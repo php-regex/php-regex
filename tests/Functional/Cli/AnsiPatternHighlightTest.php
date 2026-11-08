@@ -80,6 +80,25 @@ final class AnsiPatternHighlightTest extends TestCase
     }
 
     /**
+     * PCRE refuses the unbounded lookbehind at its opening parenthesis, past
+     * the tab: the caret stays under it once the tab is spelled "\t".
+     */
+    #[Test]
+    public function test_validate_keeps_the_caret_under_an_interior_fault_after_an_escape(): void
+    {
+        $pattern = "/a\t(?<=a+)b/";
+        $this->assertStringContainsString('length of lookbehind assertion is not limited', (string) EngineProbe::warning($pattern));
+
+        foreach ([false, true] as $terminal) {
+            [$code, $written] = $this->runRegex(['validate', $pattern], $terminal);
+            $plain = (string) preg_replace('/\x1B\[[0-9;]*m/', '', $written);
+
+            $this->assertSame(1, $code);
+            $this->assertStringContainsString("Line 1: a\\t(?<=a+)b\n".str_repeat(' ', 8 + 1 + 2).'^', $plain);
+        }
+    }
+
+    /**
      * Without "u" PCRE reads a hidden character byte by byte, under it as
      * one code point: the echoed pattern spells it the way PCRE reads it.
      */
