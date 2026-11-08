@@ -99,5 +99,7 @@ final class FirstTriedStepTest extends TestCase
         yield 'empty cancellation restores ungreedy' => ['pattern' => '/(?-U:)(?R)?a/U', 'expected' => false];
         yield 'caret preserves ungreedy' => ['pattern' => '/(?^)(?R)?a/U', 'expected' => false];
         yield 'later cancellation wins' => ['pattern' => '/(?U)(?-U)(?R)?a/', 'expected' => 'R'];
+        yield 'empty setting lets the attempt through' => ['pattern' => '/(?)(?R)(a+)+$/', 'expected' => 'R'];
+        yield 'empty setting keeps ungreedy' => ['pattern' => '/(?)(?R)?a/U', 'expected' => false];
     }
 }

@@ -102,13 +102,15 @@ final class FirstTriedStep extends AbstractNodeVisitor
 
         $wasUngreedy = $this->ungreedy;
         if (GroupType::InlineFlags === $node->type) {
-            $options = InlineFlags::read(InlineFlags::withoutAsciiOptions($node->flags ?? ''), InlineFlags::LETTERS.'r');
-            if (null === $options || null === $this->source) {
+            $flags = InlineFlags::withoutAsciiOptions($node->flags ?? '');
+            // "(?)" sets nothing: it changes no option, and needs no reading.
+            $options = '' === $flags ? null : InlineFlags::read($flags, InlineFlags::LETTERS.'r');
+            if (('' !== $flags && null === $options) || null === $this->source) {
                 // Without the spelling, an empty scope and a bare setting
                 // cannot be distinguished: do not establish a shortcut.
                 return false;
             }
-            $this->ungreedy = $options->inForce('U', $wasUngreedy);
+            $this->ungreedy = $options?->inForce('U', $wasUngreedy) ?? $wasUngreedy;
             if (InlineFlags::setOptionsOnly($this->source, $node->startPosition)) {
                 return true;
             }
