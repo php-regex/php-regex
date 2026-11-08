@@ -207,15 +207,15 @@ final class ModernizerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * @return iterable<string, array{pattern: string}>
      */
     public static function provideLiteralBackslashes(): iterable
     {
-        yield 'negated validation class' => ['~\A[^/\\\\]+\z~'];
-        yield 'positive class' => ['~\A[/\\\\]+\z~'];
-        yield 'standalone' => ['~\A\\\\\z~'];
-        yield 'before punctuation' => ['~\A\\\\@\z~'];
-        yield 'quoted run' => ['~\A\Q\@\E\z~'];
+        yield 'negated validation class' => ['pattern' => '~\A[^/\\\\]+\z~'];
+        yield 'positive class' => ['pattern' => '~\A[/\\\\]+\z~'];
+        yield 'standalone' => ['pattern' => '~\A\\\\\z~'];
+        yield 'before punctuation' => ['pattern' => '~\A\\\\@\z~'];
+        yield 'quoted run' => ['pattern' => '~\A\Q\@\E\z~'];
     }
 
     private function assertMatchesOriginalBehavior(string $original, string $modernized): void
