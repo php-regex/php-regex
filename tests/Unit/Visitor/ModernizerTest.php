@@ -203,17 +203,17 @@ final class ModernizerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, string, string}>
+     * @return iterable<string, array{pattern: string, accepted: string, rejected: string}>
      */
     public static function provideGroupedAlternations(): iterable
     {
-        yield 'anchored validation' => ['/^(?:admin|user)$/', 'admin', 'admin-evil'];
-        yield 'absolute anchors' => ['/\\A(?:admin|user)\\z/', 'user', 'evil-user'];
-        yield 'nested groups' => ['/^(?:(?:admin|user))$/', 'user', 'evil-user'];
-        yield 'sequence prefix and suffix' => ['/^pre(?:foo|bar)post$/', 'prebarpost', 'prefoo'];
-        yield 'empty alternative' => ['/^(?:admin|)$/', '', 'admin-evil'];
-        yield 'quantified alternative' => ['/^(?:ab|cd)+$/', 'abcd', 'ab-evil'];
-        yield 'modernized children' => ['/^(?:[0-9]|user)$/', '1', '1-evil'];
+        yield 'anchored validation' => ['pattern' => '/^(?:admin|user)$/', 'accepted' => 'admin', 'rejected' => 'admin-evil'];
+        yield 'absolute anchors' => ['pattern' => '/\\A(?:admin|user)\\z/', 'accepted' => 'user', 'rejected' => 'evil-user'];
+        yield 'nested groups' => ['pattern' => '/^(?:(?:admin|user))$/', 'accepted' => 'user', 'rejected' => 'evil-user'];
+        yield 'sequence prefix and suffix' => ['pattern' => '/^pre(?:foo|bar)post$/', 'accepted' => 'prebarpost', 'rejected' => 'prefoo'];
+        yield 'empty alternative' => ['pattern' => '/^(?:admin|)$/', 'accepted' => '', 'rejected' => 'admin-evil'];
+        yield 'quantified alternative' => ['pattern' => '/^(?:ab|cd)+$/', 'accepted' => 'abcd', 'rejected' => 'ab-evil'];
+        yield 'modernized children' => ['pattern' => '/^(?:[0-9]|user)$/', 'accepted' => '1', 'rejected' => '1-evil'];
     }
 
     private function assertMatchesOriginalBehavior(string $original, string $modernized): void
