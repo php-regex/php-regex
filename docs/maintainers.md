@@ -786,7 +786,12 @@ that declares neither `config.platform.php` nor `require.php` falls back to
 `--php` (`8.1` by default). That fallback run does not read the repository's
 `composer.json` at all, so a `config.platform.lib-pcre` it pins is ignored:
 the PCRE2 is the one the working directory's `composer.json` pins, else the
-running or bundled one for that PHP. PHP 7.2 and
+running or bundled one for that PHP. Every run also reads `regex.dist.json`
+and `regex.json` from the working directory, and they come before any
+`composer.json`: a `pcreVersion` there judges every repository with that
+PCRE2, its own `config.platform.lib-pcre` included, and a `phpVersion` there
+replaces the PHP each repository requires. The `regex.dist.json` at the root
+sets neither, so keep them out of a local `regex.json` before a sweep. PHP 7.2 and
 earlier ship PCRE1, which the linter never judges: a `require.php` that also
 allows PHP 7.3 or later is judged from the lowest such PHP, with the note
 saying so in the log, and a `composer.json` that allows nothing from 7.3 on
