@@ -730,6 +730,77 @@ engine answer differently disables the tab on that engine with the witness
 named. Each is a sentence in the tab, never a trace of another release
 passed off as the engine's.
 
+## The Corpus
+
+The linter and the ReDoS analyzer are run over a corpus of real PHP projects
+to check that their rules produce sensible output on real code. This run is
+not part of the automated CI differential tests; its lint results are in
+`var/log/corpus.log`.
+
+The corpus checkouts themselves are not committed. `corpus.json`, at the root
+next to `composer.json`, lists every repository with its URL, branch and the
+commit it was pinned to, much like a lock file. `bin/corpus` manages the
+checkouts, composer-style:
+
+```bash
+php bin/corpus install                 # rebuild corpus/ exactly at the pinned commits
+php bin/corpus update                  # prune, clone what is missing, then pull everything,
+                                       # and write the new commits back to corpus.json
+php bin/corpus update --no-prune       # keep checkouts that are no longer listed
+php bin/corpus update --add https://github.com/vendor/repo.git [--as path] [--branch main]
+php bin/corpus update --write-manifest # rewrite corpus.json from what is on disk
+```
+
+Every `corpus.json` key is a `vendor/name` path — a repository added without
+`--as` is checked out under the `vendor/name` derived from its URL, and a URL
+that offers no vendor segment is refused rather than guessed at.
+
+`install` never writes to `corpus.json`: delete `corpus/` at any time and one
+command rebuilds it, repository by repository, at the exact commits the
+manifest pins. `update` is the only command that moves the pins. A checkout
+with local changes is never reset or removed unless `--force` is given, and a
+repository cloned by hand is removed on the next run unless it is added with
+`--add` or listed with `--write-manifest` first.
+
+Regenerate `var/log/corpus.log` after updating the corpus, sweeping it
+repository by repository:
+
+```bash
+php bin/corpus-lint
+```
+
+One lint run per repository, the target read from its own `composer.json`:
+`config.platform.php` when it declares a plain version, else the lowest PHP
+`require.php` allows, with the PCRE2 release `config.platform.lib-pcre` pins,
+else the running one for the running PHP's minor, else the one bundled with
+that PHP. A release
+older than the library knows in full is judged with the oldest rules it does
+— the notice the linter prints is carried into the log — and a repository
+without `require.php` falls back to `--php` (`8.1` by default). PHP 7.2 and
+earlier ship PCRE1, which the linter never judges: a `require.php` that also
+allows PHP 7.3 or later is judged from the lowest such PHP, with the note
+saying so in the log, and a `composer.json` that allows nothing from 7.3 on
+is refused: the section names no target (`Target: none — exit 2`) and
+carries the refusal, and the sweep counts it as a failure, never as a clean
+repository. Each run carries the ReDoS analysis in confirmed mode
+(`--redos --redos-mode=confirmed`): a pattern the analysis proves linear
+loses the warnings that only guess at backtracking, and a proven verdict is
+replayed on the running PCRE, so the log says at which length `preg_match()`
+gives up. The merged
+`var/log/corpus.log` keeps the issue format of a single run and gains one
+`###` header per repository; each repository's own
+log stays under `var/log/corpus-parts/`. `--only` and `--limit` sweep a slice
+of the corpus, and the merged log renders the same whether the command runs
+in a terminal or through a pipe, and whatever `COLUMNS` the shell exports:
+every run folds its lines at 120 columns.
+
+To judge the whole tree for one target instead, the PHP running the command
+and the PCRE2 it links, without touching the tracked log:
+
+```bash
+php bin/regex lint corpus/ --php-version=runtime
+```
+
 ## Findings
 
 The playground's second list, and the pages under `/findings/`, show what
