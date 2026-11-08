@@ -28,7 +28,7 @@ In PHP with default settings, this often results in `preg_match()` returning `fa
 
 Remember from [Chapter 4](04-quantifiers.md): when a match fails, the engine **backtracks** — it tries different splits by giving characters back.
 
-With **nested quantifiers**, the number of possible splits grows exponentially.
+With **nested quantifiers**, those splits multiply. In `/(a+)+$/`, the same run of `a`'s can be divided between the inner `a+` and the outer `(a+)+` in many ways: all the `a`'s in one repetition of the outer group, one `a` per repetition, or anything in between. Each division is a separate path through the pattern, and the engine may have to try them all.
 
 ```php
 // /(a+)+$/ against lots of 'a' and a final '!': no split can ever match,
@@ -43,10 +43,10 @@ echo preg_last_error_msg(); // Backtrack limit exhausted
 {: data-run="" }
 
 For `/(a+)+$/` against `"aaaa...!"` (lots of a's followed by `!`):
-1. The inner `a+` and outer `(a+)+` can split the a's in many ways
-2. None of them allow `$` to match because of `!`
-3. The engine tries **every possible combination** before giving up
-4. Each extra `a` roughly doubles the number of tries
+1. Every division of the `a`'s between the two repetitions is one path to try
+2. None of the paths let `$` match, because the `!` is in the way
+3. The engine tries **every path** before giving up
+4. Each extra `a` roughly doubles the number of paths — 24 `a`'s already means millions of them
 
 ---
 
@@ -130,7 +130,7 @@ Possessive quantifiers are like greedy ones, but they never give back characters
 '/(?:a|aa)++$/'
 ```
 
-Reordering alternatives (`/(aa|a)+$/`) does **not** fix this — it only changes which path is tried first.
+Reordering alternatives (`/(aa|a)+$/`) does **not** fix this. Putting the longer alternative first can only make a *successful* match arrive sooner; when the match is going to fail anyway, the engine must still try every path before it can report "no match", whatever the order.
 
 ---
 

@@ -18,7 +18,8 @@ Think of it like a multiple-choice question — only one answer is picked.
 ```text
 Pattern: /[aeiou]/
 Text:    "hello"
-Matches: "e", "o"  (two separate matches)
+Matches: "e", "o"  (two separate matches — `preg_match_all()` finds both;
+         `preg_match()` stops after the first one, "e")
 ```
 
 The square brackets `[...]` define the set. The pattern matches **exactly one character** that is inside that set.
@@ -62,10 +63,10 @@ Ranges work based on character codes. For ASCII letters and digits this is fine.
 Prefix with `^` inside the brackets to match **anything except** what's in the set:
 
 ```php
-preg_match('/[^0-9]/', 'ABC123', $matches); // matches 'A'
+preg_match('/[^0-9]/', 'ABC123', $matches);  // matches 'A' (stops at the first hit)
 echo $matches[0], PHP_EOL;
-preg_match('/[^aeiou]/', 'apple', $matches); // matches 'p', 'p', 'l'
-echo $matches[0], PHP_EOL;
+preg_match_all('/[^aeiou]/', 'apple', $matches); // matches 'p', 'p', 'l' — every non-vowel
+print_r($matches[0]);
 ```
 {: data-run="" }
 
@@ -127,6 +128,8 @@ echo $matches[0], PHP_EOL;
 
 Note: `.` is not a "character class" in the `[...]` sense, but it's related — it matches broadly. We'll keep using it as we go.
 
+The `+` in `\w+` means "one or more of the preceding" — a **quantifier**, which [chapter 4](04-quantifiers.md) covers properly.
+
 ---
 
 ## 6) Unicode Character Properties (a bit more)
@@ -141,13 +144,15 @@ echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
+The `^` and `$` around the patterns are [anchors](03-anchors-boundaries.md): read `/^\p{L}+$/u` as "the whole string is letters". They get their own chapter next.
+
 The `\p{Emoji}` property needs a newer engine (PCRE2 10.40, so PHP 8.2 and newer):
 
 ```php
 preg_match('/\p{Emoji}/u', 'Hi 👋', $matches); // matches emoji — PHP 8.2+
 ```
 
-Run it with the version set to 8.0 or 8.1 above and the engine refuses the pattern outright — one property, two answers, and the caption tells you which engine you are talking to.
+Whether a property is accepted depends on the PCRE2 version bundled with your PHP build: `\p{Emoji}` needs PCRE2 10.40 or newer (PHP 8.2 and newer bundle it), and an older PHP refuses the pattern outright with a compilation error instead of matching.
 
 Common ones:
 

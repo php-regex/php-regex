@@ -48,7 +48,7 @@ Group `1` captures either `"` or `'`, `\1` forces the same one at the end. Note 
 
 ## 2) Subroutines `(?1)`, `(?&name)`
 
-A **subroutine** reuses the **pattern** of another group, without treating it as a new capture in the same way. Think of it as "insert this group's recipe here".
+A **subroutine** reuses the **pattern** of another group: it runs that group's regex again at the current position, but it does not capture or remember the text it matches this time. That is the difference from a backreference — `\1` repeats captured *text*, `(?1)` repeats a *pattern*. Think of it as "insert this group's recipe here".
 
 ### Numbered subroutine
 
@@ -92,9 +92,17 @@ echo $matches[0]; // "(a(b)c)"
 - `\(` matches opening paren
 - `(?:[^()]|(?R))*` matches either non-paren characters, **or** a nested balanced pair via `(?R)`
 - `\)` matches closing paren
-- `[^()]` acts as a **base case** so recursion can stop
+- `[^()]` acts as a **base case** — the alternative that succeeds on its own, without recursing again — so the recursion can stop. (A base case, as in any recursion, is what lets the pattern eventually match instead of calling itself forever.)
 
 **Important:** A recursive pattern must have some way to match **without** recursing. If every alternative recurses, it won't work.
+
+### A worked trace on `"(a(b)c)"`
+
+1. `\(` consumes the opening `(`.
+2. The repeated alternation starts: `a` is not a paren, so the `[^()]` branch matches it.
+3. The next character is `(`. `[^()]` cannot match it, so the `(?R)` branch runs the **whole pattern again**, starting at that `(`. The inner run consumes `(`, matches `b` via `[^()]`, and consumes `)` — it has matched `(b)`, the base case `b` being what lets it finish.
+4. Back in the outer run, the alternation continues: `c` matches via `[^()]`, then `\)` consumes the final `)`.
+5. The outer run has matched `(a(b)c)` — the whole subject.
 
 ---
 
@@ -104,15 +112,17 @@ Conditionals let you do "if this group matched, do X, else do Y".
 
 ### Based on a numbered group
 
+Read `(?(1)b|c)` as: *if group 1 took part in the match, match `b` here, otherwise match `c`*. "Took part" means the group was used on this attempt: an optional group that was skipped, like `(a)?` on `"c"`, did not take part, but a group that matched the empty string, like `(a*)`, did, so `/^(a*)(?(1)b|c)/` still requires `b`.
+
 ```php
-// If group 1 matched 'a', expect 'b', else expect 'c'
+// (?(1)b|c): group 1 took part -> require 'b'; otherwise -> require 'c'
 $pattern = '/^(a)?(?(1)b|c)/';
 
-preg_match($pattern, 'ab', $matches); // matches
+preg_match($pattern, 'ab', $matches); // matches: (a) captured 'a', so 'b' is required
 echo $matches[0], PHP_EOL;
-preg_match($pattern, 'c',  $matches); // matches
+preg_match($pattern, 'c',  $matches); // matches: (a) matched nothing, so 'c' runs
 echo $matches[0], PHP_EOL;
-preg_match($pattern, 'ac');           // no match
+preg_match($pattern, 'ac');           // no match: group 1 took part, so 'b' is required
 echo preg_match($pattern, 'ac'), PHP_EOL;  // 0
 ```
 {: data-run="" }
@@ -181,7 +191,21 @@ Write a pattern that matches `(hello)` and `(a(b)c)` using `(?R)`.
 
 </details>
 
-### Exercise 4: Conditional
+### Exercise 4: Balanced square brackets
+Adapt the pattern from the previous exercise so it matches balanced **square** brackets: it should match `[a[b]c]` but not `[a[b`.
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+'/\[(?:[^\[\]]|(?R))*\]/'
+```
+
+The shape is identical — escape both brackets, and put neither bracket inside the character class.
+
+</details>
+
+### Exercise 5: Conditional
 Write a pattern that matches `ab` if `a` is present, else matches `c`. Use a named group.
 
 <details markdown="1">
