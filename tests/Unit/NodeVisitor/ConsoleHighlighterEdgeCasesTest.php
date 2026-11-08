@@ -25,6 +25,7 @@ final class ConsoleHighlighterEdgeCasesTest extends TestCase
     public function test_comment_controls_are_visible_before_ansi_formatting(): void
     {
         $comment = "café\\d\x1B]0;title\x07\r\n\t\x08\x7F\u{9B}\u{202E}";
+        $this->assertSame(1, preg_match('/(?#'.$comment.')a/', 'a'), 'PCRE reads the comment as nothing.');
         $highlighted = Regex::create(['cache' => null])->parse('/(?#'.$comment.')a/')->accept(new ConsoleHighlighter());
         $plain = preg_replace('/\\x1B\\[[0-9;]*m/', '', $highlighted);
 

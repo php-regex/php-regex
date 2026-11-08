@@ -96,7 +96,9 @@ final class HighlightCommand extends AbstractCommand
             $highlighted = $ast->accept($visitor);
 
             if ('console' === $format && !$output->isAnsi()) {
-                $highlighted = DisplayEscaper::escapeToken($pattern);
+                // The whole pattern, spelled in its own mode: a backslash
+                // before a raw control stays one escape.
+                $highlighted = DisplayEscaper::escape($pattern);
             }
 
             if ('console' === $format && $style->visualsEnabled()) {
