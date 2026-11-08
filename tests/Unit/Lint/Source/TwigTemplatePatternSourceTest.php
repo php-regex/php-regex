@@ -150,6 +150,7 @@ final class TwigTemplatePatternSourceTest extends TestCase
         foreach ($occurrences as $index => $occurrence) {
             $rowIndex = intdiv($index, 2);
             $quote = 0 === $index % 2 ? strpos($row, "'/a/'") : strpos($row, "'/b/'");
+            $this->assertNotFalse($quote);
             $this->assertSame(5 + $rowIndex, $occurrence->line);
             $this->assertSame($quote + 1, $occurrence->column);
             $this->assertSame(\strlen($prefix) + $rowIndex * \strlen($row) + $quote, $occurrence->fileOffset);
