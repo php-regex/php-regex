@@ -45,6 +45,20 @@ final class FirstTriedStepTest extends TestCase
     }
 
     /**
+     * Without its JIT the engine answers a recursion it enters with no
+     * progress made by failing the match, and a recursion it skips by
+     * matching: the rows read under "U" agree with it on "a".
+     */
+    #[Test]
+    #[DataProvider('ungreedyPatterns')]
+    public function test_the_ungreedy_rows_agree_with_the_engine(string $pattern, bool|string $expected): void
+    {
+        $result = @preg_match('/(*NO_JIT)'.substr($pattern, 1), 'a');
+
+        $this->assertSame(\is_string($expected), false === $result, $pattern);
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, expected: bool|string}>
      */
     public static function patterns(): iterable
@@ -62,6 +76,16 @@ final class FirstTriedStepTest extends TestCase
         yield 'define block lets the attempt through' => ['pattern' => '/(?(DEFINE)(a))(?R)|b/', 'expected' => 'R'];
         yield 'keep lets the attempt through' => ['pattern' => '/\K(?R)|b/', 'expected' => 'R'];
         yield 'opening option lets the attempt through' => ['pattern' => '/(*UTF)(?R)|b/', 'expected' => 'R'];
+        yield from self::ungreedyPatterns();
+        yield 'nothing but transparent steps' => ['pattern' => '/(?#one)(?#two)/', 'expected' => true];
+        yield 'lookaround is a step of its own' => ['pattern' => '/(?=a)(?R)|b/', 'expected' => false];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: bool|string}>
+     */
+    public static function ungreedyPatterns(): iterable
+    {
         yield 'root ungreedy skips recursion' => ['pattern' => '/(?R)?(a+)+$/U', 'expected' => false];
         yield 'bare ungreedy skips recursion' => ['pattern' => '/(?U)(?R)?(a+)+$/', 'expected' => false];
         yield 'scoped ungreedy skips recursion' => ['pattern' => '/(?U:(?R)?(a+)+$)/', 'expected' => false];
@@ -75,7 +99,5 @@ final class FirstTriedStepTest extends TestCase
         yield 'empty cancellation restores ungreedy' => ['pattern' => '/(?-U:)(?R)?a/U', 'expected' => false];
         yield 'caret preserves ungreedy' => ['pattern' => '/(?^)(?R)?a/U', 'expected' => false];
         yield 'later cancellation wins' => ['pattern' => '/(?U)(?-U)(?R)?a/', 'expected' => 'R'];
-        yield 'nothing but transparent steps' => ['pattern' => '/(?#one)(?#two)/', 'expected' => true];
-        yield 'lookaround is a step of its own' => ['pattern' => '/(?=a)(?R)|b/', 'expected' => false];
     }
 }
