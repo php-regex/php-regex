@@ -74,6 +74,8 @@ final class BytesWithoutUtfTest extends TestCase
     #[DataProvider('provideAdvice')]
     public function test_the_refusal_gives_advice_pcre_accepts(string $pattern, string $fixed, string $subject, string $advice): void
     {
+        // The pattern as written compiles: the refusal is the target's, not PCRE's.
+        $this->assertNotFalse(@preg_match($pattern, $subject), $pattern);
         $this->assertSame(1, preg_match($fixed, $subject), $fixed);
         // The advice says whether adding u alone is enough: the engine agrees.
         $refused = !str_ends_with($advice, 'Add u.');
