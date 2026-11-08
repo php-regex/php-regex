@@ -53,13 +53,13 @@ final class ExplainCommandRedosTest extends LaravelTestCase
     }
 
     /**
-     * @return iterable<string, array{string, int}>
+     * @return iterable<string, array{pattern: string, status: int}>
      */
     public static function provideHtmlPatterns(): iterable
     {
-        yield 'literal and sample' => ['#<img src=x onerror=alert`1`>&"#', 0];
-        yield 'optimization and security warning' => ['#(<img src=x onerror=alert`1`>)(a+)+$#', 0];
-        yield 'invalid pattern diagnostic' => ['#<img src=x onerror=alert`1`>[#', 1];
+        yield 'literal and sample' => ['pattern' => '#<img src=x onerror=alert`1`>&"#', 'status' => 0];
+        yield 'optimization and security warning' => ['pattern' => '#(<img src=x onerror=alert`1`>)(a+)+$#', 'status' => 0];
+        yield 'invalid pattern diagnostic' => ['pattern' => '#<img src=x onerror=alert`1`>[#', 'status' => 1];
     }
 
     #[Test]
