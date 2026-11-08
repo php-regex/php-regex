@@ -661,7 +661,7 @@ calls are still read, and so are the functions you name with
 
 A name that is no preset is a configuration error, exit code 2, that names the
 preset it most likely means: left out, it would leave a list that reads fewer
-calls than meant, the native ones only when it was the only one.
+calls than meant, and no wrapper preset at all when it was the only one.
 
 ```
 Error: Unknown extraction preset "laravel-str" in --interop: did you mean "illuminate-support"?
