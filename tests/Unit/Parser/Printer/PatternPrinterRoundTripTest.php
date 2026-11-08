@@ -40,8 +40,8 @@ final class PatternPrinterRoundTripTest extends TestCase
         $controls = "\x03\x04\x05\x06\x07\x08\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F";
         $collision = "\x03".str_repeat("\x04", 4096);
         // Also occupy the first two numbered fallback markers.
-        $collision .= "\x03\x04".str_repeat('0', 2 * PHP_INT_SIZE)."\x04";
-        $collision .= "\x03\x04".str_repeat('0', 2 * PHP_INT_SIZE - 1)."1\x04";
+        $collision .= "\x03\x04".str_repeat('0', 2 * \PHP_INT_SIZE)."\x04";
+        $collision .= "\x03\x04".str_repeat('0', 2 * \PHP_INT_SIZE - 1)."1\x04";
         $pattern = '{(?#'.$controls.$collision.')'.str_repeat('\\{\\}', 512).'}';
         $regex = RegexParser::create(['cache' => null])->parse($pattern);
         $printer = PatternPrinter::pretty();
@@ -49,7 +49,7 @@ final class PatternPrinterRoundTripTest extends TestCase
         $mark = (new \ReflectionProperty(PatternPrinter::class, 'bracketMark'))->getValue($printer);
 
         $this->assertIsString($mark);
-        $this->assertLessThanOrEqual(3 + 2 * PHP_INT_SIZE, \strlen($mark));
+        $this->assertLessThanOrEqual(3 + 2 * \PHP_INT_SIZE, \strlen($mark));
         $this->assertStringNotContainsString($mark, $pattern);
         $this->assertSame(1, preg_match($printed, str_repeat('{}', 512)));
         $this->assertSame(0, preg_match($printed, 'different'));

@@ -2647,7 +2647,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // Index occupied candidates in one pass. Growing a run of filler
         // lets source text choose the size copied at every bracket; repeated
         // searches for numbered candidates would instead allow quadratic work.
-        $digits = 2 * PHP_INT_SIZE;
+        $digits = 2 * \PHP_INT_SIZE;
         $length = \strlen($mark) + $digits + \strlen($filler);
         $occupied = [];
         $offset = 0;
