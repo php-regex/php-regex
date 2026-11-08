@@ -75,6 +75,9 @@ final class BytesWithoutUtfTest extends TestCase
     public function test_the_refusal_gives_advice_pcre_accepts(string $pattern, string $fixed, string $subject, string $advice): void
     {
         $this->assertSame(1, preg_match($fixed, $subject), $fixed);
+        // The advice says whether adding u alone is enough: the engine agrees.
+        $refused = !str_ends_with($advice, 'Add u.');
+        $this->assertSame($refused ? false : 1, @preg_match($pattern.'u', $subject), $pattern.'u');
 
         try {
             Regex::create()->transpile($pattern, 'javascript');
