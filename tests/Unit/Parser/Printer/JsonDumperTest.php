@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Printer;
 
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
@@ -20,6 +22,7 @@ use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Parser\Printer\JsonDumper;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\VersionCondition;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\JsonSchemaSubsetValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,6 +35,15 @@ use PHPUnit\Framework\TestCase;
  */
 final class JsonDumperTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
+    /**
+     * Every comparison the parser reads after VERSION.
+     */
+    private const VERSION_OPERATORS = ['=', '>=', '>', '<=', '<', '==', '!='];
+
+    private const SCHEMA = __DIR__.'/../../../../src/Parser/ast.schema.json';
+
     #[Test]
     #[DataProvider('provideAmplifyingReferences')]
     public function test_reference_expansion_is_bounded(string $reference): void
@@ -40,9 +52,13 @@ final class JsonDumperTest extends TestCase
         $this->assertSame(0, preg_match($pattern, ''));
         $tree = RegexParser::create(['cache' => null])->parse($pattern);
 
-        $this->expectException(\LengthException::class);
-        $this->expectExceptionMessage('JSON export exceeds the limit of 100000 resolved reference targets.');
-        $tree->accept(new JsonDumper());
+        try {
+            $tree->accept(new JsonDumper());
+            $this->fail('The amplified export must be refused.');
+        } catch (ResourceLimitException $exception) {
+            $this->assertSame(ErrorCode::Complexity, $exception->errorCode);
+            $this->assertSame('JSON export exceeds the limit of 100000 resolved reference targets.', $exception->getMessage());
+        }
     }
 
     /**
@@ -75,22 +91,16 @@ final class JsonDumperTest extends TestCase
         $parser = RegexParser::create(['cache' => null]);
         $tree = $parser->parse('/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 101).'/J');
         $dumper = new JsonDumper();
+
         try {
             $tree->accept($dumper);
             $this->fail('The amplified export must be refused.');
-        } catch (\LengthException) {
+        } catch (ResourceLimitException) {
             $small = $parser->parse('/(?<n>a)\\k<n>/');
             $this->assertSame(self::export('/(?<n>a)\\k<n>/'), $small->accept($dumper));
             $this->assertSame([], self::nodesOfType($small->pattern->accept($dumper), 'backref')[0]['groups']);
         }
     }
-
-    /**
-     * Every comparison the parser reads after VERSION.
-     */
-    private const VERSION_OPERATORS = ['=', '>=', '>', '<=', '<', '==', '!='];
-
-    private const SCHEMA = __DIR__.'/../../../../src/Parser/ast.schema.json';
 
     #[Test]
     public function test_the_document_carries_its_version_and_the_pattern(): void
