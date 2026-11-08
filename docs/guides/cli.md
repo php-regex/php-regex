@@ -1243,7 +1243,7 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `phpVersion`                    | string or int    | PHP version the patterns are judged for: `"8.3"`, `80300`, or `"runtime"` for the PHP running the command |
 | `pcreVersion`                   | string           | PCRE2 release the patterns are judged for: `"10.44"`     |
 | `locale`                        | string           | `LC_CTYPE` locale the patterns run under: `"tr_TR.UTF-8"` (default: the one of the PHP running the command) |
-| `extraction.interop`            | array            | Libraries whose calls carry patterns (default: every preset; a list reads exactly those, `[]` the native calls only) |
+| `extraction.interop`            | array            | Libraries whose calls carry patterns (default: every preset; a list reads exactly those, `[]` none: the native calls, configured functions and Twig templates are still read) |
 | `extraction.functions`          | array            | Project helpers carrying patterns                        |
 | `checks.validation`             | boolean          | Report patterns PCRE2 refuses (default `true`)           |
 | `checks.redos`                  | object           | `enabled` (default `false`), `mode` (`theoretical` or `confirmed`), `threshold` (`low`, `medium`, `high`, `critical`) |
@@ -1984,7 +1984,7 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--no-lint`         | Skip the lint rules                                |
 | `--enable-rule=<id>` | Turn a lint rule on (repeatable)                  |
 | `--disable-rule=<id>` | Turn a lint rule off (repeatable)                |
-| `--interop <presets>` | Libraries to read patterns from, every preset by default (comma separated, `none` for the native calls only) |
+| `--interop <presets>` | Libraries to read patterns from, every preset by default (comma separated, `none` turns every preset off, as `--no-interop` does) |
 | `--no-interop`      | Turn off every wrapper preset; the native calls (`preg_*`, `RegexIterator`, `filter_var()`) and the functions you configure are still read |
 | `--no-twig`         | Skip the `matches` patterns of the Twig templates under the paths |
 | `--pattern-function <spec>` | Extra call carrying a pattern (repeatable) |
