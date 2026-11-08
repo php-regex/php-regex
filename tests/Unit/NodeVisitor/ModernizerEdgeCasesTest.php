@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -50,5 +51,11 @@ final class ModernizerEdgeCasesTest extends TestCase
         $this->assertInstanceOf(RegexNode::class, $modernized);
         $this->assertInstanceOf(LiteralNode::class, $modernized->pattern);
         $this->assertSame($regex->pattern, $modernized->pattern);
+        // The backslash stays a character to match, whatever the printer spells.
+        foreach ([PatternPrinter::asWritten(), PatternPrinter::normalized()] as $printer) {
+            $printed = $modernized->accept($printer);
+            $this->assertSame(1, preg_match($printed, '\\a'), $printed);
+            $this->assertSame(0, preg_match($printed, 'a'), $printed);
+        }
     }
 }

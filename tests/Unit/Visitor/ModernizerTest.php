@@ -195,7 +195,7 @@ final class ModernizerTest extends TestCase
         $ast = $this->regexService->parse($pattern);
         $modernized = $ast->accept(new Modernizer());
 
-        foreach ([new PatternPrinter(), PatternPrinter::asWritten()] as $printer) {
+        foreach ([PatternPrinter::normalized(), PatternPrinter::asWritten()] as $printer) {
             $printed = $modernized->accept($printer);
             $this->assertNotFalse(preg_match($printed, ''));
             foreach (['', 'a', '@', '/', '\\', 'a\\b', '\\@'] as $subject) {

@@ -36,11 +36,13 @@ use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -75,6 +77,12 @@ final class ModernizerTest extends TestCase
         $this->assertInstanceOf(LiteralNode::class, $result);
         /* @var LiteralNode $result */
         $this->assertSame($literal, $result);
+        // Printed, the literal still asks for the backslash before "@".
+        foreach ([PatternPrinter::asWritten(), PatternPrinter::normalized()] as $printer) {
+            $printed = (new RegexNode($result, '', '/', 0, 2))->accept($printer);
+            $this->assertSame(1, preg_match($printed, '\\@'), $printed);
+            $this->assertSame(0, preg_match($printed, '@'), $printed);
+        }
     }
 
     #[Test]
