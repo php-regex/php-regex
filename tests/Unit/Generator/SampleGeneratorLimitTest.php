@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Generator;
 use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -29,6 +30,7 @@ final class SampleGeneratorLimitTest extends TestCase
     public function test_capture_doubling_is_rejected(string $entry): void
     {
         $pattern = '/'.self::doublingChain(21).'/';
+        $this->assertTrue(EngineProbe::compiles($pattern));
         $this->expectException(SampleGenerationException::class);
         $this->expectExceptionMessageIsOrContains('No sample was built: it would pass 1048576 bytes.');
 
@@ -62,21 +64,27 @@ final class SampleGeneratorLimitTest extends TestCase
     public function test_one_byte_over_limit_is_rejected_even_before_accept(): void
     {
         $pattern = '/'.self::doublingChain(19).'aa(*ACCEPT)/';
+        $this->assertTrue(EngineProbe::compiles($pattern));
         $this->expectException(SampleGenerationException::class);
+        $this->expectExceptionMessageIsOrContains('No sample was built: it would pass 1048576 bytes.');
         RegexParser::create()->parse($pattern)->accept(new SampleGenerator());
     }
 
     public function test_oversized_intermediate_lookahead_is_rejected(): void
     {
         $pattern = '/(?='.self::doublingChain(21).')(*ACCEPT)/';
+        $this->assertTrue(EngineProbe::compiles($pattern));
         $this->expectException(SampleGenerationException::class);
+        $this->expectExceptionMessageIsOrContains('No sample was built: it would pass 1048576 bytes.');
         RegexParser::create()->parse($pattern)->accept(new SampleGenerator());
     }
 
     public function test_limit_counts_bytes_in_utf_mode(): void
     {
         $pattern = '/'.str_replace('(a)', '(é)', self::doublingChain(19)).'/u';
+        $this->assertTrue(EngineProbe::compiles($pattern));
         $this->expectException(SampleGenerationException::class);
+        $this->expectExceptionMessageIsOrContains('No sample was built: it would pass 1048576 bytes.');
         (new SampleGenerator())->generate($pattern);
     }
 

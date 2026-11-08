@@ -66,6 +66,11 @@ use PHPRegex\Generator\SampleGenerator;
 echo (new SampleGenerator())->generate('/(?!^)a/'); // "aa"
 ```
 
+A sample is at most 1,048,576 bytes, and so is every piece built on the way to it, a lookahead's
+text and a padded candidate included: a pattern whose backreferences double the text at each
+step, `/(a)(\g{1}\g{1})(\g{2}\g{2})…/`, throws `SampleGenerationException` ("No sample was
+built: it would pass 1048576 bytes.") before the string is built.
+
 Visiting the tree draws from the tree alone, unchecked; a sample, made reproducible with a seed:
 
 ```php
