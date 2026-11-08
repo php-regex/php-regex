@@ -27,7 +27,9 @@ use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\Snippet;
 use PHPRegex\Parser\Json\JsonDocument;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\Confirmation;
@@ -105,9 +107,12 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             $analysis = $regex->redos($pattern, $redosThreshold, $redosMode);
             $explain = $regex->explain($pattern);
 
-            $highlightedPattern = $output->isAnsi()
+            // A control, a hidden character or an invalid byte is spelled out
+            // and the pattern then echoed without colours.
+            $echoed = DisplayEscaper::escape($pattern);
+            $highlightedPattern = $output->isAnsi() && $echoed === $pattern
                 ? $ast->accept(new ConsoleHighlighter())
-                : $pattern;
+                : $echoed;
 
             if ('json' === $format) {
                 $this->renderJsonOutput($output, $pattern, $runtime, $validation, $analysis, $explain);
@@ -248,11 +253,11 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
         ]);
 
         if (!$validation->isValid && null !== $validation->error) {
-            $output->write('  '.$output->error($validation->error)."\n");
+            $output->write('  '.$output->error(DisplayEscaper::escapeText($validation->error))."\n");
         }
 
         if (!$validation->isValid && null !== $validation->caretSnippet) {
-            $output->write($output->error($validation->caretSnippet)."\n");
+            $output->write($output->error(Snippet::escapeForTerminal($validation->caretSnippet))."\n");
         }
 
         if ($style->visualsEnabled()) {
