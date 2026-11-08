@@ -446,6 +446,13 @@ explanation. What stays the bundle's own: `regex:routes`, `regex:security`
 and `regex:analyze` read Symfony's router and security configuration, where
 Laravel's `regex:routes` lists and validates route constraints.
 
+Their console reports print what the configuration holds, paths, roles,
+patterns and the attacks drawn from them, in display form: a line break or
+a control character is written `\xHH` (`\x0A`, `\x1B`), a character that
+moves or hides text such as U+2028 `\x{2028}`, and a console tag stays
+text. A value cannot open a line of its own or style the report; the JSON
+report keeps each value as found.
+
 `regex:routes` reads the routes in the order they are declared, as the router
 matches them: the first route that matches a path wins it. A route is
 **shadowed** when an earlier route takes every path it matches, so it can
