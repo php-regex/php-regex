@@ -98,6 +98,12 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
      */
     protected string $patternFlags = '';
 
+    /**
+     * Whether the body PCRE reads, delimiters left out, is valid UTF-8: u
+     * refuses one that is not.
+     */
+    private bool $bodyIsUtf8 = true;
+
     public function __construct(protected readonly TranspileContext $context) {}
 
     #[\Override]
@@ -150,6 +156,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         $this->ungreedy = str_contains($node->flags, 'U');
         $this->dollarEndOnly = str_contains($node->flags, 'D');
         $this->unicode = str_contains($node->flags, 'u');
+        $this->bodyIsUtf8 = mb_check_encoding($node->source ?? $this->context->sourcePattern, 'UTF-8');
     }
 
     /**
@@ -322,7 +329,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         }
 
         if ($inCharClass && mb_check_encoding($text, 'UTF-8')) {
-            $this->unsupported('A multibyte character in a class has no equivalent in this target, which reads characters, not bytes: without the u flag PCRE reads each of its bytes as a member of its own. Add u.', $node);
+            $this->unsupported('A multibyte character in a class has no equivalent in this target, which reads characters, not bytes: without the u flag PCRE reads each of its bytes as a member of its own. '.$this->utf8Advice(), $node);
         }
 
         if ($inCharClass || !mb_check_encoding($text, 'UTF-8')) {
@@ -372,10 +379,15 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
      */
     private function refuseByte(NodeInterface $node): void
     {
-        // u refuses a pattern that is not valid UTF-8: there the byte has to
-        // become the character it stands for first.
-        $this->unsupported(mb_check_encoding($this->context->sourcePattern, 'UTF-8')
-            ? 'A byte above 0x7F has no equivalent in this target, which reads characters, not bytes: without the u flag PCRE matches that byte alone. Add u.'
-            : 'A byte above 0x7F has no equivalent in this target, which reads characters, not bytes: without the u flag PCRE matches that byte alone, and u refuses a pattern that is not valid UTF-8. Write the character as UTF-8, then add u.', $node);
+        $this->unsupported('A byte above 0x7F has no equivalent in this target, which reads characters, not bytes: without the u flag PCRE matches that byte alone. '.$this->utf8Advice(), $node);
+    }
+
+    /**
+     * Add u, unless the body is not valid UTF-8, which u refuses: there each
+     * raw byte has to become the character it stands for first.
+     */
+    private function utf8Advice(): string
+    {
+        return $this->bodyIsUtf8 ? 'Add u.' : 'The u flag refuses a pattern that is not valid UTF-8: write the character as UTF-8, then add u.';
     }
 }

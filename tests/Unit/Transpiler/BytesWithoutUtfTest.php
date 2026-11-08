@@ -91,8 +91,12 @@ final class BytesWithoutUtfTest extends TestCase
     {
         yield 'escape of a byte' => ['pattern' => '/caf\xE9/', 'fixed' => '/caf\xE9/u', 'subject' => 'café', 'advice' => 'Add u.'];
         yield 'character cut by a quantifier' => ['pattern' => '/é+/', 'fixed' => '/é+/u', 'subject' => 'éé', 'advice' => 'Add u.'];
-        yield 'raw byte of invalid UTF-8' => ['pattern' => "/caf\xE9/", 'fixed' => '/café/u', 'subject' => 'café', 'advice' => 'Write the character as UTF-8, then add u.'];
+        yield 'raw byte of invalid UTF-8' => ['pattern' => "/caf\xE9/", 'fixed' => '/café/u', 'subject' => 'café', 'advice' => 'refuses a pattern that is not valid UTF-8: write the character as UTF-8, then add u.'];
         yield 'multibyte character in a class' => ['pattern' => '/[é]/', 'fixed' => '/[é]/u', 'subject' => 'é', 'advice' => 'reads each of its bytes as a member of its own. Add u.'];
+        // The class is refused first, but u needs the later byte fixed too.
+        yield 'class before a raw byte of invalid UTF-8' => ['pattern' => "/(*pla:[é])\xE9/", 'fixed' => '/(*pla:[é])é/u', 'subject' => 'é', 'advice' => 'refuses a pattern that is not valid UTF-8: write the character as UTF-8, then add u.'];
+        // PCRE reads the body alone: a delimiter above 0x7F stays out of u.
+        yield 'class between delimiters above 0x7F' => ['pattern' => "\xA7[é]\xA7", 'fixed' => "\xA7[é]\xA7u", 'subject' => 'é', 'advice' => 'reads each of its bytes as a member of its own. Add u.'];
     }
 
     #[Test]
