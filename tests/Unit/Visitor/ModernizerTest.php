@@ -189,6 +189,20 @@ final class ModernizerTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideGroupedAlternations')]
+    public function test_preserves_grouped_alternation_behavior(string $pattern, string $accepted, string $rejected): void
+    {
+        $modernized = $this->modernize($pattern);
+
+        $this->assertSame(1, preg_match($pattern, $accepted));
+        $this->assertSame(0, preg_match($pattern, $rejected));
+        foreach ([$accepted, $rejected] as $subject) {
+            $this->assertSame(preg_match($pattern, $subject, $original), preg_match($modernized, $subject, $rewritten));
+            $this->assertSame($original, $rewritten);
+        }
+    }
+
+    #[Test]
     #[DataProvider('provideLiteralBackslashes')]
     public function test_preserves_literal_backslashes(string $pattern): void
     {
@@ -204,6 +218,20 @@ final class ModernizerTest extends TestCase
                 $this->assertSame($expected, preg_match($printed, $subject), $printed.' on '.var_export($subject, true));
             }
         }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, accepted: string, rejected: string}>
+     */
+    public static function provideGroupedAlternations(): iterable
+    {
+        yield 'anchored validation' => ['pattern' => '/^(?:admin|user)$/', 'accepted' => 'admin', 'rejected' => 'admin-evil'];
+        yield 'absolute anchors' => ['pattern' => '/\\A(?:admin|user)\\z/', 'accepted' => 'user', 'rejected' => 'evil-user'];
+        yield 'nested groups' => ['pattern' => '/^(?:(?:admin|user))$/', 'accepted' => 'user', 'rejected' => 'evil-user'];
+        yield 'sequence prefix and suffix' => ['pattern' => '/^pre(?:foo|bar)post$/', 'accepted' => 'prebarpost', 'rejected' => 'prefoo'];
+        yield 'empty alternative' => ['pattern' => '/^(?:admin|)$/', 'accepted' => '', 'rejected' => 'admin-evil'];
+        yield 'quantified alternative' => ['pattern' => '/^(?:ab|cd)+$/', 'accepted' => 'abcd', 'rejected' => 'ab-evil'];
+        yield 'modernized children' => ['pattern' => '/^(?:[0-9]|user)$/', 'accepted' => '1', 'rejected' => '1-evil'];
     }
 
     /**
