@@ -763,7 +763,9 @@ manifest pins. `update` is the only command that moves the pins. A listed
 checkout with local changes is never reset unless `--force` is given. A
 checkout no longer listed is removed only if it has no local changes:
 `update --force` alone removes one that has them, and `install --force` keeps
-it. A clean repository cloned by hand is removed on the next run unless it is
+it. Local changes are what `git status --porcelain` reports, so ignored files
+(an installed `vendor/`, a `.env`) do not keep a checkout and are deleted with
+it: copy out what you need before pruning. A clean repository cloned by hand is removed on the next run unless it is
 added with `--add` or listed with `--write-manifest` first.
 
 Regenerate `var/log/corpus.log` after updating the corpus, sweeping it
@@ -780,7 +782,11 @@ else the running one for the running PHP's minor, else the one bundled with
 that PHP. A release
 older than the library knows in full is judged with the oldest rules it does
 — the notice the linter prints is carried into the log — and a repository
-without `require.php` falls back to `--php` (`8.1` by default). PHP 7.2 and
+that declares neither `config.platform.php` nor `require.php` falls back to
+`--php` (`8.1` by default). That fallback run does not read the repository's
+`composer.json` at all, so a `config.platform.lib-pcre` it pins is ignored:
+the PCRE2 is the one the working directory's `composer.json` pins, else the
+running or bundled one for that PHP. PHP 7.2 and
 earlier ship PCRE1, which the linter never judges: a `require.php` that also
 allows PHP 7.3 or later is judged from the lowest such PHP, with the note
 saying so in the log, and a `composer.json` that allows nothing from 7.3 on
@@ -788,15 +794,25 @@ is refused: the section names no target (`Target: none — exit 2`) and
 carries the refusal, and the sweep counts it as a failure, never as a clean
 repository. Each run carries the ReDoS analysis in confirmed mode
 (`--redos --redos-mode=confirmed`): a pattern the analysis proves linear
-loses the warnings that only guess at backtracking, and a proven verdict is
-replayed on the running PCRE, so the log says at which length `preg_match()`
-gives up. The merged
+loses the warnings that only guess at backtracking, and an exponential
+verdict is replayed on the running PCRE: when the replay reproduces it, the
+log says at which length `preg_match()` gives up. A polynomial verdict is not
+replayed, and an exponential one the replay does not reproduce, or cannot run
+because the limits cannot be set, carries no length (see
+[Confirmed mode](guides/redos.md#confirmed-mode)). The merged
 `var/log/corpus.log` keeps the issue format of a single run and gains one
 `###` header per repository; each repository's own
 log stays under `var/log/corpus-parts/`. `--only` and `--limit` sweep a slice
 of the corpus, and the merged log renders the same whether the command runs
 in a terminal or through a pipe, and whatever `COLUMNS` the shell exports:
 every run folds its lines at 120 columns.
+
+The merged log is rebuilt from every part the sweep has ever recorded, not
+only from the repositories under `corpus/` today: a repository removed from
+the corpus keeps its section, even after a full sweep. To drop it, delete
+`var/log/corpus-parts/` and `var/log/corpus.log` together (the sweep reseeds
+its list from the old log when the parts are gone), then run
+`php bin/corpus-lint` over the whole corpus.
 
 To judge the whole tree for one target instead, the PHP running the command
 and the PCRE2 it links, without touching the tracked log:
