@@ -324,6 +324,58 @@ final class RedosSearchCostReplayTest extends TestCase
     }
 
     /**
+     * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39): the counted
+     * search on "ab" x 256 . "!c" finishes at a recursion limit of 258 and
+     * gives up at 257, and the replay follows it as for the backtrack limit.
+     */
+    #[Test]
+    public function test_the_least_recursion_limit_the_search_needs_lets_the_replay_confirm(): void
+    {
+        $counted = '/(*NO_JIT)(*NO_AUTO_POSSESS)(?:ab)+c/';
+        $subject = str_repeat('ab', 256).'!c';
+        $this->assertSame([0, \PREG_NO_ERROR], self::engine($counted, $subject, 'pcre.recursion_limit', '258'));
+        $this->assertSame([false, \PREG_RECURSION_LIMIT_ERROR], self::engine($counted, $subject, 'pcre.recursion_limit', '257'));
+
+        $analyzer = new RedosAnalyzer();
+        $enough = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(recursionLimit: 258))->searchCost;
+        $short = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(recursionLimit: 257))->searchCost;
+
+        $this->assertInstanceOf(RedosSearchCost::class, $enough);
+        $this->assertTrue($enough->replayed);
+        $this->assertInstanceOf(RedosSearchCost::class, $short);
+        $this->assertNull($short->replayed);
+    }
+
+    /**
+     * Where ini_set() is disabled the engine runs nothing under the limits
+     * the replay asks for: the witness stays, as the model reads it exactly,
+     * and "replayed" is null, not a replay that failed to reproduce.
+     */
+    #[Test]
+    public function test_the_replay_is_not_made_where_ini_set_is_disabled(): void
+    {
+        $script = 'require '.var_export(\dirname(__DIR__, 4).'/vendor/autoload.php', true).';'
+            .'$cost = (new \PHPRegex\Redos\RedosAnalyzer())->analyze("/(?:ab)+c/", \PHPRegex\Redos\RedosSeverity::Low, \PHPRegex\Redos\RedosMode::Confirmed)->searchCost;'
+            .'echo json_encode(["ini_set" => function_exists("ini_set"), "cost" => $cost?->toArray()]);';
+        $process = proc_open(
+            [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'disable_functions=ini_set', '-r', $script],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+        );
+        $this->assertIsResource($process);
+        $output = (string) stream_get_contents($pipes[1]);
+        $errors = (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $this->assertSame(0, proc_close($process), $errors.$output);
+
+        $this->assertSame(
+            ['ini_set' => false, 'cost' => ['degree' => 2, 'witness' => ['prefix' => '', 'run' => 'ab', 'breaker' => '!c'], 'replayed' => null]],
+            json_decode($output, true),
+        );
+    }
+
+    /**
      * What preg_match() answers, with the setting at the value when one is
      * named, and its last error; the setting is put back.
      *
