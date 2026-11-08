@@ -25,6 +25,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\TranspileContext;
@@ -105,6 +106,13 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
      */
     private bool $bodyIsUtf8 = true;
 
+    /**
+     * The pattern under u with each byte above 0x7F of its body read as a
+     * plain letter: what PCRE thinks of the rest once the characters are
+     * written as UTF-8. Null without the body's spelling.
+     */
+    private ?string $asciiUnderU = null;
+
     public function __construct(protected readonly TranspileContext $context) {}
 
     #[\Override]
@@ -158,6 +166,8 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         $this->dollarEndOnly = str_contains($node->flags, 'D');
         $this->unicode = str_contains($node->flags, 'u');
         $this->bodyIsUtf8 = mb_check_encoding($node->source ?? $this->context->sourcePattern, 'UTF-8');
+        $this->asciiUnderU = null === $node->source ? null
+            : $node->delimiter.(LibraryPcre::replace('/[\x80-\xFF]/', 'x', $node->source) ?? $node->source).Delimiters::closing($node->delimiter).$node->flags.'u';
     }
 
     /**
@@ -384,17 +394,22 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * Add u, where the engine compiles the pattern with it. Otherwise a body
-     * that is not valid UTF-8 needs each raw byte written as its character,
-     * and a valid one holds something else u refuses, such as "\C".
+     * Add u, where the engine compiles the pattern with it. A body that is
+     * not valid UTF-8 needs each raw byte written as its character first,
+     * and either may hold something else u refuses, such as "\C".
      */
     private function utf8Advice(): string
     {
+        $engine = new PcreEngine();
+        $restCompiles = null === $engine->compile($this->asciiUnderU ?? $this->context->sourcePattern.'u');
+
         if (!$this->bodyIsUtf8) {
-            return 'The u flag refuses a pattern that is not valid UTF-8: write the character as UTF-8, then add u.';
+            return $restCompiles
+                ? 'The u flag refuses a pattern that is not valid UTF-8: write the character as UTF-8, then add u.'
+                : 'The u flag refuses a pattern that is not valid UTF-8, and more of this one: write the character as UTF-8 and rewrite what PCRE refuses under u, then add u.';
         }
 
-        return null === (new PcreEngine())->compile($this->context->sourcePattern.'u')
+        return null === $engine->compile($this->context->sourcePattern.'u')
             ? 'Add u.'
             : 'Add u, after rewriting what PCRE refuses under it: the pattern as written does not compile with u.';
     }
