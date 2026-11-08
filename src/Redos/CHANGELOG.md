@@ -6,6 +6,14 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * Where `ini_set()` refuses a PCRE limit (fixed by `php_admin_value`), the
+   confirmation and the replay of a proof are skipped, their evidence
+   `engine limits unavailable`, as where `ini_set()` is disabled: the refusal
+   no longer counts as a run that did not reproduce.
+ * Under `U`, `(?U)` or `(?U:…)`, an optional recursion such as `(?R)?` is
+   lazy and tried last: it no longer reads as an immediate recursion loop
+   that hides the backtracking after it, `/(?R)?(a+)+$/U` is reported as
+   the exponential pattern PCRE cannot finish.
  * An ignored pattern written with modifiers, `/(a+)+b/i`, skips that
    pattern only: the same body under the same modifiers, in any order and
    between any delimiters. Any other entry still skips its body under any

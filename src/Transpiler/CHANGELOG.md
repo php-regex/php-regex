@@ -6,9 +6,16 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A named reference whose group may not have matched is refused for
+   JavaScript and `html-pattern` under every spelling of its name, a
+   Unicode one (`\k<é>`) included: PCRE fails it where JavaScript matches
+   the empty string.
  * Without `u`, a byte above 0x7F on its own (`\xE9`, `[\x80-\xFF]`, invalid
    UTF-8) is refused for JavaScript and Python, which read characters; a
-   multibyte character written whole stays that character.
+   multibyte character written whole stays that character, outside a class:
+   in one (`/[é]/`) PCRE reads each of its bytes as a member, and the class
+   is refused. Each refusal names the fix PCRE takes: `u`, after writing a
+   raw byte of invalid UTF-8 as its character.
  * The `html-pattern` target (alias `html`): the value of an HTML `pattern`
    attribute, matched whole under the `v` flag; an unanchored side is padded
    so it accepts what `preg_match()` finds, and classes escape what `v`
