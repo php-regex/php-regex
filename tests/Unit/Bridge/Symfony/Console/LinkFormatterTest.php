@@ -75,24 +75,6 @@ final class LinkFormatterTest extends TestCase
         $this->assertStringContainsString("\e]8;;custom+editor://é//app/a%20b.php?line=10&column=2&encoded=%1B%07\e\\✏️\e]8;;\e\\", $output);
     }
 
-    private function consoleWithTemplate(string $template): string
-    {
-        $formatter = new ConsoleFormatter(
-            config: new OutputConfiguration(ansi: false),
-            ide: $template,
-            linkFormatter: new LinkFormatter($template, new RelativePathHelper('/app')),
-        );
-
-        return $formatter->format(new LintReport([[
-            'file' => '/app/a b.php',
-            'line' => 10,
-            'column' => 2,
-            'pattern' => '/a/',
-            'issues' => [],
-            'optimizations' => [],
-        ]], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]));
-    }
-
     #[Test]
     public function test_it_returns_plain_label_when_ide_missing(): void
     {
@@ -219,6 +201,24 @@ final class LinkFormatterTest extends TestCase
         $helper = new RelativePathHelper('');
 
         $this->assertSame('/tmp/file.php', $helper->getRelativePath('/tmp/file.php'));
+    }
+
+    private function consoleWithTemplate(string $template): string
+    {
+        $formatter = new ConsoleFormatter(
+            config: new OutputConfiguration(ansi: false),
+            ide: $template,
+            linkFormatter: new LinkFormatter($template, new RelativePathHelper('/app')),
+        );
+
+        return $formatter->format(new LintReport([[
+            'file' => '/app/a b.php',
+            'line' => 10,
+            'column' => 2,
+            'pattern' => '/a/',
+            'issues' => [],
+            'optimizations' => [],
+        ]], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]));
     }
 
     /**
