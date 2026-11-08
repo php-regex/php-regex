@@ -17,10 +17,9 @@ use PHPRegex\Parser\Cache\AstSerializer;
 use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetStore;
-use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Toolkit\Regex;
-use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -28,12 +27,12 @@ final class CacheOwnershipUnavailableTest extends TestCase
 {
     /**
      * With ext-posix, a directory another user owns is not trusted either:
-     * fileowner() answers another uid, and both caches leave their files
-     * unread.
+     * where fileowner() answers another uid, both caches leave their files
+     * unread; where it answers the running one, the same files load.
      */
     #[Test]
     #[RequiresOperatingSystem('Linux|Darwin')]
-    #[RequiresFunction('posix_geteuid')]
+    #[RequiresPhpExtension('posix')]
     public function test_existing_caches_are_ignored_when_another_user_owns_them(): void
     {
         $root = sys_get_temp_dir().'/regex-cache-owner-'.bin2hex(random_bytes(6));
@@ -46,30 +45,12 @@ final class CacheOwnershipUnavailableTest extends TestCase
         $setFiles = glob($store->directory().'/*.set') ?: [];
         $this->assertCount(1, $setFiles);
 
-        $prelude = 'namespace PHPRegex\Parser\Cache { function fileowner(string $f): int|false { return \posix_geteuid() + 1; } }'
+        $foreign = 'namespace PHPRegex\Parser\Cache { function fileowner(string $f): int|false { return \posix_geteuid() + 1; } }'
             .' namespace PHPRegex\Parser\Hir { function fileowner(string $f): int|false { return \posix_geteuid() + 1; } }';
-        $code = $prelude.' namespace { require $argv[1];'
-            .' $cache = new PHPRegex\Parser\Cache\FilesystemCache($argv[2]."/trees");'
-            .' $store = new PHPRegex\Parser\Hir\ClassSetStore($argv[2]);'
-            .' echo json_encode([function_exists("posix_geteuid"), $cache->load($argv[3]) === null, $store->load("u|:\\p{Han}") === null], JSON_THROW_ON_ERROR); }';
 
         try {
-            // Owned by the running user, the same files load.
-            $this->assertInstanceOf(RegexNode::class, $cache->load($files[0]));
-            $this->assertNotNull($store->load('u|:\p{Han}'));
-
-            $process = proc_open(
-                [\PHP_BINARY, '-r', $code, \dirname(__DIR__, 3).'/vendor/autoload.php', $root, $files[0]],
-                [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
-                $pipes,
-            );
-            $this->assertIsResource($process);
-            $stdout = stream_get_contents($pipes[1]);
-            $stderr = stream_get_contents($pipes[2]);
-            fclose($pipes[1]);
-            fclose($pipes[2]);
-            $this->assertSame(0, proc_close($process), (string) $stderr);
-            $this->assertSame([true, true, true], json_decode((string) $stdout, true, 512, \JSON_THROW_ON_ERROR));
+            $this->assertSame([true, false, false], self::loadInChild('', $root, $files[0]), 'Owned by the running user, the files load.');
+            $this->assertSame([true, true, true], self::loadInChild($foreign, $root, $files[0]));
         } finally {
             @unlink($setFiles[0]);
             @rmdir($store->directory());
@@ -143,5 +124,35 @@ final class CacheOwnershipUnavailableTest extends TestCase
             @rmdir($root.'/trees');
             @rmdir($root);
         }
+    }
+
+    /**
+     * Whether posix_geteuid() exists, then whether the tree and the class set
+     * seeded under the root load as null, in a PHP process of its own with
+     * the prelude declared first.
+     *
+     * @return list<bool>
+     */
+    private static function loadInChild(string $prelude, string $root, string $file): array
+    {
+        $code = $prelude.' namespace { require $argv[1];'
+            .' $cache = new PHPRegex\Parser\Cache\FilesystemCache($argv[2]."/trees");'
+            .' $store = new PHPRegex\Parser\Hir\ClassSetStore($argv[2]);'
+            .' echo json_encode([function_exists("posix_geteuid"), $cache->load($argv[3]) === null, $store->load("u|:\\p{Han}") === null], JSON_THROW_ON_ERROR); }';
+        $process = proc_open(
+            [\PHP_BINARY, '-r', $code, \dirname(__DIR__, 3).'/vendor/autoload.php', $root, $file],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+        );
+        self::assertIsResource($process);
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        self::assertSame(0, proc_close($process), (string) $stderr);
+        $results = json_decode((string) $stdout, true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($results);
+
+        return array_values(array_map(static fn (mixed $result): bool => true === $result, $results));
     }
 }
