@@ -128,7 +128,7 @@ preg_match('/\p{L}/u', $text);  // Unicode properties
 
 #### Does this guarantee ReDoS safety?
 
-**Within limits.** For the patterns its backtracking model covers, PHPRegex proves the cost of one match attempt: `safe (proven)` means no input makes that attempt backtrack beyond a linear number of steps. The guarantee is per match attempt (the retries of an unanchored search and `preg_match_all()` are not counted), about the pattern as analysed (see `abstractions`), and for the PCRE2 release it ran with. Patterns with backreferences, conditionals or recursion are judged by heuristics, and say so. The [ReDoS guide](../guides/redos.md#the-guarantee) lists every limit.
+**Within limits.** For the patterns its backtracking model covers, PHPRegex proves the cost of one match attempt: `safe (proven)` means no input can make that attempt take more than a number of steps proportional to the input's length. Three limits bound that guarantee. It covers one attempt at one position: an unanchored search, which retries along the subject, and `preg_match_all()` repeat the attempt, and those retries are not counted. It covers the pattern as the analysis read it: when the analysis simplifies a part, its `abstractions` say so. And it holds for the PCRE2 release it ran with. Patterns with backreferences, conditionals or recursion are judged by heuristics, and say so. The [ReDoS guide](../guides/redos.md#the-guarantee) lists every limit.
 
 ```php
 $analysis = Regex::create()->redos('/(a+)+b/');
@@ -376,6 +376,16 @@ $regex = Regex::create([
 | **Assertion**             | Zero-width check like `\b` or `(?=...)`                        |
 | **Word boundary**         | `\b` - transition between word and non-word characters         |
 | **Unicode property**      | `\p{L}`, `\p{N}` - characters matching Unicode properties      |
+| **Subject**               | The string a pattern is run against (the second argument of `preg_match()`) |
+| **Zero-width**            | Consumes no characters; only checks a condition at one position |
+| **Match attempt**         | One try at matching from one position in the subject            |
+| **Unanchored**            | A search that can start again at a later position of the subject when an attempt fails. A `^` or `\A` in front of the whole pattern usually rules that out; one in a single alternative does not, and under `/m`, `^` also matches after a newline |
+| **JIT**                   | PCRE2's just-in-time compiler, enabled by default in PHP       |
+| **Automaton (NFA, DFA)**  | A machine describing the ways a pattern can match: an NFA may follow several paths at once, a DFA exactly one. The logic solver compares patterns through them |
+| **Witness**               | The input built to trigger the worst case: a prefix, a part repeated n times, then a failing suffix; the CLI prints it on the `Attack:` line |
+| **Proven**                | A verdict that follows from the parsed pattern, from a mathematical model built on it, or from running the real engine |
+| **Heuristic**             | A verdict decided by conservative structural rules, for a pattern outside the proof model |
+| **Oracle**                | The real PHP engine used as the judge: the pattern runs through `preg_match()` and the result is observed |
 
 ---
 
