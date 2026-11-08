@@ -44,24 +44,24 @@ final class CacheOwnershipUnavailableTest extends TestCase
         $setContent = file_get_contents($setFile);
 
         $code = <<<'CODE'
-require $argv[1];
-$cache = new PHPRegex\Parser\Cache\FilesystemCache($argv[2].'/trees');
-$store = new PHPRegex\Parser\Hir\ClassSetStore($argv[2]);
-$tree = PHPRegex\Toolkit\Regex::create(['cache' => null])->parse('/a/');
-$results = [
-    function_exists('posix_geteuid'),
-    $cache->load($argv[3]) === null,
-    $store->load('u|:\p{Han}') === null,
-    PHPRegex\Parser\Cache\AstSerializer::serialize($tree) === PHPRegex\Parser\Cache\AstSerializer::serialize(PHPRegex\Toolkit\Regex::create(['cache' => $cache])->parse('/a/')),
-];
-PHPRegex\Parser\Hir\ClassSetProvider::persistIn($argv[2]);
-$set = PHPRegex\Parser\Hir\ClassSetProvider::query('\p{Han}', true, '');
-$results[] = $set !== null && !$set->contains(0x41) && $set->contains(0x4E00);
-$cache->write($argv[3], $tree);
-$cache->clear();
-$store->save('another key', ['set' => PHPRegex\Parser\Hir\CharSet::single(0x42)]);
-echo json_encode($results, JSON_THROW_ON_ERROR);
-CODE;
+            require $argv[1];
+            $cache = new PHPRegex\Parser\Cache\FilesystemCache($argv[2].'/trees');
+            $store = new PHPRegex\Parser\Hir\ClassSetStore($argv[2]);
+            $tree = PHPRegex\Toolkit\Regex::create(['cache' => null])->parse('/a/');
+            $results = [
+                function_exists('posix_geteuid'),
+                $cache->load($argv[3]) === null,
+                $store->load('u|:\p{Han}') === null,
+                PHPRegex\Parser\Cache\AstSerializer::serialize($tree) === PHPRegex\Parser\Cache\AstSerializer::serialize(PHPRegex\Toolkit\Regex::create(['cache' => $cache])->parse('/a/')),
+            ];
+            PHPRegex\Parser\Hir\ClassSetProvider::persistIn($argv[2]);
+            $set = PHPRegex\Parser\Hir\ClassSetProvider::query('\p{Han}', true, '');
+            $results[] = $set !== null && !$set->contains(0x41) && $set->contains(0x4E00);
+            $cache->write($argv[3], $tree);
+            $cache->clear();
+            $store->save('another key', ['set' => PHPRegex\Parser\Hir\CharSet::single(0x42)]);
+            echo json_encode($results, JSON_THROW_ON_ERROR);
+            CODE;
 
         try {
             $process = proc_open(
