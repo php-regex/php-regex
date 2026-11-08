@@ -352,8 +352,8 @@ A proven quadratic pattern is `medium`, below the default threshold; set
 
 ## Quadratic search
 
-One attempt of `/\s+$/` is linear, but an unanchored `preg_match()` starts an
-attempt at each position of the subject, and on a run of spaces each one reads
+One attempt of `/\s+$/` is linear, but an unanchored `preg_match()` may start
+an attempt at each later position of the subject, and on a run of spaces each one reads
 to the end of the run before it fails: PCRE2's interpreter takes a number of
 steps quadratic in the length of the run. `pcre.backtrack_limit` does not stop
 it, as the limit counts each attempt apart, and the JIT may avoid it for some
