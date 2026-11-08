@@ -211,6 +211,9 @@ final class PackageManifestTest extends TestCase
             // under and which give a byte its other case, and the options a
             // pattern opens with, "(*UCP)" among them.
             'Parser\Engine\CharacterTables', 'Parser\Syntax\StartOptions',
+            // The options an inline setting turns on or off, "U" among them,
+            // which decide whether a repeat tries its body first.
+            'Parser\Syntax\InlineFlags',
         ],
         'Symfony' => [
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Console\ConsoleLintRequest',
