@@ -198,7 +198,7 @@ final class ClassSetStoreTest extends TestCase
 
         $script = 'require '.var_export(\dirname(__DIR__, 3).'/vendor/autoload.php', true).';'
             .'$root = '.var_export($this->root, true).';'
-            . <<<'PHP'
+            .<<<'PHP_WRAP'
                 $store = new PHPRegex\Parser\Hir\ClassSetStore($root);
                 $loaded = $store->load('u|:\p{Han}');
                 PHPRegex\Parser\Hir\ClassSetProvider::persistIn($root);
@@ -213,13 +213,13 @@ final class ClassSetStoreTest extends TestCase
                     $set?->contains(65),
                     is_dir($fresh->directory()),
                 ]);
-                PHP;
+                PHP_WRAP;
         $process = proc_open(
             [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'disable_functions=posix_geteuid', '-r', $script],
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
         );
-        self::assertIsResource($process);
+        $this->assertIsResource($process);
         $output = (string) stream_get_contents($pipes[1]);
         $errors = (string) stream_get_contents($pipes[2]);
         fclose($pipes[1]);

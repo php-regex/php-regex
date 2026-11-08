@@ -128,6 +128,8 @@ final class ClassSetStore
      * Whether the directory is the owner's alone: not one others may write
      * into, nor one another user owns. POSIX ownership must be verifiable,
      * including before making a new directory.
+     *
+     * @phpstan-impure
      */
     private function isTrusted(): bool
     {
