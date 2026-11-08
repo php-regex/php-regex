@@ -240,7 +240,7 @@ echo $optimizer->optimize('/a{0,1}/')->optimized;  // '/a?/'
 | Before     | After       | Why                                       |
 |------------|-------------|-------------------------------------------|
 | `[0-9]`    | `\d`        | The shorthand says it shorter; kept under `/u` and `(*UCP)`, where `\d` matches every decimal digit |
-| `(?:foo)`  | `foo`       | A plain non-capturing group that changes nothing |
+| `(?:foo)`  | `foo`       | A plain non-capturing group that changes nothing; one around an alternation stays, `^(?:a\|b)$` is not `^a\|b$` |
 | `\-`       | `-`         | An escape of a character that needs none  |
 | `\1`       | `\g{1}`     | The braces end the number: no digit after it can join it |
 | `[\t\n\x0B\f\r ]` | `\s` | The same six characters under the `C` locale: only with `new Modernizer('C')` or `'POSIX'`, and kept under `/u` and `(*UCP)`, where `\s` matches more |
