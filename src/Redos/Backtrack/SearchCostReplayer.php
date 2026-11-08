@@ -57,10 +57,11 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
 
     /**
      * Whether the engine, without its JIT, starts attempts inside the run
-     * that each read what is left of it, and matches nowhere.
+     * that each read what is left of it, and matches nowhere; null when the
+     * limits of the options stop the search or an attempt before it ends.
      */
     #[\Override]
-    public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
+    public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool
     {
         $options ??= new ConfirmationOptions();
         $counted = self::counted($pattern);
@@ -70,20 +71,28 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
 
         // A search that matches the witness fails none of its attempts there.
         $subject = $prefix.str_repeat($run, self::WORDS).$breaker;
-        if (false !== self::counts($counted, $subject, 0, self::MAX_STEPS, $options)->matched) {
+        $search = self::counts($counted, $subject, 0, self::MAX_STEPS, $options);
+        if (null === $search->matched && self::isLimit($search)) {
+            return null;
+        }
+        if (false !== $search->matched) {
             return false;
         }
 
         $quarter = intdiv(self::WORDS, 4);
         $far = self::steps($counted.'A', $subject, \strlen($prefix) + $quarter * \strlen($run), $options);
         $near = self::steps($counted.'A', $subject, \strlen($prefix) + 2 * $quarter * \strlen($run), $options);
+        if (null === $far || null === $near) {
+            return null;
+        }
 
-        return null !== $far && null !== $near && $far - $near >= $quarter;
+        return $far - $near >= $quarter;
     }
 
     /**
      * The steps of the attempt pinned at the offset: one of the attempts of
-     * a search that finished within the most steps, so it finishes too.
+     * a search that finished within the most steps, so it finishes too;
+     * null when it does not finish under the limits of the options.
      */
     private static function steps(string $pinned, string $subject, int $offset, ConfirmationOptions $options): ?int
     {
@@ -107,6 +116,14 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
         }
 
         return $low;
+    }
+
+    /**
+     * Whether the engine gave up on a limit, not on the subject.
+     */
+    private static function isLimit(PcreMatch $answer): bool
+    {
+        return \in_array($answer->errorCode, [\PREG_BACKTRACK_LIMIT_ERROR, \PREG_RECURSION_LIMIT_ERROR], true);
     }
 
     /**

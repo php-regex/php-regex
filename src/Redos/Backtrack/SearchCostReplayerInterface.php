@@ -27,7 +27,8 @@ interface SearchCostReplayerInterface
 {
     /**
      * Whether the engine starts attempts inside the run that each read what
-     * is left of it, and matches nowhere.
+     * is left of it, and matches nowhere; null when the limits of the
+     * options leave the replay unable to finish its count.
      */
-    public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool;
+    public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool;
 }

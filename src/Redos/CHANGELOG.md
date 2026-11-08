@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The search-cost replay counts under the backtrack and recursion limits of
+   the `ConfirmationOptions` given, not up to ten million steps under the
+   process's recursion limit; where they stop the count, an exact witness is
+   reported with `replayed: null`.
  * Under `U`, `(?U)` or `(?U:…)`, an optional recursion such as `(?R)?` is
    lazy and tried last: it no longer reads as an immediate recursion loop
    that hides the backtracking after it, `/(?R)?(a+)+$/U` is reported as

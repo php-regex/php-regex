@@ -190,13 +190,16 @@ final class SearchCostProver
         // runs there.
         $pinnable = !self::holds($regex->pattern, static fn (NodeInterface $node): bool => $node instanceof AssertionNode && 'G' === $node->value);
         $replayed = null;
-        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $pattern, $prefix, $run, $options, &$replayed): void {
+        $measured = true;
+        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $pattern, $prefix, $run, $options, &$replayed, &$measured): void {
             foreach ($pinnable ? $breakers : [] as $breaker) {
-                if ($this->replayer->replays($pattern, $prefix, $run, $breaker, $options)) {
+                $replays = $this->replayer->replays($pattern, $prefix, $run, $breaker, $options);
+                if (true === $replays) {
                     $replayed = $breaker;
 
                     return;
                 }
+                $measured = $measured && null !== $replays;
             }
         });
 
@@ -204,7 +207,9 @@ final class SearchCostProver
             return new RedosSearchCost(2, $prefix, $run, $replayed, $unicode, true);
         }
 
-        return $exact ? new RedosSearchCost(2, $prefix, $run, $breakers[0], $unicode, false) : null;
+        // Under limits too low to count, the replay neither confirms nor
+        // refutes the witness: "replayed" is null, as for a skipped replay.
+        return $exact ? new RedosSearchCost(2, $prefix, $run, $breakers[0], $unicode, $measured ? false : null) : null;
     }
 
     /**

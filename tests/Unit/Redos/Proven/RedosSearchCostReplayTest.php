@@ -36,10 +36,24 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosSearchCostReplayTest extends TestCase
 {
+    /**
+     * Under limits too low for the replay to finish its count, the witness
+     * stays reported, as the model reads it exactly, and "replayed" is
+     * null: the replay could not measure, it did not fail to reproduce.
+     * The engine settings are the caller's afterwards.
+     *
+     * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39, JIT off): on
+     * "ab" x 64 . "!c" the search matches nowhere under the default limits,
+     * and gives up at once under a backtrack or a recursion limit of 1.
+     */
     #[Test]
     #[DataProvider('provideRestrictivePolicies')]
-    public function test_confirmed_search_replay_respects_the_callers_engine_limits(ConfirmationOptions $options): void
+    public function test_confirmed_search_replay_respects_the_callers_engine_limits(ConfirmationOptions $options, string $setting, int $error): void
     {
+        $subject = str_repeat('ab', 64).'!c';
+        $this->assertSame([0, \PREG_NO_ERROR], self::engine('/(*NO_JIT)(?:ab)+c/', $subject));
+        $this->assertSame([false, $error], self::engine('/(*NO_JIT)(?:ab)+c/', $subject, $setting));
+
         $before = [ini_get('pcre.backtrack_limit'), ini_get('pcre.recursion_limit')];
         $analyzer = new RedosAnalyzer();
         $control = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
@@ -47,19 +61,20 @@ final class RedosSearchCostReplayTest extends TestCase
 
         $this->assertInstanceOf(RedosSearchCost::class, $control);
         $this->assertTrue($control->replayed);
+        $this->assertSame(['prefix' => '', 'run' => 'ab', 'breaker' => '!c'], $control->toArray()['witness']);
         $this->assertInstanceOf(RedosSearchCost::class, $cost);
-        $this->assertFalse($cost->replayed);
+        $this->assertNull($cost->replayed);
         $this->assertSame($control->toArray()['witness'], $cost->toArray()['witness']);
         $this->assertSame($before, [ini_get('pcre.backtrack_limit'), ini_get('pcre.recursion_limit')]);
     }
 
     /**
-     * @return iterable<string, array{options: ConfirmationOptions}>
+     * @return iterable<string, array{options: ConfirmationOptions, setting: string, error: int}>
      */
     public static function provideRestrictivePolicies(): iterable
     {
-        yield 'backtracking' => ['options' => new ConfirmationOptions(backtrackLimit: 1)];
-        yield 'recursion' => ['options' => new ConfirmationOptions(recursionLimit: 1)];
+        yield 'backtracking' => ['options' => new ConfirmationOptions(backtrackLimit: 1), 'setting' => 'pcre.backtrack_limit', 'error' => \PREG_BACKTRACK_LIMIT_ERROR];
+        yield 'recursion' => ['options' => new ConfirmationOptions(recursionLimit: 1), 'setting' => 'pcre.recursion_limit', 'error' => \PREG_RECURSION_LIMIT_ERROR];
     }
 
     /**
@@ -277,5 +292,24 @@ final class RedosSearchCostReplayTest extends TestCase
         $this->assertTrue($cost->replayed);
         $this->assertFalse((new \ReflectionClass(RedosSearchCost::class))->hasProperty('jitLinear'));
         $this->assertSame([], LibrarySource::functionCalls(LibrarySource::files()['src/Redos/Backtrack/SearchCostReplayer.php'], '/^preg_/'));
+    }
+
+    /**
+     * What preg_match() answers, with the setting at 1 when one is named,
+     * and its last error; the setting is put back.
+     *
+     * @return array{int|false, int}
+     */
+    private static function engine(string $pattern, string $subject, ?string $setting = null): array
+    {
+        $previous = null === $setting ? false : ini_set($setting, '1');
+
+        try {
+            return [@preg_match($pattern, $subject), preg_last_error()];
+        } finally {
+            if (null !== $setting && false !== $previous) {
+                ini_set($setting, $previous);
+            }
+        }
     }
 }
