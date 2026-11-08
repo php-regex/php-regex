@@ -58,7 +58,7 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
     /**
      * Whether the engine, without its JIT, starts attempts inside the run
      * that each read what is left of it, and matches nowhere; null when the
-     * limits of the options stop the search or an attempt before it ends.
+     * limits of the options stop the search on the witness before it ends.
      */
     #[\Override]
     public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool
@@ -82,33 +82,22 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
         $quarter = intdiv(self::WORDS, 4);
         $far = self::steps($counted.'A', $subject, \strlen($prefix) + $quarter * \strlen($run), $options);
         $near = self::steps($counted.'A', $subject, \strlen($prefix) + 2 * $quarter * \strlen($run), $options);
-        if (null === $far || null === $near) {
-            return null;
-        }
 
         return $far - $near >= $quarter;
     }
 
     /**
      * The steps of the attempt pinned at the offset: one of the attempts of
-     * a search that finished within the most steps, so it finishes too;
-     * null when it does not finish under the limits of the options.
+     * a search that finished within the most steps, under the same limits,
+     * so it finishes too. PCRE2 counts the backtrack limit per attempt.
      */
-    private static function steps(string $pinned, string $subject, int $offset, ConfirmationOptions $options): ?int
+    private static function steps(string $pinned, string $subject, int $offset, ConfirmationOptions $options): int
     {
         $low = 1;
         $high = min(self::MAX_STEPS, $options->backtrackLimit);
-        if (null === self::counts($pinned, $subject, $offset, $high, $options)->matched) {
-            return null;
-        }
-
         while ($low < $high) {
             $middle = intdiv($low + $high, 2);
-            $answer = self::counts($pinned, $subject, $offset, $middle, $options);
-            if (null === $answer->matched && \PREG_BACKTRACK_LIMIT_ERROR !== $answer->errorCode) {
-                return null;
-            }
-            if (null === $answer->matched) {
+            if (null === self::counts($pinned, $subject, $offset, $middle, $options)->matched) {
                 $low = $middle + 1;
             } else {
                 $high = $middle;

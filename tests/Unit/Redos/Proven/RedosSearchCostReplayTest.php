@@ -295,14 +295,43 @@ final class RedosSearchCostReplayTest extends TestCase
     }
 
     /**
-     * What preg_match() answers, with the setting at 1 when one is named,
-     * and its last error; the setting is put back.
+     * The limits stop the replay only through the search on the witness:
+     * PCRE2 counts the backtrack limit per attempt, and each attempt the
+     * replay pins is one the search finished. At the least limit the search
+     * needs the replay confirms; one below, the search gives up and the
+     * replay is not made.
+     *
+     * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39): the counted
+     * search on "ab" x 256 . "!c" finishes at a backtrack limit of 258 and
+     * gives up at 257.
+     */
+    #[Test]
+    public function test_the_least_limit_the_search_needs_lets_every_pinned_attempt_finish(): void
+    {
+        $counted = '/(*NO_JIT)(*NO_AUTO_POSSESS)(?:ab)+c/';
+        $subject = str_repeat('ab', 256).'!c';
+        $this->assertSame([0, \PREG_NO_ERROR], self::engine($counted, $subject, 'pcre.backtrack_limit', '258'));
+        $this->assertSame([false, \PREG_BACKTRACK_LIMIT_ERROR], self::engine($counted, $subject, 'pcre.backtrack_limit', '257'));
+
+        $analyzer = new RedosAnalyzer();
+        $enough = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(backtrackLimit: 258))->searchCost;
+        $short = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(backtrackLimit: 257))->searchCost;
+
+        $this->assertInstanceOf(RedosSearchCost::class, $enough);
+        $this->assertTrue($enough->replayed);
+        $this->assertInstanceOf(RedosSearchCost::class, $short);
+        $this->assertNull($short->replayed);
+    }
+
+    /**
+     * What preg_match() answers, with the setting at the value when one is
+     * named, and its last error; the setting is put back.
      *
      * @return array{int|false, int}
      */
-    private static function engine(string $pattern, string $subject, ?string $setting = null): array
+    private static function engine(string $pattern, string $subject, ?string $setting = null, string $value = '1'): array
     {
-        $previous = null === $setting ? false : ini_set($setting, '1');
+        $previous = null === $setting ? false : ini_set($setting, $value);
 
         try {
             return [@preg_match($pattern, $subject), preg_last_error()];
