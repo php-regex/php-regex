@@ -78,7 +78,7 @@ final class ModernizerLocaleTest extends TestCase
         $modernizer = new Modernizer('C');
 
         foreach ([$parsed, $sourceFree] as $tree) {
-            for ($visit = 0; $visit < 2; ++$visit) {
+            for ($visit = 0; $visit < 2; $visit++) {
                 $tree = $tree->accept($modernizer);
                 $printed = $tree->accept(PatternPrinter::asWritten());
                 $this->assertSame($expected, $printed);
@@ -90,15 +90,15 @@ final class ModernizerLocaleTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, string, string}>
+     * @return iterable<string, array{pattern: string, subject: string, expected: string}>
      */
     public static function provideStartOptionClasses(): iterable
     {
-        yield 'digits' => ['/(*UTF)(*UCP)^[0-9]$/', "\u{663}", '/(*UTF)(*UCP)^[0-9]$/'];
-        yield 'spaces' => ['/(*UTF)(*UCP)^[\\t-\\r ]$/', "\u{A0}", '/(*UTF)(*UCP)^[\\t-\\r ]$/'];
-        yield 'limit before UCP' => ['/(*LIMIT_MATCH=1000)(*UTF)(*UCP)^[0-9]$/', "\u{663}", '/(*LIMIT_MATCH=1000)(*UTF)(*UCP)^[0-9]$/'];
-        yield 'alternation' => ['/(*UTF)(*UCP)^[0-9]$|^x$/', "\u{663}", '/(*UTF)(*UCP)^[0-9]$|^x$/'];
-        yield 'UTF alone' => ['/(*UTF)^[0-9]$/', "\u{663}", '/(*UTF)^\\d$/'];
+        yield 'digits' => ['pattern' => '/(*UTF)(*UCP)^[0-9]$/', 'subject' => "\u{663}", 'expected' => '/(*UTF)(*UCP)^[0-9]$/'];
+        yield 'spaces' => ['pattern' => '/(*UTF)(*UCP)^[\\t-\\r ]$/', 'subject' => "\u{A0}", 'expected' => '/(*UTF)(*UCP)^[\\t-\\r ]$/'];
+        yield 'limit before UCP' => ['pattern' => '/(*LIMIT_MATCH=1000)(*UTF)(*UCP)^[0-9]$/', 'subject' => "\u{663}", 'expected' => '/(*LIMIT_MATCH=1000)(*UTF)(*UCP)^[0-9]$/'];
+        yield 'alternation' => ['pattern' => '/(*UTF)(*UCP)^[0-9]$|^x$/', 'subject' => "\u{663}", 'expected' => '/(*UTF)(*UCP)^[0-9]$|^x$/'];
+        yield 'UTF alone' => ['pattern' => '/(*UTF)^[0-9]$/', 'subject' => "\u{663}", 'expected' => '/(*UTF)^\\d$/'];
     }
 
     /**
