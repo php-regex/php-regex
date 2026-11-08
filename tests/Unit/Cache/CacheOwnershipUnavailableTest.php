@@ -51,6 +51,10 @@ final class CacheOwnershipUnavailableTest extends TestCase
             .' echo json_encode([function_exists("posix_geteuid"), $cache->load($argv[3]) === null, $store->load("u|:\\p{Han}") === null], JSON_THROW_ON_ERROR); }';
 
         try {
+            // Owned by the running user, the same files load.
+            $this->assertNotNull($cache->load($files[0]));
+            $this->assertNotNull($store->load('u|:\p{Han}'));
+
             $process = proc_open(
                 [\PHP_BINARY, '-r', $code, \dirname(__DIR__, 3).'/vendor/autoload.php', $root, $files[0]],
                 [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
