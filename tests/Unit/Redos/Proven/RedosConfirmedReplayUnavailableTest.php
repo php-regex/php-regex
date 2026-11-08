@@ -119,9 +119,10 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
     }
 
     /**
-     * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39, JIT off, the
-     * default limits): each pattern fails preg_match() with "Backtrack limit
-     * exhausted" on its subject, checked again in the child process.
+     * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39, JIT off, a
+     * backtrack limit of 100000): each pattern fails preg_match() with
+     * "Backtrack limit exhausted" on its subject within 2 ms, checked again
+     * in the child process under that limit, whatever the ini raised.
      *
      * @return iterable<string, array{pattern: string, subject: string, refused: string, proof: string}>
      */
@@ -284,7 +285,7 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
      */
     private static function analyzeWithoutIniSet(string $pattern, string $disabled = 'ini_set', string $prelude = '', ?string $subject = null): array
     {
-        $oracle = null === $subject ? 'null' : '(static function () { \\ini_set("pcre.jit", "0"); return [@\\preg_match('.var_export($pattern, true).', '.var_export($subject, true).'), \\preg_last_error()]; })()';
+        $oracle = null === $subject ? 'null' : '(static function () { \\ini_set("pcre.jit", "0"); if (false === \\ini_set("pcre.backtrack_limit", "100000")) { return "backtrack limit not set"; } return [@\\preg_match('.var_export($pattern, true).', '.var_export($subject, true).'), \\preg_last_error()]; })()';
         $script = $prelude.' namespace { require '.var_export(\dirname(__DIR__, 4).'/vendor/autoload.php', true).';'
             .'$analysis = (new \PHPRegex\Redos\RedosAnalyzer())->analyze('.var_export($pattern, true).', \PHPRegex\Redos\RedosSeverity::Low, \PHPRegex\Redos\RedosMode::Confirmed);'
             .'echo json_encode(['
