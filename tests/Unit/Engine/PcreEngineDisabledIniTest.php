@@ -202,7 +202,8 @@ final class PcreEngineDisabledIniTest extends TestCase
      * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39, JIT off): under
      * a backtrack limit of 10, preg_match('/(a+)+$/', 'a' x 12 . '!') gives
      * up with PREG_BACKTRACK_LIMIT_ERROR; the refused call answers without
-     * running it. ini_set() is recorded key by key: the backtrack limit,
+     * running it. The caller's backtrack limit, 123456, is neither the
+     * default nor the one asked for, so finding it again proves the put back. ini_set() is recorded key by key: the backtrack limit,
      * set first, is the only one refused before anything changed, and the
      * recursion limit, set second, has the backtrack limit put back after it.
      *
@@ -213,6 +214,7 @@ final class PcreEngineDisabledIniTest extends TestCase
     public function test_a_refused_limit_stops_every_operation_and_restores_changed_settings(string $refused, array $iniCalls): void
     {
         $result = self::runWith('', <<<'PHP_WRAP'
+            \ini_set('pcre.backtrack_limit', '123456');
             $before = ini_get_all('pcre', false);
             $engine = new \PHPRegex\Parser\Engine\PcreEngine();
             $limits = new \PHPRegex\Parser\Engine\PcreLimits(10, 500);
@@ -230,6 +232,7 @@ final class PcreEngineDisabledIniTest extends TestCase
                         : $answer,
                     'handler' => $sentinel === set_error_handler(static fn (): bool => true),
                     'restored' => $before === ini_get_all('pcre', false),
+                    'backtrackLimit' => ini_get('pcre.backtrack_limit'),
                     'iniCalls' => $GLOBALS['iniCalls'],
                 ];
                 restore_error_handler();
@@ -259,6 +262,7 @@ final class PcreEngineDisabledIniTest extends TestCase
             }
             $this->assertTrue($outcome['handler'], 'The caller\'s error handler is back after '.$method.'.');
             $this->assertTrue($outcome['restored'], 'The settings are back after '.$method.'.');
+            $this->assertSame('123456', $outcome['backtrackLimit'], 'The caller\'s own backtrack limit is back after '.$method.'.');
             $this->assertSame($iniCalls, $outcome['iniCalls'], $method);
         }
         $this->assertSame(0, $result['calls'], 'No native match runs after '.$refused.' is refused.');
