@@ -73,7 +73,7 @@ if (strlen($pattern) > 100_000) {
 
 **Cause:** Read the headline of the verdict first:
 
-- `Exponential backtracking (proven)` or `Polynomial backtracking, degree N (proven)`: the analysis built an input that makes one match attempt blow up, printed as `Attack:`. Your inputs may never look like it; an attacker's can. The verdict is about a model of PCRE's backtracking: a lookaround it cannot evaluate, or an abstraction listed on the `Model:` line, can make it stricter than PCRE.
+- `Exponential backtracking (proven)` or `Polynomial backtracking, degree N (proven)`: the analysis built an input that makes one match attempt blow up, printed as `Attack:`. Your inputs may never look like it; an attacker's can. The proof runs on a model of how PCRE retries the pattern, not on PCRE itself: where the model cannot evaluate a part exactly (a lookaround, or a simplification named on the `Model:` line), it may report a blow-up the real engine does not have. Confirmed mode, below, tells the two apart.
 - `Potential backtracking (heuristic)`: the pattern holds a construct outside the model (a backreference, a conditional, recursion, …), and structural rules decided. They are conservative by design.
 
 **Solutions:**
@@ -337,13 +337,11 @@ Unknown command: regex:test
 vendor/bin/regex help
 ```
 
-2. Update to latest version:
+2. Update every PHPRegex package you installed to its latest release:
 
 ```bash
-composer update php-regex/php-regex
+composer update 'php-regex/*'
 ```
-
-## Use alternative command
 
 ### A Very Large File Reports No Patterns
 
@@ -473,14 +471,8 @@ ls demo/
 php demo/validate/validate.php
 ```
 
-4. Search issues:
-
-```bash
-# Search GitHub issues
-https://github.com/php-regex/php-regex/issues
-
-# Create new issue with question
-```
+4. Search the [GitHub issues](https://github.com/php-regex/php-regex/issues)
+   for your error message, or open a new issue with your question.
 
 5. Join the community on [GitHub Discussions](https://github.com/php-regex/php-regex/discussions).
 
@@ -489,7 +481,8 @@ https://github.com/php-regex/php-regex/issues
 ## Additional Resources
 
 - [Quick Start Guide](quick-start.md)
-- [API Reference](reference/rules.md)
+- [API Reference](reference/api.md)
+- [Lint Rules Reference](reference/rules.md)
 - [ReDoS Guide](guides/redos.md)
 - [Architecture Documentation](architecture.md)
 - [Contributing Guide](https://github.com/php-regex/php-regex/blob/2.x/CONTRIBUTING.md)
