@@ -97,14 +97,16 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideRefusedLimits')]
-    public function test_confirmed_mode_skips_the_run_when_ini_set_refuses_a_limit(string $pattern, string $refused, string $proof): void
+    public function test_confirmed_mode_skips_the_run_when_ini_set_refuses_a_limit(string $pattern, string $subject, string $refused, string $proof): void
     {
         $result = self::analyzeWithoutIniSet(
             $pattern,
             '',
             'namespace PHPRegex\\Parser\\Engine { function ini_set($key, $value) { return '.var_export($refused, true).' === $key ? false : \\ini_set($key, $value); } }',
+            $subject,
         );
 
+        $this->assertSame([false, \PREG_BACKTRACK_LIMIT_ERROR], $result['oracle'], 'Run with the JIT off, the pattern gives up on the subject.');
         $this->assertTrue($result['ini_set']);
         $this->assertNull($result['error'], (string) json_encode($result));
         $this->assertSame(RedosSeverity::Critical->value, $result['severity']);
@@ -117,13 +119,17 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, refused: string, proof: string}>
+     * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39, JIT off, the
+     * default limits): each pattern fails preg_match() with "Backtrack limit
+     * exhausted" on its subject, checked again in the child process.
+     *
+     * @return iterable<string, array{pattern: string, subject: string, refused: string, proof: string}>
      */
     public static function provideRefusedLimits(): iterable
     {
         foreach (['pcre.backtrack_limit', 'pcre.recursion_limit'] as $refused) {
-            yield 'proven, '.$refused.' refused' => ['pattern' => '/(a|a)+$/', 'refused' => $refused, 'proof' => RedosProof::Proven->value];
-            yield 'over the budget, '.$refused.' refused' => ['pattern' => '/^(?:(?:a{16}){16}){16}(a+)+$/', 'refused' => $refused, 'proof' => RedosProof::BudgetExceeded->value];
+            yield 'proven, '.$refused.' refused' => ['pattern' => '/(a|a)+$/', 'subject' => str_repeat('a', 30).'!', 'refused' => $refused, 'proof' => RedosProof::Proven->value];
+            yield 'over the budget, '.$refused.' refused' => ['pattern' => '/^(?:(?:a{16}){16}){16}(a+)+$/', 'subject' => str_repeat('a', 4096 + 30).'!', 'refused' => $refused, 'proof' => RedosProof::BudgetExceeded->value];
         }
     }
 
@@ -271,12 +277,14 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
 
     /**
      * The analysis in a PHP process with the functions disabled (ini_set()
-     * by default) and the prelude declared before it, as JSON.
+     * by default) and the prelude declared before it, as JSON; with a
+     * subject, what preg_match() answers on it there after the analysis.
      *
      * @return array<array-key, mixed>
      */
-    private static function analyzeWithoutIniSet(string $pattern, string $disabled = 'ini_set', string $prelude = ''): array
+    private static function analyzeWithoutIniSet(string $pattern, string $disabled = 'ini_set', string $prelude = '', ?string $subject = null): array
     {
+        $oracle = null === $subject ? 'null' : '(static function () { \\ini_set("pcre.jit", "0"); return [@\\preg_match('.var_export($pattern, true).', '.var_export($subject, true).'), \\preg_last_error()]; })()';
         $script = $prelude.' namespace { require '.var_export(\dirname(__DIR__, 4).'/vendor/autoload.php', true).';'
             .'$analysis = (new \PHPRegex\Redos\RedosAnalyzer())->analyze('.var_export($pattern, true).', \PHPRegex\Redos\RedosSeverity::Low, \PHPRegex\Redos\RedosMode::Confirmed);'
             .'echo json_encode(['
@@ -288,6 +296,7 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
             .'"witness" => null !== $analysis->witness,'
             .'"replayed" => $analysis->replayed,'
             .'"confirmation" => $analysis->confirmation?->jsonSerialize(),'
+            .'"oracle" => '.$oracle.','
             .'], JSON_INVALID_UTF8_SUBSTITUTE); }';
 
         $process = proc_open(
