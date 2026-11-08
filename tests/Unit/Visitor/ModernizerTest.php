@@ -188,6 +188,36 @@ final class ModernizerTest extends TestCase
         yield 'negated' => ['pattern' => '/[^\t\n\x0B\f\r ]/', 'shorthand' => false];
     }
 
+    #[Test]
+    #[DataProvider('provideLiteralBackslashes')]
+    public function test_preserves_literal_backslashes(string $pattern): void
+    {
+        $ast = $this->regexService->parse($pattern);
+        $modernized = $ast->accept(new Modernizer());
+
+        foreach ([PatternPrinter::normalized(), PatternPrinter::asWritten()] as $printer) {
+            $printed = $modernized->accept($printer);
+            $this->assertNotFalse(preg_match($printed, ''));
+            foreach (['', 'a', '@', '/', '\\', 'a\\b', '\\@'] as $subject) {
+                $expected = preg_match($pattern, $subject);
+                $this->assertNotFalse($expected);
+                $this->assertSame($expected, preg_match($printed, $subject), $printed.' on '.var_export($subject, true));
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideLiteralBackslashes(): iterable
+    {
+        yield 'negated validation class' => ['pattern' => '~\A[^/\\\\]+\z~'];
+        yield 'positive class' => ['pattern' => '~\A[/\\\\]+\z~'];
+        yield 'standalone' => ['pattern' => '~\A\\\\\z~'];
+        yield 'before punctuation' => ['pattern' => '~\A\\\\@\z~'];
+        yield 'quoted run' => ['pattern' => '~\A\Q\@\E\z~'];
+    }
+
     private function assertMatchesOriginalBehavior(string $original, string $modernized): void
     {
         // Simple test: both should match or not match the same test strings
