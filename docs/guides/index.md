@@ -53,7 +53,7 @@ Four assertions for your test suite: what a pattern captures with exact capture 
 
 ### [Infection](infection.md)
 
-Mutation testing for your regexes: Infection mutators for the literals of `preg_*()` calls, no mutant the automata prove equivalent, each with the subject that kills it.
+Mutation testing for your regexes: the Infection mutators rewrite the pattern literals of `preg_*()` calls in small ways, drop every rewrite a mathematical comparison shows behaves exactly like the original, and give you, for each rewrite that remains, the test input that tells it apart.
 
 </div>
 

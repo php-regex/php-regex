@@ -30,7 +30,18 @@ vendor/bin/regex explain '/^\d{4}-\d{2}-\d{2}$/' --no-visuals
 ```
 {: data-copy="" }
 
-`validate()` answers whether the target PHP and its PCRE2 release accept the pattern. `explain()` describes what the AST means instead of guessing from string fragments.
+`validate` answers whether the target PHP and its PCRE2 release accept the pattern; its report ends with `Status : OK`. `explain` walks the tree the parser built from the pattern and describes each part in plain English, in order:
+
+```text
+Regex matches
+  Anchor: the start of the subject
+  Character Type: A digit [0-9], exactly 4 times
+  '-'
+  Character Type: A digit [0-9], exactly 2 times
+  '-'
+  Character Type: A digit [0-9], exactly 2 times
+  Anchor: the end of the subject, or just before a newline (\n) that ends it
+```
 
 Now try a pattern with catastrophic backtracking:
 
@@ -39,11 +50,27 @@ vendor/bin/regex analyze '/^(?:a+)+$/' --no-visuals
 ```
 {: data-copy="" }
 
+The verdict comes first, before the explanation of the pattern:
+
+```text
+  Pattern: /^(?:a+)+$/
+  Parse: OK
+  Status: OK
+  Status: Exponential backtracking (proven)
+  Severity: CRITICAL (score 10)
+  Mode: THEORETICAL
+  Confidence: MEDIUM
+  Attack: "a" x n . "!"
+  Hotspot:   4-6
+```
+
+`Attack:` is the input that makes the pattern blow up, written as PHP: `"a" x n . "!"` means `str_repeat("a", $n) . "!"`. The longer the run of `a`, the longer one match attempt takes: the time roughly doubles with every extra character.
+
 The important distinction is the verdict label:
 
-- **Proven** comes from the modeled backtracking automaton for that pattern.
-- **Heuristic** means a construct or budget falls outside the proof model.
-- **Unknown** means the analysis refuses to guess.
+- **Proven**: the analyzer built a model of how the engine retries this pattern and checked every case the model covers.
+- **Heuristic**: the pattern uses a construct, or needs a budget, outside that model, so conservative structural rules decided.
+- **Unknown**: the analysis refuses to guess.
 
 Read the scope before acting on a security finding: [correctness contracts](/reference/correctness-contracts/).
 
@@ -64,7 +91,7 @@ echo $redos->headline(), "\n";
 ```
 {: data-copy="" }
 
-If `redos()` reports a proven witness, the result also carries the input shape that makes the pattern backtrack. Use that witness in a regression test before you rewrite the pattern.
+If `redos()` reports a proven verdict, the result also carries its witness: the input that makes the pattern backtrack, the one the `Attack:` line prints. Use that witness in a regression test before you rewrite the pattern.
 
 For lower-level work, call `Regex::parser()` and reuse one configured parser instead of building a new one for every analysis:
 
