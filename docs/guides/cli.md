@@ -1673,10 +1673,11 @@ Human-readable colored output for terminal.
 `parse`, `analyze` and `validate` echo the pattern, its error and the caret
 line under it in display form: a control character, a character that hides
 or moves text, or an invalid byte is spelled as PCRE reads it in the
-pattern's mode, per byte without `u` (`\xE2\x80\xAE`) and per code point
-under it (`\x{202E}`), and the pattern is then printed without colours. The
-caret stays under the character at fault. JSON output keeps the pattern as
-given.
+pattern's mode, per byte in byte mode (`\xE2\x80\xAE`) and per code point in
+UTF mode, under `u` or after a leading `(*UTF)` (`\x{202E}`), and the pattern
+is then printed without colours. The caret stays under the character at
+fault. JSON output keeps the pattern as given, except that each invalid
+UTF-8 byte becomes the text `\xNN`, in uppercase hexadecimal (`\xFF`).
 
 ### JSON
 
