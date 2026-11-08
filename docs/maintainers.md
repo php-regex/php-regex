@@ -747,20 +747,24 @@ php bin/corpus install                 # rebuild corpus/ exactly at the pinned c
 php bin/corpus update                  # prune, clone what is missing, then pull everything,
                                        # and write the new commits back to corpus.json
 php bin/corpus update --no-prune       # keep checkouts that are no longer listed
-php bin/corpus update --add https://github.com/vendor/repo.git [--as path] [--branch main]
+php bin/corpus update --add https://github.com/vendor/repo.git # add a repository to corpus.json
 php bin/corpus update --write-manifest # rewrite corpus.json from what is on disk
 ```
 
 Every `corpus.json` key is a `vendor/name` path — a repository added without
 `--as` is checked out under the `vendor/name` derived from its URL, and a URL
-that offers no vendor segment is refused rather than guessed at.
+that offers no vendor segment is refused rather than guessed at. `--add` also
+takes `--as <path>`, the path under `corpus/`, and `--branch <name>`, a branch
+other than the remote's default.
 
 `install` never writes to `corpus.json`: delete `corpus/` at any time and one
 command rebuilds it, repository by repository, at the exact commits the
-manifest pins. `update` is the only command that moves the pins. A checkout
-with local changes is never reset or removed unless `--force` is given, and a
-repository cloned by hand is removed on the next run unless it is added with
-`--add` or listed with `--write-manifest` first.
+manifest pins. `update` is the only command that moves the pins. A listed
+checkout with local changes is never reset unless `--force` is given. A
+checkout no longer listed is removed only if it has no local changes:
+`update --force` alone removes one that has them, and `install --force` keeps
+it. A clean repository cloned by hand is removed on the next run unless it is
+added with `--add` or listed with `--write-manifest` first.
 
 Regenerate `var/log/corpus.log` after updating the corpus, sweeping it
 repository by repository:
