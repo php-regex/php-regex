@@ -31,6 +31,12 @@ vendor/bin/regex explain '/^\d{4}-\d{2}-\d{2}$/'
 
 **Output:**
 ```
+PHPRegex {{ site.data.product.version }} by Younes ENNAJI
+
+Runtime : PHP 8.4.27
+Command : explain
+Format  : console
+
   [1/2] Pattern
   Pattern
       → /^\d{4}-\d{2}-\d{2}$/
@@ -59,6 +65,15 @@ vendor/bin/regex analyze '/(a+)+$/'
 
 **Output:**
 ```
+PHPRegex {{ site.data.product.version }} by Younes ENNAJI
+
+Runtime   : PHP 8.4.27
+Command   : analyze
+PCRE      : 10.49 2026-09-28
+PCRE JIT  : 1
+Backtrack : 1000000
+Recursion : 100000
+
   [1/4] Parsing pattern
   Pattern
       → /(a+)+$/
@@ -99,7 +114,7 @@ final class Slug
 {
     public function isValid(string $slug): bool
     {
-        return 1 === preg_match('/^([a-z0-9-]+)+$/', $slug);
+        return 1 === preg_match('/^([a-z0-9-]+)+\z/', $slug);
     }
 }
 ```
@@ -112,12 +127,12 @@ vendor/bin/regex lint src/
 ```
 PHPRegex {{ site.data.product.version }}
 
-Runtime       : PHP 8.4.27, PCRE2 10.49
-Target        : PHP 8.2, PCRE2 10.40 (composer.json require.php)
-Processes     : 10
-PCRE JIT      : 1
-Backtrack     : 1000000
-Recursion     : 100000
+Runtime   : PHP 8.4.27, PCRE2 10.49
+Target    : PHP 8.2, PCRE2 10.40 (composer.json require.php)
+Processes : 10
+PCRE JIT  : 1
+Backtrack : 1000000
+Recursion : 100000
 
   [1/3] Scanning files
   Scanned 1 files, found 1 patterns.
@@ -125,7 +140,7 @@ Recursion     : 100000
   [2/3] Analyzing patterns
   [3/3] Suggesting optimizations
   src/Slug.php:7:33
-      → /^([a-z0-9-]+)+$/
+      → /^([a-z0-9-]+)+\z/
     INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
     WARN Nested quantifiers can cause catastrophic backtracking.
