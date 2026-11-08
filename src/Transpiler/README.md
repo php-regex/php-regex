@@ -153,7 +153,10 @@ refuses such a pattern; and a multibyte character in a class (`/[é]/`), each of
 whose bytes PCRE reads as a member of its own, asks for `u`. Before advising
 `u`, the transpiler asks the engine whether the pattern compiles with it: where
 something else is refused under `u` (`/[é](?<=\C)/`, a `\C` in a lookbehind),
-the advice says to rewrite that construct first.
+the advice says to rewrite that construct first. Adding `u` changes what the
+pattern matches, characters instead of bytes (`/[é]/` matches `à` through its
+first byte, `/[é]/u` does not): confirm that matching characters is what the
+pattern means before taking the advice.
 
 Documentation
 -------------
