@@ -123,7 +123,8 @@ final class ValidateCommand extends AbstractCommand implements JsonCommandInterf
 
     private function highlightPattern(Regex $regex, string $pattern, Output $output, ValidationResult $validation): string
     {
-        $escaped = DisplayEscaper::escapeFragment($pattern, true);
+        // Spelled in the pattern's own mode: bytes without "u".
+        $escaped = DisplayEscaper::escape($pattern);
         if ($escaped !== $pattern || !$output->isAnsi() || !$validation->isValid) {
             return $escaped;
         }

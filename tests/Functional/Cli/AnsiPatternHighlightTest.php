@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Functional\Cli;
 use PHPRegex\Cli\ApplicationFactory;
 use PHPRegex\Cli\Output;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -61,6 +62,8 @@ final class AnsiPatternHighlightTest extends TestCase
         foreach ([false, true] as $terminal) {
             foreach (["\e]52;c;YQ==\x07", "\r", "\t", "\u{202E}", "\x9B"] as $control) {
                 $pattern = '/a'.$control.'(/';
+                $this->assertFalse(EngineProbe::compiles($pattern), 'PCRE refuses the unclosed group.');
+                $this->assertTrue(EngineProbe::compiles('/a'.$control.'/'), 'PCRE compiles the closed one.');
                 [$code, $written] = $this->runRegex(['validate', $pattern], $terminal);
                 $this->assertSame(1, $code);
                 $plain = (string) preg_replace('/\\x1B\\[[0-9;]*m/', '', $written);
@@ -74,6 +77,64 @@ final class AnsiPatternHighlightTest extends TestCase
                 $this->assertStringNotContainsString($control, $plain);
             }
         }
+    }
+
+    /**
+     * Without "u" PCRE reads a hidden character byte by byte, under it as
+     * one code point: the echoed pattern spells it the way PCRE reads it.
+     */
+    #[Test]
+    #[DataProvider('provideHiddenCharacterModes')]
+    public function test_validate_spells_a_hidden_character_in_the_mode_of_the_pattern(string $pattern, string $spelled): void
+    {
+        $this->assertSame(1, preg_match($pattern, "a\u{202E}b"));
+
+        [$code, $written] = $this->runRegex(['validate', $pattern], false);
+
+        $this->assertSame(0, $code);
+        $this->assertStringContainsString($spelled, $written);
+        $this->assertStringNotContainsString("\u{202E}", $written);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, spelled: string}>
+     */
+    public static function provideHiddenCharacterModes(): iterable
+    {
+        yield 'bytes' => ['pattern' => "/a\u{202E}b/", 'spelled' => '/a\\xE2\\x80\\xAEb/'];
+        yield 'code points' => ['pattern' => "/a\u{202E}b/u", 'spelled' => '/a\\x{202E}b/u'];
+    }
+
+    /**
+     * A pattern that parses but fails validation, a range out of order,
+     * prints its caret snippet in display form in every command that
+     * shows it.
+     */
+    #[Test]
+    #[DataProvider('provideSnippetCommands')]
+    public function test_the_caret_snippet_of_an_invalid_pattern_is_escaped(string $command): void
+    {
+        $pattern = "/\e]52;c;YQ==\x07[z-a]/";
+        $this->assertSame(
+            'preg_match(): Compilation failed: range out of order in character class at offset 16',
+            EngineProbe::warning($pattern),
+        );
+
+        [, $written] = $this->runRegex([$command, $pattern], false);
+
+        $this->assertStringNotContainsString("\e", $written);
+        $this->assertStringNotContainsString("\x07", $written);
+        $this->assertStringContainsString('\\x1B]52;c;YQ==\\x07[z-a]', $written);
+    }
+
+    /**
+     * @return iterable<string, array{command: string}>
+     */
+    public static function provideSnippetCommands(): iterable
+    {
+        yield 'validate' => ['command' => 'validate'];
+        yield 'analyze' => ['command' => 'analyze'];
+        yield 'parse' => ['command' => 'parse'];
     }
 
     /**

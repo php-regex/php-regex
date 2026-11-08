@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Exception;
 
 use PHPRegex\Parser\Exception\Snippet;
 use PHPRegex\Parser\RegexParser;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -25,13 +26,33 @@ use PHPUnit\Framework\TestCase;
  */
 final class SnippetTest extends TestCase
 {
+    /**
+     * The caret stays under the character at fault once what precedes it
+     * is spelled out: "Line 1: " is 8 columns, an escape as many as it
+     * holds characters, "界" two.
+     */
     #[Test]
-    public function test_terminal_escaping_preserves_the_fault_column(): void
+    #[DataProvider('provideEscapedPrefixes')]
+    public function test_terminal_escaping_preserves_the_fault_column(string $prefix, string $line, int $caret): void
     {
-        foreach (["a\e[2J", "界\t", "é\r", "a\u{202E}", "a\xFF", "\\d\t"] as $prefix) {
-            [$line, $caret] = explode("\n", Snippet::escapeForTerminal(Snippet::render($prefix.'Xafter', strlen($prefix))));
-            $this->assertSame(mb_strwidth(substr($line, 0, (int) strpos($line, 'X')), 'UTF-8'), strpos($caret, '^'));
-        }
+        $this->assertSame($line."\n".str_repeat(' ', $caret).'^', Snippet::escapeForTerminal(Snippet::render($prefix.'Xafter', \strlen($prefix))));
+    }
+
+    /**
+     * @return iterable<string, array{prefix: string, line: string, caret: int}>
+     */
+    public static function provideEscapedPrefixes(): iterable
+    {
+        yield 'an escape sequence' => ['prefix' => "a\e[2J", 'line' => 'Line 1: a\\x1B[2JXafter', 'caret' => 8 + 8];
+        yield 'a wide character and a tab' => ['prefix' => "界\t", 'line' => 'Line 1: 界\\tXafter', 'caret' => 8 + 2 + 2];
+        yield 'a carriage return' => ['prefix' => "é\r", 'line' => 'Line 1: é\\rXafter', 'caret' => 8 + 1 + 2];
+        yield 'a bidirectional override' => ['prefix' => "a\u{202E}", 'line' => 'Line 1: a\\x{202E}Xafter', 'caret' => 8 + 1 + 8];
+        yield 'an invalid byte' => ['prefix' => "a\xFF", 'line' => 'Line 1: a\\xFFXafter', 'caret' => 8 + 1 + 4];
+    }
+
+    #[Test]
+    public function test_terminal_escaping_spells_any_other_text_whole(): void
+    {
         $this->assertSame('raw\\n\\x1B', Snippet::escapeForTerminal("raw\n\e"));
     }
 

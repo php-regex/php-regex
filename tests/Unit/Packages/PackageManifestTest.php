@@ -110,7 +110,8 @@ final class PackageManifestTest extends TestCase
             'Parser\Cache\StaticCaches', 'Parser\NodeWalker', 'Parser\TraversalAction',
         ],
         // The CLI, the PHPStan rule and the Psalm plugin name the directory
-        // where the class sets PCRE2 answered are kept between runs.
+        // where the class sets PCRE2 answered are kept between runs. The
+        // CLI spells a caret snippet for the terminal, its caret kept aligned.
         'Cli' => [
             'Automata\Model\Nfa', 'Automata\Model\NfaState', 'Automata\Transform\HirToNfaTransformer',
             'LanguageServer\Server', 'Linter\AnalysisService',
@@ -128,6 +129,7 @@ final class PackageManifestTest extends TestCase
             'Linter\LintService', 'Linter\Source\PatternSourceCollection',
             'Linter\Source\PhpFilePatternSource', 'Linter\Source\TwigTemplatePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
             'Parser\Hir\HirTranslator', 'Parser\Text\Ascii', 'Parser\Printer\DisplayEscaper', 'Parser\Engine\IniFlag',
+            'Parser\Exception\Snippet',
             'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Text\Path',
             'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser', 'Redos\Heatmap', 'Redos\InputGenerator',
             'Transpiler\Target\TargetRegistry',
