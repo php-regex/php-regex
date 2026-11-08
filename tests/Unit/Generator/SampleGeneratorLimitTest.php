@@ -16,34 +16,38 @@ namespace PHPRegex\Tests\Unit\Generator;
 use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorLimitTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[DataProvider('provideEntryPoints')]
     public function test_capture_doubling_is_rejected(string $entry): void
     {
         $pattern = '/'.self::doublingChain(21).'/';
         $this->expectException(SampleGenerationException::class);
-        $this->expectExceptionMessage('No sample was built: it would pass 1048576 bytes.');
+        $this->expectExceptionMessageIsOrContains('No sample was built: it would pass 1048576 bytes.');
 
         match ($entry) {
             'facade' => Regex::create()->generate($pattern),
             'generator' => (new SampleGenerator())->generate($pattern),
             'visitor' => RegexParser::create()->parse($pattern)->accept(new SampleGenerator()),
+            default => $this->fail('No entry point '.$entry.'.'),
         };
     }
 
     /**
-     * @return iterable<array{string}>
+     * @return iterable<string, array{entry: string}>
      */
     public static function provideEntryPoints(): iterable
     {
-        yield ['facade'];
-        yield ['generator'];
-        yield ['visitor'];
+        yield 'facade' => ['entry' => 'facade'];
+        yield 'generator' => ['entry' => 'generator'];
+        yield 'visitor' => ['entry' => 'visitor'];
     }
 
     public function test_exact_byte_limit_is_allowed(): void
