@@ -21,6 +21,7 @@ use PHPRegex\Cli\SelfUpdate\SelfUpdater;
 use PHPRegex\Tests\Support\LocalReleaseDownloader;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\SelfUpdateFunctionOverrides;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -53,7 +54,6 @@ final class SelfUpdaterTest extends TestCase
 
                     $this->destination = $destination;
                     TestCase::assertDirectoryExists(\dirname($destination));
-                    TestCase::assertSame(0o700, fileperms(\dirname($destination)) & 0o777);
                     TestCase::assertStringEndsWith('.phar', $destination);
                     (new HttpDownloader())->download($this->source, $destination);
                     if ($this->fail) {
@@ -509,23 +509,61 @@ final class SelfUpdaterTest extends TestCase
     }
 
     #[Test]
-    public function test_run_throws_when_tempnam_fails(): void
+    public function test_run_throws_when_the_staging_directory_cannot_be_created(): void
     {
         $pharPath = $this->copyTemplatePhar();
         $checksumFile = $this->writeChecksumFile($pharPath);
         $output = new Output(false, true);
 
-        SelfUpdateFunctionOverrides::queueTempnam(false);
+        SelfUpdateFunctionOverrides::queueMkdir(false);
 
         $updater = self::updater($pharPath, $pharPath, $checksumFile);
 
         try {
             $this->expectException(CliException::class);
-            $this->expectExceptionMessageIsOrContains('Unable to create a temporary file.');
+            $this->expectExceptionMessageIsOrContains('Unable to create a temporary directory.');
             $updater->run($output);
         } finally {
             @unlink($pharPath);
             @unlink($checksumFile);
+        }
+    }
+
+    /**
+     * Windows ignores the mode mkdir() is given: the check runs where the
+     * mode is kept.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_the_staging_directory_is_private_to_its_owner(): void
+    {
+        $pharPath = $this->copyTemplatePhar();
+        $downloader = new class($pharPath) implements Downloader {
+            public ?string $destination = null;
+
+            public ?int $mode = null;
+
+            public function __construct(private readonly string $source) {}
+
+            public function download(string $url, string $destination): void
+            {
+                if (SelfUpdater::CHECKSUM_URL === $url) {
+                    file_put_contents($destination, hash_file('sha256', $this->source));
+
+                    return;
+                }
+
+                $this->destination = $destination;
+                $this->mode = fileperms(\dirname($destination)) & 0o777;
+                (new HttpDownloader())->download($this->source, $destination);
+            }
+        };
+
+        try {
+            (new SelfUpdater($downloader, $pharPath))->run(new Output(false, true));
+            $this->assertSame(0o700, $downloader->mode);
+        } finally {
+            @unlink($pharPath);
         }
     }
 
