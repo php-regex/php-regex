@@ -110,7 +110,8 @@ final class PackageManifestTest extends TestCase
             'Parser\Cache\StaticCaches', 'Parser\NodeWalker', 'Parser\TraversalAction',
         ],
         // The CLI, the PHPStan rule and the Psalm plugin name the directory
-        // where the class sets PCRE2 answered are kept between runs.
+        // where the class sets PCRE2 answered are kept between runs. The
+        // CLI spells its stderr warnings and errors as the console report.
         'Cli' => [
             'Automata\Model\Nfa', 'Automata\Model\NfaState', 'Automata\Transform\HirToNfaTransformer',
             'LanguageServer\Server', 'Linter\AnalysisService',
@@ -120,7 +121,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\LintIssue',
             'Linter\Formatter\ConsoleFormatter', 'Linter\Formatter\FormatterRegistry', 'Linter\Formatter\JsonFormatter',
             'Linter\Formatter\LinkFormatter', 'Linter\Formatter\OutputConfiguration',
-            'Linter\Formatter\OutputFormatterInterface', 'Linter\Formatter\RelativePathHelper',
+            'Linter\Formatter\OutputFormatterInterface', 'Linter\Formatter\RelativePathHelper', 'Linter\Formatter\ReportSpelling',
             'Linter\LintStatsCounter', 'Linter\Formatter\LintSummary', 'Linter\RedosVerdict',
             'Linter\Parallel\ForkedWorkerPool', 'Linter\Parallel\WorkerCount', 'Linter\LintProgress', 'Linter\LintReport', 'Linter\LintRequest',
             'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId',

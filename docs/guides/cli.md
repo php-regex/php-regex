@@ -527,6 +527,13 @@ Error: Invalid "extraction.interop" in /app/regex.json: unknown preset "laravel-
 
 `regex debug` reads `regex.json` too, and stops on the same error.
 
+A warning or an error on stderr is one line: a line break, a tab or a
+control character it quotes from `regex.json` or the command line is
+written `\xHH` (`\x0A`, `\x1B`), and a character that moves or hides text,
+such as U+2028, `\x{2028}`, so that a value cannot open a line of its own,
+a `::error::` workflow command included. The `error` of `--format=json`
+keeps the text as found: JSON escapes it already.
+
 Wrappers are matched on their fully qualified name, using the file's `use`
 statements: a class of your own named `Preg` is left alone, and so is a
 subclass of an assertion class (`class Assert extends \Webmozart\Assert\Assert`
