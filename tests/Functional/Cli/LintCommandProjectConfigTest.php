@@ -75,6 +75,23 @@ final class LintCommandProjectConfigTest extends TestCase
         $this->assertSame("Warning: Malformed pattern function \"bad#no\\x0A::error::forged\\x0D\\x1B[2J\\x09\\x{2028}\", ignored.\n", $stderr);
     }
 
+    /**
+     * A name past the file system's 255 bytes passes the check before the
+     * run, which looks at its directory, and fails the write after it.
+     */
+    #[Test]
+    public function test_an_output_file_it_cannot_write_is_named_on_one_line(): void
+    {
+        $name = "report\n::error::forged\x1B".str_repeat('a', 300).'.json';
+        $this->enterProject(['src/a.php' => "<?php\n", 'composer.json' => '{"require": {"php": "8.4"}}']);
+
+        [$exitCode, , $stderr] = $this->runLint(['src', '--format=json', '--jobs=1', '--output='.$name]);
+
+        $this->assertNotSame(0, $exitCode);
+        $this->assertStringContainsString('Error: Could not write the output file: report\\x0A::error::forged\\x1B', $stderr);
+        $this->assertSame(1, substr_count($stderr, "\n"), $stderr);
+    }
+
     #[Test]
     public function test_config_error_cannot_inject_stderr_lines_or_controls(): void
     {

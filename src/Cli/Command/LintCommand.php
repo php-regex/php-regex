@@ -517,7 +517,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         // out of room.
         $dir = \dirname($outputFile);
         if ((!is_dir($dir) && !@mkdir($dir, 0o777, true) && !is_dir($dir)) || false === @file_put_contents($outputFile, $content)) {
-            $output->writeError('Error: Could not write the output file: '.$outputFile."\n");
+            $output->writeError('Error: Could not write the output file: '.ReportSpelling::displayField($outputFile)."\n");
 
             return false;
         }
