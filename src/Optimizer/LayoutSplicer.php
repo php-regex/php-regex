@@ -239,7 +239,7 @@ final class LayoutSplicer
      * stands in both lists, or both ends when there is none.
      *
      * @param array<int, list<int>> $positions Original positions, in descending order per identity
-     * @param list<NodeInterface>  $after
+     * @param list<NodeInterface>   $after
      *
      * @return array{int, int}
      */
