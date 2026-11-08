@@ -36,7 +36,21 @@ final class PcreEngine
      */
     private const FRESH_CACHE_KEY = "\v";
 
-    private const LIMITS_UNAVAILABLE = 'The PCRE limits could not be set: ini_set() is disabled';
+    private const LIMITS_NOT_SET = 'The PCRE limits could not be set: ';
+
+    private const LIMITS_UNAVAILABLE = self::LIMITS_NOT_SET.'ini_set() is disabled';
+
+    /**
+     * Whether the engine ran nothing because the limits asked for could not
+     * be set, ini_set() disabled or refusing one: the answer of no run, not
+     * of an engine error.
+     *
+     * @internal the ReDoS confirmation reports such a run as skipped
+     */
+    public static function limitsWereNotSet(PcreMatch $match): bool
+    {
+        return \PREG_INTERNAL_ERROR === $match->errorCode && str_starts_with((string) $match->error, self::LIMITS_NOT_SET);
+    }
 
     /**
      * The pattern as the engine runs it: "(*NO_JIT)" right after the opening
@@ -336,7 +350,7 @@ final class PcreEngine
                         'result' => false,
                         'error' => null,
                         'lastError' => \PREG_INTERNAL_ERROR,
-                        'lastErrorMessage' => 'The PCRE limits could not be set: ini_set() refused '.$key,
+                        'lastErrorMessage' => self::LIMITS_NOT_SET.'ini_set() refused '.$key,
                     ];
                 }
             }

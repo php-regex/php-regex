@@ -90,6 +90,44 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
     }
 
     /**
+     * Where ini_set() exists but refuses a limit (a php_admin_value under
+     * FPM), the engine runs nothing: the replay of the proof and the
+     * confirmation of a verdict over the model's budget are skipped as
+     * where ini_set() is disabled, not recorded as an engine error.
+     */
+    #[Test]
+    #[DataProvider('provideRefusedLimits')]
+    public function test_confirmed_mode_skips_the_run_when_ini_set_refuses_a_limit(string $pattern, string $refused, string $proof): void
+    {
+        $result = self::analyzeWithoutIniSet(
+            $pattern,
+            '',
+            'namespace PHPRegex\\Parser\\Engine { function ini_set($key, $value) { return '.var_export($refused, true).' === $key ? false : \\ini_set($key, $value); } }',
+        );
+
+        $this->assertTrue($result['ini_set']);
+        $this->assertNull($result['error'], (string) json_encode($result));
+        $this->assertSame(RedosSeverity::Critical->value, $result['severity']);
+        $this->assertSame($proof, $result['proof']);
+        $this->assertNull($result['replayed']);
+        $this->assertIsArray($result['confirmation']);
+        $this->assertFalse($result['confirmation']['confirmed']);
+        $this->assertSame([], $result['confirmation']['samples'], 'Nothing was run.');
+        $this->assertSame(self::LIMITS_UNAVAILABLE, $result['confirmation']['evidence']);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, refused: string, proof: string}>
+     */
+    public static function provideRefusedLimits(): iterable
+    {
+        foreach (['pcre.backtrack_limit', 'pcre.recursion_limit'] as $refused) {
+            yield 'proven, '.$refused.' refused' => ['pattern' => '/(a|a)+$/', 'refused' => $refused, 'proof' => RedosProof::Proven->value];
+            yield 'over the budget, '.$refused.' refused' => ['pattern' => '/^(?:(?:a{16}){16}){16}(a+)+$/', 'refused' => $refused, 'proof' => RedosProof::BudgetExceeded->value];
+        }
+    }
+
+    /**
      * A throwable that is not one of the library's exceptions surfaces from
      * the analysis, from the proven path (the replay) as from the heuristic
      * one (the confirmation of a verdict over the model's budget).
@@ -232,13 +270,14 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
     }
 
     /**
-     * The analysis in a PHP process with ini_set() disabled, as JSON.
+     * The analysis in a PHP process with the functions disabled (ini_set()
+     * by default) and the prelude declared before it, as JSON.
      *
      * @return array<array-key, mixed>
      */
-    private static function analyzeWithoutIniSet(string $pattern): array
+    private static function analyzeWithoutIniSet(string $pattern, string $disabled = 'ini_set', string $prelude = ''): array
     {
-        $script = 'require '.var_export(\dirname(__DIR__, 4).'/vendor/autoload.php', true).';'
+        $script = $prelude.' namespace { require '.var_export(\dirname(__DIR__, 4).'/vendor/autoload.php', true).';'
             .'$analysis = (new \PHPRegex\Redos\RedosAnalyzer())->analyze('.var_export($pattern, true).', \PHPRegex\Redos\RedosSeverity::Low, \PHPRegex\Redos\RedosMode::Confirmed);'
             .'echo json_encode(['
             .'"ini_set" => function_exists("ini_set"),'
@@ -249,10 +288,10 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
             .'"witness" => null !== $analysis->witness,'
             .'"replayed" => $analysis->replayed,'
             .'"confirmation" => $analysis->confirmation?->jsonSerialize(),'
-            .'], JSON_INVALID_UTF8_SUBSTITUTE);';
+            .'], JSON_INVALID_UTF8_SUBSTITUTE); }';
 
         $process = proc_open(
-            [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'disable_functions=ini_set', '-r', $script],
+            [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'disable_functions='.$disabled, '-r', $script],
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
         );
