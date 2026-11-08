@@ -656,7 +656,9 @@ Notes:
   multibyte character written whole outside a class stays that character (`/café/` passes through). A lone byte above
   `0x7F`, which matches that byte alone in PCRE, and a multibyte character in a class (`/[é]/`), whose bytes PCRE reads
   as separate members, have no character equivalent in the targets and are refused: add `u`, after writing a raw byte
-  of invalid UTF-8 as the character it stands for, since `u` refuses a pattern that is not valid UTF-8.
+  of invalid UTF-8 as the character it stands for, since `u` refuses a pattern that is not valid UTF-8. The advice is
+  checked against the engine: where the pattern holds something else `u` refuses (`/[é](?<=\C)/`), it says to rewrite
+  that construct before adding `u`.
 - A script property takes the name JavaScript reads: PCRE2 reads `\p{Han}` as the script's extensions, so it is
   `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused. For a
   target before PCRE2 10.40 (PHP 8.1), which reads `\p{Han}` as the script alone, it is `\p{Script=Han}`.
