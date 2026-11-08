@@ -69,6 +69,8 @@ final class ExplainCommandRedosTest extends LaravelTestCase
         // The optimizer writes [0-9] as \d, so the suggestion quotes the pattern twice.
         yield 'optimization' => ['pattern' => '#<img src=x onerror=alert`1`>[0-9]#', 'status' => 0, 'sections' => ['Optimization Suggestion:', '&lt;img src=x onerror=alert`1`&gt;\\d']];
         yield 'security warning' => ['pattern' => '#(<img src=x onerror=alert`1`>)(a+)+$#', 'status' => 0, 'sections' => ['Security Warning:']];
+        // The vulnerable part quotes the tag the loop repeats.
+        yield 'a tag in the vulnerable part' => ['pattern' => '#(<img>|<img>)+$#', 'status' => 0, 'sections' => ['Vulnerable part: ', '&lt;img&gt;|&lt;img&gt;']];
         yield 'invalid pattern diagnostic' => ['pattern' => '#<img src=x onerror=alert`1`>[#', 'status' => 1, 'sections' => ['Invalid regex pattern:']];
     }
 
