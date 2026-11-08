@@ -20,6 +20,28 @@ the package default, so publish it only to customize it:
 php artisan vendor:publish --tag=php-regex-config
 ```
 
+## First Run
+
+Lint the patterns of your application right away; no configuration is needed:
+
+```bash
+php artisan regex:lint
+```
+
+It reads `app/` by default and prints the same report as `vendor/bin/regex
+lint` ([the CLI guide](cli.md#lint-a-codebase) shows a sample).
+
+From your code, the `Regex` facade answers in one line:
+
+```php
+use PHPRegex\Laravel\Facades\Regex;
+
+Regex::validate('/^[a-z0-9-]{3,}$/')->isValid; // true
+```
+
+[Using the service](#using-the-service) shows what else the facade does, and
+[Commands](#commands) lists every command.
+
 ## Configuration
 
 `config/php-regex.php`, with its defaults. A `config/regex-parser.php` published

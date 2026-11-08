@@ -16,15 +16,122 @@ The binary requires PHP 8.1 or later.
 
 {% include install.html package="php-regex/regex-cli" dev=true %}
 
-Once installed, the binary is `vendor/bin/regex`:
+Once installed, the binary is `vendor/bin/regex`. Three commands give a first
+result in seconds.
+
+## First Commands
+
+### Explain a pattern
+
+`explain` reads a pattern and says what it matches, in plain language:
 
 ```bash
-vendor/bin/regex --help
+vendor/bin/regex explain '/^\d{4}-\d{2}-\d{2}$/'
 ```
 
-The overview lists the commands and the options they all take;
-`vendor/bin/regex help <command>` shows the options, notes and examples of one
-command.
+**Output:**
+```
+  [1/2] Pattern
+  Pattern
+      → /^\d{4}-\d{2}-\d{2}$/
+
+  [2/2] Explanation
+Regex matches
+  Anchor: the start of the subject
+  Character Type: A digit [0-9], exactly 4 times
+  '-'
+  Character Type: A digit [0-9], exactly 2 times
+  '-'
+  Character Type: A digit [0-9], exactly 2 times
+  Anchor: the end of the subject, or just before a newline (\n) that ends it
+```
+
+### Analyze a pattern
+
+`analyze` adds a validation pass and the [ReDoS](redos.md) verdict. When a
+partial match fails, the engine backtracks: it steps back and tries another
+way to match. ReDoS is the risk that a crafted subject makes it backtrack so
+many times that PHP gives up:
+
+```bash
+vendor/bin/regex analyze '/(a+)+$/'
+```
+
+**Output:**
+```
+  [1/4] Parsing pattern
+  Pattern
+      → /(a+)+$/
+  Parse : OK
+
+  [2/4] Validation
+  Status : OK
+
+  [3/4] ReDoS analysis
+  Status     : Exponential backtracking (proven)
+  Severity   : CRITICAL (score 10)
+  Mode       : THEORETICAL
+  Confidence : MEDIUM
+  Attack: "a" x n . "!"
+  Hotspot:   1-3
+
+  [4/4] Explanation
+Regex matches
+  Quantified group, one or more times
+    Capturing group
+      'a', one or more times
+    End group
+  End quantified group
+  Anchor: the end of the subject, or just before a newline (\n) that ends it
+```
+
+### Lint a codebase
+
+`lint` scans a directory for the patterns its PHP files pass to `preg_match()`
+and the other native calls, and reports each one with a problem — here a slug
+validator whose nested quantifier can backtrack:
+
+```bash
+vendor/bin/regex lint src/
+```
+
+**Output:**
+```
+PHPRegex {{ site.data.product.version }}
+
+Runtime       : PHP 8.4.27, PCRE2 10.49
+Target        : PHP 8.2, PCRE2 10.40 (composer.json require.php)
+Processes     : 10
+PCRE JIT      : 1
+Backtrack     : 1000000
+Recursion     : 100000
+
+  [1/3] Scanning files
+  Scanned 1 files, found 1 patterns.
+
+  [2/3] Analyzing patterns
+  [3/3] Suggesting optimizations
+  src/Slug.php:7:33
+      → /^([a-z0-9-]+)+$/
+    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+    WARN Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+           need.
+
+
+  PASS 1 warnings, 1 infos found, 0 optimizations available.
+  Time: 0.09s  Memory: 16 MB  Processes: 1
+```
+
+Warnings leave the exit code at 0; a run that finds nothing wrong ends with
+`PASS No issues found, 0 optimizations available.` For everything else —
+every command, every option, every exit code — start at the
+[command overview](#command-overview). `vendor/bin/regex --help` prints that
+overview, and `vendor/bin/regex help <command>` shows the options, notes and
+examples of one command.
+
+## Other Ways to Install
 
 **Via PHAR (standalone):**
 
@@ -67,7 +174,7 @@ Phive asks you to trust the key the first time. It installs a signed
 release only: for a release that carries no `regex.phar.asc`, download the
 PHAR as above.
 
-> **Note:** Replace `vendor/bin/regex` with `regex` in all examples below if using the PHAR.
+> **Note:** Replace `vendor/bin/regex` with `regex` in every example of this guide if using the PHAR.
 
 ---
 
@@ -83,7 +190,7 @@ PHPRegex CLI provides these commands:
 | `explain`     | Explain a regex pattern in plain language                |
 | `debug`       | Detailed ReDoS analysis with heatmap                     |
 | `redos`       | Benchmark regex patterns for ReDoS behavior              |
-| `diagram`     | Render AST diagram                                       |
+| `diagram`     | Render the pattern's [AST](../concepts/ast.md) (abstract syntax tree) as a diagram |
 | `graph`       | Generate a graph diagram (DOT/Mermaid) of the NFA (nondeterministic finite automaton) |
 | `highlight`   | Syntax highlighting (console or HTML)                    |
 | `validate`    | Validate pattern syntax                                  |
@@ -105,7 +212,7 @@ PHPRegex CLI provides these commands:
 | `-q, --quiet`         | Suppress output; a JSON, GitHub, Checkstyle or JUnit report is still printed |
 | `--silent`            | Same as `--quiet`                 |
 | `--php-version <ver>` | Target PHP version for validation |
-| `--pcre-version <ver>` | Target PCRE2 release for validation, as `10.42` |
+| `--pcre-version <ver>` | Target [PCRE2](regex-in-php.md#what-is-pcre) release (the regex engine PHP bundles) for validation, as `10.42` |
 | `--locale <name>`      | Target `LC_CTYPE` locale for validation, as `tr_TR.UTF-8` (see [The locale](#the-locale)) |
 | `--cache-dir <dir>`    | Keep the Unicode class scans in `<dir>` for the next run (see [Unicode classes between runs](#unicode-classes-between-runs)) |
 | `--no-visuals`         | Disable banner and section visuals (aliases: `--no-art`, `--no-splash`) |
@@ -114,15 +221,21 @@ PHPRegex CLI provides these commands:
 Options may come before or after the pattern; `--` ends them, so that what
 follows is read as the pattern even when it starts with `-`.
 
-`parse`, `validate` and `compare` print one rendering and take no
-`--format`: giving them one is a usage error. The other commands take it and,
-but for `graph`, call the terminal rendering `console`; the other values
-depend on the command: `json` for `analyze`, `debug`, `redos`, `transpile` and
-`lint` (with `github`, `checkstyle` and `junit` for `lint`), `html` for
-`explain` and `highlight` (`auto`, the default of `highlight`, picks `console`
-in a terminal), `svg` for `diagram`, and `dot` (the default) or `mermaid` for
-`graph`. An unknown value is a usage error that names the values the command
-takes.
+`--format` chooses the rendering. What each command accepts:
+
+- `console`, the rendering for a terminal, is the default of every command
+  that takes `--format`, save two: `highlight` defaults to `auto`, which
+  picks `console` in a terminal, and `graph` defaults to `dot`;
+- `json`: `analyze`, `debug`, `explain`, `format`, `lint`, `redos`,
+  `transpile` and `validate`;
+- `github`, `checkstyle` and `junit`: `lint` only;
+- `html`: `explain` and `highlight`;
+- `svg`: `diagram`;
+- `dot` (the default), `graphviz` or `mermaid`: `graph`.
+
+`parse` and `compare` print one rendering and take no `--format`: giving them
+one is a usage error. So is an unknown value, and the error names the values
+the command takes.
 
 ### Exit Codes
 
@@ -196,19 +309,17 @@ Regex matches (with flags: i)
   ...
 ```
 
-`Status` is the verdict's headline: `safe (proven)`, `Exponential
-backtracking (proven)`, `Polynomial backtracking, degree N (proven)`,
-`Potential backtracking (heuristic)`, `no risk found (heuristic)`, `not
-analyzed (budget exceeded)` or `not analyzed (analysis error)` (see
-[the ReDoS guide](redos.md#what-the-verdict-means)). Up to three lines
-follow it:
+`Status` is the verdict in one line, from `safe (proven)` to `Exponential
+backtracking (proven)`; [the ReDoS guide](redos.md#what-the-verdict-means)
+lists every verdict and what it means. Up to three lines follow it:
 
 - `Model:` what the analysis read differently from the pattern as written, as
   a bounded repeat above 16 analysed as unbounded; the proof is about that
   model;
 - `Note: analysis budget exceeded, the heuristics decided`;
-- `Attack:` the input that drives the worst case, as PHP: `"a" x n . "!"` is
-  `str_repeat("a", $n) . "!"`.
+- `Attack:` the input that drives the worst case, written as PHP would build
+  it: `"a" x n . "!"` means `str_repeat("a", $n) . "!"`, any number of `a`
+  followed by one `!`.
 
 ```bash
 vendor/bin/regex analyze '/(a{1,20})+$/'
@@ -226,7 +337,8 @@ vendor/bin/regex analyze '/(a{1,20})+$/'
 ```
 
 `--redos-mode=confirmed` replays an exponential attack on the running PCRE,
-without the JIT, and says at which length `preg_match()` gives up:
+without the JIT (PCRE2's just-in-time compiler, enabled by default in PHP),
+and says at which length `preg_match()` gives up:
 
 ```bash
 vendor/bin/regex analyze '/(a+)+$/' --redos-mode=confirmed   # exits 1
@@ -511,10 +623,10 @@ vendor/bin/regex lint src/ --interop=composer-pcre,phpunit
 vendor/bin/regex lint src/ --no-interop
 ```
 
-A list, on the command line or in `extraction.interop`, means exactly that
-list: a preset a later release adds stays off for a project that lists its
-presets, and there is no way to say "every preset but one" other than listing
-the others. `[]` (or `--no-interop`) reads the native calls only.
+Naming presets, on the command line or in `extraction.interop`, turns off the
+ones you do not name, including any preset a later release adds; there is no
+way to say "every preset but one" other than listing the others. To read the
+native calls only, pass `--no-interop` or set `extraction.interop` to `[]`.
 
 A name that is no preset is a configuration error, exit code 2, that names the
 preset it most likely means: left out, it would leave a list that reads fewer

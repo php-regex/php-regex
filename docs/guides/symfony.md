@@ -37,6 +37,22 @@ when@dev:
         paths: [src]
 ```
 
+## First Run
+
+The configuration file is optional: every key of
+`config/packages/php_regex.yaml` has a default, so you can lint your code as
+soon as the bundle is registered:
+
+```bash
+bin/console regex:lint src
+```
+
+The report is the one `vendor/bin/regex lint` prints: a header naming the PHP
+version the patterns are judged for, each pattern with a problem under its
+file and line, and a `PASS` or `FAIL` summary ([the CLI guide](cli.md#lint-a-codebase)
+shows a sample). The command exits with 0 when it found nothing wrong;
+[Commands](#commands) lists every command and its options.
+
 ## Configuration
 
 Every key is optional; the values below are the defaults.
