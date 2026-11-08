@@ -65,7 +65,7 @@ The model covers characters and classes (exact sets under `/u` and `/i`, compute
 - an option set inside one alternative also holds in the alternatives after it;
 - `r` (caseless restrict) and the ASCII options (`a`, `aD`, `aS`, `aW`, `aP`, `aT`) are read per scope;
 - `(?^)` clears `i`, `m`, `n`, `s`, `x`, `xx` and `r`, and keeps `U` and the ASCII options;
-- `xx` drops a class's spaces and tabs;
+- `xx` drops a class's unescaped spaces and tabs (`[a\ b]` still matches a space);
 - `\b` under `aW` reads the ASCII `\w`.
 
 Each rule, with worked patterns, sits in the [ReDoS guide](../guides/redos.md#the-guarantee). A leading `(*UCP)` is read too, every class asked of the engine under it. Backreferences, conditionals, recursion and subroutine calls, backtracking control verbs, the other options a pattern opens with (`(*UTF)`, `(*CR)`, …, and `(*UCP)` beside one of them), callouts, `\X`, `\R`, non-atomic lookarounds such as `(*napla:…)`, `\b` and `\B` under two different ASCII scopes in one pattern (`(?aW:\b)…\b`), and a bounded repeat whose body can match the empty string are outside it: there, as for a pattern over the [analysis budget](../guides/redos.md#outside-the-model-heuristics-and-budget), the structural heuristics of `RedosProfiler` decide:

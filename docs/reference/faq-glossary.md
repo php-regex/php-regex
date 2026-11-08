@@ -379,7 +379,7 @@ $regex = Regex::create([
 | **Subject**               | The string a pattern is run against (the second argument of `preg_match()`) |
 | **Zero-width**            | Consumes no characters; only checks a condition at one position |
 | **Match attempt**         | One try at matching from one position in the subject            |
-| **Unanchored**            | A pattern with no `^` or `\A`, so the engine retries it at every position of the subject |
+| **Unanchored**            | A search that can start again at a later position of the subject when an attempt fails. A `^` or `\A` in front of the whole pattern usually rules that out; one in a single alternative does not, and under `/m`, `^` also matches after a newline |
 | **JIT**                   | PCRE2's just-in-time compiler, enabled by default in PHP       |
 | **Automaton (NFA, DFA)**  | A machine describing the ways a pattern can match: an NFA may follow several paths at once, a DFA exactly one. The logic solver compares patterns through them |
 | **Witness**               | The input built to trigger the worst case: a prefix, a part repeated n times, then a failing suffix; the CLI prints it on the `Attack:` line |
