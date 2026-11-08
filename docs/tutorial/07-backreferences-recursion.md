@@ -48,7 +48,7 @@ Group `1` captures either `"` or `'`, `\1` forces the same one at the end. Note 
 
 ## 2) Subroutines `(?1)`, `(?&name)`
 
-A **subroutine** reuses the **pattern** of another group: it runs that group's regex again at the current position, but it does not capture or remember the text it matches this time. That is the difference from a backreference — `\1` repeats captured *text*, `(?1)` repeats a *pattern*. Think of it as "insert this group's recipe here".
+A **subroutine** reuses the **pattern** of another group: it runs that group's regex again at the current position. Captures made during the call last only until it returns: afterwards, the group holds what it held before. The difference from a backreference is what gets repeated: `\1` repeats captured *text*, `(?1)` repeats a *pattern*. Think of it as "insert this group's recipe here".
 
 ### Numbered subroutine
 
@@ -92,7 +92,7 @@ echo $matches[0]; // "(a(b)c)"
 - `\(` matches opening paren
 - `(?:[^()]|(?R))*` matches either non-paren characters, **or** a nested balanced pair via `(?R)`
 - `\)` matches closing paren
-- `[^()]` acts as a **base case** — the alternative that succeeds on its own, without recursing again — so the recursion can stop. (A base case, as in any recursion, is what lets the pattern eventually match instead of calling itself forever.)
+- `[^()]` consumes ordinary characters, and the `*` allows zero repetitions. That `*` is the **base case**, the part that lets an inner call finish without recursing again: `()` matches with nothing between the parentheses. (A base case, as in any recursion, is what lets the pattern eventually match instead of calling itself forever.)
 
 **Important:** A recursive pattern must have some way to match **without** recursing. If every alternative recurses, it won't work.
 
@@ -100,7 +100,7 @@ echo $matches[0]; // "(a(b)c)"
 
 1. `\(` consumes the opening `(`.
 2. The repeated alternation starts: `a` is not a paren, so the `[^()]` branch matches it.
-3. The next character is `(`. `[^()]` cannot match it, so the `(?R)` branch runs the **whole pattern again**, starting at that `(`. The inner run consumes `(`, matches `b` via `[^()]`, and consumes `)` — it has matched `(b)`, the base case `b` being what lets it finish.
+3. The next character is `(`. `[^()]` cannot match it, so the `(?R)` branch runs the **whole pattern again**, starting at that `(`. The inner run consumes `(`, matches `b` via `[^()]`, and consumes `)` — it has matched `(b)` without recursing again, so it can return.
 4. Back in the outer run, the alternation continues: `c` matches via `[^()]`, then `\)` consumes the final `)`.
 5. The outer run has matched `(a(b)c)` — the whole subject.
 

@@ -45,7 +45,7 @@ echo preg_last_error_msg(); // Backtrack limit exhausted
 For `/(a+)+$/` against `"aaaa...!"` (lots of a's followed by `!`):
 1. Every division of the `a`'s between the two repetitions is one path to try
 2. None of the paths let `$` match, because the `!` is in the way
-3. The engine tries **every path** before giving up
+3. The engine keeps trying paths until none is left or PHP's backtrack limit stops it; in that second case `preg_match()` returns `false`, not `0`
 4. Each extra `a` roughly doubles the number of paths — 24 `a`'s already means millions of them
 
 ---

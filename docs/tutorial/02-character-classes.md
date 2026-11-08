@@ -144,7 +144,7 @@ echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
-The `^` and `$` around the patterns are [anchors](03-anchors-boundaries.md): read `/^\p{L}+$/u` as "the whole string is letters". They get their own chapter next.
+The `^` and `$` around the patterns are [anchors](03-anchors-boundaries.md): read `/^\p{L}+$/u` as "only letters from start to end". They get their own chapter next, with the one exception: `$` also accepts a final newline, which `\z` does not.
 
 The `\p{Emoji}` property needs a newer engine (PCRE2 10.40, so PHP 8.2 and newer):
 

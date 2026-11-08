@@ -168,7 +168,7 @@ Here `(?=.*\d)` scans ahead from the start to see whether any digit exists anywh
 This is important to know in PHP/PCRE:
 
 - **Fixed-length lookbehinds** always work, whatever the PCRE2 version: `(?<=\$)`, `(?<=abc)`, `(?<=\d{3})`
-- **Bounded variable-length lookbehinds** — a known minimum *and* maximum, like `(?<=a{1,5})` — need PCRE2 10.43 or newer. PHP 8.4 and newer bundle PCRE2 10.44, so they accept them; a PHP linked against a system PCRE2 depends on that library's version instead.
+- **Bounded variable-length lookbehinds** — a known minimum *and* maximum, like `(?<=a{1,5})` — need PCRE2 10.43 or newer. PHP 8.4 and newer bundle PCRE2 10.44, so they accept them; a PHP linked against a system PCRE2 depends on that library's version instead. By default the maximum is 255 characters: `(?<=a{1,256})` does not compile.
 - **Unbounded lookbehinds** like `(?<=a+)` are refused by every PCRE2 release — the engine insists on a maximum length up front.
 
 If you're ever unsure, test with a fixed length, or restructure with a lookahead instead.
