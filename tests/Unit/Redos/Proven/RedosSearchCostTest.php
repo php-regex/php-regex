@@ -20,6 +20,7 @@ use PHPRegex\Redos\Backtrack\BacktrackProver;
 use PHPRegex\Redos\Backtrack\SearchCostProver;
 use PHPRegex\Redos\Backtrack\SearchCostReplayer;
 use PHPRegex\Redos\Backtrack\SearchCostReplayerInterface;
+use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
@@ -965,7 +966,7 @@ final class RedosSearchCostTest extends TestCase
         $failing = new class implements SearchCostReplayerInterface {
             public bool $called = false;
 
-            public function replays(string $pattern, string $prefix, string $run, string $breaker, ?\PHPRegex\Redos\ConfirmationOptions $options = null): bool
+            public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
             {
                 $this->called = true;
 
@@ -997,7 +998,7 @@ final class RedosSearchCostTest extends TestCase
     public function test_search_cost_proof_lets_an_exception_from_outside_the_library_through(): void
     {
         $failing = new class implements SearchCostReplayerInterface {
-            public function replays(string $pattern, string $prefix, string $run, string $breaker, ?\PHPRegex\Redos\ConfirmationOptions $options = null): bool
+            public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
             {
                 throw new \LogicException('A bug in the replay.');
             }

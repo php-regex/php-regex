@@ -54,12 +54,12 @@ final class RedosSearchCostReplayTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{ConfirmationOptions}>
+     * @return iterable<string, array{options: ConfirmationOptions}>
      */
     public static function provideRestrictivePolicies(): iterable
     {
-        yield 'backtracking' => [new ConfirmationOptions(backtrackLimit: 1)];
-        yield 'recursion' => [new ConfirmationOptions(recursionLimit: 1)];
+        yield 'backtracking' => ['options' => new ConfirmationOptions(backtrackLimit: 1)];
+        yield 'recursion' => ['options' => new ConfirmationOptions(recursionLimit: 1)];
     }
 
     /**
