@@ -181,7 +181,12 @@ final class PackageManifestTest extends TestCase
         // The tools answer the document the CLI prints: the same encoder
         // spells every string, an invalid byte as \xNN.
         'Mcp' => ['Parser\Json\JsonDocument'],
-        'Optimizer' => ['Parser\Analysis\CharSetAnalyzer', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser', 'Parser\NodeWalker', 'Parser\TraversalAction'],
+        // The modernizer reads (*UCP) among the opening verbs the parser
+        // recognises as start options.
+        'Optimizer' => [
+            'Parser\Analysis\CharSetAnalyzer', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
+            'Parser\Syntax\StartOptions', 'Parser\NodeWalker', 'Parser\TraversalAction',
+        ],
         'PHPStan' => [
             'Linter\AnalysisService', 'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget',
             'Linter\Config\TargetConstraint',

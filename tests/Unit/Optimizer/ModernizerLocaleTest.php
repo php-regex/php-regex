@@ -14,7 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\Modernizer;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -87,6 +90,29 @@ final class ModernizerLocaleTest extends TestCase
                 }
             }
         }
+    }
+
+    #[Test]
+    public function test_start_options_after_a_single_alternative_wrapper_keep_unicode_classes(): void
+    {
+        $parsed = RegexParser::create(['cache' => null])->parse('/(*UTF)(*UCP)^[0-9]$/');
+        $this->assertInstanceOf(SequenceNode::class, $parsed->pattern);
+        [$utf, $ucp, $start, $class, $end] = $parsed->pattern->children;
+        $this->assertInstanceOf(PcreVerbNode::class, $utf);
+        $wrapped = new AlternationNode([new SequenceNode([$utf], $utf->getStartPosition(), $utf->getEndPosition())], $utf->getStartPosition(), $utf->getEndPosition());
+        $tree = new RegexNode(
+            new SequenceNode([$wrapped, $ucp, $start, $class, $end], $parsed->pattern->getStartPosition(), $parsed->pattern->getEndPosition()),
+            $parsed->flags,
+            $parsed->delimiter,
+            $parsed->getStartPosition(),
+            $parsed->getEndPosition(),
+        );
+
+        $printed = $tree->accept(new Modernizer('C'))->accept(PatternPrinter::asWritten());
+
+        $this->assertSame('/(*UTF)(*UCP)^[0-9]$/', $printed);
+        $this->assertSame(0, preg_match('/(*UTF)(*UCP)^[0-9]$/', "\u{663}"));
+        $this->assertSame(1, preg_match('/(*UTF)(*UCP)^\d$/', "\u{663}"));
     }
 
     /**

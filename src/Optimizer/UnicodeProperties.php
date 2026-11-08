@@ -48,7 +48,10 @@ final class UnicodeProperties
             if ($node instanceof SequenceNode) {
                 array_push($pending, ...array_reverse($node->children));
             } elseif ($node instanceof AlternationNode) {
-                $pending = isset($node->alternatives[0]) ? [$node->alternatives[0]] : [];
+                // Siblings stay pending: after a lone alternative they still open the pattern.
+                if (isset($node->alternatives[0])) {
+                    $pending[] = $node->alternatives[0];
+                }
             } elseif ($node instanceof LimitMatchNode) {
                 continue;
             } elseif ($node instanceof PcreVerbNode && [] !== StartOptions::items('(*'.$node->verb.')')) {
