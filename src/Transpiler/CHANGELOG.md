@@ -16,6 +16,9 @@ CHANGELOG
    in one (`/[é]/`) PCRE reads each of its bytes as a member, and the class
    is refused. Each refusal names the fix PCRE takes: `u`, after writing a
    raw byte of invalid UTF-8 as its character.
+ * Without `u`, `\s` is `[\t-\r ]` and `\S` is `[^\t-\r ]` for JavaScript and
+   `html-pattern`: JavaScript's `\s` also takes the Unicode spaces, so
+   `/^\s+$/` matched `U+00A0` there and not in PCRE.
  * The `html-pattern` target (alias `html`): the value of an HTML `pattern`
    attribute, matched whole under the `v` flag; an unanchored side is padded
    so it accepts what `preg_match()` finds, and classes escape what `v`

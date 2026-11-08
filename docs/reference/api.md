@@ -650,7 +650,8 @@ Notes:
   `\n` alone end a line (`(?:^|(?<=\n)(?!$))` and `(?=\n|$)`); in Python `\z` is `\Z` and `\Z` is `(?=\n?\Z)`. The dot,
   which leaves out `\n` alone, is `[^\n]` in JavaScript. Under `u`, where PHP reads `\d`, `\w`, `\s` and `\b` in
   Unicode, JavaScript gets `\p{Nd}`, a class of the word characters and one of the spaces, and Python, without `u`,
-  `re.ASCII`.
+  `re.ASCII`. Without `u`, JavaScript's `\s`, which also takes the Unicode spaces (`U+00A0`, `U+2028`, `U+FEFF`), is
+  written `[\t-\r ]`, the six bytes PCRE reads as spaces, and `\S` is `[^\t-\r ]`.
 - JavaScript targets may add `/u` when Unicode properties or code point escapes are used.
 - Without `u`, PHP reads the pattern byte by byte where JavaScript and Python read it character by character: a
   multibyte character written whole outside a class, and not cut by a quantifier, stays that character (`/café/`
@@ -661,6 +662,9 @@ Notes:
   pattern holds something else `u` refuses (`/[é](?<=\C)/`), it says to rewrite that construct before adding `u`.
   Adding `u` changes what the pattern matches, characters instead of bytes (`/[é]/` matches `à` through its first byte,
   `/[é]/u` does not): confirm that matching characters is what the pattern means before taking the advice.
+  A set that leaves characters out (the dot, `[^a]`, `\D`, `\S`) takes one byte in PCRE and one character in the
+  targets: on a subject holding a multibyte character the two count it differently (`/^\S$/` fails `U+00A0`, two
+  bytes, where `/^[^\t-\r ]$/` matches it in JavaScript).
 - A script property takes the name JavaScript reads: PCRE2 reads `\p{Han}` as the script's extensions, so it is
   `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused. For a
   target before PCRE2 10.40 (PHP 8.1), which reads `\p{Han}` as the script alone, it is `\p{Script=Han}`.
