@@ -1559,10 +1559,12 @@ these placeholders, filled in for each link:
 ```
 
 A value that is no IDE name and holds no placeholder is refused.
-A link whose address holds a control character (an escape, a line break,
-a C1 control) or a `>` is not written: the pen is printed without it, so a
-template from a project's `regex.json` cannot send the terminal a sequence
-of its own. Write such characters URL-encoded (`%1B`, `%3E`).
+A link whose address is not valid UTF-8, or holds a control character (an
+escape, a line break, a C1 control) or a `>`, is not written: the pen, or
+the file name in the Symfony and Laravel `regex:lint` commands, is printed
+without it, so a template from a project's configuration cannot send the
+terminal a sequence of its own. Write such characters URL-encoded (`%1B`,
+`%3E`).
 
 ---
 

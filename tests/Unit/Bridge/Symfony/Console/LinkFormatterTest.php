@@ -57,7 +57,7 @@ final class LinkFormatterTest extends TestCase
     #[Test]
     public function test_console_rejects_control_characters_in_editor_destinations(): void
     {
-        $controls = ["\e\\\e]52;c;YXR0YWNr\x07", "\x07", "\n", "\r", "\t", "\0", "\x7f", "\x9c", "\u{009c}", "\u{009d}"];
+        $controls = ["\e\\\e]52;c;YXR0YWNr\x07", "\x07", "\n", "\r", "\t", "\0", "\x7f", "\x9c", "\xFF", "\u{009c}", "\u{009d}"];
         foreach ($controls as $control) {
             $output = $this->consoleWithTemplate('custom://%f'.$control.'suffix');
 
@@ -90,6 +90,33 @@ final class LinkFormatterTest extends TestCase
     {
         yield 'a tag end before an escape' => ['template' => "custom://%f>\esuffix"];
         yield 'a tag end alone' => ['template' => 'custom://%f>suffix'];
+    }
+
+    /**
+     * The Symfony and Laravel commands hand the tag to Symfony Console,
+     * which writes its destination into the OSC 8 sequence: a destination
+     * holding a control or a ">" gives the fallback label instead.
+     */
+    #[Test]
+    #[DataProvider('provideUnsafeDestinations')]
+    public function test_an_unsafe_destination_gives_the_fallback_label(string $template): void
+    {
+        $formatter = new LinkFormatter($template, new RelativePathHelper('/app'));
+
+        $this->assertSame('./a.php:10', $formatter->format('/app/a.php', 10, 'label', 1, './a.php:10'));
+        $this->assertSame('a.php:10', $formatter->format('/app/a.php', 10, 'label'));
+    }
+
+    /**
+     * @return iterable<string, array{template: string}>
+     */
+    public static function provideUnsafeDestinations(): iterable
+    {
+        yield 'an escape' => ['template' => "custom://%f\e]52;c;YXR0YWNr\x07"];
+        yield 'a C1 control' => ['template' => "custom://%f\u{009d}"];
+        yield 'a line break' => ['template' => "custom://%f\n"];
+        yield 'a tag end' => ['template' => 'custom://%f>x'];
+        yield 'an invalid UTF-8 byte' => ['template' => "custom://%f\xFF"];
     }
 
     #[Test]
