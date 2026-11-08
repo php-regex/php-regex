@@ -140,7 +140,7 @@ delimiters: `/(a+)+$/i` skips `#(a+)+$#i`, not `/(a+)+$/` or `/(a+)+$/iu`.
 `regex.json`, and a custom `extractor_service` reads its own calls, leaving
 `extraction` unused. The default is every preset, and `interop: ~` says the
 same, as `null` does in the Laravel config and the PHPStan extension; a list
-reads exactly the presets it names, `[]` the native calls only. Where several files configure
+reads exactly the presets it names, and `[]` turns every preset off. Where several files configure
 the bundle (`config/packages/php_regex.yaml`, then
 `config/packages/dev/php_regex.yaml`), a later file's `interop` or
 `functions` list replaces the earlier one, while `paths` and `exclude` add up.

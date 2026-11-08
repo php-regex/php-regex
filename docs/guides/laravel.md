@@ -90,7 +90,7 @@ return [
     ],
     // The calls regex:lint reads patterns from, as "extraction" of regex.json.
     'extraction' => [
-        'interop' => null,   // null: every preset; a list: exactly those; []: native calls only
+        'interop' => null,   // null: every preset; a list: exactly those; []: no preset
         'functions' => [],   // your helpers: "App\Support\Str::matches#1"
     ],
     'paths' => ['app'],                                // read from base_path()
