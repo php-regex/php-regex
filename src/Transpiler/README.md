@@ -144,9 +144,13 @@ quantifiers it governs: `/<.+>/U` is `/<[^\n]+?>/` for JavaScript, the dot
 written as PCRE reads it.
 
 JavaScript and Python read characters, where PCRE without `u` reads bytes. A
-multibyte character written whole (`/café/`) stays that character; a byte above
-0x7F on its own, as an escape (`\xE9`, `[\x80-\xFF]`) or as invalid UTF-8, has
-no equivalent there and is refused: add `u`, or write the character itself.
+multibyte character written whole outside a class (`/café/`) stays that
+character. The rest has no equivalent there and is refused with the advice that
+works: a byte above 0x7F on its own, as an escape (`\xE9`, `[\x80-\xFF]`) or
+as the last byte a quantifier repeats (`/é+/`), asks for `u`; a raw byte of
+invalid UTF-8 asks to be written as the character, as UTF-8, before `u`, which
+refuses such a pattern; and a multibyte character in a class (`/[é]/`), each of
+whose bytes PCRE reads as a member of its own, asks for `u`.
 
 Documentation
 -------------

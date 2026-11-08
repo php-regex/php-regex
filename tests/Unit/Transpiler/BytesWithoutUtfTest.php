@@ -64,10 +64,46 @@ final class BytesWithoutUtfTest extends TestCase
         Regex::create()->transpile($pattern, $target);
     }
 
+    /**
+     * The advice is the one that works: PCRE takes the pattern under u, and
+     * reads there the character the subject holds.
+     *
+     * @param non-empty-string $advice
+     */
+    #[Test]
+    #[DataProvider('provideAdvice')]
+    public function test_the_refusal_gives_advice_pcre_accepts(string $pattern, string $fixed, string $subject, string $advice): void
+    {
+        $this->assertSame(1, preg_match($fixed, $subject), $fixed);
+
+        try {
+            Regex::create()->transpile($pattern, 'javascript');
+            $this->fail($pattern.' must be refused.');
+        } catch (TranspileException $exception) {
+            $this->assertStringEndsWith($advice, $exception->getMessage());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, fixed: string, subject: string, advice: non-empty-string}>
+     */
+    public static function provideAdvice(): iterable
+    {
+        yield 'escape of a byte' => ['pattern' => '/caf\xE9/', 'fixed' => '/caf\xE9/u', 'subject' => 'café', 'advice' => 'Add u.'];
+        yield 'character cut by a quantifier' => ['pattern' => '/é+/', 'fixed' => '/é+/u', 'subject' => 'éé', 'advice' => 'Add u.'];
+        yield 'raw byte of invalid UTF-8' => ['pattern' => "/caf\xE9/", 'fixed' => '/café/u', 'subject' => 'café', 'advice' => 'Write the character as UTF-8, then add u.'];
+        yield 'multibyte character in a class' => ['pattern' => '/[é]/', 'fixed' => '/[é]/u', 'subject' => 'é', 'advice' => 'reads each of its bytes as a member of its own. Add u.'];
+    }
+
     #[Test]
     #[DataProvider('provideMultibyteClasses')]
     public function test_unicode_multibyte_classes_keep_character_membership(string $pattern, string $target): void
     {
+        // Under u the class holds the character: é is in [é], à is not.
+        $negated = str_contains($pattern, '[^');
+        $this->assertSame($negated ? 0 : 1, preg_match($pattern.'u', 'é'));
+        $this->assertSame($negated ? 1 : 0, preg_match($pattern.'u', 'à'));
+
         $result = Regex::create()->transpile($pattern.'u', $target);
 
         $this->assertStringContainsString(str_contains($pattern, '[^') ? '[^é]' : substr($pattern, 1, -1), $result->pattern);
