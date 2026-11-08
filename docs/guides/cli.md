@@ -88,8 +88,21 @@ Regex matches
 ### Lint a codebase
 
 `lint` scans a directory for the patterns its PHP files pass to `preg_match()`
-and the other native calls, and reports each one with a problem — here a slug
-validator whose nested quantifier can backtrack:
+and the other native calls, and reports each one with a problem. Take a project
+whose `composer.json` requires `"php": "^8.2"`, with a slug validator in
+`src/Slug.php` whose nested quantifier can backtrack:
+
+```php
+<?php
+
+final class Slug
+{
+    public function isValid(string $slug): bool
+    {
+        return 1 === preg_match('/^([a-z0-9-]+)+$/', $slug);
+    }
+}
+```
 
 ```bash
 vendor/bin/regex lint src/
@@ -619,14 +632,17 @@ vendor/bin/regex lint src/
 # Exactly these presets
 vendor/bin/regex lint src/ --interop=composer-pcre,phpunit
 
-# Native calls only (preg_*, RegexIterator, filter_var())
+# No wrapper preset: the native calls (preg_*, RegexIterator, filter_var()) stay
 vendor/bin/regex lint src/ --no-interop
 ```
 
 Naming presets, on the command line or in `extraction.interop`, turns off the
 ones you do not name, including any preset a later release adds; there is no
-way to say "every preset but one" other than listing the others. To read the
-native calls only, pass `--no-interop` or set `extraction.interop` to `[]`.
+way to say "every preset but one" other than listing the others. To turn every
+preset off, pass `--no-interop` or set `extraction.interop` to `[]`. The native
+calls are still read, and so are the functions you name with
+`--pattern-function` or `extraction.functions`, and the Twig templates, which
+`--no-twig` leaves out.
 
 A name that is no preset is a configuration error, exit code 2, that names the
 preset it most likely means: left out, it would leave a list that reads fewer
@@ -1954,7 +1970,7 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--enable-rule=<id>` | Turn a lint rule on (repeatable)                  |
 | `--disable-rule=<id>` | Turn a lint rule off (repeatable)                |
 | `--interop <presets>` | Libraries to read patterns from, every preset by default (comma separated, `none` for the native calls only) |
-| `--no-interop`      | Read patterns from the native calls only (`preg_*`, `RegexIterator`, `filter_var()`) |
+| `--no-interop`      | Turn off every wrapper preset; the native calls (`preg_*`, `RegexIterator`, `filter_var()`) and the functions you configure are still read |
 | `--no-twig`         | Skip the `matches` patterns of the Twig templates under the paths |
 | `--pattern-function <spec>` | Extra call carrying a pattern (repeatable) |
 | `-v, --verbose`     | Detailed output                                    |
