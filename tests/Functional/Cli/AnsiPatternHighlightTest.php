@@ -115,10 +115,8 @@ final class AnsiPatternHighlightTest extends TestCase
     public function test_the_caret_snippet_of_an_invalid_pattern_is_escaped(string $command): void
     {
         $pattern = "/\e]52;c;YQ==\x07[z-a]/";
-        $this->assertSame(
-            'preg_match(): Compilation failed: range out of order in character class at offset 16',
-            EngineProbe::warning($pattern),
-        );
+        // The offset PCRE2 names moved between releases (15 in 10.44, 16 in 10.49).
+        $this->assertStringStartsWith('preg_match(): Compilation failed: range out of order in character class', (string) EngineProbe::warning($pattern));
 
         [, $written] = $this->runRegex([$command, $pattern], false);
 

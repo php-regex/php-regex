@@ -15,6 +15,7 @@ namespace PHPRegex\Parser\Exception;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Printer\DisplayEscaper;
+use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Parser\Text\Utf8;
 
 /**
@@ -112,7 +113,7 @@ final class Snippet
         $offset = max(0, \strlen($indent) - \strlen($label));
         $before = '';
         $columns = 0;
-        $characters = mb_check_encoding($excerpt, 'UTF-8') ? mb_str_split($excerpt, 1, 'UTF-8') : str_split($excerpt);
+        $characters = mb_check_encoding($excerpt, 'UTF-8') ? mb_str_split($excerpt, 1, 'UTF-8') : Bytes::split($excerpt);
         foreach ($characters as $character) {
             if ($columns >= $offset) {
                 break;
