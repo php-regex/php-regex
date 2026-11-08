@@ -138,8 +138,10 @@ The @regex-target marker "php>=9.0" keeps no version the project is judged for (
 ```
 
 The marker text the message quotes is spelled in display form: a control
-character or a line break in a comment is written `\xHH` or `\n`, so it
-cannot lay out a line of its own in PHPStan's output.
+character or a line break in a comment is written `\xHH` or `\n`, and a `<`
+that would open a console tag, before a letter or `/`, is written `\x3C`, so
+the text can neither lay out a line of its own nor style PHPStan's output. A
+constraint operator such as `<9` stays as written.
 
 The target follows the rules of [`regex lint`](cli.md#target-php-and-pcre2): PHP
 7.2 and earlier ship PCRE1, which the library does not judge. A version below

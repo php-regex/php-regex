@@ -82,6 +82,18 @@ final class ErrorFactoryTest extends TestCase
         $this->assertError('The @regex-target-next-line marker "php>=9.0" keeps no version the project is judged for (PHP 8.2 to 8.4): the patterns it covers are not judged.', 'regex.target.empty', 6, 'Widen the marker to versions of the range, or remove the code it covers if it never runs there.', ErrorFactory::emptyMarker($empty, '8.2 to 8.4'));
     }
 
+    /**
+     * A console tag opens on "<" before a letter or "/": that "<" is spelled
+     * out, a constraint operator such as "<9" stays as written.
+     */
+    #[Test]
+    public function test_an_empty_marker_keeps_its_constraint_operators_readable(): void
+    {
+        $empty = new TargetMarker('@regex-target', 4, 1, 1, 'php>=8.1 <9 <b>', TargetConstraint::phpFrom(90000, null), null, 0);
+
+        $this->assertStringContainsString('marker "php>=8.1 <9 \\x3Cb>" keeps no version', ErrorFactory::emptyMarker($empty, '8.2 to 8.4')->getMessage());
+    }
+
     #[Test]
     public function test_malformed_marker_source_is_safe_to_display(): void
     {
@@ -91,7 +103,7 @@ final class ErrorFactoryTest extends TestCase
         $this->assertNull($markers[0]->constraint);
 
         $this->assertError(
-            'The @regex-target marker holds "php>=bad\\x1B[2J\\rforged\\x08\\x7F<error>failure</error>\\x{202E}", which names no PHP or PCRE2 version constraint: write "@regex-target php>=8.4", "@regex-target pcre>=10.43" or "@regex-target php>=8.4 pcre>=10.43".',
+            'The @regex-target marker holds "php>=bad\\x1B[2J\\rforged\\x08\\x7F\\x3Cerror>failure\\x3C/error>\\x{202E}", which names no PHP or PCRE2 version constraint: write "@regex-target php>=8.4", "@regex-target pcre>=10.43" or "@regex-target php>=8.4 pcre>=10.43".',
             'regex.target.invalid',
             2,
             'Write the versions the code runs on as a Composer constraint after "php", "pcre", or both.',
