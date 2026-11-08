@@ -14,24 +14,23 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\TestUtils;
 
 use PHPRegex\Tests\TestUtils\PropertyByteTablesWriter;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PropertyByteTablesWriterTest extends TestCase
 {
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_probes_use_a_fresh_private_directory_instead_of_planted_symlinks(): void
     {
-        if ('Windows' === \PHP_OS_FAMILY) {
-            $this->markTestSkipped('Requires POSIX executable files and symlinks.');
-        }
-
         $planted = sys_get_temp_dir().'/property-bytes-'.getmypid();
-        if (file_exists($planted) || is_link($planted)) {
-            $this->markTestSkipped('The legacy temporary path is already in use.');
-        }
+        $this->assertFalse(file_exists($planted) || is_link($planted), 'The path the probes used to share is free.');
 
         $fixture = sys_get_temp_dir().'/property-bytes-test-'.bin2hex(random_bytes(16));
         mkdir($fixture, 0o700);
         mkdir($planted, 0o700);
+
         try {
             file_put_contents($fixture.'/victim', 'unchanged');
             symlink($fixture.'/victim', $planted.'/input');
@@ -52,7 +51,11 @@ final class PropertyByteTablesWriterTest extends TestCase
 
             $matches = new \ReflectionMethod(PropertyByteTablesWriter::class, 'matches');
             $this->assertSame([''], $matches->invoke(null, $fixture.'/pcre2test', ['/a/']));
-            [$directory, $permissions, $input, $outputDirectory] = json_decode((string) file_get_contents($fixture.'/observed'), true, 512, \JSON_THROW_ON_ERROR);
+            $observed = json_decode((string) file_get_contents($fixture.'/observed'), true, 512, \JSON_THROW_ON_ERROR);
+            $this->assertIsArray($observed);
+            [$directory, $permissions, $input, $outputDirectory] = $observed;
+            $this->assertIsString($directory);
+            $this->assertIsString($input);
             $this->assertNotSame($planted, $directory);
             $this->assertSame(0o700, $permissions);
             $this->assertSame($directory, $outputDirectory);
