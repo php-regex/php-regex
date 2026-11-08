@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The search-cost replay counts under the backtrack and recursion limits of
+   the `ConfirmationOptions` given, not up to ten million steps under the
+   process's recursion limit; where they stop the count, or `ini_set()` is
+   disabled or refuses one, an exact witness is reported with `replayed: null`.
  * Where `ini_set()` refuses a PCRE limit (fixed by `php_admin_value`), the
    confirmation and the replay of a proof are skipped, their evidence
    `engine limits unavailable`, as where `ini_set()` is disabled: the refusal

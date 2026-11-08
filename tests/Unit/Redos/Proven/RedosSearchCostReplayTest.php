@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Redos\Proven;
 
 use PHPRegex\Redos\Backtrack\SearchCostReplayer;
+use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
@@ -35,6 +36,47 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosSearchCostReplayTest extends TestCase
 {
+    /**
+     * Under limits too low for the replay to finish its count, the witness
+     * stays reported, as the model reads it exactly, and "replayed" is
+     * null: the replay could not measure, it did not fail to reproduce.
+     * The engine settings are the caller's afterwards.
+     *
+     * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39, JIT off): on
+     * "ab" x 64 . "!c" the search matches nowhere under the default limits,
+     * and gives up at once under a backtrack or a recursion limit of 1.
+     */
+    #[Test]
+    #[DataProvider('provideRestrictivePolicies')]
+    public function test_confirmed_search_replay_respects_the_callers_engine_limits(ConfirmationOptions $options, string $setting, int $error): void
+    {
+        $subject = str_repeat('ab', 64).'!c';
+        $this->assertSame([0, \PREG_NO_ERROR], self::engine('/(*NO_JIT)(?:ab)+c/', $subject));
+        $this->assertSame([false, $error], self::engine('/(*NO_JIT)(?:ab)+c/', $subject, $setting));
+
+        $before = [ini_get('pcre.backtrack_limit'), ini_get('pcre.recursion_limit')];
+        $analyzer = new RedosAnalyzer();
+        $control = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $cost = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, $options)->searchCost;
+
+        $this->assertInstanceOf(RedosSearchCost::class, $control);
+        $this->assertTrue($control->replayed);
+        $this->assertSame(['prefix' => '', 'run' => 'ab', 'breaker' => '!c'], $control->toArray()['witness']);
+        $this->assertInstanceOf(RedosSearchCost::class, $cost);
+        $this->assertNull($cost->replayed);
+        $this->assertSame($control->toArray()['witness'], $cost->toArray()['witness']);
+        $this->assertSame($before, [ini_get('pcre.backtrack_limit'), ini_get('pcre.recursion_limit')]);
+    }
+
+    /**
+     * @return iterable<string, array{options: ConfirmationOptions, setting: string, error: int}>
+     */
+    public static function provideRestrictivePolicies(): iterable
+    {
+        yield 'backtracking' => ['options' => new ConfirmationOptions(backtrackLimit: 1), 'setting' => 'pcre.backtrack_limit', 'error' => \PREG_BACKTRACK_LIMIT_ERROR];
+        yield 'recursion' => ['options' => new ConfirmationOptions(recursionLimit: 1), 'setting' => 'pcre.recursion_limit', 'error' => \PREG_RECURSION_LIMIT_ERROR];
+    }
+
     /**
      * The step replay counts the attempts inside the run after the prefix,
      * with the breaker holding the last required code unit, and through a
@@ -250,5 +292,105 @@ final class RedosSearchCostReplayTest extends TestCase
         $this->assertTrue($cost->replayed);
         $this->assertFalse((new \ReflectionClass(RedosSearchCost::class))->hasProperty('jitLinear'));
         $this->assertSame([], LibrarySource::functionCalls(LibrarySource::files()['src/Redos/Backtrack/SearchCostReplayer.php'], '/^preg_/'));
+    }
+
+    /**
+     * The limits stop the replay only through the search on the witness:
+     * PCRE2 counts the backtrack limit per attempt, and each attempt the
+     * replay pins is one the search finished. At the least limit the search
+     * needs the replay confirms; one below, the search gives up and the
+     * replay is not made.
+     *
+     * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39): the counted
+     * search on "ab" x 256 . "!c" finishes at a backtrack limit of 258 and
+     * gives up at 257.
+     */
+    #[Test]
+    public function test_the_least_limit_the_search_needs_lets_every_pinned_attempt_finish(): void
+    {
+        $counted = '/(*NO_JIT)(*NO_AUTO_POSSESS)(?:ab)+c/';
+        $subject = str_repeat('ab', 256).'!c';
+        $this->assertSame([0, \PREG_NO_ERROR], self::engine($counted, $subject, 'pcre.backtrack_limit', '258'));
+        $this->assertSame([false, \PREG_BACKTRACK_LIMIT_ERROR], self::engine($counted, $subject, 'pcre.backtrack_limit', '257'));
+
+        $analyzer = new RedosAnalyzer();
+        $enough = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(backtrackLimit: 258))->searchCost;
+        $short = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(backtrackLimit: 257))->searchCost;
+
+        $this->assertInstanceOf(RedosSearchCost::class, $enough);
+        $this->assertTrue($enough->replayed);
+        $this->assertInstanceOf(RedosSearchCost::class, $short);
+        $this->assertNull($short->replayed);
+    }
+
+    /**
+     * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39): the counted
+     * search on "ab" x 256 . "!c" finishes at a recursion limit of 258 and
+     * gives up at 257, and the replay follows it as for the backtrack limit.
+     */
+    #[Test]
+    public function test_the_least_recursion_limit_the_search_needs_lets_the_replay_confirm(): void
+    {
+        $counted = '/(*NO_JIT)(*NO_AUTO_POSSESS)(?:ab)+c/';
+        $subject = str_repeat('ab', 256).'!c';
+        $this->assertSame([0, \PREG_NO_ERROR], self::engine($counted, $subject, 'pcre.recursion_limit', '258'));
+        $this->assertSame([false, \PREG_RECURSION_LIMIT_ERROR], self::engine($counted, $subject, 'pcre.recursion_limit', '257'));
+
+        $analyzer = new RedosAnalyzer();
+        $enough = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(recursionLimit: 258))->searchCost;
+        $short = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(recursionLimit: 257))->searchCost;
+
+        $this->assertInstanceOf(RedosSearchCost::class, $enough);
+        $this->assertTrue($enough->replayed);
+        $this->assertInstanceOf(RedosSearchCost::class, $short);
+        $this->assertNull($short->replayed);
+    }
+
+    /**
+     * Where ini_set() is disabled the engine runs nothing under the limits
+     * the replay asks for: the witness stays, as the model reads it exactly,
+     * and "replayed" is null, not a replay that failed to reproduce.
+     */
+    #[Test]
+    public function test_the_replay_is_not_made_where_ini_set_is_disabled(): void
+    {
+        $script = 'require '.var_export(\dirname(__DIR__, 4).'/vendor/autoload.php', true).';'
+            .'$cost = (new \PHPRegex\Redos\RedosAnalyzer())->analyze("/(?:ab)+c/", \PHPRegex\Redos\RedosSeverity::Low, \PHPRegex\Redos\RedosMode::Confirmed)->searchCost;'
+            .'echo json_encode(["ini_set" => function_exists("ini_set"), "cost" => $cost?->toArray()]);';
+        $process = proc_open(
+            [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'disable_functions=ini_set', '-r', $script],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+        );
+        $this->assertIsResource($process);
+        $output = (string) stream_get_contents($pipes[1]);
+        $errors = (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $this->assertSame(0, proc_close($process), $errors.$output);
+
+        $this->assertSame(
+            ['ini_set' => false, 'cost' => ['degree' => 2, 'witness' => ['prefix' => '', 'run' => 'ab', 'breaker' => '!c'], 'replayed' => null]],
+            json_decode($output, true),
+        );
+    }
+
+    /**
+     * What preg_match() answers, with the setting at the value when one is
+     * named, and its last error; the setting is put back.
+     *
+     * @return array{int|false, int}
+     */
+    private static function engine(string $pattern, string $subject, ?string $setting = null, string $value = '1'): array
+    {
+        $previous = null === $setting ? false : ini_set($setting, $value);
+
+        try {
+            return [@preg_match($pattern, $subject), preg_last_error()];
+        } finally {
+            if (null !== $setting && false !== $previous) {
+                ini_set($setting, $previous);
+            }
+        }
     }
 }
