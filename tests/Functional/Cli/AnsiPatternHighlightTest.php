@@ -136,6 +136,67 @@ final class AnsiPatternHighlightTest extends TestCase
     }
 
     /**
+     * A pattern past the library's length limit is no verdict: its error
+     * and the hint each take a line of their own, indented.
+     */
+    #[Test]
+    public function test_validate_writes_the_limit_error_and_its_hint_on_lines_of_their_own(): void
+    {
+        $pattern = '/a(?#'.str_repeat('x', 100_000)."\e)/";
+        $this->assertSame(1, preg_match($pattern, 'a'), 'The limit is the library\'s, not PCRE\'s.');
+
+        [$code, $written] = $this->runRegex(['validate', $pattern], false);
+
+        $this->assertSame(1, $code);
+        $this->assertMatchesRegularExpression('/\n  Regex pattern exceeds the maximum length of 100000 bytes[^\n]*\n  A limit of this library, not of PCRE[^\n]*\n/', $written);
+    }
+
+    #[Test]
+    public function test_analyze_ends_the_caret_line(): void
+    {
+        [, $written] = $this->runRegex(['analyze', '/[z-a]/'], false);
+
+        $this->assertMatchesRegularExpression('/\nLine 1: \[z-a\]\n {9,}\^\n  \S/', $written);
+    }
+
+    #[Test]
+    public function test_parse_reports_the_recompiled_pattern_spelled_out(): void
+    {
+        [, $written] = $this->runRegex(['parse', "/a\e]0;t\x07b/"], false);
+
+        $this->assertStringContainsString("Parse: OK\n", $written);
+        $this->assertStringContainsString('Recompiled: /a\x1B]0;t\x07b/', $written);
+    }
+
+    /**
+     * Parse colours the pattern on a terminal unless spelling it out changed
+     * it; without colours it is echoed as spelled.
+     */
+    #[Test]
+    #[DataProvider('provideParseEchoes')]
+    public function test_parse_colours_only_a_pattern_written_as_it_reads(string $pattern, bool $terminal, bool $coloured, string $echoed): void
+    {
+        [, $written] = $this->runRegex(['parse', $pattern], $terminal);
+        // The echo runs from the label to the parse status, on the label's
+        // line without colours and on the next one with them.
+        $this->assertSame(1, preg_match('/Pattern(.*?)Parse/s', $written, $echo));
+
+        $this->assertSame($coloured, str_contains($echo[1], "\e[38;2;"), $echo[1]);
+        $this->assertStringContainsString($echoed, (string) preg_replace('/\x1B\[[0-9;]*m/', '', $echo[1]));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, terminal: bool, coloured: bool, echoed: string}>
+     */
+    public static function provideParseEchoes(): iterable
+    {
+        yield 'a terminal, a plain pattern' => ['pattern' => '/a+/', 'terminal' => true, 'coloured' => true, 'echoed' => 'a+'];
+        yield 'a terminal, a control' => ['pattern' => "/a\e/", 'terminal' => true, 'coloured' => false, 'echoed' => '/a\x1B/'];
+        yield 'no colours, a plain pattern' => ['pattern' => '/a+/', 'terminal' => false, 'coloured' => false, 'echoed' => '/a+/'];
+        yield 'no colours, a control' => ['pattern' => "/a\e/", 'terminal' => false, 'coloured' => false, 'echoed' => '/a\x1B/'];
+    }
+
+    /**
      * Explain echoes the pattern beside its banner alone, which a run
      * without colours leaves out.
      *
