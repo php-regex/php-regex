@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 use Illuminate\Support\Facades\Artisan;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\Newlines;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,10 +28,15 @@ use Symfony\Component\Console\Output\BufferedOutput;
  */
 final class ExplainCommandRedosTest extends LaravelTestCase
 {
+    /**
+     * @param list<string> $sections the labels the fixture brings into the report
+     */
     #[Test]
     #[DataProvider('provideHtmlPatterns')]
-    public function test_html_output_encodes_pattern_derived_text(string $pattern, int $status): void
+    public function test_html_output_encodes_pattern_derived_text(string $pattern, int $status, array $sections): void
     {
+        $this->assertSame(0 === $status, EngineProbe::compiles($pattern));
+
         foreach ([false, true] as $decorated) {
             foreach ([false, true] as $highlight) {
                 $output = new BufferedOutput(decorated: $decorated);
@@ -43,23 +49,27 @@ final class ExplainCommandRedosTest extends LaravelTestCase
 
                 $this->assertStringNotContainsString('<img', $html);
                 $this->assertStringContainsString('&lt;img', $html);
+                foreach ($sections as $section) {
+                    $this->assertStringContainsString($section, $html);
+                }
                 if (0 === $status) {
                     $this->assertStringContainsString(htmlspecialchars($pattern, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'), $html);
                     $this->assertStringContainsString('<div class="regex-explain">', $html);
-                    $this->assertStringContainsString('Sample Match:', $html);
                 }
             }
         }
     }
 
     /**
-     * @return iterable<string, array{pattern: string, status: int}>
+     * @return iterable<string, array{pattern: string, status: int, sections: list<string>}>
      */
     public static function provideHtmlPatterns(): iterable
     {
-        yield 'literal and sample' => ['pattern' => '#<img src=x onerror=alert`1`>&"#', 'status' => 0];
-        yield 'optimization and security warning' => ['pattern' => '#(<img src=x onerror=alert`1`>)(a+)+$#', 'status' => 0];
-        yield 'invalid pattern diagnostic' => ['pattern' => '#<img src=x onerror=alert`1`>[#', 'status' => 1];
+        yield 'literal and sample' => ['pattern' => '#<img src=x onerror=alert`1`>&"#', 'status' => 0, 'sections' => ['Sample Match:']];
+        // The optimizer writes [0-9] as \d, so the suggestion quotes the pattern twice.
+        yield 'optimization' => ['pattern' => '#<img src=x onerror=alert`1`>[0-9]#', 'status' => 0, 'sections' => ['Optimization Suggestion:', '&lt;img src=x onerror=alert`1`&gt;\\d']];
+        yield 'security warning' => ['pattern' => '#(<img src=x onerror=alert`1`>)(a+)+$#', 'status' => 0, 'sections' => ['Security Warning:']];
+        yield 'invalid pattern diagnostic' => ['pattern' => '#<img src=x onerror=alert`1`>[#', 'status' => 1, 'sections' => ['Invalid regex pattern:']];
     }
 
     #[Test]

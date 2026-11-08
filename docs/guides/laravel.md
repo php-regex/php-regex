@@ -398,6 +398,12 @@ heuristics judge, such as one with a backreference, shows `Potential
 backtracking (heuristic)` and no attack. The [ReDoS guide](redos.md)
 explains each verdict.
 
+With `--format=html` the explanation is HTML, and every text the report
+takes from the pattern, the pattern itself, the optimization, the security
+warning, the lint issues, the sample and an error, is HTML-encoded:
+`/<b>/` is printed `/&lt;b&gt;/`, so the page that shows the report never
+renders a tag the pattern holds. Highlighting is for the console format only.
+
 ## Upgrading from 1.x
 
 2.0 renames or removes three keys — and the `REGEX_PARSER_IDE` env var becomes
