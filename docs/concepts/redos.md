@@ -3,7 +3,7 @@ description: "Why backtracking blows up: ambiguity, witnesses and the proof mode
 ---
 # ReDoS Deep Dive
 
-**ReDoS** (Regular Expression Denial of Service) is a vulnerability where a crafted input makes a backtracking regex engine do exponential or high polynomial work before it gives up. In PHP, that work usually ends in a silent failure: `preg_match()` returns `false` once PCRE's backtrack limit is exhausted.
+**ReDoS** (Regular Expression Denial of Service) is a vulnerability where a crafted input makes a backtracking regex engine - one that tries one way to match and, when it fails, goes back to its last choice to try the next - do exponential or high polynomial work before it gives up. In PHP, that work usually ends in a silent failure: `preg_match()` returns `false` once PCRE's backtrack limit is exhausted.
 
 ## Simple explanation
 
@@ -48,10 +48,10 @@ Each pattern below was run through `RedosAnalyzer` and, for the vulnerable ones,
 
 ## How PHPRegex detects ReDoS
 
-PHPRegex reads the pattern, and runs it only to check a witness through a lookaround on a few short inputs (or in [confirmed mode](../guides/redos.md#confirmed-mode)):
+PHPRegex reads the pattern, and runs it only to check a **witness** through a lookaround on a few short inputs (or in [confirmed mode](../guides/redos.md#confirmed-mode)). A witness is the input built to drive the worst case: a prefix that reaches the risky part, a pump repeated as the input grows, and a suffix that makes the attempt fail. Step by step:
 
 1. The lexer and parser build a `RegexNode` AST.
-2. `RedosAnalyzer` builds from it a **prioritized NFA**: an automaton whose ε-transitions are ordered as PCRE tries them. Atomic groups, possessive quantifiers and atomic lookaround bodies are separate automata, analysed on their own and seen from outside as one step. A lookaround's body runs again each time the attempt passes it, so a proof of a linear attempt also builds the pattern with its lookaheads read in place, and refuses the proof where a loop reads into a loop of a lookahead's body: `/^(?:(?=a+)a)+$/` reads the run again from each position, quadratic.
+2. `RedosAnalyzer` builds from it a **prioritized NFA**: a machine - an *automaton* - that lists every way the pattern can be tried, each choice in the order PCRE tries it (NFA stands for nondeterministic finite automaton; *prioritized* because its ε-transitions, the moves that read no character, carry exactly PCRE's order). Atomic groups, possessive quantifiers and atomic lookaround bodies are separate automata, analysed on their own and seen from outside as one step. A lookaround's body runs again each time the attempt passes it, so a proof of a linear attempt also builds the pattern with its lookaheads read in place, and refuses the proof where a loop reads into a loop of a lookahead's body: `/^(?:(?=a+)a)+$/` reads the run again from each position, quadratic.
 3. It looks for **ambiguity** in that automaton, after the method of Weideman et al. ("Analyzing Matching Time Behavior of Backtracking Regular Expression Matchers by Using Ambiguous NFA", 2016):
    - a state with two different loops reading the same word means **exponential** cost;
    - a chain of k states, each looping on a word and reaching the next on that same word, means **polynomial** cost of degree k.
@@ -60,7 +60,15 @@ PHPRegex reads the pattern, and runs it only to check a witness through a lookar
 
 A pattern is `safe (proven)` only when the automaton holds no ambiguity at all, and no lookaround reads a run again at each step of a loop (`abstractions` then lists `lookaround at offset N read again at each step of a loop`). An ambiguity for which no witness can be built is not taken as safe: the heuristics decide, and `abstractions` lists `ambiguity without witness at offset N`.
 
-The model covers characters and classes (exact sets under `/u` and `/i`, computed from the running PCRE2), alternation, groups, every quantifier, atomic groups, possessive quantifiers, atomic lookarounds, anchors and word boundaries. It reads inline options as PCRE does: an option set inside one alternative also holds in the alternatives after it, `r` (caseless restrict) and the ASCII options (`a`, `aD`, `aS`, `aW`, `aP`, `aT`) are read per scope, `(?^)` clears `i`, `m`, `n`, `s`, `x`, `xx` and `r` but keeps `U` and the ASCII options, `xx` drops a class's spaces and tabs, and `\b` under `aW` reads the ASCII `\w`. A leading `(*UCP)` is read too, every class asked of the engine under it. Backreferences, conditionals, recursion and subroutine calls, backtracking control verbs, the other options a pattern opens with (`(*UTF)`, `(*CR)`, …, and `(*UCP)` beside one of them), callouts, `\X`, `\R`, non-atomic lookarounds such as `(*napla:…)`, `\b` and `\B` under two different ASCII scopes in one pattern (`(?aW:\b)…\b`), and a bounded repeat whose body can match the empty string are outside it: there, as for a pattern over the [analysis budget](../guides/redos.md#outside-the-model-heuristics-and-budget), the structural heuristics of `RedosProfiler` decide:
+The model covers characters and classes (exact sets under `/u` and `/i`, computed from the running PCRE2), alternation, groups, every quantifier, atomic groups, possessive quantifiers, atomic lookarounds, anchors and word boundaries. Inline options it reads exactly as PCRE does, rule by rule:
+
+- an option set inside one alternative also holds in the alternatives after it;
+- `r` (caseless restrict) and the ASCII options (`a`, `aD`, `aS`, `aW`, `aP`, `aT`) are read per scope;
+- `(?^)` clears `i`, `m`, `n`, `s`, `x`, `xx` and `r`, and keeps `U` and the ASCII options;
+- `xx` drops a class's spaces and tabs;
+- `\b` under `aW` reads the ASCII `\w`.
+
+Each rule, with worked patterns, sits in the [ReDoS guide](../guides/redos.md#the-guarantee). A leading `(*UCP)` is read too, every class asked of the engine under it. Backreferences, conditionals, recursion and subroutine calls, backtracking control verbs, the other options a pattern opens with (`(*UTF)`, `(*CR)`, …, and `(*UCP)` beside one of them), callouts, `\X`, `\R`, non-atomic lookarounds such as `(*napla:…)`, `\b` and `\B` under two different ASCII scopes in one pattern (`(?aW:\b)…\b`), and a bounded repeat whose body can match the empty string are outside it: there, as for a pattern over the [analysis budget](../guides/redos.md#outside-the-model-heuristics-and-budget), the structural heuristics of `RedosProfiler` decide:
 
 - star height: nested unbounded quantifiers;
 - overlapping alternatives inside a repetition, through `CharSetAnalyzer`;
