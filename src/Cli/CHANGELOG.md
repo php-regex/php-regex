@@ -10,6 +10,9 @@ CHANGELOG
    control, a hidden character or an invalid byte spelled out in its own
    mode, and its caret line escaped with the caret still under the fault: an
    escape sequence in a pattern no longer reaches the terminal.
+ * `regex highlight` spells a control character of the pattern as an escape,
+   coloured or not, so a pattern can no longer send the terminal a sequence
+   of its own; without colours the pattern is spelled in its own mode.
  * `regex lint` writes the warnings and errors it prints on stderr in display
    form: a line break, a tab or a control character quoted from the
    configuration is `\xHH`, so a value can no longer start a line of its own

@@ -394,6 +394,12 @@ Nothing is printed: the SVG goes to the file.
 vendor/bin/regex highlight '/^[a-z]+@[a-z]+\.[a-z]+$/i'
 ```
 
+A control character in the pattern, a comment's included, never reaches the
+terminal raw: coloured, each token spells it as an escape (`\x1B`, `\r`,
+`\x{202E}`); without colours the whole pattern is spelled in its mode, per
+byte without `u`, and a backslash before a raw control stays one escape
+(`/a\x1Bb/`).
+
 **HTML output:**
 
 ```bash
