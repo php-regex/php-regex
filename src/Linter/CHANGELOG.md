@@ -6,8 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
- * The lock file the forked workers of `--jobs` share is created readable and
-   writable by its owner alone (`0600`), whatever the umask.
+ * The lock file the forked workers of `--jobs` share is created with no
+   permission for anyone but its owner (`0600` under the usual umask): another
+   user can no longer read or replace it.
  * An editor link is left out when its address is not valid UTF-8 or holds a
    control character or a `>`, in the console report as in the Symfony and
    Laravel `regex:lint` output: an `ide` template could otherwise send the
