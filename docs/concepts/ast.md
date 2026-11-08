@@ -26,7 +26,7 @@ RegexNode
 │   └── AnchorNode ("$")
 ```
 
-The parser emits **one `LiteralNode` per character**: the text `hello` is five nodes, and runs of literals are never merged. This is a structural invariant the whole library builds on - the literal extractor, the length calculator and any visitor you write all see `h`, `e`, `l`, `l`, `o` as separate, position-carrying nodes.
+The parser emits **one `LiteralNode` per character**: the text `hello` is five nodes, never one merged node. Everything built on the tree relies on that rule - error positions, length calculations, and any [visitor](visitors.md) you write (a visitor is a class that walks the tree node by node) all see `h`, `e`, `l`, `l`, `o` as separate, position-carrying nodes.
 
 ## Why use an AST?
 
@@ -113,7 +113,7 @@ try {
 }
 ```
 
-Catch `RegexException`, the shared parent of every parse failure: an unclosed character class is reported by the lexer (`LexerException`), a missing closing delimiter by the parser (`ParserException`) - catching only one of the two lets the other escape. Both carry `getPosition()` and `getSnippet()`. The sample above prints:
+Catch `RegexException`, the shared parent of every parse failure: an unclosed character class is reported by the lexer (`LexerException`), a missing closing delimiter by the parser (`ParserException`) - catching only one of the two lets the other escape. Both expose the same two public properties, `->position` (a nullable `int`, the offset of the failure in the pattern) and `->snippet` (a nullable `string`, the offending text with a caret under it); each may be `null` when the failure carries no single location. The sample above reads them and prints:
 
 ```
 Error at position: 9
