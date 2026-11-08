@@ -10,6 +10,10 @@ CHANGELOG
    control character or a `>`, in the console report as in the Symfony and
    Laravel `regex:lint` output: an `ide` template could otherwise send the
    terminal escape sequences of its own through the OSC 8 hyperlink.
+ * Looking for the parameters marked as patterns reads a file once, even one
+   holding thousands of unclosed declarations or attributes: 500 lines of
+   `function f(#[Language('SQL',` took about 20 seconds, they take
+   milliseconds.
  * The character-set overlap of an alternation is no longer reported for two
    branches whose leading literal texts tell them apart,
    `associative-array|array`: the second character already decides which
