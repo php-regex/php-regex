@@ -42,7 +42,7 @@ use PHPRegex\Toolkit\Regex;
  * @phpstan-type CodeAction RewriteAction|array{
  *     title: string,
  *     kind: 'quickfix',
- *     diagnostics: list<array{code?: int|string|null}>,
+ *     diagnostics: list<array{code?: int|string|null, range?: Range}>,
  *     isPreferred: true,
  *     edit: array{changes: array<string, list<array{range: Range, newText: string}>>},
  * }
@@ -96,7 +96,7 @@ final class CodeActionHandler
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
         /** @var Range|null $range */
         $range = isset($params['range']) && \is_array($params['range']) ? $params['range'] : null;
-        /** @var array{diagnostics?: list<array{code?: int|string|null}>} $context */
+        /** @var array{diagnostics?: list<array{code?: int|string|null, range?: Range}>} $context */
         $context = isset($params['context']) && \is_array($params['context']) ? $params['context'] : [];
 
         if (null === $message->id || null === $uri || null === $range) {
@@ -180,19 +180,17 @@ final class CodeActionHandler
      * avoids scanning every diagnostic for every action. Diagnostics may
      * cover a node inside the literal rather than the whole literal.
      *
-     * @param list<RegexOccurrence> $occurrences
+     * @param list<RegexOccurrence>                              $occurrences
+     * @param list<array{code?: int|string|null, range?: Range}> $diagnostics
      *
-     * @return array<int, list<array{code?: int|string|null}>>
+     * @return array<int, list<array{code?: int|string|null, range?: Range}>>
      */
-    private function unicodeDiagnosticsByOccurrence(array $occurrences, mixed $diagnostics): array
+    private function unicodeDiagnosticsByOccurrence(array $occurrences, array $diagnostics): array
     {
         $indexed = [];
-        foreach (\is_array($diagnostics) ? $diagnostics : [] as $diagnostic) {
-            if (!\is_array($diagnostic) || !\in_array($diagnostic['code'] ?? null, self::UNICODE_LINT_IDS, true)) {
-                continue;
-            }
+        foreach ($diagnostics as $diagnostic) {
             $range = $diagnostic['range'] ?? null;
-            if (!\is_array($range) || !self::isPosition($range['start'] ?? null) || !self::isPosition($range['end'] ?? null)) {
+            if (null === $range || !\in_array($diagnostic['code'] ?? null, self::UNICODE_LINT_IDS, true)) {
                 continue;
             }
             $start = [$range['start']['line'], $range['start']['character']];
@@ -225,19 +223,9 @@ final class CodeActionHandler
     }
 
     /**
-     * @phpstan-assert-if-true Position $position
-     */
-    private static function isPosition(mixed $position): bool
-    {
-        return \is_array($position)
-            && \is_int($position['line'] ?? null) && $position['line'] >= 0
-            && \is_int($position['character'] ?? null) && $position['character'] >= 0;
-    }
-
-    /**
      * Get code actions for fixing Unicode lint issues.
      *
-     * @param list<array{code?: int|string|null}> $diagnostics
+     * @param list<array{code?: int|string|null, range?: Range}> $diagnostics
      *
      * @return list<CodeAction>
      */
