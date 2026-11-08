@@ -242,7 +242,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         // Only the whitespace immediately before this literal (or its assignment)
         // is visited; earlier literals stop the walk without copying a prefix.
         while ($offset >= 0 && str_contains(" \t\n\r\0\x0B", $content[$offset])) {
-            --$offset;
+            $offset--;
         }
 
         return $offset;
