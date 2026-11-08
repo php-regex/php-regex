@@ -19,6 +19,7 @@ use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetStore;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,6 +33,7 @@ final class CacheOwnershipUnavailableTest extends TestCase
      */
     #[Test]
     #[RequiresOperatingSystem('Linux|Darwin')]
+    #[RequiresFunction('posix_geteuid')]
     public function test_existing_caches_are_ignored_when_another_user_owns_them(): void
     {
         $root = sys_get_temp_dir().'/regex-cache-owner-'.bin2hex(random_bytes(6));
