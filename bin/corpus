@@ -449,7 +449,8 @@ function isSafeRepoDestination(string $relPath, string $corpusDir): bool
         }
 
         $resolved = realpath($path);
-        if (false === $resolved || !str_starts_with($resolved, $prefix) || !is_dir($resolved)) {
+        // A component may resolve to the corpus root itself, or below it.
+        if (false === $resolved || ($resolved !== $root && !str_starts_with($resolved, $prefix)) || !is_dir($resolved)) {
             return false;
         }
     }

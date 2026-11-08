@@ -138,6 +138,25 @@ final class CorpusScriptTest extends TestCase
     }
 
     #[Test]
+    #[TestWith(['install'])]
+    #[TestWith(['update'])]
+    public function test_creation_accepts_an_internal_symlink_to_the_corpus_root(string $command): void
+    {
+        mkdir($this->root.'/corpus', 0o777, true);
+        symlink($this->root.'/corpus', $this->root.'/corpus/self');
+        $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
+        $this->assertIsArray($manifest);
+        $this->assertIsArray($manifest['repositories'] ?? null);
+        $manifest['repositories'] = ['self/repo' => $manifest['repositories']['src']];
+        file_put_contents($this->root.'/corpus.json', json_encode($manifest));
+
+        [$code, $output] = $this->script('update' === $command ? ['update', '--clone-only'] : ['install']);
+
+        $this->assertSame(0, $code, $output);
+        $this->assertFileExists($this->root.'/corpus/repo/pattern.php');
+    }
+
+    #[Test]
     public function test_install_ignores_how_far_the_origin_moved(): void
     {
         $this->script(['install']);
