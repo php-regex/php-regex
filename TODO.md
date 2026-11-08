@@ -175,9 +175,49 @@ as `CallTypes::quote` does.
   `docs/guides/cli.md`; without the secret a release goes out unsigned.
 - #238: the language server reads a constant of another file and reports
   its pattern at the argument naming it.
+- #239 to #325, the resource and semantic fixes: merge first the ones
+  that change what a pattern means or the verdict given on it: #294 and
+  #295 (the Modernizer drops a literal backslash and unwraps
+  `^(?:a|b)$` into `^a|b$`), #317 and #321 (the JavaScript and HTML
+  targets accept subjects PCRE refuses), #319 (a ReDoS rated low under
+  `U` that the engine cannot finish). Pairs that touch the same lines and
+  conflict when the second lands: #304 and #306 (`ClassSetStore::isTrusted()`),
+  #244 and #284 (lookaround body options), #251 and #282
+  (`TextExplainer`), #294 and #295 (`ModernizerTest`). Each pull request
+  that refreshes `RegexParser::CACHE_VERSION` needs it computed again
+  after the one merged before it.
+- Closed with a reason in their thread, to close on GitHub: #242 (#280
+  carries it), #245, #246, #252 (#251 carries it), #256, #258, #260,
+  #270, #283 (#285 carries it), #315, #324, #325.
 
 
 ## Open questions
+
+- `ForkedWorkerPoolTest::test_run_ends_a_busy_worker_whatever_the_parent_does_with_sigterm`
+  measures wall time against 3 s and fails on a loaded runner (3.10 s and
+  3.94 s on PHP 8.6 cells, 2026-11-08, on #294 and #319, which do not touch
+  the worker pool). Bound what the worker did, not the clock, or give the
+  ceiling the margin the macOS runner needs.
+
+- Five real costs whose proposed bound refuses legitimate input, each
+  answered in its pull request with the fix that keeps the answers: the
+  ReDoS repair tries every quantifier (#249; try the ones the analysis
+  blames), alternation overlaps compare every pair (#254; bucket the
+  branches by their first characters), language counting multiplies every
+  range at every length (#273; sum the moves per target), nested
+  alphabetic assertion bodies are copied at each level (#276; read them in
+  place), and the replacement bound counts every byte as a reference
+  (#309; count the references apart). Whether to rework these branches or
+  write the fixes anew is open.
+- Without `u`, every set that leaves characters out (the dot, `[^a]`,
+  `\D`, `\W`, `\S`) takes one byte in PCRE and one character in the
+  JavaScript, `html-pattern` and Python output: `/^\S$/` fails U+00A0,
+  two bytes, where `/^[^\t-\r ]$/` matches it in JavaScript (raised on
+  #318, documented in the API reference). Whether to refuse those sets for
+  the character targets, or advise `u`, is open.
+- Capture shapes still double with each level of a `(?(DEFINE)` call
+  graph after #255 (8.7 s at twenty levels): another visitor walks the
+  calls again.
 
 - The Psalm and PHPStan bridges require `regex-linter` whole, for the
   target resolution and the PHP-source helpers they import. Those need a

@@ -169,7 +169,7 @@ ReDoS analysis defaults to **theoretical** mode: the pattern is read, never run.
 - a **heuristic** verdict is run on inputs of growing length: a run of a character the culprit starts with, then one it cannot take. A risk that needs another input, a backreference repeating what a group read or two alternatives sharing a prefix, is not reproduced on it: confirmed mode drops it where theoretical mode warns. Each length runs `iterations` times and stops when their average passes `timeoutMs`; a call already running is never cut, the PCRE limits bound it.
 
 When the running PHP cannot set the limits of the replay (`ini_set()` in
-`disable_functions`), nothing is replayed: the verdict keeps its severity and
+`disable_functions`, or a limit fixed by `php_admin_value`), nothing is replayed: the verdict keeps its severity and
 its proof, `replayed` is `null`, and the confirmation's evidence reads
 `engine limits unavailable`. A proven exponential pattern is still reported
 at its severity, so it cannot slip under a threshold. A heuristic verdict
@@ -233,7 +233,7 @@ echo $analysis->confirmation->samples[0]->inputLength, "\n"; // 18
 echo $analysis->confirmation->samples[0]->pregError, "\n";   // Backtrack limit exhausted
 ```
 
-Only a verdict the engine reproduced, or a proven one it could not replay because `ini_set()` is disabled, at `high` or above, is an error: it makes `analyze`, `debug` and `lint` exit with 1. A theoretical verdict is a warning, whatever its severity, so no build turns red from a theoretical verdict, nor from one the engine ran without reproducing it (a `lint` run still fails on a pattern that does not compile, or on a lint rule of error severity).
+Only a verdict the engine reproduced, or a proven one it could not replay because `ini_set()` is disabled or refuses a limit, at `high` or above, is an error: it makes `analyze`, `debug` and `lint` exit with 1. A theoretical verdict is a warning, whatever its severity, so no build turns red from a theoretical verdict, nor from one the engine ran without reproducing it (a `lint` run still fails on a pattern that does not compile, or on a lint rule of error severity).
 
 ## Severity and thresholds
 
@@ -272,7 +272,7 @@ The result is `RedosAnalysis::$searchCost`, a `RedosSearchCost` (`degree` 2, the
          ↳ Attack: " " x n . "!". pcre.backtrack_limit does not stop it: the limit counts each attempt apart. preg_match_all(), preg_replace() and preg_split() retry the same way. Anchor the pattern when every match starts at a known place (^, \A, \G or the A modifier), or bound the length of the run.
 ```
 
-In confirmed mode, when the threshold is `medium` or lower, the witness is replayed without the JIT: `replayed` says whether an attempt started further from the end of the run takes more steps. The JIT is not measured: some pattern and subject pairs crash PHP under it (PCRE2 10.40 to 10.49), so the analysis never runs your pattern with it; the table above is how it fared on these probes, not a verdict. The step counter sees nothing inside an atomic or possessive repeat of a single character set, such as `/a++b/`: that witness, which the model reads exactly, stays reported with `replayed: false`. A witness that crosses a lookaround is reported only once that replay confirms it, and a pattern holding `\G`, which holds wherever the replay pins an attempt, is never confirmed that way.
+In confirmed mode, when the threshold is `medium` or lower, the witness is replayed without the JIT: `replayed` says whether an attempt started further from the end of the run takes more steps. The JIT is not measured: some pattern and subject pairs crash PHP under it (PCRE2 10.40 to 10.49), so the analysis never runs your pattern with it; the table above is how it fared on these probes, not a verdict. The step counter sees nothing inside an atomic or possessive repeat of a single character set, such as `/a++b/`: that witness, which the model reads exactly, stays reported with `replayed: false`. A witness that crosses a lookaround is reported only once that replay confirms it, and a pattern holding `\G`, which holds wherever the replay pins an attempt, is never confirmed that way. The replay counts under the `backtrackLimit` and `recursionLimit` of the `ConfirmationOptions` you pass, and leaves your settings as it found them: where those limits stop the count before it ends, or `ini_set()` is disabled, a witness the model reads exactly stays reported with `replayed: null`, and one that crosses a lookaround, which needs the replay, is not reported.
 
 ## Outside the model: heuristics and budget
 
