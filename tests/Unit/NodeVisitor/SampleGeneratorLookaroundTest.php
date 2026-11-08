@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class SampleGeneratorLookaroundTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[DataProvider('provideExcessiveLookaheads')]
     public function test_sibling_lookaheads_are_bounded(int $count, string $limit, bool $checked): void
@@ -34,7 +37,7 @@ final class SampleGeneratorLookaroundTest extends TestCase
         $pattern = '/'.str_repeat('(?=a)', $count).'a/';
         $generator = new SampleGenerator();
         $this->expectException(SampleGenerationException::class);
-        $this->expectExceptionMessage($limit);
+        $this->expectExceptionMessageIsOrContains($limit);
 
         if ($checked) {
             $generator->generate($pattern);
@@ -43,11 +46,15 @@ final class SampleGeneratorLookaroundTest extends TestCase
         }
     }
 
+    /**
+     * @return iterable<string, array{count: int, limit: string, checked: bool}>
+     */
     public static function provideExcessiveLookaheads(): iterable
     {
         foreach ([false, true] as $checked) {
-            yield [200, 'sequence depth', $checked];
-            yield [400, 'sequence work', $checked];
+            $entry = $checked ? 'generate' : 'visitor';
+            yield 'depth, '.$entry => ['count' => 200, 'limit' => 'sequence depth', 'checked' => $checked];
+            yield 'work, '.$entry => ['count' => 400, 'limit' => 'sequence work', 'checked' => $checked];
         }
     }
 
@@ -55,11 +62,12 @@ final class SampleGeneratorLookaroundTest extends TestCase
     public function test_generator_can_be_reused_after_a_limit(): void
     {
         $generator = new SampleGenerator();
+
         try {
             $generator->generate('/'.str_repeat('(?=a)', 400).'a/');
-            self::fail('Expected a generation limit.');
+            $this->fail('Expected a generation limit.');
         } catch (SampleGenerationException) {
-            self::assertSame('a', $generator->generate('/(?=a)a/'));
+            $this->assertSame('a', $generator->generate('/(?=a)a/'));
         }
     }
 
