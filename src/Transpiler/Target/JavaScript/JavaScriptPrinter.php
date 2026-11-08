@@ -241,7 +241,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             return $node->value;
         }
 
-        $this->refuseALoneByte($node->value, $node);
+        $this->refuseALoneByte($node->value, $node, $this->inCharClass);
 
         if ($this->spellsCase() && !$this->inCharClass) {
             return $this->caselessLiteral($node->value, $node);

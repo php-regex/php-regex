@@ -53,9 +53,6 @@ jobs:
     # is not the manifest's: a toolchain that drifts fails here, by name,
     # before the bundle check below compares the same bytes.
     name: PCRE2 trace module (Emscripten, pinned)
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 20
     container: emscripten/emsdk@sha256:27bc6267cb285223b8aebb7627bfebae7cb3ad2aaa0d5923b8aa5321793033e8
@@ -79,19 +76,12 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
-
   documentation:
     # The "documentation" group of the suite: every test under
     # tests/Documentation and every test that names a file of the prose.
     name: Documentation tests (PHP 8.4)
     # Pinned: the native trace shim test needs a pcre2test trace pinned for
     # the runner's PCRE2 (10.42 on Ubuntu 24.04); a newer image would skip it.
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: pcre2-module
@@ -131,7 +121,3 @@ jobs:
       # the embedded PCRE2 trace module compared with the freshly built one.
       - name: Run the playground bundle inside the browser engine
         run: bin/playground-check
-
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
