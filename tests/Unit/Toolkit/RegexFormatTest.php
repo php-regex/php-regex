@@ -33,22 +33,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexFormatTest extends TestCase
 {
-    #[Test]
-    public function test_long_word_with_many_comments_has_bounded_output(): void
-    {
-        $long = str_repeat('a', 10_000);
-        $pattern = '/'.$long." # long\n".str_repeat("b # short\n", 2_000).'/x';
-        $regex = Regex::create(['cache' => null]);
-
-        $result = $regex->format($pattern);
-
-        $this->assertNull($result->refusal);
-        $this->assertLessThan(2 * \strlen($pattern), \strlen($result->pattern));
-        $this->assertStringContainsString($long."  # long\n", $result->pattern);
-        $this->assertSame(2_000, substr_count($result->pattern, 'b  # short'));
-        $this->assertSame($result->pattern, $regex->format($result->pattern)->pattern);
-    }
-
     private const URL = '#^(?<scheme>https?)://(?:(?<user>[^:@/]+)(?::(?<pass>[^@/]*))?@)?(?<host>\[[0-9a-f:.]+\]|[^:/?\#]+)(?::(?<port>\d+))?(?<path>/[^?\#]*)?(?:\?(?<query>[^\#]*))?(?:\#(?<fragment>.*))?$#i';
 
     private const URL_FORMATTED = <<<'REGEX'
@@ -100,6 +84,22 @@ final class RegexFormatTest extends TestCase
      * from PCRE2 10.43 on but a literal before it, so x cannot be added.
      */
     private const SPACED_QUANTIFIER = '/a{ 1,2 }bcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJ/';
+
+    #[Test]
+    public function test_long_word_with_many_comments_has_bounded_output(): void
+    {
+        $long = str_repeat('a', 10_000);
+        $pattern = '/'.$long." # long\n".str_repeat("b # short\n", 2_000).'/x';
+        $regex = Regex::create(['cache' => null]);
+
+        $result = $regex->format($pattern);
+
+        $this->assertNull($result->refusal);
+        $this->assertLessThan(2 * \strlen($pattern), \strlen($result->pattern));
+        $this->assertStringContainsString($long."  # long\n", $result->pattern);
+        $this->assertSame(2_000, substr_count($result->pattern, 'b  # short'));
+        $this->assertSame($result->pattern, $regex->format($result->pattern)->pattern);
+    }
 
     #[Test]
     public function test_format_lays_a_long_pattern_out_over_lines(): void
