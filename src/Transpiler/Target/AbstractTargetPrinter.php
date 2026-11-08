@@ -15,6 +15,7 @@ namespace PHPRegex\Transpiler\Target;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
@@ -383,11 +384,18 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * Add u, unless the body is not valid UTF-8, which u refuses: there each
-     * raw byte has to become the character it stands for first.
+     * Add u, where the engine compiles the pattern with it. Otherwise a body
+     * that is not valid UTF-8 needs each raw byte written as its character,
+     * and a valid one holds something else u refuses, such as "\C".
      */
     private function utf8Advice(): string
     {
-        return $this->bodyIsUtf8 ? 'Add u.' : 'The u flag refuses a pattern that is not valid UTF-8: write the character as UTF-8, then add u.';
+        if (!$this->bodyIsUtf8) {
+            return 'The u flag refuses a pattern that is not valid UTF-8: write the character as UTF-8, then add u.';
+        }
+
+        return null === (new PcreEngine())->compile($this->context->sourcePattern.'u')
+            ? 'Add u.'
+            : 'Add u, after rewriting what PCRE refuses under it: the pattern as written does not compile with u.';
     }
 }
