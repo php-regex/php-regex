@@ -2216,7 +2216,10 @@ regex self-update
 The new PHAR is downloaded into a directory of its own, created with a
 random name under the system's temporary directory and readable by your
 user alone (`0700` where the system keeps the mode), and that directory is
-removed whether the update succeeds or fails.
+removed whether the update succeeds or fails. When that directory cannot be
+created, the temporary directory full or not writable, the update stops
+before the download with `Unable to create a temporary directory.` and
+exits with 1.
 
 ---
 
