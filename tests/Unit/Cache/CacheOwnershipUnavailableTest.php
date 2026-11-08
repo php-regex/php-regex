@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Cache;
 
-use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetStore;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Tests\Support\CacheOwnerFunctionOverrides;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
