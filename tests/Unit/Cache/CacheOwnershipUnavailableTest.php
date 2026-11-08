@@ -24,6 +24,55 @@ use PHPUnit\Framework\TestCase;
 
 final class CacheOwnershipUnavailableTest extends TestCase
 {
+    /**
+     * With ext-posix, a directory another user owns is not trusted either:
+     * fileowner() answers another uid, and both caches leave their files
+     * unread.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_existing_caches_are_ignored_when_another_user_owns_them(): void
+    {
+        $root = sys_get_temp_dir().'/regex-cache-owner-'.bin2hex(random_bytes(6));
+        $cache = new FilesystemCache($root.'/trees');
+        Regex::create(['cache' => $cache])->parse('/a/');
+        $files = glob($root.'/trees/*/*.cache') ?: [];
+        $this->assertCount(1, $files);
+        $store = new ClassSetStore($root);
+        $store->save('u|:\p{Han}', ['set' => CharSet::single(0x41)]);
+        $setFiles = glob($store->directory().'/*.set') ?: [];
+        $this->assertCount(1, $setFiles);
+
+        $prelude = 'namespace PHPRegex\Parser\Cache { function fileowner(string $f): int|false { return \posix_geteuid() + 1; } }'
+            .' namespace PHPRegex\Parser\Hir { function fileowner(string $f): int|false { return \posix_geteuid() + 1; } }';
+        $code = $prelude.' namespace { require $argv[1];'
+            .' $cache = new PHPRegex\Parser\Cache\FilesystemCache($argv[2]."/trees");'
+            .' $store = new PHPRegex\Parser\Hir\ClassSetStore($argv[2]);'
+            .' echo json_encode([function_exists("posix_geteuid"), $cache->load($argv[3]) === null, $store->load("u|:\\p{Han}") === null], JSON_THROW_ON_ERROR); }';
+
+        try {
+            $process = proc_open(
+                [\PHP_BINARY, '-r', $code, \dirname(__DIR__, 3).'/vendor/autoload.php', $root, $files[0]],
+                [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+                $pipes,
+            );
+            $this->assertIsResource($process);
+            $stdout = stream_get_contents($pipes[1]);
+            $stderr = stream_get_contents($pipes[2]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            $this->assertSame(0, proc_close($process), (string) $stderr);
+            $this->assertSame([true, true, true], json_decode((string) $stdout, true, 512, \JSON_THROW_ON_ERROR));
+        } finally {
+            @unlink($setFiles[0]);
+            @rmdir($store->directory());
+            @unlink($files[0]);
+            @rmdir(\dirname($files[0]));
+            @rmdir($root.'/trees');
+            @rmdir($root);
+        }
+    }
+
     #[Test]
     #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_existing_caches_are_ignored_when_ownership_cannot_be_checked(): void
