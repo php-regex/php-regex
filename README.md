@@ -114,13 +114,13 @@ Coming from 1.x (`yoeunes/regex-parser`)? See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 
 ## What PHPRegex provides
 
-- 🏗️ **Deep Parsing:** Parse `/pattern/flags` into a structured, typed AST.
-- 🧠 **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset) with `LanguageSolver` from `php-regex/regex-automata`: `(new LanguageSolver())->equivalent('/a+/', '/aa*/')->isEquivalent` is `true`. It works for patterns without backreferences, recursion and the other features listed in the [regular subset](https://php-regex.com/architecture/), and refuses any other pattern with the reason named. Character classes are resolved by asking the PCRE2 release your PHP runs.
-- 🛡️ **ReDoS Analysis:** Prove the backtracking cost of a pattern — linear, polynomial or exponential — with the attack input when it is vulnerable, and replay that attack on the running PCRE. Outside the modelled subset, structural heuristics decide and say so.
-- 🧹 **Linter:** Detect useless flags, redundant groups, and common mistakes via the CLI.
-- 📖 **Explanation:** Explain patterns in plain English.
-- 📐 **Formatter:** Lay a long pattern out over lines under `x`, or compact it to one line, and prove the result matches exactly what the input matched.
-- 🔧 **Visitor API:** A flexible API for building custom regex tooling.
+- **Deep Parsing:** Parse `/pattern/flags` into a structured, typed AST.
+- **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset) with `LanguageSolver` from `php-regex/regex-automata`: `(new LanguageSolver())->equivalent('/a+/', '/aa*/')->isEquivalent` is `true`. It works for patterns without backreferences, recursion and the other features listed in the [regular subset](https://php-regex.com/architecture/), and refuses any other pattern with the reason named. Character classes are resolved by asking the PCRE2 release your PHP runs.
+- **ReDoS Analysis:** Prove the backtracking cost of a pattern — linear, polynomial or exponential — with the attack input when it is vulnerable, and replay that attack on the running PCRE. Outside the modelled subset, structural heuristics decide and say so.
+- **Linter:** Detect useless flags, redundant groups, and common mistakes via the CLI.
+- **Explanation:** Explain patterns in plain English.
+- **Formatter:** Lay a long pattern out over lines under `x`, or compact it to one line, and prove the result matches exactly what the input matched.
+- **Visitor API:** A flexible API for building custom regex tooling.
 
 ## Philosophy & Accuracy
 
