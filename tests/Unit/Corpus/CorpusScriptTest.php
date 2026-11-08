@@ -98,6 +98,8 @@ final class CorpusScriptTest extends TestCase
         $this->assertSame(0, $code, $output);
 
         $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
+        $this->assertIsArray($manifest);
+        $this->assertIsArray($manifest['repositories'] ?? null);
         $manifest['repositories']['src/'.$destination] = [
             'url' => 'file://'.$this->origin,
             'branch' => 'main',
@@ -124,6 +126,8 @@ final class CorpusScriptTest extends TestCase
         mkdir($this->root.'/corpus/storage', 0o777, true);
         symlink($this->root.'/corpus/storage', $this->root.'/corpus/alias');
         $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
+        $this->assertIsArray($manifest);
+        $this->assertIsArray($manifest['repositories'] ?? null);
         $manifest['repositories'] = ['alias/nested/repo' => $manifest['repositories']['src']];
         file_put_contents($this->root.'/corpus.json', json_encode($manifest));
 
