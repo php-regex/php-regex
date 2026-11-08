@@ -228,8 +228,11 @@ final class PcreEngineDisabledIniTest extends TestCase
                     .'function preg_match_all(...$args) { $GLOBALS["nativeCalls"] = ($GLOBALS["nativeCalls"] ?? 0) + 1; return \\preg_match_all(...$args); } }');
 
             foreach (['match', 'test'] as $method) {
-                $this->assertSame([null, [], \PREG_INTERNAL_ERROR], \array_slice($result[$method], 0, 3), $refused);
-                $this->assertStringContainsString('limits could not be set', $result[$method][3]);
+                $answer = $result[$method];
+                $this->assertIsArray($answer);
+                $this->assertSame([null, [], \PREG_INTERNAL_ERROR], \array_slice($answer, 0, 3), $refused);
+                $this->assertIsString($answer[3] ?? null);
+                $this->assertStringContainsString('limits could not be set', (string) $answer[3]);
             }
             $this->assertNull($result['matchAll']);
             $this->assertNull($result['answer']);
