@@ -91,7 +91,7 @@ echo $redos->headline(), "\n";
 ```
 {: data-copy="" }
 
-If `redos()` reports a proven verdict, the result also carries its witness: the input that makes the pattern backtrack, the one the `Attack:` line prints. Use that witness in a regression test before you rewrite the pattern.
+If `redos()` proves the pattern vulnerable, the result also carries its witness: the input that makes the pattern backtrack, the one the `Attack:` line prints. Use that witness in a regression test before you rewrite the pattern.
 
 For lower-level work, call `Regex::parser()` and reuse one configured parser instead of building a new one for every analysis:
 
