@@ -193,6 +193,13 @@ as `CallTypes::quote` does.
 
 ## Open questions
 
+- `ImpossibleBoundaryRuleTest::test_many_boundaries_under_u_are_linted_quickly`
+  ("non-ASCII letter met again") measures wall time against 0.5 s and
+  fails on the "latest PCRE2" cells (0.50 s and 0.87 s on PHP 8.2 and 8.3,
+  2026-11-08, on #275 and #297, which do not touch the linter), as
+  `AlphaAssertionBodyTest` does against 11 s. Bound the work the rule does,
+  not the clock.
+
 - `ForkedWorkerPoolTest::test_run_ends_a_busy_worker_whatever_the_parent_does_with_sigterm`
   measures wall time against 3 s and fails on a loaded runner (3.10 s and
   3.94 s on PHP 8.6 cells, 2026-11-08, on #294 and #319, which do not touch
