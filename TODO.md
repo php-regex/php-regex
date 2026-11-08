@@ -209,6 +209,12 @@ as `CallTypes::quote` does.
   place), and the replacement bound counts every byte as a reference
   (#309; count the references apart). Whether to rework these branches or
   write the fixes anew is open.
+- Without `u`, every set that leaves characters out (the dot, `[^a]`,
+  `\D`, `\W`, `\S`) takes one byte in PCRE and one character in the
+  JavaScript, `html-pattern` and Python output: `/^\S$/` fails U+00A0,
+  two bytes, where `/^[^\t-\r ]$/` matches it in JavaScript (raised on
+  #318, documented in the API reference). Whether to refuse those sets for
+  the character targets, or advise `u`, is open.
 - Capture shapes still double with each level of a `(?(DEFINE)` call
   graph after #255 (8.7 s at twenty levels): another visitor walks the
   calls again.
