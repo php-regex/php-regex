@@ -72,7 +72,7 @@ final class LintCommandProjectConfigTest extends TestCase
         [$exitCode, , $stderr] = $this->runLint(['src', '--format=json', '--jobs=1']);
 
         $this->assertSame(0, $exitCode);
-        $this->assertSame('Warning: Malformed pattern function "bad#no\\x0A::error::forged\\x0D\\x1B[2J\\x09\\x{2028}", ignored.'."\n", $stderr);
+        $this->assertSame("Warning: Malformed pattern function \"bad#no\\x0A::error::forged\\x0D\\x1B[2J\\x09\\x{2028}\", ignored.\n", $stderr);
     }
 
     #[Test]
@@ -91,7 +91,10 @@ final class LintCommandProjectConfigTest extends TestCase
         [$jsonExitCode, $json, $jsonStderr] = $this->runLint(['--format=json']);
         $this->assertSame(2, $jsonExitCode);
         $this->assertSame('', $jsonStderr);
-        $this->assertStringContainsString($key, json_decode($json, true, 512, \JSON_THROW_ON_ERROR)['error']);
+        $document = json_decode($json, true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($document);
+        $this->assertIsString($document['error'] ?? null);
+        $this->assertStringContainsString($key, (string) $document['error']);
     }
 
     /**
