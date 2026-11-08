@@ -58,8 +58,6 @@ final class Modernizer extends AbstractNodeVisitor
      */
     private const SPACES = [9, 10, 11, 12, 13, 32];
 
-    private string $delimiter = '/';
-
     /**
      * Whether "\s" and "\d" read Unicode properties: "/u", or "(*UCP)".
      */
@@ -77,7 +75,6 @@ final class Modernizer extends AbstractNodeVisitor
     #[\Override]
     public function visitRegex(RegexNode $node)
     {
-        $this->delimiter = $node->delimiter;
         $this->unicodeProperties = UnicodeProperties::on($node);
 
         return new RegexNode(
@@ -128,22 +125,7 @@ final class Modernizer extends AbstractNodeVisitor
     #[\Override]
     public function visitLiteral(LiteralNode $node): NodeInterface
     {
-        $value = $node->value;
-
-        // Remove unnecessary escaping
-        if (str_starts_with($value, '\\')) {
-            $char = substr($value, 1);
-            // Meta chars that need escaping: . \ + * ? ^ $ ( ) [ ] { } | / (if delimiter)
-            $metaChars = ['.', '\\', '+', '*', '?', '^', '$', '(', ')', '[', ']', '{', '}', '|'];
-            if ('/' !== $this->delimiter && $this->delimiter !== $char) {
-                $metaChars[] = $this->delimiter;
-            }
-            if (!\in_array($char, $metaChars, true)) {
-                // Safe to unescape
-                return new LiteralNode($char, $node->getStartPosition(), $node->getEndPosition());
-            }
-        }
-
+        // Literal values are already decoded; the printer handles escaping.
         return $node;
     }
 
