@@ -211,6 +211,9 @@ final class PackageManifestTest extends TestCase
             // under and which give a byte its other case, and the options a
             // pattern opens with, "(*UCP)" among them.
             'Parser\Engine\CharacterTables', 'Parser\Syntax\StartOptions',
+            // The options an inline setting turns on or off, "U" among them,
+            // which decide whether a repeat tries its body first.
+            'Parser\Syntax\InlineFlags',
         ],
         'Symfony' => [
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Console\ConsoleLintRequest',
@@ -229,6 +232,9 @@ final class PackageManifestTest extends TestCase
         'Transpiler' => [
             'Parser\Exception\VisualContextTrait', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
             'Parser\Hir\Utf8', 'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre',
+            // The closing delimiter of the body the engine is asked about
+            // under u, before a refusal advises adding it.
+            'Parser\Syntax\Delimiters',
         ],
     ];
 
