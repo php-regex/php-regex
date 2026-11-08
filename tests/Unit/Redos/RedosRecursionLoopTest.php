@@ -74,6 +74,34 @@ final class RedosRecursionLoopTest extends TestCase
         $this->assertStringContainsString(self::LOOP, $analysis->findings[0]->message);
     }
 
+    #[Test]
+    #[DataProvider('provideUngreedyCostlyPatterns')]
+    public function test_ungreedy_optional_recursion_does_not_hide_costly_work(string $pattern): void
+    {
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+
+        $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::High));
+        foreach ($analysis->findings as $finding) {
+            $this->assertStringNotContainsString(self::LOOP, $finding->message);
+        }
+
+        $started = '/(*NO_JIT)(*LIMIT_MATCH=10000)'.substr($pattern, 1);
+        $this->assertFalse(preg_match($started, str_repeat('a', 24).'!'));
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideUngreedyCostlyPatterns(): iterable
+    {
+        yield 'root' => ['pattern' => '/(?R)?(a+)+$/U'];
+        yield 'bare' => ['pattern' => '/(?U)(?R)?(a+)+$/'];
+        yield 'scoped' => ['pattern' => '/(?U:(?R)?(a+)+$)/'];
+        yield 'cancelled lazy suffix' => ['pattern' => '/(?-U)(?R)??(a+)+$/U'];
+        yield 'scope restores ungreedy' => ['pattern' => '/(?-U:)(?R)?(a+)+$/U'];
+    }
+
     /**
      * @return iterable<string, array{pattern: string}>
      */
