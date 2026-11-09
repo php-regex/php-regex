@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex self-update` stages the download in a private directory of a random
+   name instead of a predictable file in the shared temporary directory, and
+   removes it after a failure as after a success.
  * `parse`, `analyze` and `validate` print a pattern holding a terminal
    control, a hidden character or an invalid byte spelled out in its own
    mode, and its caret line escaped with the caret still under the fault: an

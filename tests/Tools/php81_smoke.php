@@ -90,8 +90,10 @@ $check('generate', 1 === preg_match('/^[a-c]{3}\d$/', $sample), $sample);
 
 $check('transpile', '' !== $regex->transpile('/^a+$/i', 'javascript')->pattern);
 
-$directory = sys_get_temp_dir().'/php-regex-smoke-'.getmypid();
-@mkdir($directory);
+$directory = sys_get_temp_dir().'/php-regex-smoke-'.bin2hex(random_bytes(16));
+if (!@mkdir($directory, 0o700)) {
+    throw new \RuntimeException('Unable to create the smoke test temporary directory.');
+}
 file_put_contents($directory.'/broken.php', "<?php\n\npreg_match('/(abc/', \$subject);\n");
 file_put_contents($directory.'/fine.php', "<?php\n\npreg_match('/^abc$/', \$subject);\n");
 $report = $directory.'/report.json';

@@ -331,8 +331,8 @@ final class PropertyByteTablesWriter
             $input .= $pattern."\n".$subjects."\n";
         }
 
-        $directory = sys_get_temp_dir().'/property-bytes-'.getmypid();
-        if (!is_dir($directory) && !mkdir($directory) && !is_dir($directory)) {
+        $directory = sys_get_temp_dir().'/property-bytes-'.bin2hex(random_bytes(16));
+        if (!mkdir($directory, 0o700)) {
             throw new \RuntimeException(\sprintf('Cannot create %s.', $directory));
         }
 
