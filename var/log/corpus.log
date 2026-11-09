@@ -1600,25 +1600,25 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Helper/Sample.php:90:65
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1180:51
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1175:51
     → /\d\d\d\d/
    TIP 
        - /\d\d\d\d/
        + /\d{4}/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1182:43
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1177:43
     → /^\d\d\d\d-\d\d-\d\d$/
    TIP 
        - /^\d\d\d\d-\d\d-\d\d$/
        + /^\d{4}-\d\d-\d\d$/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1184:49
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1179:49
     → /^\d\d\d\d-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
    TIP 
        - /^\d\d\d\d-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
        + /^\d{4}-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1186:49
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1181:49
     → /^\d\d?-[a-zA-Z]+-\d\d\d\d$/
    TIP 
        - /^\d\d?-[a-zA-Z]+-\d\d\d\d$/
@@ -1720,7 +1720,7 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Security/XmlScanner.ph
        - /encoding\s*=\s*(["'])UTF-7\1/si
        + /encoding\s*=\s*(["'])UTF-7\1/i
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Xlsx.php:1986:78
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Xlsx.php:1981:78
     → /[ ,](?=([^']*'[^']*')*[^']*$)/miuU
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -3994,16 +3994,16 @@ corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:858:3
    FAIL  Character class holds "«", which without /u is the bytes \xC2 \xAB: the class matches each byte on its own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6567:26
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6583:26
     → #/(wp-admin/?.*|wp-login\.php.*)#i
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6572:26
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6588:26
     → #/[^/]*$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6584:27
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6600:27
     → #/[^/]*$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -5825,7 +5825,7 @@ corpus/craftcms/cms/src/services/Composer.php:321:24
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
 
-corpus/craftcms/cms/src/services/OAuth.php:493:59
+corpus/craftcms/cms/src/services/OAuth.php:499:59
     → /^(-----BEGIN [A-Z ]+-----)(.+?)(-----END [A-Z ]+-----)$/
    TIP 
        - /^(-----BEGIN [A-Z ]+-----)(.+?)(-----END [A-Z ]+-----)$/
@@ -10686,26 +10686,26 @@ corpus/mockery/mockery/library/Mockery/Generator/StringManipulation/Pass/RemoveD
 
 
 ### corpus/modelcontextprotocol/php-sdk — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:849:24
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:867:24
     → /^int\s*<\s*[^<>]+\s*>$/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:896:24
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:914:24
     → /^(\??)([\w\\]+)\s*\[\]$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:915:27
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:933:27
     → /^(\??)([\w\\]+)\s*\[\]\[\]$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:1017:24
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:1035:24
     → /^(?:non-empty-)?array\s*<\s*((?:'[^']*'|"[^"]*"|[^<>{},'"]|<[^<>]*>)+?)\s*,\s*(.+?)\s*>$/is
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:1031:27
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:1049:27
     → /^([\w\\]+)\s*\[\]$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -16570,13 +16570,25 @@ Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the ol
 ### corpus/reactphp/http — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-corpus/reactphp/http/src/Message/Uri.php:49:149
+corpus/reactphp/http/src/Message/Uri.php:56:149
     → #[\s%+]#
    WARN  "+" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "+" matches a literal "+". If you meant to quantify a shorthand like \w, use \w+ outside the
          class.
 
-corpus/reactphp/http/src/Message/Uri.php:167:25
+corpus/reactphp/http/src/Message/Uri.php:174:25
+    → #[\s%+]#
+   WARN  "+" is a literal character inside a character class, not a quantifier.
+       ↳ Inside [...], "+" matches a literal "+". If you meant to quantify a shorthand like \w, use \w+ outside the
+         class.
+
+corpus/reactphp/http/src/Message/Uri.v1.php:50:149
+    → #[\s%+]#
+   WARN  "+" is a literal character inside a character class, not a quantifier.
+       ↳ Inside [...], "+" matches a literal "+". If you meant to quantify a shorthand like \w, use \w+ outside the
+         class.
+
+corpus/reactphp/http/src/Message/Uri.v1.php:168:25
     → #[\s%+]#
    WARN  "+" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "+" matches a literal "+". If you meant to quantify a shorthand like \w, use \w+ outside the
@@ -21003,7 +21015,7 @@ Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the ol
 ### corpus/voku/anti-xss — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1060:29
+corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1105:29
     → /(?<html_entity>&[A-Za-z]{2,};{0})/
    WARN  Quantifier always repeats zero times; it can be removed.
        ↳ Remove the quantified element or replace it with an empty pattern.
@@ -21011,13 +21023,13 @@ corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1060:29
        - /(?<html_entity>&[A-Za-z]{2,};{0})/
        + /(?<html_entity>&[A-Za-z]{2,})/
 
-corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1165:32
+corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1210:32
     → #\s*[\p{L}\d_\-\[\]]+\s*=\s*(?:(["'])(?:[^\1]*?)\1|\\"(?:[^"]*?)\\")#u
    WARN  Suspicious \1 inside character class: this is octal (\x01), not a backreference to group 1.
        ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 1, move
          the check outside the class.
 
-corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1672:41
+corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1712:41
     → /(["'])?data\s*:\s*(?:image\s*\/.*)[^\x01]*base64[^\x01]*,[^\x01]*\x01?/iUus
    WARN  Quantifier "*" is lazy under the U flag and is followed only by what may match nothing, so it always matches
        its minimum.
@@ -21025,7 +21037,7 @@ corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1672:41
    WARN  Quantifier "?" is lazy under the U flag and ends the pattern, so it always matches its minimum.
        ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
-corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1688:45
+corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1728:45
     → /(["'])?data\s*:\s*(?:image\s*\/.*)[^\x01]*base64[^\x01]*,[^\x01]*\x01?/iUus
    WARN  Quantifier "*" is lazy under the U flag and is followed only by what may match nothing, so it always matches
        its minimum.
@@ -21033,7 +21045,7 @@ corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1688:45
    WARN  Quantifier "?" is lazy under the U flag and ends the pattern, so it always matches its minimum.
        ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
-corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1755:21
+corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1795:21
     → #(?:%3C|¼|<)[^\p{L}@]*/*[^\p{L}@]*(?:script[^\p{L}@]+).*(?:%3E|¾|>)?#iUus
    WARN  Quantifier "+" is lazy under the U flag and is followed only by what may match nothing, so it always matches
        its minimum.
@@ -21044,7 +21056,7 @@ corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1755:21
    WARN  Quantifier "?" is lazy under the U flag and ends the pattern, so it always matches its minimum.
        ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
-corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:2039:17
+corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:2079:17
     → #<(?!!--|!\[)((?<start>/*\s*)((?<tagName>[\p{L}:]+)(?=[^\p{L}]|$|)|.+)[^\s"'\p{L}>/=]*[^>]*)(?<closeTag>>)?#iusS
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
    WARN  Alternation contains an empty alternative.

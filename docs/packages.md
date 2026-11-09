@@ -34,7 +34,7 @@ The focused analysis libraries remain available for tools that compose them dire
 
 - `php-regex/regex-explain` for explanations, highlighting, and diagrams.
 - `php-regex/regex-generator` for sample strings and test cases.
-- `php-regex/regex-automata` for equivalence, intersection, and subset questions (`LanguageSolver`; the facade does not wrap it).
+- `php-regex/regex-automata` for equivalence, intersection, and subset questions: call its `LanguageSolver` class directly, as the `Regex` facade does not expose these analyses.
 - `php-regex/regex-redos` for backtracking analysis and witnesses.
 - `php-regex/regex-transpiler` for JavaScript, HTML `pattern`, and Python targets.
 - `php-regex/regex-linter` for source extraction and lint rules.
