@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The mark `PatternPrinter` stands in for a bracket until the text is known
+   keeps a fixed length, at most nineteen bytes on a 64-bit build: a comment
+   holding twenty thousand of its bytes no longer lengthens it to as many, and
+   five thousand brackets no longer copy it into 210 MB.
  * `PcreEngine` runs nothing where `ini_set()` refuses a limit the call asks
    for, as where `ini_set()` is disabled, and puts back a limit it already
    changed: the call no longer runs under a higher limit fixed by

@@ -43,6 +43,8 @@ final class PatternPrinterRoundTripTest extends TestCase
         $collision .= "\x03\x04".str_repeat('0', 2 * \PHP_INT_SIZE)."\x04";
         $collision .= "\x03\x04".str_repeat('0', 2 * \PHP_INT_SIZE - 1)."1\x04";
         $pattern = '{(?#'.$controls.$collision.')'.str_repeat('\\{\\}', 512).'}';
+        $this->assertSame(1, preg_match($pattern, str_repeat('{}', 512)));
+        $this->assertSame(0, preg_match($pattern, 'different'));
         $regex = RegexParser::create(['cache' => null])->parse($pattern);
         $printer = PatternPrinter::pretty();
         $printed = $regex->accept($printer);
