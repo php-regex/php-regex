@@ -30,7 +30,10 @@ use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Validation\ClassLength;
 use PHPRegex\Parser\Validation\CompiledLength;
 use PHPRegex\Parser\Validation\ExtendedClassLength;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -45,6 +48,35 @@ use PHPUnit\Framework\TestCase;
  */
 final class ClassFormLengthTest extends TestCase
 {
+    use PcreGates;
+
+    #[Test]
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function test_overlapping_caseless_ranges_do_not_multiply_expansion_memory(): void
+    {
+        $members = '';
+        for ($index = 0; $index < 1000; $index++) {
+            $members .= \sprintf('\\x{%x}-\\x{%x}', 0x100 + $index, 0x2000 + $index);
+        }
+
+        // Repetition makes the public validator measure the compiled size.
+        // The input remains well below the default 100,000 byte limit. The
+        // Kelvin sign in the ranges matches "k" caselessly alone.
+        $pattern = '/['.$members.']{100}/iu';
+        $this->requiresCompile($pattern);
+        $this->assertSame(1, preg_match($pattern, str_repeat('k', 100)));
+        $this->assertSame(0, preg_match(substr($pattern, 0, -2).'u', str_repeat('k', 100)));
+
+        $parser = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false]);
+        $before = memory_get_peak_usage(true);
+        $result = $parser->validate($pattern);
+
+        $this->assertTrue($result->isValid);
+        $this->assertLessThan(32 * 1024 * 1024, memory_get_peak_usage(true) - $before);
+        $this->assertSame(self::lengthOf('/[\\x{100}-\\x{23e7}]{100}/iu', '10.49'), self::lengthOf($pattern, '10.49'));
+    }
+
     #[Test]
     #[DataProvider('provideLengths')]
     public function test_the_length_is_the_one_each_release_compiles(string $pattern, string $release, int $length): void

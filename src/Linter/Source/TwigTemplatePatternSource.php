@@ -87,6 +87,8 @@ final class TwigTemplatePatternSource implements PatternSourceInterface
         $ignores = [];
         $length = \strlen($content);
         $i = 0;
+        $cursor = 0;
+        $line = 1;
         while (false !== ($i = strpos($content, '{', $i)) && $i + 1 < $length) {
             $kind = $content[$i + 1];
             if ('#' === $kind) {
@@ -95,7 +97,10 @@ final class TwigTemplatePatternSource implements PatternSourceInterface
                     break;
                 }
 
-                array_push($ignores, ...self::markers($content, $i, $end));
+                // Comments arrive in source order: each newline is counted once.
+                $line += substr_count($content, "\n", $cursor, $i - $cursor);
+                $cursor = $i;
+                array_push($ignores, ...self::markers($content, $i, $end, $line));
                 $i = $end + 2;
 
                 continue;
@@ -131,11 +136,13 @@ final class TwigTemplatePatternSource implements PatternSourceInterface
         }
 
         $occurrences = [];
+        $cursor = 0;
+        $line = 1;
+        $lineStart = -1;
         foreach ($found as [$offset, $pattern]) {
-            $line = self::lineAt($content, $offset);
-            $lineStart = strrpos(substr($content, 0, $offset), "\n");
+            self::advanceLocation($content, $offset, $cursor, $line, $lineStart);
 
-            $occurrences[] = new PatternOccurrence($pattern, $file, $line, self::SOURCE, isIgnored: isset($silenced[$line]), column: $offset - (false === $lineStart ? -1 : $lineStart), fileOffset: $offset);
+            $occurrences[] = new PatternOccurrence($pattern, $file, $line, self::SOURCE, isIgnored: isset($silenced[$line]), column: $offset - $lineStart, fileOffset: $offset);
         }
 
         if ([] !== $ignores) {
@@ -152,14 +159,14 @@ final class TwigTemplatePatternSource implements PatternSourceInterface
      *
      * @return list<IgnoreMarker>
      */
-    private static function markers(string $content, int $open, int $close): array
+    private static function markers(string $content, int $open, int $close, int $line): array
     {
         $comment = substr($content, $open + 1, $close - $open - 1);
         if (\strlen($comment) > 1 && ('-' === $comment[1] || '~' === $comment[1])) {
             $comment[1] = ' ';
         }
 
-        return InlineIgnores::markersOfComment($comment, self::lineAt($content, $open), $open + 1, $content);
+        return InlineIgnores::markersOfComment($comment, $line, $open + 1, $content);
     }
 
     /**
@@ -298,9 +305,20 @@ final class TwigTemplatePatternSource implements PatternSourceInterface
         return stripcslashes($inner);
     }
 
-    private static function lineAt(string $content, int $offset): int
+    /**
+     * Offsets arrive in source order. Read each intervening byte once,
+     * keeping one-based lines and the last newline for byte columns.
+     */
+    private static function advanceLocation(string $content, int $offset, int &$cursor, int &$line, int &$lineStart): void
     {
-        return 1 + substr_count($content, "\n", 0, $offset);
+        $skipped = substr($content, $cursor, $offset - $cursor);
+        $newline = strrpos($skipped, "\n");
+        if (false !== $newline) {
+            $line += substr_count($skipped, "\n");
+            $lineStart = $cursor + $newline;
+        }
+
+        $cursor = $offset;
     }
 
     private static function startsName(string $char): bool
