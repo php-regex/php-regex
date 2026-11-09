@@ -1217,7 +1217,9 @@ final class SampleGenerator extends AbstractNodeVisitor
             // drawn again where the group takes none of it.
             for ($draw = 0; $draw < self::MAX_SCAN_DRAWS; $draw++) {
                 $prefix = $this->acceptedIn($body, true);
-                foreach ([$this->concatenate($prefix, $text), $prefix] as $candidate) {
+                // Each part was built under the limit already; the group's
+                // text meets it again where the sequence adds it.
+                foreach ([$prefix.$text, $prefix] as $candidate) {
                     if ($this->holds($group->child, $candidate, '\\A', '\\z') && $this->holds($body, $candidate, '\\A', '')) {
                         $text = $candidate;
 

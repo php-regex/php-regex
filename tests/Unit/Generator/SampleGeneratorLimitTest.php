@@ -17,6 +17,7 @@ use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorLimitTest extends TestCase
 {
+    use PcreGates;
     use PhpUnitForwardCompat;
 
     #[DataProvider('provideEntryPoints')]
@@ -100,15 +102,16 @@ final class SampleGeneratorLimitTest extends TestCase
     }
 
     /**
-     * The visitor fits a scanned group to the scan's body itself, so its
-     * seeded draws are the same text on every PCRE2, the ones before 10.45
-     * that cannot read "(*scs:" included.
+     * The visitor fits a scanned group to the scan's body, asking the
+     * engine whether the body holds: seeded, its draws are fixed text. A
+     * PCRE2 before 10.45 reads no "(*scs:" and fits nothing.
      *
      * @param list<string> $samples
      */
     #[DataProvider('provideScannedGroups')]
     public function test_a_scanned_group_is_fitted_by_the_visitor(string $pattern, array $samples): void
     {
+        $this->requiresPcre2('10.45', 'A substring scan');
         $ast = RegexParser::create(['cache' => null])->parse($pattern);
         $generator = new SampleGenerator();
         $drawn = [];
