@@ -229,6 +229,15 @@ as `CallTypes::quote` does.
   PHP 8.4 Ubuntu, 2026-11-09, on #259, which does not touch the
   optimizer). Bound the work, not the clock, as for the tests above.
 
+- The suite assumes `posix_geteuid()` on Linux and macOS: with
+  `-d disable_functions=posix_geteuid`, the AST file cache tests
+  (`FilesystemCacheTest`, `AstSerializerTest`, `FilesystemCacheSecurityTest`)
+  and the class-set store tests fail, since neither store reads or writes
+  where it cannot check the owner (raised on #306, 2026-11-09). Every CI
+  cell has the function. Whether to run the suite on such hosts, and how
+  without losing the Windows runs `#[RequiresPhpExtension('posix')]` would
+  drop, is open.
+
 - Five real costs whose proposed bound refuses legitimate input, each
   answered in its pull request with the fix that keeps the answers: the
   ReDoS repair tries every quantifier (#249; try the ones the analysis
