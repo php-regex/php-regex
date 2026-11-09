@@ -18,7 +18,9 @@ use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Hir\ClassSetStore;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\CacheOwnerFunctionOverrides;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -183,6 +185,143 @@ final class ClassSetStoreTest extends TestCase
         $this->assertNull($store->load('u|:\p{Han}'));
         $store->save('u|:\p{Greek}', ['set' => CharSet::single(0x42)]);
         $this->assertCount(1, self::files($this->root));
+    }
+
+    /**
+     * A directory made by an earlier save, or by another process, is not
+     * made again: the next answer is added to it.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_answers_are_added_to_a_directory_already_made(): void
+    {
+        $store = new ClassSetStore($this->root);
+        mkdir($store->directory(), 0o700, true);
+
+        $store->save('u|:\\p{Han}', ['set' => CharSet::single(0x41)]);
+        $store->save('u|:\\p{Greek}', ['set' => CharSet::single(0x42)]);
+
+        $this->assertCount(2, self::files($this->root));
+        $this->assertSame([[0x41, 0x41]], $store->load('u|:\\p{Han}')['set']->ranges ?? null);
+    }
+
+    /**
+     * A directory that cannot be made is not written into: nothing is
+     * tried, rather than a write that fails on its own.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    #[RequiresPhpExtension('posix')]
+    public function test_a_directory_that_cannot_be_made_is_not_written_into(): void
+    {
+        $store = new ClassSetStore($this->root);
+        CacheOwnerFunctionOverrides::reset();
+        CacheOwnerFunctionOverrides::$mkdirFails = true;
+
+        try {
+            $store->save('u|:\\p{Han}', ['set' => CharSet::single(0x41)]);
+            $writes = CacheOwnerFunctionOverrides::$writes;
+        } finally {
+            CacheOwnerFunctionOverrides::reset();
+        }
+
+        $this->assertSame(0, $writes);
+        $this->assertDirectoryDoesNotExist($store->directory());
+    }
+
+    /**
+     * Another process makes the directory between the check and mkdir():
+     * mkdir() fails, the directory is there and is the owner's, and the
+     * answer is written into it.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    #[RequiresPhpExtension('posix')]
+    public function test_a_directory_another_process_made_first_is_written_into(): void
+    {
+        $store = new ClassSetStore($this->root);
+        CacheOwnerFunctionOverrides::$madeFirst = true;
+
+        try {
+            $store->save('u|:\\p{Han}', ['set' => CharSet::single(0x41)]);
+        } finally {
+            CacheOwnerFunctionOverrides::reset();
+        }
+
+        $this->assertCount(1, self::files($this->root));
+        $this->assertSame([[0x41, 0x41]], $store->load('u|:\\p{Han}')['set']->ranges ?? null);
+    }
+
+    /**
+     * The directory is judged again once made: one that turns out to be
+     * another user's, as when another process made it first, is not
+     * written into.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    #[RequiresPhpExtension('posix')]
+    public function test_a_directory_made_for_another_owner_is_not_written_into(): void
+    {
+        $store = new ClassSetStore($this->root);
+        CacheOwnerFunctionOverrides::$anotherOwner = true;
+
+        try {
+            $store->save('u|:\\p{Han}', ['set' => CharSet::single(0x41)]);
+        } finally {
+            CacheOwnerFunctionOverrides::reset();
+        }
+
+        $this->assertDirectoryExists($store->directory());
+        $this->assertSame([], self::files($this->root));
+
+        $store->save('u|:\\p{Han}', ['set' => CharSet::single(0x41)]);
+        $this->assertCount(1, self::files($this->root));
+    }
+
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_unverifiable_ownership_disables_persistence(): void
+    {
+        $store = new ClassSetStore($this->root);
+        mkdir($store->directory(), 0o700, true);
+        $key = 'u|:\p{Han}';
+        $file = $store->directory().\DIRECTORY_SEPARATOR.hash('sha256', $key).'.set';
+        $forged = "class-set 1\n".$key."\nset 65-66\n";
+        file_put_contents($file, $forged);
+
+        $script = 'require '.var_export(\dirname(__DIR__, 3).'/vendor/autoload.php', true).';'
+            .'$root = '.var_export($this->root, true).';'
+            .<<<'PHP_WRAP'
+                $store = new PHPRegex\Parser\Hir\ClassSetStore($root);
+                $loaded = $store->load('u|:\p{Han}');
+                PHPRegex\Parser\Hir\ClassSetProvider::persistIn($root);
+                $set = PHPRegex\Parser\Hir\ClassSetProvider::query('\p{Han}', true, '');
+                $store->save('u|:\p{Han}', ['set' => PHPRegex\Parser\Hir\CharSet::single(67)]);
+                $fresh = new PHPRegex\Parser\Hir\ClassSetStore($root, 'new engine');
+                $fresh->save('key', ['set' => PHPRegex\Parser\Hir\CharSet::single(67)]);
+                echo json_encode([
+                    function_exists('posix_geteuid'),
+                    $loaded,
+                    $set?->contains(0x4E00),
+                    $set?->contains(65),
+                    is_dir($fresh->directory()),
+                ]);
+                PHP_WRAP;
+        $process = proc_open(
+            [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'disable_functions=posix_geteuid', '-r', $script],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+        );
+        $this->assertIsResource($process);
+        $output = (string) stream_get_contents($pipes[1]);
+        $errors = (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $this->assertSame(0, proc_close($process), $errors.$output);
+        $this->assertSame([false, null, true, false, false], json_decode($output, true), $errors.$output);
+        $this->assertSame($forged, file_get_contents($file));
+        $this->assertSame([$file], self::files($this->root));
     }
 
     /**

@@ -240,17 +240,21 @@ final class RedosRepairer
             return false;
         }
 
-        foreach ([$language->strings(), $language->nonMembers()] as $subjects) {
-            $read = 0;
-            foreach ($subjects as $subject) {
-                if ($engine->match($pattern, $subject)->matched !== $engine->match($candidate, $subject)->matched) {
-                    return true;
-                }
+        try {
+            foreach ([$language->strings(), $language->nonMembers()] as $subjects) {
+                $read = 0;
+                foreach ($subjects as $subject) {
+                    if ($engine->match($pattern, $subject)->matched !== $engine->match($candidate, $subject)->matched) {
+                        return true;
+                    }
 
-                if (++$read >= self::SUBJECTS) {
-                    break;
+                    if (++$read >= self::SUBJECTS) {
+                        break;
+                    }
                 }
             }
+        } catch (ComplexityException) {
+            return false;
         }
 
         return false;
