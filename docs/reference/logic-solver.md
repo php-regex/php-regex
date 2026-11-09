@@ -350,7 +350,10 @@ iterator_to_array($solver->language('/^[ab]{2}$/')->strings(), false); // ['aa',
 Counts are exact decimal strings, however large, with no extension needed. `strings()` and
 `nonMembers()` are generators: shortest first, then in code point order; they end when
 the strings run out, `nonMembers()` at once for `/[\s\S]*/`, and an infinite set never
-does, so take what you need. Each string `nonMembers()` hands out is
+does, so take what you need. The search for the next string is bounded: past a million
+steps, or 50,000 remembered states for one length, the generator throws a
+`ComplexityException`. `/^(?:b|a{400})$/` hands out `b`, then throws rather than walk
+every length up to 400. Each string `nonMembers()` hands out is
 proven outside the language by the automaton: test fixtures with positives and negatives
 both certain. Under the default full match mode a string belongs when the whole of it
 matches; ask for `MatchMode::Partial` to read the subjects `preg_match()` accepts, a final

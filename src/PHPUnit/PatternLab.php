@@ -51,6 +51,18 @@ final class PatternLab
     private static array $linearFailures = [];
 
     /**
+     * The export in progress: set by the outermost export() call, read by
+     * the calls it makes for an array's keys and values.
+     */
+    private static bool $exporting = false;
+
+    private static int $exportBudget = 0;
+
+    private static string $exportOutput = '';
+
+    private static bool $exportCut = false;
+
+    /**
      * The parser every assertion reads patterns through, created on the
      * first call and held for the process.
      */
@@ -153,44 +165,103 @@ final class PatternLab
     }
 
     /**
-     * A value as the failure messages show it, spelled the same whatever
-     * PHPUnit release renders the assertion. The depth is capped because a
-     * refusal renders what the caller handed over, and a circular or merely
-     * deep spelling must meet its refusal, not the stack floor.
+     * A value as the failure messages show it. All children share a work
+     * budget and an 8192-byte output ceiling, including the truncation
+     * marker. Depth alone cannot bound expansion of shared or cyclic arrays:
+     * the outermost call holds the budget and the output, and an array's
+     * keys and values are exported by calling it again.
      */
     public static function export(mixed $value, int $depth = 0): string
     {
-        if (null === $value) {
-            return 'null';
+        $outermost = !self::$exporting;
+        if ($outermost) {
+            self::$exporting = true;
+            self::$exportBudget = 256;
+            self::$exportOutput = '';
+            self::$exportCut = false;
         }
 
-        if (\is_bool($value)) {
-            return true === $value ? 'true' : 'false';
-        }
-
-        if (\is_int($value) || \is_float($value)) {
-            return (string) $value;
-        }
-
-        if (\is_string($value)) {
-            return "'".str_replace(['\\', "'"], ['\\\\', "\\'"], $value)."'";
-        }
-
-        if (\is_array($value)) {
-            if ($depth >= 8) {
-                return '[…]';
+        try {
+            if (self::$exportCut) {
+                // Past the ceiling: nothing more is spelled.
+            } elseif (self::$exportBudget <= 0) {
+                self::$exportCut = true;
+            } else {
+                self::$exportBudget--;
+                if (!\is_array($value)) {
+                    self::appendExport(null === $value || \is_scalar($value) ? self::exportScalar($value) : get_debug_type($value));
+                } elseif ($depth >= 8) {
+                    self::appendExport('[…]');
+                } else {
+                    self::appendExport('[');
+                    $list = array_is_list($value);
+                    $first = true;
+                    foreach ($value as $key => $part) {
+                        if (!$first) {
+                            self::appendExport(', ');
+                        }
+                        $first = false;
+                        if (!$list) {
+                            // A key is a scalar: no depth to carry.
+                            self::export($key);
+                            self::appendExport(' => ');
+                        }
+                        self::export($part, $depth + 1);
+                        if (self::$exportCut) {
+                            break;
+                        }
+                    }
+                    self::appendExport(']');
+                }
             }
 
-            $list = array_is_list($value);
-            $parts = [];
-            foreach ($value as $key => $part) {
-                $parts[] = ($list ? '' : self::export($key, $depth + 1).' => ').self::export($part, $depth + 1);
+            return $outermost ? self::$exportOutput.(self::$exportCut ? '…' : '') : '';
+        } finally {
+            if ($outermost) {
+                self::$exporting = false;
+                self::$exportOutput = '';
             }
+        }
+    }
 
-            return '['.implode(', ', $parts).']';
+    private static function exportScalar(bool|int|float|string|null $value): string
+    {
+        return match (true) {
+            null === $value => 'null',
+            \is_bool($value) => $value ? 'true' : 'false',
+            // Sliced before escaping so a large scalar or key cannot create
+            // an unbounded temporary string. This prefix already fills the cap.
+            \is_string($value) => "'".str_replace(['\\', "'"], ['\\\\', "\\'"], substr($value, 0, 8192))."'",
+            default => (string) $value,
+        };
+    }
+
+    private static function appendExport(string $part): void
+    {
+        if (self::$exportCut) {
+            return;
         }
 
-        return get_debug_type($value);
+        // Reserve three bytes for the UTF-8 ellipsis even on exact fits, and
+        // cut between characters.
+        $available = 8192 - 3 - \strlen(self::$exportOutput);
+        if (\strlen($part) > $available) {
+            // Back from a continuation byte (10xxxxxx) to the start of its
+            // character, so the cut keeps whole characters. The output never
+            // passes the ceiling, so what is available is never negative.
+            // A character has three continuation bytes at most: a longer run
+            // is no UTF-8, and stepping further would drop it all.
+            $end = $available;
+            $floor = max(0, $available - 3);
+            while ($end > $floor && 0x80 === (\ord($part[$end]) & 0xC0)) {
+                $end--;
+            }
+            self::$exportOutput .= substr($part, 0, $end);
+            self::$exportCut = true;
+
+            return;
+        }
+        self::$exportOutput .= $part;
     }
 
     /**
