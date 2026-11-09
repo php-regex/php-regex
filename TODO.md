@@ -238,6 +238,13 @@ as `CallTypes::quote` does.
   without losing the Windows runs `#[RequiresPhpExtension('posix')]` would
   drop, is open.
 
+- `format` writes a `#` comment ending in an escaped space with `\x20`
+  when the comment carries no trailing-comment marker: on its own line
+  (`/a` newline `# path\ ` newline `b/x` gives `# path\x20`), and past ten
+  indent levels (#310). The match is the same, but the guide says comments
+  are kept. Teaching `PatternLayout::finishLines()` where a comment starts
+  on a line would keep them as written.
+
 - Five real costs whose proposed bound refuses legitimate input, each
   answered in its pull request with the fix that keeps the answers: the
   ReDoS repair tries every quantifier (#249; try the ones the analysis

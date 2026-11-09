@@ -9073,7 +9073,7 @@ corpus/laravel/pint/app/PrettierFormatters/EmbeddedBladeMasker.php:70:13
 
 
 ### corpus/laravel/prompts — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-corpus/laravel/prompts/src/Task.php:243:34
+corpus/laravel/prompts/src/Task.php:244:34
     → /\e\[(?:1)?G\e\[2K/
    WARN  Redundant non-capturing group "(?:1)" at offset 4; it can be removed without changing behavior.
    TIP 
