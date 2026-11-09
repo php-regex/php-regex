@@ -17,3 +17,6 @@ CHANGELOG
  * `TestCaseGenerator` checks every case against the running engine and drops
    the ones it contradicts (`/foo|bar/` no longer lists `bar` as
    non-matching); a pattern the engine refuses has no case.
+ * `TestCaseGenerator` builds no case longer than 1,048,576 bytes, the longest
+   sample: `/^(?:a{65535}){6000}$/`, which the engine compiles, has no matching
+   case instead of one of 393 MB that exhausted memory.

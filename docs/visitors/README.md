@@ -493,7 +493,8 @@ echo (new SampleGenerator())->generate('/(?!^)a/');  // "aa"
 **Purpose:** Generates test cases for the pattern, useful for QA tooling. Every case is
 checked against the running engine: `preg_match()` gives 1 on each matching case and 0 on each
 non-matching one. A pattern the engine refuses has no case, and one that matches every subject
-(`/a*/`) has no non-matching case.
+(`/a*/`) has no non-matching case. No case is longer than 1,048,576 bytes, the longest sample
+`SampleGenerator` builds: `/^(?:a{65535}){100}$/` has no matching case.
 
 ```php
 use PHPRegex\Toolkit\Regex;
