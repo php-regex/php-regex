@@ -14,7 +14,7 @@ body:
     attributes:
       label: Page or command
       description: A URL on php-regex.com, a documentation page, or the regex command you ran.
-      placeholder: https://php-regex.com/playground/
+      placeholder: https://php-regex.com/quick-start/
     validations:
       required: true
 

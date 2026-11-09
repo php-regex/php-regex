@@ -192,6 +192,10 @@ final class PatternAttributeScanner
             static fn (\PhpToken $token): bool => !\in_array($token->id, self::IGNORED, true),
         ));
 
+        $boundaries = self::delimiterBoundaries($tokens);
+        // Bound all parameter and attribute lookaheads together. Malformed
+        // attributes can otherwise make helper walks revisit the same suffix.
+        $workLeft = 32 * \count($tokens);
         $specs = [];
         $functions = [];
         $namespace = '';
@@ -239,7 +243,7 @@ final class PatternAttributeScanner
                     $functions[] = $namespace.'\\'.$tokens[$next]->text;
                 }
 
-                foreach (self::markedParameters($tokens, $next + 1, $namespace, $uses) as [$position, $name]) {
+                foreach (self::markedParameters($tokens, $boundaries, $next + 1, $namespace, $uses, $workLeft) as [$position, $name]) {
                     $index = $position.(null !== $name ? '$'.$name : '');
 
                     if ($isMethod) {
@@ -305,15 +309,44 @@ final class PatternAttributeScanner
     }
 
     /**
+     * Match the delimiters once, including openers left unmatched by an
+     * incomplete document. As in the tolerant parameter reader, either
+     * closing delimiter ends the innermost group.
+     *
+     * @param list<\PhpToken> $tokens
+     *
+     * @return array<int, int>
+     */
+    private static function delimiterBoundaries(array $tokens): array
+    {
+        $boundaries = [];
+        $open = [];
+        foreach ($tokens as $i => $token) {
+            if ($token->is(\T_ATTRIBUTE) || \in_array($token->text, ['(', '['], true)) {
+                $open[] = $i;
+            } elseif (\in_array($token->text, [')', ']'], true) && [] !== $open) {
+                $boundaries[array_pop($open)] = $i;
+            }
+        }
+        $end = \count($tokens);
+        foreach ($open as $i) {
+            $boundaries[$i] = $end;
+        }
+
+        return $boundaries;
+    }
+
+    /**
      * The zero-based position of each parameter that carries the attribute,
      * and its name, reading the parameter list that opens at $i.
      *
      * @param list<\PhpToken>       $tokens
+     * @param array<int, int>       $boundaries
      * @param array<string, string> $uses
      *
      * @return list<array{int, string|null}>
      */
-    private static function markedParameters(array $tokens, int $i, string $namespace, array $uses): array
+    private static function markedParameters(array $tokens, array $boundaries, int $i, string $namespace, array $uses, int &$workLeft): array
     {
         if (!isset($tokens[$i]) || '(' !== $tokens[$i]->text) {
             return [];
@@ -325,13 +358,16 @@ final class PatternAttributeScanner
         $nesting = 0;
         $inAttribute = 0;
         $count = \count($tokens);
-        for ($i++; $i < $count; $i++) {
+        for ($i++; $i < $count && $workLeft > 0; $i++, $workLeft--) {
             $token = $tokens[$i];
             if ($token->is(\T_ATTRIBUTE)) {
                 $inAttribute = $nesting + 1;
                 $nesting++;
             } elseif (\in_array($token->text, ['(', '['], true)) {
-                $nesting++;
+                // Defaults and attribute arguments cannot mark parameters.
+                // Jump even when unmatched, so another declaration cannot
+                // make this walk revisit the rest of a malformed document.
+                $i = $boundaries[$i];
             } elseif (\in_array($token->text, [')', ']'], true)) {
                 if (0 === $nesting) {
                     return array_values($marked);
@@ -345,8 +381,8 @@ final class PatternAttributeScanner
             } elseif ($inAttribute === $nesting && $inAttribute > 0
                 && $token->is([\T_STRING, \T_NAME_QUALIFIED, \T_NAME_FULLY_QUALIFIED, \T_NAME_RELATIVE])) {
                 $name = Ascii::lower(self::resolve($token, $namespace, $uses));
-                if (self::marks($name, self::stringArguments($tokens, $i + 1))) {
-                    $marked[$index] ??= [$index, self::parameterName($tokens, $i + 1)];
+                if (self::marks($name, self::stringArguments($tokens, $i + 1, $workLeft))) {
+                    $marked[$index] ??= [$index, self::parameterName($tokens, $i + 1, $workLeft)];
                 }
             }
         }
@@ -360,10 +396,10 @@ final class PatternAttributeScanner
      *
      * @param list<\PhpToken> $tokens
      */
-    private static function parameterName(array $tokens, int $i): ?string
+    private static function parameterName(array $tokens, int $i, int &$workLeft): ?string
     {
         $nesting = 1;
-        for ($count = \count($tokens); $i < $count; $i++) {
+        for ($count = \count($tokens); $i < $count && $workLeft > 0; $i++, $workLeft--) {
             $token = $tokens[$i];
             if ($token->is(\T_ATTRIBUTE) || \in_array($token->text, ['(', '['], true)) {
                 $nesting++;
@@ -390,13 +426,13 @@ final class PatternAttributeScanner
      *
      * @return \Generator<int, string>
      */
-    private static function stringArguments(array $tokens, int $i): \Generator
+    private static function stringArguments(array $tokens, int $i, int &$workLeft): \Generator
     {
         if (!isset($tokens[$i]) || '(' !== $tokens[$i]->text) {
             return;
         }
 
-        for ($i++; isset($tokens[$i]) && ')' !== $tokens[$i]->text; $i++) {
+        for ($i++; isset($tokens[$i]) && ')' !== $tokens[$i]->text && $workLeft > 0; $i++, $workLeft--) {
             if ($tokens[$i]->is(\T_CONSTANT_ENCAPSED_STRING)) {
                 yield substr($tokens[$i]->text, 1, -1);
             }
