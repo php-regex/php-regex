@@ -129,6 +129,30 @@ final class PatternLabTest extends TestCase
     }
 
     /**
+     * A cut on a lead byte keeps it out: "é" is C3 A9, and with the quote in
+     * front a lead byte stands at the ceiling, so the message holds 4,094
+     * whole characters, and no lead byte is taken for a continuation one.
+     */
+    #[Test]
+    public function test_export_cuts_before_a_lead_byte_at_the_ceiling(): void
+    {
+        $this->assertSame("'".str_repeat('é', 4094).'…', PatternLab::export(str_repeat('é', 5000)));
+    }
+
+    /**
+     * A run of bytes 0x80 to 0xBF is no UTF-8: the cut steps back three
+     * bytes at most, as far as a character's continuation goes, and the
+     * message keeps the rest of the subject.
+     */
+    #[Test]
+    public function test_export_keeps_a_long_run_of_continuation_bytes(): void
+    {
+        $export = PatternLab::export(str_repeat("\x80", 10000));
+
+        $this->assertSame("'".str_repeat("\x80", 8185).'…', $export);
+    }
+
+    /**
      * The cut falls on a character boundary: "€" takes three bytes, and the
      * message keeps whole ones before the ellipsis.
      */

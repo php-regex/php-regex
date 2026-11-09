@@ -249,8 +249,11 @@ final class PatternLab
             // Back from a continuation byte (10xxxxxx) to the start of its
             // character, so the cut keeps whole characters. The output never
             // passes the ceiling, so what is available is never negative.
+            // A character has three continuation bytes at most: a longer run
+            // is no UTF-8, and stepping further would drop it all.
             $end = $available;
-            while ($end > 0 && 0x80 === (\ord($part[$end]) & 0xC0)) {
+            $floor = max(0, $available - 3);
+            while ($end > $floor && 0x80 === (\ord($part[$end]) & 0xC0)) {
                 $end--;
             }
             self::$exportOutput .= substr($part, 0, $end);
