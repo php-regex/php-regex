@@ -200,6 +200,12 @@ as `CallTypes::quote` does.
   `AlphaAssertionBodyTest` does against 11 s. Bound the work the rule does,
   not the clock.
 
+- `ForkedWorkerPoolTest::test_run_leaves_no_payload_file_when_several_workers_fail_at_once`
+  expects the report to name `file0.php`, the first failing chunk, but two
+  workers fail at once and either may be read first (`file6.php` on a macOS
+  PHP 8.6 cell, 2026-11-09, on #240, which does not touch the pool). Assert
+  one of the failing files, or order the report by chunk.
+
 - `ForkedWorkerPoolTest::test_run_ends_a_busy_worker_whatever_the_parent_does_with_sigterm`
   measures wall time against 3 s and fails on a loaded runner (3.10 s and
   3.94 s on PHP 8.6 cells, 2026-11-08, on #294 and #319, which do not touch

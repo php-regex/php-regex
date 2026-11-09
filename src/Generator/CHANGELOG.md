@@ -9,6 +9,9 @@ CHANGELOG
  * A sample, and every piece built on the way to it, stops at 1,048,576 bytes
    before it is concatenated: a chain of doubling backreferences throws
    `SampleGenerationException` instead of exhausting memory.
+ * Lookaheads in a row, each drawing what follows it again, stop at 128
+   nested draws and 131,072 copied sequence entries: thousands of `(?=a)` no
+   longer exhaust memory.
  * `TestCaseGenerator` checks every case against the running engine and drops
    the ones it contradicts (`/foo|bar/` no longer lists `bar` as
    non-matching); a pattern the engine refuses has no case.

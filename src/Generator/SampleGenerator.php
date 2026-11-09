@@ -69,6 +69,11 @@ final class SampleGenerator extends AbstractNodeVisitor
 {
     private const MAX_RECURSION_DEPTH = 2;
 
+    // Sibling lookaheads recurse through suffixes even in a flat AST.
+    private const MAX_SEQUENCE_DEPTH = 128;
+
+    private const MAX_SEQUENCE_WORK = 131072;
+
     /**
      * The longest sample built: past it, repeats of references or calls
      * would outgrow any subject worth testing with.
@@ -134,6 +139,10 @@ final class SampleGenerator extends AbstractNodeVisitor
     private array $scans = [];
 
     private int $lookaheadDraws = 0;
+
+    private int $sequenceDepth = 0;
+
+    private int $sequenceWork = 0;
 
     /**
      * Whether a "(*ACCEPT)" ended what is being generated, up to the call or
@@ -316,6 +325,8 @@ final class SampleGenerator extends AbstractNodeVisitor
         $this->groupNumbers = [];
         $this->scans = [];
         $this->lookaheadDraws = 0;
+        $this->sequenceDepth = 0;
+        $this->sequenceWork = 0;
         $this->accepted = false;
         $this->groupDefinitionCounter = 1;
         $this->requiredPrefixes = [];
@@ -1026,25 +1037,45 @@ final class SampleGenerator extends AbstractNodeVisitor
      */
     private function generateSequence(array $children): string
     {
-        $text = '';
-        $children = $this->withPlainGroupsOpened($children);
-        $ahead = $this->textAhead;
-        // What the children after each one add, at the fewest.
-        $after = [];
-        $rest = 0;
-        for ($index = \count($children) - 1; $index >= 0; $index--) {
-            $after[$index] = $rest;
-            $rest += $this->minLength($children[$index]);
+        if ($this->sequenceDepth >= self::MAX_SEQUENCE_DEPTH) {
+            throw new SampleGenerationException('No sample was built: sequence depth limit exceeded.');
         }
 
+        $this->sequenceDepth++;
+        $ahead = $this->textAhead;
+        $text = '';
         $this->textsBefore[] = &$text;
 
         try {
+            $children = $this->withPlainGroupsOpened($children);
+            // What the children after each one add, at the fewest.
+            $after = [];
+            $rest = 0;
+            for ($index = \count($children) - 1; $index >= 0; $index--) {
+                $after[$index] = $rest;
+                $rest += $this->minLength($children[$index]);
+            }
+
             return $this->generateChildren($children, $after, $ahead, $text);
         } finally {
             $this->textAhead = $ahead;
             array_pop($this->textsBefore);
+            $this->sequenceDepth--;
         }
+    }
+
+    /**
+     * Charge the entries a lookahead copies when it draws what follows it
+     * again: a plain sequence or repetition copies none, so it is not
+     * charged. Shared by nested lookaheads and retries for this sample.
+     */
+    private function reserveSequenceWork(int $entries): void
+    {
+        if ($entries > self::MAX_SEQUENCE_WORK - $this->sequenceWork) {
+            throw new SampleGenerationException('No sample was built: sequence work limit exceeded.');
+        }
+
+        $this->sequenceWork += $entries;
     }
 
     /**
@@ -1060,10 +1091,12 @@ final class SampleGenerator extends AbstractNodeVisitor
                 // the first that what is left of the sequence matches, as
                 // lookaheads in a row each ask something of the same text.
                 // None does: the whole is drawn again, while tries are left.
+                $this->reserveSequenceWork(\count($children) - $index);
                 $left = new SequenceNode(\array_slice($children, $index), $child->getStartPosition(), $child->getEndPosition());
                 do {
                     // The lookahead first: what it captures holds after it.
                     $ahead = $this->acceptedIn($child->child);
+                    $this->reserveSequenceWork(\count($children) - $index - 1);
                     $rest = $this->generateSequence(\array_slice($children, $index + 1));
                     if ($this->holds($child->child, $rest, '\\A', '')) {
                         return $this->concatenate($text, $rest);
