@@ -55,9 +55,6 @@ jobs:
     # mistake fails here, before a tag publishes it. No lock file is
     # committed, so none is checked.
     name: Validate the manifests
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -86,10 +83,6 @@ jobs:
       - name: Check no class is declared twice
         run: composer dump-autoload --optimize --strict-ambiguous --no-interaction
 
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
-
   standalone:
     # Each package as Packagist serves it: its directory alone, required in a
     # bare project, its php-regex siblings reached through path repositories
@@ -97,9 +90,6 @@ jobs:
     # hides, a sibling missing from its require or an autoload path that
     # leaves the package directory fails here, before a tag publishes it.
     name: Install ${{ matrix.package }} alone
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -158,10 +148,6 @@ jobs:
           PACKAGE: ${{ matrix.package }}
         run: php tests/Tools/package_dependency_check.php "$PACKAGE" "$project"
 
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
-
   phpunit-matrix:
     # The assertion package runs on five PHPUnit majors the monorepo suite
     # never runs together: each cell installs it alone, with the cell's
@@ -169,9 +155,6 @@ jobs:
     # and to fail — a failing assertion that stops failing, or a passing
     # one that starts failing, is what this job is here to catch.
     name: PHPUnit bridge (PHPUnit ${{ matrix.phpunit }}, PHP ${{ matrix.php }})
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -215,10 +198,6 @@ jobs:
       - name: Check the four assertions answer and fail
         run: php tests/Tools/phpunit_bridge_selfcheck.php "$project"
 
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
-
   infection-e2e:
     # The mutators run by Infection itself, as a user runs them: installed
     # through Composer, and as the PHAR, which exposes only the mutator
@@ -228,9 +207,6 @@ jobs:
     # killed and some escaped, each escaped one with its kill string, the
     # same mutants on both runs.
     name: Infection mutators (${{ matrix.mode }}, PHP ${{ matrix.php }})
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -286,19 +262,12 @@ jobs:
       - name: Run Infection with the six mutators
         run: php tests/Tools/infection_bridge_selfcheck.php "$project" "$infection"
 
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
-
   phar:
     # The release path on every pull request: the phar built as the tag workflow
     # builds it, then run on the lowest PHP the packages admit, as the tag
     # workflow runs it, so that a release never meets a broken build first.
     # The branch's phar stays seven days as an artifact of the run.
     name: Build and run the phar
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -348,7 +317,3 @@ jobs:
           name: regex.phar
           path: bin/regex.phar
           retention-days: 7
-
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
