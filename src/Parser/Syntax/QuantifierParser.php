@@ -82,7 +82,7 @@ final class QuantifierParser
         $comments = [];
         $index = \count($nodes) - 1;
         while ($index >= 0 && $nodes[$index] instanceof CommentNode) {
-            array_unshift($comments, $nodes[$index]);
+            $comments[] = $nodes[$index];
             $index--;
         }
 
@@ -122,7 +122,7 @@ final class QuantifierParser
             $nodes[] = $this->quantify($target, $token);
         }
 
-        array_push($nodes, ...$comments);
+        array_push($nodes, ...array_reverse($comments));
 
         return true;
     }
