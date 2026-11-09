@@ -23,7 +23,7 @@ Think of them like bookmarks: start of string, end of string, or the edge betwee
 
 ### `^` — start of the string
 
-`^` matches the very beginning of the subject.
+`^` matches the very beginning of the **subject** — the string the pattern is run against (`preg_match()`'s second argument).
 
 ```php
 echo preg_match('/^cat/', 'cat food'), PHP_EOL; // 1
@@ -90,7 +90,7 @@ echo preg_match('/bird\z/m', $text), PHP_EOL; // 1 (absolute end)
 
 ### The trailing newline trap
 
-One subtle point: without `m`, `$` can match **just before a final newline**. `\z` never does this — it only matches at the very end with nothing after it.
+One subtle point: without `m`, `$` doesn't only match at the very end — it also accepts the position right before a newline that is the **last character** of the subject. That's why `/^cat$/` matches `"cat\n"`: the `$` sits just before that final newline. `\z` never does this — it only matches at the very end, with nothing after it, not even a newline.
 
 ```php
 echo preg_match('/^cat$/', "cat\n"), PHP_EOL; // 1 (before the final newline)
@@ -159,7 +159,7 @@ echo preg_match('/\berror\b/', 'errorCode'), PHP_EOL;     // 0
 ```
 {: data-run="" }
 
-Don't worry about `+` yet — we'll cover [quantifiers](04-quantifiers.md) in the next chapter.
+Don't worry about `+` (in `\d+`) or the `?` in `https?` yet — `?` makes the `s` optional. Both are [quantifiers](04-quantifiers.md), covered in the next chapter.
 
 ---
 

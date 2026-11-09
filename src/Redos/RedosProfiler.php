@@ -176,7 +176,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         // A recursion the attempt tries first, before it reads a character,
         // enters the pattern again where it started, and PCRE2 stops the
         // match there with an error: nothing after it ever runs.
-        $recursion = $node->pattern->accept($this->firstTriedStep);
+        $recursion = $node->accept($this->firstTriedStep);
         if ($recursion instanceof SubroutineNode) {
             $this->addVulnerability(
                 RedosSeverity::Low,

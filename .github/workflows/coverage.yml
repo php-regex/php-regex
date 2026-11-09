@@ -54,9 +54,6 @@ jobs:
     # infection.json.dist declares; those of the whole parser in the
     # parser-mutations job.
     name: Coverage and Mutations
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 120
     outputs:
@@ -161,10 +158,6 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
-
   parser-mutations:
     # The parser holds some twenty thousand mutants, hours of one runner:
     # they are dealt to shards, largest file first, each mutated on its own
@@ -173,9 +166,6 @@ jobs:
     name: Parser Mutations (${{ matrix.shard }}/8)
     needs: coverage
     if: needs.coverage.outputs.base == ''
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 150
     strategy:
@@ -230,7 +220,3 @@ jobs:
             var/coverage/mutated-paths
           if-no-files-found: ignore
           retention-days: 14
-
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs

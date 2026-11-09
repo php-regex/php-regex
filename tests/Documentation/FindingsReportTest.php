@@ -209,6 +209,97 @@ final class FindingsReportTest extends TestCase
     }
 
     #[Test]
+    public function test_many_findings_share_source_indexes_without_mixing_files_or_literals(): void
+    {
+        $results = [];
+        foreach (['First', 'Second'] as $name) {
+            $source = "<?php\n";
+            for ($i = 0; $i < 100; $i++) {
+                // The second spelling wins by column, even though both decode
+                // to the same pattern. CRLF and UTF-8 keep byte offsets honest.
+                $text = '/* é '.$name.' */ preg_match(\'/a/s\', $x); preg_match("/a/s", $x);';
+                $source .= $text."\r\n";
+                $column = strpos($text, '"/a/s"');
+                $this->assertNotFalse($column);
+                $results[] = [
+                    'file' => $this->dir.'/corpus/acme/tool/src/'.$name.'.php',
+                    'line' => $i + 2,
+                    'column' => $column + 1,
+                    'pattern' => '/a/s',
+                    'issues' => [['severity' => 'warning', 'issue_id' => 'regex.lint.flag.useless.s']],
+                ];
+            }
+            $this->repository('acme/tool', ['src/'.$name.'.php' => $source], false);
+        }
+        // Alternate files so reuse cannot depend on adjacent report rows.
+        usort($results, static fn (array $a, array $b): int => $a['line'] <=> $b['line']);
+        file_put_contents($this->dir.'/parts/acme__tool.json', json_encode([
+            'head' => $this->head('acme/tool'),
+            'target' => ['php' => '8.1', 'pcre' => '10.42'],
+            'results' => $results,
+        ], \JSON_THROW_ON_ERROR));
+
+        [$exit, $output] = $this->report();
+        $this->assertSame(0, $exit, $output);
+        $findings = $this->repoFile()['findings'];
+        $this->assertCount(200, $findings);
+        foreach ($findings as $finding) {
+            $focus = array_values(array_filter($finding['snippet'], static fn (array $line): bool => $line['focus']))[0];
+            $plain = '';
+            foreach ($focus['runs'] as [$text, $class]) {
+                if (str_contains($class, 'pg-snippet-pattern')) {
+                    break;
+                }
+                $plain .= $text;
+            }
+            $this->assertSame($finding['column'], \strlen($plain) + 1);
+            $this->assertStringContainsString(pathinfo($finding['file'], \PATHINFO_FILENAME), $plain);
+        }
+    }
+
+    /**
+     * A file full of string literals with one finding in it: only the
+     * literals on the finding's line are decoded, so the byte maps of the
+     * others never fill the memory.
+     */
+    #[Test]
+    public function test_only_the_literals_on_a_findings_line_are_decoded(): void
+    {
+        $source = "<?php\n\npreg_match('/a/s', \$x);\n";
+        for ($i = 0; $i < 2000; $i++) {
+            $source .= "\$table[] = '".str_repeat('b', 2500)."';\n";
+        }
+        $this->repository('acme/tool', ['src/Table.php' => $source], false);
+        file_put_contents($this->dir.'/parts/acme__tool.json', json_encode([
+            'head' => $this->head('acme/tool'),
+            'target' => ['php' => '8.1', 'pcre' => '10.42'],
+            'results' => [[
+                'file' => $this->dir.'/corpus/acme/tool/src/Table.php',
+                'line' => 3,
+                'column' => 12,
+                'pattern' => '/a/s',
+                'issues' => [['severity' => 'warning', 'issue_id' => 'regex.lint.flag.useless.s']],
+            ]],
+        ], \JSON_THROW_ON_ERROR));
+
+        // Decoding every literal holds a byte map of about 80 MB.
+        [$exit, $output] = $this->report(null, ['memory_limit' => '64M']);
+
+        $this->assertSame(0, $exit, $output);
+        $findings = $this->repoFile()['findings'];
+        $this->assertCount(1, $findings);
+        $focus = array_values(array_filter($findings[0]['snippet'], static fn (array $line): bool => $line['focus']))[0];
+        $plain = '';
+        foreach ($focus['runs'] as [$text, $class]) {
+            if (str_contains($class, 'pg-snippet-pattern')) {
+                break;
+            }
+            $plain .= $text;
+        }
+        $this->assertSame('preg_match(', $plain);
+    }
+
+    #[Test]
     public function test_a_finding_keeps_its_id_when_its_line_moves(): void
     {
         $this->report();
@@ -600,12 +691,19 @@ final class FindingsReportTest extends TestCase
     }
 
     /**
+     * @param array<string, string> $ini
+     *
      * @return array{int, string}
      */
-    private function report(?string $corpus = null): array
+    private function report(?string $corpus = null, array $ini = []): array
     {
+        $settings = [];
+        foreach ($ini as $name => $value) {
+            $settings[] = '-d';
+            $settings[] = $name.'='.$value;
+        }
         $process = proc_open(
-            [\PHP_BINARY, '-d', 'auto_prepend_file=', self::REPORT, '--offline', '--parts='.$this->dir.'/parts', '--corpus='.($corpus ?? $this->dir.'/corpus'), '--out='.$this->dir.'/out'],
+            [\PHP_BINARY, '-d', 'auto_prepend_file=', ...$settings, self::REPORT, '--offline', '--parts='.$this->dir.'/parts', '--corpus='.($corpus ?? $this->dir.'/corpus'), '--out='.$this->dir.'/out'],
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
         );

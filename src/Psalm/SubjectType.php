@@ -96,7 +96,7 @@ final class SubjectType
     {
         try {
             $language = (new LanguageSolver($parser))->language($pattern, new SolverOptions(matchMode: MatchMode::Partial));
-            if (!$language->isFinite()) {
+            if (!$language->isFinite() || ($language->maxLength() ?? 0) >= $maxLength) {
                 return null;
             }
 

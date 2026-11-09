@@ -53,7 +53,10 @@ final class LinkFormatter
             return $label;
         }
 
-        if (!$this->supportsHyperlinks) {
+        // The destination goes raw into the OSC 8 sequence the terminal
+        // reads: one that is not valid UTF-8, or holds a control or a ">",
+        // which ends the console tag, gives no link.
+        if (!$this->supportsHyperlinks || 1 !== LibraryPcre::match('/^[^>\p{Cc}]++\z/u', $url)) {
             if (null !== $fallbackLabel) {
                 return $fallbackLabel;
             }

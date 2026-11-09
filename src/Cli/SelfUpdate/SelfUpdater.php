@@ -45,12 +45,18 @@ final class SelfUpdater
         $checksum = $this->parseChecksum($this->fetchRemoteString(self::CHECKSUM_URL));
 
         $tempPath = $this->createTempFile();
-        $this->downloader->download(self::UPDATE_URL, $tempPath);
 
-        $this->verifyChecksum($tempPath, $checksum);
-        $this->validateDownloadedPhar($tempPath);
+        try {
+            $this->downloader->download(self::UPDATE_URL, $tempPath);
 
-        $this->replacePhar($pharPath, $tempPath);
+            $this->verifyChecksum($tempPath, $checksum);
+            $this->validateDownloadedPhar($tempPath);
+
+            $this->replacePhar($pharPath, $tempPath);
+        } finally {
+            @unlink($tempPath);
+            @rmdir(\dirname($tempPath));
+        }
 
         $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('PHPRegex updated successfully.')."\n");
     }
@@ -72,14 +78,13 @@ final class SelfUpdater
 
     private function createTempFile(): string
     {
-        $tempBase = tempnam(sys_get_temp_dir(), 'regex-phar-');
-        if (false === $tempBase) {
-            throw new CliException('Unable to create a temporary file.');
+        $directory = sys_get_temp_dir().'/regex-phar-'.bin2hex(random_bytes(16));
+        // mkdir reserves the directory atomically; never reuse an existing path.
+        if (!@mkdir($directory, 0o700)) {
+            throw new CliException('Unable to create a temporary directory.');
         }
 
-        @unlink($tempBase);
-
-        return $tempBase.'.phar';
+        return $directory.'/regex.phar';
     }
 
     private function verifyChecksum(string $tempPath, string $expectedChecksum): void

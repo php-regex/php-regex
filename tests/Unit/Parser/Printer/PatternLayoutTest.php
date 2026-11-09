@@ -53,6 +53,37 @@ final class PatternLayoutTest extends TestCase
     }
 
     #[Test]
+    public function test_oversized_prefix_does_not_expand_every_comment_line(): void
+    {
+        $long = str_repeat('a', 10_000);
+        $trail = PatternLayout::TRAIL;
+        $text = $long.$trail."# long\n".str_repeat("b{$trail}# short\n", 2_000);
+
+        $expected = $long."  # long\n".str_repeat("b  # short\n", 2_000);
+        $result = PatternLayout::finishLines($text, $trail, false);
+        $this->assertSame(\strlen($expected), \strlen($result));
+        $this->assertSame($expected, $result);
+    }
+
+    #[Test]
+    public function test_alignment_limit_counts_columns_and_keeps_shorter_lines_aligned(): void
+    {
+        $trail = PatternLayout::TRAIL;
+        $atLimit = str_repeat('é', 120);
+        $overLimit = $atLimit.'é';
+        $text = "a{$trail}# a\n{$atLimit}{$trail}# b\n{$overLimit}{$trail}# c";
+
+        $this->assertSame(
+            'a'.str_repeat(' ', 121)."# a\n{$atLimit}  # b\n{$overLimit}  # c",
+            PatternLayout::finishLines($text, $trail, true),
+        );
+        $this->assertSame(
+            "a  # a\n{$atLimit}  # b\n{$overLimit}  # c",
+            PatternLayout::finishLines($text, $trail, false),
+        );
+    }
+
+    #[Test]
     public function test_the_last_pass_keeps_the_pattern_it_is_given(): void
     {
         // Oracle: "\x20" and "\ " are the same space under x.

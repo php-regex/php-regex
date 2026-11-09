@@ -99,6 +99,19 @@ echo $ast->accept(new AsciiTreeRenderer());
 //         \-- CharType (\d)
 ```
 
+Both write the text a pattern carries, a comment, a callout string or the
+name of a verb such as `(*MARK:…)`, in
+display form: a control character is written `\xHH` (`\x1B`), a line break,
+a tab or a carriage return `\n`, `\t` or `\r`, and a character that moves or
+hides text such as U+202E `\x{202E}`. An explanation keeps one line per
+construct, and the escape sequences of a pattern never reach the terminal.
+
+Both stop at 8 MiB of output, indentation and line breaks counted: a pattern of
+a few dozen kilobytes can nest a long run deep enough to need far more, and
+rendering it throws a `ResourceLimitException` whose `errorCode` is
+`ErrorCode::RenderingOutputTooLarge` (`regex.rendering.output_too_large`)
+instead of exhausting memory. The visitor can be reused after it threw.
+
 Highlight the pattern instead of explaining it — ANSI for a terminal, span classes for a web page:
 
 ```php

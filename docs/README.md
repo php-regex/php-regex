@@ -61,11 +61,11 @@ PHPRegex separates three kinds of answers:
 <dl class="verdict-grid">
   <div class="verdict-item">
     <dt>Proven</dt>
-    <dd>Follows from the parser, AST, automaton, or running PCRE oracle.</dd>
+    <dd>Follows from the parsed pattern itself, from a mathematical model built on it, or from running the pattern on the real PCRE engine.</dd>
   </div>
   <div class="verdict-item">
     <dt>Heuristic</dt>
-    <dd>Covers constructs outside the proof model or a budget stop.</dd>
+    <dd>The pattern uses a construct outside the proof model, or the analysis hit its budget, so conservative structural rules decided.</dd>
   </div>
   <div class="verdict-item">
     <dt>Unknown</dt>

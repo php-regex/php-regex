@@ -20,12 +20,12 @@
 
 PHPRegex is a PHP 8.1+ library that treats regular expressions as code.
 
-Unlike simple wrappers around `preg_match`, PHPRegex implements a complete **compiler pipeline** (Lexer → Parser → AST) and an **Automata-based Logic Solver** (normalized form → NFA → DFA).
+Unlike simple wrappers around `preg_match`, PHPRegex reads a pattern the way a compiler reads source code: a lexer splits it into tokens, a parser builds them into a tree (the [AST](https://php-regex.com/concepts/ast/)), and every analysis runs on that tree. To answer questions such as "do these two patterns match the same strings?", a logic solver also turns the tree into state machines (an NFA, then a DFA) and compares them.
 
 This architecture allows for advanced static analysis:
 - **Linting:** Detect redundancy, useless flags, and common mistakes.
 - **Safety:** Prove a pattern safe from catastrophic backtracking (ReDoS), or hand you the input that triggers it.
-- **Logic:** Compare patterns via NFA/DFA (Intersection, Equivalence, Subset) for the regular subset it supports.
+- **Logic:** Tell whether two patterns match the same strings, overlap, or one contains the other (equivalence, intersection, subset), for patterns without backreferences or recursion.
 
 Built for robust regex tooling in PHP projects.
 
@@ -35,12 +35,15 @@ The documentation lives at [php-regex.com](https://php-regex.com): a
 [regex tutorial](https://php-regex.com/tutorial/), a guide for every
 integration, and the reference pages behind each verdict the library prints.
 
-> ⚠️ **How to read the verdicts.** ReDoS analysis proves safety for the
-> subset of PCRE it models, one match attempt at a time; outside that subset,
-> structural heuristics decide — and the verdict says so. The parser follows
+> **How to read the verdicts.** Every ReDoS verdict carries a label.
+> `(proven)` means the analysis checked a model of how PCRE retries the
+> pattern, one match attempt at a time; `(heuristic)` means the pattern uses a
+> feature that model does not cover (a backreference, for example), so
+> conservative structural rules decided instead. The parser follows
 > PCRE closely (see the [conformance page](https://php-regex.com/reference/pcre2-conformance/))
 > without covering every edge of the engine. Treat findings as leads to
-> investigate, not as a guarantee.
+> investigate, not as a guarantee; the [correctness contracts](https://php-regex.com/reference/correctness-contracts/)
+> spell out what each label promises.
 
 ## 2.0 is coming
 
@@ -111,13 +114,13 @@ Coming from 1.x (`yoeunes/regex-parser`)? See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 
 ## What PHPRegex provides
 
-- 🏗️ **Deep Parsing:** Parse `/pattern/flags` into a structured, typed AST.
-- 🧠 **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset) with `LanguageSolver` from `php-regex/regex-automata`: `(new LanguageSolver())->equivalent('/a+/', '/aa*/')->isEquivalent` is `true`. Works for patterns in the [regular subset](https://php-regex.com/architecture/) it supports — every character set asked from the running PCRE2 — and refuses the rest with the reason named.
-- 🛡️ **ReDoS Analysis:** Prove the backtracking cost of a pattern — linear, polynomial or exponential — with the attack input when it is vulnerable, and replay that attack on the running PCRE. Outside the modelled subset, structural heuristics decide and say so.
-- 🧹 **Linter:** Detect useless flags, redundant groups, and common mistakes via the CLI.
-- 📖 **Explanation:** Explain patterns in plain English.
-- 📐 **Formatter:** Lay a long pattern out over lines under `x`, or compact it to one line, and prove the result matches exactly what the input matched.
-- 🔧 **Visitor API:** A flexible API for building custom regex tooling.
+- **Deep Parsing:** Parse `/pattern/flags` into a structured, typed AST.
+- **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset) with `LanguageSolver` from `php-regex/regex-automata`: `(new LanguageSolver())->equivalent('/a+/', '/aa*/')->isEquivalent` is `true`. It works for patterns without backreferences, recursion and the other features listed in the [regular subset](https://php-regex.com/architecture/), and refuses any other pattern with the reason named. Character classes are resolved by asking the PCRE2 release your PHP runs.
+- **ReDoS Analysis:** Prove the backtracking cost of a pattern — linear, polynomial or exponential — with the attack input when it is vulnerable, and replay that attack on the running PCRE. Outside the modelled subset, structural heuristics decide and say so.
+- **Linter:** Detect useless flags, redundant groups, and common mistakes via the CLI.
+- **Explanation:** Explain patterns in plain English.
+- **Formatter:** Lay a long pattern out over lines under `x`, or compact it to one line, and prove the result matches exactly what the input matched.
+- **Visitor API:** A flexible API for building custom regex tooling.
 
 ## Philosophy & Accuracy
 
@@ -125,7 +128,7 @@ PHPRegex separates what it can guarantee from what is heuristic:
 
 - Guaranteed: parsing and AST structure for the targeted PHP/PCRE version.
 - Measured: syntax validation and error offsets follow PHP's engine; the [PCRE2 conformance page](https://php-regex.com/reference/pcre2-conformance/) publishes how closely, case by case.
-- Proven: a ReDoS verdict marked `(proven)` holds for one match attempt on a model of PCRE's backtracking; `safe (proven)` means no input makes that attempt backtrack beyond a linear number of steps. The [ReDoS guide](https://php-regex.com/guides/redos/#the-guarantee) lists its limits.
+- Proven: a ReDoS verdict marked `(proven)` holds for one match attempt on a model of PCRE's backtracking; `safe (proven)` means no input can make that attempt take more than a number of steps proportional to the input's length (a linear number): matching time grows with the text, never faster. The [ReDoS guide](https://php-regex.com/guides/redos/#the-guarantee) lists its limits.
 - Heuristic: patterns outside that model (backreferences, conditionals, recursion, …) are judged by structural rules, marked `(heuristic)`; treat those as potential risk unless confirmed.
 - Context matters: PCRE version, JIT, and backtrack/recursion limits change practical impact.
 
@@ -153,74 +156,12 @@ be edge cases that the test suite does not yet cover.
 Separately, the linter and ReDoS analyzer have been run over a corpus of
 **over 1,700 unique patterns collected from around 200 real-world PHP
 projects** (Symfony,
-Laravel, Composer, PHPUnit, …). The lint results are in `var/log/corpus.log`.
+Laravel, Composer, PHPUnit, …).
 This corpus run is **not** part of the automated CI differential test — it is
 a snapshot used to validate that the lint and ReDoS rules produce sensible
-output on real code.
-
-The corpus checkouts themselves are not committed. `corpus.json`, at the root
-next to `composer.json`, lists every repository with its URL, branch and the
-commit it was pinned to, much like a lock file. `bin/corpus` manages the
-checkouts, composer-style:
-
-```bash
-php bin/corpus install                 # rebuild corpus/ exactly at the pinned commits
-php bin/corpus update                  # prune, clone what is missing, then pull everything,
-                                       # and write the new commits back to corpus.json
-php bin/corpus update --no-prune       # keep checkouts that are no longer listed
-php bin/corpus update --add https://github.com/vendor/repo.git [--as path] [--branch main]
-php bin/corpus update --write-manifest # rewrite corpus.json from what is on disk
-```
-
-Every `corpus.json` key is a `vendor/name` path — a repository added without
-`--as` is checked out under the `vendor/name` derived from its URL, and a URL
-that offers no vendor segment is refused rather than guessed at.
-
-`install` never writes to `corpus.json`: delete `corpus/` at any time and one
-command rebuilds it, repository by repository, at the exact commits the
-manifest pins. `update` is the only command that moves the pins. A checkout
-with local changes is never reset or removed unless `--force` is given, and a
-repository cloned by hand is removed on the next run unless it is added with
-`--add` or listed with `--write-manifest` first.
-
-Regenerate `var/log/corpus.log` after updating the corpus, sweeping it
-repository by repository:
-
-```bash
-php bin/corpus-lint
-```
-
-One lint run per repository, the target read from its own `composer.json`:
-`config.platform.php` when it declares a plain version, else the lowest PHP
-`require.php` allows, with the PCRE2 release `config.platform.lib-pcre` pins,
-else the running one for the running PHP's minor, else the one bundled with
-that PHP. A release
-older than the library knows in full is judged with the oldest rules it does
-— the notice the linter prints is carried into the log — and a repository
-without `require.php` falls back to `--php` (`8.1` by default). PHP 7.2 and
-earlier ship PCRE1, which the linter never judges: a `require.php` that also
-allows PHP 7.3 or later is judged from the lowest such PHP, with the note
-saying so in the log, and a `composer.json` that allows nothing from 7.3 on
-is refused: the section names no target (`Target: none — exit 2`) and
-carries the refusal, and the sweep counts it as a failure, never as a clean
-repository. Each run carries the ReDoS analysis in confirmed mode
-(`--redos --redos-mode=confirmed`): a pattern the analysis proves linear
-loses the warnings that only guess at backtracking, and a proven verdict is
-replayed on the running PCRE, so the log says at which length `preg_match()`
-gives up. The merged
-`var/log/corpus.log` keeps the issue format of a single run and gains one
-`###` header per repository; each repository's own
-log stays under `var/log/corpus-parts/`. `--only` and `--limit` sweep a slice
-of the corpus, and the merged log renders the same whether the command runs
-in a terminal or through a pipe, and whatever `COLUMNS` the shell exports:
-every run folds its lines at 120 columns.
-
-To judge the whole tree for one target instead, the PHP running the command
-and the PCRE2 it links, without touching the tracked log:
-
-```bash
-php bin/regex lint corpus/ --php-version=runtime
-```
+output on real code. What it reports on each project is published on the
+[findings pages](https://php-regex.com/findings/); how the corpus is pinned,
+rebuilt and swept is on the [maintainers page](https://php-regex.com/maintainers/#the-corpus).
 
 ## How to report a vulnerability responsibly
 

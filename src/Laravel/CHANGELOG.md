@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:explain --format=html` HTML-encodes every text it takes from the
+   pattern, so a pattern holding `<img onerror=…>` no longer writes a tag
+   into the page; `--highlight` colours the console format only.
  * `regex:lint` reads `paths` and `exclude` of `config/php-regex.php` from
    `base_path()`, whatever directory it runs from; the paths given on the
    command line are read from the working directory.

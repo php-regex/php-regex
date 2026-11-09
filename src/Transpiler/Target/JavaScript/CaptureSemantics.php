@@ -33,6 +33,7 @@ use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Transpiler\Exception\TranspileException;
 
 /**
  * Where JavaScript keeps captures and repeats otherwise than PCRE, found
@@ -58,6 +59,20 @@ use PHPRegex\Parser\Node\UnicodePropNode;
  */
 final class CaptureSemantics
 {
+    private const MAX_EMPTINESS_STEPS = 100_000;
+
+    private int $emptinessSteps = 0;
+
+    /**
+     * @var list<int> the groups whose reading met a reference inside them, once per meeting
+     */
+    private array $cycles = [];
+
+    /**
+     * @var array<int, bool> whether each node read so far may match empty, keyed by its object id; an answer that met a reference inside a group being read is not kept
+     */
+    private array $emptyNodes = [];
+
     /**
      * @var array<int, int> each capturing group's number, keyed by the node's object id
      */
@@ -162,7 +177,7 @@ final class CaptureSemantics
 
         if ($node instanceof BackrefNode) {
             $number = $this->referenced($node->ref);
-            if (null !== $number && true !== ($set[$number] ?? false)) {
+            if (null === $number || true !== ($set[$number] ?? false)) {
                 $this->diverge('A backreference to a group that may not have matched cannot be carried into JavaScript: there it matches the empty string, where PCRE fails.', $node);
             }
         }
@@ -362,6 +377,28 @@ final class CaptureSemantics
      */
     private function matchesEmpty(NodeInterface $node): bool
     {
+        $id = spl_object_id($node);
+        if (isset($this->emptyNodes[$id])) {
+            return $this->emptyNodes[$id];
+        }
+
+        if (++$this->emptinessSteps > self::MAX_EMPTINESS_STEPS) {
+            throw new TranspileException('Capture emptiness analysis exceeded its work limit.', $node->getStartPosition());
+        }
+
+        $cycles = \count($this->cycles);
+        $empty = $this->readsEmpty($node);
+        // An answer that met a reference inside a group being read holds
+        // only while that group is read.
+        if ($cycles === \count($this->cycles)) {
+            $this->emptyNodes[$id] = $empty;
+        }
+
+        return $empty;
+    }
+
+    private function readsEmpty(NodeInterface $node): bool
+    {
         return match (true) {
             $node instanceof LiteralNode => '' === $node->value,
             $node instanceof SequenceNode => $this->allMatchEmpty($node->children, -1),
@@ -379,7 +416,13 @@ final class CaptureSemantics
     {
         $number = $this->referenced($node->ref);
         $group = null === $number ? null : $this->groups[$number] ?? null;
-        if (null === $number || null === $group || isset($this->reading[$number])) {
+        if (null === $number || null === $group) {
+            return true;
+        }
+
+        if (isset($this->reading[$number])) {
+            $this->cycles[] = $number;
+
             return true;
         }
 
@@ -415,8 +458,8 @@ final class CaptureSemantics
     }
 
     /**
-     * The number of the group a reference names, or null for a spelling
-     * read elsewhere (a relative reference is refused by the printer).
+     * The number of the group a reference names, or null when unresolved.
+     * Relative references are refused by the printer.
      */
     private function referenced(string $ref): ?int
     {
@@ -424,7 +467,11 @@ final class CaptureSemantics
             return (int) $matches[1];
         }
 
-        if (1 === LibraryPcre::match('/^\\\\k[<{\']([A-Za-z0-9_]+)[>}\']$/', $ref, $matches)) {
+        // The parser has checked the name; resolve every name it accepts.
+        if (1 === LibraryPcre::match('/^\\\\k<([^>]++)>$/', $ref, $matches)
+            || 1 === LibraryPcre::match('/^\\\\k\{([^}]++)\}$/', $ref, $matches)
+            || 1 === LibraryPcre::match("/^\\\\k'([^']++)'$/", $ref, $matches)
+        ) {
             return $this->names[$matches[1]] ?? null;
         }
 

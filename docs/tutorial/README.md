@@ -10,7 +10,7 @@ Learn regular expressions from the ground up. This tutorial assumes **no prior k
 
 Most examples use plain PHP's `preg_match()` to show matches, but the concepts you'll learn apply to almost any regex flavor that uses PCRE.
 
-Examples marked with a **Run** button execute right here in the page: pick a PHP version beside the example, press Run, and the output appears under it with the engine that produced it — PHP and the PCRE2 build it bundles. Nothing is sent to a server; the engine is downloaded once, only when you actually run something.
+Examples marked with a **Run** button execute right here in the page: pick a PHP version beside the example, press Run, and the output appears under it with the engine that produced it — PHP and the PCRE2 build it bundles. PCRE2 (Perl Compatible Regular Expressions) is the regular expression engine PHP ships with. Nothing is sent to a server; the engine is downloaded once, only when you actually run something.
 
 ## What You'll Learn
 
@@ -131,6 +131,8 @@ You don't need to install any extra packages to follow chapters 1–7. Just read
 If you'd like a second opinion on a pattern you're working on, you can use tools to explain or visualize it. These are **completely optional** — you can safely skip them and come back later.
 
 ### PHPRegex CLI
+
+Unlike the chapters themselves, these commands need the PHPRegex CLI installed in your project (`vendor/bin/regex` only exists after `composer require` and install). The [Quick Start](../quick-start.md) walks you through it.
 
 ```bash
 vendor/bin/regex explain '/cat/i'
