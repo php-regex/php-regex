@@ -224,6 +224,11 @@ as `CallTypes::quote` does.
   bundled 10.40 measures otherwise than pcre2test 10.40, read it so for a
   PHP 8.2 target, and empty the list.
 
+- `RewriteVerificationTest::test_a_wide_alternation_is_judged_without_a_long_match_search`
+  measures wall time against 2 s and fails on a loaded runner (2.37 s on
+  PHP 8.4 Ubuntu, 2026-11-09, on #259, which does not touch the
+  optimizer). Bound the work, not the clock, as for the tests above.
+
 - Five real costs whose proposed bound refuses legitimate input, each
   answered in its pull request with the fix that keeps the answers: the
   ReDoS repair tries every quantifier (#249; try the ones the analysis
