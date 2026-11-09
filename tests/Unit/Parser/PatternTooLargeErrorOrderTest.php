@@ -42,6 +42,8 @@ final class PatternTooLargeErrorOrderTest extends TestCase
     private const UNTABLED_MESSAGES = [
         'regular expression is too large' => ErrorCode::PatternTooLarge,
         '\\K is not allowed in lookarounds (but see PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK)' => ErrorCode::KeepInLookaround,
+        // Before PHP 8.2, which reads no "n" flag.
+        "Unknown modifier 'n'" => ErrorCode::FlagUnknown,
     ];
 
     #[Test]
@@ -212,7 +214,10 @@ final class PatternTooLargeErrorOrderTest extends TestCase
 
         $codes = isset(self::UNTABLED_MESSAGES[$engine['message']]) ? [self::UNTABLED_MESSAGES[$engine['message']]->value] : PcreMessageCodes::codesFor($engine['message'], $release);
         $this->assertContains($result->errorCode?->value, $codes, \sprintf('Oracle: %s; the library: %s', $refused, (string) $result->error));
-        $this->assertSame($engine['offset'], $result->offset, 'Oracle: '.$refused);
+        // PHP reports a flag it does not know with no offset.
+        if (null !== $engine['offset']) {
+            $this->assertSame($engine['offset'], $result->offset, 'Oracle: '.$refused);
+        }
     }
 
     private static function validate(string $pattern, string $php, string $release): ValidationResult

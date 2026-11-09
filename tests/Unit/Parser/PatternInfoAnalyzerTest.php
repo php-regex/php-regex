@@ -1217,13 +1217,14 @@ final class PatternInfoAnalyzerTest extends TestCase
     }
 
     /**
-     * A thousand lookbehinds calling a group of fifty branches: PCRE
-     * compiles it, and every lookbehind counts, the last one included.
+     * A thousand lookbehinds calling a group of fifty branches, all three
+     * letters long as PCRE2 before 10.43 wants them: PCRE compiles it, and
+     * every lookbehind counts, the last one included.
      */
     #[Test]
     public function test_max_lookbehind_counts_every_lookbehind_of_a_pattern_pcre_compiles(): void
     {
-        $regex = '/('.implode('|', array_map(static fn (int $length): string => str_repeat('a', $length), range(1, 50))).')'.str_repeat('(?<=(?1))', 1000).'(?<='.str_repeat('b', 61).')/';
+        $regex = '/('.implode('|', array_map(static fn (int $index): string => 'a'.\chr(97 + intdiv($index, 26)).\chr(97 + $index % 26), range(0, 49))).')'.str_repeat('(?<=(?1))', 1000).'(?<='.str_repeat('b', 61).')/';
         $this->assertSame(0, preg_match($regex, ''));
 
         $this->assertSame(61, PatternInfoAnalyzer::analyzePattern(RegexParser::create(['cache' => null]), $regex)->maxLookbehind);
