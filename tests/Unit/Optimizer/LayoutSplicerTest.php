@@ -21,7 +21,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Tests\Support\CpuClock;
+use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +33,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LayoutSplicerTest extends TestCase
 {
+    use LinearTimeAssertions;
+
     private RegexParser $parser;
 
     protected function setUp(): void
@@ -139,21 +141,31 @@ final class LayoutSplicerTest extends TestCase
         $this->assertSame($expected, (new LayoutSplicer($this->parser))->splice($original, $rewritten));
     }
 
+    /**
+     * Every class is rewritten, so a search through the original list for
+     * each replacement finds none: four times the classes took some
+     * fourteen times as long. 64 KB stays within the default parser limit.
+     */
     #[Test]
     public function test_splice_matches_a_large_list_of_replaced_nodes_in_linear_work(): void
     {
-        // 64 KB, within the default parser limit. Every class is rewritten,
-        // so a search through the original list per replacement finds none.
         $original = $this->parser->parse('/'.str_repeat('[aa][bb]', 8000).'/x');
         $rewritten = $original->accept(new Rewriter(factorize: false));
         $this->assertInstanceOf(RegexNode::class, $rewritten);
+        $this->assertSame('/'.str_repeat('[a][b]', 8000).'/x', (new LayoutSplicer($this->parser))->splice($original, $rewritten));
 
-        $start = CpuClock::nanoseconds();
-        $spliced = (new LayoutSplicer($this->parser))->splice($original, $rewritten);
-        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+        // Parsed and rewritten once for each size: only the splice is timed.
+        $trees = [];
+        foreach ([2000, 8000] as $pairs) {
+            $tree = $this->parser->parse('/'.str_repeat('[aa][bb]', $pairs).'/x');
+            $rewritten = $tree->accept(new Rewriter(factorize: false));
+            $this->assertInstanceOf(RegexNode::class, $rewritten);
+            $trees[$pairs] = [$tree, $rewritten];
+        }
 
-        $this->assertSame('/'.str_repeat('[a][b]', 8000).'/x', $spliced);
-        $this->assertLessThan(2.0, $seconds, \sprintf('Layout matching took %.2f s.', $seconds));
+        $this->assertLinearTime(function (int $pairs) use ($trees): void {
+            (new LayoutSplicer($this->parser))->splice(...$trees[$pairs]);
+        }, 2000, 'Splicing rewritten classes', 8.0);
     }
 
     #[Test]
