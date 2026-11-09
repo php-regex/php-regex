@@ -224,7 +224,7 @@ final class PriorityNfaBuilder
 
         // What follows an end anchor must read nothing: it is checked when
         // the subject ends, or a final newline is all that is left.
-        if (PriorityNfa::START !== $kind && $this->readsMore($next, [])) {
+        if (PriorityNfa::START !== $kind && $this->readsMore($next)) {
             throw new ComplexityException(self::TRAILING_ANCHOR_MESSAGE, $hir->startPosition, $this->pattern);
         }
 
@@ -335,31 +335,33 @@ final class PriorityNfaBuilder
         return true;
     }
 
-    /**
-     * @param array<int, true> $seen
-     */
-    private function readsMore(int $state, array $seen): bool
+    private function readsMore(int $state): bool
     {
-        if (isset($seen[$state])) {
-            return false; // a cycle after an end anchor loops over nothing, refused before it is built
-        }
-        $seen[$state] = true;
-
-        $kind = $this->nfa->kinds[$state];
-        if (PriorityNfa::SPLIT === $kind) {
-            foreach ($this->nfa->targets[$state] as $target) {
-                if ($this->readsMore($target, $seen)) {
-                    return true;
-                }
+        $pending = [$state];
+        $seen = [];
+        while (null !== $state = array_pop($pending)) {
+            if (isset($seen[$state])) {
+                continue;
             }
+            // Share visitation across all branches: empty alternatives can
+            // reach the same continuation through exponentially many paths.
+            $seen[$state] = true;
 
-            return false;
+            switch ($this->nfa->kinds[$state]) {
+                case PriorityNfa::CHAR:
+                case PriorityNfa::START:
+                    return true;
+                case PriorityNfa::MATCH:
+                    break;
+                case PriorityNfa::SPLIT:
+                    array_push($pending, ...$this->nfa->targets[$state]);
+
+                    break;
+                default:
+                    $pending[] = $this->nfa->next[$state];
+            }
         }
 
-        return match ($kind) {
-            PriorityNfa::CHAR, PriorityNfa::START => true,
-            PriorityNfa::MATCH => false,
-            default => $this->readsMore($this->nfa->next[$state], $seen),
-        };
+        return false;
     }
 }
