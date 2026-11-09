@@ -99,6 +99,13 @@ echo $ast->accept(new AsciiTreeRenderer());
 //         \-- CharType (\d)
 ```
 
+Both write the text a pattern carries, a comment, a callout string or the
+name of a verb such as `(*MARK:…)`, in
+display form: a control character is written `\xHH` (`\x1B`), a line break,
+a tab or a carriage return `\n`, `\t` or `\r`, and a character that moves or
+hides text such as U+202E `\x{202E}`. An explanation keeps one line per
+construct, and the escape sequences of a pattern never reach the terminal.
+
 Highlight the pattern instead of explaining it — ANSI for a terminal, span classes for a web page:
 
 ```php
