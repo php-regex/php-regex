@@ -13,6 +13,9 @@ CHANGELOG
    of being expanded for close to a minute. A pattern PCRE compiles measures 2,001
    branches at most, so `PatternInfo::maxLookbehind` reads as before; on the tree
    of a pattern PCRE refuses, `analyze()` counts no lookbehind past that walk.
+ * `RegexParser::tokenize()`, and `Regex::tokenize()` through it, hold the
+   regex to `max_pattern_length` as `parse()` does, and throw a
+   `ResourceLimitException` past it: they lexed a pattern of any length.
  * The mark `PatternPrinter` stands in for a bracket until the text is known
    keeps a fixed length, at most nineteen bytes on a 64-bit build: a comment
    holding twenty thousand of its bytes no longer lengthens it to as many, and

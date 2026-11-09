@@ -207,45 +207,38 @@ final class StringExpressionReader
      */
     public static function stripParentheses(array $tokens, array $tokenIndexes): array
     {
-        // No tokens hold no significant one: the loop stops at once.
-        $totalTokens = \count($tokens);
-        while (true) {
-            $startIndex = PhpTokens::nextSignificant($tokens, 0, $totalTokens);
-            $endIndex = PhpTokens::previousSignificant($tokens, $totalTokens - 1);
-
-            if (null === $startIndex || null === $endIndex) {
-                break;
+        // Match parentheses once; rescanning and slicing for each enclosing
+        // pair makes deeply nested arguments take quadratic work.
+        $closers = [];
+        $open = [];
+        foreach ($tokens as $index => $token) {
+            if ('(' === $token) {
+                $open[] = $index;
+            } elseif (')' === $token && [] !== $open) {
+                $closers[array_pop($open)] = $index;
             }
-
-            if ('(' !== $tokens[$startIndex] || ')' !== $tokens[$endIndex]) {
-                break;
-            }
-
-            $depth = 0;
-            $wrapsAll = true;
-            for ($i = $startIndex; $i <= $endIndex; $i++) {
-                $token = $tokens[$i];
-                if ('(' === $token) {
-                    $depth++;
-                } elseif (')' === $token) {
-                    $depth--;
-                    if (0 === $depth && $i < $endIndex) {
-                        $wrapsAll = false;
-
-                        break;
-                    }
-                }
-            }
-
-            if (!$wrapsAll || 0 !== $depth) {
-                break;
-            }
-
-            $tokens = \array_slice($tokens, $startIndex + 1, $endIndex - $startIndex - 1);
-            $tokenIndexes = \array_slice($tokenIndexes, $startIndex + 1, $endIndex - $startIndex - 1);
-            $totalTokens = \count($tokens);
         }
 
-        return [$tokens, $tokenIndexes];
+        $start = 0;
+        $end = \count($tokens);
+        while ($start < $end) {
+            $startIndex = PhpTokens::nextSignificant($tokens, $start, $end);
+            $endIndex = PhpTokens::previousSignificant($tokens, $end - 1, $start);
+            if (null === $startIndex || null === $endIndex || ($closers[$startIndex] ?? null) !== $endIndex) {
+                break;
+            }
+
+            $start = $startIndex + 1;
+            $end = $endIndex;
+        }
+
+        if (0 === $start) {
+            return [$tokens, $tokenIndexes];
+        }
+
+        return [
+            \array_slice($tokens, $start, $end - $start),
+            \array_slice($tokenIndexes, $start, $end - $start),
+        ];
     }
 }
