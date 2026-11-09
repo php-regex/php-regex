@@ -67,7 +67,7 @@ final class SampleGeneratorLimitTest extends TestCase
     {
         $method = new \ReflectionMethod(SampleGenerator::class, 'within');
         $within = function (array ...$layouts) use ($method): array {
-            $joined = $method->invoke(null, ...$layouts);
+            $joined = $method->invoke(null, 1_048_576, ...$layouts);
             $this->assertInstanceOf(\Generator::class, $joined);
 
             return iterator_to_array($joined, false);
@@ -100,9 +100,27 @@ final class SampleGeneratorLimitTest extends TestCase
         $this->assertSame([$ahead, 'a'], $overlay);
         $this->assertIsArray($overlay);
 
-        $within = (new \ReflectionMethod(SampleGenerator::class, 'within'))->invoke(null, [$rest], $overlay);
+        $within = (new \ReflectionMethod(SampleGenerator::class, 'within'))->invoke(null, 1_048_576, [$rest], $overlay);
         $this->assertInstanceOf(\Generator::class, $within);
         $this->assertSame([$rest], iterator_to_array($within, false));
+    }
+
+    /**
+     * The text already built before a lookahead counts against the limit:
+     * after 1,048,575 letters, the layout "ab" of "(?=ab|a)b?" no longer
+     * fits, and the draws go on until one that does, "a".
+     */
+    #[Test]
+    public function test_a_lookahead_layout_counts_the_text_before_it(): void
+    {
+        $pattern = '/^'.str_repeat('a{65535}', 16).'a{15}(?=ab|a)b?/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 1_048_576)));
+
+        foreach ([2, 6] as $seed) {
+            $sample = (new SampleGenerator(seed: $seed))->generate($pattern);
+            $this->assertSame(1_048_576, \strlen($sample), 'seed '.$seed);
+            $this->assertSame(1, preg_match($pattern, $sample), 'seed '.$seed);
+        }
     }
 
     /**
