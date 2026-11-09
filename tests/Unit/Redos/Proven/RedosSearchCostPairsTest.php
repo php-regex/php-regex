@@ -19,11 +19,17 @@ use PHPRegex\Redos\Backtrack\ItemAutomaton;
 use PHPRegex\Redos\Backtrack\PnfaBuilder;
 use PHPRegex\Redos\Backtrack\SearchCostProver;
 use PHPRegex\Redos\Exception\ModelLimitException;
+use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosSearchCost;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RedosSearchCostPairsTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     public function test_pairs_keep_the_original_priority_and_order(): void
     {
@@ -65,6 +71,37 @@ final class RedosSearchCostPairsTest extends TestCase
         $actual = $pairs->invoke(null, $automaton, range(0, 1023), new Budget(10_000, 1));
 
         $this->assertSame(array_map(static fn (int $second): array => [0, $second], range(1, 16)), $actual);
+    }
+
+    /**
+     * Six hundred letters after the run split its class into some six
+     * hundred alphabet classes, all read on the loop: every ordered pair of
+     * them used to be built before sixteen were kept, a peak growth of
+     * 105 MB in 1.1 s (PHP 8.4.27, PCRE2 10.49), where the analysis now takes
+     * 13 MB. The witness stays, and the engine fails on the subject it
+     * builds: preg_match() returns 0.
+     */
+    #[Test]
+    public function test_many_looped_classes_keep_the_witness_within_the_memory_bound(): void
+    {
+        $this->requiresPhp('8.2', 'The peak memory of an analysis', 'has no memory_reset_peak_usage()');
+
+        $letters = '';
+        for ($i = 0; $i < 600; $i++) {
+            $letters .= \sprintf('\x{%X}', 0x100 + 2 * $i);
+        }
+        $pattern = '/\b[\x{100}-\x{FFF}]+x'.$letters.'/u';
+        $this->assertSame(0, preg_match($pattern, ''));
+
+        PeakMemory::reset();
+        $before = memory_get_peak_usage();
+        $cost = (new RedosAnalyzer())->analyze($pattern)->searchCost;
+        $growth = memory_get_peak_usage() - $before;
+
+        $this->assertInstanceOf(RedosSearchCost::class, $cost);
+        $this->assertSame(2, $cost->degree);
+        $this->assertSame(0, preg_match($pattern, $cost->build(100)));
+        $this->assertLessThan(48 * 1024 * 1024, $growth, \sprintf('peak memory grew by %.1f MB', $growth / 1048576));
     }
 
     private static function automaton(): ItemAutomaton
