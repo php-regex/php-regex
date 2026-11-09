@@ -255,6 +255,9 @@ final class LengthRangeCalculatorTest extends TestCase
     #[Test]
     public function test_cache_is_reset_when_pattern_unicode_mode_changes(): void
     {
+        // The engine reads "é" as two bytes without "u", as one character with it.
+        $this->assertSame([1, 0], [preg_match('/^..$/s', 'é'), preg_match('/^.$/s', 'é')]);
+        $this->assertSame([0, 1], [preg_match('/^..$/su', 'é'), preg_match('/^.$/su', 'é')]);
         $body = new LiteralNode('é', 0, 2);
         $call = new SubroutineNode('body', '', 0, 0);
         $visitor = new LengthRangeCalculator(calledBody: static fn (SubroutineNode $call): NodeInterface => $body);
