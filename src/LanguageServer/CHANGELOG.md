@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The "Add /u flag" quick fix names only the Unicode diagnostics whose
+   range lies inside its own literal, and a literal without one is checked
+   by the linter itself: a range over several literals no longer offers the
+   fix on a literal that needs no `/u`.
  * A lint finding, a ReDoS verdict and an inline marker diagnostic carry a
    `codeDescription` linking to the section of the docs that explains them.
  * A request whose answer cannot be written as JSON, a hover on a pattern

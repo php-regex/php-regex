@@ -752,6 +752,13 @@ final class CodeActionHandlerTest extends TestCase
     #[Test]
     public function test_unicode_diagnostics_are_attached_only_to_their_occurrence(): void
     {
+        // Without /u, \p{L} reads the two bytes of "é" one by one and the
+        // second is no letter; [a-z] means the same with or without /u.
+        $this->assertSame(0, preg_match('/^\p{L}+$/', 'é'));
+        $this->assertSame(1, preg_match('/^\p{L}+$/u', 'é'));
+        $this->assertSame(1, preg_match('/^[a-z]+$/', 'abc'));
+        $this->assertSame(preg_match('/^[a-z]+$/', 'é'), preg_match('/^[a-z]+$/u', 'é'));
+
         // Include two literals on each line and diagnostics inside their bodies.
         $source = "<?php\n".str_repeat("preg_match('/\\p{L}+/', \$s); preg_match('/[a-z]+/', \$s);\n", 24);
         $this->documents->open(self::URI, $source);
