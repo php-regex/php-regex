@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `CaptureGroupShape::$values` lists values of at most 4,096 bytes each and
+   65,536 bytes together, and is `null` past either bound: nested repeats such
+   as `/((?:(?:(?:(?:(?:a{32}){32}){32}){32}){32}){32})/` no longer spell a
+   gigabyte value, and two thousand calls to a group of long values no longer
+   build every call's values before the first product past the bound.
  * `PcreEngine` runs nothing where `ini_set()` refuses a limit the call asks
    for, as where `ini_set()` is disabled, and puts back a limit it already
    changed: the call no longer runs under a higher limit fixed by

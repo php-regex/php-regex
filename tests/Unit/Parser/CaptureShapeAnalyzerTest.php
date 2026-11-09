@@ -21,7 +21,9 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 use PHPRegex\Tests\Support\CpuClock;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -69,6 +71,89 @@ final class CaptureShapeAnalyzerTest extends TestCase
     public function test_a_group_knows_its_values_when_they_are_finite(string $pattern, int $group, ?array $values): void
     {
         $this->assertSame($values, $this->group($pattern, $group)->values);
+    }
+
+    /**
+     * The values of a group are enumerated up to 4,096 bytes each and 65,536
+     * bytes together; past either bound they are unknown, though the engine
+     * still matches the long value. The subject is one value the group can
+     * hold: preg_match() captures it whole (PHP 8.4.27, PCRE2 10.49).
+     *
+     * @param list<string>|null $values
+     */
+    #[Test]
+    #[DataProvider('provideByteBoundedValues')]
+    public function test_values_are_enumerated_within_the_byte_bounds(string $pattern, string $subject, ?array $values): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject, $matches));
+        $this->assertSame($subject, $matches[1]);
+
+        $this->assertSame($values, $this->group($pattern, 1)->values);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, values: list<string>|null}>
+     */
+    public static function provideByteBoundedValues(): iterable
+    {
+        yield 'value at the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){4})/', 'subject' => str_repeat('a', 4096), 'values' => [str_repeat('a', 4096)]];
+        yield 'nested repeat past the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){5})/', 'subject' => str_repeat('a', 5120), 'values' => null];
+        yield 'sequence past the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){4}b)/', 'subject' => str_repeat('a', 4096).'b', 'values' => null];
+        yield 'literal past the byte limit' => ['pattern' => '/('.str_repeat('a', 4097).')/', 'subject' => str_repeat('a', 4097), 'values' => null];
+        yield 'values at the aggregate byte limit' => ['pattern' => '/([a-p]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3})/', 'subject' => 'p'.str_repeat('a', 4095), 'values' => array_map(static fn (string $letter): string => $letter.str_repeat('a', 4095), range('a', 'p'))];
+        yield 'product past the aggregate byte limit' => ['pattern' => '/([a-q]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3})/', 'subject' => 'q'.str_repeat('a', 4095), 'values' => null];
+        yield 'union past the aggregate byte limit' => ['pattern' => '/([a-p]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3}|b(?:(?:b{32}){32}){3})/', 'subject' => str_repeat('b', 3073), 'values' => null];
+        yield 'unicode limit counts bytes' => ['pattern' => '/((?:(?:é{32}){32}){3})/u', 'subject' => str_repeat('é', 3072), 'values' => null];
+    }
+
+    /**
+     * Six nested {32} spell a value of 32^6 bytes: the engine refuses the
+     * pattern as too large, and the analysis, which reads it anyway, gives
+     * up on the value instead of spelling it.
+     */
+    #[Test]
+    public function test_a_gigabyte_value_is_not_spelled(): void
+    {
+        $pattern = '/((?:(?:(?:(?:(?:a{32}){32}){32}){32}){32}){32})/';
+        $this->assertFalse(EngineProbe::compiles($pattern));
+
+        $this->assertNull($this->group($pattern, 1)->values);
+    }
+
+    /**
+     * A sequence or an alternation stops at the first part past a bound: two
+     * thousand calls to a group of sixteen 4,096-byte values used to build
+     * every call's values first, about 250 MB, before the product or the
+     * union refused the second one. preg_match() on "" returns 0: each
+     * pattern compiles.
+     */
+    #[Test]
+    #[DataProvider('provideManyCallsPastTheBounds')]
+    public function test_values_stop_at_the_first_part_past_the_bounds(string $pattern): void
+    {
+        $this->requiresPhp('8.2', 'The peak memory of an analysis', 'has no memory_reset_peak_usage()');
+
+        $this->assertSame(0, preg_match($pattern, ''));
+        $regex = RegexParser::create()->parse($pattern);
+
+        PeakMemory::reset();
+        $before = memory_get_peak_usage();
+        $shape = (new CaptureShapeAnalyzer())->analyze($regex);
+        $growth = memory_get_peak_usage() - $before;
+
+        $this->assertNull($shape->whole->values);
+        $this->assertLessThan(16 * 1024 * 1024, $growth, \sprintf('peak memory grew by %.1f MB', $growth / 1048576));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideManyCallsPastTheBounds(): iterable
+    {
+        $group = '(?<x>[a-p]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3})';
+
+        yield 'sequence' => ['pattern' => '/'.$group.str_repeat('(?&x)', 2000).'/'];
+        yield 'alternation' => ['pattern' => '/'.$group.'(?:'.implode('|', array_fill(0, 2000, '(?&x)')).')/'];
     }
 
     /**
@@ -1374,16 +1459,6 @@ final class CaptureShapeAnalyzerTest extends TestCase
         // preg_match('/(a{2,3}?)/', 'aaa') -> ['aa', 'aa'] (PHP 8.4.26).
         yield 'lazy bounded repeat' => ['pattern' => '/(a{2,3}?)/', 'group' => 1, 'values' => ['aa', 'aaa']];
         yield 'possessive bounded repeat' => ['pattern' => '/((?:ab){0,2}+)/', 'group' => 1, 'values' => ['', 'ab', 'abab']];
-        // Finite-value enumeration is bounded by bytes as well as count.
-        yield 'value at the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){4})/', 'group' => 1, 'values' => [str_repeat('a', 4096)]];
-        yield 'nested repeats with gigabyte expansion' => ['pattern' => '/((?:(?:(?:(?:(?:a{32}){32}){32}){32}){32}){32})/', 'group' => 1, 'values' => null];
-        yield 'nested repeat past the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){5})/', 'group' => 1, 'values' => null];
-        yield 'sequence past the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){4}b)/', 'group' => 1, 'values' => null];
-        yield 'literal past the byte limit' => ['pattern' => '/('.str_repeat('a', 4097).')/', 'group' => 1, 'values' => null];
-        yield 'values at the aggregate byte limit' => ['pattern' => '/([a-p]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3})/', 'group' => 1, 'values' => array_map(static fn (string $letter): string => $letter.str_repeat('a', 4095), range('a', 'p'))];
-        yield 'product past the aggregate byte limit' => ['pattern' => '/([a-q]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3})/', 'group' => 1, 'values' => null];
-        yield 'union past the aggregate byte limit' => ['pattern' => '/([a-p]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3}|b(?:(?:b{32}){32}){3})/', 'group' => 1, 'values' => null];
-        yield 'unicode limit counts bytes' => ['pattern' => '/((?:(?:é{32}){32}){3})/u', 'group' => 1, 'values' => null];
         yield 'exact repeat past four' => ['pattern' => '/(a{5})/', 'group' => 1, 'values' => ['aaaaa']];
         yield 'bounded repeat of an empty body' => ['pattern' => '/((?:){2,1000})/', 'group' => 1, 'values' => ['']];
         yield 'bounded repeat past the limit' => ['pattern' => '/(a{1,33})/', 'group' => 1, 'values' => null];

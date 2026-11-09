@@ -283,7 +283,7 @@ final class CaptureFacts
         return match (true) {
             $node instanceof LiteralNode => \strlen($node->value) > self::MAX_VALUE_BYTES || $this->folds($node->value, $this->readsCaselessly($node)) ? null : [$node->value],
             $node instanceof CharLiteralNode => $this->character($node->codePoint, $this->readsCaselessly($node)),
-            $node instanceof SequenceNode => $this->product(array_map(fn (NodeInterface $child): ?array => $this->values($child, $scan), $node->children)),
+            $node instanceof SequenceNode => $this->product($this->valuesOf($node->children, $scan)),
             $node instanceof AlternationNode => $this->alternationValues($node, $scan),
             $node instanceof GroupNode => self::isLookaround($node) ? [''] : $this->values($node->child, $scan),
             $node instanceof QuantifierNode => $this->repeat($node, $scan),
@@ -380,7 +380,23 @@ final class CaptureFacts
             return [''];
         }
 
-        return $this->union(array_map(fn (NodeInterface $branch): ?array => $this->values($branch, $scan), $node->alternatives));
+        return $this->union($this->valuesOf($node->alternatives, $scan));
+    }
+
+    /**
+     * The values of each node, read one at a time: product() and union()
+     * stop at the first part past a bound, and the parts after it are never
+     * read.
+     *
+     * @param array<NodeInterface> $nodes
+     *
+     * @return \Generator<int, list<string>|null>
+     */
+    private function valuesOf(array $nodes, bool $scan): \Generator
+    {
+        foreach ($nodes as $node) {
+            yield $this->values($node, $scan);
+        }
     }
 
     /**
@@ -655,11 +671,11 @@ final class CaptureFacts
     }
 
     /**
-     * @param array<list<string>|null> $parts
+     * @param iterable<list<string>|null> $parts
      *
      * @return list<string>|null
      */
-    private function product(array $parts): ?array
+    private function product(iterable $parts): ?array
     {
         $strings = [''];
         foreach ($parts as $part) {
@@ -694,11 +710,11 @@ final class CaptureFacts
     }
 
     /**
-     * @param array<list<string>|null> $parts
+     * @param iterable<list<string>|null> $parts
      *
      * @return list<string>|null
      */
-    private function union(array $parts): ?array
+    private function union(iterable $parts): ?array
     {
         $strings = [];
         $bytes = 0;
