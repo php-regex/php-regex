@@ -206,6 +206,30 @@ final class ClassSetStoreTest extends TestCase
     }
 
     /**
+     * A directory that cannot be made is not written into: nothing is
+     * tried, rather than a write that fails on its own.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    #[RequiresPhpExtension('posix')]
+    public function test_a_directory_that_cannot_be_made_is_not_written_into(): void
+    {
+        $store = new ClassSetStore($this->root);
+        CacheOwnerFunctionOverrides::reset();
+        CacheOwnerFunctionOverrides::$mkdirFails = true;
+
+        try {
+            $store->save('u|:\\p{Han}', ['set' => CharSet::single(0x41)]);
+            $writes = CacheOwnerFunctionOverrides::$writes;
+        } finally {
+            CacheOwnerFunctionOverrides::reset();
+        }
+
+        $this->assertSame(0, $writes);
+        $this->assertDirectoryDoesNotExist($store->directory());
+    }
+
+    /**
      * Another process makes the directory between the check and mkdir():
      * mkdir() fails, the directory is there and is the owner's, and the
      * answer is written into it.
