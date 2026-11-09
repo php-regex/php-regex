@@ -9,7 +9,8 @@ CHANGELOG
  * A sample, and every piece built on the way to it, stops at 1,048,576 bytes
    before it is concatenated: a chain of doubling backreferences throws
    `SampleGenerationException` instead of exhausting memory. A group fitted to
-   a substring scan can still join two pieces of up to that size to check them.
+   substring scans can still join a piece of up to that size to its text for
+   each scan that reads it, to check them.
  * Lookaheads in a row, each drawing what follows it again, stop at 128
    nested draws and 131,072 copied sequence entries: thousands of `(?=a)` no
    longer exhaust memory.
