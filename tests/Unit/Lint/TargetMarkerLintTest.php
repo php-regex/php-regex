@@ -26,7 +26,10 @@ use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -178,6 +181,33 @@ final class TargetMarkerLintTest extends TestCase
         $this->assertContains('The @regex-target marker "php>=9.0" keeps no version the project is judged for (PHP >=8.2 <9.0): the patterns it covers are not judged.', $messages);
         $this->assertContains('The @regex-target marker holds "php>=eight", which names no PHP or PCRE2 version constraint: write "@regex-target php>=8.4", "@regex-target pcre>=10.43" or "@regex-target php>=8.4 pcre>=10.43".', $messages);
         $this->assertSame(4, $report->stats['errors']);
+    }
+
+    /**
+     * A "}" in the inline HTML of an "if" closes no body: the marker before
+     * the "if" covers the pattern after it, to the "}" of the code. The
+     * engine of the run compiles "(?a)" exactly where its PCRE2 has the
+     * ASCII options, 10.43 and later.
+     *
+     * @param class-string<ExtractorInterface> $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    public function test_a_brace_in_inline_html_ends_no_marked_statement(string $strategy): void
+    {
+        $this->assertSame(PcreTarget::runtime()->supports(PcreFeature::AsciiOptions), EngineProbe::compiles('/(?a)\d+/'));
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
+        $report = $this->lint($strategy, <<<'PHP'
+            <?php
+            /** @regex-target php>=8.4 */
+            if (true) { ?>}<?php
+                f();
+                preg_match('/(?a)\d+/', $s);
+            }
+            preg_match('/(?a)\d+/', $s);
+            PHP);
+
+        $this->assertSame([[7, 'regex.group.syntax', null]], self::issues($report));
     }
 
     /**

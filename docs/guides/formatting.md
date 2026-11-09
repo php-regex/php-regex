@@ -88,7 +88,7 @@ In an editor, the [language server](lsp.md) offers both as code actions on a reg
 
 ## Comments
 
-Comments stay where the author put them. A comment written after an item stays on that item's line. Trailing comments on consecutive lines align on one column, the way `gofmt` aligns them. One blank line the author left between items is kept; two become one. A `(?#…)` comment written over several lines keeps its line breaks, and each of its lines starts at the indent of the line it opens on.
+Comments stay where the author put them. A comment written after an item stays on that item's line. Trailing comments on consecutive lines align on one column, the way `gofmt` aligns them; a line whose item runs past 120 columns keeps two spaces before its comment and leaves the others aligned without it. One blank line the author left between items is kept; two become one. A `(?#…)` comment written over several lines keeps its line breaks, and each of its lines starts at the indent of the line it opens on.
 
 `compact` drops every comment, `#` and `(?#…)` alike. The one exception is a comment holding the bracket that balances a bracket delimiter where no backslash can go: in a verb name or a callout string, as in `{(*MARK:{)(?#})a}`, in a lookbehind's `(?<`, or as a class's opening `[`. That comment stays, a `#` one written as `(?#…)` holding only its brackets, less any left pairing with nothing; where one of them is a `)`, the pattern is refused (`parenthesis_in_comment`, below). A group left holding nothing once its comments are gone goes too, unless it is quantified.
 

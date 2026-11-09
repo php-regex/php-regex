@@ -11,6 +11,12 @@ CHANGELOG
    one `maxTransitionsProcessed` budget, whose diagnostic names the
    `lookaround bodies` phase. A lookaround repeated by a quantifier is compiled
    once: `/(?:(?=a{99})){100}a{99}/` no longer builds a hundred automata.
+ * `Language::strings()` and `nonMembers()` bound the search for each next
+   string, a million steps and 50,000 remembered states for one length, and
+   throw a `ComplexityException` past either: the second string of
+   `/^(?:b|a{400})$/` took 6 seconds to find, `a{2000}` more than two
+   minutes, and every state it remembered stayed in memory as long as the
+   language did.
  * `matchEquivalent()` visits each state once when it checks that nothing
    but the end follows an end anchor: `/$(?:|)(?:|)…/` with thirty empty
    alternations answers at once instead of walking 2^30 paths.

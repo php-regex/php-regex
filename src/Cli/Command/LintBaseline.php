@@ -224,9 +224,9 @@ final class LintBaseline
             }
 
             $entries = array_map(static fn (int $at, int $line): array => [$at, 0, $line], array_keys($lines), array_values($lines));
-            $taken = [] === $issues ? [] : array_column(self::align(array_column($issues, 2), $entries), 0);
+            $taken = [] === $issues ? [] : array_fill_keys(array_column(self::align(array_column($issues, 2), $entries), 0), true);
             foreach ($entries as [$at, , $line]) {
-                if (\in_array($at, $taken, true)) {
+                if (isset($taken[$at])) {
                     continue;
                 }
 
