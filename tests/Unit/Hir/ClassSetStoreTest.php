@@ -18,7 +18,9 @@ use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Hir\ClassSetStore;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\CacheOwnerFunctionOverrides;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -182,6 +184,32 @@ final class ClassSetStoreTest extends TestCase
         chmod($store->directory(), 0o777);
         $this->assertNull($store->load('u|:\p{Han}'));
         $store->save('u|:\p{Greek}', ['set' => CharSet::single(0x42)]);
+        $this->assertCount(1, self::files($this->root));
+    }
+
+    /**
+     * The directory is judged again once made: one that turns out to be
+     * another user's, as when another process made it first, is not
+     * written into.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    #[RequiresPhpExtension('posix')]
+    public function test_a_directory_made_for_another_owner_is_not_written_into(): void
+    {
+        $store = new ClassSetStore($this->root);
+        CacheOwnerFunctionOverrides::$anotherOwner = true;
+
+        try {
+            $store->save('u|:\\p{Han}', ['set' => CharSet::single(0x41)]);
+        } finally {
+            CacheOwnerFunctionOverrides::reset();
+        }
+
+        $this->assertDirectoryExists($store->directory());
+        $this->assertSame([], self::files($this->root));
+
+        $store->save('u|:\\p{Han}', ['set' => CharSet::single(0x41)]);
         $this->assertCount(1, self::files($this->root));
     }
 
