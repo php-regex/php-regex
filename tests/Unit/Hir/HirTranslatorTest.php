@@ -51,7 +51,10 @@ final class HirTranslatorTest extends TestCase
     public function test_long_literal_runs_keep_all_code_points_and_bounded_properties(): void
     {
         $points = array_merge(array_fill(0, 8000, 0xE9), [0x7A]);
-        $hir = $this->translate('/'.str_repeat('é', 8000).'z/u');
+        $subject = str_repeat('é', 8000).'z';
+        $pattern = '/'.$subject.'/u';
+        $this->assertSame(1, preg_match($pattern, $subject));
+        $hir = $this->translate($pattern);
 
         $this->assertInstanceOf(LiteralHir::class, $hir);
         $this->assertSame($points, $hir->codePoints);
