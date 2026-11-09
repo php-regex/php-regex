@@ -364,6 +364,7 @@ final class ClassLength
     private function merged(array $members, bool $negated, bool $caseless, bool $restricted): ?int
     {
         $ranges = [];
+        $literalRanges = [];
         $map = false;
         $flip = false;
         $properties = 0;
@@ -374,7 +375,7 @@ final class ClassLength
             if ('range' === $kind) {
                 \assert(\is_int($first) && \is_int($second));
                 $map = $map || !$this->utf;
-                array_push($ranges, ...($caseless ? $this->withOtherCases($first, $second, $restricted) : [[$first, $second]]));
+                $literalRanges[] = [$first, $second];
 
                 continue;
             }
@@ -430,6 +431,13 @@ final class ClassLength
                     $ranges[] = [0x100, self::MAX_CODE_POINT];
                 }
             }
+        }
+
+        // Expand disjoint literal ranges only: every cased character is
+        // visited at most once, bounding generated ranges by the case tables
+        // rather than by the number of overlapping members in the input.
+        foreach (self::mergeRanges($literalRanges) as [$low, $high]) {
+            array_push($ranges, ...($caseless ? $this->withOtherCases($low, $high, $restricted) : [[$low, $high]]));
         }
 
         $ranges = self::mergeRanges($ranges);
