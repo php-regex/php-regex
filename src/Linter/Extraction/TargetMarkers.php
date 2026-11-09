@@ -38,6 +38,12 @@ final class TargetMarkers
     private const NEXT_LINE = '@regex-target-next-line';
 
     /**
+     * Bytes of memory the statement tables need per token: up to some 70
+     * from PHP 8.2, 90 on 8.1, whose arrays take more per entry.
+     */
+    private const STATEMENT_TABLE_FACTOR = 96;
+
+    /**
      * Every marker of the source, in the order of the source.
      *
      * @return list<TargetMarker>
@@ -60,8 +66,14 @@ final class TargetMarkers
         foreach ($tokens as $index => $token) {
             $text = \is_array($token) ? $token[1] : $token;
             if (\is_array($token) && (\T_COMMENT === $token[0] || \T_DOC_COMMENT === $token[0])) {
-                if (\T_DOC_COMMENT === $token[0] && str_contains($token[1], '@regex-target') && self::opensItsLine($tokens, $index)) {
-                    $statements ??= self::statementRanges($tokens);
+                if (null === $statements && \T_DOC_COMMENT === $token[0] && str_contains($token[1], '@regex-target') && self::opensItsLine($tokens, $index)) {
+                    // The tables that find where each statement ends: a file
+                    // with room to be tokenized and not for them keeps none.
+                    if (!MemoryBudget::allowsSize(\count($tokens), self::STATEMENT_TABLE_FACTOR)) {
+                        return [];
+                    }
+
+                    $statements = self::statementRanges($tokens);
                 }
                 $statement = $statements[$index] ?? null;
                 array_push($markers, ...self::markersIn($token[1], $token[2], $offset, $content, $statement));
@@ -153,19 +165,21 @@ final class TargetMarkers
      */
     private static function statementRanges(array $tokens): array
     {
+        $count = \count($tokens);
         $lines = [];
         $closing = [];
         $stack = [];
         $line = 1;
+        // A delimiter is a token of its own: the same character in inline
+        // HTML or in the text of a string is no code.
         foreach ($tokens as $i => $token) {
             $text = \is_array($token) ? $token[1] : $token;
             $line = \is_array($token) ? $token[2] : $line;
             $lines[$i] = $line;
             $line += substr_count($text, "\n");
-            if (\in_array($text, ['(', '[', '{'], true)
-                || (\is_array($token) && \in_array($token[0], [\T_ATTRIBUTE, \T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES], true))) {
+            if (\is_array($token) ? \in_array($token[0], [\T_ATTRIBUTE, \T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES], true) : \in_array($token, ['(', '[', '{'], true)) {
                 $stack[] = $i;
-            } elseif (\in_array($text, [')', ']', '}'], true) && [] !== $stack) {
+            } elseif (\in_array($token, [')', ']', '}'], true) && [] !== $stack) {
                 // Like the original depth counter, pair by depth even in
                 // incomplete or malformed source, without requiring a type match.
                 $closing[array_pop($stack)] = $i;
@@ -173,26 +187,28 @@ final class TargetMarkers
         }
 
         $ranges = [];
-        /** @var array<int, int> $ends the last line of the statement each token starts */
-        $ends = [];
-        /** @var array<int, int|null> $after the token after each closing one */
-        $after = [];
+        // Filled from the end: an array written from its last key down is a
+        // hash, three times the memory of a fixed array.
+        /** @var \SplFixedArray<int> $ends the last line of the statement each token starts */
+        $ends = new \SplFixedArray($count);
+        /** @var \SplFixedArray<int|null> $after the token after each closing one */
+        $after = new \SplFixedArray($count);
         $next = null;
         $lastLine = null;
-        for ($i = \count($tokens) - 1; $i >= 0; $i--) {
+        for ($i = $count - 1; $i >= 0; $i--) {
             $token = $tokens[$i];
             if (\is_array($token) && \in_array($token[0], [\T_WHITESPACE, \T_COMMENT, \T_DOC_COMMENT], true)) {
                 if (\T_DOC_COMMENT === $token[0] && null !== $next && str_contains($token[1], '@regex-target') && self::opensItsLine($tokens, $i)) {
-                    $ranges[$i] = [$lines[$next], $ends[$next]];
+                    // Every token past $next has its end: the fixed array only says it may be null.
+                    $ranges[$i] = [$lines[$next], $ends[$next] ?? $lines[$next]];
                 }
 
                 continue;
             }
 
-            $text = \is_array($token) ? $token[1] : $token;
             $lastLine ??= $lines[$i];
             $end = null === $next ? $lastLine : $ends[$next];
-            if (\in_array($text, [';', ')', ']', '}'], true)) {
+            if (\in_array($token, [';', ')', ']', '}'], true)) {
                 $end = $lines[$i];
                 $after[$i] = $next;
             } elseif (isset($closing[$i])) {
@@ -201,10 +217,10 @@ final class TargetMarkers
                 $continues = null !== $following && (\is_array($tokens[$following])
                     ? \in_array($tokens[$following][0], [\T_ELSE, \T_ELSEIF, \T_CATCH, \T_FINALLY], true)
                     : \in_array($tokens[$following], [';', ')', ',', '(', '-', '.'], true));
-                $end = ('}' === $tokens[$close] && !$continues) || null === $following
+                // A body opens on "{"; "{$" and "${" open a variable in a string.
+                $end = ('{' === $token && !$continues) || null === $following
                     ? $lines[$close] : $ends[$following];
-            } elseif (\in_array($text, ['(', '[', '{'], true)
-                || (\is_array($token) && \in_array($token[0], [\T_ATTRIBUTE, \T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES], true))) {
+            } elseif (\is_array($token) ? \in_array($token[0], [\T_ATTRIBUTE, \T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES], true) : \in_array($token, ['(', '[', '{'], true)) {
                 $end = $lastLine;
             }
             $ends[$i] = $end;
