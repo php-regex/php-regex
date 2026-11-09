@@ -79,6 +79,56 @@ final class PatternLabTest extends TestCase
     }
 
     /**
+     * The budget is 256 values, the array itself counted: 255 items fit,
+     * the 256th is cut.
+     */
+    #[Test]
+    public function test_export_spends_a_budget_of_256_values(): void
+    {
+        $this->assertSame('['.implode(', ', range(1, 255)).']', PatternLab::export(range(1, 255)));
+        $this->assertStringEndsWith(', 255, …', PatternLab::export(range(1, 256)));
+    }
+
+    /**
+     * Arrays nest to depth 8: the ninth is shown as "[…]".
+     */
+    #[Test]
+    public function test_export_shows_the_ninth_nested_array_as_an_ellipsis(): void
+    {
+        $nested = [1];
+        for ($level = 0; $level < 8; $level++) {
+            $nested = [$nested];
+        }
+
+        $this->assertSame('[[[[[[[[[…]]]]]]]]]', PatternLab::export($nested));
+    }
+
+    /**
+     * 8,189 bytes fit whole, three left for the ellipsis; one more is cut,
+     * and a part that finds no room left is cut to nothing.
+     */
+    #[Test]
+    public function test_export_fills_the_ceiling_exactly(): void
+    {
+        $this->assertSame("'".str_repeat('x', 8187)."'", PatternLab::export(str_repeat('x', 8187)));
+        $this->assertSame("'".str_repeat('x', 8188).'…', PatternLab::export(str_repeat('x', 8188)));
+        $this->assertSame("['".str_repeat('x', 8186)."'…", PatternLab::export([str_repeat('x', 8186)]));
+    }
+
+    /**
+     * Once cut, nothing more is written: the "]" that would fit in the bytes
+     * a split character leaves is not appended.
+     */
+    #[Test]
+    public function test_export_writes_nothing_after_the_cut(): void
+    {
+        $export = PatternLab::export([str_repeat('€', 4000), 1]);
+
+        $this->assertTrue(mb_check_encoding($export, 'UTF-8'));
+        $this->assertStringEndsWith('€…', $export);
+    }
+
+    /**
      * The cut falls on a character boundary: "€" takes three bytes, and the
      * message keeps whole ones before the ellipsis.
      */

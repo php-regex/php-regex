@@ -202,7 +202,8 @@ final class PatternLab
                         }
                         $first = false;
                         if (!$list) {
-                            self::export($key, $depth + 1);
+                            // A key is a scalar: no depth to carry.
+                            self::export($key);
                             self::appendExport(' => ');
                         }
                         self::export($part, $depth + 1);
@@ -246,8 +247,9 @@ final class PatternLab
         $available = 8192 - 3 - \strlen(self::$exportOutput);
         if (\strlen($part) > $available) {
             // Back from a continuation byte (10xxxxxx) to the start of its
-            // character, so the cut keeps whole characters.
-            $end = max(0, $available);
+            // character, so the cut keeps whole characters. The output never
+            // passes the ceiling, so what is available is never negative.
+            $end = $available;
             while ($end > 0 && 0x80 === (\ord($part[$end]) & 0xC0)) {
                 $end--;
             }
