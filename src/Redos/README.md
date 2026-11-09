@@ -170,7 +170,8 @@ The runner runs the pattern under the process's `LC_CTYPE`, where
 `new ConfirmationRunner(locale: 'fr_FR.ISO8859-1')` runs it under that one,
 and refuses a locale the machine cannot set.
 
-Where `ini_set()` is disabled the engine cannot set those limits: nothing is
+Where `ini_set()` is disabled, or refuses one of those limits (fixed by
+`php_admin_value`), the engine cannot set them: nothing is
 run, `$confirmation->wasSkipped()` is true and its evidence is
 `Confirmation::LIMITS_UNAVAILABLE`.
 

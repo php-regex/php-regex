@@ -269,11 +269,11 @@ or `--git-diff-lines --git-diff-base=origin/2.x` for your branch).
 ## Submitting Changes
 
 ### Commit Messages
-Start the subject with the component in brackets, then a short imperative sentence that says what the change does; explain the why in the body when it is not obvious. The component is the package directory under `src/` (`Parser`, `Linter`, `Cli`, `Symfony`, `Laravel`, `PHPStan`, `Psalm`, `Rector`, `PHPUnit`, `LanguageServer`, `Redos`, `Transpiler`, `Optimizer`, `Automata`, `Explain`, `Generator`, `Toolkit`), or, outside the packages, `Docs`, `CI`, `Release` or `Corpus`; a change spanning two components names both:
+Start the subject with the component in brackets, then a short imperative sentence that says what the change does; explain the why in the body when it is not obvious. The component is the package directory under `src/` (`Parser`, `Linter`, `Cli`, `Symfony`, `Laravel`, `PHPStan`, `Psalm`, `Rector`, `PHPUnit`, `LanguageServer`, `Redos`, `Transpiler`, `Optimizer`, `Automata`, `Explain`, `Generator`, `Toolkit`), or, outside the packages, `Docs`, `CI`, `Release` or `Corpus`. Name exactly one component, never a chain such as `[Parser][Cli]`: a change that touches several packages names the one it was made for, where its user would look for it:
 ```bash
 git commit -m "[Parser] Escape numeric references when compiling a backreference"
 git commit -m "[Parser] Support branch reset groups (?|...)"
-git commit -m "[Linter][Cli] Read the matches patterns of the Twig templates"
+git commit -m "[Linter] Read the matches patterns of the Twig templates"
 ```
 
 ### Pull Request Process

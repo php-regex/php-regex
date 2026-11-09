@@ -15,11 +15,52 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Explain\AsciiTreeRenderer;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AsciiTreeRendererTest extends TestCase
 {
+    /**
+     * PCRE takes any character but ")" in a verb's name, an ESC included:
+     * the tree spells it out as the explanation does.
+     */
+    #[Test]
+    #[DataProvider('provideVerbsWithControls')]
+    public function test_verb_name_controls_are_escaped_before_rendering(string $pattern, string $line): void
+    {
+        $this->assertNotFalse(@preg_match($pattern, ''), 'PCRE compiles the verb with its name.');
+
+        $tree = Regex::create()->parse($pattern)->accept(new AsciiTreeRenderer());
+
+        $this->assertStringContainsString($line, $tree);
+        $this->assertStringNotContainsString("\e", $tree);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, line: string}>
+     */
+    public static function provideVerbsWithControls(): iterable
+    {
+        yield 'a mark' => ['pattern' => "/(*MARK:\e[2J)a/", 'line' => 'PCREVerb (*MARK:\\x1B[2J)'];
+        yield 'a bare mark' => ['pattern' => "/(*:\e]0;t\x07)a/", 'line' => 'PCREVerb (*MARK:\\x1B]0;t\\x07)'];
+        yield 'a skip' => ['pattern' => "/(*SKIP:\e)a|b/", 'line' => 'PCREVerb (*SKIP:\\x1B)'];
+        yield 'an accept' => ['pattern' => "/a(*ACCEPT:\e)/", 'line' => 'PCREVerb (*ACCEPT:\\x1B)'];
+    }
+
+    #[Test]
+    public function test_callout_controls_are_escaped_before_rendering(): void
+    {
+        $pattern = "/(?C\"é\x1B[2J\r\n\t\x07\x7F\u{009B}\u{202E}\\path\")/u";
+        $this->assertSame(1, preg_match($pattern, ''));
+        $ast = Regex::create()->parse($pattern);
+
+        $this->assertSame(
+            "Regex (flags: u)\n\\-- Callout (?C=\"é\\x1B[2J\\r\\n\\t\\x07\\x7F\\x{9B}\\x{202E}\\\\path\")",
+            $ast->accept(new AsciiTreeRenderer()),
+        );
+    }
+
     #[Test]
     public function test_diagram_renders_basic_tree(): void
     {

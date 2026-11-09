@@ -139,6 +139,39 @@ final class TwigTemplatePatternSourceTest extends TestCase
     }
 
     #[Test]
+    public function test_many_patterns_keep_byte_locations_after_comments_and_raw_text(): void
+    {
+        $prefix = "é\r\n{# comment\ncontinued #}{% verbatim %}\nraw{% endverbatim %}\n";
+        $row = "é{{ x matches '/a/' }}{{ y matches '/b/' }}\r\n";
+        $count = 5000;
+        $occurrences = TwigTemplatePatternSource::read($prefix.str_repeat($row, $count), 'many.twig');
+
+        $this->assertCount(2 * $count, $occurrences);
+        foreach ($occurrences as $index => $occurrence) {
+            $rowIndex = intdiv($index, 2);
+            $quote = 0 === $index % 2 ? strpos($row, "'/a/'") : strpos($row, "'/b/'");
+            $this->assertNotFalse($quote);
+            $this->assertSame(5 + $rowIndex, $occurrence->line);
+            $this->assertSame($quote + 1, $occurrence->column);
+            $this->assertSame(\strlen($prefix) + $rowIndex * \strlen($row) + $quote, $occurrence->fileOffset);
+        }
+    }
+
+    #[Test]
+    public function test_lines_and_columns_count_the_newlines_comments_hold(): void
+    {
+        // The newline that opens the template is counted too.
+        $template = "\n{{ a matches '/a/' }}{# one\ntwo #}{# @regex-ignore #}{{ b matches '/b/' }}\n\n{# x\n #}{{ c matches '/c/' }}";
+        $occurrences = TwigTemplatePatternSource::read($template, 'page.html.twig');
+
+        $this->assertSame(
+            [['/a/', 2, 14, 14], ['/b/', 3, 39, 67], ['/c/', 6, 17, 98]],
+            array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->pattern, $occurrence->line, $occurrence->column, $occurrence->fileOffset], self::patterns($occurrences)),
+        );
+        $this->assertSame([false, true, false], array_map(static fn (PatternOccurrence $occurrence): bool => $occurrence->isIgnored, self::patterns($occurrences)));
+    }
+
+    #[Test]
     public function test_the_pattern_is_the_one_twig_hands_to_the_engine(): void
     {
         $occurrences = TwigTemplatePatternSource::read("{% if x matches '/\\d+/' %}{% endif %}", 'page.html.twig');

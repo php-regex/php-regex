@@ -6,6 +6,27 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The value of a property read through `$this` looks into each trait of the
+   file once when it checks for a trait the file does not declare: forty traits
+   that each use the two before them no longer take exponential time to lint.
+ * The statement a `@regex-target` doc comment covers is found for every
+   marker of a file in one pass: 2,000 nested marked `if` bodies took some
+   20 seconds, they take a tenth of one. A `}` or a `;` in inline HTML or
+   in the text of a string, and the `}` that closes a `{$variable}` in a
+   string, no longer end that statement. A file with room under
+   `memory_limit` to be tokenized but not for the tables this pass builds
+   keeps no marker, as one too large to tokenize.
+ * The lock file the forked workers of `--jobs` share is created with no
+   permission for anyone but its owner (`0600` under the usual umask): another
+   user can no longer read or write it.
+ * An editor link is left out when its address is not valid UTF-8 or holds a
+   control character or a `>`, in the console report as in the Symfony and
+   Laravel `regex:lint` output: an `ide` template could otherwise send the
+   terminal escape sequences of its own through the OSC 8 hyperlink.
+ * Looking for the parameters marked as patterns reads a file once, even one
+   holding thousands of unclosed declarations or attributes: 500 lines of
+   `function f(#[Language('SQL',` took about 20 seconds, they take
+   milliseconds.
  * The character-set overlap of an alternation is no longer reported for two
    branches whose leading literal texts tell them apart,
    `associative-array|array`: the second character already decides which

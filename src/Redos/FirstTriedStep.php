@@ -27,6 +27,7 @@ use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Syntax\InlineFlags;
 
 /**
  * The first step a match attempt tries, read from the tree: the call to the
@@ -54,9 +55,16 @@ final class FirstTriedStep extends AbstractNodeVisitor
         'CASELESS_RESTRICT' => true, 'TURKISH_CASING' => true,
     ];
 
+    private bool $ungreedy = false;
+
+    private ?string $source = null;
+
     #[\Override]
     public function visitRegex(RegexNode $node): SubroutineNode|bool
     {
+        $this->ungreedy = str_contains($node->flags, 'U');
+        $this->source = $node->source;
+
         return $node->pattern->accept($this);
     }
 
@@ -92,11 +100,31 @@ final class FirstTriedStep extends AbstractNodeVisitor
             return false;
         }
 
-        return $node->child->accept($this);
+        $wasUngreedy = $this->ungreedy;
+        if (GroupType::InlineFlags === $node->type) {
+            $flags = InlineFlags::withoutAsciiOptions($node->flags ?? '');
+            // "(?)" sets nothing: it changes no option, and needs no reading.
+            $options = '' === $flags ? null : InlineFlags::read($flags, InlineFlags::LETTERS.'r');
+            if (('' !== $flags && null === $options) || null === $this->source) {
+                // Without the spelling, an empty scope and a bare setting
+                // cannot be distinguished: do not establish a shortcut.
+                return false;
+            }
+            $this->ungreedy = $options?->inForce('U', $wasUngreedy) ?? $wasUngreedy;
+            if (InlineFlags::setOptionsOnly($this->source, $node->startPosition)) {
+                return true;
+            }
+        }
+
+        try {
+            return $node->child->accept($this);
+        } finally {
+            $this->ungreedy = $wasUngreedy;
+        }
     }
 
     /**
-     * A repeat of nothing, or a lazy one that may match nothing, is skipped
+     * A repeat of nothing, or an effectively lazy one that may match nothing, is skipped
      * on the first try; any other tries its body.
      */
     #[\Override]
@@ -104,7 +132,9 @@ final class FirstTriedStep extends AbstractNodeVisitor
     {
         $min = $node->bounds->min ?? 0;
         $max = $node->bounds->max ?? null;
-        if (0 === $max || (0 === $min && QuantifierType::Lazy === $node->type)) {
+        $lazy = QuantifierType::Possessive !== $node->type
+            && ((QuantifierType::Lazy === $node->type) !== $this->ungreedy);
+        if (0 === $max || (0 === $min && $lazy)) {
             return true;
         }
 

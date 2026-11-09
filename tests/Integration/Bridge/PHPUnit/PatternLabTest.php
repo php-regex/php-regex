@@ -53,4 +53,128 @@ final class PatternLabTest extends TestCase
         $this->assertNull($attempt->matched);
         $this->assertSame("Expected ) at end of input (found eof).\nLine 1: a(\n".str_repeat(' ', 10).'^', $attempt->failure);
     }
+
+    #[Test]
+    public function test_export_preserves_ordinary_values(): void
+    {
+        $this->assertSame("[true, false, null, 42, 1.5, 'a\\\\b\\'c']", PatternLab::export([true, false, null, 42, 1.5, "a\\b'c"]));
+        $this->assertSame("['name' => ['value', 2]]", PatternLab::export(['name' => ['value', 2]]));
+        $this->assertSame('[…]', PatternLab::export(['deep'], 8));
+    }
+
+    #[Test]
+    public function test_export_bounds_shared_children_and_resets_its_budget(): void
+    {
+        $value = ['leaf'];
+        for ($depth = 0; $depth < 5; $depth++) {
+            $value = array_fill(0, 10, $value);
+        }
+
+        $rendered = PatternLab::export($value);
+
+        $this->assertLessThanOrEqual(8192, \strlen($rendered));
+        $this->assertStringContainsString('…', $rendered);
+        $this->assertLessThanOrEqual(256, substr_count($rendered, 'leaf'));
+        $this->assertSame("['leaf']", PatternLab::export(['leaf']));
+    }
+
+    /**
+     * The budget is 256 values, the array itself counted: 255 items fit,
+     * the 256th is cut.
+     */
+    #[Test]
+    public function test_export_spends_a_budget_of_256_values(): void
+    {
+        $this->assertSame('['.implode(', ', range(1, 255)).']', PatternLab::export(range(1, 255)));
+        $this->assertStringEndsWith(', 255, …', PatternLab::export(range(1, 256)));
+    }
+
+    /**
+     * Arrays nest to depth 8: the ninth is shown as "[…]".
+     */
+    #[Test]
+    public function test_export_shows_the_ninth_nested_array_as_an_ellipsis(): void
+    {
+        $nested = [1];
+        for ($level = 0; $level < 8; $level++) {
+            $nested = [$nested];
+        }
+
+        $this->assertSame('[[[[[[[[[…]]]]]]]]]', PatternLab::export($nested));
+    }
+
+    /**
+     * 8,189 bytes fit whole, three left for the ellipsis; one more is cut,
+     * and a part that finds no room left is cut to nothing.
+     */
+    #[Test]
+    public function test_export_fills_the_ceiling_exactly(): void
+    {
+        $this->assertSame("'".str_repeat('x', 8187)."'", PatternLab::export(str_repeat('x', 8187)));
+        $this->assertSame("'".str_repeat('x', 8188).'…', PatternLab::export(str_repeat('x', 8188)));
+        $this->assertSame("['".str_repeat('x', 8186)."'…", PatternLab::export([str_repeat('x', 8186)]));
+    }
+
+    /**
+     * Once cut, nothing more is written: the "]" that would fit in the bytes
+     * a split character leaves is not appended.
+     */
+    #[Test]
+    public function test_export_writes_nothing_after_the_cut(): void
+    {
+        $export = PatternLab::export([str_repeat('€', 4000), 1]);
+
+        $this->assertTrue(mb_check_encoding($export, 'UTF-8'));
+        $this->assertStringEndsWith('€…', $export);
+    }
+
+    /**
+     * A cut on a lead byte keeps it out: "é" is C3 A9, and with the quote in
+     * front a lead byte stands at the ceiling, so the message holds 4,094
+     * whole characters, and no lead byte is taken for a continuation one.
+     */
+    #[Test]
+    public function test_export_cuts_before_a_lead_byte_at_the_ceiling(): void
+    {
+        $this->assertSame("'".str_repeat('é', 4094).'…', PatternLab::export(str_repeat('é', 5000)));
+    }
+
+    /**
+     * A run of bytes 0x80 to 0xBF is no UTF-8: the cut steps back three
+     * bytes at most, as far as a character's continuation goes, and the
+     * message keeps the rest of the subject.
+     */
+    #[Test]
+    public function test_export_keeps_a_long_run_of_continuation_bytes(): void
+    {
+        $export = PatternLab::export(str_repeat("\x80", 10000));
+
+        $this->assertSame("'".str_repeat("\x80", 8185).'…', $export);
+    }
+
+    /**
+     * The cut falls on a character boundary: "€" takes three bytes, and the
+     * message keeps whole ones before the ellipsis.
+     */
+    #[Test]
+    public function test_export_cuts_a_long_string_between_characters(): void
+    {
+        $export = PatternLab::export(str_repeat('€', 10000));
+
+        $this->assertTrue(mb_check_encoding($export, 'UTF-8'));
+        $this->assertStringStartsWith("'€€€", $export);
+        $this->assertStringEndsWith('€…', $export);
+        $this->assertLessThanOrEqual(8192, \strlen($export));
+    }
+
+    #[Test]
+    public function test_export_bounds_large_strings_and_keys_before_escaping(): void
+    {
+        $value = str_repeat("'\\", 100_000);
+        foreach ([$value, [$value => $value], array_fill(0, 1000, $value)] as $input) {
+            $rendered = PatternLab::export($input);
+            $this->assertLessThanOrEqual(8192, \strlen($rendered));
+            $this->assertStringContainsString('…', $rendered);
+        }
+    }
 }

@@ -14,6 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\Modernizer;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -66,6 +70,61 @@ final class ModernizerLocaleTest extends TestCase
         yield 'digits, the locale unknown' => ['pattern' => '/[0-9]/', 'locale' => null, 'expected' => '/\d/'];
         yield 'digits, a Latin-1 locale' => ['pattern' => '/[0-9]/', 'locale' => 'fr_FR.ISO8859-1', 'expected' => '/\d/'];
         yield 'digits, C, under u' => ['pattern' => '/[0-9]/u', 'locale' => 'C', 'expected' => '/[0-9]/u'];
+    }
+
+    #[Test]
+    #[DataProvider('provideStartOptionClasses')]
+    public function test_start_options_survive_source_removal_and_repeated_modernization(string $pattern, string $subject, string $expected): void
+    {
+        $parsed = RegexParser::create(['cache' => null])->parse($pattern);
+        $sourceFree = new RegexNode($parsed->pattern, $parsed->flags, $parsed->delimiter, $parsed->getStartPosition(), $parsed->getEndPosition());
+        $modernizer = new Modernizer('C');
+
+        foreach ([$parsed, $sourceFree] as $tree) {
+            for ($visit = 0; $visit < 2; $visit++) {
+                $tree = $tree->accept($modernizer);
+                $printed = $tree->accept(PatternPrinter::asWritten());
+                $this->assertSame($expected, $printed);
+                foreach ([$subject, '3', ' '] as $input) {
+                    $this->assertSame(preg_match($pattern, $input), preg_match($printed, $input));
+                }
+            }
+        }
+    }
+
+    #[Test]
+    public function test_start_options_after_a_single_alternative_wrapper_keep_unicode_classes(): void
+    {
+        $parsed = RegexParser::create(['cache' => null])->parse('/(*UTF)(*UCP)^[0-9]$/');
+        $this->assertInstanceOf(SequenceNode::class, $parsed->pattern);
+        [$utf, $ucp, $start, $class, $end] = $parsed->pattern->children;
+        $this->assertInstanceOf(PcreVerbNode::class, $utf);
+        $wrapped = new AlternationNode([new SequenceNode([$utf], $utf->getStartPosition(), $utf->getEndPosition())], $utf->getStartPosition(), $utf->getEndPosition());
+        $tree = new RegexNode(
+            new SequenceNode([$wrapped, $ucp, $start, $class, $end], $parsed->pattern->getStartPosition(), $parsed->pattern->getEndPosition()),
+            $parsed->flags,
+            $parsed->delimiter,
+            $parsed->getStartPosition(),
+            $parsed->getEndPosition(),
+        );
+
+        $printed = $tree->accept(new Modernizer('C'))->accept(PatternPrinter::asWritten());
+
+        $this->assertSame('/(*UTF)(*UCP)^[0-9]$/', $printed);
+        $this->assertSame(0, preg_match('/(*UTF)(*UCP)^[0-9]$/', "\u{663}"));
+        $this->assertSame(1, preg_match('/(*UTF)(*UCP)^\d$/', "\u{663}"));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, expected: string}>
+     */
+    public static function provideStartOptionClasses(): iterable
+    {
+        yield 'digits' => ['pattern' => '/(*UTF)(*UCP)^[0-9]$/', 'subject' => "\u{663}", 'expected' => '/(*UTF)(*UCP)^[0-9]$/'];
+        yield 'spaces' => ['pattern' => '/(*UTF)(*UCP)^[\\t-\\r ]$/', 'subject' => "\u{A0}", 'expected' => '/(*UTF)(*UCP)^[\\t-\\r ]$/'];
+        yield 'limit before UCP' => ['pattern' => '/(*LIMIT_MATCH=1000)(*UTF)(*UCP)^[0-9]$/', 'subject' => "\u{663}", 'expected' => '/(*LIMIT_MATCH=1000)(*UTF)(*UCP)^[0-9]$/'];
+        yield 'alternation' => ['pattern' => '/(*UTF)(*UCP)^[0-9]$|^x$/', 'subject' => "\u{663}", 'expected' => '/(*UTF)(*UCP)^[0-9]$|^x$/'];
+        yield 'UTF alone' => ['pattern' => '/(*UTF)^[0-9]$/', 'subject' => "\u{663}", 'expected' => '/(*UTF)^\\d$/'];
     }
 
     /**

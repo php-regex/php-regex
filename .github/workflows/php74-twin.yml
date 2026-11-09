@@ -19,9 +19,6 @@ concurrency:
 jobs:
   generate:
     name: generate and analyse the twin
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -76,16 +73,9 @@ jobs:
 
   # PHP 7.4 and 8.0 are older than the original runs on: their twin is
   # compared to the original on the oldest PHP it serves
-
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
   reference:
     name: the original's readings on PHP 8.1
     needs: generate
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     container: php:8.1-cli
     steps:
@@ -116,16 +106,9 @@ jobs:
 
   # each PHP the original runs on: the original and the twin read every
   # pattern on the same engine, and every reading must be the same
-
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
   twin:
     name: twin on PHP ${{ matrix.php }}
     needs: generate
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     container: php:${{ matrix.php }}-cli
     strategy:
@@ -164,16 +147,9 @@ jobs:
           TWIN_REFERENCE: reference
         run: php -d memory_limit=2G build/smoke/vendor/bin/phpunit -c build/phpunit.xml.dist
 
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
-
   twin-below-the-original:
     name: twin on PHP ${{ matrix.php }}
     needs: reference
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     container: php:${{ matrix.php }}-cli
     strategy:
@@ -202,7 +178,3 @@ jobs:
   # Release: publish the verified tree to the mirror repository
   # php-regex/regex-parser-php74 under the triggering tag. A manual gesture
   # until then: the tree to publish is the "twin" artifact of a green run.
-
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs

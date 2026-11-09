@@ -373,15 +373,10 @@ final class ForkedWorkerPool
      */
     private static function createLock(): ?string
     {
-        $path = sys_get_temp_dir().\DIRECTORY_SEPARATOR.'regexparser_lock_'.bin2hex(random_bytes(8));
-        $handle = @fopen($path, 'x');
-        if (false === $handle) {
-            return null;
-        }
+        // tempnam creates the inode with mode 0600, before it is exposed.
+        $path = @tempnam(sys_get_temp_dir(), 'regexparser_lock_');
 
-        fclose($handle);
-
-        return $path;
+        return false === $path ? null : $path;
     }
 
     /**

@@ -15,6 +15,7 @@ namespace PHPRegex\Transpiler\Target;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
@@ -24,6 +25,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\TranspileContext;
@@ -98,6 +100,19 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
      */
     protected string $patternFlags = '';
 
+    /**
+     * Whether the body PCRE reads, delimiters left out, is valid UTF-8: u
+     * refuses one that is not.
+     */
+    private bool $bodyIsUtf8 = true;
+
+    /**
+     * The pattern under u with each byte above 0x7F of its body read as a
+     * plain letter: what PCRE thinks of the rest once the characters are
+     * written as UTF-8. A tree without its spelling reads as an empty body.
+     */
+    private string $asciiUnderU = '//u';
+
     public function __construct(protected readonly TranspileContext $context) {}
 
     #[\Override]
@@ -150,6 +165,9 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         $this->ungreedy = str_contains($node->flags, 'U');
         $this->dollarEndOnly = str_contains($node->flags, 'D');
         $this->unicode = str_contains($node->flags, 'u');
+        $this->bodyIsUtf8 = mb_check_encoding($node->source ?? $this->context->sourcePattern, 'UTF-8');
+        $body = $node->source ?? '';
+        $this->asciiUnderU = $node->delimiter.(LibraryPcre::replace('/[\x80-\xFF]/', 'x', $body) ?? $body).Delimiters::closing($node->delimiter).$node->flags.'u';
     }
 
     /**
@@ -308,14 +326,24 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     /**
      * Without u PCRE reads bytes, where the targets read characters: a
      * multibyte character written whole stays that character, the PHP
-     * string holding it as UTF-8 text, but a byte above 0x7F on its own, as
-     * an escape or as invalid UTF-8, has no equivalent there.
+     * string holding it as UTF-8 text. Inside a class its bytes are separate
+     * members, so even valid UTF-8 cannot be carried as characters. A
+     * byte above 0x7F on its own, as an escape or as invalid UTF-8, has
+     * no equivalent there.
      *
      * @throws TranspileException
      */
-    protected function refuseALoneByte(string $text, NodeInterface $node): void
+    protected function refuseALoneByte(string $text, NodeInterface $node, bool $inCharClass): void
     {
-        if (!str_contains($this->context->sourceFlags, 'u') && 1 === LibraryPcre::match('/[\x80-\xFF]/', $text) && !mb_check_encoding($text, 'UTF-8')) {
+        if (str_contains($this->context->sourceFlags, 'u') || 1 !== LibraryPcre::match('/[\x80-\xFF]/', $text)) {
+            return;
+        }
+
+        if ($inCharClass && mb_check_encoding($text, 'UTF-8')) {
+            $this->unsupported('A multibyte character in a class has no equivalent in this target, which reads characters, not bytes: without the u flag PCRE reads each of its bytes as a member of its own. '.$this->utf8Advice(), $node);
+        }
+
+        if ($inCharClass || !mb_check_encoding($text, 'UTF-8')) {
             $this->refuseByte($node);
         }
     }
@@ -362,6 +390,27 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
      */
     private function refuseByte(NodeInterface $node): void
     {
-        $this->unsupported('A byte above 0x7F has no equivalent in this target, which reads characters, not bytes: without the u flag PCRE matches that byte alone. Add u, or write the character itself.', $node);
+        $this->unsupported('A byte above 0x7F has no equivalent in this target, which reads characters, not bytes: without the u flag PCRE matches that byte alone. '.$this->utf8Advice(), $node);
+    }
+
+    /**
+     * Add u, where the engine compiles the pattern with it. A body that is
+     * not valid UTF-8 needs each raw byte written as its character first,
+     * and either may hold something else u refuses, such as "\C".
+     */
+    private function utf8Advice(): string
+    {
+        $engine = new PcreEngine();
+        $restCompiles = null === $engine->compile($this->asciiUnderU);
+
+        if (!$this->bodyIsUtf8) {
+            return $restCompiles
+                ? 'The u flag refuses a pattern that is not valid UTF-8: write the character as UTF-8, then add u.'
+                : 'The u flag refuses a pattern that is not valid UTF-8, and more of this one: write the character as UTF-8 and rewrite what PCRE refuses under u, then add u.';
+        }
+
+        return null === $engine->compile($this->context->sourcePattern.'u')
+            ? 'Add u.'
+            : 'Add u, after rewriting what PCRE refuses under it: the pattern as written does not compile with u.';
     }
 }

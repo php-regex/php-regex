@@ -137,13 +137,14 @@ final class Properties
             $accepted = $accepted || $part->accepts;
             $max = null === $max || null === $part->maxLength ? null : self::add($max, $part->maxLength);
             $nullable = true === $nullable && true === $part->nullable;
-            $literal = null === $literal || null === $part->literal || $part->accepts ? null : [...$literal, ...$part->literal];
+            if (null === $literal || null === $part->literal || $part->accepts
+                || \count($literal) + \count($part->literal) > self::MAX_LITERAL) {
+                $literal = null;
+            } else {
+                $literal = [...$literal, ...$part->literal];
+            }
             $captures += $part->captureCount;
             $regular = $regular && $part->regular;
-        }
-
-        if (null !== $literal && \count($literal) > self::MAX_LITERAL) {
-            $literal = null;
         }
 
         return new self(

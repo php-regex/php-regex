@@ -76,6 +76,52 @@ final class PatternAttributeScannerTest extends TestCase
     }
 
     /**
+     * Measured with PHP 8.4.27: 4,000 unterminated declarations took 4.7 s
+     * when each walk read the rest of the document, 0.02 s now; the ceiling
+     * sits between, far from both.
+     */
+    #[Test]
+    public function test_unterminated_declarations_do_not_rescan_the_remaining_source(): void
+    {
+        $content = "<?php\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\n"
+            ."function first(#[RegexPattern] \$pattern) {}\n"
+            .str_repeat("function broken(\n", 4000)
+            .'function last(#[RegexPattern] $pattern) {}';
+        $start = hrtime(true);
+
+        $this->assertSame(['first#0$pattern', 'last#0$pattern'], PatternAttributeScanner::scan($content));
+        $this->assertLessThan(1.0, (hrtime(true) - $start) / 1e9, 'Malformed declarations must not repeatedly traverse the suffix.');
+    }
+
+    /**
+     * Measured with PHP 8.4.27: 500 declarations opening an attribute took
+     * 21.8 s ("Language('SQL',") when its lookaheads read the rest of the
+     * document, 0.02 s now.
+     */
+    #[Test]
+    #[DataProvider('provideUnclosedAttributes')]
+    public function test_malformed_attribute_lookaheads_share_the_work_limit(string $attribute): void
+    {
+        $content = "<?php\n".str_repeat('function broken('.$attribute."\n", 500);
+        $start = hrtime(true);
+
+        // Incomplete parameters may be reported without a name.
+        foreach (PatternAttributeScanner::scan($content) as $spec) {
+            $this->assertSame('broken#0', $spec);
+        }
+        $this->assertLessThan(1.0, (hrtime(true) - $start) / 1e9, 'Attribute helpers must share the declaration work limit.');
+    }
+
+    /**
+     * @return iterable<string, array{attribute: string}>
+     */
+    public static function provideUnclosedAttributes(): iterable
+    {
+        yield 'the pattern attribute' => ['attribute' => '#[\\PHPRegex\\Parser\\Attribute\\RegexPattern]'];
+        yield 'a language attribute with an open argument list' => ['attribute' => "#[\\JetBrains\\PhpStorm\\Language('SQL',"];
+    }
+
+    /**
      * What marks a parameter as a pattern, read the same way by the token
      * scanner and by the static analysis rule: #[RegexPattern], or
      * PhpStorm's #[Language] given "RegExp", the names compared without

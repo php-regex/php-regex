@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lsp\Converter;
 
 use PHPRegex\LanguageServer\Converter\PositionConverter;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -210,5 +211,54 @@ final class PositionConverterTest extends TestCase
     public function test_a_position_past_the_document_is_its_end(): void
     {
         $this->assertSame(5, (new PositionConverter("ab\ncd"))->positionToOffset(9, 0));
+    }
+
+    #[Test]
+    public function test_checkpoint_boundaries_preserve_every_prefix_position(): void
+    {
+        // Exercise split code points, malformed sequences and prefixes before
+        // a malformed byte, including lookups in reverse order.
+        foreach (['é', '€', "\u{1F600}", "\xFF", "\xC0\xAF", "\xED\xA0\x80", "\xF4\x90\x80\x80", str_repeat("\x80", 8)] as $middle) {
+            $content = str_repeat('é', 127).$middle.str_repeat('z', 520)."\n".str_repeat('€', 180);
+            $converter = new PositionConverter($content);
+            for ($offset = \strlen($content) + 2; $offset >= -1; $offset--) {
+                $this->assertSame(PositionConverter::positionIn($content, $offset), $converter->offsetToPosition($offset), "Offset $offset");
+            }
+        }
+    }
+
+    /**
+     * A block boundary that splits a code point moves back to its first
+     * byte, a continuation byte being 0x80 to 0xBF: here the boundary falls
+     * on the last byte of "\u{FF}" (C3 BF), then on the last byte of "€"
+     * (E2 82 AC), on a line that ends in ASCII so that every offset past
+     * the boundary reads valid text.
+     */
+    #[Test]
+    #[DataProvider('provideSplitCodePoints')]
+    public function test_a_block_boundary_inside_a_code_point_moves_to_its_start(string $content): void
+    {
+        $converter = new PositionConverter($content);
+        for ($offset = 0; $offset <= \strlen($content); $offset++) {
+            $this->assertSame(PositionConverter::positionIn($content, $offset), $converter->offsetToPosition($offset), "Offset $offset");
+        }
+    }
+
+    /**
+     * @return iterable<string, array{content: string}>
+     */
+    public static function provideSplitCodePoints(): iterable
+    {
+        yield 'a two-byte code point ending in 0xBF' => ['content' => str_repeat('é', 127)."z\u{FF}".str_repeat('z', 300)];
+        yield 'a three-byte code point' => ['content' => str_repeat('é', 127).'€'.str_repeat('z', 300)];
+    }
+
+    #[Test]
+    public function test_many_boundaries_on_one_long_line(): void
+    {
+        $converter = new PositionConverter(str_repeat("é\u{1F600}x", 20000));
+        for ($i = 0; $i <= 20000; $i++) {
+            $this->assertSame(['line' => 0, 'character' => 4 * $i], $converter->offsetToPosition(7 * $i));
+        }
     }
 }

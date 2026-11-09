@@ -11,9 +11,9 @@ description: "Match context without consuming it with lookaheads and lookbehinds
 
 ## 1) What are Lookarounds?
 
-A **lookaround** is a zero-width assertion. It doesn't match any characters, it just checks: *"Is there X before/after this position?"*
+A **lookaround** is a **zero-width** assertion. "Zero-width" means it consumes no characters: it only checks *"Is there X before/after this position?"* and never adds anything to the match.
 
-If the check passes, the engine continues. If not, it fails.
+If the check passes, the engine continues at the same position. If not, it fails.
 
 This is perfect when you want to **filter by context** without capturing the context itself.
 
@@ -41,7 +41,14 @@ echo $matches[0]; // "100"
 ```
 {: data-run="" }
 
-**Watch out with greedy quantifiers here.** You might expect `\d+(?!USD)` to fail on `"100USD"`, but it won't — the greedy `\d+` backtracks to `"10"` (which is not followed by `"USD"`), so it matches `"10"` instead:
+**Watch out with greedy quantifiers here.** You might expect `\d+(?!USD)` to fail on `"100USD"`, but it won't. Walk through it step by step:
+
+1. `\d+` is greedy, so it first takes the maximum: all three digits, `"100"`.
+2. The lookahead `(?!USD)` is checked right after `"100"` — and fails, because `"USD"` does start there.
+3. The engine backtracks: `\d+` gives back one digit and now holds `"10"`.
+4. The lookahead is checked again, right after `"10"` — the text there is `"0USD"`, which does not start with `"USD"`, so the negative lookahead passes.
+
+The match is `"10"`:
 
 ```php
 preg_match('/\d+(?!USD)/', 'Price: 100USD', $matches);
@@ -52,14 +59,16 @@ echo $matches[0]; // "10" — not "no match"!
 To truly reject `"100USD"`, anchor the pattern or add context so there's nowhere to backtrack to:
 
 ```php
-preg_match('/\b\d+\b(?!USD)/', 'Price: 100USD'); // no match (word boundary prevents partial)
+preg_match('/\b\d+\b(?!USD)/', 'Price: 100USD'); // no match — see below
 echo preg_match('/\b\d+\b(?!USD)/', 'Price: 100USD'), PHP_EOL; // 0
 ```
 {: data-run="" }
 
+Why does this reject the whole number? The second `\b` demands a word boundary right after the digits. Inside `100USD` every character is a word character (`0`, `U`, `S`, `D` are all `\w`), so `\b` can never match between them — it fails before the lookahead is ever reached, at every length `\d+` tries.
+
 ### Greedy + lookahead matters
 
-Remember [quantifiers](04-quantifiers.md) are greedy by default. The lookahead is checked at the position where the quantifier **stops**.
+Remember [quantifiers](04-quantifiers.md) are greedy by default. A greedy quantifier first takes the maximum it can, the lookahead is checked at that position, and if it fails the engine gives back one character at a time and checks again after each give-back. A lazy quantifier does the opposite: it takes the minimum first and only takes more when the lookahead fails there.
 
 ```php
 // Greedy \w+ takes as much as it can
@@ -150,7 +159,7 @@ echo preg_match($pattern, 'abcdefg'), PHP_EOL;   // 0
 ```
 {: data-run="" }
 
-Here `(?=.*\d)` scans ahead from the start to see if any digit exists. It doesn't add to the match, `.{8,}` does the actual consuming.
+Here `(?=.*\d)` scans ahead from the start to see whether any digit exists anywhere in the subject. Because a lookahead consumes nothing, the engine then returns to position 0 (right after the `^`), and `.{8,}` does the actual consuming from there — which is why the reported match is the whole string, not just the tail after some digit.
 
 ---
 
@@ -158,9 +167,9 @@ Here `(?=.*\d)` scans ahead from the start to see if any digit exists. It doesn'
 
 This is important to know in PHP/PCRE:
 
-- **Fixed-length lookbehinds** are always fine: `(?<=\$)`, `(?<=abc)`, `(?<=\d{3})`
-- **Variable-length lookbehinds** must have a **known maximum length**. `(?<=a{1,3})` is allowed in modern PCRE2. `(?<=a+)` (unbounded) is **not** allowed.
-- Support for arbitrary variable-length lookbehinds depends on PCRE2 version. PHP ships with PCRE2, but older PHP versions may be stricter.
+- **Fixed-length lookbehinds** always work, whatever the PCRE2 version: `(?<=\$)`, `(?<=abc)`, `(?<=\d{3})`
+- **Bounded variable-length lookbehinds** — a known minimum *and* maximum, like `(?<=a{1,5})` — need PCRE2 10.43 or newer. PHP 8.4 and newer bundle PCRE2 10.44, so they accept them; a PHP linked against a system PCRE2 depends on that library's version instead. By default the maximum is 255 characters: `(?<=a{1,256})` does not compile.
+- **Unbounded lookbehinds** like `(?<=a+)` are refused by every PCRE2 release — the engine insists on a maximum length up front.
 
 If you're ever unsure, test with a fixed length, or restructure with a lookahead instead.
 
