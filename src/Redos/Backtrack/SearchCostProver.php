@@ -38,6 +38,7 @@ use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\Exception\ModelLimitException;
 use PHPRegex\Redos\RedosSearchCost;
 
@@ -127,16 +128,16 @@ final class SearchCostProver
      *                                code unit it requires and the replay under the tables
      *                                of that locale; the running engine's when null
      */
-    public function find(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, ?PcreTarget $target = null): ?RedosSearchCost
+    public function find(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, ?PcreTarget $target = null, ?ConfirmationOptions $options = null): ?RedosSearchCost
     {
         try {
-            return $this->seek($pattern, $regex, $proof, $replay, $target ?? PcreTarget::runtime());
+            return $this->seek($pattern, $regex, $proof, $replay, $target ?? PcreTarget::runtime(), $options);
         } catch (ExceptionInterface) {
             return null;
         }
     }
 
-    private function seek(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, PcreTarget $target): ?RedosSearchCost
+    private function seek(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, PcreTarget $target, ?ConfirmationOptions $options): ?RedosSearchCost
     {
         $search = $proof->search;
         if (null === $search || str_contains($regex->flags, 'A')) {
@@ -189,13 +190,16 @@ final class SearchCostProver
         // runs there.
         $pinnable = !self::holds($regex->pattern, static fn (NodeInterface $node): bool => $node instanceof AssertionNode && 'G' === $node->value);
         $replayed = null;
-        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $pattern, $prefix, $run, &$replayed): void {
+        $measured = true;
+        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $pattern, $prefix, $run, $options, &$replayed, &$measured): void {
             foreach ($pinnable ? $breakers : [] as $breaker) {
-                if ($this->replayer->replays($pattern, $prefix, $run, $breaker)) {
+                $replays = $this->replayer->replays($pattern, $prefix, $run, $breaker, $options);
+                if (true === $replays) {
                     $replayed = $breaker;
 
                     return;
                 }
+                $measured = $measured && null !== $replays;
             }
         });
 
@@ -203,7 +207,9 @@ final class SearchCostProver
             return new RedosSearchCost(2, $prefix, $run, $replayed, $unicode, true);
         }
 
-        return $exact ? new RedosSearchCost(2, $prefix, $run, $breakers[0], $unicode, false) : null;
+        // Under limits too low to count, the replay neither confirms nor
+        // refutes the witness: "replayed" is null, as for a skipped replay.
+        return $exact ? new RedosSearchCost(2, $prefix, $run, $breakers[0], $unicode, $measured ? false : null) : null;
     }
 
     /**
