@@ -39,6 +39,21 @@ use PHPUnit\Framework\TestCase;
 
 final class TextExplainerTest extends TestCase
 {
+    #[Test]
+    public function test_pattern_text_controls_are_escaped_before_rendering(): void
+    {
+        $text = "é\x1B[2J\r\n\t\x07\x7F\u{009B}\u{202E}\\path";
+        $escaped = 'é\\x1B[2J\\r\\n\\t\\x07\\x7F\\x{9B}\\x{202E}\\path';
+        $regex = Regex::create();
+        foreach (['/(?#'.$text.')a/u', '/(?C"'.$text.'")a/u'] as $pattern) {
+            $this->assertSame(1, preg_match($pattern, 'a'));
+            $explanation = $regex->explain($pattern);
+            $this->assertStringContainsString($escaped, $explanation);
+            $this->assertSame(2, substr_count($explanation, "\n"));
+            $this->assertSame(0, preg_match('/[\x00-\x09\x0B-\x1F\x7F]|[\x{80}-\x{9F}\p{Cf}]/u', $explanation));
+        }
+    }
+
     /**
      * One sentence per line: a type names its characters with no colon
      * before them, and the count follows as a clause, not in brackets.
