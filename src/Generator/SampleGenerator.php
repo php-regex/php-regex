@@ -815,7 +815,7 @@ final class SampleGenerator extends AbstractNodeVisitor
         foreach (array_keys($attempts) as $attempt) {
             $attempt = (string) $attempt;
             foreach (['a', ' ', "\n"] as $padding) {
-                foreach ([$this->concatenate($padding, $attempt), $this->concatenate($attempt, $padding), $this->concatenate($padding, $attempt, $padding)] as $padded) {
+                foreach (self::within([$padding, $attempt], [$attempt, $padding], [$padding, $attempt, $padding]) as $padded) {
                     if (true === $this->engine->match($checked, $padded)->matched) {
                         return $padded;
                     }
@@ -1105,7 +1105,7 @@ final class SampleGenerator extends AbstractNodeVisitor
                     // The rest alone again, read with the groups it defines: a
                     // call in the lookahead may name one of them.
                     $laidOver = $this->concatenate($ahead, $this->textFrom($rest, $this->textLength($ahead)));
-                    foreach ([$rest, $laidOver, $this->concatenate($ahead, $rest), $this->concatenate($rest, $ahead)] as $candidate) {
+                    foreach (self::within([$rest], [$laidOver], [$ahead, $rest], [$rest, $ahead]) as $candidate) {
                         if ($this->holds($left, $candidate, '\\A', '')) {
                             return $this->concatenate($text, $candidate);
                         }
@@ -1250,9 +1250,9 @@ final class SampleGenerator extends AbstractNodeVisitor
             // drawn again where the group takes none of it.
             for ($draw = 0; $draw < self::MAX_SCAN_DRAWS; $draw++) {
                 $prefix = $this->acceptedIn($body, true);
-                // Each part was built under the limit already; the group's
-                // text meets it again where the sequence adds it.
-                foreach ([$prefix.$text, $prefix] as $candidate) {
+                // Each part was built under the limit already; the two
+                // together are tried only where they fit.
+                foreach (self::within([$prefix, $text], [$prefix]) as $candidate) {
                     if ($this->holds($group->child, $candidate, '\\A', '\\z') && $this->holds($body, $candidate, '\\A', '')) {
                         $text = $candidate;
 
@@ -1381,6 +1381,28 @@ final class SampleGenerator extends AbstractNodeVisitor
      * Check the byte budget before allocating a combined sample. Captures
      * and references can grow exponentially even without a quantifier.
      */
+    /**
+     * Each layout joined, in order, where it fits the limit: one past it is
+     * skipped, and built only when the one before it was tried.
+     *
+     * @param list<string> ...$layouts
+     *
+     * @return \Generator<int, string>
+     */
+    private static function within(array ...$layouts): \Generator
+    {
+        foreach ($layouts as $parts) {
+            $length = 0;
+            foreach ($parts as $part) {
+                $length += \strlen($part);
+            }
+
+            if ($length <= self::MAX_SAMPLE_LENGTH) {
+                yield implode('', $parts);
+            }
+        }
+    }
+
     private function concatenate(string ...$parts): string
     {
         $remaining = self::MAX_SAMPLE_LENGTH;

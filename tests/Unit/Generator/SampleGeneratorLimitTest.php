@@ -54,6 +54,30 @@ final class SampleGeneratorLimitTest extends TestCase
         yield 'visitor' => ['entry' => 'visitor'];
     }
 
+    /**
+     * Each layout of a sample is joined and tried only when it fits: one
+     * past the limit is skipped, not refused, so a shorter layout after it
+     * is still tried. With an unmatched attempt of 1,048,575 bytes,
+     * "attempt.padding" fits where "padding.attempt.padding" does not.
+     */
+    public function test_layouts_past_the_limit_are_skipped_not_refused(): void
+    {
+        $method = new \ReflectionMethod(SampleGenerator::class, 'within');
+        $within = function (array ...$layouts) use ($method): array {
+            $joined = $method->invoke(null, ...$layouts);
+            $this->assertInstanceOf(\Generator::class, $joined);
+
+            return iterator_to_array($joined, false);
+        };
+        $attempt = str_repeat('a', 1_048_575);
+
+        $layouts = $within(['b', $attempt, 'b'], [$attempt, 'b'], ['b', $attempt]);
+
+        $this->assertSame([$attempt.'b', 'b'.$attempt], $layouts);
+        $this->assertSame(1_048_576, \strlen($attempt.'b'));
+        $this->assertSame([''], $within([str_repeat('a', 1_048_577)], []));
+    }
+
     public function test_exact_byte_limit_is_allowed(): void
     {
         $pattern = '/'.self::doublingChain(19).'a/';
