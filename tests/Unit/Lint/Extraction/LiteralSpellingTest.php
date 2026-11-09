@@ -35,6 +35,20 @@ final class LiteralSpellingTest extends TestCase
         $this->assertSame($raw, LiteralSpelling::holdsRaw($code, $offset, "\t"));
     }
 
+    #[Test]
+    public function test_one_spelling_answers_multiple_characters_independently_of_other_sources(): void
+    {
+        $spelling = LiteralSpelling::fromSource("'/a\tb\u{200B}c\\x01/'", 0);
+        $other = LiteralSpelling::fromSource('"/a\\tb/"', 0);
+
+        $this->assertTrue($spelling->containsRaw("\t"));
+        $this->assertTrue($spelling->containsRaw("\u{200B}"));
+        $this->assertFalse($spelling->containsRaw("\x01"));
+        $this->assertFalse($spelling->containsRaw(''));
+        $this->assertFalse($other->containsRaw("\t"));
+        $this->assertTrue($spelling->containsRaw("\t"));
+    }
+
     /**
      * @return iterable<string, array{expression: string, raw: bool}>
      */
