@@ -560,7 +560,9 @@ determinization and the minimization, and the threads the match solver steps.
 The determinization counts each transition it writes, one per range of the
 alphabet for every state: a Unicode class such as `\pL` splits the alphabet
 into hundreds of ranges, so a pattern with a few hundred states reaches the
-budget, and the memory its table would take stays bounded.
+budget, and the memory its table would take stays bounded. The bodies of
+lookarounds are compiled to automata of their own, and the budget bounds their
+determinization and minimization as well.
 
 ```php
 use PHPRegex\Automata\LanguageSolver;
