@@ -31,9 +31,6 @@ concurrency:
 
 jobs:
   smoke:
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -72,7 +69,3 @@ jobs:
       - name: Run the Laravel application tests
         working-directory: demo/laravel
         run: vendor/bin/phpunit
-
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
