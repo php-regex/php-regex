@@ -237,15 +237,15 @@ final class LintFunctionOverrides
      */
     public static function fopen(string $filename, string $mode): mixed
     {
-        if (self::$lockFileFails && 'x' === $mode) {
-            return false;
-        }
-
         return \fopen($filename, $mode);
     }
 
     public static function tempnam(string $dir, string $prefix): string|false
     {
+        if ('regexparser_lock_' === $prefix) {
+            return self::$lockFileFails ? false : tempnam(self::$tempnamDirectory ?? $dir, $prefix);
+        }
+
         if ([] !== self::$tempnamSequence) {
             $path = array_shift(self::$tempnamSequence);
             if (false === $path) {
