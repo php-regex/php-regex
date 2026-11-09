@@ -17,6 +17,8 @@ use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Hir\Properties;
 use PHPRegex\Parser\Hir\Utf8;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class HirPropertiesTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * @param array{0: int, 1: int|null} $lengths
      */
@@ -150,6 +154,9 @@ final class HirPropertiesTest extends TestCase
     #[Test]
     public function test_concatenated_literals_respect_the_limit(): void
     {
+        $this->assertSame(1, preg_match('/^a{128}b{128}$/', str_repeat('a', 128).str_repeat('b', 128)));
+        $this->assertSame(1, preg_match('/^a{128}b{128}c(d)$/', str_repeat('a', 128).str_repeat('b', 128).'cd'));
+
         $atLimit = $this->properties('/a{128}b{128}/');
         $expected = [...array_fill(0, 128, 0x61), ...array_fill(0, 128, 0x62)];
 
@@ -169,6 +176,24 @@ final class HirPropertiesTest extends TestCase
         $this->assertTrue($overLimit->regular);
         $this->assertSame([[0x61, 0x61]], $overLimit->first?->ranges);
         $this->assertSame([[0x64, 0x64]], $overLimit->last?->ranges);
+    }
+
+    #[Test]
+    public function test_concatenation_stops_accumulating_once_the_literal_is_cut(): void
+    {
+        $this->requiresPhp('8.2', 'The peak memory of a concatenation', 'has no memory_reset_peak_usage()');
+
+        $parts = array_fill(0, 500, Properties::literal(array_fill(0, Properties::MAX_LITERAL, 0x61)));
+
+        PeakMemory::reset();
+        $before = memory_get_peak_usage();
+        $properties = Properties::concat($parts);
+        $grown = memory_get_peak_usage() - $before;
+
+        $this->assertNull($properties->literal);
+        $this->assertSame(500 * Properties::MAX_LITERAL, $properties->minLength);
+        // Gluing every part would hold 128,000 code points, about 2 MiB.
+        $this->assertLessThan(512 * 1024, $grown, 'The concatenation grew the memory by '.$grown.' bytes.');
     }
 
     #[Test]
