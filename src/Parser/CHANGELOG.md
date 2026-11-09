@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The mark `PatternPrinter` stands in for a bracket until the text is known
+   keeps a fixed length, at most nineteen bytes on a 64-bit build: a comment
+   holding twenty thousand of its bytes no longer lengthens it to as many, and
+   five thousand brackets no longer copy it into 210 MB.
  * Outside Windows, the AST file cache and the class-set store no longer read
    write or clear an existing directory whose owner they cannot check, as when
    `ext-posix` is missing or `posix_geteuid()` is disabled: another user's
