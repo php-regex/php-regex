@@ -576,6 +576,8 @@ final class TextDocumentHandlerTest extends TestCase
     #[Test]
     public function test_an_escaped_character_keeps_the_issues_after_it(): void
     {
+        // The source spells "\t", which the engine reads as a tab.
+        $this->assertSame(1, preg_match('/\ta{1}/', "\ta"));
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
 

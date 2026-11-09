@@ -304,6 +304,8 @@ final class ServerConstantsOfOtherFilesTest extends TestCase
     #[Test]
     public function test_an_invisible_character_of_another_file_keeps_the_issues_after_it(): void
     {
+        // The engine reads the zero-width space as the bytes it is spelled with.
+        $this->assertSame(1, preg_match("/a\u{200B}b{1}/", "a\u{200B}b"));
         $this->write('src/Support/Patterns.php', str_replace("'/(a/'", "'/a\u{200B}b{1}/'", self::PATTERNS));
         $calls = $this->uri('src/Http/Controller.php');
 

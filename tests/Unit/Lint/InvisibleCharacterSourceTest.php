@@ -103,6 +103,8 @@ final class InvisibleCharacterSourceTest extends TestCase
     #[Test]
     public function test_a_pattern_without_its_source_keeps_its_other_issues(): void
     {
+        // The engine reads a tab, then one "a".
+        $this->assertSame(1, preg_match("/\ta{1}/", "\ta"));
         $service = new AnalysisService(RegexParser::create(['cache' => null]), redosThreshold: 'critical');
         $issues = $service->lint([new PatternOccurrence("/\ta{1}/", 'routes.yaml', 3, 'route:home:id')]);
 
