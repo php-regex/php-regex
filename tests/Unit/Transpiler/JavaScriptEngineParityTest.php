@@ -60,6 +60,14 @@ final class JavaScriptEngineParityTest extends TestCase
      */
     public static function provideSpelledPatterns(): iterable
     {
+        yield 'byte spaces exclude Unicode whitespace' => ['pattern' => '/^\s+$/D', 'literal' => '/^[\t-\r ]+$/', 'subject' => "\u{A0}", 'spans' => null];
+        yield 'byte spaces include vertical tab' => ['pattern' => '/^\s+$/D', 'literal' => '/^[\t-\r ]+$/', 'subject' => "\t\n\v\f\r ", 'spans' => [[0, 6]]];
+        yield 'byte spaces in a class' => ['pattern' => '/^[\sx]+$/D', 'literal' => '/^[\t-\r x]+$/', 'subject' => "\u{2028}", 'spans' => null];
+        yield 'negated byte spaces' => ['pattern' => '/^[^\s]+$/D', 'literal' => '/^[^\t-\r ]+$/', 'subject' => "\u{FEFF}", 'spans' => [[0, 3]]];
+        yield 'byte non-spaces' => ['pattern' => '/^\S+$/D', 'literal' => '/^[^\t-\r ]+$/', 'subject' => "\u{A0}", 'spans' => [[0, 2]]];
+        yield 'byte non-spaces beside a space' => ['pattern' => '/^[\S ]+$/D', 'literal' => '/^(?:[ ]|[^\t-\r ])+$/', 'subject' => " \u{A0}", 'spans' => [[0, 3]]];
+        yield 'negated byte non-spaces beside a space' => ['pattern' => '/^[^\S ]+$/D', 'literal' => '/^(?:(?![ ])[\t-\r ])+$/', 'subject' => "\t\v", 'spans' => [[0, 2]]];
+        yield 'byte space and its complement' => ['pattern' => '/^[\s\S]+$/D', 'literal' => '/^(?:[\t-\r ]|[^\t-\r ])+$/', 'subject' => "\u{A0}", 'spans' => [[0, 2]]];
         // "$" also matches before a newline that ends the subject; JavaScript's only at its end.
         yield 'a dollar before a final newline' => ['pattern' => '/a$/', 'literal' => '/a(?=\n?$)/', 'subject' => "a\n", 'spans' => [[0, 1]]];
         yield 'a dollar under D' => ['pattern' => '/a$/D', 'literal' => '/a$/', 'subject' => "a\n", 'spans' => null];

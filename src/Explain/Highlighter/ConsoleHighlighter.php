@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Explain\Highlighter;
 
+use PHPRegex\Parser\Printer\DisplayEscaper;
+
 /**
  * Highlights regex syntax for console output using ANSI escape codes.
  */
@@ -41,6 +43,7 @@ final class ConsoleHighlighter extends AbstractHighlighter
             return '';
         }
 
+        $content = DisplayEscaper::escapeToken($content);
         $color = self::COLORS[$type] ?? '';
         if ('' === $color) {
             return $content;

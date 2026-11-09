@@ -37,6 +37,22 @@ when@dev:
         paths: [src]
 ```
 
+## First Run
+
+The configuration file is optional: every key of
+`config/packages/php_regex.yaml` has a default, so you can lint your code as
+soon as the bundle is registered:
+
+```bash
+bin/console regex:lint src
+```
+
+The report is the one `vendor/bin/regex lint` prints: a header naming the PHP
+version the patterns are judged for, each pattern with a problem under its
+file and line, and a `PASS` or `FAIL` summary ([the CLI guide](cli.md#lint-a-codebase)
+shows a sample). The command exits with 0 when it found nothing wrong;
+[Commands](#commands) lists every command and its options.
+
 ## Configuration
 
 Every key is optional; the values below are the defaults.
@@ -124,7 +140,7 @@ delimiters: `/(a+)+$/i` skips `#(a+)+$#i`, not `/(a+)+$/` or `/(a+)+$/iu`.
 `regex.json`, and a custom `extractor_service` reads its own calls, leaving
 `extraction` unused. The default is every preset, and `interop: ~` says the
 same, as `null` does in the Laravel config and the PHPStan extension; a list
-reads exactly the presets it names, `[]` the native calls only. Where several files configure
+reads exactly the presets it names, and `[]` turns every preset off. Where several files configure
 the bundle (`config/packages/php_regex.yaml`, then
 `config/packages/dev/php_regex.yaml`), a later file's `interop` or
 `functions` list replaces the earlier one, while `paths` and `exclude` add up.
@@ -445,6 +461,15 @@ optimization, the ReDoS risk, the lint issues and a sample beside the
 explanation. What stays the bundle's own: `regex:routes`, `regex:security`
 and `regex:analyze` read Symfony's router and security configuration, where
 Laravel's `regex:routes` lists and validates route constraints.
+
+Their console reports print what the configuration holds, paths, roles,
+patterns and the attacks drawn from them, in display form: a line break, a
+tab and a carriage return are written `\n`, `\t` and `\r`, another control
+character `\xHH` (`\x1B`), a character that moves or hides text such as
+U+2028 `\x{2028}`, and a console tag stays text. A pattern is spelled in its
+own mode: without `u` that character is its bytes (`/a\xE2\x80\xA8/`), under
+it `/a\x{2028}/u`. A value cannot open a line of its own or style the
+report; the JSON report keeps each value as found.
 
 `regex:routes` reads the routes in the order they are declared, as the router
 matches them: the first route that matches a path wins it. A route is

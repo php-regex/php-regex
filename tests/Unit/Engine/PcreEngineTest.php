@@ -58,6 +58,25 @@ final class PcreEngineTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideAnswersWithoutARun')]
+    public function test_limits_were_not_set_reads_only_the_answer_of_no_run(PcreMatch $match, bool $notSet): void
+    {
+        $this->assertSame($notSet, PcreEngine::limitsWereNotSet($match));
+    }
+
+    /**
+     * @return iterable<string, array{match: PcreMatch, notSet: bool}>
+     */
+    public static function provideAnswersWithoutARun(): iterable
+    {
+        yield 'ini_set() disabled' => ['match' => new PcreMatch(null, [], 'The PCRE limits could not be set: ini_set() is disabled', \PREG_INTERNAL_ERROR), 'notSet' => true];
+        yield 'a limit refused' => ['match' => new PcreMatch(null, [], 'The PCRE limits could not be set: ini_set() refused pcre.recursion_limit', \PREG_INTERNAL_ERROR), 'notSet' => true];
+        yield 'the engine\'s own internal error' => ['match' => new PcreMatch(null, [], 'Internal error', \PREG_INTERNAL_ERROR), 'notSet' => false];
+        yield 'the same words under another code' => ['match' => new PcreMatch(null, [], 'The PCRE limits could not be set: ini_set() is disabled', \PREG_BACKTRACK_LIMIT_ERROR), 'notSet' => false];
+        yield 'no error' => ['match' => new PcreMatch(true), 'notSet' => false];
+    }
+
+    #[Test]
     #[DataProvider('provideCompilablePatterns')]
     public function test_compile_returns_null_for_a_pattern_the_engine_compiles(string $pattern): void
     {

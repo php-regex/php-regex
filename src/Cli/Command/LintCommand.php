@@ -33,6 +33,7 @@ use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Formatter\ReportSpelling;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintRunner;
@@ -130,7 +131,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         // name both of them hold is said once.
         if (OutputConfiguration::VERBOSITY_QUIET !== $arguments->verbosity && !$output->isQuiet()) {
             foreach (array_unique([...$lintConfigResult->warnings, ...$parsed->warnings]) as $warning) {
-                $output->writeError('Warning: '.$warning."\n");
+                $output->writeError('Warning: '.ReportSpelling::displayField($warning)."\n");
             }
         }
 
@@ -516,7 +517,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         // out of room.
         $dir = \dirname($outputFile);
         if ((!is_dir($dir) && !@mkdir($dir, 0o777, true) && !is_dir($dir)) || false === @file_put_contents($outputFile, $content)) {
-            $output->writeError('Error: Could not write the output file: '.$outputFile."\n");
+            $output->writeError('Error: Could not write the output file: '.ReportSpelling::displayField($outputFile)."\n");
 
             return false;
         }
@@ -549,7 +550,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         if ($json) {
             $output->writeDocument((new JsonFormatter())->formatError($message, $stage));
         } else {
-            $output->writeError('Error: '.$message."\n");
+            $output->writeError('Error: '.ReportSpelling::displayField($message)."\n");
         }
 
         return $exitCode;

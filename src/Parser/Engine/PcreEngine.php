@@ -24,7 +24,7 @@ use PHPRegex\Parser\Syntax\Delimiters;
  * after its opening delimiter. A warning the pattern raises is captured, not
  * silenced, and reported for the pattern as the caller wrote it. Limits asked
  * for are set for the call and the ini is left as it was found. Where ini_set()
- * is disabled, limits asked for are reported as not set, in the answer, and
+ * is disabled or refuses a limit, the call gets no answer, and
  * a pattern the verb finds no place in runs with the JIT as the caller left it.
  */
 final class PcreEngine
@@ -36,9 +36,21 @@ final class PcreEngine
      */
     private const FRESH_CACHE_KEY = "\v";
 
-    private const MAX_REPLACEMENT_BYTES = 1_048_576;
+    private const LIMITS_NOT_SET = 'The PCRE limits could not be set: ';
 
-    private const LIMITS_UNAVAILABLE = 'The PCRE limits could not be set: ini_set() is disabled';
+    private const LIMITS_UNAVAILABLE = self::LIMITS_NOT_SET.'ini_set() is disabled';
+
+    /**
+     * Whether the engine ran nothing because the limits asked for could not
+     * be set, ini_set() disabled or refusing one: the answer of no run, not
+     * of an engine error.
+     *
+     * @internal the ReDoS confirmation reports such a run as skipped
+     */
+    public static function limitsWereNotSet(PcreMatch $match): bool
+    {
+        return \PREG_INTERNAL_ERROR === $match->errorCode && str_starts_with((string) $match->error, self::LIMITS_NOT_SET);
+    }
 
     /**
      * The pattern as the engine runs it: "(*NO_JIT)" right after the opening
@@ -143,8 +155,7 @@ final class PcreEngine
      * What a preg_*() call answers for the pattern and the subject, run as
      * every call of the engine runs, serialized so that two answers of the
      * same call compare as strings; null when the engine gives up or refuses
-     * the pattern. Replacement replay also gives no answer when its
-     * conservative output bound exceeds one MiB.
+     * the pattern.
      *
      * preg_match() and preg_match_all() answer the count, or the matches
      * when the call passes $matches, shaped by the flags; preg_match() with
@@ -186,10 +197,6 @@ final class PcreEngine
 
                         break;
                     case 'preg_replace':
-                        if (!self::replacementFits($subject, $arguments['replacement'] ?? '', $limit)) {
-                            break;
-                        }
-
                         $replaced = preg_replace($prepared, $arguments['replacement'] ?? '', $subject, $limit);
                         $answer = null === $replaced ? null : serialize($replaced);
 
@@ -214,31 +221,6 @@ final class PcreEngine
         );
 
         return $answer;
-    }
-
-    /**
-     * Bound the native allocation before replacement, including captures in
-     * lookarounds: each replacement byte can expand to the whole subject.
-     * PHP can replace an empty match then a nonempty retry at the same byte,
-     * so at most 2 * length + 1 replacements occur. Division avoids overflow
-     * even for a source literal or limit near the integer range's end.
-     */
-    private static function replacementFits(string $subject, string $replacement, int $limit): bool
-    {
-        $length = \strlen($subject);
-        if ($length > self::MAX_REPLACEMENT_BYTES) {
-            return false;
-        }
-
-        $count = 2 * $length + 1;
-        if ($limit >= 0) {
-            $count = min($count, $limit);
-        }
-        if (0 === $count) {
-            return true;
-        }
-
-        return \strlen($replacement) <= intdiv(intdiv(self::MAX_REPLACEMENT_BYTES - $length, $count), max(1, $length));
     }
 
     private function withVerb(string $pattern): ?string
@@ -300,7 +282,7 @@ final class PcreEngine
      *
      * Each setting is put back from the value ini_set() returned when it was
      * changed, so a disabled ini_get() changes nothing. Where ini_set() is
-     * disabled, a call under limits gets no answer and an error saying so;
+     * disabled or refuses a limit, a call under limits gets no answer and an error saying so;
      * a pattern that needs the JIT off runs as it is, under the caller's
      * settings.
      *
@@ -361,6 +343,15 @@ final class PcreEngine
                 $previous = ini_set($key, $value);
                 if (false !== $previous) {
                     $saved[$key] = $previous;
+                } elseif (null !== $limits && 'pcre.jit' !== $key) {
+                    // A refused limit may leave a higher inherited budget.
+                    // Return inside the try so earlier changes are restored.
+                    return [
+                        'result' => false,
+                        'error' => null,
+                        'lastError' => \PREG_INTERNAL_ERROR,
+                        'lastErrorMessage' => self::LIMITS_NOT_SET.'ini_set() refused '.$key,
+                    ];
                 }
             }
 

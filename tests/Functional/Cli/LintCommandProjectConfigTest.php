@@ -59,6 +59,61 @@ final class LintCommandProjectConfigTest extends TestCase
         $this->assertSame(2, $exitCode);
     }
 
+    #[Test]
+    public function test_config_warning_cannot_inject_stderr_lines_or_controls(): void
+    {
+        $spec = "bad#no\n::error::forged\r\x1B[2J\t\u{2028}";
+        $this->enterProject([
+            'regex.json' => json_encode(['extraction' => ['functions' => [$spec]]], \JSON_THROW_ON_ERROR),
+            'src/a.php' => "<?php\n",
+            'composer.json' => '{"require": {"php": "8.4"}}',
+        ]);
+
+        [$exitCode, , $stderr] = $this->runLint(['src', '--format=json', '--jobs=1']);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertSame("Warning: Malformed pattern function \"bad#no\\x0A::error::forged\\x0D\\x1B[2J\\x09\\x{2028}\", ignored.\n", $stderr);
+    }
+
+    /**
+     * A name past the file system's 255 bytes passes the check before the
+     * run, which looks at its directory, and fails the write after it.
+     */
+    #[Test]
+    public function test_an_output_file_it_cannot_write_is_named_on_one_line(): void
+    {
+        $name = "report\n::error::forged\x1B".str_repeat('a', 300).'.json';
+        $this->enterProject(['src/a.php' => "<?php\n", 'composer.json' => '{"require": {"php": "8.4"}}']);
+
+        [$exitCode, , $stderr] = $this->runLint(['src', '--format=json', '--jobs=1', '--output='.$name]);
+
+        $this->assertNotSame(0, $exitCode);
+        $this->assertStringContainsString('Error: Could not write the output file: report\\x0A::error::forged\\x1B', $stderr);
+        $this->assertSame(1, substr_count($stderr, "\n"), $stderr);
+    }
+
+    #[Test]
+    public function test_config_error_cannot_inject_stderr_lines_or_controls(): void
+    {
+        $key = "bad\n::error::forged\r\x1B[2J\t\u{2028}";
+        $this->enterProject(['regex.json' => json_encode([$key => true], \JSON_THROW_ON_ERROR)]);
+
+        [$exitCode, $stdout, $stderr] = $this->runLint(['--format=console']);
+
+        $this->assertSame(2, $exitCode);
+        $this->assertSame('', $stdout);
+        $this->assertStringContainsString('Unknown key "bad\\x0A::error::forged\\x0D\\x1B[2J\\x09\\x{2028}"', $stderr);
+        $this->assertSame(1, substr_count($stderr, "\n"));
+
+        [$jsonExitCode, $json, $jsonStderr] = $this->runLint(['--format=json']);
+        $this->assertSame(2, $jsonExitCode);
+        $this->assertSame('', $jsonStderr);
+        $document = json_decode($json, true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($document);
+        $this->assertIsString($document['error'] ?? null);
+        $this->assertStringContainsString($key, (string) $document['error']);
+    }
+
     /**
      * @return iterable<string, array{string}>
      */
@@ -245,7 +300,7 @@ final class LintCommandProjectConfigTest extends TestCase
      *
      * @param list<string> $args
      *
-     * @return array{int, string}
+     * @return array{int, string, string}
      */
     private function runLint(array $args, ?string $phpVersion = null, ?string $locale = null): array
     {
@@ -264,16 +319,17 @@ final class LintCommandProjectConfigTest extends TestCase
             array_filter(['php_version' => $phpVersion, 'locale' => $locale], static fn (?string $value): bool => null !== $value),
         );
 
+        $output = OutputFactory::create();
         ob_start();
 
         try {
             // The error stream is a discarded in-memory sink: a usage dump
             // must not leak to the test runner's real STDERR.
-            $exitCode = $command->run($input, OutputFactory::create());
+            $exitCode = $command->run($input, $output);
         } finally {
             $stdout = (string) ob_get_clean();
         }
 
-        return [$exitCode, $stdout];
+        return [$exitCode, $stdout, OutputFactory::errors($output)];
     }
 }

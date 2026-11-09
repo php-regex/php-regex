@@ -617,6 +617,7 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.range.invalid_end` | `RangeInvalidEnd` | A range in a character class ends on more than one character. |
 | `regex.range.invalid_start` | `RangeInvalidStart` | A range in a character class starts on more than one character. |
 | `regex.range.reversed` | `RangeReversed` | A range in a character class runs from a higher code point to a lower one. |
+| `regex.rendering.output_too_large` | `RenderingOutputTooLarge` | The expanded explanation exceeds the rendering output budget. |
 | `regex.scan_substring.missing_list` | `ScanSubstringMissingList` | A scan substring assertion has no "(" to open its group list. |
 | `regex.subroutine.invalid_syntax` | `SubroutineInvalidSyntax` | A subroutine call is not written in a form PCRE reads. |
 | `regex.subroutine.missing_group` | `SubroutineMissingGroup` | A subroutine call points to a group number the pattern does not have. |

@@ -139,7 +139,7 @@ final class RedosAnalyzer
             // replayed in confirmed mode when its severity, that of a proven
             // quadratic attempt, reaches the threshold.
             $searchCost = RedosComplexity::Linear === $proof?->complexity
-                ? (new SearchCostProver())->find($regex, $ast, $outcome, RedosMode::Confirmed === $mode && RedosSeverity::Medium->rank() >= $threshold->rank(), $parser->target())
+                ? (new SearchCostProver())->find($regex, $ast, $outcome, RedosMode::Confirmed === $mode && RedosSeverity::Medium->rank() >= $threshold->rank(), $parser->target(), $confirmOptions)
                 : null;
 
             $analysis = new RedosAnalysis(

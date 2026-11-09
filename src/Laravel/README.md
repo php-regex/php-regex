@@ -72,7 +72,7 @@ Every option lives in `config/php-regex.php`; unpublished keys take the package 
 | `optimizations.*` | see the published file | Default optimization switches for `regex:lint` |
 | `paths`, `exclude`, `vendor_paths`, `ide` | `['app']`, `['vendor', 'node_modules', 'storage']`, `null`, `env('PHP_REGEX_IDE', env('APP_EDITOR'))` | What `regex:lint` scans and skips, read from `base_path()` whatever directory it runs from (paths given on the command line are read from the working directory); the libraries whose declared patterns it reads beside the scan paths, the application's `vendor/` by default and none as `[]`; and the editor behind its clickable links |
 | `report_unmatched_ignores` | `true` | `regex:lint` reports each `@regex-ignore` marker, or issue identifier it names, that silences nothing, as `regex.ignore.unmatched` |
-| `extraction.interop`, `extraction.functions` | `null`, `[]` | The libraries whose calls `regex:lint` reads patterns from (`null` for every preset, those a later release adds included; a list for exactly those; `[]` for the native calls only), and your own helpers carrying a pattern, as `extraction` of `regex.json` |
+| `extraction.interop`, `extraction.functions` | `null`, `[]` | The libraries whose calls `regex:lint` reads patterns from (`null` for every preset, those a later release adds included; a list for exactly those; `[]` for none of them), and your own helpers carrying a pattern, as `extraction` of `regex.json` |
 
 The package does not read `regex.json`: `extraction` is set here. A name in `extraction.interop` that is no preset stops `regex:lint` with `Invalid config/php-regex.php: Unknown extraction preset "…"`, naming the preset it most likely means.
 

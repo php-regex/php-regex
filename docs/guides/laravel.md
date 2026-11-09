@@ -20,6 +20,28 @@ the package default, so publish it only to customize it:
 php artisan vendor:publish --tag=php-regex-config
 ```
 
+## First Run
+
+Lint the patterns of your application right away; no configuration is needed:
+
+```bash
+php artisan regex:lint
+```
+
+It reads `app/` by default and prints the same report as `vendor/bin/regex
+lint` ([the CLI guide](cli.md#lint-a-codebase) shows a sample).
+
+From your code, the `Regex` facade answers in one line:
+
+```php
+use PHPRegex\Laravel\Facades\Regex;
+
+Regex::validate('/^[a-z0-9-]{3,}$/')->isValid; // true
+```
+
+[Using the service](#using-the-service) shows what else the facade does, and
+[Commands](#commands) lists every command.
+
 ## Configuration
 
 `config/php-regex.php`, with its defaults. A `config/regex-parser.php` published
@@ -68,7 +90,7 @@ return [
     ],
     // The calls regex:lint reads patterns from, as "extraction" of regex.json.
     'extraction' => [
-        'interop' => null,   // null: every preset; a list: exactly those; []: native calls only
+        'interop' => null,   // null: every preset; a list: exactly those; []: no preset
         'functions' => [],   // your helpers: "App\Support\Str::matches#1"
     ],
     'paths' => ['app'],                                // read from base_path()
@@ -397,6 +419,12 @@ the worst case, as PHP: `str_repeat("a", $n) . "!"`. A pattern the structural
 heuristics judge, such as one with a backreference, shows `Potential
 backtracking (heuristic)` and no attack. The [ReDoS guide](redos.md)
 explains each verdict.
+
+With `--format=html` the explanation is HTML, and every text the report
+takes from the pattern, the pattern itself, the optimization, the security
+warning, the lint issues, the sample and an error, is HTML-encoded:
+`/<b>/` is printed `/&lt;b&gt;/`, so the page that shows the report never
+renders a tag the pattern holds. Highlighting is for the console format only.
 
 ## Upgrading from 1.x
 

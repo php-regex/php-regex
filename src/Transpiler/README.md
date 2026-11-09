@@ -28,7 +28,7 @@ Features
 
 - Three targets, `javascript` (alias `js`), `html-pattern` (alias `html`) and `python` (alias `py`), each producing a paste-ready literal and a constructor call
 - Dialect rewrites: `(?P<name>)` becomes `(?<name>)` in JavaScript, `\k<name>` becomes `(?P=name)` in Python, `\h` and `\v` become character classes
-- What a target reads otherwise is written out as PCRE reads it: `$`, which also matches before a final newline, `^` and `$` under `m`, the dot, which leaves out `\n` alone, and, under `u`, `\d`, `\w`, `\s` and `\b`, which PHP reads in Unicode
+- What a target reads otherwise is written out as PCRE reads it: `$`, which also matches before a final newline, `^` and `$` under `m`, the dot, which leaves out `\n` alone, `\s` without `u`, six bytes in PHP where JavaScript's also takes the Unicode spaces, and `\S`, its complement, which takes a byte of `U+00A0` in PHP where JavaScript's leaves that space out, and, under `u`, `\d`, `\w`, `\s` and `\b`, which PHP reads in Unicode
 - Flags are mapped per target: JavaScript keeps `i`, `s`, `u`, gains `u` when Unicode escapes need it, and has `/m`, `/D`, `/x` and `/U` applied while printing; Python keeps `i` and `s`, gains `re.ASCII` without `u`, has `/m`, `/D`, `/x` and `/U` applied while printing, and spells flags inline or as `re` constants; every target drops `/S`, which PHP has ignored since 7.3, with a note
 - Warnings list every rewrite to review; notes list the flags applied or dropped
 - A construct the target cannot express without matching otherwise — `\w` under `u` in Python, a possessive quantifier or an atomic group in JavaScript, and in Python unless `pythonVersion` is 3.11 or later, a backreference to a group that may not have matched in JavaScript — throws a `TranspileException` carrying the position in the pattern
@@ -144,9 +144,19 @@ quantifiers it governs: `/<.+>/U` is `/<[^\n]+?>/` for JavaScript, the dot
 written as PCRE reads it.
 
 JavaScript and Python read characters, where PCRE without `u` reads bytes. A
-multibyte character written whole (`/café/`) stays that character; a byte above
-0x7F on its own, as an escape (`\xE9`, `[\x80-\xFF]`) or as invalid UTF-8, has
-no equivalent there and is refused: add `u`, or write the character itself.
+multibyte character written whole outside a class (`/café/`) stays that
+character. The rest has no equivalent there and is refused with the advice that
+works: a byte above 0x7F on its own, as an escape (`\xE9`, `[\x80-\xFF]`) or
+as the last byte a quantifier repeats (`/é+/`), asks for `u`; a raw byte of
+invalid UTF-8 asks to be written as the character, as UTF-8, before `u`, which
+refuses such a pattern; and a multibyte character in a class (`/[é]/`), each of
+whose bytes PCRE reads as a member of its own, asks for `u`. Before advising
+`u`, the transpiler asks the engine whether the pattern compiles with it: where
+something else is refused under `u` (`/[é](?<=\C)/`, a `\C` in a lookbehind),
+the advice says to rewrite that construct first. Adding `u` changes what the
+pattern matches, characters instead of bytes (`/[é]/` matches `à` through its
+first byte, `/[é]/u` does not): confirm that matching characters is what the
+pattern means before taking the advice.
 
 Documentation
 -------------

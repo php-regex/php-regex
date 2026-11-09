@@ -311,11 +311,19 @@ final class TextDocumentHandler
         $markers = $library ? [] : InlineIgnores::markers($content);
         $targets = $library ? [] : TargetMarkers::read($content);
 
+        // Keep the source indices for unmatched-marker reporting, while
+        // looking up only the markers covering each occurrence's line.
+        /** @var array<int, array<int, IgnoreMarker>> $markersByLine */
+        $markersByLine = [];
+        foreach ($markers as $index => $marker) {
+            $markersByLine[$marker->coveredLine][$index] = $marker;
+        }
+
         // "@regex-ignore" silences the issues of its line, as in `regex
         // lint`: every one, or those it names.
         $used = [];
         foreach ($occurrences as $occurrence) {
-            $covering = array_filter($markers, static fn (IgnoreMarker $marker): bool => $marker->coveredLine === $occurrence->line);
+            $covering = $markersByLine[$occurrence->line] ?? [];
             if ($occurrence->ignored && [] === $covering) {
                 continue;
             }
@@ -430,6 +438,7 @@ final class TextDocumentHandler
         }
 
         [, $source, $issues, $redos] = $analysis;
+        $spelling = null;
         foreach ($issues as $issue) {
             // The heuristic rules guess what the analysis just proved:
             // once it shows the pattern linear, their warnings go.
@@ -440,10 +449,15 @@ final class TextDocumentHandler
             // A raw character the literal spells with an escape, as
             // a double-quoted "\t", is no raw character in the source; the
             // literal of another file is that file's to report.
-            if (InvisibleCharacterRule::ID === $issue->id
-                && (null !== $occurrence->writtenElsewhere || !LiteralSpelling::holdsRaw($content, $occurrence->byteOffset, InvisibleCharacterRule::reportedCharacter($source, (int) $issue->offset)))
-            ) {
-                continue;
+            if (InvisibleCharacterRule::ID === $issue->id) {
+                if (null !== $occurrence->writtenElsewhere) {
+                    continue;
+                }
+
+                $spelling ??= LiteralSpelling::fromSource($content, $occurrence->byteOffset);
+                if (!$spelling->containsRaw(InvisibleCharacterRule::reportedCharacter($source, (int) $issue->offset))) {
+                    continue;
+                }
             }
 
             $diagnostics[] = $this->diagnosticConverter->convert($issue, $span);

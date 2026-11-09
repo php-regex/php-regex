@@ -68,6 +68,8 @@ Lexes a regex into its tokens, as the parser reads them for the instance's targe
 
 How many characters one token covers is not part of the contract: `tokenize()` reads a literal character as one token today, and a later release may read a run of literal characters as one token. Rely on the positions, not on a count of tokens.
 
+Like `parse()`, `tokenize()` holds the whole regex, delimiters and modifiers included, to the `max_pattern_length` option, and throws a `ResourceLimitException` past it: under a limit of 10, `/abcdefgh/` is lexed and `/abcdefgh/i` is refused.
+
 ```php
 use PHPRegex\Toolkit\Regex;
 
@@ -644,18 +646,31 @@ Notes:
   the two agree, and the pattern is written, where the empty repetition sets no group and comes after every longer
   one (`/(?:(a)|b?)?c/`, `/(a)(\1)*b/`, `/(?:x*?y|z?)*w/`). The rule reads each repetition on its own, so it also refuses
   some patterns where the two would agree only through what follows the repetition (`/(?:a|(?=b)|.)*\z/`), or through
-  a body that only matches empty (`/^(){3,5}/`): a refusal, never a translation that matches otherwise.
+  a body that only matches empty (`/^(){3,5}/`): a refusal, never a translation that matches otherwise. Whether a
+  construct may match empty is read once per construct, and again only past a reference inside the group being read;
+  past 100,000 such readings the transpiler throws `TranspileException` ("Capture emptiness analysis exceeded its work
+  limit.") rather than walk a chain of references that doubles at each group.
 - What a target reads otherwise is written as PCRE reads it: `$` is `(?=\n?$)` in JavaScript, as it also matches before
   a newline that ends the subject, `$` under `/D` and `\z` are `$`, `\Z` is `(?=\n?$)`, and `^` and `$` under `/m` see
   `\n` alone end a line (`(?:^|(?<=\n)(?!$))` and `(?=\n|$)`); in Python `\z` is `\Z` and `\Z` is `(?=\n?\Z)`. The dot,
   which leaves out `\n` alone, is `[^\n]` in JavaScript. Under `u`, where PHP reads `\d`, `\w`, `\s` and `\b` in
   Unicode, JavaScript gets `\p{Nd}`, a class of the word characters and one of the spaces, and Python, without `u`,
-  `re.ASCII`.
+  `re.ASCII`. Without `u`, JavaScript's `\s`, which also takes the Unicode spaces (`U+00A0`, `U+2028`, `U+FEFF`), is
+  written `[\t-\r ]`, the six bytes PCRE reads as spaces, and `\S` is `[^\t-\r ]`.
 - JavaScript targets may add `/u` when Unicode properties or code point escapes are used.
 - Without `u`, PHP reads the pattern byte by byte where JavaScript and Python read it character by character: a
-  multibyte character written whole stays that character (`/café/` passes through), and a lone byte above `0x7F`,
-  which matches that byte alone in PCRE and has no character equivalent in the targets, is refused — add `u`, or
-  write the character itself (`/\xC3/` is refused with that advice).
+  multibyte character written whole outside a class, and not cut by a quantifier, stays that character (`/café/`
+  passes through; in `/é+/` the `+` repeats the last byte only). A lone byte above `0x7F`, which matches that byte alone
+  in PCRE, and a multibyte character in a class (`/[é]/`), whose bytes PCRE reads as separate members, have no character
+  equivalent in the targets and are refused: add `u`, after writing a raw byte of invalid UTF-8 as the character it
+  stands for, since `u` refuses a pattern that is not valid UTF-8. The advice is checked against the engine: where the
+  pattern holds something else `u` refuses (`/[é](?<=\C)/`), it says to rewrite that construct before adding `u`.
+  Adding `u` changes what the pattern matches, characters instead of bytes (`/[é]/` matches `à` through its first byte,
+  `/[é]/u` does not): confirm that matching characters is what the pattern means before taking the advice.
+  A set that leaves characters out (the dot, `[^a]`, `\D`, `\S`) takes one byte in PCRE, one UTF-16 code unit in
+  JavaScript, one code point in Python and in `html-pattern`, matched under `v`: on a subject holding a multibyte
+  character the counts differ (`/^\S$/` fails `U+00A0`, two bytes, where `/^[^\t-\r ]$/` matches it in JavaScript;
+  that JavaScript pattern fails `U+1F600`, two UTF-16 code units, and matches it under `v`).
 - A script property takes the name JavaScript reads: PCRE2 reads `\p{Han}` as the script's extensions, so it is
   `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused. For a
   target before PCRE2 10.40 (PHP 8.1), which reads `\p{Han}` as the script alone, it is `\p{Script=Han}`.
@@ -969,7 +984,7 @@ Exception hierarchy (simplified):
       - `SyntaxErrorException` (invalid syntax)
     - `LimitException` (the library stopped at one of its own limits)
       - `RecursionLimitException` (max recursion depth)
-      - `ResourceLimitException` (max pattern length)
+      - `ResourceLimitException` (max pattern length, or a text explanation or ASCII tree past 8 MiB)
     - `SemanticErrorException` (semantic validation failure)
     - `TranspileException` (unsupported target or feature during transpile)
     - `SampleGenerationException` (no sample the pattern matches was found)
