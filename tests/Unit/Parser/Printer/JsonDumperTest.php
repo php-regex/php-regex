@@ -106,7 +106,9 @@ final class JsonDumperTest extends TestCase
     #[Test]
     public function test_reference_budget_allows_the_boundary_and_resets_between_exports(): void
     {
-        $tree = RegexParser::create(['cache' => null])->parse('/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 100).'/J');
+        $pattern = '/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 100).'/J';
+        $this->assertTrue(EngineProbe::compiles($pattern));
+        $tree = RegexParser::create(['cache' => null])->parse($pattern);
         $dumper = new JsonDumper();
         $document = $tree->accept($dumper);
         $references = self::nodesOfType($document, 'backref');
@@ -121,7 +123,9 @@ final class JsonDumperTest extends TestCase
     public function test_a_failed_export_clears_its_state(): void
     {
         $parser = RegexParser::create(['cache' => null]);
-        $tree = $parser->parse('/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 101).'/J');
+        $pattern = '/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 101).'/J';
+        $this->assertTrue(EngineProbe::compiles($pattern));
+        $tree = $parser->parse($pattern);
         $dumper = new JsonDumper();
 
         try {
