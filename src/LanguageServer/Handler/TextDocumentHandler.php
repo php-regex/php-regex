@@ -311,11 +311,19 @@ final class TextDocumentHandler
         $markers = $library ? [] : InlineIgnores::markers($content);
         $targets = $library ? [] : TargetMarkers::read($content);
 
+        // Keep the source indices for unmatched-marker reporting, while
+        // looking up only the markers covering each occurrence's line.
+        /** @var array<int, array<int, IgnoreMarker>> $markersByLine */
+        $markersByLine = [];
+        foreach ($markers as $index => $marker) {
+            $markersByLine[$marker->coveredLine][$index] = $marker;
+        }
+
         // "@regex-ignore" silences the issues of its line, as in `regex
         // lint`: every one, or those it names.
         $used = [];
         foreach ($occurrences as $occurrence) {
-            $covering = array_filter($markers, static fn (IgnoreMarker $marker): bool => $marker->coveredLine === $occurrence->line);
+            $covering = $markersByLine[$occurrence->line] ?? [];
             if ($occurrence->ignored && [] === $covering) {
                 continue;
             }
