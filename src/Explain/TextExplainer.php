@@ -15,6 +15,7 @@ namespace PHPRegex\Explain;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 
 /**
  * Generates a human-readable explanation of the regex: one line per
@@ -49,10 +50,17 @@ final class TextExplainer extends AbstractNodeVisitor
             ExplanationKind::Block => [$indent.$explanation->text, $this->render($children[0], $level + 1), $indent.$explanation->end],
             ExplanationKind::Repetition => $this->repetition($explanation, $level),
             ExplanationKind::Conditional => $this->conditional($children, $level),
-            ExplanationKind::Leaf => [$indent.$explanation->inline()],
+            ExplanationKind::Leaf => [$indent.$this->inline($explanation)],
         };
 
         return implode("\n", array_filter($lines, static fn (string $line): bool => '' !== $line));
+    }
+
+    private function inline(Explanation $explanation): string
+    {
+        // Keep existing explanation spellings (such as \d) while escaping
+        // controls before the renderer adds its own indentation and newlines.
+        return str_replace('\\\\', '\\', DisplayEscaper::escapeText($explanation->inline()));
     }
 
     /**
@@ -92,7 +100,7 @@ final class TextExplainer extends AbstractNodeVisitor
         $indent = str_repeat('  ', $level);
         $repeated = $repetition->children[0];
         if (ExplanationKind::Leaf === $repeated->kind) {
-            return [\sprintf('%s%s, %s', $indent, $repeated->inline(), $repetition->text)];
+            return [\sprintf('%s%s, %s', $indent, $this->inline($repeated), $repetition->text)];
         }
 
         return [
@@ -115,7 +123,7 @@ final class TextExplainer extends AbstractNodeVisitor
         $indent = str_repeat('  ', $level);
         [$condition, $yes] = $children;
         $lines = ExplanationKind::Leaf === $condition->kind
-            ? [\sprintf('%sIF (%s) THEN', $indent, $condition->inline())]
+            ? [\sprintf('%sIF (%s) THEN', $indent, $this->inline($condition))]
             : [$indent.'IF', $this->render($condition, $level + 1), $indent.'THEN'];
         $lines[] = $this->render($yes, $level + 1);
 
