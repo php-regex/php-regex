@@ -253,7 +253,7 @@ final class PythonPrinter extends AbstractTargetPrinter
             return $node->value;
         }
 
-        $this->refuseALoneByte($node->value, $node);
+        $this->refuseALoneByte($node->value, $node, $this->inCharClass);
         if ($this->inCharClass) {
             return $this->escapeString($node->value);
         }
