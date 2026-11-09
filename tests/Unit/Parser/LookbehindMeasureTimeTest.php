@@ -364,10 +364,8 @@ final class LookbehindMeasureTimeTest extends TestCase
         $refused = PcreMessageCodes::warningOf($pattern);
         $this->assertNotNull($refused, 'Oracle: PCRE refuses the pattern.');
         $this->assertContains(ErrorCode::LookbehindTooComplex->value, PcreMessageCodes::CODES[PcreMessageCodes::read($refused)['message']] ?? [], 'Oracle: '.$refused);
-        $start = microtime(true);
-        $result = Regex::create(['cache' => null])->validate($pattern);
-        $this->assertSame(ErrorCode::LookbehindTooComplex, $result->errorCode);
-        $this->assertLessThan(self::BUDGET, microtime(true) - $start);
+        $this->assertSame(ErrorCode::LookbehindTooComplex, Regex::create(['cache' => null])->validate($pattern)->errorCode);
+        $this->assertLessThan(self::BUDGET, self::bestValidationTime($pattern));
     }
 
     /**

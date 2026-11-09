@@ -17,6 +17,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,10 +35,20 @@ use PHPUnit\Framework\TestCase;
  */
 final class PatternTooLargeErrorOrderTest extends TestCase
 {
+    /**
+     * The engine messages these rows meet that the message table leaves
+     * out: the size limit, and "\K" in a lookaround as PHP 8.5 reports it.
+     */
+    private const UNTABLED_MESSAGES = [
+        'regular expression is too large' => ErrorCode::PatternTooLarge,
+        '\\K is not allowed in lookarounds (but see PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK)' => ErrorCode::KeepInLookaround,
+    ];
+
     #[Test]
     #[DataProvider('provideErrorsNeverReached')]
     public function test_an_error_after_the_limit_is_passed_is_never_reached(string $pattern, string $php, string $release, int $offset): void
     {
+        $this->assertMatchesTheRunningEngine($pattern);
         $result = self::validate($pattern, $php, $release);
 
         $this->assertSame(ErrorCode::PatternTooLarge, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
@@ -48,6 +59,7 @@ final class PatternTooLargeErrorOrderTest extends TestCase
     #[DataProvider('provideErrorsMetFirst')]
     public function test_an_error_before_the_limit_is_passed_is_reported(string $pattern, string $php, string $release, ErrorCode $error, int $offset): void
     {
+        $this->assertMatchesTheRunningEngine($pattern);
         $result = self::validate($pattern, $php, $release);
 
         $this->assertSame($error, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
@@ -183,6 +195,24 @@ final class PatternTooLargeErrorOrderTest extends TestCase
             $result = RegexParser::create(['cache' => null, 'max_pattern_length' => 1_000_000, 'php_version' => $php, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate('/'.$class.')/u');
             $this->assertSame([ErrorCode::GroupUnmatchedClose, $offset], [$result->errorCode, $result->offset], $target);
         }
+    }
+
+    /**
+     * The rows hold the error each PHP and PCRE2 target reports; the
+     * running engine is one more target: what PHP refuses the pattern with
+     * here is what the library reports for this PHP and this PCRE2.
+     */
+    private function assertMatchesTheRunningEngine(string $pattern): void
+    {
+        $refused = PcreMessageCodes::warningOf($pattern);
+        $this->assertNotNull($refused, 'Oracle: the running engine refuses '.$pattern);
+        $engine = PcreMessageCodes::read($refused);
+        $release = implode('.', \array_slice(explode('.', explode(' ', \PCRE_VERSION)[0]), 0, 2));
+        $result = self::validate($pattern, \PHP_MAJOR_VERSION.'.'.\PHP_MINOR_VERSION, $release);
+
+        $codes = isset(self::UNTABLED_MESSAGES[$engine['message']]) ? [self::UNTABLED_MESSAGES[$engine['message']]->value] : PcreMessageCodes::codesFor($engine['message'], $release);
+        $this->assertContains($result->errorCode?->value, $codes, \sprintf('Oracle: %s; the library: %s', $refused, (string) $result->error));
+        $this->assertSame($engine['offset'], $result->offset, 'Oracle: '.$refused);
     }
 
     private static function validate(string $pattern, string $php, string $release): ValidationResult
