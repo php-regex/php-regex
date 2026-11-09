@@ -111,10 +111,10 @@ final class LookaroundProduct
             // Check the remaining aggregate allowance before allocating a body.
             $budget->consume();
             if ($nfaStates >= $this->options->maxNfaStates) {
-                throw new ComplexityException(\sprintf('Lookaround body NFA state limit exceeded (%d).', $this->options->maxNfaStates), 0, $this->pattern, diagnostic: ['phase' => 'lookaround bodies', 'limit' => $this->options->maxNfaStates]);
+                throw new ComplexityException(\sprintf('Lookaround body NFA state limit exceeded (%d).', $this->options->maxNfaStates), $look->startPosition, $this->pattern, diagnostic: ['phase' => 'lookaround bodies', 'limit' => $this->options->maxNfaStates]);
             }
             if ($dfaStates >= $this->options->maxDfaStates) {
-                throw new ComplexityException(\sprintf('Lookaround body DFA state limit exceeded (%d).', $this->options->maxDfaStates), 0, $this->pattern, diagnostic: ['phase' => 'lookaround bodies', 'limit' => $this->options->maxDfaStates]);
+                throw new ComplexityException(\sprintf('Lookaround body DFA state limit exceeded (%d).', $this->options->maxDfaStates), $look->startPosition, $this->pattern, diagnostic: ['phase' => 'lookaround bodies', 'limit' => $this->options->maxDfaStates]);
             }
             $bodyOptions = new SolverOptions(
                 matchMode: MatchMode::Full,

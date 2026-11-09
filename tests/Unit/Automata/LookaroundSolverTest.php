@@ -105,7 +105,35 @@ final class LookaroundSolverTest extends TestCase
             $this->fail('The second lookaround body was compiled.');
         } catch (ComplexityException $e) {
             $this->assertSame(['phase' => 'lookaround bodies', 'limit' => $limit], $e->getDiagnostic());
+            // The caret stands under the lookaround refused, "(?=b{10})".
+            $this->assertSame(9, $e->position);
         }
+    }
+
+    /**
+     * A mark that reuses an assertion already compiled is skipped, and the
+     * marks after it are still read: the lookahead after the repeated one
+     * keeps "b" out. preg_match() agrees on each subject.
+     */
+    #[Test]
+    #[DataProvider('provideMarksAfterARepeatedOne')]
+    public function test_the_marks_after_a_repeated_one_are_read(string $pattern): void
+    {
+        $dfa = (new LanguageSolver())->compile($pattern);
+
+        foreach (['a', 'b', 'c', 'ab', ''] as $subject) {
+            $this->assertSame(1 === preg_match($pattern, $subject), self::accepts($dfa, $subject), \sprintf('%s on %s.', $pattern, json_encode($subject)));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideMarksAfterARepeatedOne(): iterable
+    {
+        yield 'lookahead after' => ['pattern' => '/^(?:(?=[ab])){2}(?=a)[a-c]$/'];
+        yield 'lookahead before' => ['pattern' => '/^(?=a)(?:(?=[ab])){2}[a-c]$/'];
+        yield 'lookbehind after' => ['pattern' => '/^[a-c](?:(?<=[ab])){2}(?<=a)$/'];
     }
 
     /**
