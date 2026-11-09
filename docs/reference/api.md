@@ -979,7 +979,7 @@ Exception hierarchy (simplified):
       - `SyntaxErrorException` (invalid syntax)
     - `LimitException` (the library stopped at one of its own limits)
       - `RecursionLimitException` (max recursion depth)
-      - `ResourceLimitException` (max pattern length)
+      - `ResourceLimitException` (max pattern length, or a text explanation or ASCII tree past 8 MiB)
     - `SemanticErrorException` (semantic validation failure)
     - `TranspileException` (unsupported target or feature during transpile)
     - `SampleGenerationException` (no sample the pattern matches was found)
