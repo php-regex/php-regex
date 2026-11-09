@@ -68,7 +68,10 @@ final class HirTranslatorTest extends TestCase
     #[Test]
     public function test_literal_runs_flush_at_assertions_and_across_flattened_sequences(): void
     {
-        $hir = $this->translate('/ab(?:c$de)f(?#ignored)g/');
+        $pattern = '/ab(?:c\\Bde)f(?#ignored)g/';
+        // "\B" holds between "c" and "d": the pattern matches.
+        $this->assertSame(1, preg_match($pattern, 'abcdefg'));
+        $hir = $this->translate($pattern);
 
         $this->assertInstanceOf(ConcatHir::class, $hir);
         $this->assertCount(3, $hir->parts);
@@ -78,7 +81,7 @@ final class HirTranslatorTest extends TestCase
         $this->assertInstanceOf(AssertionHir::class, $hir->parts[1]);
         $this->assertInstanceOf(LiteralHir::class, $hir->parts[2]);
         $this->assertSame([100, 101, 102, 103], $hir->parts[2]->codePoints);
-        $this->assertSame([7, 23], [$hir->parts[2]->startPosition, $hir->parts[2]->endPosition]);
+        $this->assertSame([8, 24], [$hir->parts[2]->startPosition, $hir->parts[2]->endPosition]);
     }
 
     #[Test]
