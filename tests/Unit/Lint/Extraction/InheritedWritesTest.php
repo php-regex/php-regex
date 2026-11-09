@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
+use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -129,6 +130,75 @@ final class InheritedWritesTest extends TestCase
                 public function check($s) { return preg_match($this->re, $s) + preg_match($this->other, $s); }
             }
 
+            PHP);
+    }
+
+    /**
+     * Each trait uses the two before it, so a walk that follows every path
+     * instead of every trait makes tens of millions of calls for 36 traits
+     * (19 s for both strategies on PHP 8.4.27); each trait looked into once,
+     * they take a few milliseconds. The bound is the CPU time of the whole
+     * check: the project written, both extractions and their assertions.
+     */
+    #[Test]
+    public function test_shared_trait_descendants_are_processed_in_bounded_time(): void
+    {
+        $code = "<?php\ntrait T0 {}\ntrait T1 {}\n";
+        for ($i = 2; $i < 36; $i++) {
+            $code .= 'trait T'.$i.' { use T'.($i - 1).', T'.($i - 2)."; }\n";
+        }
+
+        $code .= <<<'PHP'
+            final class Matcher
+            {
+                use T35;
+                private $re = '/shared/';
+                public function check($s) { return preg_match($this->re, $s); }
+            }
+            PHP;
+
+        $start = CpuClock::nanoseconds();
+        $this->assertExtractedByBoth([
+            ['pattern' => '/shared/', 'at' => "'/shared/'", 'location' => 'via $this->re'],
+        ], $code);
+        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+
+        $this->assertLessThan(2.0, $seconds, \sprintf('Both extractions took %.2f s.', $seconds));
+    }
+
+    #[Test]
+    public function test_a_cycle_does_not_hide_a_foreign_trait_on_another_edge(): void
+    {
+        $this->assertExtractedByBoth([], <<<'PHP'
+            <?php
+            trait A { use B, Elsewhere; }
+            trait B { use A; }
+            final class Matcher
+            {
+                use A;
+                private $re = '/unknown/';
+                public function check($s) { return preg_match($this->re, $s); }
+            }
+            PHP);
+    }
+
+    /**
+     * The walk starts at a class, and a class is no trait: a trait of the
+     * file naming the class in its use list names a trait the file does not
+     * declare, and the property proves no default.
+     */
+    #[Test]
+    public function test_a_trait_naming_the_class_back_is_a_foreign_trait(): void
+    {
+        $this->assertExtractedByBoth([], <<<'PHP'
+            <?php
+            final class Matcher
+            {
+                use Loops;
+                private $re = '/unknown/';
+                public function check($s) { return preg_match($this->re, $s); }
+            }
+            trait Loops { use Matcher; }
             PHP);
     }
 
