@@ -554,6 +554,38 @@ final class CiAnswerTest extends TestCase
         $this->assertSame('unread '.$this->short($head).' '.$path, $this->answer('demo.yml'));
     }
 
+    /**
+     * @return iterable<string, array{initial: bool}>
+     */
+    public static function provideUnreadableScans(): iterable
+    {
+        yield 'a diff' => ['initial' => false];
+        yield 'the root commit' => ['initial' => true];
+    }
+
+    /**
+     * A commit whose changed files cannot be listed is no evidence: the walk
+     * stops there instead of taking an older run for it.
+     */
+    #[Test]
+    #[DataProvider('provideUnreadableScans')]
+    public function test_a_scan_that_fails_stops_the_walk(bool $initial): void
+    {
+        if (!$initial) {
+            $base = $this->commitFiles(['src/A.php' => 'a']);
+            $this->ranOn($base, 'demo.yml', 'completed success');
+        }
+        $head = $this->commitFiles(['other/notes.txt' => 'notes']);
+        $tree = $this->git('rev-parse', $head.':other');
+        $this->assertTrue(unlink($this->root.'/repository/.git/objects/'.substr($tree, 0, 2).'/'.substr($tree, 2)));
+
+        [$exit, $output, $answer] = $this->ciAnswer(['demo.yml']);
+
+        $this->assertNotSame(0, $exit, $output);
+        $this->assertSame('', $answer, $output);
+        $this->assertStringContainsString('ci-answer: the files '.$this->short($head).' changed could not be listed', $output);
+    }
+
     #[Test]
     public function test_a_workflow_is_required(): void
     {

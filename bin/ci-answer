@@ -159,6 +159,9 @@ merged_on_its_own() {
     [ "${tree%%$'\n'*}" = "$(git rev-parse "$1^{tree}")" ]
 }
 
+changed=$(mktemp)
+trap 'rm -f "$changed"' EXIT
+
 sha=$(git rev-parse HEAD)
 count=0
 pushes=""
@@ -215,19 +218,24 @@ while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
 
     parent=$(git rev-parse -q --verify "$sha^1" 2>/dev/null || true)
     # Keep original filenames: Git's display quoting can hide a matching
-    # prefix, and filenames may themselves contain newlines.
+    # prefix, and filenames may themselves contain newlines. The list goes
+    # through a file so that a scan Git cannot finish stops the walk instead
+    # of letting an older run answer for this commit.
+    if [ -n "$parent" ]; then
+        scan=(diff --name-only --no-renames -z "$parent" "$sha")
+    else
+        scan=(ls-tree -r --name-only -z "$sha")
+    fi
+    if ! git "${scan[@]}" > "$changed"; then
+        echo "ci-answer: the files $(git rev-parse --short "$sha") changed could not be listed" >&2
+        exit 1
+    fi
     while IFS= read -r -d '' file; do
         if reads "$file"; then
             echo "unread $(git rev-parse --short "$sha") $file"
             exit 0
         fi
-    done < <(
-        if [ -n "$parent" ]; then
-            git diff --name-only --no-renames -z "$parent" "$sha"
-        else
-            git ls-tree -r --name-only -z "$sha"
-        fi
-    )
+    done < "$changed"
     sha=$parent
 done
 echo "none $count"
