@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The value of a property read through `$this` looks into each trait of the
+   file once when it checks for a trait the file does not declare: forty traits
+   that each use the two before them no longer take exponential time to lint.
  * The statement a `@regex-target` doc comment covers is found for every
    marker of a file in one pass: 2,000 nested marked `if` bodies took some
    20 seconds, they take a tenth of one. A `}` or a `;` in inline HTML or
