@@ -17,6 +17,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LanguageTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[DataProvider('provideFiniteness')]
     public function test_a_language_knows_whether_it_is_finite(string $pattern, bool $finite, ?int $min, ?int $max, ?string $size): void
@@ -46,47 +49,6 @@ final class LanguageTest extends TestCase
     public function test_a_language_counts_its_strings_of_a_length(string $pattern, int $length, string $count): void
     {
         $this->assertSame($count, (new LanguageSolver())->language($pattern)->countOfLength($length));
-    }
-
-    #[Test]
-    public function test_counting_a_huge_length_is_bounded_even_for_a_single_word_per_length(): void
-    {
-        $language = (new LanguageSolver())->language('/a*/');
-
-        $this->expectException(ComplexityException::class);
-        $language->countOfLength(\PHP_INT_MAX);
-    }
-
-    #[Test]
-    public function test_counting_growing_integers_is_bounded(): void
-    {
-        $language = (new LanguageSolver())->language('/[ab]*/');
-
-        $this->expectException(ComplexityException::class);
-        $language->countOfLength(\PHP_INT_MAX);
-    }
-
-    #[Test]
-    public function test_finite_total_counting_is_also_bounded(): void
-    {
-        $language = (new LanguageSolver())->language('/[ab]{0,100}/');
-
-        $this->expectException(ComplexityException::class);
-        $language->size();
-    }
-
-    #[Test]
-    public function test_a_failed_count_does_not_poison_later_counts(): void
-    {
-        $language = (new LanguageSolver())->language('/[ab]*/');
-        try {
-            $language->countOfLength(\PHP_INT_MAX);
-            $this->fail('Counting must exhaust its budget.');
-        } catch (ComplexityException $exception) {
-            $this->assertSame('language counting', $exception->getDiagnostic()['phase']);
-        }
-
-        $this->assertSame('1024', $language->countOfLength(10));
     }
 
     #[Test]
@@ -142,6 +104,56 @@ final class LanguageTest extends TestCase
         }
 
         $this->assertSame($take, $count);
+    }
+
+    #[Test]
+    public function test_a_long_gap_between_results_exhausts_a_finite_budget(): void
+    {
+        $pattern = '/^(?:b|a{400})$/';
+        $this->assertSame(1, preg_match($pattern, 'b'));
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 400)));
+        $language = (new LanguageSolver())->language($pattern);
+        $strings = $language->strings();
+        $this->assertSame('b', $strings->current());
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('Language enumeration work budget exceeded.');
+        $strings->next();
+    }
+
+    /**
+     * The budget bounds the search for the next string, not the whole run:
+     * the search from "b" to 110 "a" alone runs past it, while the 80 "a"
+     * found on the way starts it again.
+     */
+    #[Test]
+    public function test_the_work_budget_starts_again_at_each_string(): void
+    {
+        $pattern = '/^(?:b|a{80}|a{110})$/';
+        foreach (['b', str_repeat('a', 80), str_repeat('a', 110)] as $subject) {
+            $this->assertSame(1, preg_match($pattern, $subject));
+        }
+        $this->assertSame(0, preg_match($pattern, str_repeat('a', 95)));
+
+        $this->assertSame(['b', str_repeat('a', 80), str_repeat('a', 110)], iterator_to_array((new LanguageSolver())->language($pattern)->strings(), false));
+
+        $this->assertSame(1, preg_match('/^(?:b|a{110})$/', 'b'));
+        $this->assertSame(1, preg_match('/^(?:b|a{110})$/', str_repeat('a', 110)));
+        $strings = (new LanguageSolver())->language('/^(?:b|a{110})$/')->strings();
+        $this->assertSame('b', $strings->current());
+        $this->expectException(ComplexityException::class);
+        $strings->next();
+    }
+
+    #[Test]
+    public function test_dead_states_do_not_obscure_a_long_single_result(): void
+    {
+        $this->assertSame(1, preg_match('/^a{200}$/', str_repeat('a', 200)));
+        $this->assertSame(0, preg_match('/^a{200}$/', str_repeat('a', 199)));
+        $language = (new LanguageSolver())->language('/^a{200}$/');
+
+        $this->assertSame([str_repeat('a', 200)], iterator_to_array($language->strings(), false));
+        $this->assertSame([str_repeat('a', 200)], iterator_to_array($language->strings(), false));
     }
 
     #[Test]

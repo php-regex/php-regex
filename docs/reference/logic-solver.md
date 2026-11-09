@@ -347,19 +347,13 @@ $solver->language('/^[a-z]+$/')->countOfLength(20); // "199281488952094091523401
 iterator_to_array($solver->language('/^[ab]{2}$/')->strings(), false); // ['aa', 'ab', 'ba', 'bb']
 ```
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:8762f3ef065418dccdceeee315a440e1fca467e5e6225d3600165c4967ffa246 -->
-
-Counts are exact decimal strings, with no extension needed. Each `countOfLength()` or
-`size()` call is limited to 1,000,000 units of state and integer arithmetic work and
-100,000 simultaneously held integer limbs (including arithmetic temporaries).
-Exceeding either limit throws `ComplexityException`.
-
-<!-- /coderabbit-ai-generated:v1 --> `strings()` and
+Counts are exact decimal strings, however large, with no extension needed. `strings()` and
 `nonMembers()` are generators: shortest first, then in code point order; they end when
 the strings run out, `nonMembers()` at once for `/[\s\S]*/`, and an infinite set never
-does, so take what you need. Each string `nonMembers()` hands out is
+does, so take what you need. The search for the next string is bounded: past a million
+steps, or 50,000 remembered states for one length, the generator throws a
+`ComplexityException`. `/^(?:b|a{400})$/` hands out `b`, then throws rather than walk
+every length up to 400. Each string `nonMembers()` hands out is
 proven outside the language by the automaton: test fixtures with positives and negatives
 both certain. Under the default full match mode a string belongs when the whole of it
 matches; ask for `MatchMode::Partial` to read the subjects `preg_match()` accepts, a final

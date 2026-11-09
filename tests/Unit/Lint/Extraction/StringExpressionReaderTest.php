@@ -145,6 +145,39 @@ final class StringExpressionReaderTest extends TestCase
         }
     }
 
+    #[Test]
+    public function test_strip_parentheses_preserves_inner_trivia_and_indexes(): void
+    {
+        $comment = [\T_COMMENT, '/* ) ( */', 1];
+        $tokens = [$comment, '(', $comment, '(', $comment, 'a', $comment, ')', $comment, ')', $comment];
+        $indexes = range(20, 30);
+
+        $this->assertSame(
+            [[$comment, 'a', $comment], [24, 25, 26]],
+            StringExpressionReader::stripParentheses($tokens, $indexes),
+        );
+
+        foreach ([['(', ')'], ['(', $comment, ')'], ['(', '(', 'a', ')', '.', '(', 'b', ')', ')']] as $tokens) {
+            $indexes = array_keys($tokens);
+            $this->assertSame(
+                [\array_slice($tokens, 1, -1), \array_slice($indexes, 1, -1)],
+                StringExpressionReader::stripParentheses($tokens, $indexes),
+            );
+        }
+
+        $unbalanced = ['(', ')', ')', '(', ')'];
+        $this->assertSame([$unbalanced, array_keys($unbalanced)], StringExpressionReader::stripParentheses($unbalanced, array_keys($unbalanced)));
+    }
+
+    #[Test]
+    public function test_strip_parentheses_handles_deep_nesting(): void
+    {
+        $depth = 20000;
+        $tokens = array_merge(array_fill(0, $depth, '('), ['a'], array_fill(0, $depth, ')'));
+
+        $this->assertSame([['a'], [$depth]], StringExpressionReader::stripParentheses($tokens, array_keys($tokens)));
+    }
+
     /**
      * @return array{pattern: string, line: int, offset?: int|null, column?: int|null}|null
      */

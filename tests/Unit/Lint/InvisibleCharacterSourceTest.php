@@ -63,6 +63,7 @@ final class InvisibleCharacterSourceTest extends TestCase
     public static function provideSpellings(): iterable
     {
         foreach (['php-parser' => PhpParserExtractionStrategy::class, 'tokens' => TokenBasedExtractionStrategy::class] as $name => $extractor) {
+            yield $name.': repeated raw and escaped characters' => ['extractor' => $extractor, 'literal' => '"/a'.str_repeat("\t\u{200B}", 20).'\\x01/"', 'expected' => 40];
             yield $name.': a raw tab in single quotes' => ['extractor' => $extractor, 'literal' => "'/a\tb/'", 'expected' => 1];
             yield $name.': a tab escape in double quotes' => ['extractor' => $extractor, 'literal' => '"/a\tb/"', 'expected' => 0];
             yield $name.': a raw tab beside a tab escape' => ['extractor' => $extractor, 'literal' => "\"/a\tb\\x01/\"", 'expected' => 1];
@@ -93,6 +94,21 @@ final class InvisibleCharacterSourceTest extends TestCase
     public function test_a_pattern_without_its_source_is_not_reported(): void
     {
         $this->assertSame([], $this->invisibleIssues([new PatternOccurrence("/a\tb/", 'routes.yaml', 3, 'route:home:id')]));
+    }
+
+    /**
+     * A raw character left unreported for want of its source drops that
+     * report alone: the other issues of the pattern stay.
+     */
+    #[Test]
+    public function test_a_pattern_without_its_source_keeps_its_other_issues(): void
+    {
+        // The engine reads a tab, then one "a".
+        $this->assertSame(1, preg_match("/\ta{1}/", "\ta"));
+        $service = new AnalysisService(RegexParser::create(['cache' => null]), redosThreshold: 'critical');
+        $issues = $service->lint([new PatternOccurrence("/\ta{1}/", 'routes.yaml', 3, 'route:home:id')]);
+
+        $this->assertSame(['regex.lint.quantifier.useless'], array_map(static fn (LintIssue $issue): ?string => $issue->issueId, $issues));
     }
 
     /**

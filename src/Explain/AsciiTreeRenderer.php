@@ -64,9 +64,17 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
      */
     private array $branchStack = [];
 
+    private RenderingBudget $budget;
+
+    public function __construct()
+    {
+        $this->budget = new RenderingBudget();
+    }
+
     #[\Override]
     public function visitRegex(RegexNode $node): string
     {
+        $this->budget = new RenderingBudget();
         $this->lines = [];
         $this->branchStack = [];
 
@@ -300,7 +308,8 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
     #[\Override]
     public function visitPcreVerb(PcreVerbNode $node): string
     {
-        $this->addLine('PCREVerb (*'.$node->verb.')');
+        // A verb's name is pattern text: a control in it is spelled out.
+        $this->addLine('PCREVerb (*'.DisplayEscaper::escapeText($node->verb).')');
 
         return '';
     }
@@ -328,7 +337,7 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
         if (null === $node->identifier) {
             $label = 'Callout (?C)';
         } elseif ($node->isStringIdentifier) {
-            $label = 'Callout (?C="'.$node->identifier.'")';
+            $label = 'Callout (?C="'.DisplayEscaper::escapeText((string) $node->identifier).'")';
         } else {
             $label = 'Callout (?C'.$node->identifier.')';
         }
@@ -354,6 +363,7 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
     private function addLine(string $label): void
     {
         $depth = \count($this->branchStack);
+        $this->budget->reserve(4 * $depth + \strlen($label) + ([] === $this->lines ? 0 : 1));
         $prefix = '';
         for ($i = 0; $i < $depth - 1; $i++) {
             $prefix .= $this->branchStack[$i] ? '    ' : '|   ';

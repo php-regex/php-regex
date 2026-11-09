@@ -25,6 +25,7 @@ use PHPRegex\Explain\Highlighter\HtmlHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 
 /**
  * @internal
@@ -95,7 +96,9 @@ final class HighlightCommand extends AbstractCommand
             $highlighted = $ast->accept($visitor);
 
             if ('console' === $format && !$output->isAnsi()) {
-                $highlighted = $pattern;
+                // The whole pattern, spelled in its own mode: a backslash
+                // before a raw control stays one escape.
+                $highlighted = DisplayEscaper::escape($pattern);
             }
 
             if ('console' === $format && $style->visualsEnabled()) {

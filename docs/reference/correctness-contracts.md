@@ -75,7 +75,8 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   [`regex.redos.search`](../guides/phpstan.md), at severity `medium`, a warning.
 - **Guarantee:** None in the other direction: `search_cost: null` means no witness was found, not that the search is
   linear. A reported witness holds on the model; confirmed mode, from a threshold of `medium` or lower, replays it
-  without the JIT and counts the steps of attempts pinned at two offsets (`replayed`). Measured with PHP 8.4.26 and PCRE2 10.49:
+  without the JIT and counts the steps of attempts pinned at two offsets (`replayed`), under the backtrack and
+  recursion limits of its `ConfirmationOptions`; `replayed` is `null` where those limits stop the count. Measured with PHP 8.4.26 and PCRE2 10.49:
 
   | pattern, subject | `pcre.jit=0` | `pcre.jit=1` |
   |---|---|---|

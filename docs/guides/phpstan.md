@@ -3,16 +3,18 @@ description: "Install the PHPRegex PHPStan extension: the invalid-for-target che
 ---
 # PHPStan
 
-The PHPStan extension reads the regex patterns passed to `preg_*` functions
-(each pattern of an array given to `preg_replace()`, `preg_replace_callback()`
-or `preg_filter()`, and each key of the map given to
-`preg_replace_callback_array()`, included), to their namespaced drop-ins
-(`Safe\preg_match()` from [`thecodingmachine/safe`](https://github.com/thecodingmachine/safe)), to the static methods of the wrapper libraries
-`regex lint` reads ([Wrapper libraries](#wrapper-libraries)), and to your own
-functions and methods that mark a parameter as a pattern,
-and reports what PHPStan itself cannot see: a pattern the PHP your project
-targets refuses, while the PHP running PHPStan accepts it. Lint rules and ReDoS
-analysis are there too, off until you ask for them.
+The PHPStan extension checks the regex patterns of your code against the PHP
+version your project targets, and reports the patterns that PHP would refuse
+while the PHP running PHPStan accepts them: what PHPStan itself cannot see.
+
+It reads the patterns passed to `preg_*` functions (each pattern of an array
+given to `preg_replace()`, `preg_replace_callback()` or `preg_filter()`, and
+each key of the map given to `preg_replace_callback_array()`, included), to
+their namespaced drop-ins (`Safe\preg_match()` from [`thecodingmachine/safe`](https://github.com/thecodingmachine/safe)),
+to the static methods of the wrapper libraries `regex lint` reads
+([Wrapper libraries](#wrapper-libraries)), and to your own functions and
+methods that mark a parameter as a pattern. Lint rules and ReDoS analysis are
+there too, off until you ask for them.
 
 <div class="page-filter">
   <label class="visually-hidden" for="page-filter-input">Filter the PHPStan guide</label>
@@ -39,6 +41,24 @@ includes:
 
 The paths below are the files `php-regex/regex-phpstan` installs under its
 package root.
+
+Then run PHPStan as usual:
+
+```bash
+vendor/bin/phpstan analyse
+```
+
+The extension's findings join PHPStan's own report. For a pattern the running
+PHP accepts but the target refuses, it reads:
+
+```
+Regex pattern is invalid for PHP 8.2 with PCRE2 10.40: Invalid group modifier syntax at position 2.
+🪪 regex.invalidForTarget
+```
+
+A pattern that compiles for the target gets no such error.
+[What it reports by default](#what-it-reports-by-default) explains the check
+and how the target is chosen.
 
 ## What it reports by default
 
@@ -136,6 +156,12 @@ judged for the whole range:
 The @regex-target marker "php>=9.0" keeps no version the project is judged for (PHP >=8.2 <8.6): the patterns it covers are not judged.
 🪪 regex.target.empty
 ```
+
+The marker text the message quotes is spelled in display form: a control
+character or a line break in a comment is written `\xHH` or `\n`, and a `<`
+that would open a console tag, before a letter or `/`, is written `\x3C`, so
+the text can neither lay out a line of its own nor style PHPStan's output. A
+constraint operator such as `<9` stays as written.
 
 The target follows the rules of [`regex lint`](cli.md#target-php-and-pcre2): PHP
 7.2 and earlier ship PCRE1, which the library does not judge. A version below
@@ -332,8 +358,8 @@ A proven quadratic pattern is `medium`, below the default threshold; set
 
 ## Quadratic search
 
-One attempt of `/\s+$/` is linear, but an unanchored `preg_match()` starts an
-attempt at each position of the subject, and on a run of spaces each one reads
+One attempt of `/\s+$/` is linear, but an unanchored `preg_match()` may start
+an attempt at each later position of the subject, and on a run of spaces each one reads
 to the end of the run before it fails: PCRE2's interpreter takes a number of
 steps quadratic in the length of the run. `pcre.backtrack_limit` does not stop
 it, as the limit counts each attempt apart, and the JIT may avoid it for some

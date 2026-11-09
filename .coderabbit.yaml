@@ -206,7 +206,9 @@ reviews:
         directory under src/ (Parser, Linter, Cli, Symfony, Laravel, PHPStan,
         Psalm, Rector, PHPUnit, Infection, LanguageServer, Mcp, Redos,
         Transpiler, Optimizer, Automata, Explain, Generator, Toolkit) or Docs, CI,
-        Release, Corpus; several components are chained: `[Linter][Cli] …`.
+        Release, Corpus. Exactly one component, never a chain such as
+        `[Parser][Cli]`: a change that touches several packages names the
+        one it was made for (where its user would look for it).
     description:
       mode: "off"
     custom_checks:

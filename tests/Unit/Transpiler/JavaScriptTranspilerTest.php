@@ -64,6 +64,37 @@ final class JavaScriptTranspilerTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideUnicodeNamedReferences')]
+    public function test_checks_unicode_named_capture_participation(string $reference, string $target): void
+    {
+        $regex = Regex::create(['cache' => null]);
+        // A nonempty capture that always participates remains translatable,
+        // including when its reference is repeated inside a capturing group.
+        $safe = '/(?<é>a)('.$reference.')*/u';
+        $this->assertSame(1, preg_match($safe, 'aaa'));
+        $this->assertStringContainsString('(?<é>a)(\\k<é>)*', $regex->transpile($safe, $target)->pattern);
+
+        $unsafe = '/^(?:(?<é>a)|b)'.$reference.'$/u';
+        $this->assertSame(0, preg_match($unsafe, 'b'));
+        $this->expectException(TranspileException::class);
+        $this->expectExceptionMessageIsOrContains('A backreference to a group that may not have matched');
+
+        $regex->transpile($unsafe, $target);
+    }
+
+    /**
+     * @return iterable<string, array{reference: string, target: string}>
+     */
+    public static function provideUnicodeNamedReferences(): iterable
+    {
+        foreach (['\\k<é>', '\\k{é}', "\\k'é'", '\\g{é}'] as $reference) {
+            foreach (['javascript', 'html-pattern'] as $target) {
+                yield $target.' '.$reference => ['reference' => $reference, 'target' => $target];
+            }
+        }
+    }
+
+    #[Test]
     public function test_transpiles_g_numeric_backreference(): void
     {
         $regex = Regex::create();

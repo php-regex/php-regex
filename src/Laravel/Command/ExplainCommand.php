@@ -64,18 +64,23 @@ final class ExplainCommand extends Command
             return self::INVALID;
         }
 
+        // HTML text and console markup have separate escaping rules.
+        $escape = static fn (string $text): string => OutputFormatter::escape(
+            'html' === $format ? htmlspecialchars($text, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8') : $text,
+        );
+
         // Validate the pattern first
         $validation = $this->regex->validate($pattern);
         if (ValidationErrorCategory::Limit === $validation->category) {
             $this->warn('Pattern not analyzed:');
-            $this->line($validation->render());
+            $this->line($escape($validation->render()));
 
             return self::FAILURE;
         }
 
         if (!$validation->isValid) {
             $this->error('Invalid regex pattern:');
-            $this->line($validation->render());
+            $this->line($escape($validation->render()));
 
             return self::FAILURE;
         }
@@ -87,18 +92,18 @@ final class ExplainCommand extends Command
         $this->line('<fg=white;options=bold>Pattern:</>');
         // Highlighting is for a decorated output only: piped or under
         // --no-ansi, its escape sequences would be written as they are.
-        if ($highlight && $this->output->isDecorated()) {
+        if ('console' === $format && $highlight && $this->output->isDecorated()) {
             $highlighted = $this->regex->highlight($pattern, 'console');
             $this->line('  '.$highlighted);
         } else {
-            $this->line('  <fg=yellow>'.OutputFormatter::escape($pattern).'</>');
+            $this->line('  <fg=yellow>'.$escape($pattern).'</>');
         }
         $this->newLine();
 
         // Show explanation
         $this->line('<fg=white;options=bold>Explanation:</>');
         $explanation = $this->regex->explain($pattern, 'console' === $format ? 'text' : 'html');
-        $this->line($explanation);
+        $this->line(OutputFormatter::escape($explanation));
         $this->newLine();
 
         // Show analysis info
@@ -108,26 +113,26 @@ final class ExplainCommand extends Command
             // Show optimizations if available
             if ($analysis->optimization->original !== $analysis->optimization->optimized) {
                 $this->line('<fg=white;options=bold>Optimization Suggestion:</>');
-                $this->line('  <fg=red>-</> '.$analysis->optimization->original);
-                $this->line('  <fg=green>+</> '.$analysis->optimization->optimized);
+                $this->line('  <fg=red>-</> '.$escape($analysis->optimization->original));
+                $this->line('  <fg=green>+</> '.$escape($analysis->optimization->optimized));
                 $this->newLine();
             }
 
             // Show ReDoS analysis
             if (!$analysis->redos->isSafe()) {
                 $this->line('<fg=white;options=bold>Security Warning:</>');
-                $this->line('  <fg=red>'.$analysis->redos->headline().'</>');
-                $this->line('  Severity: <fg=yellow>'.$analysis->redos->severity->value.'</>');
+                $this->line('  <fg=red>'.$escape($analysis->redos->headline()).'</>');
+                $this->line('  Severity: <fg=yellow>'.$escape($analysis->redos->severity->value).'</>');
                 if (null !== $analysis->redos->witness) {
-                    $this->line('  Attack: <fg=yellow>'.OutputFormatter::escape($analysis->redos->witness->render()).'</>');
+                    $this->line('  Attack: <fg=yellow>'.$escape($analysis->redos->witness->render()).'</>');
                 }
                 if (null !== $analysis->redos->vulnerablePart) {
-                    $this->line('  Vulnerable part: <fg=yellow>'.OutputFormatter::escape($analysis->redos->vulnerablePart).'</>');
+                    $this->line('  Vulnerable part: <fg=yellow>'.$escape($analysis->redos->vulnerablePart).'</>');
                 }
                 if (!empty($analysis->redos->recommendations)) {
                     $this->line('  Recommendations:');
                     foreach ($analysis->redos->recommendations as $recommendation) {
-                        $this->line('    - '.$recommendation);
+                        $this->line('    - '.$escape($recommendation));
                     }
                 }
                 $this->newLine();
@@ -137,7 +142,7 @@ final class ExplainCommand extends Command
             if (!empty($analysis->lintIssues)) {
                 $this->line('<fg=white;options=bold>Lint Issues:</>');
                 foreach ($analysis->lintIssues as $issue) {
-                    $this->line('  - '.$issue->message);
+                    $this->line('  - '.$escape($issue->message));
                 }
                 $this->newLine();
             }
@@ -148,7 +153,7 @@ final class ExplainCommand extends Command
 
         try {
             $sample = $this->regex->generate($pattern);
-            $this->line('  <fg=green>'.$sample.'</>');
+            $this->line('  <fg=green>'.$escape($sample).'</>');
         } catch (\Throwable) {
             $this->line('  <fg=gray>(unable to generate sample)</>');
         }

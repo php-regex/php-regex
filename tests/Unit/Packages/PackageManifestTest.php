@@ -110,7 +110,9 @@ final class PackageManifestTest extends TestCase
             'Parser\Cache\StaticCaches', 'Parser\NodeWalker', 'Parser\TraversalAction',
         ],
         // The CLI, the PHPStan rule and the Psalm plugin name the directory
-        // where the class sets PCRE2 answered are kept between runs.
+        // where the class sets PCRE2 answered are kept between runs. The
+        // CLI spells its stderr warnings and errors as the console report,
+        // and a caret snippet for the terminal, its caret kept aligned.
         'Cli' => [
             'Automata\Model\Nfa', 'Automata\Model\NfaState', 'Automata\Transform\HirToNfaTransformer',
             'LanguageServer\Server', 'Linter\AnalysisService',
@@ -120,7 +122,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\LintIssue',
             'Linter\Formatter\ConsoleFormatter', 'Linter\Formatter\FormatterRegistry', 'Linter\Formatter\JsonFormatter',
             'Linter\Formatter\LinkFormatter', 'Linter\Formatter\OutputConfiguration',
-            'Linter\Formatter\OutputFormatterInterface', 'Linter\Formatter\RelativePathHelper',
+            'Linter\Formatter\OutputFormatterInterface', 'Linter\Formatter\RelativePathHelper', 'Linter\Formatter\ReportSpelling',
             'Linter\LintStatsCounter', 'Linter\Formatter\LintSummary', 'Linter\RedosVerdict',
             'Linter\Parallel\ForkedWorkerPool', 'Linter\Parallel\WorkerCount', 'Linter\LintProgress', 'Linter\LintReport', 'Linter\LintRequest',
             'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId',
@@ -128,6 +130,7 @@ final class PackageManifestTest extends TestCase
             'Linter\LintService', 'Linter\Source\PatternSourceCollection',
             'Linter\Source\PhpFilePatternSource', 'Linter\Source\TwigTemplatePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
             'Parser\Hir\HirTranslator', 'Parser\Text\Ascii', 'Parser\Printer\DisplayEscaper', 'Parser\Engine\IniFlag',
+            'Parser\Exception\Snippet',
             'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Text\Path',
             'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser', 'Redos\Heatmap', 'Redos\InputGenerator',
             'Transpiler\Target\TargetRegistry',
@@ -181,7 +184,12 @@ final class PackageManifestTest extends TestCase
         // The tools answer the document the CLI prints: the same encoder
         // spells every string, an invalid byte as \xNN.
         'Mcp' => ['Parser\Json\JsonDocument'],
-        'Optimizer' => ['Parser\Analysis\CharSetAnalyzer', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser', 'Parser\NodeWalker', 'Parser\TraversalAction'],
+        // The modernizer reads (*UCP) among the opening verbs the parser
+        // recognises as start options.
+        'Optimizer' => [
+            'Parser\Analysis\CharSetAnalyzer', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
+            'Parser\Syntax\StartOptions', 'Parser\NodeWalker', 'Parser\TraversalAction',
+        ],
         'PHPStan' => [
             'Linter\AnalysisService', 'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget',
             'Linter\Config\TargetConstraint',
@@ -211,6 +219,9 @@ final class PackageManifestTest extends TestCase
             // under and which give a byte its other case, and the options a
             // pattern opens with, "(*UCP)" among them.
             'Parser\Engine\CharacterTables', 'Parser\Syntax\StartOptions',
+            // The options an inline setting turns on or off, "U" among them,
+            // which decide whether a repeat tries its body first.
+            'Parser\Syntax\InlineFlags',
         ],
         'Symfony' => [
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Console\ConsoleLintRequest',
@@ -229,6 +240,9 @@ final class PackageManifestTest extends TestCase
         'Transpiler' => [
             'Parser\Exception\VisualContextTrait', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
             'Parser\Hir\Utf8', 'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre',
+            // The closing delimiter of the body the engine is asked about
+            // under u, before a refusal advises adding it.
+            'Parser\Syntax\Delimiters',
         ],
     ];
 

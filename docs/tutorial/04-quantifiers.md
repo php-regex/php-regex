@@ -167,6 +167,8 @@ echo $matches[1]; // "hello"
 ```
 {: data-run="" }
 
+`$matches[1]` holds what the pair of plain parentheses `(.+?)` captured — a **capturing group**, which [chapter 5](05-groups-alternation.md) introduces properly.
+
 If you want **all** matches, use `preg_match_all()`.
 
 ```php

@@ -32,8 +32,8 @@ use PHPRegex\Redos\Backtrack\WitnessReplayer;
  * failing sample is the shortest build that gives up there: the same input
  * does on every run, whatever the machine.
  *
- * Where the engine cannot set the limits (ini_set() disabled), nothing is
- * run: the confirmation is not confirmed, holds no sample, and its evidence
+ * Where the engine cannot set the limits (ini_set() disabled or refusing
+ * one), nothing is run: the confirmation is not confirmed, holds no sample, and its evidence
  * says the engine limits are unavailable.
  */
 final class ConfirmationRunner implements ConfirmationRunnerInterface
@@ -109,6 +109,9 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
                 $start = hrtime(true);
                 $match = $this->engine->match($regex, $input, $limits);
                 $elapsed = (hrtime(true) - $start) / 1_000_000;
+                if (PcreEngine::limitsWereNotSet($match)) {
+                    return WitnessReplayer::unavailable($options);
+                }
                 $durationMs += $elapsed;
 
                 $errorCode = $match->errorCode;

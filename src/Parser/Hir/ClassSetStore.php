@@ -103,7 +103,18 @@ final class ClassSetStore
      */
     public function save(string $key, array $sets): void
     {
-        if (!$this->isTrusted() || (!is_dir($this->directory) && !@mkdir($this->directory, 0o700, true) && !is_dir($this->directory))) {
+        if (!$this->isTrusted()) {
+            return;
+        }
+
+        // A directory that cannot be made keeps nothing; one another process
+        // made first is judged below like any other.
+        if (!is_dir($this->directory) && !@mkdir($this->directory, 0o700, true) && !is_dir($this->directory)) {
+            return;
+        }
+
+        // Judged again once made: another process may have made it first.
+        if (!$this->isTrusted()) {
             return;
         }
 
@@ -126,11 +137,22 @@ final class ClassSetStore
 
     /**
      * Whether the directory is the owner's alone: not one others may write
-     * into, nor one another user owns. One not made yet is.
+     * into, nor one another user owns. POSIX ownership must be verifiable,
+     * including before making a new directory.
+     *
+     * @phpstan-impure
      */
     private function isTrusted(): bool
     {
-        if (Path::onWindows() || !is_dir($this->directory)) {
+        if (Path::onWindows()) {
+            return true;
+        }
+
+        if (!\function_exists('posix_geteuid')) {
+            return false;
+        }
+
+        if (!is_dir($this->directory)) {
             return true;
         }
 
@@ -139,7 +161,7 @@ final class ClassSetStore
             return false;
         }
 
-        return !\function_exists('posix_geteuid') || @fileowner($this->directory) === posix_geteuid();
+        return @fileowner($this->directory) === posix_geteuid();
     }
 
     private static function write(CharSet $set): string

@@ -56,9 +56,6 @@ jobs:
     # .roave-backward-compatibility-check.xml names what the tool reports and
     # is not a break.
     name: Public API since the latest tag
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -107,7 +104,3 @@ jobs:
           FROM: ${{ steps.reference.outputs.from }}
         run: |
           tools/bc-check/vendor/bin/roave-backward-compatibility-check --from="$FROM" --to=HEAD --format=console --format=github-actions --no-interaction
-
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs

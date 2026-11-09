@@ -185,6 +185,15 @@ final class DisplayEscaper
     }
 
     /**
+     * Spell controls in display tokens before adding terminal formatting.
+     * Existing regex backslashes and printable UTF-8 are kept as written.
+     */
+    public static function escapeToken(string $text): string
+    {
+        return strtr($text, self::escapes(self::isUtf8($text) ? self::UTF8_CODE_POINTS : self::RAW_BYTES));
+    }
+
+    /**
      * Spell a sample string the way a terminal can show it: quoted, with the
      * bytes that would break the layout written as escapes.
      *

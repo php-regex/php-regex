@@ -59,6 +59,10 @@ final class HtmlPatternTargetTest extends TestCase
      */
     public static function providePatterns(): iterable
     {
+        yield 'byte spaces' => ['pattern' => '/^\s+$/', 'attribute' => '^[\t-\r ]+$', 'verdicts' => ["\t\v" => true, "\u{A0}" => false, "\u{FEFF}" => false]];
+        yield 'byte non-spaces' => ['pattern' => '/^\S+$/', 'attribute' => '^[^\t-\r ]+$', 'verdicts' => ["\u{A0}" => true, ' ' => false]];
+        yield 'byte non-spaces in a class' => ['pattern' => '/^[\S ]+$/', 'attribute' => '^[[^\t-\r ] ]+$', 'verdicts' => ["\u{2028}" => true, "\t" => false]];
+        yield 'negated byte non-spaces in a class' => ['pattern' => '/^[^\S ]+$/', 'attribute' => '^[^[^\t-\r ] ]+$', 'verdicts' => ["\t\v" => true, ' ' => false, "\u{A0}" => false]];
         yield 'a search' => ['pattern' => '/\d+/', 'attribute' => '[\s\S]*(?:\d+)[\s\S]*', 'verdicts' => ['a1b' => true, 'ab' => false]];
         yield 'anchored both ends' => ['pattern' => '/^\d+$/', 'attribute' => '^\d+$', 'verdicts' => ['12' => true, '1a' => false]];
         yield 'subject anchors' => ['pattern' => '/\A[a-z]+\z/u', 'attribute' => '^[a-z]+$', 'verdicts' => ['abc' => true, 'ab1' => false]];
