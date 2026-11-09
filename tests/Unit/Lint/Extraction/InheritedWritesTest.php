@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
+use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -132,28 +133,37 @@ final class InheritedWritesTest extends TestCase
             PHP);
     }
 
+    /**
+     * Each trait uses the two before it, so a walk that follows every path
+     * instead of every trait makes tens of millions of calls for 36 traits
+     * (19 s for both strategies on PHP 8.4.27); each trait looked into once,
+     * they take a few milliseconds. The bound is the CPU time of the two
+     * extractions together.
+     */
     #[Test]
     public function test_shared_trait_descendants_are_processed_in_bounded_time(): void
     {
         $code = "<?php\ntrait T0 {}\ntrait T1 {}\n";
-        // Each node shares both descendants with the next node. Following
-        // every path instead of every node takes exponentially many calls.
-        for ($i = 2; $i < 40; $i++) {
+        for ($i = 2; $i < 36; $i++) {
             $code .= 'trait T'.$i.' { use T'.($i - 1).', T'.($i - 2)."; }\n";
         }
 
         $code .= <<<'PHP'
             final class Matcher
             {
-                use T39;
+                use T35;
                 private $re = '/shared/';
                 public function check($s) { return preg_match($this->re, $s); }
             }
             PHP;
 
+        $start = CpuClock::nanoseconds();
         $this->assertExtractedByBoth([
             ['pattern' => '/shared/', 'at' => "'/shared/'", 'location' => 'via $this->re'],
         ], $code);
+        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+
+        $this->assertLessThan(2.0, $seconds, \sprintf('Both extractions took %.2f s.', $seconds));
     }
 
     #[Test]
