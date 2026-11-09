@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `PcreEngine` runs nothing where `ini_set()` refuses a limit the call asks
+   for, as where `ini_set()` is disabled, and puts back a limit it already
+   changed: the call no longer runs under a higher limit fixed by
+   `php_admin_value`.
  * `FormatRefusal::note()` says in one sentence why the formatter gave a
    pattern back as written, the sentence the console prints.
  * An empty script run, `(*sr:)` or `(*asr:)`, parses as a `ScriptRunNode`.
