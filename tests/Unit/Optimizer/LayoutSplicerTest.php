@@ -157,11 +157,12 @@ final class LayoutSplicerTest extends TestCase
         foreach ([100, 8000] as $pairs) {
             $before = '/'.str_repeat('[aa][bb]', $pairs).'/x';
             $after = '/'.str_repeat('[a][b]', $pairs).'/x';
+            $warning = EngineProbe::warning($before);
             if (100 === $pairs) {
                 // A hundred pairs compile on every build.
-                $this->assertNull(EngineProbe::warning($before));
+                $this->assertNull($warning);
             }
-            foreach (null === EngineProbe::warning($before) ? [$before, $after] : [$after] as $spelling) {
+            foreach (null === $warning ? [$before, $after] : [$after] as $spelling) {
                 $this->assertSame(1, preg_match($spelling, str_repeat('ab', $pairs)));
                 $this->assertSame(0, preg_match($spelling, str_repeat('ab', $pairs - 1).'ba'));
             }
