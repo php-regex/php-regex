@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The search-cost witness builds only the sixteen pairs of alphabet classes it
+   keeps, and charges their choice to the analysis budget: a run whose class
+   six hundred later letters split no longer builds every ordered pair of the
+   classes, 105 MB, before keeping sixteen.
  * The search-cost replay counts under the backtrack and recursion limits of
    the `ConfirmationOptions` given, not up to ten million steps under the
    process's recursion limit; where they stop the count, or `ini_set()` is
