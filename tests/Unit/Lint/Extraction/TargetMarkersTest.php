@@ -210,6 +210,91 @@ final class TargetMarkersTest extends TestCase
         );
     }
 
+    /**
+     * Inline HTML and the text of a string are no code: a "}" or a ";" there
+     * ends no statement; nor does the "}" of a variable in a string, which
+     * closes no body. The marker covers each statement to its own end.
+     */
+    #[Test]
+    public function test_a_delimiter_outside_the_code_ends_no_statement(): void
+    {
+        $content = <<<'PHP'
+            <?php
+            /** @regex-target php>=8.4 */
+            if (true) { ?>}<?php
+                f();
+                preg_match('/a/', $s);
+            }
+            /** @regex-target php>=8.4 */
+            $s = "$a;" . f(
+            );
+            /** @regex-target php>=8.4 */
+            $s = "{$a}" . f(
+            );
+            PHP;
+
+        $this->assertSame(
+            [[2, 3, 6], [7, 8, 9], [10, 11, 12]],
+            array_map(static fn (TargetMarker $marker): array => [$marker->line, $marker->fromLine, $marker->toLine], TargetMarkers::read($content)),
+        );
+    }
+
+    /**
+     * The tables that find where each statement ends take memory for each
+     * token: where memory_limit leaves room to tokenize the source but not
+     * for them, the source keeps no marker, as one too large to tokenize.
+     */
+    #[Test]
+    public function test_a_source_whose_statement_tables_overrun_the_memory_budget_keeps_no_marker(): void
+    {
+        $content = "<?php\n/** @regex-target php>=8.4 */\n".str_repeat(';', 200_000);
+        $limit = ini_get('memory_limit');
+
+        try {
+            ini_set('memory_limit', '-1');
+            $this->assertCount(1, TargetMarkers::read($content), 'Under no limit, the marker counts.');
+
+            gc_collect_cycles();
+            // 90 bytes a token: room to tokenize the source, whose tokens take
+            // some 18 bytes each from PHP 8.2 and 35 on 8.1, where the token
+            // list growing holds twice that for a moment, but not for the 96
+            // the tables ask on top of the tokens kept.
+            ini_set('memory_limit', (string) (memory_get_usage(true) + 90 * \strlen($content)));
+            $this->assertSame([], TargetMarkers::read($content));
+        } finally {
+            ini_set('memory_limit', (string) $limit);
+        }
+    }
+
+    #[Test]
+    public function test_many_comments_share_a_statement_boundary(): void
+    {
+        $count = 20_000;
+        $content = "<?php\n".str_repeat("/** ordinary comment */\n/** @regex-target php>=8.4 */\n", $count)."f();\n";
+        $start = microtime(true);
+        $markers = TargetMarkers::read($content);
+
+        $this->assertCount($count, $markers);
+        $this->assertSame(2 * $count + 2, $markers[0]->fromLine);
+        $this->assertSame($markers[0]->toLine, $markers[$count - 1]->toLine);
+        $this->assertLessThan(5.0, microtime(true) - $start, 'Adjacent comments must not repeatedly scan the remaining file.');
+    }
+
+    #[Test]
+    public function test_nested_marked_bodies_share_statement_boundaries(): void
+    {
+        $count = 10_000;
+        $content = "<?php\n".str_repeat("/** @regex-target php>=8.4 */\nif (true) {\n", $count)."f();\n".str_repeat("}\n", $count);
+        $start = microtime(true);
+        $markers = TargetMarkers::read($content);
+
+        $this->assertCount($count, $markers);
+        $this->assertSame(3, $markers[0]->fromLine);
+        $this->assertSame(3 * $count + 2, $markers[0]->toLine);
+        $this->assertSame(2 * $count + 3, $markers[$count - 1]->toLine);
+        $this->assertLessThan(5.0, microtime(true) - $start, 'Nested bodies must not be rescanned for each marker.');
+    }
+
     #[Test]
     public function test_a_source_without_a_marker_is_not_tokenized(): void
     {
