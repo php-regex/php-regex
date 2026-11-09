@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `PatternFormatter` keeps the rest of a construct past ten indent levels
+   on one line even when it holds a `#` comment, keeping only the line
+   break that ends the comment: a hundred nested groups each opening on a
+   comment, 1.4 KB under `x`, were laid out as 62 KB, they take 2 KB.
  * `PcreEngine` runs nothing where `ini_set()` refuses a limit the call asks
    for, as where `ini_set()` is disabled, and puts back a limit it already
    changed: the call no longer runs under a higher limit fixed by

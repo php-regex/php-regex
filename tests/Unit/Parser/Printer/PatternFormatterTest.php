@@ -201,8 +201,13 @@ final class PatternFormatterTest extends TestCase
     public function test_line_comments_do_not_bypass_the_indent_cap(): void
     {
         $pattern = '/'.str_repeat("(?:# comment\n", 100).'a'.str_repeat(')', 100).'/x';
+        // PCRE reads the comments as comments: the hundred groups hold "a" alone.
+        $this->assertSame(1, preg_match($pattern, 'a'));
+        $this->assertSame(0, preg_match($pattern, '#'));
         $formatter = new PatternFormatter(1);
         $result = $formatter->format($this->parse($pattern));
+        $this->assertNull($result->refusal);
+        $this->assertTrue($result->changed);
 
         // The retained comments must still end before the following tokens,
         // while padding and output size stay bounded independently of depth.
