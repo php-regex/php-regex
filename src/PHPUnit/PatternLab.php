@@ -51,6 +51,18 @@ final class PatternLab
     private static array $linearFailures = [];
 
     /**
+     * The export in progress: set by the outermost export() call, read by
+     * the calls it makes for an array's keys and values.
+     */
+    private static bool $exporting = false;
+
+    private static int $exportBudget = 0;
+
+    private static string $exportOutput = '';
+
+    private static bool $exportCut = false;
+
+    /**
      * The parser every assertion reads patterns through, created on the
      * first call and held for the process.
      */
@@ -155,86 +167,96 @@ final class PatternLab
     /**
      * A value as the failure messages show it. All children share a work
      * budget and an 8192-byte output ceiling, including the truncation
-     * marker. Depth alone cannot bound expansion of shared or cyclic arrays.
+     * marker. Depth alone cannot bound expansion of shared or cyclic arrays:
+     * the outermost call holds the budget and the output, and an array's
+     * keys and values are exported by calling it again.
      */
     public static function export(mixed $value, int $depth = 0): string
     {
-        $remaining = 256;
-        $output = '';
-        if (!self::exportValue($value, $depth, $remaining, $output)) {
-            $output .= '…';
+        $outermost = !self::$exporting;
+        if ($outermost) {
+            self::$exporting = true;
+            self::$exportBudget = 256;
+            self::$exportOutput = '';
+            self::$exportCut = false;
         }
 
-        return $output;
+        try {
+            if (self::$exportCut) {
+                // Past the ceiling: nothing more is spelled.
+            } elseif (self::$exportBudget <= 0) {
+                self::$exportCut = true;
+            } else {
+                self::$exportBudget--;
+                if (!\is_array($value)) {
+                    self::appendExport(null === $value || \is_scalar($value) ? self::exportScalar($value) : get_debug_type($value));
+                } elseif ($depth >= 8) {
+                    self::appendExport('[…]');
+                } else {
+                    self::appendExport('[');
+                    $list = array_is_list($value);
+                    $first = true;
+                    foreach ($value as $key => $part) {
+                        if (!$first) {
+                            self::appendExport(', ');
+                        }
+                        $first = false;
+                        if (!$list) {
+                            self::export($key, $depth + 1);
+                            self::appendExport(' => ');
+                        }
+                        self::export($part, $depth + 1);
+                        if (self::$exportCut) {
+                            break;
+                        }
+                    }
+                    self::appendExport(']');
+                }
+            }
+
+            return $outermost ? self::$exportOutput.(self::$exportCut ? '…' : '') : '';
+        } finally {
+            if ($outermost) {
+                self::$exporting = false;
+                self::$exportOutput = '';
+            }
+        }
     }
 
-    private static function exportValue(mixed $value, int $depth, int &$remaining, string &$output): bool
+    private static function exportScalar(bool|int|float|string|null $value): string
     {
-        if ($remaining <= 0) {
-            return false;
-        }
-        $remaining--;
-
-        if (null === $value) {
-            return self::appendExport('null', $output);
-        }
-
-        if (\is_bool($value)) {
-            return self::appendExport($value ? 'true' : 'false', $output);
-        }
-
-        if (\is_int($value) || \is_float($value)) {
-            return self::appendExport((string) $value, $output);
-        }
-
-        if (\is_string($value)) {
-            // Slice before escaping so a large scalar or key cannot create
+        return match (true) {
+            null === $value => 'null',
+            \is_bool($value) => $value ? 'true' : 'false',
+            // Sliced before escaping so a large scalar or key cannot create
             // an unbounded temporary string. This prefix already fills the cap.
-            return self::appendExport("'".str_replace(['\\', "'"], ['\\\\', "\\'"], substr($value, 0, 8192))."'", $output);
-        }
-
-        if (\is_array($value)) {
-            if ($depth >= 8) {
-                return self::appendExport('[…]', $output);
-            }
-
-            if (!self::appendExport('[', $output)) {
-                return false;
-            }
-            $list = array_is_list($value);
-            $first = true;
-            foreach ($value as $key => $part) {
-                if (!$first && !self::appendExport(', ', $output)) {
-                    return false;
-                }
-                $first = false;
-                if (!$list && (!self::exportValue($key, $depth + 1, $remaining, $output)
-                    || !self::appendExport(' => ', $output))) {
-                    return false;
-                }
-                if (!self::exportValue($part, $depth + 1, $remaining, $output)) {
-                    return false;
-                }
-            }
-
-            return self::appendExport(']', $output);
-        }
-
-        return self::appendExport(get_debug_type($value), $output);
+            \is_string($value) => "'".str_replace(['\\', "'"], ['\\\\', "\\'"], substr($value, 0, 8192))."'",
+            default => (string) $value,
+        };
     }
 
-    private static function appendExport(string $part, string &$output): bool
+    private static function appendExport(string $part): void
     {
-        // Reserve three bytes for the UTF-8 ellipsis even on exact fits.
-        $available = 8192 - 3 - \strlen($output);
-        if (\strlen($part) > $available) {
-            $output .= substr($part, 0, $available);
-
-            return false;
+        if (self::$exportCut) {
+            return;
         }
-        $output .= $part;
 
-        return true;
+        // Reserve three bytes for the UTF-8 ellipsis even on exact fits, and
+        // cut between characters.
+        $available = 8192 - 3 - \strlen(self::$exportOutput);
+        if (\strlen($part) > $available) {
+            // Back from a continuation byte (10xxxxxx) to the start of its
+            // character, so the cut keeps whole characters.
+            $end = max(0, $available);
+            while ($end > 0 && 0x80 === (\ord($part[$end]) & 0xC0)) {
+                $end--;
+            }
+            self::$exportOutput .= substr($part, 0, $end);
+            self::$exportCut = true;
+
+            return;
+        }
+        self::$exportOutput .= $part;
     }
 
     /**

@@ -78,6 +78,21 @@ final class PatternLabTest extends TestCase
         $this->assertSame("['leaf']", PatternLab::export(['leaf']));
     }
 
+    /**
+     * The cut falls on a character boundary: "€" takes three bytes, and the
+     * message keeps whole ones before the ellipsis.
+     */
+    #[Test]
+    public function test_export_cuts_a_long_string_between_characters(): void
+    {
+        $export = PatternLab::export(str_repeat('€', 10000));
+
+        $this->assertTrue(mb_check_encoding($export, 'UTF-8'));
+        $this->assertStringStartsWith("'€€€", $export);
+        $this->assertStringEndsWith('€…', $export);
+        $this->assertLessThanOrEqual(8192, \strlen($export));
+    }
+
     #[Test]
     public function test_export_bounds_large_strings_and_keys_before_escaping(): void
     {

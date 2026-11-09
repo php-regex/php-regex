@@ -231,7 +231,6 @@ return [
     'src/PHPUnit/PatternLab.php' => [
         'PHPRegex\PHPUnit\PatternLab::run()' => ['validator-input', 1],
         'PHPRegex\PHPUnit\PatternLab::export()' => ['validator-input', 1],
-        'PHPRegex\PHPUnit\PatternLab::exportValue()' => ['validator-input', 1],
         'PHPRegex\PHPUnit\PatternLab::judge()' => ['validator-input', 1],
     ],
     'src/Symfony/Command/LintCommand.php' => [
