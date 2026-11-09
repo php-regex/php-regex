@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The value of a property read through `$this` looks into each trait of the
+   file once when it checks for a trait the file does not declare: forty traits
+   that each use the two before them no longer take exponential time to lint.
  * The lock file the forked workers of `--jobs` share is created with no
    permission for anyone but its owner (`0600` under the usual umask): another
    user can no longer read or write it.
