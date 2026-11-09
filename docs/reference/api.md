@@ -644,7 +644,10 @@ Notes:
   the two agree, and the pattern is written, where the empty repetition sets no group and comes after every longer
   one (`/(?:(a)|b?)?c/`, `/(a)(\1)*b/`, `/(?:x*?y|z?)*w/`). The rule reads each repetition on its own, so it also refuses
   some patterns where the two would agree only through what follows the repetition (`/(?:a|(?=b)|.)*\z/`), or through
-  a body that only matches empty (`/^(){3,5}/`): a refusal, never a translation that matches otherwise.
+  a body that only matches empty (`/^(){3,5}/`): a refusal, never a translation that matches otherwise. Whether a
+  construct may match empty is read once per construct, and again only past a reference inside the group being read;
+  past 100,000 such readings the transpiler throws `TranspileException` ("Capture emptiness analysis exceeded its work
+  limit.") rather than walk a chain of references that doubles at each group.
 - What a target reads otherwise is written as PCRE reads it: `$` is `(?=\n?$)` in JavaScript, as it also matches before
   a newline that ends the subject, `$` under `/D` and `\z` are `$`, `\Z` is `(?=\n?$)`, and `^` and `$` under `/m` see
   `\n` alone end a line (`(?:^|(?<=\n)(?!$))` and `(?=\n|$)`); in Python `\z` is `\Z` and `\Z` is `(?=\n?\Z)`. The dot,

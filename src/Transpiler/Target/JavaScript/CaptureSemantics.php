@@ -66,9 +66,9 @@ final class CaptureSemantics
     private int $cycles = 0;
 
     /**
-     * @var array<int, bool> completed results unaffected by a recursive reference
+     * @var array<int, bool> whether each node read so far may match empty, keyed by its object id; an answer that met a reference inside a group being read is not kept
      */
-    private array $emptyGroups = [];
+    private array $emptyNodes = [];
 
     /**
      * @var array<int, int> each capturing group's number, keyed by the node's object id
@@ -374,10 +374,28 @@ final class CaptureSemantics
      */
     private function matchesEmpty(NodeInterface $node): bool
     {
+        $id = spl_object_id($node);
+        if (isset($this->emptyNodes[$id])) {
+            return $this->emptyNodes[$id];
+        }
+
         if (++$this->emptinessSteps > self::MAX_EMPTINESS_STEPS) {
             throw new TranspileException('Capture emptiness analysis exceeded its work limit.', $node->getStartPosition());
         }
 
+        $cycles = $this->cycles;
+        $empty = $this->readsEmpty($node);
+        // An answer that met a reference inside a group being read holds
+        // only while that group is read.
+        if ($cycles === $this->cycles) {
+            $this->emptyNodes[$id] = $empty;
+        }
+
+        return $empty;
+    }
+
+    private function readsEmpty(NodeInterface $node): bool
+    {
         return match (true) {
             $node instanceof LiteralNode => '' === $node->value,
             $node instanceof SequenceNode => $this->allMatchEmpty($node->children, -1),
@@ -405,21 +423,10 @@ final class CaptureSemantics
             return true;
         }
 
-        if (isset($this->emptyGroups[$number])) {
-            return $this->emptyGroups[$number];
-        }
-
-        $cycles = $this->cycles;
         $this->reading[$number] = true;
 
         try {
-            $empty = $this->matchesEmpty($group->child);
-            // A cycle's provisional answer depends on the active groups.
-            if ($cycles === $this->cycles) {
-                $this->emptyGroups[$number] = $empty;
-            }
-
-            return $empty;
+            return $this->matchesEmpty($group->child);
         } finally {
             unset($this->reading[$number]);
         }

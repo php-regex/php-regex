@@ -31,14 +31,45 @@ final class CaptureSemanticsWorkTest extends TestCase
     public function test_shared_predecessors_complete(string $target, bool $empty): void
     {
         $body = $empty ? '()' : '(a)';
+        $spelled = $body;
         for ($number = 1; $number < 28; $number++) {
             $reference = '\\g{'.$number.'}';
             $body .= '('.$reference.($empty ? '' : '|').$reference.')';
+            $spelled .= '(\\'.$number.($empty ? '' : '|').'\\'.$number.')';
         }
         $pattern = '/'.$body.'(?:\\g{28})+/';
+        $spelled .= '(?:\\28)+';
         $this->assertSame($empty ? 1 : 0, preg_match($pattern, ''));
 
-        $this->assertNotSame('', (new Transpiler())->transpile($pattern, $target)->pattern);
+        // The targets get the same groups and references, which Node 24
+        // matches on "" exactly as preg_match() does, for both variants.
+        $this->assertSame('html' === $target ? '[\\s\\S]*(?:'.$spelled.')[\\s\\S]*' : $spelled, (new Transpiler())->transpile($pattern, $target)->pattern);
+    }
+
+    /**
+     * Nested repetitions each ask whether what they repeat may match empty:
+     * that is asked once per construct, not once per repetition around it,
+     * so a pattern PCRE compiles is never refused for the work.
+     */
+    #[Test]
+    #[DataProvider('provideTargets')]
+    public function test_nested_repetitions_ask_once_whether_each_construct_matches_empty(string $target): void
+    {
+        $pattern = '/'.str_repeat('(?:'.str_repeat('a?', 10), 150).str_repeat('b)+', 150).'/';
+        // PCRE compiles it: no "b" in the subject, no match.
+        $this->assertSame(0, preg_match($pattern, 'x'));
+
+        $spelled = substr($pattern, 1, -1);
+        $this->assertSame('html' === $target ? '[\\s\\S]*(?:'.$spelled.')[\\s\\S]*' : $spelled, (new Transpiler())->transpile($pattern, $target)->pattern);
+    }
+
+    /**
+     * @return iterable<string, array{target: string}>
+     */
+    public static function provideTargets(): iterable
+    {
+        yield 'javascript' => ['target' => 'javascript'];
+        yield 'html' => ['target' => 'html'];
     }
 
     /**
@@ -75,8 +106,15 @@ final class CaptureSemanticsWorkTest extends TestCase
     public function test_exhausted_work_budget_refuses_analysis(): void
     {
         $ast = RegexParser::create(['cache' => null])->parse('/a/');
+        $limit = (new \ReflectionClass(CaptureSemantics::class))->getConstant('MAX_EMPTINESS_STEPS');
+        $this->assertSame(100_000, $limit);
+
+        // The last step the budget allows is still taken.
         $analysis = new CaptureSemantics();
-        $limit = (new \ReflectionClass($analysis))->getConstant('MAX_EMPTINESS_STEPS');
+        (new \ReflectionProperty($analysis, 'emptinessSteps'))->setValue($analysis, $limit - 1);
+        $this->assertFalse((new \ReflectionMethod($analysis, 'matchesEmpty'))->invoke($analysis, $ast->pattern));
+
+        $analysis = new CaptureSemantics();
         (new \ReflectionProperty($analysis, 'emptinessSteps'))->setValue($analysis, $limit);
 
         $this->expectException(TranspileException::class);
