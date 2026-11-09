@@ -174,7 +174,7 @@ final class CaptureSemantics
 
         if ($node instanceof BackrefNode) {
             $number = $this->referenced($node->ref);
-            if (null !== $number && true !== ($set[$number] ?? false)) {
+            if (null === $number || true !== ($set[$number] ?? false)) {
                 $this->diverge('A backreference to a group that may not have matched cannot be carried into JavaScript: there it matches the empty string, where PCRE fails.', $node);
             }
         }
@@ -448,8 +448,8 @@ final class CaptureSemantics
     }
 
     /**
-     * The number of the group a reference names, or null for a spelling
-     * read elsewhere (a relative reference is refused by the printer).
+     * The number of the group a reference names, or null when unresolved.
+     * Relative references are refused by the printer.
      */
     private function referenced(string $ref): ?int
     {
@@ -457,7 +457,11 @@ final class CaptureSemantics
             return (int) $matches[1];
         }
 
-        if (1 === LibraryPcre::match('/^\\\\k[<{\']([A-Za-z0-9_]+)[>}\']$/', $ref, $matches)) {
+        // The parser has checked the name; resolve every name it accepts.
+        if (1 === LibraryPcre::match('/^\\\\k<([^>]++)>$/', $ref, $matches)
+            || 1 === LibraryPcre::match('/^\\\\k\{([^}]++)\}$/', $ref, $matches)
+            || 1 === LibraryPcre::match("/^\\\\k'([^']++)'$/", $ref, $matches)
+        ) {
             return $this->names[$matches[1]] ?? null;
         }
 
