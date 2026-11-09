@@ -136,7 +136,7 @@ final class PackagesWorkflowTest extends TestCase
     #[Test]
     public function test_the_dependency_script_refuses_a_directory_without_an_install(): void
     {
-        [$code, $output] = self::runScript(self::DEPENDENCY_SCRIPT, 'Parser', sys_get_temp_dir().'/php-regex-no-such-project');
+        [$code, $output] = self::runScriptWithoutInstall(self::DEPENDENCY_SCRIPT);
 
         $this->assertSame(2, $code);
         $this->assertStringContainsString('usage: php tests/Tools/package_dependency_check.php <package> <project-dir>', $output);
@@ -154,7 +154,7 @@ final class PackagesWorkflowTest extends TestCase
     #[Test]
     public function test_the_smoke_script_refuses_a_directory_without_an_install(): void
     {
-        [$code, $output] = self::runSmokeScript('Parser', sys_get_temp_dir().'/php-regex-no-such-project');
+        [$code, $output] = self::runScriptWithoutInstall(self::SMOKE_SCRIPT);
 
         $this->assertSame(2, $code);
         $this->assertStringContainsString('usage: php tests/Tools/package_smoke_check.php <package> <project-dir>', $output);
@@ -167,6 +167,22 @@ final class PackagesWorkflowTest extends TestCase
     {
         foreach (self::packages() as $package) {
             yield $package => ['package' => $package];
+        }
+    }
+
+    /**
+     * @return array{int, string}
+     */
+    private static function runScriptWithoutInstall(string $script): array
+    {
+        $directory = sys_get_temp_dir().'/php-regex-package-test-'.bin2hex(random_bytes(16));
+        self::assertTrue(mkdir($directory, 0o700));
+
+        try {
+            // Other users cannot populate the missing project with an autoloader.
+            return self::runScript($script, 'Parser', $directory.'/missing-project');
+        } finally {
+            rmdir($directory);
         }
     }
 
