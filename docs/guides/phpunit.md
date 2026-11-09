@@ -19,6 +19,7 @@ The assertions run on PHP 8.1 or later and PHPUnit 9.6 to 13 (10 on PHP 8.1,
 
 ```php
 use PHPRegex\PHPUnit\RegexAssertions;
+use PHPUnit\Framework\TestCase;
 
 final class SlugTest extends TestCase
 {
@@ -31,6 +32,17 @@ final class SlugTest extends TestCase
     }
 }
 ```
+
+Run the tests as usual; `--filter` runs this class alone:
+
+```bash
+vendor/bin/phpunit --filter SlugTest
+```
+
+A passing run looks like any other green PHPUnit run: the assertions print
+nothing of their own, and each call counts as one assertion, so PHPUnit
+reports the test above as one test with two assertions. The assertions speak
+only when they fail, with the messages shown in the sections below.
 
 The methods are static, so the trait also works in a bare `Assert` subclass
 — arrange-only helpers included. The four constraints behind the
@@ -48,7 +60,7 @@ name. An empty expectation asks only whether the pattern matched.
 
 | expectation | asks |
 |-------------|------|
-| `true` | the group participated, any value |
+| `true` | the group matched and captured something (any value, the empty string included) |
 | `false` | the group did not participate |
 | `'value'` | exactly that captured string |
 | `['value', byteOffset]` | that string, at that byte offset |
