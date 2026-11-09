@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * For JavaScript and `html-pattern`, whether a construct may match empty is
+   read once per construct: a chain of references to groups that each refer
+   to the one before twice is transpiled in milliseconds instead of seconds,
+   and past 100,000 readings the transpiler throws `TranspileException`.
  * A named reference whose group may not have matched is refused for
    JavaScript and `html-pattern` under every spelling of its name, a
    Unicode one (`\k<é>`) included: PCRE fails it where JavaScript matches
