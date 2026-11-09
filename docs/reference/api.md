@@ -68,6 +68,8 @@ Lexes a regex into its tokens, as the parser reads them for the instance's targe
 
 How many characters one token covers is not part of the contract: `tokenize()` reads a literal character as one token today, and a later release may read a run of literal characters as one token. Rely on the positions, not on a count of tokens.
 
+Like `parse()`, `tokenize()` holds the whole regex, delimiters and modifiers included, to the `max_pattern_length` option, and throws a `ResourceLimitException` past it: under a limit of 10, `/abcdefgh/` is lexed and `/abcdefgh/i` is refused.
+
 ```php
 use PHPRegex\Toolkit\Regex;
 

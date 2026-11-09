@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `RegexParser::tokenize()`, and `Regex::tokenize()` through it, hold the
+   regex to `max_pattern_length` as `parse()` does, and throw a
+   `ResourceLimitException` past it: they lexed a pattern of any length.
  * `PcreEngine` runs nothing where `ini_set()` refuses a limit the call asks
    for, as where `ini_set()` is disabled, and puts back a limit it already
    changed: the call no longer runs under a higher limit fixed by
