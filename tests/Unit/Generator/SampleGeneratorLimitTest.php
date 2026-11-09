@@ -88,6 +88,47 @@ final class SampleGeneratorLimitTest extends TestCase
         (new SampleGenerator())->generate($pattern);
     }
 
+    /**
+     * The draw "b" stands at the start, where "(?<!^)" fails: only text put
+     * before it gives a match, as PCRE reads "ab" (not "ba" nor "aba").
+     */
+    public function test_a_draw_is_padded_before_when_only_text_before_it_matches(): void
+    {
+        $this->assertSame([0, 1, 0, 0], [preg_match('/(?<!^)b\z/', 'b'), preg_match('/(?<!^)b\z/', 'ab'), preg_match('/(?<!^)b\z/', 'ba'), preg_match('/(?<!^)b\z/', 'aba')]);
+
+        $this->assertSame('ab', (new SampleGenerator())->generate('/(?<!^)b\z/'));
+    }
+
+    /**
+     * The visitor fits a scanned group to the scan's body itself, so its
+     * seeded draws are the same text on every PCRE2, the ones before 10.45
+     * that cannot read "(*scs:" included.
+     *
+     * @param list<string> $samples
+     */
+    #[DataProvider('provideScannedGroups')]
+    public function test_a_scanned_group_is_fitted_by_the_visitor(string $pattern, array $samples): void
+    {
+        $ast = RegexParser::create(['cache' => null])->parse($pattern);
+        $generator = new SampleGenerator();
+        $drawn = [];
+        foreach (array_keys($samples) as $seed) {
+            $generator->setSeed($seed);
+            $drawn[] = $ast->accept($generator);
+        }
+
+        $this->assertSame($samples, $drawn);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, samples: list<string>}>
+     */
+    public static function provideScannedGroups(): iterable
+    {
+        yield 'a literal body' => ['pattern' => '/^([a-z])([a-z]++)(#+)(*scs:(2)(ab.))$/', 'samples' => ['pabczd###', 'jabat##', 'jabcme##']];
+        yield 'a lookahead body' => ['pattern' => '/^()(\w++)=(*scs:(2)(?=abc))(\w++)$/', 'samples' => ['abc_=a_', 'abc_a=_', 'abc_=a5']];
+    }
+
     private static function doublingChain(int $steps): string
     {
         $pattern = '(a)';
