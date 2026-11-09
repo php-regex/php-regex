@@ -143,10 +143,11 @@ position and caret snippet; `preg_match()` answering `false` — invalid
 UTF-8 under `/u`, a backtrack limit — fails with `preg_last_error_msg()`,
 never as "no match".
 
-A failure message quotes the pattern, the subject and the captured values
-with a ceiling: at most 256 values, an array counted with its items, nested
-eight deep, and 8,192 bytes in all. What passes it ends with `…`, cut
-between two characters, so a huge or cyclic subject cannot flood the report.
+A failure message quotes the pattern, the subject and the captured values,
+each under its own ceiling: at most 256 values, an array counted with its
+items, nested eight deep, and 8,192 bytes. What passes it ends with `…`, cut
+between two characters, so a huge or cyclic subject cannot flood the report;
+a message quoting several values can hold that much for each.
 
 ## Compilation and linearity
 
