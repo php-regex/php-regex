@@ -560,7 +560,13 @@ determinization and the minimization, and the threads the match solver steps.
 The determinization counts each transition it writes, one per range of the
 alphabet for every state: a Unicode class such as `\pL` splits the alphabet
 into hundreds of ranges, so a pattern with a few hundred states reaches the
-budget, and the memory its table would take stays bounded.
+budget, and the memory its table would take stays bounded. Before it steps a
+thread, the match solver also counts the ranges of the classes it splits its
+alphabet with, and each class it tests every range against: a literal of a
+thousand distinct characters under `u` reaches the default budget there, in
+milliseconds, and its `phase` is `match exploration`. Its automaton stops at
+`maxNfaStates`, counted at every state it adds, one per character of a
+literal included.
 
 ```php
 use PHPRegex\Automata\LanguageSolver;

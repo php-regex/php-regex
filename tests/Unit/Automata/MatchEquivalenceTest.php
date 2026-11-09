@@ -170,8 +170,10 @@ final class MatchEquivalenceTest extends TestCase
 
     #[Test]
     #[DataProvider('provideStateBudgetPatterns')]
-    public function test_every_state_allocation_obeys_the_budget(string $pattern, int $states): void
+    public function test_every_state_allocation_obeys_the_budget(string $pattern, string $subject, int $states): void
     {
+        // PCRE compiles the pattern and matches the subject.
+        $this->assertSame(1, preg_match($pattern, $subject));
         $solver = new LanguageSolver();
         $this->assertTrue($solver->matchEquivalent($pattern, $pattern, new SolverOptions(maxNfaStates: $states))->isEquivalent);
 
@@ -181,14 +183,14 @@ final class MatchEquivalenceTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, states: int}>
+     * @return iterable<string, array{pattern: string, subject: string, states: int}>
      */
     public static function provideStateBudgetPatterns(): iterable
     {
-        yield 'literal' => ['pattern' => '/abcdef/', 'states' => 7];
-        yield 'split' => ['pattern' => '/a|b/', 'states' => 4];
-        yield 'capture tags' => ['pattern' => '/(a)/', 'states' => 4];
-        yield 'anchor' => ['pattern' => '/^a/', 'states' => 3];
+        yield 'literal' => ['pattern' => '/abcdef/', 'subject' => 'abcdef', 'states' => 7];
+        yield 'split' => ['pattern' => '/a|b/', 'subject' => 'b', 'states' => 4];
+        yield 'capture tags' => ['pattern' => '/(a)/', 'subject' => 'a', 'states' => 4];
+        yield 'anchor' => ['pattern' => '/^a/', 'subject' => 'ab', 'states' => 3];
     }
 
     #[Test]
