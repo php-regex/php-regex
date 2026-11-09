@@ -145,7 +145,10 @@ final class RailroadLayoutTest extends TestCase
 
         $layout = (new \ReflectionMethod(RailroadLayoutVisitor::class, $method))->invoke($visitor, [$diagram, $diagram]);
 
-        $this->assertSame(['terminal start', 'terminal end', 'terminal start', 'terminal end'], array_column($layout['markers'], 'class'));
+        $this->assertIsArray($layout);
+        $markers = $layout['markers'] ?? null;
+        $this->assertIsArray($markers);
+        $this->assertSame(['terminal start', 'terminal end', 'terminal start', 'terminal end'], array_column($markers, 'class'));
     }
 
     /**
