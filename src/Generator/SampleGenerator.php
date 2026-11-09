@@ -81,12 +81,11 @@ final class SampleGenerator extends AbstractNodeVisitor
     private const MAX_SAMPLE_LENGTH = 1048576;
 
     /**
-     * Repeated visits and calls, including those that emit no bytes, across
-     * all attempts to generate one sample.
+     * How many repeats may add nothing to one sample, as a reference to a
+     * group that captured nothing: as many as the bytes it may hold. The
+     * repeats that add text are bounded by its length.
      */
-    private const MAX_GENERATION_WORK = 100000;
-
-    private int $remainingWork = self::MAX_GENERATION_WORK;
+    private const MAX_EMPTY_REPEATS = 1048576;
 
     /**
      * How many times, for one sample, lookaheads nothing fits are drawn again.
@@ -151,6 +150,11 @@ final class SampleGenerator extends AbstractNodeVisitor
     private int $sequenceDepth = 0;
 
     private int $sequenceWork = 0;
+
+    /**
+     * The repeats that added nothing, over every draw of one sample.
+     */
+    private int $emptyRepeats = 0;
 
     /**
      * Whether a "(*ACCEPT)" ended what is being generated, up to the call or
@@ -292,7 +296,8 @@ final class SampleGenerator extends AbstractNodeVisitor
      * @throws LexerException            when the pattern does not tokenize
      * @throws SampleGenerationException when the pattern parses but is invalid, as a call to a group that does not
      *                                   exist, holds a property the running engine cannot read as the target does,
-     *                                   generation exceeds its work limit, or no sample the running engine matches was found
+     *                                   more repeats add nothing than a sample may hold, or no sample the running
+     *                                   engine matches was found
      */
     public function generate(string $regex, ?RegexParser $parser = null): string
     {
@@ -312,7 +317,7 @@ final class SampleGenerator extends AbstractNodeVisitor
         }
 
         $this->target = $target;
-        $this->remainingWork = self::MAX_GENERATION_WORK;
+        $this->forgetEmptyRepeats();
 
         try {
             return $this->checkedSample($regex, $checked, $ast);
@@ -324,10 +329,10 @@ final class SampleGenerator extends AbstractNodeVisitor
     #[\Override]
     public function visitRegex(RegexNode $node): string
     {
-        // A direct AST visit starts a request. During generate(), the budget
-        // belongs to the whole request, including checkedSample() retries.
+        // The draws of one generate() share the count of repeats that add
+        // nothing; a tree visited on its own counts from none.
         if (null === $this->target) {
-            $this->remainingWork = self::MAX_GENERATION_WORK;
+            $this->forgetEmptyRepeats();
         }
 
         // Reset state for this run
@@ -450,9 +455,13 @@ final class SampleGenerator extends AbstractNodeVisitor
         $ahead = $this->textAhead;
         $each = $this->minLength($node->node);
         for ($i = 0; $i < $repeats; $i++) {
-            $this->consumeWork();
             $this->textAhead = $ahead + ($repeats - 1 - $i) * $each;
-            $sample = $this->concatenate($sample, $node->node->accept($this));
+            $piece = $node->node->accept($this);
+            if ('' === $piece && ++$this->emptyRepeats > self::MAX_EMPTY_REPEATS) {
+                throw new SampleGenerationException(\sprintf('No sample was built: more than %d repeats added nothing to it.', self::MAX_EMPTY_REPEATS));
+            }
+
+            $sample = $this->concatenate($sample, $piece);
             $this->textAhead = $ahead;
             if ($this->accepted) {
                 break;
@@ -731,8 +740,6 @@ final class SampleGenerator extends AbstractNodeVisitor
     #[\Override]
     public function visitSubroutine(SubroutineNode $node): string
     {
-        $this->consumeWork();
-
         if (null === $this->rootPattern || $this->rootPattern instanceof SubroutineNode) {
             throw new SampleGenerationException('Sample generation for subroutines is not supported.');
         }
@@ -1694,13 +1701,9 @@ final class SampleGenerator extends AbstractNodeVisitor
         return $this->namedGroupMap[$ref] ?? null;
     }
 
-    private function consumeWork(): void
+    private function forgetEmptyRepeats(): void
     {
-        if ($this->remainingWork <= 0) {
-            throw new SampleGenerationException(\sprintf('No sample was built: generation work limit of %d exceeded.', self::MAX_GENERATION_WORK));
-        }
-
-        $this->remainingWork--;
+        $this->emptyRepeats = 0;
     }
 
     private function resetRandomizer(?int $seed = null): void

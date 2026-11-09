@@ -79,6 +79,12 @@ A lookahead draws what follows it again, so lookaheads in a row nest: at most 12
 limit was met. A plain repetition copies nothing and is not charged: `/^(?:a.)+$/` repeated 37,329
 times builds its 74,658-byte sample.
 
+A repeat that adds text is bounded by the length of the sample; one that adds none, as a reference
+to a group that captured nothing, is counted apart, 1,048,576 of them over the draws of one sample.
+`/()(?:\1{65535}){100}/`, which PCRE compiles, throws `SampleGenerationException` ("No sample was
+built: more than 1048576 repeats added nothing to it.") where it went through 6,553,500 repeats of
+nothing; `/a{65535}b{65535}/` builds its 131,070 bytes as before.
+
 Visiting the tree draws from the tree alone, unchecked; a sample, made reproducible with a seed:
 
 ```php
