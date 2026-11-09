@@ -13,6 +13,9 @@ CHANGELOG
    one), and two thousand calls to a group of long values no longer
    build every call's values before the first product past the bound.
    `CaptureShapeAnalyzer::ANALYSIS_VERSION` is `'20'`.
+ * `RegexParser::tokenize()`, and `Regex::tokenize()` through it, hold the
+   regex to `max_pattern_length` as `parse()` does, and throw a
+   `ResourceLimitException` past it: they lexed a pattern of any length.
  * The mark `PatternPrinter` stands in for a bracket until the text is known
    keeps a fixed length, at most nineteen bytes on a 64-bit build: a comment
    holding twenty thousand of its bytes no longer lengthens it to as many, and
