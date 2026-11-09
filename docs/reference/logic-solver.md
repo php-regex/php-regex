@@ -580,7 +580,7 @@ try {
 
 When the budget is exceeded, a `ComplexityException` is thrown with a diagnostic payload:
 
-- `phase`: `determinize`, `minimize` or `match exploration`
+- `phase`: `determinize`, `minimize`, `lookaround bodies` or `match exploration`
 - `states`: number of DFA states seen so far
 - `transitions`: NFA/DFA transition count at the time of failure
 - `alphabet`: effective alphabet size
@@ -592,6 +592,17 @@ configurations) carries a `phase` and the `limit` too. A construct the
 automata do not read (a backreference, a lookaround the solver refuses)
 carries no `limit`: the diagnostic tells "too costly to answer" from "outside
 what the solver reads".
+
+The bodies of a pattern's lookarounds are compiled to automata of their own,
+and they share one allowance between them rather than one each: a single
+budget of `maxTransitionsProcessed` counts, for all of them together, every
+body built, its NFA states, the work of its determinization and minimization,
+and the transitions its DFA keeps; the NFA and DFA states of all bodies count
+against `maxNfaStates` and `maxDfaStates` together. A budget that answers
+`/(?=a{10})/` and `/(?=b{10})/` one at a time can refuse
+`/(?=a{10})(?=b{10})/`, and the diagnostic then names the `lookaround bodies`
+phase. A lookaround repeated by a quantifier, `(?:(?=a{99})){100}`, is one
+body compiled once, not a hundred.
 
 Use this to surface safe failure messages in CI or tooling.
 

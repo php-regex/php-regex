@@ -82,10 +82,39 @@ final class LookaroundSolverTest extends TestCase
     #[Test]
     public function test_expanded_marks_reuse_the_assertion(): void
     {
-        $dfa = (new LanguageSolver())->compile('/(?:(?=a{99})){100}a{99}/');
+        $pattern = '/(?:(?=a{99})){100}a{99}/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 99)));
+        $this->assertSame(0, preg_match($pattern, str_repeat('a', 98)));
+
+        $dfa = (new LanguageSolver())->compile($pattern);
 
         $this->assertTrue(self::accepts($dfa, str_repeat('a', 99)));
         $this->assertFalse(self::accepts($dfa, str_repeat('a', 98)));
+    }
+
+    /**
+     * The first body of each pattern fills the allowance exactly, so the
+     * second one is refused before it is built.
+     */
+    #[Test]
+    #[DataProvider('provideFilledBodyAllowances')]
+    public function test_a_filled_body_allowance_names_its_phase_and_limit(SolverOptions $options, int $limit): void
+    {
+        try {
+            (new LanguageSolver())->compile('/(?=a{10})(?=b{10})/', $options);
+            $this->fail('The second lookaround body was compiled.');
+        } catch (ComplexityException $e) {
+            $this->assertSame(['phase' => 'lookaround bodies', 'limit' => $limit], $e->getDiagnostic());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{options: SolverOptions, limit: int}>
+     */
+    public static function provideFilledBodyAllowances(): iterable
+    {
+        yield 'NFA states' => ['options' => new SolverOptions(maxNfaStates: 20, maxTransitionsProcessed: null), 'limit' => 20];
+        yield 'DFA states' => ['options' => new SolverOptions(maxDfaStates: 12, maxTransitionsProcessed: null), 'limit' => 12];
     }
 
     #[Test]
