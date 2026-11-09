@@ -132,7 +132,8 @@ final class FilesystemCache implements RemovableCacheInterface
             return false;
         }
 
-        return !\function_exists('posix_geteuid') || @fileowner($this->directory) === posix_geteuid();
+        // Existing data is trusted only when its owner can be verified.
+        return \function_exists('posix_geteuid') && @fileowner($this->directory) === posix_geteuid();
     }
 
     private function createDirectory(string $directory): void
