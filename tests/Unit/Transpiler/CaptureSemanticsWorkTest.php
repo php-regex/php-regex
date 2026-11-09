@@ -152,9 +152,76 @@ final class CaptureSemanticsWorkTest extends TestCase
         $this->assertTrue((new \ReflectionMethod($analysis, 'matchesEmpty'))->invoke($analysis, $reference));
     }
 
+    /**
+     * A ring of groups, each reading the next twice and the last reading
+     * the first, doubles the readings at each group: past the work limit
+     * the transpiler says so instead of walking them, and short of it the
+     * reference to a group that may not have matched is refused as before.
+     */
+    #[Test]
+    #[DataProvider('provideReferenceRings')]
+    public function test_a_reference_ring_past_the_work_limit_is_refused(int $groups, string $target, string $message): void
+    {
+        $body = '';
+        for ($number = 1; $number <= $groups; $number++) {
+            $next = $number < $groups ? $number + 1 : 1;
+            $body .= '(\\g{'.$next.'}\\g{'.$next.'})';
+        }
+        $pattern = '/(?:'.$body.')?/';
+        // PCRE compiles it, and the optional group lets "" match.
+        $this->assertSame(1, preg_match($pattern, ''));
+
+        $this->expectException(TranspileException::class);
+        $this->expectExceptionMessageIsOrContains($message);
+        (new Transpiler())->transpile($pattern, $target);
+    }
+
+    /**
+     * @return iterable<string, array{groups: int, target: string, message: string}>
+     */
+    public static function provideReferenceRings(): iterable
+    {
+        foreach (['javascript', 'html'] as $target) {
+            // 55,261 readings.
+            yield $target.' nine groups' => ['groups' => 9, 'target' => $target, 'message' => 'A backreference to a group that may not have matched cannot be carried into JavaScript'];
+            // 122,841 readings.
+            yield $target.' ten groups' => ['groups' => 10, 'target' => $target, 'message' => 'Capture emptiness analysis exceeded its work limit.'];
+        }
+    }
+
+    /**
+     * Through the transpiler, both patterns read a group before it is set,
+     * which is refused whatever the emptiness analysis answers.
+     */
+    #[Test]
+    #[DataProvider('provideCyclePatterns')]
+    public function test_cycle_patterns_are_refused_by_the_transpiler(string $pattern, string $target): void
+    {
+        $this->assertSame(0, preg_match($pattern, ''));
+        $this->assertSame(0, preg_match($pattern, 'a'));
+
+        $this->expectException(TranspileException::class);
+        $this->expectExceptionMessageIsOrContains('A backreference to a group that may not have matched cannot be carried into JavaScript');
+        (new Transpiler())->transpile($pattern, $target);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, target: string}>
+     */
+    public static function provideCyclePatterns(): iterable
+    {
+        foreach (['javascript', 'html'] as $target) {
+            yield $target.' reference before its group' => ['pattern' => '/(\\2a)(\\1)/', 'target' => $target];
+            yield $target.' reference inside its group' => ['pattern' => '/(\\2)(\\1\\2a)/', 'target' => $target];
+        }
+    }
+
     #[Test]
     public function test_exhausted_work_budget_refuses_analysis(): void
     {
+        // The engine: "a" is no match on "", a match on "a".
+        $this->assertSame(0, preg_match('/a/', ''));
+        $this->assertSame(1, preg_match('/a/', 'a'));
         $ast = RegexParser::create(['cache' => null])->parse('/a/');
         $limit = (new \ReflectionClass(CaptureSemantics::class))->getConstant('MAX_EMPTINESS_STEPS');
         $this->assertSame(100_000, $limit);
