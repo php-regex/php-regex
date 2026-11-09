@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -32,9 +33,9 @@ final class SampleGeneratorLookaroundTest extends TestCase
 
     #[Test]
     #[DataProvider('provideExcessiveLookaheads')]
-    public function test_sibling_lookaheads_are_bounded(int $count, string $limit, bool $checked): void
+    public function test_sibling_lookaheads_are_bounded(int $count, int $tail, string $limit, bool $checked): void
     {
-        $pattern = '/'.str_repeat('(?=a)', $count).'a/';
+        $pattern = '/'.str_repeat('(?=a)', $count).str_repeat('a', $tail).'/';
         $generator = new SampleGenerator();
         $this->expectException(SampleGenerationException::class);
         $this->expectExceptionMessageIsOrContains($limit);
@@ -47,15 +48,33 @@ final class SampleGeneratorLookaroundTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{count: int, limit: string, checked: bool}>
+     * Each lookahead draws what follows it again: depth bounds how many are
+     * nested, work how much text they copy, 100 levels of a 2,000-character
+     * suffix here.
+     *
+     * @return iterable<string, array{count: int, tail: int, limit: string, checked: bool}>
      */
     public static function provideExcessiveLookaheads(): iterable
     {
         foreach ([false, true] as $checked) {
             $entry = $checked ? 'generate' : 'visitor';
-            yield 'depth, '.$entry => ['count' => 200, 'limit' => 'sequence depth', 'checked' => $checked];
-            yield 'work, '.$entry => ['count' => 400, 'limit' => 'sequence work', 'checked' => $checked];
+            yield 'depth, '.$entry => ['count' => 200, 'tail' => 1, 'limit' => 'sequence depth', 'checked' => $checked];
+            yield 'work, '.$entry => ['count' => 100, 'tail' => 2000, 'limit' => 'sequence work', 'checked' => $checked];
         }
+    }
+
+    /**
+     * A plain repetition copies no suffix: tens of thousands of repeats of a
+     * two-character sequence build their sample, as PCRE matches it.
+     */
+    #[Test]
+    public function test_a_long_plain_repetition_is_not_charged_as_lookahead_work(): void
+    {
+        $sample = (new SampleGenerator(seed: 42, maxRepetition: 40000))->generate('/^(?:a.)+$/');
+
+        $this->assertSame(74658, \strlen($sample));
+        // The JIT stack gives up on 74,658 bytes; the interpreter matches.
+        $this->assertTrue((new PcreEngine())->match('/^(?:a.)+$/', $sample)->matched);
     }
 
     #[Test]

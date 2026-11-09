@@ -1044,7 +1044,6 @@ final class SampleGenerator extends AbstractNodeVisitor
             throw new SampleGenerationException('No sample was built: sequence depth limit exceeded.');
         }
 
-        $this->reserveSequenceWork(\count($children));
         $this->sequenceDepth++;
         $ahead = $this->textAhead;
         $text = '';
@@ -1052,7 +1051,6 @@ final class SampleGenerator extends AbstractNodeVisitor
 
         try {
             $children = $this->withPlainGroupsOpened($children);
-            $this->reserveSequenceWork(\count($children));
             // What the children after each one add, at the fewest.
             $after = [];
             $rest = 0;
@@ -1070,8 +1068,9 @@ final class SampleGenerator extends AbstractNodeVisitor
     }
 
     /**
-     * Charge entries before copying a suffix or processing a sequence.
-     * Shared by nested sequences and retries for this sample.
+     * Charge the entries a lookahead copies when it draws what follows it
+     * again: a plain sequence or repetition copies none, so it is not
+     * charged. Shared by nested lookaheads and retries for this sample.
      */
     private function reserveSequenceWork(int $entries): void
     {
