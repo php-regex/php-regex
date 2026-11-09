@@ -66,6 +66,11 @@ use PHPRegex\Generator\SampleGenerator;
 echo (new SampleGenerator())->generate('/(?!^)a/'); // "aa"
 ```
 
+A lookahead draws what follows it again, so lookaheads in a row nest: at most 128 deep, and at most
+131,072 sequence entries copied for one sample. Past either, `SampleGenerationException` says which
+limit was met. A plain repetition copies nothing and is not charged: `/^(?:a.)+$/` repeated 37,329
+times builds its 74,658-byte sample.
+
 Visiting the tree draws from the tree alone, unchecked; a sample, made reproducible with a seed:
 
 ```php

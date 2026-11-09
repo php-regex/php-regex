@@ -32,13 +32,13 @@ final class ConsoleWriter
     {
         return \sprintf(
             '<fg=white;options=bold>%s</> : <fg=yellow>%s</>',
-            str_pad($label, $maxLabelLength),
-            $value,
+            self::text(str_pad($label, $maxLabelLength)),
+            self::text($value),
         );
     }
 
     /**
-     * A pattern as written, its console tags escaped; an empty one as a pair
+     * A pattern with layout controls and console tags escaped; an empty one as a pair
      * of quotes.
      */
     public static function pattern(string $pattern): string
@@ -47,7 +47,15 @@ final class ConsoleWriter
             return '<fg=cyan>""</>';
         }
 
-        return '<fg=cyan>'.OutputFormatter::escape($pattern).'</>';
+        return '<fg=cyan>'.OutputFormatter::escape(DisplayEscaper::escape($pattern)).'</>';
+    }
+
+    /**
+     * Plain report text, with layout controls and console markup escaped.
+     */
+    public static function text(string $text): string
+    {
+        return OutputFormatter::escape(DisplayEscaper::escapeText($text));
     }
 
     /**
