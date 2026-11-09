@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -149,10 +150,27 @@ final class LayoutSplicerTest extends TestCase
     #[Test]
     public function test_splice_matches_a_large_list_of_replaced_nodes_in_linear_work(): void
     {
-        $original = $this->parser->parse('/'.str_repeat('[aa][bb]', 8000).'/x');
-        $rewritten = $original->accept(new Rewriter(factorize: false));
-        $this->assertInstanceOf(RegexNode::class, $rewritten);
-        $this->assertSame('/'.str_repeat('[a][b]', 8000).'/x', (new LayoutSplicer($this->parser))->splice($original, $rewritten));
+        // The engine reads both spellings alike where both compile; at 8,000
+        // pairs the classes of the original pass the compiled size PCRE2
+        // allows, and the splice, which works on the text, still writes the
+        // rewrite PCRE2 compiles.
+        foreach ([100 => true, 8000 => false] as $pairs => $originalCompiles) {
+            $before = '/'.str_repeat('[aa][bb]', $pairs).'/x';
+            $after = '/'.str_repeat('[a][b]', $pairs).'/x';
+            if ($originalCompiles) {
+                $this->assertSame(1, preg_match($before, str_repeat('ab', $pairs)));
+                $this->assertSame(0, preg_match($before, str_repeat('ab', $pairs - 1).'ba'));
+            } else {
+                $this->assertStringContainsString('too large', (string) EngineProbe::warning($before));
+            }
+            $this->assertSame(1, preg_match($after, str_repeat('ab', $pairs)));
+            $this->assertSame(0, preg_match($after, str_repeat('ab', $pairs - 1).'ba'));
+
+            $original = $this->parser->parse($before);
+            $rewritten = $original->accept(new Rewriter(factorize: false));
+            $this->assertInstanceOf(RegexNode::class, $rewritten);
+            $this->assertSame($after, (new LayoutSplicer($this->parser))->splice($original, $rewritten));
+        }
 
         // Parsed and rewritten once for each size: only the splice is timed.
         $trees = [];
@@ -165,7 +183,7 @@ final class LayoutSplicerTest extends TestCase
 
         $this->assertLinearTime(function (int $pairs) use ($trees): void {
             (new LayoutSplicer($this->parser))->splice(...$trees[$pairs]);
-        }, 2000, 'Splicing rewritten classes', 8.0);
+        }, 2000, 'Splicing rewritten classes');
     }
 
     #[Test]
