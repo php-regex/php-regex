@@ -203,6 +203,30 @@ final class LookbehindLengthTest extends TestCase
     }
 
     /**
+     * One measure walks 10,000 branches at most, whatever calls they hold;
+     * past them a branch has no bound. A pattern PCRE compiles has at most
+     * 2,001 branches measured for its lookbehinds, so never reaches it.
+     */
+    #[Test]
+    public function test_one_measure_walks_ten_thousand_branches_at_most(): void
+    {
+        $pattern = '/(?<=ab)x/';
+        $this->assertSame(0, preg_match($pattern, 'x'));
+        $this->assertSame(1, preg_match($pattern, 'abx'));
+        [$regex, $lookbehind] = $this->lookbehind($pattern);
+        $measure = new LookbehindLength(GroupIndex::of($regex->pattern), false, true);
+
+        $measured = [];
+        for ($branch = 1; $branch <= 10000; $branch++) {
+            $measured[] = $measure->branch($lookbehind->child);
+        }
+
+        $this->assertSame(array_fill(0, 10000, [[2, 2], false, null]), $measured);
+        $this->assertSame([[0, null], false, null], $measure->branch($lookbehind->child));
+        $this->assertSame(2, $measure->longestBranch());
+    }
+
+    /**
      * @return array{RegexNode, GroupNode}
      */
     private function lookbehind(string $pattern): array

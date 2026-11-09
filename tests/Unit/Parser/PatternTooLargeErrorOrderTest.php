@@ -151,6 +151,8 @@ final class PatternTooLargeErrorOrderTest extends TestCase
         // The lookbehinds are measured before the first pass.
         yield 'reference by name in a lookbehind after the item past the limit, 10.32' => ['pattern' => '/(?:[^a]){8634}|(?<=\\k<n>)/', 'php' => '7.3', 'release' => '10.32', 'error' => ErrorCode::BackrefMissingNamedGroup, 'offset' => 22];
         yield 'reference by name in a lookbehind after the item past the limit, 10.49' => ['pattern' => '/(?:[^a]){8634}|(?<=\\k<n>)/', 'php' => '8.5', 'release' => '10.49', 'error' => ErrorCode::BackrefMissingNamedGroup, 'offset' => 22];
+        yield 'lookbehind of no bound after the item past the limit, 10.49' => ['pattern' => '/(?:[^a]){8634}|(?<=a+)/', 'php' => '8.5', 'release' => '10.49', 'error' => ErrorCode::LookbehindUnbounded, 'offset' => 15];
+        yield 'lookbehind measuring too many branches after the item past the limit, 10.49' => ['pattern' => '/(?:[^a]){8634}|(?<=(?1))(?|x)((?2)(?2))((?3)(?3))((?4)(?4))((?5)(?5))((?6)(?6))((?7)(?7))((?8)(?8))((?9)(?9))((?10)(?10))((?11)(?11))(a)/', 'php' => '8.5', 'release' => '10.49', 'error' => ErrorCode::LookbehindTooComplex, 'offset' => 15];
     }
 
     /**

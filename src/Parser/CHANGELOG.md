@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `validate()` reports an error PCRE meets measuring the lookbehinds before it
+   estimates the compiled size, and one measure walks 10,000 branches at most:
+   calls doubled level after level behind a branch reset are refused as
+   `regex.lookbehind.too_complex` in milliseconds, as PCRE refuses them, instead
+   of being expanded for close to a minute. A pattern PCRE compiles measures 2,001
+   branches at most, so `PatternInfo::maxLookbehind` reads as before.
  * `PcreEngine` runs nothing where `ini_set()` refuses a limit the call asks
    for, as where `ini_set()` is disabled, and puts back a limit it already
    changed: the call no longer runs under a higher limit fixed by

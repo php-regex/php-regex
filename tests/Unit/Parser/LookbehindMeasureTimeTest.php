@@ -361,6 +361,9 @@ final class LookbehindMeasureTimeTest extends TestCase
     public function test_complexity_error_precedes_compiled_size_estimation(): void
     {
         $pattern = str_replace('(a)/', '()(?i:[a-\\x{100}]){1}/u', self::doublingCalls(24));
+        $refused = PcreMessageCodes::warningOf($pattern);
+        $this->assertNotNull($refused, 'Oracle: PCRE refuses the pattern.');
+        $this->assertContains(ErrorCode::LookbehindTooComplex->value, PcreMessageCodes::CODES[PcreMessageCodes::read($refused)['message']] ?? [], 'Oracle: '.$refused);
         $start = microtime(true);
         $result = Regex::create(['cache' => null])->validate($pattern);
         $this->assertSame(ErrorCode::LookbehindTooComplex, $result->errorCode);
