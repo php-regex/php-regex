@@ -97,6 +97,19 @@ final class InvisibleCharacterSourceTest extends TestCase
     }
 
     /**
+     * A raw character left unreported for want of its source drops that
+     * report alone: the other issues of the pattern stay.
+     */
+    #[Test]
+    public function test_a_pattern_without_its_source_keeps_its_other_issues(): void
+    {
+        $service = new AnalysisService(RegexParser::create(['cache' => null]), redosThreshold: 'critical');
+        $issues = $service->lint([new PatternOccurrence("/\ta{1}/", 'routes.yaml', 3, 'route:home:id')]);
+
+        $this->assertSame(['regex.lint.quantifier.useless'], array_map(static fn (LintIssue $issue): ?string => $issue->issueId, $issues));
+    }
+
+    /**
      * @param class-string<ExtractorInterface> $extractor
      *
      * @return list<PatternOccurrence>

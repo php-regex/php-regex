@@ -297,6 +297,22 @@ final class ServerConstantsOfOtherFilesTest extends TestCase
         $this->assertSame([], $this->diagnosedLines($calls));
     }
 
+    /**
+     * The raw character of another file is left to that file; the issue
+     * after it in the pattern is still reported at the call.
+     */
+    #[Test]
+    public function test_an_invisible_character_of_another_file_keeps_the_issues_after_it(): void
+    {
+        $this->write('src/Support/Patterns.php', str_replace("'/(a/'", "'/a\u{200B}b{1}/'", self::PATTERNS));
+        $calls = $this->uri('src/Http/Controller.php');
+
+        $this->initialize();
+        $this->send($this->didOpen($calls, self::CALLS));
+
+        $this->assertSame([7], $this->diagnosedLines($calls));
+    }
+
     #[Test]
     public function test_hovering_the_argument_shows_the_pattern_and_where_it_is_written(): void
     {

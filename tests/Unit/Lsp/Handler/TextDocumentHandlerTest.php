@@ -570,6 +570,35 @@ final class TextDocumentHandlerTest extends TestCase
     }
 
     /**
+     * An escaped tab drops its own report alone: the issue after it in the
+     * pattern is still published.
+     */
+    #[Test]
+    public function test_an_escaped_character_keeps_the_issues_after_it(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+
+        (new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null])))->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///e.php', 'text' => "<?php\npreg_match(\"/\\ta{1}/\", \$s);\n"]],
+        ));
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($payload);
+        $params = $payload['params'] ?? null;
+        $this->assertIsArray($params);
+        $diagnostics = $params['diagnostics'] ?? null;
+        $this->assertIsArray($diagnostics);
+
+        $this->assertSame(['regex.lint.quantifier.useless'], array_map(static fn (mixed $diagnostic): mixed => \is_array($diagnostic) ? ($diagnostic['code'] ?? null) : null, $diagnostics));
+    }
+
+    /**
      * The pushes carry the version of the document they diagnose, as the
      * client numbered it: the editor drops a push that names a version the
      * document no longer has.
