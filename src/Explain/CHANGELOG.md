@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `TextExplainer` and `AsciiTreeRenderer` stop at 8 MiB of output and throw a
+   `ResourceLimitException` with the error code `regex.rendering.output_too_large`,
+   so a short pattern whose nesting multiplies the indentation cannot exhaust memory.
  * `TextExplainer` and `AsciiTreeRenderer` write a comment, a callout string or a
    verb's name in display form: a control character is spelled out, so an explanation
    keeps one line per construct and sends the terminal no escape sequence.
