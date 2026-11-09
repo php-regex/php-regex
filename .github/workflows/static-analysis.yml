@@ -59,9 +59,6 @@ jobs:
     # (phpRegex.phpVersion: runtime). The PHPs between bring no major these
     # two do not, and the root has no dependency for prefer-lowest to lower.
     name: PHPStan (PHP ${{ matrix.php }})
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -85,15 +82,8 @@ jobs:
       - name: Run PHPStan
         run: tools/phpstan/vendor/bin/phpstan analyse
 
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
-
   php-cs-fixer:
     name: PHP-CS-Fixer
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -112,15 +102,8 @@ jobs:
       - name: Run PHP-CS-Fixer
         run: tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --dry-run --diff
 
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
-
   rector:
     name: Rector
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -139,15 +122,8 @@ jobs:
       - name: Run Rector
         run: tools/rector/vendor/bin/rector process --dry-run --ansi
 
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
-
   phplint:
     name: PHPLint
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -169,17 +145,10 @@ jobs:
           PLINT_DIAGNOSTIC: never
         run: tools/phplint/vendor/bin/phplint lint
 
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
-
   deptrac:
     # One layer per future package: the core depends on nothing, the
     # libraries on the core, the applications and bridges on the libraries.
     name: Deptrac
-    permissions:
-      contents: read
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -198,7 +167,3 @@ jobs:
 
       - name: Run Deptrac
         run: tools/deptrac/vendor/bin/deptrac analyse --config-file=deptrac.yaml --no-progress
-
-      - name: Stop the pull request's other runs
-        if: failure() && github.event_name == 'pull_request'
-        uses: ./.github/actions/stop-pull-request-runs
