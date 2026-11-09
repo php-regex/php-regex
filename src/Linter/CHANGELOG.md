@@ -6,6 +6,17 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The lock file the forked workers of `--jobs` share is created with no
+   permission for anyone but its owner (`0600` under the usual umask): another
+   user can no longer read or write it.
+ * An editor link is left out when its address is not valid UTF-8 or holds a
+   control character or a `>`, in the console report as in the Symfony and
+   Laravel `regex:lint` output: an `ide` template could otherwise send the
+   terminal escape sequences of its own through the OSC 8 hyperlink.
+ * Looking for the parameters marked as patterns reads a file once, even one
+   holding thousands of unclosed declarations or attributes: 500 lines of
+   `function f(#[Language('SQL',` took about 20 seconds, they take
+   milliseconds.
  * The character-set overlap of an alternation is no longer reported for two
    branches whose leading literal texts tell them apart,
    `associative-array|array`: the second character already decides which
