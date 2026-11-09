@@ -10,6 +10,9 @@ CHANGELOG
    on one line even when it holds a `#` comment, keeping only the line
    break that ends the comment: a hundred nested groups each opening on a
    comment, 1.4 KB under `x`, were laid out as 62 KB, they take 2 KB.
+ * `RegexParser::tokenize()`, and `Regex::tokenize()` through it, hold the
+   regex to `max_pattern_length` as `parse()` does, and throw a
+   `ResourceLimitException` past it: they lexed a pattern of any length.
  * The mark `PatternPrinter` stands in for a bracket until the text is known
    keeps a fixed length, at most nineteen bytes on a 64-bit build: a comment
    holding twenty thousand of its bytes no longer lengthens it to as many, and
