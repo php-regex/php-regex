@@ -176,6 +176,24 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->assertNull($max);
     }
 
+    /**
+     * The budget is one pattern's: a visitor that ran out of it on one
+     * pattern measures the next one in full.
+     */
+    #[Test]
+    public function test_length_work_budget_starts_again_with_each_pattern(): void
+    {
+        $children = [];
+        for ($i = 0; $i < 100001; $i++) {
+            $children[] = new LiteralNode('a', 0, 1);
+        }
+        $visitor = new LengthRangeCalculator();
+
+        // The sequence is one of the 100,000 nodes measured: 99,999 letters are.
+        $this->assertSame([99999, null], (new RegexNode(new SequenceNode($children, 0, 0), '', '/', 0, 0))->accept($visitor));
+        $this->assertSame([2, 2], (new RegexNode(new SequenceNode([new LiteralNode('a', 0, 1), new LiteralNode('b', 1, 2)], 0, 2), '', '/', 0, 0))->accept($visitor));
+    }
+
     #[Test]
     public function test_endless_subroutine_chain_stops_at_the_call_depth_limit(): void
     {
