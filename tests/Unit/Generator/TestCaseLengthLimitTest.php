@@ -14,9 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Generator;
 
 use PHPRegex\Generator\TestCaseGenerator;
+use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -141,6 +143,51 @@ final class TestCaseLengthLimitTest extends TestCase
         $this->assertSame(['matching' => [], 'non_matching' => [str_repeat('a', self::LIMIT)]], $cases);
     }
 
+    /**
+     * The limit as each visitor applies it, with no engine in between: the
+     * nodes are built by hand, as PCRE counts no further than 65,535. One
+     * byte after 1,048,576 of them is a case too long; one byte after one
+     * fewer is a case of exactly the limit, kept in the order it reads.
+     */
+    #[Test]
+    public function test_a_sequence_joins_what_fits_and_leaves_out_what_does_not(): void
+    {
+        $digit = new CharTypeNode('d', 0, 0);
+        $generator = new TestCaseGenerator();
+        $this->assertSame(['matching' => ['0'], 'non_matching' => ['!']], $digit->accept($generator));
+
+        $atTheLimit = new SequenceNode([self::repeated(self::LIMIT), $digit], 0, 0);
+        $this->assertSame([
+            'matching' => [],
+            'non_matching' => [str_repeat('a', self::LIMIT - 1).'!'],
+        ], $atTheLimit->accept($generator));
+
+        $oneBelow = new SequenceNode([self::repeated(self::LIMIT - 1), $digit], 0, 0);
+        $this->assertSame([
+            'matching' => [str_repeat('a', self::LIMIT - 1).'0'],
+            'non_matching' => [str_repeat('a', self::LIMIT - 2).'!'],
+        ], $oneBelow->accept($generator));
+    }
+
+    #[Test]
+    public function test_a_repeat_keeps_the_counts_that_fit(): void
+    {
+        $generator = new TestCaseGenerator();
+
+        $this->assertSame([
+            'matching' => [str_repeat('a', self::LIMIT)],
+            'non_matching' => [str_repeat('a', self::LIMIT - 1)],
+        ], self::repeated(self::LIMIT)->accept($generator));
+        $this->assertSame([
+            'matching' => [str_repeat('a', self::LIMIT - 1), str_repeat('a', self::LIMIT)],
+            'non_matching' => [str_repeat('a', self::LIMIT - 2)],
+        ], (new QuantifierNode(new LiteralNode('a', 0, 0), '{'.(self::LIMIT - 1).',}', QuantifierType::Greedy, 0, 0))->accept($generator));
+        $this->assertSame([
+            'matching' => [str_repeat('ab', 3), str_repeat('ab', 4)],
+            'non_matching' => [str_repeat('ab', 2), str_repeat('ab', 5)],
+        ], (new QuantifierNode(new LiteralNode('ab', 0, 0), '{3,4}', QuantifierType::Greedy, 0, 0))->accept($generator));
+    }
+
     #[Test]
     public function test_an_empty_unit_repeats_to_itself_at_any_count(): void
     {
@@ -149,6 +196,11 @@ final class TestCaseLengthLimitTest extends TestCase
         $cases = $node->accept(new TestCaseGenerator());
 
         $this->assertSame(['matching' => [''], 'non_matching' => ['', '']], $cases);
+    }
+
+    private static function repeated(int $count): QuantifierNode
+    {
+        return new QuantifierNode(new LiteralNode('a', 0, 0), '{'.$count.'}', QuantifierType::Greedy, 0, 0);
     }
 
     /**

@@ -221,11 +221,13 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     public function visitQuantifier(QuantifierNode $node): array
     {
         $unit = $node->node->accept($this)['matching'][0] ?? '';
-        $range = $this->parseQuantifierRange($node);
+        [$min, $max] = $this->parseQuantifierRange($node);
         // No count past the limit builds a case: one more than the limit
         // stands for all of them, and the sums below stay integers.
-        $min = min($range[0], self::MAX_CASE_LENGTH + 1);
-        $max = null === $range[1] ? null : min($range[1], self::MAX_CASE_LENGTH + 1);
+        $min = min($min, self::MAX_CASE_LENGTH + 1);
+        if (null !== $max) {
+            $max = min($max, self::MAX_CASE_LENGTH + 1);
+        }
 
         $matching = [];
         for ($i = $min; $i <= min($max ?? $min + 2, $min + 2); $i++) {
