@@ -10,6 +10,10 @@ CHANGELOG
    keeps a fixed length, at most nineteen bytes on a 64-bit build: a comment
    holding twenty thousand of its bytes no longer lengthens it to as many, and
    five thousand brackets no longer copy it into 210 MB.
+ * Outside Windows, the AST file cache and the class-set store no longer read
+   write or clear an existing directory whose owner they cannot check, as when
+   `ext-posix` is missing or `posix_geteuid()` is disabled: another user's
+   files were trusted there.
  * `PcreEngine` runs nothing where `ini_set()` refuses a limit the call asks
    for, as where `ini_set()` is disabled, and puts back a limit it already
    changed: the call no longer runs under a higher limit fixed by

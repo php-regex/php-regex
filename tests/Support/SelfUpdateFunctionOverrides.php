@@ -35,6 +35,11 @@ final class SelfUpdateFunctionOverrides
     /**
      * @var array<bool>
      */
+    public static array $mkdirSequence = [];
+
+    /**
+     * @var array<bool>
+     */
     public static array $renameSequence = [];
 
     /**
@@ -67,6 +72,7 @@ final class SelfUpdateFunctionOverrides
         self::$isWritableSequence = [];
         self::$tempnamSequence = [];
         self::$hashFileSequence = [];
+        self::$mkdirSequence = [];
         self::$renameSequence = [];
         self::$copySequence = [];
         self::$forceFopenReadFail = null;
@@ -84,6 +90,11 @@ final class SelfUpdateFunctionOverrides
     public static function queueTempnam(string|false $path): void
     {
         self::$tempnamSequence[] = $path;
+    }
+
+    public static function queueMkdir(bool $value): void
+    {
+        self::$mkdirSequence[] = $value;
     }
 
     public static function queueHashFile(string|false $value): void
@@ -130,6 +141,15 @@ final class SelfUpdateFunctionOverrides
         }
 
         return is_writable($path);
+    }
+
+    public static function mkdir(string $directory, int $permissions): bool
+    {
+        if ([] !== self::$mkdirSequence && !array_shift(self::$mkdirSequence)) {
+            return false;
+        }
+
+        return mkdir($directory, $permissions);
     }
 
     public static function tempnam(string $dir, string $prefix): string|false
@@ -252,6 +272,11 @@ use PHPRegex\Tests\Support\SelfUpdateFunctionOverrides;
 function is_writable(string $filename): bool
 {
     return SelfUpdateFunctionOverrides::isWritable($filename);
+}
+
+function mkdir(string $directory, int $permissions = 0o777): bool
+{
+    return SelfUpdateFunctionOverrides::mkdir($directory, $permissions);
 }
 
 function tempnam(string $directory, string $prefix): string|false
