@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "20e2a74bab4351aaf6a122fe239bba27411526d6"
+                "reference": "71e2ad1a45cfce23d021fe5a38f60514ad9a2f38"
             },
             "require": {
                 "ext-mbstring": "*",
@@ -24,6 +24,8 @@
                 "illuminate/contracts": "<10.37",
                 "illuminate/routing": "<10.37",
                 "illuminate/support": "<10.37",
+                "infection/infection": "<0.29",
+                "infection/mutator": "<0.4",
                 "nikic/php-parser": "<4.18",
                 "phpstan/phpstan": "<2.0",
                 "phpunit/phpunit": "<9.6",
@@ -41,6 +43,7 @@
                 "php-regex/regex-cli": "self.version",
                 "php-regex/regex-explain": "self.version",
                 "php-regex/regex-generator": "self.version",
+                "php-regex/regex-infection": "self.version",
                 "php-regex/regex-language-server": "self.version",
                 "php-regex/regex-laravel": "self.version",
                 "php-regex/regex-linter": "self.version",
@@ -64,6 +67,7 @@
                 "illuminate/contracts": "Required for Laravel integration.",
                 "illuminate/routing": "Required for Laravel route analysis.",
                 "illuminate/support": "Required for Laravel integration.",
+                "infection/infection": "To mutate the regex literals of preg_*() calls in a mutation-testing run (php-regex/regex-infection).",
                 "mcp/sdk": "To serve the MCP server to a coding agent with regex mcp (php-regex/regex-mcp).",
                 "nikic/php-parser": "To extract regex patterns from PHP sources with a real parser instead of the tokenizer.",
                 "phpstan/extension-installer": "To automatically enable the PHPStan rule for regex validation.",
@@ -181,6 +185,7 @@
                 "ast",
                 "automata",
                 "cli",
+                "infection",
                 "laravel",
                 "linter",
                 "parser",
@@ -852,16 +857,16 @@
         },
         {
             "name": "symfony/deprecation-contracts",
-            "version": "v3.7.1",
+            "version": "v3.8.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/deprecation-contracts.git",
-                "reference": "f3202fa1b5097b0af062dc978b32ecf63404e31d"
+                "reference": "feb1edf4e546af3b85c5caebe8359a20db230ca3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/deprecation-contracts/zipball/f3202fa1b5097b0af062dc978b32ecf63404e31d",
-                "reference": "f3202fa1b5097b0af062dc978b32ecf63404e31d",
+                "url": "https://api.github.com/repos/symfony/deprecation-contracts/zipball/feb1edf4e546af3b85c5caebe8359a20db230ca3",
+                "reference": "feb1edf4e546af3b85c5caebe8359a20db230ca3",
                 "shasum": ""
             },
             "require": {
@@ -874,7 +879,7 @@
                     "name": "symfony/contracts"
                 },
                 "branch-alias": {
-                    "dev-main": "3.7-dev"
+                    "dev-main": "3.8-dev"
                 }
             },
             "autoload": {
@@ -899,7 +904,7 @@
             "description": "A generic function and convention to trigger deprecation notices",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/deprecation-contracts/tree/v3.7.1"
+                "source": "https://github.com/symfony/deprecation-contracts/tree/v3.8.1"
             },
             "funding": [
                 {
@@ -919,7 +924,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-06-05T06:23:12+00:00"
+            "time": "2026-09-16T14:15:10+00:00"
         },
         {
             "name": "symfony/dotenv",
@@ -2289,16 +2294,16 @@
         },
         {
             "name": "symfony/runtime",
-            "version": "v8.1.10",
+            "version": "v8.1.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/runtime.git",
-                "reference": "3e6349edd0bb74565b586709cded91dbfec4848c"
+                "reference": "c673bbd5997f0039b27810b5e1f4eb70b172917b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/runtime/zipball/3e6349edd0bb74565b586709cded91dbfec4848c",
-                "reference": "3e6349edd0bb74565b586709cded91dbfec4848c",
+                "url": "https://api.github.com/repos/symfony/runtime/zipball/c673bbd5997f0039b27810b5e1f4eb70b172917b",
+                "reference": "c673bbd5997f0039b27810b5e1f4eb70b172917b",
                 "shasum": ""
             },
             "require": {
@@ -2349,7 +2354,7 @@
                 "runtime"
             ],
             "support": {
-                "source": "https://github.com/symfony/runtime/tree/v8.1.10"
+                "source": "https://github.com/symfony/runtime/tree/v8.1.11"
             },
             "funding": [
                 {
@@ -2369,7 +2374,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-23T17:06:53+00:00"
+            "time": "2026-11-01T19:30:44+00:00"
         },
         {
             "name": "symfony/service-contracts",
@@ -4665,16 +4670,16 @@
         },
         {
             "name": "symfony/browser-kit",
-            "version": "v8.1.10",
+            "version": "v8.1.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/browser-kit.git",
-                "reference": "bea5590ad99da19e537a782ca5557ecc3baae938"
+                "reference": "cc23f4014de03abce0425f9c6ff01c2d1e93ca5c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/browser-kit/zipball/bea5590ad99da19e537a782ca5557ecc3baae938",
-                "reference": "bea5590ad99da19e537a782ca5557ecc3baae938",
+                "url": "https://api.github.com/repos/symfony/browser-kit/zipball/cc23f4014de03abce0425f9c6ff01c2d1e93ca5c",
+                "reference": "cc23f4014de03abce0425f9c6ff01c2d1e93ca5c",
                 "shasum": ""
             },
             "require": {
@@ -4714,7 +4719,7 @@
             "description": "Simulates the behavior of a web browser, allowing you to make requests, click on links and submit forms programmatically",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/browser-kit/tree/v8.1.10"
+                "source": "https://github.com/symfony/browser-kit/tree/v8.1.11"
             },
             "funding": [
                 {
@@ -4734,7 +4739,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-20T19:26:02+00:00"
+            "time": "2026-11-01T07:18:47+00:00"
         },
         {
             "name": "symfony/css-selector",
