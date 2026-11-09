@@ -9,6 +9,10 @@ CHANGELOG
  * `regex self-update` stages the download in a private directory of a random
    name instead of a predictable file in the shared temporary directory, and
    removes it after a failure as after a success.
+ * `parse`, `analyze` and `validate` print a pattern holding a terminal
+   control, a hidden character or an invalid byte spelled out in its own
+   mode, and its caret line escaped with the caret still under the fault: an
+   escape sequence in a pattern no longer reaches the terminal.
  * `regex highlight` spells a control character of the pattern as an escape,
    coloured or not, so a pattern can no longer send the terminal a sequence
    of its own; without colours the pattern is spelled in its own mode.
