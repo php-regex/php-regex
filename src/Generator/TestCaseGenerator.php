@@ -163,37 +163,20 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     #[\Override]
     public function visitSequence(SequenceNode $node): array
     {
-        $matching = [''];
-        $nonMatching = [''];
+        // A case is kept as the pieces its children add and joined once, at
+        // the end: a child after a long start copies none of it again.
+        $matching = ['lengths' => [0], 'steps' => []];
+        $nonMatching = ['lengths' => [0], 'steps' => []];
 
         foreach ($node->children as $child) {
             $childCases = $child->accept($this);
-            $newMatching = [];
-            $newNonMatching = [];
-
-            foreach ($matching as $m) {
-                foreach ($childCases['matching'] as $cm) {
-                    if (\strlen($m) + \strlen($cm) <= self::MAX_CASE_LENGTH) {
-                        $newMatching[] = $m.$cm;
-                    }
-                }
-            }
-
-            foreach ($nonMatching as $nm) {
-                foreach ($childCases['non_matching'] as $cnm) {
-                    if (\strlen($nm) + \strlen($cnm) <= self::MAX_CASE_LENGTH) {
-                        $newNonMatching[] = $nm.$cnm;
-                    }
-                }
-            }
-
-            $matching = \array_slice($newMatching, 0, self::MAX_SAMPLES);
-            $nonMatching = \array_slice($newNonMatching, 0, self::MAX_SAMPLES);
+            self::extend($matching, $childCases['matching']);
+            self::extend($nonMatching, $childCases['non_matching']);
         }
 
         return [
-            'matching' => $matching,
-            'non_matching' => $nonMatching,
+            'matching' => self::joined($matching),
+            'non_matching' => self::joined($nonMatching),
         ];
     }
 
@@ -575,6 +558,55 @@ final class TestCaseGenerator extends AbstractNodeVisitor
             'matching' => [''],
             'non_matching' => [''],
         ];
+    }
+
+    /**
+     * Each case followed by each piece, in order: the first three that fit
+     * the limit. A step holds, for each of them, the case it follows and the
+     * piece it adds.
+     *
+     * @param array{lengths: list<int>, steps: list<list<array{0: int, 1: string}>>} $cases
+     * @param array<string>                                                          $pieces
+     */
+    private static function extend(array &$cases, array $pieces): void
+    {
+        $lengths = [];
+        $step = [];
+        foreach ($cases['lengths'] as $before => $length) {
+            foreach ($pieces as $piece) {
+                if (\count($step) < self::MAX_SAMPLES && $length + \strlen($piece) <= self::MAX_CASE_LENGTH) {
+                    $lengths[] = $length + \strlen($piece);
+                    $step[] = [$before, $piece];
+                }
+            }
+        }
+
+        $cases['lengths'] = $lengths;
+        $cases['steps'][] = $step;
+    }
+
+    /**
+     * Each case as a string: its pieces read back from the last step to the
+     * first, then joined in order.
+     *
+     * @param array{lengths: list<int>, steps: list<list<array{0: int, 1: string}>>} $cases
+     *
+     * @return list<string>
+     */
+    private static function joined(array $cases): array
+    {
+        $joined = [];
+        foreach (array_keys($cases['lengths']) as $case) {
+            $pieces = [];
+            for ($step = \count($cases['steps']) - 1; $step >= 0; $step--) {
+                [$case, $piece] = $cases['steps'][$step][$case];
+                $pieces[] = $piece;
+            }
+
+            $joined[] = implode('', array_reverse($pieces));
+        }
+
+        return $joined;
     }
 
     /**
