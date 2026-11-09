@@ -13,7 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\JavaScript\CaptureSemantics;
@@ -100,6 +104,52 @@ final class CaptureSemanticsWorkTest extends TestCase
         // neither group can match empty when read independently.
         $this->assertFalse($matchesEmpty->invoke($analysis, $groups[1]));
         $this->assertFalse($matchesEmpty->invoke($analysis, $groups[2]));
+    }
+
+    /**
+     * Reading the pattern reads "\1" and "\2" of group 2 while group 2 is
+     * being read, where "\2" answers "may match empty" for that reading
+     * only: asked afterwards, each reference reads its group again, and
+     * neither may match empty, as group 2 needs an "a".
+     */
+    #[Test]
+    public function test_an_answer_met_inside_a_cycle_is_not_kept(): void
+    {
+        $pattern = '/(\\2)(\\1\\2a)/';
+        $this->assertSame(0, preg_match($pattern, ''));
+        $this->assertSame(0, preg_match($pattern, 'a'));
+        $ast = RegexParser::create(['cache' => null])->parse($pattern);
+        $analysis = new CaptureSemantics();
+        (new \ReflectionMethod($analysis, 'number'))->invoke($analysis, $ast->pattern);
+        $groups = (new \ReflectionProperty($analysis, 'groups'))->getValue($analysis);
+        $this->assertIsArray($groups);
+        $this->assertInstanceOf(GroupNode::class, $groups[2]);
+        $this->assertInstanceOf(SequenceNode::class, $groups[2]->child);
+        $matchesEmpty = new \ReflectionMethod($analysis, 'matchesEmpty');
+
+        $this->assertFalse($matchesEmpty->invoke($analysis, $ast->pattern));
+        [$first, $second] = $groups[2]->child->children;
+        $this->assertFalse($matchesEmpty->invoke($analysis, $first));
+        $this->assertFalse($matchesEmpty->invoke($analysis, $second));
+    }
+
+    /**
+     * The parser reads a reference to a group the pattern does not have,
+     * which PCRE refuses: with no group to read, it is taken to match empty.
+     */
+    #[Test]
+    public function test_a_reference_to_a_missing_group_is_taken_to_match_empty(): void
+    {
+        $pattern = '/(a)\\5/';
+        $this->assertStringContainsString('reference to non-existent subpattern', (string) EngineProbe::warning($pattern));
+        $ast = RegexParser::create(['cache' => null])->parse($pattern);
+        $this->assertInstanceOf(SequenceNode::class, $ast->pattern);
+        $reference = $ast->pattern->children[1];
+        $this->assertInstanceOf(BackrefNode::class, $reference);
+        $analysis = new CaptureSemantics();
+        (new \ReflectionMethod($analysis, 'number'))->invoke($analysis, $ast->pattern);
+
+        $this->assertTrue((new \ReflectionMethod($analysis, 'matchesEmpty'))->invoke($analysis, $reference));
     }
 
     #[Test]

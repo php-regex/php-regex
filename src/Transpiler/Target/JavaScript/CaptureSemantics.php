@@ -63,7 +63,10 @@ final class CaptureSemantics
 
     private int $emptinessSteps = 0;
 
-    private int $cycles = 0;
+    /**
+     * @var list<int> the groups whose reading met a reference inside them, once per meeting
+     */
+    private array $cycles = [];
 
     /**
      * @var array<int, bool> whether each node read so far may match empty, keyed by its object id; an answer that met a reference inside a group being read is not kept
@@ -383,11 +386,11 @@ final class CaptureSemantics
             throw new TranspileException('Capture emptiness analysis exceeded its work limit.', $node->getStartPosition());
         }
 
-        $cycles = $this->cycles;
+        $cycles = \count($this->cycles);
         $empty = $this->readsEmpty($node);
         // An answer that met a reference inside a group being read holds
         // only while that group is read.
-        if ($cycles === $this->cycles) {
+        if ($cycles === \count($this->cycles)) {
             $this->emptyNodes[$id] = $empty;
         }
 
@@ -418,7 +421,7 @@ final class CaptureSemantics
         }
 
         if (isset($this->reading[$number])) {
-            $this->cycles++;
+            $this->cycles[] = $number;
 
             return true;
         }
