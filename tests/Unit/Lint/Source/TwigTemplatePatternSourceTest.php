@@ -158,6 +158,20 @@ final class TwigTemplatePatternSourceTest extends TestCase
     }
 
     #[Test]
+    public function test_lines_and_columns_count_the_newlines_comments_hold(): void
+    {
+        // The newline that opens the template is counted too.
+        $template = "\n{{ a matches '/a/' }}{# one\ntwo #}{# @regex-ignore #}{{ b matches '/b/' }}\n\n{# x\n #}{{ c matches '/c/' }}";
+        $occurrences = TwigTemplatePatternSource::read($template, 'page.html.twig');
+
+        $this->assertSame(
+            [['/a/', 2, 14, 14], ['/b/', 3, 39, 67], ['/c/', 6, 17, 98]],
+            array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->pattern, $occurrence->line, $occurrence->column, $occurrence->fileOffset], self::patterns($occurrences)),
+        );
+        $this->assertSame([false, true, false], array_map(static fn (PatternOccurrence $occurrence): bool => $occurrence->isIgnored, self::patterns($occurrences)));
+    }
+
+    #[Test]
     public function test_the_pattern_is_the_one_twig_hands_to_the_engine(): void
     {
         $occurrences = TwigTemplatePatternSource::read("{% if x matches '/\\d+/' %}{% endif %}", 'page.html.twig');

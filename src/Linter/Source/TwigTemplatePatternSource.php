@@ -89,7 +89,6 @@ final class TwigTemplatePatternSource implements PatternSourceInterface
         $i = 0;
         $cursor = 0;
         $line = 1;
-        $lineStart = -1;
         while (false !== ($i = strpos($content, '{', $i)) && $i + 1 < $length) {
             $kind = $content[$i + 1];
             if ('#' === $kind) {
@@ -98,7 +97,9 @@ final class TwigTemplatePatternSource implements PatternSourceInterface
                     break;
                 }
 
-                self::advanceLocation($content, $i, $cursor, $line, $lineStart);
+                // Comments arrive in source order: each newline is counted once.
+                $line += substr_count($content, "\n", $cursor, $i - $cursor);
+                $cursor = $i;
                 array_push($ignores, ...self::markers($content, $i, $end, $line));
                 $i = $end + 2;
 
@@ -305,18 +306,19 @@ final class TwigTemplatePatternSource implements PatternSourceInterface
     }
 
     /**
-     * Offsets arrive in source order. Scan each intervening byte once,
+     * Offsets arrive in source order. Read each intervening byte once,
      * keeping one-based lines and the last newline for byte columns.
      */
     private static function advanceLocation(string $content, int $offset, int &$cursor, int &$line, int &$lineStart): void
     {
-        while ($cursor < $offset) {
-            if ("\n" === $content[$cursor]) {
-                $line++;
-                $lineStart = $cursor;
-            }
-            $cursor++;
+        $skipped = substr($content, $cursor, $offset - $cursor);
+        $newline = strrpos($skipped, "\n");
+        if (false !== $newline) {
+            $line += substr_count($skipped, "\n");
+            $lineStart = $cursor + $newline;
         }
+
+        $cursor = $offset;
     }
 
     private static function startsName(string $char): bool
