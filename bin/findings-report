@@ -411,9 +411,9 @@ function witness(string $pattern, array $analysis): ?array
  * pattern's literal in the token colors of the pattern field when it
  * stands on the line as written.
  *
- * @param array{lines: list<string>, literals: array<int, array<string, array<int, array{start: int, end: int, map: array<int, int>}>>>} $source
- * @param array{php: string, pcre: string, source: string} $target
- * @param array<mixed>|null                                $analysis
+ * @param array{lines: list<string>, literals: array<int, list<array{int, int}>>} $source
+ * @param array{php: string, pcre: string, source: string}                        $target
+ * @param array<mixed>|null                                                       $analysis
  *
  * @return array{permalink: string, snippet: list<array{number: int, focus: bool, runs: list<array{string, string}>}>}
  */
@@ -422,8 +422,7 @@ function snippet(string $repo, string $sha, array $source, string $file, int $li
     $lines = $source['lines'];
     $first = max(1, $line - CONTEXT);
     $last = min(\count($lines), $line + CONTEXT);
-    $matches = $source['literals'][$line][$pattern] ?? [];
-    $literal = $matches[$column] ?? ($matches[array_key_first($matches)] ?? null);
+    $literal = locate($lines[$line - 1] ?? '', $source['literals'][$line] ?? [], $column, $pattern);
     $snippet = [];
     for ($number = $first; $number <= $last; ++$number) {
         $text = rtrim($lines[$number - 1], "\r");
@@ -442,11 +441,12 @@ function snippet(string $repo, string $sha, array $source, string $file, int $li
 }
 
 /**
- * Read and tokenize a source once per report repository. Index literals by
- * line, value and column so findings never rescan the file or the line's
- * other literals. Insertion order retains the first match as a fallback.
+ * Read and tokenize a source once per report repository: its lines, and
+ * where each single-line string literal stands on its line (byte offset,
+ * length). Nothing is decoded here; a finding decodes the literals of its
+ * own line only, so a file full of strings costs no byte map per literal.
  *
- * @return array{lines: list<string>, literals: array<int, array<string, array<int, array{start: int, end: int, map: array<int, int>}>>>}
+ * @return array{lines: list<string>, literals: array<int, list<array{int, int}>>}
  */
 function sourceIndex(string $path): array
 {
@@ -462,21 +462,43 @@ function sourceIndex(string $path): array
     $offset = 0;
     foreach (@token_get_all($source) as $token) {
         $text = \is_array($token) ? $token[1] : $token;
-        if (\is_array($token) && \T_CONSTANT_ENCAPSED_STRING === $token[0] && !str_contains($text, "\n")) {
-            $decoded = decodeLiteral($text);
-            if (null !== $decoded) {
-                $start = $offset - ($starts[$token[2]] ?? \strlen($source));
-                $literals[$token[2]][$decoded['value']][$start + 1] = [
-                    'start' => $start,
-                    'end' => $start + \strlen($text),
-                    'map' => $decoded['map'],
-                ];
-            }
+        if (\is_array($token) && \T_CONSTANT_ENCAPSED_STRING === $token[0] && !str_contains($text, "\n") && isset($starts[$token[2]])) {
+            $literals[$token[2]][] = [$offset - $starts[$token[2]], \strlen($text)];
         }
         $offset += \strlen($text);
     }
 
     return ['lines' => $lines, 'literals' => $literals];
+}
+
+/**
+ * The PHP string literal on the line whose value is the pattern: its byte
+ * span in the line and, byte for byte, which byte of the pattern each byte
+ * of the literal spells. The literal at the column the linter names wins
+ * over another spelling the same pattern on the line (a str_contains()
+ * argument, a second call). Null when the pattern is not written there as
+ * one literal (a constant, a concatenation, a template).
+ *
+ * @param list<array{int, int}> $literals where each literal of the line starts, and its length
+ *
+ * @return array{start: int, end: int, map: array<int, int>}|null
+ */
+function locate(string $text, array $literals, int $column, string $pattern): ?array
+{
+    $found = null;
+    foreach ($literals as [$start, $length]) {
+        $decoded = decodeLiteral(substr($text, $start, $length));
+        if (null === $decoded || $decoded['value'] !== $pattern) {
+            continue;
+        }
+        $literal = ['start' => $start, 'end' => $start + $length, 'map' => $decoded['map']];
+        if ($start + 1 === $column) {
+            return $literal;
+        }
+        $found ??= $literal;
+    }
+
+    return $found;
 }
 
 /**
@@ -493,14 +515,14 @@ function decodeLiteral(string $literal): ?array
     $value = '';
     $map = [];
     $length = \strlen($body);
-    for ($i = 0; $i < $length; ++$i) {
+    for ($i = 0; $i < $length; $i++) {
         $char = $body[$i];
         $next = $body[$i + 1] ?? '';
         if ("'" === $quote) {
             if ('\\' === $char && ('\\' === $next || "'" === $next)) {
                 $map[$i + 1] = $map[$i + 2] = \strlen($value);
                 $value .= $next;
-                ++$i;
+                $i++;
 
                 continue;
             }
@@ -514,7 +536,7 @@ function decodeLiteral(string $literal): ?array
                     'e' => "\e",
                     default => stripcslashes('\\'.$escape[0]),
                 };
-                for ($k = 0; $k <= \strlen($escape[0]); ++$k) {
+                for ($k = 0; $k <= \strlen($escape[0]); $k++) {
                     $map[$i + 1 + $k] = \strlen($value);
                 }
                 $value .= $spelled;
@@ -536,7 +558,7 @@ function decodeLiteral(string $literal): ?array
  * it spells, a ReDoS hotspot marked on top.
  *
  * @param array{start: int, end: int, map: array<int, int>} $literal
- * @param array{php: string, pcre: string, source: string} $target
+ * @param array{php: string, pcre: string, source: string}  $target
  * @param array<mixed>                                      $hotspots
  *
  * @return list<array{string, string}>
@@ -587,7 +609,7 @@ function literalRuns(string $line, array $literal, string $pattern, array $targe
         }
     };
     $push(substr($line, 0, $literal['start']), '');
-    for ($i = $literal['start']; $i < $literal['end']; ++$i) {
+    for ($i = $literal['start']; $i < $literal['end']; $i++) {
         $inner = $i - $literal['start'];
         $push($line[$i], isset($literal['map'][$inner]) ? $classOf($literal['map'][$inner]) : 'pg-snippet-pattern pg-snippet-quote');
     }
