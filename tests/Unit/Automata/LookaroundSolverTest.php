@@ -175,6 +175,26 @@ final class LookaroundSolverTest extends TestCase
         (new LanguageSolver())->compile('/(?=a{10})(?=b{10})/', new SolverOptions(maxDfaStates: 15, maxTransitionsProcessed: null));
     }
 
+    /**
+     * The body's NFA is charged one unit per state as it is built: a budget
+     * of one stops /(?=a{99})/ at the first state, not after all 198.
+     */
+    #[Test]
+    public function test_body_states_are_charged_while_they_are_built(): void
+    {
+        $pattern = '/(?=a{99})/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 99)));
+
+        try {
+            (new LanguageSolver())->compile($pattern, new SolverOptions(maxTransitionsProcessed: 1));
+            $this->fail('The body fit a budget of one.');
+        } catch (ComplexityException $e) {
+            $diagnostic = $e->getDiagnostic() ?? [];
+            $this->assertSame('lookaround bodies', $diagnostic['phase'] ?? null);
+            $this->assertSame(2, $diagnostic['consumed'] ?? null);
+        }
+    }
+
     #[Test]
     public function test_zero_work_budget_applies_to_bodies(): void
     {

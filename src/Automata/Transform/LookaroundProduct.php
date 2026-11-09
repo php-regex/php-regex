@@ -122,9 +122,8 @@ final class LookaroundProduct
                 maxDfaStates: $this->options->maxDfaStates - $dfaStates,
                 maxTransitionsProcessed: $this->options->maxTransitionsProcessed,
             );
-            $body = (new HirToNfaTransformer($this->pattern, $this->unicode))->lookaroundBody($look, $bodyOptions);
+            $body = (new HirToNfaTransformer($this->pattern, $this->unicode))->lookaroundBody($look, $bodyOptions, $budget);
             $nfaStates += \count($body->states);
-            $budget->consume(\count($body->states));
             $dfa = (new DfaBuilder())->determinize($body, $bodyOptions, $budget);
             $dfaStates += \count($dfa->states);
             // Charge stored transitions before retaining the DFA or building

@@ -19,6 +19,7 @@ use PHPRegex\Automata\Model\Nfa;
 use PHPRegex\Automata\Model\NfaFragment;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Support\WorkBudget;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
@@ -133,13 +134,14 @@ final class HirToNfaTransformer
     /**
      * The automaton of a lookaround's body: what it matches from where it
      * stands, or, for a lookbehind, any subject ending with what it matches.
+     * Each state built is charged to the budget given.
      *
      * @throws ComplexityException
      */
-    public function lookaroundBody(LookHir $look, SolverOptions $options): Nfa
+    public function lookaroundBody(LookHir $look, SolverOptions $options, ?WorkBudget $budget = null): Nfa
     {
         $alphabetMax = $this->unicode ? self::UNICODE_MAX_CODEPOINT : self::MAX_CODEPOINT;
-        $this->builder = new NfaBuilder($options->maxNfaStates, self::MIN_CODEPOINT, $alphabetMax);
+        $this->builder = new NfaBuilder($options->maxNfaStates, self::MIN_CODEPOINT, $alphabetMax, $budget);
         $this->edges = [];
         $fragment = $this->buildNode($look->body);
         $behind = LookKind::Behind === $look->kind || LookKind::NegativeBehind === $look->kind;
