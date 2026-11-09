@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `LengthRangeCalculator` measures each node once per pattern, so a body
+   that several calls share is read once: a pattern whose groups each call
+   the previous one twice no longer takes time that doubles with each
+   group. A call followed past 1024 nested calls, or a pattern past 100,000
+   measured nodes, reads as unbounded from zero there.
  * `PcreEngine` runs nothing where `ini_set()` refuses a limit the call asks
    for, as where `ini_set()` is disabled, and puts back a limit it already
    changed: the call no longer runs under a higher limit fixed by

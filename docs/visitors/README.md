@@ -420,6 +420,11 @@ A node type that does not occur in the pattern has no key in `counts`.
 no upper bound. Lengths count bytes, or UTF-8 characters when the pattern is in UTF mode. `(*ACCEPT)` ends the match
 early and lowers the minimum; `\K` only moves the start of the reported match and does not change the range.
 
+A call such as `(?&name)` reads as unbounded from zero unless the calculator is given a `calledBody` closure that
+returns the body the call runs; each body is then measured once, however many calls share it. A call followed past
+1024 nested calls, or a pattern past 100,000 measured nodes, reads as unbounded from zero there: the range stays
+true, only less precise.
+
 ```php
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;

@@ -61,7 +61,11 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
 {
     private const MAX_WORK = 100_000;
 
-    private const MAX_DEPTH = 256;
+    /**
+     * Calls followed inside calls: a pattern PCRE compiles nests a few
+     * thousand at most, past which the stack of a debugging PHP gives out.
+     */
+    private const MAX_CALL_DEPTH = 1024;
 
     private const LOOKAROUNDS = [
         GroupType::LookaheadPositive,
@@ -78,12 +82,13 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
 
     private int $work = 0;
 
-    private int $depth = 0;
+    private int $callDepth = 0;
 
     /**
      * A call reads as unbounded from zero, unless $calledBody gives the body
      * it runs: the call then reads as long as that body. It must give none
-     * for a recursion, whose length is unknown.
+     * for a recursion, whose length is unknown. A call followed past 1024
+     * nested calls, or past 100,000 measured nodes, reads as unbounded.
      *
      * @param bool                                            $unicode    whether lengths count UTF-8 characters rather than bytes; a whole pattern sets it from its flags
      * @param (\Closure(SubroutineNode): ?NodeInterface)|null $calledBody the body a call runs, or null where it is unknown
@@ -287,9 +292,22 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     #[\Override]
     public function visitSubroutine(SubroutineNode $node): array
     {
-        $body = null === $this->calledBody ? null : ($this->calledBody)($node);
+        if ($this->callDepth >= self::MAX_CALL_DEPTH) {
+            return [0, null];
+        }
 
-        return null === $body ? [0, null] : $this->length($body);
+        $body = null === $this->calledBody ? null : ($this->calledBody)($node);
+        if (null === $body) {
+            return [0, null];
+        }
+
+        $this->callDepth++;
+
+        try {
+            return $this->length($body);
+        } finally {
+            $this->callDepth--;
+        }
     }
 
     #[\Override]
@@ -353,9 +371,9 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     }
 
     /**
-     * Reuse results within subroutine traversal as well as between calls.
-     * Limits also bound distinct bodies and long call chains; an unfinished
-     * subtree can consume any length, so its bounds must stay unknown.
+     * Each node is measured once per pattern, so a body that several calls
+     * share is read once. The work budget stops a resolver that gives ever
+     * new bodies; a node it leaves unread may consume any length.
      *
      * @return LengthRange
      */
@@ -364,18 +382,13 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
         if (isset($this->lengths[$node])) {
             return $this->lengths[$node];
         }
-        if ($this->work >= self::MAX_WORK || $this->depth >= self::MAX_DEPTH) {
+        if ($this->work >= self::MAX_WORK) {
             return [0, null];
         }
 
         $this->work++;
-        $this->depth++;
 
-        try {
-            return $this->lengths[$node] = $node->accept($this);
-        } finally {
-            $this->depth--;
-        }
+        return $this->lengths[$node] = $node->accept($this);
     }
 
     /**

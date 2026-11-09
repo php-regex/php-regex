@@ -172,21 +172,63 @@ final class LengthRangeCalculatorTest extends TestCase
         }
         [$min, $max] = (new SequenceNode($children, 0, 0))->accept(new LengthRangeCalculator());
 
-        $this->assertLessThanOrEqual(100001, $min);
+        $this->assertSame(100000, $min);
         $this->assertNull($max);
     }
 
     #[Test]
-    public function test_deep_subroutine_chain_returns_conservative_bounds(): void
+    public function test_endless_subroutine_chain_stops_at_the_call_depth_limit(): void
     {
         $calls = 0;
         $visitor = new LengthRangeCalculator(calledBody: function (SubroutineNode $call) use (&$calls): NodeInterface {
-            $this->assertLessThanOrEqual(257, ++$calls);
+            $this->assertLessThanOrEqual(1024, ++$calls);
 
             return new SubroutineNode('next', '', 0, 0);
         });
 
         $this->assertSame([0, null], (new SubroutineNode('start', '', 0, 0))->accept($visitor));
+        $this->assertSame(1024, $calls);
+    }
+
+    #[Test]
+    public function test_capture_shape_measures_many_calls_in_a_row(): void
+    {
+        $pattern = '/(?(DEFINE)(?<a>a))'.str_repeat('(?&a)', 1100).'/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 1100), $match));
+        $this->assertSame(1100, \strlen($match[0]));
+
+        $whole = Regex::create(['cache' => null])->captureShape($pattern)->whole;
+
+        $this->assertSame(1100, $whole->minLength);
+        $this->assertSame(1100, $whole->maxLength);
+    }
+
+    #[Test]
+    public function test_deeply_nested_groups_keep_their_exact_length(): void
+    {
+        // Two hundred nested groups compile: PCRE2 refuses a nesting past 250.
+        $pattern = '/'.str_repeat('(?:b', 200).'a'.str_repeat(')', 200).'/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('b', 200).'a', $match));
+        $this->assertSame(201, \strlen($match[0]));
+
+        $this->assertSame([201, 201], Regex::create()->parse($pattern)->accept(new LengthRangeCalculator()));
+    }
+
+    #[Test]
+    public function test_capture_shape_measures_a_long_subroutine_chain(): void
+    {
+        $definitions = '(?<g0>a)';
+        for ($link = 1; $link <= 200; $link++) {
+            $definitions .= '(?<g'.$link.'>b(?&g'.($link - 1).'))';
+        }
+        $pattern = '/(?(DEFINE)'.$definitions.')(?&g200)/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('b', 200).'a', $match));
+        $this->assertSame(201, \strlen($match[0]));
+
+        $whole = Regex::create(['cache' => null])->captureShape($pattern)->whole;
+
+        $this->assertSame(201, $whole->minLength);
+        $this->assertSame(201, $whole->maxLength);
     }
 
     #[Test]
