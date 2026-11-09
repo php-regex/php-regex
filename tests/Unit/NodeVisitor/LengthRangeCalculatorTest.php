@@ -170,6 +170,9 @@ final class LengthRangeCalculatorTest extends TestCase
         for ($i = 0; $i < 100001; $i++) {
             $children[] = new LiteralNode('a', 0, 1);
         }
+        // Accepted directly, the sequence is not one of the nodes measured:
+        // all 100,000 measured are letters. Through a RegexNode the sequence
+        // counts too, and 99,999 letters are.
         [$min, $max] = (new SequenceNode($children, 0, 0))->accept(new LengthRangeCalculator());
 
         $this->assertSame(100000, $min);
