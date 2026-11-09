@@ -202,7 +202,30 @@ final class ClassSetStoreTest extends TestCase
         $store->save('u|:\\p{Greek}', ['set' => CharSet::single(0x42)]);
 
         $this->assertCount(2, self::files($this->root));
-        $this->assertEquals(['set' => CharSet::single(0x41)], $store->load('u|:\\p{Han}'));
+        $this->assertSame([[0x41, 0x41]], $store->load('u|:\\p{Han}')['set']->ranges ?? null);
+    }
+
+    /**
+     * Another process makes the directory between the check and mkdir():
+     * mkdir() fails, the directory is there and is the owner's, and the
+     * answer is written into it.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    #[RequiresPhpExtension('posix')]
+    public function test_a_directory_another_process_made_first_is_written_into(): void
+    {
+        $store = new ClassSetStore($this->root);
+        CacheOwnerFunctionOverrides::$madeFirst = true;
+
+        try {
+            $store->save('u|:\\p{Han}', ['set' => CharSet::single(0x41)]);
+        } finally {
+            CacheOwnerFunctionOverrides::reset();
+        }
+
+        $this->assertCount(1, self::files($this->root));
+        $this->assertSame([[0x41, 0x41]], $store->load('u|:\\p{Han}')['set']->ranges ?? null);
     }
 
     /**

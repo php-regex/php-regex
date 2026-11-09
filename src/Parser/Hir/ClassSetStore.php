@@ -107,8 +107,9 @@ final class ClassSetStore
             return;
         }
 
-        // A directory that cannot be made keeps nothing, this time.
-        if (!is_dir($this->directory) && !@mkdir($this->directory, 0o700, true)) {
+        // A directory that cannot be made keeps nothing; one another process
+        // made first is judged below like any other.
+        if (!is_dir($this->directory) && !@mkdir($this->directory, 0o700, true) && !is_dir($this->directory)) {
             return;
         }
 
