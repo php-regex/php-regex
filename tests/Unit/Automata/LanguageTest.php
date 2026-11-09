@@ -109,7 +109,10 @@ final class LanguageTest extends TestCase
     #[Test]
     public function test_a_long_gap_between_results_exhausts_a_finite_budget(): void
     {
-        $language = (new LanguageSolver())->language('/^(?:b|a{400})$/');
+        $pattern = '/^(?:b|a{400})$/';
+        $this->assertSame(1, preg_match($pattern, 'b'));
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 400)));
+        $language = (new LanguageSolver())->language($pattern);
         $strings = $language->strings();
         $this->assertSame('b', $strings->current());
 
@@ -127,11 +130,15 @@ final class LanguageTest extends TestCase
     public function test_the_work_budget_starts_again_at_each_string(): void
     {
         $pattern = '/^(?:b|a{80}|a{110})$/';
-        $this->assertSame(1, preg_match($pattern, str_repeat('a', 110)));
+        foreach (['b', str_repeat('a', 80), str_repeat('a', 110)] as $subject) {
+            $this->assertSame(1, preg_match($pattern, $subject));
+        }
         $this->assertSame(0, preg_match($pattern, str_repeat('a', 95)));
 
         $this->assertSame(['b', str_repeat('a', 80), str_repeat('a', 110)], iterator_to_array((new LanguageSolver())->language($pattern)->strings(), false));
 
+        $this->assertSame(1, preg_match('/^(?:b|a{110})$/', 'b'));
+        $this->assertSame(1, preg_match('/^(?:b|a{110})$/', str_repeat('a', 110)));
         $strings = (new LanguageSolver())->language('/^(?:b|a{110})$/')->strings();
         $this->assertSame('b', $strings->current());
         $this->expectException(ComplexityException::class);
@@ -141,6 +148,8 @@ final class LanguageTest extends TestCase
     #[Test]
     public function test_dead_states_do_not_obscure_a_long_single_result(): void
     {
+        $this->assertSame(1, preg_match('/^a{200}$/', str_repeat('a', 200)));
+        $this->assertSame(0, preg_match('/^a{200}$/', str_repeat('a', 199)));
         $language = (new LanguageSolver())->language('/^a{200}$/');
 
         $this->assertSame([str_repeat('a', 200)], iterator_to_array($language->strings(), false));
