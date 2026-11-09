@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.target.empty` and `regex.target.invalid` quote the marker text in
+   display form: a control character or a line break is spelled out, and a
+   `<` that would open a console tag is `\x3C`.
  * `checks.redos.threshold` is `high` when left unset, as everywhere else,
    where it was `critical`.
  * The extension registers its pattern rules only: `phpRegex.noNewMixed`,
