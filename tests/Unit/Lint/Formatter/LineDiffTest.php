@@ -135,6 +135,38 @@ final class LineDiffTest extends TestCase
     }
 
     /**
+     * The longest run is looked for while the matrix of the changed middle,
+     * its boundary row and column included, holds 65,536 cells: 256 by 256.
+     * One cell more on either side, and the middle is deleted then inserted
+     * whole, the line both sides share among them.
+     */
+    #[Test]
+    #[DataProvider('provideMatrixBudgets')]
+    public function test_the_longest_run_is_looked_for_within_the_matrix_budget(int $oldLines, int $newLines, int $kept): void
+    {
+        $old = ['old', 'shared', ...array_fill(0, $oldLines - 2, 'old')];
+        $new = ['new', 'shared', ...array_fill(0, $newLines - 2, 'new')];
+        $ops = LineDiff::lines($old, $new);
+
+        $this->assertCount($kept, array_filter($ops, static fn (array $op): bool => 'equal' === $op['type']));
+        $this->assertCount($oldLines + $newLines - $kept, $ops);
+        $this->assertSame($old, array_values(array_column(array_filter($ops, static fn (array $op): bool => 'insert' !== $op['type']), 'line')));
+        $this->assertSame($new, array_values(array_column(array_filter($ops, static fn (array $op): bool => 'delete' !== $op['type']), 'line')));
+    }
+
+    /**
+     * @return iterable<string, array{oldLines: int, newLines: int, kept: int}>
+     */
+    public static function provideMatrixBudgets(): iterable
+    {
+        yield 'at the budget' => ['oldLines' => 255, 'newLines' => 255, 'kept' => 1];
+        yield 'one old line over' => ['oldLines' => 256, 'newLines' => 255, 'kept' => 0];
+        yield 'one new line over' => ['oldLines' => 255, 'newLines' => 256, 'kept' => 0];
+        yield 'a short old side against a long new one' => ['oldLines' => 2, 'newLines' => 21_844, 'kept' => 1];
+        yield 'one new line past the short old side' => ['oldLines' => 2, 'newLines' => 21_845, 'kept' => 0];
+    }
+
+    /**
      * @param array{int, int} $expected the length of the shared prefix, then of the shared suffix
      */
     #[Test]

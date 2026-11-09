@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The diff of a suggested rewrite skips the lines both sides share at the
+   start and at the end before it looks for the longest run of kept lines:
+   a 10,000-line pattern with one line changed took 15 seconds and 2.6 GB,
+   it takes milliseconds. When the changed lines left in the middle would
+   still take more than 65,536 comparisons (some 256 lines against 256),
+   they are shown deleted then inserted whole, without the lines they share
+   kept between the changes.
  * The lock file the forked workers of `--jobs` share is created with no
    permission for anyone but its owner (`0600` under the usual umask): another
    user can no longer read or write it.

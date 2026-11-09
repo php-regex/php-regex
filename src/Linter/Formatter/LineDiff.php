@@ -102,7 +102,7 @@ final class LineDiff
         $newCount = \count($new);
 
         // Include the boundary row and column, and divide to avoid overflow.
-        if (0 === $oldCount || 0 === $newCount || $oldCount + 1 > intdiv(self::MAX_MATRIX_CELLS, $newCount + 1)) {
+        if ($oldCount + 1 > intdiv(self::MAX_MATRIX_CELLS, $newCount + 1)) {
             $ops = [];
             foreach ($old as $line) {
                 $ops[] = ['type' => 'delete', 'line' => $line];
