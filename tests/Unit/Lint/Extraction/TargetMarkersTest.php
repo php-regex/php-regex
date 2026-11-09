@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PHPRegex\Linter\Config\TargetConstraint;
-use PHPRegex\Linter\Extraction\MemoryBudget;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -256,8 +255,11 @@ final class TargetMarkersTest extends TestCase
             $this->assertCount(1, TargetMarkers::read($content), 'Under no limit, the marker counts.');
 
             gc_collect_cycles();
-            // Room to tokenize the source, with a megabyte to spare.
-            ini_set('memory_limit', (string) (memory_get_usage(true) + \strlen($content) * MemoryBudget::TOKENIZE_FACTOR + 1_048_576));
+            // 90 bytes a token: room to tokenize the source, whose tokens take
+            // some 18 bytes each from PHP 8.2 and 35 on 8.1, where the token
+            // list growing holds twice that for a moment, but not for the 96
+            // the tables ask on top of the tokens kept.
+            ini_set('memory_limit', (string) (memory_get_usage(true) + 90 * \strlen($content)));
             $this->assertSame([], TargetMarkers::read($content));
         } finally {
             ini_set('memory_limit', (string) $limit);
