@@ -42,15 +42,36 @@ final class QuantifierAfterCommentTest extends TestCase
             $text = (string) $index;
             $start = \strlen($body);
             $body .= '(?#'.$text.')';
-            $comments[] = new CommentNode($text, $start, \strlen($body));
+            $comments[] = [$text, $start, \strlen($body)];
         }
+        $pattern = '/'.$body.'+/';
 
-        $sequence = Regex::create(['cache' => null])->parse('/'.$body.'+/')->pattern;
+        // PHP reads the + after the comments as repeating the a.
+        $this->assertSame(1, preg_match($pattern, 'aaa', $matches));
+        $this->assertSame(['aaa'], $matches);
+
+        $sequence = Regex::create(['cache' => null])->parse($pattern)->pattern;
 
         $this->assertInstanceOf(SequenceNode::class, $sequence);
         $this->assertCount(4097, $sequence->children);
-        $this->assertEquals(new QuantifierNode(new LiteralNode('a', 0, 1), '+', QuantifierType::Greedy, 0, \strlen($body) + 1), $sequence->children[0]);
-        $this->assertEquals($comments, \array_slice($sequence->children, 1));
+
+        $quantifier = $sequence->children[0];
+        $this->assertInstanceOf(QuantifierNode::class, $quantifier);
+        $this->assertSame('+', $quantifier->quantifier);
+        $this->assertSame(QuantifierType::Greedy, $quantifier->type);
+        $this->assertSame(0, $quantifier->startPosition);
+        $this->assertSame(\strlen($body) + 1, $quantifier->endPosition);
+        $this->assertInstanceOf(LiteralNode::class, $quantifier->node);
+        $this->assertSame('a', $quantifier->node->value);
+        $this->assertSame(0, $quantifier->node->startPosition);
+        $this->assertSame(1, $quantifier->node->endPosition);
+
+        $read = [];
+        foreach (\array_slice($sequence->children, 1) as $comment) {
+            $this->assertInstanceOf(CommentNode::class, $comment);
+            $read[] = [$comment->comment, $comment->startPosition, $comment->endPosition];
+        }
+        $this->assertSame($comments, $read);
     }
 
     #[Test]
