@@ -461,6 +461,11 @@ enum ErrorCode: string
     case RangeReversed = 'regex.range.reversed';
 
     /**
+     * The expanded explanation exceeds the rendering output budget.
+     */
+    case RenderingOutputTooLarge = 'regex.rendering.output_too_large';
+
+    /**
      * A scan substring assertion has no "(" to open its group list.
      */
     case ScanSubstringMissingList = 'regex.scan_substring.missing_list';
