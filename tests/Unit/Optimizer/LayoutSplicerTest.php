@@ -150,21 +150,17 @@ final class LayoutSplicerTest extends TestCase
     #[Test]
     public function test_splice_matches_a_large_list_of_replaced_nodes_in_linear_work(): void
     {
-        // The engine reads both spellings alike where both compile; at 8,000
-        // pairs the classes of the original pass the compiled size PCRE2
-        // allows, and the splice, which works on the text, still writes the
-        // rewrite PCRE2 compiles.
-        foreach ([100 => true, 8000 => false] as $pairs => $originalCompiles) {
+        // The engine reads both spellings alike where both compile. At 8,000
+        // pairs the classes of the original may pass the compiled size the
+        // PCRE2 build allows (its link size decides); the splice, which works
+        // on the text, writes the rewrite all the same.
+        foreach ([100, 8000] as $pairs) {
             $before = '/'.str_repeat('[aa][bb]', $pairs).'/x';
             $after = '/'.str_repeat('[a][b]', $pairs).'/x';
-            if ($originalCompiles) {
-                $this->assertSame(1, preg_match($before, str_repeat('ab', $pairs)));
-                $this->assertSame(0, preg_match($before, str_repeat('ab', $pairs - 1).'ba'));
-            } else {
-                $this->assertStringContainsString('too large', (string) EngineProbe::warning($before));
+            foreach (null === EngineProbe::warning($before) ? [$before, $after] : [$after] as $spelling) {
+                $this->assertSame(1, preg_match($spelling, str_repeat('ab', $pairs)));
+                $this->assertSame(0, preg_match($spelling, str_repeat('ab', $pairs - 1).'ba'));
             }
-            $this->assertSame(1, preg_match($after, str_repeat('ab', $pairs)));
-            $this->assertSame(0, preg_match($after, str_repeat('ab', $pairs - 1).'ba'));
 
             $original = $this->parser->parse($before);
             $rewritten = $original->accept(new Rewriter(factorize: false));
@@ -186,6 +182,34 @@ final class LayoutSplicerTest extends TestCase
         }, 2000, 'Splicing rewritten classes');
     }
 
+    /**
+     * A rewrite may keep one node of the original in two places: each place
+     * is matched to the first occurrence in the original not yet passed, and
+     * the second "a" and "b", with nothing left to match them, are written
+     * anew.
+     */
+    #[Test]
+    public function test_splice_writes_a_node_the_rewrite_keeps_twice(): void
+    {
+        $this->assertSame(1, preg_match('/a  b  c/x', 'abc'));
+        $this->assertSame(1, preg_match('/a  b  ab/x', 'abab'));
+        $this->assertSame(0, preg_match('/a  b  ab/x', 'abc'));
+
+        $original = $this->parser->parse('/a  b  c/x');
+        $sequence = $original->pattern;
+        $this->assertInstanceOf(SequenceNode::class, $sequence);
+        [$a, $b] = $sequence->children;
+        $rewritten = new RegexNode(new SequenceNode([$a, $b, $a, $b], $sequence->startPosition, $sequence->endPosition), $original->flags, $original->delimiter, $original->startPosition, $original->endPosition);
+
+        $this->assertSame('/a  b  ab/x', (new LayoutSplicer($this->parser))->splice($original, $rewritten));
+    }
+
+    /**
+     * The lookup on its own, under the precondition diffList() sets: the
+     * positions of each node of the original, by identity, from the last to
+     * the first, and a cursor that only moves forward. One node held twice
+     * in the original answers its first occurrence not yet passed.
+     */
     #[Test]
     public function test_matching_keeps_the_first_remaining_occurrence_of_a_shared_node(): void
     {
