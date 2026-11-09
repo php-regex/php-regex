@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\RegexParser;
@@ -30,13 +32,31 @@ use PHPUnit\Framework\TestCase;
  */
 final class RewriteVerificationTest extends TestCase
 {
+    /**
+     * The lookbehind sends the check to the in-place proof, whose aligned
+     * pass pairs some twelve hundred parts on each side: past the 65,536
+     * cells the alignment may fill, the rewrite stays unproven and the
+     * pattern is kept. Under the limits the optimizer gives the solver,
+     * 1,000 DFA states and 200,000 units of work, the alignment is what
+     * gives up: with no cap on it, the same rewrite is proven.
+     */
     #[Test]
     public function test_a_large_alignment_leaves_the_rewrite_unproven(): void
     {
-        $original = '/(?<!x)'.str_repeat('\\d', 4).str_repeat('b?c?', 3000).str_repeat('[e-g]', 4).'/';
+        $original = '/(?<!x)'.str_repeat('\\d', 4).str_repeat('b?c?', 600).str_repeat('[e-g]', 4).'/';
         $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
+        $rewrite = $optimizer->optimize($original, new OptimizerOptions(verifyWithAutomata: false))->optimized;
+        $this->assertNotSame($original, $rewrite);
+        $this->assertSame(1, preg_match($original, '1234bceeee'));
+        $this->assertSame(1, preg_match($rewrite, '1234bceeee'));
 
-        $this->assertNotSame($original, $optimizer->optimize($original, new OptimizerOptions(verifyWithAutomata: false))->optimized);
+        try {
+            (new LanguageSolver())->rewritesAlikeInPlace($original, $rewrite, new SolverOptions(maxDfaStates: 1_000, maxTransitionsProcessed: 200_000));
+            $this->fail('The alignment fit its budget.');
+        } catch (ComplexityException $e) {
+            $this->assertSame('Rewrite alignment cell budget exceeded (65536).', $e->getMessage());
+        }
+
         $this->assertSame($original, $optimizer->optimize($original)->optimized);
     }
 
