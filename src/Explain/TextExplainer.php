@@ -42,9 +42,6 @@ final class TextExplainer extends AbstractNodeVisitor
         $budget = new RenderingBudget();
         $lines = [];
         foreach ($this->renderLines($explanation) as [$text, $level]) {
-            if ('' === $text && 0 === $level) {
-                continue;
-            }
             $budget->reserve(2 * $level + \strlen($text) + ([] === $lines ? 0 : 1));
             $lines[] = str_repeat('  ', $level).$text;
         }
@@ -88,12 +85,11 @@ final class TextExplainer extends AbstractNodeVisitor
             case ExplanationKind::Repetition:
                 if (ExplanationKind::Leaf === $children[0]->kind) {
                     yield [$this->inline($children[0]).', '.$explanation->text, $level];
-
-                    break;
+                } else {
+                    yield ['Quantified group, '.$explanation->text, $level];
+                    yield from $this->renderLines($children[0], $level + 1);
+                    yield [$explanation->end, $level];
                 }
-                yield ['Quantified group, '.$explanation->text, $level];
-                yield from $this->renderLines($children[0], $level + 1);
-                yield [$explanation->end, $level];
 
                 break;
             case ExplanationKind::Conditional:

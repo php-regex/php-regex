@@ -19,6 +19,7 @@ use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\RegexParser;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -55,5 +56,59 @@ final class ExplanationBudgetTest extends TestCase
             }
             $this->assertSame($expected, $small->accept($visitor));
         }
+    }
+
+    /**
+     * The budget counts every byte written, indentation and line breaks
+     * included: an output of exactly 8 MiB is written whole, one byte more
+     * is refused. A hundred groups deep, each dot takes one line, and the
+     * comment (text) or the callout string (tree) the last line spells out
+     * makes up the bytes left.
+     */
+    #[Test]
+    #[DataProvider('provideRenderers')]
+    public function test_the_budget_counts_every_byte_of_the_output(string $renderer): void
+    {
+        $limit = 8 * 1024 * 1024;
+        $base = \strlen(self::render($renderer, 2, 0));
+        $perDot = \strlen(self::render($renderer, 3, 0)) - $base;
+        $this->assertSame($base + 1, \strlen(self::render($renderer, 2, 1)), 'Each letter of the last line is one byte.');
+
+        $dots = 2 + intdiv($limit - $base, $perDot);
+        $width = $limit - $base - ($dots - 2) * $perDot;
+        $pattern = self::pattern($renderer, $dots, $width);
+        $this->assertSame(0, preg_match($pattern, ''), 'Oracle: PCRE compiles the pattern.');
+
+        $this->assertSame($limit, \strlen(self::render($renderer, $dots, $width)));
+
+        try {
+            self::render($renderer, $dots, $width + 1);
+            $this->fail('Expected a rendering resource limit one byte past the budget.');
+        } catch (ResourceLimitException $exception) {
+            $this->assertSame(ErrorCode::RenderingOutputTooLarge, $exception->errorCode);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{renderer: string}>
+     */
+    public static function provideRenderers(): iterable
+    {
+        yield 'text explanation' => ['renderer' => 'text'];
+        yield 'ASCII tree' => ['renderer' => 'tree'];
+    }
+
+    private static function pattern(string $renderer, int $dots, int $width): string
+    {
+        $last = 'text' === $renderer ? '(?#'.str_repeat('x', $width).')' : '(?C"'.str_repeat('x', $width).'")';
+
+        return '/'.str_repeat('(?:', 100).str_repeat('.', $dots).$last.str_repeat(')', 100).'/';
+    }
+
+    private static function render(string $renderer, int $dots, int $width): string
+    {
+        $ast = RegexParser::create(['cache' => null])->parse(self::pattern($renderer, $dots, $width));
+
+        return $ast->accept('text' === $renderer ? new TextExplainer() : new AsciiTreeRenderer());
     }
 }
