@@ -225,7 +225,7 @@ final class PatternTooLargeErrorOrderTest extends TestCase
         $engine = PcreMessageCodes::read($refused);
         $release = implode('.', \array_slice(explode('.', explode(' ', \PCRE_VERSION)[0]), 0, 2));
         if ('10.40' === $release && isset(self::PHP_BUNDLED_10_40_DIVERGENCES[$pattern])) {
-            $this->assertSame(self::PHP_BUNDLED_10_40_DIVERGENCES[$pattern], $engine['message'].' at offset '.$engine['offset'], 'Oracle: '.$refused);
+            $this->assertSame(self::PHP_BUNDLED_10_40_DIVERGENCES[$pattern], \sprintf('%s at offset %d', $engine['message'], $engine['offset'] ?? -1), 'Oracle: '.$refused);
 
             return;
         }
