@@ -436,14 +436,10 @@ final class SampleGenerator extends AbstractNodeVisitor
         $each = $this->minLength($node->node);
         for ($i = 0; $i < $repeats; $i++) {
             $this->textAhead = $ahead + ($repeats - 1 - $i) * $each;
-            $sample .= $node->node->accept($this);
+            $sample = $this->concatenate($sample, $node->node->accept($this));
             $this->textAhead = $ahead;
             if ($this->accepted) {
                 break;
-            }
-            // References and calls can double a sample at each repeat.
-            if (\strlen($sample) > self::MAX_SAMPLE_LENGTH) {
-                throw new SampleGenerationException(\sprintf('No sample was built: it would pass %d bytes.', self::MAX_SAMPLE_LENGTH));
             }
         }
 
@@ -453,7 +449,7 @@ final class SampleGenerator extends AbstractNodeVisitor
     #[\Override]
     public function visitLiteral(LiteralNode $node): string
     {
-        return $node->value;
+        return $this->concatenate($node->value);
     }
 
     #[\Override]
@@ -817,8 +813,9 @@ final class SampleGenerator extends AbstractNodeVisitor
         // hold once the sample has text around it. A sample the engine gave
         // up on is not tried again: with text around it, it gives up again.
         foreach (array_keys($attempts) as $attempt) {
+            $attempt = (string) $attempt;
             foreach (['a', ' ', "\n"] as $padding) {
-                foreach ([$padding.$attempt, $attempt.$padding, $padding.$attempt.$padding] as $padded) {
+                foreach (self::within(self::MAX_SAMPLE_LENGTH, [$padding, $attempt], [$attempt, $padding], [$padding, $attempt, $padding]) as $padded) {
                     if (true === $this->engine->match($checked, $padded)->matched) {
                         return $padded;
                     }
@@ -1101,21 +1098,24 @@ final class SampleGenerator extends AbstractNodeVisitor
                     $ahead = $this->acceptedIn($child->child);
                     $this->reserveSequenceWork(\count($children) - $index - 1);
                     $rest = $this->generateSequence(\array_slice($children, $index + 1));
-                    if ($this->holds($child->child, $rest, '\\A', '')) {
+                    // What the sequence built before the lookahead counts
+                    // against the limit too: a layout past it is not taken.
+                    $room = self::MAX_SAMPLE_LENGTH - \strlen($text);
+                    if (\strlen($rest) <= $room && $this->holds($child->child, $rest, '\\A', '')) {
                         return $text.$rest;
                     }
 
                     // The rest alone again, read with the groups it defines: a
                     // call in the lookahead may name one of them.
-                    $laidOver = $ahead.$this->textFrom($rest, $this->textLength($ahead));
-                    foreach ([$rest, $laidOver, $ahead.$rest, $rest.$ahead] as $candidate) {
+                    $laidOver = $this->overlay($ahead, $rest);
+                    foreach (self::within($room, [$rest], $laidOver, [$ahead, $rest], [$rest, $ahead]) as $candidate) {
                         if ($this->holds($left, $candidate, '\\A', '')) {
                             return $text.$candidate;
                         }
                     }
                 } while ($this->lookaheadDraws++ < self::MAX_LOOKAHEAD_DRAWS);
 
-                return $text.$laidOver;
+                return $this->concatenate($text, ...$laidOver);
             }
 
             // "(*ACCEPT)" ends what it stands in: what follows it is not read.
@@ -1127,19 +1127,19 @@ final class SampleGenerator extends AbstractNodeVisitor
 
             if ($child instanceof GroupNode && GroupType::LookbehindPositive === $child->type) {
                 // What the groups around hold before this one counts too.
-                if ($this->holds($child->child, implode('', $this->textsBefore), '', '\\z')) {
+                if ($this->holds($child->child, $this->concatenate(...$this->textsBefore), '', '\\z')) {
                     continue;
                 }
 
                 $behind = $this->acceptedIn($child->child);
                 $kept = max(0, $this->textLength($text) - $this->textLength($behind));
-                $text = $this->textTo($text, $kept).$behind;
+                $text = $this->concatenate($this->textTo($text, $kept), $behind);
 
                 continue;
             }
 
             $this->textAhead = $ahead + $after[$index];
-            $text .= $child->accept($this);
+            $text = $this->concatenate($text, $child->accept($this));
             if ($this->accepted) {
                 return $text;
             }
@@ -1347,6 +1347,18 @@ final class SampleGenerator extends AbstractNodeVisitor
         $this->dollarEndsLine = (str_contains($on, 'm') || $this->dollarEndsLine) && !str_contains($off, 'm');
     }
 
+    /**
+     * The lookahead's text laid over what follows it, as its two parts: the
+     * text, then what follows past as many characters. It is judged against
+     * the limit in bytes where it is joined.
+     *
+     * @return array{string, string}
+     */
+    private function overlay(string $ahead, string $rest): array
+    {
+        return [$ahead, $this->textFrom($rest, $this->textLength($ahead))];
+    }
+
     private function textLength(string $text): int
     {
         return $this->unicode ? mb_strlen($text, 'UTF-8') : \strlen($text);
@@ -1378,6 +1390,46 @@ final class SampleGenerator extends AbstractNodeVisitor
         }
     }
 
+    /**
+     * Each layout joined, in order, where it fits the room left: one past it
+     * is skipped, and built only when the one before it was tried.
+     *
+     * @param list<string> ...$layouts
+     *
+     * @return \Generator<int, string>
+     */
+    private static function within(int $room, array ...$layouts): \Generator
+    {
+        foreach ($layouts as $parts) {
+            $length = 0;
+            foreach ($parts as $part) {
+                $length += \strlen($part);
+            }
+
+            if ($length <= $room) {
+                yield implode('', $parts);
+            }
+        }
+    }
+
+    /**
+     * Check the byte budget before allocating a combined sample. Captures
+     * and references can grow exponentially even without a quantifier.
+     */
+    private function concatenate(string ...$parts): string
+    {
+        $remaining = self::MAX_SAMPLE_LENGTH;
+        foreach ($parts as $part) {
+            $length = \strlen($part);
+            if ($length > $remaining) {
+                throw new SampleGenerationException(\sprintf('No sample was built: it would pass %d bytes.', self::MAX_SAMPLE_LENGTH));
+            }
+            $remaining -= $length;
+        }
+
+        return implode('', $parts);
+    }
+
     private function applyLookaroundHints(string $sample): string
     {
         foreach ($this->requiredPrefixes as $prefix) {
@@ -1386,7 +1438,7 @@ final class SampleGenerator extends AbstractNodeVisitor
             }
 
             if (!str_starts_with($sample, $prefix)) {
-                $sample = $prefix.$sample;
+                $sample = $this->concatenate($prefix, $sample);
             }
         }
 
@@ -1397,7 +1449,7 @@ final class SampleGenerator extends AbstractNodeVisitor
 
             // A lookbehind constrains what the sample must END with.
             if (!str_ends_with($sample, $suffix)) {
-                $sample .= $suffix;
+                $sample = $this->concatenate($sample, $suffix);
             }
         }
 
