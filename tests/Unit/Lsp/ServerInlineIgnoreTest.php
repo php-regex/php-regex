@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Parser\Text\Path;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\TestUtils\FileUri;
@@ -160,6 +161,10 @@ final class ServerInlineIgnoreTest extends TestCase
             preg_match('/(d/', $s);
             CODE));
 
+        // PHP refuses each of the four patterns: the group is never closed.
+        foreach (['/(a/', '/(b/', '/(c/', '/(d/'] as $pattern) {
+            $this->assertStringContainsString('missing closing parenthesis', (string) EngineProbe::warning($pattern), $pattern);
+        }
         $this->assertSame([
             [1, 'regex.ignore.unmatched', 2],
             [3, 'regex.ignore.unmatched', 2],
