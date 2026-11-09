@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Corpus;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -74,6 +75,85 @@ final class CorpusScriptTest extends TestCase
         $this->assertSame(0, $code, $output);
         $this->assertSame($this->firstCommit, $this->head($this->root.'/corpus/src'), $output);
         $this->assertFileExists($this->root.'/corpus/src/pattern.php');
+    }
+
+    #[Test]
+    #[TestWith(['install', 'link/nested/repo', false])]
+    #[TestWith(['update', 'link/nested/repo', false])]
+    #[TestWith(['install', 'link', false])]
+    #[TestWith(['update', 'link', false])]
+    #[TestWith(['install', 'link/nested/repo', true])]
+    #[TestWith(['update', 'link/nested/repo', true])]
+    public function test_creation_rejects_symlinks_outside_corpus(string $command, string $destination, bool $dangling): void
+    {
+        $outside = $this->root.'/corpus-outside';
+        if (!$dangling) {
+            mkdir($outside);
+        }
+        symlink($outside, $this->origin.'/link');
+        $this->git($this->origin, 'add', 'link');
+        $this->git($this->origin, 'commit', '-m', 'add upstream symlink');
+        $this->writeManifest($this->head($this->origin));
+        [$code, $output] = $this->script(['install']);
+        $this->assertSame(0, $code, $output);
+
+        $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
+        $this->assertIsArray($manifest);
+        $this->assertIsArray($manifest['repositories'] ?? null);
+        $manifest['repositories']['src/'.$destination] = [
+            'url' => 'file://'.$this->origin,
+            'branch' => 'main',
+            'commit' => $this->firstCommit,
+        ];
+        file_put_contents($this->root.'/corpus.json', json_encode($manifest));
+
+        [$code, $output] = $this->script('update' === $command ? ['update', '--clone-only'] : ['install']);
+
+        $this->assertSame(1, $code, $output);
+        $this->assertStringContainsString('Unsafe repository destination', $output);
+        if ($dangling) {
+            $this->assertFileDoesNotExist($outside);
+        } else {
+            $this->assertSame(['.', '..'], scandir($outside));
+        }
+    }
+
+    #[Test]
+    #[TestWith(['install'])]
+    #[TestWith(['update'])]
+    public function test_creation_accepts_nested_destinations_and_internal_symlinks(string $command): void
+    {
+        mkdir($this->root.'/corpus/storage', 0o777, true);
+        symlink($this->root.'/corpus/storage', $this->root.'/corpus/alias');
+        $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
+        $this->assertIsArray($manifest);
+        $this->assertIsArray($manifest['repositories'] ?? null);
+        $manifest['repositories'] = ['alias/nested/repo' => $manifest['repositories']['src']];
+        file_put_contents($this->root.'/corpus.json', json_encode($manifest));
+
+        [$code, $output] = $this->script('update' === $command ? ['update', '--clone-only'] : ['install']);
+
+        $this->assertSame(0, $code, $output);
+        $this->assertFileExists($this->root.'/corpus/storage/nested/repo/pattern.php');
+    }
+
+    #[Test]
+    #[TestWith(['install'])]
+    #[TestWith(['update'])]
+    public function test_creation_accepts_an_internal_symlink_to_the_corpus_root(string $command): void
+    {
+        mkdir($this->root.'/corpus', 0o777, true);
+        symlink($this->root.'/corpus', $this->root.'/corpus/self');
+        $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
+        $this->assertIsArray($manifest);
+        $this->assertIsArray($manifest['repositories'] ?? null);
+        $manifest['repositories'] = ['self/repo' => $manifest['repositories']['src']];
+        file_put_contents($this->root.'/corpus.json', json_encode($manifest));
+
+        [$code, $output] = $this->script('update' === $command ? ['update', '--clone-only'] : ['install']);
+
+        $this->assertSame(0, $code, $output);
+        $this->assertFileExists($this->root.'/corpus/repo/pattern.php');
     }
 
     #[Test]
