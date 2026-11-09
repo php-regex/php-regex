@@ -245,7 +245,7 @@ final class ErrorFactory
      */
     public static function unreadableMarker(TargetMarker $marker): IdentifierRuleError
     {
-        return RuleErrorBuilder::message((string) $marker->error)
+        return RuleErrorBuilder::message(self::markerText((string) $marker->error))
             ->line($marker->line)
             ->tip('Write the versions the code runs on as a Composer constraint after "php", "pcre", or both.')
             ->identifier(RegexPatternRule::IDENTIFIER_TARGET_INVALID)
@@ -260,7 +260,7 @@ final class ErrorFactory
      */
     public static function emptyMarker(TargetMarker $marker, string $judged): IdentifierRuleError
     {
-        return RuleErrorBuilder::message(\sprintf('The %s marker "%s" keeps no version the project is judged for (PHP %s): the patterns it covers are not judged.', $marker->marker, $marker->text, $judged))
+        return RuleErrorBuilder::message(\sprintf('The %s marker "%s" keeps no version the project is judged for (PHP %s): the patterns it covers are not judged.', $marker->marker, self::markerText($marker->text), $judged))
             ->line($marker->line)
             ->tip('Widen the marker to versions of the range, or remove the code it covers if it never runs there.')
             ->identifier(RegexPatternRule::IDENTIFIER_TARGET_EMPTY)
@@ -298,6 +298,18 @@ final class ErrorFactory
         }
 
         return substr($rendered, 0, $cut).'...';
+    }
+
+    /**
+     * Text a marker comment holds, in display form: its controls spelled
+     * out, and a "<" that would open a console tag (before a letter or "/")
+     * written "\x3C"; a constraint operator such as "<9" stays readable.
+     */
+    private static function markerText(string $text): string
+    {
+        $escaped = DisplayEscaper::escapeText($text);
+
+        return LibraryPcre::replace('~<(?=[A-Za-z/])~', '\\x3C', $escaped) ?? $escaped;
     }
 
     /**
