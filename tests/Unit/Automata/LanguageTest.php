@@ -118,6 +118,26 @@ final class LanguageTest extends TestCase
         $strings->next();
     }
 
+    /**
+     * The budget bounds the search for the next string, not the whole run:
+     * the search from "b" to 110 "a" alone runs past it, while the 80 "a"
+     * found on the way starts it again.
+     */
+    #[Test]
+    public function test_the_work_budget_starts_again_at_each_string(): void
+    {
+        $pattern = '/^(?:b|a{80}|a{110})$/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 110)));
+        $this->assertSame(0, preg_match($pattern, str_repeat('a', 95)));
+
+        $this->assertSame(['b', str_repeat('a', 80), str_repeat('a', 110)], iterator_to_array((new LanguageSolver())->language($pattern)->strings(), false));
+
+        $strings = (new LanguageSolver())->language('/^(?:b|a{110})$/')->strings();
+        $this->assertSame('b', $strings->current());
+        $this->expectException(ComplexityException::class);
+        $strings->next();
+    }
+
     #[Test]
     public function test_dead_states_do_not_obscure_a_long_single_result(): void
     {

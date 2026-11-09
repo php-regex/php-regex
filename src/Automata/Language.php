@@ -135,9 +135,12 @@ final class Language
 
     /**
      * Every string of the language, shortest first, then in code point
-     * order, subject to enumeration budgets.
+     * order. The budgets bound the search for the next string, not the whole
+     * run: a million steps between two strings, 50,000 remembered states for
+     * each length. A caller that never stops on an infinite language never
+     * stops.
      *
-     * @throws ComplexityException When enumeration exceeds its work or memory budget
+     * @throws ComplexityException When the search for the next string exceeds a budget
      *
      * @return \Generator<int, string>
      */
@@ -160,8 +163,9 @@ final class Language
      * Every string outside the language, shortest first, then in code point
      * order: each is proven out by the automaton. They run out when only
      * finitely many strings are outside, none for a language of every string.
+     * The budgets of strings() bound the search for each, as there.
      *
-     * @throws ComplexityException When enumeration exceeds its work or memory budget
+     * @throws ComplexityException When the search for the next string exceeds a budget
      *
      * @return \Generator<int, string>
      */
