@@ -936,6 +936,40 @@ final class ForkedWorkerPoolTest extends TestCase
         $this->assertNothingLeftBehind();
     }
 
+    #[Test]
+    public function test_lock_file_is_private_even_with_a_permissive_umask(): void
+    {
+        $previous = umask(0);
+        $path = null;
+
+        try {
+            $path = (new \ReflectionMethod(ForkedWorkerPool::class, 'createLock'))->invoke(null);
+            $this->assertIsString($path);
+            $this->assertSame(0o600, fileperms($path) & 0o777);
+
+            // Independent opens must contend on the same inode.
+            $first = fopen($path, 'r');
+            $second = fopen($path, 'r');
+            $this->assertIsResource($first);
+            $this->assertIsResource($second);
+
+            try {
+                $this->assertTrue(flock($first, \LOCK_EX | \LOCK_NB));
+                $this->assertFalse(flock($second, \LOCK_EX | \LOCK_NB));
+                $this->assertTrue(flock($first, \LOCK_UN));
+                $this->assertTrue(flock($second, \LOCK_EX | \LOCK_NB));
+            } finally {
+                fclose($first);
+                fclose($second);
+            }
+        } finally {
+            umask($previous);
+            if (\is_string($path)) {
+                unlink($path);
+            }
+        }
+    }
+
     /**
      * Without a lock file (the temp directory is full or read-only) the run
      * goes on, its classes loaded as they come.
