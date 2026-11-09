@@ -160,6 +160,19 @@ final class MatchEquivalenceTest extends TestCase
     }
 
     #[Test]
+    public function test_end_anchor_validation_visits_shared_empty_continuations_once(): void
+    {
+        // Only thirty splits, but walking each path separately visits over
+        // a billion continuations before the comparison budget even starts.
+        $pattern = '/$'.str_repeat('(?:|)', 30).'/';
+        foreach (self::subjects("a\n", 3) as $subject) {
+            $this->assertSame(self::matchesOf('/$/', $subject), self::matchesOf($pattern, $subject), \sprintf('The engine tells them apart on %s.', json_encode($subject)));
+        }
+
+        $this->assertTrue((new LanguageSolver())->matchEquivalent($pattern, '/$/')->isEquivalent);
+    }
+
+    #[Test]
     public function test_the_automaton_stops_at_its_budget(): void
     {
         $this->expectException(ComplexityException::class);
@@ -258,6 +271,8 @@ final class MatchEquivalenceTest extends TestCase
         yield 'word boundary' => ['left' => '/\ba/', 'right' => '/a/', 'reason' => 'Word boundaries'];
         yield 'anchor before more text' => ['left' => '/a$b/', 'right' => '/ab/', 'reason' => 'An end anchor followed by more of the pattern'];
         yield 'anchor before an optional letter' => ['left' => '/a$(?:b|)/', 'right' => '/a/', 'reason' => 'An end anchor followed by more of the pattern'];
+        yield 'letter on a sibling after shared empty branches' => ['left' => '/$(?:'.str_repeat('(?:|)', 30).'|a)/', 'right' => '/$/', 'reason' => 'An end anchor followed by more of the pattern'];
+        yield 'start anchor after empty branches' => ['left' => '/$'.str_repeat('(?:|)', 30).'\\A/', 'right' => '/$/', 'reason' => 'An end anchor followed by more of the pattern'];
         yield 'multiline flag' => ['left' => '/a/m', 'right' => '/a/', 'reason' => 'Unsupported regex flags for the match solver: m.'];
         yield 'utf mode on one side' => ['left' => '/a/u', 'right' => '/a/', 'reason' => 'Both patterns must read the subject the same way'];
         // PHP 8.4.26 / PCRE2 10.49: on "ab\r\n" the left one captures "\r"
