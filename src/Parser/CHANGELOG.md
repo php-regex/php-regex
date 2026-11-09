@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `JsonDumper` resolves at most 100,000 reference targets in one document,
+   counted before duplicates are dropped, and throws `ResourceLimitException`
+   (`regex.complexity`) past them: a pattern that names one group many times,
+   under `(?J)`, no longer expands to hundreds of megabytes.
  * `PcreEngine` runs nothing where `ini_set()` refuses a limit the call asks
    for, as where `ini_set()` is disabled, and puts back a limit it already
    changed: the call no longer runs under a higher limit fixed by
