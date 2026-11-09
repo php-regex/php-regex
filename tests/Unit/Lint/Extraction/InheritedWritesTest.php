@@ -137,8 +137,8 @@ final class InheritedWritesTest extends TestCase
      * Each trait uses the two before it, so a walk that follows every path
      * instead of every trait makes tens of millions of calls for 36 traits
      * (19 s for both strategies on PHP 8.4.27); each trait looked into once,
-     * they take a few milliseconds. The bound is the CPU time of the two
-     * extractions together.
+     * they take a few milliseconds. The bound is the CPU time of the whole
+     * check: the project written, both extractions and their assertions.
      */
     #[Test]
     public function test_shared_trait_descendants_are_processed_in_bounded_time(): void
