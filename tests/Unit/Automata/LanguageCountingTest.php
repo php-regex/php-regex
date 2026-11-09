@@ -73,8 +73,12 @@ final class LanguageCountingTest extends TestCase
     public function test_a_language_with_no_string_counts_none(): void
     {
         $this->assertSame(0, preg_match('/^a\bb$/', 'ab'));
+        $this->assertSame(0, preg_match('/^a\bb$/', ''));
         $language = (new LanguageSolver())->language('/^a\bb$/');
 
+        // Not even the empty string: the count at length 0 is none as well.
+        $this->assertSame('0', $language->countOfLength(0));
+        $this->assertSame('0', $language->countOfLength(1));
         $this->assertSame('0', $language->countOfLength(2));
         $this->assertSame('0', $language->size());
     }

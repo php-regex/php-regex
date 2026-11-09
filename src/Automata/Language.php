@@ -387,7 +387,12 @@ final class Language
         }
 
         $start = $this->dfa->startState;
-        $count = $ways[$start] ?? [0];
+        if (!isset($ways[$start])) {
+            // The language holds no string: none of any length.
+            return [0];
+        }
+
+        $count = $ways[$start];
         for ($step = 1; $step <= $length; $step++) {
             $next = [];
             foreach (array_keys($ways) as $state) {
@@ -399,7 +404,7 @@ final class Language
             }
 
             $ways = $next;
-            $count = $total ? self::add($count, $ways[$start] ?? [0]) : $ways[$start] ?? [0];
+            $count = $total ? self::add($count, $ways[$start]) : $ways[$start];
         }
 
         return $count;
