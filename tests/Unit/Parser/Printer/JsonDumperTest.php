@@ -81,10 +81,8 @@ final class JsonDumperTest extends TestCase
     {
         $pattern = '/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 100).'(?<m>b)\\k<m>/J';
         $this->assertTrue(EngineProbe::compiles($pattern));
-        $tree = RegexParser::create(['cache' => null])->parse($pattern);
 
-        $this->expectException(ResourceLimitException::class);
-        $tree->accept(new JsonDumper());
+        $this->assertRefusedPastTheReferenceBudget($pattern);
     }
 
     /**
@@ -97,10 +95,8 @@ final class JsonDumperTest extends TestCase
     {
         $pattern = '/(?|'.str_repeat('(a)|', 1000).'(a))'.str_repeat('\\1', 100).'/';
         $this->assertTrue(EngineProbe::compiles($pattern));
-        $tree = RegexParser::create(['cache' => null])->parse($pattern);
 
-        $this->expectException(ResourceLimitException::class);
-        $tree->accept(new JsonDumper());
+        $this->assertRefusedPastTheReferenceBudget($pattern);
     }
 
     #[Test]
@@ -131,11 +127,14 @@ final class JsonDumperTest extends TestCase
         try {
             $tree->accept($dumper);
             $this->fail('The amplified export must be refused.');
-        } catch (ResourceLimitException) {
-            $small = $parser->parse('/(?<n>a)\\k<n>/');
-            $this->assertSame(self::export('/(?<n>a)\\k<n>/'), $small->accept($dumper));
-            $this->assertSame([], self::nodesOfType($small->pattern->accept($dumper), 'backref')[0]['groups']);
+        } catch (ResourceLimitException $exception) {
+            $this->assertSame(ErrorCode::Complexity, $exception->errorCode);
         }
+
+        // The same dumper, after the refusal, exports a small pattern whole.
+        $small = $parser->parse('/(?<n>a)\\k<n>/');
+        $this->assertSame(self::export('/(?<n>a)\\k<n>/'), $small->accept($dumper));
+        $this->assertSame([], self::nodesOfType($small->pattern->accept($dumper), 'backref')[0]['groups']);
     }
 
     #[Test]
@@ -579,6 +578,23 @@ final class JsonDumperTest extends TestCase
     {
         foreach (self::VERSION_OPERATORS as $operator) {
             yield $operator => ['operator' => $operator];
+        }
+    }
+
+    /**
+     * Refused by the reference budget itself, not by another limit met
+     * on the way.
+     */
+    private function assertRefusedPastTheReferenceBudget(string $pattern): void
+    {
+        $tree = RegexParser::create(['cache' => null])->parse($pattern);
+
+        try {
+            $tree->accept(new JsonDumper());
+            $this->fail('The export must be refused.');
+        } catch (ResourceLimitException $exception) {
+            $this->assertSame(ErrorCode::Complexity, $exception->errorCode);
+            $this->assertSame('JSON export exceeds the limit of 100000 resolved reference targets.', $exception->getMessage());
         }
     }
 
