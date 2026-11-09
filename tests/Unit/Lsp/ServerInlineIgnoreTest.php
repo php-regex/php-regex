@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Parser\Text\Path;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\TestUtils\FileUri;
@@ -143,6 +144,33 @@ final class ServerInlineIgnoreTest extends TestCase
         $this->assertSame(['start' => ['line' => 1, 'character' => 14], 'end' => ['line' => 1, 'character' => 27]], $unmatched[0]['range'] ?? null);
         $this->assertSame('The @regex-ignore marker silences nothing: no issue is reported on line 2. Remove it.', $unmatched[0]['message'] ?? null);
         $this->assertSame('The @regex-ignore marker names regex.lint.no.such.rule, which no issue reports on line 3. Remove the identifier.', $unmatched[1]['message'] ?? null);
+    }
+
+    #[Test]
+    public function test_markers_keep_their_identity_across_lines_and_shared_occurrences(): void
+    {
+        $uri = $this->uri('src/Matcher.php');
+        $this->initialize();
+        $this->send($this->didOpen($uri, <<<'CODE'
+            <?php
+            // @regex-ignore
+            /* @regex-ignore-next-line regex.group.unclosed */
+            preg_match('/(a/', $s); preg_match('/(b/', $s); /* @regex-ignore regex.group.unclosed
+             * @regex-ignore regex.lint.no.such.rule */
+            preg_match('/(c/', $s); // @regex-ignore regex.group.unclosed
+            preg_match('/(d/', $s);
+            CODE));
+
+        // PHP refuses each of the four patterns: the group is never closed.
+        foreach (['/(a/', '/(b/', '/(c/', '/(d/'] as $pattern) {
+            $this->assertStringContainsString('missing closing parenthesis', (string) EngineProbe::warning($pattern), $pattern);
+        }
+        $this->assertSame([
+            [1, 'regex.ignore.unmatched', 2],
+            [3, 'regex.ignore.unmatched', 2],
+            [4, 'regex.ignore.unmatched', 2],
+            [6, 'regex.group.unclosed', 1],
+        ], $this->diagnosed($uri));
     }
 
     /**
