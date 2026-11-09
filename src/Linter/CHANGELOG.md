@@ -9,6 +9,13 @@ CHANGELOG
  * The value of a property read through `$this` looks into each trait of the
    file once when it checks for a trait the file does not declare: forty traits
    that each use the two before them no longer take exponential time to lint.
+ * The statement a `@regex-target` doc comment covers is found for every
+   marker of a file in one pass: 2,000 nested marked `if` bodies took some
+   20 seconds, they take a tenth of one. A `}` or a `;` in inline HTML or
+   in the text of a string, and the `}` that closes a `{$variable}` in a
+   string, no longer end that statement. A file with room under
+   `memory_limit` to be tokenized but not for the tables this pass builds
+   keeps no marker, as one too large to tokenize.
  * The lock file the forked workers of `--jobs` share is created with no
    permission for anyone but its owner (`0600` under the usual umask): another
    user can no longer read or write it.
