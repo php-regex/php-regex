@@ -64,6 +64,40 @@ final class SampleGeneratorLookaroundTest extends TestCase
     }
 
     /**
+     * The work is the suffixes the lookaheads copy, twice per level, from
+     * the lookahead's place in its sequence on. 64 lookaheads first in their
+     * sequence before t characters charge 4,096 + 128t: 992 fit the 131,072
+     * allowed exactly, 993 do not. After a character each, a(?=a), they
+     * charge 8,128 + 128t: 960 fit, 961 do not.
+     */
+    #[Test]
+    #[DataProvider('provideWorkBoundary')]
+    public function test_the_work_limit_counts_every_copied_suffix(string $level, int $tail, bool $built): void
+    {
+        $pattern = '/'.str_repeat($level, 64).str_repeat('a', $tail).'/';
+
+        try {
+            $sample = Regex::create(['cache' => null])->parse($pattern)->accept(new SampleGenerator());
+            $this->assertTrue($built, 'Past the limit, no sample is built.');
+            $this->assertSame(str_repeat('(?=a)' === $level ? '' : 'a', 64).str_repeat('a', $tail), $sample);
+        } catch (SampleGenerationException $e) {
+            $this->assertFalse($built, $e->getMessage());
+            $this->assertSame('No sample was built: sequence work limit exceeded.', $e->getMessage());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{level: string, tail: int, built: bool}>
+     */
+    public static function provideWorkBoundary(): iterable
+    {
+        yield 'lookaheads first, exactly the limit' => ['level' => '(?=a)', 'tail' => 992, 'built' => true];
+        yield 'lookaheads first, one step past it' => ['level' => '(?=a)', 'tail' => 993, 'built' => false];
+        yield 'lookaheads after a character, within the limit' => ['level' => 'a(?=a)', 'tail' => 960, 'built' => true];
+        yield 'lookaheads after a character, past it' => ['level' => 'a(?=a)', 'tail' => 961, 'built' => false];
+    }
+
+    /**
      * A plain repetition copies no suffix: tens of thousands of repeats of a
      * two-character sequence build their sample, as PCRE matches it.
      */
