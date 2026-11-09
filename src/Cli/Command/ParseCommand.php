@@ -24,6 +24,8 @@ use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\Snippet;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 
@@ -103,9 +105,12 @@ final class ParseCommand extends AbstractCommand
     {
         $ast = $regex->parse($pattern);
         $compiled = $ast->accept(PatternPrinter::asWritten());
-        $highlightedPattern = $output->isAnsi()
+        // A control, a hidden character or an invalid byte is spelled out
+        // and the pattern then echoed without colours.
+        $echoed = DisplayEscaper::escape($pattern);
+        $highlightedPattern = $output->isAnsi() && $echoed === $pattern
             ? $ast->accept(new ConsoleHighlighter())
-            : $pattern;
+            : $echoed;
 
         $steps = $validate ? 2 : 1;
 
@@ -124,7 +129,7 @@ final class ParseCommand extends AbstractCommand
         $style->renderPattern($highlightedPattern);
         $style->renderKeyValueBlock([
             'Parse' => 'OK',
-            'Recompiled' => $compiled,
+            'Recompiled' => DisplayEscaper::escape($compiled),
         ]);
     }
 
@@ -145,11 +150,11 @@ final class ParseCommand extends AbstractCommand
         ]);
 
         if (!$validation->isValid && null !== $validation->error) {
-            $output->write('  '.$output->error($validation->error)."\n");
+            $output->write('  '.$output->error(DisplayEscaper::escapeText($validation->error))."\n");
         }
 
         if (!$validation->isValid && null !== $validation->caretSnippet) {
-            $output->write($output->error($validation->caretSnippet)."\n");
+            $output->write($output->error(Snippet::escapeForTerminal($validation->caretSnippet))."\n");
         }
 
         return $validation->isValid;
