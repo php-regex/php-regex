@@ -38,8 +38,13 @@ final class WorkBudgetTest extends TestCase
         $solver->compile('/(?:a{11})+/', $options);
         $solver->compile('/(?:a{13})+/', $options);
 
+        // PCRE matches the witness whole with both, and no shorter run of "a".
+        $witness = str_repeat('a', 143);
+        $this->assertSame([1, 1], [preg_match('/^(?:a{11})+$/D', $witness), preg_match('/^(?:a{13})+$/D', $witness)]);
+        $this->assertSame([], array_filter(range(1, 142), static fn (int $length): bool => 1 === preg_match('/^(?:a{11})+$/D', str_repeat('a', $length)) && 1 === preg_match('/^(?:a{13})+$/D', str_repeat('a', $length))));
+
         $result = $solver->intersection('/(?:a{11})+/', '/(?:a{13})+/', new SolverOptions(maxDfaStates: 200));
-        $this->assertSame(str_repeat('a', 143), $result->example);
+        $this->assertSame($witness, $result->example);
 
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessageIsOrContains('The comparison explored more than 40 pairs of DFA states.');
