@@ -69,7 +69,9 @@ echo (new SampleGenerator())->generate('/(?!^)a/'); // "aa"
 A sample is at most 1,048,576 bytes, and so is every piece built on the way to it, a lookahead's
 text and a padded candidate included: a pattern whose backreferences double the text at each
 step, `/(a)(\g{1}\g{1})(\g{2}\g{2})…/`, throws `SampleGenerationException` ("No sample was
-built: it would pass 1048576 bytes.") before the string is built.
+built: it would pass 1048576 bytes.") before the string is built. One candidate can reach twice
+that: a group fitted to a substring scan, `(*scs:…)`, joins a drawn prefix to its text, each under
+the limit, and checks it against the group and the scan before the sample refuses it.
 
 A lookahead draws what follows it again, so lookaheads in a row nest: at most 128 deep, and at most
 131,072 sequence entries copied for one sample. Past either, `SampleGenerationException` says which
