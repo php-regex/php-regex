@@ -22,6 +22,7 @@ use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -75,6 +76,43 @@ final class WorkBudgetTest extends TestCase
         } catch (ComplexityException $exception) {
             $this->assertSame('comparison', $exception->getDiagnostic()['phase'] ?? null);
             $this->assertSame(2, $exception->getDiagnostic()['consumed'] ?? null);
+        }
+    }
+
+    /**
+     * The left start state accepts and the right one does not: the first
+     * search of `equivalent()` answers at once, and only the second, which
+     * looks for a string the right side alone accepts, walks the pairs. It
+     * spends the same budget: two ranges past a limit of one.
+     */
+    #[Test]
+    public function test_the_second_equivalence_search_spends_the_same_budget(): void
+    {
+        $left = new Dfa(0, [0 => new DfaState(0, [97 => 0, 98 => 0], true)], [[97, 97], [98, 98]], 97, 98);
+        $right = new Dfa(0, [0 => new DfaState(0, [97 => 0, 98 => 0], false)], [[97, 97], [98, 98]], 97, 98);
+        $cache = new class([$left, $right]) implements DfaCacheInterface {
+            /**
+             * @param list<Dfa> $dfas
+             */
+            public function __construct(private array $dfas) {}
+
+            public function get(string $key): Dfa
+            {
+                $dfa = array_shift($this->dfas);
+                Assert::assertInstanceOf(Dfa::class, $dfa);
+
+                return $dfa;
+            }
+
+            public function set(string $key, Dfa $dfa): void {}
+        };
+
+        try {
+            (new LanguageSolver(dfaCache: $cache))->equivalent('/a/', '/b/', new SolverOptions(maxTransitionsProcessed: 1));
+            $this->fail('Expected the second search to exceed its budget.');
+        } catch (ComplexityException $exception) {
+            $this->assertSame('comparison', $exception->getDiagnostic()['phase'] ?? null);
+            $this->assertSame(1, $exception->getDiagnostic()['limit'] ?? null);
         }
     }
 
