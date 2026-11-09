@@ -58,6 +58,29 @@ final class TrivialMatchClassifierTest extends TestCase
     }
 
     #[Test]
+    public function test_classification_refuses_nested_repetitions_before_they_exhaust_memory(): void
+    {
+        // Only one path, but 4^20 bytes if expanded before the solver runs.
+        $pattern = '/'.str_repeat('(?:', 20).'a'.str_repeat('){4}', 20).'/';
+
+        $this->assertNull((new TrivialMatchClassifier())->classify($pattern));
+    }
+
+    #[Test]
+    public function test_products_bound_literal_bytes_before_the_solver_runs(): void
+    {
+        // The solver also refuses long literals, so check the expansion
+        // boundary itself to ensure the allocation is guarded first.
+        $product = new \ReflectionMethod(TrivialMatchClassifier::class, 'product');
+        $classifier = new TrivialMatchClassifier();
+        $prefix = str_repeat('a', 4999);
+
+        $this->assertSame([$prefix.'b'], $product->invoke($classifier, [[$prefix], ['b']]));
+        $this->assertNull($product->invoke($classifier, [[$prefix], ['bb']]));
+        $this->assertNull($product->invoke($classifier, [[str_repeat('a', 5001)]]));
+    }
+
+    #[Test]
     public function test_a_limit_verb_can_fail_where_a_string_function_answers(): void
     {
         // In the interpreter, a one-step match limit set in the pattern

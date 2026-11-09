@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Engine;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -198,17 +199,96 @@ final class PcreEngineDisabledIniTest extends TestCase
     }
 
     /**
+     * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39, JIT off): under
+     * a backtrack limit of 10, preg_match('/(a+)+$/', 'a' x 12 . '!') gives
+     * up with PREG_BACKTRACK_LIMIT_ERROR; the refused call answers without
+     * running it. The caller's backtrack limit, 123456, is neither the
+     * default nor the one asked for, so finding it again proves the put back. ini_set() is recorded key by key: the backtrack limit,
+     * set first, is the only one refused before anything changed, and the
+     * recursion limit, set second, has the backtrack limit put back after it.
+     *
+     * @param list<string> $iniCalls
+     */
+    #[Test]
+    #[DataProvider('provideRefusedLimits')]
+    public function test_a_refused_limit_stops_every_operation_and_restores_changed_settings(string $refused, array $iniCalls): void
+    {
+        $result = self::runWith('', <<<'PHP_WRAP'
+            \ini_set('pcre.backtrack_limit', '123456');
+            $before = ini_get_all('pcre', false);
+            $engine = new \PHPRegex\Parser\Engine\PcreEngine();
+            $limits = new \PHPRegex\Parser\Engine\PcreLimits(10, 500);
+            $out = [];
+            foreach (['match', 'test', 'matchAll', 'answer'] as $method) {
+                $GLOBALS['iniCalls'] = [];
+                $sentinel = static fn (): bool => true;
+                set_error_handler($sentinel);
+                $answer = 'answer' === $method
+                    ? $engine->answer('preg_match', '/(a+)+$/', str_repeat('a', 12).'!', [], $limits)
+                    : $engine->{$method}('/(a+)+$/', str_repeat('a', 12).'!', $limits);
+                $out[$method] = [
+                    'answer' => $answer instanceof \PHPRegex\Parser\Engine\PcreMatch
+                        ? [$answer->matched, $answer->groups, $answer->errorCode, $answer->error]
+                        : $answer,
+                    'handler' => $sentinel === set_error_handler(static fn (): bool => true),
+                    'restored' => $before === ini_get_all('pcre', false),
+                    'backtrackLimit' => ini_get('pcre.backtrack_limit'),
+                    'iniCalls' => $GLOBALS['iniCalls'],
+                ];
+                restore_error_handler();
+                restore_error_handler();
+            }
+            $out['calls'] = $GLOBALS['nativeCalls'] ?? 0;
+            \ini_set('pcre.jit', '0');
+            \ini_set('pcre.backtrack_limit', '10');
+            $out['oracle'] = [@\preg_match('/(a+)+$/', str_repeat('a', 12).'!'), \preg_last_error()];
+            return $out;
+            PHP_WRAP, 'namespace PHPRegex\\Parser\\Engine { function ini_set($key, $value) { $GLOBALS["iniCalls"][] = $key; return '
+                .var_export($refused, true).' === $key ? false : \\ini_set($key, $value); } '
+                .'function preg_match(...$args) { $GLOBALS["nativeCalls"] = ($GLOBALS["nativeCalls"] ?? 0) + 1; return \\preg_match(...$args); } '
+                .'function preg_match_all(...$args) { $GLOBALS["nativeCalls"] = ($GLOBALS["nativeCalls"] ?? 0) + 1; return \\preg_match_all(...$args); } }');
+
+        $this->assertSame([false, \PREG_BACKTRACK_LIMIT_ERROR], $result['oracle'], 'Run, the call would give up.');
+        foreach (['match', 'test', 'matchAll', 'answer'] as $method) {
+            $outcome = $result[$method];
+            $this->assertIsArray($outcome);
+            if (\in_array($method, ['match', 'test'], true)) {
+                $answer = $outcome['answer'];
+                $this->assertIsArray($answer);
+                $this->assertSame([null, [], \PREG_INTERNAL_ERROR], \array_slice($answer, 0, 3), $method);
+                $this->assertSame('The PCRE limits could not be set: ini_set() refused '.$refused, $answer[3] ?? null, $method);
+            } else {
+                $this->assertNull($outcome['answer'], $method);
+            }
+            $this->assertTrue($outcome['handler'], 'The caller\'s error handler is back after '.$method.'.');
+            $this->assertTrue($outcome['restored'], 'The settings are back after '.$method.'.');
+            $this->assertSame('123456', $outcome['backtrackLimit'], 'The caller\'s own backtrack limit is back after '.$method.'.');
+            $this->assertSame($iniCalls, $outcome['iniCalls'], $method);
+        }
+        $this->assertSame(0, $result['calls'], 'No native match runs after '.$refused.' is refused.');
+    }
+
+    /**
+     * @return iterable<string, array{refused: string, iniCalls: list<string>}>
+     */
+    public static function provideRefusedLimits(): iterable
+    {
+        yield 'the first limit, nothing changed yet' => ['refused' => 'pcre.backtrack_limit', 'iniCalls' => ['pcre.backtrack_limit']];
+        yield 'the second limit, the first put back' => ['refused' => 'pcre.recursion_limit', 'iniCalls' => ['pcre.backtrack_limit', 'pcre.recursion_limit', 'pcre.backtrack_limit']];
+    }
+
+    /**
      * Runs the code in a PHP process with the function disabled; the code
      * returns what it saw, printed back as JSON.
      *
      * @return array<array-key, mixed>
      */
-    private static function runWith(string $disabled, string $code): array
+    private static function runWith(string $disabled, string $code, string $prelude = ''): array
     {
-        $script = 'require '.var_export(\dirname(__DIR__, 3).'/vendor/autoload.php', true).';'
+        $script = $prelude.' namespace { require '.var_export(\dirname(__DIR__, 3).'/vendor/autoload.php', true).';'
             .'const NO_ROOM_BODY = '.var_export(self::NO_ROOM_BODY, true).';'
             .'$run = static function () { '.$code.' };'
-            .'echo json_encode($run(), JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);';
+            .'echo json_encode($run(), JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR); }';
 
         $process = proc_open(
             [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'disable_functions='.$disabled, '-r', $script],
