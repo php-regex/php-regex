@@ -105,6 +105,33 @@ final class SampleGeneratorLimitTest extends TestCase
         $this->assertSame([$rest], iterator_to_array($within, false));
     }
 
+    /**
+     * A lookahead whose text the drawn rest does not start with is laid
+     * over it: "ab" over "a." gives "ab", tried before the layouts that
+     * put one after the other ("abac").
+     *
+     * @param list<int> $seeds
+     */
+    #[Test]
+    #[DataProvider('provideLookaheadOverlays')]
+    public function test_a_lookahead_is_laid_over_the_text_after_it(string $pattern, string $sample, array $seeds): void
+    {
+        $this->assertSame(1, preg_match($pattern, $sample));
+
+        foreach ($seeds as $seed) {
+            $this->assertSame($sample, (new SampleGenerator(seed: $seed))->generate($pattern), 'seed '.$seed);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, sample: string, seeds: list<int>}>
+     */
+    public static function provideLookaheadOverlays(): iterable
+    {
+        yield 'a lookahead longer than the letter after it' => ['pattern' => '/(?=ab)a./', 'sample' => 'ab', 'seeds' => [1, 2, 3, 4]];
+        yield 'a lookahead over a run of word characters' => ['pattern' => '/^(?=abc)\\w+$/', 'sample' => 'abc', 'seeds' => [1, 2, 3, 4]];
+    }
+
     #[Test]
     public function test_exact_byte_limit_is_allowed(): void
     {
