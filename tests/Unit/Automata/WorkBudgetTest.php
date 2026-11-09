@@ -82,6 +82,9 @@ final class WorkBudgetTest extends TestCase
     {
         yield 'one body' => ['pattern' => '/(?=[ab]*a[ab]{3})/'];
         yield 'two bodies' => ['pattern' => '/(?=[ab]*a[ab]{3})(?=[ab]*b[ab]{3})/'];
+        // The first body needs 11 transitions: at 179 the second one is the
+        // body past the budget.
+        yield 'a cheap body, then one at the threshold' => ['pattern' => '/(?=a)(?=[ab]*b[ab]{3})/'];
     }
 
     /**
