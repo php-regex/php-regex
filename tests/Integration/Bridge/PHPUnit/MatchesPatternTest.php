@@ -123,11 +123,13 @@ final class MatchesPatternTest extends TestCase
             $circular[$index] = &$circular;
         }
 
-        $expectationFailure = $this->failingMessage(function () use ($circular): void {
-            $this->assertThat('a', new MatchesPattern('/(a)/', [1 => $circular]));
+        // Evaluated directly: PHPUnit 10.5's assertThat() reads the value
+        // it is given whole, and never ends on a cycle.
+        $expectationFailure = $this->failingMessage(static function () use ($circular): void {
+            (new MatchesPattern('/(a)/', [1 => $circular]))->evaluate('a');
         });
-        $subjectFailure = $this->failingMessage(function () use ($circular): void {
-            $this->assertThat($circular, new MatchesPattern('/a/'));
+        $subjectFailure = $this->failingMessage(static function () use ($circular): void {
+            (new MatchesPattern('/a/'))->evaluate($circular);
         });
 
         $this->assertStringContainsString('unknown expectation for group 1', $expectationFailure);
