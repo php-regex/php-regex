@@ -15,6 +15,7 @@ namespace PHPRegex\Explain;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 
 /**
  * Generates a human-readable explanation of the regex: one line per
@@ -86,7 +87,7 @@ final class TextExplainer extends AbstractNodeVisitor
                 break;
             case ExplanationKind::Repetition:
                 if (ExplanationKind::Leaf === $children[0]->kind) {
-                    yield [$children[0]->inline().', '.$explanation->text, $level];
+                    yield [$this->inline($children[0]).', '.$explanation->text, $level];
 
                     break;
                 }
@@ -97,7 +98,7 @@ final class TextExplainer extends AbstractNodeVisitor
                 break;
             case ExplanationKind::Conditional:
                 if (ExplanationKind::Leaf === $children[0]->kind) {
-                    yield ['IF ('.$children[0]->inline().') THEN', $level];
+                    yield ['IF ('.$this->inline($children[0]).') THEN', $level];
                 } else {
                     yield ['IF', $level];
                     yield from $this->renderLines($children[0], $level + 1);
@@ -111,9 +112,16 @@ final class TextExplainer extends AbstractNodeVisitor
 
                 break;
             default: // ExplanationKind::Leaf
-                yield [$explanation->inline(), $level];
+                yield [$this->inline($explanation), $level];
 
                 break;
         }
+    }
+
+    private function inline(Explanation $explanation): string
+    {
+        // Keep existing explanation spellings (such as \d) while escaping
+        // controls before the renderer adds its own indentation and newlines.
+        return str_replace('\\\\', '\\', DisplayEscaper::escapeText($explanation->inline()));
     }
 }

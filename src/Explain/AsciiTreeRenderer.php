@@ -308,7 +308,8 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
     #[\Override]
     public function visitPcreVerb(PcreVerbNode $node): string
     {
-        $this->addLine('PCREVerb (*'.$node->verb.')');
+        // A verb's name is pattern text: a control in it is spelled out.
+        $this->addLine('PCREVerb (*'.DisplayEscaper::escapeText($node->verb).')');
 
         return '';
     }
@@ -336,7 +337,7 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
         if (null === $node->identifier) {
             $label = 'Callout (?C)';
         } elseif ($node->isStringIdentifier) {
-            $label = 'Callout (?C="'.$node->identifier.'")';
+            $label = 'Callout (?C="'.DisplayEscaper::escapeText((string) $node->identifier).'")';
         } else {
             $label = 'Callout (?C'.$node->identifier.')';
         }
