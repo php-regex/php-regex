@@ -2097,8 +2097,11 @@ The next run reads them back instead of asking the engine again; the
 workers of `--jobs` share them. Each answer is one small text file under
 `<dir>/class-sets-<hash>/`, `<hash>` naming the library release, the PHP
 and the PCRE2 that gave it, so an upgrade of any of them reads the classes
-again. A directory other users may write into is not read; one that cannot
-be written keeps nothing, and the run goes on. Removing the directory
+again. A directory other users may write into, or one another user owns,
+is not read; one that cannot be written keeps nothing, and the run goes on.
+Outside Windows the owner is checked with `posix_geteuid()`: where
+`ext-posix` is missing or the function is disabled, `--cache-dir` keeps
+nothing and makes no directory, and each run reads the classes again. Removing the directory
 empties it. On about 1,800 Unicode patterns gathered from open-source
 projects, `--redos` on, a second run takes about 2.3 s where the first takes
 2.7 s.
