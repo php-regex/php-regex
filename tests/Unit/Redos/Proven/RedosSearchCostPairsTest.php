@@ -19,7 +19,11 @@ use PHPRegex\Redos\Backtrack\ItemAutomaton;
 use PHPRegex\Redos\Backtrack\PnfaBuilder;
 use PHPRegex\Redos\Backtrack\SearchCostProver;
 use PHPRegex\Redos\Exception\ModelLimitException;
+use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosComplexity;
+use PHPRegex\Redos\RedosOptions;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 use PHPRegex\Tests\Support\PcreGates;
@@ -102,6 +106,53 @@ final class RedosSearchCostPairsTest extends TestCase
         $this->assertSame(2, $cost->degree);
         $this->assertSame(0, preg_match($pattern, $cost->build(100)));
         $this->assertLessThan(48 * 1024 * 1024, $growth, \sprintf('peak memory grew by %.1f MB', $growth / 1048576));
+    }
+
+    /**
+     * The pairs are chosen on the analysis budget, the one every step of the
+     * proof spends. At the smallest budget that still holds the witness the
+     * engine fails on the subject it builds; one step fewer and the search
+     * cost is given up while one attempt stays proven linear: a budget run
+     * out in the pair choice drops the witness, it never fails the analysis.
+     * The smallest budget depends on the PCRE2 release the parser targets
+     * (13,936 steps on 10.44 and 10.49, 13,708 on 10.40), so it is searched.
+     */
+    #[Test]
+    public function test_a_budget_one_step_short_of_the_pairs_gives_the_search_cost_up(): void
+    {
+        $letters = '';
+        for ($i = 0; $i < 20; $i++) {
+            $letters .= \sprintf('\x{%X}', 0x100 + 2 * $i);
+        }
+        $pattern = '/\b[\x{100}-\x{FFF}]+x'.$letters.'/u';
+        $this->assertSame(0, preg_match($pattern, ''));
+
+        $low = 1;
+        $high = 250_000;
+        $this->assertInstanceOf(RedosSearchCost::class, self::analyzeWithin($pattern, $high)->searchCost);
+        while ($low < $high) {
+            $middle = intdiv($low + $high, 2);
+            if (null === self::analyzeWithin($pattern, $middle)->searchCost) {
+                $low = $middle + 1;
+            } else {
+                $high = $middle;
+            }
+        }
+
+        $cost = self::analyzeWithin($pattern, $low)->searchCost;
+        $this->assertInstanceOf(RedosSearchCost::class, $cost);
+        $this->assertSame(2, $cost->degree);
+        $this->assertSame(0, preg_match($pattern, $cost->build(100)));
+
+        $short = self::analyzeWithin($pattern, $low - 1);
+        $this->assertNull($short->searchCost);
+        $this->assertSame(RedosProof::Proven, $short->proof);
+        $this->assertSame(RedosComplexity::Linear, $short->complexity);
+    }
+
+    private static function analyzeWithin(string $pattern, int $steps): RedosAnalysis
+    {
+        return (new RedosAnalyzer(options: new RedosOptions(maxSteps: $steps)))->analyze($pattern);
     }
 
     private static function automaton(): ItemAutomaton
