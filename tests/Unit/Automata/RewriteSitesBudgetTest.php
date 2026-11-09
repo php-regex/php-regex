@@ -32,6 +32,42 @@ final class RewriteSitesBudgetTest extends TestCase
         RewriteSites::between($left, $right, aligned: true);
     }
 
+    /**
+     * The table of 127 against 511 parts holds 128 times 512 cells, the
+     * whole budget: it is built. One part more on the left passes it.
+     */
+    #[Test]
+    public function test_an_alignment_of_exactly_the_budget_is_built(): void
+    {
+        $right = new ConcatHir(array_fill(0, 511, new LiteralHir([98])));
+
+        $this->assertNotEmpty(RewriteSites::between(new ConcatHir(array_fill(0, 127, new LiteralHir([97]))), $right, aligned: true));
+
+        $this->expectException(ComplexityException::class);
+        RewriteSites::between(new ConcatHir(array_fill(0, 128, new LiteralHir([97]))), $right, aligned: true);
+    }
+
+    /**
+     * Each site is charged its whole table, (parts + 1) times (parts + 1):
+     * 128 times 256 cells for the first site, then 16,385 times 2 for the
+     * second, two cells past the budget together.
+     */
+    #[Test]
+    public function test_each_site_is_charged_its_whole_table(): void
+    {
+        $left = new ConcatHir([
+            new ConcatHir(array_fill(0, 127, new LiteralHir([97]))),
+            new ConcatHir(array_fill(0, 16_384, new LiteralHir([97]))),
+        ]);
+        $right = new ConcatHir([
+            new ConcatHir(array_fill(0, 255, new LiteralHir([98]))),
+            new ConcatHir([new LiteralHir([98])]),
+        ]);
+
+        $this->expectException(ComplexityException::class);
+        RewriteSites::between($left, $right, aligned: true);
+    }
+
     #[Test]
     public function test_the_alignment_budget_is_shared_by_all_sites(): void
     {
