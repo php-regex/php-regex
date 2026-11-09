@@ -37,8 +37,12 @@ final class ExplanationBudgetTest extends TestCase
     #[Test]
     public function test_nested_wide_patterns_are_bounded_and_visitors_can_be_reused(): void
     {
+        $pattern = '/'.str_repeat('(?:', 100).str_repeat('.', 50000).str_repeat(')', 100).'/';
+        // PCRE compiles the pattern: the explanation of a valid pattern is what is bounded.
+        $this->assertSame(0, preg_match($pattern, ''));
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 50000)));
         $parser = RegexParser::create(['cache' => null]);
-        $large = $parser->parse('/'.str_repeat('(?:', 100).str_repeat('.', 50000).str_repeat(')', 100).'/');
+        $large = $parser->parse($pattern);
         $small = $parser->parse('/a/');
         foreach ([new AsciiTreeRenderer(), new TextExplainer()] as $visitor) {
             $expected = $small->accept($visitor);
