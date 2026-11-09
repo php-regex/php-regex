@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `RegexParser::tokenize()`, and `Regex::tokenize()` through it, hold the
+   regex to `max_pattern_length` as `parse()` does, and throw a
+   `ResourceLimitException` past it: they lexed a pattern of any length.
  * The mark `PatternPrinter` stands in for a bracket until the text is known
    keeps a fixed length, at most nineteen bytes on a 64-bit build: a comment
    holding twenty thousand of its bytes no longer lengthens it to as many, and
