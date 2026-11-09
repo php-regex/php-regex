@@ -24,7 +24,9 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\Snippet;
 use PHPRegex\Parser\Json\JsonDocument;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Toolkit\Regex;
@@ -121,8 +123,10 @@ final class ValidateCommand extends AbstractCommand implements JsonCommandInterf
 
     private function highlightPattern(Regex $regex, string $pattern, Output $output, ValidationResult $validation): string
     {
-        if (!$output->isAnsi() || !$validation->isValid) {
-            return $pattern;
+        // Spelled in the pattern's own mode: bytes without "u".
+        $escaped = DisplayEscaper::escape($pattern);
+        if ($escaped !== $pattern || !$output->isAnsi() || !$validation->isValid) {
+            return $escaped;
         }
 
         try {
@@ -130,7 +134,7 @@ final class ValidateCommand extends AbstractCommand implements JsonCommandInterf
 
             return $ast->accept(new ConsoleHighlighter());
         } catch (LexerException|ParserException) {
-            return $pattern;
+            return $escaped;
         }
     }
 
@@ -158,11 +162,11 @@ final class ValidateCommand extends AbstractCommand implements JsonCommandInterf
             ]);
 
             if (null !== $validation->error) {
-                $output->write('  '.$output->warning($validation->error)."\n");
+                $output->write('  '.$output->warning(DisplayEscaper::escapeText($validation->error))."\n");
             }
 
             if (null !== $validation->hint) {
-                $output->write('  '.$validation->hint."\n");
+                $output->write('  '.DisplayEscaper::escapeText($validation->hint)."\n");
             }
 
             return self::FAILURE;
@@ -173,15 +177,15 @@ final class ValidateCommand extends AbstractCommand implements JsonCommandInterf
         ]);
 
         if (null !== $validation->error) {
-            $output->write('  '.$output->error($validation->error)."\n");
+            $output->write('  '.$output->error(DisplayEscaper::escapeText($validation->error))."\n");
         }
 
         if (null !== $validation->caretSnippet) {
-            $output->write($output->error($validation->caretSnippet)."\n");
+            $output->write($output->error(Snippet::escapeForTerminal($validation->caretSnippet))."\n");
         }
 
         if (null !== $validation->hint) {
-            $output->write('  '.$validation->hint."\n");
+            $output->write('  '.DisplayEscaper::escapeText($validation->hint)."\n");
         }
 
         return self::FAILURE;

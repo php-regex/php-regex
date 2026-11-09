@@ -201,6 +201,12 @@ condition, not "contains this string": `/ab?/` finds what `/a/` finds, yet
 `preg_replace('/ab?/', 'X', 'ab')` is `X` where `str_replace('a', 'X', 'ab')`
 is `Xb`. See [Prefilters](../reference/prefilters.md) for both methods.
 
+Neither method spells out a string longer than 5,000 bytes: the solver's
+default budget of one state per byte could not prove it, and a nested
+repetition such as `/(?:a{1000}){1000}/` would otherwise be built in
+memory first. Past that length the answer is `null` and the call is left as
+written.
+
 The pattern must be one constant string, written as a literal or a constant,
 and compile on the PHP running Rector and on the PHP your code targets. The
 proof is made twice: with the PCRE2 the running PHP links, and with the one
