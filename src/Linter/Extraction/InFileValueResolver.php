@@ -532,7 +532,9 @@ final class InFileValueResolver
      */
     private function usesForeignTrait(string $user): bool
     {
-        $seen = [$user => true];
+        // Keyed by trait, each queued once. The user is a class, which no
+        // trait of the file can use: it needs no entry.
+        $seen = [];
         $pending = [$user];
         while ([] !== $pending) {
             $current = array_pop($pending);
@@ -541,10 +543,7 @@ final class InFileValueResolver
                     return true;
                 }
 
-                if (!isset($seen[$trait])) {
-                    $seen[$trait] = true;
-                    $pending[] = $trait;
-                }
+                $seen[$trait] ??= $pending[] = $trait;
             }
         }
 

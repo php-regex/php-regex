@@ -172,6 +172,26 @@ final class InheritedWritesTest extends TestCase
             PHP);
     }
 
+    /**
+     * The walk starts at a class, and a class is no trait: a trait of the
+     * file naming the class in its use list names a trait the file does not
+     * declare, and the property proves no default.
+     */
+    #[Test]
+    public function test_a_trait_naming_the_class_back_is_a_foreign_trait(): void
+    {
+        $this->assertExtractedByBoth([], <<<'PHP'
+            <?php
+            final class Matcher
+            {
+                use Loops;
+                private $re = '/unknown/';
+                public function check($s) { return preg_match($this->re, $s); }
+            }
+            trait Loops { use Matcher; }
+            PHP);
+    }
+
     #[Test]
     public function test_a_private_property_of_a_class_extending_another_is_read(): void
     {
