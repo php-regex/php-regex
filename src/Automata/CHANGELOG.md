@@ -11,6 +11,12 @@ CHANGELOG
    throws a `ComplexityException` past them: the optimizer keeps a pattern of
    six thousand optional parts behind a lookbehind as written instead of
    reaching a peak of nearly 1 GB to prove its rewrite.
+ * `Language::strings()` and `nonMembers()` bound the search for each next
+   string, a million steps and 50,000 remembered states for one length, and
+   throw a `ComplexityException` past either: the second string of
+   `/^(?:b|a{400})$/` took 6 seconds to find, `a{2000}` more than two
+   minutes, and every state it remembered stayed in memory as long as the
+   language did.
  * `matchEquivalent()` visits each state once when it checks that nothing
    but the end follows an end anchor: `/$(?:|)(?:|)…/` with thirty empty
    alternations answers at once instead of walking 2^30 paths.

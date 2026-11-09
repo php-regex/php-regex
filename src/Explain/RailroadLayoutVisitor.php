@@ -573,11 +573,11 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
             $offsetY = $baselineY - (int) $layout['entryY'];
 
             $offsetLayout = $this->offsetLayout($layout, $x, $offsetY);
-            $nodes = array_merge($nodes, $offsetLayout['nodes']);
-            $paths = array_merge($paths, $offsetLayout['paths']);
-            $texts = array_merge($texts, $offsetLayout['texts']);
-            $boxes = array_merge($boxes, $offsetLayout['boxes']);
-            $markers = array_merge($markers, $offsetLayout['markers']);
+            array_push($nodes, ...$offsetLayout['nodes']);
+            array_push($paths, ...$offsetLayout['paths']);
+            array_push($texts, ...$offsetLayout['texts']);
+            array_push($boxes, ...$offsetLayout['boxes']);
+            array_push($markers, ...$offsetLayout['markers']);
 
             if (null !== $prevLayout) {
                 $currEntryXAbs = $x + (int) $layout['entryX'];
@@ -644,11 +644,11 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         $bottomY = null;
         foreach ($layouts as $layout) {
             $offsetLayout = $this->offsetLayout($layout, self::BRANCH_GAP, $y);
-            $nodes = array_merge($nodes, $offsetLayout['nodes']);
-            $paths = array_merge($paths, $offsetLayout['paths']);
-            $texts = array_merge($texts, $offsetLayout['texts']);
-            $boxes = array_merge($boxes, $offsetLayout['boxes']);
-            $markers = array_merge($markers, $offsetLayout['markers']);
+            array_push($nodes, ...$offsetLayout['nodes']);
+            array_push($paths, ...$offsetLayout['paths']);
+            array_push($texts, ...$offsetLayout['texts']);
+            array_push($boxes, ...$offsetLayout['boxes']);
+            array_push($markers, ...$offsetLayout['markers']);
 
             $centerY = $y + (int) $layout['entryY'];
             $topY ??= $centerY;
