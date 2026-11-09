@@ -273,6 +273,36 @@ final class CaptureFacts
     }
 
     /**
+     * The values when they stay within the bounds of a value set: at most
+     * MAX_VALUES strings of at most 4,096 bytes each, 65,536 bytes together.
+     * Null past any of them. The analysis checks the values it builds from
+     * other ones, a newline added after each or the branches of a reset
+     * joined, against the same bounds as those it reads.
+     *
+     * @param list<string> $values
+     *
+     * @return list<string>|null
+     */
+    public static function bounded(array $values): ?array
+    {
+        if (\count($values) > self::MAX_VALUES) {
+            return null;
+        }
+
+        $bytes = 0;
+        foreach ($values as $value) {
+            $length = \strlen($value);
+            if ($length > self::MAX_VALUE_BYTES || $length > self::MAX_TOTAL_VALUE_BYTES - $bytes) {
+                return null;
+            }
+
+            $bytes += $length;
+        }
+
+        return $values;
+    }
+
+    /**
      * The strings a node can match, when they are a small finite set read
      * from literals alone.
      *

@@ -107,6 +107,80 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
+     * The value a pinned subject holds is the whole match followed by a
+     * final newline the end anchor lets through: 4,096 bytes and "\n" pass
+     * the 4,096-byte bound, so the subject's values are unknown.
+     * preg_match() matches that subject (PHP 8.4.27, PCRE2 10.49).
+     */
+    #[Test]
+    public function test_a_subject_value_past_the_byte_bound_is_unknown(): void
+    {
+        $pattern = '/^(?:(?:a{32}){32}){4}$/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 4096)."\n"));
+
+        $subject = $this->analyze($pattern)->subject;
+
+        $this->assertInstanceOf(CaptureGroupShape::class, $subject);
+        $this->assertNull($subject->values);
+    }
+
+    /**
+     * 4,095 bytes and "\n" fill the 4,096-byte bound exactly: the subject
+     * keeps both values. preg_match() matches both subjects.
+     */
+    #[Test]
+    public function test_a_subject_value_at_the_byte_bound_is_kept(): void
+    {
+        $pattern = '/^a{31}(?:a{32}){31}(?:(?:a{32}){32}){3}$/';
+        $run = str_repeat('a', 4095);
+        $this->assertSame(1, preg_match($pattern, $run));
+        $this->assertSame(1, preg_match($pattern, $run."\n"));
+
+        $subject = $this->analyze($pattern)->subject;
+
+        $this->assertInstanceOf(CaptureGroupShape::class, $subject);
+        $this->assertSame([$run, $run."\n"], $subject->values);
+    }
+
+    /**
+     * A branch reset joins what each branch writes to the group, and the
+     * join keeps to the bounds of a value set: 32 strings at most, 65,536
+     * bytes together. Sixteen branches of 4,096 bytes fill the byte bound,
+     * a seventeenth passes it; 32 one-letter branches fill the count, a
+     * 33rd passes it. preg_match() captures the last branch's text whole
+     * (PHP 8.4.27, PCRE2 10.49).
+     *
+     * @param list<string> $branches
+     */
+    #[Test]
+    #[DataProvider('provideBranchResetJoins')]
+    public function test_a_branch_reset_join_keeps_to_the_bounds(array $branches, string $last, ?int $count): void
+    {
+        $pattern = '/(?|('.implode(')|(', $branches).'))/';
+        $this->assertSame(1, preg_match($pattern, $last, $matches));
+        $this->assertSame($last, $matches[1]);
+
+        $values = $this->group($pattern, 1)->values;
+
+        $this->assertSame($count, null === $values ? null : \count($values));
+    }
+
+    /**
+     * @return iterable<string, array{branches: list<string>, last: string, count: int|null}>
+     */
+    public static function provideBranchResetJoins(): iterable
+    {
+        $long = static fn (string $letter): string => $letter.'a{31}(?:a{32}){31}(?:(?:a{32}){32}){3}';
+        $letters = [...range('a', 'z'), ...range('A', 'Z')];
+
+        yield 'sixteen long branches at the byte bound' => ['branches' => array_map($long, \array_slice($letters, 0, 16)), 'last' => 'p'.str_repeat('a', 4095), 'count' => 16];
+        yield 'seventeen long branches past the byte bound' => ['branches' => array_map($long, \array_slice($letters, 0, 17)), 'last' => 'q'.str_repeat('a', 4095), 'count' => null];
+        yield 'thirty-two long branches past the byte bound' => ['branches' => array_map($long, \array_slice($letters, 0, 32)), 'last' => 'F'.str_repeat('a', 4095), 'count' => null];
+        yield 'thirty-two letters at the count bound' => ['branches' => \array_slice($letters, 0, 32), 'last' => 'F', 'count' => 32];
+        yield 'thirty-three letters past the count bound' => ['branches' => \array_slice($letters, 0, 33), 'last' => 'G', 'count' => null];
+    }
+
+    /**
      * Six nested {32} spell a value of 32^6 bytes: the engine refuses the
      * pattern as too large, and the analysis, which reads it anyway, gives
      * up on the value instead of spelling it.
