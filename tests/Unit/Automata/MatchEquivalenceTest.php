@@ -165,6 +165,9 @@ final class MatchEquivalenceTest extends TestCase
         // Only thirty splits, but walking each path separately visits over
         // a billion continuations before the comparison budget even starts.
         $pattern = '/$'.str_repeat('(?:|)', 30).'/';
+        foreach (self::subjects("a\n", 3) as $subject) {
+            $this->assertSame(self::matchesOf('/$/', $subject), self::matchesOf($pattern, $subject), \sprintf('The engine tells them apart on %s.', json_encode($subject)));
+        }
 
         $this->assertTrue((new LanguageSolver())->matchEquivalent($pattern, '/$/')->isEquivalent);
     }
