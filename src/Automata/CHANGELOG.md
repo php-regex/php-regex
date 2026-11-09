@@ -12,6 +12,9 @@ CHANGELOG
    `/^(?:b|a{400})$/` took 6 seconds to find, `a{2000}` more than two
    minutes, and every state it remembered stayed in memory as long as the
    language did.
+ * `matchEquivalent()` visits each state once when it checks that nothing
+   but the end follows an end anchor: `/$(?:|)(?:|)…/` with thirty empty
+   alternations answers at once instead of walking 2^30 paths.
  * `TrivialMatchClassifier::classify()` stops at 5,000 bytes, as
    `matchedLiteral()` does, while it combines the strings of a sequence: a
    pattern of twenty nested `(?:…){4}` around `a`, 4^20 bytes spelled out, no
