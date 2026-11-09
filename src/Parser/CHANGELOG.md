@@ -11,6 +11,9 @@ CHANGELOG
    the previous one twice no longer takes time that doubles with each
    group. A call followed past 1024 nested calls, or a pattern past 100,000
    measured nodes, reads as unbounded from zero there.
+ * `RegexParser::tokenize()`, and `Regex::tokenize()` through it, hold the
+   regex to `max_pattern_length` as `parse()` does, and throw a
+   `ResourceLimitException` past it: they lexed a pattern of any length.
  * The mark `PatternPrinter` stands in for a bracket until the text is known
    keeps a fixed length, at most nineteen bytes on a 64-bit build: a comment
    holding twenty thousand of its bytes no longer lengthens it to as many, and
