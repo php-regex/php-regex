@@ -16,9 +16,11 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 use Illuminate\Support\Facades\Artisan;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\Newlines;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\Console\Output\BufferedOutput;
 
 /**
  * The security warning of "regex:explain" names the verdict as every other
@@ -26,6 +28,52 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class ExplainCommandRedosTest extends LaravelTestCase
 {
+    /**
+     * @param list<string> $sections the labels the fixture brings into the report
+     */
+    #[Test]
+    #[DataProvider('provideHtmlPatterns')]
+    public function test_html_output_encodes_pattern_derived_text(string $pattern, int $status, array $sections): void
+    {
+        $this->assertSame(0 === $status, EngineProbe::compiles($pattern));
+
+        foreach ([false, true] as $decorated) {
+            foreach ([false, true] as $highlight) {
+                $output = new BufferedOutput(decorated: $decorated);
+                $this->assertSame($status, Artisan::call('regex:explain', [
+                    'pattern' => $pattern,
+                    '--format' => 'html',
+                    '--highlight' => $highlight,
+                ], $output));
+                $html = $output->fetch();
+
+                $this->assertStringNotContainsString('<img', $html);
+                $this->assertStringContainsString('&lt;img', $html);
+                foreach ($sections as $section) {
+                    $this->assertStringContainsString($section, $html);
+                }
+                if (0 === $status) {
+                    $this->assertStringContainsString(htmlspecialchars($pattern, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'), $html);
+                    $this->assertStringContainsString('<div class="regex-explain">', $html);
+                }
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, status: int, sections: list<string>}>
+     */
+    public static function provideHtmlPatterns(): iterable
+    {
+        yield 'literal and sample' => ['pattern' => '#<img src=x onerror=alert`1`>&"#', 'status' => 0, 'sections' => ['Sample Match:']];
+        // The optimizer writes [0-9] as \d, so the suggestion quotes the pattern twice.
+        yield 'optimization' => ['pattern' => '#<img src=x onerror=alert`1`>[0-9]#', 'status' => 0, 'sections' => ['Optimization Suggestion:', '&lt;img src=x onerror=alert`1`&gt;\\d']];
+        yield 'security warning' => ['pattern' => '#(<img src=x onerror=alert`1`>)(a+)+$#', 'status' => 0, 'sections' => ['Security Warning:']];
+        // The vulnerable part quotes the tag the loop repeats.
+        yield 'a tag in the vulnerable part' => ['pattern' => '#(<img>|<img>)+$#', 'status' => 0, 'sections' => ['Vulnerable part: ', '&lt;img&gt;|&lt;img&gt;']];
+        yield 'invalid pattern diagnostic' => ['pattern' => '#<img src=x onerror=alert`1`>[#', 'status' => 1, 'sections' => ['Invalid regex pattern:']];
+    }
+
     #[Test]
     public function test_explain_prints_the_pattern_and_the_vulnerable_part_literally(): void
     {
