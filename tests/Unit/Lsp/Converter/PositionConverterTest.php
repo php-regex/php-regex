@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lsp\Converter;
 
 use PHPRegex\LanguageServer\Converter\PositionConverter;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -224,6 +225,32 @@ final class PositionConverterTest extends TestCase
                 $this->assertSame(PositionConverter::positionIn($content, $offset), $converter->offsetToPosition($offset), "Offset $offset");
             }
         }
+    }
+
+    /**
+     * A block boundary that splits a code point moves back to its first
+     * byte, a continuation byte being 0x80 to 0xBF: here the boundary falls
+     * on the last byte of "\u{FF}" (C3 BF), then on the last byte of "€"
+     * (E2 82 AC), on a line that ends in ASCII so that every offset past
+     * the boundary reads valid text.
+     */
+    #[Test]
+    #[DataProvider('provideSplitCodePoints')]
+    public function test_a_block_boundary_inside_a_code_point_moves_to_its_start(string $content): void
+    {
+        $converter = new PositionConverter($content);
+        for ($offset = 0; $offset <= \strlen($content); $offset++) {
+            $this->assertSame(PositionConverter::positionIn($content, $offset), $converter->offsetToPosition($offset), "Offset $offset");
+        }
+    }
+
+    /**
+     * @return iterable<string, array{content: string}>
+     */
+    public static function provideSplitCodePoints(): iterable
+    {
+        yield 'a two-byte code point ending in 0xBF' => ['content' => str_repeat('é', 127)."z\u{FF}".str_repeat('z', 300)];
+        yield 'a three-byte code point' => ['content' => str_repeat('é', 127).'€'.str_repeat('z', 300)];
     }
 
     #[Test]

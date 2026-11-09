@@ -155,8 +155,9 @@ final class PositionConverter
         while (\count($checkpoints) <= $block) {
             $end = \count($checkpoints) * self::CHECKPOINT_BYTES;
             // A UTF-8 sequence has at most three continuation bytes. Do not
-            // let malformed runs of continuation bytes make this unbounded.
-            for ($back = 0; $back < 3 && $end > 0; $back++) {
+            // let malformed runs of continuation bytes make this unbounded;
+            // $end starts a whole block in, so three steps back stay in it.
+            for ($back = 0; $back < 3; $back++) {
                 $byte = \ord($this->content[$lineStart + $end] ?? "\0");
                 if ($byte < 0x80 || $byte > 0xBF) {
                     break;
