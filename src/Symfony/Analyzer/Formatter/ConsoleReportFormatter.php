@@ -21,7 +21,6 @@ use PHPRegex\Symfony\Analyzer\ReportSection;
 use PHPRegex\Symfony\Analyzer\SecurityReport;
 use PHPRegex\Symfony\Output\ConsoleWriter;
 use PHPRegex\Toolkit\Regex;
-use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -80,15 +79,15 @@ final class ConsoleReportFormatter
         $this->renderNotices($io, $section->summary);
 
         foreach ($section->issues as $issue) {
-            $io->writeln('  '.$this->badge($issue->severity).' <fg=white>'.$issue->title.'</>');
+            $io->writeln('  '.$this->badge($issue->severity).' <fg=white>'.ConsoleWriter::text($issue->title).'</>');
 
             foreach ($issue->details as $detail) {
                 $value = $this->formatDetailValue($detail);
-                $io->writeln('      <fg=gray>'.self::ARROW_LABEL.' '.$detail->label.':</> '.$value);
+                $io->writeln('      <fg=gray>'.self::ARROW_LABEL.' '.ConsoleWriter::text($detail->label).':</> '.$value);
             }
 
             foreach ($issue->notes as $note) {
-                $io->writeln('      <fg=gray>'.self::ARROW_LABEL.' Note:</> '.$note);
+                $io->writeln('      <fg=gray>'.self::ARROW_LABEL.' Note:</> '.ConsoleWriter::text($note));
             }
 
             $io->newLine();
@@ -97,7 +96,7 @@ final class ConsoleReportFormatter
         if ([] !== $section->suggestions) {
             $this->renderSubsectionHeader($io, 'Suggestions');
             foreach ($section->suggestions as $suggestion) {
-                $io->writeln('  <fg=gray>'.self::ARROW_LABEL.'</> '.$suggestion);
+                $io->writeln('  <fg=gray>'.self::ARROW_LABEL.'</> '.ConsoleWriter::text($suggestion));
             }
             $io->newLine();
         }
@@ -118,7 +117,7 @@ final class ConsoleReportFormatter
         }
 
         foreach ($notices as $notice) {
-            $io->writeln('  '.$this->badge($notice->severity).' <fg=white>'.$notice->message.'</>');
+            $io->writeln('  '.$this->badge($notice->severity).' <fg=white>'.ConsoleWriter::text($notice->message).'</>');
         }
 
         $io->newLine();
@@ -159,17 +158,17 @@ final class ConsoleReportFormatter
             'example' => ConsoleWriter::example($detail->value),
             'pattern' => ConsoleWriter::pattern($detail->value),
             // Text rows carry user input (paths, attacks): never console markup.
-            default => OutputFormatter::escape($detail->value),
+            default => ConsoleWriter::text($detail->value),
         };
     }
 
     private function renderSectionHeader(SymfonyStyle $io, string $title): void
     {
-        $io->writeln(\sprintf(self::SECTION_BADGE, $title));
+        $io->writeln(\sprintf(self::SECTION_BADGE, ConsoleWriter::text($title)));
     }
 
     private function renderSubsectionHeader(SymfonyStyle $io, string $title): void
     {
-        $io->writeln(\sprintf(self::SUBSECTION_BADGE, $title));
+        $io->writeln(\sprintf(self::SUBSECTION_BADGE, ConsoleWriter::text($title)));
     }
 }

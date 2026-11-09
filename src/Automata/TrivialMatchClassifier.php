@@ -62,7 +62,7 @@ final class TrivialMatchClassifier
     private const MAX_LITERALS = 16;
 
     /**
-     * The longest literal matchedLiteral() builds: past it, the solver's
+     * The longest literal either entry point builds: past it, the solver's
      * default budget (one NFA state per byte, 5000 states) cannot prove it
      * anyway, and a nested repetition such as "(?:a{1000}){1000}" would
      * otherwise be spelled out in memory first.
@@ -395,6 +395,9 @@ final class TrivialMatchClassifier
             $next = [];
             foreach ($strings as $prefix) {
                 foreach ($part as $suffix) {
+                    if (\strlen($prefix) + \strlen($suffix) > self::MAX_LITERAL_BYTES) {
+                        return null;
+                    }
                     $next[] = $prefix.$suffix;
                 }
             }
