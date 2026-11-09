@@ -78,6 +78,29 @@ final class SampleGeneratorLimitTest extends TestCase
         $this->assertSame([''], $within([str_repeat('a', 1_048_577)], []));
     }
 
+    /**
+     * A lookahead's text laid over what follows it is counted in
+     * characters under "u" but judged in bytes: 524,288 "é" over 524,289
+     * "a" leaves one "a" past them, 1,048,577 bytes. That layout is skipped
+     * like any other past the limit; it ends nothing, and the next draw is
+     * tried.
+     */
+    public function test_a_lookahead_laid_over_its_text_is_judged_in_bytes(): void
+    {
+        $generator = new SampleGenerator();
+        RegexParser::create(['cache' => null])->parse('/a/u')->accept($generator);
+        $ahead = str_repeat('é', 524_288);
+        $rest = str_repeat('a', 524_289);
+
+        $overlay = (new \ReflectionMethod($generator, 'overlay'))->invoke($generator, $ahead, $rest);
+        $this->assertSame([$ahead, 'a'], $overlay);
+        $this->assertIsArray($overlay);
+
+        $within = (new \ReflectionMethod(SampleGenerator::class, 'within'))->invoke(null, [$rest], $overlay);
+        $this->assertInstanceOf(\Generator::class, $within);
+        $this->assertSame([$rest], iterator_to_array($within, false));
+    }
+
     public function test_exact_byte_limit_is_allowed(): void
     {
         $pattern = '/'.self::doublingChain(19).'a/';

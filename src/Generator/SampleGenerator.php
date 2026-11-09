@@ -1104,15 +1104,15 @@ final class SampleGenerator extends AbstractNodeVisitor
 
                     // The rest alone again, read with the groups it defines: a
                     // call in the lookahead may name one of them.
-                    $laidOver = $this->concatenate($ahead, $this->textFrom($rest, $this->textLength($ahead)));
-                    foreach (self::within([$rest], [$laidOver], [$ahead, $rest], [$rest, $ahead]) as $candidate) {
+                    $laidOver = $this->overlay($ahead, $rest);
+                    foreach (self::within([$rest], $laidOver, [$ahead, $rest], [$rest, $ahead]) as $candidate) {
                         if ($this->holds($left, $candidate, '\\A', '')) {
                             return $this->concatenate($text, $candidate);
                         }
                     }
                 } while ($this->lookaheadDraws++ < self::MAX_LOOKAHEAD_DRAWS);
 
-                return $this->concatenate($text, $laidOver);
+                return $this->concatenate($text, ...$laidOver);
             }
 
             // "(*ACCEPT)" ends what it stands in: what follows it is not read.
@@ -1344,6 +1344,18 @@ final class SampleGenerator extends AbstractNodeVisitor
         $this->caseless = (str_contains($on, 'i') || $this->caseless) && !str_contains($off, 'i');
         $this->dotAll = (str_contains($on, 's') || $this->dotAll) && !str_contains($off, 's');
         $this->dollarEndsLine = (str_contains($on, 'm') || $this->dollarEndsLine) && !str_contains($off, 'm');
+    }
+
+    /**
+     * The lookahead's text laid over what follows it, as its two parts: the
+     * text, then what follows past as many characters. It is judged against
+     * the limit in bytes where it is joined.
+     *
+     * @return array{string, string}
+     */
+    private function overlay(string $ahead, string $rest): array
+    {
+        return [$ahead, $this->textFrom($rest, $this->textLength($ahead))];
     }
 
     private function textLength(string $text): int
