@@ -26,3 +26,5 @@ include it.
  * Mutants the engine refuses, mutants whose backtracking the ReDoS
    analysis proves exponential where the original's is not, and mutants alike another one already
    produced are left out.
+ * The replay runs a call only on subjects a hint can hold, 120 bytes: a longer
+   one was run on both patterns and then written into no hint.

@@ -74,7 +74,8 @@ final class CallReplay
 
     /**
      * Whether the two patterns answer the call differently on the subject,
-     * both answering.
+     * both answering. A subject longer than a hint holds is not run: it
+     * would be written into none.
      */
     public function differs(PatternCall $call, string $original, string $mutant, string $subject): bool
     {
