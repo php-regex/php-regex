@@ -188,6 +188,24 @@ final class ClassSetStoreTest extends TestCase
     }
 
     /**
+     * A directory made by an earlier save, or by another process, is not
+     * made again: the next answer is added to it.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_answers_are_added_to_a_directory_already_made(): void
+    {
+        $store = new ClassSetStore($this->root);
+        mkdir($store->directory(), 0o700, true);
+
+        $store->save('u|:\\p{Han}', ['set' => CharSet::single(0x41)]);
+        $store->save('u|:\\p{Greek}', ['set' => CharSet::single(0x42)]);
+
+        $this->assertCount(2, self::files($this->root));
+        $this->assertEquals(['set' => CharSet::single(0x41)], $store->load('u|:\\p{Han}'));
+    }
+
+    /**
      * The directory is judged again once made: one that turns out to be
      * another user's, as when another process made it first, is not
      * written into.

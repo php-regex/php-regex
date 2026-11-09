@@ -103,7 +103,17 @@ final class ClassSetStore
      */
     public function save(string $key, array $sets): void
     {
-        if (!$this->isTrusted() || (!is_dir($this->directory) && !@mkdir($this->directory, 0o700, true) && !is_dir($this->directory)) || !$this->isTrusted()) {
+        if (!$this->isTrusted()) {
+            return;
+        }
+
+        // A directory that cannot be made keeps nothing, this time.
+        if (!is_dir($this->directory) && !@mkdir($this->directory, 0o700, true)) {
+            return;
+        }
+
+        // Judged again once made: another process may have made it first.
+        if (!$this->isTrusted()) {
             return;
         }
 
