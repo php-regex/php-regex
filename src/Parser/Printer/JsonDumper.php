@@ -101,8 +101,8 @@ final class JsonDumper extends AbstractNodeVisitor
                 'pattern' => $node->pattern->accept($this),
             ];
         } finally {
+            // The budget is reset where each export starts.
             $this->groups = null;
-            $this->referenceTargets = 0;
         }
     }
 

@@ -22,6 +22,7 @@ use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Parser\Printer\JsonDumper;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\VersionCondition;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\JsonSchemaSubsetValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -69,6 +70,37 @@ final class JsonDumperTest extends TestCase
         yield 'named backreferences' => ['reference' => '\\k<n>'];
         yield 'named conditions' => ['reference' => '(?(n)a|b)'];
         yield 'references across nested nodes' => ['reference' => '(?:\\k<n>)'];
+    }
+
+    /**
+     * One target past the limit: 100,000 from the named references, one
+     * more from a group of its own.
+     */
+    #[Test]
+    public function test_reference_budget_refuses_one_target_past_the_limit(): void
+    {
+        $pattern = '/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 100).'(?<m>b)\\k<m>/J';
+        $this->assertTrue(EngineProbe::compiles($pattern));
+        $tree = RegexParser::create(['cache' => null])->parse($pattern);
+
+        $this->expectException(ResourceLimitException::class);
+        $tree->accept(new JsonDumper());
+    }
+
+    /**
+     * A branch reset numbers 1,001 captures 1: each "\1" resolves all of
+     * them, and the budget counts them before duplicates are dropped,
+     * 100,100 targets for 100 references.
+     */
+    #[Test]
+    public function test_reference_budget_counts_targets_a_branch_reset_numbers_alike(): void
+    {
+        $pattern = '/(?|'.str_repeat('(a)|', 1000).'(a))'.str_repeat('\\1', 100).'/';
+        $this->assertTrue(EngineProbe::compiles($pattern));
+        $tree = RegexParser::create(['cache' => null])->parse($pattern);
+
+        $this->expectException(ResourceLimitException::class);
+        $tree->accept(new JsonDumper());
     }
 
     #[Test]
