@@ -106,6 +106,23 @@ final class SampleGeneratorLimitTest extends TestCase
     }
 
     /**
+     * A sample that must not end the subject, and must start it, matches
+     * only with padding after it: "b" then "a".
+     */
+    #[Test]
+    public function test_padding_after_a_sample_is_tried(): void
+    {
+        $pattern = '/\\Ab(?!\\z)/';
+        $this->assertSame(0, preg_match($pattern, 'b'));
+        $this->assertSame(0, preg_match($pattern, 'ab'));
+        $this->assertSame(1, preg_match($pattern, 'ba'));
+
+        foreach ([1, 2, 3, 4] as $seed) {
+            $this->assertSame('ba', (new SampleGenerator(seed: $seed))->generate($pattern), 'seed '.$seed);
+        }
+    }
+
+    /**
      * A lookahead whose text the drawn rest does not start with is laid
      * over it: "ab" over "a." gives "ab", tried before the layouts that
      * put one after the other ("abac").
