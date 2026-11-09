@@ -99,6 +99,10 @@ final class VerbNamesTest extends TestCase
         $this->assertTrue(VerbNames::opensCondition([$opener, $callout], 7));
         $this->assertFalse(VerbNames::opensCondition([$opener], 3));
         $this->assertFalse(VerbNames::opensCondition([], 0));
+        $comment = new Token(TokenType::CommentOpen, '(?#x)', 7, 5);
+        $this->assertTrue(VerbNames::opensCondition([$opener, $callout, $comment], 7, 1));
+        $this->assertTrue(VerbNames::opensCondition([$opener, $callout], 2, 0));
+        $this->assertFalse(VerbNames::opensCondition([$opener], 0, -1));
         $this->assertFalse(VerbNames::opensCondition([new Token(TokenType::GroupOpen, '(', 0, 1)], 1));
     }
 
