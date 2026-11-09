@@ -56,6 +56,36 @@ final class LineDiffTest extends TestCase
             'new' => ['b', 'a'],
             'expected' => [['type' => 'delete', 'line' => 'a'], ['type' => 'equal', 'line' => 'b'], ['type' => 'insert', 'line' => 'a']],
         ];
+        yield 'a line repeated once more at the end' => [
+            'old' => ['a'],
+            'new' => ['a', 'a'],
+            'expected' => [['type' => 'equal', 'line' => 'a'], ['type' => 'insert', 'line' => 'a']],
+        ];
+        yield 'a repeated line dropped at the end' => [
+            'old' => ['a', 'a'],
+            'new' => ['a'],
+            'expected' => [['type' => 'equal', 'line' => 'a'], ['type' => 'delete', 'line' => 'a']],
+        ];
+        yield 'a run kept from the first old line' => [
+            'old' => ['b', 'b', 'c'],
+            'new' => ['c', 'b', 'b', 'a'],
+            'expected' => [['type' => 'insert', 'line' => 'c'], ['type' => 'equal', 'line' => 'b'], ['type' => 'equal', 'line' => 'b'], ['type' => 'delete', 'line' => 'c'], ['type' => 'insert', 'line' => 'a']],
+        ];
+        yield 'a run kept up to the last new line' => [
+            'old' => ['b', 'b', 'a', 'b', 'a'],
+            'new' => ['c', 'b', 'a', 'c', 'b'],
+            'expected' => [['type' => 'delete', 'line' => 'b'], ['type' => 'insert', 'line' => 'c'], ['type' => 'equal', 'line' => 'b'], ['type' => 'equal', 'line' => 'a'], ['type' => 'insert', 'line' => 'c'], ['type' => 'equal', 'line' => 'b'], ['type' => 'delete', 'line' => 'a']],
+        ];
+        yield 'a match read from the cell before it' => [
+            'old' => ['b', 'a', 'c', 'b', 'c'],
+            'new' => ['a', 'b', 'b'],
+            'expected' => [['type' => 'delete', 'line' => 'b'], ['type' => 'equal', 'line' => 'a'], ['type' => 'delete', 'line' => 'c'], ['type' => 'equal', 'line' => 'b'], ['type' => 'delete', 'line' => 'c'], ['type' => 'insert', 'line' => 'b']],
+        ];
+        yield 'a miss read from the cell to its left' => [
+            'old' => ['b', 'b', 'a', 'b'],
+            'new' => ['a', 'b', 'c', 'a'],
+            'expected' => [['type' => 'delete', 'line' => 'b'], ['type' => 'delete', 'line' => 'b'], ['type' => 'equal', 'line' => 'a'], ['type' => 'equal', 'line' => 'b'], ['type' => 'insert', 'line' => 'c'], ['type' => 'insert', 'line' => 'a']],
+        ];
         yield 'an insert at the end' => [
             'old' => ['a'],
             'new' => ['a', 'b'],
