@@ -11,6 +11,7 @@ CHANGELOG
    as `/((?:(?:(?:(?:(?:a{32}){32}){32}){32}){32}){32})/` no longer spell a
    gigabyte value, and two thousand calls to a group of long values no longer
    build every call's values before the first product past the bound.
+   `CaptureShapeAnalyzer::ANALYSIS_VERSION` is `'20'`.
  * Outside Windows, the AST file cache and the class-set store no longer read
    write or clear an existing directory whose owner they cannot check, as when
    `ext-posix` is missing or `posix_geteuid()` is disabled: another user's
