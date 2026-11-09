@@ -1390,10 +1390,6 @@ final class SampleGenerator extends AbstractNodeVisitor
     }
 
     /**
-     * Check the byte budget before allocating a combined sample. Captures
-     * and references can grow exponentially even without a quantifier.
-     */
-    /**
      * Each layout joined, in order, where it fits the limit: one past it is
      * skipped, and built only when the one before it was tried.
      *
@@ -1415,6 +1411,10 @@ final class SampleGenerator extends AbstractNodeVisitor
         }
     }
 
+    /**
+     * Check the byte budget before allocating a combined sample. Captures
+     * and references can grow exponentially even without a quantifier.
+     */
     private function concatenate(string ...$parts): string
     {
         $remaining = self::MAX_SAMPLE_LENGTH;

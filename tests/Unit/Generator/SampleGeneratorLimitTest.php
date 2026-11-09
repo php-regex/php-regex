@@ -21,6 +21,7 @@ use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorLimitTest extends TestCase
@@ -29,6 +30,7 @@ final class SampleGeneratorLimitTest extends TestCase
     use PhpUnitForwardCompat;
 
     #[DataProvider('provideEntryPoints')]
+    #[Test]
     public function test_capture_doubling_is_rejected(string $entry): void
     {
         $pattern = '/'.self::doublingChain(21).'/';
@@ -60,6 +62,7 @@ final class SampleGeneratorLimitTest extends TestCase
      * is still tried. With an unmatched attempt of 1,048,575 bytes,
      * "attempt.padding" fits where "padding.attempt.padding" does not.
      */
+    #[Test]
     public function test_layouts_past_the_limit_are_skipped_not_refused(): void
     {
         $method = new \ReflectionMethod(SampleGenerator::class, 'within');
@@ -85,6 +88,7 @@ final class SampleGeneratorLimitTest extends TestCase
      * like any other past the limit; it ends nothing, and the next draw is
      * tried.
      */
+    #[Test]
     public function test_a_lookahead_laid_over_its_text_is_judged_in_bytes(): void
     {
         $generator = new SampleGenerator();
@@ -101,6 +105,7 @@ final class SampleGeneratorLimitTest extends TestCase
         $this->assertSame([$rest], iterator_to_array($within, false));
     }
 
+    #[Test]
     public function test_exact_byte_limit_is_allowed(): void
     {
         $pattern = '/'.self::doublingChain(19).'a/';
@@ -110,6 +115,7 @@ final class SampleGeneratorLimitTest extends TestCase
         $this->assertSame(1, preg_match($pattern, $sample));
     }
 
+    #[Test]
     public function test_one_byte_over_limit_is_rejected_even_before_accept(): void
     {
         $pattern = '/'.self::doublingChain(19).'aa(*ACCEPT)/';
@@ -119,6 +125,7 @@ final class SampleGeneratorLimitTest extends TestCase
         RegexParser::create()->parse($pattern)->accept(new SampleGenerator());
     }
 
+    #[Test]
     public function test_oversized_intermediate_lookahead_is_rejected(): void
     {
         $pattern = '/(?='.self::doublingChain(21).')(*ACCEPT)/';
@@ -128,6 +135,7 @@ final class SampleGeneratorLimitTest extends TestCase
         RegexParser::create()->parse($pattern)->accept(new SampleGenerator());
     }
 
+    #[Test]
     public function test_limit_counts_bytes_in_utf_mode(): void
     {
         $pattern = '/'.str_replace('(a)', '(é)', self::doublingChain(19)).'/u';
@@ -141,6 +149,7 @@ final class SampleGeneratorLimitTest extends TestCase
      * The draw "b" stands at the start, where "(?<!^)" fails: only text put
      * before it gives a match, as PCRE reads "ab" (not "ba" nor "aba").
      */
+    #[Test]
     public function test_a_draw_is_padded_before_when_only_text_before_it_matches(): void
     {
         $this->assertSame([0, 1, 0, 0], [preg_match('/(?<!^)b\z/', 'b'), preg_match('/(?<!^)b\z/', 'ab'), preg_match('/(?<!^)b\z/', 'ba'), preg_match('/(?<!^)b\z/', 'aba')]);
@@ -156,6 +165,7 @@ final class SampleGeneratorLimitTest extends TestCase
      * @param list<string> $samples
      */
     #[DataProvider('provideScannedGroups')]
+    #[Test]
     public function test_a_scanned_group_is_fitted_by_the_visitor(string $pattern, array $samples): void
     {
         $this->requiresPcre2('10.45', 'A substring scan');
@@ -168,6 +178,9 @@ final class SampleGeneratorLimitTest extends TestCase
         }
 
         $this->assertSame($samples, $drawn);
+        foreach ($drawn as $sample) {
+            $this->assertSame(1, preg_match($pattern, $sample), $sample);
+        }
     }
 
     /**
