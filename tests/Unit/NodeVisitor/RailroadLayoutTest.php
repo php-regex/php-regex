@@ -86,7 +86,7 @@ final class RailroadLayoutTest extends TestCase
                 ? new AlternationNode($children, 0, $count)
                 : new SequenceNode($children, 0, $count);
             $tree->accept(new RailroadLayoutVisitor());
-        }, 8000, $alternation ? 'An alternation of dots' : 'A sequence of dots', 8.0);
+        }, 8000, $alternation ? 'An alternation of dots' : 'A sequence of dots');
     }
 
     #[Test]
@@ -128,6 +128,33 @@ final class RailroadLayoutTest extends TestCase
         $this->assertSame($texts, array_map(static fn (array $text): string => $text['class'].': '.$text['text'], $layout['texts']));
         $this->assertSame($boxes, array_column($layout['boxes'], 'class'));
         $this->assertCount($paths, $layout['paths']);
+    }
+
+    /**
+     * A composed layout keeps the markers of its children, moved with them:
+     * a whole diagram, its two terminals included, laid out twice in a row
+     * or one above the other, keeps all four.
+     */
+    #[Test]
+    #[DataProvider('provideCompositions')]
+    public function test_composition_keeps_the_markers_of_its_children(string $method): void
+    {
+        $visitor = new RailroadLayoutVisitor();
+        $diagram = RegexParser::create(['cache' => null])->parse('/a/')->accept($visitor);
+        $this->assertCount(2, $diagram['markers']);
+
+        $layout = (new \ReflectionMethod(RailroadLayoutVisitor::class, $method))->invoke($visitor, [$diagram, $diagram]);
+
+        $this->assertSame(['terminal start', 'terminal end', 'terminal start', 'terminal end'], array_column($layout['markers'], 'class'));
+    }
+
+    /**
+     * @return iterable<string, array{method: string}>
+     */
+    public static function provideCompositions(): iterable
+    {
+        yield 'a sequence' => ['method' => 'layoutSequence'];
+        yield 'an alternation' => ['method' => 'layoutAlternation'];
     }
 
     /**
