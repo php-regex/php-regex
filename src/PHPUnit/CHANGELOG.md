@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * Each value a failure message quotes, the pattern, the subject or a
+   capture, is cut at 256 values, eight levels deep and 8,192 bytes, between
+   characters and ended with `…`: a large or shared array subject no longer
+   exhausts memory while the message is written.
  * Four assertions: `assertPatternMatches()` runs one guarded match attempt
    and judges a capture expectation against the pattern's own groups,
    `assertPatternDoesNotMatch()` asserts no match, `assertPatternCompiles()`
