@@ -10,6 +10,9 @@ CHANGELOG
    counted before duplicates are dropped, and throws `ResourceLimitException`
    (`regex.complexity`) past them: a pattern that names one group many times,
    under `(?J)`, no longer expands to hundreds of megabytes.
+ * `RegexParser::tokenize()`, and `Regex::tokenize()` through it, hold the
+   regex to `max_pattern_length` as `parse()` does, and throw a
+   `ResourceLimitException` past it: they lexed a pattern of any length.
  * The mark `PatternPrinter` stands in for a bracket until the text is known
    keeps a fixed length, at most nineteen bytes on a 64-bit build: a comment
    holding twenty thousand of its bytes no longer lengthens it to as many, and

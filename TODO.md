@@ -245,6 +245,13 @@ as `CallTypes::quote` does.
   are kept. Teaching `PatternLayout::finishLines()` where a comment starts
   on a line would keep them as written.
 
+- `JsonFatalErrorTest::test_fatal_error_in_json_mode_prints_the_internal_envelope`
+  exits 255 instead of 1 on a slow Windows runner (PHP 8.5, 2026-11-09, on
+  #271, which does not touch the CLI): the one-second `--time-limit` runs out
+  again inside the shutdown handler of `bin/regex`, which then never writes
+  the JSON envelope. Give the handler room (reset the limit in it) or bound
+  the work instead of the clock.
+
 - Five real costs whose proposed bound refuses legitimate input, each
   answered in its pull request with the fix that keeps the answers: the
   ReDoS repair tries every quantifier (#249; try the ones the analysis
