@@ -562,7 +562,9 @@ alphabet for every state: a Unicode class such as `\pL` splits the alphabet
 into hundreds of ranges, so a pattern with a few hundred states reaches the
 budget, and the memory its table would take stays bounded. The bodies of
 lookarounds are compiled to automata of their own, and the budget bounds their
-determinization and minimization as well.
+determinization and minimization as well: each of these steps gets the whole
+budget, so it bounds each body, not their sum. `/(?=[ab]*a[ab]{3})/` needs a
+budget of 180, and so does `/(?=[ab]*a[ab]{3})(?=[ab]*b[ab]{3})/`.
 
 ```php
 use PHPRegex\Automata\LanguageSolver;

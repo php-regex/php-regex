@@ -60,6 +60,31 @@ final class WorkBudgetTest extends TestCase
     }
 
     /**
+     * Each lookaround body is determinized under the whole budget: two
+     * bodies that each need 180 transitions compile under 180, as one does.
+     */
+    #[Test]
+    #[DataProvider('provideLookaroundBodies')]
+    public function test_each_lookaround_body_gets_the_whole_budget(string $pattern): void
+    {
+        $this->assertSame(1, preg_match($pattern, 'abaaa'));
+
+        (new LanguageSolver())->compile($pattern, new SolverOptions(maxTransitionsProcessed: 180));
+
+        $this->expectException(ComplexityException::class);
+        (new LanguageSolver())->compile($pattern, new SolverOptions(maxTransitionsProcessed: 179));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideLookaroundBodies(): iterable
+    {
+        yield 'one body' => ['pattern' => '/(?=[ab]*a[ab]{3})/'];
+        yield 'two bodies' => ['pattern' => '/(?=[ab]*a[ab]{3})(?=[ab]*b[ab]{3})/'];
+    }
+
+    /**
      * Each state of the DFA writes a transition per range of the alphabet,
      * and \pL splits the Unicode alphabet into hundreds of ranges: the
      * table, not the moves of the NFA, is where the work and the memory go.
