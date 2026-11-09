@@ -11,7 +11,8 @@ CHANGELOG
    calls doubled level after level behind a branch reset are refused as
    `regex.lookbehind.too_complex` in milliseconds, as PCRE refuses them, instead
    of being expanded for close to a minute. A pattern PCRE compiles measures 2,001
-   branches at most, so `PatternInfo::maxLookbehind` reads as before.
+   branches at most, so `PatternInfo::maxLookbehind` reads as before; on the tree
+   of a pattern PCRE refuses, `analyze()` counts no lookbehind past that walk.
  * `PcreEngine` runs nothing where `ini_set()` refuses a limit the call asks
    for, as where `ini_set()` is disabled, and puts back a limit it already
    changed: the call no longer runs under a higher limit fixed by

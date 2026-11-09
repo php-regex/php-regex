@@ -22,6 +22,7 @@ use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\NewlineConvention;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -1213,6 +1214,37 @@ final class PatternInfoAnalyzerTest extends TestCase
 
         $this->assertTrue($info->alwaysMatches);
         $this->assertTrue($info->alwaysMatchesFromAnyOffset);
+    }
+
+    /**
+     * A thousand lookbehinds calling a group of fifty branches: PCRE
+     * compiles it, and every lookbehind counts, the last one included.
+     */
+    #[Test]
+    public function test_max_lookbehind_counts_every_lookbehind_of_a_pattern_pcre_compiles(): void
+    {
+        $regex = '/('.implode('|', array_map(static fn (int $length): string => str_repeat('a', $length), range(1, 50))).')'.str_repeat('(?<=(?1))', 1000).'(?<='.str_repeat('b', 61).')/';
+        $this->assertSame(0, preg_match($regex, ''));
+
+        $this->assertSame(61, PatternInfoAnalyzer::analyzePattern(RegexParser::create(['cache' => null]), $regex)->maxLookbehind);
+    }
+
+    /**
+     * Past 2,001 branches measured PCRE gives up on the lookbehinds, and so
+     * does the library: such a pattern has no facts.
+     */
+    #[Test]
+    public function test_a_pattern_whose_lookbehinds_pcre_gives_up_on_has_no_facts(): void
+    {
+        $regex = '/'.str_repeat('(?<=a)', 10_000).'(?<=ab)/';
+        $this->assertStringContainsString('lookbehind is too complicated', (string) EngineProbe::warning($regex));
+
+        try {
+            PatternInfoAnalyzer::analyzePattern(RegexParser::create(['cache' => null]), $regex);
+            $this->fail('The pattern is refused.');
+        } catch (SemanticErrorException $exception) {
+            $this->assertSame(ErrorCode::LookbehindTooComplex, $exception->errorCode);
+        }
     }
 
     private function info(string $pattern): PatternInfo
