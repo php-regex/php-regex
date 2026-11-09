@@ -212,6 +212,18 @@ as `CallTypes::quote` does.
   the worker pool). Bound what the worker did, not the clock, or give the
   ceiling the margin the macOS runner needs.
 
+- The PCRE2 10.40 that PHP 8.2 bundles reports five patterns of
+  `PatternTooLargeErrorOrderTest` otherwise than the library reads 10.40
+  (`php:8.2-cli` and the Windows PHP 8.2 cell, 2026-11-09, on #271; PHP
+  8.3's 10.42 agrees with the library). `/(?:(?:[^a]){5000}|(?:[^a]){4000}\k<n>(?:[^a]){1000})/`
+  gives "reference to non-existent subpattern at offset 35" there, where the
+  library and the 10.40 fixture give `regex.pattern.too_large` at 52, and
+  `/(?:[^a]){8190}aaa\d|\k<n>/` "regular expression is too large at offset
+  0" where the library gives the reference at 23. The test lists the five
+  with the engine's answer (`PHP_BUNDLED_10_40_DIVERGENCES`). Find what the
+  bundled 10.40 measures otherwise than pcre2test 10.40, read it so for a
+  PHP 8.2 target, and empty the list.
+
 - Five real costs whose proposed bound refuses legitimate input, each
   answered in its pull request with the fix that keeps the answers: the
   ReDoS repair tries every quantifier (#249; try the ones the analysis
