@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The console reports of `regex:routes`, `regex:security` and
+   `regex:analyze` write the text they quote from the configuration in
+   display form: a line break, a tab and a carriage return are `\n`, `\t`
+   and `\r`, another control character `\xHH`,
+   a pattern is spelled in its own mode and a console tag stays text.
+   The JSON report keeps each value as found.
  * `regex:lint` reads the `matches` patterns of the Twig templates under the
    linted paths; `--no-twig` leaves them out.
  * `regex:lint` reads the `Regex` constraints of the validator mapping files
