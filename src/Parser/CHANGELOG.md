@@ -10,10 +10,16 @@ CHANGELOG
    on one line even when it holds a `#` comment, keeping only the line
    break that ends the comment: a hundred nested groups each opening on a
    comment, 1.4 KB under `x`, were laid out as 62 KB, they take 2 KB.
+ * The mark `PatternPrinter` stands in for a bracket until the text is known
+   keeps a fixed length, at most nineteen bytes on a 64-bit build: a comment
+   holding twenty thousand of its bytes no longer lengthens it to as many, and
+   five thousand brackets no longer copy it into 210 MB.
  * Outside Windows, the AST file cache and the class-set store no longer read
    write or clear an existing directory whose owner they cannot check, as when
    `ext-posix` is missing or `posix_geteuid()` is disabled: another user's
    files were trusted there.
+ * There, the class-set store makes no directory and keeps no answer either,
+   and it checks a directory it has just made before writing into it.
  * `PcreEngine` runs nothing where `ini_set()` refuses a limit the call asks
    for, as where `ini_set()` is disabled, and puts back a limit it already
    changed: the call no longer runs under a higher limit fixed by
