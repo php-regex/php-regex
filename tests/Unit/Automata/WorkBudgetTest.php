@@ -47,9 +47,13 @@ final class WorkBudgetTest extends TestCase
         $result = $solver->intersection('/(?:a{11})+/', '/(?:a{13})+/', new SolverOptions(maxDfaStates: 200));
         $this->assertSame($witness, $result->example);
 
-        $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessageIsOrContains('The comparison explored more than 40 pairs of DFA states.');
-        $solver->intersection('/(?:a{11})+/', '/(?:a{13})+/', $options);
+        try {
+            $solver->intersection('/(?:a{11})+/', '/(?:a{13})+/', $options);
+            $this->fail('Expected the comparison to explore more pairs than the limit.');
+        } catch (ComplexityException $exception) {
+            $this->assertStringContainsString('The comparison explored more than 40 pairs of DFA states.', $exception->getMessage());
+            $this->assertSame(['phase' => 'comparison', 'limit' => 40], $exception->getDiagnostic());
+        }
     }
 
     #[Test]
