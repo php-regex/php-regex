@@ -13,6 +13,14 @@ CHANGELOG
    one), and two thousand calls to a group of long values no longer
    build every call's values before the first product past the bound.
    `CaptureShapeAnalyzer::ANALYSIS_VERSION` is `'20'`.
+ * `PatternFormatter` keeps the rest of a construct past ten indent levels
+   on one line even when it holds a `#` comment, keeping only the line
+   break that ends the comment: a hundred nested groups each opening on a
+   comment, 1.4 KB under `x`, were laid out as 62 KB, they take 2 KB.
+ * `JsonDumper` resolves at most 100,000 reference targets in one document,
+   counted before duplicates are dropped, and throws `ResourceLimitException`
+   (`regex.complexity`) past them: a pattern that names one group many times,
+   under `(?J)`, no longer expands to hundreds of megabytes.
  * `LengthRangeCalculator` measures each node once per pattern, so a body
    that several calls share is read once: a pattern whose groups each call
    the previous one twice no longer takes time that doubles with each
