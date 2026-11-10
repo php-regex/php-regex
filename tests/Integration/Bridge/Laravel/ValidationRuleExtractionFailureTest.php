@@ -353,9 +353,8 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
     {
         $best = \PHP_FLOAT_MAX;
         for ($run = 0; $run < 3; $run++) {
-            $start = CpuClock::nanoseconds();
-            $found = self::extracted($directory);
-            $best = min($best, (CpuClock::nanoseconds() - $start) / 1e9);
+            $found = CpuClock::timed(static fn () => self::extracted($directory), $seconds);
+            $best = min($best, $seconds);
             self::assertSame(['/a/', '/b+/'], $found, 'Both rules are found at every size.');
         }
 

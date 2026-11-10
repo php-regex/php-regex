@@ -764,9 +764,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
     {
         $shape = $this->analyze($pattern);
 
-        $start = CpuClock::nanoseconds();
-        $shape->matchShape($flags);
-        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+        $seconds = CpuClock::time(static function () use ($shape, $flags): void {
+            $shape->matchShape($flags);
+        });
 
         $this->assertLessThan(2.0, $seconds, \sprintf('matchShape(%d) took %.2f s.', $flags, $seconds));
     }
@@ -1443,9 +1443,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $shape = $this->analyze($pattern);
 
         foreach ([\PREG_PATTERN_ORDER, \PREG_SET_ORDER] as $order) {
-            $start = CpuClock::nanoseconds();
-            $shape->matchAllShape($order | $flags);
-            $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+            $seconds = CpuClock::time(static function () use ($shape, $order, $flags): void {
+                $shape->matchAllShape($order | $flags);
+            });
 
             $this->assertLessThan(2.0, $seconds, \sprintf('matchAllShape(%d) took %.2f s.', $order | $flags, $seconds));
         }
@@ -3039,9 +3039,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
     {
         $fastest = \INF;
         for ($run = 0; $run < 3; $run++) {
-            $start = CpuClock::nanoseconds();
-            $analyzer->analyze($regex);
-            $fastest = min($fastest, (CpuClock::nanoseconds() - $start) / 1e9);
+            $fastest = min($fastest, CpuClock::time(static function () use ($analyzer, $regex): void {
+                $analyzer->analyze($regex);
+            }));
         }
 
         return $fastest;
