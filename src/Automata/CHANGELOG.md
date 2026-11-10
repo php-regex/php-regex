@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `rewritesAlikeInPlace()` fills at most 65,536 cells, across all the sites
+   of the two patterns, when it pairs their parts by those both keep, and
+   throws a `ComplexityException` past them: the optimizer keeps a pattern of
+   six thousand optional parts behind a lookbehind as written instead of
+   reaching a peak of nearly 1 GB to prove its rewrite.
  * `matchEquivalent()` counts at every state it adds against `maxNfaStates`,
    and counts building its alphabet against `maxTransitionsProcessed`: a
    literal of fifteen thousand distinct characters under `u` is refused in

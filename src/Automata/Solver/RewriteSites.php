@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata\Solver;
 
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AtomicHir;
 use PHPRegex\Parser\Hir\CaptureHir;
@@ -36,9 +37,18 @@ use PHPRegex\Parser\Hir\RepetitionHir;
 final class RewriteSites
 {
     /**
+     * The cells the alignment tables of one comparison may fill, all of its
+     * sites together.
+     */
+    private const MAX_ALIGNMENT_CELLS = 65_536;
+
+    /**
      * @var list<array{Hir, Hir, bool, bool}>
      */
     private array $sites = [];
+
+    // Bound both retained table cells and total alignment work across sites.
+    private int $alignmentCellsRemaining = self::MAX_ALIGNMENT_CELLS;
 
     private bool $insideLookbehind = false;
 
@@ -179,7 +189,7 @@ final class RewriteSites
             return;
         }
 
-        foreach (self::runsBetweenKeptParts($leftMiddle, $rightMiddle) as [$leftRun, $rightRun]) {
+        foreach ($this->runsBetweenKeptParts($leftMiddle, $rightMiddle) as [$leftRun, $rightRun]) {
             if (\count($leftRun) === \count($rightRun)) {
                 foreach ($leftRun as $index => $part) {
                     $this->compare($part, $rightRun[$index]);
@@ -200,11 +210,17 @@ final class RewriteSites
      *
      * @return list<array{list<Hir>, list<Hir>}>
      */
-    private static function runsBetweenKeptParts(array $left, array $right): array
+    private function runsBetweenKeptParts(array $left, array $right): array
     {
+        [$leftCount, $rightCount] = [\count($left), \count($right)];
+        // Check before shaping or allocating, using division to avoid overflow.
+        if ($leftCount + 1 > intdiv($this->alignmentCellsRemaining, $rightCount + 1)) {
+            throw new ComplexityException(\sprintf('Rewrite alignment cell budget exceeded (%d).', self::MAX_ALIGNMENT_CELLS));
+        }
+        $this->alignmentCellsRemaining -= ($leftCount + 1) * ($rightCount + 1);
+
         $leftShapes = array_map(static fn (Hir $part): string => serialize(self::shape($part)), $left);
         $rightShapes = array_map(static fn (Hir $part): string => serialize(self::shape($part)), $right);
-        [$leftCount, $rightCount] = [\count($left), \count($right)];
 
         // $kept[$i][$j]: how many parts the runs from $i and $j keep alike.
         $kept = array_fill(0, $leftCount + 1, array_fill(0, $rightCount + 1, 0));
