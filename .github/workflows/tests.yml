@@ -52,7 +52,9 @@ jobs:
   tests:
     # Linux on every PHP and both dependency floors; Windows on every PHP
     # with the stable dependencies, the floors being Composer's business,
-    # not the host's; macOS on one. Every cell gates.
+    # not the host's. macOS is engines.yml's, on every PHP from 8.2: its
+    # cells run this same suite with these same dependencies, and a cell
+    # here would run one of them twice. Every cell gates.
     name: Tests (PHP ${{ matrix.php }}, ${{ matrix.dependency }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
@@ -69,7 +71,6 @@ jobs:
           - { os: windows-latest, php: '8.3', dependency: prefer-stable }
           - { os: windows-latest, php: '8.2', dependency: prefer-stable }
           - { os: windows-latest, php: '8.1', dependency: prefer-stable }
-          - { os: macos-latest, php: '8.4', dependency: prefer-stable }
 
     steps:
       - name: Checkout Code
@@ -81,7 +82,7 @@ jobs:
         # The native build of the playground's trace shim, in the
         # documentation tests: it compiles against pcre2-config and the
         # system's cc, and skips itself where either is missing. Linux only;
-        # macOS and Windows keep their hosts as they are.
+        # Windows keeps its host as it is.
         if: runner.os == 'Linux'
         shell: bash
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpcre2-dev pcre2-utils
