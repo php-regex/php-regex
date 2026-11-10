@@ -16,6 +16,7 @@ namespace PHPRegex\Transpiler\Target;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
@@ -25,6 +26,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Transpiler\Exception\TranspileException;
@@ -37,8 +39,9 @@ use PHPRegex\Transpiler\TranspileContext;
  * genuinely share lives here: the context they compile against, how they
  * refuse a construct, the options in force where the printer stands (a
  * pattern's flags, then each "(?flags)" up to the end of its group), the
- * swap of greedy and lazy under /U, a repeated assertion read once, and the
- * spaces PCRE reads under u.
+ * swap of greedy and lazy under /U, a repeated assertion read once, the
+ * spaces PCRE reads under u, and the warning a set gets where PCRE takes a
+ * byte for it and the target a character.
  *
  * @extends AbstractNodeVisitor<string>
  *
@@ -113,6 +116,22 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
      */
     private string $asciiUnderU = '//u';
 
+    /**
+     * The body PCRE reads, delimiters left out.
+     */
+    private string $body = '';
+
+    /**
+     * Whether an inline "(?xx)" holds where the printer stands: PCRE leaves
+     * out the spaces and tabs of a class, which the tree no longer holds.
+     */
+    private bool $extendedMore = false;
+
+    /**
+     * Whether the pattern has its warning on a set that takes a byte.
+     */
+    private bool $warnedOfASet = false;
+
     public function __construct(protected readonly TranspileContext $context) {}
 
     #[\Override]
@@ -166,35 +185,35 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         $this->dollarEndOnly = str_contains($node->flags, 'D');
         $this->unicode = str_contains($node->flags, 'u');
         $this->bodyIsUtf8 = mb_check_encoding($node->source ?? $this->context->sourcePattern, 'UTF-8');
-        $body = $node->source ?? '';
+        $body = $this->body = $node->source ?? '';
         $this->asciiUnderU = $node->delimiter.(LibraryPcre::replace('/[\x80-\xFF]/', 'x', $body) ?? $body).Delimiters::closing($node->delimiter).$node->flags.'u';
     }
 
     /**
      * The options in force, to be restored where a group ends.
      *
-     * @return array{bool, bool, bool, bool}
+     * @return array{bool, bool, bool, bool, bool}
      */
     protected function scope(): array
     {
-        return [$this->caseless, $this->dotAll, $this->multiline, $this->ungreedy];
+        return [$this->caseless, $this->dotAll, $this->multiline, $this->ungreedy, $this->extendedMore];
     }
 
     /**
-     * @param array{bool, bool, bool, bool} $scope
+     * @param array{bool, bool, bool, bool, bool} $scope
      */
     protected function restoreScope(array $scope): void
     {
-        [$this->caseless, $this->dotAll, $this->multiline, $this->ungreedy] = $scope;
+        [$this->caseless, $this->dotAll, $this->multiline, $this->ungreedy, $this->extendedMore] = $scope;
     }
 
     /**
      * Apply an inline "(?flags)" and say whether the target carries every
-     * letter it holds: a leading "^" unsets i, m and s, then the letters
+     * letter it holds: a leading "^" unsets i, m, s and x, then the letters
      * before "-" are set and those after it unset. "x" is applied by the
      * parser, so a target that takes it has nothing left to do; "xx" only
      * goes through where the target says so, and a letter the target does
-     * not list never does.
+     * not list never does. "xx" holds until "x" is set without it or unset.
      *
      * @param string $carried the letters the target can carry
      */
@@ -205,10 +224,11 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         }
 
         if (str_starts_with($flags, '^')) {
-            $this->caseless = $this->dotAll = $this->multiline = false;
+            $this->caseless = $this->dotAll = $this->multiline = $this->extendedMore = false;
         }
 
         [$set, $unset] = explode('-', ltrim($flags, '^').'-', 3);
+        $this->extendedMore = (str_contains($set, 'xx') || ($this->extendedMore && !str_contains($set, 'x'))) && !str_contains($unset, 'x');
         $this->caseless = (str_contains($set, 'i') || $this->caseless) && !str_contains($unset, 'i');
         $this->dotAll = (str_contains($set, 's') || $this->dotAll) && !str_contains($unset, 's');
         $this->multiline = (str_contains($set, 'm') || $this->multiline) && !str_contains($unset, 'm');
@@ -359,6 +379,37 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     }
 
     /**
+     * Warn of a set the printer writes, a dot, a type, a property or a
+     * class with its members, that reaches past ASCII without u, where
+     * PCRE takes one byte for a set and the target one character. The two
+     * agree while the set stays in ASCII, and differ on a subject holding a
+     * character outside it once the set reaches there: in PCRE, which
+     * takes a byte above 0x7F for the dot, a negated class, "\D", "\W" and
+     * "\S", and for "\h" and "\v", or in the target, which reads the
+     * character where PCRE reads a byte as Latin-1 for a property. Such a
+     * set is not refused, most patterns holding one and most subjects
+     * being ASCII: the first one written is named, once per pattern.
+     */
+    protected function warnOfASetPastAscii(NodeInterface $node): void
+    {
+        if ($this->unicode || $this->warnedOfASet) {
+            return;
+        }
+
+        $offset = $node->getStartPosition();
+        $written = substr($this->body, $offset, $node->getEndPosition() - $offset);
+        // The bytes above 0x7F the set takes, as the running PCRE says of
+        // it under the "xx" in force: a set it cannot be asked about is
+        // taken to reach them.
+        if (!self::holdsAProperty($node) && true === ClassSetProvider::query('(?=[\x80-\xFF])'.$written, false, $this->extendedMore ? 'xx' : '')?->isEmpty()) {
+            return;
+        }
+
+        $this->warnedOfASet = true;
+        $this->context->addLastWarning(\sprintf('Without the u flag "%s" at offset %d takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. %s', $written, $offset, $this->utf8Advice()));
+    }
+
+    /**
      * Drop the whitespace /x allows inside a quantifier: "{1, 3}" is "{1,3}"
      * to every target, and none of them read /x the way PCRE does. "{,3}",
      * which PCRE2 reads as "{0,3}" from 10.43, is written so.
@@ -378,6 +429,21 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
 
         foreach ($node->getChildren() as $child) {
             if (self::holdsCapture($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function holdsAProperty(NodeInterface $node): bool
+    {
+        if ($node instanceof UnicodePropNode) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsAProperty($child)) {
                 return true;
             }
         }

@@ -11,6 +11,8 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use PHPRegex\Tests\Support\HostRequirements;
+
 require __DIR__.'/../vendor/autoload.php';
 require __DIR__.'/Support/PhpUnitCompat/bootstrap.php';
 require __DIR__.'/Support/LintFunctionOverrides.php';
@@ -19,3 +21,7 @@ require __DIR__.'/Support/SymfonyExtractorFunctionOverrides.php';
 require __DIR__.'/Support/DependencyInjectionFunctionOverrides.php';
 require __DIR__.'/Support/SecurityConfigFunctionOverrides.php';
 require __DIR__.'/Support/CacheOwnerFunctionOverrides.php';
+
+// What the suite needs of the host and Composer does not check, said before
+// the failures it causes.
+fwrite(\STDERR, HostRequirements::notice(HostRequirements::ofThisHost()));

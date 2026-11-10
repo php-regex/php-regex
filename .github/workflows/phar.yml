@@ -88,7 +88,22 @@ jobs:
           php-version: '8.2'
           extensions: mbstring, tokenizer, fileinfo
           ini-values: phar.readonly=0
-          tools: composer, box
+          coverage: none
+          tools: composer
+
+      # The release's phar, checked against the checksum pinned here before
+      # it builds anything. Asked for Box, setup-php downloads the latest
+      # release, and once: a 504 from GitHub then fails the build.
+      - name: Install Box
+        env:
+          VERSION: '4.7.1'
+          SHA256: aedabb38bad96a90868603f118956c3faa662b545c06be66df1b145aba703c0a
+        run: |
+          mkdir -p "$RUNNER_TEMP/box"
+          curl -fsSL --retry 5 -o "$RUNNER_TEMP/box/box" "https://github.com/box-project/box/releases/download/${VERSION}/box.phar"
+          echo "$SHA256  $RUNNER_TEMP/box/box" | sha256sum --check --strict
+          chmod +x "$RUNNER_TEMP/box/box"
+          echo "$RUNNER_TEMP/box" >> "$GITHUB_PATH"
 
       - name: Build
         run: phar/build

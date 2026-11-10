@@ -23,6 +23,11 @@ CHANGELOG
  * Without `u`, `\s` is `[\t-\r ]` and `\S` is `[^\t-\r ]` for JavaScript and
    `html-pattern`: JavaScript's `\s` also takes the Unicode spaces, so
    `/^\s+$/` matched `U+00A0` there and not in PCRE.
+ * Without `u`, a set that reaches past ASCII takes one byte in PCRE and one
+   character in the targets: the dot, a negated class, `\D`, `\W`, `\S`,
+   `\h`, `\v` and a property. The pattern is written as before, and
+   `warnings` names the first such set and its offset: the two differ on a
+   subject holding a character outside ASCII, and agree under `u`.
  * The `html-pattern` target (alias `html`): the value of an HTML `pattern`
    attribute, matched whole under the `v` flag; an unanchored side is padded
    so it accepts what `preg_match()` finds, and classes escape what `v`

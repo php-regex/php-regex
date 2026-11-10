@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The overlapping branches of an alternation are found without comparing
+   every pair of them: branches whose first characters never meet are not
+   compared, and the texts the others start with are read in byte order,
+   where a text comes right before the texts it starts. A quantified list of
+   2,000 names that all start alike took over ten seconds to lint, it takes
+   a fraction of one; the findings are the same.
  * The diff of a suggested rewrite skips the lines both sides share at the
    start and at the end before it looks for the longest run of kept lines:
    a 10,000-line pattern with one line changed took 15 seconds and 2.6 GB,

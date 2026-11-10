@@ -171,10 +171,11 @@ final class PackageManifestTest extends TestCase
             'Transpiler\Target\TargetRegistry',
         ],
         // The overlap rule asks PCRE2 for the characters of a branch's first
-        // atom where the byte sets stop, above ASCII.
+        // atom where the byte sets stop, above ASCII, and compares the
+        // branches by the sets it is given.
         'Linter' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
-            'Parser\Hir\ClassSetProvider',
+            'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
             'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Text\Path', 'Parser\Printer\DisplayEscaper',
             'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument',
             'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
