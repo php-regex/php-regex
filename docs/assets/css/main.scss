@@ -5585,10 +5585,12 @@ body.search-open {
 }
 
 /* The answers: one framed panel, one strip of tabs at its top, one tab
-   open under it. */
+   open under it. The strip's row asks for the strip's own height: under
+   a panel taller than the column an automatic row fell back to the
+   strip's padding, and the panel rose over the tabs. */
 .pg-results {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: max-content 1fr;
   align-content: start;
   min-width: 0;
   background: var(--panel);
@@ -6430,13 +6432,19 @@ body.search-open {
   border-radius: var(--radius-s);
 }
 
-/* Step through: the match as PCRE2 ran it. The outcome line, the slider
-   with its two buttons, the subject with two cursors (where the attempt
-   started, where PCRE2 stands), the list of steps with the current one
-   pressed in amber, the captures at that step as a small table, and the
-   line that says which PCRE2 traced, whose options were applied, and
-   whether the engine agrees — red, with both answers, when it does not.
-   Every color is a token the themes already carry. */
+/* Step through: a debugger over the match as PCRE2 ran it, in the dialect
+   a browser's own debugger speaks. A transport travels the recording both
+   ways, with the step's number and the match's outcome beside it; the
+   timeline is the browser's slider laid unseen over a chart of the match,
+   the position in the text at every step; the execution point shows the
+   pattern with the item PCRE2 is about to try and the text with what the
+   attempt consumed, under a status line; then three panes — the steps,
+   the stops Resume and Rewind travel between, the captures as PCRE2 held
+   them — and the line that says which PCRE2 traced, whose options were
+   applied, and whether the engine agrees: red, with both answers, when it
+   does not. The panel answers its own width, for the answers column is
+   squeezed and widened by hand. Every color is a token the themes already
+   carry. */
 .pg-tool-line.is-error {
   color: var(--danger);
   font-weight: 600;
@@ -6444,44 +6452,366 @@ body.search-open {
 .pg-tool-list.is-error {
   color: var(--danger);
 }
-.pg-trace-outcome {
-  font-weight: 500;
-  color: var(--ink);
+#pg-tool-trace {
+  container: pg-trace / inline-size;
 }
-.pg-trace-nav input[type="range"] {
-  flex: 1 1 10rem;
-  min-width: 6rem;
-  max-width: 100%;
+.pg-trace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .6rem;
+}
+.pg-trace-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .5rem;
+}
+.pg-trace-head > .pg-tool-line {
   margin: 0;
-  accent-color: var(--amber);
 }
-.pg-trace-nav input[type="range"]:focus-visible {
+
+/* The transport: four buttons in one frame, as a debugger groups them. A
+   filled shape runs to a stop, an arrow to a dot takes one step. An end
+   of the trace dims a button; it stays in reach of the keyboard. */
+.pg-trace-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem .7rem;
+}
+.pg-trace-controls {
+  display: inline-flex;
+  flex: none;
+  gap: 1px;
+  padding: 2px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-m);
+}
+.pg-trace-btn {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.pg-trace-btn .icon {
+  width: 1rem;
+  height: 1rem;
+}
+.pg-trace-btn .icon.is-solid {
+  fill: currentColor;
+}
+.pg-trace-btn:hover {
+  color: var(--amber-deep);
+  background: var(--amber-tint);
+}
+.pg-trace-btn:focus-visible {
   outline: 2px solid var(--amber);
-  outline-offset: 2px;
+  outline-offset: -1px;
+}
+.pg-trace-btn[aria-disabled="true"] {
+  color: var(--ink-soft);
+  background: transparent;
+  cursor: default;
+  opacity: .45;
 }
 .pg-trace-count {
+  flex: none;
   font-family: var(--font-mono);
   font-size: .78rem;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-soft);
   white-space: nowrap;
 }
-.pg-trace-subject {
-  max-height: 8rem;
-  margin: 0 0 .5rem;
-  padding: .5rem .65rem;
-  overflow: auto;
-  font-family: var(--font-mono);
-  font-size: .78rem;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+.pg-trace-count b {
+  font-weight: 600;
+  color: var(--ink);
+}
+/* How the match ended, a light and a sentence: green for a match, red
+   where PCRE2 stopped or PHP refuses, the quiet ink for no match. */
+.pg-trace-outcome {
+  display: flex;
+  flex: 1 1 16rem;
+  align-items: baseline;
+  gap: .45rem;
+  min-width: 0;
+  margin: 0;
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+.pg-trace-outcome::before {
+  content: '';
+  flex: none;
+  width: .5rem;
+  height: .5rem;
+  background: var(--line);
+  border-radius: 50%;
+}
+.pg-trace-outcome.is-ok::before {
+  background: var(--ok);
+}
+.pg-trace-outcome.is-warn::before {
+  background: var(--amber);
+}
+.pg-trace-outcome.is-error::before {
+  background: var(--danger);
+}
+/* Alone in the panel, when PCRE2 made no step, it keeps a line's air. */
+.pg-tool > .pg-trace-outcome {
+  margin-bottom: .5rem;
+}
+
+/* The timeline. One length says the slider's thumb: the chart is inset by
+   half of it on each side and the playhead travels the rest, so the line
+   under the pointer is the step the slider sets. What is still to come
+   lies under a veil of the paper. */
+.pg-trace-timeline {
+  display: flex;
+  align-items: stretch;
+  gap: .4rem;
+}
+.pg-trace-play {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--amber-deep);
+  border: 1px solid var(--line-soft);
+}
+.pg-trace-play.is-playing {
   background: var(--amber-tint);
+  border-color: var(--amber);
+}
+.pg-trace-track {
+  --thumb: .875rem;
+  --t: 0;
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 2.5rem;
+  overflow: hidden;
+  background: var(--paper);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-s);
+}
+.pg-trace-track:has(input:focus-visible) {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+.pg-trace-chart {
+  position: absolute;
+  top: 0;
+  left: calc(var(--thumb) / 2);
+  width: calc(100% - var(--thumb));
+  height: 100%;
+  overflow: visible;
+}
+.pg-trace-chart path {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.pg-trace-chart .is-area {
+  fill: color-mix(in srgb, var(--amber) 17%, transparent);
+}
+.pg-trace-chart .is-band {
+  fill: color-mix(in srgb, var(--amber) 30%, transparent);
+}
+.pg-trace-chart .is-line {
+  stroke: var(--amber);
+  stroke-width: 1.25;
+}
+.pg-trace-chart .is-attempt {
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+.pg-trace-chart .is-backtrack {
+  stroke: var(--amber-deep);
+  stroke-width: 1.5;
+}
+/* A stop the visitor unticked fades on the chart: Resume passes it. */
+.pg-trace.no-attempt .pg-trace-chart .is-attempt,
+.pg-trace.no-backtrack .pg-trace-chart .is-backtrack {
+  opacity: .3;
+}
+.pg-trace-veil {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--t));
+  background: color-mix(in srgb, var(--paper) 68%, transparent);
+  pointer-events: none;
+}
+.pg-trace-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--t));
+  width: 2px;
+  margin-left: -1px;
+  background: var(--amber);
+  pointer-events: none;
+}
+.pg-trace-playhead::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: .5rem;
+  height: .35rem;
+  background: var(--amber);
+  border-radius: 0 0 2px 2px;
+  transform: translateX(-50%);
+}
+.pg-trace-track input[type="range"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.pg-trace-track input[type="range"]::-webkit-slider-thumb {
+  width: var(--thumb);
+  height: 2.5rem;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.pg-trace-track input[type="range"]::-moz-range-thumb {
+  width: var(--thumb);
+  height: 2.5rem;
+  border: 0;
+}
+
+/* The execution point: the status line, then the pattern and the text on
+   the code's ground, each named in its gutter. The item PCRE2 is about
+   to try wears the mark it wears in the pattern field; what the attempt
+   consumed wears a match's; the cursor is a bar before the character. */
+.pg-trace-point {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--code-ink);
+  background: var(--code-bg);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}
+.pg-trace-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .1rem .5rem;
+  margin: 0;
+  padding: .35rem .65rem;
+  font-size: .78rem;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--amber) 7%, var(--panel));
+  border-bottom: 1px solid var(--line-soft);
+  box-shadow: inset 3px 0 0 var(--line);
+}
+.pg-trace-status.is-backtrack {
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+.pg-trace-event {
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.pg-trace-event.is-backtrack {
+  color: var(--amber-deep);
+}
+.pg-trace-doing code {
+  padding: .05rem .3rem;
+  font-size: .76rem;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--amber) 15%, transparent);
+  border-radius: var(--radius-s);
+  overflow-wrap: anywhere;
+}
+.pg-trace-where {
+  margin-left: auto;
+  font-size: .72rem;
+  color: var(--ink-soft);
+}
+.pg-trace-line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.pg-trace-line + .pg-trace-line {
+  border-top: 1px solid var(--line-soft);
+}
+.pg-trace-line::before {
+  content: attr(data-label);
+  width: 4.6rem;
+  padding: .56rem 0 0 .65rem;
+  font-size: .62rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.pg-trace-pattern,
+.pg-trace-subject {
+  max-height: 5.5rem;
+  margin: 0;
+  padding: .32rem .65rem .32rem 0;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   scrollbar-width: thin;
 }
-/* The cursors: a bar before the character, the start of the attempt in
-   the quiet line color, the current position in amber. */
+:where(.pg-trace-point) mark {
+  color: inherit;
+  background: transparent;
+}
+.pg-trace-item {
+  background: var(--mark-match-current);
+  box-shadow: inset 0 -2px 0 var(--amber-deep);
+}
+.pg-trace-consumed {
+  background: var(--mark-match);
+  box-shadow: inset 0 -2px 0 var(--amber);
+}
+/* A group pointed at in the captures, shown where it sits in the text. */
+.pg-trace-peek {
+  background: var(--mark-match-alt);
+  box-shadow: inset 0 -2px 0 var(--line);
+}
+.pg-trace-peek.is-empty {
+  display: inline-block;
+  width: 2px;
+  height: 1.15em;
+  margin: 0 -1px;
+  vertical-align: text-bottom;
+  background: var(--line);
+}
+.pg-trace-past {
+  opacity: .55;
+}
+.pg-trace-nl {
+  color: var(--ink-soft);
+  opacity: .75;
+  user-select: none;
+}
 .pg-trace-cursor {
   display: inline-block;
   width: 2px;
@@ -6496,143 +6826,417 @@ body.search-open {
   background: var(--amber);
   box-shadow: 0 0 0 1px var(--amber-tint);
 }
-.pg-trace-cursor.is-start.is-now {
-  background: var(--amber-deep);
+
+/* The panes, as a debugger's sidebar stacks them: a quiet head, then
+   rows a line tall. */
+.pg-trace-panes,
+.pg-trace-side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .6rem;
+  min-width: 0;
 }
-.pg-trace-steps {
-  max-height: 18rem;
-  margin: 0 0 .5rem;
-  padding: .25rem 0 .25rem 2.4rem;
-  overflow: auto;
-  font-family: var(--font-mono);
-  font-size: .78rem;
-  line-height: 1.5;
+.pg-trace-pane {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-s);
+}
+.pg-trace-pane-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .3rem .6rem;
+  font-size: .64rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--line) 9%, transparent);
+  border-bottom: 1px solid var(--line-soft);
+}
+.pg-trace-pane-note {
+  font-weight: 500;
+}
+
+/* The steps. A row is one fixed line — its number from the stylesheet,
+   a mark where PCRE2 backtracked, the item, the byte it stands at — and
+   the rows stand in chunks of a screen or two: the browser lays a chunk
+   out and skips it as one, and a skipped chunk still stands as tall as
+   its rows, so a step costs the same on a trace of twenty thousand as on
+   one of twenty. The current row is pressed in amber; a match attempt
+   opens under a header that stays pinned while its steps scroll past. */
+.pg-trace-steps {
+  --row: 1.45rem;
+  max-height: 16rem;
+  margin: 0;
+  padding: 0 0 .2rem;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: .76rem;
   scrollbar-width: thin;
+  scrollbar-gutter: stable;
 }
 .pg-trace-steps:focus-visible {
   outline: 2px solid var(--amber);
-  outline-offset: 2px;
+  outline-offset: -2px;
+}
+.pg-trace-chunk {
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto calc(var(--rows, 1) * var(--row));
 }
 .pg-trace-step {
-  padding: .1rem .5rem .1rem .25rem;
+  display: grid;
+  grid-template-columns: 2.7rem .9rem minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: .3rem;
+  height: var(--row);
+  margin: 0;
+  padding: 0 .6rem 0 0;
   cursor: pointer;
+}
+.pg-trace-step::before {
+  content: attr(data-n);
+  grid-row: 1;
+  grid-column: 1;
+  font-size: .68rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--ink-soft);
+}
+.pg-trace-step.is-backtrack::after,
+.pg-trace-stop-mark.is-backtrack {
+  width: .8rem;
+  height: .8rem;
+  background: var(--amber-deep);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='square'%3E%3Cpath d='M6.5 3.5 3 7l3.5 3.5M3.5 7h6a3 3 0 0 1 0 6H8'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='square'%3E%3Cpath d='M6.5 3.5 3 7l3.5 3.5M3.5 7h6a3 3 0 0 1 0 6H8'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.pg-trace-step.is-backtrack::after {
+  content: '';
+  grid-row: 1;
+  grid-column: 2;
+}
+.pg-trace-step code {
+  grid-row: 1;
+  grid-column: 3;
+  justify-self: start;
+  max-width: 100%;
+  padding: 0 .3rem;
+  overflow: hidden;
+  font-size: inherit;
+  line-height: 1.5;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: pre;
+  background: var(--amber-tint);
   border-radius: var(--radius-s);
 }
-.pg-trace-step::marker {
+.pg-trace-step code.is-end {
+  padding: 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--ink-soft);
+  background: transparent;
+}
+.pg-trace-at {
+  grid-row: 1;
+  grid-column: 4;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-soft);
 }
 .pg-trace-step:hover {
   background: var(--amber-tint);
 }
 .pg-trace-step.is-current {
-  background: var(--amber-tint);
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
   box-shadow: inset 2px 0 0 var(--amber);
 }
-.pg-trace-step.is-current .pg-trace-try {
-  color: var(--ink);
-  font-weight: 600;
-}
-.pg-trace-attempt,
-.pg-trace-backtrack {
-  display: block;
-  font-family: var(--font-body);
-  font-size: .72rem;
-  font-weight: 600;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-.pg-trace-backtrack {
+.pg-trace-step.is-current::before {
+  font-weight: 700;
   color: var(--amber-deep);
 }
-.pg-trace-try {
-  color: var(--ink-soft);
+.pg-trace-step.is-current code {
+  font-weight: 600;
+  background: transparent;
 }
-.pg-trace-try code {
-  padding: .05rem .3rem;
+.pg-trace-step.is-current .pg-trace-at {
+  color: var(--ink);
+}
+.pg-trace-attempt {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: .3rem .6rem .24rem;
+  font-family: var(--font-body);
+  font-size: .62rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: var(--panel);
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+}
+.pg-trace-attempt:hover {
+  color: var(--ink);
+}
+
+/* The stops: a checkbox, the mark the stop wears in the list and on the
+   timeline, its name, and how many the trace holds. */
+.pg-trace-stops {
+  margin: 0;
+  padding: .25rem 0;
+  list-style: none;
+}
+.pg-trace-stops li {
+  margin: 0;
+}
+.pg-trace-stop {
+  display: grid;
+  grid-template-columns: auto .9rem minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: .45rem;
+  padding: .17rem .6rem;
   font-size: .78rem;
   color: var(--ink);
-  background: var(--amber-tint);
-  border-radius: var(--radius-s);
-  overflow-wrap: anywhere;
+  cursor: pointer;
 }
-.pg-trace-at {
+.pg-trace-stop:hover {
+  background: var(--amber-tint);
+}
+.pg-trace-stop input {
+  width: .85rem;
+  height: .85rem;
+  margin: 0;
+  accent-color: var(--amber);
+  cursor: pointer;
+}
+.pg-trace-stop-mark {
+  justify-self: center;
+}
+.pg-trace-stop-mark.is-attempt {
+  height: .8rem;
+  border-left: 1px dashed var(--line);
+}
+.pg-trace-stop-mark.is-capture {
+  width: 2px;
+  height: .8rem;
+  background: var(--amber);
+}
+.pg-trace-stop-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pg-trace-stop-count {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-soft);
 }
-.pg-trace-status {
-  margin: 0 0 .5rem;
-  font-size: .8rem;
-  color: var(--ink);
-}
+
+/* The captures, as a debugger lists a scope: the group, what it holds,
+   where. A group whose capture moved at this step is marked, the way a
+   debugger marks the variable a step changed. */
 .pg-trace-captures {
-  margin: 0 0 .5rem;
+  max-height: 12rem;
+  padding: .3rem .6rem .4rem;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.pg-trace-captures .pg-tool-hint {
+  margin: 0;
+  font-size: .78rem;
 }
 .pg-trace-table {
-  width: auto;
-  max-width: 100%;
+  display: table;
+  width: 100%;
   margin: 0;
-  font-size: .8rem;
-  border-collapse: collapse;
-}
-.pg-trace-table caption {
-  padding: 0 0 .25rem;
+  overflow: visible;
   font-size: .78rem;
-  font-weight: 600;
-  letter-spacing: .02em;
-  text-align: left;
-  color: var(--ink-soft);
+  border-collapse: collapse;
 }
 .pg-trace-table th,
 .pg-trace-table td {
-  padding: .15rem .6rem .15rem 0;
+  padding: .17rem .6rem .17rem 0;
+  line-height: 1.45;
   text-align: left;
-  vertical-align: top;
+  vertical-align: baseline;
+  border: 0;
   border-bottom: 1px solid var(--line-soft);
 }
-.pg-trace-table th {
+.pg-trace-table thead th {
+  padding-top: 0;
+  font-size: .62rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--ink-soft);
+}
+.pg-trace-table tbody th {
+  padding-left: .45rem;
   font-family: var(--font-mono);
-  font-size: .78rem;
+  font-size: .76rem;
   font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.pg-trace-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.pg-trace-group {
+  font-size: .68rem;
   color: var(--ink-soft);
 }
 .pg-trace-table td code {
-  font-size: .78rem;
+  padding: .05rem .3rem;
+  font-size: .76rem;
+  color: var(--ink);
+  white-space: pre-wrap;
+  background: var(--amber-tint);
   overflow-wrap: anywhere;
+}
+.pg-trace-table tr.is-changed th {
+  box-shadow: inset 2px 0 0 var(--amber);
+}
+.pg-trace-table tr.is-changed td code {
+  font-weight: 600;
+  color: var(--amber-deep);
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
 }
 .pg-trace-bytes {
   font-family: var(--font-mono);
-  font-size: .78rem;
+  font-size: .72rem;
   color: var(--ink-soft);
+  text-align: right;
   white-space: nowrap;
 }
 .pg-trace-unset {
   font-style: italic;
   color: var(--ink-soft);
 }
+
+/* The line under the panes: a light for its state — waiting, not
+   compared, agrees, disagrees — and the sentence, whole. */
+.pg-trace-check {
+  display: grid;
+  gap: .2rem;
+}
+.pg-trace-check .pg-tool-line,
+.pg-trace-check .pg-tool-list {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: .74rem;
+}
 .pg-trace-label {
+  position: relative;
+  padding-left: .95rem;
   color: var(--ink-soft);
+}
+.pg-trace-label::before {
+  content: '';
+  position: absolute;
+  top: .5em;
+  left: .1rem;
+  width: .45rem;
+  height: .45rem;
+  background: var(--line);
+  border-radius: 50%;
+}
+.pg-trace-check.is-pending .pg-trace-label::before {
+  background: var(--amber);
+}
+.pg-trace-check.is-ok .pg-trace-label::before {
+  background: var(--ok);
+}
+.pg-trace-check.is-error .pg-trace-label::before {
+  background: var(--danger);
 }
 /* The item PCRE2 is about to try, lit in the pattern field. */
 .pg-mirror .pg-mark-trace {
   background: var(--mark-match-current);
   box-shadow: inset 0 -2px 0 var(--amber-deep);
 }
+
+/* A squeezed panel drops the gutter names: the two lines read by what
+   they hold. */
+@container pg-trace (max-width: 21rem) {
+  .pg-trace-line::before {
+    width: .65rem;
+    padding: 0;
+    font-size: 0;
+  }
+}
+/* A wide panel stands the panes side by side, the steps beside the stops
+   and the captures. */
+@container pg-trace (min-width: 27rem) {
+  .pg-trace-panes {
+    grid-template-columns: minmax(0, 1fr) minmax(12.5rem, 15rem);
+  }
+  .pg-trace-side {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+}
+/* Where the answers column has a height of its own, the debugger fills
+   it: the panes take what the head leaves and scroll inside, and a step
+   moves nothing but its list. A list that fills its pane asks for no
+   height of its own. */
+@media (min-width: 1024px) {
+  @container pg-trace (min-width: 27rem) {
+    .pg-trace {
+      height: 100%;
+      grid-template-rows: auto minmax(12rem, 1fr) auto;
+    }
+    .pg-trace-panes {
+      grid-template-rows: minmax(0, 1fr);
+    }
+    .pg-trace-steps,
+    .pg-trace-captures {
+      max-height: none;
+      contain: size;
+    }
+  }
+}
 @media (max-width: 639px) {
   .pg-trace-steps {
     max-height: 12rem;
   }
-  .pg-trace-nav input[type="range"] {
-    flex-basis: 100%;
+}
+/* A finger asks for more than a pointer does. */
+@media (pointer: coarse) {
+  .pg-trace-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+  .pg-trace-play {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  .pg-trace-steps {
+    --row: 1.9rem;
   }
 }
 @media (forced-colors: active) {
   .pg-trace-step.is-current {
     outline: 2px solid CanvasText;
+    outline-offset: -2px;
   }
-  .pg-trace-cursor {
+  .pg-trace-cursor,
+  .pg-trace-playhead {
     background: CanvasText;
+  }
+  .pg-trace-item,
+  .pg-trace-consumed,
+  .pg-trace-peek {
+    color: MarkText;
+    background: Mark;
+    forced-color-adjust: none;
   }
 }
 
