@@ -90,9 +90,10 @@ to match).
   `re2-vs-pcre2`, `which-pcre2-ships-with-which-php`,
   `why-pcre2-is-a-separate-library`): flip `published`, and add an
   `## Articles` section to `docs/llms.txt` with a line for each.
-- Before the 8.6 GA, re-check the 8.6 row of the version matrix in
+- On the day of the 8.6 GA, re-check the 8.6 row of the version matrix in
   `which-pcre2-ships-with-which-php` against the PHP-8.6 branch: the article
-  promises it.
+  promises it. On 2026-11-10 the branch and master still bundle PCRE2
+  10.44, as the row says.
 - Next articles, in priority order: variable-length lookbehind across
   PHP 8.2–8.4, the capture shapes of `$matches`, why `pcre.backtrack_limit`
   does not protect under the PCRE2 JIT, regex equivalence with proofs,
@@ -178,55 +179,80 @@ the probes hold no whitespace.
 
 ## Pull requests to merge before the tag
 
-- #234: a class read alone before a syntax error is no longer measured
-  against the whole pattern; the linear-time test of `(*pla:[a])` bodies
-  gets its margin back on a loaded runner.
-- The playground bundle predates the explanation wording of #235: run
-  `bin/playground-bundle` and commit it; its reflow then changes nothing
-  and can go.
-- #237: the root `action.yml` (`uses: php-regex/php-regex@v2.0.0`) and the
-  Phive signature. Before the release candidate, create the release key,
-  set `PHAR_GPG_PRIVATE_KEY` and `PHAR_GPG_PASSPHRASE` as secrets of the
-  repository, and publish the key's fingerprint beside the Phive line of
-  `docs/guides/cli.md`; without the secret a release goes out unsigned.
-- #238: the language server reads a constant of another file and reports
-  its pattern at the argument naming it.
+#335 first: the time-ratio tests it settles fail the PHP 8.1
+lowest-dependencies cell of every other one. Each of the others then takes
+`2.x` again before it is merged. #343, #345, #346 and #348 each move
+`Regex::CACHE_VERSION`: after the first of them is in, the next ones take
+`2.x` and run `php tests/Tools/update_cache_version.php`.
+
+- #335: the linear-time tests read 10 to 12 where the read is linear,
+  because a run of the cycle collector walks what the process holds and the
+  larger read alone sets it off; every timed read of the suite now holds
+  the collector. The PHP 8.1 lowest-dependencies cell is green on it.
+- #334: a JSON run PHP stops at its time limit prints the envelope however
+  long the shutdown takes (`JsonFatalErrorTest`, exit 255 on Windows).
+- #336: the rewrite verification test asserts the threads the match check
+  steps, not its time.
+- #337: the two worker pool tests and the boundary rule test are judged by
+  what the code did.
+- #338: one macOS cell on a pull request, a ceiling on the matrices, `CI`
+  reported for a pull request of prose alone, Box downloaded with a retry,
+  no coverage driver in the phar builds. See "Pull request checks in
+  stages".
+- #339: `format` keeps a `#` comment that ends in an escaped space.
+- #340: capture shapes read the body of a called group once per fact
+  (twenty levels of a `(?(DEFINE)` call graph: 16 s to 2 ms).
+- #341: without `u`, a transpiled set that reaches past ASCII carries a
+  warning that names it and advises `u`; nothing is refused. In the Laravel
+  command such a pattern now reads `PARTIAL`.
+- #342: overlapping alternation branches are found without comparing every
+  pair (2,000 branches sharing a start: 36 s to 0.2 s), with the same
+  findings.
+- #343: nested alphabetic assertion bodies are no longer kept in copies
+  (900 levels: 264 MB to 11 MB). The lexer still cuts the text of a body
+  once per level, so the time stays depth times size.
+- #344: the playground bundle is rebuilt from the current sources, and the
+  page no longer rewrites the sentences of an explanation.
+- #345: the size limit is read as the PCRE2 10.40 of PHP 8.2.35 checks it
+  (php-src backported upstream's fixes there), and
+  `PHP_BUNDLED_10_40_DIVERGENCES` is gone. It adds a gate that is no point
+  of the judged range (`PhpVersionGates::ERROR_ONLY`): the one decision of
+  it to look at.
+- #346: the lookaround product is read by classes of characters and
+  counted (twelve Unicode-class lookaheads: 39 s to 0.3 s, same refusal).
+  A few patterns refused for the determinize budget are now answered.
+- #347: the suite names `posix_geteuid()` when it starts on a host without
+  it, and the contributing guide lists it; the tests are not skipped there.
+- #348: a ReDoS repair tries the blamed quantifiers first and keeps no tree
+  per candidate (1,000 quantifiers: 65 s and 407 MB to 20 s and 21 MB),
+  with the same repairs and no cut-off.
+
+Before the release candidate, create the release key, set
+`PHAR_GPG_PRIVATE_KEY` and `PHAR_GPG_PASSPHRASE` as secrets of the
+repository, and publish the key's fingerprint beside the Phive line of
+`docs/guides/cli.md`; without the secret a release goes out unsigned.
 
 
 ## Pull request checks in stages
 
-- #333 to merge: `ci.yml` runs the checks of a pull request in three
-  stages. Its own run (2026-11-10) read the suite on the PHP 8.4 Linux
-  cell in 461 s where it took 1,100 s under Xdebug, and 440 runner
-  minutes where a run took about 520. Then delete the `ci-stages` branch.
-- Only "Every stage ran. Failed: Tests (stage 3)." was read on GitHub. A
-  stop at stage 1 and at stage 2 is covered by the tests of the verdict
-  script alone: after the merge, push a branch that breaks PHPStan, then
-  one that breaks a test, and run `gh workflow run ci.yml --ref <branch>`
-  on each.
-- To decide, which macOS and Windows cells a pull request runs: on #333
-  every Linux and Windows cell had answered 15 minutes after stage 3
-  began, and the five macOS cells of `engines.yml` took two hours, each
-  waiting for one of the five macOS runners the organization has at once,
-  shared with every other open pull request. Leaving some of them to the
-  weekly run is a choice of PCRE coverage: the latest PCRE2 is read
-  nowhere else.
-- To decide, whether coverage and the mutation score gate the matrix:
-  they run beside the reference and stop nothing. At 19 minutes the
-  coverage job is the longest of a pull request.
-- To decide, `CI` as the one required check of `2.x`: a pull request of
-  prose alone does not start `ci.yml`, and a required check that never
-  reports stays pending. It needs a second workflow reporting `CI` on the
-  paths `ci.yml` ignores, or the check stays optional.
-- To decide, a `max-parallel` on the matrix of `tests.yml` and
-  `engines.yml`, so that one pull request does not take the sixty runners
-  when several are open.
-- The two phar builds (`phar.yml`, `packages.yml`, "Setup PHP to build")
-  call setup-php without `coverage: none` and still load Xdebug; the job
-  takes twenty seconds, so it costs little. `RunnerTimeTest` could then
-  hold every setup-php step to naming its driver.
-- The download of `box` by setup-php itself fails on a 504 as the release
-  assets did, and no `--retry` reaches it.
+- After #338 is merged, make `CI` the required check of `2.x` in the
+  branch protection: a pull request of prose alone now reports it.
+- No run of #338 reached stage 3 before its review ended: read its first
+  complete run for the single `Tests (PHP 8.4, latest PCRE2)` macOS cell
+  and for the ceilings (twenty runners for the matrices of one pull
+  request). The path of a pull request of prose alone is held by tests
+  only: open one and see `CI` reported.
+- The two stops were read on GitHub (2026-11-10): "Stopped at stage 1, the
+  quick checks: Static analysis failed. Stages 2 and 3 did not start." and
+  "Stopped at stage 2, the reference: Reference, Coverage failed. Stage 3,
+  the matrix, did not start."
+- `packages.yml` starts about 33 jobs of fifteen seconds at once in stage
+  2, with no ceiling.
+- The Box pin (4.7.1 and its checksum, in `phar.yml` and `packages.yml`) is
+  bumped by hand: Dependabot does not see it.
+- The `tests/**` instruction of `.coderabbit.yaml` names
+  `#[RequiresPhpExtension]` alone as an attribute gate, where the suite
+  uses `#[RequiresFunction]` too: the review raises it each time.
 
 
 ## Pattern resolution without PHPStan
@@ -265,118 +291,90 @@ captures. `static::X` and `self::X` in a closure stay unread on purpose.
 
 ## Open questions
 
-- `RailroadLayoutTest::test_wide_layout_composition_scales_with_its_geometry`
-  ("alternation") measures a time ratio against 11 and passes it on loaded
-  runners (12.18 on Windows PHP 8.3 for #310, 11.19 on PHP 8.2 latest PCRE2
-  for #247, 2026-11-10; neither touches the railroad layout). Count the
-  work, or give the ratio the margin the other linear-time tests have.
-  On #333 it read 16.5 to 21.3 on the PHP 8.1 prefer-lowest Ubuntu cell,
-  beside `AlphaAssertionBodyTest` at 11.4 to 11.8 in the same process; the
-  layout itself reads 4 to 7 in `php:8.1-cli` and `php:8.4-cli`. With
-  Xdebug gone from the Linux cells the smaller read is some 25 ms there
-  too, a thin base for a ratio: more children would steady it.
-  On 2026-11-10 it failed on the PHP 8.1 prefer-lowest Ubuntu cell of every
-  pull request that ran it to the end (12.2 to 16.0 on #247, #261, #307,
-  #310 and #323) and read 13.4 on the PHP 8.3 prefer-lowest one (#277);
-  `AlphaAssertionBodyTest` read 12.1 to 12.5 against 11 beside it on #261.
-  None of these touches the layout or the lexer.
+- The capture shape of `/(?:(?=y)|(x))(^|a)/` is wrong: on `xa` PHP writes
+  `["xa","x","a"]`, and the shape reads `array{0: '', 1: '', 2: ''|'a'}|
+  array{0: 'x', 1: 'x', 2: ''|'a'}` (2026-11-10, PHP 8.4, PCRE2 10.49).
+  The at-start and at-end marks of `CaptureFacts` only grow, so the mark
+  made for the zero-width branch still stands in the next case and `^`
+  wins there; with the branches the other way round the shape is right
+  (`'x'|'xa'`). A fix changes answers: its own pull request after #340,
+  with `ANALYSIS_VERSION` moved. PHPStan and Psalm read this shape.
 
-- `DisplayEscaperLinearTimeTest::test_escape_drops_many_comments_in_linear_time`
-  (`(*ANYCRLF)`, 32,000 comments) measures a time ratio against 3.0 and
-  read 3.01 on the PHP 8.5 "latest PCRE2" cell (2026-11-10, on #277, which
-  does not touch the escaper). The same remedy: count the work, or give the
-  ratio a margin.
+- `format` writes an inner line of a `(?#...)` comment that ends in an
+  escaped space with `\x20` (`/a(?#x\ ` newline `y)/x` gives `(?#x\x20`):
+  the case #339 leaves. Those lines are measured for width, so the marker
+  of #339 would have to count for nothing in `columns()`.
 
-- `ImpossibleBoundaryRuleTest::test_many_boundaries_under_u_are_linted_quickly`
-  ("non-ASCII letter met again") measures wall time against 0.5 s and
-  fails on the "latest PCRE2" cells (0.50 s and 0.87 s on PHP 8.2 and 8.3,
-  2026-11-08, on #275 and #297, which do not touch the linter), as
-  `AlphaAssertionBodyTest` does against 11 s. Bound the work the rule does,
-  not the clock.
+- Two findings of the overlap rule are false, kept by #342 as they were.
+  `/(?:ö|è)+/u` is reported as overlapping sets: two code points are
+  compared by their UTF-8 lead byte. `/(?:\xE9+|c|b+)+/i` reports `\xE9+`
+  and `c`: a byte above ASCII read caselessly makes its set unknown, and
+  an unknown set meets every other. PHP matches neither overlap. The
+  set findings also double the backslashes of the branch they quote and
+  spell non-ASCII as byte escapes under `u`, where the literal findings
+  print `é` (`AlternationOverlapCharsetSpellingTest` pins the doubling).
 
-- `ForkedWorkerPoolTest::test_run_leaves_no_payload_file_when_several_workers_fail_at_once`
-  expects the report to name `file0.php`, the first failing chunk, but two
-  workers fail at once and either may be read first (`file6.php` on a macOS
-  PHP 8.6 cell, 2026-11-09, on #240, which does not touch the pool). Assert
-  one of the failing files, or order the report by chunk.
+- A password rule of Unicode classes is still slow or refused after #346,
+  in the determinization: it writes one transition per range of the
+  alphabet per state, about 2,100 ranges. Four `\p{..}` lookaheads take
+  1.5 s with `.{8,}` and pass the default budget with `.{12,}`. The
+  classes of the alphabet #346 reads the product by would cut that table.
+  The forty `(?=.*a{2})` of the earlier note are answered in under a
+  second: identical lookaheads merge; forty distinct characters reach the
+  state limit.
 
-- `ForkedWorkerPoolTest::test_run_ends_a_busy_worker_whatever_the_parent_does_with_sigterm`
-  measures wall time against 3 s and fails on a loaded runner (3.10 s and
-  3.94 s on PHP 8.6 cells, 2026-11-08, on #294 and #319, which do not touch
-  the worker pool). Bound what the worker did, not the clock, or give the
-  ceiling the margin the macOS runner needs.
+- A ReDoS repair still proves one rewrite per quantifier after #348 (1,000
+  quantifiers: about 20 s). The PHPStan rule reads `repair()[0]` alone: a
+  call that stops at the first certified repair, or a prover that keeps
+  work between rewrites, is the next gain. `/^(?:a+)++$/` is not proven
+  linear ("atomic group at offset 1 over-approximated") although PHP
+  rejects forty `a` and a `!` at once, so no repair offers a possessive on
+  the outer loop. The heuristics blame quantifiers no subject reaches (the
+  `x+` under `{0}` in `/(?:x+x+){0}^(?:a+)+$/`), so on that shape the
+  blame orders nothing.
 
-- The PCRE2 10.40 that PHP 8.2 bundles reports five patterns of
-  `PatternTooLargeErrorOrderTest` otherwise than the library reads 10.40
-  (`php:8.2-cli` and the Windows PHP 8.2 cell, 2026-11-09, on #271; PHP
-  8.3's 10.42 agrees with the library). `/(?:(?:[^a]){5000}|(?:[^a]){4000}\k<n>(?:[^a]){1000})/`
-  gives "reference to non-existent subpattern at offset 35" there, where the
-  library and the 10.40 fixture give `regex.pattern.too_large` at 52, and
-  `/(?:[^a]){8190}aaa\d|\k<n>/` "regular expression is too large at offset
-  0" where the library gives the reference at 23. The test lists the five
-  with the engine's answer (`PHP_BUNDLED_10_40_DIVERGENCES`). Find what the
-  bundled 10.40 measures otherwise than pcre2test 10.40, read it so for a
-  PHP 8.2 target, and empty the list.
+- After #343 the lexer still cuts the text of a nested assertion body once
+  per level and checks its UTF-8 again: time stays depth times size. A
+  script run node holds its body text, so `(*asr:` nested 3,200 deep peaks
+  at 77 MB: changing that field is a contract decision. Plain `(` nested
+  about 6,400 deep ends PHP on its C stack (800 under a 1 MB stack). The
+  witness runner of the PHP 7.4 twin dies on a pattern literal nested past
+  512 anywhere under `tests/` (`build/verify/Witness.php`, `json_encode()`
+  depth), and every twin cell then fails with "no witness". On PHP 8.6
+  `memory_get_usage()` stops counting call frames below some 900 levels:
+  a memory ratio measured across that depth bends there.
 
-- `RewriteVerificationTest::test_a_wide_alternation_is_judged_without_a_long_match_search`
-  measures wall time against 2 s and fails on a loaded runner (2.37 s on
-  PHP 8.4 Ubuntu, 2026-11-09, on #259, which does not touch the
-  optimizer). Bound the work, not the clock, as for the tests above.
+- Upstream recommends the fixes PHP 8.2.35 backported
+  (`pcre2-10.48-Fix-compiler-integer-overflows.patch`) to every
+  distributor of PCRE2 10.39 to 10.47. When a PHP 8.3, 8.4 or 8.5 patch
+  release or a distribution's libpcre2 applies them,
+  `PatternTooLargeErrorOrderTest` and `PatternTooLargeOffsetTest` fail on
+  that cell as they did on PHP 8.2: one more gate beside
+  `BUNDLES_PCRE2_10_40_WITH_ITS_FIXES`, or a way for a target to name "a
+  release with upstream's fixes". PHP 8.2.35 linked to a system 10.40
+  without them is judged as patched: `PCRE_VERSION` cannot tell. The
+  backport also touches the matcher and the JIT of PHP 8.2.35: what the
+  library claims of matching on 10.40 was not re-read.
 
-- The suite assumes `posix_geteuid()` on Linux and macOS: with
-  `-d disable_functions=posix_geteuid`, the AST file cache tests
-  (`FilesystemCacheTest`, `AstSerializerTest`, `FilesystemCacheSecurityTest`)
-  and the class-set store tests fail, since neither store reads or writes
-  where it cannot check the owner (raised on #306, 2026-11-09). Every CI
-  cell has the function. Whether to run the suite on such hosts, and how
-  without losing the Windows runs `#[RequiresPhpExtension('posix')]` would
-  drop, is open.
+- With #341, `Add u.` can lead to a refusal on the Python target when the
+  pattern holds `\w` or `\b`, which Python cannot write under `u`: the
+  advice does not look at the target. `\p` without `u` is warned of, not
+  refused, although PCRE reads the byte as Latin-1 there; `\h` and `\v`
+  are written with the full Unicode set where PCRE takes 0xA0 and 0x85.
+  The caret of a `TranspileException` snippet stands one column left of
+  the construct. `ClassSetProvider::query()` answers nothing for a class
+  holding all eight probe delimiters.
 
-- `format` writes a `#` comment ending in an escaped space with `\x20`
-  when the comment carries no trailing-comment marker: on its own line
-  (`/a` newline `# path\ ` newline `b/x` gives `# path\x20`), and past ten
-  indent levels (#310). The match is the same, but the guide says comments
-  are kept. Teaching `PatternLayout::finishLines()` where a comment starts
-  on a line would keep them as written.
+- `ForkedWorkerPoolTest`: the deadline of `withDeadline()` does not
+  interrupt a blocking read of a channel, so a pool that blocked for ever
+  in `shutdown()` would hang the suite; and
+  `test_run_reads_a_slow_payload_name_past_the_socket_timeout` rests on a
+  head start of 300 ms, not seen failing.
 
-- `JsonFatalErrorTest::test_fatal_error_in_json_mode_prints_the_internal_envelope`
-  exits 255 instead of 1 on a slow Windows runner (PHP 8.5, 2026-11-09, on
-  #271, which does not touch the CLI): the one-second `--time-limit` runs out
-  again inside the shutdown handler of `bin/regex`, which then never writes
-  the JSON envelope. Give the handler room (reset the limit in it) or bound
-  the work instead of the clock.
+- `CaptureFacts::reaches()` walks the call graph again for each group:
+  quadratic in the groups, nothing measurable at eighty levels.
 
-- Three real costs whose pull request was closed, its bound refusing
-  legitimate input; the fix that keeps the answers is still to write. The
-  ReDoS repair analyses one candidate per quantifier (#249): the quantifiers
-  the analysis blames can only be tried first, as `/^\s*(?:\w+\s*)*$/` is
-  repaired with no culprit and no hotspot named, and whether the others are
-  then cut off at a count is open. Alternation overlaps compare every pair
-  (#254): bucketing by first character is not enough when every branch
-  starts alike, the pairs have to be ruled out by their shared prefix.
-  Nested alphabetic assertion bodies are copied at each level (#276): read
-  them in place.
-- The solver works for 18 to 30 s before it refuses a pattern of many
-  lookaheads with "NFA state limit exceeded (5000)":
-  `LanguageSolver::compile()` takes 29 s on twelve lookaheads of Unicode
-  classes, `/^(?=.*\p{Lu})(?=.*\p{Ll})(?=.*\p{N})...{12,}$/u`, and 18 s on
-  forty of the shape `(?=.*a{2})`, under the default options and under a
-  budget of 200,000 units alike (measured 2026-11-10, before and after
-  #244, which bounds the bodies and not this). The state limit is reached
-  late and `maxTransitionsProcessed` does not count the work done before
-  it: find where the time goes and charge it. A password rule of four or
-  six lookaheads is answered in 0.3 to 2.5 s.
-- Without `u`, every set that leaves characters out (the dot, `[^a]`,
-  `\D`, `\W`, `\S`) takes one byte in PCRE and one character in the
-  JavaScript, `html-pattern` and Python output: `/^\S$/` fails U+00A0,
-  two bytes, where `/^[^\t-\r ]$/` matches it in JavaScript (raised on
-  #318, documented in the API reference). Whether to refuse those sets for
-  the character targets, or advise `u`, is open.
-- Capture shapes still double with each level of a `(?(DEFINE)` call
-  graph after #255 (8.7 s at twenty levels): another visitor walks the
-  calls again.
-
-- The Psalm and PHPStan bridges require `regex-linter` whole, for the
-  target resolution and the PHP-source helpers they import. Those need a
-  home below it, a new split package or a lower one; dropping the
-  `require` afterwards is never a break.
+- Some fifteen test helpers read a process's standard output to its end,
+  then its standard error: a process that fills the second first would
+  block. The `Scope` job of `ci.yml` counts a moved file twice against
+  GitHub's limit of 3,000 files.
