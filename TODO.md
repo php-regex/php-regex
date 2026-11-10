@@ -193,6 +193,12 @@ as `CallTypes::quote` does.
 
 ## Open questions
 
+- `RailroadLayoutTest::test_wide_layout_composition_scales_with_its_geometry`
+  ("alternation") measures a time ratio against 11 and passes it on loaded
+  runners (12.18 on Windows PHP 8.3 for #310, 11.19 on PHP 8.2 latest PCRE2
+  for #247, 2026-11-10; neither touches the railroad layout). Count the
+  work, or give the ratio the margin the other linear-time tests have.
+
 - `ImpossibleBoundaryRuleTest::test_many_boundaries_under_u_are_linted_quickly`
   ("non-ASCII letter met again") measures wall time against 0.5 s and
   fails on the "latest PCRE2" cells (0.50 s and 0.87 s on PHP 8.2 and 8.3,
