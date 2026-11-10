@@ -49,8 +49,9 @@ final class PatternTooLargeErrorOrderTest extends TestCase
     /**
      * Where the PCRE2 10.40 PHP 8.2 bundles answers otherwise than the
      * library reads that release, with the engine's own answer: PHP 8.3's
-     * 10.42 answers as the library does. Checked as they stand until the
-     * library reads them so.
+     * 10.42, and a system 10.40, answer as the library does. An engine that
+     * gives this answer is not held to the library's until the library
+     * reads it so.
      */
     private const PHP_BUNDLED_10_40_DIVERGENCES = [
         '/(?:[^a]){5000}|(?:[^a]){4000}\\k<n>(?:[^a]){1000}/' => 'reference to non-existent subpattern at offset 32',
@@ -224,9 +225,9 @@ final class PatternTooLargeErrorOrderTest extends TestCase
         $this->assertNotNull($refused, 'Oracle: the running engine refuses '.$pattern);
         $engine = PcreMessageCodes::read($refused);
         $release = implode('.', \array_slice(explode('.', explode(' ', \PCRE_VERSION)[0]), 0, 2));
-        if ('10.40' === $release && isset(self::PHP_BUNDLED_10_40_DIVERGENCES[$pattern])) {
-            $this->assertSame(self::PHP_BUNDLED_10_40_DIVERGENCES[$pattern], \sprintf('%s at offset %d', $engine['message'], $engine['offset'] ?? -1), 'Oracle: '.$refused);
-
+        // The PCRE2 10.40 PHP 8.2 bundles answers these as listed; a system
+        // 10.40 answers as the library reads that release, checked below.
+        if ('10.40' === $release && (self::PHP_BUNDLED_10_40_DIVERGENCES[$pattern] ?? null) === \sprintf('%s at offset %d', $engine['message'], $engine['offset'] ?? -1)) {
             return;
         }
 
