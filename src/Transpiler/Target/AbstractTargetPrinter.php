@@ -122,6 +122,12 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     private string $body = '';
 
     /**
+     * Whether an inline "(?xx)" holds where the printer stands: PCRE leaves
+     * out the spaces and tabs of a class, which the tree no longer holds.
+     */
+    private bool $extendedMore = false;
+
+    /**
      * Whether the pattern has its warning on a set that takes a byte.
      */
     private bool $warnedOfASet = false;
@@ -186,28 +192,28 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     /**
      * The options in force, to be restored where a group ends.
      *
-     * @return array{bool, bool, bool, bool}
+     * @return array{bool, bool, bool, bool, bool}
      */
     protected function scope(): array
     {
-        return [$this->caseless, $this->dotAll, $this->multiline, $this->ungreedy];
+        return [$this->caseless, $this->dotAll, $this->multiline, $this->ungreedy, $this->extendedMore];
     }
 
     /**
-     * @param array{bool, bool, bool, bool} $scope
+     * @param array{bool, bool, bool, bool, bool} $scope
      */
     protected function restoreScope(array $scope): void
     {
-        [$this->caseless, $this->dotAll, $this->multiline, $this->ungreedy] = $scope;
+        [$this->caseless, $this->dotAll, $this->multiline, $this->ungreedy, $this->extendedMore] = $scope;
     }
 
     /**
      * Apply an inline "(?flags)" and say whether the target carries every
-     * letter it holds: a leading "^" unsets i, m and s, then the letters
+     * letter it holds: a leading "^" unsets i, m, s and x, then the letters
      * before "-" are set and those after it unset. "x" is applied by the
      * parser, so a target that takes it has nothing left to do; "xx" only
      * goes through where the target says so, and a letter the target does
-     * not list never does.
+     * not list never does. "xx" holds until "x" is set without it or unset.
      *
      * @param string $carried the letters the target can carry
      */
@@ -218,10 +224,11 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         }
 
         if (str_starts_with($flags, '^')) {
-            $this->caseless = $this->dotAll = $this->multiline = false;
+            $this->caseless = $this->dotAll = $this->multiline = $this->extendedMore = false;
         }
 
         [$set, $unset] = explode('-', ltrim($flags, '^').'-', 3);
+        $this->extendedMore = (str_contains($set, 'xx') || ($this->extendedMore && !str_contains($set, 'x'))) && !str_contains($unset, 'x');
         $this->caseless = (str_contains($set, 'i') || $this->caseless) && !str_contains($unset, 'i');
         $this->dotAll = (str_contains($set, 's') || $this->dotAll) && !str_contains($unset, 's');
         $this->multiline = (str_contains($set, 'm') || $this->multiline) && !str_contains($unset, 'm');
@@ -391,9 +398,10 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
 
         $offset = $node->getStartPosition();
         $written = substr($this->body, $offset, $node->getEndPosition() - $offset);
-        // The bytes above 0x7F the set takes, as the running PCRE says: a
-        // set it cannot be asked about is taken to reach them.
-        if (!self::holdsAProperty($node) && true === ClassSetProvider::query('(?=[\x80-\xFF])'.$written, false, '')?->isEmpty()) {
+        // The bytes above 0x7F the set takes, as the running PCRE says of
+        // it under the "xx" in force: a set it cannot be asked about is
+        // taken to reach them.
+        if (!self::holdsAProperty($node) && true === ClassSetProvider::query('(?=[\x80-\xFF])'.$written, false, $this->extendedMore ? 'xx' : '')?->isEmpty()) {
             return;
         }
 

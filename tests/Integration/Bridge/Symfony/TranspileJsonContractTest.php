@@ -54,7 +54,7 @@ final class TranspileJsonContractTest extends TestCase
         yield 'a valid pattern, javascript' => ['pattern' => '/a+b/i', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a note, javascript' => ['pattern' => '/(?<n>a)\k<n>/x', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a warning, python' => ['pattern' => '/a+/U', 'target' => 'python', 'exitCode' => 0, 'address' => 'transpile'];
-        // Without u the dot takes a byte in PCRE and a character in the target: a warning, in each document.
+        // A set that takes a byte in PCRE without u, and the same set under u: the bridge prints what the command prints.
         yield 'a set past ASCII without u' => ['pattern' => '/^.+,[^,]+$/', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a set past ASCII under u' => ['pattern' => '/^.+,[^,]+$/u', 'target' => 'python', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a syntax error' => ['pattern' => '/(a/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
@@ -94,6 +94,27 @@ final class TranspileJsonContractTest extends TestCase
         yield 'mixed case' => ['format' => 'Json', 'pattern' => '/a+b/i', 'target' => 'python', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'upper case, invalid pattern' => ['format' => 'JSON', 'pattern' => '/(a/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
         yield 'upper case, unknown target' => ['format' => 'JSON', 'pattern' => '/a+b/i', 'target' => 'ruby', 'exitCode' => 2, 'address' => 'error'];
+    }
+
+    /**
+     * Without u the dot takes one byte in PCRE and one character in the
+     * target: the document carries the warning, and none under u.
+     */
+    #[Test]
+    public function test_transpile_json_warns_of_a_set_that_takes_a_byte_without_u(): void
+    {
+        // Oracle: "é" is two bytes to the dot, and one character under u.
+        $this->assertSame(0, preg_match('/^.,[^,]+$/', 'é,b'));
+        $this->assertSame(1, preg_match('/^.,[^,]+$/u', 'é,b'));
+
+        $tester = new CommandTester(new TranspileCommand(Regex::create()));
+        $tester->execute(['pattern' => '/^.,[^,]+$/', '--target' => 'javascript', '--format' => 'json']);
+        $document = JsonContract::decodeDocument($tester->getDisplay());
+        $this->assertSame(['Without the u flag "." at offset 1 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.'], $document['warnings'] ?? null);
+
+        $tester->execute(['pattern' => '/^.,[^,]+$/u', '--target' => 'javascript', '--format' => 'json']);
+        $underU = JsonContract::decodeDocument($tester->getDisplay());
+        $this->assertSame([], $underU['warnings'] ?? null);
     }
 
     #[Test]

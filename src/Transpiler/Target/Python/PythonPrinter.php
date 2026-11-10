@@ -638,7 +638,7 @@ final class PythonPrinter extends AbstractTargetPrinter
      * A lookbehind over alternatives of different lengths, which PCRE takes
      * and Python does not, as one lookbehind per alternative.
      *
-     * @param array{bool, bool, bool, bool} $scope
+     * @param array{bool, bool, bool, bool, bool} $scope
      */
     private function splitLookbehind(GroupNode $node, AlternationNode $alternation, array $scope): string
     {

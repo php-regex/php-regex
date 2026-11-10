@@ -136,11 +136,53 @@ final class SetsWithoutUtfTest extends TestCase
         $this->assertSame([], Regex::create()->transpile($pattern.'u', $target)->warnings);
     }
 
+    /**
+     * @param string $subject what the pattern matches with the lone byte 0xE9 where the named set stands
+     */
     #[Test]
     #[DataProvider('provideFirstSets')]
-    public function test_one_warning_names_the_first_set_of_the_pattern(string $pattern, string $target, string $set, int $offset): void
+    public function test_one_warning_names_the_first_set_of_the_pattern(string $pattern, string $target, string $set, int $offset, string $subject): void
     {
+        // The named set takes the byte, which is no character on its own.
+        $this->assertSame(1, preg_match('/^'.$set.'$/', "\xE9"), $set);
+        $this->assertSame(1, substr_count($subject, "\xE9"));
+        $this->assertFalse(mb_check_encoding($subject, 'UTF-8'));
+        $this->assertSame(1, preg_match($pattern, $subject), $pattern);
+        // Without the byte the pattern fails: the set is what took it.
+        $this->assertSame(0, preg_match($pattern, str_replace("\xE9", '', $subject)), $pattern);
+
         $this->assertSame([self::warning($set, $offset)], Regex::create()->transpile($pattern, $target)->warnings);
+    }
+
+    /**
+     * An inline "(?xx)", which Python alone carries, has PCRE leave out the
+     * spaces and tabs of a class: "[ ^a]" is "[^a]" under it, and takes a
+     * byte above 0x7F, where it is a space, "^" and "a" without it.
+     */
+    #[Test]
+    #[DataProvider('provideClassesUnderExtendedMore')]
+    public function test_a_class_is_read_under_the_inline_xx_in_force(string $pattern, ?int $offset): void
+    {
+        // Negated, the class takes the byte; a space, "^" and "a" do not.
+        $this->assertSame(null === $offset ? 0 : 1, preg_match($pattern, "\xE9"), $pattern);
+        $this->assertSame(1, preg_match($pattern, ' '), $pattern);
+
+        $this->assertSame(null === $offset ? [] : [self::warning('[ ^a]', $offset)], Regex::create()->transpile($pattern, 'python')->warnings);
+    }
+
+    /**
+     * Under "(?xx)" the class "[ ^\S]" is "[^\S]", six ASCII bytes: the dot
+     * after it is the first set that reaches past ASCII.
+     */
+    #[Test]
+    public function test_a_class_that_stays_in_ascii_under_xx_leaves_the_warning_to_the_next_set(): void
+    {
+        $this->assertSame(1, preg_match('/(?xx)^[ ^\S].$/', " \xE9"));
+        $this->assertSame(0, preg_match('/(?xx)^[ ^\S].$/', "\xA0\xE9"));
+        $this->assertSame(1, preg_match('/^[ ^\S].$/', "\xA0\xE9"));
+
+        $this->assertSame([self::warning('.', 12)], Regex::create()->transpile('/(?xx)^[ ^\S].$/', 'python')->warnings);
+        $this->assertSame([self::warning('[ ^\S]', 1)], Regex::create()->transpile('/^[ ^\S].$/', 'python')->warnings);
     }
 
     /**
@@ -281,26 +323,53 @@ final class SetsWithoutUtfTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, target: string, set: string, offset: int}>
+     * @return iterable<string, array{pattern: string, target: string, set: string, offset: int, subject: string}>
      */
     public static function provideFirstSets(): iterable
     {
         foreach (self::TARGETS as $target) {
-            yield $target.': three sets, the dot first' => ['pattern' => '/^.[^a]\S$/', 'target' => $target, 'set' => '.', 'offset' => 1];
-            yield $target.': after sets that stay in ASCII' => ['pattern' => '/^\d+[a-z]\w\D$/', 'target' => $target, 'set' => '\D', 'offset' => 11];
-            yield $target.': the same set twice' => ['pattern' => '/^[^,]+,[^,]+$/', 'target' => $target, 'set' => '[^,]', 'offset' => 1];
-            yield $target.': in a group, before one outside it' => ['pattern' => '/^(a|[^b])\S$/', 'target' => $target, 'set' => '[^b]', 'offset' => 4];
-            yield $target.': in a lookbehind' => ['pattern' => '/(?<=\W)a.$/', 'target' => $target, 'set' => '\W', 'offset' => 4];
-            yield $target.': a member of a class is the class' => ['pattern' => '/^[a\D]$/', 'target' => $target, 'set' => '[a\D]', 'offset' => 1];
+            yield $target.': three sets, the dot first' => ['pattern' => '/^.[^a]\S$/', 'target' => $target, 'set' => '.', 'offset' => 1, 'subject' => "\xE9bc"];
+            yield $target.': after sets that stay in ASCII' => ['pattern' => '/^\d+[a-z]\w\D$/', 'target' => $target, 'set' => '\D', 'offset' => 11, 'subject' => "1a_\xE9"];
+            yield $target.': the same set twice' => ['pattern' => '/^[^,]+,[^,]+$/', 'target' => $target, 'set' => '[^,]', 'offset' => 1, 'subject' => "\xE9,b"];
+            yield $target.': in a group, before one outside it' => ['pattern' => '/^(a|[^b])\S$/', 'target' => $target, 'set' => '[^b]', 'offset' => 4, 'subject' => "\xE9c"];
+            yield $target.': in a lookbehind' => ['pattern' => '/(?<=\W)a.$/', 'target' => $target, 'set' => '\W', 'offset' => 4, 'subject' => "\xE9ab"];
+            yield $target.': a member of a class is the class' => ['pattern' => '/^[a\D]$/', 'target' => $target, 'set' => '[a\D]', 'offset' => 1, 'subject' => "\xE9"];
             // The offset is the one in the pattern as written, delimiters left out.
-            yield $target.': a quoted dot is a literal' => ['pattern' => '/^\Q.\E\S$/', 'target' => $target, 'set' => '\S', 'offset' => 6];
-            yield $target.': under x, after a space and before a comment' => ['pattern' => "/^ a [^b] # .\n $/x", 'target' => $target, 'set' => '[^b]', 'offset' => 4];
-            yield $target.': between other delimiters' => ['pattern' => '#^a.$#', 'target' => $target, 'set' => '.', 'offset' => 2];
-            yield $target.': a dot under an inline s' => ['pattern' => '/^(?s)a.$/', 'target' => $target, 'set' => '.', 'offset' => 6];
+            yield $target.': a quoted dot is a literal' => ['pattern' => '/^\Q.\E\S$/', 'target' => $target, 'set' => '\S', 'offset' => 6, 'subject' => ".\xE9"];
+            yield $target.': under x, after a space and before a comment' => ['pattern' => "/^ a [^b] # .\n $/x", 'target' => $target, 'set' => '[^b]', 'offset' => 4, 'subject' => "a\xE9"];
+            yield $target.': between other delimiters' => ['pattern' => '#^a.$#', 'target' => $target, 'set' => '.', 'offset' => 2, 'subject' => "a\xE9"];
+            yield $target.': a dot under an inline s' => ['pattern' => '/^(?s)a.$/', 'target' => $target, 'set' => '.', 'offset' => 6, 'subject' => "a\xE9"];
         }
 
         // Python splits the lookbehind, and writes its branches in order.
-        yield 'python: in the second branch of a lookbehind' => ['pattern' => '/(?<=ab|\W)a.$/', 'target' => 'python', 'set' => '\W', 'offset' => 7];
+        yield 'python: in the second branch of a lookbehind' => ['pattern' => '/(?<=ab|\W)a.$/', 'target' => 'python', 'set' => '\W', 'offset' => 7, 'subject' => "\xE9ab"];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: ?int}>
+     */
+    public static function provideClassesUnderExtendedMore(): iterable
+    {
+        yield 'no xx' => ['pattern' => '/^[ ^a]$/', 'offset' => null];
+        yield 'x alone' => ['pattern' => '/(?x)^[ ^a]$/', 'offset' => null];
+        yield 'xx' => ['pattern' => '/(?xx)^[ ^a]$/', 'offset' => 6];
+        yield 'xx beside another letter' => ['pattern' => '/(?xx-i)^[ ^a]$/', 'offset' => 8];
+        yield 'three of them' => ['pattern' => '/(?xxx)^[ ^a]$/', 'offset' => 7];
+        yield 'xx after a caret' => ['pattern' => '/(?^xx)^[ ^a]$/', 'offset' => 7];
+        yield 'xx after x' => ['pattern' => '/(?x)(?xx)^[ ^a]$/', 'offset' => 10];
+        yield 'xx kept by another letter' => ['pattern' => '/(?xx)(?i)^[ ^a]$/', 'offset' => 10];
+        yield 'xx ended by x alone' => ['pattern' => '/(?xx)(?x)^[ ^a]$/', 'offset' => null];
+        yield 'xx ended by x unset' => ['pattern' => '/(?xx)(?-x)^[ ^a]$/', 'offset' => null];
+        yield 'xx ended by a caret' => ['pattern' => '/(?xx)(?^)^[ ^a]$/', 'offset' => null];
+        yield 'xx set and x unset at once' => ['pattern' => '/(?xx-x)^[ ^a]$/', 'offset' => null];
+        yield 'x set and xx unset at once' => ['pattern' => '/(?x-xx)^[ ^a]$/', 'offset' => null];
+        yield 'xx for a group' => ['pattern' => '/^(?xx:[ ^a])$/', 'offset' => 6];
+        yield 'after the group xx was set for' => ['pattern' => '/^(?xx:b)?[ ^a]$/', 'offset' => null];
+        yield 'after the group xx was set in' => ['pattern' => '/^(?:(?xx)b)?[ ^a]$/', 'offset' => null];
+        yield 'in the alternative after the one xx was set in' => ['pattern' => '/^(?:(?xx)b|[ ^a])$/', 'offset' => 11];
+        yield 'xx ended for a group' => ['pattern' => '/(?xx)^(?x:[ ^a])$/', 'offset' => null];
+        yield 'xx kept in a group that sets another letter' => ['pattern' => '/(?xx)^(?i:[ ^a])$/', 'offset' => 10];
+        yield 'xx back after the group that ended it' => ['pattern' => '/(?xx)^(?x:b)?[ ^a]$/', 'offset' => 13];
     }
 
     /**
