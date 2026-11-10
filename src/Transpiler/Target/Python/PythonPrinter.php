@@ -307,6 +307,10 @@ final class PythonPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitCharType(CharTypeNode $node): string
     {
+        if (!$this->inCharClass) {
+            $this->warnOfASetPastAscii($node);
+        }
+
         if ('h' === $node->value || 'v' === $node->value) {
             $this->context->addNote('Converted \\'.$node->value.' to character class.');
             $set = 'h' === $node->value ? self::HORIZONTAL_SPACES : self::VERTICAL_SPACES;
@@ -334,6 +338,8 @@ final class PythonPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitDot(DotNode $node): string
     {
+        $this->warnOfASetPastAscii($node);
+
         $dotAllFlag = str_contains($this->patternFlags, 's');
         if ($this->dotAll) {
             return $dotAllFlag ? '.' : '[\s\S]';
@@ -383,6 +389,7 @@ final class PythonPrinter extends AbstractTargetPrinter
     {
         $wasInCharClass = $this->inCharClass;
         $this->inCharClass = true;
+        $this->warnOfASetPastAscii($node);
 
         try {
             $members = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
@@ -631,7 +638,7 @@ final class PythonPrinter extends AbstractTargetPrinter
      * A lookbehind over alternatives of different lengths, which PCRE takes
      * and Python does not, as one lookbehind per alternative.
      *
-     * @param array{bool, bool, bool, bool} $scope
+     * @param array{bool, bool, bool, bool, bool} $scope
      */
     private function splitLookbehind(GroupNode $node, AlternationNode $alternation, array $scope): string
     {

@@ -39,6 +39,10 @@ jobs:
     timeout-minutes: 40
     strategy:
       fail-fast: false
+      # Eight of the eighteen cells at once: the organization runs sixty
+      # jobs at once for every open pull request, and the matrices of one
+      # pull request hold a third of them at most.
+      max-parallel: 8
       matrix:
         os: [ ubuntu-latest ]
         php: [ '8.6', '8.5', '8.4', '8.3', '8.2', '8.1' ]
@@ -225,6 +229,8 @@ jobs:
     timeout-minutes: 15
     strategy:
       fail-fast: false
+      # One after the other: a cell takes half a minute.
+      max-parallel: 1
       matrix:
         include:
           - { psalm: 'lowest', constraint: '6.19.0' }

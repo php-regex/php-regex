@@ -600,6 +600,30 @@ no equivalent for stops it with the envelope too, stage `pattern`, without a
 | `warnings` | list of strings | Where the target matches differently from PCRE |
 | `notes` | list of strings | What was rewritten on the way, matching the same |
 
+Without `u`, PCRE takes one byte for a set where the targets take one
+character. A pattern holding a set that reaches past ASCII (the dot, a
+negated class, `\D`, `\W`, `\S`, `\h`, `\v`, a property) is written all the
+same, and `warnings` names the first such set and its offset in the pattern,
+once per pattern: the two differ on a subject holding a character outside
+ASCII, and agree under `u` for UTF-8 subjects.
+
+```json
+{
+    "target": "javascript",
+    "source": "/^\\S+$/D",
+    "pattern": "^[^\\t-\\r ]+$",
+    "flags": "",
+    "literal": "/^[^\\t-\\r ]+$/",
+    "constructor": "new RegExp(\"^[^\\\\t-\\\\r ]+$\", \"\")",
+    "warnings": [
+        "Without the u flag \"\\S\" at offset 1 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u."
+    ],
+    "notes": [
+        "Applied /D: \"$\" is written for the end of the subject alone."
+    ]
+}
+```
+
 ## Format
 
 `regex format <pattern> --format=json` lays a pattern out over lines under
