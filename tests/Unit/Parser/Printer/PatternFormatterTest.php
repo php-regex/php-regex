@@ -143,6 +143,37 @@ final class PatternFormatterTest extends TestCase
         $this->assertFormatsTo($pattern, $width, $expected);
     }
 
+    /**
+     * PCRE skips a "#" comment up to the line break that ends it: an escaped
+     * space closing its text is no space of the pattern, and an editor that
+     * strips it changes nothing. The comment stays as written wherever the
+     * layout writes it, and code ending its line after it is still spelled
+     * "\x20".
+     */
+    #[Test]
+    #[DataProvider('provideCommentsClosedByAnEscapedSpace')]
+    public function test_format_keeps_a_comment_closed_by_an_escaped_space_as_written(string $pattern, int $width, string $expected, string $subject): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject), 'The oracle: the comment matches nothing.');
+
+        $this->assertFormatsTo($pattern, $width, $expected);
+        $this->assertSame(1, preg_match($expected, $subject));
+    }
+
+    /**
+     * A "#" that opens no comment is a character of the pattern, and so is
+     * an escaped space ending the line after it: that one is spelled "\x20".
+     */
+    #[Test]
+    #[DataProvider('provideHashesThatOpenNoComment')]
+    public function test_format_spells_an_escaped_space_ending_a_line_after_a_hash_that_opens_no_comment(string $pattern, int $width, string $expected, string $subject): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject), 'The oracle: the "#" and the space are matched.');
+
+        $this->assertFormatsTo($pattern, $width, $expected);
+        $this->assertSame(1, preg_match($expected, $subject));
+    }
+
     #[Test]
     #[DataProvider('provideExtendedModeScopes')]
     public function test_format_keeps_a_region_without_x_on_one_line(string $pattern, int $width, string $expected): void
@@ -2011,6 +2042,80 @@ final class PatternFormatterTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{pattern: string, width: int, expected: string, subject: string}>
+     */
+    public static function provideCommentsClosedByAnEscapedSpace(): iterable
+    {
+        yield 'on a line of its own' => ['pattern' => "/a\n# path\\ \nb/x", 'width' => 80, 'expected' => self::lines('/', '    a', '    # path\ ', '    b', '/x'), 'subject' => 'ab'];
+        yield 'closing the pattern' => ['pattern' => "/a\n# path\\ /x", 'width' => 80, 'expected' => self::lines('/', '    a', '    # path\ ', '/x'), 'subject' => 'a'];
+        yield 'alone in the pattern' => ['pattern' => '/# c\ /x', 'width' => 1, 'expected' => self::lines('/', '    # c\ ', '/x'), 'subject' => ''];
+        yield 'two in a row, then a blank line' => ['pattern' => "/a\n# c\\ \n# d\\ \n\nb/x", 'width' => 80, 'expected' => self::lines('/', '    a', '    # c\ ', '    # d\ ', '', '    b', '/x'), 'subject' => 'ab'];
+        yield 'after the start options' => ['pattern' => "/(*UTF) # c\\ \na/x", 'width' => 1, 'expected' => self::lines('/(*UTF)', '    # c\ ', '    a', '/x'), 'subject' => 'a'];
+        yield 'after the start options of a first branch' => ['pattern' => "/(*UTF) # c\\ \n|b/x", 'width' => 80, 'expected' => self::lines('/(*UTF)', '    # c\ ', '  | b', '/x'), 'subject' => 'b'];
+        yield 'after the bar that follows the start options' => ['pattern' => "/(*UTF)| # c\\ \nb/x", 'width' => 1, 'expected' => self::lines('/(*UTF)', '    # c\ ', '  | b', '/x'), 'subject' => 'b'];
+        yield 'after an escaped space of the pattern' => ['pattern' => "/a\\ # c\\ \n(?:b)/x", 'width' => 1, 'expected' => self::lines('/', '    a\   # c\ ', '    (?:', '        b', '    )', '/x'), 'subject' => 'a b'];
+        yield 'opening a branch' => ['pattern' => "/a\n|\n# c\\ \nb/x", 'width' => 80, 'expected' => self::lines('/', '    a', '  | # c\ ', '    b', '/x'), 'subject' => 'b'];
+        yield 'in a branch and in DEFINE' => ['pattern' => "/(?:a\n# c\\ \n|b)(?(DEFINE)\n# d\\ \n(?<n>e))/x", 'width' => 1, 'expected' => self::lines('/', '    (?:', '        a', '        # c\ ', '      | b', '    )', '    (?(DEFINE)', '        # d\ ', '        (?<n>', '            e', '        )', '    )', '/x'), 'subject' => 'a'];
+        yield 'in each branch of a conditional' => ['pattern' => "/(a)(?(1)\n# c\\ \nb|\n# d\\ \nc)/x", 'width' => 1, 'expected' => self::lines('/', '    (', '        a', '    )', '    (?(1)', '        # c\ ', '        b', '      | # d\ ', '        c', '    )', '/x'), 'subject' => 'ab'];
+        // Past ten indent levels the rest of a group is written on one line,
+        // but for the line break that ends each comment.
+        yield 'past ten indent levels' => ['pattern' => '/'.str_repeat("(?:# c\\ \n", 12).'a'.str_repeat(')', 12).'/x', 'width' => 1, 'expected' => self::lines(
+            '/',
+            '    (?:                                  # c\ ',
+            '        (?:                              # c\ ',
+            '            (?:                          # c\ ',
+            '                (?:                      # c\ ',
+            '                    (?:                  # c\ ',
+            '                        (?:              # c\ ',
+            '                            (?:          # c\ ',
+            '                                (?:      # c\ ',
+            '                                    (?:  # c\ ',
+            '                                        (?:# c\ ',
+            '(?:# c\ ',
+            '(?:# c\ ',
+            'a)))',
+            '                                    )',
+            '                                )',
+            '                            )',
+            '                        )',
+            '                    )',
+            '                )',
+            '            )',
+            '        )',
+            '    )',
+            '/x',
+        ), 'subject' => 'a'];
+        // After "(?-x)" the rest of the group stays on its line: a comment
+        // written once x is back on ends that line, and the escaped space
+        // of the pattern ends the next one.
+        yield 'where x is back on, before code ending its line' => ['pattern' => "/(?:(?-x)a(?x)# c\\ \nb\\ )d/x", 'width' => 1, 'expected' => self::lines('/', '    (?:', '        (?-x)a(?x)# c\ ', 'b\x20', '    )', '    d', '/x'), 'subject' => 'ab d'];
+        // A carriage return ends no comment unless the pattern says so: here
+        // the comment runs up to the line feed, "b\ " included.
+        yield 'holding a carriage return that does not end it' => ['pattern' => "/a\n# c\\ \rb\\ \nd/x", 'width' => 1, 'expected' => self::lines('/', '    a', "    # c\\ \rb\\ ", '    d', '/x'), 'subject' => 'ad'];
+        // Under (*ANYCRLF) it does: "b\ " is the pattern's.
+        yield 'ended by a carriage return under (*ANYCRLF)' => ['pattern' => "/(*ANYCRLF)a\n# c\\ \rb\\ \n(?:d)/x", 'width' => 1, 'expected' => self::lines('/(*ANYCRLF)', '    a', "    # c\\ \r", '    b\x20', '    (?:', '        d', '    )', '/x'), 'subject' => 'ab d'];
+        yield 'ended by a carriage return under (*ANYCRLF), before code ending its line' => ['pattern' => "/(*ANYCRLF)(?:(?-x)a(?x)# c\\ \rb\\ )d/x", 'width' => 1, 'expected' => self::lines('/(*ANYCRLF)', '    (?:', "        (?-x)a(?x)# c\\ \rb\\x20", '    )', '    d', '/x'), 'subject' => 'ab d'];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, width: int, expected: string, subject: string}>
+     */
+    public static function provideHashesThatOpenNoComment(): iterable
+    {
+        yield 'escaped' => ['pattern' => "/a\\#\\ \n(?:b)/x", 'width' => 1, 'expected' => self::lines('/', '    a\#\x20', '    (?:', '        b', '    )', '/x'), 'subject' => 'a# b'];
+        yield 'in a class' => ['pattern' => "/[#]\\ \n(?:b)/x", 'width' => 1, 'expected' => self::lines('/', '    [#]\x20', '    (?:', '        b', '    )', '/x'), 'subject' => '# b'];
+        yield 'in a quoted run' => ['pattern' => "/\\Q#\\E\\ \n(?:b)/x", 'width' => 1, 'expected' => self::lines('/', '    \#\x20', '    (?:', '        b', '    )', '/x'), 'subject' => '# b'];
+        yield 'in a pattern without x' => ['pattern' => '/a#\ (?:b)/', 'width' => 1, 'expected' => self::lines('/', '    a\#\x20', '    (?:', '        b', '    )', '/x'), 'subject' => 'a# b'];
+        yield 'in a scope where x is off' => ['pattern' => "/(?-x:a#)\\ \n(?:b)/x", 'width' => 1, 'expected' => self::lines('/', '    (?-x:a#)', '    \x20', '    (?:', '        b', '    )', '/x'), 'subject' => 'a# b'];
+        yield 'after a setting that switches x off' => ['pattern' => "/(?:(?-x)a#)\\ \n(?:b)/x", 'width' => 1, 'expected' => self::lines('/', '    (?:', '        (?-x)a#)', '    \x20', '    (?:', '        b', '    )', '/x'), 'subject' => 'a# b'];
+        // PHP reads the flags "xx" as "x": only "(?xx)" skips a space in a class.
+        yield 'in a class under (?xx)' => ['pattern' => "/(?xx)[a #]\\ \n(?:b)/", 'width' => 1, 'expected' => self::lines('/', '    (?xx)', '    [a#]\x20', '    (?:', '        b', '    )', '/x'), 'subject' => '# b'];
+        yield 'in a class under the flags xx' => ['pattern' => "/[a #]\\ \n(?:b)/xx", 'width' => 1, 'expected' => self::lines('/', '    [a #]\x20', '    (?:', '        b', '    )', '/xx'), 'subject' => '# b'];
+        yield 'in a comment group' => ['pattern' => "/a(?##)\\ \n(?:b)/x", 'width' => 1, 'expected' => self::lines('/', '    a', '    (?##)\x20', '    (?:', '        b', '    )', '/x'), 'subject' => 'a b'];
+        yield 'in a verb name' => ['pattern' => "/(*MARK:#)a\\ \n(?:b)/x", 'width' => 1, 'expected' => self::lines('/', '    (*MARK:#)', '    a\x20', '    (?:', '        b', '    )', '/x'), 'subject' => 'a b'];
+    }
+
+    /**
      * Without x a line break is a literal: "(?-x:...)" and "(?^...)" print on
      * one line, and an unscoped "(?-x)" glues the rest of its group, later
      * branches included.
@@ -2197,6 +2302,12 @@ final class PatternFormatterTest extends TestCase
         yield 'in a comment group' => ['pattern' => "/(?:x)a(?#\x01TRAILING-COMMENT\x01)b(?:y)/", 'width' => 1, 'kept' => "(?#\x01TRAILING-COMMENT\x01)"];
         yield 'in a # comment' => ['pattern' => "/(?:x)a # \x01TRAILING-COMMENT\x01\nb(?:y)/x", 'width' => 1, 'kept' => "# \x01TRAILING-COMMENT\x01"];
         yield 'the trailing-comment marker itself' => ['pattern' => "/(?:x)a\x01TRAILING-COMMENT\x02b # c\n(?:y)/x", 'width' => 1, 'kept' => "a\x01TRAILING-COMMENT\x02b  # c"];
+        yield 'the comment-end marker in a literal' => ['pattern' => "/(?:x)a\x01COMMENT-END\x02b\\ \n(?:y)/x", 'width' => 1, 'kept' => "a\x01COMMENT-END\x02b\\x20\n"];
+        // Under x the space between the two halves is skipped: the pattern
+        // holds the marker where its source does not.
+        yield 'the comment-end marker a skipped space parts in the source' => ['pattern' => "/(?:x)a\x01COMMENT-END \x02b\\ \n(?:y)/x", 'width' => 1, 'kept' => "a\x01COMMENT-END\x02b\\x20\n"];
+        yield 'the comment-end marker closing a # comment' => ['pattern' => "/(?:x)a\n# c\\ \x01COMMENT-END\x02\nb\\ \n(?:y)/x", 'width' => 1, 'kept' => "    # c\\ \x01COMMENT-END\x02\n    b\\x20\n"];
+        yield 'the comment-end marker before an escaped space closing a # comment' => ['pattern' => "/(?:x)a\n# \x01COMMENT-END\x02c\\ \n(?:y)/x", 'width' => 1, 'kept' => "    # \x01COMMENT-END\x02c\\ \n"];
     }
 
     /**
@@ -2715,6 +2826,8 @@ final class PatternFormatterTest extends TestCase
             self::provideSpellings(),
             self::provideSeparators(),
             self::provideComments(),
+            self::provideCommentsClosedByAnEscapedSpace(),
+            self::provideHashesThatOpenNoComment(),
             self::provideExtendedModeScopes(),
             self::provideGroupKinds(),
             self::provideRefusalNeighbours(),

@@ -977,9 +977,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // A "#" comment ends its line: a laid-out line writes it without the
         // line break, which the layout puts back.
         if ($this->laysOut() && $node->isExtended) {
-            $this->layout?->noteLineComment();
-
-            return null !== $this->layout && $this->layout->isActive() ? rtrim($node->comment, "\n") : $node->comment;
+            return $this->layout?->lineComment($node) ?? $node->comment;
         }
 
         // A comment written as "# ..." is extended-mode whatever the pattern
@@ -2235,7 +2233,9 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $written ?? $inline;
         }
 
-        $trail = self::markAbsentFrom(($this->source ?? '').$inline, PatternLayout::TRAIL, "\x02");
+        $held = ($this->source ?? '').$inline;
+        $trail = self::markAbsentFrom($held, PatternLayout::TRAIL, "\x02");
+        $commentEnd = self::markAbsentFrom($held, PatternLayout::COMMENT_END, "\x02");
         $this->addsExtended = !str_contains($node->flags, 'x');
 
         // Under the x it adds, a space may part two tokens a "(?:)" parted
@@ -2247,7 +2247,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             }
         }
 
-        return $this->unlessMisread(PatternLayout::finishLines($this->renderRoot($node, $flags, true, $trail), $trail, $this->countsCodePoints), $written, $inline);
+        return $this->unlessMisread(PatternLayout::finishLines($this->renderRoot($node, $flags, true, $trail, $commentEnd), $trail, $commentEnd, $this->countsCodePoints), $written, $inline);
     }
 
     /**
@@ -2417,15 +2417,16 @@ final class PatternPrinter extends AbstractNodeVisitor
      * Render the whole pattern, on one line or laid out from the first
      * indent level on.
      *
-     * @param non-empty-string $trail the marker of a trailing comment
+     * @param non-empty-string $trail      the marker of a trailing comment
+     * @param non-empty-string $commentEnd the marker of the end of a "#" comment
      */
-    private function renderRoot(RegexNode $node, string $flags, bool $layout, string $trail = PatternLayout::TRAIL): string
+    private function renderRoot(RegexNode $node, string $flags, bool $layout, string $trail = PatternLayout::TRAIL, string $commentEnd = PatternLayout::COMMENT_END): string
     {
         $this->delimiterMisread = false;
-        $write = function () use ($node, $flags, $layout, $trail): string {
+        $write = function () use ($node, $flags, $layout, $trail, $commentEnd): string {
             $this->capturesOpened = 0;
             $this->flags = $flags;
-            $this->layout = new PatternLayout($this, $this->width, $this->countsCodePoints, $this->source, $trail, $layout);
+            $this->layout = new PatternLayout($this, $this->width, $this->countsCodePoints, $this->source, $trail, $commentEnd, $layout);
 
             return $this->layout->root($node->pattern);
         };
