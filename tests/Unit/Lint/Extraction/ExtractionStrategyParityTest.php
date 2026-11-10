@@ -470,9 +470,7 @@ final class ExtractionStrategyParityTest extends TestCase
             .str_repeat('Strings::match(subject: ', $depth).'$s'.str_repeat(", pattern: '/n/')", $depth).";\n");
         $strategy = new TokenBasedExtractionStrategy([], PatternFunctionRegistry::create(['nette-utils']));
 
-        $start = CpuClock::nanoseconds();
-        $patterns = $this->patterns($strategy, $file);
-        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+        $patterns = CpuClock::timed(fn () => $this->patterns($strategy, $file), $seconds);
 
         $this->assertCount($depth, $patterns);
         // A quadratic reading takes 70 s and more at this depth, a linear
@@ -492,9 +490,7 @@ final class ExtractionStrategyParityTest extends TestCase
             .str_repeat("Strings::replace(\$s, ['/a/' => 'x'], function (\$m) { return ", $depth).'$m'.str_repeat('; });', $depth)."\n");
         $strategy = new TokenBasedExtractionStrategy([], PatternFunctionRegistry::create(['nette-utils']));
 
-        $start = CpuClock::nanoseconds();
-        $patterns = $this->patterns($strategy, $file);
-        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+        $patterns = CpuClock::timed(fn () => $this->patterns($strategy, $file), $seconds);
 
         $this->assertCount($depth, $patterns);
         // A quadratic reading takes 70 s and more at this depth, a linear
