@@ -23,6 +23,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +36,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class CaptureShapeCallGraphTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * The facts a call asks of the body it runs: its values and whether it
      * starts off zero, each for a match and for a scan; whether it may be
@@ -170,7 +174,13 @@ final class CaptureShapeCallGraphTest extends TestCase
     #[DataProvider('provideCallGraphs')]
     public function test_the_shape_reads_calls_as_the_engine_runs_them(string $pattern, string $subject, array $matches, string $expected): void
     {
-        $this->assertSame(1, preg_match($pattern, $subject, $written));
+        // The interpreter is asked: PHP runs a pattern through the JIT or
+        // not as the process stands, and one packaged engine answers the
+        // two differently for the groups inside a called one.
+        $this->assertSame(1, preg_match(PcreInterpreter::pattern($pattern), $subject, $written));
+        if ($matches !== $written) {
+            $this->requiresCallCapturesGivenBack($pattern);
+        }
         $this->assertSame($matches, $written);
 
         $this->assertSame($expected, self::analyze($pattern)->matchShape());
