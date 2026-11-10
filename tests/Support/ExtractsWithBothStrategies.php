@@ -221,7 +221,7 @@ trait ExtractsWithBothStrategies
                 continue;
             }
 
-            $this->assertNotNull(ArgumentState::tryFrom($occurrence->state), 'An argument ends in one of the five states, got "'.$occurrence->state.'".');
+            $this->assertInstanceOf(ArgumentState::class, ArgumentState::tryFrom($occurrence->state), 'An argument ends in one of the five states, got "'.$occurrence->state.'".');
             $this->assertSame('', $occurrence->pattern, 'An argument holds no pattern: its patterns are occurrences of their own.');
             $this->assertNotNull($occurrence->expression, 'An argument carries its expression.');
             $arguments[] = [

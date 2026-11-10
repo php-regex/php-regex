@@ -141,7 +141,7 @@ final class PatternOccurrenceArgumentTest extends TestCase
         $this->assertTrue($ignored->isIgnored);
 
         $guarded = $argument->guardedBy($guard);
-        $this->assertNotNull($guarded->guard);
+        $this->assertInstanceOf(TargetConstraint::class, $guarded->guard);
 
         $analysed = $ignored->analysed();
         $this->assertFalse($analysed->isIgnored);
