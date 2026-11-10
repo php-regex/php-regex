@@ -112,6 +112,27 @@ final class JsonFatalErrorTest extends TestCase
     }
 
     /**
+     * PHP lets the shutdown of a run it stopped at its time limit run for
+     * about as long again, and stops it too: the envelope is still printed
+     * when the shutdown takes longer, on a loaded host.
+     */
+    #[Test]
+    public function test_time_limit_in_json_mode_leaves_the_envelope_the_time_to_be_written(): void
+    {
+        [$exitCode, $stdout, $stderr] = $this->runFatalRun('timeout');
+
+        $this->assertSame(1, $exitCode, $stdout.$stderr);
+        $this->assertStringEndsWith("\n", $stdout, $stdout.$stderr);
+        $document = JsonContract::decodeDocument($stdout);
+        $this->assertSame(['error', 'stage'], array_keys($document), $stdout);
+        $this->assertSame('internal', $document['stage']);
+        $this->assertSame('Fatal error: Maximum execution time of 1 second exceeded', $document['error']);
+        // The limit ran out once, in the command: the shutdown did not
+        // run out of it a second time.
+        $this->assertSame(1, substr_count($stderr, 'Fatal error: Maximum execution time'), $stderr);
+    }
+
+    /**
      * A forked child runs the shutdown code of its parent: its fatal error
      * is its parent's to report, and stdout keeps the parent's document.
      */
