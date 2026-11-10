@@ -337,6 +337,13 @@ final class BranchOverlapsTest extends TestCase
             'expected' => null,
             'compared' => 2,
         ];
+        // The two texts are read once; their set has ended where the branch
+        // with no text meets the last one, and is compared with it.
+        yield 'a set that has ended before one with no text meets another' => [
+            'branches' => [['ab', false, [[1, 4]]], ['cd', false, [[1, 4]]], ['', false, [[6, 8]]], ['ef', false, [[8, 9]]]],
+            'expected' => [2, 3],
+            'compared' => 2,
+        ];
         // Branch 1 with the two later ones: the first branch is never held with another.
         yield 'sets given out of the order of the alphabet' => [
             'branches' => [['', false, [[1, 2]]], ['', false, [[8, 9]]], ['', false, [[4, 5]]], ['', false, [[8, 9]]]],
