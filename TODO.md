@@ -245,16 +245,23 @@ as `CallTypes::quote` does.
   are kept. Teaching `PatternLayout::finishLines()` where a comment starts
   on a line would keep them as written.
 
-- Five real costs whose proposed bound refuses legitimate input, each
-  answered in its pull request with the fix that keeps the answers: the
-  ReDoS repair tries every quantifier (#249; try the ones the analysis
-  blames), alternation overlaps compare every pair (#254; bucket the
-  branches by their first characters), language counting multiplies every
-  range at every length (#273; sum the moves per target), nested
-  alphabetic assertion bodies are copied at each level (#276; read them in
-  place), and the replacement bound counts every byte as a reference
-  (#309; count the references apart). Whether to rework these branches or
-  write the fixes anew is open.
+- `JsonFatalErrorTest::test_fatal_error_in_json_mode_prints_the_internal_envelope`
+  exits 255 instead of 1 on a slow Windows runner (PHP 8.5, 2026-11-09, on
+  #271, which does not touch the CLI): the one-second `--time-limit` runs out
+  again inside the shutdown handler of `bin/regex`, which then never writes
+  the JSON envelope. Give the handler room (reset the limit in it) or bound
+  the work instead of the clock.
+
+- Three real costs whose pull request was closed, its bound refusing
+  legitimate input; the fix that keeps the answers is still to write. The
+  ReDoS repair analyses one candidate per quantifier (#249): the quantifiers
+  the analysis blames can only be tried first, as `/^\s*(?:\w+\s*)*$/` is
+  repaired with no culprit and no hotspot named, and whether the others are
+  then cut off at a count is open. Alternation overlaps compare every pair
+  (#254): bucketing by first character is not enough when every branch
+  starts alike, the pairs have to be ruled out by their shared prefix.
+  Nested alphabetic assertion bodies are copied at each level (#276): read
+  them in place.
 - Without `u`, every set that leaves characters out (the dot, `[^a]`,
   `\D`, `\W`, `\S`) takes one byte in PCRE and one character in the
   JavaScript, `html-pattern` and Python output: `/^\S$/` fails U+00A0,

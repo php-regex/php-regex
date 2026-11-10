@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
@@ -75,6 +76,31 @@ final class RegexParserTest extends TestCase
     {
         $this->assertEquals(Regex::create()->tokenize('/a+(b)/'), RegexParser::create()->tokenize('/a+(b)/'));
         $this->assertTrue(array_is_list(RegexParser::create()->tokenize('/a+(b)/')));
+    }
+
+    #[Test]
+    #[DataProvider('provideTokenizationLimits')]
+    public function test_tokenization_enforces_the_configured_length_limit(bool $facade, string $pattern, bool $tooLong): void
+    {
+        $reader = $facade ? Regex::create(['max_pattern_length' => 10]) : RegexParser::create(['max_pattern_length' => 10]);
+        if ($tooLong) {
+            $this->expectException(ResourceLimitException::class);
+        }
+
+        $tokens = $reader->tokenize($pattern);
+        $this->assertNotEmpty($tokens);
+    }
+
+    /**
+     * @return iterable<string, array{facade: bool, pattern: string, tooLong: bool}>
+     */
+    public static function provideTokenizationLimits(): iterable
+    {
+        foreach ([false, true] as $facade) {
+            yield (int) $facade.' at limit' => ['facade' => $facade, 'pattern' => '/abcdefgh/', 'tooLong' => false];
+            yield (int) $facade.' past limit with modifier' => ['facade' => $facade, 'pattern' => '/abcdefgh/i', 'tooLong' => true];
+            yield (int) $facade.' past limit with leading space' => ['facade' => $facade, 'pattern' => ' /abcdefgh/', 'tooLong' => true];
+        }
     }
 
     #[Test]

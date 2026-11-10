@@ -18,9 +18,9 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The suite runs where the library runs: the Linux matrix of PHP versions
- * and dependency floors, Windows on every PHP with the stable
- * dependencies, and macOS on one. Every cell gates; every step runs under
- * the bash each runner carries.
+ * and dependency floors, and Windows on every PHP with the stable
+ * dependencies; macOS is the engines workflow's, on every PHP from 8.2.
+ * Every cell gates; every step runs under the bash each runner carries.
  */
 final class TestsWorkflowTest extends TestCase
 {
@@ -37,7 +37,7 @@ final class TestsWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_windows_runs_every_php_on_the_stable_dependencies_and_macos_one(): void
+    public function test_windows_runs_every_php_on_the_stable_dependencies(): void
     {
         $job = self::job('tests');
         $this->assertSame(1, preg_match('~^        include:\n((?:          .*\n)+)~m', $job, $include), 'The matrix has include rows.');
@@ -55,9 +55,29 @@ final class TestsWorkflowTest extends TestCase
             ['windows-latest', '8.3', 'prefer-stable'],
             ['windows-latest', '8.2', 'prefer-stable'],
             ['windows-latest', '8.1', 'prefer-stable'],
-            ['macos-latest', '8.4', 'prefer-stable'],
         ], $rows);
-        $this->assertSame(7, substr_count($include[1], "\n"), 'Nothing but these rows.');
+        $this->assertSame(6, substr_count($include[1], "\n"), 'Nothing but these rows.');
+    }
+
+    /**
+     * The engines workflow runs the suite on macOS with the same PHP setup,
+     * the same dependencies (the root has none to lower, and no lock file)
+     * and the same command, on every PHP from 8.2: a macOS cell here would
+     * run one of its cells a second time, on the scarcest runners.
+     */
+    #[Test]
+    public function test_macos_is_left_to_the_engines_workflow(): void
+    {
+        $this->assertStringNotContainsString('macos', self::job('tests'));
+
+        $engines = (string) file_get_contents(\dirname(__DIR__, 3).'/.github/workflows/engines.yml');
+        $this->assertSame(1, preg_match('~\n  engines-latest:\n(.*?)(?=\n  [\w-]+:\n|\z)~s', $engines, $latest));
+        $this->assertMatchesRegularExpression('~^    runs-on: macos-latest$~m', $latest[1]);
+        $this->assertMatchesRegularExpression("~^        php: \\[ '8\\.6', '8\\.5', '8\\.4', '8\\.3', '8\\.2' \\]$~m", $latest[1]);
+        foreach (['ini-values: phar.readonly=0', 'tools: phpunit phpstan phpbench', 'run: tools/phpunit/vendor/bin/phpunit --colors=always'] as $line) {
+            $this->assertStringContainsString($line, $latest[1]);
+            $this->assertStringContainsString($line, self::job('tests'));
+        }
     }
 
     #[Test]
