@@ -603,6 +603,7 @@ final class PatternDeclarations
             $value->scope,
             $value->written,
             $value->file,
+            $value->integer,
             null === $value->guard ? null : serialize($value->guard),
             array_map(self::shape(...), $value->parts),
             array_map(static fn (array $item): array => [null === $item[0] ? null : self::shape($item[0]), self::shape($item[1])], $value->items),
