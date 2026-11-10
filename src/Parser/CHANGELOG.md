@@ -10,6 +10,11 @@ CHANGELOG
    on one line even when it holds a `#` comment, keeping only the line
    break that ends the comment: a hundred nested groups each opening on a
    comment, 1.4 KB under `x`, were laid out as 62 KB, they take 2 KB.
+ * `LengthRangeCalculator` measures each node once per pattern, so a body
+   that several calls share is read once: a pattern whose groups each call
+   the previous one twice no longer takes time that doubles with each
+   group. A call followed past 1024 nested calls, or a pattern past 100,000
+   measured nodes, reads as unbounded from zero there.
  * `RegexParser::tokenize()`, and `Regex::tokenize()` through it, hold the
    regex to `max_pattern_length` as `parse()` does, and throw a
    `ResourceLimitException` past it: they lexed a pattern of any length.
