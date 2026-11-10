@@ -56,6 +56,36 @@ final class LineDiffTest extends TestCase
             'new' => ['b', 'a'],
             'expected' => [['type' => 'delete', 'line' => 'a'], ['type' => 'equal', 'line' => 'b'], ['type' => 'insert', 'line' => 'a']],
         ];
+        yield 'a line repeated once more at the end' => [
+            'old' => ['a'],
+            'new' => ['a', 'a'],
+            'expected' => [['type' => 'equal', 'line' => 'a'], ['type' => 'insert', 'line' => 'a']],
+        ];
+        yield 'a repeated line dropped at the end' => [
+            'old' => ['a', 'a'],
+            'new' => ['a'],
+            'expected' => [['type' => 'equal', 'line' => 'a'], ['type' => 'delete', 'line' => 'a']],
+        ];
+        yield 'a run kept from the first old line' => [
+            'old' => ['b', 'b', 'c'],
+            'new' => ['c', 'b', 'b', 'a'],
+            'expected' => [['type' => 'insert', 'line' => 'c'], ['type' => 'equal', 'line' => 'b'], ['type' => 'equal', 'line' => 'b'], ['type' => 'delete', 'line' => 'c'], ['type' => 'insert', 'line' => 'a']],
+        ];
+        yield 'a run kept up to the last new line' => [
+            'old' => ['b', 'b', 'a', 'b', 'a'],
+            'new' => ['c', 'b', 'a', 'c', 'b'],
+            'expected' => [['type' => 'delete', 'line' => 'b'], ['type' => 'insert', 'line' => 'c'], ['type' => 'equal', 'line' => 'b'], ['type' => 'equal', 'line' => 'a'], ['type' => 'insert', 'line' => 'c'], ['type' => 'equal', 'line' => 'b'], ['type' => 'delete', 'line' => 'a']],
+        ];
+        yield 'a match read from the cell before it' => [
+            'old' => ['b', 'a', 'c', 'b', 'c'],
+            'new' => ['a', 'b', 'b'],
+            'expected' => [['type' => 'delete', 'line' => 'b'], ['type' => 'equal', 'line' => 'a'], ['type' => 'delete', 'line' => 'c'], ['type' => 'equal', 'line' => 'b'], ['type' => 'delete', 'line' => 'c'], ['type' => 'insert', 'line' => 'b']],
+        ];
+        yield 'a miss read from the cell to its left' => [
+            'old' => ['b', 'b', 'a', 'b'],
+            'new' => ['a', 'b', 'c', 'a'],
+            'expected' => [['type' => 'delete', 'line' => 'b'], ['type' => 'delete', 'line' => 'b'], ['type' => 'equal', 'line' => 'a'], ['type' => 'equal', 'line' => 'b'], ['type' => 'insert', 'line' => 'c'], ['type' => 'insert', 'line' => 'a']],
+        ];
         yield 'an insert at the end' => [
             'old' => ['a'],
             'new' => ['a', 'b'],
@@ -102,6 +132,68 @@ final class LineDiffTest extends TestCase
         yield 'a run that starts late' => ['old' => ['x', 'y', 'a', 'b', 'c'], 'new' => ['a', 'b', 'c', 'x'], 'longest' => 3];
         yield 'one line in common at the end' => ['old' => ['a', 'b', 'z'], 'new' => ['c', 'z'], 'longest' => 1];
         yield 'nothing in common' => ['old' => ['a', 'b'], 'new' => ['c', 'd', 'e'], 'longest' => 0];
+    }
+
+    #[Test]
+    public function test_large_shared_layout_is_kept(): void
+    {
+        $layout = array_fill(0, 10_000, '');
+        $old = ['/[0-9]', ...$layout, '/x'];
+        $new = ['/\\d', ...$layout, '/x'];
+        $ops = LineDiff::lines($old, $new);
+
+        $this->assertSame(['type' => 'delete', 'line' => '/[0-9]'], $ops[0]);
+        $this->assertSame(['type' => 'insert', 'line' => '/\\d'], $ops[1]);
+        $this->assertCount(10_001, array_filter($ops, static fn (array $op): bool => 'equal' === $op['type']));
+        $this->assertCount(10_000, LineDiff::lines($layout, $layout));
+    }
+
+    #[Test]
+    public function test_large_changed_middle_preserves_both_inputs(): void
+    {
+        $old = ['start', ...array_fill(0, 10_000, 'old'), 'end'];
+        $new = ['start', ...array_fill(0, 10_000, 'new'), 'end'];
+        $ops = LineDiff::lines($old, $new);
+
+        $this->assertCount(20_002, $ops);
+        $this->assertSame(['type' => 'equal', 'line' => 'start'], $ops[0]);
+        $this->assertSame(['type' => 'delete', 'line' => 'old'], $ops[10_000]);
+        $this->assertSame(['type' => 'insert', 'line' => 'new'], $ops[10_001]);
+        $this->assertSame(['type' => 'equal', 'line' => 'end'], $ops[20_001]);
+        $this->assertSame($old, array_values(array_column(array_filter($ops, static fn (array $op): bool => 'insert' !== $op['type']), 'line')));
+        $this->assertSame($new, array_values(array_column(array_filter($ops, static fn (array $op): bool => 'delete' !== $op['type']), 'line')));
+    }
+
+    /**
+     * The longest run is looked for while the matrix of the changed middle,
+     * its boundary row and column included, holds 65,536 cells: 256 by 256.
+     * One cell more on either side, and the middle is deleted then inserted
+     * whole, the line both sides share among them.
+     */
+    #[Test]
+    #[DataProvider('provideMatrixBudgets')]
+    public function test_the_longest_run_is_looked_for_within_the_matrix_budget(int $oldLines, int $newLines, int $kept): void
+    {
+        $old = ['old', 'shared', ...array_fill(0, $oldLines - 2, 'old')];
+        $new = ['new', 'shared', ...array_fill(0, $newLines - 2, 'new')];
+        $ops = LineDiff::lines($old, $new);
+
+        $this->assertCount($kept, array_filter($ops, static fn (array $op): bool => 'equal' === $op['type']));
+        $this->assertCount($oldLines + $newLines - $kept, $ops);
+        $this->assertSame($old, array_values(array_column(array_filter($ops, static fn (array $op): bool => 'insert' !== $op['type']), 'line')));
+        $this->assertSame($new, array_values(array_column(array_filter($ops, static fn (array $op): bool => 'delete' !== $op['type']), 'line')));
+    }
+
+    /**
+     * @return iterable<string, array{oldLines: int, newLines: int, kept: int}>
+     */
+    public static function provideMatrixBudgets(): iterable
+    {
+        yield 'at the budget' => ['oldLines' => 255, 'newLines' => 255, 'kept' => 1];
+        yield 'one old line over' => ['oldLines' => 256, 'newLines' => 255, 'kept' => 0];
+        yield 'one new line over' => ['oldLines' => 255, 'newLines' => 256, 'kept' => 0];
+        yield 'a short old side against a long new one' => ['oldLines' => 2, 'newLines' => 21_844, 'kept' => 1];
+        yield 'one new line past the short old side' => ['oldLines' => 2, 'newLines' => 21_845, 'kept' => 0];
     }
 
     /**
