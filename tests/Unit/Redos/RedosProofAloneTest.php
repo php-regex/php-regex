@@ -18,6 +18,7 @@ use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosOptions;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,10 +32,28 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosProofAloneTest extends TestCase
 {
+    /**
+     * The engine is asked first, without its JIT and under its default
+     * limits, what it does of each pattern on a subject made to cost it:
+     * it answers, it gives up at the backtrack limit, or it refuses the
+     * pattern. A pattern proven linear answers; one PHP refuses is never
+     * proven.
+     */
     #[Test]
     #[DataProvider('providePatterns')]
-    public function test_the_proof_alone_answers_as_the_analysis_does(string $pattern, bool $provenSafe): void
+    public function test_the_proof_alone_answers_as_the_analysis_does(string $pattern, bool $provenSafe, string $subject, string $engine): void
     {
+        $written = @preg_match(PcreInterpreter::pattern($pattern), $subject);
+        $asked = match (true) {
+            false !== $written => 'answers',
+            \PREG_BACKTRACK_LIMIT_ERROR === preg_last_error() => 'gives up',
+            default => 'refuses',
+        };
+        $this->assertSame($engine, $asked);
+        if ($provenSafe) {
+            $this->assertSame('answers', $asked, 'A pattern proven linear does not make the engine give up.');
+        }
+
         $analyzer = new RedosAnalyzer();
 
         $this->assertSame($provenSafe, $analyzer->analyze($pattern)->isProvenSafe());
@@ -42,19 +61,23 @@ final class RedosProofAloneTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, provenSafe: bool}>
+     * @return iterable<string, array{pattern: string, provenSafe: bool, subject: string, engine: string}>
      */
     public static function providePatterns(): iterable
     {
-        yield 'one loop' => ['pattern' => '/^a+b$/', 'provenSafe' => true];
-        yield 'a possessive loop in a loop' => ['pattern' => '/^(?:a++)+$/', 'provenSafe' => true];
-        yield 'a search that retries a linear attempt' => ['pattern' => '/a+b/', 'provenSafe' => true];
-        yield 'a loop in a loop' => ['pattern' => '/^(?:a+)+$/', 'provenSafe' => false];
-        yield 'two loops on the same letters' => ['pattern' => '/^\w+\w+!$/', 'provenSafe' => false];
-        yield 'no culprit and no hotspot named' => ['pattern' => '/^\s*(?:\w+\s*)*$/', 'provenSafe' => false];
-        yield 'a pattern that does not parse' => ['pattern' => '/(a+/', 'provenSafe' => false];
-        yield 'a pattern that parses and is refused' => ['pattern' => '/a{2,1}/', 'provenSafe' => false];
-        yield 'a lookbehind with no bound' => ['pattern' => '/(?<=a+)b/', 'provenSafe' => false];
+        $letters = str_repeat('a', 5000);
+        $pump = str_repeat('a', 40).'!';
+
+        yield 'one loop' => ['pattern' => '/^a+b$/', 'provenSafe' => true, 'subject' => $letters, 'engine' => 'answers'];
+        yield 'a possessive loop in a loop' => ['pattern' => '/^(?:a++)+$/', 'provenSafe' => true, 'subject' => $letters.'!', 'engine' => 'answers'];
+        yield 'a search that retries a linear attempt' => ['pattern' => '/a+b/', 'provenSafe' => true, 'subject' => $letters, 'engine' => 'answers'];
+        yield 'a loop in a loop' => ['pattern' => '/^(?:a+)+$/', 'provenSafe' => false, 'subject' => $pump, 'engine' => 'gives up'];
+        // Not proven is no claim of a cost: the engine answers this one.
+        yield 'two loops on the same letters' => ['pattern' => '/^\w+\w+!$/', 'provenSafe' => false, 'subject' => $letters.'!x', 'engine' => 'answers'];
+        yield 'no culprit and no hotspot named' => ['pattern' => '/^\s*(?:\w+\s*)*$/', 'provenSafe' => false, 'subject' => $pump, 'engine' => 'gives up'];
+        yield 'a pattern that does not parse' => ['pattern' => '/(a+/', 'provenSafe' => false, 'subject' => '', 'engine' => 'refuses'];
+        yield 'a pattern that parses and is refused' => ['pattern' => '/a{2,1}/', 'provenSafe' => false, 'subject' => '', 'engine' => 'refuses'];
+        yield 'a lookbehind with no bound' => ['pattern' => '/(?<=a+)b/', 'provenSafe' => false, 'subject' => '', 'engine' => 'refuses'];
     }
 
     /**
