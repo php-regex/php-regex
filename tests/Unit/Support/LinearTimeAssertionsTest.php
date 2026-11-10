@@ -97,11 +97,11 @@ final class LinearTimeAssertionsTest extends TestCase
                     return false;
                 }
             }
-        
+
             namespace {
                 require $argv[1];
                 gc_enable();
-        
+
                 try {
                     PHPRegex\Tests\Support\CpuClock::time(static function (): void {});
                     echo 'The clock was read.';
