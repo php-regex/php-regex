@@ -34,16 +34,14 @@ use PHPRegex\Parser\Token\TokenType;
  * a substring scan "(*scs:(1)...)" and its list of groups.
  *
  * A body PCRE reads from the text of the verb is read apart, by the parser
- * this reader is given, its offsets in the whole pattern. It shares the
- * parser's ParseState, and reads one text, the pattern or a body read apart.
+ * this reader is given, where it stands in the whole pattern: the reader
+ * hands over its offsets, never a copy of its text. It shares the parser's
+ * ParseState, and reads one text, the pattern or a body read apart.
  *
  * @internal
  */
 final class VerbParser
 {
-    // Token length constants for calculating positions
-    private const PCRE_VERB_WRAPPER_LENGTH = 3; // (*...)
-
     private readonly TokenStream $stream;
 
     private readonly string $pattern;
@@ -54,9 +52,10 @@ final class VerbParser
     private ?GroupListReader $groupLists = null;
 
     /**
-     * @param \Closure(): NodeInterface            $branches  reads the alternatives of a group, up to its ")"
-     * @param \Closure(string, int): NodeInterface $readApart reads the body given, which starts at the offset
-     *                                                        given in the whole pattern, by a parser of its own
+     * @param \Closure(): NodeInterface         $branches  reads the alternatives of a group, up to its ")"
+     * @param \Closure(int, int): NodeInterface $readApart reads the body that starts at the offset given in
+     *                                                     the whole pattern, of the length given, by a parser
+     *                                                     of its own
      */
     public function __construct(
         private readonly ParseState $state,
@@ -69,11 +68,13 @@ final class VerbParser
 
     /**
      * The node of a verb token: a verb, or the group an alphabetic assertion
-     * or a script run stands for, its body read from its text. A body read
-     * in place by the lexer, one that never closes or any body when every
-     * one is read in place, has the opener alone for its token, with no ")"
-     * in its text, "(*pla:" or "(?*": the tokens after it are its body, up
-     * to its ")", or to the ")" PCRE misses at the end.
+     * or a script run stands for, its body read from the pattern, between
+     * its opener and the ")" its token ends on, whether the token holds the
+     * text of the body or the opener alone. A body read in place by the
+     * lexer, one that never closes or any body when every one is read in
+     * place, has the opener alone for its token, with no ")" in its text,
+     * "(*pla:" or "(?*": the tokens after it are its body, up to its ")",
+     * or to the ")" PCRE misses at the end.
      */
     public function verbNode(Token $token, int $startPosition): NodeInterface
     {
@@ -83,8 +84,8 @@ final class VerbParser
             throw PcreVerb::doubleStarError($this->pattern, $token->position + 2);
         }
 
-        if ($token->end() - $token->position !== \strlen($token->value) + 2) {
-            return $this->createPcreVerbNode($token->value, $startPosition, $startPosition + \strlen($token->value) + self::PCRE_VERB_WRAPPER_LENGTH);
+        if ($token->sourceLength !== \strlen($token->value) + 2) {
+            return $this->createPcreVerbNode($token->value, $startPosition, $startPosition + $token->sourceLength);
         }
 
         $read = PcreVerb::read($token->value);
@@ -155,10 +156,9 @@ final class VerbParser
         }
 
         [$groups, $bodyStart] = $this->groupLists()->readGroupList($listOpen + 1);
-        $body = substr($this->pattern, $bodyStart, $endPosition - 1 - $bodyStart);
 
         return new GroupNode(
-            ($this->readApart)($body, $bodyStart),
+            ($this->readApart)($bodyStart, $endPosition - 1 - $bodyStart),
             GroupType::ScanSubstring,
             // The spelling, "scs" or "scan_substring".
             $name,
@@ -170,6 +170,10 @@ final class VerbParser
         );
     }
 
+    /**
+     * @param string $verb the verb as written between "(*" and ")", or the
+     *                     opener alone of a body left in the pattern, "pla:"
+     */
     private function createPcreVerbNode(string $verb, int $startPosition, int $endPosition): NodeInterface
     {
         $read = PcreVerb::read($verb);
@@ -178,11 +182,15 @@ final class VerbParser
             return $this->createScanSubstringNode($read->scanSubstring, $startPosition, $endPosition);
         }
 
+        // The body stands between the opener and the ")" of the verb.
+        $bodyStart = $startPosition + 2 + $read->payloadOffset;
+        $bodyLength = $endPosition - 1 - $bodyStart;
+
         if (null !== $read->assertion) {
             // "(*pla:...)" and its friends are the alphabetic spelling of a
             // lookaround, so they parse into the group they stand for.
             return new GroupNode(
-                ($this->readApart)((string) $read->payload, $startPosition + 2 + $read->payloadOffset),
+                ($this->readApart)($bodyStart, $bodyLength),
                 $read->assertion,
                 null,
                 $read->nonAtomic ? GroupParser::NON_ATOMIC_FLAG : null,
@@ -196,13 +204,11 @@ final class VerbParser
         }
 
         if ($read->isScriptRun()) {
-            $payload = (string) $read->payload;
-
             return new ScriptRunNode(
-                $payload,
+                substr($this->pattern, $bodyStart, $bodyLength),
                 $startPosition,
                 $endPosition,
-                ($this->readApart)($payload, $startPosition + 2 + $read->payloadOffset),
+                ($this->readApart)($bodyStart, $bodyLength),
                 $read->atomicScriptRun,
             );
         }
