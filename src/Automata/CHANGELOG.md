@@ -11,6 +11,16 @@ CHANGELOG
    one `maxTransitionsProcessed` budget, whose diagnostic names the
    `lookaround bodies` phase. A lookaround repeated by a quantifier is compiled
    once: `/(?:(?=a{99})){100}a{99}/` no longer builds a hundred automata.
+ * The product of a pattern's automaton with its lookarounds reads each state
+   on the classes of the alphabet, the characters that belong to the same
+   sets, where it read every range, and counts each move against a
+   `maxTransitionsProcessed` budget of its own, whose diagnostic names the
+   `lookaround product` phase. Twelve lookaheads of Unicode classes,
+   `/^(?=.*\p{Lu})(?=.*\p{Ll})(?=.*\p{N})...{12,}$/u`, are refused for
+   `maxNfaStates` in 0.3 s where they took 39 s, none of it counted, and a
+   password rule of six lookaheads is answered in 20 ms where it took 470 ms.
+   A pattern whose determinization ran out of budget on the ranges the
+   product had cut its transitions into can now be answered.
  * `Language::countOfLength()` and `size()` multiply once for each state a
    move leads to, however many ranges spell its characters, and leave out the
    states no string is accepted from: `size()` of `/[ab]{0,100}/` answers its
