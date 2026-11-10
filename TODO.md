@@ -252,16 +252,16 @@ as `CallTypes::quote` does.
   the JSON envelope. Give the handler room (reset the limit in it) or bound
   the work instead of the clock.
 
-- Five real costs whose proposed bound refuses legitimate input, each
-  answered in its pull request with the fix that keeps the answers: the
-  ReDoS repair tries every quantifier (#249; try the ones the analysis
-  blames), alternation overlaps compare every pair (#254; bucket the
-  branches by their first characters), language counting multiplies every
-  range at every length (#273; sum the moves per target), nested
-  alphabetic assertion bodies are copied at each level (#276; read them in
-  place), and the replacement bound counts every byte as a reference
-  (#309; count the references apart). Whether to rework these branches or
-  write the fixes anew is open.
+- Three real costs whose pull request was closed, its bound refusing
+  legitimate input; the fix that keeps the answers is still to write. The
+  ReDoS repair analyses one candidate per quantifier (#249): the quantifiers
+  the analysis blames can only be tried first, as `/^\s*(?:\w+\s*)*$/` is
+  repaired with no culprit and no hotspot named, and whether the others are
+  then cut off at a count is open. Alternation overlaps compare every pair
+  (#254): bucketing by first character is not enough when every branch
+  starts alike, the pairs have to be ruled out by their shared prefix.
+  Nested alphabetic assertion bodies are copied at each level (#276): read
+  them in place.
 - Without `u`, every set that leaves characters out (the dot, `[^a]`,
   `\D`, `\W`, `\S`) takes one byte in PCRE and one character in the
   JavaScript, `html-pattern` and Python output: `/^\S$/` fails U+00A0,

@@ -39,6 +39,26 @@ final class CallReplayTest extends TestCase
     }
 
     /**
+     * A subject longer than a hint holds, 120 bytes, is written into none:
+     * the engine tells the two patterns apart on it, and the replay does
+     * not run them.
+     */
+    #[Test]
+    public function test_a_subject_too_long_for_a_hint_is_not_replayed(): void
+    {
+        $call = self::call("preg_replace('/a/', '_', \$s)");
+        $replay = new CallReplay();
+        foreach ([120, 121] as $length) {
+            $subject = str_repeat('a', $length);
+            $this->assertSame(str_repeat('_', $length), preg_replace('/a/', '_', $subject));
+            $this->assertSame($subject, preg_replace('/b/', '_', $subject));
+        }
+
+        $this->assertTrue($replay->differs($call, '/a/', '/b/', str_repeat('a', 120)));
+        $this->assertFalse($replay->differs($call, '/a/', '/b/', str_repeat('a', 121)));
+    }
+
+    /**
      * @return iterable<string, array{code: string, original: string, mutant: string, subject: string, differs: bool}>
      */
     public static function provideReplays(): iterable

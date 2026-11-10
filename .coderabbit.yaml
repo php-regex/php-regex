@@ -194,7 +194,8 @@ reviews:
     - path: ".github/workflows/**"
       instructions: |
         - Actions are pinned; `permissions` are the least each job needs.
-        - A workflow a pull request starts declares its scope (code workflows stay out of prose-only changes); schedules run weekly, off the hour, at least twenty minutes apart.
+        - A workflow a pull request starts declares its scope (ci.yml, which judges the code, stays out of prose-only changes); schedules run weekly, off the hour, at least twenty minutes apart.
+        - A check of the code is a job of a workflow ci.yml calls in one of its three stages (quick checks, reference, matrix), and the last job of ci.yml reads every other: no code workflow starts on a pull request by itself.
 
   pre_merge_checks:
     docstrings:
