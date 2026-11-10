@@ -1980,6 +1980,10 @@
     try {
       localStorage.setItem(TOOL_STORAGE_KEY, tool);
     } catch (error) {/* the choice simply does not persist */}
+    if (left === 'trace' && tool !== left) {
+      // A trace that was playing stops with the tab that is left.
+      traceStopPlay();
+    }
     if (tool === 'trace') {
       // Opening the tab is a gesture: the trace runs for the input shown;
       // drain(), below, moves a trace already under way.
@@ -2052,6 +2056,10 @@
 
   function renderToolPanel(tool, announceResult) {
     var panel = toolPanel(tool);
+    if (tool === 'trace') {
+      // The panel is drawn again: a trace that was playing stops with it.
+      traceStopPlay();
+    }
     clear(panel);
     panel.classList.remove('is-hot');
     if (!current) {
@@ -2962,6 +2970,7 @@
       answer.subjectBytes = encoder.encode(input.subject);
       answer.subjectUnits = unitTable(input.subject);
       answer.captures = carryCaptures(payload.steps || []);
+      answer.marks = traceMarks(payload.steps || [], answer.captures);
       answer.selfCheck = selfCheckBeforeEngine(answer);
       if (activeTool === 'trace') {
         renderTool('trace', true);
@@ -3210,6 +3219,9 @@
       box.removeChild(box.firstChild);
     }
     var check = answer.selfCheck;
+    // The line's light, one per state: waiting, not compared, agrees,
+    // disagrees.
+    box.className = 'pg-trace-check is-' + (check && check.pending ? 'pending' : (!check || check.agrees === null ? 'off' : (check.agrees ? 'ok' : 'error')));
     if (check && check.pending) {
       box.appendChild(text('p', 'pg-tool-line pg-trace-label', traceLabel(answer) + ' — ' + check.note + '…'));
       return;
@@ -3269,6 +3281,331 @@
     return 'No match after ' + stepsWord + '.';
   }
 
+  // The outcome's light: green for a match, red where PCRE2 stopped on an
+  // error or PHP refuses the match, amber where the module ran out of
+  // memory and there is no verdict, the quiet ink for no match.
+  function traceOutcomeTone(answer) {
+    var outcome = answer.trace.outcome || {};
+    if (outcome.error) {
+      return outcome.error.code === PCRE2_ERROR_NOMEMORY ? 'warn' : 'error';
+    }
+    if (reversedMatch(outcome)) {
+      return 'error';
+    }
+    return outcome.rc > 0 && Array.isArray(outcome.ovector) && outcome.ovector[0] ? 'ok' : 'none';
+  }
+
+  // --- the debugger around the trace ----------------------------------------
+
+  // The trace is a recording, so the debugger travels it both ways: one
+  // step back or on, and to the previous or the next stop — a backtrack,
+  // the start of a match attempt, a capture that moved, whichever are
+  // ticked. The icons are drawn in the header's dialect, a 16-unit box and
+  // square strokes: a filled shape runs, an arrow to a dot takes one step.
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var TRACE_ICONS = {
+    rewind: 'M13 3v10M10 3 3 8l7 5z',
+    back: 'M14.5 8H6M9.5 4l-4 4 4 4M1.4 7.4h1v1.2h-1z',
+    step: 'M1.5 8H10M6.5 4l4 4-4 4M13.6 7.4h1v1.2h-1z',
+    resume: 'M3 3v10M6 3l7 5-7 5z',
+    play: 'M4.5 3l8 5-8 5z',
+    pause: 'M4 3.5h1.5v9H4zM10.5 3.5H12v9h-1.5z'
+  };
+  var TRACE_CONTROLS = [
+    { act: 'rewind', label: 'Rewind to the previous stop', hint: 'Shift+←', keys: 'Shift+ArrowLeft', icon: 'rewind', solid: true },
+    { act: 'back', label: 'Step back', hint: '←', keys: 'ArrowLeft', icon: 'back', solid: false },
+    { act: 'step', label: 'Step', hint: '→', keys: 'ArrowRight', icon: 'step', solid: false },
+    { act: 'resume', label: 'Resume to the next stop', hint: 'Shift+→', keys: 'Shift+ArrowRight', icon: 'resume', solid: true }
+  ];
+  var TRACE_PLAY = { act: 'play', label: 'Play', hint: 'Space', keys: 'Space', icon: 'play', solid: true };
+  var TRACE_STOPS = [
+    { kind: 'backtrack', label: 'Every backtrack', hint: 'A step PCRE2 reached after backtracking — a flag on the step, at least one backtrack since the step before, never a count of them. The number beside counts the flagged steps.' },
+    { kind: 'attempt', label: 'Every new attempt', hint: 'The first step of a match attempt: PCRE2 starts over from another place in the text.' },
+    { kind: 'capture', label: 'Every capture change', hint: 'A step at which a group holds another capture than at the step before.' }
+  ];
+  // The stops Resume and Rewind travel between: the two events PCRE2
+  // flags from the start, a capture that moved once it is ticked. The
+  // choice holds for the page's life, from one trace to the next.
+  var traceStops = { backtrack: true, attempt: true, capture: false };
+  // Playback: a whole trace in about twelve seconds whatever its length —
+  // a short one a readable step at a time, a long one striding over steps
+  // rather than running for minutes.
+  var TRACE_PLAY_MS = 12000;
+  var TRACE_PLAY_SLOWEST_MS = 400;
+  var TRACE_PLAY_FASTEST_MS = 30;
+  var tracePlay = { timer: null, answer: null };
+  // The chart's box, in its own units: the positions are drawn between top
+  // and base, the backtracks ticked along the floor under them.
+  var TRACE_CHART = { width: 1000, top: 8, base: 82, floor: 100, columns: 500 };
+  // The rows of the steps list stand in chunks of this many: a screen or
+  // two of rows, laid out and skipped by the browser as one.
+  var TRACE_CHUNK_ROWS = 100;
+
+  function traceIcon(name, solid) {
+    var svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', solid ? 'icon is-solid' : 'icon');
+    svg.setAttribute('viewBox', '0 0 16 16');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    var path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', TRACE_ICONS[name]);
+    svg.appendChild(path);
+    return svg;
+  }
+
+  // A button of the debugger: an icon, a name for a voice, a tooltip that
+  // teaches its key.
+  function traceButton(control) {
+    var button = text('button', 'pg-trace-btn');
+    button.type = 'button';
+    button.setAttribute('data-act', control.act);
+    button.setAttribute('aria-label', control.label);
+    button.title = control.label + ' (' + control.hint + ')';
+    button.setAttribute('aria-keyshortcuts', control.keys);
+    button.appendChild(traceIcon(control.icon, control.solid));
+    return button;
+  }
+
+  // A pane, as a debugger's sidebar stacks them: a head that names it and
+  // the group, and a note at the head's far end over the column it reads.
+  function tracePane(name, title, note) {
+    var pane = text('div', 'pg-trace-pane is-' + name);
+    var head = text('div', 'pg-trace-pane-head');
+    var label = text('span', null, title);
+    label.id = 'pg-trace-pane-' + name;
+    head.appendChild(label);
+    if (note) {
+      head.appendChild(text('span', 'pg-trace-pane-note', note));
+    }
+    pane.setAttribute('role', 'group');
+    pane.setAttribute('aria-labelledby', label.id);
+    pane.appendChild(head);
+    return pane;
+  }
+
+  // A line of the execution point, named in its gutter.
+  function traceLine(label, line) {
+    var row = text('div', 'pg-trace-line');
+    row.setAttribute('data-label', label);
+    row.appendChild(line);
+    return row;
+  }
+
+  // A count as the page writes them: thousands parted by a space.
+  function spaced(count) {
+    return count.toLocaleString('en-US').replace(/,/g, ' ');
+  }
+
+  // What the trace holds besides its steps, read once: where each match
+  // attempt starts, where PCRE2 backtracked, where a group's capture
+  // moved, and the attempt every step belongs to.
+  function traceMarks(steps, captures) {
+    var marks = { backtrack: [], attempt: [], capture: [], moved: {}, attemptOf: [] };
+    var attempt = 0;
+    steps.forEach(function (step, index) {
+      if (step.flags & 1) {
+        attempt += 1;
+        marks.attempt.push(index);
+      }
+      if (step.flags & 2) {
+        marks.backtrack.push(index);
+      }
+      if (index > 0 && captures[index] !== captures[index - 1] && movedGroups(captures[index - 1], captures[index]).length) {
+        marks.capture.push(index);
+        marks.moved[index] = true;
+      }
+      marks.attemptOf.push(Math.max(attempt, 1));
+    });
+    return marks;
+  }
+
+  // The groups whose capture differs between two steps, from 1: pair 0 is
+  // not a capture during a callout.
+  function movedGroups(before, after) {
+    var moved = [];
+    var top = Math.max(before.length, after.length);
+    for (var group = 1; group < top; group += 1) {
+      var was = Array.isArray(before[group]) ? before[group] : null;
+      var is = Array.isArray(after[group]) ? after[group] : null;
+      if ((was === null) !== (is === null) || (was && (was[0] !== is[0] || was[1] !== is[1]))) {
+        moved.push(group);
+      }
+    }
+    return moved;
+  }
+
+  function traceIsStop(answer, index) {
+    var step = answer.trace.steps[index];
+    return Boolean((traceStops.backtrack && step.flags & 2) || (traceStops.attempt && step.flags & 1) || (traceStops.capture && answer.marks.moved[index]));
+  }
+
+  // The nearest stop before or after the current step; an end of the trace
+  // when none is left that way, as a program runs to its exit.
+  function traceSeek(answer, direction) {
+    var last = answer.trace.steps.length - 1;
+    var index = answer.step + direction;
+    while (index > 0 && index < last && !traceIsStop(answer, index)) {
+      index += direction;
+    }
+    return Math.max(0, Math.min(index, last));
+  }
+
+  // One door for every gesture, a button, a key or a row: playback ends at
+  // the first of them, for the hand has taken over.
+  function traceAct(answer, act) {
+    if (act === 'play') {
+      traceTogglePlay(answer);
+      return;
+    }
+    traceStopPlay();
+    switch (act) {
+      case 'rewind': setTraceStep(answer, traceSeek(answer, -1)); break;
+      case 'back': setTraceStep(answer, answer.step - 1); break;
+      case 'step': setTraceStep(answer, answer.step + 1); break;
+      case 'resume': setTraceStep(answer, traceSeek(answer, 1)); break;
+      case 'first': setTraceStep(answer, 0); break;
+      case 'last': setTraceStep(answer, answer.trace.steps.length - 1); break;
+      default: break;
+    }
+  }
+
+  // Played from its last step, the trace starts over, as a film does. The
+  // status line is not live while the trace runs: a voice would read every
+  // step of a run it cannot follow.
+  function traceTogglePlay(answer) {
+    if (tracePlay.timer) {
+      traceStopPlay();
+      return;
+    }
+    var view = answer.view;
+    var steps = answer.trace.steps;
+    if (!view || steps.length < 2) {
+      return;
+    }
+    if (answer.step >= steps.length - 1) {
+      setTraceStep(answer, 0);
+    }
+    var tick = Math.max(TRACE_PLAY_FASTEST_MS, Math.min(TRACE_PLAY_SLOWEST_MS, TRACE_PLAY_MS / steps.length));
+    var stride = Math.max(1, Math.ceil(steps.length * tick / TRACE_PLAY_MS));
+    view.status.setAttribute('aria-live', 'off');
+    syncTracePlay(view, true);
+    tracePlay.answer = answer;
+    tracePlay.timer = window.setInterval(function () {
+      if (!view.root.isConnected || toolAnswers.trace !== answer) {
+        traceStopPlay();
+        return;
+      }
+      setTraceStep(answer, answer.step + stride);
+      if (answer.step >= steps.length - 1) {
+        traceStopPlay();
+      }
+    }, tick);
+  }
+
+  // The timer ends here, wherever playback is stopped from; the status
+  // line is live again and says the step the run stopped on.
+  function traceStopPlay() {
+    if (!tracePlay.timer) {
+      return;
+    }
+    window.clearInterval(tracePlay.timer);
+    tracePlay.timer = null;
+    var answer = tracePlay.answer;
+    tracePlay.answer = null;
+    if (answer && answer.view && answer.view.root.isConnected) {
+      answer.view.status.setAttribute('aria-live', 'polite');
+      syncTracePlay(answer.view, false);
+      setTraceStep(answer, answer.step);
+    }
+  }
+
+  function syncTracePlay(view, playing) {
+    var label = playing ? 'Pause' : TRACE_PLAY.label;
+    view.play.setAttribute('aria-label', label);
+    view.play.title = label + ' (' + TRACE_PLAY.hint + ')';
+    view.play.classList.toggle('is-playing', playing);
+    view.play.querySelector('path').setAttribute('d', TRACE_ICONS[playing ? 'pause' : 'play']);
+  }
+
+  // The match's flight, drawn once as the timeline's ground: the position
+  // in the text at every step, a stair that climbs as PCRE2 consumes and
+  // drops where it backtracked. Past the chart's columns a column holds
+  // the lowest and the highest position of its steps, so a sawtooth of
+  // backtracks stays a band and never a line that hides it. Hairlines part
+  // the match attempts; ticks along the floor mark the backtracks.
+  function traceChart(answer) {
+    var steps = answer.trace.steps;
+    var last = steps.length - 1;
+    var columns = Math.min(steps.length, TRACE_CHART.columns);
+    var peak = 1;
+    var lows = [];
+    var highs = [];
+    steps.forEach(function (step, index) {
+      var column = Math.min(columns - 1, Math.floor(index * columns / steps.length));
+      peak = Math.max(peak, step.s);
+      lows[column] = lows[column] === undefined ? step.s : Math.min(lows[column], step.s);
+      highs[column] = highs[column] === undefined ? step.s : Math.max(highs[column], step.s);
+    });
+    var round = function (value) {
+      return Math.round(value * 10) / 10;
+    };
+    var x = function (column) {
+      return columns > 1 ? round(column * TRACE_CHART.width / (columns - 1)) : 0;
+    };
+    var y = function (position) {
+      return round(TRACE_CHART.base - position * (TRACE_CHART.base - TRACE_CHART.top) / peak);
+    };
+    var line = 'M0 ' + y(highs[0]);
+    for (var column = 1; column < columns; column += 1) {
+      line += 'H' + x(column) + 'V' + y(highs[column]);
+    }
+    line += 'H' + TRACE_CHART.width;
+    var band = '';
+    if (lows.some(function (low, at) { return low < highs[at]; })) {
+      band = line + 'V' + y(lows[columns - 1]);
+      for (var back = columns - 1; back > 0; back -= 1) {
+        band += 'H' + x(back) + 'V' + y(lows[back - 1]);
+      }
+      band += 'H0Z';
+    }
+    // One stroke per place on the chart, however many steps share it.
+    var strokes = function (indexes, from, to) {
+      var seen = {};
+      var path = '';
+      indexes.forEach(function (index) {
+        var at = last ? Math.round(index * TRACE_CHART.width / last) : 0;
+        if (!seen[at]) {
+          seen[at] = true;
+          path += 'M' + at + ' ' + from + 'V' + to;
+        }
+      });
+      return path;
+    };
+    var svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'pg-trace-chart');
+    svg.setAttribute('viewBox', '0 0 ' + TRACE_CHART.width + ' ' + TRACE_CHART.floor);
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    [
+      ['is-area', line + 'V' + TRACE_CHART.base + 'H0Z'],
+      ['is-band', band],
+      ['is-line', line],
+      ['is-attempt', strokes(answer.marks.attempt.filter(function (index) { return index > 0; }), 0, TRACE_CHART.base)],
+      ['is-capture', strokes(answer.marks.capture, 0, TRACE_CHART.top)],
+      ['is-backtrack', strokes(answer.marks.backtrack, TRACE_CHART.floor, TRACE_CHART.base + 6)]
+    ].forEach(function (layer) {
+      if (!layer[1]) {
+        return;
+      }
+      var path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('class', layer[0]);
+      path.setAttribute('d', layer[1]);
+      svg.appendChild(path);
+    });
+    return svg;
+  }
+
   function renderTrace(panel, answer, announceResult) {
     if (answer.stage !== 'done') {
       clearTraceMark();
@@ -3304,114 +3641,229 @@
     var view = { items: [], current: null };
     answer.view = view;
 
-    panel.appendChild(text('p', 'pg-tool-line pg-trace-outcome', traceOutcomeLine(answer)));
+    // What the record says of itself before its steps: where it stops
+    // short, where the text was cut for it.
+    var notes = [];
     if (trace.truncated) {
       // The record stops at the step cap, or earlier when the recorded steps
       // outgrow their byte cap (hundreds of groups rewritten at every step).
-      panel.appendChild(text('p', 'pg-tool-line is-warn', 'Recording stopped after ' + steps.length.toLocaleString('en-US').replace(/,/g, ' ') + ' steps' + (steps.length < TRACE_STEP_CAP ? ' (the record reached its size cap)' : '') + '; the outcome is the engine’s.'));
+      notes.push(text('p', 'pg-tool-line is-warn', 'Recording stopped after ' + steps.length.toLocaleString('en-US').replace(/,/g, ' ') + ' steps' + (steps.length < TRACE_STEP_CAP ? ' (the record reached its size cap)' : '') + '; the outcome is the engine’s.'));
     }
     if (input.subjectTruncated) {
-      panel.appendChild(text('p', 'pg-tool-line is-warn', 'The trace reads the first ' + TRACE_SUBJECT_CAP.toLocaleString('en-US').replace(',', ' ') + ' bytes of the subject.'));
+      notes.push(text('p', 'pg-tool-line is-warn', 'The trace reads the first ' + TRACE_SUBJECT_CAP.toLocaleString('en-US').replace(',', ' ') + ' bytes of the subject.'));
     }
     if (!steps.length) {
+      panel.appendChild(text('p', 'pg-trace-outcome is-' + traceOutcomeTone(answer), traceOutcomeLine(answer)));
+      notes.forEach(function (note) {
+        panel.appendChild(note);
+      });
       panel.appendChild(text('p', 'pg-tool-hint', 'PCRE2 made no step: its start-of-match optimizations found no position worth trying.'));
       renderTraceLabel(panel, answer);
       if (announceResult) announce('Traced: no step. ' + traceOutcomeLine(answer));
       return;
     }
 
-    // The slider and the two buttons: one hand for the mouse, one for the
-    // keys (the slider's own arrows, Home and End move it).
-    var nav = text('div', 'pg-tool-row pg-trace-nav');
-    var label = text('label', null, 'Step');
-    label.htmlFor = 'pg-trace-step';
+    // The debugger, top to bottom: the transport with the step's number and
+    // the match's outcome; the timeline, a slider over the chart of the
+    // match; the execution point — the pattern with the item PCRE2 is
+    // about to try, the text with what the attempt consumed — under the
+    // status line that says the same in words; then the panes: the steps,
+    // the stops, the captures.
+    var frame = text('div', 'pg-trace');
+    view.root = frame;
+    view.tiles = patternTokens(current.payload).sort(function (a, b) {
+      return a.start - b.start;
+    });
+    var head = text('div', 'pg-trace-head');
+
+    var bar = text('div', 'pg-trace-bar');
+    var controls = text('div', 'pg-trace-controls');
+    controls.setAttribute('role', 'group');
+    controls.setAttribute('aria-label', 'Step controls');
+    view.buttons = {};
+    TRACE_CONTROLS.forEach(function (control) {
+      view.buttons[control.act] = traceButton(control);
+      controls.appendChild(view.buttons[control.act]);
+    });
+    bar.appendChild(controls);
+    var count = text('span', 'pg-trace-count');
+    view.count = text('b');
+    count.appendChild(view.count);
+    count.appendChild(document.createTextNode(' / ' + spaced(steps.length)));
+    bar.appendChild(count);
+    bar.appendChild(text('p', 'pg-trace-outcome is-' + traceOutcomeTone(answer), traceOutcomeLine(answer)));
+    head.appendChild(bar);
+    notes.forEach(function (note) {
+      head.appendChild(note);
+    });
+
+    // The timeline: play, then the chart with the slider laid over it. The
+    // chart is for the eye alone; the slider is the platform's own — its
+    // arrows, its drag, a finger on a phone.
+    var timeline = text('div', 'pg-trace-timeline');
+    view.play = traceButton(TRACE_PLAY);
+    view.play.classList.add('pg-trace-play');
+    timeline.appendChild(view.play);
+    var track = text('div', 'pg-trace-track');
+    track.appendChild(traceChart(answer));
+    track.appendChild(text('span', 'pg-trace-veil'));
+    track.appendChild(text('span', 'pg-trace-playhead'));
     var slider = document.createElement('input');
     slider.type = 'range';
     slider.id = 'pg-trace-step';
     slider.min = '0';
     slider.max = String(steps.length - 1);
     slider.value = String(answer.step);
+    slider.setAttribute('aria-label', 'Step');
     slider.addEventListener('input', function () {
+      traceStopPlay();
       setTraceStep(answer, parseInt(slider.value, 10) || 0);
     });
-    var count = text('span', 'pg-trace-count');
-    nav.appendChild(label);
-    nav.appendChild(slider);
-    nav.appendChild(count);
-    nav.appendChild(toolButton('← Previous', function () {
-      setTraceStep(answer, answer.step - 1);
-    }));
-    nav.appendChild(toolButton('Next →', function () {
-      setTraceStep(answer, answer.step + 1);
-    }));
+    track.appendChild(slider);
+    view.track = track;
     view.slider = slider;
-    view.count = count;
-    panel.appendChild(nav);
+    timeline.appendChild(track);
+    head.appendChild(timeline);
 
-    // The subject with its two cursors: where the attempt started, where
-    // PCRE2 stands; the status line under the list says the same in words.
-    var subjectLine = text('pre', 'pg-trace-subject');
-    subjectLine.setAttribute('aria-hidden', 'true');
-    view.subject = subjectLine;
-    panel.appendChild(subjectLine);
-
-    var list = text('ol', 'pg-trace-steps');
-    list.tabIndex = 0;
-    list.setAttribute('aria-label', 'Steps; the arrow keys, Home and End move between them');
-    steps.forEach(function (step, index) {
-      var item = text('li', 'pg-trace-step' + (step.flags & 2 ? ' is-backtrack' : ''));
-      item.setAttribute('data-step', String(index));
-      if (step.flags & 1) {
-        item.appendChild(text('span', 'pg-trace-attempt', 'New match attempt'));
-      }
-      if (step.flags & 2) {
-        item.appendChild(text('span', 'pg-trace-backtrack', 'Backtracked before this item'));
-      }
-      var line = text('span', 'pg-trace-try', 'Try ');
-      line.appendChild(text('code', null, traceItemText(answer, step)));
-      line.appendChild(text('span', 'pg-trace-at', ' at ' + step.s));
-      if (typeof step.n === 'number' && step.n !== TRACE_CALLOUT_AUTO) {
-        line.appendChild(text('span', 'pg-trace-at', ' (callout ' + step.n + ')'));
-      }
-      item.appendChild(line);
-      view.items.push(item);
-      list.appendChild(item);
-    });
-    list.addEventListener('click', function (event) {
-      var item = event.target.closest('li[data-step]');
-      if (item) {
-        setTraceStep(answer, Number(item.getAttribute('data-step')));
-      }
-    });
-    list.addEventListener('keydown', function (event) {
-      if (event.altKey || event.ctrlKey || event.metaKey) {
-        return;
-      }
-      var target = -1;
-      switch (event.key) {
-        case 'ArrowRight': case 'ArrowDown': target = answer.step + 1; break;
-        case 'ArrowLeft': case 'ArrowUp': target = answer.step - 1; break;
-        case 'Home': target = 0; break;
-        case 'End': target = steps.length - 1; break;
-        default: return;
-      }
-      event.preventDefault();
-      setTraceStep(answer, target);
-    });
-    view.list = list;
-    panel.appendChild(list);
-
+    // The execution point. The two lines are for the eye, colored as the
+    // fields are; the status line above them is the one a voice hears, and
+    // it says the step's number first.
+    var point = text('div', 'pg-trace-point');
     var status = text('p', 'pg-trace-status');
     status.setAttribute('aria-live', 'polite');
     status.setAttribute('aria-atomic', 'true');
     view.status = status;
-    panel.appendChild(status);
+    point.appendChild(status);
+    view.pattern = text('pre', 'pg-trace-pattern');
+    view.pattern.setAttribute('aria-hidden', 'true');
+    point.appendChild(traceLine('Pattern', view.pattern));
+    view.subject = text('pre', 'pg-trace-subject');
+    view.subject.setAttribute('aria-hidden', 'true');
+    point.appendChild(traceLine('Text', view.subject));
+    head.appendChild(point);
+    frame.appendChild(head);
 
+    // The steps, as a debugger lists its frames: the item in the mono
+    // voice, the byte it stands at to the right, the number in the gutter,
+    // a mark in the gutter where PCRE2 backtracked. A match attempt opens
+    // with a header of its own, pinned while its steps scroll past. The
+    // rows stand in chunks, one list to a voice: a chunk out of sight is
+    // skipped by the browser, so a step costs the same on a trace of
+    // twenty thousand as on one of twenty.
+    var panes = text('div', 'pg-trace-panes');
+    var stepsPane = tracePane('steps', 'Steps', 'at byte');
+    var list = text('div', 'pg-trace-steps');
+    list.tabIndex = 0;
+    list.setAttribute('role', 'list');
+    list.setAttribute('aria-label', 'Steps; the arrow keys, Home and End move between them');
+    var attempt = 0;
+    var chunk = null;
+    var chunks = [];
+    steps.forEach(function (step, index) {
+      if (step.flags & 1) {
+        attempt += 1;
+        var header = text('div', 'pg-trace-attempt', 'Attempt ' + attempt + ' \u00b7 from byte ' + (typeof step.start === 'number' ? step.start : step.s));
+        header.setAttribute('role', 'listitem');
+        header.setAttribute('data-step', String(index));
+        list.appendChild(header);
+        chunk = null;
+      }
+      if (!chunk || chunk.childNodes.length >= TRACE_CHUNK_ROWS) {
+        chunk = text('div', 'pg-trace-chunk');
+        chunk.setAttribute('role', 'none');
+        chunks.push(chunk);
+        list.appendChild(chunk);
+      }
+      var row = text('div', 'pg-trace-step' + (step.flags & 2 ? ' is-backtrack' : '') + (answer.marks.moved[index] ? ' is-capture' : ''));
+      row.setAttribute('role', 'listitem');
+      row.setAttribute('data-step', String(index));
+      row.setAttribute('data-n', String(index + 1));
+      if (step.flags & 2) {
+        row.appendChild(text('span', 'visually-hidden', 'Backtracked. '));
+      }
+      if (answer.marks.moved[index]) {
+        row.appendChild(text('span', 'visually-hidden', 'Capture changed. '));
+      }
+      row.appendChild(text('code', step.len ? null : 'is-end', traceItemText(answer, step)));
+      row.appendChild(text('span', 'pg-trace-at', typeof step.n === 'number' && step.n !== TRACE_CALLOUT_AUTO ? step.s + ' (callout ' + step.n + ')' : String(step.s)));
+      view.items.push(row);
+      chunk.appendChild(row);
+    });
+    // A chunk the browser skips still stands as tall as its rows: it is
+    // told how many it holds.
+    chunks.forEach(function (held) {
+      held.style.setProperty('--rows', String(held.childNodes.length));
+    });
+    list.addEventListener('click', function (event) {
+      var row = event.target.closest('[data-step]');
+      if (row) {
+        traceStopPlay();
+        setTraceStep(answer, Number(row.getAttribute('data-step')));
+      }
+    });
+    view.list = list;
+    stepsPane.appendChild(list);
+    panes.appendChild(stepsPane);
+
+    // The stops, as a debugger lists what it pauses on: a checkbox, the
+    // mark the stop wears in the list and on the timeline, and how many
+    // the trace holds.
+    var side = text('div', 'pg-trace-side');
+    var stopsPane = tracePane('stops', 'Breakpoints');
+    var stops = text('ul', 'pg-trace-stops');
+    TRACE_STOPS.forEach(function (stop) {
+      var held = answer.marks[stop.kind].length;
+      var row = text('li');
+      var label = text('label', 'pg-trace-stop');
+      label.title = stop.hint;
+      var input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = traceStops[stop.kind];
+      input.setAttribute('aria-label', stop.label + ', ' + held + ' in this trace');
+      input.addEventListener('change', function () {
+        traceStops[stop.kind] = input.checked;
+        frame.classList.toggle('no-' + stop.kind, !input.checked);
+      });
+      frame.classList.toggle('no-' + stop.kind, !input.checked);
+      label.appendChild(input);
+      label.appendChild(text('span', 'pg-trace-stop-mark is-' + stop.kind));
+      label.appendChild(text('span', 'pg-trace-stop-name', stop.label));
+      label.appendChild(text('span', 'pg-trace-stop-count', spaced(held)));
+      row.appendChild(label);
+      stops.appendChild(row);
+    });
+    stopsPane.appendChild(stops);
+    side.appendChild(stopsPane);
+
+    // The captures, as a debugger lists a scope. Pointing at a group shows
+    // its span in the text above.
+    var capturesPane = tracePane('captures', 'Captures');
     var captures = text('div', 'pg-trace-captures');
     view.captures = captures;
-    panel.appendChild(captures);
+    captures.addEventListener('mouseover', function (event) {
+      var row = event.target.closest('tr[data-from]');
+      if (row) {
+        tracePeek(answer, [Number(row.getAttribute('data-from')), Number(row.getAttribute('data-to'))]);
+      }
+    });
+    captures.addEventListener('mouseleave', function () {
+      tracePeek(answer, null);
+    });
+    capturesPane.appendChild(captures);
+    side.appendChild(capturesPane);
+    panes.appendChild(side);
+    frame.appendChild(panes);
 
-    renderTraceLabel(panel, answer);
+    frame.addEventListener('click', function (event) {
+      var button = event.target.closest('button[data-act]');
+      if (button && button.getAttribute('aria-disabled') !== 'true') {
+        traceAct(answer, button.getAttribute('data-act'));
+      }
+    });
+    panel.appendChild(frame);
+    var pinned = list.querySelector('.pg-trace-attempt');
+    view.pinned = pinned ? pinned.offsetHeight : 0;
+    renderTraceLabel(frame, answer);
     setTraceStep(answer, answer.step);
     if (announceResult) {
       var check = answer.selfCheck;
@@ -3419,16 +3871,19 @@
     }
   }
 
-  // The current step: the list's aria-current, the slider, the cursors in
-  // the subject, the captures as PCRE2 held them, the item lit in the
-  // pattern field and the node under it lit in the tree.
+  // The current step: the list's aria-current, the slider and the playhead
+  // over the chart, the ends of the transport, the status line, the item
+  // in the pattern and the cursor in the text, the captures as PCRE2 held
+  // them, the item lit in the pattern field and the node under it lit in
+  // the tree.
   function setTraceStep(answer, index) {
     var view = answer.view;
     var steps = answer.trace ? answer.trace.steps : null;
     if (!view || !steps || !steps.length) {
       return;
     }
-    index = Math.max(0, Math.min(index, steps.length - 1));
+    var last = steps.length - 1;
+    index = Math.max(0, Math.min(index, last));
     answer.step = index;
     var step = steps[index];
     if (view.current) {
@@ -3438,21 +3893,34 @@
     view.current = view.items[index];
     view.current.setAttribute('aria-current', 'step');
     view.current.classList.add('is-current');
-    if (view.list.scrollHeight > view.list.clientHeight) {
-      view.current.scrollIntoView({ block: 'nearest' });
-    }
-    view.slider.value = String(index);
-    view.count.textContent = (index + 1) + ' / ' + steps.length;
 
+    view.slider.value = String(index);
+    view.slider.setAttribute('aria-valuetext', 'Step ' + (index + 1) + ' of ' + steps.length);
+    view.track.style.setProperty('--t', String(last ? index / last : 0));
+    view.count.textContent = spaced(index + 1);
+    // An end of the trace dims a button and never disables it: a disabled
+    // button drops the focus to the body, and the arrows would step nothing.
+    ['rewind', 'back'].forEach(function (act) {
+      view.buttons[act].setAttribute('aria-disabled', index === 0 ? 'true' : 'false');
+    });
+    ['step', 'resume'].forEach(function (act) {
+      view.buttons[act].setAttribute('aria-disabled', index === last ? 'true' : 'false');
+    });
+
+    fillTraceStatus(answer, step, index);
+    view.peek = null;
+    clear(view.pattern);
+    view.pattern.appendChild(tracePatternFragment(view, step));
     clear(view.subject);
     view.subject.appendChild(traceSubjectFragment(answer, step));
-
-    var item = traceItemText(answer, step);
-    var where = 'item ' + (index + 1) + ' of ' + steps.length + ' at subject byte ' + step.s + (typeof step.start === 'number' && step.start !== step.s ? ' (the attempt started at byte ' + step.start + ')' : '');
-    view.status.textContent = (step.flags & 1 ? 'New match attempt. ' : '') + (step.flags & 2 ? 'Backtracked before this item. ' : '') + 'Try ' + (step.len ? quoted(item) : item) + ': ' + where + '.';
-
     clear(view.captures);
     view.captures.appendChild(traceCapturesFragment(answer, index));
+
+    // Everything is written; the layout is read once, here, to bring the
+    // row, the item and the cursor into the view of their own boxes.
+    traceReveal(view.list, view.current, view.pinned);
+    traceReveal(view.pattern, view.pattern.querySelector('.pg-trace-item'), 0);
+    traceReveal(view.subject, view.subject.querySelector('.pg-trace-cursor.is-now'), 0);
 
     // The item in the pattern field, and the node around it in the tree.
     traceMark = { start: step.p, end: step.p + step.len };
@@ -3462,6 +3930,79 @@
     } else if (current) {
       renderPatternMirror(current.payload, current.regex, lintFor === current.regex ? lastLint : null);
     }
+  }
+
+  // Brings a row into the view of the box that holds it, by that box's own
+  // scroll and only when the box scrolls: the answers column and the page
+  // stay where the visitor left them. head is what a pinned header covers
+  // at the box's top.
+  function traceReveal(box, row, head) {
+    if (!row || box.scrollHeight <= box.clientHeight) {
+      return;
+    }
+    var top = row.getBoundingClientRect().top - box.getBoundingClientRect().top - box.clientTop + box.scrollTop;
+    var bottom = top + row.offsetHeight;
+    if (top < box.scrollTop + head) {
+      box.scrollTop = Math.max(0, top - head);
+    } else if (bottom > box.scrollTop + box.clientHeight) {
+      box.scrollTop = bottom - box.clientHeight;
+    }
+  }
+
+  // The status line, a debugger's "paused" strip: what brought PCRE2 here —
+  // a new attempt, a backtrack, a capture that moved — then what it is
+  // about to try and where. The step's number comes first, for a voice:
+  // the eye has the counter.
+  function fillTraceStatus(answer, step, index) {
+    var status = answer.view.status;
+    var steps = answer.trace.steps;
+    var events = [];
+    if (step.flags & 1) {
+      events.push(['is-attempt', 'New attempt']);
+    }
+    if (step.flags & 2) {
+      events.push(['is-backtrack', 'Backtracked']);
+    }
+    if (answer.marks.moved[index]) {
+      events.push(['is-capture', 'Capture changed']);
+    }
+    clear(status);
+    status.className = 'pg-trace-status' + (step.flags & 2 ? ' is-backtrack' : '');
+    status.appendChild(text('span', 'visually-hidden', 'Step ' + (index + 1) + ' of ' + steps.length + '. '));
+    events.forEach(function (entry) {
+      status.appendChild(text('span', 'pg-trace-event ' + entry[0], entry[1]));
+      status.appendChild(text('span', 'visually-hidden', '. '));
+    });
+    var doing = text('span', 'pg-trace-doing');
+    if (step.len) {
+      doing.appendChild(document.createTextNode('Trying '));
+      doing.appendChild(text('code', null, traceItemText(answer, step)));
+    } else {
+      doing.appendChild(document.createTextNode(traceItemText(answer, step)));
+    }
+    doing.appendChild(document.createTextNode(' at byte ' + step.s));
+    status.appendChild(doing);
+    status.appendChild(text('span', 'visually-hidden', ', '));
+    status.appendChild(text('span', 'pg-trace-where', 'attempt ' + answer.marks.attemptOf[index] + ' of ' + Math.max(answer.marks.attempt.length, 1) + (typeof step.start === 'number' ? ', from byte ' + step.start : '')));
+  }
+
+  // The pattern as its field shows it, the delimiters and the flags around
+  // the body, in the engine's token colors, with the item PCRE2 is about
+  // to try marked in it; at the end of the pattern, the closing delimiter.
+  function tracePatternFragment(view, step) {
+    var fragment = document.createDocumentFragment();
+    var regex = current.regex;
+    var item = unitRange(current.payload, step.p, step.p + step.len);
+    if (!item) {
+      fragment.appendChild(document.createTextNode(regex));
+      return fragment;
+    }
+    fragment.appendChild(tileText(regex, view.tiles, 0, item.start));
+    var mark = text('mark', 'pg-trace-item');
+    mark.appendChild(tileText(regex, view.tiles, item.start, item.end));
+    fragment.appendChild(mark);
+    fragment.appendChild(tileText(regex, view.tiles, item.end, regex.length));
+    return fragment;
   }
 
   // The deepest node of the tree that holds a body offset: the nodes are
@@ -3476,41 +4017,92 @@
     return found;
   }
 
-  // The subject, the start of the attempt and the current position as two
-  // marks in it; one mark when they coincide. The marks are for the eye,
-  // the status line says the same.
+  // A text for a debugger's eye: every line break shown, so the place
+  // before one is a place the cursor can be seen at.
+  function traceText(parent, string) {
+    string.split('\n').forEach(function (line, index) {
+      if (index > 0) {
+        parent.appendChild(text('span', 'pg-trace-nl', '\u21b5'));
+        parent.appendChild(document.createTextNode('\n'));
+      }
+      if (line) {
+        parent.appendChild(document.createTextNode(line));
+      }
+    });
+  }
+
+  function traceCursor(className, title) {
+    var cursor = text('mark', 'pg-trace-cursor ' + className);
+    cursor.title = title;
+    return cursor;
+  }
+
+  // The text, with what the attempt consumed so far marked from where the
+  // attempt started to where PCRE2 stands, the cursor at that place, and
+  // what was passed before the attempt in the quiet ink. A lookbehind
+  // reads before the attempt's start: nothing is consumed there, and both
+  // places are shown. The marks are for the eye; the status line says the
+  // same.
   function traceSubjectFragment(answer, step) {
     var subject = answer.payload.input.subject;
     var fragment = document.createDocumentFragment();
-    var atStart = typeof step.start === 'number' ? unitAt(answer.subjectUnits, step.start) : -1;
-    var atNow = unitAt(answer.subjectUnits, step.s);
-    var cuts = [];
-    if (atStart >= 0 && atStart !== atNow) {
-      cuts.push({ at: atStart, className: 'pg-trace-cursor is-start', title: 'start of the attempt, byte ' + step.start });
+    var now = unitAt(answer.subjectUnits, step.s);
+    var start = typeof step.start === 'number' ? unitAt(answer.subjectUnits, step.start) : now;
+    if (Math.min(start, now) > 0) {
+      var past = text('span', 'pg-trace-past');
+      traceText(past, subject.slice(0, Math.min(start, now)));
+      fragment.appendChild(past);
     }
-    cuts.push({ at: atNow, className: 'pg-trace-cursor is-now' + (atStart === atNow ? ' is-start' : ''), title: 'subject byte ' + step.s });
-    cuts.sort(function (a, b) {
-      return a.at - b.at;
-    });
-    var from = 0;
-    cuts.forEach(function (cut) {
-      if (cut.at > from) {
-        fragment.appendChild(document.createTextNode(subject.slice(from, cut.at)));
-        from = cut.at;
-      }
-      var mark = text('mark', cut.className);
-      mark.title = cut.title;
-      fragment.appendChild(mark);
-    });
-    if (from < subject.length) {
-      fragment.appendChild(document.createTextNode(subject.slice(from)));
+    if (start < now) {
+      var consumed = text('mark', 'pg-trace-consumed');
+      consumed.title = 'consumed by this attempt, from byte ' + step.start;
+      traceText(consumed, subject.slice(start, now));
+      fragment.appendChild(consumed);
+    }
+    fragment.appendChild(traceCursor('is-now', 'subject byte ' + step.s));
+    if (now < start) {
+      traceText(fragment, subject.slice(now, start));
+      fragment.appendChild(traceCursor('is-start', 'start of the attempt, byte ' + step.start));
+    }
+    traceText(fragment, subject.slice(Math.max(start, now)));
+    if (!subject) {
+      fragment.appendChild(text('span', 'pg-trace-nl', 'empty text'));
     }
     fragment.appendChild(document.createTextNode('\n'));
     return fragment;
   }
 
+  // Pointing at a group in the captures shows its span in the text; the
+  // step's own marks come back when the pointer leaves.
+  function tracePeek(answer, pair) {
+    var view = answer.view;
+    var key = pair ? pair[0] + ':' + pair[1] : null;
+    if (!view || view.peek === key) {
+      return;
+    }
+    view.peek = key;
+    clear(view.subject);
+    if (!pair) {
+      view.subject.appendChild(traceSubjectFragment(answer, answer.trace.steps[answer.step]));
+      traceReveal(view.subject, view.subject.querySelector('.pg-trace-cursor.is-now'), 0);
+      return;
+    }
+    var subject = answer.payload.input.subject;
+    var from = unitAt(answer.subjectUnits, pair[0]);
+    var to = unitAt(answer.subjectUnits, pair[1]);
+    traceText(view.subject, subject.slice(0, from));
+    var span = text('mark', 'pg-trace-peek' + (to > from ? '' : ' is-empty'));
+    traceText(span, subject.slice(from, to));
+    view.subject.appendChild(span);
+    traceText(view.subject, subject.slice(Math.max(from, to)));
+    view.subject.appendChild(document.createTextNode('\n'));
+    traceReveal(view.subject, span, 0);
+  }
+
   // The captures at a step, as PCRE2 held them: groups from 1, the pairs
-  // below capture_top; pair 0 is not a capture during a callout.
+  // below capture_top; pair 0 is not a capture during a callout. A group
+  // whose capture moved at this step is marked, as a debugger marks the
+  // variable a step changed.
   function traceCapturesFragment(answer, index) {
     var fragment = document.createDocumentFragment();
     var pairs = answer.captures[index] || [];
@@ -3519,10 +4111,10 @@
       fragment.appendChild(text('p', 'pg-tool-hint', 'No group captured yet.'));
       return fragment;
     }
+    var moved = index > 0 ? movedGroups(answer.captures[index - 1] || [], pairs) : [];
     var table = document.createElement('table');
     table.className = 'pg-trace-table';
-    var caption = text('caption', null, 'Captures at this step');
-    table.appendChild(caption);
+    table.appendChild(text('caption', 'visually-hidden', 'Captures at this step'));
     var head = document.createElement('thead');
     var headRow = document.createElement('tr');
     ['Group', 'Text', 'Bytes'].forEach(function (title) {
@@ -3536,8 +4128,22 @@
     for (var group = 1; group < pairs.length; group += 1) {
       var row = document.createElement('tr');
       var pair = Array.isArray(pairs[group]) ? pairs[group] : null;
-      var name = text('th', null, names[String(group)] ? names[String(group)] + ' (' + group + ')' : String(group));
+      var changed = moved.indexOf(group) !== -1;
+      if (changed) {
+        row.className = 'is-changed';
+      }
+      if (pair) {
+        row.setAttribute('data-from', String(pair[0]));
+        row.setAttribute('data-to', String(pair[1]));
+      }
+      var name = text('th', null, names[String(group)] ? names[String(group)] + ' ' : String(group));
       name.scope = 'row';
+      if (names[String(group)]) {
+        name.appendChild(text('span', 'pg-trace-group', String(group)));
+      }
+      if (changed) {
+        name.appendChild(text('span', 'visually-hidden', ' (changed at this step)'));
+      }
       row.appendChild(name);
       var value = text('td', null);
       if (pair) {
@@ -3546,13 +4152,47 @@
         value.appendChild(text('span', 'pg-trace-unset', 'unset'));
       }
       row.appendChild(value);
-      row.appendChild(text('td', 'pg-trace-bytes', pair ? pair[0] + '–' + pair[1] : '—'));
+      row.appendChild(text('td', 'pg-trace-bytes', pair ? pair[0] + '\u2013' + pair[1] : '\u2014'));
       body.appendChild(row);
     }
     table.appendChild(body);
     fragment.appendChild(table);
     return fragment;
   }
+
+  // The debugger's keys, read once on the panel so they answer wherever
+  // the focus stands in it: the arrows step, Shift travels to a stop, Home
+  // and End reach the ends, Space plays. Inside the list, up and down step
+  // too, as they walk any list. A modified key stays the browser's; the
+  // slider and the checkboxes keep their own, and a button its Space.
+  function onTraceKey(event) {
+    if (event.altKey || event.ctrlKey || event.metaKey) {
+      return;
+    }
+    var answer = toolAnswers.trace;
+    var view = answer ? answer.view : null;
+    if (!view || !view.root || !view.root.isConnected || event.target.tagName === 'INPUT') {
+      return;
+    }
+    var inList = view.list.contains(event.target);
+    var act = '';
+    switch (event.key) {
+      case 'ArrowRight': act = event.shiftKey ? 'resume' : 'step'; break;
+      case 'ArrowLeft': act = event.shiftKey ? 'rewind' : 'back'; break;
+      case 'ArrowDown': act = inList ? 'step' : ''; break;
+      case 'ArrowUp': act = inList ? 'back' : ''; break;
+      case 'Home': act = 'first'; break;
+      case 'End': act = 'last'; break;
+      case ' ': act = event.target.tagName === 'BUTTON' ? '' : 'play'; break;
+      default: break;
+    }
+    if (!act) {
+      return;
+    }
+    event.preventDefault();
+    traceAct(answer, act);
+  }
+  toolPanel('trace').addEventListener('keydown', onTraceKey);
 
   // The tab strip's hands: a click opens a tab; the arrow keys, Home and
   // End move between tabs and open the one they land on. A modified key
