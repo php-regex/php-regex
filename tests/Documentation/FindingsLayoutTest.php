@@ -168,7 +168,7 @@ final class FindingsLayoutTest extends TestCase
         $this->assertSame(1, preg_match('/\.pg-tree-item\[aria-selected="true"\] > \.pg-tree-row \{([^}]*)\}/', $stylesheet, $rail));
         $this->assertStringContainsString('inset 2px 0 0 var(--amber)', $rail[1], 'The shown row carries a rail on its edge.');
         $this->assertSame(1, preg_match('/\.hero-playground \.hero-inner \{([^}]*)\}/', $stylesheet, $wide), 'The playground home is wider than the docs column.');
-        $this->assertStringContainsString('padding-inline: max(1.25rem, calc(50vw - 45rem))', $wide[1], 'A tool page: 90rem centered, the docs keep their 75rem.');
+        $this->assertStringContainsString('padding-inline: max(1.25rem, calc(50vw - 53.75rem))', $wide[1], 'A tool page: 107.5rem centered, the docs keep their 75rem.');
         // On its own tint over --code-bg, --ok reads at 4.13:1 in the light
         // theme, under the 4.5:1 small text needs; a fifth of --ink brings
         // it to 5.06:1 there and 9.10:1 in the dark theme.

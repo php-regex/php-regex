@@ -116,12 +116,12 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(0, self::nodes($xpath, $main.'//'.self::self('pg-match-list').' | '.$main.'//'.self::self('pg-explain').' | '.$main.'//'.self::self('pg-diagnostics')));
         $this->assertStringNotContainsString('pg-tools-note', self::source(self::INCLUDE), 'A note nothing writes.');
 
-        // What stays in the writing column: the two fields. The examples
-        // stand in a column of their own, before it.
-        $this->assertSame(0, self::nodes($xpath, $main.'//'.self::self('pg-examples')), 'The examples are a column of the window, not a row of the fields.');
+        // What stays in the writing column: the text field — the pattern
+        // has a row of its own above the columns. The examples stand in
+        // a column of their own, before it.
+        $this->assertSame(0, self::nodes($xpath, $main.'//'.self::self('pg-examples')), 'The examples are a column of the tool, not a row of the fields.');
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/'.self::self('pg-examples')), 'The examples are the body\'s first column.');
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/'.self::self('pg-examples').'/following-sibling::*'.self::has('pg-main')), 'The fields follow the examples.');
-        $this->assertSame(1, self::nodes($xpath, $main.'//textarea[@id="pg-pattern"]'));
         $this->assertSame(1, self::nodes($xpath, $main.'//textarea[@id="pg-subject"]'));
     }
 
@@ -153,18 +153,34 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
-     * The window's name stands in the middle of its bar whatever the state
-     * beside Run says: the two outer tracks share what the name leaves, so
-     * "Ready" and "Sample · press Run" never slide it sideways.
+     * No window, no title bar: the pattern is the tool's first row, a
+     * field as wide as the tool with its controls — the PHP version, Run,
+     * the state — standing at the row's far end, beside the field they
+     * act on. The desktop's lights are gone with the metaphor that drew
+     * them, and the tool answers a wide screen: to 1 720 pixels, where
+     * the reading pages keep their column.
      */
     #[Test]
-    public function test_the_title_stays_centred_whatever_the_state_says(): void
+    public function test_the_pattern_row_holds_the_field_and_its_controls(): void
     {
+        $xpath = self::include();
+
+        $this->assertSame(0, self::nodes($xpath, self::byClass('pg-lights').'|'.self::byClass('pg-titlebar').'|'.self::byClass('pg-title').'|'.self::byClass('pg-statusbar')), 'The window and its furniture are gone.');
+
+        $row = self::byClass('pg-patternbar');
+        $this->assertSame(1, self::nodes($xpath, $row), 'One row above the columns.');
+        $this->assertSame(1, self::nodes($xpath, $row.'//textarea[@id="pg-pattern"]'), 'The row opens on the pattern itself.');
+        $this->assertSame(1, self::nodes($xpath, $row.'//select[@id="pg-version"]'));
+        $this->assertSame(1, self::nodes($xpath, $row.'//'.self::self('pg-run')));
+        $this->assertSame(1, self::nodes($xpath, $row.'//'.self::self('pg-state')), 'The state sits beside Run, where it is read.');
+
         $stylesheet = self::source(self::STYLESHEET);
-        $this->assertSame(1, preg_match('/(?<!,\n)^\.pg-titlebar \{([^}]*)\}/m', $stylesheet, $bar), 'The bar\'s own rule exists, not the one it shares with the terminal.');
-        $this->assertStringContainsString('grid-template-columns: 1fr minmax(0, max-content) 1fr;', $bar[1], 'Two outer tracks of one share, the name between them.');
+        $this->assertSame(1, preg_match('/^\.pg-patternbar \{([^}]*)\}/m', $stylesheet, $bar), 'The pattern row\'s own rule exists.');
+        $this->assertStringContainsString('grid-template-columns: minmax(0, 1fr) auto;', $bar[1], 'The field takes the row; the controls keep to its end.');
         $this->assertSame(1, preg_match('/^\.pg-controls \{([^}]*)\}/m', $stylesheet, $controls));
-        $this->assertStringContainsString('justify-self: end;', $controls[1], 'The controls keep to the bar\'s far edge.');
+        $this->assertStringContainsString('justify-self: end;', $controls[1], 'The controls keep to the row\'s far edge.');
+        $this->assertSame(1, preg_match('/^\.hero-playground \.hero-inner \{([^}]*)\}/m', $stylesheet, $inner));
+        $this->assertStringContainsString('padding-inline: max(1.25rem, calc(50vw - 53.75rem));', $inner[1], 'A tool page to 1 720 pixels; the prose keeps its column.');
     }
 
     /**
@@ -200,48 +216,25 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
-     * Below the side-by-side layout the bar is a wrapping row: the
-     * desktop's window lights go, the name keeps to the left where no
-     * state can move it, and controls too wide for one row — enlarged
-     * text, a narrow phone — drop under the name and then wrap among
-     * themselves, never past the frame that clips them. A phone also
-     * says the state by its light alone, its word still read by the live
-     * region.
+     * On a phone the pattern row gives the field a line of its own: the
+     * controls drop under it rather than squeeze the field that holds
+     * the work, and the state says itself by its light alone, its word
+     * still read by the live region.
      */
     #[Test]
-    public function test_the_title_bar_keeps_one_row_on_a_phone(): void
+    public function test_the_pattern_row_keeps_one_row_on_a_phone(): void
     {
         $stylesheet = self::source(self::STYLESHEET);
-        $narrow = '/@media \(max-width: 1023px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*';
         $phone = '/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*';
 
-        $this->assertStringNotContainsString('@media (max-width: 899px)', $stylesheet, 'At 660px and 800px with the text at 200%, a grid track for the controls pushed the state past the frame.');
-        $this->assertSame(1, preg_match($narrow.'\.pg-lights \{([^}]*)\}/', $stylesheet, $lights));
-        $this->assertStringContainsString('display: none;', $lights[1], 'The desktop metaphor gives its room to the controls.');
-        $this->assertSame(1, preg_match($narrow.'\.pg-titlebar \{([^}]*)\}/', $stylesheet, $bar));
-        $this->assertStringContainsString('display: flex;', $bar[1]);
-        $this->assertStringContainsString('flex-wrap: wrap;', $bar[1], 'The controls drop under the name rather than leave the frame.');
-        $this->assertSame(1, preg_match($narrow.'\.pg-controls \{([^}]*)\}/', $stylesheet, $controls));
+        $this->assertSame(1, preg_match($phone.'\.pg-patternbar \{([^}]*)\}/', $stylesheet, $bar));
+        $this->assertStringContainsString('grid-template-columns: minmax(0, 1fr);', $bar[1], 'The field holds the row; the controls take the next.');
+        $this->assertSame(1, preg_match($phone.'\.pg-controls \{([^}]*)\}/', $stylesheet, $controls));
         $this->assertStringContainsString('flex-wrap: wrap;', $controls[1], 'And wrap among themselves when one row of them is too wide.');
-        $this->assertStringContainsString('margin-left: auto;', $controls[1], 'Kept to the far edge on either row.');
-        $this->assertSame(1, preg_match($narrow.'\.pg-title \{([^}]*)\}/', $stylesheet, $title));
-        $this->assertStringContainsString('flex: 1 0 auto;', $title[1], 'The name never shrinks to nothing to keep the controls beside it.');
-        $this->assertStringContainsString('text-align: left;', $title[1]);
 
         $this->assertSame(1, preg_match($phone.'\.pg-state-word \{([^}]*)\}/', $stylesheet, $word));
         $this->assertStringContainsString('clip-path: inset(50%);', $word[1], 'Hidden from the eye, not from the live region.');
         $this->assertStringNotContainsString('display: none', $word[1]);
-        $this->assertSame(0, preg_match($phone.'\.pg-controls \{[^}]*grid-column: 1 \/ -1;/', $stylesheet), 'No second row for the controls while they fit.');
-
-        // The header above already says the brand: a phone's bar says
-        // "Playground" whole rather than the full name cut short.
-        $xpath = self::include();
-        $name = $xpath->evaluate('string('.self::byClass('pg-title').')');
-        $this->assertIsString($name);
-        $this->assertSame('PHPRegex playground', trim($name), 'A wide bar says the whole name.');
-        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-title').'/'.self::self('pg-title-brand')));
-        $this->assertSame(1, preg_match($phone.'\.pg-title-brand \{\s*display: none;/', $stylesheet), 'The brand word gives way on a phone.');
-        $this->assertSame(1, preg_match($phone.'\.pg-title::first-letter \{\s*text-transform: uppercase;/', $stylesheet), 'And the name left starts as a name.');
     }
 
     /**
@@ -274,7 +267,7 @@ final class PlaygroundLayoutTest extends TestCase
     public function test_the_window_controls_show_a_focus_ring(): void
     {
         $stylesheet = self::source(self::STYLESHEET);
-        foreach (['.pg-titlebar .pg-run:focus-visible', '.pg-example:focus-visible'] as $selector) {
+        foreach (['.pg-patternbar .pg-run:focus-visible', '.pg-example:focus-visible'] as $selector) {
             $this->assertSame(1, preg_match('/(?<!,\n)^'.preg_quote($selector, '/').' \{([^}]*)\}/m', $stylesheet, $rule), $selector.' has a rule of its own.');
             $this->assertStringContainsString('outline: 2px solid var(--amber);', $rule[1], $selector.' draws the ring.');
         }
@@ -345,11 +338,12 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
-     * Before any run the status bar already says what judged the sample,
-     * so the bar is never a blank strip beside the privacy chip.
+     * Before any run the meta line under the columns already says what
+     * judged the sample, so the line is never a blank strip beside the
+     * privacy chip.
      */
     #[Test]
-    public function test_the_status_bar_names_the_sample_engine(): void
+    public function test_the_meta_line_names_the_sample_engine(): void
     {
         $caption = self::between(self::source(self::SCRIPT), 'function renderCaption(payload, prerendered) {', "\n  }\n");
         $sample = self::between($caption, 'if (prerendered) {', 'return;');
@@ -390,12 +384,12 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     #[Test]
-    public function test_the_privacy_chip_lives_in_the_footer(): void
+    public function test_the_privacy_chip_lives_in_the_meta_line(): void
     {
         $xpath = self::include();
         $sentence = 'Nothing you type leaves your browser';
 
-        $chip = $xpath->query(self::byClass('pg-statusbar').'//'.self::self('pg-privacy'));
+        $chip = $xpath->query(self::byClass('pg-meta').'//'.self::self('pg-privacy'));
         $this->assertNotFalse($chip);
         $this->assertCount(1, $chip);
         $element = $chip->item(0);
@@ -491,12 +485,9 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(1, substr_count($section, 'var(--tk-str)'), 'A code color is not a state color: the string token colors a token only.');
         $this->assertSame(1, preg_match('/\.pg-tok-anchor \{\s*color: var\(--tk-str\);/', $section));
 
-        // The title bar keeps its navy in both themes: the error pill it
-        // holds is read on that navy, not on the page's paper.
-        $this->assertSame(1, preg_match('/\.terminal,\n\.pg-titlebar \{([^}]*)\}/', $stylesheet, $bar));
-        $this->assertSame(1, preg_match('/--code-bg: (#[0-9A-F]{6});/', $bar[1], $navy));
-        $this->assertSame(1, preg_match('/--danger: (#[0-9A-F]{6});/', $bar[1], $danger), 'The title bar says its own danger.');
-        $this->assertGreaterThanOrEqual(4.5, self::contrast($danger[1], $navy[1]), 'The Stopped pill is text: 4.5:1 on the navy.');
+        // The pattern row sits on the page: the state's tones are the
+        // state tokens of the theme it stands on, nothing of its own.
+        $this->assertSame(1, preg_match('/^\.terminal \{([^}]*)\}/m', $stylesheet), 'The navy panel is the terminal\'s alone.');
     }
 
     /**
@@ -672,7 +663,7 @@ final class PlaygroundLayoutTest extends TestCase
         $stylesheet = self::source(self::STYLESHEET);
         $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-main \{([^}]*)\}/', $stylesheet, $main), 'The writing column stretches on a wide screen.');
         $this->assertStringContainsString('align-self: stretch;', $main[1]);
-        $this->assertStringContainsString('grid-template-rows: auto minmax(0, 1fr) auto;', $main[1], 'The text field takes whatever height the answers leave.');
+        $this->assertStringContainsString('grid-template-rows: minmax(0, 1fr) auto;', $main[1], 'The text field takes whatever height the answers leave; the pattern has a row of its own above the columns.');
         $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-editor-subject \.pg-input \{([^}]*)\}/', $stylesheet, $input), 'The text input fills its editor on a wide screen.');
         $this->assertStringContainsString('height: 100%;', $input[1]);
         $this->assertStringContainsString('max-height: none;', $input[1], 'No cap cuts the fill short.');
@@ -908,26 +899,6 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringNotContainsString("'export'", $script, 'No tool, no label, no seeded answer of the export op on the page.');
         $this->assertStringNotContainsString('exportSubjects', $script);
         $this->assertStringContainsString('if (storedTool && TABS.indexOf(storedTool) !== -1) {', $script, 'A stored tab the strip no longer holds opens on the tree.');
-    }
-
-    /**
-     * The WCAG contrast ratio of two #RRGGBB colors.
-     */
-    private static function contrast(string $one, string $two): float
-    {
-        $luminance = static function (string $hex): float {
-            $channels = array_map(static function (string $pair): float {
-                $value = hexdec($pair) / 255;
-
-                return $value <= 0.03928 ? $value / 12.92 : (($value + 0.055) / 1.055) ** 2.4;
-            }, str_split(substr($hex, 1), 2));
-
-            return 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
-        };
-        $lighter = max($luminance($one), $luminance($two));
-        $darker = min($luminance($one), $luminance($two));
-
-        return ($lighter + 0.05) / ($darker + 0.05);
     }
 
     private static function include(): \DOMXPath

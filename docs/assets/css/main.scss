@@ -1253,11 +1253,10 @@ main table::-webkit-scrollbar-thumb {
    (third raw-color block): text 12.60, soft/bar 6.51, keyword 5.72,
    string 7.79, number 6.97, ok 7.51, danger 6.26 — all >= 4.5:1 on the
    #182B45 panel. Ok and danger are the dark theme's: a ready or a
-   stopped engine reads on the navy.
+   stopped run reads on the navy.
    ========================================================================== */
 
-.terminal,
-.pg-titlebar {
+.terminal {
   --code-bg: #182B45;
   --code-ink: #EDF1F7;
   --ink-soft: #A3B0C4;
@@ -4725,64 +4724,31 @@ body.search-open {
 .hero-playground .hero-inner {
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  /* A tool page, not a reading one: the window breathes to 90rem while
-     the docs keep their 75rem column — three columns need the room the
+  /* A tool page, not a reading one: the tool breathes to 107.5rem while
+     the docs keep their 75rem column — the answers need the room the
      prose never did. */
-  padding-inline: max(1.25rem, calc(50vw - 45rem));
+  padding-inline: max(1.25rem, calc(50vw - 53.75rem));
 }
 
-/* The window: a title bar, a body, a status bar. It floats one step
-   above the page, like the dialogs do. The frame clips its children to
-   its rounded corners — `clip`, not `hidden`: a hidden overflow would
-   make the frame the scrollport of the sticky answers, which would then
-   never stick and sit below their row. Browsers without `clip` keep the
-   hidden fallback and lose the stick, nothing else. */
+/* The pattern row: the tool's first row. No window around the tool, no
+   title bar over it — the pattern is the name of this page, a field as
+   wide as the tool with the controls it acts with at the row's far end.
+   What is left of the window is its clip: `clip`, not `hidden`, for a
+   hidden overflow would make the tool the scrollport of the sticky
+   answers, which would then never stick and sit below their row.
+   Browsers without `clip` keep the hidden fallback and lose the stick,
+   nothing else. */
 .playground {
   min-width: 0;
   overflow: hidden;
   overflow: clip;
-  background: var(--panel);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-l);
-  box-shadow: var(--shadow-1);
 }
-.pg-titlebar {
-  /* Inside the frame the bar carries no chrome of its own: the frame
-     draws the border and the corners. The two outer tracks share what
-     the name leaves, so the name stays in the middle of the bar whatever
-     the state beside Run says; a crowded bar gives the controls their
-     width first and cuts the name. */
+.pg-patternbar {
   display: grid;
-  grid-template-columns: 1fr minmax(0, max-content) 1fr;
-  align-items: center;
-  gap: .75rem;
-  min-height: 2.75rem;
-  padding: .4rem .9rem;
-  border: 0;
-  border-radius: 0;
-  color: var(--code-ink);
-  background: var(--code-bg);
-}
-.pg-lights {
-  display: inline-flex;
-  gap: .4rem;
-}
-.pg-lights i {
-  width: .7rem;
-  height: .7rem;
-  background: var(--ink-soft);
-  border-radius: var(--radius-pill);
-  opacity: .8;
-}
-.pg-title {
-  overflow: hidden;
-  font-size: .8rem;
-  font-weight: 600;
-  letter-spacing: .02em;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--ink-soft);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: .5rem .8rem;
+  padding: .35rem 1rem .95rem;
 }
 .pg-controls {
   display: inline-flex;
@@ -4790,34 +4756,30 @@ body.search-open {
   align-items: center;
   gap: .5rem;
 }
-/* The version reads as one of the window's own controls, not the
-   browser's: the native chrome is dropped, the chevron is drawn in the
-   bar's soft ink — the bar is navy in both themes, so one color serves
-   them both — and the border sits at the terminal's hairline weight
+/* The version reads as one of the tool's own controls: the platform's
+   select, the page's ink and paper, its border at the hairline weight
    until a hand or the keyboard claims it. */
-.pg-titlebar .pg-version {
+.pg-patternbar .pg-version {
   min-height: 1.9rem;
-  padding: .25rem 1.7rem .25rem .6rem;
+  padding: .25rem .5rem;
   font-family: var(--font-mono);
   font-size: .78rem;
   line-height: 1;
-  color: var(--code-ink);
-  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1.5 1.5 5 4.5 8.5 1.5' fill='none' stroke='%23EDF1F7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right .55rem center;
-  border: 1px solid var(--term-hairline);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
   border-radius: var(--radius-s);
   cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
 }
-.pg-titlebar .pg-version:hover {
-  border-color: var(--ink-soft);
+.pg-patternbar .pg-version:hover,
+.pg-patternbar .pg-version:focus-visible {
+  border-color: var(--amber);
 }
-.pg-titlebar .pg-version:focus-visible {
-  border-color: var(--ink-soft);
+.pg-patternbar .pg-version:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 1px;
 }
-.pg-titlebar .pg-run {
+.pg-patternbar .pg-run {
   display: inline-flex;
   align-items: center;
   gap: .45rem;
@@ -4827,17 +4789,17 @@ body.search-open {
   font-size: .78rem;
   font-weight: 600;
   line-height: 1;
-  color: var(--code-bg);
-  background: var(--tk-key);
+  color: var(--paper);
+  background: var(--amber);
   border: 1px solid transparent;
   border-radius: var(--radius-s);
   cursor: pointer;
 }
-.pg-titlebar .pg-run:hover,
-.pg-titlebar .pg-run:focus-visible {
-  filter: brightness(1.08);
+.pg-patternbar .pg-run:hover,
+.pg-patternbar .pg-run:focus-visible {
+  background: var(--amber-deep);
 }
-.pg-titlebar .pg-run:focus-visible {
+.pg-patternbar .pg-run:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
@@ -4854,11 +4816,10 @@ body.search-open {
   border-left: 1px solid color-mix(in srgb, currentColor 35%, transparent);
   border-radius: 0;
 }
-.pg-titlebar .pg-run:disabled {
+.pg-patternbar .pg-run:disabled {
   cursor: progress;
   opacity: .7;
-}
-/* What the window is doing: a light and a word, not a pill — an outline
+}/* What the window is doing: a light and a word, not a pill — an outline
    beside Run would read as a second button. The same height as the
    select and the button, so the three sit on one line. The light is a
    border, hollow while the sample stands, full once the engine speaks:
@@ -4999,14 +4960,12 @@ body.search-open {
   min-width: 0;
   align-content: start;
 }
-.pg-statusbar {
+.pg-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: .4rem .75rem;
-  padding: .5rem .9rem;
-  background: var(--paper);
-  border-top: 1px solid var(--line-soft);
+  padding: .7rem 1.1rem 0;
 }
 /* What stays on the visitor's machine, said once, at the far end of the
    bar the engine's facts fill after a run. */
@@ -5512,7 +5471,9 @@ body.search-open {
     grid-column: 2;
     grid-row: 1;
     align-self: stretch;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    /* The text and its status line; the pattern has a row of its own
+       above the columns. */
+    grid-template-rows: minmax(0, 1fr) auto;
   }
   .pg-field-text {
     grid-template-rows: auto minmax(0, 1fr) auto;
@@ -5975,31 +5936,9 @@ body.search-open {
   font-weight: 600;
 }
 
-/* Below the side-by-side layout the bar has no room to hold its name in
-   the middle: the desktop's window lights give their room, and the bar
-   is a wrapping row. The name keeps to the left, where no state can move
-   it; controls too wide for one row — enlarged text, a narrow phone —
-   drop under the name and then wrap among themselves, inside the frame
-   that clips them. */
-@media (max-width: 1023px) {
-  .pg-titlebar {
-    display: flex;
-    flex-wrap: wrap;
-  }
-  .pg-lights {
-    display: none;
-  }
-  .pg-title {
-    flex: 1 0 auto;
-    text-align: left;
-  }
-  .pg-controls {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    margin-left: auto;
-  }
-}
-
+/* A phone gives the pattern field a line of its own; between a phone and
+   the side-by-side layout the row keeps its two cells, the field taking
+   what the controls leave. */
 @media (max-width: 639px) {
   .pg-body {
     padding: .85rem .8rem .9rem;
@@ -6007,21 +5946,17 @@ body.search-open {
   .pg-tool {
     padding: .75rem .75rem .85rem;
   }
-  /* A phone's bar: the header above already says the brand, so the bar
-     says "Playground" whole rather than the full name cut short; the
-     state says itself by its light — its word still read by the live
-     region, and named by the light's title. */
-  .pg-titlebar {
-    gap: .5rem;
+  /* A phone's pattern row: the field holds the row, the controls take
+     the next and wrap among themselves; the state says itself by its
+     light — its word still read by the live region, and named by the
+     light's title. */
+  .pg-patternbar {
+    grid-template-columns: minmax(0, 1fr);
+    padding: .25rem .8rem .85rem;
   }
   .pg-controls {
     gap: .4rem;
-  }
-  .pg-title-brand {
-    display: none;
-  }
-  .pg-title::first-letter {
-    text-transform: uppercase;
+    flex-wrap: wrap;
   }
   .pg-state-word {
     position: absolute;
@@ -6034,17 +5969,13 @@ body.search-open {
   .pg-run-key {
     display: none;
   }
-  .pg-titlebar .pg-version,
-  .pg-titlebar .pg-run,
-  .pg-titlebar .pg-state {
+  .pg-patternbar .pg-version,
+  .pg-patternbar .pg-run,
+  .pg-state {
     min-height: 2.5rem;
   }
-  .pg-titlebar .pg-run {
+  .pg-patternbar .pg-run {
     padding-inline: .9rem;
-  }
-  /* The select keeps room for its chevron; the button does not. */
-  .pg-titlebar .pg-version {
-    padding-inline: .7rem 1.8rem;
   }
   .pg-example {
     min-height: 2rem;
