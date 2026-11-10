@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
@@ -226,8 +229,8 @@ final class IntegerOperandTest extends TestCase
     }
 
     /**
-     * What the library says of a pattern read through an integer is what
-     * the engine says of it: PHP 8.4.27 with PCRE2 10.49 compiles /^a{3}$/
+     * What the library and its lint say of a pattern read through an
+     * integer is what the engine says of it: PHP 8.4.27 with PCRE2 10.49 compiles /^a{3}$/
      * and /^a{65535}$/, and refuses /^a{65536}$/ and /^a{999999}$/ ("number
      * too big in {} quantifier").
      */
@@ -240,6 +243,11 @@ final class IntegerOperandTest extends TestCase
         $this->assertCount(1, $read);
         $this->assertSame($compiles, EngineProbe::compiles($read[0]));
         $this->assertSame($compiles, RegexParser::create()->validate($read[0])->isValid);
+
+        // The lint reports an error for the pattern exactly where the engine refuses it.
+        $issues = (new AnalysisService(RegexParser::create()))->lint([PatternOccurrence::found($read[0], 'bounds.php', 1)]);
+        $errors = array_values(array_filter($issues, static fn (LintIssue $issue): bool => $issue->severity->failsRun()));
+        $this->assertSame($compiles, [] === $errors, implode(' ', array_map(static fn (LintIssue $issue): string => $issue->message, $errors)));
     }
 
     /**
