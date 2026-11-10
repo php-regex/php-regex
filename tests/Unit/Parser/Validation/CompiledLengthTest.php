@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Validation;
 
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\RegexNode;
@@ -791,6 +792,7 @@ final class CompiledLengthTest extends TestCase
         $this->assertTrue($measure->passedWhereABranchEnds(self::parseOnPhp82('/(?:a){8190}abc.|d/')->pattern));
         $this->assertFalse($measure->passedWhereABranchEnds(self::parseOnPhp82('/(?:a){8192}|d/')->pattern));
         $this->assertFalse($measure->passedWhereABranchEnds(self::parseOnPhp82('/a|b/')->pattern));
+        $this->assertTrue(EngineProbe::compiles('/a|b/'), 'Oracle: PHP compiles /a|b/.');
     }
 
     /**
@@ -808,6 +810,17 @@ final class CompiledLengthTest extends TestCase
         $this->assertNull(self::measureOnPhp82('/(?:[iI]|d)/', 80235)->of(self::parseOnPhp82('/(?:[iI]|d)/')->pattern));
         $this->assertFalse(self::measureOnPhp82($unknown, 80235)->passedWhereABranchEnds(self::parseOnPhp82($unknown)->pattern));
         $this->assertTrue(self::measureOnPhp82($known, 80235)->passedWhereABranchEnds(self::parseOnPhp82($known)->pattern));
+
+        // On that engine PHP, which has the tables, reports both at offset 0,
+        // and so does the validator, which measures with them.
+        $running = PcreTarget::runtime();
+        if ($running->measuresBranchesApart() && !$running->pcreAtLeast('10.47')) {
+            foreach ([$unknown, $known] as $pattern) {
+                $this->assertSame('preg_match(): Compilation failed: regular expression is too large at offset 0', EngineProbe::warning($pattern));
+                $result = RegexParser::create(['cache' => null, 'php_version' => $running->phpVersionId, 'pcre_version' => $running->pcreVersion, 'locale' => 'C', 'runtime_pcre_validation' => false])->validate($pattern);
+                $this->assertSame([ErrorCode::PatternTooLarge, 0], [$result->errorCode, $result->offset], $pattern);
+            }
+        }
     }
 
     private static function parseOnPhp82(string $pattern): RegexNode

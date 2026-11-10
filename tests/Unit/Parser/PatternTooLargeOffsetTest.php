@@ -89,6 +89,8 @@ final class PatternTooLargeOffsetTest extends TestCase
         yield 'lookbehind whose last branch passes the limit, PHP 8.2.35' => ['pattern' => '/(?<=b|'.str_repeat('a', 32763).')/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32770];
         yield 'branch past the limit after a lookbehind of two, PHP 8.2.35' => ['pattern' => '/(?<!'.str_repeat('a', 32755).'|b)x|y/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
         yield 'letter past the limit after a lookbehind of two, PHP 8.2.35' => ['pattern' => '/(?<!'.str_repeat('a', 32756).'|b)x|y/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32766];
+        yield 'branch past the limit after a group of two letters or one, PHP 8.2.35' => ['pattern' => '/(?:[jJ]|d)(?:a){8189}a|e/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'letter past the limit after a group of two letters or one, PHP 8.2.35' => ['pattern' => '/(?:[jJ]|d)(?:a){8189}aaa|e/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 26];
         yield 'repeated group of two branches, PHP 8.2.35' => ['pattern' => '/(?:a|b){5041}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 13];
 
         // On 10.47, at offset 0.
