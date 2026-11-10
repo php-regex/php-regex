@@ -50,7 +50,7 @@ final class JsonDumperTest extends TestCase
     public function test_reference_expansion_is_bounded(string $reference): void
     {
         $pattern = '/'.str_repeat('(?<n>a)', 1000).str_repeat($reference, 101).'/J';
-        $this->assertSame(0, preg_match($pattern, ''));
+        $this->assertTrue(EngineProbe::compiles($pattern));
         $tree = RegexParser::create(['cache' => null])->parse($pattern);
 
         try {
