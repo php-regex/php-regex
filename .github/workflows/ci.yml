@@ -1,0 +1,269 @@
+name: CI
+
+# What a pull request that changes the code runs, in three stages, each
+# waiting for the one before: a pull request that fails early stops there,
+# and its runners go to the next pull request.
+#
+#   1. The quick checks, minutes of a few runners: the static analysis and
+#      the public API.
+#   2. The reference: the suite once, on PHP 8.4 and Linux. Beside it, what
+#      needs no matrix: the packages, the benchmarks, the coverage and the
+#      mutations of the changed lines.
+#   3. The matrix: the suite on every other PHP, host and engine, and the
+#      PHP 7.4 twin when the pull request changes what the twin reads.
+#
+# A stage runs every one of its jobs to the end, so that it says all it has
+# to say at once; the last job names the stage that stopped the run. The
+# workflows called here hold the jobs, and keep their run by hand and, for
+# those that have one, their weekly run.
+
+on:
+  pull_request:
+    branches: [ 2.x ]
+    # Not for the prose or the tools' settings alone: a pull request that
+    # changes only what is listed here runs the spelling check, and the
+    # documentation tests and the link check when the prose or the site
+    # changes. A merge into 2.x runs nothing: its pull request already did.
+    paths-ignore:
+      - 'docs/**'
+      - 'art/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'UPGRADE-2.0.md'
+      - 'CONTRIBUTING.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'SECURITY.md'
+      - 'TODO.md'
+      - 'LICENSE'
+      - 'src/*/README.md'
+      - 'src/*/CHANGELOG.md'
+      - '.github/organization/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/FUNDING.yml'
+      - '.github/CODEOWNERS'
+      - '.github/dependabot.yml'
+      - '.github/zizmor.yml'
+      - '.coderabbit.yaml'
+      - '.editorconfig'
+      - '.gitmessage'
+      - '_typos.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # The event in the key: a run by hand neither cancels the run of a pull
+  # request nor is cancelled by one. A new push to a pull request cancels
+  # the run of the push before it, whatever stage it had reached.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Stage 1, the quick checks.
+
+  static-analysis:
+    name: Static analysis
+    uses: ./.github/workflows/static-analysis.yml
+
+  backward-compatibility:
+    name: Backward compatibility
+    uses: ./.github/workflows/backward-compatibility.yml
+
+  scope:
+    # The twin reads the parser, the build that writes it and the tests: a
+    # pull request that changes none of them leaves it out of stage 3.
+    # GitHub lists the files of the pull request, so nothing is checked
+    # out; a run by hand has no pull request and runs the twin. This job
+    # gates nothing: when the list cannot be read, the twin runs.
+    name: Scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      twin: ${{ steps.changed.outputs.twin }}
+
+    steps:
+      - name: Read what the pull request changes
+        id: changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PULL_REQUEST: ${{ github.event.pull_request.number }}
+        run: |
+          twin=true
+          # One name a line: each file, and the name it had before a move.
+          if [ -n "$PULL_REQUEST" ] && gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PULL_REQUEST/files?per_page=100" --jq '.[] | .filename, (.previous_filename // empty)' > "$RUNNER_TEMP/changed"; then
+            # GitHub lists three thousand files and no more: a list that
+            # long may leave out the one the twin reads.
+            if [ "$(wc -l < "$RUNNER_TEMP/changed")" -lt 3000 ] && ! grep -Eq '^(src/Parser/|build/|tests/|\.github/workflows/(ci|php74-twin)\.yml$)' "$RUNNER_TEMP/changed"; then
+              twin=false
+            fi
+          fi
+          echo "twin=$twin" >> "$GITHUB_OUTPUT"
+          echo "The PHP 7.4 twin runs: $twin."
+
+  # Stage 2, the reference and what needs no matrix.
+
+  reference:
+    # The suite once, where most changes are written and where a break of
+    # the library itself shows: PHP 8.4, the latest dependencies, Linux.
+    # The cell is tests.yml's, which leaves it out when called from here;
+    # the steps are that cell's, kept the same by a test.
+    name: Reference (PHP 8.4, prefer-stable, ubuntu-latest)
+    needs: [ static-analysis, backward-compatibility ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install the PCRE2 headers and tools
+        # The native build of the playground's trace shim, in the
+        # documentation tests, as in the cells of tests.yml.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpcre2-dev pcre2-utils
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          ini-values: phar.readonly=0
+          dependencies: prefer-stable
+          tools: phpunit phpstan phpbench
+
+      - name: Run Test Suite
+        run: tools/phpunit/vendor/bin/phpunit --colors=always
+
+  packages:
+    name: Packages
+    needs: [ static-analysis, backward-compatibility ]
+    uses: ./.github/workflows/packages.yml
+
+  benchmarks:
+    name: Benchmarks
+    needs: [ static-analysis, backward-compatibility ]
+    uses: ./.github/workflows/benchmarks.yml
+
+  coverage:
+    # The longest answer of a pull request, and the one that most often
+    # says no: it starts with the reference and waits for nothing else.
+    name: Coverage
+    needs: [ static-analysis, backward-compatibility ]
+    uses: ./.github/workflows/coverage.yml
+
+  # Stage 3, the matrix.
+
+  tests:
+    name: Tests
+    needs: reference
+    uses: ./.github/workflows/tests.yml
+    with:
+      after-reference: true
+
+  engines:
+    name: Engines
+    needs: reference
+    uses: ./.github/workflows/engines.yml
+
+  twin:
+    name: php74 twin
+    needs: [ reference, scope ]
+    if: needs.scope.outputs.twin == 'true'
+    uses: ./.github/workflows/php74-twin.yml
+
+  verdict:
+    # The one answer of the run. A job the stage before it stopped is
+    # skipped, which GitHub counts as passed: this job reads every other
+    # and fails unless each ran and passed, the twin aside when the pull
+    # request changes nothing it reads. Its summary and the error on the
+    # run's page name the stage that stopped the run. A newer push cancels
+    # the run, and nothing is left to say about it.
+    name: CI
+    needs: [ static-analysis, backward-compatibility, scope, reference, packages, benchmarks, coverage, tests, engines, twin ]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Name the stage that stopped the run
+        env:
+          STATIC_ANALYSIS: ${{ needs.static-analysis.result }}
+          BACKWARD_COMPATIBILITY: ${{ needs.backward-compatibility.result }}
+          SCOPE: ${{ needs.scope.result }}
+          REFERENCE: ${{ needs.reference.result }}
+          PACKAGES: ${{ needs.packages.result }}
+          BENCHMARKS: ${{ needs.benchmarks.result }}
+          COVERAGE: ${{ needs.coverage.result }}
+          TESTS: ${{ needs.tests.result }}
+          ENGINES: ${{ needs.engines.result }}
+          TWIN: ${{ needs.twin.result }}
+          TWIN_READ: ${{ needs.scope.outputs.twin }}
+        run: |
+          failed=()
+          staged=()
+          unstarted=()
+          gate=''
+          rows=''
+          # One check: its stage, its name, its result, and "gate" when
+          # the stage after it waits for it.
+          read_check() {
+            local stage=$1 name=$2 result=$3 gates=${4:-}
+            case "$result" in
+              success) result=passed ;;
+              skipped)
+                if [ "$name" = 'php74 twin' ] && [ "$TWIN_READ" = false ]; then
+                  result='not read by this pull request'
+                else
+                  result='not started'
+                  unstarted+=("$name")
+                fi
+                ;;
+              *)
+                [ "$result" = failure ] && result=failed
+                failed+=("$name")
+                staged+=("$name (stage $stage)")
+                if [ -n "$gates" ] && [ -z "$gate" ]; then gate=$stage; fi
+                ;;
+            esac
+            rows+="| $stage | $name | $result |"$'\n'
+          }
+          read_check 1 'Static analysis' "$STATIC_ANALYSIS" gate
+          read_check 1 'Backward compatibility' "$BACKWARD_COMPATIBILITY" gate
+          read_check 1 'Scope' "$SCOPE"
+          read_check 2 'Reference' "$REFERENCE" gate
+          read_check 2 'Packages' "$PACKAGES"
+          read_check 2 'Benchmarks' "$BENCHMARKS"
+          read_check 2 'Coverage' "$COVERAGE"
+          read_check 3 'Tests' "$TESTS"
+          read_check 3 'Engines' "$ENGINES"
+          read_check 3 'php74 twin' "$TWIN"
+
+          join() { local list; printf -v list '%s, ' "$@"; printf '%s' "${list%, }"; }
+          if [ "$gate" = 1 ]; then
+            verdict="Stopped at stage 1, the quick checks: $(join "${failed[@]}") failed. Stages 2 and 3 did not start."
+          elif [ "$gate" = 2 ]; then
+            verdict="Stopped at stage 2, the reference: $(join "${failed[@]}") failed. Stage 3, the matrix, did not start."
+          elif [ "${#failed[@]}" -gt 0 ]; then
+            verdict="Every stage ran. Failed: $(join "${staged[@]}")."
+          elif [ "${#unstarted[@]}" -gt 0 ]; then
+            verdict="Not started, though nothing failed: $(join "${unstarted[@]}")."
+          else
+            verdict='Every stage passed.'
+          fi
+
+          {
+            echo "$verdict"
+            echo
+            echo '| Stage | Check | Result |'
+            echo '| --- | --- | --- |'
+            printf '%s' "$rows"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$verdict" != 'Every stage passed.' ]; then
+            echo "::error title=CI::$verdict"
+            exit 1
+          fi
+          echo "$verdict"

@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/splitsh"
           archive="$RUNNER_TEMP/lite_linux_amd64.tar.gz"
-          curl -fsSL -o "$archive" "https://github.com/splitsh/lite/releases/download/v${VERSION}/lite_linux_amd64.tar.gz"
+          curl -fsSL --retry 5 -o "$archive" "https://github.com/splitsh/lite/releases/download/v${VERSION}/lite_linux_amd64.tar.gz"
           echo "$SHA256  $archive" | sha256sum --check --strict
           tar -xzf "$archive" -C "$RUNNER_TEMP/splitsh" ./splitsh-lite
           echo "$RUNNER_TEMP/splitsh" >> "$GITHUB_PATH"

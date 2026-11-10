@@ -442,21 +442,38 @@ final class HirTranslator
     private static function concat(array $parts, int $start, int $end): Hir
     {
         $flat = [];
+        $codePoints = [];
+        $literalStart = 0;
+        $literalEnd = 0;
         foreach ($parts as $part) {
             foreach ($part instanceof ConcatHir ? $part->parts : [$part] as $piece) {
                 if ($piece instanceof EmptyHir || ($piece instanceof LiteralHir && [] === $piece->codePoints)) {
                     continue;
                 }
 
-                $previous = [] === $flat ? null : $flat[\count($flat) - 1];
-                if ($piece instanceof LiteralHir && $previous instanceof LiteralHir) {
-                    $flat[\count($flat) - 1] = new LiteralHir([...$previous->codePoints, ...$piece->codePoints], $previous->startPosition, $piece->endPosition);
+                if ($piece instanceof LiteralHir) {
+                    if ([] === $codePoints) {
+                        $literalStart = $piece->startPosition;
+                    }
+                    // Append each character once instead of copying the growing run.
+                    foreach ($piece->codePoints as $codePoint) {
+                        $codePoints[] = $codePoint;
+                    }
+                    $literalEnd = $piece->endPosition;
 
                     continue;
                 }
 
+                if ([] !== $codePoints) {
+                    $flat[] = new LiteralHir($codePoints, $literalStart, $literalEnd);
+                    $codePoints = [];
+                }
                 $flat[] = $piece;
             }
+        }
+
+        if ([] !== $codePoints) {
+            $flat[] = new LiteralHir($codePoints, $literalStart, $literalEnd);
         }
 
         return match (\count($flat)) {
