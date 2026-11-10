@@ -72,8 +72,15 @@ final class PullRequestRequiredCheckTest extends TestCase
         foreach ($ignored as $pattern) {
             $this->assertMatchesRegularExpression('~^[\w./-]+(?:\*{1,2}[\w./-]*)*$~', $pattern);
         }
-        $this->assertSame(1, preg_match('~^    paths-ignore:\n((?:      .*\n)+)~m', $block, $list));
-        $this->assertCount(substr_count($list[1], "\n"), $ignored, 'Every line under paths-ignore is a path between single quotes.');
+        // GitHub and the step read the list to the line that ends it,
+        // whatever blank line stands between two of its paths.
+        foreach (['ci.yml' => 'paths-ignore', 'ci-prose.yml' => 'paths'] as $workflow => $key) {
+            $this->assertSame(
+                array_map(static fn (string $path): string => "      - '".$path."'", self::listUnder($key, self::pullRequestBlock($workflow))),
+                self::linesUnder($key, $workflow),
+                $workflow.': every line of the list is a path between single quotes.',
+            );
+        }
 
         $scope = self::jobs()['scope'];
         $this->assertMatchesRegularExpression("~^      - name: Checkout the list of the code workflow\n        uses: actions/checkout@.+\n        with:\n          persist-credentials: false\n          sparse-checkout: \\.github/workflows/ci\\.yml\n          sparse-checkout-cone-mode: false$~m", $scope);
@@ -300,6 +307,32 @@ final class PullRequestRequiredCheckTest extends TestCase
         preg_match_all("~^      - '([^']+)'$~m", $match[1], $items);
 
         return $items[1];
+    }
+
+    /**
+     * The lines under a key of the pull request trigger, to the first line
+     * indented less than the paths of a list, blank lines aside.
+     *
+     * @return list<string>
+     */
+    private static function linesUnder(string $key, string $workflow): array
+    {
+        $lines = explode("\n", self::workflow($workflow));
+        $start = array_search('    '.$key.':', $lines, true);
+        self::assertIsInt($start, $workflow.' has a '.$key.' list.');
+
+        $list = [];
+        foreach (\array_slice($lines, $start + 1) as $line) {
+            if ('' === trim($line)) {
+                continue;
+            }
+            if (!str_starts_with($line, '      ')) {
+                break;
+            }
+            $list[] = $line;
+        }
+
+        return $list;
     }
 
     /**
