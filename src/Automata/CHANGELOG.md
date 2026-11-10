@@ -11,6 +11,11 @@ CHANGELOG
    throws a `ComplexityException` past them: the optimizer keeps a pattern of
    six thousand optional parts behind a lookbehind as written instead of
    reaching a peak of nearly 1 GB to prove its rewrite.
+ * `matchEquivalent()` counts at every state it adds against `maxNfaStates`,
+   and counts building its alphabet against `maxTransitionsProcessed`: a
+   literal of fifteen thousand distinct characters under `u` is refused in
+   under a second instead of being compared for more than a minute, and one of
+   a thousand reaches the default work budget.
  * `Language::strings()` and `nonMembers()` bound the search for each next
    string, a million steps and 50,000 remembered states for one length, and
    throw a `ComplexityException` past either: the second string of
