@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `Language::countOfLength()` and `size()` multiply once for each state a
+   move leads to, however many ranges spell its characters, and leave out the
+   states no string is accepted from: `size()` of `/[ab]{0,100}/` answers its
+   31 digits in some 60 ms where it took 4.7 s, and the counts stay exact.
+   `countOfLength()` of a negative length is `"0"`.
  * `rewritesAlikeInPlace()` fills at most 65,536 cells, across all the sites
    of the two patterns, when it pairs their parts by those both keep, and
    throws a `ComplexityException` past them: the optimizer keeps a pattern of
