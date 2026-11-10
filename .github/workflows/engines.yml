@@ -5,36 +5,8 @@ name: Engines
 # bundles, the latest PCRE2, and pcre2test built from release tarballs.
 
 on:
-  pull_request:
-    branches: [ 2.x ]
-    # Not for the prose or the tools' settings alone: a pull request that
-    # changes only what is listed here runs the spelling check, and the
-    # documentation tests and the link check when the prose or the site
-    # changes. A merge into 2.x runs nothing: its pull request already did.
-    paths-ignore:
-      - 'docs/**'
-      - 'art/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'UPGRADE-2.0.md'
-      - 'CONTRIBUTING.md'
-      - 'CODE_OF_CONDUCT.md'
-      - 'SECURITY.md'
-      - 'TODO.md'
-      - 'LICENSE'
-      - 'src/*/README.md'
-      - 'src/*/CHANGELOG.md'
-      - '.github/organization/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
-      - '.github/FUNDING.yml'
-      - '.github/CODEOWNERS'
-      - '.github/dependabot.yml'
-      - '.github/zizmor.yml'
-      - '.coderabbit.yaml'
-      - '.editorconfig'
-      - '.gitmessage'
-      - '_typos.toml'
+  # A pull request starts ci.yml, which calls this workflow in its stage.
+  workflow_call:
   schedule:
     # Every Monday, against the week's tool releases, which no lock file pins.
     - cron: '43 2 * * 1'
@@ -45,8 +17,10 @@ permissions:
 
 concurrency:
   # The event in the key: a scheduled run on 2.x neither cancels a manual
-  # run nor is cancelled by one.
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  # run nor is cancelled by one. The name is written out: called from
+  # ci.yml, github.workflow is the caller's, and the group would be the
+  # caller's own.
+  group: engines-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -266,7 +240,7 @@ jobs:
           for version in 10.40 10.49; do
             (
               mkdir -p "$RUNNER_TEMP/pcre2" && cd "$RUNNER_TEMP/pcre2"
-              curl -fsSL -o "pcre2-$version.tar.gz" "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$version/pcre2-$version.tar.gz"
+              curl -fsSL --retry 5 -o "pcre2-$version.tar.gz" "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$version/pcre2-$version.tar.gz"
               tar xzf "pcre2-$version.tar.gz"
               cd "pcre2-$version" && ./configure --disable-shared --enable-unicode && make pcre2test
             )
@@ -314,7 +288,7 @@ jobs:
             (
               version="10.$minor"
               cd "$RUNNER_TEMP/pcre2-releases"
-              curl -fsSL -o "pcre2-$version.tar.gz" "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$version/pcre2-$version.tar.gz"
+              curl -fsSL --retry 5 -o "pcre2-$version.tar.gz" "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$version/pcre2-$version.tar.gz"
               tar xzf "pcre2-$version.tar.gz" && rm "pcre2-$version.tar.gz"
               cd "pcre2-$version" && ./configure --disable-shared --enable-unicode && make pcre2test
               find . -mindepth 1 -maxdepth 1 ! -name pcre2test ! -name testdata -exec rm -rf {} +

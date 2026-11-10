@@ -97,9 +97,9 @@ prose (the site under `docs/`, the READMEs, the changelogs, the upgrade guide,
 the documentation tests, and the link check when the site under `docs/`
 changes, and nothing else: the suite, the engines, static analysis, the
 packages, coverage, the benchmarks and the public API comparison wait for a
-change elsewhere. Each of those workflows names the prose it stays out of in
-its `paths-ignore` list, one list copied as is; the workflows that read a part
-of the tree name it instead, and the spelling check runs on every pull
+change elsewhere. One workflow starts them all, `ci.yml`, which names the
+prose it stays out of in its `paths-ignore` list; the workflows that read a
+part of the tree name it instead, and the spelling check runs on every pull
 request. The documentation tests are the `documentation` group of the suite,
 every test under `tests/Documentation` and every test that names a file of
 the prose:
@@ -108,6 +108,18 @@ the prose:
 tools/phpunit/vendor/bin/phpunit --group documentation
 ```
 
+`ci.yml` runs in three stages, each waiting for the one before, so that a
+pull request that fails early stops there and leaves its runners to the next
+one. First the quick checks: static analysis and the public API comparison.
+Then the reference, the suite once on PHP 8.4 and Linux, and beside it the
+packages, the benchmarks, and coverage with the mutations of the changed
+lines. Then the matrix: the suite on every other PHP, on Windows and macOS,
+on each engine, and the PHP 7.4 twin when the pull request changes the
+parser, `build/` or the tests. A stage runs every one of its jobs to the end,
+and the last check of the run, `CI`, names the stage that stopped it. Each
+workflow `ci.yml` calls holds its own jobs and still runs by itself on any
+branch (`gh workflow run tests.yml --ref my-branch`).
+
 A merge into 2.x runs nothing: its pull request already ran what the change
 could affect, and `bin/status` and `bin/release` read a merge commit's checks
 from a pull request run on the head of its pull request, as long as Git made
@@ -115,9 +127,9 @@ the merge on its own and the run started after the merge's base reached 2.x,
 as GitHub's record of the branch's pushes dates it (a record kept ninety
 days): a conflict resolved by hand, a branch that moved after the last run,
 or a base older than the record, is a tree no run is known to have seen, so the workflow runs again on 2.x
-(`gh workflow run tests.yml --ref 2.x`) before a release. A workflow a change did not start, because
+(`gh workflow run ci.yml --ref 2.x`) before a release. A workflow a change did not start, because
 the change touched nothing the workflow reads, answers with its last run
-before that change; `bin/ci-answer tests.yml` names the run that answers for
+before that change; `bin/ci-answer ci.yml` names the run that answers for
 HEAD, or the commit that changed what the workflow reads and has no run. Every
 Monday the scheduled runs read 2.x whole, and each workflow runs on any branch
 by hand (`workflow_dispatch`).
@@ -304,7 +316,7 @@ waits until it passes. Run it on an idle machine: the times are wall-clock.
 
 `bin/release` releases only a HEAD that origin's branch holds, read from
 origin when it runs, and for which every gating workflow passed, on HEAD or
-on the last commit it read before HEAD: the tests, the engines, static analysis, the packages (each
+on the last commit it read before HEAD: `ci.yml` and all it calls, the tests, the engines, static analysis, the packages (each
 installed alone, its manifest checked against what its sources use, which
 `php tests/Tools/package_dependency_check.php Parser <project>` runs on one
 package from a throwaway project that installs it, which the check adds to,
