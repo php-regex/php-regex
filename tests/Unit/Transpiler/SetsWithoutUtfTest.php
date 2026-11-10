@@ -292,6 +292,11 @@ final class SetsWithoutUtfTest extends TestCase
             yield $target.': in a group, before one outside it' => ['pattern' => '/^(a|[^b])\S$/', 'target' => $target, 'set' => '[^b]', 'offset' => 4];
             yield $target.': in a lookbehind' => ['pattern' => '/(?<=\W)a.$/', 'target' => $target, 'set' => '\W', 'offset' => 4];
             yield $target.': a member of a class is the class' => ['pattern' => '/^[a\D]$/', 'target' => $target, 'set' => '[a\D]', 'offset' => 1];
+            // The offset is the one in the pattern as written, delimiters left out.
+            yield $target.': a quoted dot is a literal' => ['pattern' => '/^\Q.\E\S$/', 'target' => $target, 'set' => '\S', 'offset' => 6];
+            yield $target.': under x, after a space and before a comment' => ['pattern' => "/^ a [^b] # .\n $/x", 'target' => $target, 'set' => '[^b]', 'offset' => 4];
+            yield $target.': between other delimiters' => ['pattern' => '#^a.$#', 'target' => $target, 'set' => '.', 'offset' => 2];
+            yield $target.': a dot under an inline s' => ['pattern' => '/^(?s)a.$/', 'target' => $target, 'set' => '.', 'offset' => 6];
         }
 
         // Python splits the lookbehind, and writes its branches in order.

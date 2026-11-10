@@ -393,7 +393,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         $written = substr($this->body, $offset, $node->getEndPosition() - $offset);
         // The bytes above 0x7F the set takes, as the running PCRE says: a
         // set it cannot be asked about is taken to reach them.
-        if (!self::holdsAProperty($node) && true === ClassSetProvider::query('(?=[\x80-\xFF])'.$written, false, '', '', false)?->isEmpty()) {
+        if (!self::holdsAProperty($node) && true === ClassSetProvider::query('(?=[\x80-\xFF])'.$written, false, '')?->isEmpty()) {
             return;
         }
 
