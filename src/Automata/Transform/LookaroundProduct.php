@@ -79,6 +79,11 @@ final class LookaroundProduct
      */
     private array $runOf = [];
 
+    /**
+     * @var array<int, array<int, array<int, int>>> lookaround index => state of its run => character read => state reached
+     */
+    private array $steps = [];
+
     public function __construct(
         private readonly string $pattern,
         private readonly bool $unicode,
@@ -98,6 +103,7 @@ final class LookaroundProduct
         $indexes = [];
         $nfaStates = 0;
         $dfaStates = 0;
+        $bodySets = [];
         $budget = new WorkBudget($this->options->maxTransitionsProcessed, 'lookaround bodies', 0, 0, 0);
 
         foreach ($marks as $state => $look) {
@@ -124,6 +130,11 @@ final class LookaroundProduct
             );
             $body = (new HirToNfaTransformer($this->pattern, $this->unicode))->lookaroundBody($look, $bodyOptions, $budget);
             $nfaStates += \count($body->states);
+            foreach ($body->states as $bodyState) {
+                foreach ($bodyState->transitions as $transition) {
+                    $bodySets[] = $transition->charSet;
+                }
+            }
             $dfa = (new DfaBuilder())->determinize($body, $bodyOptions, $budget);
             $dfaStates += \count($dfa->states);
             // Charge stored transitions before retaining the DFA or building
@@ -144,7 +155,14 @@ final class LookaroundProduct
             }
         }
 
-        $symbols = $this->alphabet($nfa);
+        // The product has a budget of its own, as the determinization that
+        // follows it has: splitting the alphabet and every move are counted.
+        $transitions = 0;
+        foreach ($nfa->states as $counted) {
+            $transitions += \count($counted->transitions);
+        }
+        $work = new WorkBudget($this->options->maxTransitionsProcessed, 'lookaround product', 0, $transitions, 0);
+        [$classes, $reads] = $this->alphabet($nfa, $bodySets, $work);
         $builder = new NfaBuilder($this->options->maxNfaStates, $nfa->minCodePoint, $nfa->maxCodePoint);
 
         $trackers = array_map(fn (int $index): int => $this->automata[$index]->startState, $this->behind);
@@ -163,20 +181,25 @@ final class LookaroundProduct
                 $accepting[] = $from;
             }
 
+            // One unit a move: a step that reads nothing, or a transition
+            // read on one class of characters, whether it leads somewhere
+            // or breaks a promise.
+            $work->updateStats(\count($queue), $transitions, \count($classes));
             $moves = [];
             foreach ($nfaState->epsilonTransitions as $target) {
+                $work->consume();
                 $moves[] = [null, $this->cross($state, $target, $kept, $avoided, $tracked)];
             }
 
-            foreach ($nfaState->transitions as $transition) {
-                foreach ($symbols as [$symbol, $class]) {
-                    if ($transition->charSet->contains($symbol)) {
-                        $moves[] = [$class, $this->read($transition->target, $symbol, $kept, $avoided, $tracked)];
-                    }
+            foreach ($reads[$state] ?? [] as [$target, $held]) {
+                foreach ($held as $class) {
+                    $work->consume();
+                    [$symbol, $set] = $classes[$class];
+                    $moves[] = [$set, $this->read($target, $symbol, $kept, $avoided, $tracked)];
                 }
             }
 
-            foreach ($moves as [$class, $next]) {
+            foreach ($moves as [$set, $next]) {
                 if (null === $next) {
                     continue;
                 }
@@ -187,7 +210,7 @@ final class LookaroundProduct
                     $queue[] = $next;
                 }
 
-                null === $class ? $builder->addEpsilon($from, $ids[$key]) : $builder->addTransition($from, $class, $ids[$key]);
+                null === $set ? $builder->addEpsilon($from, $ids[$key]) : $builder->addTransition($from, $set, $ids[$key]);
             }
         }
 
@@ -220,7 +243,11 @@ final class LookaroundProduct
             return $holds === (LookKind::Behind === $look->kind) ? [$target, $kept, $avoided, $tracked] : null;
         }
 
-        return $this->promise($target, $index, $dfa->startState, $kept, $avoided, $tracked);
+        if (!$this->promise($index, $dfa->startState, $kept, $avoided)) {
+            return null;
+        }
+
+        return [$target, self::settled($kept), self::settled($avoided), $tracked];
     }
 
     /**
@@ -236,118 +263,178 @@ final class LookaroundProduct
     {
         $tracked = array_map(fn (int $run, int $position): int => $this->step($this->behind[$position], $run, $symbol), $tracked, array_keys($tracked));
 
-        $next = [$target, [], [], $tracked];
-        foreach ([...$kept, ...$avoided] as [$index, $run]) {
-            $next = $this->promise($next[0], $index, $this->step($index, $run, $symbol), $next[1], $next[2], $next[3]);
-            if (null === $next) {
+        $pending = [...$kept, ...$avoided];
+        $kept = [];
+        $avoided = [];
+        foreach ($pending as [$index, $run]) {
+            if (!$this->promise($index, $this->step($index, $run, $symbol), $kept, $avoided)) {
                 return null;
             }
         }
 
-        return $next;
+        return [$target, self::settled($kept), self::settled($avoided), $tracked];
     }
 
     /**
-     * Records where a promise's run stands: a positive one kept once its run
-     * accepts and broken once it cannot; a negative one broken once its run
-     * accepts and forgotten once it cannot.
+     * Records where a promise's run stands, and tells whether the promise
+     * still holds: a positive one is kept once its run accepts and broken
+     * once it cannot; a negative one is broken once its run accepts and
+     * forgotten once it cannot. A promise still pending is added to its
+     * list as it comes: settled() puts the list in order.
      *
      * @param list<PromisePair> $kept
      * @param list<PromisePair> $avoided
-     * @param list<int>         $tracked
-     *
-     * @return ProductState|null
      */
-    private function promise(int $target, int $index, int $run, array $kept, array $avoided, array $tracked): ?array
+    private function promise(int $index, int $run, array &$kept, array &$avoided): bool
     {
         $accepts = self::DEAD !== $run && $this->automata[$index]->getState($run)->isAccepting;
         $alive = self::DEAD !== $run && isset($this->live[$index][$run]);
-        $positive = LookKind::Ahead === $this->looks[$index]->kind;
+        $pending = $alive && !$accepts;
 
-        if ($positive) {
-            if ($accepts) {
-                return [$target, $kept, $avoided, $tracked];
+        if (LookKind::Ahead === $this->looks[$index]->kind) {
+            if ($pending) {
+                $kept[] = [$index, $run];
             }
 
-            if (!$alive) {
-                return null;
-            }
-
-            $kept[] = [$index, $run];
-            $kept = array_values(array_unique($kept, \SORT_REGULAR));
-            sort($kept);
-
-            return [$target, $kept, $avoided, $tracked];
+            // A run that accepts can still accept: it is alive.
+            return $alive;
         }
 
-        if ($accepts) {
-            return null;
-        }
-
-        if ($alive) {
+        if ($pending) {
             $avoided[] = [$index, $run];
-            $avoided = array_values(array_unique($avoided, \SORT_REGULAR));
-            sort($avoided);
         }
 
-        return [$target, $kept, $avoided, $tracked];
-    }
-
-    private function step(int $index, int $run, int $symbol): int
-    {
-        return self::DEAD === $run ? self::DEAD : ($this->automata[$index]->getState($run)->transitionFor($symbol) ?? self::DEAD);
+        return !$accepts;
     }
 
     /**
-     * One character per stretch of characters every set of the automaton and
-     * of the lookarounds' runs treats alike, with the stretch as a set.
+     * The pending promises as a set, each once and in order, so that two
+     * ways to the same promises reach one state. It is done once a move,
+     * after every promise has moved, not once a promise.
      *
-     * @return list<array{int, CharSet}>
+     * @param list<PromisePair> $promises
+     *
+     * @return list<PromisePair>
      */
-    private function alphabet(Nfa $nfa): array
+    private static function settled(array $promises): array
     {
-        $universe = CharSet::universe($this->unicode);
-        $bounds = [];
-        foreach ($universe->ranges as [$from, $to]) {
-            $bounds[$from] = true;
-            $bounds[$to + 1] = true;
-        }
+        $promises = array_unique($promises, \SORT_REGULAR);
+        sort($promises);
 
-        foreach ($nfa->states as $state) {
+        return $promises;
+    }
+
+    /**
+     * Where a run stands after a character. A run moves alike on every
+     * state of the product that holds it, so each move is looked up once.
+     */
+    private function step(int $index, int $run, int $symbol): int
+    {
+        return $this->steps[$index][$run][$symbol] ??= self::DEAD === $run ? self::DEAD : ($this->automata[$index]->getState($run)->transitionFor($symbol) ?? self::DEAD);
+    }
+
+    /**
+     * The classes of the alphabet: the characters that belong to the same
+     * sets, of the automaton and of the lookarounds' bodies, move every
+     * state and every run alike, so one of them is read for all. A Unicode
+     * class cuts the alphabet into hundreds of stretches and two classes.
+     *
+     * The first list holds each class, in the order of its first character:
+     * that character, and the class as a set. The second holds, for each
+     * state of the automaton, the target of each transition and the classes
+     * its set holds. One unit is counted for each stretch a set covers, and
+     * one for each stretch kept.
+     *
+     * @param list<CharSet> $bodySets the sets the lookarounds' bodies read
+     *
+     * @throws ComplexityException
+     *
+     * @return array{list<array{int, CharSet}>, array<int, list<array{int, list<int>}>>}
+     */
+    private function alphabet(Nfa $nfa, array $bodySets, WorkBudget $work): array
+    {
+        // Each set has a number, shared by the sets of the same characters:
+        // a literal builds one set for each time it is repeated.
+        /** @var \SplObjectStorage<CharSet, int> $numbers */
+        $numbers = new \SplObjectStorage();
+        $sets = [];
+        $numberOf = static function (CharSet $set) use ($numbers, &$sets): int {
+            if (!isset($numbers[$set])) {
+                $key = $set->key();
+                $sets[$key] ??= [\count($sets), $set];
+                $numbers[$set] = $sets[$key][0];
+            }
+
+            return $numbers[$set];
+        };
+
+        $transitions = [];
+        foreach ($nfa->states as $id => $state) {
             foreach ($state->transitions as $transition) {
-                foreach ($transition->charSet->ranges as [$from, $to]) {
-                    $bounds[$from] = true;
-                    $bounds[$to + 1] = true;
-                }
+                $transitions[$id][] = [$transition->target, $numberOf($transition->charSet)];
             }
         }
-
-        foreach ($this->automata as $dfa) {
-            foreach ($dfa->states as $state) {
-                foreach (array_keys($state->byteTransitions()) as $codePoint) {
-                    $bounds[$codePoint] = true;
-                    $bounds[$codePoint + 1] = true;
-                }
-                $ranges = $state->packedRanges();
-                for ($at = 0, $count = \count($ranges); $at < $count; $at += 3) {
-                    $bounds[$ranges[$at]] = true;
-                    $bounds[$ranges[$at + 1] + 1] = true;
-                }
-            }
+        foreach ($bodySets as $set) {
+            $numberOf($set);
         }
 
+        $bounds = [];
+        foreach ($sets as [, $set]) {
+            foreach ($set->ranges as [$from, $to]) {
+                $bounds[$from] = true;
+                $bounds[$to + 1] = true;
+            }
+        }
         $bounds = array_keys($bounds);
         sort($bounds);
+        $position = array_flip($bounds);
 
-        $symbols = [];
-        for ($index = 0, $count = \count($bounds) - 1; $index < $count; $index++) {
-            $class = CharSet::range($bounds[$index], $bounds[$index + 1] - 1)->intersect($universe);
-            if (!$class->isEmpty()) {
-                $symbols[] = [$class->ranges[0][0], $class];
+        // The sets each stretch belongs to, a stretch running from one
+        // bound to the next.
+        $holders = array_fill(0, \count($bounds), []);
+        foreach ($sets as [$number, $set]) {
+            foreach ($set->ranges as [$from, $to]) {
+                for ($at = $position[$from]; $bounds[$at] <= $to; $at++) {
+                    $work->consume();
+                    $holders[$at][] = $number;
+                }
             }
         }
 
-        return $symbols;
+        $firsts = [];
+        $classOf = [];
+        $ranges = [];
+        $held = [];
+        foreach ($holders as $at => $holding) {
+            // No move reads a stretch no set holds: the last bound opens
+            // none. A stretch a set holds lies in the alphabet, as the set.
+            if ([] === $holding) {
+                continue;
+            }
+
+            $work->consume();
+            $signature = implode(',', $holding);
+            if (!isset($classOf[$signature])) {
+                $classOf[$signature] = \count($firsts);
+                $firsts[] = $bounds[$at];
+                foreach ($holding as $number) {
+                    $held[$number][] = $classOf[$signature];
+                }
+            }
+            $ranges[$classOf[$signature]][] = [$bounds[$at], $bounds[$at + 1] - 1];
+        }
+
+        $classes = array_map(static fn (int $first, array $stretches): array => [$first, CharSet::fromSorted($stretches)], $firsts, $ranges);
+
+        $reads = [];
+        foreach ($transitions as $id => $moves) {
+            foreach ($moves as [$target, $number]) {
+                // A set holds a stretch at least: none is empty.
+                $reads[$id][] = [$target, $held[$number]];
+            }
+        }
+
+        return [$classes, $reads];
     }
 
     /**
