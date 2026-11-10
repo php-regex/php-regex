@@ -95,9 +95,9 @@ A pull request runs what its changes can affect. One that changes only the
 prose (the site under `docs/`, the READMEs, the changelogs, the upgrade guide,
 `art/` and the community files under `.github/`) runs the spelling check and
 the documentation tests, and the link check when the site under `docs/`
-changes, and nothing else: the suite, the engines, static analysis, the
-packages, coverage, the benchmarks and the public API comparison wait for a
-change elsewhere. One workflow starts them all, `ci.yml`, which names the
+changes, and none of the code checks: the suite, the engines, static analysis,
+the packages, coverage, the benchmarks and the public API comparison wait for
+a change elsewhere. One workflow starts them all, `ci.yml`, which names the
 prose it stays out of in its `paths-ignore` list; the workflows that read a
 part of the tree name it instead, and the spelling check runs on every pull
 request. The documentation tests are the `documentation` group of the suite,
@@ -113,12 +113,29 @@ pull request that fails early stops there and leaves its runners to the next
 one. First the quick checks: static analysis and the public API comparison.
 Then the reference, the suite once on PHP 8.4 and Linux, and beside it the
 packages, the benchmarks, and coverage with the mutations of the changed
-lines. Then the matrix: the suite on every other PHP, on Windows and macOS,
-on each engine, and the PHP 7.4 twin when the pull request changes the
-parser, `build/` or the tests. A stage runs every one of its jobs to the end,
-and the last check of the run, `CI`, names the stage that stopped it. Each
-workflow `ci.yml` calls holds its own jobs and still runs by itself on any
-branch (`gh workflow run tests.yml --ref my-branch`).
+lines. Coverage and the mutation score stop nothing: the matrix waits for the
+reference alone, since their job is the longest of a pull request and a score
+that fails it fails the `CI` check all the same. Then the matrix: the suite on
+every other PHP, on Windows and macOS, on each engine, and the PHP 7.4 twin
+when the pull request changes the parser, `build/` or the tests. A stage runs
+every one of its jobs to the end, and the last check of the run, `CI`, names
+the stage that stopped it. Each workflow `ci.yml` calls holds its own jobs and
+still runs by itself on any branch (`gh workflow run tests.yml --ref
+my-branch`).
+
+The runners are shared by every open pull request, so a matrix runs a part of
+its cells at once (`max-parallel`), and the matrices of one pull request hold
+a third of the runners at most. The macOS runners are the fewest: a pull
+request runs one macOS cell, PHP 8.4 on the latest PCRE2, which no Linux or
+Windows cell links, and the macOS cells of the other PHP versions run every
+Monday and on a run by hand (`gh workflow run engines.yml`, or `ci.yml`).
+
+`CI` is the one check to require of a pull request. One that changes the prose
+or the tools' settings alone does not start `ci.yml`: `ci-prose.yml` starts on
+the paths `ci.yml` ignores, the same list in both files, and reports `CI` for
+it. A pull request that changes the code as well is left to `ci.yml`. When
+the files of a pull request cannot be read, `ci-prose.yml` fails `CI` and says
+so: running its failed jobs again reads them again.
 
 A merge into 2.x runs nothing: its pull request already ran what the change
 could affect, and `bin/status` and `bin/release` read a merge commit's checks
