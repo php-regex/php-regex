@@ -833,13 +833,17 @@ final class TokenParser
     }
 
     /**
-     * Parses a raw sub-pattern string (e.g. the payload of an alphabetic
-     * assertion verb) into an AST. Node positions are those of the enclosing
-     * pattern: the payload is read from $absoluteOffset on.
+     * Parses a part of the pattern (e.g. the body of an alphabetic assertion
+     * verb) into an AST: the $length bytes from $absoluteOffset on. Node
+     * positions are those of the enclosing pattern.
+     *
+     * The lexer cuts the text of the part for itself and keeps it no longer
+     * than its reading: nothing here holds a copy of it while the bodies
+     * nested in the part are read in their turn.
      */
-    private function parseSubPattern(string $payload, int $absoluteOffset): NodeInterface
+    private function parseSubPattern(int $absoluteOffset, int $length): NodeInterface
     {
-        if ('' === $payload) {
+        if (0 === $length) {
             return $this->createEmptyLiteralNodeAt($absoluteOffset);
         }
 
@@ -853,7 +857,7 @@ final class TokenParser
         $this->partLexer ??= new Lexer($this->target);
 
         try {
-            $stream = $this->partLexer->tokenizePart($this->pattern, $absoluteOffset, \strlen($payload), $flags, $this->state->extendedMoreMode);
+            $read = $this->partLexer->tokenizePart($this->pattern, $absoluteOffset, $length, $flags, $this->state->extendedMoreMode)->getTokens();
         } catch (LexerException $error) {
             // The lexer around it only found where the body ends: an escape
             // it refuses in the body, as "\x{}", is met here, where the body
@@ -862,7 +866,7 @@ final class TokenParser
         }
 
         $tokens = [];
-        foreach ($stream->getTokens() as $token) {
+        foreach ($read as $token) {
             $tokens[] = new Token($token->type, $token->value, $token->position + $absoluteOffset, $token->sourceLength);
         }
 
