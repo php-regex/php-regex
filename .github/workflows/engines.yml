@@ -266,7 +266,7 @@ jobs:
           for version in 10.40 10.49; do
             (
               mkdir -p "$RUNNER_TEMP/pcre2" && cd "$RUNNER_TEMP/pcre2"
-              curl -fsSL -o "pcre2-$version.tar.gz" "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$version/pcre2-$version.tar.gz"
+              curl -fsSL --retry 5 -o "pcre2-$version.tar.gz" "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$version/pcre2-$version.tar.gz"
               tar xzf "pcre2-$version.tar.gz"
               cd "pcre2-$version" && ./configure --disable-shared --enable-unicode && make pcre2test
             )
@@ -314,7 +314,7 @@ jobs:
             (
               version="10.$minor"
               cd "$RUNNER_TEMP/pcre2-releases"
-              curl -fsSL -o "pcre2-$version.tar.gz" "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$version/pcre2-$version.tar.gz"
+              curl -fsSL --retry 5 -o "pcre2-$version.tar.gz" "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$version/pcre2-$version.tar.gz"
               tar xzf "pcre2-$version.tar.gz" && rm "pcre2-$version.tar.gz"
               cd "pcre2-$version" && ./configure --disable-shared --enable-unicode && make pcre2test
               find . -mindepth 1 -maxdepth 1 ! -name pcre2test ! -name testdata -exec rm -rf {} +

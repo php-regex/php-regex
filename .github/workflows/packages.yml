@@ -251,7 +251,7 @@ jobs:
       - name: Download the Infection PHAR
         if: matrix.mode == 'phar'
         run: |
-          curl -fsSL -o "$project/infection.phar" https://github.com/infection/infection/releases/download/0.35.9/infection.phar
+          curl -fsSL --retry 5 -o "$project/infection.phar" https://github.com/infection/infection/releases/download/0.35.9/infection.phar
           echo "c9b332af194380b2043eb6e309b308653f221073f41825b54e862fbef606a094  $project/infection.phar" | sha256sum --check
           echo "infection=$project/infection.phar" >> "$GITHUB_ENV"
 

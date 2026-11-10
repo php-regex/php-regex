@@ -18,7 +18,8 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * A job pays for what it uses and nothing else: no coverage driver where
- * nothing is measured.
+ * nothing is measured, and no second run for a download GitHub did not
+ * serve the first time.
  */
 final class RunnerTimeTest extends TestCase
 {
@@ -46,6 +47,29 @@ final class RunnerTimeTest extends TestCase
         // The coverage run of the suite, and Infection run end to end in a
         // bare project, which measures the coverage of that project itself.
         $this->assertSame(['coverage.yml: pcov', 'packages.yml: pcov'], $asking, 'The jobs that measure coverage are the ones that load a driver.');
+    }
+
+    /**
+     * A release asset GitHub answers with a 504 for is asked for again: one
+     * failed download otherwise fails its job, and the job its run.
+     */
+    #[Test]
+    public function test_a_download_is_asked_for_again_before_it_fails_a_job(): void
+    {
+        $downloads = [];
+        foreach (self::workflows() as $name => $source) {
+            preg_match_all('~^.*\bcurl\b.* -o .*$~m', $source, $lines);
+            foreach ($lines[0] as $line) {
+                $downloads[$name][] = trim($line);
+            }
+        }
+
+        $this->assertSame(['engines.yml', 'packages.yml', 'split.yml', 'workflows.yml'], array_keys($downloads));
+        foreach ($downloads as $name => $lines) {
+            foreach ($lines as $line) {
+                $this->assertStringContainsString('curl -fsSL --retry 5 -o ', $line, $name);
+            }
+        }
     }
 
     /**
