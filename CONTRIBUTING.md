@@ -133,7 +133,9 @@ Monday and on a run by hand (`gh workflow run engines.yml`, or `ci.yml`).
 `CI` is the one check to require of a pull request. One that changes the prose
 or the tools' settings alone does not start `ci.yml`: `ci-prose.yml` starts on
 the paths `ci.yml` ignores, the same list in both files, and reports `CI` for
-it. A pull request that changes the code as well is left to `ci.yml`.
+it. A pull request that changes the code as well is left to `ci.yml`. When
+the files of a pull request cannot be read, `ci-prose.yml` fails `CI` and says
+so: running its job again reads them again.
 
 A merge into 2.x runs nothing: its pull request already ran what the change
 could affect, and `bin/status` and `bin/release` read a merge commit's checks

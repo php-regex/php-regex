@@ -27,6 +27,8 @@ use PHPUnit\Framework\TestCase;
  * it, and a required check nothing reports stays pending: ci-prose.yml
  * starts on those very paths and reports CI for that pull request, and for
  * no other, since one that changes the code as well is ci.yml's to answer.
+ * When nothing says which of the two a pull request is, CI fails and says
+ * so: a check that stayed pending would say nothing.
  */
 #[Group('documentation')]
 final class PullRequestRequiredCheckTest extends TestCase
@@ -98,21 +100,24 @@ final class PullRequestRequiredCheckTest extends TestCase
         yield 'a name that holds a README' => ['files' => ['README.md.php'], 'code' => 'true'];
         yield 'a dot read as any character' => ['files' => ['READMExmd'], 'code' => 'true'];
         yield 'a file moved out of the code' => ['files' => ['docs/notes.md', 'src/Parser/notes.md'], 'code' => 'true'];
-        yield 'as many files as GitHub lists' => ['files' => array_fill(0, 3000, 'docs/index.md'), 'code' => 'true'];
-        yield 'no file' => ['files' => [], 'code' => 'true'];
-        yield 'a list GitHub does not give' => ['files' => null, 'code' => 'true'];
+        yield 'a source file in as many files as GitHub lists' => ['files' => [...array_fill(0, 2999, 'docs/index.md'), 'src/Parser/Lexer.php'], 'code' => 'true'];
+        yield 'as many files as GitHub lists, none of the code' => ['files' => array_fill(0, 3000, 'docs/index.md'), 'code' => 'unknown'];
+        yield 'no file' => ['files' => [], 'code' => 'unknown'];
+        yield 'a list GitHub does not give' => ['files' => null, 'code' => 'unknown'];
     }
 
     /**
-     * In doubt the pull request changes the code: CI is then left to
-     * ci.yml, and a pull request neither workflow answers for waits.
+     * One file outside the list is enough to know that the code changes,
+     * and the whole list to know that it does not: a list that is empty,
+     * that GitHub does not give or cuts at three thousand files says
+     * neither.
      *
      * @param list<string>|null $files the files of the pull request as GitHub lists them, a moved one under both its names; null when GitHub does not answer
      */
     #[Test]
     #[DataProvider('providePullRequests')]
     #[RequiresOperatingSystem('Linux|Darwin')]
-    public function test_the_code_is_changed_unless_every_file_is_one_the_code_workflow_ignores(?array $files, string $code): void
+    public function test_the_step_says_whether_a_file_is_outside_what_the_code_workflow_ignores(?array $files, string $code): void
     {
         $this->prepare($files);
 
@@ -124,18 +129,18 @@ final class PullRequestRequiredCheckTest extends TestCase
     }
 
     /**
-     * A list the step cannot read ignores nothing.
+     * Without the list of ci.yml, nothing says what it stays out of.
      */
     #[Test]
     #[RequiresOperatingSystem('Linux|Darwin')]
-    public function test_the_code_is_changed_when_the_code_workflow_names_no_ignored_path(): void
+    public function test_nothing_is_known_when_the_code_workflow_names_no_ignored_path(): void
     {
         $this->prepare(['docs/index.md'], "on:\n  pull_request:\n    branches: [ 2.x ]\n  workflow_dispatch:\n");
 
         [$exit, $output] = $this->runStep(self::jobs()['scope'], 'Read what the pull request changes', ['PULL_REQUEST' => '7']);
 
         $this->assertSame(0, $exit, $output);
-        $this->assertSame("code=true\n", (string) file_get_contents($this->root.'/output'));
+        $this->assertSame("code=unknown\n", (string) file_get_contents($this->root.'/output'));
     }
 
     /**
@@ -143,7 +148,8 @@ final class PullRequestRequiredCheckTest extends TestCase
      * changes the code as well starts both workflows, and the last job of
      * ci.yml is created only once its stages are over: a CI reported here
      * would be the only one for as long as they run, and a job that is
-     * skipped passes, so the job runs under another name.
+     * skipped passes, so the job runs under another name. Whatever else
+     * the scope says, or when it says nothing, the job is CI and runs.
      */
     #[Test]
     public function test_ci_is_reported_for_the_prose_alone(): void
@@ -152,37 +158,42 @@ final class PullRequestRequiredCheckTest extends TestCase
 
         $this->assertSame(['scope', 'verdict'], array_keys($jobs));
         $this->assertMatchesRegularExpression('~^    name: CI$~m', self::jobs('ci.yml')['verdict'], 'The check ci.yml reports.');
-        $this->assertMatchesRegularExpression("~^    name: \\$\\{\\{ needs\\.scope\\.outputs\\.code == 'false' && 'CI' \\|\\| 'Left to the code checks' \\}\\}$~m", $jobs['verdict']);
+        $this->assertMatchesRegularExpression("~^    name: \\$\\{\\{ needs\\.scope\\.outputs\\.code == 'true' && 'Left to the code checks' \\|\\| 'CI' \\}\\}$~m", $jobs['verdict']);
         $this->assertMatchesRegularExpression('~^    needs: scope$~m', $jobs['verdict']);
-        $this->assertStringNotContainsString("\n    if:", "\n".$jobs['verdict']);
+        // A scope that failed would otherwise skip the job, and a skipped
+        // CI passes.
+        $this->assertMatchesRegularExpression('~^    if: \$\{\{ !cancelled\(\) \}\}$~m', $jobs['verdict']);
         $this->assertStringNotContainsString('continue-on-error', $jobs['scope'].$jobs['verdict']);
         $this->assertDoesNotMatchRegularExpression('~^    name: CI$~m', $jobs['scope']);
     }
 
     /**
-     * @return iterable<string, array{code: string, said: string}>
+     * @return iterable<string, array{code: string, exit: int, said: string}>
      */
     public static function provideAnswers(): iterable
     {
-        yield 'the prose alone' => ['code' => 'false', 'said' => 'This pull request changes nothing the code checks read.'];
-        yield 'the code as well' => ['code' => 'true', 'said' => 'This pull request changes the code as well: the CI check is the one ci.yml reports.'];
-        yield 'a scope that said nothing' => ['code' => '', 'said' => 'This pull request changes the code as well: the CI check is the one ci.yml reports.'];
+        $unread = 'The files of this pull request could not be read in full: nothing says whether ci.yml answers for it. Running this job again reads them again.';
+
+        yield 'the prose alone' => ['code' => 'false', 'exit' => 0, 'said' => 'This pull request changes nothing the code checks read.'];
+        yield 'the code as well' => ['code' => 'true', 'exit' => 0, 'said' => 'This pull request changes the code as well: the CI check is the one ci.yml reports.'];
+        yield 'files that could not be read' => ['code' => 'unknown', 'exit' => 1, 'said' => $unread];
+        yield 'a scope that said nothing' => ['code' => '', 'exit' => 1, 'said' => $unread];
     }
 
     #[Test]
     #[DataProvider('provideAnswers')]
     #[RequiresOperatingSystem('Linux|Darwin')]
-    public function test_the_job_says_which_workflow_answers(string $code, string $said): void
+    public function test_the_job_says_which_workflow_answers(string $code, int $exit, string $said): void
     {
         $verdict = self::jobs()['verdict'];
         $this->assertStringContainsString('CODE: ${{ needs.scope.outputs.code }}', $verdict);
         $this->root = TemporaryDirectory::create('php-regex-required-check');
 
-        [$exit, $output, $summary] = $this->runStep($verdict, 'Say which workflow answers', ['CODE' => $code]);
+        [$status, $output, $summary] = $this->runStep($verdict, 'Say which workflow answers', ['CODE' => $code]);
 
-        $this->assertSame(0, $exit, $output);
-        $this->assertSame($said."\n", $output);
+        $this->assertSame($exit, $status, $output);
         $this->assertSame($said."\n", $summary);
+        $this->assertSame(0 === $exit ? $said."\n" : $said."\n::error title=CI::".$said."\n", $output, 'The run page shows why CI failed without opening the job.');
     }
 
     /**

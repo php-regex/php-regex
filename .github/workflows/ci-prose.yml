@@ -4,7 +4,8 @@ name: CI (prose)
 # ci.yml reports it when the pull request changes the code. A pull request
 # that changes nothing but what ci.yml ignores does not start it, and a
 # required check nothing reports stays pending: this workflow starts on
-# those paths and reports CI for that pull request, and for no other.
+# those paths and reports CI for that pull request, and for no other. When
+# nothing says which of the two a pull request is, CI fails and says so.
 
 on:
   pull_request:
@@ -47,9 +48,9 @@ jobs:
     # A pull request that changes one of these paths and the code starts
     # both workflows. GitHub lists the files of the pull request; the paths
     # ci.yml ignores are read from ci.yml as the pull request holds it,
-    # which is the list GitHub starts it from. In doubt (a list that
-    # cannot be read, or that is as long as GitHub gives) the pull request
-    # changes the code.
+    # which is the list GitHub starts it from. One file outside them says
+    # that the code changes, and the whole list that it does not: a list
+    # that cannot be read, or that GitHub cuts, says neither.
     name: Prose scope
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -73,7 +74,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PULL_REQUEST: ${{ github.event.pull_request.number }}
         run: |
-          code=true
+          code=unknown
           # The paths ci.yml ignores as one expression: "**" crosses
           # directories, "*" stays in one, a dot is a dot.
           dot='\.'
@@ -87,9 +88,11 @@ jobs:
           done < <(sed -n '/^    paths-ignore:$/,/^  [a-z_]*:$/p' .github/workflows/ci.yml | sed -n "s/^      - '\(.*\)'\$/\1/p")
           # One name a line: each file, and the name it had before a move.
           if [ -n "$ignored" ] && gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PULL_REQUEST/files?per_page=100" --jq '.[] | .filename, (.previous_filename // empty)' > "$RUNNER_TEMP/changed"; then
+            if grep -Evq -- "^($ignored)\$" "$RUNNER_TEMP/changed"; then
+              code=true
             # GitHub lists three thousand files and no more: a list that
             # long may leave out a file of the code.
-            if [ -s "$RUNNER_TEMP/changed" ] && [ "$(wc -l < "$RUNNER_TEMP/changed")" -lt 3000 ] && ! grep -Evq -- "^($ignored)\$" "$RUNNER_TEMP/changed"; then
+            elif [ -s "$RUNNER_TEMP/changed" ] && [ "$(wc -l < "$RUNNER_TEMP/changed")" -lt 3000 ]; then
               code=false
             fi
           fi
@@ -101,9 +104,13 @@ jobs:
     # well, CI is ci.yml's to report, and its last job is created only once
     # its stages are over: a CI reported here would be the only one for as
     # long as they run. A job that is skipped passes, so the job runs, under
-    # another name.
-    name: ${{ needs.scope.outputs.code == 'false' && 'CI' || 'Left to the code checks' }}
+    # another name. It runs whatever the job before it did, and fails as CI
+    # when that job could not say what the pull request changes: a pull
+    # request of prose alone would otherwise wait for a check nothing
+    # reports, with nothing to say why.
+    name: ${{ needs.scope.outputs.code == 'true' && 'Left to the code checks' || 'CI' }}
     needs: scope
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -112,9 +119,13 @@ jobs:
         env:
           CODE: ${{ needs.scope.outputs.code }}
         run: |
-          if [ "$CODE" = false ]; then
-            answer='This pull request changes nothing the code checks read.'
-          else
-            answer='This pull request changes the code as well: the CI check is the one ci.yml reports.'
-          fi
+          case "$CODE" in
+            false) answer='This pull request changes nothing the code checks read.' ;;
+            true) answer='This pull request changes the code as well: the CI check is the one ci.yml reports.' ;;
+            *) answer='The files of this pull request could not be read in full: nothing says whether ci.yml answers for it. Running this job again reads them again.' ;;
+          esac
           echo "$answer" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$CODE" != false ] && [ "$CODE" != true ]; then
+            echo "::error title=CI::$answer"
+            exit 1
+          fi
