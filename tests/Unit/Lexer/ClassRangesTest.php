@@ -110,9 +110,13 @@ final class ClassRangesTest extends TestCase
     public function test_repeated_legacy_class_escapes_are_read_in_linear_time(): void
     {
         $count = 16000;
+        $class = '['.str_repeat('\\d', $count).']';
+        // The engine reads the sixteen thousand escapes as one class of digits.
+        $this->assertSame(1, preg_match('/'.$class.'/', '7'));
+        $this->assertSame(0, preg_match('/'.$class.'/', 'd'));
         $lexer = new Lexer(PcreTarget::bundledWith(70300));
         $start = hrtime(true);
-        $tokens = $lexer->tokenize('['.str_repeat('\\d', $count).']')->getTokens();
+        $tokens = $lexer->tokenize($class)->getTokens();
         $elapsed = (hrtime(true) - $start) / 1e9;
 
         $this->assertCount($count + 3, $tokens);

@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `JsonDumper` resolves at most 100,000 reference targets in one document,
+   counted before duplicates are dropped, and throws `ResourceLimitException`
+   (`regex.complexity`) past them: a pattern that names one group many times,
+   under `(?J)`, no longer expands to hundreds of megabytes.
  * `LengthRangeCalculator` measures each node once per pattern, so a body
    that several calls share is read once: a pattern whose groups each call
    the previous one twice no longer takes time that doubles with each

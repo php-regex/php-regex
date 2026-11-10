@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Printer;
 
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
@@ -20,6 +22,8 @@ use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Parser\Printer\JsonDumper;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\VersionCondition;
+use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\JsonSchemaSubsetValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,12 +36,106 @@ use PHPUnit\Framework\TestCase;
  */
 final class JsonDumperTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * Every comparison the parser reads after VERSION.
      */
     private const VERSION_OPERATORS = ['=', '>=', '>', '<=', '<', '==', '!='];
 
     private const SCHEMA = __DIR__.'/../../../../src/Parser/ast.schema.json';
+
+    #[Test]
+    #[DataProvider('provideAmplifyingReferences')]
+    public function test_reference_expansion_is_bounded(string $reference): void
+    {
+        $pattern = '/'.str_repeat('(?<n>a)', 1000).str_repeat($reference, 101).'/J';
+        $this->assertTrue(EngineProbe::compiles($pattern));
+        $tree = RegexParser::create(['cache' => null])->parse($pattern);
+
+        try {
+            $tree->accept(new JsonDumper());
+            $this->fail('The amplified export must be refused.');
+        } catch (ResourceLimitException $exception) {
+            $this->assertSame(ErrorCode::Complexity, $exception->errorCode);
+            $this->assertSame('JSON export exceeds the limit of 100000 resolved reference targets.', $exception->getMessage());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{reference: string}>
+     */
+    public static function provideAmplifyingReferences(): iterable
+    {
+        yield 'named backreferences' => ['reference' => '\\k<n>'];
+        yield 'named conditions' => ['reference' => '(?(n)a|b)'];
+        yield 'references across nested nodes' => ['reference' => '(?:\\k<n>)'];
+    }
+
+    /**
+     * One target past the limit: 100,000 from the named references, one
+     * more from a group of its own.
+     */
+    #[Test]
+    public function test_reference_budget_refuses_one_target_past_the_limit(): void
+    {
+        $pattern = '/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 100).'(?<m>b)\\k<m>/J';
+        $this->assertTrue(EngineProbe::compiles($pattern));
+
+        $this->assertRefusedPastTheReferenceBudget($pattern);
+    }
+
+    /**
+     * A branch reset numbers 1,001 captures 1: each "\1" resolves all of
+     * them, and the budget counts them before duplicates are dropped,
+     * 100,100 targets for 100 references.
+     */
+    #[Test]
+    public function test_reference_budget_counts_targets_a_branch_reset_numbers_alike(): void
+    {
+        $pattern = '/(?|'.str_repeat('(a)|', 1000).'(a))'.str_repeat('\\1', 100).'/';
+        $this->assertTrue(EngineProbe::compiles($pattern));
+
+        $this->assertRefusedPastTheReferenceBudget($pattern);
+    }
+
+    #[Test]
+    public function test_reference_budget_allows_the_boundary_and_resets_between_exports(): void
+    {
+        $pattern = '/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 100).'/J';
+        $this->assertTrue(EngineProbe::compiles($pattern));
+        $tree = RegexParser::create(['cache' => null])->parse($pattern);
+        $dumper = new JsonDumper();
+        $document = $tree->accept($dumper);
+        $references = self::nodesOfType($document, 'backref');
+        $this->assertCount(100, $references);
+        foreach ($references as $reference) {
+            $this->assertSame(range(1, 1000), $reference['groups']);
+        }
+        $this->assertSame($document, $tree->accept($dumper));
+    }
+
+    #[Test]
+    public function test_a_failed_export_clears_its_state(): void
+    {
+        $parser = RegexParser::create(['cache' => null]);
+        $pattern = '/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 101).'/J';
+        $this->assertTrue(EngineProbe::compiles($pattern));
+        $tree = $parser->parse($pattern);
+        $dumper = new JsonDumper();
+
+        try {
+            $tree->accept($dumper);
+            $this->fail('The amplified export must be refused.');
+        } catch (ResourceLimitException $exception) {
+            $this->assertSame(ErrorCode::Complexity, $exception->errorCode);
+        }
+
+        // The same dumper, after the refusal, exports a small pattern whole.
+        $small = $parser->parse('/(?<n>a)\\k<n>/');
+        $this->assertSame(self::export('/(?<n>a)\\k<n>/'), $small->accept($dumper));
+        $this->assertSame([], self::nodesOfType($small->pattern->accept($dumper), 'backref')[0]['groups']);
+    }
 
     #[Test]
     public function test_the_document_carries_its_version_and_the_pattern(): void
@@ -480,6 +578,23 @@ final class JsonDumperTest extends TestCase
     {
         foreach (self::VERSION_OPERATORS as $operator) {
             yield $operator => ['operator' => $operator];
+        }
+    }
+
+    /**
+     * Refused by the reference budget itself, not by another limit met
+     * on the way.
+     */
+    private function assertRefusedPastTheReferenceBudget(string $pattern): void
+    {
+        $tree = RegexParser::create(['cache' => null])->parse($pattern);
+
+        try {
+            $tree->accept(new JsonDumper());
+            $this->fail('The export must be refused.');
+        } catch (ResourceLimitException $exception) {
+            $this->assertSame(ErrorCode::Complexity, $exception->errorCode);
+            $this->assertSame('JSON export exceeds the limit of 100000 resolved reference targets.', $exception->getMessage());
         }
     }
 
