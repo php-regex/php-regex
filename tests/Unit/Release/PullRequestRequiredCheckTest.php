@@ -18,6 +18,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -60,6 +61,46 @@ final class PullRequestRequiredCheckTest extends TestCase
     }
 
     /**
+     * A path written after a blank line, empty or of spaces, is read by
+     * GitHub: the check of the two lists fails on it, where reading the
+     * list to its first blank line would leave it out of the comparison.
+     */
+    #[Test]
+    #[DataProvider('provideBlankLines')]
+    public function test_a_path_after_a_blank_line_does_not_escape_the_comparison(string $workflow, string $key, string $blank): void
+    {
+        $text = self::workflow($workflow);
+        self::assertListIsReadWhole($key, $text, $workflow);
+
+        $first = "      - '".self::listUnder($key, self::blockOf($text, $workflow))[0]."'\n";
+        $at = strpos($text, '    '.$key.":\n".$first);
+        $this->assertIsInt($at);
+        $end = $at + \strlen('    '.$key.":\n".$first);
+        $hidden = substr($text, 0, $end).$blank."\n      - 'hidden/**'\n".substr($text, $end);
+
+        try {
+            self::assertListIsReadWhole($key, $hidden, $workflow);
+        } catch (ExpectationFailedException) {
+            return;
+        }
+
+        $this->fail('The path after the blank line was not seen.');
+    }
+
+    /**
+     * @return iterable<string, array{workflow: string, key: string, blank: string}>
+     */
+    public static function provideBlankLines(): iterable
+    {
+        foreach (['ci.yml' => 'paths-ignore', 'ci-prose.yml' => 'paths'] as $workflow => $key) {
+            yield $workflow.', an empty line' => ['workflow' => $workflow, 'key' => $key, 'blank' => ''];
+            yield $workflow.', a line of four spaces' => ['workflow' => $workflow, 'key' => $key, 'blank' => '    '];
+            yield $workflow.', a line of six spaces' => ['workflow' => $workflow, 'key' => $key, 'blank' => '      '];
+            yield $workflow.', a line of a tab' => ['workflow' => $workflow, 'key' => $key, 'blank' => "\t"];
+        }
+    }
+
+    /**
      * The step reads the list of ci.yml as it stands in the pull request,
      * and knows a literal path, "*" and "**": a pattern that negates, or
      * that names a set or a repetition, would be read as something else.
@@ -75,11 +116,7 @@ final class PullRequestRequiredCheckTest extends TestCase
         // GitHub and the step read the list to the line that ends it,
         // whatever blank line stands between two of its paths.
         foreach (['ci.yml' => 'paths-ignore', 'ci-prose.yml' => 'paths'] as $workflow => $key) {
-            $this->assertSame(
-                array_map(static fn (string $path): string => "      - '".$path."'", self::listUnder($key, self::pullRequestBlock($workflow))),
-                self::linesUnder($key, $workflow),
-                $workflow.': every line of the list is a path between single quotes.',
-            );
+            self::assertListIsReadWhole($key, self::workflow($workflow), $workflow);
         }
 
         $scope = self::jobs()['scope'];
@@ -310,14 +347,28 @@ final class PullRequestRequiredCheckTest extends TestCase
     }
 
     /**
+     * Every line GitHub reads under the key is a path the test read too,
+     * between single quotes: a path after a blank line, empty or of spaces,
+     * is one the comparison of the two lists would not see.
+     */
+    private static function assertListIsReadWhole(string $key, string $text, string $workflow): void
+    {
+        self::assertSame(
+            array_map(static fn (string $path): string => "      - '".$path."'", self::listUnder($key, self::blockOf($text, $workflow))),
+            self::linesUnder($key, $text, $workflow),
+            $workflow.': every line of the list is a path between single quotes.',
+        );
+    }
+
+    /**
      * The lines under a key of the pull request trigger, to the first line
      * indented less than the paths of a list, blank lines aside.
      *
      * @return list<string>
      */
-    private static function linesUnder(string $key, string $workflow): array
+    private static function linesUnder(string $key, string $text, string $workflow): array
     {
-        $lines = explode("\n", self::workflow($workflow));
+        $lines = explode("\n", $text);
         $start = array_search('    '.$key.':', $lines, true);
         self::assertIsInt($start, $workflow.' has a '.$key.' list.');
 
@@ -341,10 +392,18 @@ final class PullRequestRequiredCheckTest extends TestCase
      */
     private static function pullRequestBlock(string $workflow): string
     {
-        self::assertSame(1, preg_match('~^  pull_request:\n((?:    .*\n)+)(.*)$~m', self::workflow($workflow), $match), $workflow.' runs on a pull request.');
+        return self::blockOf(self::workflow($workflow), $workflow);
+    }
+
+    /**
+     * The same, of the text of a workflow.
+     */
+    private static function blockOf(string $text, string $workflow): string
+    {
+        self::assertSame(1, preg_match('~^  pull_request:\n((?:    .*\n)+)(.*)$~m', $text, $match), $workflow.' runs on a pull request.');
         self::assertMatchesRegularExpression('~^(?:  [a-z_]+:|)$~', $match[2], $workflow.': the pull request trigger is followed by the next trigger, or by the end of the triggers.');
         if ('' === $match[2]) {
-            self::assertDoesNotMatchRegularExpression('~^  pull_request:\n(?:    .*\n)+\n+ ~m', self::workflow($workflow), $workflow.': no blank line stands inside the pull request trigger.');
+            self::assertDoesNotMatchRegularExpression('~^  pull_request:\n(?:    .*\n)+\n+ ~m', $text, $workflow.': no blank line stands inside the pull request trigger.');
         }
 
         return $match[1];
