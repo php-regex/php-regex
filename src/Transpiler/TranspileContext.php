@@ -33,6 +33,11 @@ final class TranspileContext
     /**
      * @var array<int, string>
      */
+    private array $lastWarnings = [];
+
+    /**
+     * @var array<int, string>
+     */
     private array $notes = [];
 
     /**
@@ -67,6 +72,15 @@ final class TranspileContext
         }
     }
 
+    /**
+     * A warning on the pattern as a whole, listed after those on what was
+     * rewritten, whenever they are added.
+     */
+    public function addLastWarning(string $message): void
+    {
+        $this->lastWarnings[] = $message;
+    }
+
     public function addNote(string $message): void
     {
         if (!\in_array($message, $this->notes, true)) {
@@ -79,7 +93,7 @@ final class TranspileContext
      */
     public function getWarnings(): array
     {
-        return $this->warnings;
+        return [...$this->warnings, ...$this->lastWarnings];
     }
 
     /**

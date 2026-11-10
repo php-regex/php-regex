@@ -65,6 +65,13 @@ final class TranspileCommandOutputTest extends TestCase
             'remark' => 'Converted octal escape to hex/Unicode escape for JavaScript.',
             'absentBlock' => '[NOTE]',
         ];
+        // Without u "\S" takes a byte in PCRE and a character in JavaScript.
+        yield 'a set past ASCII without u, a warning' => [
+            'pattern' => '/\S+/',
+            'block' => '[WARNING]',
+            'remark' => 'Without the u flag "\S" at offset 0 takes one byte in PCRE',
+            'absentBlock' => '[NOTE]',
+        ];
         yield 'extended mode applied, a note' => [
             'pattern' => '/a b/x',
             'block' => '[NOTE]',

@@ -52,6 +52,9 @@ final class TranspileJsonContractTest extends LaravelTestCase
         yield 'a valid pattern, javascript' => ['pattern' => '/a+b/i', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a note, javascript' => ['pattern' => '/(?<n>a)\k<n>/x', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a warning, python' => ['pattern' => '/a+/U', 'target' => 'python', 'exitCode' => 0, 'address' => 'transpile'];
+        // Without u the dot takes a byte in PCRE and a character in the target: a warning, in each document.
+        yield 'a set past ASCII without u' => ['pattern' => '/^.+,[^,]+$/', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
+        yield 'a set past ASCII under u' => ['pattern' => '/^.+,[^,]+$/u', 'target' => 'python', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a syntax error' => ['pattern' => '/(a/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
         yield 'a semantic error' => ['pattern' => '/(?<=a+)b/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
         yield 'a construct the target lacks' => ['pattern' => '/a++b/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];

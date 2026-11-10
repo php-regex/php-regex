@@ -110,8 +110,9 @@ final class TranspileToolTest extends TestCase
         $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/\p{L}+/', 'target' => 'js']);
 
         $this->assertFalse($result->isError);
-        $this->assertSame(['Added /u for Unicode property escapes.'], $result->structured['warnings']);
-        $this->assertStringContainsString("\nWarning: Added /u for Unicode property escapes.", $result->text);
+        $set = 'Without the u flag "\p{L}" at offset 0 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.';
+        $this->assertSame(['Added /u for Unicode property escapes.', $set], $result->structured['warnings']);
+        $this->assertStringContainsString("\nWarning: Added /u for Unicode property escapes.\nWarning: ".$set, $result->text);
     }
 
     #[Test]

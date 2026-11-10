@@ -399,6 +399,8 @@ final class JavaScriptTranspilerTest extends TestCase
 
         $this->assertSame('/\p{L}/u', $result->literal);
         $this->assertSame('u', $result->flags);
-        $this->assertSame(['Added /u for Unicode property escapes.'], $result->warnings);
+        // Without u PCRE reads a byte for the property, and JavaScript a character.
+        $this->assertSame(0, preg_match('/^\pL$/', 'é'));
+        $this->assertSame(['Added /u for Unicode property escapes.', 'Without the u flag "\pL" at offset 0 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.'], $result->warnings);
     }
 }

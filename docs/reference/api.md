@@ -667,10 +667,21 @@ Notes:
   pattern holds something else `u` refuses (`/[é](?<=\C)/`), it says to rewrite that construct before adding `u`.
   Adding `u` changes what the pattern matches, characters instead of bytes (`/[é]/` matches `à` through its first byte,
   `/[é]/u` does not): confirm that matching characters is what the pattern means before taking the advice.
-  A set that leaves characters out (the dot, `[^a]`, `\D`, `\S`) takes one byte in PCRE, one UTF-16 code unit in
-  JavaScript, one code point in Python and in `html-pattern`, matched under `v`: on a subject holding a multibyte
-  character the counts differ (`/^\S$/` fails `U+00A0`, two bytes, where `/^[^\t-\r ]$/` matches it in JavaScript;
-  that JavaScript pattern fails `U+1F600`, two UTF-16 code units, and matches it under `v`).
+  A set takes one byte in PCRE, one UTF-16 code unit in JavaScript, one code point in Python and in `html-pattern`,
+  matched under `v`. While the set stays in ASCII (`\d`, `\w`, `\s`, `[a-z]`, `[^\D]`) PCRE and the target agree on
+  every subject. Once it reaches past ASCII they differ on a subject holding a character outside it: the dot, a negated
+  class, `\D`, `\W` and `\S` take every byte above `0x7F` (`/^\S$/` fails `U+00A0`, two bytes, where `/^[^\t-\r ]$/`
+  matches it in JavaScript; that JavaScript pattern fails `U+1F600`, two UTF-16 code units, and matches it under `v`),
+  `\h` takes `0xA0` and `\v` `0x85`, and a property reads a byte as a Latin-1 character where the target reads the
+  character (`/^\p{L}$/` matches `0xC3`, the first byte of `é`, and not `é`). Such a pattern is not refused: most
+  patterns hold a dot or a negated class, and on ASCII subjects the two agree. It is written, and
+  `$result->warnings` names the first such set with its offset in the pattern, once per pattern:
+  `Without the u flag "\S" at offset 1 takes one byte in PCRE and one character in this target, so the two differ on a
+  subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.` The advice is the one a
+  refusal gives, checked against the engine the same way and to be weighed the same way: under `u` PHP also reads
+  `\d`, `\w`, `\s`, `\b` and case in Unicode. Which bytes a set takes is asked of the running PCRE: `[^\S]`, six ASCII
+  bytes, gets no warning. Under `u` there is none, and a set the target refuses (`\H`, `\V`, `\N`, `\C`, `\R`, `\X`, a
+  POSIX class) is refused as before.
 - A script property takes the name JavaScript reads: PCRE2 reads `\p{Han}` as the script's extensions, so it is
   `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused. For a
   target before PCRE2 10.40 (PHP 8.1), which reads `\p{Han}` as the script alone, it is `\p{Script=Han}`.
