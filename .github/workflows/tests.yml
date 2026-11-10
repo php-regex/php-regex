@@ -4,36 +4,13 @@ name: Tests
 # lowest and the latest dependencies, and on the next PHP as an experiment.
 
 on:
-  pull_request:
-    branches: [ 2.x ]
-    # Not for the prose or the tools' settings alone: a pull request that
-    # changes only what is listed here runs the spelling check, and the
-    # documentation tests and the link check when the prose or the site
-    # changes. A merge into 2.x runs nothing: its pull request already did.
-    paths-ignore:
-      - 'docs/**'
-      - 'art/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'UPGRADE-2.0.md'
-      - 'CONTRIBUTING.md'
-      - 'CODE_OF_CONDUCT.md'
-      - 'SECURITY.md'
-      - 'TODO.md'
-      - 'LICENSE'
-      - 'src/*/README.md'
-      - 'src/*/CHANGELOG.md'
-      - '.github/organization/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
-      - '.github/FUNDING.yml'
-      - '.github/CODEOWNERS'
-      - '.github/dependabot.yml'
-      - '.github/zizmor.yml'
-      - '.coderabbit.yaml'
-      - '.editorconfig'
-      - '.gitmessage'
-      - '_typos.toml'
+  # A pull request starts ci.yml, which calls this workflow in its stage.
+  workflow_call:
+    inputs:
+      after-reference:
+        description: Whether the caller has run the reference cell, PHP 8.4 with the latest dependencies on Linux, which the matrix then leaves out.
+        type: boolean
+        default: false
   schedule:
     # Every Monday, against the week's tool releases, which no lock file pins.
     - cron: '17 2 * * 1'
@@ -44,8 +21,10 @@ permissions:
 
 concurrency:
   # The event in the key: a scheduled run on 2.x neither cancels a manual
-  # run nor is cancelled by one.
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  # run nor is cancelled by one. The name is written out: called from
+  # ci.yml, github.workflow is the caller's, and the group would be the
+  # caller's own.
+  group: tests-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -71,6 +50,13 @@ jobs:
           - { os: windows-latest, php: '8.3', dependency: prefer-stable }
           - { os: windows-latest, php: '8.2', dependency: prefer-stable }
           - { os: windows-latest, php: '8.1', dependency: prefer-stable }
+        # The reference cell: ci.yml runs it one stage before this workflow
+        # and says so, and it is left out; run by itself, on Mondays or by
+        # hand, the workflow runs every cell.
+        exclude:
+          - os: ${{ inputs.after-reference && 'ubuntu-latest' || 'no host' }}
+            php: '8.4'
+            dependency: prefer-stable
 
     steps:
       - name: Checkout Code

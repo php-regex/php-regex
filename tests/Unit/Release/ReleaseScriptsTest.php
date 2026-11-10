@@ -637,7 +637,7 @@ exit 1
         [$code, $output] = $this->runScript('release', ['--dry-run', '2.0.0'], $this->fakeGitHub());
 
         $this->assertSame(1, $code, $output);
-        $this->assertStringContainsString('tests.yml on '.$this->git('rev-parse', '--short', $runs).' is "failure", not "success".', $output);
+        $this->assertStringContainsString('ci.yml on '.$this->git('rev-parse', '--short', $runs).' is "failure", not "success".', $output);
     }
 
     #[Test]
@@ -647,7 +647,7 @@ exit 1
 
         [, $output] = $this->runScript('status', [], $this->fakeGitHub());
 
-        $this->assertStringContainsString('tests.yml passed on '.$this->git('rev-parse', '--short', $runs).', and nothing it reads changed since', $output);
+        $this->assertStringContainsString('ci.yml passed on '.$this->git('rev-parse', '--short', $runs).', and nothing it reads changed since', $output);
         $this->assertFileExists($this->root.'/fake/curl.log', 'The package channels are read through the stub, never the network.');
     }
 
@@ -738,7 +738,7 @@ exit 1
 
         [, $output] = $this->runScript('status', [], $this->fakeGitHub());
 
-        $this->assertStringContainsString('no tests.yml run for '.$this->git('rev-parse', '--short', 'HEAD').', which changed src/Other.php', $output);
+        $this->assertStringContainsString('no ci.yml run for '.$this->git('rev-parse', '--short', 'HEAD').', which changed src/Other.php', $output);
     }
 
     /**
@@ -786,8 +786,10 @@ exit 1
         $release = self::gatedWorkflows('release');
 
         $this->assertSame($release, self::gatedWorkflows('status'));
-        $this->assertContains('workflows.yml', $release);
-        $this->assertContains('demo.yml', $release);
+        // ci.yml answers for every workflow it calls: the suite, the
+        // engines, the static analysis, the packages, the coverage, the
+        // benchmarks and the public API.
+        $this->assertSame(['ci.yml', 'workflows.yml', 'spelling.yml', 'demo.yml'], $release);
     }
 
     /**

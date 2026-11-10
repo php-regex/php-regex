@@ -101,7 +101,7 @@ short=$(git -C "$root" rev-parse --short HEAD)
 # What bin/ci-answer says on stderr (a record GitHub would not give)
 # explains a refusal: kept, and said once, not once a workflow.
 ci_said=$(mktemp)
-for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml spelling.yml backward-compatibility.yml demo.yml; do
+for workflow in ci.yml workflows.yml spelling.yml demo.yml; do
     answer=$("$here/ci-answer" --root "$root" "$workflow" 2>>"$ci_said" || echo "none 0")
     kind=${answer%% *}
     rest=${answer#* }
