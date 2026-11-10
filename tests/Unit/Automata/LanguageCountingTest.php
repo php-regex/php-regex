@@ -28,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LanguageCountingTest extends TestCase
 {
+    private const TIMED_LENGTH = 600;
+
     #[Test]
     #[DataProvider('provideExactCounts')]
     public function test_a_count_is_exact(string $pattern, ?int $length, string $count, string $member): void
@@ -87,7 +89,9 @@ final class LanguageCountingTest extends TestCase
      * 512 characters written as one range, then as 512 ranges of one
      * character with a gap after each: the same count at every length, the
      * same numbers to multiply, so about the same time. Multiplying once for
-     * each range took some hundreds of times as long.
+     * each range took some hundreds of times as long. The counts are taken at
+     * length 600, some 25 ms each: at length 120 they take a millisecond,
+     * too little for a ratio on a loaded machine.
      */
     #[Test]
     public function test_counting_costs_the_same_however_many_ranges_spell_the_characters(): void
@@ -104,22 +108,22 @@ final class LanguageCountingTest extends TestCase
             // 512^3; the automaton's moves are read here, before the clock.
             $this->assertSame('134217728', $language->countOfLength(3));
         }
-        $this->assertSame($languages[0]->countOfLength(120), $languages[1]->countOfLength(120));
+        $this->assertSame($languages[0]->countOfLength(self::TIMED_LENGTH), $languages[1]->countOfLength(self::TIMED_LENGTH));
 
         [$oneRange, $manyRanges] = array_map(self::bestCountingTime(...), $languages);
 
-        $this->assertLessThan(8.0, $manyRanges / max($oneRange, 1e-4), \sprintf('One range: %.4f s; 512 ranges: %.4f s.', $oneRange, $manyRanges));
+        $this->assertLessThan(8.0, $manyRanges / max($oneRange, 1e-3), \sprintf('One range: %.4f s; 512 ranges: %.4f s.', $oneRange, $manyRanges));
     }
 
     /**
-     * The least CPU time of three counts at length 120.
+     * The least CPU time of three counts at the timed length.
      */
     private static function bestCountingTime(Language $language): float
     {
         $best = \INF;
         for ($turn = 0; $turn < 3; $turn++) {
             $start = CpuClock::seconds();
-            $language->countOfLength(120);
+            $language->countOfLength(self::TIMED_LENGTH);
             $best = min($best, CpuClock::seconds() - $start);
         }
 
