@@ -526,7 +526,9 @@ final class PlaygroundLayoutTest extends TestCase
      * minimum height is zero: in the panel's `auto 1fr` rows, a tree
      * taller than a short screen's panel crushed the strip to its
      * padding and the tabs were gone. The strip asks for its content's
-     * height outright.
+     * height outright — and so does its row: under a panel taller than a
+     * squeezed column the floor alone did not hold, the row fell back to
+     * the strip's padding and the panel rose over the tabs.
      */
     #[Test]
     public function test_a_full_panel_never_crushes_the_strip(): void
@@ -534,6 +536,8 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(1, preg_match('/^\.pg-tabs \{([^}]*)\}/m', self::source(self::STYLESHEET), $strip));
         $this->assertStringContainsString('overflow-x: auto;', $strip[1], 'The strip is a scroll container…');
         $this->assertStringContainsString('min-height: max-content;', $strip[1], '…so its height is asked for, never left to the automatic minimum.');
+        $this->assertSame(1, preg_match('/^\.pg-results \{([^}]*)\}/m', self::source(self::STYLESHEET), $panel));
+        $this->assertStringContainsString('grid-template-rows: max-content 1fr;', $panel[1], 'The strip\'s row is as tall as the strip, whatever stands under it.');
     }
 
     /**
