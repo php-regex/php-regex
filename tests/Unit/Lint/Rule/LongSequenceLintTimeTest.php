@@ -35,9 +35,9 @@ final class LongSequenceLintTimeTest extends TestCase
         $tree = Regex::create(['cache' => null])->parse('/'.str_repeat($item, $count).'/');
         $linter = new PatternLinter(array_fill_keys(RuleCatalog::lintRuleIds(), true));
 
-        $start = CpuClock::nanoseconds();
-        $tree->accept($linter);
-        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+        $seconds = CpuClock::time(static function () use ($tree, $linter): void {
+            $tree->accept($linter);
+        });
 
         // About 6 s for the lazy quantifiers, 1 s for the others, when each
         // item read the rest of its sequence again.
