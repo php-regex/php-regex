@@ -22,6 +22,7 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Validation\CompiledLength;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -741,6 +742,13 @@ final class CompiledLengthTest extends TestCase
     public function test_where_the_10_40_php_bundles_from_8_2_35_passes_the_limit(string $pattern, bool $whereABranchEnds): void
     {
         $this->assertSame($whereABranchEnds, self::measureOnPhp82($pattern, 80235)->passedWhereABranchEnds(self::parseOnPhp82($pattern)->pattern), $pattern);
+
+        // On that engine PHP reports the check at offset 0, and any other at
+        // the end of the pattern.
+        $running = PcreTarget::runtime();
+        if ($running->measuresBranchesApart() && !$running->pcreAtLeast('10.47')) {
+            $this->assertSame(\sprintf('preg_match(): Compilation failed: regular expression is too large at offset %d', $whereABranchEnds ? 0 : \strlen($pattern) - 2), EngineProbe::warning($pattern));
+        }
     }
 
     /**

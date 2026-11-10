@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +37,7 @@ final class PatternTooLargeOffsetTest extends TestCase
     #[DataProvider('provideTooLargePatterns')]
     public function test_a_pattern_too_large_is_reported_where_pcre2_reports_it(string $pattern, string $php, string $release, int $offset): void
     {
+        $this->assertMatchesTheRunningEngine($pattern);
         $result = RegexParser::create(['cache' => null, 'php_version' => $php, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
@@ -176,5 +178,28 @@ final class PatternTooLargeOffsetTest extends TestCase
         // "a{2}" compiles to four units.
         yield 'group of branches before the limit, 10.48' => ['pattern' => '/(?:(?:a{2}){3400}|(?:b{2}){3400})(?:cc){1500}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 45];
         yield 'capturing group of branches before the limit, 10.49' => ['pattern' => '/((?:a{2}){3400}|(?:b{2}){3400})x(?:cc){1500}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 44];
+    }
+
+    /**
+     * The rows hold the offset each PHP and PCRE2 target reports; the
+     * running engine is one more target: a pattern PHP finds too large here
+     * is too large for this PHP, its patch release included, and this PCRE2,
+     * at the offset PHP reports, and one PHP compiles or refuses otherwise
+     * is not.
+     */
+    private function assertMatchesTheRunningEngine(string $pattern): void
+    {
+        $refused = EngineProbe::warning($pattern);
+        $release = implode('.', \array_slice(explode('.', explode(' ', \PCRE_VERSION)[0]), 0, 2));
+        $result = RegexParser::create(['cache' => null, 'php_version' => \PHP_VERSION_ID, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern);
+
+        if (null === $refused || 1 !== preg_match('~: regular expression is too large at offset (\d+)$~', $refused, $engine)) {
+            $this->assertNotSame(ErrorCode::PatternTooLarge, $result->errorCode, \sprintf('Oracle: %s; the library: %s', $refused ?? 'PHP compiles '.$pattern, (string) $result->error));
+
+            return;
+        }
+
+        $this->assertSame(ErrorCode::PatternTooLarge, $result->errorCode, \sprintf('Oracle: %s; the library: %s', $refused, (string) $result->error));
+        $this->assertSame((int) $engine[1], $result->offset, 'Oracle: '.$refused);
     }
 }

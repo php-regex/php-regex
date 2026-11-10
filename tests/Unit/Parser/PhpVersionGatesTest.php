@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\LibrarySource;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -82,6 +83,9 @@ final class PhpVersionGatesTest extends TestCase
         $before = RegexParser::create(['cache' => null, 'php_version' => 80234, 'pcre_version' => '10.40', 'runtime_pcre_validation' => false])->validate($pattern);
         $from = RegexParser::create(['cache' => null, 'php_version' => PhpVersionGates::BUNDLES_PCRE2_10_40_WITH_ITS_FIXES, 'pcre_version' => '10.40', 'runtime_pcre_validation' => false])->validate($pattern);
 
+        // A pattern is as large on every release: whatever engine runs
+        // compiles the rows that are valid and refuses the others.
+        $this->assertSame($valid, EngineProbe::compiles($pattern), 'Oracle: '.(EngineProbe::warning($pattern) ?? 'PHP compiles '.$pattern));
         $this->assertSame($valid, $before->isValid, (string) $before->error);
         $this->assertSame($valid, $from->isValid, (string) $from->error);
         $this->assertSame($sameError, [$before->errorCode, $before->offset] === [$from->errorCode, $from->offset]);
