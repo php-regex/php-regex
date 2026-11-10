@@ -92,3 +92,7 @@ CHANGELOG
    read, `x#a` say, is ignored with a warning instead of silently.
  * `graph` reads `--format` in any case, as the other commands do, and
    names `graphviz`, an alias of `dot`, in its usage, its error and its help.
+ * A JSON run PHP stops at its time limit prints the envelope, stage
+   `internal`, however long the shutdown takes: PHP stopped the shutdown
+   too once the limit had run out again, and the run then exited with 255
+   and printed nothing.

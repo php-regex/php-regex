@@ -1257,29 +1257,10 @@
     });
   }
 
-  // The library's sentence, reflowed for the eye: "A digit: [0-9]
-  // (exactly 4 times)" reads "A digit [0-9], exactly 4 times". The colon
-  // between a word and a bracketed or escaped token gives way to a space;
-  // a repetition at the end of the line, in brackets, becomes a clause.
-  // Anything else stays as the library wrote it, and so do the lines that
-  // carry the visitor's own words: a comment, a verb's name, a callout's
-  // argument.
-  var EXPLAIN_REFLOW = [
-    [/([A-Za-z]): (?=[[\\])/g, '$1 '],
-    [/ \(((?:zero or more|one or more) times|once or not at all|exactly \d+ times|at least \d+(?: but not more than \d+)? times|with quantifier \S+)((?: \((?:as few as possible|and do not backtrack)\))?)\)$/, ', $1$2'],
-  ];
-
-  var REFLOW_KEEP = ['Comment', 'PCRE Verb', 'Callout'];
-
-  function reflow(sentence) {
-    return EXPLAIN_REFLOW.reduce(function (line, rule) {
-      return line.replace(rule[0], rule[1]);
-    }, sentence);
-  }
-
   // One line, split into its voices: a branch keyword, a labelled kind
   // ("Anchor: …", a quiet tag that names the tree's word for it), a bare
-  // quoted literal, or plain prose.
+  // quoted literal, or plain prose. Each sentence is shown as the library
+  // wrote it.
   function explainVoices(content, head) {
     var keyword = content.match(/^(IF|THEN|ELSE|EITHER|OR)(?:\s+(.*))?$/);
     var labeled = keyword ? null : content.match(/^([A-Z][A-Za-z]*(?: [A-Za-z]+)*): (.+)$/);
@@ -1287,16 +1268,16 @@
       head.appendChild(text('span', 'pg-explain-keyword', keyword[1]));
       if (keyword[2]) {
         head.appendChild(document.createTextNode(' '));
-        head.appendChild(text('span', 'pg-explain-text', reflow(keyword[2])));
+        head.appendChild(text('span', 'pg-explain-text', keyword[2]));
       }
     } else if (labeled) {
       head.appendChild(text('span', 'pg-explain-kind', labeled[1]));
       head.appendChild(document.createTextNode(' '));
-      head.appendChild(text('span', 'pg-explain-text', REFLOW_KEEP.indexOf(labeled[1]) === -1 ? reflow(labeled[2]) : labeled[2]));
+      head.appendChild(text('span', 'pg-explain-text', labeled[2]));
     } else if (/^['"].*['"]$/.test(content)) {
       head.appendChild(text('span', 'pg-explain-literal', content));
     } else {
-      head.appendChild(text('span', 'pg-explain-text', reflow(content)));
+      head.appendChild(text('span', 'pg-explain-text', content));
     }
   }
 

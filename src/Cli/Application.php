@@ -174,6 +174,13 @@ final class Application
             return null;
         }
 
+        // PHP stops the shutdown of a run it stopped at its time limit once
+        // that limit has run out again, and a loaded host takes longer than
+        // a limit of one second to get here: the envelope is not timed.
+        if (\function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
+
         // Memory exhausted leaves none to print with: the reserve makes room.
         self::$memoryReserve = null;
 

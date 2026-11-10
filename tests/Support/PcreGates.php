@@ -145,6 +145,23 @@ trait PcreGates
     }
 
     /**
+     * Skip when the interpreter of the running engine keeps, after a
+     * subroutine call, what the groups inside the called one captured — the
+     * probe, never a release. PCRE2 gives them their earlier values back;
+     * the interpreter of the PCRE2 10.42 that Ubuntu 24.04 packages keeps
+     * them, where its own JIT, the 10.42 PHP bundles and the later releases
+     * do not. The probe asks the interpreter, so that the answer does not
+     * turn on whether PHP ran the pattern through the JIT.
+     */
+    private function requiresCallCapturesGivenBack(string $pattern): void
+    {
+        preg_match('/(*NO_JIT)(?(DEFINE)(?<pair>(\d)(\d)))((?&pair)(?&pair))/', '1234', $written);
+        if (['', ''] !== [$written[2] ?? null, $written[3] ?? null]) {
+            $this->markTestSkipped(\sprintf('%s reads the groups inside a called one, and the interpreter of PCRE2 %s keeps what a call captured in them.', $pattern, \PCRE_VERSION));
+        }
+    }
+
+    /**
      * Named for the trait, never for the class it lands in: a class's own
      * helper of another name must not silently replace the gate arithmetic.
      *

@@ -6,6 +6,25 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `PatternFormatter` keeps a `#` comment that ends in an escaped space as
+   written wherever it lays it out: on a line of its own, after the start
+   options and past ten indent levels, `# path\ ` came out as `# path\x20`,
+   the spelling meant for a space of the pattern that ends its line.
+ * The body of an alphabetic assertion nested in others, `(*pla:(*nla:a))`, is
+   read from the pattern by its offsets, and the text a level read is dropped
+   before the bodies inside it are read: every level kept three copies of its
+   body. 240 nested `(*pla:` around a 60,000-byte comment, which PCRE compiles,
+   peaked at 46 MB and take 3 MB; 900 around 93,000 bytes peaked at 264 MB, a
+   fatal error under a 128 MB `memory_limit`, and take 11 MB. The tokens, the
+   tree and the errors of a pattern are what they were.
+ * `validate()` reports, for PHP 8.2.35 and later 8.2 releases with PCRE2
+   10.40, the error that engine gives a pattern too large to compile that is
+   wrong elsewhere too: those releases bundle 10.40 with the fixes PCRE2 keeps
+   for it, one of which checks each branch against the size limit on its own,
+   as 10.48 does. `/(?:[^a]){8190}aaa\d|\k<n>/` is `regex.pattern.too_large`
+   at offset 0 there, and the missing group on PHP 8.2.34, as on any other
+   10.40. No pattern changes verdict, so `PcreTarget::phpVersionBoundaries()`
+   lists no new version.
  * `validate()` reports an error PCRE meets measuring the lookbehinds before it
    estimates the compiled size, and one measure walks 10,000 branches at most:
    calls doubled level after level behind a branch reset are refused as
@@ -33,6 +52,11 @@ CHANGELOG
    the previous one twice no longer takes time that doubles with each
    group. A call followed past 1024 nested calls, or a pattern past 100,000
    measured nodes, reads as unbounded from zero there.
+ * `CaptureShapeAnalyzer` reads the body of a called group once for each
+   fact it asks of it, however many calls run it: the shape of a pattern
+   whose groups each call the previous one twice no longer takes time that
+   doubles with each group, seconds at twenty of them. Every shape reads
+   as before.
  * `RegexParser::tokenize()`, and `Regex::tokenize()` through it, hold the
    regex to `max_pattern_length` as `parse()` does, and throw a
    `ResourceLimitException` past it: they lexed a pattern of any length.

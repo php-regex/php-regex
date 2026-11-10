@@ -26,7 +26,7 @@ use PHPRegex\Parser\Text\Utf8;
  *
  * It also keeps what outlives one text: where the bodies of the whole
  * pattern end, as far as they were read, and whether the bodies of the
- * alphabetic assertions are read in place.
+ * alphabetic assertions are read in place, or left in the pattern.
  *
  * @internal
  */
@@ -123,6 +123,14 @@ final class LexerState
      * of the body, then its ")".
      */
     public bool $bodiesInPlace = false;
+
+    /**
+     * Whether a body that closes is left in the pattern: its token holds the
+     * opener alone, "pla:" or "*", and spans the whole body, which the
+     * parser reads from the pattern. The parts of a pattern are read so: a
+     * body nested in bodies is not copied once more at each level.
+     */
+    public bool $bodiesLeftInPattern = false;
 
     /**
      * Where the bodies of the whole pattern end, as far as they were read:

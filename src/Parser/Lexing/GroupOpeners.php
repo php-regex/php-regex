@@ -164,7 +164,12 @@ final class GroupOpeners
             // which are all a verb name is judged on.
             VerbNames::refuse($state->text, substr($state->pattern, $start + 2, strspn($state->pattern, PcreVerb::WORD_NAME, $start + 2) + 1), $start, $tokens, $state->extendedMode);
             $state->position = $end;
-            $tokens[] = new Token(TokenType::PcreVerb, substr($state->pattern, $start + 2, $end - $start - 3), $start, $end - $start);
+            // Or not at all, in a part: the parser reads the body from the
+            // pattern, and the token holds the opener alone.
+            $value = $state->bodiesLeftInPattern && self::parserReadsBodyApart($state, $name)
+                ? substr($opener, 2)
+                : substr($state->pattern, $start + 2, $end - $start - 3);
+            $tokens[] = new Token(TokenType::PcreVerb, $value, $start, $end - $start);
 
             return true;
         }
@@ -191,6 +196,21 @@ final class GroupOpeners
         $tokens[] = new Token(TokenType::PcreVerb, substr($opened, 2), $start, \strlen($opened));
 
         return true;
+    }
+
+    /**
+     * Whether the parser reads apart the body "(*$name:" opens, "(?*" being
+     * the empty name: the body of an assertion, of a script run, or of a
+     * substring scan where PCRE reads one. Any other name is a verb to the
+     * parser, which keeps its whole text.
+     */
+    private static function parserReadsBodyApart(LexerState $state, string $name): bool
+    {
+        return '' === $name
+            || PcreVerb::isAlphabeticAssertion($name)
+            || PcreVerb::isNonAtomicAssertion($name)
+            || PcreVerb::namesScriptRun($name)
+            || ($state->text->syntax->readsScanSubstring && \in_array($name, ['scs', 'scan_substring'], true));
     }
 
     /**

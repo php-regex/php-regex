@@ -27,9 +27,9 @@ use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\Delimiters;
+use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
-use PHPRegex\Redos\RedosProof;
 
 /**
  * Rewrites a pattern open to catastrophic backtracking and keeps the
@@ -39,8 +39,9 @@ use PHPRegex\Redos\RedosProof;
  * Vulnerability of Real-World Regexes", IEEE S&P 2022.)
  *
  * The rewrites: a repeat of a repeat flattened, "(?:a+)+" to "a+"; the
- * optimizer's own rewrite; a quantifier made possessive. Certified repairs
- * come first.
+ * optimizer's own rewrite; a quantifier made possessive. Those of the
+ * quantifiers the analysis blames are tried first. Certified repairs come
+ * first.
  *
  *     (new RedosRepairer())->repair('/^(?:a+)+$/')[0]->pattern; // "/^a+$/"
  */
@@ -86,20 +87,25 @@ final class RedosRepairer
         }
 
         $analyzer = $this->analyzer;
-        $verdict = $analyzer->analyze($regex)->complexity;
-        if (RedosComplexity::Exponential !== $verdict && RedosComplexity::Polynomial !== $verdict) {
+        $analysis = $analyzer->analyze($regex);
+        if (RedosComplexity::Exponential !== $analysis->complexity && RedosComplexity::Polynomial !== $analysis->complexity) {
             return [];
         }
 
         $engine = new PcreEngine();
+        // The pattern is the same for every rewrite: what the engine answers
+        // for it is asked once, as far as a rewrite needs it.
+        $answers = $this->answers($regex);
+        $asked = [];
         $repairs = [];
-        foreach ($this->candidates($ast, $regex, $parser) as $candidate) {
+        foreach ($this->candidates($ast, $regex, $parser, $analysis) as $candidate) {
             if (null !== $engine->compile($candidate)) {
                 continue; // the edits are textual: a guard, as none of them breaks a pattern today
             }
 
-            $analysis = $analyzer->analyze($candidate);
-            if (RedosProof::Proven !== $analysis->proof || RedosComplexity::Linear !== $analysis->complexity) {
+            // Most rewrites are dropped here: the proof alone decides, and
+            // nothing of a rewrite is kept in the parser.
+            if (!$analyzer->provesSafe($candidate)) {
                 continue;
             }
 
@@ -108,7 +114,7 @@ final class RedosRepairer
             // do not read a possessive, which may keep what the pattern
             // gives back ("/(x++x+)+y/" refuses "xxy").
             $sameSubjects = $this->sameSubjects($regex, $candidate);
-            if (false === $sameSubjects || (null === $sameSubjects && $this->engineTellsApart($regex, $candidate))) {
+            if (false === $sameSubjects || (null === $sameSubjects && self::engineTellsApart($candidate, $answers, $asked))) {
                 continue;
             }
 
@@ -122,44 +128,66 @@ final class RedosRepairer
     }
 
     /**
-     * The rewrites to try, each once, in order.
+     * The rewrites to try, each once, in order: those of the quantifiers
+     * the analysis blames, then the others, each group in the order it
+     * had: the flattenings, the optimizer's rewrite, the possessives, and
+     * every possessive at once. A quantifier is blamed when a hotspot
+     * covers it or lies in it, the culprit being one of the hotspots: the
+     * loop around a blamed repeat is the one to flatten. None is left out:
+     * a pattern is repaired where the analysis names nothing.
      *
      * @return list<string>
      */
-    private function candidates(RegexNode $ast, string $pattern, RegexParser $parser): array
+    private function candidates(RegexNode $ast, string $pattern, RegexParser $parser, RedosAnalysis $analysis): array
     {
         $source = $ast->source ?? '';
-        $edits = [];
+        // Each edit with its rank: 0 for a blamed quantifier, 1 for another.
+        $flat = [];
         $possessive = [];
         foreach (self::quantifiers($ast->pattern) as $quantifier) {
-            $flat = self::flattened($quantifier, $source);
-            if (null !== $flat) {
-                $edits[] = [$quantifier->getStartPosition(), $quantifier->getEndPosition(), $flat];
+            $rank = self::blamed($quantifier, $analysis) ? 0 : 1;
+            $flattened = self::flattened($quantifier, $source);
+            if (null !== $flattened) {
+                $flat[] = [$rank, [$quantifier->getStartPosition(), $quantifier->getEndPosition(), $flattened]];
             }
 
             if (QuantifierType::Greedy === $quantifier->type && \in_array($quantifier->quantifier, ['*', '+'], true)) {
-                $possessive[] = [$quantifier->getEndPosition(), $quantifier->getEndPosition(), '+'];
+                $possessive[] = [$rank, [$quantifier->getEndPosition(), $quantifier->getEndPosition(), '+']];
             }
         }
 
         $closing = Delimiters::closing($ast->delimiter);
         $wrap = static fn (string $body): string => $ast->delimiter.$body.$closing.$ast->flags;
 
-        $candidates = [];
-        foreach ($edits as $edit) {
-            $candidates[] = $wrap(self::apply($source, [$edit]));
+        $tries = [];
+        foreach ($flat as [$rank, $edit]) {
+            $tries[] = [$rank, $wrap(self::apply($source, [$edit]))];
         }
         // The optimizer's rewrite, proven to write the same $matches, as the
         // lint's suggestions are: one it cannot prove is no candidate.
-        $candidates[] = (new Optimizer($parser))->optimize($pattern, new OptimizerOptions(verifyWithAutomata: true))->optimized;
-        foreach ($possessive as $edit) {
-            $candidates[] = $wrap(self::apply($source, [$edit]));
+        $tries[] = [1, (new Optimizer($parser))->optimize($pattern, new OptimizerOptions(verifyWithAutomata: true))->optimized];
+        foreach ($possessive as [$rank, $edit]) {
+            $tries[] = [$rank, $wrap(self::apply($source, [$edit]))];
         }
+        // The sort is stable: each rank keeps the order it had.
+        usort($tries, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
+        $candidates = array_column($tries, 1);
         if (\count($possessive) > 1) {
-            $candidates[] = $wrap(self::apply($source, $possessive));
+            $candidates[] = $wrap(self::apply($source, array_column($possessive, 1)));
         }
 
         return array_values(array_unique(array_filter($candidates, static fn (string $candidate): bool => $candidate !== $pattern)));
+    }
+
+    private static function blamed(QuantifierNode $quantifier, RedosAnalysis $analysis): bool
+    {
+        foreach ($analysis->hotspots as $hotspot) {
+            if ($quantifier->getStartPosition() < $hotspot->end && $hotspot->start < $quantifier->getEndPosition()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -204,16 +232,17 @@ final class RedosRepairer
     }
 
     /**
-     * @return list<QuantifierNode>
+     * @return \Generator<int, QuantifierNode>
      */
-    private static function quantifiers(NodeInterface $node): array
+    private static function quantifiers(NodeInterface $node): \Generator
     {
-        $found = $node instanceof QuantifierNode ? [$node] : [];
-        foreach ($node->getChildren() as $child) {
-            $found = [...$found, ...self::quantifiers($child)];
+        if ($node instanceof QuantifierNode) {
+            yield $node;
         }
 
-        return $found;
+        foreach ($node->getChildren() as $child) {
+            yield from self::quantifiers($child);
+        }
     }
 
     private function sameSubjects(string $pattern, string $candidate): ?bool
@@ -226,27 +255,22 @@ final class RedosRepairer
     }
 
     /**
-     * Whether the engine answers otherwise for the rewrite on a subject the
-     * automata spell for the pattern: the shortest strings it matches, then
-     * the shortest it rejects, SUBJECTS of each.
+     * What the engine answers for the pattern on the subjects the automata
+     * spell for it: the shortest strings it matches, then the shortest it
+     * rejects, SUBJECTS of each. They end where the automata give up.
+     *
+     * @return \Generator<int, array{string, bool|null}>
      */
-    private function engineTellsApart(string $pattern, string $candidate): bool
+    private function answers(string $pattern): \Generator
     {
         $engine = new PcreEngine();
 
         try {
             $language = $this->solver->language($pattern, new SolverOptions(matchMode: MatchMode::Partial));
-        } catch (ComplexityException) {
-            return false;
-        }
-
-        try {
             foreach ([$language->strings(), $language->nonMembers()] as $subjects) {
                 $read = 0;
                 foreach ($subjects as $subject) {
-                    if ($engine->match($pattern, $subject)->matched !== $engine->match($candidate, $subject)->matched) {
-                        return true;
-                    }
+                    yield [$subject, $engine->match($pattern, $subject)->matched];
 
                     if (++$read >= self::SUBJECTS) {
                         break;
@@ -254,10 +278,38 @@ final class RedosRepairer
                 }
             }
         } catch (ComplexityException) {
-            return false;
+            // The subjects read so far are all there is to ask about.
         }
+    }
 
-        return false;
+    /**
+     * Whether the engine answers otherwise for the rewrite on a subject of
+     * the pattern: those already asked for an earlier rewrite, then the
+     * next ones, read as far as this rewrite needs them.
+     *
+     * @param \Generator<int, array{string, bool|null}> $answers
+     * @param list<array{string, bool|null}>            $asked
+     *
+     * @param-out list<array{string, bool|null}> $asked
+     */
+    private static function engineTellsApart(string $candidate, \Generator $answers, array &$asked): bool
+    {
+        $engine = new PcreEngine();
+        for ($i = 0; ; $i++) {
+            if (!isset($asked[$i])) {
+                if (!$answers->valid()) {
+                    return false;
+                }
+
+                $asked[] = $answers->current();
+                $answers->next();
+            }
+
+            [$subject, $matched] = $asked[$i];
+            if ($matched !== $engine->match($candidate, $subject)->matched) {
+                return true;
+            }
+        }
     }
 
     private function sameMatches(string $pattern, string $candidate): ?bool

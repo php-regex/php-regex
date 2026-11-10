@@ -195,13 +195,16 @@ final class CompiledSize
      * Where PCRE reports a pattern too large to compile: at its end up to
      * PCRE2 10.46, at offset 0 on 10.47. From 10.48 the check made where a
      * group or the pattern ends sets no offset, so a pattern that only that
-     * check finds too large is reported at its end again.
+     * check finds too large is reported at its end again. The PCRE2 10.40
+     * PHP bundles from 8.2.35 reports at offset 0 a branch that passes the
+     * limit with those before it, and at the end what any other check
+     * finds.
      */
     public function errorOffset(): int
     {
         $end = \strlen($this->regex->source ?? '');
         if (!$this->target->supports(PcreFeature::TooLargeAtPatternStart)) {
-            return $end;
+            return $this->target->measuresBranchesApart() && $this->length()->passedWhereABranchEnds($this->regex->pattern) ? 0 : $end;
         }
 
         // On 10.47 a class whose lists pass the limit as it is compiled is

@@ -32,6 +32,12 @@ use PHPUnit\Framework\TestCase;
  * 10.47 each item is checked with the branches before it in its group; from
  * 10.48 with its own branch, and the branches before it where the next one
  * starts. Every row was run through pcre2test 10.32 to 10.49.
+ *
+ * PHP 8.2.35 bundles PCRE2 10.40 with the fixes PCRE2 keeps for that
+ * release, the one that makes 10.48 check each branch on its own among
+ * them: its rows were run on PHP 8.2.35. Only the check made where a branch
+ * ends and another follows reports offset 0 there; the others report the
+ * end of the pattern, as 10.40 does.
  */
 final class PatternTooLargeErrorOrderTest extends TestCase
 {
@@ -44,21 +50,6 @@ final class PatternTooLargeErrorOrderTest extends TestCase
         '\\K is not allowed in lookarounds (but see PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK)' => ErrorCode::KeepInLookaround,
         // Before PHP 8.2, which reads no "n" flag.
         "Unknown modifier 'n'" => ErrorCode::FlagUnknown,
-    ];
-
-    /**
-     * Where the PCRE2 10.40 PHP 8.2 bundles answers otherwise than the
-     * library reads that release, with the engine's own answer: PHP 8.3's
-     * 10.42, and a system 10.40, answer as the library does. An engine that
-     * gives this answer is not held to the library's until the library
-     * reads it so.
-     */
-    private const PHP_BUNDLED_10_40_DIVERGENCES = [
-        '/(?:[^a]){5000}|(?:[^a]){4000}\\k<n>(?:[^a]){1000}/' => 'reference to non-existent subpattern at offset 32',
-        '/(?:(?:[^a]){5000}|(?:[^a]){4000}\\k<n>(?:[^a]){1000})/' => 'reference to non-existent subpattern at offset 35',
-        '/(?:[^a]){8190}aaa\\d|\\k<n>/' => 'regular expression is too large at offset 0',
-        '/(?:[^a]){8190}aaa\\d\\d|\\k<n>/' => 'regular expression is too large at offset 0',
-        '/\\d|b(?:(?:[^a]){8189})|(?:[^a]){8191}\\g{7}/' => 'reference to non-existent subpattern at offset 41',
     ];
 
     #[Test]
@@ -145,6 +136,27 @@ final class PatternTooLargeErrorOrderTest extends TestCase
         // An assertion as the condition is checked before the branches.
         yield 'reference by name after a condition past the limit, 10.32' => ['pattern' => '/(?(?=(?:[^a]){8634})\\k<n>)/', 'php' => '7.3', 'release' => '10.32', 'offset' => 26];
         yield 'reference by name after a condition past the limit, 10.48' => ['pattern' => '/(?(?=(?:[^a]){8634})\\k<n>)/', 'php' => '8.5', 'release' => '10.48', 'offset' => 0];
+        // The PCRE2 10.40 PHP bundles from 8.2.35: a branch is added to those
+        // before it, the end marker included, where the next one starts, and
+        // that check alone reports offset 0.
+        yield 'branch at the limit with the brackets but not the end marker, PHP 8.2.35' => ['pattern' => '/(?:[^a]){8190}aaa\\d|\\k<n>/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'branch one unit past the limit with the brackets, PHP 8.2.35' => ['pattern' => '/(?:[^a]){8190}aaa\\d\\d|\\k<n>/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'branch one unit past the limit with the brackets, PHP 8.2.99' => ['pattern' => '/(?:[^a]){8190}aaa\\d\\d|\\k<n>/', 'php' => '8.2.99', 'release' => '10.40', 'offset' => 0];
+        yield 'second branch past the limit with the first where it ends, PHP 8.2.35' => ['pattern' => '/x|(?:[^a]){8190}a\\d|\\k<n>/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'branch of a group one unit past the limit with the brackets, PHP 8.2.35' => ['pattern' => '/(c)(?:(?:[^a]){8190}aaa\\d\\d|\\k<n>)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        // Its other checks set no offset, as on 10.40: the item past the
+        // limit in its own branch, the letter, the condition, and the last
+        // branch where the group ends.
+        yield 'reference by name after the item past the limit, PHP 8.2.35' => ['pattern' => '/(c)(?:[^a]){8634}|\\k<n>/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 23];
+        yield 'reference by name after the letter past the limit, PHP 8.2.35' => ['pattern' => '/(?:[^a]){8190}aaaaaa\\k<n>/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 25];
+        yield 'reference by name after a condition past the limit, PHP 8.2.35' => ['pattern' => '/(?(?=(?:[^a]){8634})\\k<n>)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 26];
+        yield 'reference by name after a group past the limit where it ends, PHP 8.2.35' => ['pattern' => '/(c)(?:(?:[^a]){8000}|(?:[^a]){8000})\\k<n>/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 41];
+        // PHP 8.2.34 bundles the 10.40 PCRE2 released, and no other PHP
+        // bundles 10.40: judged as that release.
+        yield 'branch one unit past the limit with the brackets, PHP 8.2.34' => ['pattern' => '/(?:[^a]){8190}aaa\\d\\d|\\k<n>/', 'php' => '8.2.34', 'release' => '10.40', 'offset' => 27];
+        yield 'branch one unit past the limit with the brackets, PHP 8.3 with 10.40' => ['pattern' => '/(?:[^a]){8190}aaa\\d\\d|\\k<n>/', 'php' => '8.3', 'release' => '10.40', 'offset' => 27];
+        yield 'branch one unit past the limit with the brackets, PHP 8.2.35 with 10.42' => ['pattern' => '/(?:[^a]){8190}aaa\\d\\d|\\k<n>/', 'php' => '8.2.35', 'release' => '10.42', 'offset' => 27];
+        yield 'second branch past the limit with the first, before a reference, PHP 8.2.34' => ['pattern' => '/(?:[^a]){5000}|(?:[^a]){4000}\\k<n>(?:[^a]){1000}/', 'php' => '8.2.34', 'release' => '10.40', 'offset' => 48];
         yield 'scan of a missing group after the item past the limit, 10.47' => ['pattern' => '/(?:[^a]){8634}|(*scs:(5)a)/', 'php' => '8.5', 'release' => '10.47', 'offset' => 0];
         // Up to 10.47 the lists of a class are checked as it is compiled.
         yield 'reference by name after a class whose lists pass the limit, 10.47' => ['pattern' => '/'.str_repeat('[\\x{100}a]', 1637).str_repeat('[\\x{100}\\x{300}\\x{500}\\x{700}\\x{900}\\x{B00}\\x{D00}a]', 2).'\\k<n>/u', 'php' => '8.5', 'release' => '10.47', 'offset' => 16479];
@@ -171,6 +183,14 @@ final class PatternTooLargeErrorOrderTest extends TestCase
         // A reference PCRE2 reports at the end of the pattern is met where it
         // stands, before the check made where the pattern ends.
         yield 'reference by number reported at the end, before the check where the pattern ends, 10.48' => ['pattern' => '/\\d|b(?:(?:[^a]){8189})|(?:[^a]){8191}\\g{7}/', 'php' => '8.5', 'release' => '10.48', 'error' => ErrorCode::BackrefMissingGroup, 'offset' => 42];
+        // The PCRE2 10.40 PHP bundles from 8.2.35 checks an item with its own
+        // branch: the reference is met before the limit is passed.
+        yield 'second branch past the limit with the first, before a reference, PHP 8.2.35' => ['pattern' => '/(?:[^a]){5000}|(?:[^a]){4000}\\k<n>(?:[^a]){1000}/', 'php' => '8.2.35', 'release' => '10.40', 'error' => ErrorCode::BackrefMissingNamedGroup, 'offset' => 32];
+        yield 'second branch past the limit with the first, in a group, before a reference, PHP 8.2.35' => ['pattern' => '/(?:(?:[^a]){5000}|(?:[^a]){4000}\\k<n>(?:[^a]){1000})/', 'php' => '8.2.35', 'release' => '10.40', 'error' => ErrorCode::BackrefMissingNamedGroup, 'offset' => 35];
+        yield 'reference by number before the check where the pattern ends, PHP 8.2.35' => ['pattern' => '/\\d|b(?:(?:[^a]){8189})|(?:[^a]){8191}\\g{7}/', 'php' => '8.2.35', 'release' => '10.40', 'error' => ErrorCode::BackrefMissingGroup, 'offset' => 41];
+        yield 'branch one unit under the limit with the end marker, PHP 8.2.35' => ['pattern' => '/(?:[^a]){8190}aa\\d|\\k<n>/', 'php' => '8.2.35', 'release' => '10.40', 'error' => ErrorCode::BackrefMissingNamedGroup, 'offset' => 22];
+        yield 'branch of a group at the limit with the brackets, PHP 8.2.35' => ['pattern' => '/(c)(?:(?:[^a]){8190}aaa\\d|\\k<n>)/', 'php' => '8.2.35', 'release' => '10.40', 'error' => ErrorCode::BackrefMissingNamedGroup, 'offset' => 29];
+        yield 'branch at the limit with the brackets but not the end marker, PHP 8.2.34' => ['pattern' => '/(?:[^a]){8190}aaa\\d|\\k<n>/', 'php' => '8.2.34', 'release' => '10.40', 'error' => ErrorCode::BackrefMissingNamedGroup, 'offset' => 23];
         // The first "\K" met in a lookaround is refused before a reference
         // after it.
         yield 'keep in a lookahead before a reference to a missing name, 10.47' => ['pattern' => '/(?=\\K\\k<n>)/', 'php' => '8.5', 'release' => '10.47', 'error' => ErrorCode::KeepInLookaround, 'offset' => 11];
@@ -217,7 +237,8 @@ final class PatternTooLargeErrorOrderTest extends TestCase
     /**
      * The rows hold the error each PHP and PCRE2 target reports; the
      * running engine is one more target: what PHP refuses the pattern with
-     * here is what the library reports for this PHP and this PCRE2.
+     * here is what the library reports for this PHP, its patch release
+     * included, and this PCRE2.
      */
     private function assertMatchesTheRunningEngine(string $pattern): void
     {
@@ -225,13 +246,8 @@ final class PatternTooLargeErrorOrderTest extends TestCase
         $this->assertNotNull($refused, 'Oracle: the running engine refuses '.$pattern);
         $engine = PcreMessageCodes::read($refused);
         $release = implode('.', \array_slice(explode('.', explode(' ', \PCRE_VERSION)[0]), 0, 2));
-        // The PCRE2 10.40 PHP 8.2 bundles answers these as listed; a system
-        // 10.40 answers as the library reads that release, checked below.
-        if ('10.40' === $release && (self::PHP_BUNDLED_10_40_DIVERGENCES[$pattern] ?? null) === \sprintf('%s at offset %d', $engine['message'], $engine['offset'] ?? -1)) {
-            return;
-        }
-
-        $result = self::validate($pattern, \PHP_MAJOR_VERSION.'.'.\PHP_MINOR_VERSION, $release);
+        // With its patch release: the PCRE2 a PHP bundles may change in one.
+        $result = self::validate($pattern, \PHP_MAJOR_VERSION.'.'.\PHP_MINOR_VERSION.'.'.\PHP_RELEASE_VERSION, $release);
 
         $codes = isset(self::UNTABLED_MESSAGES[$engine['message']]) ? [self::UNTABLED_MESSAGES[$engine['message']]->value] : PcreMessageCodes::codesFor($engine['message'], $release);
         $this->assertContains($result->errorCode?->value, $codes, \sprintf('Oracle: %s; the library: %s', $refused, (string) $result->error));
