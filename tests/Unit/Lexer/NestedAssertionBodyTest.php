@@ -52,6 +52,11 @@ final class NestedAssertionBodyTest extends TestCase
     #[DataProvider('provideBodiesNestedDeep')]
     public function test_parser_reads_a_nested_body_as_it_did_from_a_copy(string $pattern, string $release, bool $compiles, array|string $tokens, string $tree, ?string $error): void
     {
+        // The engine the row was recorded on is asked first, where it runs.
+        if (str_starts_with(\PCRE_VERSION, $release.' ')) {
+            $this->assertSame($compiles, false !== @preg_match($pattern, ''), 'engine');
+        }
+
         $parser = self::parserFor($release);
 
         try {
@@ -74,15 +79,6 @@ final class NestedAssertionBodyTest extends TestCase
 
         $this->assertSame($compiles, $result->isValid, (string) $result->error);
         $this->assertSame($error, $result->isValid ? null : \sprintf('%s@%s: %s', $result->errorCode?->value, $result->offset ?? '-', $result->error), 'error');
-    }
-
-    #[Test]
-    #[DataProvider('provideEngineVerdicts')]
-    public function test_engine_compiles_a_nested_body_as_recorded(string $pattern, string $release, bool $compiles): void
-    {
-        $this->requiresPcre2Release($release, addcslashes($pattern, "\0..\37\177..\377"));
-
-        $this->assertSame($compiles, false !== @preg_match($pattern, ''));
     }
 
     /**
@@ -143,16 +139,6 @@ final class NestedAssertionBodyTest extends TestCase
                 'tree' => '47795e75804a001a',
                 'error' => 'regex.group.nested_too_deep@1506: Parentheses are nested too deeply: PCRE allows at most 250 levels.',
             ];
-        }
-    }
-
-    /**
-     * @return iterable<string, array{pattern: string, release: string, compiles: bool}>
-     */
-    public static function provideEngineVerdicts(): iterable
-    {
-        foreach ([...self::provideNestedBodies(), ...self::provideBodiesNestedDeep()] as $name => $row) {
-            yield $name => ['pattern' => $row['pattern'], 'release' => $row['release'], 'compiles' => $row['compiles']];
         }
     }
 
