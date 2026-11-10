@@ -130,34 +130,46 @@ final class ImpossibleBoundaryRuleTest extends TestCase
      *
      * The questions are counted where each of them lands: it looks its two
      * patterns up in the DFA cache of the run. Two hundred boundaries ask
-     * what one asks.
+     * what one asks, and each is reported when the engine matches nothing:
+     * $subject is what one boundary matches, null when it never holds.
      */
     #[Test]
     #[DataProvider('provideRepeatedBoundaries')]
-    public function test_many_boundaries_under_u_ask_the_automata_what_one_boundary_asks(string $boundary, int $questions, int $reported): void
+    public function test_many_boundaries_under_u_ask_the_automata_what_one_boundary_asks(string $boundary, int $questions, ?string $subject): void
     {
         foreach ([1, 50, 200] as $times) {
+            $pattern = '/'.str_repeat($boundary, $times).'/u';
+
+            // Oracle, PHP 8.4.27 / PCRE2 10.49, and 10.39 to 10.44: the
+            // subject matches, or no subject does.
+            if (null !== $subject) {
+                $this->assertSame(1, preg_match($pattern, str_repeat($subject, $times)), $pattern);
+            }
+            foreach (null === $subject ? [...self::SUBJECTS, '«»'] : [] as $candidate) {
+                $this->assertSame(0, preg_match($pattern, str_repeat($candidate, $times)), \sprintf('%s matches %s', $pattern, json_encode($candidate)));
+            }
+
             $cache = self::countingCache();
             $linter = PatternLinter::withDfaCache([], $cache);
 
-            Regex::create(['cache' => null])->parse('/'.str_repeat($boundary, $times).'/u')->accept($linter);
+            Regex::create(['cache' => null])->parse($pattern)->accept($linter);
 
             $this->assertSame(2 * $questions, $cache->lookups, \sprintf('The lookups of %d boundaries, two per question.', $times));
-            $this->assertCount($reported * $times, array_filter($linter->getIssues(), static fn (RuleViolation $violation): bool => self::ID === $violation->id));
+            $this->assertCount(null === $subject ? $times : 0, array_filter($linter->getIssues(), static fn (RuleViolation $violation): bool => self::ID === $violation->id));
         }
     }
 
     /**
-     * @return iterable<string, array{boundary: string, questions: int, reported: int}>
+     * @return iterable<string, array{boundary: string, questions: int, subject: string|null}>
      */
     public static function provideRepeatedBoundaries(): iterable
     {
-        yield 'ASCII letter beside a dot' => ['boundary' => 'a\b.', 'questions' => 0, 'reported' => 0];
-        yield 'two ASCII letters' => ['boundary' => 'a\bb', 'questions' => 0, 'reported' => 1];
+        yield 'ASCII letter beside a dot' => ['boundary' => 'a\b.', 'questions' => 0, 'subject' => 'a!'];
+        yield 'two ASCII letters' => ['boundary' => 'a\bb', 'questions' => 0, 'subject' => null];
         // Whether "é" is within "\w": it is.
-        yield 'non-ASCII letter met again' => ['boundary' => 'é\bx', 'questions' => 1, 'reported' => 1];
+        yield 'non-ASCII letter met again' => ['boundary' => 'é\bx', 'questions' => 1, 'subject' => null];
         // Whether each is within "\w", then whether it shares nothing with it.
-        yield 'non-ASCII non-word characters met again' => ['boundary' => '«\b»', 'questions' => 4, 'reported' => 1];
+        yield 'non-ASCII non-word characters met again' => ['boundary' => '«\b»', 'questions' => 4, 'subject' => null];
     }
 
     /**
