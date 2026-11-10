@@ -74,6 +74,28 @@ final class TranspileCommandOutputTest extends TestCase
     }
 
     /**
+     * Without u "\S" takes one byte in PCRE and one character in JavaScript:
+     * the warning gets its block, and under u there is none.
+     */
+    #[Test]
+    public function test_console_warns_of_a_set_that_takes_a_byte_without_u(): void
+    {
+        // Oracle: "é" is two bytes to "\S", and one character under u.
+        $this->assertSame(0, preg_match('/^\S$/D', 'é'));
+        $this->assertSame(1, preg_match('/^\S$/Du', 'é'));
+
+        [$status, $display] = $this->transpile(['pattern' => '/^\S$/D', '--target' => 'javascript']);
+
+        $this->assertSame(0, $status);
+        $this->assertStringContainsString('[WARNING] Without the u flag "\S" at offset 1 takes one byte in PCRE', $display);
+
+        [$status, $display] = $this->transpile(['pattern' => '/^\S$/Du', '--target' => 'javascript']);
+
+        $this->assertSame(0, $status);
+        $this->assertStringNotContainsString('[WARNING]', $display);
+    }
+
+    /**
      * Called from code with an ArrayInput, the pattern argument may hold a
      * value that is no string: a usage error, the envelope in JSON mode.
      */

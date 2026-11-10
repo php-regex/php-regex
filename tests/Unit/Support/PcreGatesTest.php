@@ -294,6 +294,32 @@ final class PcreGatesTest extends TestCase
         $this->assertLessThan(80500, \PHP_VERSION_ID);
     }
 
+    /**
+     * PCRE2 gives the captures a subroutine call set their earlier values
+     * back. The interpreter of the PCRE2 10.42 that Ubuntu 24.04 packages
+     * keeps those of the groups inside the called one, where its own JIT,
+     * the 10.42 PHP bundles and the later releases give them back: the gate
+     * follows what the interpreter of the running engine writes.
+     */
+    #[Test]
+    public function test_the_call_captures_gate_follows_what_the_interpreter_writes(): void
+    {
+        $this->assertSame(1, preg_match('/(*NO_JIT)(?(DEFINE)(?<pair>(\d)(\d)))((?&pair)(?&pair))/', '1234', $written));
+        $inside = [$written[2], $written[3]];
+        $this->assertContains($inside, [['', ''], ['3', '4']], 'The two answers engines give.');
+
+        try {
+            $this->requiresCallCapturesGivenBack('/(?&pair)/');
+            $this->assertSame(['', ''], $inside, 'The gate let through an engine that keeps the captures of a call.');
+        } catch (SkippedWithMessageException $skip) {
+            $this->assertSame(['3', '4'], $inside, 'The gate skipped on an engine that gives the captures of a call back.');
+            $this->assertSame(
+                \sprintf('%s reads the groups inside a called one, and the interpreter of PCRE2 %s keeps what a call captured in them.', '/(?&pair)/', \PCRE_VERSION),
+                $skip->getMessage(),
+            );
+        }
+    }
+
     #[Test]
     public function test_a_pattern_the_engine_accepts_does_not_skip(): void
     {

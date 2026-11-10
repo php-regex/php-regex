@@ -16,6 +16,19 @@ name: CI
 # to say at once; the last job names the stage that stopped the run. The
 # workflows called here hold the jobs, and keep their run by hand and, for
 # those that have one, their weekly run.
+#
+# The coverage and the mutation score stop nothing: the matrix waits for
+# the reference alone. Their job is the longest of a pull request, and a
+# stage that waited for it would hold every pull request for a number that
+# fails the last job all the same.
+#
+# The runners are shared by every open pull request: the matrices run a
+# part of their cells at once, and a pull request reads the latest PCRE2 on
+# one PHP, the macOS runners being the fewest.
+#
+# The last job is the check to require of a pull request, CI. One that
+# changes nothing but what is ignored below does not start this workflow:
+# ci-prose.yml reports CI for it, from the same list.
 
 on:
   pull_request:
@@ -24,6 +37,7 @@ on:
     # changes only what is listed here runs the spelling check, and the
     # documentation tests and the link check when the prose or the site
     # changes. A merge into 2.x runs nothing: its pull request already did.
+    # ci-prose.yml starts on this list, line for line.
     paths-ignore:
       - 'docs/**'
       - 'art/**'
@@ -150,7 +164,8 @@ jobs:
 
   coverage:
     # The longest answer of a pull request, and the one that most often
-    # says no: it starts with the reference and waits for nothing else.
+    # says no: it starts with the reference and waits for nothing else,
+    # and the matrix does not wait for it.
     name: Coverage
     needs: [ static-analysis, backward-compatibility ]
     uses: ./.github/workflows/coverage.yml
@@ -168,6 +183,10 @@ jobs:
     name: Engines
     needs: reference
     uses: ./.github/workflows/engines.yml
+    with:
+      # A pull request reads the latest PCRE2 on one PHP: the macOS runners
+      # are five for every open pull request. A run by hand reads them all.
+      pull-request: ${{ github.event_name == 'pull_request' }}
 
   twin:
     name: php74 twin

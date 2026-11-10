@@ -317,7 +317,7 @@
         "groupNames": {
             "1": "date"
         },
-        "explain": "Regex matches (with flags: m)\n  Anchor: the start of a line: the start of the subject, or just after a newline (\\n) that does not end it\n  Capturing group (named: 'date')\n    Character Type: A digit: [0-9] (exactly 4 times)\n  End group\n  '-'\n  Capturing group\n    Character Type: A digit: [0-9] (exactly 2 times)\n  End group\n  '-'\n  Capturing group\n    Character Type: A digit: [0-9] (exactly 2 times)\n  End group\n  Anchor: the end of a line: just before a newline (\\n), or at the end of the subject",
+        "explain": "Regex matches (with flags: m)\n  Anchor: the start of a line: the start of the subject, or just after a newline (\\n) that does not end it\n  Capturing group (named: 'date')\n    Character Type: A digit [0-9], exactly 4 times\n  End group\n  '-'\n  Capturing group\n    Character Type: A digit [0-9], exactly 2 times\n  End group\n  '-'\n  Capturing group\n    Character Type: A digit [0-9], exactly 2 times\n  End group\n  Anchor: the end of a line: just before a newline (\\n), or at the end of the subject",
         "errors": [],
         "engineError": null,
         "matches": {

@@ -13,10 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
+use PHPRegex\Automata\Model\Dfa;
+use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
-use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -126,30 +127,78 @@ final class ImpossibleBoundaryRuleTest extends TestCase
      * Under /u the automata read "\w" over the whole of Unicode, which
      * takes time to build: an ASCII literal or a dot beside a boundary is
      * decided without them, and an atom met again is not asked twice.
+     *
+     * The questions are counted where each of them lands: it looks its two
+     * patterns up in the DFA cache of the run. Two hundred boundaries ask
+     * what one asks, and each is reported when the engine matches nothing:
+     * $subject is what one boundary matches, null when it never holds.
      */
     #[Test]
     #[DataProvider('provideRepeatedBoundaries')]
-    public function test_many_boundaries_under_u_are_linted_quickly(string $pattern, int $reported): void
+    public function test_many_boundaries_under_u_ask_the_automata_what_one_boundary_asks(string $boundary, int $questions, ?string $subject): void
     {
-        $tree = Regex::create(['cache' => null])->parse($pattern);
+        foreach ([1, 50, 200] as $times) {
+            $pattern = '/'.str_repeat($boundary, $times).'/u';
 
-        $start = CpuClock::nanoseconds();
-        $linter = new PatternLinter();
-        $tree->accept($linter);
-        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+            // Oracle, PHP 8.4.27 / PCRE2 10.49, and 10.39 to 10.44: the
+            // subject matches, or no subject does.
+            if (null !== $subject) {
+                $this->assertSame(1, preg_match($pattern, str_repeat($subject, $times)), $pattern);
+            }
+            foreach (null === $subject ? [...self::SUBJECTS, '«»'] : [] as $candidate) {
+                $this->assertSame(0, preg_match($pattern, str_repeat($candidate, $times)), \sprintf('%s matches %s', $pattern, json_encode($candidate)));
+            }
 
-        $this->assertLessThan(0.5, $seconds);
-        $this->assertCount($reported, array_filter($linter->getIssues(), static fn (RuleViolation $violation): bool => self::ID === $violation->id));
+            $cache = self::countingCache();
+            $linter = PatternLinter::withDfaCache([], $cache);
+
+            Regex::create(['cache' => null])->parse($pattern)->accept($linter);
+
+            $this->assertSame(2 * $questions, $cache->lookups, \sprintf('The lookups of %d boundaries, two per question.', $times));
+            $this->assertCount(null === $subject ? $times : 0, array_filter($linter->getIssues(), static fn (RuleViolation $violation): bool => self::ID === $violation->id));
+        }
     }
 
     /**
-     * @return iterable<string, array{pattern: string, reported: int}>
+     * @return iterable<string, array{boundary: string, questions: int, subject: string|null}>
      */
     public static function provideRepeatedBoundaries(): iterable
     {
-        yield 'ASCII letter beside a dot' => ['pattern' => '/'.str_repeat('a\b.', 50).'/u', 'reported' => 0];
-        yield 'two ASCII letters' => ['pattern' => '/'.str_repeat('a\bb', 50).'/u', 'reported' => 50];
-        yield 'non-ASCII letter met again' => ['pattern' => '/'.str_repeat('é\bx', 50).'/u', 'reported' => 50];
+        yield 'ASCII letter beside a dot' => ['boundary' => 'a\b.', 'questions' => 0, 'subject' => 'a!'];
+        yield 'two ASCII letters' => ['boundary' => 'a\bb', 'questions' => 0, 'subject' => null];
+        // Whether "é" is within "\w": it is.
+        yield 'non-ASCII letter met again' => ['boundary' => 'é\bx', 'questions' => 1, 'subject' => null];
+        // Whether each is within "\w", then whether it shares nothing with it.
+        yield 'non-ASCII non-word characters met again' => ['boundary' => '«\b»', 'questions' => 4, 'subject' => null];
+    }
+
+    /**
+     * A DFA cache that counts the times it is looked into.
+     *
+     * @return DfaCacheInterface&object{lookups: int}
+     */
+    private static function countingCache(): DfaCacheInterface
+    {
+        return new class implements DfaCacheInterface {
+            public int $lookups = 0;
+
+            /**
+             * @var array<string, Dfa>
+             */
+            private array $dfas = [];
+
+            public function get(string $key): ?Dfa
+            {
+                $this->lookups++;
+
+                return $this->dfas[$key] ?? null;
+            }
+
+            public function set(string $key, Dfa $dfa): void
+            {
+                $this->dfas[$key] = $dfa;
+            }
+        };
     }
 
     private function violation(string $pattern): ?RuleViolation

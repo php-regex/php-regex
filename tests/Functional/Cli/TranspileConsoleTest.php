@@ -31,6 +31,10 @@ final class TranspileConsoleTest extends TestCase
     {
         // Oracle: "\77" is the octal escape of "?", "\h" a horizontal space.
         $this->assertSame(1, preg_match('/\77\h/m', 'a? b'));
+        // Without u "\h" takes the byte 0xA0, where the target takes U+00A0, two bytes.
+        $this->assertSame(1, preg_match('/\77\h/m', "?\xA0"));
+        $this->assertSame(0, preg_match('/\77\h/m', "?\u{A0}"));
+        $this->assertSame(1, preg_match('/\77\h/mu', "?\u{A0}"));
 
         [$code, $stdout] = $this->runRegex(['transpile', '/\77\h/m']);
 
@@ -39,11 +43,41 @@ final class TranspileConsoleTest extends TestCase
         $this->assertStringEndsWith(
             "\n  Warnings:\n"
             ."   - Converted octal escape to hex/Unicode escape for JavaScript.\n"
+            ."   - Without the u flag \"\h\" at offset 3 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.\n"
             ."\n  Notes:\n"
             ."   - Converted \\h (horizontal whitespace) to character class.\n"
             ."   - Applied /m: \"^\" and \"$\" are written for lines ended by \"\\n\" alone, as PCRE reads them.\n",
             $stdout,
         );
+    }
+
+    /**
+     * Without u a set that reaches past ASCII takes one byte in PCRE and
+     * one character in the target: the JSON document says so once, for the
+     * first such set, and not at all under u.
+     */
+    #[Test]
+    public function test_transpile_json_warns_once_of_a_set_that_takes_a_byte_without_u(): void
+    {
+        // Oracle: "é" is two bytes to the dot, and one character under u.
+        $this->assertSame(0, preg_match('/^.[^a]$/D', 'éb'));
+        $this->assertSame(1, preg_match('/^.[^a]$/Du', 'éb'));
+
+        [$code, $stdout] = $this->runRegex(['transpile', '/^.[^a]$/D', '--target=python', '--json']);
+
+        $this->assertSame(0, $code);
+        $document = json_decode($stdout, true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($document);
+        $this->assertSame("r'(?a)^.[^a]\\Z'", $document['literal'] ?? null);
+        $this->assertSame(['Without the u flag "." at offset 1 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.'], $document['warnings'] ?? null);
+
+        [$code, $stdout] = $this->runRegex(['transpile', '/^.[^a]$/Du', '--target=python', '--json']);
+
+        $this->assertSame(0, $code);
+        $document = json_decode($stdout, true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($document);
+        $this->assertSame("r'^.[^a]\\Z'", $document['literal'] ?? null);
+        $this->assertSame([], $document['warnings'] ?? null);
     }
 
     #[Test]

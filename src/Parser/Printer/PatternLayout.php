@@ -81,6 +81,13 @@ final class PatternLayout
      */
     public const TRAIL = "\x01TRAILING-COMMENT\x02";
 
+    /**
+     * Where a "#" comment ends on a line, until the last pass has read the
+     * lines: the comment's text comes from the tree, so what a line ends in
+     * is known to be a comment or code without reading the line again.
+     */
+    public const COMMENT_END = "\x01COMMENT-END\x02";
+
     private const INDENT = '    ';
 
     /**
@@ -123,6 +130,13 @@ final class PatternLayout
     private bool $sawLineComment = false;
 
     /**
+     * The marker written after each "#" comment of a laid-out pattern; ''
+     * for a pattern written on one line and once the pattern is rendered:
+     * what is written then gets no last pass.
+     */
+    private string $commentEnd;
+
+    /**
      * @param int              $width            the width a line aims at, indent included
      * @param bool             $countsCodePoints whether widths count code points (u, or a
      *                                           leading (*UTF)) or bytes
@@ -130,6 +144,8 @@ final class PatternLayout
      *                                           from, which tells where comments stood
      * @param non-empty-string $trail            the marker of a trailing comment: a
      *                                           text the pattern does not hold
+     * @param non-empty-string $commentEnd       the marker of the end of a "#" comment:
+     *                                           a text the pattern does not hold
      * @param bool             $active           whether the pattern is laid out, from
      *                                           the first indent level on, or written on one line;
      *                                           false too while a part of a laid-out pattern is
@@ -141,10 +157,12 @@ final class PatternLayout
         private readonly bool $countsCodePoints,
         private readonly ?string $source,
         private readonly string $trail,
+        string $commentEnd,
         private bool $active,
     ) {
         $this->indentLevel = $this->active ? 1 : 0;
         $this->parentBroke = $this->active;
+        $this->commentEnd = $this->active ? $commentEnd : '';
     }
 
     /**
@@ -195,20 +213,29 @@ final class PatternLayout
      * consecutive lines line up on one column, the way gofmt aligns them.
      * Prefixes wider than 120 columns use a two-space gap instead.
      * A line ending in an escaped space ends in "\x20" instead, which an
-     * editor stripping trailing spaces leaves alone.
+     * editor stripping trailing spaces leaves alone. A line ending in a "#"
+     * comment is kept as written: PCRE reads no escape there, so the space
+     * is not the pattern's.
      *
-     * @param non-empty-string $trail the marker the layout wrote before each trailing comment
+     * @param non-empty-string $trail      the marker the layout wrote before each trailing comment
+     * @param non-empty-string $commentEnd the marker the layout wrote after each "#" comment
      */
-    public static function finishLines(string $text, string $trail, bool $countsCodePoints): string
+    public static function finishLines(string $text, string $trail, string $commentEnd, bool $countsCodePoints): string
     {
         $lines = explode("\n", $text);
+        foreach ($lines as $i => $line) {
+            // A line ending in a comment ends in a marker, not in a space;
+            // the markers then go, before any column is counted.
+            if (!str_contains($line, $trail) && self::endsInEscapedSpace($line)) {
+                $line = substr($line, 0, -2).'\\x20';
+            }
+
+            $lines[$i] = str_replace($commentEnd, '', $line);
+        }
+
         $count = \count($lines);
         for ($i = 0; $i < $count; $i++) {
             if (!str_contains($lines[$i], $trail)) {
-                if (self::endsInEscapedSpace($lines[$i])) {
-                    $lines[$i] = substr($lines[$i], 0, -2).'\\x20';
-                }
-
                 continue;
             }
 
@@ -250,9 +277,17 @@ final class PatternLayout
         return $node === $this->skipNode;
     }
 
-    public function noteLineComment(): void
+    /**
+     * A "#" comment as the pattern being rendered holds it: its text, the
+     * marker of its end, then the line break that ends it. A line of the
+     * layout holds the first two, and the layout breaks the line.
+     */
+    public function lineComment(CommentNode $node): string
     {
         $this->sawLineComment = true;
+        $text = rtrim($node->comment, "\n");
+
+        return $text.$this->commentEnd.($this->active ? '' : substr($node->comment, \strlen($text)));
     }
 
     public function sawLineComment(): bool
@@ -275,6 +310,7 @@ final class PatternLayout
         } finally {
             $this->active = false;
             $this->parentBroke = false;
+            $this->commentEnd = '';
         }
 
         if (!$laidOut) {
@@ -321,7 +357,7 @@ final class PatternLayout
             if (null !== $lead && !$previousLast instanceof CommentNode
                 && !str_contains(substr($result, (int) strrpos($result, "\n")), $this->trail)) {
                 $this->skipNode = $lead;
-                $result .= $this->trail.rtrim($lead->comment, "\n");
+                $result .= $this->trailing($lead);
             }
 
             $first = $alternatives[$i] instanceof SequenceNode ? ($alternatives[$i]->children[0] ?? null) : $alternatives[$i];
@@ -470,7 +506,7 @@ final class PatternLayout
             $lead = $this->leadingSameLineComment($node->child, $node->getStartPosition() + \strlen($opening));
             if (null !== $lead) {
                 $this->skipNode = $lead;
-                $trailing = $this->trail.rtrim($lead->comment, "\n");
+                $trailing = $this->trailing($lead);
             }
 
             $this->indentLevel++;
@@ -1083,13 +1119,22 @@ final class PatternLayout
         if (!$this->sawLineComment && false === strpbrk($text, "\n\r") && $this->fits($text) && $shallow) {
             $this->sawLineComment = true;
 
-            return $text.$this->trail.rtrim($last->comment, "\n");
+            return $text.$this->trailing($last);
         }
 
         $this->printer->restoreScope($scope);
         $this->sawLineComment = $sawLineComment;
 
         return null;
+    }
+
+    /**
+     * A comment trailing the line written before it: the marker of a
+     * trailing comment, its text, the marker of its end.
+     */
+    private function trailing(CommentNode $comment): string
+    {
+        return $this->trail.rtrim($comment->comment, "\n").$this->commentEnd;
     }
 
     /**
