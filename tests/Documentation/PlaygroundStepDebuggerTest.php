@@ -180,6 +180,19 @@ final class PlaygroundStepDebuggerTest extends TestCase
         $this->assertStringContainsString('function traceSeek(answer, direction) {', $section);
         $this->assertStringContainsString('function traceIsStop(answer, index) {', $section);
         $this->assertStringContainsString("input.type = 'checkbox';", $section, 'A stop is a checkbox: the platform\'s own.');
+
+        // Every stop wears its mark twice, in the list and on the timeline,
+        // and unticking it fades both. The capture stop is no exception:
+        // its rows carry the stop's bar, its changes tick the chart's top.
+        $this->assertStringContainsString("(answer.marks.moved[index] ? ' is-capture' : '')", $section, 'A row the capture stop pauses on says so in its class.');
+        $this->assertStringContainsString("text('span', 'visually-hidden', 'Capture changed. '", $section, 'And in words, for a voice.');
+        $this->assertStringContainsString("['is-capture', strokes(answer.marks.capture", $section, 'The chart draws the capture changes along its top.');
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-trace-step\.is-capture \{([^}]*)\}/m', $stylesheet, $mark));
+        $this->assertStringContainsString('box-shadow: inset -2px 0 0 var(--amber);', $mark[1], 'The stop\'s swatch is a bar: the row wears it at its far end.');
+        foreach (['.pg-trace.no-capture .pg-trace-step.is-capture', '.pg-trace.no-capture .pg-trace-chart .is-capture'] as $dimmed) {
+            $this->assertStringContainsString($dimmed, $stylesheet, 'An unticked stop fades everywhere it wears its mark.');
+        }
     }
 
     /**

@@ -6629,12 +6629,18 @@ body.search-open {
   stroke-width: 1;
   stroke-dasharray: 2 2;
 }
+/* A capture that moved ticks the chart's top, the backtracks its floor. */
+.pg-trace-chart .is-capture {
+  stroke: var(--amber);
+  stroke-width: 1.5;
+}
 .pg-trace-chart .is-backtrack {
   stroke: var(--amber-deep);
   stroke-width: 1.5;
 }
 /* A stop the visitor unticked fades on the chart: Resume passes it. */
 .pg-trace.no-attempt .pg-trace-chart .is-attempt,
+.pg-trace.no-capture .pg-trace-chart .is-capture,
 .pg-trace.no-backtrack .pg-trace-chart .is-backtrack {
   opacity: .3;
 }
@@ -6965,6 +6971,22 @@ body.search-open {
 }
 .pg-trace-step.is-current .pg-trace-at {
   color: var(--ink);
+}
+/* A row the capture stop pauses on wears the stop's swatch — the bar of
+   its Breakpoints entry — at its far end, the backtrack's glyph sitting
+   in the gutter; the current row wears both edges. Unticked, the bar
+   fades as the mark on the chart does. */
+.pg-trace-step.is-capture {
+  box-shadow: inset -2px 0 0 var(--amber);
+}
+.pg-trace-step.is-current.is-capture {
+  box-shadow: inset 2px 0 0 var(--amber), inset -2px 0 0 var(--amber);
+}
+.pg-trace.no-capture .pg-trace-step.is-capture:not(.is-current) {
+  box-shadow: none;
+}
+.pg-trace.no-capture .pg-trace-step.is-current.is-capture {
+  box-shadow: inset 2px 0 0 var(--amber);
 }
 .pg-trace-attempt {
   position: sticky;

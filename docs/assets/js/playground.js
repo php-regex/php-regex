@@ -3592,6 +3592,7 @@
       ['is-band', band],
       ['is-line', line],
       ['is-attempt', strokes(answer.marks.attempt.filter(function (index) { return index > 0; }), 0, TRACE_CHART.base)],
+      ['is-capture', strokes(answer.marks.capture, 0, TRACE_CHART.top)],
       ['is-backtrack', strokes(answer.marks.backtrack, TRACE_CHART.floor, TRACE_CHART.base + 6)]
     ].forEach(function (layer) {
       if (!layer[1]) {
@@ -3773,12 +3774,15 @@
         chunks.push(chunk);
         list.appendChild(chunk);
       }
-      var row = text('div', 'pg-trace-step' + (step.flags & 2 ? ' is-backtrack' : ''));
+      var row = text('div', 'pg-trace-step' + (step.flags & 2 ? ' is-backtrack' : '') + (answer.marks.moved[index] ? ' is-capture' : ''));
       row.setAttribute('role', 'listitem');
       row.setAttribute('data-step', String(index));
       row.setAttribute('data-n', String(index + 1));
       if (step.flags & 2) {
         row.appendChild(text('span', 'visually-hidden', 'Backtracked. '));
+      }
+      if (answer.marks.moved[index]) {
+        row.appendChild(text('span', 'visually-hidden', 'Capture changed. '));
       }
       row.appendChild(text('code', step.len ? null : 'is-end', traceItemText(answer, step)));
       row.appendChild(text('span', 'pg-trace-at', typeof step.n === 'number' && step.n !== TRACE_CALLOUT_AUTO ? step.s + ' (callout ' + step.n + ')' : String(step.s)));
