@@ -509,7 +509,9 @@ final class BranchValuesTest extends TestCase
     #[DataProvider('provideCompositionsOfTwoBranchingOperands')]
     public function test_two_branching_operands_leave_the_argument_opaque(string $argument): void
     {
-        $code = self::matcher("\$two = 'a';\n        if (\$flag) {\n            \$two = 'b';\n        }", $argument);
+        // $two is given its two values by one assignment: each operand is
+        // an exact set, and it is their number that leaves nothing read.
+        $code = self::matcher("\$two = \$flag ? 'a' : 'b';", $argument);
 
         $this->assertExtractedByBoth([], $code);
         $this->assertArgumentsReadByBoth([

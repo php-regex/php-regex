@@ -77,6 +77,7 @@ use PhpParser\Node\Stmt\TraitUse;
 use PhpParser\Node\Stmt\TryCatch;
 use PhpParser\Node\Stmt\Unset_;
 use PhpParser\Node\Stmt\While_;
+use PhpParser\NodeFinder;
 use PhpParser\NodeVisitorAbstract;
 
 /**
@@ -99,6 +100,12 @@ final class AstValueCollector extends NodeVisitorAbstract
 
     private const BOUND = 'phpRegexBound';
 
+    private const CALLS = 'phpRegexCalls';
+
+    private const HELD = 'phpRegexHeld';
+
+    private const RUNS_AT = 'phpRegexRunsAt';
+
     private readonly InFileValueResolver $values;
 
     /**
@@ -116,10 +123,23 @@ final class AstValueCollector extends NodeVisitorAbstract
     private array $classes = [];
 
     /**
-     * @var list<bool> whether each body around the node is a closure or an arrow function, which
-     *                 Closure::bind() may give another class and another $this
+     * @var list<list<string>|false|null> for each body around the node: false for one that is no closure; for a
+     *                                    closure or an arrow function, which Closure::bind() may give another
+     *                                    class and another $this, the lowercase functions the call it is
+     *                                    written in may reach, when PHP's own only calls it, or null
      */
-    private array $bound = [];
+    private array $held = [];
+
+    /**
+     * @var list<list<string>> the functions a call a closure is written in may reach, for each such closure
+     */
+    private array $holders = [];
+
+    /**
+     * @var list<list<list<string>>> for each class constant read in closures PHP's functions alone may hold, the
+     *                               functions the call of each closure may reach
+     */
+    private array $closureCalls = [];
 
     /**
      * @var list<bool> whether each body around the node returns by reference: a generator of
@@ -148,6 +168,11 @@ final class AstValueCollector extends NodeVisitorAbstract
      */
     public function enterNode(Node $node)
     {
+        // A closure written in the call is entered after it.
+        if ($node instanceof FuncCall && $node->name instanceof Name) {
+            $this->holdClosures($node, $node->name);
+        }
+
         if ($node instanceof ClassLike) {
             $this->enterClass($node);
         } elseif ($node instanceof Function_ || $node instanceof ClassMethod || $node instanceof Closure || $node instanceof ArrowFunction) {
@@ -157,10 +182,19 @@ final class AstValueCollector extends NodeVisitorAbstract
             // $$name, ${'name'}: any variable of the body.
             if (!\is_string($node->name)) {
                 $this->bailScope();
+            } elseif ('GLOBALS' === $node->name) {
+                $this->values->nameGlobals();
             }
         } elseif ($node instanceof ClassConstFetch || $node instanceof PropertyFetch || $node instanceof NullsafePropertyFetch) {
             $node->setAttribute(self::CLASS_KEY, $this->classKey());
-            $node->setAttribute(self::BOUND, [] !== $this->bound && $this->bound[\count($this->bound) - 1]);
+            $bound = [] !== $this->held && false !== $this->held[\count($this->held) - 1];
+            $node->setAttribute(self::BOUND, $bound);
+            // Out of any closure, the class is the one around the read.
+            $calls = $bound && $node instanceof ClassConstFetch ? $this->callsAround() : null;
+            if (null !== $calls) {
+                $node->setAttribute(self::CALLS, \count($this->closureCalls));
+                $this->closureCalls[] = $calls;
+            }
         } elseif ($node instanceof StaticPropertyFetch && $node->name instanceof Expr) {
             $this->bailScope();
         } elseif ($node instanceof For_ || $node instanceof Foreach_ || $node instanceof While_ || $node instanceof Do_) {
@@ -169,7 +203,14 @@ final class AstValueCollector extends NodeVisitorAbstract
                 // As the tokenizer reads it: such a loop may hold anything.
                 $this->values->jumps($scope);
             } elseif (null !== $scope) {
-                $this->values->loop($scope, $node->getStartFilePos(), $node->getEndFilePos());
+                // What a foreach iterates is read once, before its first
+                // turn: the loop runs again from its "as".
+                $this->values->loop($scope, $node instanceof Foreach_ ? $node->expr->getEndFilePos() + 1 : $node->getStartFilePos(), $node->getEndFilePos());
+                // What a for runs after each turn is written in its head,
+                // and runs after its body.
+                foreach ($node instanceof For_ ? (new NodeFinder())->findInstanceOf($node->loop, Assign::class) : [] as $assign) {
+                    $assign->setAttribute(self::RUNS_AT, $node->getEndFilePos());
+                }
             }
         } elseif ($node instanceof TraitUse) {
             $owner = [] === $this->classes ? null : $this->classes[\count($this->classes) - 1][3];
@@ -196,11 +237,11 @@ final class AstValueCollector extends NodeVisitorAbstract
         if ($node instanceof ClassLike) {
             array_pop($this->classes);
             array_pop($this->scopes);
-            array_pop($this->bound);
+            array_pop($this->held);
             array_pop($this->references);
         } elseif ($node instanceof Function_ || $node instanceof ClassMethod || $node instanceof Closure || $node instanceof ArrowFunction) {
             array_pop($this->scopes);
-            array_pop($this->bound);
+            array_pop($this->held);
             array_pop($this->references);
         } elseif ($node instanceof Yield_ && [] !== $this->references && $this->references[\count($this->references) - 1]) {
             // The caller's foreach may write what is yielded by reference.
@@ -226,11 +267,7 @@ final class AstValueCollector extends NodeVisitorAbstract
         } elseif ($node instanceof AssignOp || $node instanceof PreInc || $node instanceof PreDec || $node instanceof PostInc || $node instanceof PostDec) {
             $this->write($node->var);
         } elseif ($node instanceof Foreach_) {
-            $this->writeEverything($node->keyVar);
-            $this->writeEverything($node->valueVar);
-            if ($node->byRef && !$node->expr instanceof Array_) {
-                $this->iterateByReference($node->expr);
-            }
+            $this->leaveForeach($node);
         } elseif ($node instanceof Catch_) {
             $this->write($node->var);
         } elseif ($node instanceof Unset_) {
@@ -238,6 +275,7 @@ final class AstValueCollector extends NodeVisitorAbstract
                 $this->write($variable);
             }
         } elseif ($node instanceof Global_) {
+            $this->values->nameGlobals();
             foreach ($node->vars as $variable) {
                 $this->write($variable);
             }
@@ -299,6 +337,22 @@ final class AstValueCollector extends NodeVisitorAbstract
 
         if ($expr instanceof Array_) {
             return $this->arrayOf($expr);
+        }
+
+        // $map['word'], self::LIST[0]: an item of an array a variable or a
+        // constant holds. An item of an item, or of a property, is not
+        // followed.
+        if ($expr instanceof ArrayDimFetch) {
+            $array = $expr->var;
+            if (null === $expr->dim || (!$array instanceof Variable && !$array instanceof ConstFetch && !$array instanceof ClassConstFetch)) {
+                return ValueExpr::unknown();
+            }
+
+            $held = $this->expression($array);
+
+            return \in_array($held->kind, [ValueExpr::VARIABLE, ValueExpr::CONSTANT, ValueExpr::CLASS_CONSTANT], true)
+                ? ValueExpr::item($held, $this->expression($expr->dim), max(0, $expr->getStartFilePos()), $expr->getStartLine())
+                : ValueExpr::unknown();
         }
 
         if ($expr instanceof FuncCall) {
@@ -461,7 +515,7 @@ final class AstValueCollector extends NodeVisitorAbstract
 
         $this->classes[] = [$key, $final, $class instanceof Class_ && null !== $class->extends, $owner];
         $this->scopes[] = null;
-        $this->bound[] = false;
+        $this->held[] = false;
         $this->references[] = false;
     }
 
@@ -476,7 +530,8 @@ final class AstValueCollector extends NodeVisitorAbstract
         $outer = $this->scope();
         $scope = $this->nextScope++;
         $this->scopes[] = $scope;
-        $this->bound[] = $function instanceof Closure || $function instanceof ArrowFunction;
+        $holder = $function->getAttribute(self::HELD);
+        $this->held[] = $function instanceof Closure || $function instanceof ArrowFunction ? (\is_int($holder) ? $this->holders[$holder] ?? null : null) : false;
         $this->references[] = $function->byRef;
 
         foreach ($function->params as $param) {
@@ -551,9 +606,14 @@ final class AstValueCollector extends NodeVisitorAbstract
         if ($target instanceof Variable && \is_string($target->name)) {
             $scope = $target->getAttribute(self::SCOPE);
             if (\is_int($scope)) {
-                // A local array of literals proves no pattern either: it is
-                // not built.
-                $this->values->assign($scope, $target->name, $assign->expr instanceof Array_ ? ValueExpr::unknown() : $this->expression($assign->expr), $target->getStartFilePos());
+                $runsAt = $assign->getAttribute(self::RUNS_AT);
+                $this->values->assign(
+                    $scope,
+                    $target->name,
+                    $this->expression($assign->expr),
+                    \is_int($runsAt) ? $runsAt : $target->getStartFilePos(),
+                    \is_int($runsAt) ? $runsAt : $assign->getEndFilePos(),
+                );
             }
 
             return;
@@ -564,6 +624,11 @@ final class AstValueCollector extends NodeVisitorAbstract
 
     private function leaveCall(CallLike $call): void
     {
+        // The code a call of the file level runs may write its variables.
+        if ([] === $this->scopes) {
+            $this->values->call($call->getEndFilePos());
+        }
+
         if ($call instanceof FuncCall && $call->name instanceof Name) {
             // Resolved, a name of one segment is the global function, or the
             // namespace's one PHP falls back from: Foo\extract() is neither.
@@ -605,9 +670,9 @@ final class AstValueCollector extends NodeVisitorAbstract
             if ($value instanceof Variable && 'this' === $value->name) {
                 $this->values->writeAnyProperty($this->classKey());
             } elseif (self::isChain($value) && [] === $byValue) {
-                $this->write($value);
+                $this->write($value, $call->getEndFilePos());
             } elseif (self::isChain($value)) {
-                $this->values->byValue($byValue, fn () => $this->write($value));
+                $this->values->byValue($byValue, fn () => $this->write($value, $call->getEndFilePos()));
             }
         }
     }
@@ -666,14 +731,16 @@ final class AstValueCollector extends NodeVisitorAbstract
     /**
      * Mark what an expression written to may change: the variable at its
      * root, the property names along it.
+     *
+     * @param int|null $at where the call the expression is passed to ends, when a call may write it
      */
-    private function write(?Expr $target): void
+    private function write(?Expr $target, ?int $at = null): void
     {
         while (null !== $target) {
             if ($target instanceof Variable) {
                 $scope = $target->getAttribute(self::SCOPE);
                 if (\is_string($target->name) && \is_int($scope)) {
-                    $this->values->bail($scope, $target->name);
+                    $this->values->bail($scope, $target->name, $at);
                 }
 
                 return;
@@ -739,7 +806,16 @@ final class AstValueCollector extends NodeVisitorAbstract
     {
         if (($expr instanceof PropertyFetch || $expr instanceof NullsafePropertyFetch) && $expr->name instanceof Identifier) {
             $this->write($expr);
-        } elseif ([] !== $this->classes) {
+
+            return;
+        }
+
+        // A variable, or what one leads to: the loop writes its items.
+        if (self::isChain($expr)) {
+            $this->write($expr);
+        }
+
+        if ([] !== $this->classes) {
             $this->values->writeAnyProperty($this->classKey());
         }
     }
@@ -778,13 +854,18 @@ final class AstValueCollector extends NodeVisitorAbstract
 
         $original = $fetch->class->getAttribute('originalName');
         $written = ($original instanceof Name ? $original : $fetch->class)->toCodeString().'::'.$fetch->name->toString();
-        // A closure may be bound to another class: self:: names none.
+        // A closure may be bound to another class: self:: names none,
+        // unless a function of PHP that only calls it holds each closure
+        // around the read.
+        $index = $fetch->getAttribute(self::CALLS);
+        $calls = true === $fetch->getAttribute(self::BOUND) ? (\is_int($index) ? $this->closureCalls[$index] ?? null : null) : [];
         $context = $fetch->getAttribute(self::CLASS_KEY);
-        $context = \is_string($context) && true !== $fetch->getAttribute(self::BOUND) ? $context : null;
+        $context = \is_string($context) && null !== $calls ? $context : null;
+        $calls = null === $context ? [] : $calls ?? [];
 
         return match ($fetch->class->toLowerString()) {
-            'self' => ValueExpr::classConstant($context, $fetch->name->toString(), false, $written),
-            'static' => ValueExpr::classConstant($context, $fetch->name->toString(), true, $written),
+            'self' => ValueExpr::classConstant($context, $fetch->name->toString(), false, $written, $calls),
+            'static' => ValueExpr::classConstant($context, $fetch->name->toString(), true, $written, $calls),
             'parent' => ValueExpr::unknown(),
             default => ValueExpr::classConstant(ValueExpr::classKey($fetch->class->toString()), $fetch->name->toString(), false, $written),
         };
@@ -826,9 +907,90 @@ final class AstValueCollector extends NodeVisitorAbstract
         return ValueExpr::arrayOf($items);
     }
 
+    /**
+     * The function body around the node, or the file level; null in a
+     * class body.
+     */
     private function scope(): ?int
     {
-        return [] === $this->scopes ? null : $this->scopes[\count($this->scopes) - 1];
+        return [] === $this->scopes ? InFileValueResolver::FILE : $this->scopes[\count($this->scopes) - 1];
+    }
+
+    /**
+     * The functions the call of each closure around the node may reach,
+     * from the innermost, up to the body that is no closure; null when
+     * one of them is written in no call of a function of PHP that only
+     * calls its closure: some code may bind it.
+     *
+     * @return list<list<string>>|null
+     */
+    private function callsAround(): ?array
+    {
+        $calls = [];
+        for ($i = \count($this->held) - 1; $i >= 0; $i--) {
+            $holder = $this->held[$i];
+            if (false === $holder) {
+                break;
+            }
+
+            if (null === $holder) {
+                return null;
+            }
+
+            $calls[] = $holder;
+        }
+
+        return $calls;
+    }
+
+    /**
+     * Marks the closures and the arrow functions written as arguments of
+     * a call to a function of PHP that calls them and lets them go, with
+     * the functions the call may reach.
+     */
+    private function holdClosures(FuncCall $call, Name $name): void
+    {
+        $names = self::functionNames($name);
+        if (!isset(InFileValueResolver::CALLING[$names[\count($names) - 1]])) {
+            return;
+        }
+
+        foreach ($call->getRawArgs() as $arg) {
+            if (!$arg instanceof Arg || $arg->unpack) {
+                continue;
+            }
+
+            $value = $arg->value;
+            if (($value instanceof Closure || $value instanceof ArrowFunction) && [] === $value->attrGroups) {
+                $value->setAttribute(self::HELD, \count($this->holders));
+                $this->holders[] = $names;
+            }
+        }
+    }
+
+    /**
+     * A foreach, once its body is read: the head assigns a target that is
+     * a plain variable at each turn, one of the values of what the loop
+     * iterates, or one of its keys. Any other target, one taken by
+     * reference and one of a loop whose end is not known are written
+     * unseen.
+     */
+    private function leaveForeach(Foreach_ $loop): void
+    {
+        $scope = $this->scope();
+        // As the tokenizer reads it: such a loop may hold anything.
+        $iterated = null === $scope || self::runsAControlStructureUnbraced($loop) ? null : $this->expression($loop->expr);
+        foreach ([[$loop->keyVar, true], [$loop->valueVar, false]] as [$target, $isKey]) {
+            if (null !== $iterated && null !== $scope && $target instanceof Variable && \is_string($target->name) && 'this' !== $target->name && ($isKey || !$loop->byRef)) {
+                $this->values->iterate($scope, $target->name, ValueExpr::each($iterated, $isKey), $loop->valueVar->getEndFilePos(), $loop->expr->getEndFilePos() + 1, $loop->getEndFilePos());
+            } else {
+                $this->writeEverything($target);
+            }
+        }
+
+        if ($loop->byRef && !$loop->expr instanceof Array_) {
+            $this->iterateByReference($loop->expr);
+        }
     }
 
     private function classKey(): ?string

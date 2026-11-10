@@ -62,28 +62,44 @@ final class PendingPattern
      * The occurrences the file proves the argument holds, given what it
      * reads as: each where its literal is written. One of another file
      * carries where the argument stands in $content, when $argument says.
+     * One no file writes, a value PHP gives one of its constants, stands
+     * where the argument starts.
      *
      * @param array{int, int}|null $argument the argument's byte offset and length in $content
+     * @param int|null             $start    where the argument starts in $content, the parentheses around the whole
+     *                                       of it left out
      *
      * @return list<PatternOccurrence>
      */
-    public function occurrences(InFileValueResolver $resolver, ValueExpr $value, string $file, string $content, ?array $argument = null): array
+    public function occurrences(InFileValueResolver $resolver, ValueExpr $value, string $file, string $content, ?array $argument = null, ?int $start = null): array
     {
         $occurrences = [];
         foreach ($resolver->patterns($value, $this->function) as $pattern) {
+            $offset = $pattern['offset'];
+            $line = $pattern['line'];
+            if ($offset < 0) {
+                if (null === $start) {
+                    continue;
+                }
+
+                $offset = $start;
+                $line = substr_count($content, "\n", 0, $start) + 1;
+            }
+
             // A literal of another file, read through the project's
             // constants, is reported there, at the column read with it,
             // for the versions the guards of that file keep around it.
             $occurrences[] = (new PatternOccurrence(
                 $pattern['pattern'],
                 $pattern['file'] ?? $file,
-                $pattern['line'],
+                $line,
                 $this->function->source(),
                 location: $pattern['location'],
-                column: null === $pattern['file'] ? self::column($content, $pattern['offset']) : $pattern['column'],
-                fileOffset: $pattern['offset'],
+                column: null === $pattern['file'] ? self::column($content, $offset) : $pattern['column'],
+                fileOffset: $offset,
                 argumentOffset: null === $pattern['file'] ? null : $argument[0] ?? null,
                 argumentLength: null === $pattern['file'] ? null : $argument[1] ?? null,
+                variant: $pattern['variant'],
             ))->guardedBy($pattern['guard']);
         }
 

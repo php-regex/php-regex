@@ -231,25 +231,53 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
     }
 
     /**
-     * The variables the file assigns with a plain "=", whatever the scope,
-     * each with where its "=" stand.
+     * The variables the file assigns, whatever the scope, with a plain
+     * "=" or as the target of a foreach, each with the tokens its values
+     * are read from: [$from, $to), what follows the "=" up to the end of
+     * its statement, $to left null until it is asked for, or what the
+     * loop iterates.
      *
      * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
      *
-     * @return array<string, non-empty-list<int>>
+     * @return array<string, non-empty-list<array{int, int|null}>>
      */
-    private function assignedVariables(array $tokens): array
+    private function assignedVariables(array $tokens, array $closers): array
     {
         $assigned = [];
         foreach ($tokens as $index => $token) {
-            if ('=' !== $token) {
+            if ('=' === $token) {
+                $target = PhpTokens::previousSignificant($tokens, $index - 1);
+                $targetToken = null === $target ? null : $tokens[$target];
+                if (\is_array($targetToken) && \T_VARIABLE === $targetToken[0]) {
+                    $assigned[$targetToken[1]][] = [$index + 1, null];
+                }
+
                 continue;
             }
 
-            $target = PhpTokens::previousSignificant($tokens, $index - 1);
-            $targetToken = null === $target ? null : $tokens[$target];
-            if (\is_array($targetToken) && \T_VARIABLE === $targetToken[0]) {
-                $assigned[$targetToken[1]][] = $index;
+            if (!\is_array($token) || \T_FOREACH !== $token[0]) {
+                continue;
+            }
+
+            // foreach (<iterated> as $key => $value): each target that
+            // is a variable takes its values from what is iterated.
+            $open = PhpTokens::nextSignificant($tokens, $index + 1, \count($tokens));
+            $close = null === $open ? null : $closers[$open] ?? null;
+            if (null === $open || null === $close) {
+                continue;
+            }
+
+            $as = null;
+            for ($i = $open + 1; $i < $close; $i++) {
+                $inner = $tokens[$i];
+                if (\is_array($inner) && \T_AS === $inner[0]) {
+                    $as = $i;
+                } elseif (null !== $as && \is_array($inner) && \T_VARIABLE === $inner[0]) {
+                    $assigned[$inner[1]][] = [$open + 1, $as];
+                } elseif (PhpTokens::opensNesting($inner)) {
+                    $i = $closers[$i] ?? $close;
+                }
             }
         }
 
@@ -305,9 +333,9 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
         $values = [];
         $resolver = null;
         $assigned = null;
-        $pending = $this->pendingRanges($found, $tokens, $assigned);
+        $pending = $this->pendingRanges($found, $tokens, $closers, $assigned);
         if ([] !== $pending) {
-            [$variables, $properties] = $this->watchedNames($pending, $tokens, $assigned);
+            [$variables, $properties] = $this->watchedNames($pending, $tokens, $closers, $assigned);
             $collector = new TokenValueCollector($tokens, $tokenOffsets, $closers, $content, $variables, $properties);
             if (null !== $this->project) {
                 $collector->values()->useProject($this->project);
@@ -337,15 +365,15 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
             // None for an argument whose state the call itself gave, or
             // for a variable the file never assigns.
             $value = null === $resolver || null !== $item->state ? null : $values[$start.':'.$end] ?? null;
+            $place = self::argumentPlace($tokens, $tokenOffsets, $closers, $start, $end);
             if (null !== $resolver && null !== $value) {
-                array_push($occurrences, ...$item->occurrences($resolver, $value, $file, $content, self::span($tokens, $tokenOffsets, $start, $end)));
+                array_push($occurrences, ...$item->occurrences($resolver, $value, $file, $content, self::span($tokens, $tokenOffsets, $start, $end), $place[1] ?? null));
             }
 
             if (!$arguments) {
                 continue;
             }
 
-            $place = self::argumentPlace($tokens, $tokenOffsets, $closers, $start, $end);
             if (null !== $place) {
                 $states = null === $resolver || null === $value ? [$item->state ?? ArgumentState::Opaque->value] : $resolver->states($value, $item->function);
                 array_push($occurrences, ...$item->arguments($states, $file, $content, $place[0], $place[1], $place[2]));
@@ -361,14 +389,15 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
      * variable gets a value from an assignment, or none, so one the file
      * never assigns is left out.
      *
-     * @param list<PatternOccurrence|PendingPattern<array{int, int}>> $found
-     * @param array<int, array{int, string, int}|string>              $tokens
-     * @param array<string, non-empty-list<int>>|null                 $assigned the variables the file assigns, read
-     *                                                                          when first asked for
+     * @param list<PatternOccurrence|PendingPattern<array{int, int}>>  $found
+     * @param array<int, array{int, string, int}|string>               $tokens
+     * @param array<int, int>                                          $closers
+     * @param array<string, non-empty-list<array{int, int|null}>>|null $assigned the variables the file assigns, read
+     *                                                                           when first asked for
      *
      * @return array<int, non-empty-array<int, true>>
      */
-    private function pendingRanges(array $found, array $tokens, ?array &$assigned): array
+    private function pendingRanges(array $found, array $tokens, array $closers, ?array &$assigned): array
     {
         $pending = [];
         foreach ($found as $item) {
@@ -379,7 +408,7 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
             [$start, $end] = $item->place;
             $variable = $this->soleVariable($tokens, $start, $end);
             if (null !== $variable) {
-                $assigned ??= $this->assignedVariables($tokens);
+                $assigned ??= $this->assignedVariables($tokens, $closers);
                 if (!isset($assigned[$variable])) {
                     continue;
                 }
@@ -394,18 +423,20 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
     /**
      * The variables the held arguments name, and whether they name a
      * property: the writes to any other change no pattern, and are not
-     * followed. A variable named in the value assigned to one of them is
-     * one of them, and so on until none is added: a pattern is read
-     * through any number of variables.
+     * followed. A variable named in the value assigned to one of them, or
+     * in what a foreach whose target is one of them iterates, is one of
+     * them, and so on until none is added: a pattern is read through any
+     * number of variables.
      *
-     * @param array<int, non-empty-array<int, true>>     $pending
-     * @param array<int, array{int, string, int}|string> $tokens
-     * @param array<string, non-empty-list<int>>|null    $assigned the variables the file assigns, read when first
-     *                                                             asked for
+     * @param array<int, non-empty-array<int, true>>                   $pending
+     * @param array<int, array{int, string, int}|string>               $tokens
+     * @param array<int, int>                                          $closers
+     * @param array<string, non-empty-list<array{int, int|null}>>|null $assigned the variables the file assigns, read
+     *                                                                           when first asked for
      *
      * @return array{array<string, true>, bool}
      */
-    private function watchedNames(array $pending, array $tokens, ?array &$assigned): array
+    private function watchedNames(array $pending, array $tokens, array $closers, ?array &$assigned): array
     {
         $variables = [];
         $met = [];
@@ -416,9 +447,9 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
 
         // Each name is followed once, in the order they are met.
         for ($next = 0; isset($met[$next]); $next++) {
-            $assigned ??= $this->assignedVariables($tokens);
-            foreach ($assigned[$met[$next]] ?? [] as $equals) {
-                $this->namesIn($tokens, $equals + 1, self::statementEnd($tokens, $equals + 1), $variables, $met, $properties);
+            $assigned ??= $this->assignedVariables($tokens, $closers);
+            foreach ($assigned[$met[$next]] ?? [] as [$from, $to]) {
+                $this->namesIn($tokens, $from, $to ?? self::statementEnd($tokens, $from), $variables, $met, $properties);
             }
         }
 
@@ -517,6 +548,9 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
             // Most tokens declare, write and hold nothing.
             if (isset(TokenValueCollector::READ[$id])) {
                 $collector->visit($i, $context);
+            } elseif ((\T_VARIABLE === $id && '$GLOBALS' === $token[1]) || (\T_STRING_VARNAME === $id && 'GLOBALS' === $token[1])) {
+                // The variables of the file level, named from anywhere.
+                $collector->values()->nameGlobals();
             }
 
             if (isset($pending[$i])) {

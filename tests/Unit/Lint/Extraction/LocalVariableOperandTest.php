@@ -19,18 +19,22 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A local variable as an operand of a concatenation reads as the values
- * its assignments give it, when it passes the rules a variable read alone
- * passes: every write a plain assignment that may reach the read. A
- * variable assigned another variable, and one holding an integer, read the
- * same way.
+ * A local variable as an operand of a concatenation reads as the value
+ * its assignment gives it, when it passes the rules a variable read alone
+ * passes, every write a plain assignment, and when one assignment alone
+ * reaches the concatenation. Two assignments cannot be told alternatives
+ * from successive ones without following the branches: nothing is known of
+ * the argument then, and no pattern is read (ComposedReadTest holds that
+ * rule). A variable assigned another variable, and one holding an integer,
+ * read the same way.
  *
- * One operand of several values, standing once in the concatenation,
- * gives as many patterns, each one the code builds. Two operands of
- * several values, or the same one twice, would give combinations the code
- * never builds: nothing is known of the argument, and no pattern is read.
- * Past 32 patterns nothing is known either. A variable that does not pass
- * the rules is a part built at run time, and the argument a raw shell.
+ * The one assignment may give several values, a ternary or a match: one
+ * operand of several values, standing once in the concatenation, gives as
+ * many patterns, each one the code builds. Two operands of several values,
+ * or the same one twice, would give combinations the code never builds:
+ * nothing is known of the argument, and no pattern is read. Past 32
+ * patterns nothing is known either. A variable that does not pass the
+ * rules is a part built at run time, and the argument a raw shell.
  *
  * A pattern composed at the call is reported where the argument starts; a
  * variable assigned such a concatenation is read where the concatenation
@@ -143,10 +147,12 @@ final class LocalVariableOperandTest extends TestCase
     }
 
     /**
-     * Two assignments may reach the read: the operand holds one of two
-     * values, the argument one of two patterns, both composed at the call.
+     * One assignment gives the operand one of two values, the arms of a
+     * ternary: the argument is one of two patterns, both composed at the
+     * call.
      *
-     * $kind = 'cat' gives "/^cats?$/", $kind = 'dog' gives "/^dogs?$/".
+     * $kind = true ? 'cat' : 'dog' gives "/^cats?$/", with false
+     * "/^dogs?$/".
      */
     #[Test]
     public function test_an_operand_of_two_values_gives_two_patterns(): void
@@ -156,10 +162,7 @@ final class LocalVariableOperandTest extends TestCase
 
             function run(string $s, bool $flag): int
             {
-                $kind = 'cat';
-                if ($flag) {
-                    $kind = 'dog';
-                }
+                $kind = $flag ? 'cat' : 'dog';
 
                 return preg_match('/^' . $kind . 's?$/', $s);
             }
@@ -178,9 +181,8 @@ final class LocalVariableOperandTest extends TestCase
      * Two operands of several values are not multiplied: the code builds
      * only some of the combinations, and the file does not say which.
      *
-     * PHP 8.4: after if ($flag) { $x = 'a'; $y = 'c'; } else { $x = 'b';
-     * $y = 'd'; }, '/' . $x . $y . '/' is "/ac/" or "/bd/", never "/ad/"
-     * nor "/bc/".
+     * PHP 8.4: after $x = $flag ? 'a' : 'b'; $y = $flag ? 'c' : 'd';, '/'
+     * . $x . $y . '/' is "/ac/" or "/bd/", never "/ad/" nor "/bc/".
      *
      * @return iterable<string, array{argument: string}>
      */
@@ -203,7 +205,7 @@ final class LocalVariableOperandTest extends TestCase
     public function test_two_operands_of_several_values_leave_the_argument_opaque(string $argument): void
     {
         $code = "<?php\n\nfunction run(string \$s, bool \$flag): int\n{\n"
-            ."    if (\$flag) {\n        \$x = 'a';\n        \$y = 'c';\n        \$open = '/';\n    } else {\n        \$x = 'b';\n        \$y = 'd';\n        \$open = '#';\n    }\n"
+            ."    \$x = \$flag ? 'a' : 'b';\n    \$y = \$flag ? 'c' : 'd';\n    \$open = \$flag ? '/' : '#';\n"
             ."    \$pair = '(' . \$x . ')';\n    \$alias = \$x;\n\n"
             .'    return preg_match('.$argument.", \$s) + preg_match('/^' . \$x . '$/', \$s);\n}\n";
 
@@ -222,8 +224,8 @@ final class LocalVariableOperandTest extends TestCase
      * A variable built of one of several values holds as many: read
      * alone or joined to literals, it gives each of them.
      *
-     * PHP 8.4: $x is 'a' or 'b'; $pair = '(' . $x . ')'; '/' . $pair .
-     * '+/' is "/(a)+/" or "/(b)+/".
+     * PHP 8.4: $x = $flag ? 'a' : 'b'; $pair = '(' . $x . ')'; '/' .
+     * $pair . '+/' is "/(a)+/" or "/(b)+/".
      */
     #[Test]
     public function test_a_variable_built_of_one_of_several_values_brings_them_through(): void
@@ -233,10 +235,7 @@ final class LocalVariableOperandTest extends TestCase
 
             function run(string $s, bool $flag): int
             {
-                $x = 'a';
-                if ($flag) {
-                    $x = 'b';
-                }
+                $x = $flag ? 'a' : 'b';
                 $pair = '(' . $x . ')';
                 $re = '/^' . $pair . '$/';
 
@@ -257,21 +256,18 @@ final class LocalVariableOperandTest extends TestCase
     }
 
     /**
-     * Two assignments of the same text are one value: one pattern, read
-     * once where the argument starts.
+     * Two arms of the same text are one value: one pattern, read once
+     * where the argument starts.
      */
     #[Test]
-    public function test_an_operand_assigned_the_same_value_twice_gives_one_pattern(): void
+    public function test_an_operand_whose_two_arms_are_the_same_text_gives_one_pattern(): void
     {
         $code = <<<'PHP'
             <?php
 
             function run(string $s, bool $flag): int
             {
-                $kind = 'cat';
-                if ($flag) {
-                    $kind = 'c' . 'at';
-                }
+                $kind = $flag ? 'cat' : 'c' . 'at';
 
                 return preg_match('/^' . $kind . 's?$/', $s);
             }
@@ -347,9 +343,9 @@ final class LocalVariableOperandTest extends TestCase
     }
 
     /**
-     * One of the assignments that may reach the read proves nothing: the
-     * operand may be a part built at run time, and none of the patterns
-     * the other assignment gives is read.
+     * One of the arms of the assignment proves nothing: the operand may
+     * be a part built at run time, and the pattern the other arm gives is
+     * not read.
      */
     #[Test]
     public function test_an_operand_one_of_whose_values_is_not_proved_gives_no_pattern(): void
@@ -359,10 +355,7 @@ final class LocalVariableOperandTest extends TestCase
 
             function run(string $s, string $given, bool $flag): int
             {
-                $kind = 'cat';
-                if ($flag) {
-                    $kind = $given;
-                }
+                $kind = $flag ? 'cat' : $given;
 
                 return preg_match('/^' . $kind . 's?$/', $s);
             }
@@ -513,9 +506,9 @@ final class LocalVariableOperandTest extends TestCase
     }
 
     /**
-     * 32 patterns are the most a composition gives: one operand of 32
-     * values, joined to literals and to an operand of one value, gives
-     * 32, each read where the argument starts.
+     * 32 patterns are the most a composition gives: one operand given 32
+     * values by one assignment, joined to literals and to an operand of
+     * one value, gives 32, each read where the argument starts.
      */
     #[Test]
     public function test_a_composition_of_thirty_two_patterns_is_read(): void
@@ -574,16 +567,17 @@ final class LocalVariableOperandTest extends TestCase
 
     /**
      * The cap bounds what a composition gives, not what a variable
-     * holds: 33 patterns assigned to a variable read alone are a finite
-     * set, each read where it is written; the same 33 values joined to a
-     * literal are a composition, past the cap. A variable assigned a
-     * composition that is not built proves nothing.
+     * holds: 33 patterns assigned to a variable read alone, each by an
+     * assignment of its own, are a finite set, each read where it is
+     * written; 33 values one assignment gives, joined to a literal, are a
+     * composition, past the cap. A variable assigned a composition that
+     * is not built proves nothing.
      */
     #[Test]
     public function test_the_cap_bounds_a_composition_and_not_a_variable_read_alone(): void
     {
         $values = self::names('/whole-', 33, '/');
-        $alone = self::product(['s1'], $values, '$kind');
+        $alone = self::product(['s1'], $values, '$kind', '', true);
 
         $patterns = $this->patternsReadByBoth($alone);
         $this->assertCount(33, $patterns);
@@ -647,23 +641,28 @@ final class LocalVariableOperandTest extends TestCase
     }
 
     /**
-     * A function assigning $size and $kind each of the values, the first
-     * outright and each other under a condition of its own, then reading
-     * the argument in preg_match().
+     * A function giving $size and $kind each one of the values, then
+     * reading the argument in preg_match(). Each is given its values by
+     * one assignment, a match with an arm per value, the one assignment
+     * of a variable of one value being that value; or, when asked, by an
+     * assignment per value, the first outright and each other under a
+     * condition of its own.
      *
      * @param list<string> $sizes
      * @param list<string> $kinds
      */
-    private static function product(array $sizes, array $kinds, string $argument, string $before = ''): string
+    private static function product(array $sizes, array $kinds, string $argument, string $before = '', bool $assignments = false): string
     {
         return "<?php\n\nfunction run(string \$s, int \$a, int \$b): int\n{\n"
-            .self::branches('size', 'a', $sizes)
-            .self::branches('kind', 'b', $kinds)
+            .($assignments ? self::branches('size', 'a', $sizes) : self::arms('size', 'a', $sizes))
+            .($assignments ? self::branches('kind', 'b', $kinds) : self::arms('kind', 'b', $kinds))
             .('' === $before ? '' : '    '.$before."\n")
             ."\n    return preg_match(".$argument.", \$s);\n}\n";
     }
 
     /**
+     * One assignment per value.
+     *
      * @param list<string> $values
      */
     private static function branches(string $variable, string $selector, array $values): string
@@ -676,6 +675,26 @@ final class LocalVariableOperandTest extends TestCase
         }
 
         return $code;
+    }
+
+    /**
+     * One assignment of a match giving each value in an arm, the last as
+     * its default arm.
+     *
+     * @param list<string> $values
+     */
+    private static function arms(string $variable, string $selector, array $values): string
+    {
+        if (1 === \count($values)) {
+            return \sprintf("    \$%s = '%s';\n", $variable, $values[0]);
+        }
+
+        $code = \sprintf("    \$%s = match (\$%s) {\n", $variable, $selector);
+        foreach ($values as $index => $value) {
+            $code .= \sprintf("        %s => '%s',\n", $index === \count($values) - 1 ? 'default' : (string) ($index + 1), $value);
+        }
+
+        return $code."    };\n";
     }
 
     /**

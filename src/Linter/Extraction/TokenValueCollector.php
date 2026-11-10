@@ -39,8 +39,8 @@ final class TokenValueCollector
         \T_CLASS => true, \T_INTERFACE => true, \T_TRAIT => true, \T_ENUM => true,
         \T_FUNCTION => true, \T_FN => true, \T_CONST => true, \T_GLOBAL => true, \T_STATIC => true,
         \T_CATCH => true, \T_UNSET => true, \T_FOREACH => true, \T_INC => true, \T_DEC => true,
-        \T_FOR => true, \T_WHILE => true, \T_DO => true, \T_GOTO => true, \T_YIELD => true,
-        \T_EVAL => true, \T_INCLUDE => true, \T_INCLUDE_ONCE => true, \T_REQUIRE => true, \T_REQUIRE_ONCE => true,
+        \T_FOR => true, \T_WHILE => true, \T_DO => true, \T_GOTO => true, \T_YIELD => true, \T_NEW => true,
+        \T_ATTRIBUTE => true, \T_EVAL => true, \T_INCLUDE => true, \T_INCLUDE_ONCE => true, \T_REQUIRE => true, \T_REQUIRE_ONCE => true,
         \T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG => true, \T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG => true,
         \T_PLUS_EQUAL => true, \T_MINUS_EQUAL => true, \T_MUL_EQUAL => true, \T_DIV_EQUAL => true,
         \T_CONCAT_EQUAL => true, \T_MOD_EQUAL => true, \T_AND_EQUAL => true, \T_OR_EQUAL => true,
@@ -105,11 +105,20 @@ final class TokenValueCollector
      * The bodies the current token may be in: a class (its lowercase name,
      * null for a trait or an anonymous class) or a function (its scope,
      * whether it is a closure or an arrow function, which Closure::bind()
-     * may give another class, and whether it returns by reference).
+     * may give another class, the functions the call it is written in may
+     * reach when PHP's own only calls it, and whether it returns by
+     * reference).
      *
-     * @var list<array{class: true, id: string|null, ranges: list<array{int, int}>, end: int}|array{class: false, id: int, ranges: list<array{int, int}>, end: int, bound: bool, reference: bool}>
+     * @var list<array{class: true, id: string|null, ranges: list<array{int, int}>, end: int}|array{class: false, id: int, ranges: list<array{int, int}>, end: int, bound: bool, held: list<string>|null, reference: bool}>
      */
     private array $stack = [];
+
+    /**
+     * @var array<int, list<string>> the "function" or "fn" of each closure written as an argument of a call to a
+     *                               function of PHP that calls it and lets it go => the lowercase functions
+     *                               the call may reach
+     */
+    private array $heldClosures = [];
 
     private int $nextScope = 0;
 
@@ -138,6 +147,18 @@ final class TokenValueCollector
      * @var list<int>|null the offset of each newline, read on demand
      */
     private ?array $newlines = null;
+
+    /**
+     * @var array{int, int, int}|null the tokens the last "for" met runs after each turn of its body, from its
+     *                                second ";" to its ")", and where its loop ends
+     */
+    private ?array $step = null;
+
+    /**
+     * Where the last attribute group met ends: what it holds runs when
+     * the attribute is read, not where it stands.
+     */
+    private int $attributeEnd = -1;
 
     /**
      * @param array<int, array{int, string, int}|string> $tokens
@@ -268,8 +289,7 @@ final class TokenValueCollector
 
                 break;
             case \T_FOREACH:
-                $this->foreachTargets($index);
-                $this->loop($index);
+                $this->loop($index, $this->foreachTargets($index, $context));
 
                 break;
             case \T_FOR:
@@ -293,6 +313,18 @@ final class TokenValueCollector
             case \T_INC:
             case \T_DEC:
                 $this->increment($index);
+
+                break;
+            case \T_NEW:
+                // "new Kernel" runs a constructor as "new Kernel()" does,
+                // whose parenthesis says so itself.
+                if ($index > $this->attributeEnd && InFileValueResolver::FILE === $this->scopeAt($index) && !$this->takesArguments($index)) {
+                    $this->values->call($this->offsets[$index]);
+                }
+
+                break;
+            case \T_ATTRIBUTE:
+                $this->attributeEnd = $this->closers[$index] ?? $index;
 
                 break;
             case \T_EVAL:
@@ -463,7 +495,7 @@ final class TokenValueCollector
      * The function whose body holds the token, or the class whose body
      * does, whichever is the innermost; null at file scope.
      *
-     * @return array{class: true, id: string|null, ranges: list<array{int, int}>, end: int}|array{class: false, id: int, ranges: list<array{int, int}>, end: int, bound: bool, reference: bool}|null
+     * @return array{class: true, id: string|null, ranges: list<array{int, int}>, end: int}|array{class: false, id: int, ranges: list<array{int, int}>, end: int, bound: bool, held: list<string>|null, reference: bool}|null
      */
     private function bodyAt(int $index): ?array
     {
@@ -488,8 +520,8 @@ final class TokenValueCollector
     }
 
     /**
-     * The function body the token is in; null at file scope or directly in
-     * a class body.
+     * The function body the token is in, or the file level; null directly
+     * in a class body.
      */
     private function scopeAt(int $index): ?int
     {
@@ -502,7 +534,38 @@ final class TokenValueCollector
             return $entry['class'] ? null : $entry['id'];
         }
 
-        return null;
+        return InFileValueResolver::FILE;
+    }
+
+    /**
+     * The functions the call of each closure around the token may reach,
+     * from the innermost, up to the body that is no closure; null when
+     * one of them is written in no call of a function of PHP that only
+     * calls its closure: some code may bind it.
+     *
+     * @return list<list<string>>|null
+     */
+    private function callsAround(int $index): ?array
+    {
+        $calls = [];
+        for ($i = \count($this->stack) - 1; $i >= 0; $i--) {
+            $entry = $this->stack[$i];
+            if (!self::contains($entry['ranges'], $index)) {
+                continue;
+            }
+
+            if ($entry['class'] || !$entry['bound']) {
+                break;
+            }
+
+            if (null === $entry['held']) {
+                return null;
+            }
+
+            $calls[] = $entry['held'];
+        }
+
+        return $calls;
     }
 
     /**
@@ -564,6 +627,23 @@ final class TokenValueCollector
 
         if ('[' === $token && ($this->closers[$first] ?? null) === $last) {
             return $this->arrayOf($first, $last, $context);
+        }
+
+        // $map['word'], self::LIST[0]: an item of an array a variable or
+        // a constant holds. An item of an item, or of a property, is not
+        // followed.
+        $opener = ']' === $this->tokens[$last] ? $this->openers[$last] ?? null : null;
+        if (null !== $opener && $opener > $first) {
+            $arrayLast = $this->previous($opener - 1, $first);
+            if (null === $arrayLast || null === $this->next($opener + 1, $last)) {
+                return ValueExpr::unknown();
+            }
+
+            $array = $arrayLast === $first ? $this->singleToken($first, $context) : $this->operand($first, $arrayLast, $context);
+
+            return \in_array($array->kind, [ValueExpr::VARIABLE, ValueExpr::CONSTANT, ValueExpr::CLASS_CONSTANT], true)
+                ? ValueExpr::item($array, $this->expression($opener + 1, $last, $context), $this->offsets[$first], $this->lineAt($this->offsets[$first]))
+                : ValueExpr::unknown();
         }
 
         // (Kind::Re)->value, ((Kind::Re))->value: parentheses around the
@@ -827,8 +907,9 @@ final class TokenValueCollector
      * The pieces of a string that interpolates, from the tokens in
      * [$from, $to): each text as written, with the index of its token, and
      * each expression. $x, {$x} and ${x} are the variable, $this->p and
-     * {$this->p} the property; an offset, a call or any other expression
-     * is not followed. Null when the tokens are no such string.
+     * {$this->p} the property, $a[key] and {$a['key']} the item of an
+     * array; a call or any other expression is not followed. Null when
+     * the tokens are no such string.
      *
      * @return list<ValueExpr|array{int, string}>|null
      */
@@ -858,8 +939,9 @@ final class TokenValueCollector
                 // follows them is text again.
                 $after = $this->tokens[$i + 1] ?? null;
                 if ('[' === $after) {
-                    $pieces[] = ValueExpr::unknown();
-                    $i = $this->closers[$i + 1] ?? $to;
+                    $close = $this->closers[$i + 1] ?? $to;
+                    $pieces[] = $this->interpolatedItem($i, $close, $context);
+                    $i = $close;
                 } elseif (\is_array($after) && (\T_OBJECT_OPERATOR === $after[0] || \T_NULLSAFE_OBJECT_OPERATOR === $after[0])) {
                     $pieces[] = $this->operand($i, $i + 2, $context);
                     $i += 2;
@@ -872,6 +954,40 @@ final class TokenValueCollector
         }
 
         return $pieces;
+    }
+
+    /**
+     * "$map[word]", "$list[0]" or "$map[$key]" in a string, the variable
+     * at $variable and the bracket closing at $close: the item of the
+     * array under the key PHP reads there, a bare word being a string and
+     * a number written the canonical way an integer.
+     */
+    private function interpolatedItem(int $variable, int $close, NameResolutionContext $context): ValueExpr
+    {
+        $array = $this->singleToken($variable, $context);
+        $first = $variable + 2;
+        $negative = '-' === ($this->tokens[$first] ?? null);
+        if ($negative) {
+            $first++;
+        }
+
+        $token = $this->tokens[$first] ?? null;
+        if (ValueExpr::VARIABLE !== $array->kind || !\is_array($token) || $first + 1 !== $close) {
+            return ValueExpr::unknown();
+        }
+
+        $offset = $this->offsets[$first];
+        $key = null;
+        if (\T_NUM_STRING === $token[0]) {
+            $number = ($negative ? '-' : '').$token[1];
+            $key = PatternFunction::isStringKey($number) ? ValueExpr::literal($number, $offset, $token[2]) : ValueExpr::nonString((int) $number);
+        } elseif (!$negative && \T_STRING === $token[0]) {
+            $key = ValueExpr::literal($token[1], $offset, $token[2]);
+        } elseif (!$negative && \T_VARIABLE === $token[0]) {
+            $key = $this->singleToken($first, $context);
+        }
+
+        return null === $key ? ValueExpr::unknown() : ValueExpr::item($array, $key, $this->offsets[$variable], $this->lineAt($this->offsets[$variable]));
     }
 
     /**
@@ -915,11 +1031,16 @@ final class TokenValueCollector
     private function classConstant(string $class, string $name, int $index, NameResolutionContext $context): ValueExpr
     {
         $written = $class.'::'.$name;
+        // A closure may be bound to another class: self:: names none,
+        // unless a function of PHP that only calls it holds each closure
+        // around the read.
+        $calls = $this->callsAround($index);
+        $around = null === $calls ? null : $this->classAt($index);
+        $calls = null === $around ? [] : $calls ?? [];
 
         return match (Ascii::lower($class)) {
-            // A closure may be bound to another class: self:: names none.
-            'self' => ValueExpr::classConstant($this->isBoundAt($index) ? null : $this->classAt($index), $name, false, $written),
-            'static' => ValueExpr::classConstant($this->isBoundAt($index) ? null : $this->classAt($index), $name, true, $written),
+            'self' => ValueExpr::classConstant($around, $name, false, $written, $calls),
+            'static' => ValueExpr::classConstant($around, $name, true, $written, $calls),
             'parent' => ValueExpr::unknown(),
             default => ValueExpr::classConstant(ValueExpr::classKey($context->resolveClass($class)), $name, false, $written),
         };
@@ -1269,7 +1390,7 @@ final class TokenValueCollector
             $ranges[] = [$i, $this->closers[$i]];
         }
 
-        $this->stack[] = ['class' => false, 'id' => $scope, 'ranges' => $ranges, 'end' => $ranges[\count($ranges) - 1][1], 'bound' => $bound, 'reference' => $byReference];
+        $this->stack[] = ['class' => false, 'id' => $scope, 'ranges' => $ranges, 'end' => $ranges[\count($ranges) - 1][1], 'bound' => $bound, 'held' => $bound ? $this->heldClosures[$index] ?? null : null, 'reference' => $byReference];
         $this->bailVariables($open, $close, $scope);
 
         if (null === $uses) {
@@ -1312,7 +1433,7 @@ final class TokenValueCollector
 
         $scope = $this->nextScope++;
         $end = $this->arrowEnd($arrow + 1);
-        $this->stack[] = ['class' => false, 'id' => $scope, 'ranges' => [[$open, $end]], 'end' => $end, 'bound' => true, 'reference' => $byReference];
+        $this->stack[] = ['class' => false, 'id' => $scope, 'ranges' => [[$open, $end]], 'end' => $end, 'bound' => true, 'held' => $this->heldClosures[$index] ?? null, 'reference' => $byReference];
         $this->bailVariables($open, $close, $scope);
     }
 
@@ -1353,6 +1474,7 @@ final class TokenValueCollector
             return;
         }
 
+        $this->values->nameGlobals();
         for ($i = $index + 1, $count = \count($this->tokens); $i < $count && ';' !== $this->tokens[$i]; $i++) {
             $token = $this->tokens[$i];
             if (null !== $scope && \is_array($token) && \T_VARIABLE === $token[0]) {
@@ -1418,33 +1540,61 @@ final class TokenValueCollector
         }
     }
 
-    private function foreachTargets(int $index): void
+    /**
+     * A foreach: its head assigns a target that is a plain variable at
+     * each turn, one of the values of what the loop iterates, or one of
+     * its keys. Any other target, one taken by reference and one of a
+     * loop whose end is not known are written unseen. Gives back its
+     * "as": what stands before it is read once, before the first turn.
+     */
+    private function foreachTargets(int $index, NameResolutionContext $context): ?int
     {
         $open = $this->next($index + 1);
         $close = null === $open ? null : $this->closers[$open] ?? null;
         if (null === $open || null === $close) {
-            return;
+            return null;
         }
 
         $as = $this->find($open + 1, $close, static fn (array|string $token): bool => \is_array($token) && \T_AS === $token[0]);
         if (null === $as) {
-            return;
+            return null;
         }
 
-        $this->writeEverything($as + 1, $close, $this->scopeAt($index));
+        $scope = $this->scopeAt($index);
+        $end = $this->loopEnd($index);
+        $arrow = $this->find($as + 1, $close, static fn (array|string $token): bool => \is_array($token) && \T_DOUBLE_ARROW === $token[0]);
+        $iterated = null;
+        foreach (null === $arrow ? [[$as + 1, $close, false]] : [[$as + 1, $arrow, true], [$arrow + 1, $close, false]] as [$from, $to, $isKey]) {
+            $target = $this->next($from, $to);
+            $token = null === $target ? null : $this->tokens[$target];
+            if (null === $scope || null === $end || null === $target || !\is_array($token) || \T_VARIABLE !== $token[0] || '$this' === $token[1] || null !== $this->next($target + 1, $to)) {
+                $this->writeEverything($from, $to, $scope);
+
+                continue;
+            }
+
+            if (isset($this->watchedVariables[$token[1]])) {
+                $iterated ??= $this->expression($open + 1, $as, $context);
+                $this->values->iterate($scope, substr($token[1], 1), ValueExpr::each($iterated, $isKey), $this->offsets[$close], $this->offsets[$as], $this->offsets[$end]);
+            }
+        }
 
         $byReference = null !== $this->find($as + 1, $close, static fn (array|string $token): bool => \is_array($token)
             && (\T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG === $token[0] || \T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG === $token[0]));
         if ($byReference && !$this->isArrayLiteral($open + 1, $as)) {
             $this->iterateByReference($index, $open + 1, $as);
         }
+
+        return $as;
     }
 
     /**
-     * A loop of a function body, from its keyword to its last byte: what
-     * it holds may run again. One whose end is not known may hold anything.
+     * A loop of a body, from its keyword to its last byte: what it holds
+     * may run again. One whose end is not known may hold anything.
+     *
+     * @param int|null $from the token a foreach runs again from, its "as"
      */
-    private function loop(int $index): void
+    private function loop(int $index, ?int $from = null): void
     {
         $scope = $this->scopeAt($index);
         if (null === $scope) {
@@ -1454,8 +1604,23 @@ final class TokenValueCollector
         $end = $this->loopEnd($index);
         if (null === $end) {
             $this->values->jumps($scope);
-        } else {
-            $this->values->loop($scope, $this->offsets[$index], $this->offsets[$end]);
+
+            return;
+        }
+
+        $this->values->loop($scope, $this->offsets[$from ?? $index], $this->offsets[$end]);
+        if (!$this->is($index, \T_FOR)) {
+            return;
+        }
+
+        // for (...; ...; <step>): what follows the second ";".
+        $open = $this->next($index + 1);
+        $close = null === $open ? null : $this->closers[$open] ?? null;
+        $semicolon = static fn (array|string $token): bool => ';' === $token;
+        $condition = null === $open || null === $close ? null : $this->find($open + 1, $close, $semicolon);
+        $step = null === $condition || null === $close ? null : $this->find($condition + 1, $close, $semicolon);
+        if (null !== $step && null !== $close) {
+            $this->step = [$step, $close, $this->offsets[$end]];
         }
     }
 
@@ -1700,7 +1865,16 @@ final class TokenValueCollector
         $before = null === $last ? null : $this->previous($last - 1);
         if (null !== $last && null !== $before && $this->isObjectOperator($before) && null !== PhpTokens::identifier($this->tokens[$last])) {
             $this->writeBackward($last, $this->scopeAt($index));
-        } elseif ($this->inClassBody($index)) {
+
+            return;
+        }
+
+        // A variable, or an item of one: the loop writes its items.
+        if (null !== $last) {
+            $this->writeBackward($last, $this->scopeAt($index));
+        }
+
+        if ($this->inClassBody($index)) {
             $this->values->writeAnyProperty($this->classAt($index));
         }
     }
@@ -1812,15 +1986,24 @@ final class TokenValueCollector
         }
 
         if (null !== $scope && \is_array($token) && isset($this->watchedVariables[$token[1]])) {
-            $this->values->assign($scope, substr($token[1], 1), $this->assignedValue($value, $context), $this->offsets[$target]);
+            $end = $this->assignedValueEnd($value);
+            $from = $this->offsets[$target];
+            $to = ($this->offsets[$end] ?? \strlen($this->content)) - 1;
+            // What a for runs after each turn is written in its head,
+            // and runs after its body.
+            if (null !== $this->step && $index > $this->step[0] && $index < $this->step[1]) {
+                $from = $to = $this->step[2];
+            }
+
+            $this->values->assign($scope, substr($token[1], 1), $this->assignedValue($value, $end, $context), $from, $to);
         }
     }
 
     /**
-     * The value of an assignment whose right side starts at $start, read
-     * up to the token that closes it.
+     * The token that closes the value of an assignment whose right side
+     * starts at $start; the number of tokens, where the file ends first.
      */
-    private function assignedValue(int $start, NameResolutionContext $context): ValueExpr
+    private function assignedValueEnd(int $start): int
     {
         // A ":" ends the value, unless a "?" of the value opens the
         // ternary it belongs to.
@@ -1840,8 +2023,16 @@ final class TokenValueCollector
             }
         }
 
-        // A local array of literals proves no pattern: it is not built.
-        return $this->isArrayLiteral($start, $i) ? ValueExpr::unknown() : $this->expression($start, $i, $context);
+        return $i;
+    }
+
+    /**
+     * The value of an assignment whose right side is the tokens in
+     * [$start, $end).
+     */
+    private function assignedValue(int $start, int $end, NameResolutionContext $context): ValueExpr
+    {
+        return $this->expression($start, $end, $context);
     }
 
     /**
@@ -1923,8 +2114,18 @@ final class TokenValueCollector
             }
         }
 
+        if (null !== $function && isset(InFileValueResolver::CALLING[Ascii::lower($context->resolveFunction($function))])) {
+            $this->holdClosures($index, $close, $this->functionNames($function, $context));
+        }
+
         if (!$this->watchesWrites) {
             return;
+        }
+
+        // The code a call of the file level runs may write its variables:
+        // an attribute runs none where it stands.
+        if (InFileValueResolver::FILE === $scope && $index > $this->attributeEnd) {
+            $this->values->call($this->offsets[$close]);
         }
 
         foreach ($this->split($index + 1, $close) as [$from, $to]) {
@@ -1949,11 +2150,96 @@ final class TokenValueCollector
 
             $written = $this->fetchArgument($value, $to);
             if (null === $byValue) {
-                $this->writeBackward($written, $scope);
+                $this->writeBackward($written, $scope, $this->offsets[$close]);
             } else {
-                $this->values->byValue($byValue, fn () => $this->writeBackward($written, $scope));
+                $this->values->byValue($byValue, fn () => $this->writeBackward($written, $scope, $this->offsets[$close]));
             }
         }
+    }
+
+    /**
+     * Marks the closures and the arrow functions written as arguments of
+     * the call whose parentheses are at $open and $close, a call to a
+     * function of PHP that calls them and lets them go, with the
+     * functions the call may reach.
+     *
+     * @param list<string> $names
+     */
+    private function holdClosures(int $open, int $close, array $names): void
+    {
+        foreach ($this->split($open + 1, $close) as [$from, $to]) {
+            // A spread passes no closure written here.
+            $start = $this->next($from, $to);
+            $value = null === $start || $this->is($start, \T_ELLIPSIS) ? null : $this->argumentValue($from, $to);
+            $bounds = null === $value ? null : $this->bounds($value, $to);
+            if (null === $bounds) {
+                continue;
+            }
+
+            [$first, $last] = $bounds;
+            if ($this->is($first, \T_STATIC)) {
+                $first = $this->next($first + 1, $last + 1) ?? $first;
+            }
+
+            // An arrow function runs to the end of the argument; a
+            // closure is the whole of it when its body ends it.
+            if ($this->is($first, \T_FN) || ($this->is($first, \T_FUNCTION) && $this->closureEnd($first) === $last)) {
+                $this->heldClosures[$first] = $names;
+            }
+        }
+    }
+
+    /**
+     * The brace closing the body of the closure whose "function" is at
+     * $index; null when it has none.
+     */
+    private function closureEnd(int $index): ?int
+    {
+        $i = $this->next($index + 1);
+        if (null !== $i && $this->isAmpersand($i)) {
+            $i = $this->next($i + 1);
+        }
+
+        if (null === $i || '(' !== $this->tokens[$i]) {
+            return null;
+        }
+
+        // The use list and the return type, then the body.
+        $i = $this->next(($this->closers[$i] ?? $i) + 1);
+        while (null !== $i && '{' !== $this->tokens[$i] && ';' !== $this->tokens[$i]) {
+            $i = $this->next((PhpTokens::opensNesting($this->tokens[$i]) ? ($this->closers[$i] ?? $i) : $i) + 1);
+        }
+
+        return null !== $i && '{' === $this->tokens[$i] ? $this->closers[$i] ?? null : null;
+    }
+
+    /**
+     * Whether the "new" at $index gives its class arguments, in a
+     * parenthesis read as a call of its own: new Foo(), new class() {},
+     * new ($class)(), as opposed to new Foo and new class {}.
+     */
+    private function takesArguments(int $index): bool
+    {
+        $i = $this->next($index + 1);
+        while (null !== $i && $this->is($i, \T_ATTRIBUTE)) {
+            $i = $this->next(($this->closers[$i] ?? $i) + 1);
+        }
+
+        if (null === $i) {
+            return false;
+        }
+
+        if ('(' === $this->tokens[$i]) {
+            $i = $this->next(($this->closers[$i] ?? $i) + 1);
+        } else {
+            // A name, static or class, or a variable and what it leads to.
+            $i = $this->next($i + 1);
+            while (null !== $i && ('[' === $this->tokens[$i] || PhpTokens::isObjectOrStaticOperator($this->tokens[$i]))) {
+                $i = $this->next(('[' === $this->tokens[$i] ? $this->closers[$i] ?? $i : $this->next($i + 1) ?? $i) + 1);
+            }
+        }
+
+        return null !== $i && '(' === $this->tokens[$i];
     }
 
     /**
@@ -2157,8 +2443,10 @@ final class TokenValueCollector
      * Mark what the expression ending at $index, written to, may change:
      * the variable at its root, the property names along it, everything a
      * destructuring names.
+     *
+     * @param int|null $at where the call the expression is passed to ends, when a call may write it
      */
-    private function writeBackward(?int $index, ?int $scope): void
+    private function writeBackward(?int $index, ?int $scope, ?int $at = null): void
     {
         while (null !== $index) {
             $token = $this->tokens[$index];
@@ -2198,7 +2486,7 @@ final class TokenValueCollector
                 }
 
                 if (null !== $scope && (null === $before || (!$this->is($before, \T_DOUBLE_COLON) && '$' !== $this->tokens[$before]))) {
-                    $this->values->bail($scope, substr($token[1], 1));
+                    $this->values->bail($scope, substr($token[1], 1), $at);
                 }
 
                 return;

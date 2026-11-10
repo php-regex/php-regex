@@ -41,8 +41,9 @@ final class CandidatePlaceTest extends TestCase
     use ExtractsWithBothStrategies;
 
     /**
-     * The values are assigned in an order that is not that of their
-     * bytes, and one composition gives the patterns PHP 8.4 sorts as
+     * One assignment gives the values, the arms of a match, in an order
+     * that is not that of their bytes, and one composition gives the
+     * patterns PHP 8.4 sorts as
      * "/^B$/", "/^a$/", "/^a$/i", "/^ab$/", "/^b$/", "/^é$/u" (sort() with
      * SORT_STRING, and strcmp(): an upper case letter before the lower
      * case ones, a shorter pattern before the one it starts, a multi-byte
@@ -53,22 +54,14 @@ final class CandidatePlaceTest extends TestCase
 
         function run(string $s, int $kind): int
         {
-            $body = 'b$/';
-            if (1 === $kind) {
-                $body = 'é$/u';
-            }
-            if (2 === $kind) {
-                $body = 'a$/i';
-            }
-            if (3 === $kind) {
-                $body = 'ab$/';
-            }
-            if (4 === $kind) {
-                $body = 'B$/';
-            }
-            if (5 === $kind) {
-                $body = 'a$/';
-            }
+            $body = match ($kind) {
+                1 => 'é$/u',
+                2 => 'a$/i',
+                3 => 'ab$/',
+                4 => 'B$/',
+                5 => 'a$/',
+                default => 'b$/',
+            };
 
             return preg_match('/^' . $body, $s);
         }

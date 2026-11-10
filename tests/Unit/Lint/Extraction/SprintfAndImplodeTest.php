@@ -324,8 +324,10 @@ final class SprintfAndImplodeTest extends TestCase
      * them, or the same one twice, would give strings the code never
      * builds: nothing is known of the argument.
      *
-     * PHP 8.4: $kind = 'cat' gives "/^cats?$/" and "/^(bird|cat)$/",
-     * $kind = 'dog' gives "/^dogs?$/" and "/^(bird|dog)$/";
+     * Each of the two variables is given its values by one assignment,
+     * the arms of a ternary. PHP 8.4: $kind = 'cat' gives "/^cats?$/" and
+     * "/^(bird|cat)$/", $kind = 'dog' gives "/^dogs?$/" and
+     * "/^(bird|dog)$/";
      * sprintf('/^%s|%s$/', $kind, $kind) is "/^cat|cat$/" or
      * "/^dog|dog$/", never "/^cat|dog$/".
      */
@@ -337,13 +339,8 @@ final class SprintfAndImplodeTest extends TestCase
 
             function run(string $s, bool $flag): int
             {
-                if ($flag) {
-                    $kind = 'cat';
-                    $size = 'big';
-                } else {
-                    $kind = 'dog';
-                    $size = 'small';
-                }
+                $kind = $flag ? 'cat' : 'dog';
+                $size = $flag ? 'big' : 'small';
 
                 return preg_match(sprintf('/^%ss?$/', $kind), $s)
                     + preg_match('/^(' . implode('|', ['bird', $kind]) . ')$/', $s)
@@ -561,35 +558,97 @@ final class SprintfAndImplodeTest extends TestCase
     }
 
     /**
-     * A later unit reads this: the items held in a local variable
-     * assigned an array literal ($local = ['a', 'b']; implode('|',
-     * $local) is "a|b" in PHP). Until the arrays are read, the call is a
-     * part built at run time as with any array the file does not prove;
-     * each row moves with that reading.
+     * The items held in a local variable assigned an array literal are
+     * read as those of a literal array are: PHP 8.4, $local = ['a', 'b'],
+     * implode('|', $local) and join('|', $local) are "a|b",
+     * implode($local) is "ab", and '/^(' . implode('|', $local) . ')$/'
+     * is "/^(a|b)$/".
      *
-     * @return iterable<string, array{call: string}>
+     * @return iterable<string, array{call: string, joined: string}>
      */
-    public static function provideImplodeCallsALaterUnitReads(): iterable
+    public static function provideImplodeCallsOfALocalArray(): iterable
     {
-        yield 'implode() of a local array' => ['call' => "implode('|', \$local)"];
-        yield 'join() of a local array' => ['call' => "join('|', \$local)"];
-        yield 'implode() of a local array alone' => ['call' => 'implode($local)'];
+        yield 'implode() of a local array' => ['call' => "implode('|', \$local)", 'joined' => 'a|b'];
+        yield 'join() of a local array' => ['call' => "join('|', \$local)", 'joined' => 'a|b'];
+        yield 'implode() of a local array alone' => ['call' => 'implode($local)', 'joined' => 'ab'];
     }
 
     #[Test]
-    #[DataProvider('provideImplodeCallsALaterUnitReads')]
-    public function test_implode_of_a_local_array_is_a_raw_hole_until_the_arrays_are_read(string $call): void
+    #[DataProvider('provideImplodeCallsOfALocalArray')]
+    public function test_implode_of_a_local_array_reads_as_php_joins_it(string $call, string $joined): void
     {
         $code = "<?php\n\nfunction run(string \$s): int\n{\n    \$local = ['a', 'b'];\n\n    return preg_match(".$call.", \$s)\n        + preg_match('/^(' . ".$call." . ')$/', \$s)\n        + preg_match('/^(' . implode('|', ['kept', 'read']) . ')$/', \$s);\n}\n";
 
-        // The call beside them is proved whole: "/^(kept|read)$/".
+        // Each is composed at its call, as the one of a literal array
+        // beside them: "/^(kept|read)$/".
         $this->assertExtractedByBoth([
+            ['pattern' => $joined, 'at' => $call.', $s)', 'location' => null],
+            ['pattern' => '/^('.$joined.')$/', 'at' => "'/^(' . ".$call." . ')$/'", 'location' => null],
             ['pattern' => '/^(kept|read)$/', 'at' => "'/^(' . implode('|', ['kept', 'read']) . ')$/'", 'location' => null],
         ], $code);
         $this->assertArgumentsReadByBoth([
-            ['state' => 'opaque', 'expression' => $call, 'at' => $call.', $s)'],
-            ['state' => 'raw_shell', 'expression' => "'/^(' . ".$call." . ')$/'"],
+            ['state' => 'constant', 'expression' => $call, 'at' => $call.', $s)'],
+            ['state' => 'constant', 'expression' => "'/^(' . ".$call." . ')$/'"],
             ['state' => 'constant', 'expression' => "'/^(' . implode('|', ['kept', 'read']) . ')$/'"],
+        ], $code);
+    }
+
+    /**
+     * A local array the body does not prove whole leaves the call a part
+     * built at run time, as an array the file does not know does: one
+     * written otherwise than by a plain assignment (PHP 8.4: after
+     * $local[] = 'c', implode('|', $local) is "a|b|c"), or holding an
+     * item the body does not prove.
+     *
+     * @return iterable<string, array{setup: string}>
+     */
+    public static function provideLocalArraysTheBodyDoesNotProve(): iterable
+    {
+        yield 'an item appended' => ['setup' => "\$local = ['a', 'b'];\n    \$local[] = \$given;"];
+        yield 'an item written by its index' => ['setup' => "\$local = ['a', 'b'];\n    \$local[0] = \$given;"];
+        yield 'a foreach by reference over it' => ['setup' => "\$local = ['a', 'b'];\n    foreach (\$local as &\$item) {\n        \$item = \$given;\n    }"];
+        yield 'the array passed to a call' => ['setup' => "\$local = ['a', 'b'];\n    sort(\$local);"];
+        yield 'an item that is a parameter' => ['setup' => "\$local = ['a', \$given];"];
+        yield 'an item that is an array' => ['setup' => "\$local = ['a', ['b']];"];
+    }
+
+    #[Test]
+    #[DataProvider('provideLocalArraysTheBodyDoesNotProve')]
+    public function test_implode_of_a_local_array_the_body_does_not_prove_is_a_raw_hole(string $setup): void
+    {
+        $code = "<?php\n\nfunction run(string \$s, string \$given): int\n{\n    ".$setup."\n\n    return preg_match(implode('|', \$local), \$s)\n        + preg_match('/^(' . implode('|', \$local) . ')$/', \$s);\n}\n";
+
+        $this->assertExtractedByBoth([], $code);
+        $this->assertArgumentsReadByBoth([
+            ['state' => 'opaque', 'expression' => "implode('|', \$local)", 'at' => "implode('|', \$local), \$s)"],
+            ['state' => 'raw_shell', 'expression' => "'/^(' . implode('|', \$local) . ')$/'"],
+        ], $code);
+    }
+
+    /**
+     * Two assignments of the array reach the call: which of the two
+     * arrays is joined is not followed, whatever each holds, and nothing
+     * is known of an argument composed of it, not even the literals
+     * around the call.
+     *
+     * @return iterable<string, array{second: string}>
+     */
+    public static function provideSecondAssignmentsOfALocalArray(): iterable
+    {
+        yield 'an array the body proves' => ['second' => "\$local = ['c', 'd'];"];
+        yield 'an array the body does not prove' => ['second' => "\$local = explode(',', \$given);"];
+    }
+
+    #[Test]
+    #[DataProvider('provideSecondAssignmentsOfALocalArray')]
+    public function test_implode_of_a_local_array_two_assignments_reach_is_opaque(string $second): void
+    {
+        $code = "<?php\n\nfunction run(string \$s, string \$given): int\n{\n    \$local = ['a', 'b'];\n    if ('' !== \$given) {\n        ".$second."\n    }\n\n    return preg_match(implode('|', \$local), \$s)\n        + preg_match('/^(' . implode('|', \$local) . ')$/', \$s);\n}\n";
+
+        $this->assertExtractedByBoth([], $code);
+        $this->assertArgumentsReadByBoth([
+            ['state' => 'opaque', 'expression' => "implode('|', \$local)", 'at' => "implode('|', \$local), \$s)"],
+            ['state' => 'opaque', 'expression' => "'/^(' . implode('|', \$local) . ')$/'"],
         ], $code);
     }
 

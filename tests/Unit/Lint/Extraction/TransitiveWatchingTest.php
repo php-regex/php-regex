@@ -187,8 +187,6 @@ final class TransitiveWatchingTest extends TestCase
         yield 'assigned by reference' => ['write' => '$far = &$given;'];
         yield 'captured by reference in a closure' => ['write' => "\$write = function () use (&\$far): void {\n    };"];
         yield 'a reference in an array literal' => ['write' => '$references = [&$far];'];
-        yield 'assigned a parameter in a branch' => ['write' => "if ('' !== \$given) {\n        \$far = \$given;\n    }"];
-        yield 'assigned a call in a branch' => ['write' => "if ('' !== \$given) {\n        \$far = strtolower(\$given);\n    }"];
         yield 'the value of a foreach over an unknown array' => ['write' => "foreach (\$items->all() as \$far) {\n    }"];
         yield 'the value of a foreach by reference' => ['write' => "foreach (\$items->all() as &\$far) {\n    }"];
         yield 'a destructuring target' => ['write' => '[$far] = $items->all();'];
@@ -219,6 +217,41 @@ final class TransitiveWatchingTest extends TestCase
         $this->assertArgumentsReadByBoth([
             ['state' => 'constant', 'expression' => '$re', 'at' => '$re, $s)', 'source' => 'preg_match()'],
             ['state' => 'raw_shell', 'expression' => '$written', 'at' => '$written, $s)', 'source' => 'preg_match()'],
+        ], $code);
+    }
+
+    /**
+     * A second plain assignment of $far, two variables away from the
+     * call: two assignments reach the concatenation $far is joined in,
+     * which is not built whatever the second one gives, and the variables
+     * built of it hold nothing the file proves. The chain beside it is
+     * read.
+     *
+     * @return iterable<string, array{write: string}>
+     */
+    public static function provideSecondAssignmentsTwoVariablesAway(): iterable
+    {
+        yield 'assigned a parameter in a branch' => ['write' => "if ('' !== \$given) {\n        \$far = \$given;\n    }"];
+        yield 'assigned a call in a branch' => ['write' => "if ('' !== \$given) {\n        \$far = strtolower(\$given);\n    }"];
+        yield 'assigned a literal in a branch' => ['write' => "if ('' !== \$given) {\n        \$far = 'def';\n    }"];
+        yield 'assigned a literal again' => ['write' => "\$far = 'def';"];
+    }
+
+    #[Test]
+    #[DataProvider('provideSecondAssignmentsTwoVariablesAway')]
+    public function test_a_second_assignment_two_variables_away_leaves_the_argument_opaque(string $write): void
+    {
+        $code = "<?php\n\nfunction run(string \$s, string \$given, object \$items): int\n{\n"
+            ."    \$word = 'abc';\n    \$body = '^' . \$word . '$';\n    \$re = '/' . \$body . '/';\n\n"
+            ."    \$far = 'abc';\n    ".$write."\n    \$near = '^' . \$far . '$';\n    \$written = '#' . \$near . '#';\n\n"
+            ."    return preg_match(\$re, \$s) + preg_match(\$written, \$s);\n}\n";
+
+        $this->assertExtractedByBoth([
+            ['pattern' => '/^abc$/', 'at' => "'/' . \$body . '/'", 'location' => 'via $re'],
+        ], $code);
+        $this->assertArgumentsReadByBoth([
+            ['state' => 'constant', 'expression' => '$re', 'at' => '$re, $s)', 'source' => 'preg_match()'],
+            ['state' => 'opaque', 'expression' => '$written', 'at' => '$written, $s)', 'source' => 'preg_match()'],
         ], $code);
     }
 

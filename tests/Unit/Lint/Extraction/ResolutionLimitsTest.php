@@ -31,8 +31,9 @@ use PHPUnit\Framework\TestCase;
  * What the reading of names costs stays bounded: a constant folded to a
  * string past 64 KiB proves nothing, a variable assigned and read
  * thousands of times in one body is read in time that grows with it, not
- * with its square, and the values of several operands are not multiplied
- * past the most a composition may give.
+ * with its square, the values of several operands are not multiplied
+ * past the most a composition may give, and an array read item by item
+ * through a loop is read in time that grows with its items.
  */
 final class ResolutionLimitsTest extends TestCase
 {
@@ -129,6 +130,102 @@ final class ResolutionLimitsTest extends TestCase
         }
     }
 
+    /**
+     * Twelve constants of 32 values each, joined in one argument, would
+     * give 32 to the power of 12 strings: the product is never built.
+     * Nothing is known of the argument, and no pattern is read.
+     */
+    #[Test]
+    public function test_a_product_of_constants_of_several_values_is_abandoned_without_being_built(): void
+    {
+        $this->requiresPhp('8.2', 'The peak memory of a resolution', 'has no memory_reset_peak_usage()');
+
+        $code = "<?php\n\n";
+        $joined = "'/^'";
+        for ($constant = 1; $constant <= 12; $constant++) {
+            $code .= \sprintf("define('SET_%d', match (\\PHP_INT_SIZE) {\n", $constant);
+            for ($value = 1; $value < 32; $value++) {
+                $code .= \sprintf("    %d => 'c%dv%d',\n", $value, $constant, $value);
+            }
+            $code .= \sprintf("    default => 'c%dv32',\n});\n", $constant);
+            $joined .= \sprintf(' . SET_%d', $constant);
+        }
+        $code .= "\nfunction f(string \$s): int\n{\n    return preg_match(".$joined." . '$/', \$s);\n}\n";
+        $file = $this->makeProject(['constants.php' => $code]).'/constants.php';
+
+        foreach ($this->strategies() as $name => $strategy) {
+            $this->assertInstanceOf(ArgumentAwareInterface::class, $strategy, $name);
+
+            PeakMemory::reset();
+            $before = memory_get_peak_usage();
+            $read = $strategy->extractWithArguments([$file]);
+            $grown = memory_get_peak_usage() - $before;
+
+            $patterns = [];
+            $states = [];
+            foreach ($read as $occurrence) {
+                if (null === $occurrence->state) {
+                    $patterns[] = $occurrence->pattern;
+                } else {
+                    $states[] = $occurrence->state;
+                }
+            }
+
+            $this->assertSame([], $patterns, $name);
+            $this->assertSame(['opaque'], $states, $name);
+            $this->assertLessThan(32 * 1024 * 1024, $grown, $name.' grew the memory by '.$grown.' bytes.');
+        }
+    }
+
+    /**
+     * An array of 2,000 patterns read through a foreach whose body calls
+     * four functions: each item is read once, where it is written, and
+     * eight times the items take about 8 times as long, not 8 times 8.
+     */
+    #[Test]
+    public function test_an_array_read_through_a_foreach_at_several_calls_is_read_in_linear_time(): void
+    {
+        foreach ($this->strategies() as $name => $strategy) {
+            $small = min(array_map(fn (): float => $this->timeLoop($strategy, 250), range(1, 3)));
+            $large = min(array_map(fn (): float => $this->timeLoop($strategy, 2000), range(1, 3)));
+
+            $this->assertLessThan(24 * $small, $large, \sprintf('%s: %.3fs for 250 items, %.3fs for 2000.', $name, $small, $large));
+        }
+    }
+
+    /**
+     * A variable assigned and joined to literals thousands of times in a
+     * row: the first read has one assignment before it and is read; each
+     * read after it has several, and is not. Telling so for eight times
+     * the reads takes about 8 times as long, not 8 times 8.
+     */
+    #[Test]
+    public function test_a_variable_reassigned_before_each_composed_read_is_read_in_linear_time(): void
+    {
+        foreach ($this->strategies() as $name => $strategy) {
+            $small = min(array_map(fn (): float => $this->timeComposedReads($strategy, 500), range(1, 3)));
+            $large = min(array_map(fn (): float => $this->timeComposedReads($strategy, 4000), range(1, 3)));
+
+            $this->assertLessThan(24 * $small, $large, \sprintf('%s: %.3fs for 500 reads, %.3fs for 4000.', $name, $small, $large));
+        }
+    }
+
+    private function timeLoop(ExtractorInterface $strategy, int $items): float
+    {
+        $code = "<?php\n\nfunction f(string \$s): int\n{\n    \$found = 0;\n    foreach ([\n";
+        for ($i = 0; $i < $items; $i++) {
+            $code .= \sprintf("        '/item-%d/',\n", $i);
+        }
+        $code .= "    ] as \$re) {\n        \$found += preg_match(\$re, \$s) + preg_match_all(\$re, \$s) + \\count(preg_split(\$re, \$s) ?: []) + \\count(preg_grep(\$re, [\$s]) ?: []);\n    }\n\n    return \$found;\n}\n";
+        $file = $this->makeProject(['loop.php' => $code]).'/loop.php';
+
+        $patterns = CpuClock::timed(static fn () => self::patterns($strategy, $file), $elapsed);
+
+        $this->assertCount($items, $patterns);
+
+        return max($elapsed, 0.001);
+    }
+
     private function timeProduct(ExtractorInterface $strategy, int $operands): float
     {
         $file = $this->makeProject(['product.php' => self::productOf($operands, 33)]).'/product.php';
@@ -143,22 +240,56 @@ final class ResolutionLimitsTest extends TestCase
     }
 
     /**
-     * A function assigning each of its variables as many values, one in
-     * each branch, then reading the pattern all of them are joined into.
+     * A function giving each of its variables as many values by one
+     * assignment, the arms of a match, then reading the pattern all of
+     * them are joined into: each operand is an exact set, and only their
+     * product leaves the argument unread.
      */
     private static function productOf(int $operands, int $values): string
     {
         $code = "<?php\n\nfunction f(string \$s, int \$k): int\n{\n";
         $joined = "'/^'";
         for ($operand = 1; $operand <= $operands; $operand++) {
-            $code .= \sprintf("    \$v%d = 'o%dv0';\n", $operand, $operand);
+            $code .= \sprintf("    \$v%d = match (\$k) {\n", $operand);
             for ($value = 1; $value < $values; $value++) {
-                $code .= \sprintf("    if (%d === \$k) {\n        \$v%d = 'o%dv%d';\n    }\n", $value, $operand, $operand, $value);
+                $code .= \sprintf("        %d => 'o%dv%d',\n", $value, $operand, $value);
             }
+            $code .= \sprintf("        default => 'o%dv0',\n    };\n", $operand);
             $joined .= \sprintf(' . $v%d', $operand);
         }
 
         return $code."\n    return preg_match(".$joined." . '$/', \$s);\n}\n";
+    }
+
+    private function timeComposedReads(ExtractorInterface $strategy, int $reads): float
+    {
+        $code = "<?php\n\nfunction f(\$s)\n{\n";
+        for ($i = 0; $i < $reads; $i++) {
+            $code .= \sprintf("    \$part = 'a%d'; preg_match('/' . \$part . '/', \$s);\n", $i);
+        }
+        $file = $this->makeProject(['composed.php' => $code."}\n"]).'/composed.php';
+
+        $this->assertInstanceOf(ArgumentAwareInterface::class, $strategy);
+        $start = CpuClock::nanoseconds();
+        $read = $strategy->extractWithArguments([$file]);
+        $elapsed = (CpuClock::nanoseconds() - $start) / 1e9;
+
+        $patterns = [];
+        $states = [];
+        foreach ($read as $occurrence) {
+            if (null === $occurrence->state) {
+                $patterns[] = $occurrence->pattern;
+            } else {
+                $states[$occurrence->state] = ($states[$occurrence->state] ?? 0) + 1;
+            }
+        }
+
+        // One assignment is written before the first read alone.
+        ksort($states);
+        $this->assertSame(['/a0/'], $patterns);
+        $this->assertSame(['constant' => 1, 'opaque' => $reads - 1], $states);
+
+        return max($elapsed, 0.001);
     }
 
     private function timeReading(ExtractorInterface $strategy, int $calls): float

@@ -315,11 +315,17 @@ final class InFileResolutionTest extends TestCase
      * PHP keeps its own value for a constant it defines: define('PHP_EOL',
      * ...) and a global const E_ALL change nothing, PHP 8.4 still gives
      * "\n" for PHP_EOL. A name PHP does not define is read.
+     *
+     * PHP_EOL is read as what PHP makes it, a line feed, or a carriage
+     * return and a line feed on Windows: the two are the patterns the
+     * argument may hold, composed at the call, and "/(/" is none of them.
      */
     #[Test]
     public function test_a_constant_php_defines_keeps_its_own_value(): void
     {
         $this->assertExtractedByBoth([
+            ['pattern' => "\n", 'at' => 'PHP_EOL, $s)', 'location' => null],
+            ['pattern' => "\r\n", 'at' => 'PHP_EOL, $s)', 'location' => null],
             ['pattern' => '/t/', 'at' => "'/t/'", 'location' => 'via TRUE_'],
         ], <<<'PHP_WRAP'
             <?php
@@ -863,14 +869,16 @@ final class InFileResolutionTest extends TestCase
 
     /**
      * The file scope is no function body: an included file, or a function
-     * declaring the variable global, may write it.
+     * declaring the variable global, may write it. Here a function of the
+     * file does; FileLevelVariableTest holds the rule a variable at file
+     * level is read under, and every other case of it.
      */
     #[Test]
-    public function test_a_variable_at_file_scope_is_not_read(): void
+    public function test_a_variable_at_file_scope_a_function_declares_global_is_not_read(): void
     {
         $this->assertExtractedByBoth([
             ['pattern' => '/control/', 'at' => "'/control/'"],
-        ], "<?php\n\n\$re = '/file-scope/';\npreg_match(\$re, \$subject);\n".self::CONTROL);
+        ], "<?php\n\n\$re = '/file-scope/';\npreg_match(\$re, \$subject);\n\nfunction configure(string \$given): void\n{\n    global \$re;\n    \$re = \$given;\n}\n".self::CONTROL);
     }
 
     /**

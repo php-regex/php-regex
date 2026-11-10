@@ -20,16 +20,15 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The state every shape of pattern argument ends in, before the readings
- * that come next exist: no shape is dropped, each argument is held and
- * says what is known of it.
+ * The state every shape of pattern argument ends in: no shape is dropped,
+ * each argument is held and says what is known of it.
  *
- * Three tables. The first holds what the file proves today. The second
- * holds the shapes a reading still to come will read: each row names that
- * reading, and moves to the first table with it. The third holds the
- * shapes nothing reads.
+ * Three tables. The first holds what the file proves. The second holds
+ * the one shape read under a rule of its own, a variable at file level.
+ * The third holds the shapes nothing reads.
  *
- * Every snippet holds one pattern argument; each runs through both
+ * Every snippet holds one expression in a pattern argument, which an
+ * array of several items makes as many arguments; each runs through both
  * strategies, which must give it the same state at the same place.
  */
 final class ArgumentStateBaselineTest extends TestCase
@@ -37,7 +36,7 @@ final class ArgumentStateBaselineTest extends TestCase
     use ExtractsWithBothStrategies;
 
     /**
-     * @return iterable<string, array{code: string, expression: string, state: ArgumentState, patterns: list<string>, at?: string}>
+     * @return iterable<string, array{code: string, expression: string, state: ArgumentState, patterns: list<string>, at?: string, times?: int}>
      */
     public static function provideShapesTheFileProves(): iterable
     {
@@ -217,107 +216,119 @@ final class ArgumentStateBaselineTest extends TestCase
             'state' => ArgumentState::Constant,
             'patterns' => ['/a|b/'],
         ];
+
+        // $list is ['/item-a/', '/item-b/']: preg_replace() takes a list,
+        // and each item is one argument, where the call names the array.
+        yield 'a local variable assigned an array of patterns' => [
+            'code' => self::inFunction('string $s', "\$list = ['/item-a/', '/item-b/'];\n\n    return (string) preg_replace(\$list, '', \$s);", 'string'),
+            'expression' => '$list',
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/item-a/', '/item-b/'],
+            'at' => "\$list, '', \$s)",
+            'times' => 2,
+        ];
+
+        yield 'the value of a foreach over an array literal' => [
+            'code' => self::inFunction('string $s', "\$found = 0;\n    foreach (['/loop-a/', '/loop-b/'] as \$re) {\n        \$found += preg_match(\$re, \$s);\n    }\n\n    return \$found;"),
+            'expression' => '$re',
+            'state' => ArgumentState::FiniteSet,
+            'patterns' => ['/loop-a/', '/loop-b/'],
+            'at' => '$re, $s)',
+        ];
+
+        yield 'the key of a foreach over an array literal' => [
+            'code' => self::inFunction('string $s', "\$found = 0;\n    foreach (['/key-a/' => 1, '/key-b/' => 2] as \$re => \$weight) {\n        \$found += \$weight * preg_match(\$re, \$s);\n    }\n\n    return \$found;"),
+            'expression' => '$re',
+            'state' => ArgumentState::FiniteSet,
+            'patterns' => ['/key-a/', '/key-b/'],
+            'at' => '$re, $s)',
+        ];
+
+        // ['word' => '/\w+/', 'digit' => '/\d+/']['word'] is "/\w+/" in PHP.
+        yield 'an item of a local array, by its literal key' => [
+            'code' => self::inFunction('string $s', "\$map = ['word' => '/\\\\w+/', 'digit' => '/\\\\d+/'];\n\n    return preg_match(\$map['word'], \$s);"),
+            'expression' => "\$map['word']",
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/\\w+/'],
+            'at' => "\$map['word'], \$s)",
+        ];
+
+        yield 'an item of a constant array, by its literal key' => [
+            'code' => self::inFinalClass("private const MAP = ['word' => '/\\\\w+/'];", "return preg_match(self::MAP['word'], \$s);"),
+            'expression' => "self::MAP['word']",
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/\\w+/'],
+            'at' => "self::MAP['word'], \$s)",
+        ];
+
+        // Nothing but array_filter() holds the closure: self:: is the
+        // class around it.
+        yield 'a class constant in a closure passed to array_filter()' => [
+            'code' => self::inFinalClass("private const RE = '/in-a-closure/';", 'return \\count(array_filter([$s], static fn (string $item): bool => 1 === preg_match(self::RE, $item)));'),
+            'expression' => 'self::RE',
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/in-a-closure/'],
+            'at' => 'self::RE, $item)',
+        ];
+
+        // PHP_INT_SIZE === 8 ? '/wide/' : '/narrow/' is "/wide/" on 64
+        // bits, "/narrow/" elsewhere.
+        yield 'a constant whose value is a ternary' => [
+            'code' => self::inFinalClass("private const RE = \\PHP_INT_SIZE === 8 ? '/wide/' : '/narrow/';", 'return preg_match(self::RE, $s);'),
+            'expression' => 'self::RE',
+            'state' => ArgumentState::FiniteSet,
+            'patterns' => ['/wide/', '/narrow/'],
+            'at' => 'self::RE, $s)',
+        ];
+
+        // '~^' . '/' . '~' where the separator is a slash, '~^' . '\\' .
+        // '~' where it is a backslash.
+        yield 'a concatenation with DIRECTORY_SEPARATOR' => [
+            'code' => self::inFunction('string $s', "return preg_match('~^' . \\DIRECTORY_SEPARATOR . '~', \$s);"),
+            'expression' => "'~^' . \\DIRECTORY_SEPARATOR . '~'",
+            'state' => ArgumentState::FiniteSet,
+            'patterns' => ['~^/~', '~^\\~'],
+        ];
+    }
+
+    /**
+     * @param list<string> $patterns
+     * @param int          $times    how many arguments the expression stands for: one per item of an array
+     */
+    #[Test]
+    #[DataProvider('provideShapesTheFileProves')]
+    public function test_a_shape_the_file_proves_ends_in_its_state(string $code, string $expression, ArgumentState $state, array $patterns, ?string $at = null, int $times = 1): void
+    {
+        $this->assertSame($patterns, $this->patternsReadByBoth($code));
+        $this->assertArgumentsReadByBoth(array_fill(0, $times, self::argument($expression, $state, $at)), $code);
+    }
+
+    /**
+     * A variable at file level is read under a rule of its own, which
+     * FileLevelVariableTest holds whole: this row stands or falls with
+     * the rows of that class.
+     *
+     * @return iterable<string, array{code: string, expression: string, state: ArgumentState, patterns: list<string>, at?: string}>
+     */
+    public static function provideShapesReadUnderARuleOfTheirOwn(): iterable
+    {
+        yield 'a variable at file level' => [
+            'code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\n",
+            'expression' => '$re',
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/file-level/'],
+            'at' => '$re, $subject)',
+        ];
     }
 
     /**
      * @param list<string> $patterns
      */
     #[Test]
-    #[DataProvider('provideShapesTheFileProves')]
-    public function test_a_shape_the_file_proves_ends_in_its_state(string $code, string $expression, ArgumentState $state, array $patterns, ?string $at = null): void
+    #[DataProvider('provideShapesReadUnderARuleOfTheirOwn')]
+    public function test_a_shape_read_under_a_rule_of_its_own_ends_in_its_state(string $code, string $expression, ArgumentState $state, array $patterns, ?string $at = null): void
     {
         $this->assertSame($patterns, $this->patternsReadByBoth($code));
-        $this->assertArgumentsReadByBoth([self::argument($expression, $state, $at)], $code);
-    }
-
-    /**
-     * Each row is read by a reading still to come, named on the row: the
-     * state here is the one the argument has until then.
-     *
-     * @return iterable<string, array{code: string, expression: string, state: ArgumentState, at?: string}>
-     */
-    public static function provideShapesALaterReadingReads(): iterable
-    {
-        // Read with the arrays of patterns (row 3a): then one argument per
-        // item, each constant.
-        yield 'a local variable assigned an array of patterns' => [
-            'code' => self::inFunction('string $s', "\$list = ['/item-a/', '/item-b/'];\n\n    return (string) preg_replace(\$list, '', \$s);", 'string'),
-            'expression' => '$list',
-            'state' => ArgumentState::Opaque,
-            'at' => "\$list, '', \$s)",
-        ];
-
-        // Read with the arrays of patterns (row 3b): then a finite set.
-        yield 'the value of a foreach over an array literal' => [
-            'code' => self::inFunction('string $s', "\$found = 0;\n    foreach (['/loop-a/', '/loop-b/'] as \$re) {\n        \$found += preg_match(\$re, \$s);\n    }\n\n    return \$found;"),
-            'expression' => '$re',
-            'state' => ArgumentState::Opaque,
-            'at' => '$re, $s)',
-        ];
-
-        // Read with the arrays of patterns (row 3b): then a finite set.
-        yield 'the key of a foreach over an array literal' => [
-            'code' => self::inFunction('string $s', "\$found = 0;\n    foreach (['/key-a/' => 1, '/key-b/' => 2] as \$re => \$weight) {\n        \$found += \$weight * preg_match(\$re, \$s);\n    }\n\n    return \$found;"),
-            'expression' => '$re',
-            'state' => ArgumentState::Opaque,
-            'at' => '$re, $s)',
-        ];
-
-        // Read with the arrays of patterns (row 3c): then constant.
-        yield 'an item of a local array, by its literal key' => [
-            'code' => self::inFunction('string $s', "\$map = ['word' => '/\\\\w+/', 'digit' => '/\\\\d+/'];\n\n    return preg_match(\$map['word'], \$s);"),
-            'expression' => "\$map['word']",
-            'state' => ArgumentState::Opaque,
-            'at' => "\$map['word'], \$s)",
-        ];
-
-        // Read with the arrays of patterns (row 3c): then constant.
-        yield 'an item of a constant array, by its literal key' => [
-            'code' => self::inFinalClass("private const MAP = ['word' => '/\\\\w+/'];", "return preg_match(self::MAP['word'], \$s);"),
-            'expression' => "self::MAP['word']",
-            'state' => ArgumentState::Opaque,
-            'at' => "self::MAP['word'], \$s)",
-        ];
-
-        // Read with the variables at file level (row 4): then constant.
-        yield 'a variable at file level' => [
-            'code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\n",
-            'expression' => '$re',
-            'state' => ArgumentState::Opaque,
-            'at' => '$re, $subject)',
-        ];
-
-        // Read with self:: in a closure passed to a PHP function (row 6a):
-        // then constant.
-        yield 'a class constant in a closure passed to array_filter()' => [
-            'code' => self::inFinalClass("private const RE = '/in-a-closure/';", 'return \\count(array_filter([$s], static fn (string $item): bool => 1 === preg_match(self::RE, $item)));'),
-            'expression' => 'self::RE',
-            'state' => ArgumentState::Opaque,
-            'at' => 'self::RE, $item)',
-        ];
-
-        // Read with the constants holding branches (row 6c): then a finite
-        // set.
-        yield 'a constant whose value is a ternary' => [
-            'code' => self::inFinalClass("private const RE = \\PHP_INT_SIZE === 8 ? '/wide/' : '/narrow/';", 'return preg_match(self::RE, $s);'),
-            'expression' => 'self::RE',
-            'state' => ArgumentState::Opaque,
-            'at' => 'self::RE, $s)',
-        ];
-
-        // Read with the platform constants (row 6e): then a finite set.
-        yield 'a concatenation with DIRECTORY_SEPARATOR' => [
-            'code' => self::inFunction('string $s', "return preg_match('~^' . \\DIRECTORY_SEPARATOR . '~', \$s);"),
-            'expression' => "'~^' . \\DIRECTORY_SEPARATOR . '~'",
-            'state' => ArgumentState::RawShell,
-        ];
-    }
-
-    #[Test]
-    #[DataProvider('provideShapesALaterReadingReads')]
-    public function test_a_shape_a_later_reading_reads_is_held_until_then(string $code, string $expression, ArgumentState $state, ?string $at = null): void
-    {
-        $this->assertSame([], $this->patternsReadByBoth($code));
         $this->assertArgumentsReadByBoth([self::argument($expression, $state, $at)], $code);
     }
 

@@ -31,16 +31,37 @@ use PHPRegex\Parser\Text\Ascii;
  * - a constant of the file: self::X and ClassName::X of a class (no trait)
  *   the file declares, static::X when the class or the constant is final,
  *   a namespace "const" or a define() with a literal name; an unqualified
- *   name tries the namespace, then the global constant;
+ *   name tries the namespace, then the global constant. Its value may be
+ *   a ternary, a match, "?:" or "??": one of the values of its arms. A
+ *   constant of another file is read through the project's constants;
+ *   DIRECTORY_SEPARATOR, PHP_EOL and PATH_SEPARATOR are each one of the
+ *   two values a system gives them;
+ * - self::X and static::X in a closure or an arrow function, which may be
+ *   bound to another class, only when each closure around the read is
+ *   written in a call to a function of CALLING, which nothing declares
+ *   again in the namespace of the call;
  * - a property read as $this->p: a literal default, private, or protected,
  *   in a final class or final itself, never promoted, and never written in
  *   the file;
  * - a local variable: every assignment of the function body that may
  *   reach the read a value the file proves, and no way of writing it
  *   otherwise (a parameter, a reference, a compound assignment, global,
- *   static, extract(), $$, a destructuring, a foreach or catch target, a
- *   call it is passed to). It is read alone, as an operand, in an
- *   interpolated string, or through another variable assigned from it.
+ *   static, extract(), $$, a destructuring, a catch target, a call it is
+ *   passed to). It is read alone, as an operand, in an interpolated
+ *   string, or through another variable assigned from it. Joined to
+ *   other texts, it is read when one assignment alone is written before
+ *   that read: two are not told alternatives from successive ones, and
+ *   nothing is known then;
+ * - the target of a foreach, in the body of its loop: one of the values,
+ *   or of the keys, of the array the file proves the loop iterates, when
+ *   nothing else in the loop writes it;
+ * - an array a variable is assigned, at a call PHP gives a list of
+ *   patterns to, and an item of an array a variable or a constant holds:
+ *   the one a key the file proves names, any of them otherwise;
+ * - a variable of the file level, a global any code may write: by the
+ *   rules of a local variable, in a file that includes no other, names no
+ *   global from a function body and evaluates nothing, and where no call
+ *   and no "new" may run between the assignment and the read.
  *
  * A value is read as the values it may take, each a list of parts: the
  * text the file proves, and a hole for each part it does not, a text
@@ -57,6 +78,8 @@ use PHPRegex\Parser\Text\Ascii;
  * one operand of several values gives as many patterns, each one the code
  * builds; two of them, or more values than
  * PatternArgument::MAX_CANDIDATES, and nothing is known of the argument.
+ * A constant has one value wherever it stands: the same one twice in a
+ * composition is one operand, and gives a pattern for each of its values.
  * Folding follows 32 constants at most and stops on a cycle.
  *
  * A pattern that is one literal is reported once, where the literal is
@@ -98,6 +121,50 @@ final class InFileValueResolver
      * variable passed to one of them keeps the value the file proves.
      */
     public const BY_VALUE = ['preg_quote' => true, 'sprintf' => true, 'implode' => true, 'join' => true];
+
+    /**
+     * The functions of PHP that call a closure they are given and let it
+     * go: none of them keeps it, hands it on or binds it, so a closure
+     * written in a call to one of them keeps the class it is written in.
+     * A list of its own, not the functions of the PHP that runs: what a
+     * file proves does not depend on the extensions loaded.
+     */
+    public const CALLING = [
+        'array_map' => true, 'array_filter' => true, 'array_reduce' => true, 'array_walk' => true,
+        'array_walk_recursive' => true, 'array_find' => true, 'array_find_key' => true, 'array_any' => true,
+        'array_all' => true, 'usort' => true, 'uasort' => true, 'uksort' => true, 'array_udiff' => true,
+        'array_udiff_assoc' => true, 'array_udiff_uassoc' => true, 'array_uintersect' => true,
+        'array_uintersect_assoc' => true, 'array_uintersect_uassoc' => true, 'array_diff_ukey' => true,
+        'array_diff_uassoc' => true, 'array_intersect_ukey' => true, 'array_intersect_uassoc' => true,
+        'preg_replace_callback' => true, 'call_user_func' => true, 'call_user_func_array' => true,
+        'iterator_apply' => true,
+    ];
+
+    /**
+     * The scope of the variables of the file level: globals, which any
+     * code the file runs may write.
+     */
+    public const FILE = -1;
+
+    /**
+     * The constants of PHP whose value depends on the system the code
+     * runs on, each with its two values and what a pattern built of one
+     * says of it.
+     */
+    private const PLATFORM = [
+        'DIRECTORY_SEPARATOR' => ['/' => 'DIRECTORY_SEPARATOR is "/"', '\\' => 'DIRECTORY_SEPARATOR is "\"'],
+        'PHP_EOL' => ["\n" => 'PHP_EOL is "\n"', "\r\n" => 'PHP_EOL is "\r\n"'],
+        'PATH_SEPARATOR' => [':' => 'PATH_SEPARATOR is ":"', ';' => 'PATH_SEPARATOR is ";"'],
+    ];
+
+    /**
+     * How a variable is read: as the pattern itself; as a value an arm or
+     * another variable selects, joined to nothing; or as a part of a
+     * composition.
+     */
+    private const ALONE = 0;
+    private const SELECTED = 1;
+    private const COMPOSED = 2;
 
     /**
      * What a call may write of what it is passed.
@@ -164,15 +231,99 @@ final class InFileValueResolver
     private array $opaqueScopes = [];
 
     /**
-     * @var array<int, array<string, true>> scope => the variables written otherwise than by a plain assignment
+     * @var array<int, array<string, true>> scope => the variables written otherwise than by a plain assignment,
+     *                                      or by a call they are passed to
      */
     private array $bailed = [];
 
     /**
-     * @var array<int, array<string, list<array{ValueExpr, int}>>> scope => variable => the values assigned to it,
-     *                                                             each with where it is assigned
+     * @var array<int, array<string, list<int>>> scope => variable => where the calls it is passed to end: each
+     *                                           may write it
+     */
+    private array $passedAt = [];
+
+    /**
+     * @var array<int, array<string, list<array{ValueExpr, int, int}>>> scope => variable => the values assigned to
+     *                                                                  it, each with where its assignment starts
+     *                                                                  and ends
      */
     private array $assignments = [];
+
+    /**
+     * @var array<int, array<string, array{list<int>, list<int>, list<int>}>> scope => variable => where its
+     *                                                                        assignments start, in order, where
+     *                                                                        they end, in order, and which
+     *                                                                        assignment starts at each rank
+     */
+    private array $assignmentPlaces = [];
+
+    /**
+     * @var array<int, array<string, array<int, array<int, list<ValueExpr>>>>> scope => variable => assignment =>
+     *                                                                         the values it gives a composition,
+     *                                                                         under 0, and a variable read as a
+     *                                                                         pattern, under 1
+     */
+    private array $assignmentValues = [];
+
+    /**
+     * @var array<int, array{list<array{int, int}>, list<int>}> scope => the byte ranges of its loops, in order, and
+     *                                                          for each the rank of the loop that holds it, -1
+     *                                                          for none
+     */
+    private array $loopTrees = [];
+
+    /**
+     * @var array<int, array<string, list<array{ValueExpr, int, int, int}>>> scope => variable => the foreach loops
+     *                                                                       whose head assigns it at each turn:
+     *                                                                       what the head gives it, where the
+     *                                                                       head ends, and where the loop starts
+     *                                                                       and ends
+     */
+    private array $targets = [];
+
+    /**
+     * @var array<int, array<string, true>> scope => the variables whose loops are in the order they start in
+     */
+    private array $targetsInOrder = [];
+
+    /**
+     * @var array<int, array<string, array<int, list<ValueExpr>>>> scope => variable => loop => the values its head
+     *                                                             gives the variable
+     */
+    private array $headValues = [];
+
+    /**
+     * @var list<int> where each call and each "new" the file level runs ends
+     */
+    private array $calls = [];
+
+    private bool $callsInOrder = true;
+
+    /**
+     * Whether a "global" statement or $GLOBALS stands anywhere in the
+     * file: a function body may then write a variable of the file level.
+     */
+    private bool $globalsNamed = false;
+
+    /**
+     * @var \WeakMap<ValueExpr, string> the constant an item of several values takes them from
+     */
+    private \WeakMap $sources;
+
+    /**
+     * @var \WeakMap<ValueExpr, string> what a value built of a constant of PLATFORM says of that constant
+     */
+    private \WeakMap $variants;
+
+    /**
+     * @var \WeakMap<ValueExpr, true> the arrays a variable is assigned as an array literal
+     */
+    private \WeakMap $localArrays;
+
+    /**
+     * @var array<string, list<ValueExpr>> constant of PLATFORM => its values
+     */
+    private array $platformValues = [];
 
     /**
      * @var array<int, list<array{int, int}>> scope => the byte ranges of its loops
@@ -232,10 +383,11 @@ final class InFileValueResolver
     private ?array $callee = null;
 
     /**
-     * @var list<array{list<string>, int, int|string|null, string}> the writes of the calls that may reach a
-     *                                                              function of BY_VALUE, each with the functions its
-     *                                                              call may reach: which write, its scope or its
-     *                                                              class, its name
+     * @var list<array{list<string>, int, int|string|null, string, int|null}> the writes of the calls that may reach
+     *                                                                        a function of BY_VALUE, each with the
+     *                                                                        functions its call may reach: which
+     *                                                                        write, its scope or its class, its
+     *                                                                        name, and where the call ends
      */
     private array $passed = [];
 
@@ -252,7 +404,8 @@ final class InFileValueResolver
     private array $variablesRead = [];
 
     /**
-     * @var array<string, array{list<ValueExpr>, int}> constant => its folded values and the constants they went through
+     * @var array<string, array{list<ValueExpr>, int, string|null}> constant => its folded values, the constants they
+     *                                                              went through and the constant they follow
      */
     private array $folded = [];
 
@@ -262,8 +415,10 @@ final class InFileValueResolver
     private array $folding = [];
 
     /**
-     * @var array<string, array{int, list<ValueExpr>, int}> constant => the depth its reading was cut short from, what
-     *                                                      it gave from there and the constants it went through
+     * @var array<string, array{int, list<ValueExpr>, int, string|null}> constant => the depth its reading was cut
+     *                                                                   short from, what it gave from there, the
+     *                                                                   constants it went through and the
+     *                                                                   constant its values follow
      */
     private array $cutShort = [];
 
@@ -272,13 +427,43 @@ final class InFileValueResolver
      */
     private array $reported = [];
 
+    public function __construct()
+    {
+        $this->sources = new \WeakMap();
+        $this->variants = new \WeakMap();
+        $this->localArrays = new \WeakMap();
+    }
+
     /**
-     * Resolve a class the file does not declare through the project's
-     * constants: the file's own class of a name always wins.
+     * Resolve a class, a constant or a function the file does not declare
+     * through what the project's other files declare: the file's own
+     * declaration of a name always wins.
      */
     public function useProject(ProjectConstants $project): void
     {
         $this->project = $project;
+    }
+
+    /**
+     * The constants the file declared so far at the level of a
+     * namespace, by a "const" or a define(): null for one it declares
+     * twice, or that PHP defines itself.
+     *
+     * @return array<string, ValueExpr|null>
+     */
+    public function globalConstants(): array
+    {
+        return $this->constants;
+    }
+
+    /**
+     * The lowercase functions the file declared so far.
+     *
+     * @return list<string>
+     */
+    public function functions(): array
+    {
+        return array_map(strval(...), array_keys($this->functions));
     }
 
     /**
@@ -380,7 +565,7 @@ final class InFileValueResolver
     public function writeProperty(string $name): void
     {
         if (null !== $this->callee) {
-            $this->passed[] = [$this->callee, self::WRITES_PROPERTY, null, $name];
+            $this->passed[] = [$this->callee, self::WRITES_PROPERTY, null, $name, null];
 
             return;
         }
@@ -396,7 +581,7 @@ final class InFileValueResolver
     public function writeAnyProperty(?string $class): void
     {
         if (null !== $this->callee) {
-            $this->passed[] = [$this->callee, self::WRITES_ANY_PROPERTY, $class, ''];
+            $this->passed[] = [$this->callee, self::WRITES_ANY_PROPERTY, $class, '', null];
 
             return;
         }
@@ -409,11 +594,41 @@ final class InFileValueResolver
     }
 
     /**
-     * @param int $at where the assignment is written
+     * @param int      $at  where the assignment is written
+     * @param int|null $end where its value ends; null when it is not known, which reads as where it is written
      */
-    public function assign(int $scope, string $name, ValueExpr $value, int $at): void
+    public function assign(int $scope, string $name, ValueExpr $value, int $at, ?int $end = null): void
     {
-        $this->assignments[$scope][$name][] = [$value, $at];
+        $this->assignments[$scope][$name][] = [$value, $at, max($at, $end ?? $at)];
+    }
+
+    /**
+     * A foreach whose head assigns the variable at each turn, as its
+     * value target or its key target: what the head gives it, where the
+     * head ends, and the loop from its keyword to its last byte.
+     */
+    public function iterate(int $scope, string $name, ValueExpr $each, int $head, int $start, int $end): void
+    {
+        $this->targets[$scope][$name][] = [$each, $head, $start, $end];
+    }
+
+    /**
+     * A call or a "new" the file level runs, by where it ends: the code
+     * it runs may write any variable of that level.
+     */
+    public function call(int $at): void
+    {
+        $this->callsInOrder = $this->callsInOrder && ([] === $this->calls || $this->calls[\count($this->calls) - 1] <= $at);
+        $this->calls[] = $at;
+    }
+
+    /**
+     * A "global" statement or $GLOBALS, anywhere in the file: the
+     * variables of the file level may be written from a function body.
+     */
+    public function nameGlobals(): void
+    {
+        $this->globalsNamed = true;
     }
 
     /**
@@ -488,15 +703,25 @@ final class InFileValueResolver
         }
     }
 
-    public function bail(int $scope, string $name): void
+    /**
+     * A variable written otherwise than by a plain assignment.
+     *
+     * @param int|null $at where the call it is passed to ends, when a call may write it; null for any other
+     *                     write, which may reach every read
+     */
+    public function bail(int $scope, string $name, ?int $at = null): void
     {
         if (null !== $this->callee) {
-            $this->passed[] = [$this->callee, self::WRITES_VARIABLE, $scope, $name];
+            $this->passed[] = [$this->callee, self::WRITES_VARIABLE, $scope, $name, $at];
 
             return;
         }
 
-        $this->bailed[$scope][$name] = true;
+        if (null === $at) {
+            $this->bailed[$scope][$name] = true;
+        } else {
+            $this->passedAt[$scope][$name][] = $at;
+        }
     }
 
     public function bailScope(int $scope): void
@@ -509,18 +734,22 @@ final class InFileValueResolver
      * reported yet, each where its literal is written, with the name the
      * call reaches it through: "via self::RE", "via $re"; none for a
      * pattern written or composed in the argument. One composed in the
-     * argument stands where the argument starts. An argument one of whose
-     * values is no whole pattern gives none. The patterns reported at one
-     * place come in the order of their bytes.
+     * argument stands where the argument starts, and so does one no file
+     * writes, a value PHP gives one of its constants: its offset is -1,
+     * and each argument reports it. An argument one of whose values is no
+     * whole pattern gives none. The patterns reported at one place come
+     * in the order of their bytes.
      *
-     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null}> each with the file, the column and the guard of its literal when it is another file's
+     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null, variant: string|null}> each with the file, the column and the guard of its literal when it is another file's, and what it says of a constant of PHP whose value depends on the system
      */
     public function patterns(ValueExpr $expr, PatternFunction $function): array
     {
         // A variable read again the same way gives the patterns its first
-        // read reported: none is new.
-        if (ValueExpr::VARIABLE === $expr->kind) {
-            $key = ($expr->scope ?? -1).'|'.$expr->value.'|'.$function->patternSuffix.'|'.implode("\0", $function->optionPath).'|'.(int) $function->optionPathRequired;
+        // read reported: none is new. One read by its place holds other
+        // values at another read.
+        $key = null;
+        if (ValueExpr::VARIABLE === $expr->kind && !$this->readsByPlace($expr)) {
+            $key = ($expr->scope ?? -1).'|'.$expr->value.'|'.$function->patternSuffix.'|'.implode("\0", $function->optionPath).'|'.(int) $function->optionPathRequired.'|'.(int) \in_array($function->label, PregFunctions::PATTERN_LISTS, true);
             if (isset($this->variablesRead[$key])) {
                 return [];
             }
@@ -542,6 +771,17 @@ final class InFileValueResolver
                 }
 
                 $pattern = $literal->value.$function->patternSuffix;
+                $variant = $this->variants[$literal] ?? null;
+                if ($literal->offset < 0 && null === $literal->file) {
+                    $patterns[] = ['pattern' => $pattern, 'offset' => -1, 'line' => 0, 'location' => null, 'file' => null, 'column' => null, 'guard' => null, 'variant' => $variant];
+                    // The next argument naming the variable reports it too.
+                    if (null !== $key) {
+                        unset($this->variablesRead[$key]);
+                    }
+
+                    continue;
+                }
+
                 // A literal of another file is told from one of the file
                 // at the same offset: each file keeps its own.
                 if (isset($this->reported[$literal->file ?? ''][$literal->offset][$pattern])) {
@@ -549,7 +789,7 @@ final class InFileValueResolver
                 }
 
                 $this->reported[$literal->file ?? ''][$literal->offset][$pattern] = $literal;
-                $patterns[] = ['pattern' => $pattern, 'offset' => $literal->offset, 'line' => $literal->line, 'location' => $location, 'file' => $literal->file, 'column' => $literal->column, 'guard' => $literal->guard];
+                $patterns[] = ['pattern' => $pattern, 'offset' => $literal->offset, 'line' => $literal->line, 'location' => $location, 'file' => $literal->file, 'column' => $literal->column, 'guard' => $literal->guard, 'variant' => $variant];
             }
         }
 
@@ -566,12 +806,12 @@ final class InFileValueResolver
      */
     public function states(ValueExpr $expr, PatternFunction $function): array
     {
-        if (ValueExpr::VARIABLE !== $expr->kind) {
+        if (ValueExpr::VARIABLE !== $expr->kind || $this->readsByPlace($expr)) {
             return $this->statesOf($expr, $function);
         }
 
         // A variable read many times holds the same values at each read.
-        $key = ($expr->scope ?? -1).'|'.$expr->value.'|'.implode("\0", $function->optionPath).'|'.(int) $function->optionPathRequired.'|'.(int) $function->keysArePatterns.'|'.($function->replacementIndex ?? '');
+        $key = ($expr->scope ?? -1).'|'.$expr->value.'|'.(int) \in_array($function->label, PregFunctions::PATTERN_LISTS, true).'|'.implode("\0", $function->optionPath).'|'.(int) $function->optionPathRequired.'|'.(int) $function->keysArePatterns.'|'.($function->replacementIndex ?? '');
 
         return $this->variableStates[$key] ??= $this->statesOf($expr, $function);
     }
@@ -623,9 +863,9 @@ final class InFileValueResolver
      * each place keeping its rank among the others: the patterns an
      * argument composes are listed the same way on every run.
      *
-     * @param list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null}> $patterns
+     * @param list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null, variant: string|null}> $patterns
      *
-     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null}>
+     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null, variant: string|null}>
      */
     private static function inByteOrder(array $patterns): array
     {
@@ -709,6 +949,11 @@ final class InFileValueResolver
      */
     private static function kept(array $first, \Closure $second, bool $coalescing, bool $mayBeUnset): array
     {
+        // Nothing is known of A: nor of what PHP keeps of it.
+        if ([] === $first) {
+            return [];
+        }
+
         $kept = [];
         $passedOver = $mayBeUnset;
         foreach ($first as $entry) {
@@ -789,7 +1034,9 @@ final class InFileValueResolver
      * The arguments a call reads through the expression, each as the
      * values it may take: one argument, or, for an array a name holds, one
      * for each item the call reads a pattern from. An array written where
-     * a pattern is read is no pattern: PHP reads it as "Array". None when
+     * a pattern is read is no pattern: PHP reads it as "Array". An array
+     * the body assigns a variable is read by the calls PHP gives a list
+     * of patterns to, and nothing is known of it at any other. None when
      * the call reads its pattern from an option the value is known not to
      * hold. An argument with no value is one nothing is known of. Each
      * value comes with the name the call reads it through, "via $re", or
@@ -810,6 +1057,10 @@ final class InFileValueResolver
         $strings = [];
         $scalars = [];
         foreach ($values as [$value, $via]) {
+            if (isset($this->localArrays[$value]) && !\in_array($function->label, PregFunctions::PATTERN_LISTS, true)) {
+                return [[]];
+            }
+
             $value = $this->optionValue($value, $function);
             if (null === $value) {
                 continue;
@@ -857,8 +1108,8 @@ final class InFileValueResolver
         switch ($expr->kind) {
             case ValueExpr::VARIABLE:
                 // The argument itself is read as a pattern, an arm as a
-                // part of one.
-                $values = $expr === $argument ? $this->variableValues($expr, false) ?? [] : $this->variableValues($expr, true) ?? [self::rawHole()];
+                // value the argument selects.
+                $values = $expr === $argument ? $this->variable($expr, self::ALONE) ?? [] : $this->variable($expr, self::SELECTED) ?? [self::rawHole()];
 
                 break;
             case ValueExpr::PROPERTY:
@@ -891,8 +1142,16 @@ final class InFileValueResolver
                 foreach ($this->values($expr) as $value) {
                     // A pattern composed in an arm is composed in the
                     // argument all the same.
-                    $moved = $expr !== $argument && ValueExpr::LITERAL !== $expr->kind && ValueExpr::LITERAL === $value->kind;
-                    $composed[] = [$moved ? ValueExpr::literal($value->value, $argument->offset, $argument->line) : $value, null];
+                    if ($expr !== $argument && ValueExpr::LITERAL !== $expr->kind && ValueExpr::LITERAL === $value->kind && ValueExpr::ITEM !== $expr->kind) {
+                        $moved = ValueExpr::literal($value->value, $argument->offset, $argument->line);
+                        if (isset($this->variants[$value])) {
+                            $this->variants[$moved] = $this->variants[$value];
+                        }
+
+                        $value = $moved;
+                    }
+
+                    $composed[] = [$value, null];
                 }
 
                 return $composed;
@@ -916,13 +1175,13 @@ final class InFileValueResolver
     {
         $passed = $this->passed;
         $this->passed = [];
-        foreach ($passed as [$names, $write, $owner, $name]) {
+        foreach ($passed as [$names, $write, $owner, $name, $at]) {
             if ($this->isNative($names)) {
                 continue;
             }
 
             if (self::WRITES_VARIABLE === $write && \is_int($owner)) {
-                $this->bail($owner, $name);
+                $this->bail($owner, $name, $at);
             } elseif (self::WRITES_PROPERTY === $write) {
                 $this->writeProperty($name);
             } elseif (self::WRITES_ANY_PROPERTY === $write && !\is_int($owner)) {
@@ -933,14 +1192,16 @@ final class InFileValueResolver
 
     /**
      * Whether a call reaches a function of PHP: the file declares none of
-     * the functions PHP tries for it.
+     * the functions PHP tries for it, and no other file of the project
+     * declares the one of the namespace, which PHP tries first.
      *
      * @param list<string> $names the lowercase functions the call may reach, in the order PHP tries them
      */
     private function isNative(array $names): bool
     {
-        foreach ($names as $name) {
-            if (isset($this->functions[$name])) {
+        $last = \count($names) - 1;
+        foreach ($names as $position => $name) {
+            if (isset($this->functions[$name]) || ($position < $last && true === $this->project?->declaresFunction($name))) {
                 return false;
             }
         }
@@ -990,25 +1251,73 @@ final class InFileValueResolver
     }
 
     /**
-     * Every value the assignments of the variable that may reach its reads
-     * give it: a hole for one the file does not prove, and for a variable
-     * that may be written unseen; null when no assignment reaches them.
-     * Read once per variable for its reads as a pattern, and once more for
-     * its reads as a part of one when some come later.
+     * Whether what a variable holds depends on where it is read: a
+     * variable of the file level, which a call may write, and the target
+     * of a foreach, which holds another array in each loop.
+     */
+    private function readsByPlace(ValueExpr $variable): bool
+    {
+        return self::FILE === $variable->scope || (null !== $variable->scope && isset($this->targets[$variable->scope][$variable->value]));
+    }
+
+    /**
+     * The values a variable holds where it is read: a hole for one the
+     * file does not prove, and for a variable that may be written unseen;
+     * none when nothing is known of what it holds there; null when no
+     * assignment reaches the read.
      *
-     * @param bool $part whether the variable is read as a part of a pattern, not as the pattern itself
+     * @param int $mode how the variable is read, ALONE, SELECTED or COMPOSED
      *
      * @return list<ValueExpr>|null
      */
-    private function variableValues(ValueExpr $variable, bool $part): ?array
+    private function variable(ValueExpr $variable, int $mode): ?array
     {
         $scope = $variable->scope;
         $name = $variable->value;
-        if (null === $scope || isset($this->opaqueScopes[$scope]) || isset($this->bailed[$scope][$name])) {
+        if (null === $scope || isset($this->opaqueScopes[$scope]) || (self::FILE === $scope && $this->writtenOutOfSight())) {
             return [self::rawHole()];
         }
 
-        $read = ($part ? $this->lastUses : $this->lastReads)[$scope][$name] ?? -1;
+        if (isset($this->targets[$scope][$name])) {
+            return isset($this->bailed[$scope][$name]) ? [self::rawHole()] : $this->targetValues($scope, $name, $variable->offset);
+        }
+
+        if (self::COMPOSED === $mode) {
+            return $this->composedValues($scope, $name, $variable->offset);
+        }
+
+        if (isset($this->bailed[$scope][$name]) || isset($this->passedAt[$scope][$name])) {
+            return [self::rawHole()];
+        }
+
+        return self::FILE === $scope ? $this->fileValues($name, $variable->offset) : $this->variableValues($scope, $name, self::SELECTED === $mode);
+    }
+
+    /**
+     * Whether the file may write its variables of the file level where
+     * no assignment shows: code it includes or evaluates, extract(),
+     * compact() or a variable named by an expression, anywhere in it, and
+     * a function body that names them with "global" or $GLOBALS.
+     */
+    private function writtenOutOfSight(): bool
+    {
+        return $this->globalsNamed || [] !== $this->opaqueScopes;
+    }
+
+    /**
+     * Every value the assignments of a variable of a function body that
+     * may reach its reads give it; null when no assignment reaches them.
+     * Read once per variable for its reads as a pattern, and once more for
+     * its reads as a value an arm or another variable selects when some
+     * come later.
+     *
+     * @param bool $selected whether the variable is read through an arm or another variable, not as the pattern itself
+     *
+     * @return list<ValueExpr>|null
+     */
+    private function variableValues(int $scope, string $name, bool $selected): ?array
+    {
+        $read = ($selected ? $this->lastUses : $this->lastReads)[$scope][$name] ?? -1;
         $key = $scope.'|'.$name.'|'.$read;
         if (!\array_key_exists($key, $this->variableValues)) {
             // A variable assigned from itself, through any number of
@@ -1027,28 +1336,47 @@ final class InFileValueResolver
      */
     private function assignedValues(int $scope, string $name, int $read): ?array
     {
+        $reaching = [];
+        foreach ($this->assignments[$scope][$name] ?? [] as $assignment => [, $at]) {
+            if ($this->reaches($scope, $at, $read)) {
+                $reaching[] = $assignment;
+            }
+        }
+
+        return $this->union($scope, $name, $reaching);
+    }
+
+    /**
+     * The values several assignments of a variable give it, each once;
+     * null for no assignment. None when nothing is known of what one of
+     * them gives, and when one of several gives an array: two arrays are
+     * not proved alternatives item by item.
+     *
+     * @param list<int> $assignments the assignments, by their rank among those declared
+     *
+     * @return list<ValueExpr>|null
+     */
+    private function union(int $scope, string $name, array $assignments): ?array
+    {
+        if ([] === $assignments) {
+            return null;
+        }
+
         $values = [];
         $seen = [];
-        $reached = false;
-        foreach ($this->assignments[$scope][$name] ?? [] as [$expr, $at]) {
-            if (!$this->reaches($scope, $at, $read)) {
-                continue;
-            }
-
-            // A local array of literals is left out.
-            if (ValueExpr::ARRAY === $expr->kind) {
-                return [self::rawHole()];
-            }
-
-            $assigned = $this->values($expr);
+        foreach ($assignments as $assignment) {
+            $assigned = $this->assignmentValue($scope, $name, $assignment, true);
             if ([] === $assigned) {
                 return [];
             }
 
-            $reached = true;
             // A value two assignments give, each naming the same
             // variable, is one value.
             foreach ($assigned as $value) {
+                if (\count($assignments) > 1 && isset($this->localArrays[$value])) {
+                    return [];
+                }
+
                 $id = spl_object_id($value);
                 if (!isset($seen[$id])) {
                     $seen[$id] = true;
@@ -1057,7 +1385,451 @@ final class InFileValueResolver
             }
         }
 
-        return $reached ? $values : null;
+        return $values;
+    }
+
+    /**
+     * The values one assignment gives its variable, read once for all the
+     * reads it reaches. An array literal assigned there is an array of
+     * the body, which the calls taking a list of patterns alone read.
+     *
+     * @param int  $assignment its rank among the assignments declared
+     * @param bool $selects    whether the variable is read as a pattern, its value selected and joined to nothing
+     *
+     * @return list<ValueExpr>
+     */
+    private function assignmentValue(int $scope, string $name, int $assignment, bool $selects): array
+    {
+        $mode = (int) $selects;
+        if (!isset($this->assignmentValues[$scope][$name][$assignment][$mode])) {
+            $expr = $this->assignments[$scope][$name][$assignment][0];
+            $values = $selects ? $this->selected($expr) : $this->values($expr);
+            if (ValueExpr::ARRAY === $expr->kind) {
+                foreach ($values as $value) {
+                    $this->localArrays[$value] = true;
+                }
+            }
+
+            $this->assignmentValues[$scope][$name][$assignment][$mode] = $values;
+        }
+
+        return $this->assignmentValues[$scope][$name][$assignment][$mode];
+    }
+
+    /**
+     * The values a variable brings to a composition, where it is read:
+     * those of the one assignment written before the read. Two
+     * assignments written before it are not told alternatives from
+     * successive ones, and joining each value to what is written around
+     * would give a pattern the code never builds: none then, nothing is
+     * known. None either when an assignment written after the read may
+     * run before it, in a loop that holds both or in a body a goto runs
+     * again; nor when the body assigns the variable only after the read,
+     * where PHP joins nothing. A variable the body never assigns, or one
+     * written otherwise than by a plain assignment, is a hole; so is one
+     * of the file level a call may have written since its assignment.
+     *
+     * @return list<ValueExpr>
+     */
+    private function composedValues(int $scope, string $name, int $read): array
+    {
+        if (!isset($this->assignments[$scope][$name])) {
+            return [self::rawHole()];
+        }
+
+        // Assigned only after the read: PHP joins nothing there, unless
+        // something else wrote the variable first.
+        $places = $this->assignmentPlaces[$scope][$name] ??= self::inOrder($this->assignments[$scope][$name]);
+        if ($read >= 0 && 0 === self::before($places[1], $read)) {
+            return isset($this->bailed[$scope][$name]) || $this->passedBetween($scope, $name, -1, $read) ? [self::rawHole()] : [];
+        }
+
+        if (isset($this->bailed[$scope][$name]) || isset($this->passedAt[$scope][$name])) {
+            return [self::rawHole()];
+        }
+
+        $assignment = $this->reaching($scope, $name, $read);
+        if (null === $assignment) {
+            return [];
+        }
+
+        [, $at, $end] = $this->assignments[$scope][$name][$assignment];
+        if (self::FILE === $scope && $this->calledBetween($at, $end, $read)) {
+            return [self::rawHole()];
+        }
+
+        return $this->assignmentValue($scope, $name, $assignment, false);
+    }
+
+    /**
+     * The one assignment of the variable that reaches a read at $read, as
+     * its rank among the assignments declared; null when none does, or
+     * several, or when one written after the read may run before it. A
+     * read somewhere unknown, -1, comes after every assignment.
+     */
+    private function reaching(int $scope, string $name, int $read): ?int
+    {
+        [$starts, $ends, $order] = $this->assignmentPlaces[$scope][$name] ??= self::inOrder($this->assignments[$scope][$name]);
+        $count = \count($starts);
+        if ($read < 0) {
+            return 1 === $count ? $order[0] : null;
+        }
+
+        // An assignment that started before the read and did not end
+        // holds the read in its own value: it is written after it.
+        $started = self::before($starts, $read);
+        if (1 !== self::before($ends, $read)) {
+            return null;
+        }
+
+        if ($started > 1 || $started < $count) {
+            if (isset($this->jumpingScopes[$scope])) {
+                return null;
+            }
+
+            $loop = $this->outerLoop($scope, $read);
+            if (null !== $loop && ($started > 1 || $starts[$started] <= $loop[1])) {
+                return null;
+            }
+        }
+
+        for ($rank = 0; $rank < $started; $rank++) {
+            if ($this->assignments[$scope][$name][$order[$rank]][2] < $read) {
+                return $order[$rank];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The values a variable of the file level holds where it is read as
+     * a pattern, or through an arm or another variable: those of every
+     * assignment written before the read, when no call may have run since
+     * the first of them. A call may write the variable out of sight, and
+     * so may one of a loop that holds the read, which a later turn runs
+     * before it: a hole then. Null when no assignment is written before
+     * the read.
+     *
+     * @return list<ValueExpr>|null
+     */
+    private function fileValues(string $name, int $read): ?array
+    {
+        $assignments = $this->assignments[self::FILE][$name] ?? null;
+        if (null === $assignments) {
+            return null;
+        }
+
+        if ($read < 0) {
+            return [self::rawHole()];
+        }
+
+        [$starts, $ends, $order] = $this->assignmentPlaces[self::FILE][$name] ??= self::inOrder($assignments);
+        $started = self::before($starts, $read);
+        $ended = self::before($ends, $read);
+        if ($started > $ended || $started < \count($starts)) {
+            // An assignment written after the read reaches it at a later
+            // turn of a loop that holds both, past the calls of the loop.
+            $loop = $this->outerLoop(self::FILE, $read);
+            if (isset($this->jumpingScopes[self::FILE]) || (null !== $loop && ($started > $ended || $starts[$started] <= $loop[1]))) {
+                return [self::rawHole()];
+            }
+        }
+
+        $reaching = [];
+        for ($rank = 0; $rank < $started; $rank++) {
+            [, $at, $end] = $assignments[$order[$rank]];
+            if ($end >= $read) {
+                continue;
+            }
+
+            // The first one written is the farthest from the read: a
+            // call after it stands before the read whichever one runs.
+            if ([] === $reaching && $this->calledBetween($at, $end, $read)) {
+                return [self::rawHole()];
+            }
+
+            $reaching[] = $order[$rank];
+        }
+
+        return $this->union(self::FILE, $name, $reaching);
+    }
+
+    /**
+     * The values the target of a foreach holds where it is read: in the
+     * body of its loop, those the head gives it at each turn, when
+     * nothing else in the loop writes it. Out of its loops it holds what
+     * the last turn left: a hole. None when the loop writes it again, by
+     * an assignment or by the head of a loop inside it. A call it is
+     * passed to between the head and the read may have written it, and
+     * at the file level any call there: a hole. A call after the read is
+     * followed by the head, which assigns it again.
+     *
+     * @return list<ValueExpr>
+     */
+    private function targetValues(int $scope, string $name, int $read): array
+    {
+        if (!isset($this->targetsInOrder[$scope][$name])) {
+            usort($this->targets[$scope][$name], static fn (array $a, array $b): int => $a[2] <=> $b[2]);
+            $this->targetsInOrder[$scope][$name] = true;
+        }
+
+        // The last loop whose head stands before the read.
+        $heads = $this->targets[$scope][$name];
+        $low = 0;
+        $high = \count($heads);
+        while ($low < $high) {
+            $middle = intdiv($low + $high, 2);
+            if ($heads[$middle][1] < $read) {
+                $low = $middle + 1;
+            } else {
+                $high = $middle;
+            }
+        }
+
+        $rank = $low - 1;
+        if ($rank < 0 || $heads[$rank][3] < $read || isset($this->jumpingScopes[$scope])) {
+            return [self::rawHole()];
+        }
+
+        [$each, $head, $start, $end] = $heads[$rank];
+        if (isset($heads[$rank + 1]) && $heads[$rank + 1][2] <= $end) {
+            return [];
+        }
+
+        if (isset($this->assignments[$scope][$name])) {
+            $starts = ($this->assignmentPlaces[$scope][$name] ??= self::inOrder($this->assignments[$scope][$name]))[0];
+            if (self::before($starts, $end + 1) > self::before($starts, $start)) {
+                return [];
+            }
+        }
+
+        if ($this->passedBetween($scope, $name, $head, $read) || (self::FILE === $scope && $this->calledBetween($head, $head, $read))) {
+            return [self::rawHole()];
+        }
+
+        return $this->headValues[$scope][$name][$rank] ??= $this->values($each);
+    }
+
+    /**
+     * Whether a call the variable is passed to, which may write it, may
+     * run between a write at $from and a read: one that ends after the
+     * write and before the read, or anywhere in a loop that holds the
+     * read and not the write, or in a body a goto runs again.
+     *
+     * @param int $from where the write is made; -1 for the start of the body
+     */
+    private function passedBetween(int $scope, string $name, int $from, int $read): bool
+    {
+        $passed = $this->passedAt[$scope][$name] ?? [];
+        if ([] === $passed) {
+            return false;
+        }
+
+        if (isset($this->jumpingScopes[$scope])) {
+            return true;
+        }
+
+        $until = $read;
+        foreach ($this->loopsHolding($scope, $read) as $loop) {
+            if ($loop[0] <= $from) {
+                break;
+            }
+
+            $until = $loop[1] + 1;
+        }
+
+        foreach ($passed as $at) {
+            if ($at > $from && $at < $until) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether a call the file level runs may stand between an assignment
+     * of a variable of that level and a read of it: one that ends after
+     * the assignment and before the read, or anywhere in a loop that
+     * holds the read and not the assignment, which a later turn of the
+     * loop runs before the read.
+     *
+     * @param int $at  where the assignment is written
+     * @param int $end where it ends
+     */
+    private function calledBetween(int $at, int $end, int $read): bool
+    {
+        if (!$this->callsInOrder) {
+            sort($this->calls);
+            $this->callsInOrder = true;
+        }
+
+        $until = $read;
+        foreach ($this->loopsHolding(self::FILE, $read) as $loop) {
+            if ($loop[0] <= $at) {
+                break;
+            }
+
+            $until = $loop[1] + 1;
+        }
+
+        return self::before($this->calls, $until) > self::before($this->calls, $end + 1);
+    }
+
+    /**
+     * Where the assignments of a variable start and where they end, each
+     * in order, and the assignment that starts at each rank.
+     *
+     * @param list<array{ValueExpr, int, int}> $assignments
+     *
+     * @return array{list<int>, list<int>, list<int>}
+     */
+    private static function inOrder(array $assignments): array
+    {
+        $order = array_keys($assignments);
+        usort($order, static fn (int $a, int $b): int => [$assignments[$a][1], $a] <=> [$assignments[$b][1], $b]);
+
+        $starts = [];
+        $ends = [];
+        foreach ($order as $index) {
+            $starts[] = $assignments[$index][1];
+            $ends[] = $assignments[$index][2];
+        }
+
+        sort($ends);
+
+        return [$starts, $ends, $order];
+    }
+
+    /**
+     * How many of the offsets, in order, come before $offset.
+     *
+     * @param list<int> $offsets
+     */
+    private static function before(array $offsets, int $offset): int
+    {
+        $low = 0;
+        $high = \count($offsets);
+        while ($low < $high) {
+            $middle = intdiv($low + $high, 2);
+            if ($offsets[$middle] < $offset) {
+                $low = $middle + 1;
+            } else {
+                $high = $middle;
+            }
+        }
+
+        return $low;
+    }
+
+    /**
+     * The loop of the body that holds the offset and that no other loop
+     * holds; null when no loop holds it.
+     *
+     * @return array{int, int}|null
+     */
+    private function outerLoop(int $scope, int $offset): ?array
+    {
+        $holding = $this->loopsHolding($scope, $offset);
+
+        return [] === $holding ? null : $holding[\count($holding) - 1];
+    }
+
+    /**
+     * The loops of the body that hold the offset, from the innermost.
+     *
+     * @return list<array{int, int}>
+     */
+    private function loopsHolding(int $scope, int $offset): array
+    {
+        if (!isset($this->loopTrees[$scope])) {
+            $loops = $this->loops[$scope] ?? [];
+            usort($loops, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
+            // Each loop with the one that holds it: the last still open
+            // where it starts.
+            $parents = [];
+            $open = [];
+            foreach ($loops as $rank => $loop) {
+                while ([] !== $open && $loops[$open[\count($open) - 1]][1] < $loop[0]) {
+                    array_pop($open);
+                }
+
+                $parents[] = [] === $open ? -1 : $open[\count($open) - 1];
+                $open[] = $rank;
+            }
+
+            $this->loopTrees[$scope] = [$loops, $parents];
+        }
+
+        [$loops, $parents] = $this->loopTrees[$scope];
+        $low = 0;
+        $high = \count($loops);
+        while ($low < $high) {
+            $middle = intdiv($low + $high, 2);
+            if ($loops[$middle][0] <= $offset) {
+                $low = $middle + 1;
+            } else {
+                $high = $middle;
+            }
+        }
+
+        // A loop that holds the offset holds the last one started before
+        // it too.
+        $holding = [];
+        for ($rank = $low - 1; $rank >= 0; $rank = $parents[$rank]) {
+            if ($loops[$rank][1] >= $offset) {
+                $holding[] = $loops[$rank];
+            }
+        }
+
+        return $holding;
+    }
+
+    /**
+     * The values of an expression assigned to a variable that is read as
+     * a pattern. A variable, an arm of a ternary or of a match and a side
+     * of "?:" or "??" select a value and join it to nothing: a variable
+     * met there gives each value it may hold, as one read as a pattern
+     * does. Anything else is a composition.
+     *
+     * @return list<ValueExpr>
+     */
+    private function selected(ValueExpr $expr): array
+    {
+        switch ($expr->kind) {
+            case ValueExpr::VARIABLE:
+                return $this->variable($expr, self::SELECTED) ?? [self::rawHole()];
+
+            case ValueExpr::SET:
+                $values = [];
+                foreach ($expr->alternatives as $alternative) {
+                    $arm = ValueExpr::ARRAY === $alternative->kind ? [self::rawHole()] : $this->selected($alternative);
+                    if ([] === $arm) {
+                        return [];
+                    }
+
+                    foreach ($arm as $value) {
+                        $values[] = $value;
+                    }
+                }
+
+                return $values;
+
+            case ValueExpr::FALLBACK:
+                $pairs = static fn (array $values): array => array_map(static fn (ValueExpr $value): array => [$value, null], $values);
+                $second = $expr->parts[1];
+
+                return array_column(self::kept(
+                    $pairs(ValueExpr::ARRAY === $expr->parts[0]->kind ? [self::rawHole()] : $this->selected($expr->parts[0])),
+                    fn (): array => $pairs(ValueExpr::ARRAY === $second->kind ? [self::rawHole()] : $this->selected($second)),
+                    '??' === $expr->value,
+                    ValueExpr::VARIABLE === $expr->parts[0]->kind,
+                ), 0);
+
+            default:
+                return $this->values($expr);
+        }
     }
 
     /**
@@ -1167,13 +1939,16 @@ final class InFileValueResolver
      * that is not quoted. None at all when a composition is one
      * PatternArgument::concat() does not build: nothing is known then.
      *
-     * @param int $height set to the constants the values went through
+     * @param int         $height set to the constants the values went through
+     * @param string|null $source set to the constant several values are those of, each at its rank: a constant
+     *                            has one value wherever it stands
      *
      * @return list<ValueExpr>
      */
-    private function resolve(ValueExpr $expr, int $depth, int &$height): array
+    private function resolve(ValueExpr $expr, int $depth, int &$height, ?string &$source = null): array
     {
         $height = 0;
+        $source = null;
 
         switch ($expr->kind) {
             case ValueExpr::LITERAL:
@@ -1185,19 +1960,15 @@ final class InFileValueResolver
                 return [$expr->quoted && !$this->isNative($expr->names) ? self::rawHole() : $expr];
 
             case ValueExpr::CONCAT:
-                return $this->concatenation($expr, $depth, $height);
+                return $this->concatenation($expr, $depth, $height, $source);
 
             case ValueExpr::VARIABLE:
-                return $this->constantExpressions > 0 ? [self::rawHole()] : $this->variableValues($expr, true) ?? [self::rawHole()];
+                return $this->constantExpressions > 0 ? [self::rawHole()] : $this->variable($expr, self::COMPOSED) ?? [self::rawHole()];
 
             case ValueExpr::PROPERTY:
                 return $this->constantExpressions > 0 ? [self::rawHole()] : $this->propertyValues($expr);
 
             case ValueExpr::SET:
-                if ($this->constantExpressions > 0) {
-                    return [self::rawHole()];
-                }
-
                 $values = [];
                 $seen = [];
                 foreach ($expr->alternatives as $alternative) {
@@ -1223,10 +1994,6 @@ final class InFileValueResolver
                 return $values;
 
             case ValueExpr::FALLBACK:
-                if ($this->constantExpressions > 0) {
-                    return [self::rawHole()];
-                }
-
                 $firstHeight = 0;
                 $secondHeight = 0;
                 $first = [];
@@ -1247,10 +2014,21 @@ final class InFileValueResolver
                 return array_column($kept, 0);
 
             case ValueExpr::FORMAT:
-                return $this->constantExpressions > 0 ? [self::rawHole()] : $this->formatted($expr, $depth, $height);
+                return $this->constantExpressions > 0 ? [self::rawHole()] : $this->formatted($expr, $depth, $height, $source);
 
             case ValueExpr::JOIN:
-                return $this->constantExpressions > 0 ? [self::rawHole()] : $this->joined($expr, $depth, $height);
+                return $this->constantExpressions > 0 ? [self::rawHole()] : $this->joined($expr, $depth, $height, $source);
+
+            case ValueExpr::ITEM:
+                return $this->itemOf($expr, $depth, $height, $source);
+
+            case ValueExpr::EACH:
+                $array = $this->arrayOf($expr->parts[0], $depth, $height);
+                if (!$array instanceof ValueExpr) {
+                    return $array;
+                }
+
+                return ValueExpr::KEYS === $expr->value ? self::keysOf($array) : self::valuesOf($array);
 
             case ValueExpr::ARRAY:
                 $items = [];
@@ -1272,6 +2050,14 @@ final class InFileValueResolver
                     return [self::rawHole()];
                 }
 
+                // A closure a function of the file or of the project is
+                // given may be bound there to another class.
+                foreach ($expr->calls as $names) {
+                    if (!$this->isNative($names)) {
+                        return [self::rawHole()];
+                    }
+                }
+
                 if (\array_key_exists($class, $this->classes)) {
                     $final = $this->classes[$class];
                     $constant = null === $final ? null : $this->classConstants[$class.'::'.$expr->value] ?? null;
@@ -1288,14 +2074,34 @@ final class InFileValueResolver
                     return [self::rawHole()];
                 }
 
-                return $this->fold('c:'.$class.'::'.$expr->value, $constant[0], $depth, $height);
+                return $this->fold('c:'.$class.'::'.$expr->value, $constant[0], $depth, $height, $source);
 
             case ValueExpr::CONSTANT:
                 foreach ($expr->names as $name) {
+                    // PHP keeps its own value for these, whatever a file
+                    // declares under their name.
+                    if (isset(self::PLATFORM[$name])) {
+                        $source = 'p:'.$name;
+
+                        return $this->platformValues[$name] ??= $this->platform($name);
+                    }
+
                     if (\array_key_exists($name, $this->constants)) {
                         $value = $this->constants[$name];
 
-                        return null === $value ? [self::rawHole()] : $this->fold('g:'.$name, $value, $depth, $height);
+                        return null === $value ? [self::rawHole()] : $this->fold('g:'.$name, $value, $depth, $height, $source);
+                    }
+
+                    if (isset(self::predefinedConstants()[$name])) {
+                        return [self::rawHole()];
+                    }
+
+                    // A constant the file does not declare may be another
+                    // file's, declared once at its top level.
+                    if (true === $this->project?->declaresGlobal($name)) {
+                        $value = $this->project->globalConstant($name);
+
+                        return null === $value ? [self::rawHole()] : $this->fold('g:'.$name, $value, $depth, $height, $source);
                     }
                 }
 
@@ -1304,6 +2110,218 @@ final class InFileValueResolver
             default:
                 return [self::rawHole()];
         }
+    }
+
+    /**
+     * The values of a constant of PLATFORM, each a text no file writes,
+     * which says what it stands for.
+     *
+     * @return list<ValueExpr>
+     */
+    private function platform(string $name): array
+    {
+        $values = [];
+        foreach (self::PLATFORM[$name] ?? [] as $text => $says) {
+            $value = ValueExpr::literal($text, -1, 0);
+            $this->variants[$value] = $says;
+            $values[] = $value;
+        }
+
+        return $values;
+    }
+
+    /**
+     * The one array an expression holds, when it is a variable or a
+     * constant the file proves an array: the items of a property and of
+     * an item are not followed. A hole otherwise, and none when nothing
+     * is known of the expression.
+     *
+     * @param int $height set to the constants the array went through
+     *
+     * @return ValueExpr|list<ValueExpr> the array, or what the expression reads as without one
+     */
+    private function arrayOf(ValueExpr $expr, int $depth, int &$height): ValueExpr|array
+    {
+        if (!\in_array($expr->kind, [ValueExpr::VARIABLE, ValueExpr::CLASS_CONSTANT, ValueExpr::CONSTANT, ValueExpr::ARRAY], true)) {
+            return [self::rawHole()];
+        }
+
+        $arrays = $this->resolve($expr, $depth, $height);
+        if ([] === $arrays) {
+            return [];
+        }
+
+        return 1 === \count($arrays) && ValueExpr::ARRAY === $arrays[0]->kind ? $arrays[0] : [self::rawHole()];
+    }
+
+    /**
+     * The values of an item of an array: named by a key the file proves,
+     * a string or an integer, that item, as PHP finds it; named by any
+     * other key, one of the values of the array. A key the array does not
+     * hold names nothing, and an item that is an array is no text: a
+     * hole.
+     *
+     * @param int         $height set to the constants the values went through
+     * @param string|null $source set to the constant the item takes several values from
+     *
+     * @return list<ValueExpr>
+     */
+    private function itemOf(ValueExpr $expr, int $depth, int &$height, ?string &$source): array
+    {
+        $array = $this->arrayOf($expr->parts[0], $depth, $height);
+        if (!$array instanceof ValueExpr) {
+            return $array;
+        }
+
+        $keyHeight = 0;
+        $keys = $this->resolve($expr->parts[1], $depth, $keyHeight);
+        $height = max($height, $keyHeight);
+        $key = 1 === \count($keys) ? self::keyOf($keys[0]) : null;
+        if (null === $key) {
+            return self::valuesOf($array);
+        }
+
+        $item = (self::keyed($array) ?? [])[$key] ?? null;
+        if (null === $item || ValueExpr::ARRAY === $item->kind) {
+            return [self::rawHole()];
+        }
+
+        if (ValueExpr::SET !== $item->kind) {
+            return [$item];
+        }
+
+        $source = $this->sources[$item] ?? null;
+
+        return [] === $item->alternatives ? [self::rawHole()] : $item->alternatives;
+    }
+
+    /**
+     * The key PHP stores an item under, given the value of its key: an
+     * integer for one, and for a string that writes one the canonical
+     * way; null for a key the file does not prove.
+     */
+    private static function keyOf(ValueExpr $key): int|string|null
+    {
+        if (ValueExpr::LITERAL === $key->kind) {
+            return PatternFunction::isStringKey($key->value) ? $key->value : (int) $key->value;
+        }
+
+        return ValueExpr::NON_STRING === $key->kind ? $key->integer : null;
+    }
+
+    /**
+     * The items of an array under the keys PHP stores them by, the last
+     * of a key written twice; null when a key is one the file does not
+     * prove, which may be any of the others. An item with no key takes
+     * the index after the highest one; after a negative index alone, PHP
+     * counts on from it or from zero, as its version has it: not told.
+     *
+     * @return array<int|string, ValueExpr>|null
+     */
+    private static function keyed(ValueExpr $array): ?array
+    {
+        $items = [];
+        $next = 0;
+        $counted = true;
+        foreach ($array->items as [$key, $value]) {
+            if (null === $key) {
+                if (!$counted) {
+                    return null;
+                }
+
+                $items[$next++] = $value;
+
+                continue;
+            }
+
+            $at = self::keyOf($key);
+            if (null === $at) {
+                return null;
+            }
+
+            $items[$at] = $value;
+            if (\is_int($at) && $at >= $next) {
+                $next = $at + 1;
+            } elseif (\is_int($at) && $at < 0 && 0 === $next) {
+                $counted = false;
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * The values an array may give, one per item: each value an item may
+     * take, and a hole for an item that is an array or of which nothing
+     * is known.
+     *
+     * @return list<ValueExpr>
+     */
+    private static function valuesOf(ValueExpr $array): array
+    {
+        $values = [];
+        foreach ($array->items as [, $item]) {
+            foreach (self::itemValues($item) as $value) {
+                $values[] = $value;
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * The keys an array may give, one per item: the key written, an
+     * integer for a string that writes one, and the index PHP gives an
+     * item with no key.
+     *
+     * @return list<ValueExpr>
+     */
+    private static function keysOf(ValueExpr $array): array
+    {
+        $keys = [];
+        $next = 0;
+        foreach ($array->items as [$key]) {
+            if (null === $key) {
+                $keys[] = null === $next ? self::rawHole() : ValueExpr::nonString($next++);
+
+                continue;
+            }
+
+            foreach (self::itemValues($key) as $value) {
+                $at = self::keyOf($value);
+                if (\is_int($at)) {
+                    $value = ValueExpr::nonString($at);
+                    // After a negative index alone, the next one is PHP's
+                    // to say.
+                    $next = null === $next || ($at < 0 && 0 === $next) ? null : max($next, $at + 1);
+                } elseif (null === $at) {
+                    $next = null;
+                }
+
+                $keys[] = $value;
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * What one item of an array may be: each of its values, a hole for
+     * an array or for an item nothing is known of.
+     *
+     * @return list<ValueExpr>
+     */
+    private static function itemValues(ValueExpr $item): array
+    {
+        if (ValueExpr::ARRAY === $item->kind) {
+            return [self::rawHole()];
+        }
+
+        if (ValueExpr::SET !== $item->kind) {
+            return [$item];
+        }
+
+        return [] === $item->alternatives ? [self::rawHole()] : $item->alternatives;
     }
 
     /**
@@ -1321,15 +2339,25 @@ final class InFileValueResolver
     }
 
     /**
-     * An item of an array: its value, or the set of those it may take.
+     * An item of an array: its value, or the set of those it may take,
+     * which keeps the constant it takes them from.
      *
      * @param int $height set to the constants the item went through
      */
     private function item(ValueExpr $expr, int $depth, int &$height): ValueExpr
     {
-        $values = $this->resolve($expr, $depth, $height);
+        $source = null;
+        $values = $this->resolve($expr, $depth, $height, $source);
+        if (1 === \count($values)) {
+            return $values[0];
+        }
 
-        return 1 === \count($values) ? $values[0] : ValueExpr::setOf($values);
+        $set = ValueExpr::setOf($values);
+        if (null !== $source) {
+            $this->sources[$set] = $source;
+        }
+
+        return $set;
     }
 
     /**
@@ -1338,17 +2366,21 @@ final class InFileValueResolver
      * None when it does not, or when nothing is known of an operand: the
      * operands after that one are not read.
      *
-     * @param int $height set to the constants the values went through
+     * @param int         $height set to the constants the values went through
+     * @param string|null $source set to the constant the values follow, each at its rank
      *
      * @return list<ValueExpr>
      */
-    private function concatenation(ValueExpr $expr, int $depth, int &$height): array
+    private function concatenation(ValueExpr $expr, int $depth, int &$height, ?string &$source = null): array
     {
         /** @var list<list<string|Hole>> $alternatives */
         $alternatives = [[]];
+        $variants = [null];
+        $driver = null;
         foreach ($expr->parts as $part) {
             $partHeight = 0;
-            $alternatives = self::followedBy($alternatives, $this->resolve($part, $depth, $partHeight), static fn (ValueExpr $value): array => self::parts($value, true));
+            $partSource = null;
+            $alternatives = $this->followedBy($alternatives, $variants, $driver, $this->resolve($part, $depth, $partHeight, $partSource), $partSource, static fn (ValueExpr $value): array => self::parts($value, true));
             if (null === $alternatives) {
                 return [];
             }
@@ -1356,7 +2388,10 @@ final class InFileValueResolver
             $height = max($height, $partHeight);
         }
 
-        return self::composed($alternatives, $expr);
+        $values = $this->composed($alternatives, $variants, $expr);
+        $source = \count($values) > 1 ? $driver : null;
+
+        return $values;
     }
 
     /**
@@ -1365,19 +2400,60 @@ final class InFileValueResolver
      * them, or when nothing is known of the operand. An operand of more
      * values than a composition may give is refused before any is read.
      *
+     * A constant has one value wherever it stands: an operand that takes
+     * its values from the constant the alternatives already follow gives
+     * each alternative its own, and multiplies nothing.
+     *
      * @param list<list<string|Hole>>                $alternatives
+     * @param list<string|null>                      $variants     what each alternative says of a constant of PLATFORM,
+     *                                                             brought up to date
+     * @param string|null                            $driver       the constant the alternatives follow, each at its
+     *                                                             rank, brought up to date
      * @param list<ValueExpr>                        $values       the values of the operand
+     * @param string|null                            $source       the constant they are those of, each at its rank
      * @param \Closure(ValueExpr): list<string|Hole> $parts        what a value reads as in the composition
      *
      * @return list<list<string|Hole>>|null
      */
-    private static function followedBy(array $alternatives, array $values, \Closure $parts): ?array
+    private function followedBy(array $alternatives, array &$variants, ?string &$driver, array $values, ?string $source, \Closure $parts): ?array
     {
-        if ([] === $values || \count($values) > PatternArgument::MAX_CANDIDATES) {
+        $count = \count($values);
+        if (0 === $count || $count > PatternArgument::MAX_CANDIDATES) {
             return null;
         }
 
-        return PatternArgument::concat($alternatives, array_map($parts, $values));
+        $operand = [];
+        $says = [];
+        foreach ($values as $value) {
+            $operand[] = $parts($value);
+            $says[] = $this->variants[$value] ?? null;
+        }
+
+        if ($count > 1 && null !== $source && $source === $driver && \count($alternatives) === $count) {
+            $aligned = [];
+            foreach ($alternatives as $rank => $alternative) {
+                $aligned[] = [...$alternative, ...$operand[$rank] ?? []];
+            }
+
+            return $aligned;
+        }
+
+        $product = PatternArgument::concat($alternatives, $operand);
+        if (null === $product) {
+            return null;
+        }
+
+        if ($count > 1) {
+            // One alternative, followed by each value.
+            $before = $variants[0] ?? null;
+            $variants = array_map(static fn (?string $say): ?string => $say ?? $before, $says);
+            $driver = $source;
+        } elseif (null !== $says[0]) {
+            $said = $says[0];
+            $variants = array_map(static fn (?string $variant): string => $variant ?? $said, $variants);
+        }
+
+        return $product;
     }
 
     /**
@@ -1389,13 +2465,18 @@ final class InFileValueResolver
      * whole call is such a part. The arguments multiply as the operands
      * of a concatenation do.
      *
-     * @param int $height set to the constants the values went through
+     * @param int         $height set to the constants the values went through
+     * @param string|null $source set to the constant the values follow, each at its rank
      *
      * @return list<ValueExpr>
      */
-    private function formatted(ValueExpr $expr, int $depth, int &$height): array
+    private function formatted(ValueExpr $expr, int $depth, int &$height, ?string &$source = null): array
     {
         $formats = $this->resolve($expr->parts[0], $depth, $height);
+        if ([] === $formats) {
+            return [];
+        }
+
         $pieces = 1 === \count($formats) && ValueExpr::LITERAL === $formats[0]->kind ? self::places($formats[0]->value) : null;
         // A function the file declares is not the sprintf() of PHP.
         if (null === $pieces || !$this->isNative($expr->names) || intdiv(\count($pieces), 2) >= \count($expr->parts)) {
@@ -1404,15 +2485,21 @@ final class InFileValueResolver
 
         /** @var list<list<string|Hole>> $alternatives */
         $alternatives = [[]];
+        $variants = [null];
+        $driver = null;
         $argument = 1;
         foreach ($pieces as $piece) {
             if (\is_string($piece)) {
                 $alternatives = PatternArgument::concat($alternatives, [[$piece]]);
             } else {
                 $argumentHeight = 0;
-                $alternatives = self::followedBy(
+                $argumentSource = null;
+                $alternatives = $this->followedBy(
                     $alternatives,
-                    $this->resolve($expr->parts[$argument++], $depth, $argumentHeight),
+                    $variants,
+                    $driver,
+                    $this->resolve($expr->parts[$argument++], $depth, $argumentHeight, $argumentSource),
+                    $argumentSource,
                     static fn (ValueExpr $value): array => !$piece || null !== $value->integer ? self::parts($value, true) : [self::unread()],
                 );
                 $height = max($height, $argumentHeight);
@@ -1423,7 +2510,10 @@ final class InFileValueResolver
             }
         }
 
-        return self::composed($alternatives, $expr);
+        $values = $this->composed($alternatives, $variants, $expr);
+        $source = \count($values) > 1 ? $driver : null;
+
+        return $values;
     }
 
     /**
@@ -1434,16 +2524,21 @@ final class InFileValueResolver
      * does not prove. The items multiply as the operands of a
      * concatenation do.
      *
-     * @param int $height set to the constants the values went through
+     * @param int         $height set to the constants the values went through
+     * @param string|null $source set to the constant the values follow, each at its rank
      *
      * @return list<ValueExpr>
      */
-    private function joined(ValueExpr $expr, int $depth, int &$height): array
+    private function joined(ValueExpr $expr, int $depth, int &$height, ?string &$source = null): array
     {
         $parts = $expr->parts;
         $separator = '';
         if (2 === \count($parts)) {
             $separators = $this->resolve($parts[0], $depth, $height);
+            if ([] === $separators) {
+                return [];
+            }
+
             if (1 !== \count($separators) || ValueExpr::LITERAL !== $separators[0]->kind) {
                 return [self::rawHole()];
             }
@@ -1454,6 +2549,10 @@ final class InFileValueResolver
         $arrayHeight = 0;
         $arrays = $this->resolve($parts[\count($parts) - 1], $depth, $arrayHeight);
         $height = max($height, $arrayHeight);
+        if ([] === $arrays) {
+            return [];
+        }
+
         // A function the file declares is not the implode() of PHP.
         if (1 !== \count($arrays) || ValueExpr::ARRAY !== $arrays[0]->kind || !$this->isNative($expr->names)) {
             return [self::rawHole()];
@@ -1470,20 +2569,25 @@ final class InFileValueResolver
                 }
             }
 
-            $items[] = $values;
+            $items[] = [$values, ValueExpr::SET === $item->kind ? $this->sources[$item] ?? null : null];
         }
 
         /** @var list<list<string|Hole>> $alternatives */
         $alternatives = [[]];
-        foreach ($items as $position => $values) {
+        $variants = [null];
+        $driver = null;
+        foreach ($items as $position => [$values, $itemSource]) {
             $before = 0 === $position ? '' : $separator;
-            $alternatives = self::followedBy($alternatives, $values, static fn (ValueExpr $value): array => [$before.(ValueExpr::LITERAL === $value->kind ? $value->value : (string) $value->integer)]);
+            $alternatives = $this->followedBy($alternatives, $variants, $driver, $values, $itemSource, static fn (ValueExpr $value): array => [$before.(ValueExpr::LITERAL === $value->kind ? $value->value : (string) $value->integer)]);
             if (null === $alternatives) {
                 return [];
             }
         }
 
-        return self::composed($alternatives, $expr);
+        $values = $this->composed($alternatives, $variants, $expr);
+        $source = \count($values) > 1 ? $driver : null;
+
+        return $values;
     }
 
     /**
@@ -1493,11 +2597,12 @@ final class InFileValueResolver
      * read: a hole.
      *
      * @param list<list<string|Hole>> $alternatives
+     * @param list<string|null>       $variants     what each alternative says of a constant of PLATFORM
      * @param ValueExpr               $expr         the concatenation, or the call
      *
      * @return list<ValueExpr>
      */
-    private static function composed(array $alternatives, ValueExpr $expr): array
+    private function composed(array $alternatives, array $variants, ValueExpr $expr): array
     {
         // Measured before anything is joined: constants that double each
         // other are refused without their text being built.
@@ -1513,7 +2618,7 @@ final class InFileValueResolver
         }
 
         $values = [];
-        foreach ($alternatives as $parts) {
+        foreach ($alternatives as $rank => $parts) {
             // Strings that follow each other are one string.
             $pieces = [];
             $text = null;
@@ -1539,16 +2644,21 @@ final class InFileValueResolver
             }
 
             if ([] === $pieces) {
-                $values[] = ValueExpr::literal($text ?? '', $expr->offset, $expr->line, $expr->file, $expr->column, $expr->guard);
+                $value = ValueExpr::literal($text ?? '', $expr->offset, $expr->line, $expr->file, $expr->column, $expr->guard);
+            } else {
+                if (null !== $text) {
+                    $pieces[] = ValueExpr::literal($text, $expr->offset, $expr->line);
+                }
 
-                continue;
+                $value = ValueExpr::concat($pieces, $expr->offset, $expr->line);
             }
 
-            if (null !== $text) {
-                $pieces[] = ValueExpr::literal($text, $expr->offset, $expr->line);
+            $variant = $variants[$rank] ?? null;
+            if (null !== $variant) {
+                $this->variants[$value] = $variant;
             }
 
-            $values[] = ValueExpr::concat($pieces, $expr->offset, $expr->line);
+            $values[] = $value;
         }
 
         return $values;
@@ -1558,19 +2668,24 @@ final class InFileValueResolver
      * The values of a constant, at most MAX_DEPTH constants from the call,
      * none of them met twice on the way: a hole past them.
      *
-     * @param int $height set to the constants the values went through, this one included
+     * @param int         $height set to the constants the values went through, this one included
+     * @param string|null $source set to the constant several values are those of, each at its rank: this one, or
+     *                            the one it follows when it only names it or joins it to texts
      *
      * @return list<ValueExpr>
      */
-    private function fold(string $key, ValueExpr $value, int $depth, int &$height): array
+    private function fold(string $key, ValueExpr $value, int $depth, int &$height, ?string &$source = null): array
     {
+        $source = null;
         if (isset($this->folded[$key])) {
-            [$resolved, $height] = $this->folded[$key];
+            [$resolved, $height, $followed] = $this->folded[$key];
             if ($depth + $height > self::MAX_DEPTH) {
                 $this->cuts++;
 
                 return [self::rawHole()];
             }
+
+            $source = $followed;
 
             return $resolved;
         }
@@ -1586,7 +2701,7 @@ final class InFileValueResolver
         // one before twice would double the work at each of them.
         if (isset($this->cutShort[$key]) && $depth >= $this->cutShort[$key][0]) {
             $this->cuts++;
-            [, $resolved, $height] = $this->cutShort[$key];
+            [, $resolved, $height, $source] = $this->cutShort[$key];
 
             return $resolved;
         }
@@ -1595,18 +2710,20 @@ final class InFileValueResolver
         $this->folding[$key] = true;
         $this->constantExpressions++;
         $below = 0;
-        $resolved = $this->resolve($value, $depth + 1, $below);
+        $followed = null;
+        $resolved = $this->resolve($value, $depth + 1, $below, $followed);
         $this->constantExpressions--;
         unset($this->folding[$key]);
         $height = $below + 1;
+        $source = \count($resolved) > 1 ? $followed ?? $key : null;
 
         // A value a guard cut short is the value from this depth: read
         // from nearer the call, the constant may give more. It is kept
         // for this depth and beyond only.
         if ($cuts === $this->cuts) {
-            $this->folded[$key] = [$resolved, $height];
+            $this->folded[$key] = [$resolved, $height, $source];
         } else {
-            $this->cutShort[$key] = [$depth, $resolved, $height];
+            $this->cutShort[$key] = [$depth, $resolved, $height, $source];
         }
 
         return $resolved;

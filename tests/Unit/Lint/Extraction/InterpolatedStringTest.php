@@ -23,7 +23,8 @@ use PHPUnit\Framework\TestCase;
  * concatenation they are: their literal pieces, decoded as PHP decodes
  * them, and their expressions. A variable, written $x or {$x}, reads as a
  * variable operand of a concatenation does; $this->p and {$this->p} read
- * by the rules of a property; any other expression is a part built at run
+ * by the rules of a property; $a[key] and {$a['key']} read as the item of
+ * an array the body proves; any other expression is a part built at run
  * time.
  *
  * The pattern is composed at the call: it is reported where the string
@@ -249,6 +250,11 @@ final class InterpolatedStringTest extends TestCase
         yield 'an item of a parameter, by a number' => ['argument' => '"/^$items[0]$/"'];
         yield 'an item of a parameter, in braces' => ['argument' => '"/^{$items[\'word\']}$/"'];
         yield 'an item of an item' => ['argument' => '"/^{$items[\'word\'][0]}$/"'];
+        // $map holds no 'missing' and $list no index 7: PHP gives null,
+        // and warns "Undefined array key".
+        yield 'an item a local array does not hold, by a bare key' => ['argument' => '"/^$map[missing]$/"'];
+        yield 'an item a local array does not hold, in braces' => ['argument' => '"/^{$map[\'missing\']}$/"'];
+        yield 'an item a local list does not hold' => ['argument' => '"/^$list[7]$/"'];
         yield 'a variable the body never assigns' => ['argument' => '"/^$missing$/"'];
     }
 
@@ -265,31 +271,36 @@ final class InterpolatedStringTest extends TestCase
     }
 
     /**
-     * A later unit reads this: an item of an array the body or a constant
-     * proves, $map['word'] being 'abc' and $list[0] 'abc' here ("/^$map
-     * [word]$/" is "/^abc$/" in PHP). Until the arrays are read, the item
-     * is a part built at run time as any other expression is; each row
-     * moves with that reading.
+     * An item of an array the body proves, named by a literal key, reads
+     * as that item: $map is ['word' => 'abc'] and $list ['abc'] here.
+     * PHP 8.4: "/^$map[word]$/", "/^{$map['word']}$/", "/^$list[0]$/"
+     * and "/^{$list[0]}$/" are all "/^abc$/"; in a string, the bare key
+     * of "$map[word]" is the string 'word'.
      *
-     * @return iterable<string, array{argument: string}>
+     * @return iterable<string, array{argument: string, pattern: string}>
      */
-    public static function provideArrayItemsALaterUnitReads(): iterable
+    public static function provideInterpolatedArrayItems(): iterable
     {
-        yield 'an item of a local array, by a bare key' => ['argument' => '"/^$map[word]$/"'];
-        yield 'an item of a local array, in braces' => ['argument' => '"/^{$map[\'word\']}$/"'];
-        yield 'an item of a local list, by a number' => ['argument' => '"/^$list[0]$/"'];
-        yield 'an item of a local list, in braces' => ['argument' => '"/^{$list[0]}$/"'];
+        yield 'an item of a local array, by a bare key' => ['argument' => '"/^$map[word]$/"', 'pattern' => '/^abc$/'];
+        yield 'an item of a local array, in braces' => ['argument' => '"/^{$map[\'word\']}$/"', 'pattern' => '/^abc$/'];
+        yield 'an item of a local list, by a number' => ['argument' => '"/^$list[0]$/"', 'pattern' => '/^abc$/'];
+        yield 'an item of a local list, in braces' => ['argument' => '"/^{$list[0]}$/"', 'pattern' => '/^abc$/'];
+        // "/^$map[word]+$part$/" is "/^abc+abc$/".
+        yield 'an item beside a variable' => ['argument' => '"/^$map[word]+$part$/"', 'pattern' => '/^abc+abc$/'];
     }
 
     #[Test]
-    #[DataProvider('provideArrayItemsALaterUnitReads')]
-    public function test_an_interpolated_array_item_is_a_raw_hole_until_the_arrays_are_read(string $argument): void
+    #[DataProvider('provideInterpolatedArrayItems')]
+    public function test_an_interpolated_array_item_reads_as_the_item_the_body_proves(string $argument, string $pattern): void
     {
         $code = self::matcher($argument);
 
-        $this->assertExtractedByBoth([], $code);
+        // Composed at the call: reported where the string starts.
+        $this->assertExtractedByBoth([
+            ['pattern' => $pattern, 'at' => $argument, 'source' => 'preg_match()', 'location' => null],
+        ], $code);
         $this->assertArgumentsReadByBoth([
-            ['state' => 'raw_shell', 'expression' => $argument, 'source' => 'preg_match()'],
+            ['state' => 'constant', 'expression' => $argument, 'source' => 'preg_match()'],
         ], $code);
     }
 
@@ -322,10 +333,12 @@ final class InterpolatedStringTest extends TestCase
     }
 
     /**
-     * A variable two assignments may reach gives the string two values;
-     * one holding a preg_quote() text makes it a quoted shell.
+     * A variable one assignment gives two values, the arms of a ternary,
+     * gives the string two values; one holding a preg_quote() text makes
+     * it a quoted shell.
      *
-     * $kind = 'cat' gives "/^cats?$/", $kind = 'dog' gives "/^dogs?$/".
+     * $kind = true ? 'cat' : 'dog' gives "/^cats?$/", with false
+     * "/^dogs?$/".
      */
     #[Test]
     public function test_an_interpolated_variable_brings_every_value_it_may_hold(): void
@@ -335,10 +348,7 @@ final class InterpolatedStringTest extends TestCase
 
             function run(string $s, string $given, bool $flag): int
             {
-                $kind = 'cat';
-                if ($flag) {
-                    $kind = 'dog';
-                }
+                $kind = $flag ? 'cat' : 'dog';
                 $quoted = preg_quote($given, '/');
 
                 return preg_match("/^{$kind}s?$/", $s) + preg_match("/^{$quoted}$/", $s) + preg_match("/^$quoted$given/", $s);
@@ -361,7 +371,7 @@ final class InterpolatedStringTest extends TestCase
      * twice, would give strings the code never builds: nothing is known
      * of the string, and no pattern is read.
      *
-     * PHP 8.4: $kind is 'cat' or 'dog'; "/^$kind|$kind$/" is
+     * PHP 8.4: $kind = $flag ? 'cat' : 'dog'; "/^$kind|$kind$/" is
      * "/^cat|cat$/" or "/^dog|dog$/", never "/^cat|dog$/".
      *
      * @return iterable<string, array{argument: string}>
@@ -379,7 +389,7 @@ final class InterpolatedStringTest extends TestCase
     public function test_two_interpolated_expressions_of_several_values_leave_the_string_opaque(string $argument): void
     {
         $code = "<?php\n\nfunction run(string \$s, bool \$flag): int\n{\n"
-            ."    if (\$flag) {\n        \$kind = 'cat';\n        \$size = 'big';\n    } else {\n        \$kind = 'dog';\n        \$size = 'small';\n    }\n\n"
+            ."    \$kind = \$flag ? 'cat' : 'dog';\n    \$size = \$flag ? 'big' : 'small';\n\n"
             .'    return preg_match('.$argument.", \$s) + preg_match(\"#^{\$kind}$#\", \$s);\n}\n";
 
         // One of them alone, once, is still read: "#^cat$#" and "#^dog$#".

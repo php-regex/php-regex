@@ -256,7 +256,7 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
             $length = $place->getEndFilePos() + 1 - $offset;
             $expression = $expressions[$index] ?? null;
             if (null !== $values && null !== $expression) {
-                array_push($occurrences, ...$item->occurrences($values, $expression, $file, $content, [$offset, $length]));
+                array_push($occurrences, ...$item->occurrences($values, $expression, $file, $content, [$offset, $length], $offset));
             }
 
             if ($arguments) {

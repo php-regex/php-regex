@@ -147,7 +147,8 @@ final class ProjectConstantsTest extends TestCase
 
         $this->assertTrue($constants->has('a'));
         $this->assertNull($constants->constant('a', 'CALL'));
-        $this->assertNull($constants->constant('a', 'TERNARY'));
+        // Branches whose arms are proved are a value: one of them, whatever the condition.
+        $this->assertNotNull($constants->constant('a', 'TERNARY'));
         $this->assertNull($constants->constant('a', 'DEEP'));
         $this->assertNull($constants->constant('a', 'JOINED'));
         $this->assertNotNull($constants->constant('a', 'FINE'));
