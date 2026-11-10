@@ -56,6 +56,33 @@ final class RewriteCheck
      */
     public function verify(string $original, string $optimized): bool
     {
+        try {
+            $verdict = $this->matchCheck($original, $optimized);
+        } catch (ComplexityException) {
+            // Outside what the match solver reads, or past its budget, and
+            // not reading alike: the strings both match whole would prove no
+            // $matches, a lookahead at the edge of the match or alternatives
+            // taken in another order write other text.
+            $verdict = null;
+        }
+
+        return $verdict ?? $this->provenInPlace($original, $optimized);
+    }
+
+    /**
+     * The match check alone, the first proof verify() asks for: whether the
+     * rewrite writes the $matches the pattern writes, in every call.
+     *
+     * @throws ComplexityException when the match solver does not read a
+     *                             side, or gives up on its configurations
+     *                             or on the threads it may step
+     * @throws ExceptionInterface  when the match solver cannot parse a side
+     *
+     * @return bool|null null when no run proves anything: a pattern that
+     *                   reads the text before where the search starts
+     */
+    public function matchCheck(string $original, string $optimized): ?bool
+    {
         // A pattern goes to preg_match_all(), preg_replace(), preg_split()
         // and preg_match() from an offset as well: the rewrite must write
         // what the pattern writes in each. A pattern that reads the text
@@ -63,31 +90,22 @@ final class RewriteCheck
         // needs a search past the start of the subject, and an empty match
         // the retry those calls make after it. Two patterns that read alike
         // need no run at all.
-        $options = new SolverOptions(maxDfaStates: self::MATCH_CHECK_STATES, maxTransitionsProcessed: self::MATCH_CHECK_WORK);
         $runs = $this->solver->runsOfEveryCall($original, $optimized);
         if (null === $runs) {
-            return $this->provenInPlace($original, $optimized, $options);
+            return null;
         }
 
         // The same strings are not enough: a rewrite must write the same
         // $matches, which /(a|ab)/ and /(ab|a)/ do not on "ab". The same
         // $matches on every subject is the same answer on every subject,
         // so the strings preg_match() accepts agree as well.
-        try {
-            foreach ($runs as $run) {
-                if (!$this->solver->matchEquivalentIn($run, $original, $optimized, $options)->isEquivalent) {
-                    return false;
-                }
+        foreach ($runs as $run) {
+            if (!$this->solver->matchEquivalentIn($run, $original, $optimized, self::limits())->isEquivalent) {
+                return false;
             }
-
-            return true;
-        } catch (ComplexityException) {
-            // Outside what the match solver reads, or past its budget, and
-            // not reading alike: the strings both match whole would prove no
-            // $matches, a lookahead at the edge of the match or alternatives
-            // taken in another order write other text.
-            return $this->provenInPlace($original, $optimized, $options);
         }
+
+        return true;
     }
 
     /**
@@ -95,12 +113,17 @@ final class RewriteCheck
      * the rest of the pattern untouched: /(?<!\\)(?:_|%)/ into
      * /(?<!\\)[_%]/, where the lookbehind keeps the match check out.
      */
-    private function provenInPlace(string $original, string $optimized, SolverOptions $options): bool
+    private function provenInPlace(string $original, string $optimized): bool
     {
         try {
-            return $this->solver->rewritesAlikeInPlace($original, $optimized, $options);
+            return $this->solver->rewritesAlikeInPlace($original, $optimized, self::limits());
         } catch (ComplexityException) {
             return false;
         }
+    }
+
+    private static function limits(): SolverOptions
+    {
+        return new SolverOptions(maxDfaStates: self::MATCH_CHECK_STATES, maxTransitionsProcessed: self::MATCH_CHECK_WORK);
     }
 }
