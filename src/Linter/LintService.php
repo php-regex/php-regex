@@ -164,6 +164,11 @@ final class LintService
     public static function holdsNothing(array $patterns, bool $reportUnmatchedIgnores): bool
     {
         foreach ($patterns as $pattern) {
+            // The state of an argument is no pattern to analyse.
+            if (null !== $pattern->state) {
+                continue;
+            }
+
             if (null === $pattern->ignores || ($reportUnmatchedIgnores && [] !== $pattern->ignores)) {
                 return false;
             }
@@ -194,7 +199,8 @@ final class LintService
 
         $occurrences = [];
         foreach ($patterns as $pattern) {
-            if (null !== $pattern->ignores) {
+            // A file read and the state of an argument hold no pattern.
+            if (null !== $pattern->ignores || null !== $pattern->state) {
                 continue;
             }
 

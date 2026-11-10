@@ -21,6 +21,7 @@ use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\CpuClock;
+use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresMethod;
 use PHPUnit\Framework\Attributes\Test;
@@ -35,6 +36,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExtractionStrategyParityTest extends TestCase
 {
+    use ExtractsWithBothStrategies;
+
     /**
      * @var list<string>
      */
@@ -523,6 +526,87 @@ final class ExtractionStrategyParityTest extends TestCase
             'Preg::replaceCallbackArray()',
         ], $fromAst);
         $this->assertSame($fromAst, $fromTokens);
+    }
+
+    /**
+     * The fixture holds one pattern argument of each shape, the items of
+     * an array literal and the keys of a callback array included: both
+     * strategies anchor the same arguments, at the same places, and give
+     * each the same state. They return them beside the patterns extract()
+     * returns, one per argument and no more.
+     */
+    #[Test]
+    public function test_both_strategies_give_each_argument_of_the_states_fixture_its_state(): void
+    {
+        $code = file_get_contents(__DIR__.'/../../../Fixtures/Extractor/parity_states.php');
+        $this->assertIsString($code);
+
+        $this->assertSame([
+            '/state-namespace-const/',
+            '/state-enum-case/',
+            '/state-class-const/',
+            '/state-property/',
+            '/state-literal/',
+            '/state-concat/',
+            '/state-abc+/',
+            '/^state-a{3}$/',
+            '/state-variable/',
+            '/state-branch-a/',
+            '/state-branch-b/',
+            '/state-item/',
+            '/state-key/',
+        ], $this->patternsReadByBoth($code));
+
+        $expected = [
+            // One pattern.
+            ['state' => 'constant', 'expression' => "'/state-literal/'"],
+            ['state' => 'constant', 'expression' => "'/state-' . 'concat/'"],
+            ['state' => 'constant', 'expression' => 'NAMESPACED', 'at' => 'NAMESPACED, $subject)'],
+            ['state' => 'constant', 'expression' => 'self::RE'],
+            ['state' => 'constant', 'expression' => 'StateKind::Word->value'],
+            ['state' => 'constant', 'expression' => "'/state-' . self::PART . '+/'"],
+            ['state' => 'constant', 'expression' => '$this->property'],
+            ['state' => 'constant', 'expression' => "'/^state-a{' . self::MAX . '}$/'"],
+            ['state' => 'constant', 'expression' => '$once', 'at' => '$once, $subject)'],
+            // One of several patterns.
+            ['state' => 'finite_set', 'expression' => '$branches', 'at' => '$branches, $subject)'],
+            // A static pattern around preg_quote() texts.
+            ['state' => 'quoted_shell', 'expression' => "'/^state-' . preg_quote(\$word, '/') . '$/'"],
+            ['state' => 'quoted_shell', 'expression' => "'/^state-' . preg_quote(\$word) . '$/'"],
+            // A static pattern around another part built at run time.
+            ['state' => 'raw_shell', 'expression' => "'/^state-' . \$word . '$/'"],
+            ['state' => 'raw_shell', 'expression' => "'/^state-' . 1.5 . '$/'"],
+            // Nothing static. The readings still to come move the ternary,
+            // the interpolated string, the array item, the variable at
+            // file level and the foreach target out of here.
+            ['state' => 'opaque', 'expression' => '$given', 'at' => '$given, $subject)'],
+            ['state' => 'opaque', 'expression' => '$this->build()'],
+            ['state' => 'opaque', 'expression' => 'build_state()'],
+            ['state' => 'opaque', 'expression' => '$other->pattern'],
+            ['state' => 'opaque', 'expression' => "\$map['state']"],
+            ['state' => 'opaque', 'expression' => "\$flag ? '/state-then/' : '/state-else/'"],
+            ['state' => 'opaque', 'expression' => '"/^state-{$word}$/"'],
+            ['state' => 'opaque', 'expression' => "\$word . 'state' . \$word"],
+            ['state' => 'opaque', 'expression' => "preg_quote(\$word) . '/state/'"],
+            // An array literal: one argument per item, a key per pattern.
+            ['state' => 'constant', 'expression' => "'/state-item/'"],
+            ['state' => 'opaque', 'expression' => "\$given . '/item/'"],
+            ['state' => 'raw_shell', 'expression' => "'/^state-item-' . \$word . '/'"],
+            ['state' => 'constant', 'expression' => "'/state-key/'"],
+            ['state' => 'quoted_shell', 'expression' => "'/^state-key-' . preg_quote(\$word, '/') . '/'"],
+            // Outside any class.
+            ['state' => 'opaque', 'expression' => '$fileLevel', 'at' => '$fileLevel, $subject)'],
+            ['state' => 'opaque', 'expression' => '$each', 'at' => '$each, $subject)'],
+            ['state' => 'opaque', 'expression' => '$captured', 'at' => '$captured, $subject)'],
+        ];
+
+        $this->assertArgumentsReadByBoth($expected, $code);
+
+        // Every argument of the fixture ends in exactly one state.
+        $counts = array_count_values($this->statesReadByBoth($code));
+        ksort($counts);
+        $this->assertSame(['constant' => 11, 'finite_set' => 1, 'opaque' => 13, 'quoted_shell' => 3, 'raw_shell' => 3], $counts);
+        $this->assertSame(31, array_sum($counts));
     }
 
     private function write(string $content): string

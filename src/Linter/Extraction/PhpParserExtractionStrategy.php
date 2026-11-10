@@ -24,14 +24,12 @@ use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Expr\CallLike;
 use PhpParser\Node\Expr\Cast\Array_ as ArrayCast;
 use PhpParser\Node\Expr\Cast\Object_;
-use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Clone_;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
-use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\UnaryMinus;
 use PhpParser\Node\Expr\UnaryPlus;
@@ -46,6 +44,7 @@ use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Parser\Resolution\ArgumentState;
 
 /**
  * PhpParser-based regex pattern extraction strategy.
@@ -61,11 +60,12 @@ use PHPRegex\Linter\PatternOccurrence;
  * and a same-named class of the project's own is not mistaken for one. A
  * pattern argument that is no literal is read through the constants,
  * properties and local variables the file proves (AstValueCollector,
- * InFileValueResolver).
+ * InFileValueResolver). Every pattern argument is held with it, so that
+ * each can say what is known of it.
  *
  * @internal
  */
-final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface, ProjectConstantsAwareInterface
+final class PhpParserExtractionStrategy implements ArgumentAwareInterface, ExtractorInterface, PatternFunctionAwareInterface, ProjectConstantsAwareInterface
 {
     private readonly ?Parser $parser;
 
@@ -107,6 +107,21 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
 
     public function extract(array $files): array
     {
+        return $this->analyzeFilesWithPhpStan($files, false);
+    }
+
+    public function extractWithArguments(array $files): array
+    {
+        return $this->analyzeFilesWithPhpStan($files, true);
+    }
+
+    /**
+     * @param array<string> $files
+     *
+     * @return list<PatternOccurrence>
+     */
+    private function analyzeFilesWithPhpStan(array $files, bool $arguments): array
+    {
         if (empty($files)) {
             return [];
         }
@@ -116,20 +131,10 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
         $specs = $this->registry->declarationsRead() ? [] : PatternAttributeScanner::specs($files);
         $strategy = [] === $specs ? $this : new self([], $this->registry->withDeclaredFunctions($specs), $this->project);
 
-        return $strategy->analyzeFilesWithPhpStan($files);
-    }
-
-    /**
-     * @param array<string> $files
-     *
-     * @return list<PatternOccurrence>
-     */
-    private function analyzeFilesWithPhpStan(array $files): array
-    {
         $occurrences = [];
 
         foreach ($files as $file) {
-            $fileOccurrences = $this->analyzeFileWithPhpStan($file);
+            $fileOccurrences = $strategy->analyzeFileWithPhpStan($file, $arguments);
             $this->appendOccurrences($occurrences, $fileOccurrences);
         }
 
@@ -139,7 +144,7 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
     /**
      * @return array<PatternOccurrence>
      */
-    private function analyzeFileWithPhpStan(string $file): array
+    private function analyzeFileWithPhpStan(string $file, bool $arguments = false): array
     {
         if (null === $this->parser) {
             return [];
@@ -179,9 +184,11 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
             // reads them, and the run counts the file. A RangeException is
             // the parser meeting a token of a PHP newer than itself. Anything
             // else thrown here is a defect of ours, and is not caught.
+            $tokenizer = new TokenBasedExtractionStrategy([], $this->registry, $this->project);
+
             return [
                 PatternOccurrence::parserFallback($file, $e->getMessage()),
-                ...(new TokenBasedExtractionStrategy([], $this->registry, $this->project))->extract([$file]),
+                ...($arguments ? $tokenizer->extractWithArguments([$file]) : $tokenizer->extract([$file])),
             ];
         }
 
@@ -191,42 +198,48 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
         }
 
         // Each pattern judged for the versions the guards around it keep.
-        return PhpParserGuards::regions($ast, $content)->apply($this->settle($found, $ast, $file, $content), $file);
+        return PhpParserGuards::regions($ast, $content)->apply($this->settle($found, $ast, $file, $content, $arguments), $file);
     }
 
     /**
      * The occurrences in the order of their calls. A pattern no literal
      * gives is read, when the file holds one, through what the whole file
-     * proves about its names.
+     * proves about its names. With $arguments, each pattern argument
+     * follows the patterns it holds, with what is known of it.
      *
-     * @param list<PatternOccurrence|PendingPattern<Expr>> $found
+     * @param list<PatternOccurrence|PendingPattern<Node>> $found
      * @param array<Node>                                  $ast
      *
      * @return list<PatternOccurrence>
      */
-    private function settle(array $found, array $ast, string $file, string $content): array
+    private function settle(array $found, array $ast, string $file, string $content, bool $arguments): array
     {
-        $pending = array_filter($found, static fn (PatternOccurrence|PendingPattern $item): bool => $item instanceof PendingPattern);
-        if ([] === $pending) {
-            return array_values(array_filter($found, static fn (PatternOccurrence|PendingPattern $item): bool => $item instanceof PatternOccurrence));
-        }
-
-        $collector = new AstValueCollector($this->patternArguments(...));
-        if (null !== $this->project) {
-            $collector->values()->useProject($this->project);
-        }
-        $traverser = new NodeTraverser();
-        $traverser->addVisitor($collector);
-        $traverser->traverse($ast);
-        $values = $collector->values();
-
-        // Every read is known before the first is resolved: a value
-        // assigned after the last never reaches any.
+        // Those the call site did not settle on its own are read from the
+        // whole file.
         $expressions = [];
-        foreach ($pending as $index => $item) {
+        $collector = null;
+        foreach ($found as $index => $item) {
+            if (!$item instanceof PendingPattern || null !== $item->state || !$item->place instanceof Expr) {
+                continue;
+            }
+
+            if (null === $collector) {
+                $collector = new AstValueCollector($this->patternArguments(...));
+                if (null !== $this->project) {
+                    $collector->values()->useProject($this->project);
+                }
+                $traverser = new NodeTraverser();
+                $traverser->addVisitor($collector);
+                $traverser->traverse($ast);
+            }
+
+            // Every read is known before the first is resolved: a value
+            // assigned after the last never reaches any.
             $expressions[$index] = $collector->expression($item->place);
-            $values->read($expressions[$index]);
+            $collector->values()->read($expressions[$index]);
         }
+
+        $values = $collector?->values();
 
         $occurrences = [];
         foreach ($found as $index => $item) {
@@ -236,16 +249,27 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
                 continue;
             }
 
-            // The parser keeps the file positions of every expression.
+            // The parser keeps the file positions of every node, the
+            // parentheses around an expression left out.
             $place = $item->place;
-            array_push($occurrences, ...$item->occurrences($values, $expressions[$index], $file, $content, [$place->getStartFilePos(), $place->getEndFilePos() + 1 - $place->getStartFilePos()]));
+            $offset = $place->getStartFilePos();
+            $length = $place->getEndFilePos() + 1 - $offset;
+            $expression = $expressions[$index] ?? null;
+            if (null !== $values && null !== $expression) {
+                array_push($occurrences, ...$item->occurrences($values, $expression, $file, $content, [$offset, $length]));
+            }
+
+            if ($arguments) {
+                $states = null === $values || null === $expression ? [$item->state ?? ArgumentState::Opaque->value] : $values->states($expression, $item->function);
+                array_push($occurrences, ...$item->arguments($states, $file, $content, $place->getStartLine(), $offset, $length));
+            }
         }
 
         return $occurrences;
     }
 
     /**
-     * @param list<PatternOccurrence|PendingPattern<Expr>> $found
+     * @param list<PatternOccurrence|PendingPattern<Node>> $found
      */
     private function extractFromNode(Node $node, string $file, string $content, array &$found): void
     {
@@ -276,7 +300,7 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
     /**
      * The patterns of a function call.
      *
-     * @return list<PatternOccurrence|PendingPattern<Expr>>
+     * @return list<PatternOccurrence|PendingPattern<Node>>
      */
     private function extractFromFuncCall(FuncCall $funcCall, string $file, string $content): array
     {
@@ -373,7 +397,7 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
 
     /**
      * @param array<Arg>                                   $args
-     * @param list<PatternOccurrence|PendingPattern<Expr>> $found
+     * @param list<PatternOccurrence|PendingPattern<Node>> $found
      */
     private function extractFromArgs(array $args, PatternFunction $patternFunction, string $file, string $content, array &$found): void
     {
@@ -397,10 +421,13 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
             }
 
             // Nette's utf8: true appends "u" to every pattern; anything but
-            // true or false leaves its flags unknown.
+            // true or false leaves its flags unknown, and the argument with
+            // them.
             if (null !== $function->utf8Argument) {
                 $utf8 = self::utf8($args, $function->utf8Argument);
                 if (null === $utf8) {
+                    $found[] = self::held($arg->value, $function, ArgumentState::Opaque->value);
+
                     continue;
                 }
 
@@ -418,9 +445,17 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
                 }
             }
 
-            $value = $this->optionValue($arg->value, $function);
+            $followed = true;
+            $value = $this->optionValue($arg->value, $function, $followed);
             if (null !== $value) {
-                $this->extractPatternFromValue($value, $function, $file, $content, $found);
+                // An item of the options written at the call is the
+                // pattern itself; options read through a name are looked
+                // into for it.
+                $this->extractPatternFromValue($value, $value === $arg->value ? $function : $function->readingTheItem(), $file, $content, $found);
+            } elseif (!$followed) {
+                // Options that hold no pattern give no argument; options
+                // the call does not spell out may hold one.
+                $found[] = self::held($arg->value, $function, ArgumentState::Opaque->value);
             }
         }
     }
@@ -429,29 +464,44 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
      * The expression an argument holds the pattern in: the argument itself,
      * or, for an array literal, the item its option path leads to (the
      * last of a repeated key, as PHP keeps it).
+     *
+     * @param bool $followed set to false when the path leads nowhere the call spells out: options that are no
+     *                       array literal, or one whose spread may hold the key
      */
-    private function optionValue(Expr $value, PatternFunction $function): ?Expr
+    private function optionValue(Expr $value, PatternFunction $function, bool &$followed = true): ?Expr
     {
-        if ([] === $function->optionPath || !$value instanceof Array_) {
-            return [] !== $function->optionPath && $function->optionPathRequired ? null : $value;
+        $followed = true;
+        if ([] === $function->optionPath) {
+            return $value;
         }
 
         foreach ($function->optionPath as $key) {
             if (!$value instanceof Array_) {
-                return null;
+                // Only the first level may be the pattern itself.
+                if ($function->optionPathRequired || $key !== $function->optionPath[0]) {
+                    $followed = false;
+
+                    return null;
+                }
+
+                return $value;
             }
 
             $found = null;
+            $spread = false;
             foreach ($value->items as $item) {
                 if (null !== $item && $item->unpack) {
                     // A spread may hold the key, replacing what came before.
                     $found = null;
+                    $spread = true;
                 } elseif (null !== $item && null !== $item->key && $key === $this->extractStringValue($item->key)) {
                     $found = $item->value;
                 }
             }
 
             if (null === $found) {
+                $followed = !$spread;
+
                 return null;
             }
 
@@ -567,13 +617,10 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
     }
 
     /**
-     * @param list<PatternOccurrence|PendingPattern<Expr>> $found
+     * @param list<PatternOccurrence|PendingPattern<Node>> $found
      */
     private function extractPatternFromValue(Expr $value, PatternFunction $patternFunction, string $file, string $content, array &$found): void
     {
-        // A null argument, as any other constant that holds no string, is
-        // left out by mayName().
-
         // preg_replace(['/a/', '/b/'], ...) and preg_replace_callback_array(['/a/' => $fn])
         // hold several patterns in one argument.
         if ($value instanceof Array_) {
@@ -582,14 +629,14 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
             return;
         }
 
-        $pattern = $this->extractPatternFromExpr($value, $patternFunction, $file, $content);
-        if (null !== $pattern) {
-            $found[] = $pattern;
-        }
+        $this->readArgument($value, $patternFunction, $file, $content, $found);
     }
 
     /**
-     * @param list<PatternOccurrence|PendingPattern<Expr>> $found
+     * Each item of an array literal is a pattern argument of its own. A
+     * spread may hold any number of patterns, and nothing is known of it.
+     *
+     * @param list<PatternOccurrence|PendingPattern<Node>> $found
      */
     private function extractPatternsFromArray(Array_ $array, PatternFunction $patternFunction, string $file, string $content, array &$found): void
     {
@@ -606,14 +653,15 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
                 continue;
             }
 
-            $expr = $useKeys ? $item->key : $item->value;
-            if (null === $expr) {
+            if ($item->unpack) {
+                $found[] = self::held($item, $patternFunction, ArgumentState::Opaque->value);
+
                 continue;
             }
 
-            $pattern = $this->extractPatternFromExpr($expr, $patternFunction, $file, $content);
-            if (null !== $pattern) {
-                $found[] = $pattern;
+            $expr = $useKeys ? $item->key : $item->value;
+            if (null !== $expr) {
+                $this->readArgument($expr, $patternFunction, $file, $content, $found);
             }
         }
     }
@@ -643,16 +691,47 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
     }
 
     /**
-     * A literal pattern is reported at the call; any other is held until
-     * the file is read, for the names it may go through.
+     * A pattern argument held at its node, an expression or the item of an
+     * array, with the state the call site gives it, if any.
      *
-     * @return PatternOccurrence|PendingPattern<Expr>|null
+     * @return PendingPattern<Node>
+     */
+    private static function held(Node $place, PatternFunction $function, ?string $state = null): PendingPattern
+    {
+        return new PendingPattern($place, $function, $state);
+    }
+
+    /**
+     * One pattern argument: its pattern when a literal gives it, and the
+     * argument itself, held for what the file says of it. A literal is an
+     * argument too, held as one that is settled.
+     *
+     * @param list<PatternOccurrence|PendingPattern<Node>> $found
+     */
+    private function readArgument(Expr $expr, PatternFunction $patternFunction, string $file, string $content, array &$found): void
+    {
+        $read = $this->extractPatternFromExpr($expr, $patternFunction, $file, $content);
+        if (null !== $read) {
+            $found[] = $read;
+        }
+
+        if (!$read instanceof PendingPattern) {
+            $found[] = self::held($expr, $patternFunction, ArgumentState::Constant->value);
+        }
+    }
+
+    /**
+     * A literal pattern is reported at the call, the empty string as no
+     * pattern; any other argument is held until the file is read, for the
+     * names it may go through.
+     *
+     * @return PatternOccurrence|PendingPattern<Node>|null
      */
     private function extractPatternFromExpr(Expr $expr, PatternFunction $patternFunction, string $file, string $content): PatternOccurrence|PendingPattern|null
     {
         $pattern = $this->extractStringValue($expr);
         if (null === $pattern) {
-            return self::mayName($expr) ? new PendingPattern($expr, $patternFunction) : null;
+            return self::held($expr, $patternFunction);
         }
 
         if ('' === $pattern) {
@@ -669,31 +748,6 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
             column: null !== $offset ? PendingPattern::column($content, $offset) : null,
             fileOffset: $offset,
         );
-    }
-
-    /**
-     * Whether a pattern argument that is no literal may still be read
-     * through the names of the file: a concatenation, a constant, a local
-     * variable, a property of $this.
-     */
-    private static function mayName(Expr $expr): bool
-    {
-        if ($expr instanceof ConstFetch) {
-            return !\in_array($expr->name->toLowerString(), ['true', 'false', 'null'], true);
-        }
-
-        if ($expr instanceof PropertyFetch) {
-            // $this->re, or an enum case's backing value, Kind::Re->value.
-            if (!$expr->name instanceof Identifier) {
-                return false;
-            }
-
-            return $expr->var instanceof ClassConstFetch
-                ? 'value' === $expr->name->toString()
-                : $expr->var instanceof Variable && 'this' === $expr->var->name;
-        }
-
-        return $expr instanceof Concat || $expr instanceof ClassConstFetch || ($expr instanceof Variable && \is_string($expr->name) && 'this' !== $expr->name);
     }
 
     private function extractStringValue(Expr $expr): ?string

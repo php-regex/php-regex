@@ -65,6 +65,38 @@ final class TokenValueCollector
 
     private const MODIFIERS = [\T_PUBLIC, \T_PROTECTED, \T_PRIVATE, \T_STATIC, \T_FINAL, \T_ABSTRACT, \T_READONLY, \T_VAR];
 
+    /**
+     * The operators that bind looser than ".": with one between its
+     * operands, an expression is no concatenation, whatever it joins.
+     */
+    private const LOOSER_THAN_CONCATENATION = [
+        '?' => true, ':' => true, '<' => true, '>' => true, '|' => true, '^' => true,
+        \T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG => true, \T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG => true,
+        \T_IS_SMALLER_OR_EQUAL => true, \T_IS_GREATER_OR_EQUAL => true, \T_SPACESHIP => true,
+        \T_IS_EQUAL => true, \T_IS_NOT_EQUAL => true, \T_IS_IDENTICAL => true, \T_IS_NOT_IDENTICAL => true,
+        \T_BOOLEAN_AND => true, \T_BOOLEAN_OR => true, \T_COALESCE => true,
+    ];
+
+    /**
+     * "and", "or" and "xor" bind looser than everything, an assignment
+     * included.
+     */
+    private const LOOSEST = [\T_LOGICAL_AND => true, \T_LOGICAL_OR => true, \T_LOGICAL_XOR => true];
+
+    /**
+     * The tokens that take what follows them as their own operand, up to
+     * an operator of LOOSEST: an assignment and its value, print, yield,
+     * throw, include and require.
+     */
+    private const TAKES_THE_REST = [
+        '=' => true,
+        \T_PLUS_EQUAL => true, \T_MINUS_EQUAL => true, \T_MUL_EQUAL => true, \T_DIV_EQUAL => true,
+        \T_CONCAT_EQUAL => true, \T_MOD_EQUAL => true, \T_AND_EQUAL => true, \T_OR_EQUAL => true,
+        \T_XOR_EQUAL => true, \T_SL_EQUAL => true, \T_SR_EQUAL => true, \T_POW_EQUAL => true, \T_COALESCE_EQUAL => true,
+        \T_PRINT => true, \T_YIELD => true, \T_YIELD_FROM => true, \T_THROW => true,
+        \T_INCLUDE => true, \T_INCLUDE_ONCE => true, \T_REQUIRE => true, \T_REQUIRE_ONCE => true,
+    ];
+
     private readonly InFileValueResolver $values;
 
     /**
@@ -195,7 +227,7 @@ final class TokenValueCollector
 
                 break;
             case \T_FUNCTION:
-                $this->enterFunction($index);
+                $this->enterFunction($index, $context);
 
                 break;
             case \T_FN:
@@ -279,32 +311,39 @@ final class TokenValueCollector
      */
     public function expression(int $start, int $end, NameResolutionContext $context): ValueExpr
     {
-        $first = $this->next($start, $end);
-        if (null === $first) {
+        $bounds = $this->bounds($start, $end);
+        if (null === $bounds) {
             return ValueExpr::unknown();
         }
 
-        // The walk down to $first stops at $first at the latest.
-        $last = $this->previous($end - 1, $first) ?? $first;
-        while ('(' === $this->tokens[$first] && ($this->closers[$first] ?? null) === $last) {
-            $first = $this->next($first + 1, $last);
-            if (null === $first) {
-                return ValueExpr::unknown();
-            }
-
-            $last = $this->previous($last - 1, $first) ?? $first;
-        }
-
+        [$first, $last] = $bounds;
         $operands = [];
         $operandStart = $first;
+        // Whether a token met takes the rest as its operand: no "." after
+        // it joins operands of this expression.
+        $taken = false;
         // A heredoc holds a "." only in the "{$" and "${" it interpolates.
         for ($i = $first; $i <= $last; $i++) {
             $token = $this->tokens[$i];
+            $id = \is_array($token) ? $token[0] : $token;
             if (PhpTokens::opensNesting($token)) {
                 $i = $this->closers[$i] ?? $last;
+            } elseif (\T_FN === $id) {
+                // The body of an arrow function runs to the end.
+                break;
+            } elseif (isset(self::LOOSEST[$id])) {
+                return ValueExpr::unknown();
+            } elseif ($taken) {
+                continue;
             } elseif ('.' === $token) {
                 $operands[] = [$operandStart, $i];
                 $operandStart = $i + 1;
+            } elseif (isset(self::TAKES_THE_REST[$id])) {
+                $taken = true;
+            } elseif (isset(self::LOOSER_THAN_CONCATENATION[$id]) || (\is_array($token) && '|>' === $token[1])) {
+                // A ternary, a comparison, "??": the "." joins operands
+                // of theirs, and the whole is no concatenation.
+                return ValueExpr::unknown();
             }
         }
 
@@ -328,6 +367,34 @@ final class TokenValueCollector
         return $allLiteral
             ? ValueExpr::literal($literal, $offset, $this->lineAt($offset))
             : ValueExpr::concat($parts, $offset, $this->lineAt($offset));
+    }
+
+    /**
+     * The first and the last token of the expression in [$start, $end),
+     * the parentheses around the whole of it left out, as many pairs as
+     * there are; null when it holds no token.
+     *
+     * @return array{int, int}|null
+     */
+    private function bounds(int $start, int $end): ?array
+    {
+        $first = $this->next($start, $end);
+        if (null === $first) {
+            return null;
+        }
+
+        // The walk down to $first stops at $first at the latest.
+        $last = $this->previous($end - 1, $first) ?? $first;
+        while ('(' === $this->tokens[$first] && ($this->closers[$first] ?? null) === $last) {
+            $first = $this->next($first + 1, $last);
+            if (null === $first) {
+                return null;
+            }
+
+            $last = $this->previous($last - 1, $first) ?? $first;
+        }
+
+        return [$first, $last];
     }
 
     /**
@@ -394,13 +461,18 @@ final class TokenValueCollector
 
     /**
      * One operand, [$first, $last] trimmed: a literal, a heredoc, a
-     * constant, a variable, $this->name, an array or a number.
+     * constant, a variable, $this->name, an array, a number or a call to
+     * preg_quote().
      */
     private function operand(int $first, int $last, NameResolutionContext $context): ValueExpr
     {
         $token = $this->tokens[$first];
         if ($first === $last) {
             return $this->singleToken($first, $context);
+        }
+
+        if ('-' === $token || '+' === $token) {
+            return $this->signedNumber($first, $last);
         }
 
         if (\is_array($token) && \T_START_HEREDOC === $token[0]) {
@@ -441,9 +513,11 @@ final class TokenValueCollector
             return $this->arrayOf($second, $last, $context);
         }
 
-        // -1, +2.5: a number, as a key.
-        if (('-' === $token || '+' === $token) && $second === $last && \is_array($this->tokens[$last]) && \in_array($this->tokens[$last][0], [\T_LNUMBER, \T_DNUMBER], true)) {
-            return ValueExpr::nonString();
+        // preg_quote($word, '/'): a function called by its name, the call
+        // the whole operand.
+        $function = PhpTokens::name($token);
+        if (null !== $function && '(' === $this->tokens[$second] && ($this->closers[$second] ?? null) === $last) {
+            return $this->quotedText($function, $second, $context);
         }
 
         $third = $this->next($second + 1, $last + 1);
@@ -494,7 +568,11 @@ final class TokenValueCollector
             return ValueExpr::literal(PhpTokens::stringValue($token[1]), $this->offsets[$index], $token[2]);
         }
 
-        if (\T_LNUMBER === $token[0] || \T_DNUMBER === $token[0]) {
+        if (\T_LNUMBER === $token[0]) {
+            return ValueExpr::nonString(PhpTokens::integerValue($token[1]));
+        }
+
+        if (\T_DNUMBER === $token[0]) {
             return ValueExpr::nonString();
         }
 
@@ -517,6 +595,85 @@ final class TokenValueCollector
         }
 
         return ValueExpr::constant(array_map(ValueExpr::constantKey(...), $context->resolveConstant($name)), $name);
+    }
+
+    /**
+     * -1, +2.5, - -3, -(3): a number under its signs, the parentheses PHP
+     * drops around it left out. An integer keeps its value.
+     */
+    private function signedNumber(int $first, int $last): ValueExpr
+    {
+        $negative = false;
+        $index = $first;
+        while (true) {
+            $token = $this->tokens[$index];
+            $wrapped = '(' === $token && ($this->closers[$index] ?? null) === $last;
+            if ('-' !== $token && '+' !== $token && !$wrapped) {
+                break;
+            }
+
+            $inner = $this->next($index + 1, $wrapped ? $last : $last + 1);
+            if (null === $inner) {
+                return ValueExpr::unknown();
+            }
+
+            if ($wrapped) {
+                $last = $this->previous($last - 1, $inner) ?? $inner;
+            } else {
+                $negative = $negative !== ('-' === $token);
+            }
+
+            $index = $inner;
+        }
+
+        $token = $this->tokens[$index];
+        if ($index !== $last || !\is_array($token) || (\T_LNUMBER !== $token[0] && \T_DNUMBER !== $token[0])) {
+            return ValueExpr::unknown();
+        }
+
+        if (\T_DNUMBER === $token[0]) {
+            return ValueExpr::nonString();
+        }
+
+        $integer = PhpTokens::integerValue($token[1]);
+
+        return ValueExpr::nonString($negative ? -$integer : $integer);
+    }
+
+    /**
+     * A call to a function by its name, its arguments opening at $open:
+     * preg_quote() is a quoted text, with the delimiter its second
+     * argument gives, by position or by name, when that is a string
+     * literal. Any other call is not followed.
+     */
+    private function quotedText(string $function, int $open, NameResolutionContext $context): ValueExpr
+    {
+        $names = $this->functionNames($function, $context);
+        $count = \count($this->tokens);
+        // preg_quote(...) is a closure, not a text.
+        if (InFileValueResolver::QUOTING !== $names[\count($names) - 1] || CallArguments::isPartialApplication($this->tokens, $open + 1, $count, $this->closers)) {
+            return ValueExpr::unknown();
+        }
+
+        $argument = CallArguments::find($this->tokens, $open + 1, $count, 1, ['delimiter'], $this->closers);
+        $bounds = null === $argument ? null : $this->bounds($argument[0], $argument[1]);
+        $delimiter = null === $bounds ? null : $this->operand($bounds[0], $bounds[1], $context);
+
+        return ValueExpr::hole(true, null !== $delimiter && ValueExpr::LITERAL === $delimiter->kind ? $delimiter->value : null, '', $names);
+    }
+
+    /**
+     * The lowercase functions a call by the name may reach, in the order
+     * PHP tries them: the namespace's own, then the global one.
+     *
+     * @return non-empty-list<string>
+     */
+    private function functionNames(string $function, NameResolutionContext $context): array
+    {
+        $namespaced = $context->namespacedFunction($function);
+        $resolved = Ascii::lower($context->resolveFunction($function));
+
+        return null === $namespaced ? [$resolved] : [Ascii::lower($namespaced), $resolved];
     }
 
     private function heredoc(int $first, int $last): ValueExpr
@@ -849,7 +1006,7 @@ final class TokenValueCollector
      * here, the import statements are read before the tokens are handed
      * over.
      */
-    private function enterFunction(int $index): void
+    private function enterFunction(int $index, NameResolutionContext $context): void
     {
         $open = $this->next($index + 1);
         $byReference = null !== $open && $this->isAmpersand($open);
@@ -859,7 +1016,15 @@ final class TokenValueCollector
 
         // A closure has no name: Closure::bind() may give it another class.
         $bound = true;
-        if (null !== $open && null !== PhpTokens::identifier($this->tokens[$open])) {
+        $name = null === $open ? null : PhpTokens::identifier($this->tokens[$open]);
+        if (null !== $open && null !== $name) {
+            // Named outside a class body, it is a function of the
+            // namespace: a call by its name reaches it before PHP's own.
+            $around = $this->bodyAt($index);
+            if (null === $around || !$around['class']) {
+                $this->values->declareFunction($context->declaredName($name));
+            }
+
             $open = $this->next($open + 1);
             $bound = false;
         }
@@ -1533,8 +1698,15 @@ final class TokenValueCollector
         }
 
         $scope = $this->scopeAt($index);
+        // The functions the call may reach, when PHP's own takes every
+        // argument by value: what is passed to it is not written.
+        $byValue = null;
         if (null !== $function) {
             $resolved = Ascii::lower($context->resolveFunction($function));
+            if (isset(InFileValueResolver::BY_VALUE[$resolved])) {
+                $byValue = $this->functionNames($function, $context);
+            }
+
             if ('extract' === $resolved || 'compact' === $resolved) {
                 $this->bailScope($index);
             } elseif ('define' === $resolved) {
@@ -1570,7 +1742,12 @@ final class TokenValueCollector
                 continue;
             }
 
-            $this->writeBackward($this->fetchArgument($value, $to), $scope);
+            $written = $this->fetchArgument($value, $to);
+            if (null === $byValue) {
+                $this->writeBackward($written, $scope);
+            } else {
+                $this->values->byValue($byValue, fn () => $this->writeBackward($written, $scope));
+            }
         }
     }
 

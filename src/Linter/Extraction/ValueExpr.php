@@ -19,7 +19,8 @@ use PHPRegex\Parser\Text\Ascii;
 /**
  * An expression of a PHP file as the in-file resolution reads it: a
  * literal, a concatenation, a reference to a constant, a local variable or
- * a property, an array, or something it does not follow.
+ * a property, an array, a text known at run time only, one of several
+ * values, or something it does not follow.
  *
  * Both extraction strategies translate their own syntax tree into this
  * form, so the rules deciding what a name proves are written once, in
@@ -38,30 +39,40 @@ final class ValueExpr
     public const ARRAY = 'array';
     public const NON_STRING = 'non-string';
     public const UNKNOWN = 'unknown';
+    public const HOLE = 'hole';
+    public const SET = 'set';
 
     /**
-     * @param string                             $kind       one of the constants above
-     * @param string                             $value      the literal's value, or the name of the constant,
-     *                                                       variable or property
-     * @param int                                $offset     where the expression starts in the file
-     * @param int                                $line       the line it starts on
-     * @param list<self>                         $parts      the operands of a concatenation
-     * @param list<array{0: self|null, 1: self}> $items      the key, if any, and the value of each array item
-     * @param string|null                        $class      the lowercase class a class constant or a property
-     *                                                       belongs to; null when no class of the file is known
-     * @param bool                               $lateStatic a class constant read through static::
-     * @param list<string>                       $names      the constant keys a name may reach, in the order PHP
-     *                                                       tries them
-     * @param int|null                           $scope      the function body a variable belongs to; null at file
-     *                                                       scope
-     * @param string                             $written    the reference as the source writes it: "self::RE"
-     * @param string|null                        $file       the file a literal or a concatenation of another file
-     *                                                       is written in; null for one of the file being read
-     * @param int|null                           $column     its column on its line, one-based, in bytes, known
-     *                                                       with the file
-     * @param TargetConstraint|null              $guard      the versions the guards of that file keep around it;
-     *                                                       null when none holds there, or for one of the file
-     *                                                       being read, whose guards the reader applies
+     * @param string                             $kind         one of the constants above
+     * @param string                             $value        the literal's value, or the name of the constant,
+     *                                                         variable or property
+     * @param int                                $offset       where the expression starts in the file
+     * @param int                                $line         the line it starts on
+     * @param list<self>                         $parts        the operands of a concatenation
+     * @param list<array{0: self|null, 1: self}> $items        the key, if any, and the value of each array item
+     * @param string|null                        $class        the lowercase class a class constant or a property
+     *                                                         belongs to; null when no class of the file is known
+     * @param bool                               $lateStatic   a class constant read through static::
+     * @param list<string>                       $names        the constant keys a name may reach, in the order PHP
+     *                                                         tries them; for a hole, the lowercase functions its
+     *                                                         call may reach
+     * @param int|null                           $scope        the function body a variable belongs to; null at file
+     *                                                         scope
+     * @param string                             $written      the reference as the source writes it: "self::RE";
+     *                                                         for a hole, the operand as written
+     * @param string|null                        $file         the file a literal or a concatenation of another file
+     *                                                         is written in; null for one of the file being read
+     * @param int|null                           $column       its column on its line, one-based, in bytes, known
+     *                                                         with the file
+     * @param TargetConstraint|null              $guard        the versions the guards of that file keep around it;
+     *                                                         null when none holds there, or for one of the file
+     *                                                         being read, whose guards the reader applies
+     * @param bool                               $quoted       a hole that is a preg_quote() call
+     * @param string|null                        $delimiter    the delimiter that call is given, when a string
+     *                                                         literal gives it
+     * @param list<self>                         $alternatives the values a set may take, in the order the source
+     *                                                         gives them
+     * @param int|null                           $integer      the integer a scalar that is no string is
      */
     private function __construct(
         public readonly string $kind,
@@ -78,6 +89,10 @@ final class ValueExpr
         public readonly ?string $file = null,
         public readonly ?int $column = null,
         public readonly ?TargetConstraint $guard = null,
+        public readonly bool $quoted = false,
+        public readonly ?string $delimiter = null,
+        public readonly array $alternatives = [],
+        public readonly ?int $integer = null,
     ) {}
 
     public static function literal(string $value, int $offset, int $line, ?string $file = null, ?int $column = null): self
@@ -102,6 +117,7 @@ final class ValueExpr
             // need no place of their own.
             self::CONCAT => new self(self::CONCAT, offset: $this->offset, line: $this->line, parts: $this->parts, file: $file, column: PendingPattern::column($content, $this->offset), guard: $guards->at($this->offset)),
             self::ARRAY => new self(self::ARRAY, items: array_map(static fn (array $item): array => [$item[0]?->inFile($file, $content, $guards), $item[1]->inFile($file, $content, $guards)], $this->items)),
+            self::SET => new self(self::SET, alternatives: array_map(static fn (self $alternative): self => $alternative->inFile($file, $content, $guards), $this->alternatives)),
             default => $this,
         };
     }
@@ -176,11 +192,37 @@ final class ValueExpr
 
     /**
      * A scalar that is no string, a number, true or false: never a pattern,
-     * and, as an array key, an int.
+     * and, as an array key, an int. An integer keeps its value: joined to
+     * a string, it reads as PHP writes it, in decimal.
      */
-    public static function nonString(): self
+    public static function nonString(?int $integer = null): self
     {
-        return new self(self::NON_STRING);
+        return new self(self::NON_STRING, integer: $integer);
+    }
+
+    /**
+     * A text known at run time only, where a string is read: what
+     * preg_quote() returns, which reads as literal characters, or, not
+     * quoted, anything.
+     *
+     * @param string|null  $delimiter the second argument of preg_quote(), when a string literal gives it
+     * @param string       $written   the operand as the source writes it
+     * @param list<string> $names     the lowercase functions the call may reach, in the order PHP tries
+     *                                them: one the file declares is not the function of PHP
+     */
+    public static function hole(bool $quoted, ?string $delimiter, string $written, array $names = []): self
+    {
+        return new self(self::HOLE, names: $names, written: $written, quoted: $quoted, delimiter: $delimiter);
+    }
+
+    /**
+     * One of several values, whichever path the code takes.
+     *
+     * @param list<self> $alternatives
+     */
+    public static function setOf(array $alternatives): self
+    {
+        return new self(self::SET, alternatives: $alternatives);
     }
 
     public static function unknown(): self
@@ -223,6 +265,6 @@ final class ValueExpr
      */
     public function isResolvable(): bool
     {
-        return self::CONCAT === $this->kind || $this->isReference();
+        return self::CONCAT === $this->kind || self::SET === $this->kind || $this->isReference();
     }
 }

@@ -23,7 +23,8 @@ use PHPRegex\Parser\Text\Ascii;
  * Strings::replace() either, the keys when the first key PHP stores is a
  * string. Which items they are follows from the array's tokens alone; what
  * each item reads as is the caller's to say, so the walk hands back each
- * item's tokens, in order.
+ * item's tokens, in order. A spread stands for any number of items: it is
+ * handed back whole, whichever the call reads.
  *
  * @internal
  */
@@ -117,7 +118,7 @@ final class ArrayLiteralPatterns
             if (end($stack) === $token) {
                 array_pop($stack);
                 if ([] === $stack) {
-                    if (!$useKeys) {
+                    if (!$useKeys || self::isSpread($segmentTokens)) {
                         $segments[] = [$segmentTokens, $segmentTokenIndexes];
                     }
 
@@ -135,7 +136,7 @@ final class ArrayLiteralPatterns
             $atTopLevel = 1 === \count($stack);
 
             if ($atTopLevel && ',' === $token) {
-                if (!$useKeys) {
+                if (!$useKeys || self::isSpread($segmentTokens)) {
                     $segments[] = [$segmentTokens, $segmentTokenIndexes];
                 }
 
@@ -177,6 +178,19 @@ final class ArrayLiteralPatterns
         }
 
         return $segments;
+    }
+
+    /**
+     * Whether the tokens of an item are a spread, "...$more": it has no
+     * key of its own, and may hold any.
+     *
+     * @param list<array{int, string, int}|string> $tokens
+     */
+    private static function isSpread(array $tokens): bool
+    {
+        $first = PhpTokens::nextSignificant($tokens, 0, \count($tokens));
+
+        return null !== $first && \is_array($tokens[$first]) && \T_ELLIPSIS === $tokens[$first][0];
     }
 
     /**

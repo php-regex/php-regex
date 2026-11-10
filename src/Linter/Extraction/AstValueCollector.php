@@ -296,11 +296,75 @@ final class AstValueCollector extends NodeVisitorAbstract
             return $this->arrayOf($expr);
         }
 
+        if ($expr instanceof FuncCall) {
+            return $this->quotedText($expr);
+        }
+
+        // -1, +2.5, - -3: a number under its signs. An integer keeps its
+        // value.
+        $negative = false;
         while ($expr instanceof UnaryMinus || $expr instanceof UnaryPlus) {
+            $negative = $negative !== $expr instanceof UnaryMinus;
             $expr = $expr->expr;
         }
 
-        return $expr instanceof Int_ || $expr instanceof Float_ ? ValueExpr::nonString() : ValueExpr::unknown();
+        if ($expr instanceof Int_) {
+            return ValueExpr::nonString($negative ? -$expr->value : $expr->value);
+        }
+
+        return $expr instanceof Float_ ? ValueExpr::nonString() : ValueExpr::unknown();
+    }
+
+    /**
+     * A call to a function by its name: preg_quote() is a quoted text,
+     * with the delimiter its second argument gives, by position or by
+     * name, when that is a string literal. Any other call is not followed.
+     */
+    private function quotedText(FuncCall $call): ValueExpr
+    {
+        $names = $call->name instanceof Name ? self::functionNames($call->name) : [];
+        if (InFileValueResolver::QUOTING !== ($names[\count($names) - 1] ?? null)) {
+            return ValueExpr::unknown();
+        }
+
+        $position = 0;
+        $positional = null;
+        $named = null;
+        foreach ($call->getRawArgs() as $arg) {
+            // preg_quote(...) is a closure, not a text.
+            if (!$arg instanceof Arg) {
+                return ValueExpr::unknown();
+            }
+
+            if (null !== $arg->name) {
+                if ('delimiter' === $arg->name->toString()) {
+                    $named ??= $arg;
+                }
+            } elseif ($arg->unpack) {
+                // A spread makes every later position unknowable; a name
+                // still passes the argument.
+                $position = \PHP_INT_MIN;
+            } elseif (1 === $position++) {
+                $positional ??= $arg;
+            }
+        }
+
+        $delimiter = ($positional ?? $named)?->value;
+
+        return ValueExpr::hole(true, $delimiter instanceof String_ ? $delimiter->value : null, '', $names);
+    }
+
+    /**
+     * The lowercase functions a call by the name may reach, in the order
+     * PHP tries them: the namespace's own, then the global one.
+     *
+     * @return non-empty-list<string>
+     */
+    private static function functionNames(Name $name): array
+    {
+        $namespaced = $name->getAttribute('namespacedName');
+
+        return $namespaced instanceof Name ? [$namespaced->toLowerString(), $name->toLowerString()] : [$name->toLowerString()];
     }
 
     private function enterClass(ClassLike $class): void
@@ -326,6 +390,12 @@ final class AstValueCollector extends NodeVisitorAbstract
 
     private function enterFunction(Function_|ClassMethod|Closure|ArrowFunction $function): void
     {
+        // A function of the namespace: a call by its name reaches it before
+        // PHP's own.
+        if ($function instanceof Function_ && null !== $function->namespacedName) {
+            $this->values->declareFunction($function->namespacedName->toString());
+        }
+
         $outer = $this->scope();
         $scope = $this->nextScope++;
         $this->scopes[] = $scope;
@@ -436,8 +506,16 @@ final class AstValueCollector extends NodeVisitorAbstract
             }
         }
 
-        // Any call may take a variable by reference: the file does not say
-        // which. The argument the call reads its pattern from is read.
+        // The functions the call may reach, when PHP's own takes every
+        // argument by value: what is passed to it is not written.
+        $byValue = $call instanceof FuncCall && $call->name instanceof Name ? self::functionNames($call->name) : [];
+        if (!isset(InFileValueResolver::BY_VALUE[$byValue[\count($byValue) - 1] ?? ''])) {
+            $byValue = [];
+        }
+
+        // Any other call may take a variable by reference: the file does
+        // not say which. The argument the call reads its pattern from is
+        // read.
         $read = ($this->patternArguments)($call);
         foreach ($call->getRawArgs() as $arg) {
             if (!$arg instanceof Arg || \in_array($arg, $read, true)) {
@@ -446,10 +524,13 @@ final class AstValueCollector extends NodeVisitorAbstract
 
             // $this passed: the callee may write any property of it, as
             // array_walk($this, ...) does, private ones included.
-            if ($arg->value instanceof Variable && 'this' === $arg->value->name) {
+            $value = $arg->value;
+            if ($value instanceof Variable && 'this' === $value->name) {
                 $this->values->writeAnyProperty($this->classKey());
-            } elseif (self::isChain($arg->value)) {
-                $this->write($arg->value);
+            } elseif (self::isChain($value) && [] === $byValue) {
+                $this->write($value);
+            } elseif (self::isChain($value)) {
+                $this->values->byValue($byValue, fn () => $this->write($value));
             }
         }
     }

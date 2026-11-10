@@ -96,8 +96,16 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
         'src/Transpiler/Target/Python/PythonTarget.php',
         // preg_quote() of a literal, typed as the literal it returns.
         'src/Psalm/CallTypes.php',
-        'src/Psalm/QuotedPattern.php',
+        'src/Parser/Resolution/QuotedPattern.php',
     ];
+
+    /**
+     * Where the reading of a pattern written around preg_quote() texts
+     * lives, and where it lived before it moved to the parser package.
+     */
+    private const QUOTED_PATTERN = 'src/Parser/Resolution/QuotedPattern.php';
+
+    private const QUOTED_PATTERN_BEFORE = 'src/Psalm/QuotedPattern.php';
 
     /**
      * The one place a regex the library owns runs: under at least PHP's
@@ -196,6 +204,24 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
     {
         $this->assertArrayHasKey(self::LIBRARY_PCRE, LibrarySource::files());
         $this->assertNotSame([], LibrarySource::functionCalls(LibrarySource::files()[self::LIBRARY_PCRE], self::RUNS_A_REGEX));
+    }
+
+    /**
+     * The reading of a pattern written around preg_quote() texts tests what
+     * follows a quoted text with a regex of the library: it runs through
+     * the floor helper, where the class lives now, and the file it left
+     * behind is neither kept nor named.
+     */
+    #[Test]
+    public function test_quoted_pattern_runs_no_regex_of_its_own_outside_the_engine(): void
+    {
+        $files = LibrarySource::files();
+
+        $this->assertContains(self::QUOTED_PATTERN, self::OWN_REGEX_FILES);
+        $this->assertNotContains(self::QUOTED_PATTERN_BEFORE, self::OWN_REGEX_FILES);
+        $this->assertArrayHasKey(self::QUOTED_PATTERN, $files);
+        $this->assertArrayNotHasKey(self::QUOTED_PATTERN_BEFORE, $files);
+        $this->assertSame([], LibrarySource::functionCalls($files[self::QUOTED_PATTERN], self::RUNS_A_REGEX));
     }
 
     #[Test]

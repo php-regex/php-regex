@@ -57,6 +57,34 @@ final class PublicSurfaceTest extends TestCase
     }
 
     /**
+     * The classes that say what is known of a pattern argument before its
+     * text is promise nothing in 2.0: each one exists, is left out of the
+     * public list, and says so.
+     */
+    #[Test]
+    #[DataProvider('provideResolutionClasses')]
+    public function test_a_resolution_class_exists_and_says_it_is_internal(string $class): void
+    {
+        $file = self::src().'/Parser/Resolution/'.$class.'.php';
+
+        $this->assertNotContains('Resolution/'.$class, self::PUBLIC['Parser']);
+        $this->assertNotContains('Resolution/*', self::PUBLIC['Parser']);
+        $this->assertFileExists($file);
+        $this->assertMatchesRegularExpression('~^\s*\*\s*@internal\b~m', self::classDocBlock((string) file_get_contents($file)), $file.' is not public: it must say @internal');
+    }
+
+    /**
+     * @return iterable<string, array{class: string}>
+     */
+    public static function provideResolutionClasses(): iterable
+    {
+        yield 'the states of an argument' => ['class' => 'ArgumentState'];
+        yield 'a part nobody wrote' => ['class' => 'Hole'];
+        yield 'the state of an argument' => ['class' => 'PatternArgument'];
+        yield 'a pattern around quoted texts' => ['class' => 'QuotedPattern'];
+    }
+
+    /**
      * @return iterable<string, array{string, bool}>
      */
     public static function provideClasses(): iterable

@@ -15,6 +15,7 @@ namespace PHPRegex\Linter;
 
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Exception\LintException;
+use PHPRegex\Linter\Extraction\ArgumentAwareInterface;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\InlineIgnores;
@@ -528,13 +529,14 @@ final class PatternExtractor
     /**
      * The occurrences of one file, those a marker naming no issue silences
      * marked, each judged for the versions its "@regex-target" markers
-     * keep; with $scanned, followed by the file's markers.
+     * keep; with $scanned, the pattern arguments of the file among them,
+     * where the extractor gives them, and the file's markers after them.
      *
      * @return list<PatternOccurrence>
      */
     private function read(ExtractorInterface $extractor, string $file, bool $scanned): array
     {
-        $occurrences = array_values($extractor->extract([$file]));
+        $occurrences = array_values($scanned && $extractor instanceof ArgumentAwareInterface ? $extractor->extractWithArguments([$file]) : $extractor->extract([$file]));
         $markers = [];
         $unread = false;
         foreach ($occurrences as $occurrence) {
@@ -561,8 +563,9 @@ final class PatternExtractor
         $result = [];
         foreach ($occurrences as $occurrence) {
             // A file read with the tokenizer, or not read at all, holds no
-            // pattern a marker could silence.
-            if (!$occurrence instanceof PatternOccurrence || null !== $occurrence->unread || null !== $occurrence->parserFallback) {
+            // pattern a marker could silence; neither does a pattern
+            // argument, which is passed on as it is.
+            if (!$occurrence instanceof PatternOccurrence || null !== $occurrence->unread || null !== $occurrence->parserFallback || null !== $occurrence->state) {
                 $result[] = $occurrence;
 
                 continue;

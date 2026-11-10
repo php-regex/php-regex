@@ -73,6 +73,8 @@ final class NoLegacyNamesTest extends TestCase
         yield 'RegexParser\Lint\PhpStanExtractionStrategy' => ['RegexParser\\Lint\\PhpStanExtractionStrategy'];
         yield 'RegexParser\Node\ClassOperationNode' => ['RegexParser\\Node\\ClassOperationNode'];
         yield 'RegexParser\Node\ClassOperationType' => ['RegexParser\\Node\\ClassOperationType'];
+        // Moved to the parser package before 2.0, where it was internal already.
+        yield 'PHPRegex\Psalm\QuotedPattern' => ['PHPRegex\\Psalm\\QuotedPattern'];
     }
 
     #[Test]

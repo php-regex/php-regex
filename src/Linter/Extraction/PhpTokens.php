@@ -152,6 +152,52 @@ final class PhpTokens
     }
 
     /**
+     * The integer a T_LNUMBER spells, whichever base it is written in:
+     * 0x10 is 16, 0b11 is 3, 010 and 0o17 are 8 and 15, 1_000 is 1000. The
+     * tokenizer makes a number too large for an integer a T_DNUMBER, so
+     * this one always holds.
+     */
+    public static function integerValue(string $token): int
+    {
+        $digits = str_replace('_', '', $token);
+        $prefix = Ascii::lower(substr($digits, 0, 2));
+
+        return (int) match (true) {
+            '0x' === $prefix => hexdec(substr($digits, 2)),
+            '0b' === $prefix => bindec(substr($digits, 2)),
+            '0o' === $prefix => octdec(substr($digits, 2)),
+            str_starts_with($digits, '0') => octdec($digits),
+            default => $digits,
+        };
+    }
+
+    /**
+     * The line a token starts on. A token of one character carries no
+     * line: it stands on the line of the token after it, which it cannot
+     * be parted from by a line break of its own, or, at the end of the
+     * source, where the token before it ends.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    public static function lineOf(array $tokens, int $index): int
+    {
+        for ($i = $index, $count = \count($tokens); $i < $count; $i++) {
+            if (\is_array($tokens[$i])) {
+                return $tokens[$i][2];
+            }
+        }
+
+        for ($i = $index - 1; $i >= 0; $i--) {
+            $token = $tokens[$i];
+            if (\is_array($token)) {
+                return $token[2] + substr_count($token[1], "\n");
+            }
+        }
+
+        return 1;
+    }
+
+    /**
      * The first token from $start, before $end, that is no whitespace and
      * no comment. A range left open by a file cut short runs past the last
      * token, and stops there.

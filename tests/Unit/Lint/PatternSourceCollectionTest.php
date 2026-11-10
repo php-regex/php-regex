@@ -108,7 +108,7 @@ final class PatternSourceCollectionTest extends TestCase
 
         $read = array_map(
             static fn (PatternOccurrence $occurrence): string => $occurrence->source.' '.$occurrence->pattern,
-            array_values(array_filter($collection->collect(new PatternSourceContext([$project.'/src'], [])), static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores)),
+            array_values(array_filter($collection->collect(new PatternSourceContext([$project.'/src'], [])), static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores && null === $occurrence->state)),
         );
 
         $this->assertSame(['preg_match() /read/', 'other:run-together p/read/'], $read);
@@ -135,7 +135,7 @@ final class PatternSourceCollectionTest extends TestCase
 
         $read = array_map(
             static fn (PatternOccurrence $occurrence): string => $occurrence->source,
-            array_values(array_filter($collection->collect(new PatternSourceContext([$project.'/src'], [])), static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores)),
+            array_values(array_filter($collection->collect(new PatternSourceContext([$project.'/src'], [])), static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores && null === $occurrence->state)),
         );
 
         $this->assertSame(['preg_match()', 'other:same'], $read);

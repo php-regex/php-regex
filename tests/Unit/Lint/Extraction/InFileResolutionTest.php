@@ -907,12 +907,16 @@ final class InFileResolutionTest extends TestCase
             PHP);
     }
 
+    /**
+     * A pattern built around preg_quote() holds a text known at run time
+     * only: no pattern is extracted from it, at the call or through a
+     * variable. Each argument is held all the same, as a static pattern
+     * around a quoted text.
+     */
     #[Test]
     public function test_preg_quote_concat_is_not_extracted(): void
     {
-        $this->assertExtractedByBoth([
-            ['pattern' => '/control/', 'at' => "'/control/'"],
-        ], <<<'PHP'
+        $code = <<<'PHP'
             <?php
 
             function quoted(string $s, string $word): int
@@ -929,7 +933,17 @@ final class InFileResolutionTest extends TestCase
 
                 return preg_match($control, $s);
             }
-            PHP);
+            PHP;
+
+        $this->assertExtractedByBoth([
+            ['pattern' => '/control/', 'at' => "'/control/'"],
+        ], $code);
+
+        $this->assertArgumentsReadByBoth([
+            ['state' => 'quoted_shell', 'expression' => "'/'.preg_quote(\$word, '/').'/i'", 'source' => 'preg_match()'],
+            ['state' => 'quoted_shell', 'expression' => '$re', 'at' => '$re, $s)', 'source' => 'preg_match()'],
+            ['state' => 'constant', 'expression' => '$control', 'at' => '$control, $s)', 'source' => 'preg_match()'],
+        ], $code);
     }
 
     #[Test]

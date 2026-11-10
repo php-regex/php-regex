@@ -15,8 +15,8 @@ namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
 use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Resolution\QuotedPattern;
 use PHPRegex\Psalm\PatternVerdicts;
-use PHPRegex\Psalm\QuotedPattern;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
