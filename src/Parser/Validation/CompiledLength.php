@@ -67,6 +67,10 @@ use PHPRegex\Parser\Text\Bytes;
  * whole pattern, so the pattern is too large exactly when that length
  * passes the limit, on every release.
  *
+ * The PCRE2 10.40 PHP bundles from 8.2.35 sums as 10.48 does
+ * (PcreTarget::measuresBranchesApart()), and reports at offset 0 only a
+ * branch that passes the limit with those before it.
+ *
  * An item is counted at the length PCRE2 compiles it to where this class
  * knows that length, and at the floor it is given otherwise, the one
  * CompiledSize measures, with the most it may compile to where that is
@@ -135,6 +139,19 @@ final class CompiledLength
      * the limit is not passed.
      */
     public int $stoppedAt = \PHP_INT_MAX;
+
+    /**
+     * Whether the measure passed the limit where a branch is added to the
+     * branches before it, at its "|": the one check the PCRE2 10.40 PHP
+     * bundles from 8.2.35 reports at offset 0.
+     */
+    private bool $passedAtBranchEnd = false;
+
+    /**
+     * Whether the release measured checks each item with its own branch,
+     * and each branch with those before it where the next one starts.
+     */
+    private readonly bool $branchesApart;
 
     /**
      * Whether a group of several branches was measured whole before the
@@ -282,7 +299,9 @@ final class CompiledLength
         private readonly string $flags,
         private readonly PcreTarget $target,
         private readonly ?CharacterTables $tables = null,
-    ) {}
+    ) {
+        $this->branchesApart = $target->measuresBranchesApart();
+    }
 
     /**
      * Whether PCRE2 10.48 and later find the pattern too large inside a
@@ -294,6 +313,19 @@ final class CompiledLength
         [$found] = $this->measure($pattern);
 
         return false === $found && !$this->branchesMayEndPastTheLimit;
+    }
+
+    /**
+     * Whether the pattern is found too large where a branch is added to the
+     * branches before it, which the PCRE2 10.40 PHP bundles from 8.2.35
+     * reports at offset 0: false when another check finds it, or when that
+     * cannot be told for sure.
+     */
+    public function passedWhereABranchEnds(NodeInterface $pattern): bool
+    {
+        $this->measure($pattern);
+
+        return $this->passedAtBranchEnd && !$this->branchesMayEndPastTheLimit;
     }
 
     /**
@@ -328,6 +360,7 @@ final class CompiledLength
         $this->openGroups = [];
         $this->charLists = 0;
         $this->passedAtClassLists = false;
+        $this->passedAtBranchEnd = false;
         $this->stoppedAt = \PHP_INT_MAX;
         $this->restricted = $this->caseRulesVary() && (str_contains($this->flags, 'r') || \in_array('CASELESS_RESTRICT', StartOptions::items($this->source), true));
         if ($this->pattern !== $pattern) {
@@ -356,10 +389,12 @@ final class CompiledLength
      * the limit; each branch but the last is then added to what comes before
      * the group, and the last one where the group ends.
      *
-     * @param list<NodeInterface>    $branches
-     * @param int                    $before   the units counted before the group
-     * @param array{0: int, 1: ?int} $frame    the length and the ceiling of what
-     *                                         the group holds besides its branches
+     * @param list<NodeInterface>                   $branches
+     * @param int                                   $before   the units counted before the group
+     * @param array{0: int, 1: ?int, 2?: list<int>} $frame    the length and the ceiling of what
+     *                                                        the group holds besides its branches,
+     *                                                        and what each branch starts with, which
+     *                                                        the ceiling holds and the length does not
      *
      * @return array{0: bool|null, 1: int, 2: ?int} whether the limit is passed
      *                                              where the group ends
@@ -375,10 +410,11 @@ final class CompiledLength
     private function measureBranches(array $branches, int $before, array $frame, bool $caseless): array
     {
         [$length, $ceiling] = $frame;
+        $starts = $frame[2] ?? [];
         $done = 0;
         $last = \count($branches) - 1;
         foreach ($branches as $index => $branch) {
-            [$found, $length, $branchCeiling, $caseless] = $this->measureItems($branch, $length, $caseless, $done);
+            [$found, $length, $branchCeiling, $caseless] = $this->measureItems($branch, $length + ($starts[$index] ?? 0), $caseless, $done);
             $ceiling = self::sum($ceiling, $branchCeiling);
             if (null !== $found) {
                 return [$found, $done + $length, null];
@@ -389,7 +425,8 @@ final class CompiledLength
                 $ceiling = self::sum($ceiling, self::ALTERNATION);
                 // Up to 10.47 the next branch is checked with the branches
                 // before it, the end marker left out.
-                if (($this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) ? $before : 0) + $done + $length > self::LIMIT) {
+                if (($this->branchesApart ? $before : 0) + $done + $length > self::LIMIT) {
+                    $this->passedAtBranchEnd = true;
                     $this->stoppedAt = $branch->getEndPosition();
 
                     return [false, $length, null];
@@ -427,7 +464,7 @@ final class CompiledLength
     {
         // Up to 10.47 each item is checked with the branches before it in
         // its group; from 10.48 with its own branch.
-        $checked = $this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) ? 0 : $before;
+        $checked = $this->branchesApart ? 0 : $before;
         $ceiling = 0;
         foreach (self::itemsOf($branch) as $item) {
             // Most items are one ASCII letter, or one byte without UTF:
@@ -581,7 +618,7 @@ final class CompiledLength
      * of it, whether its body starts caseless, and a condition to measure
      * first.
      *
-     * @return array{0: list<NodeInterface>, 1: array{0: int, 1: ?int}, 2: bool, 3: ?NodeInterface}|null
+     * @return array{0: list<NodeInterface>, 1: array{0: int, 1: ?int, 2?: list<int>}, 2: bool, 3: ?NodeInterface}|null
      */
     private function groupOf(NodeInterface $node, bool $caseless): ?array
     {
@@ -1452,11 +1489,13 @@ final class CompiledLength
      * The brackets of a lookbehind and, for each branch of some length, the
      * length to move back: one number, or two where the lookbehind is of
      * varying length and the branch longer than its shortest (from 10.43).
-     * When a branch is of no known length, the most each may add.
+     * PCRE2 counts it where the branch starts, so it is given apart, by
+     * branch, and only the ceiling holds it. When a branch is of no known
+     * length, the most each may add.
      *
      * @param list<NodeInterface> $branches
      *
-     * @return array{0: int, 1: int}
+     * @return array{0: int, 1: int, 2?: list<int>}
      */
     private function lookbehindFrame(GroupNode $node, array $branches): array
     {
@@ -1501,14 +1540,16 @@ final class CompiledLength
         }
 
         $varying = [] !== array_filter($lengths, static fn (array $length): bool => $length[0] !== $length[1]);
-        $units = self::BRACKETS;
+        $starts = [];
         foreach ($lengths as [, $longest]) {
-            if ($longest > 0) {
-                $units += !$varying || $shortest === $longest ? 3 : 5;
-            }
+            $starts[] = match (true) {
+                0 === $longest => 0,
+                !$varying || $shortest === $longest => 3,
+                default => 5,
+            };
         }
 
-        return [$units, $units];
+        return [self::BRACKETS, self::BRACKETS + array_sum($starts), $starts];
     }
 
     /**

@@ -67,6 +67,28 @@ final class PatternTooLargeOffsetTest extends TestCase
         yield 'capture one unit past the limit, 10.46' => ['pattern' => '/(a){6553}/', 'php' => '8.4', 'release' => '10.46', 'offset' => 9];
         yield 'repeated group, PHP 8.2' => ['pattern' => '/x(?:a){65535}/', 'php' => '8.2', 'release' => '10.40', 'offset' => 13];
 
+        // The PCRE2 10.40 PHP bundles from 8.2.35 reports at offset 0 the
+        // check it makes where a branch ends and another follows, and at the
+        // end of the pattern any other. Run on PHP 8.2.35.
+        yield 'first branch past the limit, PHP 8.2.35' => ['pattern' => '/(?:b){8191}|a/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'first branch past the limit, PHP 8.2.34' => ['pattern' => '/(?:b){8191}|a/', 'php' => '8.2.34', 'release' => '10.40', 'offset' => 13];
+        yield 'branch of a repeated group past the limit, PHP 8.2.35' => ['pattern' => '/(?:a{2}){7000}|(?:bb){1000}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 27];
+        yield 'repeated group, PHP 8.2.35' => ['pattern' => '/x(?:a){65535}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 13];
+        yield 'last branch alone past the limit, PHP 8.2.35' => ['pattern' => '/a|(?:b){8193}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 13];
+        yield 'last branch makes it too large, PHP 8.2.35' => ['pattern' => '/a|(?:b){8191}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 13];
+        yield 'capture one unit past the limit, PHP 8.2.35' => ['pattern' => '/(a){6553}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 9];
+        // Each branch of a lookbehind starts with the length to move back,
+        // counted with that branch.
+        yield 'lookbehind whose first branch passes the limit where it ends, PHP 8.2.35' => ['pattern' => '/(?<='.str_repeat('a', 32763).'|b)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'lookbehind whose first branch reaches the limit where it ends, PHP 8.2.35' => ['pattern' => '/(?<='.str_repeat('a', 32762).'|b)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32769];
+        yield 'lookbehind whose first branch passes the limit at a letter, PHP 8.2.35' => ['pattern' => '/(?<='.str_repeat('a', 32764).'|b)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32771];
+        yield 'lookbehind whose second branch passes the limit where it ends, PHP 8.2.35' => ['pattern' => '/(?<='.str_repeat('a', 32759).'|b|c)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'lookbehind whose second branch reaches the limit where it ends, PHP 8.2.35' => ['pattern' => '/(?<='.str_repeat('a', 32758).'|b|c)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32767];
+        yield 'lookbehind whose last branch passes the limit, PHP 8.2.35' => ['pattern' => '/(?<=b|'.str_repeat('a', 32763).')/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32770];
+        yield 'branch past the limit after a lookbehind of two, PHP 8.2.35' => ['pattern' => '/(?<!'.str_repeat('a', 32755).'|b)x|y/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'letter past the limit after a lookbehind of two, PHP 8.2.35' => ['pattern' => '/(?<!'.str_repeat('a', 32756).'|b)x|y/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32766];
+        yield 'repeated group of two branches, PHP 8.2.35' => ['pattern' => '/(?:a|b){5041}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 13];
+
         // On 10.47, at offset 0.
         yield 'repeated group, 10.47' => ['pattern' => '/(?:a){65535}/', 'php' => '8.4', 'release' => '10.47', 'offset' => 0];
         yield 'capture one unit past the limit, 10.47' => ['pattern' => '/(a){6553}/', 'php' => '8.4', 'release' => '10.47', 'offset' => 0];

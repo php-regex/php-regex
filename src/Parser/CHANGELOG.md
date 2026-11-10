@@ -6,6 +6,14 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `validate()` reports, for PHP 8.2.35 and later 8.2 releases with PCRE2
+   10.40, the error that engine gives a pattern too large to compile that is
+   wrong elsewhere too: those releases bundle 10.40 with the fixes PCRE2 keeps
+   for it, one of which checks each branch against the size limit on its own,
+   as 10.48 does. `/(?:[^a]){8190}aaa\d|\k<n>/` is `regex.pattern.too_large`
+   at offset 0 there, and the missing group on PHP 8.2.34, as on any other
+   10.40. No pattern changes verdict, so `PcreTarget::phpVersionBoundaries()`
+   lists no new version.
  * `validate()` reports an error PCRE meets measuring the lookbehinds before it
    estimates the compiled size, and one measure walks 10,000 branches at most:
    calls doubled level after level behind a branch reset are refused as

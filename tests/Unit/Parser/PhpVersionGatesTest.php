@@ -14,7 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\PhpVersionGates;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\LibrarySource;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -27,6 +29,10 @@ use PHPUnit\Framework\TestCase;
  *
  * Comparisons with PHP_VERSION_ID, which ask about the PHP running the
  * library rather than the PHP judged, are not gates.
+ *
+ * A gate where a pattern keeps its verdict and a refused one only gets
+ * another error is no point: the matrix and the ranges have nothing to
+ * judge there.
  */
 final class PhpVersionGatesTest extends TestCase
 {
@@ -49,14 +55,59 @@ final class PhpVersionGatesTest extends TestCase
         $missing = [];
         foreach ((new \ReflectionClass(PhpVersionGates::class))->getReflectionConstants() as $constant) {
             $version = $constant->getValue();
-            if (\is_int($version) && $version >= PhpVersionGates::FLOOR && !\in_array($version, PhpVersionGates::POINTS, true)) {
+            // A gate where only the error reported changes is named apart.
+            if (\is_int($version) && $version >= PhpVersionGates::FLOOR && !\in_array($version, PhpVersionGates::POINTS, true) && !\in_array($version, PhpVersionGates::ERROR_ONLY, true)) {
                 $missing[] = $constant->getName().' = '.$version;
             }
         }
 
         $this->assertSame([], $missing, 'Add each gate to PhpVersionGates::POINTS, or the matrix and the lint range do not judge it.');
+        $this->assertSame([], array_values(array_intersect(PhpVersionGates::ERROR_ONLY, PhpVersionGates::POINTS)), 'A gate is a point or changes the error reported only, never both.');
+        $this->assertContains(PhpVersionGates::BUNDLES_PCRE2_10_40_WITH_ITS_FIXES, PhpVersionGates::ERROR_ONLY);
+        $this->assertNotContains(PhpVersionGates::BUNDLES_PCRE2_10_40_WITH_ITS_FIXES, PhpVersionGates::POINTS);
         $this->assertContains(PhpVersionGates::NO_AUTO_CAPTURE_MODIFIER, PhpVersionGates::POINTS);
         $this->assertNotContains(PhpVersionGates::EVAL_MODIFIER_REMOVED, PhpVersionGates::POINTS);
+    }
+
+    /**
+     * PHP 8.2.35 bundles PCRE2 10.40 with the fixes PCRE2 keeps for that
+     * release. One of them changes which error a pattern that is both too
+     * large and wrong elsewhere is refused with, never whether it is
+     * refused: the gate is not a point.
+     */
+    #[Test]
+    #[DataProvider('providePatternsAroundTheSizeLimit')]
+    public function test_the_fixes_php_8_2_35_bundles_change_the_error_reported_only(string $pattern, bool $valid, bool $sameError): void
+    {
+        $before = RegexParser::create(['cache' => null, 'php_version' => 80234, 'pcre_version' => '10.40', 'runtime_pcre_validation' => false])->validate($pattern);
+        $from = RegexParser::create(['cache' => null, 'php_version' => PhpVersionGates::BUNDLES_PCRE2_10_40_WITH_ITS_FIXES, 'pcre_version' => '10.40', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame($valid, $before->isValid, (string) $before->error);
+        $this->assertSame($valid, $from->isValid, (string) $from->error);
+        $this->assertSame($sameError, [$before->errorCode, $before->offset] === [$from->errorCode, $from->offset]);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, valid: bool, sameError: bool}>
+     */
+    public static function providePatternsAroundTheSizeLimit(): iterable
+    {
+        yield 'under the limit' => ['pattern' => '/(?:[^a]){8190}aa|b/', 'valid' => true, 'sameError' => true];
+        yield 'at the limit' => ['pattern' => '/(?:[^a]){8190}aaaa\\d/', 'valid' => true, 'sameError' => true];
+        yield 'one unit past the limit' => ['pattern' => '/(?:[^a]){8190}aaaaa/', 'valid' => false, 'sameError' => true];
+        yield 'past the limit where a branch ends' => ['pattern' => '/(?:[^a]){8190}aaaa|b/', 'valid' => false, 'sameError' => false];
+        yield 'a missing group under the limit' => ['pattern' => '/(?:[^a]){8190}aa|\\k<n>/', 'valid' => false, 'sameError' => true];
+        yield 'a missing group past the limit' => ['pattern' => '/(?:[^a]){5000}|(?:[^a]){4000}\\k<n>(?:[^a]){1000}/', 'valid' => false, 'sameError' => false];
+    }
+
+    #[Test]
+    public function test_the_gate_of_the_fixes_holds_for_the_php_8_2_releases_from_8_2_35(): void
+    {
+        $this->assertFalse(PhpVersionGates::bundlesPcre2WithItsFixes(80234));
+        $this->assertTrue(PhpVersionGates::bundlesPcre2WithItsFixes(80235));
+        $this->assertTrue(PhpVersionGates::bundlesPcre2WithItsFixes(80299));
+        $this->assertFalse(PhpVersionGates::bundlesPcre2WithItsFixes(80300));
+        $this->assertFalse(PhpVersionGates::bundlesPcre2WithItsFixes(80500));
     }
 
     #[Test]

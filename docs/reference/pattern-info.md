@@ -364,6 +364,13 @@ releases, and 8.5.10 and later, compile `u` patterns with
 `PCRE2_NEVER_BACKSLASH_C`, the others compile `\C` there, but an engine that
 compiles it can crash while matching, so `/a\Cb/u` gets 170 invalid verdicts.
 
+PHP 8.2.35 and later 8.2 releases bundle PCRE2 10.40 with the fixes PCRE2
+keeps for that release. One of them changes which error a pattern too large
+to compile is refused with when it is wrong elsewhere too, and where the size
+is reported: `validate()` gives that error for a target of PHP 8.2.35 or
+later with PCRE2 10.40. No pattern changes verdict there, so 8.2.35 is not a
+point of the matrix.
+
 A pattern is never a reason for `compatibility()` to throw. A pattern no
 target can read, a missing delimiter included, gets a verdict refusing it at
 every point: `/abc` gets 170 verdicts with the code `regex.delimiter.unclosed`
