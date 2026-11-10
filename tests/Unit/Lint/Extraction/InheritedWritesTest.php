@@ -157,11 +157,11 @@ final class InheritedWritesTest extends TestCase
             }
             PHP;
 
-        $start = CpuClock::nanoseconds();
-        $this->assertExtractedByBoth([
-            ['pattern' => '/shared/', 'at' => "'/shared/'", 'location' => 'via $this->re'],
-        ], $code);
-        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+        $seconds = CpuClock::time(function () use ($code): void {
+            $this->assertExtractedByBoth([
+                ['pattern' => '/shared/', 'at' => "'/shared/'", 'location' => 'via $this->re'],
+            ], $code);
+        });
 
         $this->assertLessThan(2.0, $seconds, \sprintf('Both extractions took %.2f s.', $seconds));
     }
