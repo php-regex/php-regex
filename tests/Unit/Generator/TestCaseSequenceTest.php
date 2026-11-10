@@ -57,7 +57,8 @@ final class TestCaseSequenceTest extends TestCase
 
     /**
      * Fifteen runs of 65,535 letters, 983,025 bytes, then 400 repeats of
-     * one to three: joined at each child, every one of them copied the
+     * one to three, of two letters in turns so that the engine reads each
+     * case in one pass: joined at each child, every one of them copied the
      * start again, nine cases of it, some 3.5 GB in all. Joined once, the
      * 400 children cost what they cost after a start of 45 letters, and the
      * long start what it costs alone: the two together are the measure, as
@@ -67,17 +68,21 @@ final class TestCaseSequenceTest extends TestCase
     public function test_children_after_a_long_start_do_not_copy_it_again(): void
     {
         $start = str_repeat('a{65535}', 15);
+        $children = str_repeat('b{1,3}c{1,3}', 200);
         $alone = self::sequence('/'.$start.'b/');
-        $followed = self::sequence('/'.$start.str_repeat('b{1,3}', 400).'/');
-        $afterAShortStart = self::sequence('/'.str_repeat('a{3}', 15).str_repeat('b{1,3}', 400).'/');
-        $this->assertSame(0, preg_match('/'.$start.str_repeat('b{1,3}', 400).'/', ''));
+        $followed = self::sequence('/'.$start.$children.'/');
+        $afterAShortStart = self::sequence('/'.str_repeat('a{3}', 15).$children.'/');
+        $this->assertSame(0, preg_match('/'.$start.$children.'/', ''));
+
+        // Every child gives its shortest case but the last, which gives three.
+        $allButTheLast = str_repeat('a', 983_025).str_repeat('bc', 199).'b';
+        $matching = [$allButTheLast.'c', $allButTheLast.'cc', $allButTheLast.'ccc'];
+        foreach ($matching as $subject) {
+            $this->assertSame(1, preg_match('/'.$start.$children.'/', $subject), 'A subject of '.\strlen($subject).' bytes');
+        }
 
         $cases = $followed->accept(new TestCaseGenerator());
-        $this->assertSame([
-            str_repeat('a', 983_025).str_repeat('b', 400),
-            str_repeat('a', 983_025).str_repeat('b', 401),
-            str_repeat('a', 983_025).str_repeat('b', 402),
-        ], $cases['matching']);
+        $this->assertSame($matching, $cases['matching']);
         $this->assertCount(3, $cases['non_matching']);
 
         [$startAlone, $childrenAlone, $withChildren] = [self::bestTime($alone), self::bestTime($afterAShortStart), self::bestTime($followed)];

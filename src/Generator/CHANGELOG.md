@@ -21,4 +21,5 @@ CHANGELOG
    sample: `/^(?:a{65535}){6000}$/`, which the engine compiles, has no matching
    case instead of one of 393 MB that exhausted memory.
    A sequence joins each case once, when it ends: a child after a long start
-   copied it again, eight seconds for two thousand repeats after 983,025 bytes.
+   copied it again, 2.8 seconds for two thousand repeats after 983,025 bytes,
+   15 milliseconds now.
