@@ -1002,9 +1002,10 @@ final class ForkedWorkerPoolTest extends TestCase
      * not the worker's, and a SIGTERM the parent blocks is let through in
      * the worker.
      *
-     * The busy worker sleeps for longer than the deadline of the run, then
-     * leaves a file: a run that waits for it outlasts the deadline, and a
-     * worker let finish its chunk leaves the file. No time is read.
+     * The failure waits for the busy worker to be in its chunk. That worker
+     * sleeps for longer than the deadline of the run, then leaves a file: a
+     * run that waits for it outlasts the deadline, and a worker let finish
+     * its chunk leaves the file. No time is read.
      */
     #[Test]
     #[RequiresFunction('pcntl_fork')]
@@ -1021,17 +1022,23 @@ final class ForkedWorkerPoolTest extends TestCase
         $pool = new ForkedWorkerPool(chunkFactor: 1);
         // Outside the directory of the payload files, which stays empty.
         $marker = sys_get_temp_dir().'/regexparser_pool_busy_'.bin2hex(random_bytes(6));
+        $started = $marker.'.started';
 
         try {
             $error = $this->failureOf(static fn (): ?array => $pool->run(
                 ['fails', 'busy'],
                 2,
-                static function (array $chunk, \Closure $done) use ($marker): array {
+                static function (array $chunk, \Closure $done) use ($marker, $started): array {
                     if (['fails'] === $chunk) {
-                        usleep(200_000);
+                        // Fails once the other worker is in its chunk,
+                        // however long the machine takes to get it there.
+                        for ($waits = 0; $waits < 100 * self::DEADLINE && !is_file($started); $waits++) {
+                            usleep(10_000);
+                        }
 
-                        throw new \RuntimeException('Boom');
+                        throw new \RuntimeException(is_file($started) ? 'Boom' : 'The busy worker never started.');
                     }
+                    touch($started);
                     sleep(self::DEADLINE + 2);
                     touch($marker);
                     $done(\count($chunk));
@@ -1049,6 +1056,7 @@ final class ForkedWorkerPoolTest extends TestCase
             pcntl_async_signals($async);
             $finished = is_file($marker);
             @unlink($marker);
+            @unlink($started);
         }
 
         $this->assertSame('Parallel analysis failed: RuntimeException: Boom (in fails.php)', $error->getMessage());
