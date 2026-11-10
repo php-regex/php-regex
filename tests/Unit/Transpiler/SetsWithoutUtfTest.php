@@ -78,8 +78,12 @@ final class SetsWithoutUtfTest extends TestCase
 
     #[Test]
     #[DataProvider('provideSetsPastAsciiByTarget')]
-    public function test_the_first_set_past_ascii_is_named_and_the_pattern_written_as_before(string $set, string $target, string $literal): void
+    public function test_the_first_set_past_ascii_is_named_and_the_pattern_written_as_before(string $set, string $target, string $literal, string $character): void
     {
+        // The character is two bytes to the set without u, and one character under it.
+        $this->assertSame(0, preg_match('/^'.$set.'$/', $character), $set);
+        $this->assertSame(1, preg_match('/^'.$set.'$/u', $character), $set.' under u');
+
         $result = Regex::create()->transpile('/^'.$set.'$/', $target);
 
         $this->assertSame($literal, $result->literal);
@@ -88,8 +92,10 @@ final class SetsWithoutUtfTest extends TestCase
 
     #[Test]
     #[DataProvider('provideSetsPastAsciiUnderU')]
-    public function test_under_u_no_set_is_named(string $set, string $target): void
+    public function test_under_u_no_set_is_named(string $set, string $target, string $character): void
     {
+        $this->assertSame(1, preg_match('/^'.$set.'$/u', $character), $set.' under u');
+
         try {
             $result = Regex::create()->transpile('/^'.$set.'$/u', $target);
         } catch (TranspileException $refusal) {
@@ -118,15 +124,21 @@ final class SetsWithoutUtfTest extends TestCase
      * 0xC3, the first byte of "é", is the letter "Ã". JavaScript reads the
      * character the subject holds, and takes a digit of another script that
      * PCRE reads as two bytes, neither one a digit.
+     *
+     * @param string $subject a subject of UTF-8 the pattern takes whole under u, and not without it
      */
     #[Test]
     #[DataProvider('provideProperties')]
-    public function test_a_property_is_named_whatever_bytes_it_takes(string $pattern, string $target, string $literal, string $set, int $offset): void
+    public function test_a_property_is_named_whatever_bytes_it_takes(string $pattern, string $target, string $literal, string $set, int $offset, string $subject): void
     {
         $this->assertSame(1, preg_match('/^\p{L}$/', "\xC3"));
         $this->assertSame(0, preg_match('/^\p{L}$/', 'é'));
         $this->assertSame(0, preg_match('/\p{Nd}/', '٣'));
         $this->assertSame(1, preg_match('/\p{Nd}/u', '٣'));
+        // The pattern itself: bytes without u, the character under it.
+        $this->assertTrue(mb_check_encoding($subject, 'UTF-8'));
+        $this->assertSame(0, preg_match($pattern, $subject), $pattern);
+        $this->assertSame(1, preg_match($pattern.'u', $subject), $pattern.'u');
 
         $result = Regex::create()->transpile($pattern, $target);
 
@@ -256,6 +268,7 @@ final class SetsWithoutUtfTest extends TestCase
     #[Test]
     public function test_the_warning_reads_as_one_sentence_and_the_advice(): void
     {
+        $this->assertSame(0, preg_match('/^\S$/', 'é'));
         $this->assertSame(1, preg_match('/^\S$/u', 'é'));
         $this->assertSame(
             ['Without the u flag "\S" at offset 1 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.'],
@@ -274,24 +287,24 @@ final class SetsWithoutUtfTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{set: string, target: string, literal: string}>
+     * @return iterable<string, array{set: string, target: string, literal: string, character: string}>
      */
     public static function provideSetsPastAsciiByTarget(): iterable
     {
         foreach (self::SETS_PAST_ASCII as $set => $row) {
             foreach (self::TARGETS as $target) {
-                yield $target.': '.$set => ['set' => $set, 'target' => $target, 'literal' => $row[$target]];
+                yield $target.': '.$set => ['set' => $set, 'target' => $target, 'literal' => $row[$target], 'character' => $row['character']];
             }
         }
     }
 
     /**
-     * @return iterable<string, array{set: string, target: string}>
+     * @return iterable<string, array{set: string, target: string, character: string}>
      */
     public static function provideSetsPastAsciiUnderU(): iterable
     {
         foreach (self::provideSetsPastAsciiByTarget() as $name => $row) {
-            yield $name => ['set' => $row['set'], 'target' => $row['target']];
+            yield $name => ['set' => $row['set'], 'target' => $row['target'], 'character' => $row['character']];
         }
     }
 
@@ -310,16 +323,16 @@ final class SetsWithoutUtfTest extends TestCase
     /**
      * Python's re has no property.
      *
-     * @return iterable<string, array{pattern: string, target: string, literal: string, set: string, offset: int}>
+     * @return iterable<string, array{pattern: string, target: string, literal: string, set: string, offset: int, subject: string}>
      */
     public static function provideProperties(): iterable
     {
-        yield 'javascript: letters, some of them Latin-1 bytes' => ['pattern' => '/^\p{L}$/D', 'target' => 'javascript', 'literal' => '/^\p{L}$/u', 'set' => '\p{L}', 'offset' => 1];
-        yield 'javascript: digits, none of them above 0x7F' => ['pattern' => '/^\p{Nd}$/D', 'target' => 'javascript', 'literal' => '/^\p{Nd}$/u', 'set' => '\p{Nd}', 'offset' => 1];
-        yield 'javascript: a negated property' => ['pattern' => '/^a\P{L}$/D', 'target' => 'javascript', 'literal' => '/^a\P{L}$/u', 'set' => '\P{L}', 'offset' => 2];
-        yield 'javascript: a property in a class' => ['pattern' => '/^[a-f\p{Nd}]$/D', 'target' => 'javascript', 'literal' => '/^[a-f\p{Nd}]$/u', 'set' => '[a-f\p{Nd}]', 'offset' => 1];
-        yield 'html-pattern: digits' => ['pattern' => '/^\p{Nd}$/', 'target' => 'html-pattern', 'literal' => '^\p{Nd}$', 'set' => '\p{Nd}', 'offset' => 1];
-        yield 'html-pattern: a property in a negated class' => ['pattern' => '/^[^\P{Nd}]$/', 'target' => 'html-pattern', 'literal' => '^[^\P{Nd}]$', 'set' => '[^\P{Nd}]', 'offset' => 1];
+        yield 'javascript: letters, some of them Latin-1 bytes' => ['pattern' => '/^\p{L}$/D', 'target' => 'javascript', 'literal' => '/^\p{L}$/u', 'set' => '\p{L}', 'offset' => 1, 'subject' => 'é'];
+        yield 'javascript: digits, none of them above 0x7F' => ['pattern' => '/^\p{Nd}$/D', 'target' => 'javascript', 'literal' => '/^\p{Nd}$/u', 'set' => '\p{Nd}', 'offset' => 1, 'subject' => '٣'];
+        yield 'javascript: a negated property' => ['pattern' => '/^a\P{L}$/D', 'target' => 'javascript', 'literal' => '/^a\P{L}$/u', 'set' => '\P{L}', 'offset' => 2, 'subject' => "a\u{A0}"];
+        yield 'javascript: a property in a class' => ['pattern' => '/^[a-f\p{Nd}]$/D', 'target' => 'javascript', 'literal' => '/^[a-f\p{Nd}]$/u', 'set' => '[a-f\p{Nd}]', 'offset' => 1, 'subject' => '٣'];
+        yield 'html-pattern: digits' => ['pattern' => '/^\p{Nd}$/', 'target' => 'html-pattern', 'literal' => '^\p{Nd}$', 'set' => '\p{Nd}', 'offset' => 1, 'subject' => '٣'];
+        yield 'html-pattern: a property in a negated class' => ['pattern' => '/^[^\P{Nd}]$/', 'target' => 'html-pattern', 'literal' => '^[^\P{Nd}]$', 'set' => '[^\P{Nd}]', 'offset' => 1, 'subject' => '٣'];
     }
 
     /**
@@ -352,6 +365,8 @@ final class SetsWithoutUtfTest extends TestCase
     {
         yield 'no xx' => ['pattern' => '/^[ ^a]$/', 'offset' => null];
         yield 'x alone' => ['pattern' => '/(?x)^[ ^a]$/', 'offset' => null];
+        yield 'another letter alone' => ['pattern' => '/(?i)^[ ^a]$/', 'offset' => null];
+        yield 'a caret alone' => ['pattern' => '/(?^)^[ ^a]$/', 'offset' => null];
         yield 'xx' => ['pattern' => '/(?xx)^[ ^a]$/', 'offset' => 6];
         yield 'xx beside another letter' => ['pattern' => '/(?xx-i)^[ ^a]$/', 'offset' => 8];
         yield 'three of them' => ['pattern' => '/(?xxx)^[ ^a]$/', 'offset' => 7];
