@@ -13,6 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Validation;
 
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
@@ -30,6 +34,24 @@ use PHPUnit\Framework\TestCase;
  */
 final class CompiledLengthTest extends TestCase
 {
+    #[Test]
+    public function test_lookbehind_call_expansion_is_bounded_without_validation(): void
+    {
+        $groups = '';
+        for ($group = 1; $group < 24; $group++) {
+            $groups .= '((?'.($group + 1).')(?'.($group + 1).'))';
+        }
+        // Parse the definitions alone so validation does not measure the calls.
+        $regex = RegexParser::create(['cache' => null])->parse('/(?|x)'.$groups.'()/');
+        $call = new SubroutineNode('1', '(?1)', 1000, 1005);
+        $lookbehind = new GroupNode($call, GroupType::LookbehindPositive, null, null, 996, 1006);
+        $body = new SequenceNode([$regex->pattern, $lookbehind], 0, 1006);
+        $measure = new CompiledLength(static fn (): int => 0, '', false, false, '', new PcreTarget(80400, '10.49'));
+        $start = microtime(true);
+        $this->assertNull($measure->of($body));
+        $this->assertLessThan(1.0, microtime(true) - $start);
+    }
+
     #[Test]
     #[DataProvider('provideLengths')]
     public function test_the_length_is_the_one_pcre2_compiles(string $pattern, int $length): void

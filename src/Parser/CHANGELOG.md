@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `validate()` reports an error PCRE meets measuring the lookbehinds before it
+   estimates the compiled size, and one measure walks 10,000 branches at most:
+   calls doubled level after level behind a branch reset are refused as
+   `regex.lookbehind.too_complex` in milliseconds, as PCRE refuses them, instead
+   of being expanded for close to a minute. A pattern PCRE compiles measures 2,001
+   branches at most, so `PatternInfo::maxLookbehind` reads as before; on the tree
+   of a pattern PCRE refuses, `analyze()` counts no lookbehind past that walk.
  * `CaptureGroupShape::$values` lists values of at most 4,096 bytes each and
    65,536 bytes together, and is `null` past either bound: nested repeats such
    as `/((?:(?:a{32}){32}){32})/` no longer spell their 32,768-byte value (and

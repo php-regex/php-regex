@@ -85,6 +85,13 @@ $regex = RegexParser::create(['php_version' => '8.0', 'pcre_version' => '10.33']
 (new PatternInfoAnalyzer(new PcreTarget(80000, '10.34')))->analyze($regex)->maxLookbehind; // 4
 ```
 
+The lookbehinds of one pattern are measured over 10,000 branches at most. No
+pattern PCRE2 compiles gets that far, as it gives up past 2,001 branches
+measured, and `analyzePattern()` refuses such a pattern with
+`regex.lookbehind.too_complex`. `analyze()` reads the tree without judging it:
+on one of these patterns, the lookbehinds past that point count for nothing in
+`maxLookbehind`.
+
 ## The facts
 
 `PatternInfo` is a read-only value; its constructor is internal. Its facts fall

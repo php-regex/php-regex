@@ -17,6 +17,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,10 +35,37 @@ use PHPUnit\Framework\TestCase;
  */
 final class PatternTooLargeErrorOrderTest extends TestCase
 {
+    /**
+     * The engine messages these rows meet that the message table leaves
+     * out: the size limit, and "\K" in a lookaround as PHP 8.5 reports it.
+     */
+    private const UNTABLED_MESSAGES = [
+        'regular expression is too large' => ErrorCode::PatternTooLarge,
+        '\\K is not allowed in lookarounds (but see PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK)' => ErrorCode::KeepInLookaround,
+        // Before PHP 8.2, which reads no "n" flag.
+        "Unknown modifier 'n'" => ErrorCode::FlagUnknown,
+    ];
+
+    /**
+     * Where the PCRE2 10.40 PHP 8.2 bundles answers otherwise than the
+     * library reads that release, with the engine's own answer: PHP 8.3's
+     * 10.42, and a system 10.40, answer as the library does. An engine that
+     * gives this answer is not held to the library's until the library
+     * reads it so.
+     */
+    private const PHP_BUNDLED_10_40_DIVERGENCES = [
+        '/(?:[^a]){5000}|(?:[^a]){4000}\\k<n>(?:[^a]){1000}/' => 'reference to non-existent subpattern at offset 32',
+        '/(?:(?:[^a]){5000}|(?:[^a]){4000}\\k<n>(?:[^a]){1000})/' => 'reference to non-existent subpattern at offset 35',
+        '/(?:[^a]){8190}aaa\\d|\\k<n>/' => 'regular expression is too large at offset 0',
+        '/(?:[^a]){8190}aaa\\d\\d|\\k<n>/' => 'regular expression is too large at offset 0',
+        '/\\d|b(?:(?:[^a]){8189})|(?:[^a]){8191}\\g{7}/' => 'reference to non-existent subpattern at offset 41',
+    ];
+
     #[Test]
     #[DataProvider('provideErrorsNeverReached')]
     public function test_an_error_after_the_limit_is_passed_is_never_reached(string $pattern, string $php, string $release, int $offset): void
     {
+        $this->assertMatchesTheRunningEngine($pattern);
         $result = self::validate($pattern, $php, $release);
 
         $this->assertSame(ErrorCode::PatternTooLarge, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
@@ -48,6 +76,7 @@ final class PatternTooLargeErrorOrderTest extends TestCase
     #[DataProvider('provideErrorsMetFirst')]
     public function test_an_error_before_the_limit_is_passed_is_reported(string $pattern, string $php, string $release, ErrorCode $error, int $offset): void
     {
+        $this->assertMatchesTheRunningEngine($pattern);
         $result = self::validate($pattern, $php, $release);
 
         $this->assertSame($error, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
@@ -151,6 +180,8 @@ final class PatternTooLargeErrorOrderTest extends TestCase
         // The lookbehinds are measured before the first pass.
         yield 'reference by name in a lookbehind after the item past the limit, 10.32' => ['pattern' => '/(?:[^a]){8634}|(?<=\\k<n>)/', 'php' => '7.3', 'release' => '10.32', 'error' => ErrorCode::BackrefMissingNamedGroup, 'offset' => 22];
         yield 'reference by name in a lookbehind after the item past the limit, 10.49' => ['pattern' => '/(?:[^a]){8634}|(?<=\\k<n>)/', 'php' => '8.5', 'release' => '10.49', 'error' => ErrorCode::BackrefMissingNamedGroup, 'offset' => 22];
+        yield 'lookbehind of no bound after the item past the limit, 10.49' => ['pattern' => '/(?:[^a]){8634}|(?<=a+)/', 'php' => '8.5', 'release' => '10.49', 'error' => ErrorCode::LookbehindUnbounded, 'offset' => 15];
+        yield 'lookbehind measuring too many branches after the item past the limit, 10.49' => ['pattern' => '/(?:[^a]){8634}|(?<=(?1))(?|x)((?2)(?2))((?3)(?3))((?4)(?4))((?5)(?5))((?6)(?6))((?7)(?7))((?8)(?8))((?9)(?9))((?10)(?10))((?11)(?11))(a)/', 'php' => '8.5', 'release' => '10.49', 'error' => ErrorCode::LookbehindTooComplex, 'offset' => 15];
     }
 
     /**
@@ -180,6 +211,33 @@ final class PatternTooLargeErrorOrderTest extends TestCase
             [$php, $release] = explode('/', $target);
             $result = RegexParser::create(['cache' => null, 'max_pattern_length' => 1_000_000, 'php_version' => $php, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate('/'.$class.')/u');
             $this->assertSame([ErrorCode::GroupUnmatchedClose, $offset], [$result->errorCode, $result->offset], $target);
+        }
+    }
+
+    /**
+     * The rows hold the error each PHP and PCRE2 target reports; the
+     * running engine is one more target: what PHP refuses the pattern with
+     * here is what the library reports for this PHP and this PCRE2.
+     */
+    private function assertMatchesTheRunningEngine(string $pattern): void
+    {
+        $refused = PcreMessageCodes::warningOf($pattern);
+        $this->assertNotNull($refused, 'Oracle: the running engine refuses '.$pattern);
+        $engine = PcreMessageCodes::read($refused);
+        $release = implode('.', \array_slice(explode('.', explode(' ', \PCRE_VERSION)[0]), 0, 2));
+        // The PCRE2 10.40 PHP 8.2 bundles answers these as listed; a system
+        // 10.40 answers as the library reads that release, checked below.
+        if ('10.40' === $release && (self::PHP_BUNDLED_10_40_DIVERGENCES[$pattern] ?? null) === \sprintf('%s at offset %d', $engine['message'], $engine['offset'] ?? -1)) {
+            return;
+        }
+
+        $result = self::validate($pattern, \PHP_MAJOR_VERSION.'.'.\PHP_MINOR_VERSION, $release);
+
+        $codes = isset(self::UNTABLED_MESSAGES[$engine['message']]) ? [self::UNTABLED_MESSAGES[$engine['message']]->value] : PcreMessageCodes::codesFor($engine['message'], $release);
+        $this->assertContains($result->errorCode?->value, $codes, \sprintf('Oracle: %s; the library: %s', $refused, (string) $result->error));
+        // PHP reports a flag it does not know with no offset.
+        if (null !== $engine['offset']) {
+            $this->assertSame($engine['offset'], $result->offset, 'Oracle: '.$refused);
         }
     }
 
