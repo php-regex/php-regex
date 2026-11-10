@@ -91,9 +91,7 @@ final class LargeCountExpansionTest extends TestCase
     public function test_the_literals_of_a_large_count_are_found_within_budget(string $regex): void
     {
         $tree = RegexParser::create(['cache' => null])->parse($regex);
-        $start = CpuClock::seconds();
-        $set = $tree->accept(new LiteralExtractor());
-        $time = CpuClock::seconds() - $start;
+        $set = CpuClock::timed(static fn () => $tree->accept(new LiteralExtractor()), $time);
 
         $budget = false !== getenv('CI') && '' !== getenv('CI') ? self::SHARED_RUNNER_BUDGET : self::BUDGET;
         $this->assertLessThan($budget, $time, \sprintf('%s: %.3f s.', $regex, $time));
@@ -121,9 +119,7 @@ final class LargeCountExpansionTest extends TestCase
         $regex = '/(?:a{60000}){60000}/';
         $this->assertInstanceOf(PcreError::class, (new PcreEngine())->compile($regex), 'Oracle: the engine refuses the pattern as too large.');
 
-        $start = CpuClock::seconds();
-        $cases = Regex::create(['cache' => null])->parse($regex)->accept(new TestCaseGenerator());
-        $time = CpuClock::seconds() - $start;
+        $cases = CpuClock::timed(static fn () => Regex::create(['cache' => null])->parse($regex)->accept(new TestCaseGenerator()), $time);
 
         $this->assertSame(['matching' => [], 'non_matching' => []], $cases);
         $this->assertLessThan(self::BUDGET, $time, \sprintf('%.3f s.', $time));

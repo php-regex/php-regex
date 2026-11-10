@@ -426,9 +426,9 @@ final class LookbehindMeasureTimeTest extends TestCase
     {
         $best = \INF;
         for ($run = 0; $run < 3; $run++) {
-            $start = CpuClock::nanoseconds();
-            Regex::create(['cache' => null])->validate($regex);
-            $best = min($best, (CpuClock::nanoseconds() - $start) / 1e9);
+            $best = min($best, CpuClock::time(static function () use ($regex): void {
+                Regex::create(['cache' => null])->validate($regex);
+            }));
             if ($best >= 10 * self::BUDGET) {
                 break;
             }
