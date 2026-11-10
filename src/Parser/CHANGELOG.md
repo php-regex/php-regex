@@ -10,6 +10,13 @@ CHANGELOG
    written wherever it lays it out: on a line of its own, after the start
    options and past ten indent levels, `# path\ ` came out as `# path\x20`,
    the spelling meant for a space of the pattern that ends its line.
+ * The body of an alphabetic assertion nested in others, `(*pla:(*nla:a))`, is
+   read from the pattern by its offsets, and the text a level read is dropped
+   before the bodies inside it are read: every level kept three copies of its
+   body. 240 nested `(*pla:` around a 60,000-byte comment, which PCRE compiles,
+   peaked at 46 MB and take 3 MB; 900 around 93,000 bytes peaked at 264 MB, a
+   fatal error under a 128 MB `memory_limit`, and take 11 MB. The tokens, the
+   tree and the errors of a pattern are what they were.
  * `validate()` reports an error PCRE meets measuring the lookbehinds before it
    estimates the compiled size, and one measure walks 10,000 branches at most:
    calls doubled level after level behind a branch reset are refused as
