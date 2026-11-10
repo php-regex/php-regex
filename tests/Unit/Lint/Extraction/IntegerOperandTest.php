@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -221,6 +223,34 @@ final class IntegerOperandTest extends TestCase
         $this->assertArgumentsReadByBoth([
             ['state' => 'raw_shell', 'expression' => $argument, 'source' => 'preg_match()'],
         ], $code);
+    }
+
+    /**
+     * What the library says of a pattern read through an integer is what
+     * the engine says of it: PHP 8.4.27 with PCRE2 10.49 compiles /^a{3}$/
+     * and /^a{65535}$/, and refuses /^a{65536}$/ and /^a{999999}$/ ("number
+     * too big in {} quantifier").
+     */
+    #[Test]
+    #[DataProvider('provideQuantifierBounds')]
+    public function test_a_pattern_read_through_an_integer_is_judged_as_the_engine_judges_it(string $operand, bool $compiles): void
+    {
+        $read = $this->patternsReadByBoth(self::matcher("'/^a{' . ".$operand." . '}$/'"));
+
+        $this->assertCount(1, $read);
+        $this->assertSame($compiles, EngineProbe::compiles($read[0]));
+        $this->assertSame($compiles, RegexParser::create()->validate($read[0])->isValid);
+    }
+
+    /**
+     * @return iterable<string, array{operand: string, compiles: bool}>
+     */
+    public static function provideQuantifierBounds(): iterable
+    {
+        yield 'a small bound' => ['operand' => '3', 'compiles' => true];
+        yield 'the largest bound' => ['operand' => '65535', 'compiles' => true];
+        yield 'one past the largest bound' => ['operand' => '65536', 'compiles' => false];
+        yield 'a number too big for a quantifier' => ['operand' => '999999', 'compiles' => false];
     }
 
     /**
