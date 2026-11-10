@@ -1001,6 +1001,10 @@ final class ForkedWorkerPoolTest extends TestCase
      * chunk, whatever the parent does with SIGTERM: a handler of its own is
      * not the worker's, and a SIGTERM the parent blocks is let through in
      * the worker.
+     *
+     * The busy worker sleeps for longer than the deadline of the run, then
+     * leaves a file: a run that waits for it outlasts the deadline, and a
+     * worker let finish its chunk leaves the file. No time is read.
      */
     #[Test]
     #[RequiresFunction('pcntl_fork')]
@@ -1015,19 +1019,21 @@ final class ForkedWorkerPoolTest extends TestCase
             pcntl_sigprocmask(\SIG_BLOCK, [\SIGTERM]);
         }
         $pool = new ForkedWorkerPool(chunkFactor: 1);
-        $started = microtime(true);
+        // Outside the directory of the payload files, which stays empty.
+        $marker = sys_get_temp_dir().'/regexparser_pool_busy_'.bin2hex(random_bytes(6));
 
         try {
             $error = $this->failureOf(static fn (): ?array => $pool->run(
                 ['fails', 'busy'],
                 2,
-                static function (array $chunk, \Closure $done): array {
+                static function (array $chunk, \Closure $done) use ($marker): array {
                     if (['fails'] === $chunk) {
                         usleep(200_000);
 
                         throw new \RuntimeException('Boom');
                     }
-                    sleep(4);
+                    sleep(self::DEADLINE + 2);
+                    touch($marker);
                     $done(\count($chunk));
 
                     return $chunk;
@@ -1041,10 +1047,12 @@ final class ForkedWorkerPoolTest extends TestCase
             pcntl_sigprocmask(\SIG_UNBLOCK, [\SIGTERM]);
             pcntl_signal(\SIGTERM, \SIG_DFL);
             pcntl_async_signals($async);
+            $finished = is_file($marker);
+            @unlink($marker);
         }
 
         $this->assertSame('Parallel analysis failed: RuntimeException: Boom (in fails.php)', $error->getMessage());
-        $this->assertLessThan(3.0, microtime(true) - $started, 'The run waited for the busy worker.');
+        $this->assertFalse($finished, 'The run waited for the busy worker.');
         $this->assertNothingLeftBehind();
     }
 
@@ -1202,10 +1210,12 @@ final class ForkedWorkerPoolTest extends TestCase
     }
 
     /**
-     * Every chunk throws. The first worker hands its failure back at once;
-     * the others are slower to write their payload (a slow disk): each has
-     * created its file and not named it yet when the run fails on the
-     * first. Their files are still removed.
+     * Every chunk throws. One worker hands its failure back quickly; the
+     * others are slower to write their payload (a slow disk): each has
+     * created its file and not named it yet when the run fails. The run
+     * ends on the first failure it reads, without waiting for the other
+     * workers, so which of the four chunks it names depends on the
+     * machine. Their files are still removed.
      */
     #[Test]
     #[RequiresFunction('pcntl_fork')]
@@ -1221,7 +1231,8 @@ final class ForkedWorkerPoolTest extends TestCase
             static fn (int $item): string => 'file'.$item.'.php',
         ));
 
-        $this->assertSame('Parallel analysis failed: RuntimeException: Boom (in file0.php and 1 more)', $error->getMessage());
+        // Eight items in chunks of two: a chunk starts on an even item.
+        $this->assertMatchesRegularExpression('/^Parallel analysis failed: RuntimeException: Boom \(in file[0246]\.php and 1 more\)\z/', $error->getMessage());
         $this->assertNothingLeftBehind();
     }
 
@@ -1252,8 +1263,9 @@ final class ForkedWorkerPoolTest extends TestCase
 
     /**
      * Throws on every chunk: the one holding item 0 after 200 ms, by when
-     * the others are writing their payload file; the others at once, with
-     * a slow tempnam() in their own worker.
+     * the others are writing their payload file unless the machine held
+     * them back; the others at once, with a slow tempnam() in their own
+     * worker.
      *
      * @return \Closure(list<int>, \Closure(int): void): list<int>
      */
