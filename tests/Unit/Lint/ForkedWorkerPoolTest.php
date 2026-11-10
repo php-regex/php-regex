@@ -34,7 +34,12 @@ use PHPUnit\Framework\TestCase;
 #[RequiresPhpExtension('pcntl')]
 final class ForkedWorkerPoolTest extends TestCase
 {
-    private const DEADLINE = 10;
+    /**
+     * Seconds a run is given before it is taken for a hang. It is no
+     * budget: forking the process that runs the whole suite takes seconds
+     * on the macOS runners, and four forks outlasted ten there.
+     */
+    private const DEADLINE = 60;
 
     /**
      * Where the workers' tempnam() creates their payload files during the
