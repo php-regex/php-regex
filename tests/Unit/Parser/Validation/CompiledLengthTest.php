@@ -24,6 +24,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Validation\CompiledLength;
 use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -811,14 +812,20 @@ final class CompiledLengthTest extends TestCase
         $this->assertFalse(self::measureOnPhp82($unknown, 80235)->passedWhereABranchEnds(self::parseOnPhp82($unknown)->pattern));
         $this->assertTrue(self::measureOnPhp82($known, 80235)->passedWhereABranchEnds(self::parseOnPhp82($known)->pattern));
 
-        // On that engine PHP, which has the tables, reports both at offset 0,
-        // and so does the validator, which measures with them.
+        // On that engine PHP has the tables of the locale it runs under, and
+        // the validator measures with the same ones: both report the pattern
+        // too large at one offset, 0 under "C", where "[iI]" is a pair of
+        // cases.
         $running = PcreTarget::runtime();
         if ($running->measuresBranchesApart() && !$running->pcreAtLeast('10.47')) {
             foreach ([$unknown, $known] as $pattern) {
-                $this->assertSame('preg_match(): Compilation failed: regular expression is too large at offset 0', EngineProbe::warning($pattern));
-                $result = RegexParser::create(['cache' => null, 'php_version' => $running->phpVersionId, 'pcre_version' => $running->pcreVersion, 'locale' => 'C', 'runtime_pcre_validation' => false])->validate($pattern);
-                $this->assertSame([ErrorCode::PatternTooLarge, 0], [$result->errorCode, $result->offset], $pattern);
+                $engine = PcreMessageCodes::read((string) EngineProbe::warning($pattern));
+                $result = RegexParser::create(['cache' => null, 'php_version' => $running->phpVersionId, 'pcre_version' => $running->pcreVersion, 'locale' => $running->locale, 'runtime_pcre_validation' => false])->validate($pattern);
+                $this->assertSame('regular expression is too large', $engine['message'], $pattern);
+                $this->assertSame([ErrorCode::PatternTooLarge, $engine['offset']], [$result->errorCode, $result->offset], $pattern);
+                if ('C' === $running->locale) {
+                    $this->assertSame(0, $engine['offset'], $pattern);
+                }
             }
         }
     }
