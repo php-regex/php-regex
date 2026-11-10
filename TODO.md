@@ -159,6 +159,22 @@ quoted part in literal position loses nothing; and the `(?<` case leaves
 follow-up folds `preg_quote()` of a constant string to the literal it returns,
 as `CallTypes::quote` does.
 
+Two verdicts leak through the placeholder even where the quoted text is read
+as literal characters, so the port above does not cover them (seen 2026-11-10,
+PHP 8.4, PCRE2 10.49). `PregMatchDynamicReturnTypeExtension` reads the
+placeholder as the pattern: `preg_match('/' . preg_quote($x, '/') . '/', $s)`
+is typed `1|false` and `=== 0` on it is reported as always false, where `/abc/`
+returns 0 on `zzz`. `RegularExpressionPatternRule` compiles the placeholder:
+`'/(?<=' . preg_quote($x, '/') . ')\d+/'` is reported as
+`length of lookbehind assertion is not limited`, where `/(?<=id\=)\d+/`
+compiles; PHPStan 2.3.5 reports it too. As `PregCallAnalyzer::typeAroundQuotes()`
+does here, the placeholder stands for the groups only: the return type and the
+validity rule read a pattern with a quoted part as a pattern that is not
+constant. Red first: a new row keeps `0|1|false` for that `preg_match()`, and
+the lookbehind call leaves `RegularExpressionPatternRuleTest` silent. Under `x`
+a quoted space is not a literal either (`/^a b$/x` matches `ab`, not `a b`), and
+the probes hold no whitespace.
+
 
 ## Pull requests to merge before the tag
 
