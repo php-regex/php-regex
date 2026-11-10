@@ -13,10 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\LibrarySource;
+use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -84,8 +86,10 @@ final class PhpVersionGatesTest extends TestCase
         $from = RegexParser::create(['cache' => null, 'php_version' => PhpVersionGates::BUNDLES_PCRE2_10_40_WITH_ITS_FIXES, 'pcre_version' => '10.40', 'runtime_pcre_validation' => false])->validate($pattern);
 
         // A pattern is as large on every release: whatever engine runs
-        // compiles the rows that are valid and refuses the others.
+        // compiles the rows that are valid and refuses the others, with the
+        // error the library reports for it.
         $this->assertSame($valid, EngineProbe::compiles($pattern), 'Oracle: '.(EngineProbe::warning($pattern) ?? 'PHP compiles '.$pattern));
+        $this->assertMatchesTheRunningEngine($pattern);
         $this->assertSame($valid, $before->isValid, (string) $before->error);
         $this->assertSame($valid, $from->isValid, (string) $from->error);
         $this->assertSame($sameError, [$before->errorCode, $before->offset] === [$from->errorCode, $from->offset]);
@@ -156,6 +160,28 @@ final class PhpVersionGatesTest extends TestCase
         }
 
         $this->assertSame([], $found, 'Move each PHP-version comparison to a named gate on '.self::GATE_CLASS.'.');
+    }
+
+    /**
+     * The running engine is one side of the gate, or another target: what
+     * PHP refuses the pattern with, and where, is what the library reports
+     * for this PHP, its patch release included, and this PCRE2.
+     */
+    private function assertMatchesTheRunningEngine(string $pattern): void
+    {
+        $release = implode('.', \array_slice(explode('.', explode(' ', \PCRE_VERSION)[0]), 0, 2));
+        $result = RegexParser::create(['cache' => null, 'php_version' => \PHP_VERSION_ID, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern);
+        $refused = EngineProbe::warning($pattern);
+        if (null === $refused) {
+            $this->assertTrue($result->isValid, \sprintf('Oracle: PHP compiles %s; the library: %s', $pattern, (string) $result->error));
+
+            return;
+        }
+
+        $engine = PcreMessageCodes::read($refused);
+        $codes = 'regular expression is too large' === $engine['message'] ? [ErrorCode::PatternTooLarge->value] : PcreMessageCodes::codesFor($engine['message'], $release);
+        $this->assertContains($result->errorCode?->value, $codes, \sprintf('Oracle: %s; the library: %s', $refused, (string) $result->error));
+        $this->assertSame($engine['offset'], $result->offset, 'Oracle: '.$refused);
     }
 
     /**
