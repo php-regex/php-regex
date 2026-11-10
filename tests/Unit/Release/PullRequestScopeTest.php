@@ -84,9 +84,11 @@ final class PullRequestScopeTest extends TestCase
     /**
      * The workflows that run on a pull request for what it changes, each
      * scoped by its own list: the prose readers, the demo applications, the
-     * workflow checks.
+     * workflow checks, and the workflow that reports CI for a pull request
+     * ci.yml stays out of.
      */
     private const SCOPED = [
+        'ci-prose.yml',
         'documentation.yml',
         'docs-links.yml',
         'spelling.yml',
