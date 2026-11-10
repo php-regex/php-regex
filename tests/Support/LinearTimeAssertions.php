@@ -28,6 +28,8 @@ trait LinearTimeAssertions
      * The clock is the CPU time of the process, not the wall clock: a
      * process the machine sets aside while it reads (a loaded laptop, a
      * shared runner, the other test processes) is not charged for the wait.
+     * The cycle collector is held while a read is timed: what a run of it
+     * costs is the process's, and the larger read alone sets it off.
      * The smaller read is read twice, then the two sizes in turns, each
      * keeping its best reading, and the first turn under the line ends the
      * measure. A slowed reading only errs one way: the larger one slowed
@@ -84,9 +86,8 @@ trait LinearTimeAssertions
      */
     private static function cpuTime(\Closure $read, int $size): float
     {
-        $start = CpuClock::seconds();
-        $read($size);
-
-        return CpuClock::seconds() - $start;
+        return CpuClock::time(static function () use ($read, $size): void {
+            $read($size);
+        });
     }
 }
