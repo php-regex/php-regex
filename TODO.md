@@ -226,6 +226,9 @@ lowest-dependencies cell of every other one. Each of the others then takes
 - #348: a ReDoS repair tries the blamed quantifiers first and keeps no tree
   per candidate (1,000 quantifiers: 65 s and 407 MB to 20 s and 21 MB),
   with the same repairs and no cut-off.
+- #349: 54 of the 57 type checks of three Psalm fixtures stood in plain
+  comments and never ran; they run again, the formatter leaves such a
+  docblock alone, and one expectation that had never run is corrected.
 
 Before the release candidate, create the release key, set
 `PHAR_GPG_PRIVATE_KEY` and `PHAR_GPG_PASSPHRASE` as secrets of the
@@ -281,16 +284,8 @@ were data left unquoted, 23 a regex fragment meant to be one, 9 undecided,
 and a parameter is the only unknown part of 14 % of them. That finding comes
 back on a rule measured at 90 % on a hundred parts labelled by hand.
 
-Before that work starts: the Psalm type checks of
-`tests/Integration/Bridge/Psalm/Fixtures/Types/` are read from `/** */`
-blocks only (`PsalmRun::typeChecks()`), and three of the four files hold
-theirs in `/* */` blocks: `concatenation.php` 0 of 20 collected, `subject.php`
-0 of 20, `finite.php` 3 of 17, `returns.php` 19 of 19. Read as docblocks, 75
-pass and one fails: `subject_kept_where_matches_is_typed()` expects
-`$m = array<never, never>` after the `if`, where Psalm traces
-`array{0?: non-falsy-string, 1?: non-falsy-string}`, which is what
-`preg_match()` leaves. Collect them again, settle that one, and make a check
-that is not collected an error.
+The Psalm type checks its fixtures held in plain comments run again in #349,
+which that work is stacked on.
 
 The 3.1 % folding reads, by what the extraction lacks, most first: a local
 variable as an operand of a concatenation; an interpolated string; an array
