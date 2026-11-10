@@ -37,55 +37,51 @@ final class FindingsLayoutTest extends TestCase
     private const EVENTS = ['run', 'example_loaded', 'finding_opened', 'share_clicked', 'voice_toggled', 'version_changed'];
 
     #[Test]
-    public function test_column_one_holds_a_segmented_examples_findings_control(): void
+    public function test_the_quick_row_holds_the_patterns_and_the_projects_door(): void
     {
         $xpath = self::include();
 
-        $groups = $xpath->query(self::byClass('pg-examples').'/li[1]/*[@role="radiogroup"]');
-        $this->assertNotFalse($groups);
-        $this->assertCount(1, $groups, 'The column\'s head is its control: which list it shows.');
-        $group = $groups->item(0);
-        $this->assertInstanceOf(\DOMElement::class, $group);
-        $this->assertStringContainsString('pg-source', (string) $group->getAttribute('class'));
-        $this->assertSame('Source', $group->getAttribute('aria-label'));
+        // No segmented control anymore: the quick patterns are always
+        // there, and the projects live behind a door of their own.
+        $this->assertSame(0, self::nodes($xpath, self::byClass('pg-quickbar').'//*[@role="radiogroup"]'), 'No radiogroup holds the quick row: the door is a door, not a choice of lists.');
+        $this->assertSame(0, self::nodes($xpath, self::byClass('pg-source').'|'.self::byClass('pg-source-option')), 'The source toggle is gone with the column it served.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar')), 'One row under the pattern.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/*[1]'.self::has('pg-quick-label')), 'The row names its first list.');
+        $label = $xpath->evaluate('string('.self::byClass('pg-quick-label').')');
+        $this->assertIsString($label);
+        $this->assertSame('Quick patterns', trim($label), 'Named for what they are: patterns, ready to run.');
 
-        $options = $xpath->query('.//button[@role="radio"]', $group);
-        $this->assertNotFalse($options);
-        $this->assertCount(2, $options);
-        $seen = [];
-        foreach ($options as $index => $option) {
-            $this->assertInstanceOf(\DOMElement::class, $option);
-            $this->assertStringContainsString('pg-source-option', (string) $option->getAttribute('class'), 'The voice toggle\'s dialect: one look for one kind of choice.');
-            $seen[$option->getAttribute('data-source')] = trim($option->textContent);
-            $this->assertSame(0 === $index ? 'true' : 'false', $option->getAttribute('aria-checked'));
-            $this->assertSame(0 === $index ? '' : '-1', $option->getAttribute('tabindex'), 'One stop in the tab order; the arrows move inside.');
-        }
-        $this->assertSame(['examples' => 'Examples', 'findings' => 'Projects'], $seen, 'The list is named for what it holds: projects, real ones.');
-        $this->assertSame(1, preg_match('/function setSource\(source, persist\)/', self::source(self::SCRIPT)), 'One function moves the column between its two lists.');
+        // The chips and the door stand in one row; the door counts what it
+        // holds, and opens on the row of its own the panel is.
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/ul'.self::has('pg-examples').'[@aria-label="Quick patterns"]'));
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary[contains(., "Projects")]/*'.self::has('pg-findings-count')), 'The door says how many projects it holds.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/div'.self::has('pg-findings-body')), 'The panel is a body of its own, inside the door.');
+
+        // A repository's page arrives with the door already open: the link
+        // was the gesture.
+        $this->assertStringContainsString('{% if include.findings_repo %} open{% endif %}', self::source(self::INCLUDE));
     }
 
     #[Test]
-    public function test_the_findings_list_is_a_filter_and_a_tree_folded_below_the_widest_screens(): void
+    public function test_the_projects_panel_is_a_filter_and_a_tree_behind_its_door(): void
     {
         $xpath = self::include();
 
-        $panels = $xpath->query(self::byClass('pg-examples').'/li'.self::has('pg-findings-panel'));
-        $this->assertNotFalse($panels);
-        $this->assertCount(1, $panels);
-        $panel = $panels->item(0);
-        $this->assertInstanceOf(\DOMElement::class, $panel);
-        $this->assertTrue($panel->hasAttribute('hidden'), 'The examples are the default list.');
+        $doors = $xpath->query(self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse'));
+        $this->assertNotFalse($doors);
+        $this->assertCount(1, $doors);
+        $door = $doors->item(0);
+        $this->assertInstanceOf(\DOMElement::class, $door);
 
-        $this->assertSame(1, self::nodes($xpath, './details'.self::has('pg-findings-browse').'/summary[contains(., "Browse")]/*'.self::has('pg-findings-count'), $panel), 'Below 1280px, a folded block says how many projects it holds.');
-        $this->assertSame(1, self::nodes($xpath, './/input[@type="search"]'.self::has('pg-findings-filter').'[@aria-label="Filter by owner, repository or rule"]', $panel));
-        $this->assertSame(1, self::nodes($xpath, './/ul'.self::has('pg-findings-tree').'[@role="tree"][@aria-label="Projects"]', $panel));
-        $this->assertSame(1, self::nodes($xpath, './/a[@href="/findings/"]', $panel), 'The index is one link away, without the header.');
-        $this->assertSame(1, self::nodes($xpath, './/a[@href="https://github.com/php-regex/php-regex/issues/new?template=propose-project.yml"]', $panel));
+        $this->assertSame(1, self::nodes($xpath, './/input[@type="search"]'.self::has('pg-findings-filter').'[@aria-label="Filter by owner, repository or rule"]', $door));
+        $this->assertSame(1, self::nodes($xpath, './/ul'.self::has('pg-findings-tree').'[@role="tree"][@aria-label="Projects"]', $door));
+        $this->assertSame(1, self::nodes($xpath, './/a[@href="/findings/"]', $door), 'The index is one link away, without the header.');
+        $this->assertSame(1, self::nodes($xpath, './/a[@href="https://github.com/php-regex/php-regex/issues/new?template=propose-project.yml"]', $door));
 
         $script = self::source(self::SCRIPT);
         $this->assertStringContainsString("fetch('/assets/findings/index.json')", $script, 'The list is fetched from the site itself when it opens, never embedded in every page.');
         $this->assertStringContainsString("fetch('/assets/findings/repos/' + slug + '.json')", $script, 'A repository\'s findings, when it opens.');
-        $this->assertStringContainsString("window.matchMedia('(min-width: 1280px)')", $script, 'The widest screens keep the block open.');
+        $this->assertStringNotContainsString("window.matchMedia('(min-width: 1280px)')", $script, 'No width opens the door: a hand or a repository\'s link does.');
         $this->assertStringContainsString("item.setAttribute('role', 'treeitem');", $script);
         $this->assertStringContainsString("item.setAttribute('aria-expanded'", $script);
         $keys = self::between($script, 'function onTreeKey(event) {', "\n  }\n");
@@ -94,7 +90,6 @@ final class FindingsLayoutTest extends TestCase
         }
         $filter = self::between($script, 'function filterTree() {', "\n  }\n");
         $this->assertStringContainsString('keepTabStop();', $filter, 'Filtering never hides the tree\'s one tab stop.');
-        $this->assertStringContainsString("el.examplesList.setAttribute('aria-label', findings ? 'Projects' : 'Examples');", $script, 'The list is named for what it shows.');
         $this->assertStringContainsString('repo.repo', $filter);
         $this->assertStringContainsString('repo.rules', $filter, 'A rule filters without opening every repository.');
         $row = self::between($script, 'function repoRow(repo) {', "\n  }\n");
@@ -124,21 +119,19 @@ final class FindingsLayoutTest extends TestCase
     }
 
     /**
-     * The list is a window of its own, not the page's longest column: at
-     * every width the tree scrolls inside a frame tall as the answers
-     * panel beside it — a project with three hundred findings opens as a
-     * scroll, never as a page twenty screens deep.
+     * The panel is a window of its own, not the page's longest wall: the
+     * tree scrolls inside a frame that answers the viewport — a project
+     * with three hundred findings opens as a scroll, never as a page
+     * twenty screens deep.
      */
     #[Test]
-    public function test_the_tree_scrolls_inside_its_column_at_every_width(): void
+    public function test_the_tree_scrolls_inside_its_panel_at_every_width(): void
     {
         $stylesheet = self::source(self::STYLESHEET);
 
-        $this->assertSame(1, preg_match('/\.pg-findings-tree \{([^}]*)\}/', $stylesheet, $base), 'The base tree rule exists.');
-        $this->assertStringContainsString('max-height:', $base[1], 'Below the widest screens the tree scrolls.');
-        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-findings-tree \{([^}]*)\}/', $stylesheet, $wide), 'The widest screens keep the tree a window.');
-        $this->assertStringNotContainsString('max-height: none', $wide[1], 'No width lets the list stretch the page.');
-        $this->assertStringContainsString('clamp(', $wide[1], 'The window\'s height answers the viewport, as the answers panel does.');
+        $this->assertSame(1, preg_match('/\.pg-findings-tree \{([^}]*)\}/', $stylesheet, $base), 'The tree\'s own rule exists.');
+        $this->assertStringContainsString('clamp(', $base[1], 'The window\'s height answers the viewport, as the answers panel does.');
+        $this->assertStringNotContainsString('max-height: none', $base[1], 'No width lets the list stretch the page.');
     }
 
     /**
@@ -219,121 +212,84 @@ final class FindingsLayoutTest extends TestCase
 
     /**
      * A row that opens says so: a chevron before its name, pivoting when
-     * it stands open — the dialect every tree of this web speaks. And the
-     * list column folds on its window's edge when a finding is being
-     * read, giving its width to the card and the tools: one toggle,
-     * everywhere, reversible.
+     * it stands open — the dialect every tree of this web speaks. The
+     * projects door speaks it too: closed, it says "Projects"; open, its
+     * panel takes a row of its own under the quick patterns. There is no
+     * fold and no rail anymore: the columns went from three to two, and
+     * the patterns live in the row above them.
      */
     #[Test]
-    public function test_the_listing_column_folds_and_the_rows_say_they_open(): void
+    public function test_the_rows_say_they_open_and_the_projects_door_speaks_their_dialect(): void
     {
         $stylesheet = self::source(self::STYLESHEET);
         $this->assertSame(1, preg_match('/\.pg-tree-item\[aria-expanded\] > \.pg-tree-row::before \{([^}]*)\}/', $stylesheet, $chevron), 'Every row that opens carries a chevron.');
         $this->assertStringContainsString("content: '›'", $chevron[1]);
         $this->assertSame(1, preg_match('/\.pg-tree-item\[aria-expanded="true"\] > \.pg-tree-row::before \{([^}]*)\}/', $stylesheet, $pivoted), 'The chevron pivots on the open row.');
         $this->assertStringContainsString('rotate(90deg)', $pivoted[1]);
-        $this->assertSame(1, preg_match('/\.playground\.is-listing-hidden \.pg-body \{([^}]*)\}/', $stylesheet, $folded), 'The fold exists.');
-        $this->assertStringContainsString('grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);', $folded[1], 'Folded, the window is two columns: the finding and the tools.');
-        $this->assertStringContainsString('.playground.is-listing-hidden .pg-main', $stylesheet, 'Folded, the columns take the two places that remain.');
-        $this->assertSame(1, preg_match('/\.playground\.is-listing-hidden \.pg-examples \{([^}]*)\}/', $stylesheet, $hidden));
-        $this->assertStringContainsString('display: none;', $hidden[1]);
+        $this->assertSame(1, preg_match('/\.pg-findings-browse > summary::after \{([^}]*)\}/', $stylesheet, $door), 'The door carries the same chevron.');
+        $this->assertStringContainsString("content: '›'", $door[1]);
+        $this->assertSame(1, preg_match('/\.pg-findings-browse\[open\] > summary::after \{([^}]*)\}/', $stylesheet, $opened), 'And it pivots when the door stands open.');
+        $this->assertStringContainsString('rotate(90deg)', $opened[1]);
+
+        $this->assertStringNotContainsString('is-listing-hidden', $stylesheet, 'The fold is gone with the column it folded.');
+        $this->assertStringNotContainsString('pg-listing-rail', $stylesheet, 'The rail of owners is gone with it.');
+        $this->assertStringNotContainsString('pg-listing-tab', $stylesheet);
 
         $xpath = self::include();
-        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/*[1]'.self::has('pg-listing-tab').'[@aria-expanded="true"][@aria-controls="pg-listing"]'), 'A tab on the window\'s edge folds the column.');
-        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-listing-tab').'[@aria-label="List column"]/span[@aria-hidden="true"]'), 'The tab is named, its glyph silent: a screen reader says "List column, expanded", never "single left-pointing angle quotation mark".');
-        $script = self::source(self::SCRIPT);
-        $this->assertStringContainsString("classList.toggle('is-listing-hidden')", $script, 'The tab toggles the fold.');
-        $fold = self::between($script, "el.listingTab.addEventListener('click', function () {", "\n    });\n");
-        $this->assertStringContainsString('el.listingRail.hidden = !hidden;', $fold, 'Folded, the rail shows, whether the index has loaded or not: the column can always come back.');
-        $this->assertStringNotContainsString('firstChild', $fold);
-        $this->assertStringContainsString('.focus()', $fold, 'The control the hand was on disappears with the fold: focus moves to the one that undoes it.');
-        $stylesheet = self::source(self::STYLESHEET);
-        $this->assertSame(1, preg_match('/\.playground\.is-listing-hidden \.pg-listing-tab \{([^}]*)\}/', $stylesheet, $tabfold), 'Folded, the tab gives its edge to the rail.');
-        $this->assertStringContainsString('display: none;', $tabfold[1], 'The tab never sits over the avatars, cutting them.');
+        $this->assertSame(0, self::nodes($xpath, self::byClass('pg-body').'/*'.self::has('pg-examples')), 'The patterns are not a column of the body anymore.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/ul'.self::has('pg-examples')), 'They are the quick row\'s list.');
+        $this->assertSame(['pg-main', 'pg-results', 'pg-loader'], self::bodyChildren(), 'The body holds two panes and the loader, in the order they read.');
+
         $this->assertSame(1, preg_match('/\.pg-splitter::after \{([^}]*)\}/', $stylesheet, $grip), 'The separator is a grip.');
         $this->assertStringContainsString('repeating-linear-gradient', $grip[1], 'A grip speaks in dashes, not a hairline doubling the borders beside it.');
     }
 
     /**
-     * Folded, the list leaves its avatars behind: a rail of owners on the
-     * window's edge, each picturing its project, each unfolding the column
-     * onto that project. The visitor keeps the ecosystem in reach while
-     * the finding reads wide.
+     * The two panes answer the hand: one separator on their boundary,
+     * dragged by the pointer, walked by the arrow keys, doubled back to
+     * its default by a double click, and the chosen width persists
+     * between visits. The answers pane gives what is left; nothing ever
+     * disappears.
      */
     #[Test]
-    public function test_the_fold_leaves_a_rail_of_owners(): void
-    {
-        $xpath = self::include();
-        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/*'.self::has('pg-listing-rail').'[@hidden]'), 'The rail waits, hidden, inside the body.');
-
-        $script = self::source(self::SCRIPT);
-        $rail = self::between($script, 'function buildRail() {', "\n  }\n");
-        $this->assertStringContainsString('findingsIndex.owners', $rail, 'The rail is built from the index, as the tree is.');
-        $this->assertStringContainsString("'pg-listing-rail-avatar'", $rail);
-        $this->assertStringContainsString('avatar.title = login;', $rail, 'An avatar says its project\'s name to a hovering pointer.');
-        $this->assertStringContainsString('openOwnerFromRail(login)', $rail, 'A click unfolds the column onto that project.');
-        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-listing-rail').'/*[1]'.self::has('pg-listing-rail-open').'[@type="button"][@aria-label="Unfold the list column"]'), 'The rail carries the unfold control of its own, at its head, from the first paint: a fold made before the index loads can be undone.');
-        $this->assertStringNotContainsString('clear(el.listingRail)', $rail, 'Rebuilding the avatars leaves the unfold control in place.');
-        $this->assertStringContainsString('[data-owner]', $rail, 'The rail pictures the owners the tree shows: on a repository\'s page, that project alone.');
-        $this->assertStringNotContainsString('Object.keys(findingsIndex.owners)', $rail);
-
-        $fold = self::between($script, "el.listingTab.addEventListener('click', function () {", "\n    });\n");
-        $this->assertStringContainsString('el.listingRail.contains(focused)', $fold, 'An avatar under the keyboard disappears with the unfold as the rail\'s button does: the focus is never left on a hidden control.');
-        $fromRail = self::between($script, 'function openOwnerFromRail(login) {', "\n  }\n");
-        $clear = strpos($fromRail, "el.findingsFilter.value = '';");
-        $this->assertNotFalse($clear, 'A filter that hides the chosen owner is cleared: the project the avatar named is shown.');
-        $this->assertStringContainsString('item.hidden && el.findingsFilter.value', $fromRail, 'Only a filter that hides it.');
-        $this->assertLessThan(strpos($fromRail, 'openGroup(item)'), $clear, 'Cleared before the group opens.');
-        $this->assertStringContainsString('focusItem(item)', $fromRail, 'The focus lands on the project the avatar named.');
-    }
-
-    /**
-     * The columns answer the hand: a separator on each boundary, dragged
-     * by the pointer, walked by the arrow keys, doubled back to its
-     * default by a double click, and the chosen widths persist between
-     * visits. The last column gives what is left; nothing ever disappears.
-     */
-    #[Test]
-    public function test_the_columns_answer_a_separator(): void
+    public function test_the_panes_answer_a_separator(): void
     {
         $script = self::source(self::SCRIPT);
-        $this->assertStringContainsString("var COLUMNS_STORAGE_KEY = 'playground-columns';", $script);
+        $this->assertStringContainsString("var SPLIT_STORAGE_KEY = 'playground-split';", $script);
         $split = self::between($script, 'function buildSplitters() {', "\n  }\n");
         $this->assertStringContainsString("setAttribute('role', 'separator')", $split);
         $this->assertStringContainsString("setAttribute('aria-orientation', 'vertical')", $split);
-        $this->assertStringContainsString("'Projects list width'", $split);
-        $this->assertStringContainsString("'Answers width'", $split);
+        $this->assertStringContainsString("'Text width'", $split);
+        $this->assertStringNotContainsString('Projects list width', $split, 'One boundary, one handle.');
         $drag = self::between($script, 'function dragSplitter(handle', "\n  }\n");
         $this->assertStringContainsString('pointermove', $drag);
-        $this->assertStringContainsString('applyColumnWidths();', $drag, 'Every drag step runs through the clamp.');
-        $clamp = self::between($script, 'function clampColumnWidths() {', "\n  }\n");
-        $this->assertStringContainsString('Math.min(Math.max(', $clamp, 'A column never drags past its floor or its ceiling.');
-        $this->assertStringContainsString('dblclick', $script, 'A double click gives the default widths back.');
+        $this->assertStringContainsString('applyPaneWidths();', $drag, 'Every drag step runs through the clamp.');
+        $clamp = self::between($script, 'function clampPaneWidths() {', "\n  }\n");
+        $this->assertStringContainsString('Math.min(Math.max(', $clamp, 'A pane never drags past its floor or its ceiling.');
+        $this->assertStringContainsString('dblclick', $script, 'A double click gives the default width back.');
         $this->assertStringContainsString('ArrowRight', $script, 'The keys walk a separator as the pointer drags it.');
-        $this->assertStringContainsString('applyColumnWidths()', $script, 'Stored widths come back on the next visit.');
+        $this->assertStringContainsString('applyPaneWidths()', $script, 'A stored width comes back on the next visit.');
     }
 
     /**
-     * The separators sit on the gaps the grid draws, folded or not: the
-     * body's padding (wider when the rail takes the edge) and its gaps
-     * are counted, never taken for column. The clamp holds the sum, not
-     * each width alone, so the answers keep their floor whatever the hand
-     * did; a smaller window clamps again, and a folded separator is gone,
-     * not a focusable ghost under the other one.
+     * The separator sits on the gap the grid draws: the body's padding
+     * and its one gap are counted, never taken for pane. The clamp holds
+     * what the text leaves the answers, so the answers keep their floor
+     * whatever the hand did; a smaller window clamps again.
      */
     #[Test]
-    public function test_the_separators_ride_the_tracks_and_the_last_column_keeps_its_floor(): void
+    public function test_the_separator_rides_the_gap_and_the_answers_keep_their_floor(): void
     {
         $script = self::source(self::SCRIPT);
-        $bounds = self::between($script, 'function columnBounds() {', "\n  }\n");
-        $this->assertStringContainsString('paddingLeft', $bounds, 'The padding is not a column.');
+        $bounds = self::between($script, 'function paneBounds() {', "\n  }\n");
+        $this->assertStringContainsString('paddingLeft', $bounds, 'The padding is not a pane.');
         $this->assertStringContainsString('paddingRight', $bounds);
-        $this->assertStringContainsString('gap * (folded ? 1 : 2)', $bounds, 'Two gaps between three columns, one between two.');
-        $clamp = self::between($script, 'function clampColumnWidths() {', "\n  }\n");
-        $this->assertStringContainsString('bounds.total - columnWidths.list - SPLIT_LAST_MIN', $clamp, 'The answers width is bounded by what the list leaves: the two never add up past the floor of the last column.');
+        $this->assertStringContainsString('gap * 1', $bounds, 'One gap between two panes.');
+        $clamp = self::between($script, 'function clampPaneWidths() {', "\n  }\n");
+        $this->assertStringContainsString('bounds.total - SPLIT_LAST_MIN', $clamp, 'The text pane is bounded by what it leaves: the answers never lose their floor.');
         $place = self::between($script, 'function positionSplitters() {', "\n  }\n");
         $this->assertStringContainsString('inset + edge', $place, 'A handle is placed from the padding edge, where an absolute box starts.');
-        $this->assertStringContainsString("window.addEventListener('resize', applyColumnWidths);", $script, 'A smaller window clamps the stored widths again.');
+        $this->assertStringContainsString("window.addEventListener('resize', applyPaneWidths);", $script, 'A smaller window clamps the stored width again.');
         $this->assertStringNotContainsString("window.addEventListener('resize', positionSplitters);", $script);
 
         $stylesheet = self::source(self::STYLESHEET);
@@ -456,7 +412,7 @@ final class FindingsLayoutTest extends TestCase
         $this->assertLessThan(strpos($open, 'loadIndex()'), strpos($open, "var wanted = window.location.hash.replace(/^#/, '');"), 'The finding the link names is read before anything can rewrite the address.');
         $this->assertStringContainsString('if (pageTouched) {', $open, 'What the visitor typed while the findings loaded is never overwritten.');
         $this->assertStringContainsString("window.history.replaceState(null, '', '/');", self::between($open, 'if (pageTouched) {', "\n        }\n"), 'A visitor who acted first is in the sandbox: the address is the home\'s, where a pattern may be written.');
-        foreach (['function activateItem(item) {', "Array.prototype.forEach.call(el.sources, function (option) {\n    option.addEventListener('click', function () {"] as $gesture) {
+        foreach (['function activateItem(item) {', "el.findingsBrowse.addEventListener('toggle', function () {"] as $gesture) {
             $this->assertStringContainsString('pageTouched = true;', self::between($script, $gesture, "\n    });\n"), $gesture.': a gesture made while the findings load wins over the page\'s own finding.');
         }
         $this->assertStringContainsString("' is not in the latest run; '", $open, 'A link to a finding gone says so.');
@@ -469,30 +425,29 @@ final class FindingsLayoutTest extends TestCase
     {
         $script = self::source(self::SCRIPT);
 
-        $this->assertStringContainsString("var SOURCE_STORAGE_KEY = 'playground-source';", $script);
         $this->assertStringContainsString("var FINDING_STORAGE_KEY = 'playground-finding';", $script);
         $this->assertStringContainsString("var STORAGE_KEY = 'php-version';", $script, 'The existing keys stay as they are: no migration, no reset.');
         $this->assertStringContainsString("var TOOL_STORAGE_KEY = 'playground-tool';", $script);
         $this->assertStringContainsString("var VOICE_STORAGE_KEY = 'playground-voice';", $script);
+        $this->assertStringNotContainsString('playground-source', $script, 'The source toggle is gone with the column it served; no key outlives it.');
 
-        preg_match_all('/^.*localStorage\.\w+\((?:SOURCE|FINDING)_STORAGE_KEY.*$/m', $script, $uses);
+        preg_match_all('/^.*localStorage\.\w+\(FINDING_STORAGE_KEY.*$/m', $script, $uses);
         $this->assertNotSame([], $uses[0]);
         foreach ($uses[0] as $use) {
             $this->assertMatchesRegularExpression('/^\s*(?:try \{ )?(?:var \w+ = |\w+ = )?localStorage/', $use);
         }
-        $this->assertSame(\count($uses[0]), substr_count(self::between($script, '// --- the source ---', '// --- the URL hash'), 'catch (error)'), 'Every access is in a try: a private window keeps the defaults.');
+        $this->assertSame(\count($uses[0]), substr_count(self::between($script, '// --- the projects panel ---', '// --- the URL hash'), 'catch (error)'), 'Every access is in a try: a private window keeps the defaults.');
     }
 
     #[Test]
-    public function test_the_home_restores_the_source_not_the_finding(): void
+    public function test_the_home_never_opens_a_finding_unasked(): void
     {
         $script = self::source(self::SCRIPT);
         $paint = self::between($script, '// --- first paint ---', '})();');
 
         $this->assertSame(1, preg_match("/var pageRepo = root\\.getAttribute\\('data-findings-repo'\\) \\|\\| '';/", $script));
         $this->assertSame(1, preg_match('/\} else if \(pageRepo\) \{\s*openRepoPage\(pageRepo\);/', $paint), 'A repository\'s page opens its finding: the link was the gesture.');
-        $this->assertStringContainsString('setSource(storedSource, false);', $paint, 'The home comes back to the list the visitor chose…');
-        $this->assertStringNotContainsString('enterFinding(', $paint, '…and never opens a finding unasked.');
+        $this->assertStringNotContainsString('enterFinding(', $paint, 'The home never opens a finding unasked.');
         $this->assertStringContainsString('lastFinding = storedFinding;', $script, 'The last one is lit, one click away.');
     }
 
@@ -547,13 +502,31 @@ final class FindingsLayoutTest extends TestCase
         $section = self::between(self::source(self::STYLESHEET), '/* --- Findings', '/* --- end of Findings */');
 
         $this->assertSame(0, preg_match('/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/', $section), 'No new color: the tokens say it all.');
-        foreach (['.pg-source-option {', '.pg-findings-filter {', '.pg-finding-actions button {', '.pg-finding-back {'] as $control) {
+        foreach (['.pg-findings-browse > summary {', '.pg-findings-filter {', '.pg-finding-actions button {', '.pg-finding-back {'] as $control) {
             $this->assertSame(1, preg_match('/'.preg_quote($control, '/').'[^}]*font-family: var\(--font-/', $section), $control.': a control left to the browser speaks its own font.');
         }
         $this->assertStringContainsString('.pg-field-text[hidden]', $section, 'A displayed field would show through the hidden attribute.');
         $this->assertStringContainsString('.pg-snippet-line.is-focus', $section);
         $this->assertStringContainsString('.pg-snippet-hot', $section);
-        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{[^}]*\.pg-findings-browse > summary \{\s*display: none;/', $section), 'The widest screens show the list without its fold.');
+    }
+
+    /**
+     * The body's children, by the first class each carries.
+     *
+     * @return list<string>
+     */
+    private static function bodyChildren(): array
+    {
+        $xpath = self::include();
+        $children = $xpath->query(self::byClass('pg-body').'/*');
+        self::assertNotFalse($children);
+        $classes = [];
+        foreach ($children as $child) {
+            self::assertInstanceOf(\DOMElement::class, $child);
+            $classes[] = explode(' ', $child->getAttribute('class'))[0];
+        }
+
+        return $classes;
     }
 
     private static function include(): \DOMXPath

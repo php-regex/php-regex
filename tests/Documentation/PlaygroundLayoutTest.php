@@ -116,12 +116,12 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(0, self::nodes($xpath, $main.'//'.self::self('pg-match-list').' | '.$main.'//'.self::self('pg-explain').' | '.$main.'//'.self::self('pg-diagnostics')));
         $this->assertStringNotContainsString('pg-tools-note', self::source(self::INCLUDE), 'A note nothing writes.');
 
-        // What stays in the writing column: the text field — the pattern
-        // has a row of its own above the columns. The examples stand in
-        // a column of their own, before it.
-        $this->assertSame(0, self::nodes($xpath, $main.'//'.self::self('pg-examples')), 'The examples are a column of the tool, not a row of the fields.');
-        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/'.self::self('pg-examples')), 'The examples are the body\'s first column.');
-        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/'.self::self('pg-examples').'/following-sibling::*'.self::has('pg-main')), 'The fields follow the examples.');
+        // What stays in the writing pane: the text field — the pattern
+        // has a row of its own above the panes, the quick patterns
+        // another. The examples stand in that row, never in the pane.
+        $this->assertSame(0, self::nodes($xpath, $main.'//'.self::self('pg-examples')), 'The quick patterns are not a row of the text pane.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/ul'.self::has('pg-examples')), 'They are the quick row\'s list, above the panes.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/following-sibling::*'.self::has('pg-body').'/'.self::self('pg-main')), 'The panes follow the quick row.');
         $this->assertSame(1, self::nodes($xpath, $main.'//textarea[@id="pg-subject"]'));
     }
 
@@ -274,9 +274,9 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
-     * Under the column, the examples are a row: a name never folds over
-     * two lines inside its chip, and a row that scrolls fades on the edge
-     * where more examples wait, as the strip of tabs does.
+     * Under the quick row a chip keeps its name on one line, and a row
+     * that scrolls fades on the edge where more patterns wait, as the
+     * strip of tabs does.
      */
     #[Test]
     public function test_an_example_chip_keeps_its_name_on_one_line(): void
@@ -286,10 +286,7 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringContainsString('white-space: nowrap;', $chip[1], 'A name never wraps at its space.');
         $this->assertSame(1, preg_match('/^\.pg-examples li \{([^}]*)\}/m', $stylesheet, $item));
         $this->assertStringContainsString('flex: none;', $item[1], 'A chip never shrinks below its name.');
-        $this->assertSame(1, preg_match('/^\.pg-examples \.pg-findings-panel \{([^}]*)\}/m', $stylesheet, $panel), 'The projects list outranks the item rule, which would hold it beside the control.');
-        $this->assertStringContainsString('flex: 1 1 100%;', $panel[1], 'It takes a row of its own under the control.');
-        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \.pg-example-name \{([^}]*)\}/', $stylesheet, $name), 'In the column, a long name is cut, never pushed past the box.');
-        $this->assertStringContainsString('text-overflow: ellipsis;', $name[1]);
+        $this->assertStringContainsString('margin: 0;', $item[1], 'Nor carries the list item\'s margin.');
 
         $this->assertStringContainsString('.pg-examples.has-more-right', $stylesheet);
         $this->assertStringContainsString('.pg-examples.has-more-left', $stylesheet);
@@ -607,44 +604,52 @@ final class PlaygroundLayoutTest extends TestCase
             $this->assertInstanceOf(\DOMElement::class, $column);
             $classes[] = explode(' ', $column->getAttribute('class'))[0];
         }
-        $this->assertSame(['pg-listing-tab', 'pg-listing-rail', 'pg-examples', 'pg-main', 'pg-results', 'pg-loader'], $classes, 'The fold tab and its rail of avatars ride the body\'s edge; the columns read in the order of the markup: the examples, the fields, the answers.');
+        $this->assertSame(['pg-main', 'pg-results', 'pg-loader'], $classes, 'The body holds two panes and the loader, in the order they read: the text, the answers.');
     }
 
     /**
-     * A column of examples beside the fields: one click loads a pattern
-     * and its text. The pattern rides under the name — spelled in the
-     * mono voice, hidden where the column folds back into a row — and the
-     * window holds its three columns only where they fit; below that the
-     * list is one row above the fields, which scrolls under its fade.
+     * The quick patterns are a row under the pattern, not a column beside
+     * the work: one click loads a pattern and its text. A chip never
+     * folds its name over two lines, and a row that scrolls fades on the
+     * edge where more patterns wait, as the strip of tabs does. The
+     * pattern under the name stays in the chip's words, read as its own
+     * by a voice, out of the eye's way.
      */
     #[Test]
-    public function test_the_examples_stand_in_their_own_column(): void
+    public function test_the_quick_patterns_stand_in_a_row_of_their_own(): void
     {
         $xpath = self::include();
 
-        $examples = $xpath->query(self::byClass('pg-examples').'/li/'.self::self('pg-example'));
+        $examples = $xpath->query(self::byClass('pg-quickbar').'/ul'.self::has('pg-examples').'/li/'.self::self('pg-example'));
         $this->assertNotFalse($examples);
-        $this->assertGreaterThanOrEqual(10, $examples->length, 'A column is worth a list: the examples are many.');
+        $this->assertGreaterThanOrEqual(10, $examples->length, 'A row is worth a list: the patterns are many.');
         foreach ($examples as $example) {
             $this->assertInstanceOf(\DOMElement::class, $example);
             $name = $xpath->evaluate('string(.//*[contains(concat(" ", normalize-space(@class), " "), " pg-example-name ")])', $example);
-            $this->assertNotSame('', $name, 'Every example is named.');
+            $this->assertIsString($name);
+            $this->assertNotSame('', $name, 'Every pattern is named.');
             $pattern = $xpath->evaluate('string(.//*[contains(concat(" ", normalize-space(@class), " "), " pg-example-pattern ")])', $example);
             $this->assertSame($example->getAttribute('data-regex'), $pattern, 'The line under the name is the pattern the click loads.');
             $this->assertNotSame('', $example->getAttribute('data-regex'));
-            $this->assertNotSame('', $example->getAttribute('data-subject'), 'An example carries its own text to match against.');
+            $this->assertNotSame('', $example->getAttribute('data-subject'), 'A pattern carries its own text to match against.');
             $this->assertSame($example->getAttribute('data-regex'), $example->getAttribute('title'), 'The tooltip says the whole pattern.');
         }
 
         $stylesheet = self::source(self::STYLESHEET);
-        $this->assertSame(1, preg_match('/\.pg-example-pattern \{\s*display: none;/', $stylesheet), 'The pattern line waits for the column to have room.');
-        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-body \{([^}]*)\}/', $stylesheet, $wide), 'The widest screens give the body its three columns.');
-        $this->assertSame(1, preg_match('/grid-template-columns:\s*minmax\([^;]*\)\s+minmax\(0, 2fr\)\s+minmax\(0, 3fr\);/', $wide[1]), 'Examples, fields, answers — three tracks.');
-        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-example \{([^}]*)\}/', $stylesheet, $box), 'One column, one size of box.');
-        $this->assertStringContainsString('width: 100%;', $box[1], 'A box fills its item: no example shrinks to its name.');
-        $this->assertSame(1, preg_match('/@media \(max-width: 1279px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \{([^}]*)\}/', $stylesheet, $narrow), 'Wherever the column folds back, phones, tablets and laptops keep one row: the list scrolls under its fade, the fields stay near — five wrapped rows pushed the pattern a hand down.');
-        $this->assertStringContainsString('flex-wrap: nowrap;', $narrow[1]);
-        $this->assertStringContainsString('overflow-x: auto;', $narrow[1]);
+        $this->assertSame(1, preg_match('/^\.pg-examples \{([^}]*)\}/m', $stylesheet, $row), 'The row\'s own rule exists.');
+        $this->assertStringContainsString('flex-wrap: nowrap;', $row[1], 'One line of chips, at every width.');
+        $this->assertStringContainsString('overflow-x: auto;', $row[1], 'The row scrolls, never stacks.');
+        $this->assertSame(1, preg_match('/^\.pg-example \{([^}]*)\}/m', $stylesheet, $chip));
+        $this->assertStringContainsString('white-space: nowrap;', $chip[1], 'A name never wraps at its space.');
+        $this->assertStringContainsString('flex: none;', $chip[1], 'A chip never shrinks below its name.');
+        $this->assertSame(1, preg_match('/^\.pg-examples \.pg-example-pattern \{([^}]*)\}/m', $stylesheet, $pattern), 'The pattern line waits for a place of its own.');
+        $this->assertStringContainsString('clip-path: inset(50%);', $pattern[1], 'Hidden from the eye, still read as the chip\'s own words.');
+
+        $this->assertStringContainsString('.pg-examples.has-more-right', $stylesheet);
+        $this->assertStringContainsString('.pg-examples.has-more-left', $stylesheet);
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString('function syncExampleFades() {', $script);
+        $this->assertStringContainsString("el.examplesList.addEventListener('scroll', syncExampleFades, { passive: true });", $script);
     }
 
     /**
@@ -661,17 +666,17 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringNotContainsString('pg-tool-matches', self::source(self::INCLUDE), 'The matches live in the text field; no tab holds them anymore.');
 
         $stylesheet = self::source(self::STYLESHEET);
-        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-main \{([^}]*)\}/', $stylesheet, $main), 'The writing column stretches on a wide screen.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1024px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-main \{([^}]*)\}/', $stylesheet, $main), 'The writing pane stretches wherever the panes stand side by side.');
         $this->assertStringContainsString('align-self: stretch;', $main[1]);
         $this->assertStringContainsString('grid-template-rows: minmax(0, 1fr) auto;', $main[1], 'The text field takes whatever height the answers leave; the pattern has a row of its own above the columns.');
-        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-editor-subject \.pg-input \{([^}]*)\}/', $stylesheet, $input), 'The text input fills its editor on a wide screen.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1024px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-editor-subject \.pg-input \{([^}]*)\}/', $stylesheet, $input), 'The text input fills its editor on a wide screen.');
         $this->assertStringContainsString('height: 100%;', $input[1]);
         $this->assertStringContainsString('max-height: none;', $input[1], 'No cap cuts the fill short.');
-        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-editor-subject \.pg-mirror \{([^}]*)\}/', $stylesheet, $mirror), 'The mirror drops its floor with the input: an opened match list shrinks both.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1024px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-editor-subject \.pg-mirror \{([^}]*)\}/', $stylesheet, $mirror), 'The mirror drops its floor with the input: an opened match list shrinks both.');
         $this->assertStringContainsString('min-height: 0;', $mirror[1]);
 
         $script = self::source(self::SCRIPT);
-        $this->assertStringContainsString("matchMedia('(min-width: 1280px)').matches", $script, 'The auto-size yields to the stylesheet exactly where the fill begins.');
+        $this->assertStringContainsString("matchMedia('(min-width: 1024px)').matches", $script, 'The auto-size yields to the stylesheet exactly where the fill begins, at the width the panes stand side by side.');
     }
 
     /**
