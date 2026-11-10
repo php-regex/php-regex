@@ -37,12 +37,18 @@ use PHPRegex\Parser\Hir\RepetitionHir;
 final class RewriteSites
 {
     /**
+     * The cells the alignment tables of one comparison may fill, all of its
+     * sites together.
+     */
+    private const MAX_ALIGNMENT_CELLS = 65_536;
+
+    /**
      * @var list<array{Hir, Hir, bool, bool}>
      */
     private array $sites = [];
 
     // Bound both retained table cells and total alignment work across sites.
-    private int $alignmentCellsRemaining = 65_536;
+    private int $alignmentCellsRemaining = self::MAX_ALIGNMENT_CELLS;
 
     private bool $insideLookbehind = false;
 
@@ -209,7 +215,7 @@ final class RewriteSites
         [$leftCount, $rightCount] = [\count($left), \count($right)];
         // Check before shaping or allocating, using division to avoid overflow.
         if ($leftCount + 1 > intdiv($this->alignmentCellsRemaining, $rightCount + 1)) {
-            throw new ComplexityException('Rewrite alignment cell budget exceeded (65536).');
+            throw new ComplexityException(\sprintf('Rewrite alignment cell budget exceeded (%d).', self::MAX_ALIGNMENT_CELLS));
         }
         $this->alignmentCellsRemaining -= ($leftCount + 1) * ($rightCount + 1);
 
