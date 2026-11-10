@@ -3883,42 +3883,6 @@ return [
             ],
         ],
     ],
-    'a hundred bodies deep' => [
-        'pattern' => '/(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:a))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))/',
-        'reads' => [
-            [
-                'releases' => ['10.44', '10.49'],
-                'compiles' => true,
-                'tokens' => [['pcre_verb', 'pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:a)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))', 0, 701], ['eof', '', 701, 0]],
-                'tree' => 'bc952e75d5815eb1',
-                'error' => null,
-            ],
-        ],
-    ],
-    'a hundred bodies deep around a class left open' => [
-        'pattern' => '/(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:[a))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))/',
-        'reads' => [
-            [
-                'releases' => ['10.44', '10.49'],
-                'compiles' => false,
-                'tokens' => 'regex.charclass.unclosed@702: Unclosed character class "]" at end of input.',
-                'tree' => 'regex.charclass.unclosed@702: Unclosed character class "]" at end of input.',
-                'error' => 'regex.charclass.unclosed@702: Unclosed character class "]" at end of input.',
-            ],
-        ],
-    ],
-    'three hundred bodies deep' => [
-        'pattern' => '/(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:a))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))/',
-        'reads' => [
-            [
-                'releases' => ['10.44', '10.49'],
-                'compiles' => false,
-                'tokens' => [['pcre_verb', 'pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:(*pla:a)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))', 0, 2101], ['eof', '', 2101, 0]],
-                'tree' => '47795e75804a001a',
-                'error' => 'regex.group.nested_too_deep@1506: Parentheses are nested too deeply: PCRE allows at most 250 levels.',
-            ],
-        ],
-    ],
     'error after two bodies' => [
         'pattern' => '/(*pla:(*pla:a))b)/',
         'reads' => [

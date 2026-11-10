@@ -33,9 +33,10 @@ use PHPUnit\Framework\TestCase;
  *
  * The rows of the fixture hold what each pattern read as when every level
  * kept a copy of its body: each construct a body may hold, two and three
- * bodies deep, valid or not, with and without "x", as bytes and under "u".
- * Whether a pattern compiles was read from the engine, PHP 8.4 on PCRE2
- * 10.44 and on PCRE2 10.49, and is asked again where one of them runs.
+ * bodies deep, valid or not, with and without "x", as bytes and under "u";
+ * the rows nested a hundred bodies deep and more are built here. Whether a
+ * pattern compiles was read from the engine, PHP 8.4 on PCRE2 10.44 and on
+ * PCRE2 10.49, and is asked again where one of them runs.
  */
 final class NestedAssertionBodyTest extends TestCase
 {
@@ -48,6 +49,7 @@ final class NestedAssertionBodyTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideNestedBodies')]
+    #[DataProvider('provideBodiesNestedDeep')]
     public function test_parser_reads_a_nested_body_as_it_did_from_a_copy(string $pattern, string $release, bool $compiles, array|string $tokens, string $tree, ?string $error): void
     {
         $parser = self::parserFor($release);
@@ -108,11 +110,48 @@ final class NestedAssertionBodyTest extends TestCase
     }
 
     /**
+     * PCRE compiles parentheses nested 250 deep at most.
+     *
+     * @return iterable<string, array{pattern: string, release: string, compiles: bool, tokens: list<array{0: string, 1: string, 2: int, 3: int}>|string, tree: string, error: string|null}>
+     */
+    public static function provideBodiesNestedDeep(): iterable
+    {
+        $nested = static fn (int $depth, string $body): string => str_repeat('(*pla:', $depth).$body.str_repeat(')', $depth);
+
+        foreach (['10.44', '10.49'] as $release) {
+            yield 'a hundred bodies deep, PCRE2 '.$release => [
+                'pattern' => '/'.$nested(100, 'a').'/',
+                'release' => $release,
+                'compiles' => true,
+                'tokens' => [['pcre_verb', substr($nested(100, 'a'), 2, -1), 0, 701], ['eof', '', 701, 0]],
+                'tree' => 'bc952e75d5815eb1',
+                'error' => null,
+            ];
+            yield 'a hundred bodies deep around a class left open, PCRE2 '.$release => [
+                'pattern' => '/'.$nested(100, '[a').'/',
+                'release' => $release,
+                'compiles' => false,
+                'tokens' => 'regex.charclass.unclosed@702: Unclosed character class "]" at end of input.',
+                'tree' => 'regex.charclass.unclosed@702: Unclosed character class "]" at end of input.',
+                'error' => 'regex.charclass.unclosed@702: Unclosed character class "]" at end of input.',
+            ];
+            yield 'three hundred bodies deep, PCRE2 '.$release => [
+                'pattern' => '/'.$nested(300, 'a').'/',
+                'release' => $release,
+                'compiles' => false,
+                'tokens' => [['pcre_verb', substr($nested(300, 'a'), 2, -1), 0, 2101], ['eof', '', 2101, 0]],
+                'tree' => '47795e75804a001a',
+                'error' => 'regex.group.nested_too_deep@1506: Parentheses are nested too deeply: PCRE allows at most 250 levels.',
+            ];
+        }
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, release: string, compiles: bool}>
      */
     public static function provideEngineVerdicts(): iterable
     {
-        foreach (self::provideNestedBodies() as $name => $row) {
+        foreach ([...self::provideNestedBodies(), ...self::provideBodiesNestedDeep()] as $name => $row) {
             yield $name => ['pattern' => $row['pattern'], 'release' => $row['release'], 'compiles' => $row['compiles']];
         }
     }
@@ -233,12 +272,16 @@ final class NestedAssertionBodyTest extends TestCase
 
     /**
      * Each level kept three copies of its body while the levels inside it
-     * were read. Measured then on PHP 8.4, "(*pla:" nested 300 then 1 200
-     * deep around "a": 4.6 MB then 33.2 MB at the peak, seven times as
-     * much for four times the pattern, and nine times as much under the
-     * longer "(*negative_lookbehind:". PCRE refuses parentheses nested
-     * deeper than 250, which the parser leaves to validation: only the
-     * memory of reading the pattern counts here.
+     * were read. Measured then on PHP 8.4, "(*pla:" nested 100 then 400
+     * deep, a comment of 150 bytes at each level: 4.0 MB then 44.4 MB at
+     * the peak, eleven times as much for four times the pattern. PCRE
+     * refuses parentheses nested deeper than 250, which the parser leaves
+     * to validation: only the memory of reading the pattern counts here.
+     *
+     * The comments make the text weigh more than the frames of the calls
+     * that read it, and the depths stay low: PHP 8.6 counts those frames
+     * past some nine hundred levels only, which bends a ratio taken across
+     * that depth.
      */
     #[Test]
     #[DataProvider('provideNestedOpeners')]
@@ -246,10 +289,11 @@ final class NestedAssertionBodyTest extends TestCase
     {
         $this->requiresPhp('8.2', 'The peak memory of a parse', 'has no memory_reset_peak_usage()');
 
-        $shallow = self::peakOfParsing('/'.str_repeat($opener, 300).'a'.str_repeat(')', 300).'/');
-        $deep = self::peakOfParsing('/'.str_repeat($opener, 1_200).'a'.str_repeat(')', 1_200).'/');
+        $pattern = static fn (int $depth): string => '/'.str_repeat($opener.'(?#'.str_repeat('c', 150).')', $depth).str_repeat(')', $depth).'/';
+        $shallow = self::peakOfParsing($pattern(100));
+        $deep = self::peakOfParsing($pattern(400));
 
-        $this->assertLessThan(5 * $shallow, $deep, \sprintf('The peak grew from %.1f MB at 300 levels to %.1f MB at 1 200.', $shallow / 1_048_576, $deep / 1_048_576));
+        $this->assertLessThan(5 * $shallow, $deep, \sprintf('The peak grew from %.1f MB at 100 levels to %.1f MB at 400.', $shallow / 1_048_576, $deep / 1_048_576));
     }
 
     /**
@@ -291,21 +335,27 @@ final class NestedAssertionBodyTest extends TestCase
      */
     private static function peakOfParsing(string $pattern): int
     {
-        $parser = RegexParser::create(['cache' => null, 'max_recursion_depth' => 2_000]);
-        // The classes are loaded and the token regexes compiled before the
-        // measure.
-        $parser->parse('/(*pla:(?*(*asr:(*atomic:a(?#b)))))/');
+        $parser = RegexParser::create(['cache' => null]);
+        // Read once before the measure: the classes are loaded, the token
+        // regexes compiled, and what PHP keeps between two calls as deep is
+        // there.
+        self::parseOrRefuse($parser, $pattern);
         gc_collect_cycles();
         PeakMemory::reset();
         $before = memory_get_usage();
 
+        self::parseOrRefuse($parser, $pattern);
+
+        return memory_get_peak_usage() - $before;
+    }
+
+    private static function parseOrRefuse(RegexParser $parser, string $pattern): void
+    {
         try {
             $parser->parse($pattern);
         } catch (RegexException) {
             // A refusal ends the reading: only its memory counts.
         }
-
-        return memory_get_peak_usage() - $before;
     }
 
     private static function parserFor(string $release): RegexParser
