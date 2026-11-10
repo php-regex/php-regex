@@ -82,9 +82,7 @@ final class ResolutionLimitsTest extends TestCase
         }
         $file = $this->makeProject(['same.php' => $code."}\n"]).'/same.php';
 
-        $start = CpuClock::nanoseconds();
-        $patterns = self::patterns($strategy, $file);
-        $elapsed = (CpuClock::nanoseconds() - $start) / 1e9;
+        $patterns = CpuClock::timed(static fn () => self::patterns($strategy, $file), $elapsed);
 
         $this->assertCount($calls, $patterns);
 

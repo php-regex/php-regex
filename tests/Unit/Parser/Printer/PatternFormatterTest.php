@@ -878,15 +878,14 @@ final class PatternFormatterTest extends TestCase
         $formatter = new PatternFormatter();
         $formatter->{$operation}($this->parse('/\.\./'));
 
-        $start = CpuClock::nanoseconds();
-        $formatter->{$operation}($short);
-        $shortTime = CpuClock::nanoseconds() - $start;
+        $shortTime = CpuClock::time(static function () use ($formatter, $operation, $short): void {
+            $formatter->{$operation}($short);
+        });
+        $longTime = CpuClock::time(static function () use ($formatter, $operation, $long): void {
+            $formatter->{$operation}($long);
+        });
 
-        $start = CpuClock::nanoseconds();
-        $formatter->{$operation}($long);
-        $longTime = CpuClock::nanoseconds() - $start;
-
-        $this->assertLessThan(10, $longTime / max(1, $shortTime), \sprintf('%s: %.0f ms for 5,000 escapes, %.0f ms for 20,000.', $operation, $shortTime / 1e6, $longTime / 1e6));
+        $this->assertLessThan(10, $longTime / max(1e-9, $shortTime), \sprintf('%s: %.0f ms for 5,000 escapes, %.0f ms for 20,000.', $operation, $shortTime * 1e3, $longTime * 1e3));
     }
 
     /**
@@ -1496,9 +1495,7 @@ final class PatternFormatterTest extends TestCase
         $pattern = '{'.str_repeat('\Q{\E.\Q}\E.', 8000).'}';
         $regex = $this->parse($pattern);
 
-        $start = CpuClock::nanoseconds();
-        $result = (new PatternFormatter())->compact($regex);
-        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+        $result = CpuClock::timed(static fn () => (new PatternFormatter())->compact($regex), $seconds);
 
         $this->assertLessThan(3.0, $seconds, \sprintf('compact took %.1f s.', $seconds));
         $this->assertSame(1, preg_match($result->pattern, str_repeat('{a}b', 8000)), 'The output matches as the input does.');
