@@ -223,6 +223,12 @@ final class InFileValueResolver
     private array $folding = [];
 
     /**
+     * @var array<string, array{int, list<ValueExpr>, int}> constant => the depth its reading was cut short from, what
+     *                                                      it gave from there and the constants it went through
+     */
+    private array $cutShort = [];
+
+    /**
      * @var array<string, array<int, array<string, ValueExpr>>> file ("" for this one) => offset => pattern => the literal already reported
      */
     private array $reported = [];
@@ -1093,6 +1099,16 @@ final class InFileValueResolver
             return [self::rawHole()];
         }
 
+        // A reading that was cut short gives no more from as far or
+        // farther: it is not made again, or constants that each name the
+        // one before twice would double the work at each of them.
+        if (isset($this->cutShort[$key]) && $depth >= $this->cutShort[$key][0]) {
+            $this->cuts++;
+            [, $resolved, $height] = $this->cutShort[$key];
+
+            return $resolved;
+        }
+
         $cuts = $this->cuts;
         $this->folding[$key] = true;
         $below = 0;
@@ -1101,9 +1117,12 @@ final class InFileValueResolver
         $height = $below + 1;
 
         // A value a guard cut short is the value from this depth: read
-        // from nearer the call, the constant may give more. It is not kept.
+        // from nearer the call, the constant may give more. It is kept
+        // for this depth and beyond only.
         if ($cuts === $this->cuts) {
             $this->folded[$key] = [$resolved, $height];
+        } else {
+            $this->cutShort[$key] = [$depth, $resolved, $height];
         }
 
         return $resolved;
