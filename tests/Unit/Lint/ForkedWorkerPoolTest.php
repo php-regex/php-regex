@@ -1006,9 +1006,13 @@ final class ForkedWorkerPoolTest extends TestCase
      * sleeps for longer than the deadline of the run, then leaves a file: a
      * run that waits for it outlasts the deadline, and a worker let finish
      * its chunk leaves the file. No time is read.
+     *
+     * Without posix_kill() the pool has no way to end a worker, and waits
+     * for it.
      */
     #[Test]
     #[RequiresFunction('pcntl_fork')]
+    #[RequiresFunction('posix_kill')]
     #[DataProvider('provideParentSigterm')]
     public function test_run_ends_a_busy_worker_whatever_the_parent_does_with_sigterm(string $parent): void
     {
