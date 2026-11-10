@@ -15,7 +15,9 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Toolkit\Regex;
@@ -121,6 +123,148 @@ final class LengthRangeCalculatorTest extends TestCase
         $visitor = new LengthRangeCalculator(calledBody: static fn (SubroutineNode $call): ?NodeInterface => null);
 
         $this->assertSame([3, null], $ast->accept($visitor));
+    }
+
+    #[Test]
+    public function test_shared_subroutine_bodies_are_measured_once(): void
+    {
+        $bodies = [new LiteralNode('a', 0, 1)];
+        for ($level = 1; $level <= 20; $level++) {
+            $bodies[] = new SequenceNode([
+                new SubroutineNode((string) ($level - 1), '', 0, 0),
+                new SubroutineNode((string) ($level - 1), '', 0, 0),
+            ], 0, 0);
+        }
+        $calls = 0;
+        $visitor = new LengthRangeCalculator(calledBody: function (SubroutineNode $call) use ($bodies, &$calls): NodeInterface {
+            $this->assertLessThanOrEqual(40, ++$calls, 'Shared bodies must not be expanded at every call site.');
+
+            return $bodies[(int) $call->reference];
+        });
+
+        $this->assertSame([1048576, 1048576], $bodies[20]->accept($visitor));
+    }
+
+    #[Test]
+    public function test_capture_shape_measures_a_compact_subroutine_graph(): void
+    {
+        $definitions = '(?<g0>a)';
+        for ($level = 1; $level <= 10; $level++) {
+            $previous = $level - 1;
+            $definitions .= '(?<g'.$level.'>(?&g'.$previous.')(?&g'.$previous.'))';
+        }
+        $pattern = '/(?(DEFINE)'.$definitions.')(?&g10)/';
+        $subject = str_repeat('a', 1024);
+        $this->assertSame(1, preg_match($pattern, $subject));
+
+        $whole = Regex::create(['cache' => null])->captureShape($pattern)->whole;
+
+        $this->assertSame(1024, $whole->minLength);
+        $this->assertSame(1024, $whole->maxLength);
+    }
+
+    #[Test]
+    public function test_length_work_budget_returns_conservative_bounds(): void
+    {
+        $children = [];
+        for ($i = 0; $i < 100001; $i++) {
+            $children[] = new LiteralNode('a', 0, 1);
+        }
+        // Accepted directly, the sequence is not one of the nodes measured:
+        // all 100,000 measured are letters. Through a RegexNode the sequence
+        // counts too, and 99,999 letters are.
+        [$min, $max] = (new SequenceNode($children, 0, 0))->accept(new LengthRangeCalculator());
+
+        $this->assertSame(100000, $min);
+        $this->assertNull($max);
+    }
+
+    /**
+     * The budget is one pattern's: a visitor that ran out of it on one
+     * pattern measures the next one in full.
+     */
+    #[Test]
+    public function test_length_work_budget_starts_again_with_each_pattern(): void
+    {
+        $children = [];
+        for ($i = 0; $i < 100001; $i++) {
+            $children[] = new LiteralNode('a', 0, 1);
+        }
+        $visitor = new LengthRangeCalculator();
+
+        // The sequence is one of the 100,000 nodes measured: 99,999 letters are.
+        $this->assertSame([99999, null], (new RegexNode(new SequenceNode($children, 0, 0), '', '/', 0, 0))->accept($visitor));
+        $this->assertSame([2, 2], (new RegexNode(new SequenceNode([new LiteralNode('a', 0, 1), new LiteralNode('b', 1, 2)], 0, 2), '', '/', 0, 0))->accept($visitor));
+    }
+
+    #[Test]
+    public function test_endless_subroutine_chain_stops_at_the_call_depth_limit(): void
+    {
+        $calls = 0;
+        $visitor = new LengthRangeCalculator(calledBody: function (SubroutineNode $call) use (&$calls): NodeInterface {
+            $this->assertLessThanOrEqual(1024, ++$calls);
+
+            return new SubroutineNode('next', '', 0, 0);
+        });
+
+        $this->assertSame([0, null], (new SubroutineNode('start', '', 0, 0))->accept($visitor));
+        $this->assertSame(1024, $calls);
+    }
+
+    #[Test]
+    public function test_capture_shape_measures_many_calls_in_a_row(): void
+    {
+        $pattern = '/(?(DEFINE)(?<a>a))'.str_repeat('(?&a)', 1100).'/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 1100), $match));
+        $this->assertSame(1100, \strlen($match[0]));
+
+        $whole = Regex::create(['cache' => null])->captureShape($pattern)->whole;
+
+        $this->assertSame(1100, $whole->minLength);
+        $this->assertSame(1100, $whole->maxLength);
+    }
+
+    #[Test]
+    public function test_deeply_nested_groups_keep_their_exact_length(): void
+    {
+        // Two hundred nested groups compile: PCRE2 refuses a nesting past 250.
+        $pattern = '/'.str_repeat('(?:b', 200).'a'.str_repeat(')', 200).'/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('b', 200).'a', $match));
+        $this->assertSame(201, \strlen($match[0]));
+
+        $this->assertSame([201, 201], Regex::create()->parse($pattern)->accept(new LengthRangeCalculator()));
+    }
+
+    #[Test]
+    public function test_capture_shape_measures_a_long_subroutine_chain(): void
+    {
+        $definitions = '(?<g0>a)';
+        for ($link = 1; $link <= 200; $link++) {
+            $definitions .= '(?<g'.$link.'>b(?&g'.($link - 1).'))';
+        }
+        $pattern = '/(?(DEFINE)'.$definitions.')(?&g200)/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('b', 200).'a', $match));
+        $this->assertSame(201, \strlen($match[0]));
+
+        $whole = Regex::create(['cache' => null])->captureShape($pattern)->whole;
+
+        $this->assertSame(201, $whole->minLength);
+        $this->assertSame(201, $whole->maxLength);
+    }
+
+    #[Test]
+    public function test_cache_is_reset_when_pattern_unicode_mode_changes(): void
+    {
+        // The engine reads "é" as two bytes without "u", as one character with it.
+        $this->assertSame([1, 0], [preg_match('/^..$/s', 'é'), preg_match('/^.$/s', 'é')]);
+        $this->assertSame([0, 1], [preg_match('/^..$/su', 'é'), preg_match('/^.$/su', 'é')]);
+        $body = new LiteralNode('é', 0, 2);
+        $call = new SubroutineNode('body', '', 0, 0);
+        $visitor = new LengthRangeCalculator(calledBody: static fn (SubroutineNode $call): NodeInterface => $body);
+
+        $this->assertSame([2, 2], (new RegexNode($call, '', '/', 0, 0))->accept($visitor));
+        $this->assertSame([1, 1], (new RegexNode($call, 'u', '/', 0, 0))->accept($visitor));
+        $this->assertSame([2, 2], (new RegexNode($call, '', '/', 0, 0))->accept($visitor));
     }
 
     #[Test]
