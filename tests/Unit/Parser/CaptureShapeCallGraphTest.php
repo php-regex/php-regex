@@ -45,7 +45,8 @@ final class CaptureShapeCallGraphTest extends TestCase
     /**
      * Each level calls the level below twice: entering every call reads
      * 2^depth bodies, and twenty levels a million of them. A fact is read
-     * once per body, so the bodies read grow with the depth alone.
+     * once per body, so the bodies read grow with the depth alone. The
+     * pattern is marked first, as the analysis marks it before it reads.
      */
     #[Test]
     #[DataProvider('provideDoublingGraphs')]
@@ -54,6 +55,8 @@ final class CaptureShapeCallGraphTest extends TestCase
         foreach ([10, 20] as $depth) {
             $ast = RegexParser::create()->parse('/(?(DEFINE)'.self::levels($depth, $leaf, $level).')(?&g'.$depth.')/');
             $facts = new CaptureFacts(groups: GroupIndex::of($ast->pattern));
+            $facts->markAtStart($ast->pattern);
+            $facts->markAtEnd($ast->pattern);
             $facts->of($ast->pattern);
             $facts->of($ast->pattern, true);
 

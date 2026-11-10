@@ -164,6 +164,11 @@ final class CaptureFacts
     private array $calledValues = [];
 
     /**
+     * A node was marked since the called bodies were last read.
+     */
+    private bool $marked = false;
+
+    /**
      * How many times the body of a called group was read.
      */
     private int $bodiesRead = 0;
@@ -283,7 +288,7 @@ final class CaptureFacts
     public function markAtStart(NodeInterface $node): void
     {
         $this->atStart[spl_object_id($node)] = true;
-        $this->forgetCalled();
+        $this->marked = true;
     }
 
     /**
@@ -302,7 +307,7 @@ final class CaptureFacts
     public function markAtEnd(NodeInterface $node): void
     {
         $this->atEnd[spl_object_id($node)] = true;
-        $this->forgetCalled();
+        $this->marked = true;
     }
 
     /**
@@ -430,6 +435,7 @@ final class CaptureFacts
      */
     private function calledValues(NodeInterface $body, bool $scan): ?array
     {
+        $this->forgetOnceMarked();
         $mode = (int) $scan;
         $id = spl_object_id($body);
         if (!\array_key_exists($id, $this->calledValues[$mode] ?? [])) {
@@ -448,6 +454,7 @@ final class CaptureFacts
      */
     private function calledFact(string $fact, NodeInterface $body, \Closure $read): bool
     {
+        $this->forgetOnceMarked();
         $id = spl_object_id($body);
         if (!isset($this->calledFacts[$fact][$id])) {
             $this->bodiesRead++;
@@ -458,14 +465,18 @@ final class CaptureFacts
     }
 
     /**
-     * Forgets what the called bodies read. A mark moves what an alternation
-     * reads where it stands, and the analysis marks the nodes of each case
-     * it reads: a body kept from one case would read in the next what it
-     * no longer reads there.
+     * Forgets what the called bodies read once a node was marked. A mark
+     * moves what an alternation reads where it stands, and the analysis
+     * marks the nodes of each case it reads: a body kept from one case
+     * would read in the next what it no longer reads there. A pattern
+     * that calls no group pays one flag per mark.
      */
-    private function forgetCalled(): void
+    private function forgetOnceMarked(): void
     {
-        $this->calledFacts = $this->calledValues = [];
+        if ($this->marked) {
+            $this->calledFacts = $this->calledValues = [];
+            $this->marked = false;
+        }
     }
 
     private function readsCaselessly(NodeInterface $node): bool
