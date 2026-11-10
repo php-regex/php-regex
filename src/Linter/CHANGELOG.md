@@ -6,6 +6,14 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The diff of a suggested rewrite skips the lines both sides share at the
+   start and at the end before it looks for the longest run of kept lines:
+   a 10,000-line pattern with one line changed took 15 seconds and 2.6 GB,
+   it takes milliseconds. When the table of the changed lines left in the
+   middle, one row and one column more than their counts, would hold more
+   than 65,536 cells (255 lines against 255 fit, 256 against 255 do not),
+   they are shown deleted then inserted whole, without the lines they share
+   kept between the changes.
  * The value of a property read through `$this` looks into each trait of the
    file once when it checks for a trait the file does not declare: forty traits
    that each use the two before them no longer take exponential time to lint.
