@@ -73,6 +73,17 @@ final class ByteCharSet
         return $this->unknown;
     }
 
+    /**
+     * The inclusive ranges of byte values the set holds; none when the
+     * set is not known.
+     *
+     * @return array<array{0:int, 1:int}>
+     */
+    public function ranges(): array
+    {
+        return $this->ranges;
+    }
+
     public function union(self $other): self
     {
         if ($this->unknown || $other->unknown) {
