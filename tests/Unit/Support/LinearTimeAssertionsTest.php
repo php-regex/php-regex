@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Support;
 
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPUnit\Framework\Attributes\Test;
@@ -79,6 +80,54 @@ final class LinearTimeAssertionsTest extends TestCase
         }
 
         $this->assertTrue(gc_enabled(), 'The collector was not given back.');
+    }
+
+    /**
+     * getrusage() may fail, and the clock then throws: before the work or
+     * after it, the collector is given back. Read in a process of its own,
+     * where the function is replaced before the clock first calls it.
+     */
+    #[Test]
+    public function test_the_collector_is_given_back_when_the_clock_cannot_be_read(): void
+    {
+        $code = <<<'PHP_WRAP'
+            namespace PHPRegex\Tests\Support {
+                function getrusage(int $mode = 0): array|false
+                {
+                    return false;
+                }
+            }
+        
+            namespace {
+                require $argv[1];
+                gc_enable();
+        
+                try {
+                    PHPRegex\Tests\Support\CpuClock::time(static function (): void {});
+                    echo 'The clock was read.';
+                } catch (RuntimeException $e) {
+                    echo $e->getMessage();
+                }
+                echo "\n", gc_enabled() ? 'collecting' : 'held';
+            }
+            PHP_WRAP;
+
+        $process = proc_open(
+            [\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'xdebug.mode=off', '-r', $code, \dirname(__DIR__, 3).'/vendor/autoload.php'],
+            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+        );
+        $this->assertIsResource($process);
+        fclose($pipes[0]);
+        $output = (string) stream_get_contents($pipes[1]);
+        $errors = (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $this->assertSame(0, proc_close($process), $output.$errors);
+
+        // Windows reads the wall clock, which does not fail.
+        $read = Path::onWindows() ? 'The clock was read.' : 'getrusage() failed: the CPU time of the process cannot be read.';
+        $this->assertSame($read."\ncollecting", $output, $errors);
     }
 
     /**

@@ -96,15 +96,20 @@ final class CpuClock
      */
     public static function timed(\Closure $work, ?float &$seconds = null): mixed
     {
+        $seconds = 0.0;
         $collects = gc_enabled();
         gc_collect_cycles();
         gc_disable();
-        $start = self::nanoseconds();
 
+        // The clock itself may fail: the collector is given back whatever
+        // throws, the work or a reading, and no time is told then.
         try {
-            return $work();
-        } finally {
+            $start = self::nanoseconds();
+            $result = $work();
             $seconds = (self::nanoseconds() - $start) / 1e9;
+
+            return $result;
+        } finally {
             if ($collects) {
                 gc_enable();
             }
