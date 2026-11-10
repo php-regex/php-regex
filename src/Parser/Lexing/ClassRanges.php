@@ -29,35 +29,38 @@ use PHPRegex\Parser\Token\TokenType;
  *
  * It reads the tokens of the class, the text they were read from, and
  * whether PCRE reads it as UTF-8 or as bytes, which decides the character a
- * multibyte bound names; it keeps nothing.
+ * multibyte bound names. Range-end queries retain their state for one
+ * tokenizing, consuming only tokens appended since the previous query.
  *
  * @internal
  */
 final class ClassRanges
 {
+    private int $tokensRead = 0;
+
+    private string $rangeState = 'none';
+
     /**
      * Whether the escape at $position, in a class of PCRE2 10.32, ends a
      * range: a character, then a "-" that starts a range from it. A class
      * escape there is refused, and read as its letter under
      * PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL.
      *
-     * @param list<Token> $tokens     the tokens read before $position
+     * @param list<Token> $tokens     append-only tokens of one tokenizing, read before $position
      * @param int|null    $classStart where the innermost class open opens, null outside a class
      */
-    public static function startsRangeEnd(PatternText $text, array $tokens, int $position, ?int $classStart): bool
+    public function startsRangeEnd(PatternText $text, array $tokens, int $position, ?int $classStart): bool
     {
         // Only a class escape may be refused there; a character never is.
         if (!$text->syntax->classBadEscapeReadAsLetter || null === $classStart || !str_contains(BadEscape::CLASS_ESCAPE_LETTERS, $text->pattern[$position + 1] ?? '')) {
             return false;
         }
 
-        $first = \count($tokens);
-        while ($first > 0 && !(TokenType::CharClassOpen === $tokens[$first - 1]->type && $tokens[$first - 1]->position === $classStart)) {
-            $first--;
-        }
-
-        $state = 'none';
-        foreach (\array_slice($tokens, $first) as $token) {
+        // The lexer only appends tokens. A class opener resets the state,
+        // so a later class cannot inherit a range from an earlier one.
+        $state = $this->rangeState;
+        for ($count = \count($tokens); $this->tokensRead < $count; $this->tokensRead++) {
+            $token = $tokens[$this->tokensRead];
             $state = match ($token->type) {
                 TokenType::QuoteModeStart, TokenType::QuoteModeEnd, TokenType::Negation => $state,
                 TokenType::Range => match ($state) {
@@ -73,6 +76,8 @@ final class ClassRanges
                 default => 'none',
             };
         }
+
+        $this->rangeState = $state;
 
         return 'range' === $state;
     }

@@ -48,6 +48,11 @@ final class Language
      */
     private array $moves = [];
 
+    /**
+     * @var array<int, array<int, int>> per state, how many characters lead to each state a string is accepted from
+     */
+    private array $charactersTo = [];
+
     private ?CharSet $universe = null;
 
     /**
@@ -111,7 +116,7 @@ final class Language
      */
     public function countOfLength(int $length): string
     {
-        return self::decimal($this->countsUpTo($length)[$length]);
+        return $length < 0 ? '0' : self::decimal($this->count($length));
     }
 
     /**
@@ -125,12 +130,7 @@ final class Language
             return $this->isEmpty() ? '0' : null;
         }
 
-        $total = [0];
-        foreach ($this->countsUpTo($max) as $count) {
-            $total = self::add($total, $count);
-        }
-
-        return self::decimal($total);
+        return self::decimal($this->count($max, true));
     }
 
     /**
@@ -371,37 +371,67 @@ final class Language
     }
 
     /**
-     * Per length up to the given one, how many strings of that length the
-     * language holds, as base 10^9 limbs.
+     * How many strings of the length the language holds, or of every length
+     * up to it with $total, as base 10^9 limbs.
      *
-     * @return list<list<int>>
+     * @return list<int>
      */
-    private function countsUpTo(int $length): array
+    private function count(int $length, bool $total = false): array
     {
         // ways[state]: how many strings of the current length lead from the
-        // state to acceptance; counted backwards from length 0.
-        $states = array_keys($this->dfa->states);
+        // state to acceptance; counted backwards from length 0. A state no
+        // string is accepted from counts none at any length: it is left out.
         $ways = [];
-        foreach ($states as $state) {
+        foreach (array_keys($this->live()) as $state) {
             $ways[$state] = [$this->dfa->getState($state)->isAccepting ? 1 : 0];
         }
 
-        $counts = [$ways[$this->dfa->startState]];
+        $start = $this->dfa->startState;
+        if (!isset($ways[$start])) {
+            // The language holds no string: none of any length.
+            return [0];
+        }
+
+        $count = $ways[$start];
         for ($step = 1; $step <= $length; $step++) {
             $next = [];
-            foreach ($states as $state) {
-                $total = [0];
-                foreach ($this->movesOf($state) as [$from, $to, $target]) {
-                    $total = self::add($total, self::times($ways[$target], $this->characters($from, $to)));
+            foreach (array_keys($ways) as $state) {
+                $sum = [0];
+                foreach ($this->charactersTo($state) as $target => $characters) {
+                    $sum = self::add($sum, self::times($ways[$target], $characters));
                 }
-                $next[$state] = $total;
+                $next[$state] = $sum;
             }
 
             $ways = $next;
-            $counts[] = $ways[$this->dfa->startState];
+            $count = $total ? self::add($count, $ways[$start]) : $ways[$start];
         }
 
-        return $counts;
+        return $count;
+    }
+
+    /**
+     * How many characters lead from the state to each state a string is
+     * accepted from: the ranges of its moves added up once, however many
+     * spell them.
+     *
+     * @return array<int, int>
+     */
+    private function charactersTo(int $state): array
+    {
+        if (!isset($this->charactersTo[$state])) {
+            $live = $this->live();
+            $characters = [];
+            foreach ($this->movesOf($state) as [$from, $to, $target]) {
+                if (isset($live[$target])) {
+                    $characters[$target] = ($characters[$target] ?? 0) + $this->characters($from, $to);
+                }
+            }
+
+            $this->charactersTo[$state] = $characters;
+        }
+
+        return $this->charactersTo[$state];
     }
 
     /**
