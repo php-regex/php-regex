@@ -56,8 +56,15 @@ final class AnalyticsContractTest extends TestCase
         $this->assertNotFalse($production);
         $this->assertNotFalse($config);
         $this->assertNotFalse($loader);
-        $this->assertLessThan($config, $production, 'Nothing is measured outside the published site.');
-        $this->assertLessThan($loader, $config);
+        $end = strpos($head, '{% endif %}', $production);
+        $this->assertNotFalse($end);
+        // The script that loads the tag and the one that configures it, in
+        // either order: the first is asynchronous, and the second queues
+        // what it says until the tag reads it.
+        foreach ([$config, $loader] as $at) {
+            $this->assertGreaterThan($production, $at, 'Nothing is measured outside the published site.');
+            $this->assertLessThan($end, $at, 'Nothing is measured outside the published site.');
+        }
         $this->assertSame(1, substr_count($head, "gtag('config'"));
         $this->assertSame(1, substr_count($head, 'googletagmanager.com/gtag/js'));
         $this->assertStringNotContainsString("gtag('consent'", $head, 'No consent is set, and the privacy page says so: one that set it would make the page wrong.');

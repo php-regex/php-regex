@@ -58,10 +58,11 @@ final class VisitorDepthScalingTest extends TestCase
         $pattern = '/'.str_repeat('(?:', $depth).'a'.str_repeat(')*', $depth).'/';
         $tree = Regex::create(['cache' => null])->parse($pattern);
 
-        $start = CpuClock::nanoseconds();
-        $tree->accept($visitor);
+        $seconds = CpuClock::time(static function () use ($tree, $visitor): void {
+            $tree->accept($visitor);
+        });
 
-        $this->assertLessThan(1.0, (CpuClock::nanoseconds() - $start) / 1e9);
+        $this->assertLessThan(1.0, $seconds);
     }
 
     /**

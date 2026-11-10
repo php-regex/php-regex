@@ -105,9 +105,9 @@ final class TestCaseSequenceTest extends TestCase
     {
         $best = \INF;
         for ($turn = 0; $turn < 3; $turn++) {
-            $start = CpuClock::seconds();
-            $node->accept(new TestCaseGenerator());
-            $best = min($best, CpuClock::seconds() - $start);
+            $best = min($best, CpuClock::time(static function () use ($node): void {
+                $node->accept(new TestCaseGenerator());
+            }));
         }
 
         return $best;
