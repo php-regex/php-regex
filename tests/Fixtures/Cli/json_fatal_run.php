@@ -19,6 +19,9 @@ declare(strict_types=1);
  *   php json_fatal_run.php exhaust   the command exhausts the memory left
  *   php json_fatal_run.php fork      a forked child of the command exhausts
  *                                    it; the parent prints {"ok": true}
+ *   php json_fatal_run.php timeout   the command runs past a time limit of
+ *                                    one second, on a host where reading
+ *                                    the error at shutdown takes longer
  */
 
 require dirname(__DIR__, 3).'/vendor/autoload.php';
@@ -76,6 +79,10 @@ $command = new class implements JsonCommandInterface {
 
     public function run(Input $input, Output $output): int
     {
+        if ('timeout' === ($input->args[0] ?? null)) {
+            self::runPastTheTimeLimit();
+        }
+
         if ('fork' !== ($input->args[0] ?? null)) {
             self::exhaustMemory();
         }
@@ -89,6 +96,20 @@ $command = new class implements JsonCommandInterface {
         $output->writeDocument(JsonDocument::encode(['ok' => true]));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Computes for ever under a time limit of one second, on a host where
+     * the shutdown takes longer than that.
+     */
+    private static function runPastTheTimeLimit(): never
+    {
+        require __DIR__.'/slow_shutdown.php';
+        set_time_limit(1);
+
+        while (true) {
+            hash('crc32b', 'x');
+        }
     }
 
     /**
