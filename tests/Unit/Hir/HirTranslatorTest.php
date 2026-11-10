@@ -48,6 +48,43 @@ final class HirTranslatorTest extends TestCase
     }
 
     #[Test]
+    public function test_long_literal_runs_keep_all_code_points_and_bounded_properties(): void
+    {
+        $points = array_merge(array_fill(0, 8000, 0xE9), [0x7A]);
+        $subject = str_repeat('é', 8000).'z';
+        $pattern = '/'.$subject.'/u';
+        $this->assertSame(1, preg_match($pattern, $subject));
+        $hir = $this->translate($pattern);
+
+        $this->assertInstanceOf(LiteralHir::class, $hir);
+        $this->assertSame($points, $hir->codePoints);
+        $this->assertSame([8001, 8001], [$hir->properties->minLength, $hir->properties->maxLength]);
+        $this->assertNull($hir->properties->literal);
+        $this->assertSame(array_slice($points, 0, 256), $hir->properties->prefix);
+        $this->assertSame(array_slice($points, -256), $hir->properties->suffix);
+        $this->assertSame([0, 16001], [$hir->startPosition, $hir->endPosition]);
+    }
+
+    #[Test]
+    public function test_literal_runs_flush_at_assertions_and_across_flattened_sequences(): void
+    {
+        $pattern = '/ab(?:c\\Bde)f(?#ignored)g/';
+        // "\B" holds between "c" and "d": the pattern matches.
+        $this->assertSame(1, preg_match($pattern, 'abcdefg'));
+        $hir = $this->translate($pattern);
+
+        $this->assertInstanceOf(ConcatHir::class, $hir);
+        $this->assertCount(3, $hir->parts);
+        $this->assertInstanceOf(LiteralHir::class, $hir->parts[0]);
+        $this->assertSame([97, 98, 99], $hir->parts[0]->codePoints);
+        $this->assertSame([0, 6], [$hir->parts[0]->startPosition, $hir->parts[0]->endPosition]);
+        $this->assertInstanceOf(AssertionHir::class, $hir->parts[1]);
+        $this->assertInstanceOf(LiteralHir::class, $hir->parts[2]);
+        $this->assertSame([100, 101, 102, 103], $hir->parts[2]->codePoints);
+        $this->assertSame([8, 24], [$hir->parts[2]->startPosition, $hir->parts[2]->endPosition]);
+    }
+
+    #[Test]
     public function test_a_literal_counts_code_points_under_u_and_bytes_without(): void
     {
         $unicode = $this->translate('/é/u');
