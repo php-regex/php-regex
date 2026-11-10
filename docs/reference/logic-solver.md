@@ -559,7 +559,9 @@ Large patterns can cause determinization or minimization to grow quickly, and
 `matchEquivalent()` steps one thread per branch of a wide alternation at every
 character. You can enforce a hard work budget using
 `SolverOptions::maxTransitionsProcessed`: it counts the transitions of the
-determinization and the minimization, and the threads the match solver steps.
+determinization and the minimization, the pairs of states a comparison of two
+automata visits, one unit per range of the alphabet for each pair, and the
+threads the match solver steps.
 The determinization counts each transition it writes, one per range of the
 alphabet for every state: a Unicode class such as `\pL` splits the alphabet
 into hundreds of ranges, so a pattern with a few hundred states reaches the
@@ -585,14 +587,16 @@ try {
     $solver->subsetOf('/[a-z]+/', '/[a-z0-9]+/', $options);
 } catch (ComplexityException $exception) {
     $diagnostic = $exception->getDiagnostic();
-    // ['phase' => 'determinize'|'minimize', 'states' => ..., 'transitions' => ..., 'alphabet' => ..., 'consumed' => ..., 'limit' => ...]
+    // ['phase' => 'determinize'|'minimize'|'comparison'|'match exploration', 'states' => ..., 'transitions' => ..., 'alphabet' => ..., 'consumed' => ..., 'limit' => ...]
 }
 ```
 
 When the budget is exceeded, a `ComplexityException` is thrown with a diagnostic payload:
 
-- `phase`: `determinize`, `minimize` or `match exploration`
-- `states`: number of DFA states seen so far
+- `phase`: `determinize`, `minimize`, `comparison` or `match exploration`
+- `states`: number of DFA states seen so far; in `comparison`, the pairs of
+  states visited; in `match exploration`, the states of the two match automata
+  together
 - `transitions`: NFA/DFA transition count at the time of failure
 - `alphabet`: effective alphabet size
 - `consumed`: work units consumed

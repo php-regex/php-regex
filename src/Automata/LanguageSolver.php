@@ -332,7 +332,7 @@ final class LanguageSolver
      *
      * @internal the check of a rewrite asks it where the match solver does not read the pattern
      *
-     * @throws ComplexityException When a part outgrows the limits of the options
+     * @throws ComplexityException When a part outgrows the limits of the options, or when pairing two long sequences by the parts both keep takes more than 65,536 cells
      */
     public function rewritesAlikeInPlace(string $left, string $right, ?SolverOptions $options = null): bool
     {

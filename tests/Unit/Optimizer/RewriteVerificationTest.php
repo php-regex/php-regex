@@ -49,6 +49,9 @@ final class RewriteVerificationTest extends TestCase
         $this->assertNotSame($original, $rewrite);
         $this->assertSame(1, preg_match($original, '1234bceeee'));
         $this->assertSame(1, preg_match($rewrite, '1234bceeee'));
+        // The lookbehind holds in both: no match right after an "x".
+        $this->assertSame(0, preg_match($original, 'x1234eeee'));
+        $this->assertSame(0, preg_match($rewrite, 'x1234eeee'));
 
         try {
             (new LanguageSolver())->rewritesAlikeInPlace($original, $rewrite, new SolverOptions(maxDfaStates: 1_000, maxTransitionsProcessed: 200_000));
@@ -58,6 +61,28 @@ final class RewriteVerificationTest extends TestCase
         }
 
         $this->assertSame($original, $optimizer->optimize($original)->optimized);
+    }
+
+    /**
+     * The same rewrite with sixty repeats in place of six hundred: its
+     * alignment fits the cells, the rewrite is proven under the same limits
+     * and the optimizer ships it. The alignment is what the longer pattern
+     * outgrows, nothing before it.
+     */
+    #[Test]
+    public function test_the_same_rewrite_is_proven_when_its_alignment_fits(): void
+    {
+        $original = '/(?<!x)'.str_repeat('\\d', 4).str_repeat('b?c?', 60).str_repeat('[e-g]', 4).'/';
+        $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
+        $rewrite = $optimizer->optimize($original, new OptimizerOptions(verifyWithAutomata: false))->optimized;
+        $this->assertNotSame($original, $rewrite);
+        foreach ([$original, $rewrite] as $pattern) {
+            $this->assertSame(1, preg_match($pattern, '1234bceeee'));
+            $this->assertSame(0, preg_match($pattern, 'x1234eeee'));
+        }
+
+        $this->assertTrue((new LanguageSolver())->rewritesAlikeInPlace($original, $rewrite, new SolverOptions(maxDfaStates: 1_000, maxTransitionsProcessed: 200_000)));
+        $this->assertSame($rewrite, $optimizer->optimize($original)->optimized);
     }
 
     #[Test]

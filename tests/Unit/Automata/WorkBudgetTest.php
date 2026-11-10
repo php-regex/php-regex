@@ -61,6 +61,8 @@ final class WorkBudgetTest extends TestCase
     public function test_comparison_charges_even_transitions_to_visited_pairs(string $method): void
     {
         // One pair is retained, but every alphabet range still takes work.
+        // The automaton is built by hand and served for both patterns, which
+        // only name the two sides: what they spell is not read here.
         $dfa = new Dfa(0, [0 => new DfaState(0, [97 => 0, 98 => 0], false)], [[97, 97], [98, 98]], 97, 98);
         $cache = new class($dfa) implements DfaCacheInterface {
             public function __construct(private readonly Dfa $dfa) {}
@@ -87,7 +89,8 @@ final class WorkBudgetTest extends TestCase
      * The left start state accepts and the right one does not: the first
      * search of `equivalent()` answers at once, and only the second, which
      * looks for a string the right side alone accepts, walks the pairs. It
-     * spends the same budget: two ranges past a limit of one.
+     * spends the same budget: two ranges past a limit of one. Both automata
+     * are built by hand and served in turn: the patterns only name the sides.
      */
     #[Test]
     public function test_the_second_equivalence_search_spends_the_same_budget(): void
