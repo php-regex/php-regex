@@ -121,6 +121,102 @@ final class ArgumentStateBaselineTest extends TestCase
             'state' => ArgumentState::RawShell,
             'patterns' => [],
         ];
+
+        // $part = 'abc'; '/' . $part . '+/' is "/abc+/" in PHP.
+        yield 'a concatenation with a local variable' => [
+            'code' => self::inFunction('string $s', "\$part = 'abc';\n\n    return preg_match('/' . \$part . '+/', \$s);"),
+            'expression' => "'/' . \$part . '+/'",
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/abc+/'],
+        ];
+
+        yield 'a local variable assigned a concatenation with a local variable' => [
+            'code' => self::inFunction('string $s', "\$part = 'abc';\n    \$re = '/' . \$part . '+/';\n\n    return preg_match(\$re, \$s);"),
+            'expression' => '$re',
+            'at' => '$re, $s)',
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/abc+/'],
+        ];
+
+        // $part = 'abc'; "/^{$part}$/" is "/^abc$/" in PHP.
+        yield 'an interpolated string' => [
+            'code' => self::inFunction('string $s', "\$part = 'abc';\n\n    return preg_match(\"/^{\$part}$/\", \$s);"),
+            'expression' => '"/^{$part}$/"',
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/^abc$/'],
+        ];
+
+        yield 'an interpolated string holding a parameter' => [
+            'code' => self::inFunction('string $s, string $x', 'return preg_match("/^$x+/", $s);'),
+            'expression' => '"/^$x+/"',
+            'state' => ArgumentState::RawShell,
+            'patterns' => [],
+        ];
+
+        // PHP takes the indentation of the closing line off the body:
+        // the heredoc is "/^abc$/".
+        yield 'a heredoc with an interpolation' => [
+            'code' => self::inFunction('string $s', "\$part = 'abc';\n\n    return preg_match(<<<RE\n        /^{\$part}$/\n        RE, \$s);"),
+            'expression' => "<<<RE\n        /^{\$part}$/\n        RE",
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/^abc$/'],
+        ];
+
+        yield 'a ternary' => [
+            'code' => self::inFunction('string $s, bool $flag', "return preg_match(\$flag ? '/then/' : '/else/', \$s);"),
+            'expression' => "\$flag ? '/then/' : '/else/'",
+            'state' => ArgumentState::FiniteSet,
+            'patterns' => ['/then/', '/else/'],
+        ];
+
+        // '/short/' ?: '/else/' is "/short/" in PHP: the other arm is
+        // kept only for a value that is '' or '0'.
+        yield 'a short ternary' => [
+            'code' => self::inFinalClass("private const RE = '/short/';", "return preg_match(self::RE ?: '/else/', \$s);"),
+            'expression' => "self::RE ?: '/else/'",
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/short/'],
+        ];
+
+        // '/coalesced/' ?? '/else/' is "/coalesced/" in PHP: a string is
+        // never null.
+        yield 'a null coalescing' => [
+            'code' => self::inFinalClass("private const RE = '/coalesced/';", "return preg_match(self::RE ?? '/else/', \$s);"),
+            'expression' => "self::RE ?? '/else/'",
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/coalesced/'],
+        ];
+
+        yield 'a match' => [
+            'code' => self::inFunction('string $s, int $kind', "return preg_match(match (\$kind) {\n        1 => '/one/',\n        default => '/other/',\n    }, \$s);"),
+            'expression' => "match (\$kind) {\n        1 => '/one/',\n        default => '/other/',\n    }",
+            'state' => ArgumentState::FiniteSet,
+            'patterns' => ['/one/', '/other/'],
+        ];
+
+        yield 'a local variable assigned a ternary' => [
+            'code' => self::inFunction('string $s, bool $flag', "\$re = \$flag ? '/then/' : '/else/';\n\n    return preg_match(\$re, \$s);"),
+            'expression' => '$re',
+            'at' => '$re, $s)',
+            'state' => ArgumentState::FiniteSet,
+            'patterns' => ['/then/', '/else/'],
+        ];
+
+        // sprintf('/^%s$/', 'abc') is "/^abc$/" in PHP.
+        yield 'sprintf() of literals' => [
+            'code' => self::inFunction('string $s', "return preg_match(sprintf('/^%s$/', 'abc'), \$s);"),
+            'expression' => "sprintf('/^%s$/', 'abc')",
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/^abc$/'],
+        ];
+
+        // implode('|', ['/a', 'b/']) is "/a|b/" in PHP.
+        yield 'implode() of literals' => [
+            'code' => self::inFunction('string $s', "return preg_match(implode('|', ['/a', 'b/']), \$s);"),
+            'expression' => "implode('|', ['/a', 'b/'])",
+            'state' => ArgumentState::Constant,
+            'patterns' => ['/a|b/'],
+        ];
     }
 
     /**
@@ -142,92 +238,6 @@ final class ArgumentStateBaselineTest extends TestCase
      */
     public static function provideShapesALaterReadingReads(): iterable
     {
-        // Read with the local variables as operands (row 1): then constant.
-        yield 'a concatenation with a local variable' => [
-            'code' => self::inFunction('string $s', "\$part = 'abc';\n\n    return preg_match('/' . \$part . '+/', \$s);"),
-            'expression' => "'/' . \$part . '+/'",
-            'state' => ArgumentState::RawShell,
-        ];
-
-        // Read with the local variables as operands (row 1): then constant.
-        yield 'a local variable assigned a concatenation with a local variable' => [
-            'code' => self::inFunction('string $s', "\$part = 'abc';\n    \$re = '/' . \$part . '+/';\n\n    return preg_match(\$re, \$s);"),
-            'expression' => '$re',
-            'at' => '$re, $s)',
-            'state' => ArgumentState::RawShell,
-        ];
-
-        // Read with the interpolated strings (row 2): then constant.
-        yield 'an interpolated string' => [
-            'code' => self::inFunction('string $s', "\$part = 'abc';\n\n    return preg_match(\"/^{\$part}$/\", \$s);"),
-            'expression' => '"/^{$part}$/"',
-            'state' => ArgumentState::Opaque,
-        ];
-
-        // Read with the interpolated strings (row 2): then a raw shell.
-        yield 'an interpolated string holding a parameter' => [
-            'code' => self::inFunction('string $s, string $x', 'return preg_match("/^$x+/", $s);'),
-            'expression' => '"/^$x+/"',
-            'state' => ArgumentState::Opaque,
-        ];
-
-        // Read with the interpolated strings (row 2): then constant.
-        yield 'a heredoc with an interpolation' => [
-            'code' => self::inFunction('string $s', "\$part = 'abc';\n\n    return preg_match(<<<RE\n        /^{\$part}$/\n        RE, \$s);"),
-            'expression' => "<<<RE\n        /^{\$part}$/\n        RE",
-            'state' => ArgumentState::Opaque,
-        ];
-
-        // Read with the branches as values (row 5): then a finite set.
-        yield 'a ternary' => [
-            'code' => self::inFunction('string $s, bool $flag', "return preg_match(\$flag ? '/then/' : '/else/', \$s);"),
-            'expression' => "\$flag ? '/then/' : '/else/'",
-            'state' => ArgumentState::Opaque,
-        ];
-
-        // Read with the branches as values (row 5): then a finite set.
-        yield 'a short ternary' => [
-            'code' => self::inFinalClass("private const RE = '/short/';", "return preg_match(self::RE ?: '/else/', \$s);"),
-            'expression' => "self::RE ?: '/else/'",
-            'state' => ArgumentState::Opaque,
-        ];
-
-        // Read with the branches as values (row 5): then a finite set.
-        yield 'a null coalescing' => [
-            'code' => self::inFinalClass("private const RE = '/coalesced/';", "return preg_match(self::RE ?? '/else/', \$s);"),
-            'expression' => "self::RE ?? '/else/'",
-            'state' => ArgumentState::Opaque,
-        ];
-
-        // Read with the branches as values (row 5): then a finite set.
-        yield 'a match' => [
-            'code' => self::inFunction('string $s, int $kind', "return preg_match(match (\$kind) {\n        1 => '/one/',\n        default => '/other/',\n    }, \$s);"),
-            'expression' => "match (\$kind) {\n        1 => '/one/',\n        default => '/other/',\n    }",
-            'state' => ArgumentState::Opaque,
-        ];
-
-        // Read with the branches as values (row 5): then a finite set.
-        yield 'a local variable assigned a ternary' => [
-            'code' => self::inFunction('string $s, bool $flag', "\$re = \$flag ? '/then/' : '/else/';\n\n    return preg_match(\$re, \$s);"),
-            'expression' => '$re',
-            'at' => '$re, $s)',
-            'state' => ArgumentState::Opaque,
-        ];
-
-        // Read with sprintf() of constants (row 7): then constant.
-        yield 'sprintf() of literals' => [
-            'code' => self::inFunction('string $s', "return preg_match(sprintf('/^%s$/', 'abc'), \$s);"),
-            'expression' => "sprintf('/^%s$/', 'abc')",
-            'state' => ArgumentState::Opaque,
-        ];
-
-        // Read with implode() of constants (row 7): then constant.
-        yield 'implode() of literals' => [
-            'code' => self::inFunction('string $s', "return preg_match(implode('|', ['/a', 'b/']), \$s);"),
-            'expression' => "implode('|', ['/a', 'b/'])",
-            'state' => ArgumentState::Opaque,
-        ];
-
         // Read with the arrays of patterns (row 3a): then one argument per
         // item, each constant.
         yield 'a local variable assigned an array of patterns' => [

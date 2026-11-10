@@ -23,6 +23,7 @@ use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\AssignOp;
 use PhpParser\Node\Expr\AssignRef;
+use PhpParser\Node\Expr\BinaryOp\Coalesce;
 use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Expr\CallLike;
 use PhpParser\Node\Expr\ClassConstFetch;
@@ -32,6 +33,7 @@ use PhpParser\Node\Expr\Eval_;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Include_;
 use PhpParser\Node\Expr\List_;
+use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\NullsafePropertyFetch;
 use PhpParser\Node\Expr\PostDec;
 use PhpParser\Node\Expr\PostInc;
@@ -39,14 +41,17 @@ use PhpParser\Node\Expr\PreDec;
 use PhpParser\Node\Expr\PreInc;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\StaticPropertyFetch;
+use PhpParser\Node\Expr\Ternary;
 use PhpParser\Node\Expr\UnaryMinus;
 use PhpParser\Node\Expr\UnaryPlus;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Expr\Yield_;
 use PhpParser\Node\Identifier;
+use PhpParser\Node\InterpolatedStringPart;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
+use PhpParser\Node\Scalar\InterpolatedString;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Catch_;
 use PhpParser\Node\Stmt\Class_;
@@ -297,7 +302,43 @@ final class AstValueCollector extends NodeVisitorAbstract
         }
 
         if ($expr instanceof FuncCall) {
-            return $this->quotedText($expr);
+            return $this->callTo($expr);
+        }
+
+        $offset = max(0, $expr->getStartFilePos());
+
+        // "/^{$part}$/", a heredoc that interpolates: the concatenation of
+        // its pieces, which the parser decodes, and of its expressions.
+        if ($expr instanceof InterpolatedString) {
+            $parts = [];
+            foreach ($expr->parts as $part) {
+                $parts[] = $part instanceof InterpolatedStringPart
+                    ? ValueExpr::literal($part->value, max(0, $part->getStartFilePos()), $part->getStartLine())
+                    : $this->expression($part);
+            }
+
+            return ValueExpr::concat($parts, $offset, $expr->getStartLine());
+        }
+
+        // The set of the two arms, whatever the condition; or "A ?: B".
+        if ($expr instanceof Ternary) {
+            return null === $expr->if
+                ? ValueExpr::fallback($this->expression($expr->cond), $this->expression($expr->else), false, $offset, $expr->getStartLine())
+                : ValueExpr::setOf([$this->expression($expr->if), $this->expression($expr->else)], $offset, $expr->getStartLine());
+        }
+
+        if ($expr instanceof Coalesce) {
+            return ValueExpr::fallback($this->expression($expr->left), $this->expression($expr->right), true, $offset, $expr->getStartLine());
+        }
+
+        // The set of the values of the arms, the default one among them.
+        if ($expr instanceof Match_) {
+            $arms = [];
+            foreach ($expr->arms as $arm) {
+                $arms[] = $this->expression($arm->body);
+            }
+
+            return ValueExpr::setOf($arms, $offset, $expr->getStartLine());
         }
 
         // -1, +2.5, - -3: a number under its signs. An integer keeps its
@@ -316,17 +357,53 @@ final class AstValueCollector extends NodeVisitorAbstract
     }
 
     /**
-     * A call to a function by its name: preg_quote() is a quoted text,
-     * with the delimiter its second argument gives, by position or by
-     * name, when that is a string literal. Any other call is not followed.
+     * A call to a function by its name: preg_quote() is a quoted text;
+     * sprintf(), implode() and join() are read with their arguments, each
+     * given by its position. Any other call is not followed.
      */
-    private function quotedText(FuncCall $call): ValueExpr
+    private function callTo(FuncCall $call): ValueExpr
     {
         $names = $call->name instanceof Name ? self::functionNames($call->name) : [];
-        if (InFileValueResolver::QUOTING !== ($names[\count($names) - 1] ?? null)) {
+        $name = $names[\count($names) - 1] ?? '';
+        if (InFileValueResolver::QUOTING === $name) {
+            return $this->quotedText($call, $names);
+        }
+
+        $joins = isset(InFileValueResolver::JOINING[$name]);
+        if (InFileValueResolver::FORMATTING !== $name && !$joins) {
             return ValueExpr::unknown();
         }
 
+        $arguments = [];
+        foreach ($call->getRawArgs() as $arg) {
+            // sprintf(...) is a closure; a spread or a named argument
+            // fills places the call does not spell out.
+            if (!$arg instanceof Arg || null !== $arg->name || $arg->unpack) {
+                return ValueExpr::unknown();
+            }
+
+            $arguments[] = $this->expression($arg->value);
+        }
+
+        $offset = max(0, $call->getStartFilePos());
+        if ([] === $arguments || ($joins && \count($arguments) > 2)) {
+            return ValueExpr::unknown();
+        }
+
+        return $joins
+            ? ValueExpr::join($arguments, $names, $offset, $call->getStartLine())
+            : ValueExpr::format($arguments, $names, $offset, $call->getStartLine());
+    }
+
+    /**
+     * A call to preg_quote(): a quoted text, with the delimiter its second
+     * argument gives, by position or by name, when that is a string
+     * literal.
+     *
+     * @param list<string> $names the lowercase functions the call may reach
+     */
+    private function quotedText(FuncCall $call, array $names): ValueExpr
+    {
         $position = 0;
         $positional = null;
         $named = null;

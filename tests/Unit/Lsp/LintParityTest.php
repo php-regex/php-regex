@@ -29,6 +29,7 @@ use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSearchCost;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -46,9 +47,10 @@ use PHPUnit\Framework\TestCase;
  * parse or validation error carries on the line under it.
  *
  * Where the two cannot agree the divergence is the promise, not a failure:
- * a pattern no single literal holds (a heredoc, a concatenation) and a
- * string whose first byte is no delimiter are reported by the command
- * alone — nothing in the editor can be underlined for them.
+ * a pattern no single literal holds (a heredoc, a concatenation, a pattern
+ * composed at the call from a variable, an interpolated string, sprintf()
+ * or implode()) and a string whose first byte is no delimiter are reported
+ * by the command alone — nothing in the editor can be underlined for them.
  *
  * @phpstan-type ParityRange array{start: array{line: int, character: int}, end: array{line: int, character: int}}
  * @phpstan-type ParityDiagnostic array{code: string, severity: int, range: ParityRange, message: string}
@@ -137,6 +139,39 @@ final class LintParityTest extends TestCase
     }
 
     /**
+     * The arms of a ternary and of a match are literals standing in the
+     * file: the command reads each as one of the patterns the argument
+     * may hold, and the editor reports it in its literal, as it does any
+     * pattern a literal holds.
+     *
+     * "/(then/", "/(else/", "/(one/" and "/(other/": preg_match() refuses
+     * each, "missing closing parenthesis".
+     */
+    #[Test]
+    public function test_the_editor_publishes_the_literal_arms_of_a_ternary_and_a_match_regex_lint_reports(): void
+    {
+        foreach (['/(then/', '/(else/', '/(one/', '/(other/'] as $pattern) {
+            $this->assertFalse(EngineProbe::compiles($pattern), 'Oracle: PCRE refuses '.$pattern.'.');
+        }
+
+        $content = (string) file_get_contents(self::FIXTURES.'simple_lsp_parity_branches.php');
+
+        $lines = [];
+        foreach ($this->linted($content) as $issue) {
+            if ('error' === $issue->severity->level()) {
+                $lines[$issue->line] = true;
+            }
+        }
+        ksort($lines);
+
+        // One arm per line: the two of the ternary, the two of the match.
+        $this->assertSame([6, 7, 9, 10], array_keys($lines), 'The command was expected to report an error at each of the four arms.');
+
+        // The editor publishes the same four, each in its literal.
+        $this->assertParity('simple_lsp_parity_branches.php');
+    }
+
+    /**
      * A pattern built at the call from several pieces, or written as a
      * heredoc: the command reports what it read of it, the editor cannot —
      * no single literal holds it for a diagnostic to land in.
@@ -147,6 +182,40 @@ final class LintParityTest extends TestCase
         $content = (string) file_get_contents(self::FIXTURES.'simple_lsp_parity_divergence_heredoc.php');
 
         $this->assertNotSame([], $this->linted($content), 'The command was expected to report the heredoc and the concatenation.');
+        $this->assertSame([], $this->published($content), 'The editor published diagnostics for a pattern no single literal holds.');
+    }
+
+    /**
+     * A pattern composed at the call from a local variable, an
+     * interpolated string, sprintf() or implode(): the command reads what
+     * PHP builds and reports it at the argument; the editor still reports
+     * only a pattern whose literal stands in the file, and no literal
+     * holds these.
+     *
+     * PHP 8.4, $open = '((a+)+b': '/' . $open . '/', "/{$open}/" and
+     * sprintf('/%s/', $open) are "/((a+)+b/", implode('|', ['/((a',
+     * 'b/']) is "/((a|b/"; preg_match() refuses both, "missing closing
+     * parenthesis" at offsets 7 and 5.
+     */
+    #[Test]
+    public function test_a_pattern_composed_at_the_call_is_reported_by_the_command_only(): void
+    {
+        $this->assertFalse(EngineProbe::compiles('/((a+)+b/'), 'Oracle: PCRE refuses the pattern the first three calls compose.');
+        $this->assertFalse(EngineProbe::compiles('/((a|b/'), 'Oracle: PCRE refuses the pattern implode() joins.');
+
+        $content = (string) file_get_contents(self::FIXTURES.'simple_lsp_parity_divergence_composed.php');
+
+        $lines = [];
+        foreach ($this->linted($content) as $issue) {
+            if ('error' === $issue->severity->level()) {
+                $lines[$issue->line] = true;
+            }
+        }
+        ksort($lines);
+
+        // One call per line: the concatenation, the interpolated string,
+        // sprintf() and implode().
+        $this->assertSame([7, 8, 9, 10], array_keys($lines), 'The command was expected to report an error at each of the four composed patterns.');
         $this->assertSame([], $this->published($content), 'The editor published diagnostics for a pattern no single literal holds.');
     }
 

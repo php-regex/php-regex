@@ -231,11 +231,12 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
     }
 
     /**
-     * The variables the file assigns with a plain "=", whatever the scope.
+     * The variables the file assigns with a plain "=", whatever the scope,
+     * each with where its "=" stand.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      *
-     * @return array<string, true>
+     * @return array<string, non-empty-list<int>>
      */
     private function assignedVariables(array $tokens): array
     {
@@ -248,7 +249,7 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
             $target = PhpTokens::previousSignificant($tokens, $index - 1);
             $targetToken = null === $target ? null : $tokens[$target];
             if (\is_array($targetToken) && \T_VARIABLE === $targetToken[0]) {
-                $assigned[$targetToken[1]] = true;
+                $assigned[$targetToken[1]][] = $index;
             }
         }
 
@@ -303,9 +304,10 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
     {
         $values = [];
         $resolver = null;
-        $pending = $this->pendingRanges($found, $tokens);
+        $assigned = null;
+        $pending = $this->pendingRanges($found, $tokens, $assigned);
         if ([] !== $pending) {
-            [$variables, $properties] = $this->watchedNames($pending, $tokens);
+            [$variables, $properties] = $this->watchedNames($pending, $tokens, $assigned);
             $collector = new TokenValueCollector($tokens, $tokenOffsets, $closers, $content, $variables, $properties);
             if (null !== $this->project) {
                 $collector->values()->useProject($this->project);
@@ -361,13 +363,14 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
      *
      * @param list<PatternOccurrence|PendingPattern<array{int, int}>> $found
      * @param array<int, array{int, string, int}|string>              $tokens
+     * @param array<string, non-empty-list<int>>|null                 $assigned the variables the file assigns, read
+     *                                                                          when first asked for
      *
      * @return array<int, non-empty-array<int, true>>
      */
-    private function pendingRanges(array $found, array $tokens): array
+    private function pendingRanges(array $found, array $tokens, ?array &$assigned): array
     {
         $pending = [];
-        $assigned = null;
         foreach ($found as $item) {
             if (!$item instanceof PendingPattern || null !== $item->state) {
                 continue;
@@ -391,34 +394,91 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
     /**
      * The variables the held arguments name, and whether they name a
      * property: the writes to any other change no pattern, and are not
-     * followed.
+     * followed. A variable named in the value assigned to one of them is
+     * one of them, and so on until none is added: a pattern is read
+     * through any number of variables.
      *
      * @param array<int, non-empty-array<int, true>>     $pending
      * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<string, non-empty-list<int>>|null    $assigned the variables the file assigns, read when first
+     *                                                             asked for
      *
      * @return array{array<string, true>, bool}
      */
-    private function watchedNames(array $pending, array $tokens): array
+    private function watchedNames(array $pending, array $tokens, ?array &$assigned): array
     {
         $variables = [];
+        $met = [];
         $properties = false;
         foreach ($pending as $start => $ends) {
-            for ($i = $start, $last = max(array_keys($ends)); $i < $last; $i++) {
-                $token = $tokens[$i];
-                if (!\is_array($token)) {
-                    continue;
-                }
+            $this->namesIn($tokens, $start, max(array_keys($ends)), $variables, $met, $properties);
+        }
 
-                if (\T_VARIABLE === $token[0]) {
-                    $variables[$token[1]] = true;
-                } elseif (!$properties && \T_STRING === $token[0]) {
-                    $before = PhpTokens::previousSignificant($tokens, $i - 1);
-                    $properties = null !== $before && PhpTokens::isObjectOrStaticOperator($tokens[$before]);
-                }
+        // Each name is followed once, in the order they are met.
+        for ($next = 0; isset($met[$next]); $next++) {
+            $assigned ??= $this->assignedVariables($tokens);
+            foreach ($assigned[$met[$next]] ?? [] as $equals) {
+                $this->namesIn($tokens, $equals + 1, self::statementEnd($tokens, $equals + 1), $variables, $met, $properties);
             }
         }
 
         return [$variables, $properties];
+    }
+
+    /**
+     * Adds the variables the tokens in [$start, $end) name to those met
+     * so far, and says whether the tokens name a property.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<string, true>                        $variables
+     * @param list<string>                               $met       the same variables, in the order they are met
+     */
+    private function namesIn(array $tokens, int $start, int $end, array &$variables, array &$met, bool &$properties): void
+    {
+        for ($i = $start; $i < $end; $i++) {
+            $token = $tokens[$i];
+            if (!\is_array($token)) {
+                continue;
+            }
+
+            // "${re}" names $re.
+            $variable = \T_VARIABLE === $token[0] ? $token[1] : (\T_STRING_VARNAME === $token[0] ? '$'.$token[1] : null);
+            if (null !== $variable) {
+                if (!isset($variables[$variable])) {
+                    $variables[$variable] = true;
+                    $met[] = $variable;
+                }
+            } elseif (!$properties && \T_STRING === $token[0]) {
+                $before = PhpTokens::previousSignificant($tokens, $i - 1);
+                $properties = null !== $before && PhpTokens::isObjectOrStaticOperator($tokens[$before]);
+            }
+        }
+    }
+
+    /**
+     * Where the statement holding the token at $start ends: its ";", the
+     * bracket that closes what it stands in, a close tag, or the end of
+     * the file. An assigned value runs no further.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    private static function statementEnd(array $tokens, int $start): int
+    {
+        $depth = 0;
+        for ($i = $start, $count = \count($tokens); $i < $count; $i++) {
+            $token = $tokens[$i];
+            if (PhpTokens::opensNesting($token)) {
+                $depth++;
+            } elseif (')' === $token || ']' === $token || '}' === $token) {
+                if (0 === $depth--) {
+                    return $i;
+                }
+            } elseif (0 === $depth && (';' === $token || (\is_array($token) && \T_CLOSE_TAG === $token[0]))) {
+                return $i;
+            }
+        }
+
+        return \count($tokens);
     }
 
     /**

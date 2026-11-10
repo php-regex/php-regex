@@ -29,6 +29,11 @@ final class States
         preg_match('/^state-a{' . self::MAX . '}$/', $subject);
         $once = '/state-variable/';
         preg_match($once, $subject);
+        $part = 'abc';
+        preg_match('/state-' . $part . '-operand/', $subject);
+        preg_match("/state-{$part}-interpolated/", $subject);
+        preg_match(sprintf('/state-%s-%d/', 'sprintf', 7), $subject);
+        preg_match(implode('|', ['/state-implode', 'joined/']), $subject);
 
         // One of several patterns.
         $branches = '/state-branch-a/';
@@ -36,6 +41,8 @@ final class States
             $branches = '/state-branch-b/';
         }
         preg_match($branches, $subject);
+        preg_match($flag ? '/state-then/' : '/state-else/', $subject);
+        preg_match(match ($flag) { true => '/state-match-a/', false => '/state-match-b/' }, $subject);
 
         // A static pattern around preg_quote() texts.
         preg_match('/^state-' . preg_quote($word, '/') . '$/', $subject);
@@ -44,6 +51,7 @@ final class States
         // A static pattern around another part built at run time.
         preg_match('/^state-' . $word . '$/', $subject);
         preg_match('/^state-' . 1.5 . '$/', $subject);
+        preg_match("/^state-{$word}$/", $subject);
 
         // Nothing static.
         preg_match($given, $subject);
@@ -51,8 +59,6 @@ final class States
         preg_match(build_state(), $subject);
         preg_match($other->pattern, $subject);
         preg_match($map['state'], $subject);
-        preg_match($flag ? '/state-then/' : '/state-else/', $subject);
-        preg_match("/^state-{$word}$/", $subject);
         preg_match($word . 'state' . $word, $subject);
         preg_match(preg_quote($word) . '/state/', $subject);
 

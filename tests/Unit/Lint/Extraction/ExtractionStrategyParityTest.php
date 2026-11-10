@@ -547,8 +547,20 @@ final class ExtractionStrategyParityTest extends TestCase
             '/state-abc+/',
             '/^state-a{3}$/',
             '/state-variable/',
+            // Composed at the call, as PHP 8.4 builds them: $part is 'abc',
+            // sprintf('/state-%s-%d/', 'sprintf', 7) is "/state-sprintf-7/",
+            // implode('|', ['/state-implode', 'joined/']) is
+            // "/state-implode|joined/".
+            '/state-abc-operand/',
+            '/state-abc-interpolated/',
+            '/state-sprintf-7/',
+            '/state-implode|joined/',
             '/state-branch-a/',
             '/state-branch-b/',
+            '/state-then/',
+            '/state-else/',
+            '/state-match-a/',
+            '/state-match-b/',
             '/state-item/',
             '/state-key/',
         ], $this->patternsReadByBoth($code));
@@ -564,24 +576,29 @@ final class ExtractionStrategyParityTest extends TestCase
             ['state' => 'constant', 'expression' => '$this->property'],
             ['state' => 'constant', 'expression' => "'/^state-a{' . self::MAX . '}$/'"],
             ['state' => 'constant', 'expression' => '$once', 'at' => '$once, $subject)'],
+            ['state' => 'constant', 'expression' => "'/state-' . \$part . '-operand/'"],
+            ['state' => 'constant', 'expression' => '"/state-{$part}-interpolated/"'],
+            ['state' => 'constant', 'expression' => "sprintf('/state-%s-%d/', 'sprintf', 7)"],
+            ['state' => 'constant', 'expression' => "implode('|', ['/state-implode', 'joined/'])"],
             // One of several patterns.
             ['state' => 'finite_set', 'expression' => '$branches', 'at' => '$branches, $subject)'],
+            ['state' => 'finite_set', 'expression' => "\$flag ? '/state-then/' : '/state-else/'"],
+            ['state' => 'finite_set', 'expression' => "match (\$flag) { true => '/state-match-a/', false => '/state-match-b/' }"],
             // A static pattern around preg_quote() texts.
             ['state' => 'quoted_shell', 'expression' => "'/^state-' . preg_quote(\$word, '/') . '$/'"],
             ['state' => 'quoted_shell', 'expression' => "'/^state-' . preg_quote(\$word) . '$/'"],
             // A static pattern around another part built at run time.
             ['state' => 'raw_shell', 'expression' => "'/^state-' . \$word . '$/'"],
             ['state' => 'raw_shell', 'expression' => "'/^state-' . 1.5 . '$/'"],
-            // Nothing static. The readings still to come move the ternary,
-            // the interpolated string, the array item, the variable at
-            // file level and the foreach target out of here.
+            ['state' => 'raw_shell', 'expression' => '"/^state-{$word}$/"'],
+            // Nothing static. The readings still to come move the array
+            // item, the variable at file level and the foreach target out
+            // of here.
             ['state' => 'opaque', 'expression' => '$given', 'at' => '$given, $subject)'],
             ['state' => 'opaque', 'expression' => '$this->build()'],
             ['state' => 'opaque', 'expression' => 'build_state()'],
             ['state' => 'opaque', 'expression' => '$other->pattern'],
             ['state' => 'opaque', 'expression' => "\$map['state']"],
-            ['state' => 'opaque', 'expression' => "\$flag ? '/state-then/' : '/state-else/'"],
-            ['state' => 'opaque', 'expression' => '"/^state-{$word}$/"'],
             ['state' => 'opaque', 'expression' => "\$word . 'state' . \$word"],
             ['state' => 'opaque', 'expression' => "preg_quote(\$word) . '/state/'"],
             // An array literal: one argument per item, a key per pattern.
@@ -601,8 +618,8 @@ final class ExtractionStrategyParityTest extends TestCase
         // Every argument of the fixture ends in exactly one state.
         $counts = array_count_values($this->statesReadByBoth($code));
         ksort($counts);
-        $this->assertSame(['constant' => 11, 'finite_set' => 1, 'opaque' => 13, 'quoted_shell' => 3, 'raw_shell' => 3], $counts);
-        $this->assertSame(31, array_sum($counts));
+        $this->assertSame(['constant' => 15, 'finite_set' => 3, 'opaque' => 11, 'quoted_shell' => 3, 'raw_shell' => 4], $counts);
+        $this->assertSame(36, array_sum($counts));
     }
 
     private function write(string $content): string

@@ -20,7 +20,8 @@ use PHPRegex\Parser\Text\Ascii;
  * An expression of a PHP file as the in-file resolution reads it: a
  * literal, a concatenation, a reference to a constant, a local variable or
  * a property, an array, a text known at run time only, one of several
- * values, or something it does not follow.
+ * values, a value with another to fall back on, a sprintf() or an
+ * implode() call, or something it does not follow.
  *
  * Both extraction strategies translate their own syntax tree into this
  * form, so the rules deciding what a name proves are written once, in
@@ -41,21 +42,28 @@ final class ValueExpr
     public const UNKNOWN = 'unknown';
     public const HOLE = 'hole';
     public const SET = 'set';
+    public const FALLBACK = 'fallback';
+    public const FORMAT = 'format';
+    public const JOIN = 'join';
 
     /**
      * @param string                             $kind         one of the constants above
-     * @param string                             $value        the literal's value, or the name of the constant,
-     *                                                         variable or property
+     * @param string                             $value        the literal's value, the name of the constant,
+     *                                                         variable or property, or the operator of a
+     *                                                         fallback, "?:" or "??"
      * @param int                                $offset       where the expression starts in the file
      * @param int                                $line         the line it starts on
-     * @param list<self>                         $parts        the operands of a concatenation
+     * @param list<self>                         $parts        the operands of a concatenation; the two sides of a
+     *                                                         fallback; the format of a sprintf() and its
+     *                                                         arguments; the separator of an implode(), when it is
+     *                                                         given one, and its items
      * @param list<array{0: self|null, 1: self}> $items        the key, if any, and the value of each array item
      * @param string|null                        $class        the lowercase class a class constant or a property
      *                                                         belongs to; null when no class of the file is known
      * @param bool                               $lateStatic   a class constant read through static::
      * @param list<string>                       $names        the constant keys a name may reach, in the order PHP
-     *                                                         tries them; for a hole, the lowercase functions its
-     *                                                         call may reach
+     *                                                         tries them; for a hole, a sprintf() or an implode(),
+     *                                                         the lowercase functions its call may reach
      * @param int|null                           $scope        the function body a variable belongs to; null at file
      *                                                         scope
      * @param string                             $written      the reference as the source writes it: "self::RE";
@@ -95,9 +103,9 @@ final class ValueExpr
         public readonly ?int $integer = null,
     ) {}
 
-    public static function literal(string $value, int $offset, int $line, ?string $file = null, ?int $column = null): self
+    public static function literal(string $value, int $offset, int $line, ?string $file = null, ?int $column = null, ?TargetConstraint $guard = null): self
     {
-        return new self(self::LITERAL, $value, $offset, $line, file: $file, column: $column);
+        return new self(self::LITERAL, $value, $offset, $line, file: $file, column: $column, guard: $guard);
     }
 
     /**
@@ -216,13 +224,49 @@ final class ValueExpr
     }
 
     /**
-     * One of several values, whichever path the code takes.
+     * One of several values, whichever path the code takes: the arms of a
+     * ternary or of a match.
      *
      * @param list<self> $alternatives
+     * @param int        $offset       where the expression starts, -1 when unknown
      */
-    public static function setOf(array $alternatives): self
+    public static function setOf(array $alternatives, int $offset = -1, int $line = 0): self
     {
-        return new self(self::SET, alternatives: $alternatives);
+        return new self(self::SET, offset: $offset, line: $line, alternatives: $alternatives);
+    }
+
+    /**
+     * A value, and the one PHP takes when it passes over the first: "A ?:
+     * B" passes over an empty A, "A ?? B" over a null one.
+     *
+     * @param bool $coalescing whether the operator is "??"
+     */
+    public static function fallback(self $first, self $second, bool $coalescing, int $offset, int $line): self
+    {
+        return new self(self::FALLBACK, $coalescing ? '??' : '?:', $offset, $line, parts: [$first, $second]);
+    }
+
+    /**
+     * A call to sprintf(): its format, then its arguments.
+     *
+     * @param non-empty-list<self> $parts
+     * @param list<string>         $names the lowercase functions the call may reach, in the order PHP tries them
+     */
+    public static function format(array $parts, array $names, int $offset, int $line): self
+    {
+        return new self(self::FORMAT, offset: $offset, line: $line, parts: $parts, names: $names);
+    }
+
+    /**
+     * A call to implode() or join(): its separator and its items, or its
+     * items alone, which PHP joins with nothing.
+     *
+     * @param non-empty-list<self> $parts
+     * @param list<string>         $names the lowercase functions the call may reach, in the order PHP tries them
+     */
+    public static function join(array $parts, array $names, int $offset, int $line): self
+    {
+        return new self(self::JOIN, offset: $offset, line: $line, parts: $parts, names: $names);
     }
 
     public static function unknown(): self
@@ -265,6 +309,6 @@ final class ValueExpr
      */
     public function isResolvable(): bool
     {
-        return self::CONCAT === $this->kind || self::SET === $this->kind || $this->isReference();
+        return \in_array($this->kind, [self::CONCAT, self::SET, self::FALLBACK, self::FORMAT, self::JOIN], true) || $this->isReference();
     }
 }

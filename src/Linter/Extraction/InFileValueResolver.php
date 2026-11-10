@@ -35,24 +35,33 @@ use PHPRegex\Parser\Text\Ascii;
  * - a property read as $this->p: a literal default, private, or protected,
  *   in a final class or final itself, never promoted, and never written in
  *   the file;
- * - a local variable: every assignment of the function body a literal, a
- *   concatenation of literals or a constant the file proves, and no way of
- *   writing it otherwise (a parameter, a reference, a compound assignment,
- *   global, static, extract(), $$, a destructuring, a foreach or catch
- *   target, a call it is passed to).
+ * - a local variable: every assignment of the function body that may
+ *   reach the read a value the file proves, and no way of writing it
+ *   otherwise (a parameter, a reference, a compound assignment, global,
+ *   static, extract(), $$, a destructuring, a foreach or catch target, a
+ *   call it is passed to). It is read alone, as an operand, in an
+ *   interpolated string, or through another variable assigned from it.
  *
  * A value is read as the values it may take, each a list of parts: the
  * text the file proves, and a hole for each part it does not, a text
- * known at run time only. A concatenation keeps what is written around a
- * part the file does not prove; preg_quote() is a hole whose text reads as
- * literal characters; an integer joined to a string reads as PHP writes
- * it. Every pattern argument ends in one state, from one pattern to
- * nothing static.
+ * known at run time only. A concatenation and an interpolated string keep
+ * what is written around a part the file does not prove; preg_quote() is
+ * a hole whose text reads as literal characters; an integer joined to a
+ * string reads as PHP writes it. A ternary and a match are the values of
+ * their arms; "A ?: B" and "A ?? B" the values PHP keeps of them;
+ * sprintf() and implode() the string PHP builds of what the file proves.
+ * Every pattern argument ends in one state, from one pattern to nothing
+ * static.
  *
- * Folding follows 32 constants at most and stops on a cycle; a
- * concatenation gives at most PatternArgument::MAX_CANDIDATES values. A
- * pattern read through a name is reported once, where its literal is
- * written.
+ * What a composition multiplies is bounded by PatternArgument::concat():
+ * one operand of several values gives as many patterns, each one the code
+ * builds; two of them, or more values than
+ * PatternArgument::MAX_CANDIDATES, and nothing is known of the argument.
+ * Folding follows 32 constants at most and stops on a cycle.
+ *
+ * A pattern that is one literal is reported once, where the literal is
+ * written; one composed in the argument, where the argument starts; one
+ * composed in the value of a name, where that composition is written.
  *
  * @internal
  */
@@ -73,6 +82,16 @@ final class InFileValueResolver
      * The function of PHP whose result is a quoted text.
      */
     public const QUOTING = 'preg_quote';
+
+    /**
+     * The function of PHP whose result is its format, each place filled.
+     */
+    public const FORMATTING = 'sprintf';
+
+    /**
+     * The functions of PHP whose result is the items of an array, joined.
+     */
+    public const JOINING = ['implode' => true, 'join' => true];
 
     /**
      * The functions of PHP known to take every argument by value: a
@@ -172,9 +191,29 @@ final class InFileValueResolver
     private array $lastReads = [];
 
     /**
-     * @var array<string, list<ValueExpr>> "scope|name" => the values the variable is read with
+     * @var array<int, array<string, int>> scope => variable => where it is last read at all, as a pattern or
+     *                                     as a part of one; -1 for somewhere unknown
+     */
+    private array $lastUses = [];
+
+    /**
+     * @var array<int, array<string, true>> scope => the variables whose assigned values were read for the
+     *                                      variables they name
+     */
+    private array $followed = [];
+
+    /**
+     * @var array<string, list<ValueExpr>|null> "scope|name|read" => the values the variable holds where it is last
+     *                                          read; null when no assignment reaches the read
      */
     private array $variableValues = [];
+
+    /**
+     * How deep the reading is in the value of a constant or in the
+     * default of a property: a constant expression, in which a variable,
+     * a branch or a call is a part the file does not prove.
+     */
+    private int $constantExpressions = 0;
 
     /**
      * @var array<string, list<string>> the states of the arguments a variable is for a function, "scope|name|function"
@@ -396,18 +435,57 @@ final class InFileValueResolver
     }
 
     /**
-     * Say where each variable is read as a pattern, before the patterns
-     * are asked for: a value assigned after the last read never reaches
-     * it.
+     * Say where each variable is read, before the patterns are asked for:
+     * a value assigned after the last read never reaches it. A variable is
+     * read as a pattern, where an argument is the variable alone, or as a
+     * part of one: an operand of the argument, or of the value assigned to
+     * a variable that is read.
      */
     public function read(ValueExpr $expr): void
     {
-        if (ValueExpr::VARIABLE !== $expr->kind || null === $expr->scope) {
-            return;
+        if (ValueExpr::VARIABLE === $expr->kind && null !== $expr->scope) {
+            $last = $this->lastReads[$expr->scope][$expr->value] ?? null;
+            $this->lastReads[$expr->scope][$expr->value] = $expr->offset < 0 || -1 === $last ? -1 : max($last ?? 0, $expr->offset);
         }
 
-        $last = $this->lastReads[$expr->scope][$expr->value] ?? null;
-        $this->lastReads[$expr->scope][$expr->value] = $expr->offset < 0 || -1 === $last ? -1 : max($last ?? 0, $expr->offset);
+        // Each expression is walked once, and the values assigned to a
+        // variable once for all its reads.
+        $pending = [$expr];
+        while ([] !== $pending) {
+            $current = array_pop($pending);
+            foreach ($current->parts as $part) {
+                $pending[] = $part;
+            }
+
+            foreach ($current->alternatives as $alternative) {
+                $pending[] = $alternative;
+            }
+
+            foreach ($current->items as [$key, $item]) {
+                if (null !== $key) {
+                    $pending[] = $key;
+                }
+
+                $pending[] = $item;
+            }
+
+            $scope = $current->scope;
+            if (ValueExpr::VARIABLE !== $current->kind || null === $scope) {
+                continue;
+            }
+
+            $name = $current->value;
+            $last = $this->lastUses[$scope][$name] ?? null;
+            $this->lastUses[$scope][$name] = $current->offset < 0 || -1 === $last ? -1 : max($last ?? 0, $current->offset);
+            if (isset($this->followed[$scope][$name])) {
+                continue;
+            }
+
+            $this->followed[$scope][$name] = true;
+            foreach ($this->assignments[$scope][$name] ?? [] as [$assigned]) {
+                $pending[] = $assigned;
+            }
+        }
     }
 
     public function bail(int $scope, string $name): void
@@ -428,10 +506,12 @@ final class InFileValueResolver
 
     /**
      * The patterns a call reads through the expression and that were not
-     * reported yet, each where its literal is written, with the way the
-     * call reaches it: "via self::RE", "via $re"; none for a pattern the
-     * call assembles itself. An argument one of whose values is no whole
-     * pattern gives none.
+     * reported yet, each where its literal is written, with the name the
+     * call reaches it through: "via self::RE", "via $re"; none for a
+     * pattern written or composed in the argument. One composed in the
+     * argument stands where the argument starts. An argument one of whose
+     * values is no whole pattern gives none. The patterns reported at one
+     * place come in the order of their bytes.
      *
      * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null}> each with the file, the column and the guard of its literal when it is another file's
      */
@@ -448,16 +528,15 @@ final class InFileValueResolver
             $this->variablesRead[$key] = true;
         }
 
-        $location = $expr->isReference() ? 'via '.$expr->written : null;
         $patterns = [];
         foreach ($this->arguments($expr, $function) as $alternatives) {
-            foreach ($alternatives as $alternative) {
+            foreach ($alternatives as [$alternative]) {
                 if (ValueExpr::LITERAL !== $alternative->kind) {
                     continue 2;
                 }
             }
 
-            foreach ($alternatives as $literal) {
+            foreach ($alternatives as [$literal, $location]) {
                 if ('' === $literal->value) {
                     continue;
                 }
@@ -474,7 +553,7 @@ final class InFileValueResolver
             }
         }
 
-        return $patterns;
+        return self::inByteOrder($patterns);
     }
 
     /**
@@ -540,6 +619,123 @@ final class InFileValueResolver
     }
 
     /**
+     * The patterns reported at one place in the order of their bytes,
+     * each place keeping its rank among the others: the patterns an
+     * argument composes are listed the same way on every run.
+     *
+     * @param list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null}> $patterns
+     *
+     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null}>
+     */
+    private static function inByteOrder(array $patterns): array
+    {
+        $places = [];
+        foreach ($patterns as $index => $pattern) {
+            $places[($pattern['file'] ?? '').'|'.$pattern['offset']][] = $index;
+        }
+
+        foreach ($places as $indexes) {
+            if (1 === \count($indexes)) {
+                continue;
+            }
+
+            $here = [];
+            foreach ($indexes as $index) {
+                $here[] = $patterns[$index];
+            }
+
+            usort($here, static fn (array $a, array $b): int => strcmp($a['pattern'], $b['pattern']));
+            foreach ($indexes as $rank => $index) {
+                $patterns[$index] = $here[$rank];
+            }
+        }
+
+        return $patterns;
+    }
+
+    /**
+     * The pieces of a sprintf() format that holds only "%s", "%d" and
+     * "%%": its text, and for each place whether it takes an integer.
+     * Null for a format holding any other directive, or a "%" that ends
+     * it.
+     *
+     * @return list<string|bool>|null
+     */
+    private static function places(string $format): ?array
+    {
+        $pieces = [];
+        $text = '';
+        $from = 0;
+        while (false !== $percent = strpos($format, '%', $from)) {
+            $text .= substr($format, $from, $percent - $from);
+            $directive = $format[$percent + 1] ?? '';
+            $from = $percent + 2;
+            if ('%' === $directive) {
+                $text .= '%';
+
+                continue;
+            }
+
+            if ('s' !== $directive && 'd' !== $directive) {
+                return null;
+            }
+
+            $pieces[] = $text;
+            $pieces[] = 'd' === $directive;
+            $text = '';
+        }
+
+        $pieces[] = $text.substr($format, $from);
+
+        return $pieces;
+    }
+
+    /**
+     * What "A ?: B" and "A ?? B" give of the values of A, as PHP does:
+     * "?:" passes over '' and '0' for the values of B, "??" over none, a
+     * string being never null. None at all when a value of A is no
+     * string the file proves: whether PHP keeps it is not known. A
+     * variable is not proved to be assigned on every path, and PHP takes B
+     * for one that is not: its values are kept, and those of B beside them.
+     *
+     * @param list<array{ValueExpr, string|null}>             $first      the values of A, each with the name it is
+     *                                                                    read through
+     * @param \Closure(): list<array{ValueExpr, string|null}> $second     the values of B, asked for only when one
+     *                                                                    of A is passed over
+     * @param bool                                            $coalescing whether the operator is "??"
+     * @param bool                                            $mayBeUnset whether A is a variable
+     *
+     * @return list<array{ValueExpr, string|null}>
+     */
+    private static function kept(array $first, \Closure $second, bool $coalescing, bool $mayBeUnset): array
+    {
+        $kept = [];
+        $passedOver = $mayBeUnset;
+        foreach ($first as $entry) {
+            $value = $entry[0];
+            if (ValueExpr::LITERAL !== $value->kind) {
+                return [];
+            }
+
+            if (!$coalescing && ('' === $value->value || '0' === $value->value)) {
+                $passedOver = true;
+
+                continue;
+            }
+
+            $kept[] = $entry;
+        }
+
+        if (!$passedOver) {
+            return $kept;
+        }
+
+        $fallback = $second();
+
+        return [] === $fallback ? [] : [...$kept, ...$fallback];
+    }
+
+    /**
      * The parts of a folded value: its text, and a hole for each part
      * known at run time only. A scalar that is no string is such a part,
      * but an integer joined to a string, which reads as PHP writes it; an
@@ -583,7 +779,7 @@ final class InFileValueResolver
     {
         $states = [];
         foreach ($this->arguments($expr, $function) as $alternatives) {
-            $states[] = PatternArgument::state(array_map(static fn (ValueExpr $alternative): array => self::parts($alternative, false), $alternatives))->value;
+            $states[] = PatternArgument::state(array_map(static fn (array $alternative): array => self::parts($alternative[0], false), $alternatives))->value;
         }
 
         return $states;
@@ -595,20 +791,17 @@ final class InFileValueResolver
      * for each item the call reads a pattern from. An array written where
      * a pattern is read is no pattern: PHP reads it as "Array". None when
      * the call reads its pattern from an option the value is known not to
-     * hold. An argument with no value is one nothing is known of.
+     * hold. An argument with no value is one nothing is known of. Each
+     * value comes with the name the call reads it through, "via $re", or
+     * null for one written or composed in the argument.
      *
-     * @return list<list<ValueExpr>>
+     * @return list<list<array{ValueExpr, string|null}>>
      */
     private function arguments(ValueExpr $expr, PatternFunction $function): array
     {
         $this->settleCalls();
 
-        $values = match ($expr->kind) {
-            ValueExpr::VARIABLE => $this->variableValues($expr),
-            ValueExpr::PROPERTY => $this->propertyValues($expr),
-            default => $this->values($expr),
-        };
-
+        $values = $this->written($expr, $expr);
         if ([] === $values) {
             return [[]];
         }
@@ -616,15 +809,15 @@ final class InFileValueResolver
         $arguments = [];
         $strings = [];
         $scalars = [];
-        foreach ($values as $value) {
+        foreach ($values as [$value, $via]) {
             $value = $this->optionValue($value, $function);
             if (null === $value) {
                 continue;
             }
 
-            if (ValueExpr::ARRAY === $value->kind && $expr->isReference()) {
+            if (ValueExpr::ARRAY === $value->kind && null !== $via) {
                 foreach ($this->arrayPatterns($value, $function) as $item) {
-                    $arguments[] = ValueExpr::SET === $item->kind ? $item->alternatives : [$item];
+                    $arguments[] = array_map(static fn (ValueExpr $alternative): array => [$alternative, $via], ValueExpr::SET === $item->kind ? $item->alternatives : [$item]);
                 }
 
                 continue;
@@ -632,9 +825,9 @@ final class InFileValueResolver
 
             foreach (ValueExpr::SET === $value->kind ? $value->alternatives : [$value] as $alternative) {
                 if (ValueExpr::NON_STRING === $alternative->kind) {
-                    $scalars[] = $alternative;
+                    $scalars[] = [$alternative, $via];
                 } else {
-                    $strings[] = $alternative;
+                    $strings[] = [$alternative, $via];
                 }
             }
         }
@@ -645,6 +838,73 @@ final class InFileValueResolver
         $alternatives = [] === $strings ? $scalars : $strings;
 
         return [] === $alternatives ? $arguments : [$alternatives, ...$arguments];
+    }
+
+    /**
+     * The values of an expression written in an argument, each with the
+     * name it is read through. A name gives the values it holds, reported
+     * where they are written; a ternary, a match, "?:" and "??" give those
+     * of their arms, each read the same way; anything else is composed in
+     * the argument, and a pattern it gives is reported where the argument
+     * starts. None when nothing is known of one of them.
+     *
+     * @param ValueExpr $argument the whole argument
+     *
+     * @return list<array{ValueExpr, string|null}>
+     */
+    private function written(ValueExpr $expr, ValueExpr $argument): array
+    {
+        switch ($expr->kind) {
+            case ValueExpr::VARIABLE:
+                // The argument itself is read as a pattern, an arm as a
+                // part of one.
+                $values = $expr === $argument ? $this->variableValues($expr, false) ?? [] : $this->variableValues($expr, true) ?? [self::rawHole()];
+
+                break;
+            case ValueExpr::PROPERTY:
+                $values = $this->propertyValues($expr);
+
+                break;
+            case ValueExpr::CLASS_CONSTANT:
+            case ValueExpr::CONSTANT:
+                $values = $this->values($expr);
+
+                break;
+            case ValueExpr::SET:
+                $arms = [];
+                foreach ($expr->alternatives as $alternative) {
+                    $arm = $this->written($alternative, $argument);
+                    if ([] === $arm) {
+                        return [];
+                    }
+
+                    foreach ($arm as $entry) {
+                        $arms[] = $entry;
+                    }
+                }
+
+                return $arms;
+            case ValueExpr::FALLBACK:
+                return self::kept($this->written($expr->parts[0], $argument), fn (): array => $this->written($expr->parts[1], $argument), '??' === $expr->value, ValueExpr::VARIABLE === $expr->parts[0]->kind);
+            default:
+                $composed = [];
+                foreach ($this->values($expr) as $value) {
+                    // A pattern composed in an arm is composed in the
+                    // argument all the same.
+                    $moved = $expr !== $argument && ValueExpr::LITERAL !== $expr->kind && ValueExpr::LITERAL === $value->kind;
+                    $composed[] = [$moved ? ValueExpr::literal($value->value, $argument->offset, $argument->line) : $value, null];
+                }
+
+                return $composed;
+        }
+
+        $via = 'via '.$expr->written;
+        $read = [];
+        foreach ($values as $value) {
+            $read[] = [$value, $via];
+        }
+
+        return $read;
     }
 
     /**
@@ -732,36 +992,46 @@ final class InFileValueResolver
     /**
      * Every value the assignments of the variable that may reach its reads
      * give it: a hole for one the file does not prove, and for a variable
-     * that may be written unseen. Read once per variable.
+     * that may be written unseen; null when no assignment reaches them.
+     * Read once per variable for its reads as a pattern, and once more for
+     * its reads as a part of one when some come later.
      *
-     * @return list<ValueExpr>
+     * @param bool $part whether the variable is read as a part of a pattern, not as the pattern itself
+     *
+     * @return list<ValueExpr>|null
      */
-    private function variableValues(ValueExpr $variable): array
+    private function variableValues(ValueExpr $variable, bool $part): ?array
     {
         $scope = $variable->scope;
-        if (null === $scope || isset($this->opaqueScopes[$scope]) || isset($this->bailed[$scope][$variable->value])) {
+        $name = $variable->value;
+        if (null === $scope || isset($this->opaqueScopes[$scope]) || isset($this->bailed[$scope][$name])) {
             return [self::rawHole()];
         }
 
-        $key = $scope.'|'.$variable->value;
+        $read = ($part ? $this->lastUses : $this->lastReads)[$scope][$name] ?? -1;
+        $key = $scope.'|'.$name.'|'.$read;
         if (!\array_key_exists($key, $this->variableValues)) {
-            $this->variableValues[$key] = $this->assignedValues($scope, $variable->value);
+            // A variable assigned from itself, through any number of
+            // others, holds there a part the file does not prove.
+            $this->variableValues[$key] = [self::rawHole()];
+            $this->variableValues[$key] = $this->assignedValues($scope, $name, $read);
         }
 
         return $this->variableValues[$key];
     }
 
     /**
-     * @return list<ValueExpr>
+     * @param int $read where the variable is last read; -1 for somewhere unknown
+     *
+     * @return list<ValueExpr>|null
      */
-    private function assignedValues(int $scope, string $name): array
+    private function assignedValues(int $scope, string $name, int $read): ?array
     {
-        $lastRead = $this->lastReads[$scope][$name] ?? -1;
-
         $values = [];
-        // Never assigned: no value, the loop below gives none.
+        $seen = [];
+        $reached = false;
         foreach ($this->assignments[$scope][$name] ?? [] as [$expr, $at]) {
-            if (!$this->reaches($scope, $at, $lastRead)) {
+            if (!$this->reaches($scope, $at, $read)) {
                 continue;
             }
 
@@ -775,12 +1045,19 @@ final class InFileValueResolver
                 return [];
             }
 
+            $reached = true;
+            // A value two assignments give, each naming the same
+            // variable, is one value.
             foreach ($assigned as $value) {
-                $values[] = $value;
+                $id = spl_object_id($value);
+                if (!isset($seen[$id])) {
+                    $seen[$id] = true;
+                    $values[] = $value;
+                }
             }
         }
 
-        return $values;
+        return $reached ? $values : null;
     }
 
     /**
@@ -817,8 +1094,15 @@ final class InFileValueResolver
         }
 
         $default = $this->properties[$class.'::'.$property->value] ?? null;
+        if (null === $default) {
+            return [self::rawHole()];
+        }
 
-        return null === $default ? [self::rawHole()] : $this->values($default);
+        $this->constantExpressions++;
+        $values = $this->values($default);
+        $this->constantExpressions--;
+
+        return $values;
     }
 
     /**
@@ -880,8 +1164,8 @@ final class InFileValueResolver
      * The values an expression may take, each folded: a literal, a scalar
      * that is no string, an array of them, a hole, or a concatenation of
      * literals and holes. An expression the file does not prove is a hole
-     * that is not quoted. None at all when a concatenation would give more
-     * values than a pattern argument may: nothing is known then.
+     * that is not quoted. None at all when a composition is one
+     * PatternArgument::concat() does not build: nothing is known then.
      *
      * @param int $height set to the constants the values went through
      *
@@ -903,23 +1187,70 @@ final class InFileValueResolver
             case ValueExpr::CONCAT:
                 return $this->concatenation($expr, $depth, $height);
 
+            case ValueExpr::VARIABLE:
+                return $this->constantExpressions > 0 ? [self::rawHole()] : $this->variableValues($expr, true) ?? [self::rawHole()];
+
+            case ValueExpr::PROPERTY:
+                return $this->constantExpressions > 0 ? [self::rawHole()] : $this->propertyValues($expr);
+
             case ValueExpr::SET:
+                if ($this->constantExpressions > 0) {
+                    return [self::rawHole()];
+                }
+
                 $values = [];
+                $seen = [];
                 foreach ($expr->alternatives as $alternative) {
                     $alternativeHeight = 0;
-                    $resolved = $this->resolve($alternative, $depth, $alternativeHeight);
+                    $resolved = $this->arm($alternative, $depth, $alternativeHeight);
                     if ([] === $resolved) {
                         return [];
                     }
 
+                    // A value two arms give, each naming the same
+                    // variable, is one value.
                     foreach ($resolved as $value) {
-                        $values[] = $value;
+                        $id = spl_object_id($value);
+                        if (!isset($seen[$id])) {
+                            $seen[$id] = true;
+                            $values[] = $value;
+                        }
                     }
 
                     $height = max($height, $alternativeHeight);
                 }
 
                 return $values;
+
+            case ValueExpr::FALLBACK:
+                if ($this->constantExpressions > 0) {
+                    return [self::rawHole()];
+                }
+
+                $firstHeight = 0;
+                $secondHeight = 0;
+                $first = [];
+                foreach ($this->arm($expr->parts[0], $depth, $firstHeight) as $value) {
+                    $first[] = [$value, null];
+                }
+
+                $kept = self::kept($first, function () use ($expr, $depth, &$secondHeight): array {
+                    $second = [];
+                    foreach ($this->arm($expr->parts[1], $depth, $secondHeight) as $value) {
+                        $second[] = [$value, null];
+                    }
+
+                    return $second;
+                }, '??' === $expr->value, ValueExpr::VARIABLE === $expr->parts[0]->kind);
+                $height = max($firstHeight, $secondHeight);
+
+                return array_column($kept, 0);
+
+            case ValueExpr::FORMAT:
+                return $this->constantExpressions > 0 ? [self::rawHole()] : $this->formatted($expr, $depth, $height);
+
+            case ValueExpr::JOIN:
+                return $this->constantExpressions > 0 ? [self::rawHole()] : $this->joined($expr, $depth, $height);
 
             case ValueExpr::ARRAY:
                 $items = [];
@@ -971,9 +1302,22 @@ final class InFileValueResolver
                 return [self::rawHole()];
 
             default:
-                // A variable or a property is no constant expression.
                 return [self::rawHole()];
         }
+    }
+
+    /**
+     * The values of an arm of a ternary, of a match or of a fallback. An
+     * array written there is left out, as one assigned to a local variable
+     * is: a hole.
+     *
+     * @param int $height set to the constants the values went through
+     *
+     * @return list<ValueExpr>
+     */
+    private function arm(ValueExpr $expr, int $depth, int &$height): array
+    {
+        return ValueExpr::ARRAY === $expr->kind ? [self::rawHole()] : $this->resolve($expr, $depth, $height);
     }
 
     /**
@@ -990,9 +1334,9 @@ final class InFileValueResolver
 
     /**
      * The values a concatenation may take: those of its operands, each
-     * followed by each. A whole pattern is reported where the
-     * concatenation starts; around a hole, what is written is kept. One
-     * that would fold past MAX_LENGTH is not read: a hole.
+     * followed by each, as far as PatternArgument::concat() builds them.
+     * None when it does not, or when nothing is known of an operand: the
+     * operands after that one are not read.
      *
      * @param int $height set to the constants the values went through
      *
@@ -1004,12 +1348,7 @@ final class InFileValueResolver
         $alternatives = [[]];
         foreach ($expr->parts as $part) {
             $partHeight = 0;
-            $operand = [];
-            foreach ($this->resolve($part, $depth, $partHeight) as $value) {
-                $operand[] = self::parts($value, true);
-            }
-
-            $alternatives = PatternArgument::concat($alternatives, $operand);
+            $alternatives = self::followedBy($alternatives, $this->resolve($part, $depth, $partHeight), static fn (ValueExpr $value): array => self::parts($value, true));
             if (null === $alternatives) {
                 return [];
             }
@@ -1017,6 +1356,149 @@ final class InFileValueResolver
             $height = max($height, $partHeight);
         }
 
+        return self::composed($alternatives, $expr);
+    }
+
+    /**
+     * The alternatives of a composition, each followed by each value of
+     * one more operand; null when PatternArgument::concat() does not build
+     * them, or when nothing is known of the operand. An operand of more
+     * values than a composition may give is refused before any is read.
+     *
+     * @param list<list<string|Hole>>                $alternatives
+     * @param list<ValueExpr>                        $values       the values of the operand
+     * @param \Closure(ValueExpr): list<string|Hole> $parts        what a value reads as in the composition
+     *
+     * @return list<list<string|Hole>>|null
+     */
+    private static function followedBy(array $alternatives, array $values, \Closure $parts): ?array
+    {
+        if ([] === $values || \count($values) > PatternArgument::MAX_CANDIDATES) {
+            return null;
+        }
+
+        return PatternArgument::concat($alternatives, array_map($parts, $values));
+    }
+
+    /**
+     * The values of a sprintf() call: its format, one constant holding
+     * only "%s", "%d" and "%%", each place filled with what its argument
+     * reads as. A place for an integer given anything else is a part the
+     * file does not prove; an argument past the places is not read, as
+     * PHP ignores it. Any other format, or an argument short, and the
+     * whole call is such a part. The arguments multiply as the operands
+     * of a concatenation do.
+     *
+     * @param int $height set to the constants the values went through
+     *
+     * @return list<ValueExpr>
+     */
+    private function formatted(ValueExpr $expr, int $depth, int &$height): array
+    {
+        $formats = $this->resolve($expr->parts[0], $depth, $height);
+        $pieces = 1 === \count($formats) && ValueExpr::LITERAL === $formats[0]->kind ? self::places($formats[0]->value) : null;
+        // A function the file declares is not the sprintf() of PHP.
+        if (null === $pieces || !$this->isNative($expr->names) || intdiv(\count($pieces), 2) >= \count($expr->parts)) {
+            return [self::rawHole()];
+        }
+
+        /** @var list<list<string|Hole>> $alternatives */
+        $alternatives = [[]];
+        $argument = 1;
+        foreach ($pieces as $piece) {
+            if (\is_string($piece)) {
+                $alternatives = PatternArgument::concat($alternatives, [[$piece]]);
+            } else {
+                $argumentHeight = 0;
+                $alternatives = self::followedBy(
+                    $alternatives,
+                    $this->resolve($expr->parts[$argument++], $depth, $argumentHeight),
+                    static fn (ValueExpr $value): array => !$piece || null !== $value->integer ? self::parts($value, true) : [self::unread()],
+                );
+                $height = max($height, $argumentHeight);
+            }
+
+            if (null === $alternatives) {
+                return [];
+            }
+        }
+
+        return self::composed($alternatives, $expr);
+    }
+
+    /**
+     * The values of an implode() or join() call: the items of its array,
+     * each a string or an integer the file proves, joined by its
+     * separator, one string the file proves, or by nothing without one.
+     * Any other separator or item, and the whole call is a part the file
+     * does not prove. The items multiply as the operands of a
+     * concatenation do.
+     *
+     * @param int $height set to the constants the values went through
+     *
+     * @return list<ValueExpr>
+     */
+    private function joined(ValueExpr $expr, int $depth, int &$height): array
+    {
+        $parts = $expr->parts;
+        $separator = '';
+        if (2 === \count($parts)) {
+            $separators = $this->resolve($parts[0], $depth, $height);
+            if (1 !== \count($separators) || ValueExpr::LITERAL !== $separators[0]->kind) {
+                return [self::rawHole()];
+            }
+
+            $separator = $separators[0]->value;
+        }
+
+        $arrayHeight = 0;
+        $arrays = $this->resolve($parts[\count($parts) - 1], $depth, $arrayHeight);
+        $height = max($height, $arrayHeight);
+        // A function the file declares is not the implode() of PHP.
+        if (1 !== \count($arrays) || ValueExpr::ARRAY !== $arrays[0]->kind || !$this->isNative($expr->names)) {
+            return [self::rawHole()];
+        }
+
+        // Every item is looked at before any is joined: one the file does
+        // not prove leaves nothing of the call, whatever the others give.
+        $items = [];
+        foreach ($arrays[0]->items as [, $item]) {
+            $values = ValueExpr::SET === $item->kind ? $item->alternatives : [$item];
+            foreach ($values as $value) {
+                if (ValueExpr::LITERAL !== $value->kind && null === $value->integer) {
+                    return [self::rawHole()];
+                }
+            }
+
+            $items[] = $values;
+        }
+
+        /** @var list<list<string|Hole>> $alternatives */
+        $alternatives = [[]];
+        foreach ($items as $position => $values) {
+            $before = 0 === $position ? '' : $separator;
+            $alternatives = self::followedBy($alternatives, $values, static fn (ValueExpr $value): array => [$before.(ValueExpr::LITERAL === $value->kind ? $value->value : (string) $value->integer)]);
+            if (null === $alternatives) {
+                return [];
+            }
+        }
+
+        return self::composed($alternatives, $expr);
+    }
+
+    /**
+     * The values a composition gives, from the parts of each: a whole
+     * pattern is reported where the composition starts; around a hole,
+     * what is written is kept. One that would fold past MAX_LENGTH is not
+     * read: a hole.
+     *
+     * @param list<list<string|Hole>> $alternatives
+     * @param ValueExpr               $expr         the concatenation, or the call
+     *
+     * @return list<ValueExpr>
+     */
+    private static function composed(array $alternatives, ValueExpr $expr): array
+    {
         // Measured before anything is joined: constants that double each
         // other are refused without their text being built.
         foreach ($alternatives as $parts) {
@@ -1057,7 +1539,7 @@ final class InFileValueResolver
             }
 
             if ([] === $pieces) {
-                $values[] = ValueExpr::literal($text ?? '', $expr->offset, $expr->line, $expr->file, $expr->column);
+                $values[] = ValueExpr::literal($text ?? '', $expr->offset, $expr->line, $expr->file, $expr->column, $expr->guard);
 
                 continue;
             }
@@ -1111,8 +1593,10 @@ final class InFileValueResolver
 
         $cuts = $this->cuts;
         $this->folding[$key] = true;
+        $this->constantExpressions++;
         $below = 0;
         $resolved = $this->resolve($value, $depth + 1, $below);
+        $this->constantExpressions--;
         unset($this->folding[$key]);
         $height = $below + 1;
 
