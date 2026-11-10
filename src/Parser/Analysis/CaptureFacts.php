@@ -148,6 +148,27 @@ final class CaptureFacts
     private array $recursive = [];
 
     /**
+     * Whether the body of a called group holds a fact, by fact then by
+     * object id.
+     *
+     * @var array<string, array<int, bool>>
+     */
+    private array $calledFacts = [];
+
+    /**
+     * The values of the body of a called group, for a match (0) and for a
+     * scan (1), by object id.
+     *
+     * @var array<int, array<int, list<string>|null>>
+     */
+    private array $calledValues = [];
+
+    /**
+     * How many times the body of a called group was read.
+     */
+    private int $bodiesRead = 0;
+
+    /**
      * Nodes the scan reaches before any part of the pattern may have read
      * a character, by object id: an alternation there is read at the start.
      *
@@ -246,12 +267,23 @@ final class CaptureFacts
     }
 
     /**
+     * How many times the body of a called group was read: once for each
+     * fact asked of it, however many calls run it, and once more after the
+     * analysis marked a node.
+     */
+    public function bodiesRead(): int
+    {
+        return $this->bodiesRead;
+    }
+
+    /**
      * Marks a node the scan reaches before any part of the pattern may have
      * read a character. The analysis collects them before it asks for facts.
      */
     public function markAtStart(NodeInterface $node): void
     {
         $this->atStart[spl_object_id($node)] = true;
+        $this->forgetCalled();
     }
 
     /**
@@ -270,6 +302,7 @@ final class CaptureFacts
     public function markAtEnd(NodeInterface $node): void
     {
         $this->atEnd[spl_object_id($node)] = true;
+        $this->forgetCalled();
     }
 
     /**
@@ -321,7 +354,7 @@ final class CaptureFacts
             $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof CommentNode,
             $node instanceof KeepNode, $node instanceof DefineNode, $node instanceof CalloutNode => [''],
             $node instanceof PcreVerbNode => 'ACCEPT' === $node->name ? null : [''],
-            $node instanceof SubroutineNode => null === ($body = $this->calledBody($node)) ? null : $this->values($body, $scan),
+            $node instanceof SubroutineNode => null === ($body = $this->calledBody($node)) ? null : $this->calledValues($body, $scan),
             default => null,
         };
     }
@@ -385,6 +418,54 @@ final class CaptureFacts
         }
 
         return $calls;
+    }
+
+    /**
+     * The values of the body a call runs, read once and kept: entered at
+     * every call, a body that calls another twice reads it twice, and so
+     * on down the groups it calls. No body is asked while it is read:
+     * calledBody() gives none for a group that runs itself again.
+     *
+     * @return list<string>|null
+     */
+    private function calledValues(NodeInterface $body, bool $scan): ?array
+    {
+        $mode = (int) $scan;
+        $id = spl_object_id($body);
+        if (!\array_key_exists($id, $this->calledValues[$mode] ?? [])) {
+            $this->bodiesRead++;
+            $this->calledValues[$mode][$id] = $this->values($body, $scan);
+        }
+
+        return $this->calledValues[$mode][$id];
+    }
+
+    /**
+     * Whether the body a call runs holds a fact, read once and kept as its
+     * values are.
+     *
+     * @param \Closure(NodeInterface): bool $read
+     */
+    private function calledFact(string $fact, NodeInterface $body, \Closure $read): bool
+    {
+        $id = spl_object_id($body);
+        if (!isset($this->calledFacts[$fact][$id])) {
+            $this->bodiesRead++;
+            $this->calledFacts[$fact][$id] = $read($body);
+        }
+
+        return $this->calledFacts[$fact][$id];
+    }
+
+    /**
+     * Forgets what the called bodies read. A mark moves what an alternation
+     * reads where it stands, and the analysis marks the nodes of each case
+     * it reads: a body kept from one case would read in the next what it
+     * no longer reads there.
+     */
+    private function forgetCalled(): void
+    {
+        $this->calledFacts = $this->calledValues = [];
     }
 
     private function readsCaselessly(NodeInterface $node): bool
@@ -791,7 +872,7 @@ final class CaptureFacts
     private function mayBeZero(NodeInterface $node): bool
     {
         return match (true) {
-            $node instanceof SubroutineNode => null === ($body = $this->calledBody($node)) || $this->mayBeZero($body),
+            $node instanceof SubroutineNode => null === ($body = $this->calledBody($node)) || $this->calledFact('mayBeZero', $body, $this->mayBeZero(...)),
             $node instanceof CharClassNode => $node->isNegated ? !$this->holdsZero($node->expression) : $this->classMayHoldZero($node->expression),
             $node instanceof SequenceNode => $this->sequenceMayBeZero($node->children),
             $node instanceof AlternationNode => self::any($node->alternatives, $this->mayBeZero(...)),
@@ -893,7 +974,7 @@ final class CaptureFacts
             $node instanceof AlternationNode => self::all($node->alternatives, $this->digitsOnly(...)),
             $node instanceof GroupNode => self::isLookaround($node) || $this->digitsOnly($node->child),
             $node instanceof QuantifierNode => $this->digitsOnly($node->node),
-            $node instanceof SubroutineNode => null !== ($body = $this->calledBody($node)) && $this->digitsOnly($body),
+            $node instanceof SubroutineNode => null !== ($body = $this->calledBody($node)) && $this->calledFact('digitsOnly', $body, $this->digitsOnly(...)),
             default => self::consumesNothing($node),
         };
     }
@@ -987,7 +1068,7 @@ final class CaptureFacts
             $node instanceof AlternationNode => self::all($node->alternatives, fn (NodeInterface $branch): bool => $this->startsWithNonZero($branch, $scan)),
             $node instanceof SequenceNode => $this->sequenceStartsWithNonZero($node->children, $scan),
             $node instanceof QuantifierNode => ($node->bounds->min ?? 0) >= 1 && $this->startsWithNonZero($node->node, $scan),
-            $node instanceof SubroutineNode => null !== ($body = $this->calledBody($node)) && $this->startsWithNonZero($body, $scan),
+            $node instanceof SubroutineNode => null !== ($body = $this->calledBody($node)) && $this->calledFact($scan ? 'scanStartsWithNonZero' : 'startsWithNonZero', $body, fn (NodeInterface $body): bool => $this->startsWithNonZero($body, $scan)),
             $node instanceof CharClassNode, $node instanceof CharTypeNode => $this->lengths($node)[0] >= 1 && !$this->mayBeZero($node),
             default => false,
         };
@@ -1027,7 +1108,7 @@ final class CaptureFacts
             $node instanceof AlternationNode => self::all($node->alternatives, fn (NodeInterface $branch): bool => $this->holdsNoLetter($branch, $upper)),
             $node instanceof GroupNode => self::isLookaround($node) || $this->holdsNoLetter($node->child, $upper),
             $node instanceof QuantifierNode => $this->holdsNoLetter($node->node, $upper),
-            $node instanceof SubroutineNode => null !== ($body = $this->calledBody($node)) && $this->holdsNoLetter($body, $upper),
+            $node instanceof SubroutineNode => null !== ($body = $this->calledBody($node)) && $this->calledFact($upper ? 'holdsNoUppercase' : 'holdsNoLowercase', $body, fn (NodeInterface $body): bool => $this->holdsNoLetter($body, $upper)),
             default => self::consumesNothing($node),
         };
     }
