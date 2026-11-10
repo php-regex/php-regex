@@ -12,9 +12,12 @@ inputs:
     required: false
     default: ''
   coverage:
-    description: The coverage driver, "pcov" or "xdebug"; setup-php's default when empty.
+    description: >
+      The coverage driver, "pcov" or "xdebug", for the job that measures
+      coverage. None otherwise: the Ubuntu runners load Xdebug into PHP by
+      default, and a suite that measures nothing pays for it all the same.
     required: false
-    default: ''
+    default: none
   dependencies:
     description: >
       How the root dependencies are installed: "install", or "prefer-lowest"
