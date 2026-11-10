@@ -218,7 +218,9 @@ final class PullRequestRequiredCheckTest extends TestCase
         $this->assertSame(1, preg_match('~^      - name: '.preg_quote($step, '~').'\n(?:        .*\n)*?        run: \|\n((?:          .*\n|\n)+)~m', $job, $match), 'The job has a "'.$step.'" step.');
         $script = (string) preg_replace('~^          ~m', '', $match[1]);
         $this->assertStringNotContainsString('${{', $script, 'A step reads the run through its environment, never inside its script.');
-        file_put_contents($this->root.'/step.sh', $script);
+        // One pipe for both streams: a step that fills the pipe of its
+        // errors while its output is being read would wait for ever.
+        file_put_contents($this->root.'/step.sh', "exec 2>&1\n".$script);
         touch($this->root.'/summary');
         touch($this->root.'/output');
 
@@ -231,11 +233,10 @@ final class PullRequestRequiredCheckTest extends TestCase
             'GITHUB_OUTPUT' => $this->root.'/output',
             'RUNNER_TEMP' => $this->root,
         ];
-        $process = proc_open(['bash', '--noprofile', '--norc', '-e', '-o', 'pipefail', $this->root.'/step.sh'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $this->root, $env);
+        $process = proc_open(['bash', '--noprofile', '--norc', '-e', '-o', 'pipefail', $this->root.'/step.sh'], [1 => ['pipe', 'w']], $pipes, $this->root, $env);
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = (string) stream_get_contents($pipes[1]);
         fclose($pipes[1]);
-        fclose($pipes[2]);
 
         return [proc_close($process), $output, (string) file_get_contents($this->root.'/summary')];
     }
