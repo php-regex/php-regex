@@ -18,6 +18,7 @@ use PHPRegex\Automata\Model\Nfa;
 use PHPRegex\Automata\Model\NfaFragment;
 use PHPRegex\Automata\Model\NfaState;
 use PHPRegex\Automata\Model\NfaTransition;
+use PHPRegex\Automata\Support\WorkBudget;
 use PHPRegex\Parser\Hir\CharSet;
 
 /**
@@ -48,6 +49,7 @@ final class NfaBuilder
         private readonly int $maxStates,
         private readonly int $minCodePoint = 0,
         private readonly int $maxCodePoint = 255,
+        private readonly ?WorkBudget $budget = null,
     ) {}
 
     /**
@@ -62,6 +64,10 @@ final class NfaBuilder
                 diagnostic: ['phase' => 'nfa construction', 'limit' => $this->maxStates],
             );
         }
+
+        // Each state is charged before it is stored: a budget smaller than
+        // the automaton stops its construction, not only what follows it.
+        $this->budget?->consume();
 
         $this->transitions[$stateId] = [];
         $this->epsilonTransitions[$stateId] = [];

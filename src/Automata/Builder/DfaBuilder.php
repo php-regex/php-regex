@@ -35,12 +35,12 @@ final class DfaBuilder
     /**
      * @throws ComplexityException
      */
-    public function determinize(Nfa $nfa, SolverOptions $options): Dfa
+    public function determinize(Nfa $nfa, SolverOptions $options, ?WorkBudget $workBudget = null): Dfa
     {
+        $sharedBudget = $workBudget;
         $alphabetRanges = $this->buildAlphabetRanges($nfa);
         $nfaTransitions = $this->countTransitions($nfa);
-        $workBudget = null;
-        if (null !== $options->maxTransitionsProcessed) {
+        if (null === $workBudget && null !== $options->maxTransitionsProcessed) {
             $workBudget = new WorkBudget(
                 $options->maxTransitionsProcessed,
                 'determinize',
@@ -64,7 +64,7 @@ final class DfaBuilder
 
         $minimizer = new DfaMinimizer((new MinimizationAlgorithmFactory())->create($options->minimizationAlgorithm));
 
-        return $minimizer->minimize($dfa, $options);
+        return $minimizer->minimize($dfa, $options, $sharedBudget);
     }
 
     /**

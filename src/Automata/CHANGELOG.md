@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The lookaround bodies of a pattern share one allowance: their states count
+   together against `maxNfaStates` and `maxDfaStates`, and their work against
+   one `maxTransitionsProcessed` budget, whose diagnostic names the
+   `lookaround bodies` phase. A lookaround repeated by a quantifier is compiled
+   once: `/(?:(?=a{99})){100}a{99}/` no longer builds a hundred automata.
  * `Language::countOfLength()` and `size()` multiply once for each state a
    move leads to, however many ranges spell its characters, and leave out the
    states no string is accepted from: `size()` of `/[ab]{0,100}/` answers its

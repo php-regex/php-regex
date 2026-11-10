@@ -79,6 +79,131 @@ final class LookaroundSolverTest extends TestCase
         (new LanguageSolver())->compile($pattern);
     }
 
+    #[Test]
+    public function test_expanded_marks_reuse_the_assertion(): void
+    {
+        $pattern = '/(?:(?=a{99})){100}a{99}/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 99)));
+        $this->assertSame(0, preg_match($pattern, str_repeat('a', 98)));
+
+        $dfa = (new LanguageSolver())->compile($pattern);
+
+        $this->assertTrue(self::accepts($dfa, str_repeat('a', 99)));
+        $this->assertFalse(self::accepts($dfa, str_repeat('a', 98)));
+    }
+
+    /**
+     * The first body of each pattern fills the allowance exactly, so the
+     * second one is refused before it is built.
+     */
+    #[Test]
+    #[DataProvider('provideFilledBodyAllowances')]
+    public function test_a_filled_body_allowance_names_its_phase_and_limit(SolverOptions $options, int $limit): void
+    {
+        try {
+            (new LanguageSolver())->compile('/(?=a{10})(?=b{10})/', $options);
+            $this->fail('The second lookaround body was compiled.');
+        } catch (ComplexityException $e) {
+            $this->assertSame(['phase' => 'lookaround bodies', 'limit' => $limit], $e->getDiagnostic());
+            // The caret stands under the lookaround refused, "(?=b{10})".
+            $this->assertSame(9, $e->position);
+        }
+    }
+
+    /**
+     * A mark that reuses an assertion already compiled is skipped, and the
+     * marks after it are still read: the lookahead after the repeated one
+     * keeps "b" out. preg_match() agrees on each subject.
+     */
+    #[Test]
+    #[DataProvider('provideMarksAfterARepeatedOne')]
+    public function test_the_marks_after_a_repeated_one_are_read(string $pattern): void
+    {
+        $dfa = (new LanguageSolver())->compile($pattern);
+
+        foreach (['a', 'b', 'c', 'ab', ''] as $subject) {
+            $this->assertSame(1 === preg_match($pattern, $subject), self::accepts($dfa, $subject), \sprintf('%s on %s.', $pattern, json_encode($subject)));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideMarksAfterARepeatedOne(): iterable
+    {
+        yield 'lookahead after' => ['pattern' => '/^(?:(?=[ab])){2}(?=a)[a-c]$/'];
+        yield 'lookahead before' => ['pattern' => '/^(?=a)(?:(?=[ab])){2}[a-c]$/'];
+        yield 'lookbehind after' => ['pattern' => '/^[a-c](?:(?<=[ab])){2}(?<=a)$/'];
+    }
+
+    /**
+     * @return iterable<string, array{options: SolverOptions, limit: int}>
+     */
+    public static function provideFilledBodyAllowances(): iterable
+    {
+        yield 'NFA states' => ['options' => new SolverOptions(maxNfaStates: 20, maxTransitionsProcessed: null), 'limit' => 20];
+        yield 'DFA states' => ['options' => new SolverOptions(maxDfaStates: 12, maxTransitionsProcessed: null), 'limit' => 12];
+    }
+
+    #[Test]
+    public function test_body_state_limits_are_shared(): void
+    {
+        $this->expectException(ComplexityException::class);
+
+        (new LanguageSolver())->compile('/(?=a{20})(?=b{20})/', new SolverOptions(maxNfaStates: 60));
+    }
+
+    #[Test]
+    public function test_body_work_limit_is_shared(): void
+    {
+        $solver = new LanguageSolver();
+        $options = new SolverOptions(maxTransitionsProcessed: 5000);
+        $solver->compile('/(?=a{10})/', $options);
+        $solver->compile('/(?=b{10})/', $options);
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('lookaround bodies');
+
+        $solver->compile('/(?=a{10})(?=b{10})/', $options);
+    }
+
+    #[Test]
+    public function test_body_dfa_state_limits_are_shared_even_without_a_work_limit(): void
+    {
+        $this->expectException(ComplexityException::class);
+
+        (new LanguageSolver())->compile('/(?=a{10})(?=b{10})/', new SolverOptions(maxDfaStates: 15, maxTransitionsProcessed: null));
+    }
+
+    /**
+     * The body's NFA is charged one unit per state as it is built: a budget
+     * of one stops /(?=a{99})/ at the first state, not after all 198.
+     */
+    #[Test]
+    public function test_body_states_are_charged_while_they_are_built(): void
+    {
+        $pattern = '/(?=a{99})/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 99)));
+
+        try {
+            (new LanguageSolver())->compile($pattern, new SolverOptions(maxTransitionsProcessed: 1));
+            $this->fail('The body fit a budget of one.');
+        } catch (ComplexityException $e) {
+            $diagnostic = $e->getDiagnostic() ?? [];
+            $this->assertSame('lookaround bodies', $diagnostic['phase'] ?? null);
+            $this->assertSame(2, $diagnostic['consumed'] ?? null);
+        }
+    }
+
+    #[Test]
+    public function test_zero_work_budget_applies_to_bodies(): void
+    {
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('lookaround bodies');
+
+        (new LanguageSolver())->compile('/(?=a{99})/', new SolverOptions(maxTransitionsProcessed: 0));
+    }
+
     /**
      * @return iterable<string, array{pattern: string, letters: string, length: int}>
      */
