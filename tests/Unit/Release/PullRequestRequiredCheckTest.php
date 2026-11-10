@@ -118,7 +118,9 @@ final class PullRequestRequiredCheckTest extends TestCase
      * One file outside the list is enough to know that the code changes,
      * and the whole list to know that it does not: a list that is empty,
      * that GitHub does not give or cuts at three thousand files says
-     * neither.
+     * neither, and the step fails: running the failed jobs again then
+     * reads the files again, where a step that passed would hand the same
+     * answer to the job after it.
      *
      * @param list<string>|null $files the files of the pull request as GitHub lists them, a moved one as its name, a tab and the name it had; null when GitHub does not answer
      */
@@ -134,8 +136,11 @@ final class PullRequestRequiredCheckTest extends TestCase
 
         [$exit, $output] = $this->runStep(self::jobs()['scope'], 'Read what the pull request changes', ['PULL_REQUEST' => '7']);
 
-        $this->assertSame(0, $exit, $output);
+        $this->assertSame('unknown' === $code ? 1 : 0, $exit, $output);
         $this->assertSame("code=$code\n", (string) file_get_contents($this->root.'/output'));
+        if ('unknown' === $code) {
+            $this->assertStringContainsString('::error title=Prose scope::', $output);
+        }
         $this->assertStringContainsString('api --paginate repos/php-regex/php-regex/pulls/7/files', (string) file_get_contents($this->root.'/gh.log'));
     }
 
@@ -150,7 +155,7 @@ final class PullRequestRequiredCheckTest extends TestCase
 
         [$exit, $output] = $this->runStep(self::jobs()['scope'], 'Read what the pull request changes', ['PULL_REQUEST' => '7']);
 
-        $this->assertSame(0, $exit, $output);
+        $this->assertSame(1, $exit, $output);
         $this->assertSame("code=unknown\n", (string) file_get_contents($this->root.'/output'));
     }
 
@@ -167,7 +172,7 @@ final class PullRequestRequiredCheckTest extends TestCase
 
         [$exit, $output] = $this->runStep(self::jobs()['scope'], 'Read what the pull request changes', ['PULL_REQUEST' => '7']);
 
-        $this->assertSame(0, $exit, $output);
+        $this->assertSame(1, $exit, $output);
         $this->assertSame("code=unknown\n", (string) file_get_contents($this->root.'/output'));
     }
 
@@ -200,7 +205,7 @@ final class PullRequestRequiredCheckTest extends TestCase
      */
     public static function provideAnswers(): iterable
     {
-        $unread = 'The files of this pull request could not be read in full: nothing says whether ci.yml answers for it. Running this job again reads them again.';
+        $unread = 'The files of this pull request could not be read in full: nothing says whether ci.yml answers for it. Running the failed jobs again reads them again.';
 
         yield 'the prose alone' => ['code' => 'false', 'exit' => 0, 'said' => 'This pull request changes nothing the code checks read.'];
         yield 'the code as well' => ['code' => 'true', 'exit' => 0, 'said' => 'This pull request changes the code as well: the CI check is the one ci.yml reports.'];
@@ -297,9 +302,17 @@ final class PullRequestRequiredCheckTest extends TestCase
         return $items[1];
     }
 
+    /**
+     * The block ends where the next trigger starts: a path written after a
+     * blank line would be read by GitHub and not here.
+     */
     private static function pullRequestBlock(string $workflow): string
     {
-        self::assertSame(1, preg_match('~^  pull_request:\n((?:    .*\n)+)~m', self::workflow($workflow), $match), $workflow.' runs on a pull request.');
+        self::assertSame(1, preg_match('~^  pull_request:\n((?:    .*\n)+)(.*)$~m', self::workflow($workflow), $match), $workflow.' runs on a pull request.');
+        self::assertMatchesRegularExpression('~^(?:  [a-z_]+:|)$~', $match[2], $workflow.': the pull request trigger is followed by the next trigger, or by the end of the triggers.');
+        if ('' === $match[2]) {
+            self::assertDoesNotMatchRegularExpression('~^  pull_request:\n(?:    .*\n)+\n+ ~m', self::workflow($workflow), $workflow.': no blank line stands inside the pull request trigger.');
+        }
 
         return $match[1];
     }

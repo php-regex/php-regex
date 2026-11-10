@@ -50,7 +50,8 @@ jobs:
     # ci.yml ignores are read from ci.yml as the pull request holds it,
     # which is the list GitHub starts it from. One file outside them says
     # that the code changes, and the whole list that it does not: a list
-    # that cannot be read, or that GitHub cuts, says neither.
+    # that cannot be read, or that GitHub cuts, says neither, and the job
+    # fails, so that running the failed jobs again reads the list again.
     name: Prose scope
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -108,6 +109,10 @@ jobs:
           fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
           echo "The pull request changes the code: $code."
+          if [ "$code" = unknown ]; then
+            echo '::error title=Prose scope::The files of this pull request, or the paths ci.yml ignores, could not be read in full.'
+            exit 1
+          fi
 
   verdict:
     # CI for the prose alone. For a pull request that changes the code as
@@ -132,7 +137,7 @@ jobs:
           case "$CODE" in
             false) answer='This pull request changes nothing the code checks read.' ;;
             true) answer='This pull request changes the code as well: the CI check is the one ci.yml reports.' ;;
-            *) answer='The files of this pull request could not be read in full: nothing says whether ci.yml answers for it. Running this job again reads them again.' ;;
+            *) answer='The files of this pull request could not be read in full: nothing says whether ci.yml answers for it. Running the failed jobs again reads them again.' ;;
           esac
           echo "$answer" | tee -a "$GITHUB_STEP_SUMMARY"
           if [ "$CODE" != false ] && [ "$CODE" != true ]; then
