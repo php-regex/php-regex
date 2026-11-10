@@ -74,23 +74,46 @@ final class HostRequirementsTest extends TestCase
     }
 
     /**
-     * The bootstrap of the suite, in a process of its own: silent on this
-     * host, and saying what is missing where the function is disabled.
+     * The bootstrap of the suite, in a process of its own: it says what
+     * that process lacks, which its own settings decide, not this one's.
+     * Silent where the function can be called, it names it where a setting
+     * disables it.
      */
     #[Test]
     public function test_the_suite_says_what_the_host_lacks_when_it_starts(): void
     {
-        $this->assertSame('', $this->bootstrapErrors([]));
+        $this->assertSame($this->expectedNotice([]), $this->bootstrapErrors([]));
 
-        $disabled = $this->bootstrapErrors(['-d', 'disable_functions=posix_geteuid']);
-        if (Path::onWindows()) {
-            $this->assertSame('', $disabled);
+        $disabled = ['-d', 'disable_functions=posix_geteuid'];
+        $this->assertFalse($this->canCheckOwner($disabled));
+        $this->assertSame($this->expectedNotice($disabled), $this->bootstrapErrors($disabled));
+        $this->assertSame(!Path::onWindows(), str_contains($this->bootstrapErrors($disabled), 'posix_geteuid()'));
+    }
 
-            return;
-        }
+    /**
+     * What a process started with these settings is told when the suite
+     * starts in it.
+     *
+     * @param list<string> $settings
+     */
+    private function expectedNotice(array $settings): string
+    {
+        return HostRequirements::notice(HostRequirements::missing(Path::onWindows(), $this->canCheckOwner($settings)));
+    }
 
-        $this->assertSame(HostRequirements::notice(HostRequirements::missing(windows: false, ownerCheck: false)), $disabled);
-        $this->assertStringContainsString('posix_geteuid()', $disabled);
+    /**
+     * Whether a process started with these settings can call
+     * posix_geteuid(): a php.ini may disable it for every process of the
+     * host, this one included.
+     *
+     * @param list<string> $settings
+     */
+    private function canCheckOwner(array $settings): bool
+    {
+        [$output] = $this->runPhp([...$settings, '-r', 'echo function_exists("posix_geteuid") ? "yes" : "no";']);
+        $this->assertContains($output, ['yes', 'no']);
+
+        return 'yes' === $output;
     }
 
     /**
@@ -100,8 +123,23 @@ final class HostRequirementsTest extends TestCase
      */
     private function bootstrapErrors(array $settings): string
     {
+        [$output, $errors] = $this->runPhp([...$settings, \dirname(__DIR__, 2).'/bootstrap.php']);
+        $this->assertSame('', $output);
+
+        return $errors;
+    }
+
+    /**
+     * Runs PHP in a process of its own.
+     *
+     * @param list<string> $arguments
+     *
+     * @return array{string, string} what it wrote to the standard output and to the standard error
+     */
+    private function runPhp(array $arguments): array
+    {
         $process = proc_open(
-            [\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'xdebug.mode=off', ...$settings, \dirname(__DIR__, 2).'/bootstrap.php'],
+            [\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'xdebug.mode=off', ...$arguments],
             [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
         );
@@ -112,8 +150,7 @@ final class HostRequirementsTest extends TestCase
         fclose($pipes[1]);
         fclose($pipes[2]);
         $this->assertSame(0, proc_close($process), $output.$errors);
-        $this->assertSame('', $output);
 
-        return $errors;
+        return [$output, $errors];
     }
 }
