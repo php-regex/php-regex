@@ -16,7 +16,9 @@ namespace PHPRegex\Parser;
 /**
  * Every PHP version a rule of the library changes at, by name: the parser
  * and the validator compare the PHP judged with these, never with a raw
- * number, so POINTS names every version where a verdict may change.
+ * number, so POINTS names every version where a verdict may change, and
+ * ERROR_ONLY those where only the error a refused pattern is reported with
+ * does.
  *
  * Comparisons with PHP_VERSION_ID ask about the PHP running the library,
  * not about the one judged, and are not gates.
@@ -80,6 +82,16 @@ final class PhpVersionGates
     public const NUL_IN_PATTERN = 80200;
 
     /**
+     * PHP 8.2.35 bundles PCRE2 10.40 with the fixes PCRE2 keeps for that
+     * release, on its release/pcre2-10.40 branch. One of them makes the
+     * first pass check each item of a pattern against the size limit with
+     * its own branch, and each branch with those before it where the next
+     * one starts, as 10.48 does: a pattern too large that holds another
+     * error may be refused with the other one. No pattern changes verdict.
+     */
+    public const BUNDLES_PCRE2_10_40_WITH_ITS_FIXES = 80235;
+
+    /**
      * PHP dropped the "e" modifier in 7.0.
      */
     public const EVAL_MODIFIER_REMOVED = 70000;
@@ -137,6 +149,15 @@ final class PhpVersionGates
     ];
 
     /**
+     * The PHP versions where a pattern keeps its verdict and only the error
+     * a refused one is reported with may change: no point, as the matrix
+     * and the ranges have nothing to judge there.
+     */
+    public const ERROR_ONLY = [
+        self::BUNDLES_PCRE2_10_40_WITH_ITS_FIXES,
+    ];
+
+    /**
      * Whether PHP compiles a pattern with these modifiers with
      * PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL: 7.3 and 7.4, without "X".
      */
@@ -153,5 +174,14 @@ final class PhpVersionGates
     {
         return $phpVersionId >= self::NEVER_BACKSLASH_C_UNDER_UTF_8_5
             || ($phpVersionId >= self::NEVER_BACKSLASH_C_UNDER_UTF_8_4 && $phpVersionId < self::PHP_8_5);
+    }
+
+    /**
+     * Whether the PCRE2 10.40 PHP bundles carries the fixes PCRE2 keeps for
+     * that release: 8.2 from 8.2.35.
+     */
+    public static function bundlesPcre2WithItsFixes(int $phpVersionId): bool
+    {
+        return $phpVersionId >= self::BUNDLES_PCRE2_10_40_WITH_ITS_FIXES && $phpVersionId < self::BUNDLES_PCRE2_10_42;
     }
 }

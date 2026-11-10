@@ -13,14 +13,18 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Validation;
 
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Validation\CompiledLength;
+use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -728,6 +732,114 @@ final class CompiledLengthTest extends TestCase
         yield 'lookbehind of two branches before a repeat past the limit' => ['pattern' => '/(?<=a|b)(?:c){8200}/', 'insideABranch' => true];
         yield 'negative lookbehind of two branches before a repeat past the limit' => ['pattern' => '/(?<!a|b)(?:c){8200}/', 'insideABranch' => true];
         yield 'atomic script run of two branches before a repeat past the limit' => ['pattern' => '/(*asr:(?:a){8189}aa|b)(?:c){8200}/', 'insideABranch' => true];
+    }
+
+    /**
+     * PHP 8.2.35 bundles a PCRE2 10.40 that sums as 10.48 does, and reports
+     * at offset 0 only the check it makes where a branch ends and another
+     * follows.
+     */
+    #[Test]
+    #[DataProvider('provideWhereTheBundledReleaseOfPhp82PassesTheLimit')]
+    public function test_where_the_10_40_php_bundles_from_8_2_35_passes_the_limit(string $pattern, bool $whereABranchEnds): void
+    {
+        $this->assertSame($whereABranchEnds, self::measureOnPhp82($pattern, 80235)->passedWhereABranchEnds(self::parseOnPhp82($pattern)->pattern), $pattern);
+
+        // On that engine PHP reports the check at offset 0, and any other at
+        // the end of the pattern.
+        $running = PcreTarget::runtime();
+        if ($running->measuresBranchesApart() && !$running->pcreAtLeast('10.47')) {
+            $this->assertSame(\sprintf('preg_match(): Compilation failed: regular expression is too large at offset %d', $whereABranchEnds ? 0 : \strlen($pattern) - 2), EngineProbe::warning($pattern));
+        }
+    }
+
+    /**
+     * Each run on PHP 8.2.35: offset 0 when the limit is passed where a
+     * branch ends and another follows, the end of the pattern when another
+     * check finds it.
+     *
+     * @return iterable<string, array{pattern: string, whereABranchEnds: bool}>
+     */
+    public static function provideWhereTheBundledReleaseOfPhp82PassesTheLimit(): iterable
+    {
+        yield 'first branch one unit past the limit with the end marker' => ['pattern' => '/(?:a){8190}abc.|d/', 'whereABranchEnds' => true];
+        yield 'first branch at the limit with the end marker' => ['pattern' => '/(?:a){8190}abc|d/', 'whereABranchEnds' => false];
+        yield 'item past the limit in the first branch' => ['pattern' => '/(?:a){8192}|d/', 'whereABranchEnds' => false];
+        yield 'second of three branches past the limit with the first' => ['pattern' => '/(?:a){4000}|(?:b){4200}|c/', 'whereABranchEnds' => true];
+        yield 'last branch past the limit with the branch before' => ['pattern' => '/a|(?:b){8191}/', 'whereABranchEnds' => false];
+        yield 'group of 65537 units, past the limit where it ends' => ['pattern' => '/(?:(?:a){8190}|abcd)/', 'whereABranchEnds' => false];
+        yield 'first branch of a group at the limit' => ['pattern' => '/(?:(?:a){8190}abc.|d)/', 'whereABranchEnds' => false];
+        yield 'first branch of a group one unit past the limit' => ['pattern' => '/(?:(?:a){8190}abc..|d)/', 'whereABranchEnds' => true];
+        yield 'pattern of one branch one unit past the limit' => ['pattern' => '/'.str_repeat('a', 32765).'/', 'whereABranchEnds' => false];
+        yield 'condition past the limit on its own' => ['pattern' => '/(?(?=(?:a){8192})b|c)/', 'whereABranchEnds' => false];
+        yield 'first branch of a conditional past the limit where it ends' => ['pattern' => '/(a)(?(1)(?:b){8190}abc|c)|d/', 'whereABranchEnds' => true];
+        yield 'conditional past the limit in the branch around it' => ['pattern' => '/(a)(?(1)(?:b){8188}abc|c)|d/', 'whereABranchEnds' => false];
+        // Each branch of a lookbehind starts with its length to move back.
+        yield 'first branch of a lookbehind past the limit where it ends' => ['pattern' => '/(?<='.str_repeat('a', 32763).'|b)/', 'whereABranchEnds' => true];
+        yield 'first branch of a lookbehind at the limit where it ends' => ['pattern' => '/(?<='.str_repeat('a', 32762).'|b)/', 'whereABranchEnds' => false];
+        yield 'second branch of a lookbehind past the limit where it ends' => ['pattern' => '/(?<='.str_repeat('a', 32759).'|b|c)/', 'whereABranchEnds' => true];
+        yield 'second branch of a lookbehind at the limit where it ends' => ['pattern' => '/(?<='.str_repeat('a', 32758).'|b|c)/', 'whereABranchEnds' => false];
+    }
+
+    /**
+     * One measure serves several patterns: where the last one passed the
+     * limit is not kept from the one before.
+     */
+    #[Test]
+    public function test_where_a_pattern_passed_the_limit_is_not_kept_for_the_next(): void
+    {
+        $measure = new CompiledLength(static fn (): int => 0, '', false, false, '', new PcreTarget(80235, '10.40'));
+
+        $this->assertTrue($measure->passedWhereABranchEnds(self::parseOnPhp82('/(?:a){8190}abc.|d/')->pattern));
+        $this->assertFalse($measure->passedWhereABranchEnds(self::parseOnPhp82('/(?:a){8192}|d/')->pattern));
+        $this->assertFalse($measure->passedWhereABranchEnds(self::parseOnPhp82('/a|b/')->pattern));
+        $this->assertTrue(EngineProbe::compiles('/a|b/'), 'Oracle: PHP compiles /a|b/.');
+    }
+
+    /**
+     * A group of branches measured before, whose length is not known for
+     * sure, may have passed the limit where it ends: the branch end found
+     * after it is not reported as the check that fails.
+     */
+    #[Test]
+    public function test_a_branch_end_after_a_group_of_no_known_length_is_not_told_for_sure(): void
+    {
+        // Without the tables of the locale, "[iI]" has no length.
+        $unknown = '/(?:[iI]|d)(?:a){8189}aa|e/';
+        $known = '/(?:[jJ]|d)(?:a){8189}a|e/';
+
+        $this->assertNull(self::measureOnPhp82('/(?:[iI]|d)/', 80235)->of(self::parseOnPhp82('/(?:[iI]|d)/')->pattern));
+        $this->assertFalse(self::measureOnPhp82($unknown, 80235)->passedWhereABranchEnds(self::parseOnPhp82($unknown)->pattern));
+        $this->assertTrue(self::measureOnPhp82($known, 80235)->passedWhereABranchEnds(self::parseOnPhp82($known)->pattern));
+
+        // On that engine PHP has the tables of the locale it runs under, and
+        // the validator measures with the same ones: both report the pattern
+        // too large at one offset, 0 under "C", where "[iI]" is a pair of
+        // cases.
+        $running = PcreTarget::runtime();
+        if ($running->measuresBranchesApart() && !$running->pcreAtLeast('10.47')) {
+            foreach ([$unknown, $known] as $pattern) {
+                $engine = PcreMessageCodes::read((string) EngineProbe::warning($pattern));
+                $result = RegexParser::create(['cache' => null, 'php_version' => $running->phpVersionId, 'pcre_version' => $running->pcreVersion, 'locale' => $running->locale, 'runtime_pcre_validation' => false])->validate($pattern);
+                $this->assertSame('regular expression is too large', $engine['message'], $pattern);
+                $this->assertSame([ErrorCode::PatternTooLarge, $engine['offset']], [$result->errorCode, $result->offset], $pattern);
+                if ('C' === $running->locale) {
+                    $this->assertSame(0, $engine['offset'], $pattern);
+                }
+            }
+        }
+    }
+
+    private static function parseOnPhp82(string $pattern): RegexNode
+    {
+        return RegexParser::create(['cache' => null, 'php_version' => '8.2', 'pcre_version' => '10.40', 'runtime_pcre_validation' => false])->parse($pattern);
+    }
+
+    private static function measureOnPhp82(string $pattern, int $phpVersionId): CompiledLength
+    {
+        $regex = self::parseOnPhp82($pattern);
+
+        return new CompiledLength(static fn (): int => 0, (string) $regex->source, false, false, $regex->flags, new PcreTarget($phpVersionId, '10.40'));
     }
 
     private static function lengthOf(string $pattern, string $release = '10.48'): ?int

@@ -40,6 +40,11 @@ final class PcreTarget
      */
     private const KNOWN_IN_FULL = 10_039;
 
+    /**
+     * The release PHP 8.2 bundles, 10.40.
+     */
+    private const BUNDLED_WITH_PHP_8_2 = 10_040;
+
     public readonly string $pcreVersion;
 
     /**
@@ -198,6 +203,25 @@ final class PcreTarget
         });
 
         return self::$supported[$this->release][$feature->name] = $this->pcreAtLeast($feature->release());
+    }
+
+    /**
+     * Whether the first pass of the PCRE2 judged checks each item of a
+     * pattern against the size limit with its own branch, and each branch
+     * with those before it where the next one starts: from 10.48, and in
+     * the 10.40 PHP 8.2 bundles from 8.2.35, which carries that fix. Up to
+     * 10.47 an item is checked with the branches before it in its group.
+     *
+     * PCRE2 gives that fix to every distributor of 10.39 to 10.47, and a
+     * release names neither who built it nor what was applied: any other
+     * build is judged as the release PCRE2 tagged.
+     *
+     * @internal
+     */
+    public function measuresBranchesApart(): bool
+    {
+        return $this->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd)
+            || (self::BUNDLED_WITH_PHP_8_2 === $this->release && PhpVersionGates::bundlesPcre2WithItsFixes($this->phpVersionId));
     }
 
     /**

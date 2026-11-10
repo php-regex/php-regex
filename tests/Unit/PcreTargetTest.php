@@ -217,6 +217,48 @@ final class PcreTargetTest extends TestCase
         $this->assertSame(9, (new PcreTarget(80400, '10.47'))->faultOffset(9));
     }
 
+    /**
+     * PCRE2 checks each item of a pattern against the size limit with its
+     * own branch from 10.48; PHP 8.2 bundles a 10.40 that does from 8.2.35.
+     */
+    #[Test]
+    #[DataProvider('provideBranchMeasures')]
+    public function test_branches_are_measured_apart_from_pcre2_10_48_and_in_the_10_40_php_bundles_from_8_2_35(int $phpVersionId, string $release, bool $apart): void
+    {
+        $this->assertSame($apart, (new PcreTarget($phpVersionId, $release))->measuresBranchesApart());
+    }
+
+    /**
+     * @return iterable<string, array{phpVersionId: int, release: string, apart: bool}>
+     */
+    public static function provideBranchMeasures(): iterable
+    {
+        yield '10.47' => ['phpVersionId' => 80500, 'release' => '10.47', 'apart' => false];
+        yield '10.48' => ['phpVersionId' => 80500, 'release' => '10.48', 'apart' => true];
+        yield '10.49 on PHP 8.2' => ['phpVersionId' => 80200, 'release' => '10.49', 'apart' => true];
+        yield '10.40 on PHP 8.2.0' => ['phpVersionId' => 80200, 'release' => '10.40', 'apart' => false];
+        yield '10.40 on PHP 8.2.34' => ['phpVersionId' => 80234, 'release' => '10.40', 'apart' => false];
+        yield '10.40 on PHP 8.2.35' => ['phpVersionId' => 80235, 'release' => '10.40', 'apart' => true];
+        yield '10.40 on PHP 8.2.99' => ['phpVersionId' => 80299, 'release' => '10.40', 'apart' => true];
+        yield '10.40 as PCRE_VERSION spells it on PHP 8.2.35' => ['phpVersionId' => 80235, 'release' => '10.40 2022-04-14', 'apart' => true];
+        // PHP 8.3 bundles 10.42: a 10.40 beside it is the release PCRE2 tagged.
+        yield '10.40 on PHP 8.3.0' => ['phpVersionId' => 80300, 'release' => '10.40', 'apart' => false];
+        yield '10.40 on PHP 8.1' => ['phpVersionId' => 80100, 'release' => '10.40', 'apart' => false];
+        // Only the 10.40 it bundles: another release beside PHP 8.2.35 is
+        // not the bundled one.
+        yield '10.39 on PHP 8.2.35' => ['phpVersionId' => 80235, 'release' => '10.39', 'apart' => false];
+        yield '10.41 on PHP 8.2.35' => ['phpVersionId' => 80235, 'release' => '10.41', 'apart' => false];
+        yield '10.42 on PHP 8.2.35' => ['phpVersionId' => 80235, 'release' => '10.42', 'apart' => false];
+    }
+
+    #[Test]
+    public function test_the_php_a_version_names_alone_bundles_the_10_40_measured_so_from_8_2_35(): void
+    {
+        $this->assertFalse(PcreTarget::bundledWith(80234)->measuresBranchesApart());
+        $this->assertTrue(PcreTarget::bundledWith(80235)->measuresBranchesApart());
+        $this->assertFalse(PcreTarget::bundledWith(80300)->measuresBranchesApart());
+    }
+
     #[Test]
     public function test_the_running_engine_is_the_running_php_minor_and_pcre2_release(): void
     {
@@ -245,7 +287,8 @@ final class PcreTargetTest extends TestCase
         // The floor, 7.3, the first PHP on PCRE2; the PHP versions that
         // bundle a newer PCRE2 (7.4, 8.0, 8.1, 8.2, 8.3, 8.4); and the ones
         // where a rule starts: \C under u refused from 8.4.25 and 8.5.10, \K
-        // in a lookaround refused from 8.5.
+        // in a lookaround refused from 8.5. PHP 8.2.35, whose bundled PCRE2
+        // only reports another error for some refused patterns, is none.
         $this->assertSame([70300, 70400, 80000, 80100, 80200, 80300, 80400, 80425, 80500, 80510], PcreTarget::phpVersionBoundaries());
     }
 
