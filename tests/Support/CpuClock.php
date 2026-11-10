@@ -60,4 +60,59 @@ final class CpuClock
     {
         return self::nanoseconds() / 1e9;
     }
+
+    /**
+     * The CPU time $work takes, in seconds, with the cycle collector held.
+     *
+     * The collector runs once the engine has counted enough values that may
+     * be garbage, and each run walks what those values reach: what it costs
+     * is the process's, not the work's. A larger read sets it off where its
+     * smaller twin does not, and in the process of the whole suite a linear
+     * read then took ten to twelve times its twin, four to five with the
+     * collector held. The cycles earlier work left are collected first, so
+     * that they do not add up from one reading to the next.
+     *
+     * @param \Closure(): void $work
+     */
+    public static function time(\Closure $work): float
+    {
+        self::timed($work, $seconds);
+
+        return $seconds;
+    }
+
+    /**
+     * What $work returns, the CPU time it took written to $seconds, with
+     * the cycle collector held as time() holds it: for the work whose
+     * result the test reads.
+     *
+     * @template T
+     *
+     * @param \Closure(): T $work
+     *
+     * @param-out float $seconds
+     *
+     * @return T
+     */
+    public static function timed(\Closure $work, ?float &$seconds = null): mixed
+    {
+        $seconds = 0.0;
+        $collects = gc_enabled();
+        gc_collect_cycles();
+        gc_disable();
+
+        // The clock itself may fail: the collector is given back whatever
+        // throws, the work or a reading, and no time is told then.
+        try {
+            $start = self::nanoseconds();
+            $result = $work();
+            $seconds = (self::nanoseconds() - $start) / 1e9;
+
+            return $result;
+        } finally {
+            if ($collects) {
+                gc_enable();
+            }
+        }
+    }
 }
