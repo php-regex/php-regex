@@ -38,6 +38,11 @@ final class TestCaseSequenceTest extends TestCase
             'matching' => ['abc', 'abbc', 'abbbc'],
             'non_matching' => ['d', 'bbbbd', 'aaaad'],
         ], self::sequence('/a{1,3}b{1,3}c/')->accept(new TestCaseGenerator()));
+
+        foreach (['x00a', 'x000a', 'x0000a'] as $subject) {
+            $this->assertSame(1, preg_match('/x\d{2,}[ab]/', $subject), $subject);
+        }
+        $this->assertSame(0, preg_match('/x\d{2,}[ab]/', 'y0!'));
         $this->assertSame([
             'matching' => ['x00a', 'x000a', 'x0000a'],
             'non_matching' => ['y0!'],
