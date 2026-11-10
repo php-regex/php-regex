@@ -175,20 +175,6 @@ as `CallTypes::quote` does.
   `docs/guides/cli.md`; without the secret a release goes out unsigned.
 - #238: the language server reads a constant of another file and reports
   its pattern at the argument naming it.
-- #239 to #325, the resource and semantic fixes: merge first the ones
-  that change what a pattern means or the verdict given on it: #294 and
-  #295 (the Modernizer drops a literal backslash and unwraps
-  `^(?:a|b)$` into `^a|b$`), #317 and #321 (the JavaScript and HTML
-  targets accept subjects PCRE refuses), #319 (a ReDoS rated low under
-  `U` that the engine cannot finish). Pairs that touch the same lines and
-  conflict when the second lands: #304 and #306 (`ClassSetStore::isTrusted()`),
-  #244 and #284 (lookaround body options), #251 and #282
-  (`TextExplainer`), #294 and #295 (`ModernizerTest`). Each pull request
-  that refreshes `RegexParser::CACHE_VERSION` needs it computed again
-  after the one merged before it.
-- Closed with a reason in their thread, to close on GitHub: #242 (#280
-  carries it), #245, #246, #252 (#251 carries it), #256, #258, #260,
-  #270, #283 (#285 carries it), #315, #324, #325.
 
 
 ## Pull request checks in stages
@@ -239,6 +225,17 @@ as `CallTypes::quote` does.
   layout itself reads 4 to 7 in `php:8.1-cli` and `php:8.4-cli`. With
   Xdebug gone from the Linux cells the smaller read is some 25 ms there
   too, a thin base for a ratio: more children would steady it.
+  On 2026-11-10 it failed on the PHP 8.1 prefer-lowest Ubuntu cell of every
+  pull request that ran it to the end (12.2 to 16.0 on #247, #261, #307,
+  #310 and #323) and read 13.4 on the PHP 8.3 prefer-lowest one (#277);
+  `AlphaAssertionBodyTest` read 12.1 to 12.5 against 11 beside it on #261.
+  None of these touches the layout or the lexer.
+
+- `DisplayEscaperLinearTimeTest::test_escape_drops_many_comments_in_linear_time`
+  (`(*ANYCRLF)`, 32,000 comments) measures a time ratio against 3.0 and
+  read 3.01 on the PHP 8.5 "latest PCRE2" cell (2026-11-10, on #277, which
+  does not touch the escaper). The same remedy: count the work, or give the
+  ratio a margin.
 
 - `ImpossibleBoundaryRuleTest::test_many_boundaries_under_u_are_linted_quickly`
   ("non-ASCII letter met again") measures wall time against 0.5 s and
@@ -309,6 +306,16 @@ as `CallTypes::quote` does.
   starts alike, the pairs have to be ruled out by their shared prefix.
   Nested alphabetic assertion bodies are copied at each level (#276): read
   them in place.
+- The solver works for 18 to 30 s before it refuses a pattern of many
+  lookaheads with "NFA state limit exceeded (5000)":
+  `LanguageSolver::compile()` takes 29 s on twelve lookaheads of Unicode
+  classes, `/^(?=.*\p{Lu})(?=.*\p{Ll})(?=.*\p{N})...{12,}$/u`, and 18 s on
+  forty of the shape `(?=.*a{2})`, under the default options and under a
+  budget of 200,000 units alike (measured 2026-11-10, before and after
+  #244, which bounds the bodies and not this). The state limit is reached
+  late and `maxTransitionsProcessed` does not count the work done before
+  it: find where the time goes and charge it. A password rule of four or
+  six lookaheads is answered in 0.3 to 2.5 s.
 - Without `u`, every set that leaves characters out (the dot, `[^a]`,
   `\D`, `\W`, `\S`) takes one byte in PCRE and one character in the
   JavaScript, `html-pattern` and Python output: `/^\S$/` fails U+00A0,
