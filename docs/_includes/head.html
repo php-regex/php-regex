@@ -71,27 +71,18 @@
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/jetbrains-mono-var.woff2" crossorigin>
   {% if jekyll.environment == 'production' %}
   {% comment %}
-    Analytics without a cookie: every consent is denied before the script
-    that reads it arrives, and nothing ever grants one, so no banner asks.
-    The address it reports stops at the path: the fragment carries what a
-    visitor typed in the playground, and it never leaves the browser.
-    What is measured is said on /privacy/.
+    The standard gtag.js installation: Google's own cookies, no consent
+    gate and no banner. What a visitor types in the playground stays
+    behind anyway — gtag.js drops the fragment of the address it reports,
+    and the fragment is where the patterns live.
   {% endcomment %}
   <link rel="preconnect" href="https://www.googletagmanager.com">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QSYBM5HXPS"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    gtag('consent', 'default', {
-      analytics_storage: 'denied',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-    });
     gtag('js', new Date());
-    gtag('config', 'G-QSYBM5HXPS', {
-      page_location: window.location.origin + window.location.pathname,
-    });
+    gtag('config', 'G-QSYBM5HXPS');
   </script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QSYBM5HXPS"></script>
   {% endif %}
 </head>

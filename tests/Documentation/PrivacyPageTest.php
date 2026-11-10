@@ -37,14 +37,19 @@ final class PrivacyPageTest extends TestCase
     }
 
     #[Test]
-    public function test_privacy_states_no_cookie_and_path_only(): void
+    public function test_privacy_states_the_cookies_and_an_address_without_what_is_typed(): void
     {
         $this->assertFileExists(self::PAGE);
         $page = (string) file_get_contents(self::PAGE);
 
         $this->assertStringContainsString("permalink: /privacy/\n", $page);
-        $this->assertStringContainsString('No cookie', $page);
-        $this->assertStringContainsString('a cookieless request reaches Google with the page path, never what you type', $page);
+        $this->assertStringContainsString('Google Analytics, with its cookies', $page);
+        $this->assertStringContainsString('`_ga` and `_ga_QSYBM5HXPS`', $page, 'The cookies the tag stores are named.');
+        $this->assertStringContainsString('No banner asks first', $page, 'No consent is asked, and the page says so.');
+        $this->assertStringContainsString('a request reaches Google with the page address up to the `#`, never what you type', $page);
+        $this->assertStringNotContainsStringIgnoringCase('no cookie', $page, 'The tag stores cookies: the page must not say otherwise.');
+        $this->assertStringNotContainsStringIgnoringCase('cookieless', $page);
+        $this->assertStringNotContainsString('consent setting denied', $page);
         $this->assertStringContainsString('14 months', $page);
         $this->assertStringContainsString('event-level data', $page, 'The retention setting covers event-level data, not the aggregated reports.');
         $this->assertStringContainsString('the first time you ask it for an answer', $page, 'Typing asks for an answer as Run does: the engine may download then.');
