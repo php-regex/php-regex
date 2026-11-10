@@ -19,16 +19,15 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every workflow runs on each push to 2.x, which bin/release reads. A pull
- * request runs what its changes can affect: the prose (the site under docs/,
- * the READMEs, the changelogs, the upgrade guide, the community files) is
- * read by the spelling check and the documentation tests, by the link check
- * when the site changes, and by nothing else; the tools' settings (the
- * review bot, Dependabot, the workflow audit, the dictionary, the editor and
- * the commit template) are read by those tools alone. The workflows that
- * judge the code stay out of a pull request that changes the prose or those
- * settings alone. Each is one list, copied as is into every workflow that
- * names it.
+ * A pull request runs what its changes can affect: the prose (the site
+ * under docs/, the READMEs, the changelogs, the upgrade guide, the community
+ * files) is read by the spelling check and the documentation tests, by the
+ * link check when the site changes, and by nothing else; the tools' settings
+ * (the review bot, Dependabot, the workflow audit, the dictionary, the
+ * editor and the commit template) are read by those tools alone. The
+ * workflow that judges the code, ci.yml, stays out of a pull request that
+ * changes the prose or those settings alone, and with it every workflow it
+ * calls, which no pull request starts by itself.
  */
 #[Group('documentation')]
 final class PullRequestScopeTest extends TestCase
@@ -72,30 +71,26 @@ final class PullRequestScopeTest extends TestCase
     ];
 
     /**
-     * The workflows that judge the code: each stays out of a pull request
-     * that changes the prose or the tools' settings alone.
+     * The workflow that judges the code: it stays out of a pull request
+     * that changes the prose or the tools' settings alone, and calls, stage
+     * after stage, the workflows that hold the checks (the suite, the
+     * engines, the static analysis, the packages, the coverage, the
+     * benchmarks, the public API, the twin).
      */
     private const CODE = [
-        'tests.yml',
-        'coverage.yml',
-        'engines.yml',
-        'packages.yml',
-        'benchmarks.yml',
-        'static-analysis.yml',
-        'backward-compatibility.yml',
+        'ci.yml',
     ];
 
     /**
      * The workflows that run on a pull request for what it changes, each
      * scoped by its own list: the prose readers, the demo applications, the
-     * twin, the workflow checks.
+     * workflow checks.
      */
     private const SCOPED = [
         'documentation.yml',
         'docs-links.yml',
         'spelling.yml',
         'demo.yml',
-        'php74-twin.yml',
         'workflows.yml',
     ];
 
@@ -122,7 +117,7 @@ final class PullRequestScopeTest extends TestCase
         $known = [...self::CODE, ...self::SCOPED];
         sort($known);
 
-        $this->assertSame($known, $started, 'A workflow a pull request starts is listed here, as judging the code or as scoped.');
+        $this->assertSame($known, $started, 'A workflow a pull request starts is listed here, as judging the code or as scoped; a check of the code is a stage of ci.yml.');
     }
 
     /**
