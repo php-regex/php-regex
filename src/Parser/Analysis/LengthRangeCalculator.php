@@ -59,6 +59,14 @@ use PHPRegex\Parser\Node\VersionConditionNode;
  */
 final class LengthRangeCalculator extends AbstractNodeVisitor
 {
+    private const MAX_WORK = 100_000;
+
+    /**
+     * Calls followed inside calls: a pattern PCRE compiles nests a few
+     * thousand at most, past which the stack of a debugging PHP gives out.
+     */
+    private const MAX_CALL_DEPTH = 1024;
+
     private const LOOKAROUNDS = [
         GroupType::LookaheadPositive,
         GroupType::LookaheadNegative,
@@ -68,21 +76,36 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     ];
 
     /**
+     * @var \WeakMap<NodeInterface, LengthRange>
+     */
+    private \WeakMap $lengths;
+
+    private int $work = 0;
+
+    private int $callDepth = 0;
+
+    /**
      * A call reads as unbounded from zero, unless $calledBody gives the body
      * it runs: the call then reads as long as that body. It must give none
-     * for a recursion, whose length is unknown.
+     * for a recursion, whose length is unknown. A call followed past 1024
+     * nested calls, or past 100,000 measured nodes, reads as unbounded.
      *
      * @param bool                                            $unicode    whether lengths count UTF-8 characters rather than bytes; a whole pattern sets it from its flags
      * @param (\Closure(SubroutineNode): ?NodeInterface)|null $calledBody the body a call runs, or null where it is unknown
      */
-    public function __construct(private bool $unicode = false, private readonly ?\Closure $calledBody = null) {}
+    public function __construct(private bool $unicode = false, private readonly ?\Closure $calledBody = null)
+    {
+        $this->lengths = new \WeakMap();
+    }
 
     #[\Override]
     public function visitRegex(RegexNode $node): array
     {
         $this->unicode = $node->isUnicode();
+        $this->lengths = new \WeakMap();
+        $this->work = 0;
 
-        return $node->pattern->accept($this);
+        return $this->length($node->pattern);
     }
 
     #[\Override]
@@ -93,7 +116,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
         $hasInfinite = false;
 
         foreach ($node->alternatives as $alt) {
-            [$altMin, $altMax] = $alt->accept($this);
+            [$altMin, $altMax] = $this->length($alt);
             $min = min($min, $altMin);
             if (null === $altMax) {
                 $hasInfinite = true;
@@ -115,7 +138,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
         $accepted = false;
 
         foreach ($node->children as $child) {
-            [$childMin, $childMax] = $child->accept($this);
+            [$childMin, $childMax] = $this->length($child);
 
             // Past a "(*ACCEPT)" the match may already be over.
             if (!$accepted) {
@@ -142,7 +165,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
             return [0, 0];
         }
 
-        return $node->child->accept($this);
+        return $this->length($node->child);
     }
 
     /**
@@ -151,7 +174,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): array
     {
-        [$childMin, $childMax] = $node->node->accept($this);
+        [$childMin, $childMax] = $this->length($node->node);
 
         // Parse quantifier
         $range = $this->parseQuantifierRange($node);
@@ -254,8 +277,8 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     public function visitConditional(ConditionalNode $node): array
     {
         // For simplicity, take the max of yes and no
-        [$yesMin, $yesMax] = $node->yes->accept($this);
-        [$noMin, $noMax] = $node->no->accept($this);
+        [$yesMin, $yesMax] = $this->length($node->yes);
+        [$noMin, $noMax] = $this->length($node->no);
 
         $min = min($yesMin, $noMin);
         $max = null;
@@ -269,9 +292,22 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     #[\Override]
     public function visitSubroutine(SubroutineNode $node): array
     {
-        $body = null === $this->calledBody ? null : ($this->calledBody)($node);
+        if ($this->callDepth >= self::MAX_CALL_DEPTH) {
+            return [0, null];
+        }
 
-        return $body?->accept($this) ?? [0, null];
+        $body = null === $this->calledBody ? null : ($this->calledBody)($node);
+        if (null === $body) {
+            return [0, null];
+        }
+
+        $this->callDepth++;
+
+        try {
+            return $this->length($body);
+        } finally {
+            $this->callDepth--;
+        }
     }
 
     #[\Override]
@@ -295,7 +331,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     #[\Override]
     public function visitScriptRun(ScriptRunNode $node): array
     {
-        return $node->content?->accept($this) ?? [0, null];
+        return null === $node->content ? [0, null] : $this->length($node->content);
     }
 
     #[\Override]
@@ -332,6 +368,27 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     public function visitKeep(KeepNode $node): array
     {
         return [0, 0];
+    }
+
+    /**
+     * Each node is measured once per pattern, so a body that several calls
+     * share is read once. The work budget stops a resolver that gives ever
+     * new bodies; a node it leaves unread may consume any length.
+     *
+     * @return LengthRange
+     */
+    private function length(NodeInterface $node): array
+    {
+        if (isset($this->lengths[$node])) {
+            return $this->lengths[$node];
+        }
+        if ($this->work >= self::MAX_WORK) {
+            return [0, null];
+        }
+
+        $this->work++;
+
+        return $this->lengths[$node] = $node->accept($this);
     }
 
     /**
