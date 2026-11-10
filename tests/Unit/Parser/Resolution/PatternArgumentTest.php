@@ -224,15 +224,15 @@ final class PatternArgumentTest extends TestCase
     }
 
     #[Test]
-    public function test_concat_follows_each_alternative_of_the_left_by_each_of_the_right(): void
+    public function test_concat_multiplies_one_operand_of_several_values_and_no_more(): void
     {
         $hole = new Hole(quoted: true, delimiter: '/');
 
         $this->assertSame([['/a', 'b/']], PatternArgument::concat([['/a']], [['b/']]));
-        $this->assertSame(
-            [['/a', 'x/'], ['/a', 'y/'], ['/b', 'x/'], ['/b', 'y/']],
-            PatternArgument::concat([['/a'], ['/b']], [['x/'], ['y/']]),
-        );
+        $this->assertSame([['/a', 'x/'], ['/b', 'x/']], PatternArgument::concat([['/a'], ['/b']], [['x/']]));
+        $this->assertSame([['/a', 'x/'], ['/a', 'y/']], PatternArgument::concat([['/a']], [['x/'], ['y/']]));
+        // Two operands of several values would give patterns the code never builds.
+        $this->assertNull(PatternArgument::concat([['/a'], ['/b']], [['x/'], ['y/']]));
         $this->assertSame([['/^', $hole, '$/']], PatternArgument::concat([['/^', $hole]], [['$/']]));
         $this->assertSame([], PatternArgument::concat([], [['x/']]));
         $this->assertSame([], PatternArgument::concat([['/a']], []));
@@ -240,7 +240,7 @@ final class PatternArgumentTest extends TestCase
 
     #[Test]
     #[DataProvider('provideProducts')]
-    public function test_concat_is_not_built_past_the_cap(int $left, int $right, ?int $expected): void
+    public function test_concat_is_not_built_past_the_cap_nor_for_two_sets(int $left, int $right, ?int $expected): void
     {
         $product = PatternArgument::concat(self::wholes($left), self::wholes($right));
 
@@ -252,10 +252,12 @@ final class PatternArgumentTest extends TestCase
      */
     public static function provideProducts(): iterable
     {
-        yield '4 by 8' => ['left' => 4, 'right' => 8, 'expected' => 32];
+        yield '2 by 2' => ['left' => 2, 'right' => 2, 'expected' => null];
+        yield '4 by 8' => ['left' => 4, 'right' => 8, 'expected' => null];
         yield '32 by 1' => ['left' => 32, 'right' => 1, 'expected' => 32];
         yield '1 by 32' => ['left' => 1, 'right' => 32, 'expected' => 32];
         yield '3 by 11' => ['left' => 3, 'right' => 11, 'expected' => null];
+        yield '1 by 1' => ['left' => 1, 'right' => 1, 'expected' => 1];
         yield '33 by 1' => ['left' => 33, 'right' => 1, 'expected' => null];
         yield '1 by 33' => ['left' => 1, 'right' => 33, 'expected' => null];
         yield '4000 by 4000' => ['left' => 4000, 'right' => 4000, 'expected' => null];

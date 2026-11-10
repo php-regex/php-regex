@@ -61,7 +61,13 @@ final class PatternArgument
             $kind = self::kind($alternative);
             $weakest = max($weakest, $kind);
             if (self::WHOLE === $kind) {
-                $wholes[implode('', array_filter($alternative, \is_string(...)))] = true;
+                $whole = '';
+                foreach ($alternative as $part) {
+                    if (\is_string($part)) {
+                        $whole .= $part;
+                    }
+                }
+                $wholes[$whole] = true;
             }
         }
 
@@ -75,8 +81,8 @@ final class PatternArgument
 
     /**
      * Each alternative of the left followed by each of the right, as a
-     * concatenation reads its two operands; null when there would be more
-     * than the cap, and nothing is built then.
+     * concatenation reads its two operands; null when both hold several,
+     * or when there would be more than the cap, and nothing is built then.
      *
      * @param list<list<string|Hole>> $left
      * @param list<list<string|Hole>> $right
@@ -85,7 +91,9 @@ final class PatternArgument
      */
     public static function concat(array $left, array $right): ?array
     {
-        if (\count($left) * \count($right) > self::MAX_CANDIDATES) {
+        // Two operands of several values would give combinations the code
+        // never builds: one alone is multiplied, each of its values built.
+        if ((\count($left) > 1 && \count($right) > 1) || \count($left) * \count($right) > self::MAX_CANDIDATES) {
             return null;
         }
 
