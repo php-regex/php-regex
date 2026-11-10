@@ -97,13 +97,16 @@ if [ "$skip_ci" -eq 0 ]; then
         # The workflows that gate a release, each run on the pull request a
         # commit of the branch came from, and only when it changed what the
         # workflow reads: bin/ci-answer finds the run that answers for HEAD,
-        # walking back past the commits the workflow ignores. The
-        # experimental and scheduled ones do not gate. demo.yml installs
-        # HEAD itself into a Symfony and a Laravel application.
+        # walking back past the commits the workflow ignores. ci.yml
+        # answers for every workflow it calls, stage after stage: the
+        # suite, the engines, the static analysis, the packages, the
+        # coverage, the benchmarks and the public API. The experimental
+        # and scheduled ones do not gate. demo.yml installs HEAD itself
+        # into a Symfony and a Laravel application.
         # What bin/ci-answer says on stderr (a record GitHub would not give)
         # explains a refusal: kept, and said once, not once a workflow.
         ci_said=$(mktemp)
-        for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml spelling.yml backward-compatibility.yml demo.yml; do
+        for workflow in ci.yml workflows.yml spelling.yml demo.yml; do
             answer=$("$bin/ci-answer" --root "$root" "$workflow" 2>>"$ci_said" || echo "none 0")
             kind=${answer%% *}
             rest=${answer#* }
