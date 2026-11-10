@@ -80,19 +80,29 @@ jobs:
           dot='\.'
           name='[^/]*'
           ignored=''
+          read=0
+          list=$(sed -n '/^    paths-ignore:$/,/^  [a-z_]*:$/p' .github/workflows/ci.yml)
           while IFS= read -r path; do
+            read=$((read + 1))
             path=${path//./$dot}
             path=${path//\*\*/$'\t'}
             path=${path//\*/$name}
             ignored+="${ignored:+|}${path//$'\t'/.*}"
-          done < <(sed -n '/^    paths-ignore:$/,/^  [a-z_]*:$/p' .github/workflows/ci.yml | sed -n "s/^      - '\(.*\)'\$/\1/p")
-          # One name a line: each file, and the name it had before a move.
-          if [ -n "$ignored" ] && gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PULL_REQUEST/files?per_page=100" --jq '.[] | .filename, (.previous_filename // empty)' > "$RUNNER_TEMP/changed"; then
+          done < <(sed -n "s/^      - '\(.*\)'\$/\1/p" <<< "$list")
+          # A path written another way is one GitHub ignores and this step
+          # would take for the code: nothing is known then.
+          if [ "$(grep -c '^      - ' <<< "$list")" -ne "$read" ]; then
+            ignored=''
+          fi
+          # One line a file: its name, a tab, and the name it had before a
+          # move or nothing.
+          if [ -n "$ignored" ] && gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PULL_REQUEST/files?per_page=100" --jq '.[] | "\(.filename)\t\(.previous_filename // "")"' > "$RUNNER_TEMP/files"; then
+            tr '\t' '\n' < "$RUNNER_TEMP/files" | sed '/^$/d' > "$RUNNER_TEMP/changed"
             if grep -Evq -- "^($ignored)\$" "$RUNNER_TEMP/changed"; then
               code=true
             # GitHub lists three thousand files and no more: a list that
             # long may leave out a file of the code.
-            elif [ -s "$RUNNER_TEMP/changed" ] && [ "$(wc -l < "$RUNNER_TEMP/changed")" -lt 3000 ]; then
+            elif [ -s "$RUNNER_TEMP/files" ] && [ "$(wc -l < "$RUNNER_TEMP/files")" -lt 3000 ]; then
               code=false
             fi
           fi

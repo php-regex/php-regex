@@ -67,9 +67,13 @@ final class PullRequestRequiredCheckTest extends TestCase
     #[Test]
     public function test_the_ignored_paths_are_written_as_the_step_reads_them(): void
     {
-        foreach (self::listUnder('paths-ignore', self::pullRequestBlock('ci.yml')) as $pattern) {
+        $block = self::pullRequestBlock('ci.yml');
+        $ignored = self::listUnder('paths-ignore', $block);
+        foreach ($ignored as $pattern) {
             $this->assertMatchesRegularExpression('~^[\w./-]+(?:\*{1,2}[\w./-]*)*$~', $pattern);
         }
+        $this->assertSame(1, preg_match('~^    paths-ignore:\n((?:      .*\n)+)~m', $block, $list));
+        $this->assertCount(substr_count($list[1], "\n"), $ignored, 'Every line under paths-ignore is a path between single quotes.');
 
         $scope = self::jobs()['scope'];
         $this->assertMatchesRegularExpression("~^      - name: Checkout the list of the code workflow\n        uses: actions/checkout@.+\n        with:\n          persist-credentials: false\n          sparse-checkout: \\.github/workflows/ci\\.yml\n          sparse-checkout-cone-mode: false$~m", $scope);
@@ -99,7 +103,11 @@ final class PullRequestRequiredCheckTest extends TestCase
         yield 'a name that ends like a README' => ['files' => ['tests/README.md'], 'code' => 'true'];
         yield 'a name that holds a README' => ['files' => ['README.md.php'], 'code' => 'true'];
         yield 'a dot read as any character' => ['files' => ['READMExmd'], 'code' => 'true'];
-        yield 'a file moved out of the code' => ['files' => ['docs/notes.md', 'src/Parser/notes.md'], 'code' => 'true'];
+        yield 'a file moved out of the code' => ['files' => ["docs/notes.md\tsrc/Parser/notes.md"], 'code' => 'true'];
+        yield 'a file moved into the code' => ['files' => ["src/Parser/notes.md\tdocs/notes.md"], 'code' => 'true'];
+        yield 'a file moved within the prose' => ['files' => ["docs/guides/notes.md\tdocs/notes.md"], 'code' => 'false'];
+        // The limit is GitHub's count of files, not of names.
+        yield 'half as many files as GitHub lists, each moved' => ['files' => array_fill(0, 1500, "docs/guides/notes.md\tdocs/notes.md"), 'code' => 'false'];
         yield 'a source file in as many files as GitHub lists' => ['files' => [...array_fill(0, 2999, 'docs/index.md'), 'src/Parser/Lexer.php'], 'code' => 'true'];
         yield 'as many files as GitHub lists, none of the code' => ['files' => array_fill(0, 3000, 'docs/index.md'), 'code' => 'unknown'];
         yield 'no file' => ['files' => [], 'code' => 'unknown'];
@@ -112,13 +120,16 @@ final class PullRequestRequiredCheckTest extends TestCase
      * that GitHub does not give or cuts at three thousand files says
      * neither.
      *
-     * @param list<string>|null $files the files of the pull request as GitHub lists them, a moved one under both its names; null when GitHub does not answer
+     * @param list<string>|null $files the files of the pull request as GitHub lists them, a moved one as its name, a tab and the name it had; null when GitHub does not answer
      */
     #[Test]
     #[DataProvider('providePullRequests')]
     #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_the_step_says_whether_a_file_is_outside_what_the_code_workflow_ignores(?array $files, string $code): void
     {
+        // One line a file: its name, a tab, and the name it had before a
+        // move or nothing.
+        $this->assertStringContainsString('--jq \'.[] | "\(.filename)\t\(.previous_filename // "")"\'', self::jobs()['scope']);
         $this->prepare($files);
 
         [$exit, $output] = $this->runStep(self::jobs()['scope'], 'Read what the pull request changes', ['PULL_REQUEST' => '7']);
@@ -136,6 +147,23 @@ final class PullRequestRequiredCheckTest extends TestCase
     public function test_nothing_is_known_when_the_code_workflow_names_no_ignored_path(): void
     {
         $this->prepare(['docs/index.md'], "on:\n  pull_request:\n    branches: [ 2.x ]\n  workflow_dispatch:\n");
+
+        [$exit, $output] = $this->runStep(self::jobs()['scope'], 'Read what the pull request changes', ['PULL_REQUEST' => '7']);
+
+        $this->assertSame(0, $exit, $output);
+        $this->assertSame("code=unknown\n", (string) file_get_contents($this->root.'/output'));
+    }
+
+    /**
+     * A path GitHub reads and the step does not would be a file of the code
+     * to the step and one ci.yml ignores to GitHub: neither workflow would
+     * report CI for a pull request that changes it alone.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_nothing_is_known_when_the_step_cannot_read_every_ignored_path(): void
+    {
+        $this->prepare(['docs/index.md', 'NOTICE'], "on:\n  pull_request:\n    branches: [ 2.x ]\n    paths-ignore:\n      - 'docs/**'\n      - \"NOTICE\"\n  workflow_dispatch:\n");
 
         [$exit, $output] = $this->runStep(self::jobs()['scope'], 'Read what the pull request changes', ['PULL_REQUEST' => '7']);
 
@@ -211,7 +239,8 @@ final class PullRequestRequiredCheckTest extends TestCase
         file_put_contents($this->root.'/fake/gh', "#!/usr/bin/env bash\necho \"\$*\" >> \"\$GH_LOG\"\n[ -f \"\$GH_FILES\" ] || { echo 'HTTP 502' >&2; exit 1; }\ncat \"\$GH_FILES\"\n");
         chmod($this->root.'/fake/gh', 0o755);
         if (null !== $files) {
-            file_put_contents($this->root.'/files', [] === $files ? '' : implode("\n", $files)."\n");
+            $lines = array_map(static fn (string $file): string => str_contains($file, "\t") ? $file : $file."\t", $files);
+            file_put_contents($this->root.'/listed', [] === $lines ? '' : implode("\n", $lines)."\n");
         }
     }
 
@@ -237,7 +266,7 @@ final class PullRequestRequiredCheckTest extends TestCase
 
         $env += [
             'PATH' => $this->root.'/fake:'.getenv('PATH'),
-            'GH_FILES' => $this->root.'/files',
+            'GH_FILES' => $this->root.'/listed',
             'GH_LOG' => $this->root.'/gh.log',
             'GITHUB_REPOSITORY' => 'php-regex/php-regex',
             'GITHUB_STEP_SUMMARY' => $this->root.'/summary',
