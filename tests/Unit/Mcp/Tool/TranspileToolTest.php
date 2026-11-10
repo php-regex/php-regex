@@ -107,6 +107,12 @@ final class TranspileToolTest extends TestCase
     {
         // Without u, a Unicode property reads as JavaScript reads it under /u:
         // the flag is added and the addition reported.
+        // Oracle: PCRE reads the first byte of "é" as a Latin-1 letter, and the character under u.
+        $this->assertSame(1, preg_match('/\p{L}+/', 'é', $bytes));
+        $this->assertSame("\xC3", $bytes[0]);
+        $this->assertSame(1, preg_match('/\p{L}+/u', 'é', $character));
+        $this->assertSame('é', $character[0]);
+
         $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/\p{L}+/', 'target' => 'js']);
 
         $this->assertFalse($result->isError);

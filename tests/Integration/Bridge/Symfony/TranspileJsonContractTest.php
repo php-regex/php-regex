@@ -54,9 +54,9 @@ final class TranspileJsonContractTest extends TestCase
         yield 'a valid pattern, javascript' => ['pattern' => '/a+b/i', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a note, javascript' => ['pattern' => '/(?<n>a)\k<n>/x', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a warning, python' => ['pattern' => '/a+/U', 'target' => 'python', 'exitCode' => 0, 'address' => 'transpile'];
-        // A set that takes a byte in PCRE without u, and the same set under u: the bridge prints what the command prints.
-        yield 'a set past ASCII without u' => ['pattern' => '/^.+,[^,]+$/', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
-        yield 'a set past ASCII under u' => ['pattern' => '/^.+,[^,]+$/u', 'target' => 'python', 'exitCode' => 0, 'address' => 'transpile'];
+        // A set that takes a byte in PCRE without u, and the same set under u, as the test of the warning runs them in PCRE.
+        yield 'a set past ASCII without u' => ['pattern' => '/^.,[^,]+$/', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
+        yield 'a set past ASCII under u' => ['pattern' => '/^.,[^,]+$/u', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a syntax error' => ['pattern' => '/(a/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
         yield 'a semantic error' => ['pattern' => '/(?<=a+)b/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
         yield 'a construct the target lacks' => ['pattern' => '/a++b/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];

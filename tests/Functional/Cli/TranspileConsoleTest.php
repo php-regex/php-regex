@@ -32,8 +32,9 @@ final class TranspileConsoleTest extends TestCase
         // Oracle: "\77" is the octal escape of "?", "\h" a horizontal space.
         $this->assertSame(1, preg_match('/\77\h/m', 'a? b'));
         // Without u "\h" takes the byte 0xA0, where the target takes U+00A0, two bytes.
-        $this->assertSame(1, preg_match('/^\h$/', "\xA0"));
-        $this->assertSame(0, preg_match('/^\h$/', "\u{A0}"));
+        $this->assertSame(1, preg_match('/\77\h/m', "?\xA0"));
+        $this->assertSame(0, preg_match('/\77\h/m', "?\u{A0}"));
+        $this->assertSame(1, preg_match('/\77\h/mu', "?\u{A0}"));
 
         [$code, $stdout] = $this->runRegex(['transpile', '/\77\h/m']);
 
@@ -59,8 +60,8 @@ final class TranspileConsoleTest extends TestCase
     public function test_transpile_json_warns_once_of_a_set_that_takes_a_byte_without_u(): void
     {
         // Oracle: "é" is two bytes to the dot, and one character under u.
-        $this->assertSame(0, preg_match('/^.$/', 'é'));
-        $this->assertSame(1, preg_match('/^.$/u', 'é'));
+        $this->assertSame(0, preg_match('/^.[^a]$/D', 'éb'));
+        $this->assertSame(1, preg_match('/^.[^a]$/Du', 'éb'));
 
         [$code, $stdout] = $this->runRegex(['transpile', '/^.[^a]$/D', '--target=python', '--json']);
 

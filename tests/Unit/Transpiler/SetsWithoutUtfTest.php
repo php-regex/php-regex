@@ -116,7 +116,7 @@ final class SetsWithoutUtfTest extends TestCase
             $this->assertSame(0, preg_match('/^'.$set.'$/', \chr($byte)), \sprintf('%s takes no byte above 0x7F, 0x%X included.', $set, $byte));
         }
 
-        $this->assertSame([], Regex::create()->transpile('/^'.$set.'+$/', $target)->warnings);
+        $this->assertSame([], Regex::create()->transpile('/^'.$set.'$/', $target)->warnings);
     }
 
     /**
