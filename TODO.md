@@ -306,6 +306,20 @@ captures. `static::X` and `self::X` in a closure stay unread on purpose.
   (`'x'|'xa'`). A fix changes answers: its own pull request after #340,
   with `ANALYSIS_VERSION` moved. PHPStan and Psalm read this shape.
 
+- The interpreter of the PCRE2 10.42 that Ubuntu 24.04 packages
+  (`10.42-4ubuntu2.2`) keeps what a subroutine call captured in the groups
+  inside the called one: `/(?(DEFINE)(?<pair>(\d)(\d)))((?&pair)(?&pair))/`
+  on `1234` writes `2: 3` and `3: 4` in `pcre2test`, where its own JIT, the
+  10.42 PHP bundles and Debian's 10.46 leave both unset (2026-11-10). PHP
+  on that system answers one way or the other as the JIT runs the pattern
+  or not, and the capture shape, which says `''` for both, is wrong there
+  without the JIT. The call graph rows of #340 ask the interpreter and are
+  held to the engines that give the captures back
+  (`requiresCallCapturesGivenBack()`). Which Ubuntu patch does it, whether
+  other packaged releases do, and whether the shape should say so for a
+  system 10.42 are open; the engine tests that write `ini_set('pcre.jit',
+  '0')` after a pattern was compiled do not ask the interpreter either.
+
 - `format` writes an inner line of a `(?#...)` comment that ends in an
   escaped space with `\x20` (`/a(?#x\ ` newline `y)/x` gives `(?#x\x20`):
   the case #339 leaves. Those lines are measured for width, so the marker
