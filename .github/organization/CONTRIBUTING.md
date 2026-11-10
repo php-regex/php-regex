@@ -159,6 +159,11 @@ classes, so a test must leave nothing behind that another test class reads: a
 file it writes goes in a temporary directory of its own, and a static it sets
 is reset in `tearDown()`.
 
+On Linux and macOS the suite needs `posix_geteuid()`, from `ext-posix` and
+not disabled: the AST file cache and the class-set store keep nothing where
+they cannot check who owns their directory, and the tests of what they keep
+fail on a host without it. The suite says so when it starts there.
+
 ## Coding Standards
 
 - **Strict types** required for all PHP files
