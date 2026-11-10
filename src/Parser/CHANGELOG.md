@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `PatternFormatter` keeps a `#` comment that ends in an escaped space as
+   written wherever it lays it out: on a line of its own, after the start
+   options and past ten indent levels, `# path\ ` came out as `# path\x20`,
+   the spelling meant for a space of the pattern that ends its line.
  * `validate()` reports an error PCRE meets measuring the lookbehinds before it
    estimates the compiled size, and one measure walks 10,000 branches at most:
    calls doubled level after level behind a branch reset are refused as
