@@ -21,7 +21,9 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 use PHPRegex\Tests\Support\CpuClock;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -69,6 +71,163 @@ final class CaptureShapeAnalyzerTest extends TestCase
     public function test_a_group_knows_its_values_when_they_are_finite(string $pattern, int $group, ?array $values): void
     {
         $this->assertSame($values, $this->group($pattern, $group)->values);
+    }
+
+    /**
+     * The values of a group are enumerated up to 4,096 bytes each and 65,536
+     * bytes together; past either bound they are unknown, though the engine
+     * still matches the long value. The subject is one value the group can
+     * hold: preg_match() captures it whole (PHP 8.4.27, PCRE2 10.49).
+     *
+     * @param list<string>|null $values
+     */
+    #[Test]
+    #[DataProvider('provideByteBoundedValues')]
+    public function test_values_are_enumerated_within_the_byte_bounds(string $pattern, string $subject, ?array $values): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject, $matches));
+        $this->assertSame($subject, $matches[1]);
+
+        $this->assertSame($values, $this->group($pattern, 1)->values);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, values: list<string>|null}>
+     */
+    public static function provideByteBoundedValues(): iterable
+    {
+        yield 'value at the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){4})/', 'subject' => str_repeat('a', 4096), 'values' => [str_repeat('a', 4096)]];
+        yield 'nested repeat past the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){5})/', 'subject' => str_repeat('a', 5120), 'values' => null];
+        yield 'sequence past the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){4}b)/', 'subject' => str_repeat('a', 4096).'b', 'values' => null];
+        yield 'literal past the byte limit' => ['pattern' => '/('.str_repeat('a', 4097).')/', 'subject' => str_repeat('a', 4097), 'values' => null];
+        yield 'values at the aggregate byte limit' => ['pattern' => '/([a-p]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3})/', 'subject' => 'p'.str_repeat('a', 4095), 'values' => array_map(static fn (string $letter): string => $letter.str_repeat('a', 4095), range('a', 'p'))];
+        yield 'product past the aggregate byte limit' => ['pattern' => '/([a-q]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3})/', 'subject' => 'q'.str_repeat('a', 4095), 'values' => null];
+        yield 'union past the aggregate byte limit' => ['pattern' => '/([a-p]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3}|b(?:(?:b{32}){32}){3})/', 'subject' => str_repeat('b', 3073), 'values' => null];
+        yield 'unicode limit counts bytes' => ['pattern' => '/((?:(?:é{32}){32}){3})/u', 'subject' => str_repeat('é', 3072), 'values' => null];
+    }
+
+    /**
+     * The value a pinned subject holds is the whole match followed by a
+     * final newline the end anchor lets through: 4,096 bytes and "\n" pass
+     * the 4,096-byte bound, so the subject's values are unknown.
+     * preg_match() matches that subject (PHP 8.4.27, PCRE2 10.49).
+     */
+    #[Test]
+    public function test_a_subject_value_past_the_byte_bound_is_unknown(): void
+    {
+        $pattern = '/^(?:(?:a{32}){32}){4}$/';
+        $this->assertSame(1, preg_match($pattern, str_repeat('a', 4096)."\n"));
+
+        $subject = $this->analyze($pattern)->subject;
+
+        $this->assertInstanceOf(CaptureGroupShape::class, $subject);
+        $this->assertNull($subject->values);
+    }
+
+    /**
+     * 4,095 bytes and "\n" fill the 4,096-byte bound exactly: the subject
+     * keeps both values. preg_match() matches both subjects.
+     */
+    #[Test]
+    public function test_a_subject_value_at_the_byte_bound_is_kept(): void
+    {
+        $pattern = '/^a{31}(?:a{32}){31}(?:(?:a{32}){32}){3}$/';
+        $run = str_repeat('a', 4095);
+        $this->assertSame(1, preg_match($pattern, $run));
+        $this->assertSame(1, preg_match($pattern, $run."\n"));
+
+        $subject = $this->analyze($pattern)->subject;
+
+        $this->assertInstanceOf(CaptureGroupShape::class, $subject);
+        $this->assertSame([$run, $run."\n"], $subject->values);
+    }
+
+    /**
+     * A branch reset joins what each branch writes to the group, and the
+     * join keeps to the bounds of a value set: 32 strings at most, 65,536
+     * bytes together. Sixteen branches of 4,096 bytes fill the byte bound,
+     * a seventeenth passes it; 32 one-letter branches fill the count, a
+     * 33rd passes it. preg_match() captures the last branch's text whole
+     * (PHP 8.4.27, PCRE2 10.49).
+     *
+     * @param list<string> $branches
+     */
+    #[Test]
+    #[DataProvider('provideBranchResetJoins')]
+    public function test_a_branch_reset_join_keeps_to_the_bounds(array $branches, string $last, ?int $count): void
+    {
+        $pattern = '/(?|('.implode(')|(', $branches).'))/';
+        $this->assertSame(1, preg_match($pattern, $last, $matches));
+        $this->assertSame($last, $matches[1]);
+
+        $values = $this->group($pattern, 1)->values;
+
+        $this->assertSame($count, null === $values ? null : \count($values));
+    }
+
+    /**
+     * @return iterable<string, array{branches: list<string>, last: string, count: int|null}>
+     */
+    public static function provideBranchResetJoins(): iterable
+    {
+        $long = static fn (string $letter): string => $letter.'a{31}(?:a{32}){31}(?:(?:a{32}){32}){3}';
+        $letters = [...range('a', 'z'), ...range('A', 'Z')];
+
+        yield 'sixteen long branches at the byte bound' => ['branches' => array_map($long, \array_slice($letters, 0, 16)), 'last' => 'p'.str_repeat('a', 4095), 'count' => 16];
+        yield 'seventeen long branches past the byte bound' => ['branches' => array_map($long, \array_slice($letters, 0, 17)), 'last' => 'q'.str_repeat('a', 4095), 'count' => null];
+        yield 'thirty-two long branches past the byte bound' => ['branches' => array_map($long, \array_slice($letters, 0, 32)), 'last' => 'F'.str_repeat('a', 4095), 'count' => null];
+        yield 'thirty-two letters at the count bound' => ['branches' => \array_slice($letters, 0, 32), 'last' => 'F', 'count' => 32];
+        yield 'thirty-three letters past the count bound' => ['branches' => \array_slice($letters, 0, 33), 'last' => 'G', 'count' => null];
+    }
+
+    /**
+     * Six nested {32} spell a value of 32^6 bytes: the engine refuses the
+     * pattern as too large, and the analysis, which reads it anyway, gives
+     * up on the value instead of spelling it.
+     */
+    #[Test]
+    public function test_a_gigabyte_value_is_not_spelled(): void
+    {
+        $pattern = '/((?:(?:(?:(?:(?:a{32}){32}){32}){32}){32}){32})/';
+        $this->assertFalse(EngineProbe::compiles($pattern));
+
+        $this->assertNull($this->group($pattern, 1)->values);
+    }
+
+    /**
+     * A sequence or an alternation stops at the first part past a bound: two
+     * thousand calls to a group of sixteen 4,096-byte values used to build
+     * every call's values first, about 250 MB, before the product or the
+     * union refused the second one. preg_match() on "" returns 0: each
+     * pattern compiles.
+     */
+    #[Test]
+    #[DataProvider('provideManyCallsPastTheBounds')]
+    public function test_values_stop_at_the_first_part_past_the_bounds(string $pattern): void
+    {
+        $this->requiresPhp('8.2', 'The peak memory of an analysis', 'has no memory_reset_peak_usage()');
+
+        $this->assertSame(0, preg_match($pattern, ''));
+        $regex = RegexParser::create()->parse($pattern);
+
+        PeakMemory::reset();
+        $before = memory_get_peak_usage();
+        $shape = (new CaptureShapeAnalyzer())->analyze($regex);
+        $growth = memory_get_peak_usage() - $before;
+
+        $this->assertNull($shape->whole->values);
+        $this->assertLessThan(16 * 1024 * 1024, $growth, \sprintf('peak memory grew by %.1f MB', $growth / 1048576));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideManyCallsPastTheBounds(): iterable
+    {
+        $group = '(?<x>[a-p]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3})';
+
+        yield 'sequence' => ['pattern' => '/'.$group.str_repeat('(?&x)', 2000).'/'];
+        yield 'alternation' => ['pattern' => '/'.$group.'(?:'.implode('|', array_fill(0, 2000, '(?&x)')).')/'];
     }
 
     /**
