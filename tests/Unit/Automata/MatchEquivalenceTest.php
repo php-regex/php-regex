@@ -210,6 +210,8 @@ final class MatchEquivalenceTest extends TestCase
     public function test_large_unicode_literal_stops_at_the_default_state_budget(): void
     {
         $literal = implode('', array_map(static fn (int $code): string => mb_chr($code, 'UTF-8'), range(0x1000, 0x1000 + 14999)));
+        $this->assertSame(1, preg_match('/'.$literal.'/u', $literal));
+        $this->assertSame(0, preg_match('/'.$literal.'/u', 'b'));
 
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessageIsOrContains('The match solver needs more than 5000 states');
@@ -220,6 +222,8 @@ final class MatchEquivalenceTest extends TestCase
     public function test_unicode_alphabet_construction_obeys_the_work_budget(): void
     {
         $literal = implode('', array_map(static fn (int $code): string => mb_chr($code, 'UTF-8'), range(0x1000, 0x13FF)));
+        $this->assertSame(1, preg_match('/'.$literal.'/u', $literal));
+        $this->assertSame(0, preg_match('/'.$literal.'/u', 'b'));
 
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessageIsOrContains('work budget exceeded during match exploration');
