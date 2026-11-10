@@ -1,6 +1,6 @@
 ---
 title: Privacy
-description: "What php-regex.com measures, and what it never sees: no cookie, and nothing you type in the playground leaves your browser."
+description: "What php-regex.com measures, and what it never sees: Google Analytics counts visits with its cookies, and nothing you type in the playground leaves your browser."
 permalink: /privacy/
 ---
 
@@ -8,7 +8,7 @@ permalink: /privacy/
 
 **Nothing you type leaves your browser.** The playground runs PHP inside your browser: the pattern and the text you test are never sent anywhere. A link you share carries them after the `#`, the part of an address browsers never send to a server.
 
-**No cookie.** The site counts visits with Google Analytics, every consent setting denied before its script loads, so it stores nothing on your device. For each page, a cookieless request reaches Google with the page path, never what you type: the address it reports stops before the `#`.
+**Google Analytics, with its cookies.** The site counts visits with the standard Google Analytics tag, which stores two cookies on your device, `_ga` and `_ga_QSYBM5HXPS`, for up to two years, to tell one visitor from another. No banner asks first. Blocking cookies or the tag in your browser, or [Google's opt-out add-on](https://tools.google.com/dlpage/gaoptout), turns the measure off, and the site works the same without it. For each page, a request reaches Google with the page address up to the `#`, never what you type: the tag leaves out what follows the `#`, where the playground keeps your pattern and your text.
 
 Besides page views, it counts a few gestures in the playground, with the details named here and nothing else:
 
