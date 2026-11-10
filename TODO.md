@@ -268,18 +268,29 @@ other 16.2 % are left out without a word: 3.1 % folding would read, 8.2 % a
 static pattern around a part that is not (2.7 % `preg_quote()`, 5.4 % anything
 else), 4.9 % nothing static at all.
 
-To decide before the work is specified:
+Decided 2026-11-10, for 2.0: every argument ends in one of five states (one
+pattern, a finite set of at most 32, a static pattern around `preg_quote()`
+texts, a static pattern around another dynamic part, nothing static); the
+states and `QuotedPattern` live in the parser package, internal; a reader
+hands over literal parts and unknown ones, never a set of strings; the run
+counts what it could not verify and lists it per site only when asked, as
+`info`; a pattern around `preg_quote()` gets one error, invalid whatever the
+text, and only where the text stands as literal characters. A part that is
+not quoted is not reported: of 60 filled by a parameter and read by hand, 28
+were data left unquoted, 23 a regex fragment meant to be one, 9 undecided,
+and a parameter is the only unknown part of 14 % of them. That finding comes
+back on a rule measured at 90 % on a hundred parts labelled by hand.
 
-- the four results an argument can have (one pattern, a finite set, a static
-  pattern around unknown parts, nothing static) and the diagnostic the last
-  two get, where the lint says nothing today: its identifier and its level;
-- where they live: `QuotedPattern` needs nothing of Psalm, and its input, a
-  list of literal parts and unknown ones, is what every reader can produce; a
-  set of constant strings cannot carry an unknown part;
-- whether a part that is not quoted is reported. Of 60 such parts filled by a
-  parameter and read by hand, 28 were data left unquoted, 23 a regex fragment
-  meant to be one, 9 undecided; a parameter is the only unknown part of 14 %
-  of them, and a name the file assigns a literal to is no unknown part at all.
+Before that work starts: the Psalm type checks of
+`tests/Integration/Bridge/Psalm/Fixtures/Types/` are read from `/** */`
+blocks only (`PsalmRun::typeChecks()`), and three of the four files hold
+theirs in `/* */` blocks: `concatenation.php` 0 of 20 collected, `subject.php`
+0 of 20, `finite.php` 3 of 17, `returns.php` 19 of 19. Read as docblocks, 75
+pass and one fails: `subject_kept_where_matches_is_typed()` expects
+`$m = array<never, never>` after the `if`, where Psalm traces
+`array{0?: non-falsy-string, 1?: non-falsy-string}`, which is what
+`preg_match()` leaves. Collect them again, settle that one, and make a check
+that is not collected an error.
 
 The 3.1 % folding reads, by what the extraction lacks, most first: a local
 variable as an operand of a concatenation; an interpolated string; an array
