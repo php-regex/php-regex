@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +37,7 @@ final class PatternTooLargeOffsetTest extends TestCase
     #[DataProvider('provideTooLargePatterns')]
     public function test_a_pattern_too_large_is_reported_where_pcre2_reports_it(string $pattern, string $php, string $release, int $offset): void
     {
+        $this->assertMatchesTheRunningEngine($pattern);
         $result = RegexParser::create(['cache' => null, 'php_version' => $php, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
@@ -66,6 +68,30 @@ final class PatternTooLargeOffsetTest extends TestCase
         yield 'repeated group, 10.46' => ['pattern' => '/(?:a){65535}/', 'php' => '8.4', 'release' => '10.46', 'offset' => 12];
         yield 'capture one unit past the limit, 10.46' => ['pattern' => '/(a){6553}/', 'php' => '8.4', 'release' => '10.46', 'offset' => 9];
         yield 'repeated group, PHP 8.2' => ['pattern' => '/x(?:a){65535}/', 'php' => '8.2', 'release' => '10.40', 'offset' => 13];
+
+        // The PCRE2 10.40 PHP bundles from 8.2.35 reports at offset 0 the
+        // check it makes where a branch ends and another follows, and at the
+        // end of the pattern any other. Run on PHP 8.2.35.
+        yield 'first branch past the limit, PHP 8.2.35' => ['pattern' => '/(?:b){8191}|a/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'first branch past the limit, PHP 8.2.34' => ['pattern' => '/(?:b){8191}|a/', 'php' => '8.2.34', 'release' => '10.40', 'offset' => 13];
+        yield 'branch of a repeated group past the limit, PHP 8.2.35' => ['pattern' => '/(?:a{2}){7000}|(?:bb){1000}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 27];
+        yield 'repeated group, PHP 8.2.35' => ['pattern' => '/x(?:a){65535}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 13];
+        yield 'last branch alone past the limit, PHP 8.2.35' => ['pattern' => '/a|(?:b){8193}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 13];
+        yield 'last branch makes it too large, PHP 8.2.35' => ['pattern' => '/a|(?:b){8191}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 13];
+        yield 'capture one unit past the limit, PHP 8.2.35' => ['pattern' => '/(a){6553}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 9];
+        // Each branch of a lookbehind starts with the length to move back,
+        // counted with that branch.
+        yield 'lookbehind whose first branch passes the limit where it ends, PHP 8.2.35' => ['pattern' => '/(?<='.str_repeat('a', 32763).'|b)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'lookbehind whose first branch reaches the limit where it ends, PHP 8.2.35' => ['pattern' => '/(?<='.str_repeat('a', 32762).'|b)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32769];
+        yield 'lookbehind whose first branch passes the limit at a letter, PHP 8.2.35' => ['pattern' => '/(?<='.str_repeat('a', 32764).'|b)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32771];
+        yield 'lookbehind whose second branch passes the limit where it ends, PHP 8.2.35' => ['pattern' => '/(?<='.str_repeat('a', 32759).'|b|c)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'lookbehind whose second branch reaches the limit where it ends, PHP 8.2.35' => ['pattern' => '/(?<='.str_repeat('a', 32758).'|b|c)/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32767];
+        yield 'lookbehind whose last branch passes the limit, PHP 8.2.35' => ['pattern' => '/(?<=b|'.str_repeat('a', 32763).')/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32770];
+        yield 'branch past the limit after a lookbehind of two, PHP 8.2.35' => ['pattern' => '/(?<!'.str_repeat('a', 32755).'|b)x|y/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'letter past the limit after a lookbehind of two, PHP 8.2.35' => ['pattern' => '/(?<!'.str_repeat('a', 32756).'|b)x|y/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 32766];
+        yield 'branch past the limit after a group of two letters or one, PHP 8.2.35' => ['pattern' => '/(?:[jJ]|d)(?:a){8189}a|e/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 0];
+        yield 'letter past the limit after a group of two letters or one, PHP 8.2.35' => ['pattern' => '/(?:[jJ]|d)(?:a){8189}aaa|e/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 26];
+        yield 'repeated group of two branches, PHP 8.2.35' => ['pattern' => '/(?:a|b){5041}/', 'php' => '8.2.35', 'release' => '10.40', 'offset' => 13];
 
         // On 10.47, at offset 0.
         yield 'repeated group, 10.47' => ['pattern' => '/(?:a){65535}/', 'php' => '8.4', 'release' => '10.47', 'offset' => 0];
@@ -154,5 +180,28 @@ final class PatternTooLargeOffsetTest extends TestCase
         // "a{2}" compiles to four units.
         yield 'group of branches before the limit, 10.48' => ['pattern' => '/(?:(?:a{2}){3400}|(?:b{2}){3400})(?:cc){1500}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 45];
         yield 'capturing group of branches before the limit, 10.49' => ['pattern' => '/((?:a{2}){3400}|(?:b{2}){3400})x(?:cc){1500}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 44];
+    }
+
+    /**
+     * The rows hold the offset each PHP and PCRE2 target reports; the
+     * running engine is one more target: a pattern PHP finds too large here
+     * is too large for this PHP, its patch release included, and this PCRE2,
+     * at the offset PHP reports, and one PHP compiles or refuses otherwise
+     * is not.
+     */
+    private function assertMatchesTheRunningEngine(string $pattern): void
+    {
+        $refused = EngineProbe::warning($pattern);
+        $release = implode('.', \array_slice(explode('.', explode(' ', \PCRE_VERSION)[0]), 0, 2));
+        $result = RegexParser::create(['cache' => null, 'php_version' => \PHP_VERSION_ID, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern);
+
+        if (null === $refused || 1 !== preg_match('~: regular expression is too large at offset (\d+)$~', $refused, $engine)) {
+            $this->assertNotSame(ErrorCode::PatternTooLarge, $result->errorCode, \sprintf('Oracle: %s; the library: %s', $refused ?? 'PHP compiles '.$pattern, (string) $result->error));
+
+            return;
+        }
+
+        $this->assertSame(ErrorCode::PatternTooLarge, $result->errorCode, \sprintf('Oracle: %s; the library: %s', $refused, (string) $result->error));
+        $this->assertSame((int) $engine[1], $result->offset, 'Oracle: '.$refused);
     }
 }

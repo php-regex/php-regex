@@ -258,6 +258,7 @@ final class Lexer
         $this->wholePattern = $pattern;
         $this->state->bodies?->forget();
         $this->state->bodiesInPlace = false;
+        $this->state->bodiesLeftInPattern = false;
 
         return $this->read($pattern, $flags, $extendedMore, 0);
     }
@@ -276,6 +277,7 @@ final class Lexer
         $this->wholePattern = $pattern;
         $this->state->bodies?->forget();
         $this->state->bodiesInPlace = true;
+        $this->state->bodiesLeftInPattern = false;
 
         return $this->read($pattern, $flags, false, 0);
     }
@@ -286,7 +288,10 @@ final class Lexer
      *
      * Where the bodies inside it end is taken from the earlier calls on the
      * same pattern when they found it, so that bodies nested in bodies are
-     * not each read again at every level.
+     * not each read again at every level. A body that closes inside it is
+     * left in the pattern: its token holds the opener alone, "pla:" or "*",
+     * and spans the whole body, which the parser reads from the pattern by
+     * its offsets, not from a copy the token would hold at every level.
      *
      * @internal
      *
@@ -300,6 +305,7 @@ final class Lexer
         }
 
         $this->state->bodiesInPlace = false;
+        $this->state->bodiesLeftInPattern = true;
 
         return $this->read(substr($pattern, $offset, $length), $flags, $extendedMore, $offset);
     }
