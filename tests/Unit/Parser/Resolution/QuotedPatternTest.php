@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser\Resolution;
 
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Resolution\QuotedPattern;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -43,6 +44,18 @@ final class QuotedPatternTest extends TestCase
         $parser = RegexParser::create(['php_version' => '8.4', 'pcre_version' => $release]);
 
         $this->assertSame('/(?(VERSION>=10.45)(a)|(?<n>b))(?:[\s\S]*)/', QuotedPattern::of(['/(?(VERSION>=10.45)(a)|(?<n>b))', null, '/'], $parser));
+
+        // The engine takes one arm, the yes arm from PCRE2 10.45 (10.49 matches
+        // 'ax.y') and the no arm before (10.42 matches 'bx.y'), and writes the
+        // same groups for either: 0, 1, n and 2.
+        $written = '/(?(VERSION>=10.45)(a)|(?<n>b))'.preg_quote('x.y', '/').'/';
+        $groups = [];
+        foreach (['ax.y', 'bx.y'] as $subject) {
+            if (1 === preg_match($written, $subject, $matches, \PREG_UNMATCHED_AS_NULL)) {
+                $groups[] = array_keys($matches);
+            }
+        }
+        $this->assertSame([[0, 1, 'n', 2]], $groups);
     }
 
     /**
@@ -62,6 +75,16 @@ final class QuotedPatternTest extends TestCase
     public function test_quoted_pattern_moved_reads_each_position_as_before(array $parts, ?string $expected): void
     {
         $this->assertSame($expected, QuotedPattern::of($parts, RegexParser::create()));
+
+        if (null === $expected) {
+            return;
+        }
+
+        // Where the class reads the pattern, the engine compiles it with a text quoted in each place.
+        foreach (['a', 'a.b', '1'] as $text) {
+            $written = implode('', array_map(static fn (?string $part): string => $part ?? preg_quote($text, $parts[0][0] ?? null), $parts));
+            $this->assertTrue(EngineProbe::compiles($written), 'The engine refuses '.$written.'.');
+        }
     }
 
     /**
