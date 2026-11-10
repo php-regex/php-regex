@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\RegexParser;
@@ -30,6 +32,59 @@ use PHPUnit\Framework\TestCase;
  */
 final class RewriteVerificationTest extends TestCase
 {
+    /**
+     * The lookbehind sends the check to the in-place proof, whose aligned
+     * pass pairs some twelve hundred parts on each side: past the 65,536
+     * cells the alignment may fill, the rewrite stays unproven and the
+     * pattern is kept. Under the limits the optimizer gives the solver,
+     * 1,000 DFA states and 200,000 units of work, the alignment is what
+     * gives up: with no cap on it, the same rewrite is proven.
+     */
+    #[Test]
+    public function test_a_large_alignment_leaves_the_rewrite_unproven(): void
+    {
+        $original = '/(?<!x)'.str_repeat('\\d', 4).str_repeat('b?c?', 600).str_repeat('[e-g]', 4).'/';
+        $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
+        $rewrite = $optimizer->optimize($original, new OptimizerOptions(verifyWithAutomata: false))->optimized;
+        $this->assertNotSame($original, $rewrite);
+        $this->assertSame(1, preg_match($original, '1234bceeee'));
+        $this->assertSame(1, preg_match($rewrite, '1234bceeee'));
+        // The lookbehind holds in both: no match right after an "x".
+        $this->assertSame(0, preg_match($original, 'x1234eeee'));
+        $this->assertSame(0, preg_match($rewrite, 'x1234eeee'));
+
+        try {
+            (new LanguageSolver())->rewritesAlikeInPlace($original, $rewrite, new SolverOptions(maxDfaStates: 1_000, maxTransitionsProcessed: 200_000));
+            $this->fail('The alignment fit its budget.');
+        } catch (ComplexityException $e) {
+            $this->assertSame('Rewrite alignment cell budget exceeded (65536).', $e->getMessage());
+        }
+
+        $this->assertSame($original, $optimizer->optimize($original)->optimized);
+    }
+
+    /**
+     * The same rewrite with sixty repeats in place of six hundred: its
+     * alignment fits the cells, the rewrite is proven under the same limits
+     * and the optimizer ships it. The alignment is what the longer pattern
+     * outgrows, nothing before it.
+     */
+    #[Test]
+    public function test_the_same_rewrite_is_proven_when_its_alignment_fits(): void
+    {
+        $original = '/(?<!x)'.str_repeat('\\d', 4).str_repeat('b?c?', 60).str_repeat('[e-g]', 4).'/';
+        $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
+        $rewrite = $optimizer->optimize($original, new OptimizerOptions(verifyWithAutomata: false))->optimized;
+        $this->assertNotSame($original, $rewrite);
+        foreach ([$original, $rewrite] as $pattern) {
+            $this->assertSame(1, preg_match($pattern, '1234bceeee'));
+            $this->assertSame(0, preg_match($pattern, 'x1234eeee'));
+        }
+
+        $this->assertTrue((new LanguageSolver())->rewritesAlikeInPlace($original, $rewrite, new SolverOptions(maxDfaStates: 1_000, maxTransitionsProcessed: 200_000)));
+        $this->assertSame($rewrite, $optimizer->optimize($original)->optimized);
+    }
+
     #[Test]
     #[DataProvider('provideRewrites')]
     public function test_a_rewrite_is_judged_on_the_matches_it_writes(string $original, string $rewrite, ?bool $verdict): void

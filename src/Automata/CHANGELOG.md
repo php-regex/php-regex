@@ -11,6 +11,21 @@ CHANGELOG
    one `maxTransitionsProcessed` budget, whose diagnostic names the
    `lookaround bodies` phase. A lookaround repeated by a quantifier is compiled
    once: `/(?:(?=a{99})){100}a{99}/` no longer builds a hundred automata.
+ * `Language::countOfLength()` and `size()` multiply once for each state a
+   move leads to, however many ranges spell its characters, and leave out the
+   states no string is accepted from: `size()` of `/[ab]{0,100}/` answers its
+   31 digits in some 60 ms where it took 4.7 s, and the counts stay exact.
+   `countOfLength()` of a negative length is `"0"`.
+ * `rewritesAlikeInPlace()` fills at most 65,536 cells, across all the sites
+   of the two patterns, when it pairs their parts by those both keep, and
+   throws a `ComplexityException` past them: the optimizer keeps a pattern of
+   six thousand optional parts behind a lookbehind as written instead of
+   reaching a peak of nearly 1 GB to prove its rewrite.
+ * `matchEquivalent()` counts at every state it adds against `maxNfaStates`,
+   and counts building its alphabet against `maxTransitionsProcessed`: a
+   literal of fifteen thousand distinct characters under `u` is refused in
+   under a second instead of being compared for more than a minute, and one of
+   a thousand reaches the default work budget.
  * `Language::strings()` and `nonMembers()` bound the search for each next
    string, a million steps and 50,000 remembered states for one length, and
    throw a `ComplexityException` past either: the second string of

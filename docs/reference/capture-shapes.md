@@ -630,9 +630,12 @@ every string the group can take, a length bound holds every match. When the patt
 cannot tell, the answer widens rather than guesses:
 
 - Values come from literals only, through alternations and bounded repeats: `(a{1,3})`
-  holds `'a'`, `'aa'` or `'aaa'`, up to 32 strings. Where caseless matching holds, a
-  letter that may fold leaves them unknown: under `/i`, from `(?i)` to the end of its
-  group, or inside `(?i:...)`. In `/(?i:a)(b)/` group 1 still holds `'b'`.
+  holds `'a'`, `'aa'` or `'aaa'`, up to 32 strings of at most 4,096 bytes each and
+  65,536 bytes together; past either bound the values are unknown, so
+  `/((?:(?:a{32}){32}){5})/`, whose one value is 5,120 bytes long, has `values` `null`.
+  The bytes are counted, not the characters: `é` weighs two under `/u`. Where caseless
+  matching holds, a letter that may fold leaves them unknown: under `/i`, from `(?i)` to
+  the end of its group, or inside `(?i:...)`. In `/(?i:a)(b)/` group 1 still holds `'b'`.
 - After `\K` the whole match holds the text from the last `\K` run to the end, and the
   whole span where no `\K` ran: `/a\K(?:b|c\Kd)/` writes `'b'` or `'d'`, `/a(?:\K|b)c/`
   writes `'c'` or `'abc'`. Backtracking past a `\K` takes its reset back:

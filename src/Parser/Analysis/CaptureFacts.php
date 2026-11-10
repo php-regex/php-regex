@@ -63,6 +63,13 @@ final class CaptureFacts
     public const MAX_VALUES = 32;
 
     /**
+     * Bound literal expansion independently of pattern size and nesting.
+     */
+    private const MAX_VALUE_BYTES = 4096;
+
+    private const MAX_TOTAL_VALUE_BYTES = 65536;
+
+    /**
      * \D, \W, \s, \h, \v and \R never match "0".
      */
     private const ZERO_FREE_TYPES = ['D', 'W', 's', 'h', 'v', 'R'];
@@ -266,6 +273,36 @@ final class CaptureFacts
     }
 
     /**
+     * The values when they stay within the bounds of a value set: at most
+     * MAX_VALUES strings of at most 4,096 bytes each, 65,536 bytes together.
+     * Null past any of them. The analysis checks the values it builds from
+     * other ones, a newline added after each or the branches of a reset
+     * joined, against the same bounds as those it reads.
+     *
+     * @param list<string> $values
+     *
+     * @return list<string>|null
+     */
+    public static function bounded(array $values): ?array
+    {
+        if (\count($values) > self::MAX_VALUES) {
+            return null;
+        }
+
+        $bytes = 0;
+        foreach ($values as $value) {
+            $length = \strlen($value);
+            if ($length > self::MAX_VALUE_BYTES || $length > self::MAX_TOTAL_VALUE_BYTES - $bytes) {
+                return null;
+            }
+
+            $bytes += $length;
+        }
+
+        return $values;
+    }
+
+    /**
      * The strings a node can match, when they are a small finite set read
      * from literals alone.
      *
@@ -274,9 +311,9 @@ final class CaptureFacts
     private function values(NodeInterface $node, bool $scan = false): ?array
     {
         return match (true) {
-            $node instanceof LiteralNode => $this->folds($node->value, $this->readsCaselessly($node)) ? null : [$node->value],
+            $node instanceof LiteralNode => \strlen($node->value) > self::MAX_VALUE_BYTES || $this->folds($node->value, $this->readsCaselessly($node)) ? null : [$node->value],
             $node instanceof CharLiteralNode => $this->character($node->codePoint, $this->readsCaselessly($node)),
-            $node instanceof SequenceNode => $this->product(array_map(fn (NodeInterface $child): ?array => $this->values($child, $scan), $node->children)),
+            $node instanceof SequenceNode => $this->product($this->valuesOf($node->children, $scan)),
             $node instanceof AlternationNode => $this->alternationValues($node, $scan),
             $node instanceof GroupNode => self::isLookaround($node) ? [''] : $this->values($node->child, $scan),
             $node instanceof QuantifierNode => $this->repeat($node, $scan),
@@ -373,7 +410,23 @@ final class CaptureFacts
             return [''];
         }
 
-        return $this->union(array_map(fn (NodeInterface $branch): ?array => $this->values($branch, $scan), $node->alternatives));
+        return $this->union($this->valuesOf($node->alternatives, $scan));
+    }
+
+    /**
+     * The values of each node, read one at a time: product() and union()
+     * stop at the first part past a bound, and the parts after it are never
+     * read.
+     *
+     * @param array<NodeInterface> $nodes
+     *
+     * @return \Generator<int, list<string>|null>
+     */
+    private function valuesOf(array $nodes, bool $scan): \Generator
+    {
+        foreach ($nodes as $node) {
+            yield $this->values($node, $scan);
+        }
     }
 
     /**
@@ -648,11 +701,11 @@ final class CaptureFacts
     }
 
     /**
-     * @param array<list<string>|null> $parts
+     * @param iterable<list<string>|null> $parts
      *
      * @return list<string>|null
      */
-    private function product(array $parts): ?array
+    private function product(iterable $parts): ?array
     {
         $strings = [''];
         foreach ($parts as $part) {
@@ -661,8 +714,18 @@ final class CaptureFacts
             }
 
             $next = [];
+            $bytes = 0;
             foreach ($strings as $prefix) {
                 foreach ($part as $suffix) {
+                    // Check before allocating, including intermediate products
+                    // of nested repeats. Count duplicate candidates too so the
+                    // temporary array is bounded before deduplication.
+                    $length = \strlen($prefix) + \strlen($suffix);
+                    if ($length > self::MAX_VALUE_BYTES || $length > self::MAX_TOTAL_VALUE_BYTES - $bytes) {
+                        return null;
+                    }
+
+                    $bytes += $length;
                     $next[] = $prefix.$suffix;
                 }
             }
@@ -677,24 +740,35 @@ final class CaptureFacts
     }
 
     /**
-     * @param array<list<string>|null> $parts
+     * @param iterable<list<string>|null> $parts
      *
      * @return list<string>|null
      */
-    private function union(array $parts): ?array
+    private function union(iterable $parts): ?array
     {
         $strings = [];
+        $bytes = 0;
         foreach ($parts as $part) {
             if (null === $part) {
                 return null;
             }
 
-            $strings = [...$strings, ...$part];
+            foreach ($part as $value) {
+                if (\in_array($value, $strings, true)) {
+                    continue;
+                }
+
+                $length = \strlen($value);
+                if (\count($strings) >= self::MAX_VALUES || $length > self::MAX_VALUE_BYTES || $length > self::MAX_TOTAL_VALUE_BYTES - $bytes) {
+                    return null;
+                }
+
+                $bytes += $length;
+                $strings[] = $value;
+            }
         }
 
-        $strings = array_values(array_unique($strings));
-
-        return \count($strings) > self::MAX_VALUES ? null : $strings;
+        return $strings;
     }
 
     /**

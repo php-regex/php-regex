@@ -365,6 +365,11 @@ final class Validator extends AbstractNodeVisitor
     {
         $this->walkPattern($node);
 
+        // Lookbehind errors precede the first pass, including its size check.
+        if (isset($this->lateErrors[0])) {
+            $this->raiseFirstLateError();
+        }
+
         // PCRE measures the compiled pattern in its first pass; one that
         // cannot reach the limit by its text alone is not measured.
         $size = CompiledSize::belowTheLimit($node) ? null : new CompiledSize($node, $this->unicodeMode, $this->target);
@@ -374,7 +379,7 @@ final class Validator extends AbstractNodeVisitor
         // where the pattern passes the limit: an error it would meet past
         // that point is never reached, nor the second pass, which counts
         // the branches of conditionals.
-        if (isset($this->lateErrors[0]) || ([] !== $this->lateErrors && (null === $tooLarge || $this->firstPassErrorAt < $tooLarge->firstPassStop()))) {
+        if ([] !== $this->lateErrors && (null === $tooLarge || $this->firstPassErrorAt < $tooLarge->firstPassStop())) {
             $this->raiseFirstLateError();
         }
 

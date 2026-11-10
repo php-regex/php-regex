@@ -20,12 +20,119 @@ use PHPRegex\Automata\Minimization\DfaMinimizer;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class WorkBudgetTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
+    #[Test]
+    public function test_comparison_bounds_the_product_of_individually_small_dfas(): void
+    {
+        $solver = new LanguageSolver();
+        $options = new SolverOptions(maxDfaStates: 40, maxTransitionsProcessed: null);
+        $solver->compile('/(?:a{11})+/', $options);
+        $solver->compile('/(?:a{13})+/', $options);
+
+        // PCRE matches the witness whole with both, and no shorter run of "a".
+        $witness = str_repeat('a', 143);
+        $this->assertSame([1, 1], [preg_match('/^(?:a{11})+$/D', $witness), preg_match('/^(?:a{13})+$/D', $witness)]);
+        $this->assertSame([], array_filter(range(1, 142), static fn (int $length): bool => 1 === preg_match('/^(?:a{11})+$/D', str_repeat('a', $length)) && 1 === preg_match('/^(?:a{13})+$/D', str_repeat('a', $length))));
+
+        $result = $solver->intersection('/(?:a{11})+/', '/(?:a{13})+/', new SolverOptions(maxDfaStates: 200));
+        $this->assertSame($witness, $result->example);
+
+        try {
+            $solver->intersection('/(?:a{11})+/', '/(?:a{13})+/', $options);
+            $this->fail('Expected the comparison to explore more pairs than the limit.');
+        } catch (ComplexityException $exception) {
+            $this->assertStringContainsString('The comparison explored more than 40 pairs of DFA states.', $exception->getMessage());
+            $this->assertSame(['phase' => 'comparison', 'limit' => 40], $exception->getDiagnostic());
+        }
+    }
+
+    #[Test]
+    #[DataProvider('provideComparisons')]
+    public function test_comparison_charges_even_transitions_to_visited_pairs(string $method): void
+    {
+        // One pair is retained, but every alphabet range still takes work.
+        // The automaton is built by hand and served for both patterns, which
+        // only name the two sides: what they spell is not read here.
+        $dfa = new Dfa(0, [0 => new DfaState(0, [97 => 0, 98 => 0], false)], [[97, 97], [98, 98]], 97, 98);
+        $cache = new class($dfa) implements DfaCacheInterface {
+            public function __construct(private readonly Dfa $dfa) {}
+
+            public function get(string $key): Dfa
+            {
+                return $this->dfa;
+            }
+
+            public function set(string $key, Dfa $dfa): void {}
+        };
+        $solver = new LanguageSolver(dfaCache: $cache);
+
+        try {
+            $solver->$method('/a/', '/b/', new SolverOptions(maxTransitionsProcessed: 1));
+            $this->fail('Expected comparison work to exceed its budget.');
+        } catch (ComplexityException $exception) {
+            $this->assertSame('comparison', $exception->getDiagnostic()['phase'] ?? null);
+            $this->assertSame(2, $exception->getDiagnostic()['consumed'] ?? null);
+        }
+    }
+
+    /**
+     * The left start state accepts and the right one does not: the first
+     * search of `equivalent()` answers at once, and only the second, which
+     * looks for a string the right side alone accepts, walks the pairs. It
+     * spends the same budget: two ranges past a limit of one. Both automata
+     * are built by hand and served in turn: the patterns only name the sides.
+     */
+    #[Test]
+    public function test_the_second_equivalence_search_spends_the_same_budget(): void
+    {
+        $left = new Dfa(0, [0 => new DfaState(0, [97 => 0, 98 => 0], true)], [[97, 97], [98, 98]], 97, 98);
+        $right = new Dfa(0, [0 => new DfaState(0, [97 => 0, 98 => 0], false)], [[97, 97], [98, 98]], 97, 98);
+        $cache = new class([$left, $right]) implements DfaCacheInterface {
+            /**
+             * @param list<Dfa> $dfas
+             */
+            public function __construct(private array $dfas) {}
+
+            public function get(string $key): Dfa
+            {
+                $dfa = array_shift($this->dfas);
+                Assert::assertInstanceOf(Dfa::class, $dfa);
+
+                return $dfa;
+            }
+
+            public function set(string $key, Dfa $dfa): void {}
+        };
+
+        try {
+            (new LanguageSolver(dfaCache: $cache))->equivalent('/a/', '/b/', new SolverOptions(maxTransitionsProcessed: 1));
+            $this->fail('Expected the second search to exceed its budget.');
+        } catch (ComplexityException $exception) {
+            $this->assertSame('comparison', $exception->getDiagnostic()['phase'] ?? null);
+            $this->assertSame(1, $exception->getDiagnostic()['limit'] ?? null);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{method: string}>
+     */
+    public static function provideComparisons(): iterable
+    {
+        foreach (['intersection', 'subsetOf', 'equivalent'] as $method) {
+            yield $method => ['method' => $method];
+        }
+    }
+
     #[Test]
     public function test_determinize_budget_is_enforced(): void
     {

@@ -84,7 +84,7 @@ In an editor, the [language server](lsp.md) offers both as code actions on a reg
   ```
 
 - **Delimiters** sit on their own lines, the flags after the closing one. A leading `(*UTF)`, `(*CR)` or `(*LIMIT_MATCH=…)` stays on the opening delimiter's line, because PCRE reads them only at the very start.
-- **Width** is counted in code points under `u` or `(*UTF)`, and in bytes otherwise. It is a goal, not a promise: an atom wider than the width stays whole, and past ten indent levels the rest of a construct stays on one line.
+- **Width** is counted in code points under `u` or `(*UTF)`, and in bytes otherwise. It is a goal, not a promise: an atom wider than the width stays whole, and past ten indent levels the rest of a construct stays on one line, but for the line break that ends a `#` comment there, which starts the next line at the left margin.
 
 ## Comments
 

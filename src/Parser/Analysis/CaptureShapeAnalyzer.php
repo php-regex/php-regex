@@ -371,7 +371,7 @@ final class CaptureShapeAnalyzer
                     $values[] = $value.$newline;
                 }
             }
-            $values = \count($values) > CaptureFacts::MAX_VALUES ? null : $values;
+            $values = CaptureFacts::bounded($values);
         }
 
         $longest = max(array_map(fn (string $newline): int => $this->unicode ? mb_strlen($newline, 'UTF-8') : \strlen($newline), $newlines));
@@ -1098,7 +1098,9 @@ final class CaptureShapeAnalyzer
             $join = [
                 'min' => null === $join['min'] ? $occurrence['min'] : min($join['min'], $occurrence['min']),
                 'max' => null === $join['max'] || null === $occurrence['max'] ? null : max($join['max'], $occurrence['max']),
-                'values' => null === $join['values'] || null === $occurrence['values'] ? null : [...$join['values'], ...$occurrence['values']],
+                // Joined one branch at a time, so a reset of many branches
+                // stops at the first join past the bounds.
+                'values' => null === $join['values'] || null === $occurrence['values'] ? null : CaptureFacts::bounded(array_values(array_unique([...$join['values'], ...$occurrence['values']]))),
                 'nonFalsy' => $join['nonFalsy'] && $occurrence['nonFalsy'],
                 'digitsOnly' => $join['digitsOnly'] && $occurrence['digitsOnly'],
                 'decimalInt' => $join['decimalInt'] && $occurrence['decimalInt'],
@@ -1108,10 +1110,6 @@ final class CaptureShapeAnalyzer
         }
 
         $values = $join['values'];
-        if (null !== $values) {
-            $values = array_values(array_unique($values));
-            $values = \count($values) > CaptureFacts::MAX_VALUES ? null : $values;
-        }
 
         if (\in_array(true, array_column($occurrences, 'open_at_accept'), true)) {
             // A group (*ACCEPT) leaves open holds what it read so far.

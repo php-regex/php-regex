@@ -191,7 +191,54 @@ as `CallTypes::quote` does.
   #270, #283 (#285 carries it), #315, #324, #325.
 
 
+## Pull request checks in stages
+
+- #333 to merge: `ci.yml` runs the checks of a pull request in three
+  stages. Its own run (2026-11-10) read the suite on the PHP 8.4 Linux
+  cell in 461 s where it took 1,100 s under Xdebug, and 440 runner
+  minutes where a run took about 520. Then delete the `ci-stages` branch.
+- Only "Every stage ran. Failed: Tests (stage 3)." was read on GitHub. A
+  stop at stage 1 and at stage 2 is covered by the tests of the verdict
+  script alone: after the merge, push a branch that breaks PHPStan, then
+  one that breaks a test, and run `gh workflow run ci.yml --ref <branch>`
+  on each.
+- To decide, which macOS and Windows cells a pull request runs: on #333
+  every Linux and Windows cell had answered 15 minutes after stage 3
+  began, and the five macOS cells of `engines.yml` took two hours, each
+  waiting for one of the five macOS runners the organization has at once,
+  shared with every other open pull request. Leaving some of them to the
+  weekly run is a choice of PCRE coverage: the latest PCRE2 is read
+  nowhere else.
+- To decide, whether coverage and the mutation score gate the matrix:
+  they run beside the reference and stop nothing. At 19 minutes the
+  coverage job is the longest of a pull request.
+- To decide, `CI` as the one required check of `2.x`: a pull request of
+  prose alone does not start `ci.yml`, and a required check that never
+  reports stays pending. It needs a second workflow reporting `CI` on the
+  paths `ci.yml` ignores, or the check stays optional.
+- To decide, a `max-parallel` on the matrix of `tests.yml` and
+  `engines.yml`, so that one pull request does not take the sixty runners
+  when several are open.
+- The two phar builds (`phar.yml`, `packages.yml`, "Setup PHP to build")
+  call setup-php without `coverage: none` and still load Xdebug; the job
+  takes twenty seconds, so it costs little. `RunnerTimeTest` could then
+  hold every setup-php step to naming its driver.
+- The download of `box` by setup-php itself fails on a 504 as the release
+  assets did, and no `--retry` reaches it.
+
+
 ## Open questions
+
+- `RailroadLayoutTest::test_wide_layout_composition_scales_with_its_geometry`
+  ("alternation") measures a time ratio against 11 and passes it on loaded
+  runners (12.18 on Windows PHP 8.3 for #310, 11.19 on PHP 8.2 latest PCRE2
+  for #247, 2026-11-10; neither touches the railroad layout). Count the
+  work, or give the ratio the margin the other linear-time tests have.
+  On #333 it read 16.5 to 21.3 on the PHP 8.1 prefer-lowest Ubuntu cell,
+  beside `AlphaAssertionBodyTest` at 11.4 to 11.8 in the same process; the
+  layout itself reads 4 to 7 in `php:8.1-cli` and `php:8.4-cli`. With
+  Xdebug gone from the Linux cells the smaller read is some 25 ms there
+  too, a thin base for a ratio: more children would steady it.
 
 - `ImpossibleBoundaryRuleTest::test_many_boundaries_under_u_are_linted_quickly`
   ("non-ASCII letter met again") measures wall time against 0.5 s and
@@ -252,16 +299,16 @@ as `CallTypes::quote` does.
   the JSON envelope. Give the handler room (reset the limit in it) or bound
   the work instead of the clock.
 
-- Five real costs whose proposed bound refuses legitimate input, each
-  answered in its pull request with the fix that keeps the answers: the
-  ReDoS repair tries every quantifier (#249; try the ones the analysis
-  blames), alternation overlaps compare every pair (#254; bucket the
-  branches by their first characters), language counting multiplies every
-  range at every length (#273; sum the moves per target), nested
-  alphabetic assertion bodies are copied at each level (#276; read them in
-  place), and the replacement bound counts every byte as a reference
-  (#309; count the references apart). Whether to rework these branches or
-  write the fixes anew is open.
+- Three real costs whose pull request was closed, its bound refusing
+  legitimate input; the fix that keeps the answers is still to write. The
+  ReDoS repair analyses one candidate per quantifier (#249): the quantifiers
+  the analysis blames can only be tried first, as `/^\s*(?:\w+\s*)*$/` is
+  repaired with no culprit and no hotspot named, and whether the others are
+  then cut off at a count is open. Alternation overlaps compare every pair
+  (#254): bucketing by first character is not enough when every branch
+  starts alike, the pairs have to be ruled out by their shared prefix.
+  Nested alphabetic assertion bodies are copied at each level (#276): read
+  them in place.
 - Without `u`, every set that leaves characters out (the dot, `[^a]`,
   `\D`, `\W`, `\S`) takes one byte in PCRE and one character in the
   JavaScript, `html-pattern` and Python output: `/^\S$/` fails U+00A0,

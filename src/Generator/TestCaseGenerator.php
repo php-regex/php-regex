@@ -60,6 +60,12 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     private const MAX_SAMPLES = 3;
 
     /**
+     * The longest case built, as long as the longest sample: a longer one
+     * is left out before it is allocated.
+     */
+    private const MAX_CASE_LENGTH = 1048576;
+
+    /**
      * @param PcreEngine $engine Asks the running engine which characters a class holds
      */
     public function __construct(private readonly PcreEngine $engine = new PcreEngine()) {}
@@ -157,33 +163,20 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     #[\Override]
     public function visitSequence(SequenceNode $node): array
     {
-        $matching = [''];
-        $nonMatching = [''];
+        // A case is kept as the pieces its children add and joined once, at
+        // the end: a child after a long start copies none of it again.
+        $matching = ['lengths' => [0], 'steps' => []];
+        $nonMatching = ['lengths' => [0], 'steps' => []];
 
         foreach ($node->children as $child) {
             $childCases = $child->accept($this);
-            $newMatching = [];
-            $newNonMatching = [];
-
-            foreach ($matching as $m) {
-                foreach ($childCases['matching'] as $cm) {
-                    $newMatching[] = $m.$cm;
-                }
-            }
-
-            foreach ($nonMatching as $nm) {
-                foreach ($childCases['non_matching'] as $cnm) {
-                    $newNonMatching[] = $nm.$cnm;
-                }
-            }
-
-            $matching = \array_slice($newMatching, 0, self::MAX_SAMPLES);
-            $nonMatching = \array_slice($newNonMatching, 0, self::MAX_SAMPLES);
+            self::extend($matching, $childCases['matching']);
+            self::extend($nonMatching, $childCases['non_matching']);
         }
 
         return [
-            'matching' => $matching,
-            'non_matching' => $nonMatching,
+            'matching' => self::joined($matching),
+            'non_matching' => self::joined($nonMatching),
         ];
     }
 
@@ -210,25 +203,28 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): array
     {
-        $childCases = $node->node->accept($this);
-        $range = $this->parseQuantifierRange($node);
-        $min = $range[0];
-        $max = $range[1];
+        $unit = $node->node->accept($this)['matching'][0] ?? '';
+        [$min, $max] = $this->parseQuantifierRange($node);
+        // No count past the limit builds a case: one more than the limit
+        // stands for all of them, and the sums below stay integers.
+        $min = min($min, self::MAX_CASE_LENGTH + 1);
+        if (null !== $max) {
+            $max = min($max, self::MAX_CASE_LENGTH + 1);
+        }
 
         $matching = [];
         for ($i = $min; $i <= min($max ?? $min + 2, $min + 2); $i++) {
-            $sample = str_repeat($childCases['matching'][0] ?? '', $i);
-            $matching[] = $sample;
+            $matching = [...$matching, ...$this->repeated($unit, $i)];
         }
 
         $nonMatching = [];
         if ($min > 0) {
             // Too few
-            $nonMatching[] = str_repeat($childCases['matching'][0] ?? '', $min - 1);
+            $nonMatching = $this->repeated($unit, $min - 1);
         }
         if (null !== $max) {
             // Too many
-            $nonMatching[] = str_repeat($childCases['matching'][0] ?? '', $max + 1);
+            $nonMatching = [...$nonMatching, ...$this->repeated($unit, $max + 1)];
         }
 
         return [
@@ -565,6 +561,55 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     }
 
     /**
+     * Each case followed by each piece, in order: the first three that fit
+     * the limit. A step holds, for each of them, the case it follows and the
+     * piece it adds.
+     *
+     * @param array{lengths: list<int>, steps: list<list<array{0: int, 1: string}>>} $cases
+     * @param array<string>                                                          $pieces
+     */
+    private static function extend(array &$cases, array $pieces): void
+    {
+        $lengths = [];
+        $step = [];
+        foreach ($cases['lengths'] as $before => $length) {
+            foreach ($pieces as $piece) {
+                if (\count($step) < self::MAX_SAMPLES && $length + \strlen($piece) <= self::MAX_CASE_LENGTH) {
+                    $lengths[] = $length + \strlen($piece);
+                    $step[] = [$before, $piece];
+                }
+            }
+        }
+
+        $cases['lengths'] = $lengths;
+        $cases['steps'][] = $step;
+    }
+
+    /**
+     * Each case as a string: its pieces read back from the last step to the
+     * first, then joined in order.
+     *
+     * @param array{lengths: list<int>, steps: list<list<array{0: int, 1: string}>>} $cases
+     *
+     * @return list<string>
+     */
+    private static function joined(array $cases): array
+    {
+        $joined = [];
+        foreach (array_keys($cases['lengths']) as $case) {
+            $pieces = [];
+            for ($step = \count($cases['steps']) - 1; $step >= 0; $step--) {
+                [$case, $piece] = $cases['steps'][$step][$case];
+                $pieces[] = $piece;
+            }
+
+            $joined[] = implode('', array_reverse($pieces));
+        }
+
+        return $joined;
+    }
+
+    /**
      * The candidates preg_match() matches (or does not, for $matching
      * false), duplicates and those the engine errors on left out; three at
      * most. A pattern the engine refuses keeps none.
@@ -583,6 +628,20 @@ final class TestCaseGenerator extends AbstractNodeVisitor
         }
 
         return $kept;
+    }
+
+    /**
+     * The unit repeated, or nothing when the case would pass the limit.
+     *
+     * @return list<string>
+     */
+    private function repeated(string $unit, int $count): array
+    {
+        if ('' !== $unit && $count > intdiv(self::MAX_CASE_LENGTH, \strlen($unit))) {
+            return [];
+        }
+
+        return [str_repeat($unit, $count)];
     }
 
     /**

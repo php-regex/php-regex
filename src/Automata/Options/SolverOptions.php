@@ -25,10 +25,10 @@ final class SolverOptions
     /**
      * @param MatchMode                $matchMode                How to interpret matching semantics
      * @param int                      $maxNfaStates             Maximum allowed NFA states
-     * @param int                      $maxDfaStates             Maximum allowed DFA states
+     * @param int                      $maxDfaStates             Maximum allowed DFA states or retained state pairs per comparison search
      * @param bool                     $minimizeDfa              Whether to minimize DFAs after determinization
      * @param MinimizationAlgorithm    $minimizationAlgorithm    Strategy used for DFA minimization
-     * @param int|null                 $maxTransitionsProcessed  Hard limit on transition work (determinize/minimize); null disables the guard
+     * @param int|null                 $maxTransitionsProcessed  Hard limit on transition work (determinize/minimize/compare); null disables the guard
      * @param DeterminizationAlgorithm $determinizationAlgorithm Strategy used for NFA determinization
      *
      * @throws InvalidRegexOptionException when a state cap is below 1, or the transition budget below 0
