@@ -786,81 +786,64 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
-     * The library's sentence, reflowed for the eye: the colon before a
-     * token and the bracketed repetition at the end give way to a space
-     * and a clause. Run here with PCRE on the script's own rewrites.
+     * The page shows each sentence of the explanation as the library wrote
+     * it: a branch keyword, a labelled kind or plain prose, never rewritten
+     * on the way.
      */
     #[Test]
-    public function test_the_explanation_reflow_reads_one_sentence(): void
+    public function test_the_explanation_is_shown_as_the_library_wrote_it(): void
     {
-        $rewrites = self::reflow();
+        $voices = self::between(self::source(self::SCRIPT), 'function explainVoices(content, head) {', "\n  }\n");
 
-        $this->assertSame('A digit [0-9], exactly 4 times', self::apply($rewrites, 'A digit: [0-9] (exactly 4 times)'));
-        $this->assertSame('A digit [0-9], one or more times (as few as possible)', self::apply($rewrites, 'A digit: [0-9] (one or more times (as few as possible))'));
-        $this->assertSame("'b', one or more times (and do not backtrack)", self::apply($rewrites, "'b' (one or more times (and do not backtrack))"));
-        $this->assertSame("any character in [ Range: from 'a' to 'c' ], exactly 3 times", self::apply($rewrites, "any character in [ Range: from 'a' to 'c' ] (exactly 3 times)"));
-        $this->assertSame('any character in [ POSIX Class [[:alpha:]] ], at least 1 but not more than 3 times', self::apply($rewrites, 'any character in [ POSIX Class: [[:alpha:]] ] (at least 1 but not more than 3 times)'));
-        $this->assertSame('Quantified group, zero or more times', self::apply($rewrites, 'Quantified group (zero or more times)'));
-        $this->assertSame("'c', once or not at all", self::apply($rewrites, "'c' (once or not at all)"));
-        $this->assertSame('at least 2 times', self::apply($rewrites, 'at least 2 times'));
-
-        // What is not a repetition, nor a colon before a token, stays.
-        foreach ([
-            'Any linebreak sequence (\r\n|[\n\x0B\f\r\x85])',
-            'An uppercase letter (category)',
-            'the start of a line: the start of the subject, or just after a newline (\n) that does not end it',
-            'A whitespace character: a Unicode separator (\p{Z}), or a horizontal or vertical whitespace character (\h, \v)',
-            'whatever the capturing group "1" matched',
-            "any character in [ ':', ' ' (space), ''' ]",
-            '\'note: "q"\'',
-        ] as $unchanged) {
-            $this->assertSame($unchanged, self::apply($rewrites, $unchanged));
-        }
-
-        $script = self::source(self::SCRIPT);
-        $this->assertStringContainsString('REFLOW_KEEP.indexOf(labeled[1]) === -1 ? reflow(labeled[2]) : labeled[2]', $script, 'A labelled line reads reflowed, unless it carries the visitor\'s own text.');
-        $this->assertStringContainsString('reflow(content)', $script, 'A line of plain prose too.');
+        $this->assertStringContainsString("text('span', 'pg-explain-text', keyword[2])", $voices, 'What follows a branch keyword.');
+        $this->assertStringContainsString("text('span', 'pg-explain-text', labeled[2])", $voices, 'What follows a labelled kind.');
+        $this->assertStringContainsString("text('span', 'pg-explain-text', content)", $voices, 'A line of plain prose.');
+        $this->assertStringNotContainsString('.replace(', $voices);
     }
 
     /**
-     * The library writes the sentence the reflow reads: on its own output
-     * the reflow changes nothing, so a page running a bundle built before
-     * the wording moved and one built after show the same line.
+     * The library writes the sentence the page shows: no colon between a
+     * word and a bracketed or escaped token, and a repetition as a clause
+     * at the end of the line, "A digit [0-9], exactly 4 times".
      */
     #[Test]
-    public function test_the_library_writes_what_the_reflow_shows(): void
+    public function test_the_library_writes_the_sentence_the_page_shows(): void
     {
-        $rewrites = self::reflow();
+        $library = Regex::create();
+
+        $this->assertStringContainsString('A digit [0-9], exactly 4 times', $library->explain('/\d{4}/'));
+        $this->assertStringContainsString('A word character [a-zA-Z_0-9], zero or more times (and do not backtrack)', $library->explain('/\w*+\h{2,5}/'));
+        $this->assertStringContainsString("any character in [ Range: from 'a' to 'c' ], zero or more times", $library->explain('/(?(1)\D{2}|[a-c]*)/'));
+        $this->assertStringContainsString('Quantified group, one or more times (as few as possible)', $library->explain('/(?:[[:alpha:]\s]c)+?/u'));
 
         foreach (['/\d{4}/', '/(?:[[:alpha:]\s]c)+?/u', '/\w*+\h{2,5}/', '/(?(1)\D{2}|[a-c]*)/'] as $pattern) {
-            foreach (explode("\n", Regex::create()->explain($pattern)) as $line) {
-                $this->assertSame($line, self::apply($rewrites, $line), $pattern);
+            foreach (explode("\n", $library->explain($pattern)) as $line) {
+                $this->assertDoesNotMatchRegularExpression('/[A-Za-z]: (?=[\[\\\\])/', $line, $pattern);
+                $this->assertDoesNotMatchRegularExpression('/ \((?:(?:zero or more|one or more) times|once or not at all|exactly \d+ times|at least \d+(?: but not more than \d+)? times)(?: \((?:as few as possible|and do not backtrack)\))?\)$/', $line, $pattern);
             }
         }
     }
 
     /**
      * A comment, a verb's name, a callout's argument: the visitor's own
-     * words, which the library quotes and the page must not rewrite. The
-     * kinds the library gives those lines are the kinds the script keeps.
+     * words, which the library quotes on a line of their kind and the page
+     * shows as written.
      */
     #[Test]
     public function test_the_explanation_keeps_the_visitor_text(): void
     {
-        $this->assertSame(1, preg_match('/var REFLOW_KEEP = \\[([^\\]]*)\\];/', self::source(self::SCRIPT), $declared));
-        preg_match_all("/'([^']+)'/", $declared[1], $kept);
         $library = Regex::create();
 
         foreach ([
-            "/a(?#see: [RFC 3339] or: 'x')b/" => 'Comment',
-            "/a #c: [x]\n/x" => 'Comment',
-            '/(*MARK:a: [b])x/' => 'PCRE Verb',
-            '/(*MARK:x (one or more times)a/' => 'PCRE Verb',
-            '/(?C"t: [x]")a/' => 'Callout',
-        ] as $pattern => $kind) {
+            "/a(?#see: [RFC 3339] or: 'x')b/" => ['Comment', "see: [RFC 3339] or: 'x'"],
+            "/a #c: [x]\n/x" => ['Comment', 'c: [x]'],
+            '/(*MARK:a: [b])x/' => ['PCRE Verb', 'a: [b]'],
+            '/(*MARK:x (one or more times)a/' => ['PCRE Verb', 'x (one or more times'],
+            '/(?C"t: [x]")a/' => ['Callout', 't: [x]'],
+        ] as $pattern => [$kind, $words]) {
             $explained = $library->parse($pattern)->accept(new TextExplainer($library->target()));
-            $this->assertSame(1, preg_match('/^\s*('.preg_quote($kind, '/').'): /m', $explained), $pattern.' is explained as a '.$kind.' line.');
-            $this->assertContains($kind, $kept[1], $kind.' lines carry the visitor\'s text: the script leaves them as written.');
+            $this->assertSame(1, preg_match('/^\s*('.preg_quote($kind, '/').'): (.+)$/m', $explained, $line), $pattern.' is explained as a '.$kind.' line.');
+            $this->assertStringContainsString($words, $line[2], $pattern.' keeps the visitor\'s words.');
         }
     }
 
@@ -941,35 +924,6 @@ final class PlaygroundLayoutTest extends TestCase
         $darker = min($luminance($one), $luminance($two));
 
         return ($lighter + 0.05) / ($darker + 0.05);
-    }
-
-    /**
-     * @return list<array{pattern: string, replacement: string, limit: int}>
-     */
-    private static function reflow(): array
-    {
-        $script = self::source(self::SCRIPT);
-        $block = self::between($script, 'var EXPLAIN_REFLOW = [', '];');
-        preg_match_all("~^\\s*\\[/(.+)/(g?), '([^']*)'\\],?$~m", $block, $rules, \PREG_SET_ORDER);
-        self::assertCount(2, $rules, 'Two rewrites, each a regex literal and its replacement.');
-
-        return array_map(static fn (array $rule): array => [
-            'pattern' => '/'.$rule[1].'/',
-            'replacement' => $rule[3],
-            'limit' => 'g' === $rule[2] ? -1 : 1,
-        ], $rules);
-    }
-
-    /**
-     * @param list<array{pattern: string, replacement: string, limit: int}> $rewrites
-     */
-    private static function apply(array $rewrites, string $text): string
-    {
-        foreach ($rewrites as $rewrite) {
-            $text = (string) preg_replace($rewrite['pattern'], $rewrite['replacement'], $text, $rewrite['limit']);
-        }
-
-        return $text;
     }
 
     private static function include(): \DOMXPath

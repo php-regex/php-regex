@@ -15,11 +15,12 @@ namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Match\MatchRun;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Optimizer\RewriteCheck;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Tests\Support\CpuClock;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -97,9 +98,10 @@ final class RewriteVerificationTest extends TestCase
     /**
      * Hundreds of short branches, as in a user-agent list: the match check
      * steps a thread per branch for every character class, so it gives up on
-     * its work budget, not after hundreds of configurations. It took seconds.
+     * its work budget, some 200,000 threads stepped, not after hundreds of
+     * configurations. Searched to the end, it steps over twelve million.
      * Each part the rewrite changed, a class for an alternation inside a
-     * group, is then proven alone, at once.
+     * group, is then proven alone.
      */
     #[Test]
     public function test_a_wide_alternation_is_judged_without_a_long_match_search(): void
@@ -112,41 +114,61 @@ final class RewriteVerificationTest extends TestCase
                 : $letters[$i % 26].$letters[intdiv($i, 26) % 26].$letters[($i * 7) % 26].$letters[($i * 3) % 26];
         }
         $original = '/'.implode('|', $branches).'/';
-        $optimizer = new Optimizer(RegexParser::create());
+        $parser = RegexParser::create();
+        $optimizer = new Optimizer($parser);
         $rewrite = $optimizer->optimize($original)->optimized;
         $this->assertNotSame($original, $rewrite, 'The pattern has something to rewrite.');
 
-        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
-        $start = CpuClock::nanoseconds();
-        $verdict = $verify->invoke($optimizer, $original, $rewrite);
-        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+        try {
+            (new RewriteCheck(new LanguageSolver($parser)))->matchCheck($original, $rewrite);
+            $this->fail('The match check searched to the end.');
+        } catch (ComplexityException $e) {
+            $this->assertSame('match exploration', $e->getDiagnostic()['phase'] ?? null);
+            // No 'consumed' where the configurations ran out instead.
+            $this->assertLessThan(201_000, $e->getDiagnostic()['consumed'] ?? \PHP_INT_MAX, 'The threads the match check stepped.');
+        }
 
-        $this->assertTrue($verdict);
-        $this->assertLessThan(2.0, $seconds, \sprintf('The check took %.2f s.', $seconds));
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+
+        $this->assertTrue($verify->invoke($optimizer, $original, $rewrite));
     }
 
     /**
      * An anchored alternation of some thirty SQL statements: the rewrite
      * spells "(?:S)?" as "S?" and drops a repeated branch, and the match
-     * check settles it after some six hundred configurations, within its
-     * cap and its work, in a fraction of a second.
+     * check settles it itself after some six hundred configurations, more
+     * than five hundred, within its cap of 1,000 and the 200,000 threads it
+     * may step.
      */
     #[Test]
     public function test_a_wide_anchored_alternation_is_proven_within_the_configurations_the_check_explores(): void
     {
         /** @var string $original */
         $original = require \dirname(__DIR__, 2).'/Fixtures/Automata/sql_table_pattern.php';
-        $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
+        $parser = RegexParser::create(['cache' => null]);
+        $optimizer = new Optimizer($parser);
         $rewrite = $optimizer->optimize($original)->optimized;
         $this->assertNotSame($original, $rewrite, 'The pattern has something to rewrite.');
 
-        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
-        $start = CpuClock::nanoseconds();
-        $verdict = $verify->invoke($optimizer, $original, $rewrite);
-        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+        $solver = new LanguageSolver($parser);
+        $runs = $solver->runsOfEveryCall($original, $rewrite);
+        $this->assertSame([MatchRun::Search, MatchRun::SearchPastSubjectStart], $runs);
+        foreach ($runs as $run) {
+            $this->assertTrue($solver->matchEquivalentIn($run, $original, $rewrite, new SolverOptions(maxDfaStates: 1_000, maxTransitionsProcessed: 200_000))->isEquivalent);
+        }
 
-        $this->assertTrue($verdict);
-        $this->assertLessThan(2.0, $seconds, \sprintf('The check took %.2f s.', $seconds));
+        try {
+            $solver->matchEquivalent($original, $rewrite, new SolverOptions(maxDfaStates: 500, maxTransitionsProcessed: 200_000));
+            $this->fail('Five hundred configurations settled it.');
+        } catch (ComplexityException $e) {
+            $this->assertSame('The match solver explored more than 500 configurations for these patterns.', $e->getMessage());
+        }
+
+        $this->assertTrue((new RewriteCheck($solver))->matchCheck($original, $rewrite), 'The match check settles it: no part is proven alone.');
+
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+
+        $this->assertTrue($verify->invoke($optimizer, $original, $rewrite));
     }
 
     /**

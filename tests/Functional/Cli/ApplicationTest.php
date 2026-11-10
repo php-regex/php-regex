@@ -314,6 +314,33 @@ final class ApplicationTest extends TestCase
     }
 
     /**
+     * PHP stops the shutdown of a run it stopped at its time limit once
+     * that limit has run out again: the report lifts the limit before it
+     * reads anything. Asked during a run PHP did not stop, it prints
+     * nothing.
+     */
+    #[Test]
+    public function test_fatal_report_lifts_the_time_limit_before_it_reads_the_error(): void
+    {
+        $limit = (int) \ini_get('max_execution_time');
+        $command = new ReportingJsonCommand();
+        $app = new Application(new GlobalOptionsParser(), OutputFactory::create(), new DummyCommand('help'));
+        $app->register($command);
+
+        $buffer = '';
+
+        try {
+            $exitCode = $this->runApp($app, ['regex', 'report', '--json'], $buffer);
+        } finally {
+            set_time_limit($limit);
+        }
+
+        $this->assertSame(0, $exitCode);
+        $this->assertSame(['code' => null, 'limit' => '0'], $command->reported);
+        $this->assertSame(['ok' => true], json_decode($buffer, true, flags: \JSON_THROW_ON_ERROR));
+    }
+
+    /**
      * Once the document is printed, a second one would break stdout: the
      * failure goes on to PHP, and stdout keeps the one document.
      */
@@ -553,5 +580,41 @@ final class FailingJsonCommand implements JsonCommandInterface
         }
 
         throw $this->failure;
+    }
+}
+
+/**
+ * A JSON command that asks for the fatal error report in the middle of its
+ * run, under a time limit, and keeps what it got.
+ */
+final class ReportingJsonCommand implements JsonCommandInterface
+{
+    /**
+     * @var array{code: int|null, limit: string|false}|null
+     */
+    public ?array $reported = null;
+
+    public function getName(): string
+    {
+        return 'report';
+    }
+
+    public function getAliases(): array
+    {
+        return [];
+    }
+
+    public function getDescription(): string
+    {
+        return 'report';
+    }
+
+    public function run(Input $input, Output $output): int
+    {
+        set_time_limit(30);
+        $this->reported = ['code' => Application::reportFatalError(), 'limit' => \ini_get('max_execution_time')];
+        $output->writeDocument(JsonDocument::encode(['ok' => true]));
+
+        return self::SUCCESS;
     }
 }

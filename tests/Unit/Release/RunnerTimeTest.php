@@ -50,6 +50,23 @@ final class RunnerTimeTest extends TestCase
     }
 
     /**
+     * Left to itself, setup-php loads Xdebug on the Ubuntu runners: every
+     * step that installs PHP says which driver it loads, in a workflow as in
+     * an action, so that none loads one for having said nothing.
+     */
+    #[Test]
+    public function test_every_step_that_installs_php_names_its_coverage_driver(): void
+    {
+        $installs = self::installs();
+
+        $this->assertGreaterThan(5, \count($installs));
+        foreach ($installs as [$name, $settings]) {
+            $this->assertSame(1, preg_match('~^ +php-version: (.+)$~m', $settings, $php), $name);
+            $this->assertMatchesRegularExpression('~^ +coverage: \S.*$~m', $settings, $name.': the step that installs PHP '.$php[1].' names its coverage driver.');
+        }
+    }
+
+    /**
      * A release asset GitHub answers with a 504 for is asked for again: one
      * failed download otherwise fails its job, and the job its run.
      */
@@ -64,12 +81,61 @@ final class RunnerTimeTest extends TestCase
             }
         }
 
-        $this->assertSame(['engines.yml', 'packages.yml', 'split.yml', 'workflows.yml'], array_keys($downloads));
+        $this->assertSame(['engines.yml', 'packages.yml', 'phar.yml', 'split.yml', 'workflows.yml'], array_keys($downloads));
         foreach ($downloads as $name => $lines) {
             foreach ($lines as $line) {
                 $this->assertStringContainsString('curl -fsSL --retry 5 -o ', $line, $name);
             }
         }
+    }
+
+    /**
+     * setup-php downloads the tools it is asked for itself, once: a tool a
+     * build needs from GitHub's releases is downloaded by a step of the
+     * workflow, which asks again, pins the release and checks what it got.
+     */
+    #[Test]
+    public function test_setup_php_downloads_no_tool_from_a_release(): void
+    {
+        $tools = [];
+        foreach (self::installs() as [$name, $settings]) {
+            if (1 === preg_match('~^ +tools: (.+)$~m', $settings, $asked)) {
+                $tools[] = $name.': '.$asked[1];
+            }
+        }
+
+        // Composer is the runner's own, which setup-php keeps.
+        $this->assertSame(['packages.yml: composer', 'phar.yml: composer'], $tools);
+    }
+
+    /**
+     * @return list<array{string, string}> the file and the settings of each step that installs PHP with setup-php
+     */
+    private static function installs(): array
+    {
+        $installs = [];
+        foreach ([...self::workflows(), ...self::actions()] as $name => $source) {
+            preg_match_all('~uses: shivammathur/setup-php@.*\n((?: +[^\s-].*\n)*)~', $source, $steps);
+            foreach ($steps[1] as $settings) {
+                $installs[] = [$name, $settings];
+            }
+        }
+
+        return $installs;
+    }
+
+    /**
+     * @return array<string, string> the source of the action at the root and of each local action, by its path
+     */
+    private static function actions(): array
+    {
+        $actions = ['action.yml' => (string) file_get_contents(self::root().'/action.yml')];
+        foreach (glob(self::root().'/.github/actions/*/action.yml') ?: [] as $path) {
+            $actions['actions/'.basename(\dirname($path)).'/action.yml'] = (string) file_get_contents($path);
+        }
+        ksort($actions);
+
+        return $actions;
     }
 
     /**

@@ -13,9 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Linter\Rule\Support\BranchOverlaps;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -51,6 +53,19 @@ final class OverlappingAlternationRule extends AbstractLintRule
     public const ID_OVERLAP = 'regex.lint.alternation.overlap';
 
     public const ID_CHARSET = 'regex.lint.overlap.charset';
+
+    private int $comparisons = 0;
+
+    /**
+     * The comparisons of two branches made since the rule was created:
+     * what the cost of a wide alternation is measured by.
+     *
+     * @internal
+     */
+    public function comparisons(): int
+    {
+        return $this->comparisons;
+    }
 
     public function getRuleIds(): array
     {
@@ -91,13 +106,20 @@ final class OverlappingAlternationRule extends AbstractLintRule
             );
         }
 
-        // Each literal branch, and whether it reads its letters in either
-        // case: under i, or through a group turning i on.
+        // Overlapping branches are only flagged inside an unbounded quantifier.
+        // Without one (e.g., /\r\n|\r|\n/ or /^(978|979)/) they do not pose a
+        // ReDoS risk because there's no exponential backtracking.
+        if (!$context->isInsideUnboundedQuantifier()) {
+            return $issues;
+        }
+
+        // Each literal branch, once, and whether it reads its letters in
+        // either case: under i, or through a group turning i on.
         $literals = [];
         $flags = $context->flagsAtEachChild($node);
         foreach ($node->alternatives as $index => $alt) {
             $literal = $this->extractLiteralSequence($alt);
-            if (null === $literal) {
+            if (null === $literal || '' === $literal) {
                 continue;
             }
 
@@ -105,39 +127,21 @@ final class OverlappingAlternationRule extends AbstractLintRule
             $literals[$literal.'|'.($caseless ? 'i' : '')] = [$literal, $caseless];
         }
 
-        // Check for literal-based overlaps
-        if ([] !== $literals) {
-            // Only flag overlapping literal branches when they're inside an unbounded quantifier.
-            // Overlapping alternations without a quantifier (e.g., /\r\n|\r|\n/ or /^(978|979)/)
-            // do not pose a ReDoS risk because there's no exponential backtracking.
-            if ($context->isInsideUnboundedQuantifier()) {
-                $unique = array_values($literals);
-                $total = \count($unique);
-                for ($i = 0; $i < $total; $i++) {
-                    for ($j = $i + 1; $j < $total; $j++) {
-                        [$a, $aCaseless] = $unique[$i];
-                        [$b, $bCaseless] = $unique[$j];
-                        if ('' === $a || '' === $b) {
-                            continue;
-                        }
+        // Literal branches are compared by their text alone: one set of
+        // first characters for all of them.
+        $texts = array_column($literals, 0);
+        $pair = $this->firstOverlap($texts, array_column($literals, 1), array_fill(0, \count($texts), CharSet::single(0)), $context);
+        if (null !== $pair) {
+            $issues[] = new RuleViolation(
+                self::ID_OVERLAP,
+                \sprintf('Alternation branches "%s" and "%s" overlap.', self::spell($texts[$pair[0]], $context), self::spell($texts[$pair[1]], $context)),
+                $node->startPosition,
+                'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
+                end: $node->getEndPosition(),
+            );
 
-                        // A caseless branch meets the other in either case.
-                        [$readA, $readB] = $aCaseless || $bCaseless ? [self::fold($a, $context), self::fold($b, $context)] : [$a, $b];
-                        if (str_starts_with($readA, $readB) || str_starts_with($readB, $readA)) {
-                            $issues[] = new RuleViolation(
-                                self::ID_OVERLAP,
-                                \sprintf('Alternation branches "%s" and "%s" overlap.', self::spell($a, $context), self::spell($b, $context)),
-                                $node->startPosition,
-                                'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
-                                end: $node->getEndPosition(),
-                            );
-
-                            // A literal overlap suppresses the semantic charset check.
-                            return $issues;
-                        }
-                    }
-                }
-            }
+            // A literal overlap suppresses the semantic charset check.
+            return $issues;
         }
 
         // Check for semantic overlaps using character set analysis
@@ -151,13 +155,6 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
     private function checkSemanticOverlaps(AlternationNode $node, LintContext $context): ?RuleViolation
     {
-        // Only flag overlapping alternations when they're inside an unbounded quantifier.
-        // Overlapping alternations without a quantifier (e.g., /\r\n|\r|\n/ or /^(978|979)/)
-        // do not pose a ReDoS risk because there's no exponential backtracking.
-        if (!$context->isInsideUnboundedQuantifier()) {
-            return null;
-        }
-
         // Each alternative reads the flags in effect there, with the ones an
         // earlier alternative carries into it.
         $charSets = [];
@@ -177,47 +174,52 @@ final class OverlappingAlternationRule extends AbstractLintRule
             $charSets[] = $caseless ? self::foldCharSet($charSet) : $charSet;
         }
 
-        if (!$anyUnknown) {
-            $total = \count($charSets);
-            for ($i = 0; $i < $total; $i++) {
-                for ($j = $i + 1; $j < $total; $j++) {
-                    if (!$charSets[$i]->isEmpty() && !$charSets[$j]->isEmpty() && $charSets[$i]->intersects($charSets[$j])) {
-                        if ($this->tellsApart($node, $i, $j, $caselessAt, $context)) {
-                            continue;
-                        }
-
-                        return $this->makeCharsetViolation($node, $i, $j, $context);
-                    }
-                }
-            }
-
+        // At least one charset is unknown (e.g. above-ASCII byte ranges that
+        // ByteCharSet cannot model): the sets are asked of PCRE.
+        $sets = $anyUnknown ? $this->setsFromPcre($node, $context) : array_map(self::alphabetSet(...), $charSets);
+        if (null === $sets) {
             return null;
         }
 
-        // At least one charset is unknown (e.g. above-ASCII byte ranges that
-        // ByteCharSet cannot model). Fall back to PCRE-queried sets.
-        return $this->checkWithClassSetProvider($node, $caselessAt, $context);
+        // Two branches whose sets meet are still told apart by the texts
+        // they start with: when neither text is a prefix of the other,
+        // "associative-array" and "array", an input one branch takes the
+        // other never does. A branch that starts with no literal tells
+        // nothing.
+        $pair = $this->firstOverlap(array_map($this->leadingText(...), $node->alternatives), $caselessAt, $sets, $context);
+
+        return null === $pair ? null : $this->makeCharsetViolation($node, $pair[0], $pair[1], $context);
     }
 
     /**
-     * Whether the texts two branches start with tell them apart: when
-     * neither text is a prefix of the other, "associative-array" and
-     * "array", an input one branch takes the other never does, whatever
-     * character they share at their start. A branch that starts with no
-     * literal tells nothing.
+     * The first two branches that overlap, in the order of the
+     * alternation: their first characters meet and the text of one starts
+     * the text of the other, both read in one case when either branch is
+     * caseless.
      *
-     * @param list<bool> $caselessAt whether each branch matches caselessly
+     * @param list<string>  $texts    the text each branch starts with
+     * @param list<bool>    $caseless whether each branch matches caselessly
+     * @param list<CharSet> $sets     the characters each branch can start with
+     *
+     * @return ?array{int, int}
      */
-    private function tellsApart(AlternationNode $node, int $i, int $j, array $caselessAt, LintContext $context): bool
+    private function firstOverlap(array $texts, array $caseless, array $sets, LintContext $context): ?array
     {
-        $first = $this->leadingText($node->alternatives[$i]);
-        $second = $this->leadingText($node->alternatives[$j]);
-        if ($caselessAt[$i] || $caselessAt[$j]) {
-            $first = self::fold($first, $context);
-            $second = self::fold($second, $context);
-        }
+        $overlaps = new BranchOverlaps($texts, array_map(static fn (string $text): string => self::fold($text, $context), $texts), $caseless, $sets);
+        $pair = $overlaps->first();
+        $this->comparisons += $overlaps->compared();
 
-        return !str_starts_with($first, $second) && !str_starts_with($second, $first);
+        return $pair;
+    }
+
+    /**
+     * The byte set as a set of the alphabet. One that is not known, a set
+     * with a byte above ASCII read caselessly, meets every set that holds
+     * a character.
+     */
+    private static function alphabetSet(ByteCharSet $set): CharSet
+    {
+        return $set->isUnknown() ? CharSet::universe(false) : CharSet::fromRanges($set->ranges());
     }
 
     /**
@@ -288,15 +290,15 @@ final class OverlappingAlternationRule extends AbstractLintRule
     }
 
     /**
-     * The overlap read from the characters PCRE gives the first atom of
-     * each branch, for sets the byte sets cannot hold (above ASCII), as the
-     * target reads them: its properties, and without u the tables of its
-     * locale. A branch whose first character is not one atom, or that may
-     * start with what follows it, is not judged.
+     * The characters PCRE gives the first atom of each branch, for sets
+     * the byte sets cannot hold (above ASCII), as the target reads them:
+     * its properties, and without u the tables of its locale. None when a
+     * branch is not judged: its first character is not one atom, or it may
+     * start with what follows it.
      *
-     * @param list<bool> $caselessAt whether each branch matches caselessly
+     * @return ?list<CharSet>
      */
-    private function checkWithClassSetProvider(AlternationNode $node, array $caselessAt, LintContext $context): ?RuleViolation
+    private function setsFromPcre(AlternationNode $node, LintContext $context): ?array
     {
         $startVerbs = StartOptions::of($context->pattern->source);
         $unicodeFlag = str_contains($context->pattern->flags, 'u');
@@ -319,16 +321,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
             $sets[] = $set;
         }
 
-        $total = \count($sets);
-        for ($i = 0; $i < $total; $i++) {
-            for ($j = $i + 1; $j < $total; $j++) {
-                if (!$sets[$i]->intersect($sets[$j])->isEmpty() && !$this->tellsApart($node, $i, $j, $caselessAt, $context)) {
-                    return $this->makeCharsetViolation($node, $i, $j, $context);
-                }
-            }
-        }
-
-        return null;
+        return $sets;
     }
 
     /**

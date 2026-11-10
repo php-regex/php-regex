@@ -31,7 +31,7 @@ final class PatternLayoutTest extends TestCase
     #[DataProvider('provideLaidOutLines')]
     public function test_finish_lines_aligns_trailing_comments_and_spells_a_final_escaped_space(string $text, bool $countsCodePoints, string $expected): void
     {
-        $this->assertSame($expected, PatternLayout::finishLines($text, PatternLayout::TRAIL, $countsCodePoints));
+        $this->assertSame($expected, PatternLayout::finishLines($text, PatternLayout::TRAIL, PatternLayout::COMMENT_END, $countsCodePoints));
     }
 
     /**
@@ -40,6 +40,7 @@ final class PatternLayoutTest extends TestCase
     public static function provideLaidOutLines(): iterable
     {
         $trail = PatternLayout::TRAIL;
+        $end = PatternLayout::COMMENT_END;
 
         yield 'comments of consecutive lines on one column' => ['text' => "a{$trail}# x\nbbb{$trail}# y\nc", 'countsCodePoints' => false, 'expected' => "a    # x\nbbb  # y\nc"];
         yield 'a line between two comments parts their columns' => ['text' => "a{$trail}# x\nbbb\ncc{$trail}# y", 'countsCodePoints' => false, 'expected' => "a  # x\nbbb\ncc  # y"];
@@ -50,6 +51,17 @@ final class PatternLayoutTest extends TestCase
         yield 'a line ending in an escaped space' => ['text' => "a\\ \nb", 'countsCodePoints' => false, 'expected' => "a\\x20\nb"];
         yield 'an escaped backslash, then a space' => ['text' => 'a\\\\ ', 'countsCodePoints' => false, 'expected' => 'a\\\\ '];
         yield 'a control backslash, then an escaped space' => ['text' => 'a\\c\\\\ ', 'countsCodePoints' => false, 'expected' => 'a\\c\\\\x20'];
+        // A comment is no code: the escaped space closing it stays, and the
+        // mark of its end goes.
+        yield 'a comment ending in an escaped space' => ['text' => "a\n# c\\ {$end}\nb", 'countsCodePoints' => false, 'expected' => "a\n# c\\ \nb"];
+        yield 'a comment ending in an escaped space, last' => ['text' => "a\n# c\\ {$end}", 'countsCodePoints' => false, 'expected' => "a\n# c\\ "];
+        yield 'a trailing comment ending in an escaped space' => ['text' => "a{$trail}# c\\ {$end}\nb\\ ", 'countsCodePoints' => false, 'expected' => "a  # c\\ \nb\\x20"];
+        // A carriage return ended the comment: what follows is code again.
+        yield 'an escaped space ending the line after a comment' => ['text' => "# c\\ \r{$end}b\\ \nd", 'countsCodePoints' => false, 'expected' => "# c\\ \rb\\x20\nd"];
+        yield 'a comment, code, then a comment ending in an escaped space' => ['text' => "# c\r{$end}b# d\\ {$end}\ne", 'countsCodePoints' => false, 'expected' => "# c\rb# d\\ \ne"];
+        // The mark takes no column: both comments stand two spaces after
+        // four characters.
+        yield 'the end of a comment before a trailing comment' => ['text' => "#x\r{$end}a{$trail}# c{$end}\nbbbb{$trail}# d{$end}", 'countsCodePoints' => false, 'expected' => "#x\ra  # c\nbbbb  # d"];
     }
 
     #[Test]
@@ -60,7 +72,7 @@ final class PatternLayoutTest extends TestCase
         $text = $long.$trail."# long\n".str_repeat("b{$trail}# short\n", 2_000);
 
         $expected = $long."  # long\n".str_repeat("b  # short\n", 2_000);
-        $result = PatternLayout::finishLines($text, $trail, false);
+        $result = PatternLayout::finishLines($text, $trail, PatternLayout::COMMENT_END, false);
         $this->assertSame(\strlen($expected), \strlen($result));
         $this->assertSame($expected, $result);
     }
@@ -75,11 +87,11 @@ final class PatternLayoutTest extends TestCase
 
         $this->assertSame(
             'a'.str_repeat(' ', 121)."# a\n{$atLimit}  # b\n{$overLimit}  # c",
-            PatternLayout::finishLines($text, $trail, true),
+            PatternLayout::finishLines($text, $trail, PatternLayout::COMMENT_END, true),
         );
         $this->assertSame(
             "a  # a\n{$atLimit}  # b\n{$overLimit}  # c",
-            PatternLayout::finishLines($text, $trail, false),
+            PatternLayout::finishLines($text, $trail, PatternLayout::COMMENT_END, false),
         );
     }
 

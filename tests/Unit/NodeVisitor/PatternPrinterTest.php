@@ -284,6 +284,9 @@ final class PatternPrinterTest extends TestCase
         yield 'a comment breaks a short x pattern' => ['pattern' => "/^(?P<n>a)\\k{n} # the first\n|(?P<m>b)(?P=m)\\x41\\101\$/x", 'expected' => implode("\n", ['/', '    ^(?P<n>a)\k{n}  # the first', '  | (?P<m>b)\k<m>\x41\101$', '/x'])];
         yield 'a short x pattern stays on one line' => ['pattern' => '/^(?:a|b)c$/x', 'expected' => '/^(?:a|b)c$/x'];
         yield 'a laid-out x pattern that fits joins one line' => ['pattern' => '/^ (?: a | b ) c $/x', 'expected' => '/^(?:a|b)c$/x'];
+        // An escaped space closing a comment is the comment's; the one that
+        // ends the line of "b" is the pattern's.
+        yield 'a comment closed by an escaped space keeps it' => ['pattern' => "/a # c\\ \n# d\\ \nb\\ \n(?:e)/x", 'expected' => implode("\n", ['/', '    a  # c\ ', '    # d\ ', '    b\x20', '    (?:e)', '/x'])];
         // Where the formatter would refuse, pretty printing writes one line.
         yield 'a long x pattern turning x off at the top level stays on one line' => ['pattern' => '/(?-x)a(?:b'.str_repeat('b', 70).')/x', 'expected' => '/(?-x)a(?:b'.str_repeat('b', 70).')/x'];
     }
@@ -635,6 +638,24 @@ final class PatternPrinterTest extends TestCase
 
         $this->assertSame('/(?-x)(((a)))/x', Regex::create()->parse('/(?-x)(((a)))/x')->accept($printer));
         $this->assertNull($printer->refusal());
+    }
+
+    /**
+     * The body of a pattern printed alone is laid out by nothing: a "#"
+     * comment comes out whole, with the line break that ends it, before the
+     * printer laid a whole pattern out and after.
+     */
+    #[Test]
+    public function test_pretty_mode_writes_a_hash_comment_of_a_body_printed_alone_with_its_line_break(): void
+    {
+        $pattern = "/a # c\\ \nb/x";
+        $this->assertSame(1, preg_match($pattern, 'ab'));
+        $tree = Regex::create(['cache' => null])->parse($pattern);
+        $printer = PatternPrinter::pretty();
+
+        $this->assertSame("a# c\\ \nb", $tree->pattern->accept($printer));
+        $this->assertSame("/\n    a  # c\\ \n    b\n/x", $tree->accept($printer));
+        $this->assertSame("a# c\\ \nb", $tree->pattern->accept($printer));
     }
 
     #[Test]

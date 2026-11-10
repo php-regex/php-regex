@@ -89,6 +89,12 @@ final class PsalmRun
         foreach ($files as $file) {
             $code = (string) file_get_contents(self::FIXTURES.'/'.$file);
             preg_match_all('~/\*\*(?:(?!\*/).)*?@psalm-check-type-exact\s+(\$\w+)\s*=\s*([^\n]+?)\s*\n(?:(?!\*/).)*\*/~s', $code, $blocks, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE);
+            // Psalm reads a check from a docblock alone: one written in a
+            // plain comment is never run, and would pass for ever.
+            $written = substr_count($code, '@psalm-check-type-exact');
+            if ($written !== \count($blocks)) {
+                throw new \LogicException(\sprintf('%s: %d of its %d "@psalm-check-type-exact" stand outside a docblock holding one check, and would not run.', $file, $written - \count($blocks), $written));
+            }
             foreach ($blocks as $block) {
                 [$text, $offset] = $block[0];
                 $variable = $block[1][0];
