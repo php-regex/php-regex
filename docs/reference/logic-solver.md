@@ -393,7 +393,8 @@ among many. Anchors at the edges, `\A` leading every alternative of a search or 
 closing it, still cost nothing.
 
 A lookaround inside a lookaround, an anchor or word boundary inside one, and the non-atomic
-`(*napla:...)` are refused. The product can grow large; the usual NFA and DFA budgets bound it.
+`(*napla:...)` are refused. The product can grow large; the usual NFA and DFA budgets bound it,
+and the [work budget](#safety-limits--work-budget) counts its moves.
 
 ## What the Solver Refuses
 
@@ -587,19 +588,20 @@ try {
     $solver->subsetOf('/[a-z]+/', '/[a-z0-9]+/', $options);
 } catch (ComplexityException $exception) {
     $diagnostic = $exception->getDiagnostic();
-    // ['phase' => 'determinize'|'minimize'|'comparison'|'lookaround bodies'|'match exploration', 'states' => ..., 'transitions' => ..., 'alphabet' => ..., 'consumed' => ..., 'limit' => ...]
+    // ['phase' => 'determinize'|'minimize'|'comparison'|'lookaround bodies'|'lookaround product'|'match exploration', 'states' => ..., 'transitions' => ..., 'alphabet' => ..., 'consumed' => ..., 'limit' => ...]
 }
 ```
 
 When the budget is exceeded, a `ComplexityException` is thrown with a diagnostic payload:
 
-- `phase`: `determinize`, `minimize`, `comparison`, `lookaround bodies` or
-  `match exploration`
+- `phase`: `determinize`, `minimize`, `comparison`, `lookaround bodies`,
+  `lookaround product` or `match exploration`
 - `states`: number of DFA states seen so far; in `comparison`, the pairs of
-  states visited; in `match exploration`, the states of the two match automata
-  together
+  states visited; in `lookaround product`, the states of the product built so
+  far; in `match exploration`, the states of the two match automata together
 - `transitions`: NFA/DFA transition count at the time of failure
-- `alphabet`: effective alphabet size
+- `alphabet`: effective alphabet size; in `lookaround product`, the classes
+  the alphabet is split into, 0 until it is
 - `consumed`: work units consumed
 - `limit`: configured budget
 
@@ -619,6 +621,19 @@ against `maxNfaStates` and `maxDfaStates` together. A budget that answers
 `/(?=a{10})(?=b{10})/`, and the diagnostic then names the `lookaround bodies`
 phase. A lookaround repeated by a quantifier, `(?:(?=a{99})){100}`, is one
 body compiled once, not a hundred.
+
+The product of the pattern's automaton with those bodies then has a budget of
+`maxTransitionsProcessed` of its own, and its diagnostic names the
+`lookaround product` phase. It first splits the alphabet into classes, the
+characters that belong to the same sets of the pattern and of the bodies: one
+unit for each stretch of the alphabet a set covers, and one for each stretch
+kept. Then every move is one unit: a step that reads nothing, or a transition
+read on one class, whether it leads to a state or breaks a promise. A Unicode
+class cuts the alphabet into hundreds of stretches but only two classes, so
+the product reads each state on a few classes: twelve lookaheads of Unicode
+classes, `/^(?=.*\p{Lu})(?=.*\p{Ll})(?=.*\p{N})...{12,}$/u`, reach
+`maxNfaStates` after some 34,000 units of the product, fewer than the 82,000
+their twelve bodies count.
 
 Use this to surface safe failure messages in CI or tooling.
 
