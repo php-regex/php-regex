@@ -25,8 +25,10 @@ use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\Parser\Analysis\ComplexityScorer;
 use PHPRegex\Parser\Analysis\MetricsCollector;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
@@ -98,7 +100,9 @@ final class ExtendedCharClassDisplayTest extends TestCase
      * When the engine gives up splitting what lies between the operands (a
      * caller's backtrack limit of 1, the raise refused, no JIT), the text
      * there is kept, escaped, with nothing wrapped; the operands and the
-     * class's own brackets are still highlighted.
+     * class's own brackets are still highlighted. Where the display itself
+     * cannot run under that limit, the highlight fails as the library's
+     * own patterns do, with the limit named.
      *
      * @param NodeVisitorInterface<string> $highlighter
      */
@@ -112,13 +116,35 @@ final class ExtendedCharClassDisplayTest extends TestCase
         $this->requiresCompile($pattern);
 
         $tree = Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse($pattern);
+        // The characters the shown form spells out are read from the engine
+        // once per process: before the limit falls, as any earlier display
+        // in the process would have read them.
+        $this->assertNotSame([], DisplayEscaper::hiddenCharacters());
         $saved = ['pcre.jit' => ini_get('pcre.jit'), 'pcre.backtrack_limit' => ini_get('pcre.backtrack_limit')];
         LibraryPcre::useIniSetter(static fn (): bool => false);
+        $displays = true;
+        $highlighted = null;
+        $failure = null;
 
         try {
             ini_set('pcre.jit', '0');
             ini_set('pcre.backtrack_limit', '1');
-            $highlighted = $tree->accept($highlighter);
+
+            // PHP keeps a pattern compiled with the JIT, and the JIT counts
+            // a limit of 1 otherwise: the display's own patterns still run
+            // where it compiled them. Where it did not (no JIT in this
+            // process, or none left), no pattern runs at all under 1.
+            try {
+                DisplayEscaper::escapeToken('a');
+            } catch (InternalFailureException) {
+                $displays = false;
+            }
+
+            try {
+                $highlighted = $tree->accept($highlighter);
+            } catch (InternalFailureException $e) {
+                $failure = $e;
+            }
         } finally {
             foreach ($saved as $key => $value) {
                 if (false !== $value) {
@@ -126,6 +152,16 @@ final class ExtendedCharClassDisplayTest extends TestCase
                 }
             }
             LibraryPcre::useIniSetter(null);
+        }
+
+        if (null !== $failure) {
+            // Only where nothing can be shown: the library says it gave up,
+            // and why, rather than show a text it could not read. The HTML
+            // highlight escapes without the engine and never gets here.
+            $this->assertFalse($displays, 'The highlight gave up where the display of a token still runs.');
+            $this->assertStringContainsString('the backtrack limit (pcre.backtrack_limit) was exhausted', $failure->getMessage());
+
+            return;
         }
 
         $this->assertSame($expected, $highlighted);

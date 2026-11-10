@@ -44,6 +44,28 @@ final class TranspileCommandOutputTest extends LaravelTestCase
     }
 
     #[Test]
+    public function test_console_warns_of_a_set_that_takes_a_byte_without_u(): void
+    {
+        // Oracle: without u "\S" takes one byte of "é", and the whole character under u.
+        $this->assertSame(0, preg_match('/^\S$/', 'é'));
+        $this->assertSame(1, preg_match('/^\S$/u', 'é'));
+
+        $status = Artisan::call('regex:transpile', ['pattern' => '/^\S$/', '--target' => 'javascript']);
+        $output = Newlines::lf(Artisan::output());
+
+        $this->assertSame(0, $status);
+        $this->assertStringContainsString("Warnings:\n  ⚠ Without the u flag \"\\S\" at offset 1 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.\n", $output);
+        $this->assertStringContainsString(' PARTIAL  Pattern transpiled with limitations.', $output);
+
+        $status = Artisan::call('regex:transpile', ['pattern' => '/^\S$/u', '--target' => 'javascript']);
+        $output = Newlines::lf(Artisan::output());
+
+        $this->assertSame(0, $status);
+        $this->assertStringContainsString(' COMPATIBLE  Pattern transpiled successfully.', $output);
+        $this->assertStringNotContainsString('Warnings:', $output);
+    }
+
+    #[Test]
     public function test_console_calls_a_translation_without_warnings_compatible(): void
     {
         $status = Artisan::call('regex:transpile', ['pattern' => '/a+b/', '--target' => 'javascript']);

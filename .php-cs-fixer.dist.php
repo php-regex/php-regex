@@ -115,8 +115,10 @@ return (new PhpCsFixer\Config())
         'ternary_to_null_coalescing' => true,
         'trailing_comma_in_multiline' => ['elements' => ['arguments']],
         'unary_operator_spaces' => true,
+         // Psalm reads a type check and a trace from a docblock alone:
+         // turned into a comment, the check of a fixture is never run.
          'phpdoc_to_comment' => [
-             'ignored_tags' => ['var'],
+             'ignored_tags' => ['var', 'psalm-check-type-exact', 'psalm-trace'],
          ],
         'array_indentation' => true,
         'blank_line_after_namespace' => true,

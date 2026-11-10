@@ -289,6 +289,10 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitCharType(CharTypeNode $node): string
     {
+        if (!$this->inCharClass) {
+            $this->warnOfASetPastAscii($node);
+        }
+
         if ('h' === $node->value || 'v' === $node->value) {
             $this->context->addNote('Converted \\'.$node->value.' ('.('h' === $node->value ? 'horizontal' : 'vertical').' whitespace) to character class.');
             $set = 'h' === $node->value ? self::HORIZONTAL_SPACES : self::VERTICAL_SPACES;
@@ -324,6 +328,8 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitDot(DotNode $node): string
     {
+        $this->warnOfASetPastAscii($node);
+
         // The dot leaves out "\n" alone; JavaScript's also "\r", U+2028 and U+2029.
         if (!$this->dotAll) {
             return '[^\n]';
@@ -388,6 +394,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     {
         $wasInCharClass = $this->inCharClass;
         $this->inCharClass = true;
+        $this->warnOfASetPastAscii($node);
 
         try {
             $negation = $node->isNegated ? '^' : '';
@@ -444,6 +451,9 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitUnicodeProp(UnicodePropNode $node): string
     {
+        // A class that holds a property has had the warning already.
+        $this->warnOfASetPastAscii($node);
+
         $prop = $node->hasBraces ? trim($node->prop, '{}') : $node->prop;
         $isNegated = str_starts_with($prop, '^');
         $prop = ltrim($prop, '^');

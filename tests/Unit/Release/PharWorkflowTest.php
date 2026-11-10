@@ -70,6 +70,29 @@ final class PharWorkflowTest extends TestCase
         esac
         BASH;
 
+    /**
+     * A curl that writes its arguments to curl.log and FAKE_DOWNLOAD to the
+     * file it is asked to write.
+     */
+    private const FAKE_CURL = <<<'BASH'
+        #!/usr/bin/env bash
+        echo "$*" >> "$LOGS/curl.log"
+        while [ $# -gt 1 ]; do
+            [ "$1" != -o ] || printf '%s' "$FAKE_DOWNLOAD" > "$2"
+            shift
+        done
+        BASH;
+
+    /**
+     * A sha256sum that checks the one "checksum, two spaces, file" line it
+     * reads, as the runners' does: macOS ships none.
+     */
+    private const FAKE_SHA256SUM = <<<'BASH'
+        #!/usr/bin/env bash
+        IFS= read -r line
+        [ "$("$REAL_PHP" -r 'echo hash_file("sha256", $argv[1]);' "${line#*  }")" = "${line%%  *}" ]
+        BASH;
+
     private string $scratch = '';
 
     protected function tearDown(): void
@@ -301,6 +324,60 @@ final class PharWorkflowTest extends TestCase
     }
 
     /**
+     * Box comes from its release, pinned: the step asks GitHub again when a
+     * download fails, and the two builds run the same Box, which a build
+     * that packs the same phar twice needs.
+     */
+    #[Test]
+    #[DataProvider('providePharJobs')]
+    public function test_the_build_runs_the_box_pinned_by_the_workflow(string $source): void
+    {
+        $this->assertSame(1, preg_match('~^      - name: Install Box\n(?:        .*\n)+~m', $source, $install));
+        $this->assertSame(1, preg_match('~^      - name: Install Box\n(?:        .*\n)+~m', self::workflow(), $tagged));
+        $this->assertSame($tagged[0], $install[0], 'The two builds install the same Box.');
+
+        $this->assertMatchesRegularExpression("~^          VERSION: '\\d+\\.\\d+\\.\\d+'$~m", $install[0]);
+        $this->assertMatchesRegularExpression('~^          SHA256: [0-9a-f]{64}$~m', $install[0]);
+        $this->assertStringContainsString('"https://github.com/box-project/box/releases/download/${VERSION}/box.phar"', $install[0]);
+
+        $build = strpos($source, 'run: phar/build');
+        $this->assertNotFalse($build);
+        $this->assertLessThan($build, strpos($source, '- name: Install Box'));
+    }
+
+    /**
+     * @return iterable<string, array{downloaded: string, accepted: bool}>
+     */
+    public static function provideBoxDownloads(): iterable
+    {
+        yield 'the pinned release' => ['downloaded' => 'box', 'accepted' => true];
+        yield 'another file' => ['downloaded' => 'not box', 'accepted' => false];
+    }
+
+    /**
+     * What GitHub served is checked against the pinned checksum before the
+     * build can find it: phar/build runs the box on the PATH.
+     */
+    #[Test]
+    #[DataProvider('provideBoxDownloads')]
+    public function test_box_is_checked_before_the_build_can_run_it(string $downloaded, bool $accepted): void
+    {
+        [$code, $output] = $this->runStep('Install Box', ['VERSION' => '4.7.1', 'SHA256' => hash('sha256', 'box'), 'FAKE_DOWNLOAD' => $downloaded, 'GITHUB_PATH' => 'github-path']);
+
+        $this->assertSame($accepted, 0 === $code, $output);
+        $this->assertSame(
+            ['-fsSL --retry 5 -o '.$this->scratch.'/temp/box/box https://github.com/box-project/box/releases/download/4.7.1/box.phar'],
+            file($this->scratch.'/curl.log', \FILE_IGNORE_NEW_LINES),
+        );
+        if ($accepted) {
+            $this->assertSame($this->scratch."/temp/box\n", file_get_contents($this->scratch.'/work/github-path'));
+            $this->assertTrue(is_executable($this->scratch.'/temp/box/box'));
+        } else {
+            $this->assertFileDoesNotExist($this->scratch.'/work/github-path');
+        }
+    }
+
+    /**
      * @return iterable<string, array{draft: string, accepted: bool}>
      */
     public static function provideReleaseCases(): iterable
@@ -411,9 +488,10 @@ final class PharWorkflowTest extends TestCase
 
     /**
      * Runs the script of one step as GitHub runs it, in a scratch directory,
-     * with the fake php, a fake gh and a fake gpg first on the PATH, and a
-     * file to hold what the step writes to GITHUB_OUTPUT. gh and gpg write
-     * the arguments of each call to gh.log and gpg.log.
+     * with the fake php, a fake gh, a fake gpg, a fake curl and a fake
+     * sha256sum first on the PATH, and a file to hold what the step writes
+     * to GITHUB_OUTPUT. gh, gpg and curl write the arguments of each call to
+     * gh.log, gpg.log and curl.log.
      *
      * @param array<string, string> $env
      * @param array<string, string> $files more files of the working directory, by path
@@ -435,9 +513,13 @@ final class PharWorkflowTest extends TestCase
         file_put_contents($this->scratch.'/fake/php', self::FAKE_PHP);
         file_put_contents($this->scratch.'/fake/gh', "#!/usr/bin/env bash\necho \"\$*\" >> \"\$LOGS/gh.log\"\ncase \"\$*\" in *'--json assets'*) [ \"\$FAKE_ASSETS\" != fail ] || { echo 'HTTP 502' >&2; exit 1; }; printf '%s\\n' \$FAKE_ASSETS; exit 0 ;; esac\ncase \"\$FAKE_DRAFT\" in missing) echo 'release not found' >&2; exit 1 ;; *) echo \"\$FAKE_DRAFT\" ;; esac\n");
         file_put_contents($this->scratch.'/fake/gpg', self::FAKE_GPG);
+        file_put_contents($this->scratch.'/fake/curl', self::FAKE_CURL);
+        file_put_contents($this->scratch.'/fake/sha256sum', self::FAKE_SHA256SUM);
         chmod($this->scratch.'/fake/php', 0o755);
         chmod($this->scratch.'/fake/gh', 0o755);
         chmod($this->scratch.'/fake/gpg', 0o755);
+        chmod($this->scratch.'/fake/curl', 0o755);
+        chmod($this->scratch.'/fake/sha256sum', 0o755);
         file_put_contents($this->scratch.'/step.sh', self::step($name));
 
         $process = proc_open(

@@ -30,7 +30,7 @@ Features
 - Dialect rewrites: `(?P<name>)` becomes `(?<name>)` in JavaScript, `\k<name>` becomes `(?P=name)` in Python, `\h` and `\v` become character classes
 - What a target reads otherwise is written out as PCRE reads it: `$`, which also matches before a final newline, `^` and `$` under `m`, the dot, which leaves out `\n` alone, `\s` without `u`, six bytes in PHP where JavaScript's also takes the Unicode spaces, and `\S`, its complement, which takes a byte of `U+00A0` in PHP where JavaScript's leaves that space out, and, under `u`, `\d`, `\w`, `\s` and `\b`, which PHP reads in Unicode
 - Flags are mapped per target: JavaScript keeps `i`, `s`, `u`, gains `u` when Unicode escapes need it, and has `/m`, `/D`, `/x` and `/U` applied while printing; Python keeps `i` and `s`, gains `re.ASCII` without `u`, has `/m`, `/D`, `/x` and `/U` applied while printing, and spells flags inline or as `re` constants; every target drops `/S`, which PHP has ignored since 7.3, with a note
-- Warnings list every rewrite to review; notes list the flags applied or dropped
+- Warnings list every rewrite to review, and the first set that takes a byte in PCRE and a character in the target when the pattern has no `u`; notes list the flags applied or dropped
 - A construct the target cannot express without matching otherwise — `\w` under `u` in Python, a possessive quantifier or an atomic group in JavaScript, and in Python unless `pythonVersion` is 3.11 or later, a backreference to a group that may not have matched in JavaScript — throws a `TranspileException` carrying the position in the pattern
 - Every target is checked against its own engine: the test suite runs the transpiled patterns in Node and Python on the subjects `preg_match()` is run on, and compares the matches and the groups
 
@@ -157,6 +157,22 @@ the advice says to rewrite that construct first. Adding `u` changes what the
 pattern matches, characters instead of bytes (`/[é]/` matches `à` through its
 first byte, `/[é]/u` does not): confirm that matching characters is what the
 pattern means before taking the advice.
+
+A set is not refused, where PCRE takes one byte for it and the targets one
+character: most patterns hold a dot or a negated class, and on ASCII subjects
+the two agree. Once the set reaches past ASCII (the dot, a negated class, `\D`,
+`\W`, `\S`, `\h`, `\v`, a property) they differ on a subject holding a
+character outside it, and the first such set is named in a warning, once per
+pattern, with the advice a refusal gives:
+
+```php
+$result = $transpiler->transpile('/^\S+$/D', 'javascript');
+
+echo $result->literal;     // /^[^\t-\r ]+$/
+echo $result->warnings[0]; // Without the u flag "\S" at offset 1 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.
+
+var_dump($transpiler->transpile('/^\S+$/Du', 'javascript')->hasWarnings()); // bool(false)
+```
 
 Documentation
 -------------

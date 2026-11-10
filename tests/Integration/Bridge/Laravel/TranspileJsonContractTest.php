@@ -52,6 +52,9 @@ final class TranspileJsonContractTest extends LaravelTestCase
         yield 'a valid pattern, javascript' => ['pattern' => '/a+b/i', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a note, javascript' => ['pattern' => '/(?<n>a)\k<n>/x', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a warning, python' => ['pattern' => '/a+/U', 'target' => 'python', 'exitCode' => 0, 'address' => 'transpile'];
+        // A set that takes a byte in PCRE without u, and the same set under u, as the test of the warning runs them in PCRE.
+        yield 'a set past ASCII without u' => ['pattern' => '/^.,[^,]+$/', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
+        yield 'a set past ASCII under u' => ['pattern' => '/^.,[^,]+$/u', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a syntax error' => ['pattern' => '/(a/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
         yield 'a semantic error' => ['pattern' => '/(?<=a+)b/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
         yield 'a construct the target lacks' => ['pattern' => '/a++b/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
@@ -88,6 +91,26 @@ final class TranspileJsonContractTest extends LaravelTestCase
         yield 'mixed case' => ['format' => 'Json', 'pattern' => '/a+b/i', 'target' => 'python', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'upper case, invalid pattern' => ['format' => 'JSON', 'pattern' => '/(a/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
         yield 'upper case, unknown target' => ['format' => 'JSON', 'pattern' => '/a+b/i', 'target' => 'ruby', 'exitCode' => 2, 'address' => 'error'];
+    }
+
+    /**
+     * Without u the dot takes one byte in PCRE and one character in the
+     * target: the document carries the warning, and none under u.
+     */
+    #[Test]
+    public function test_transpile_json_warns_of_a_set_that_takes_a_byte_without_u(): void
+    {
+        // Oracle: "é" is two bytes to the dot, and one character under u.
+        $this->assertSame(0, preg_match('/^.,[^,]+$/', 'é,b'));
+        $this->assertSame(1, preg_match('/^.,[^,]+$/u', 'é,b'));
+
+        Artisan::call('regex:transpile', ['pattern' => '/^.,[^,]+$/', '--target' => 'javascript', '--format' => 'json']);
+        $document = JsonContract::decodeDocument(Artisan::output());
+        $this->assertSame(['Without the u flag "." at offset 1 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.'], $document['warnings'] ?? null);
+
+        Artisan::call('regex:transpile', ['pattern' => '/^.,[^,]+$/u', '--target' => 'javascript', '--format' => 'json']);
+        $underU = JsonContract::decodeDocument(Artisan::output());
+        $this->assertSame([], $underU['warnings'] ?? null);
     }
 
     protected function getPackageProviders($app): array

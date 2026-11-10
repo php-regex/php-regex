@@ -1,0 +1,146 @@
+name: CI (prose)
+
+# One check answers for a pull request, CI, which a branch can then require.
+# ci.yml reports it when the pull request changes the code. A pull request
+# that changes nothing but what ci.yml ignores does not start it, and a
+# required check nothing reports stays pending: this workflow starts on
+# those paths and reports CI for that pull request, and for no other. When
+# nothing says which of the two a pull request is, CI fails and says so.
+
+on:
+  pull_request:
+    branches: [ 2.x ]
+    # What ci.yml ignores, line for line.
+    paths:
+      - 'docs/**'
+      - 'art/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'UPGRADE-2.0.md'
+      - 'CONTRIBUTING.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'SECURITY.md'
+      - 'TODO.md'
+      - 'LICENSE'
+      - 'src/*/README.md'
+      - 'src/*/CHANGELOG.md'
+      - '.github/organization/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/FUNDING.yml'
+      - '.github/CODEOWNERS'
+      - '.github/dependabot.yml'
+      - '.github/zizmor.yml'
+      - '.coderabbit.yaml'
+      - '.editorconfig'
+      - '.gitmessage'
+      - '_typos.toml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scope:
+    # A pull request that changes one of these paths and the code starts
+    # both workflows. GitHub lists the files of the pull request; the paths
+    # ci.yml ignores are read from ci.yml as the pull request holds it,
+    # which is the list GitHub starts it from. One file outside them says
+    # that the code changes, and the whole list that it does not: a list
+    # that cannot be read, or that GitHub cuts, says neither, and the job
+    # fails, so that running the failed jobs again reads the list again.
+    name: Prose scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.changed.outputs.code }}
+
+    steps:
+      - name: Checkout the list of the code workflow
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/workflows/ci.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Read what the pull request changes
+        id: changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PULL_REQUEST: ${{ github.event.pull_request.number }}
+        run: |
+          code=unknown
+          # The paths ci.yml ignores as one expression: "**" crosses
+          # directories, "*" stays in one, a dot is a dot.
+          dot='\.'
+          name='[^/]*'
+          ignored=''
+          read=0
+          list=$(sed -n '/^    paths-ignore:$/,/^  [a-z_]*:$/p' .github/workflows/ci.yml)
+          while IFS= read -r path; do
+            read=$((read + 1))
+            path=${path//./$dot}
+            path=${path//\*\*/$'\t'}
+            path=${path//\*/$name}
+            ignored+="${ignored:+|}${path//$'\t'/.*}"
+          done < <(sed -n "s/^      - '\(.*\)'\$/\1/p" <<< "$list")
+          # A path written another way is one GitHub ignores and this step
+          # would take for the code: nothing is known then.
+          if [ "$(grep -c '^      - ' <<< "$list")" -ne "$read" ]; then
+            ignored=''
+          fi
+          # One line a file: its name, a tab, and the name it had before a
+          # move or nothing.
+          if [ -n "$ignored" ] && gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PULL_REQUEST/files?per_page=100" --jq '.[] | "\(.filename)\t\(.previous_filename // "")"' > "$RUNNER_TEMP/files"; then
+            tr '\t' '\n' < "$RUNNER_TEMP/files" | sed '/^$/d' > "$RUNNER_TEMP/changed"
+            if grep -Evq -- "^($ignored)\$" "$RUNNER_TEMP/changed"; then
+              code=true
+            # GitHub lists three thousand files and no more: a list that
+            # long may leave out a file of the code.
+            elif [ -s "$RUNNER_TEMP/files" ] && [ "$(wc -l < "$RUNNER_TEMP/files")" -lt 3000 ]; then
+              code=false
+            fi
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "The pull request changes the code: $code."
+          if [ "$code" = unknown ]; then
+            echo '::error title=Prose scope::The files of this pull request, or the paths ci.yml ignores, could not be read in full.'
+            exit 1
+          fi
+
+  verdict:
+    # CI for the prose alone. For a pull request that changes the code as
+    # well, CI is ci.yml's to report, and its last job is created only once
+    # its stages are over: a CI reported here would be the only one for as
+    # long as they run. A job that is skipped passes, so the job runs, under
+    # another name. It runs whatever the job before it did, and fails as CI
+    # when that job could not say what the pull request changes: a pull
+    # request of prose alone would otherwise wait for a check nothing
+    # reports, with nothing to say why.
+    name: ${{ needs.scope.outputs.code == 'true' && 'Left to the code checks' || 'CI' }}
+    needs: scope
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Say which workflow answers
+        env:
+          CODE: ${{ needs.scope.outputs.code }}
+        run: |
+          case "$CODE" in
+            false) answer='This pull request changes nothing the code checks read.' ;;
+            true) answer='This pull request changes the code as well: the CI check is the one ci.yml reports.' ;;
+            *) answer='The files of this pull request could not be read in full: nothing says whether ci.yml answers for it. Running the failed jobs again reads them again.' ;;
+          esac
+          echo "$answer" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$CODE" != false ] && [ "$CODE" != true ]; then
+            echo "::error title=CI::$answer"
+            exit 1
+          fi
