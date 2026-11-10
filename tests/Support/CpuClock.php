@@ -76,16 +76,35 @@ final class CpuClock
      */
     public static function time(\Closure $work): float
     {
+        self::timed($work, $seconds);
+
+        return $seconds;
+    }
+
+    /**
+     * What $work returns, the CPU time it took written to $seconds, with
+     * the cycle collector held as time() holds it: for the work whose
+     * result the test reads.
+     *
+     * @template T
+     *
+     * @param \Closure(): T $work
+     *
+     * @param-out float $seconds
+     *
+     * @return T
+     */
+    public static function timed(\Closure $work, ?float &$seconds = null): mixed
+    {
         $collects = gc_enabled();
         gc_collect_cycles();
         gc_disable();
+        $start = self::nanoseconds();
 
         try {
-            $start = self::nanoseconds();
-            $work();
-
-            return (self::nanoseconds() - $start) / 1e9;
+            return $work();
         } finally {
+            $seconds = (self::nanoseconds() - $start) / 1e9;
             if ($collects) {
                 gc_enable();
             }
