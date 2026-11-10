@@ -36,9 +36,12 @@ use PHPUnit\Framework\TestCase;
 final class OverlappingAlternationPairwiseTest extends TestCase
 {
     /**
+     * The findings of each pattern the test has linted: a pair comes back
+     * in many alternations of one test.
+     *
      * @var array<string, list<string>>
      */
-    private static array $findings = [];
+    private array $findings = [];
 
     /**
      * @param list<string> $branches
@@ -47,10 +50,10 @@ final class OverlappingAlternationPairwiseTest extends TestCase
     #[DataProvider('provideAlternations')]
     public function test_the_finding_is_the_one_of_the_first_overlapping_pair(array $branches, string $flags, ?string $expected): void
     {
-        $pairwise = self::pairwise($branches, $flags);
+        $pairwise = $this->pairwise($branches, $flags);
 
         $this->assertSame(null === $expected ? [] : [$expected], $pairwise);
-        $this->assertSame($pairwise, self::findings(self::alternation($branches, $flags)));
+        $this->assertSame($pairwise, $this->findings(self::alternation($branches, $flags)));
     }
 
     /**
@@ -102,7 +105,7 @@ final class OverlappingAlternationPairwiseTest extends TestCase
     #[DataProvider('provideAlternationsReadAsAWhole')]
     public function test_the_finding_stays_where_a_pair_alone_is_read_otherwise(string $pattern, array $expected): void
     {
-        $this->assertSame($expected, self::findings($pattern));
+        $this->assertSame($expected, $this->findings($pattern));
     }
 
     /**
@@ -159,10 +162,10 @@ final class OverlappingAlternationPairwiseTest extends TestCase
                 $branches[] = $start.$atoms[$next(\count($atoms))];
             }
 
-            $pairwise = self::pairwise($branches, $flags, $last);
+            $pairwise = $this->pairwise($branches, $flags, $last);
             $reported += \count($pairwise);
             $pattern = self::alternation([...$branches, ...(array) $last], $flags);
-            $this->assertSame($pairwise, self::findings($pattern), $pattern);
+            $this->assertSame($pairwise, $this->findings($pattern), $pattern);
         }
 
         // The family holds both answers in number.
@@ -198,13 +201,13 @@ final class OverlappingAlternationPairwiseTest extends TestCase
      *
      * @return list<string>
      */
-    private static function pairwise(array $branches, string $flags, ?string $last = null): array
+    private function pairwise(array $branches, string $flags, ?string $last = null): array
     {
         $first = [];
         $total = \count($branches);
         for ($i = 0; $i < $total; $i++) {
             for ($j = $i + 1; $j < $total; $j++) {
-                $found = self::findings(self::alternation([$branches[$i], $branches[$j], ...(array) $last], $flags));
+                $found = $this->findings(self::alternation([$branches[$i], $branches[$j], ...(array) $last], $flags));
                 if ([] !== $found && str_starts_with($found[0], OverlappingAlternationRule::ID_OVERLAP)) {
                     return $found;
                 }
@@ -227,10 +230,10 @@ final class OverlappingAlternationPairwiseTest extends TestCase
     /**
      * @return list<string>
      */
-    private static function findings(string $pattern): array
+    private function findings(string $pattern): array
     {
-        if (!isset(self::$findings[$pattern])) {
-            self::assertNotFalse(@preg_match($pattern, ''), $pattern);
+        if (!isset($this->findings[$pattern])) {
+            $this->assertNotFalse(@preg_match($pattern, ''), $pattern);
 
             $linter = new PatternLinter();
             Regex::create(['cache' => null])->parse($pattern)->accept($linter);
@@ -242,9 +245,9 @@ final class OverlappingAlternationPairwiseTest extends TestCase
                 }
             }
 
-            self::$findings[$pattern] = $found;
+            $this->findings[$pattern] = $found;
         }
 
-        return self::$findings[$pattern];
+        return $this->findings[$pattern];
     }
 }
