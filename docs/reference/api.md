@@ -747,7 +747,10 @@ script extensions from PHP 8.2, on PHP 8.1; `\p{Sunuwar}` before PCRE2 10.45),
 gives no sample: `SampleGenerationException` is thrown. A pattern that
 does not parse throws the parser's exception (`SyntaxErrorException` for
 `/(/`); one that parses but is invalid, as `/(?1)a/`, throws
-`SampleGenerationException`.
+`SampleGenerationException`. So does a pattern whose repeats add nothing to
+the sample more than 1,048,576 times over the draws of one call, as a
+reference to a group that captured nothing in `/()(?:\1{65535}){100}/`;
+repeats that add text are not counted.
 
 ```php
 use PHPRegex\Toolkit\Regex;
