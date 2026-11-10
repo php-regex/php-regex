@@ -17,3 +17,8 @@ CHANGELOG
    rebuilt or modernized twice, where `\d` also matched `٣` (U+0663).
  * `OptimizerOptions` exports `OptimizerOptionsArray`, the closed shape of
    the array `optimize()` takes, so PHPStan checks each key and value.
+ * `RedosRepairer` tries the rewrites of the quantifiers the analysis blames
+   first, then every other as before; it proves each rewrite without the
+   heuristics and the search cost of a full analysis, and keeps no tree of a
+   rewrite in the parser: `/(?:x+…){0}^(?:a+)+$/` with 300 `x+` gets the same
+   three repairs in under half the time, 11 MB at its peak where it took 49.

@@ -102,13 +102,7 @@ final class RedosAnalyzer
                 return RedosAnalysis::failed($mode, $validation->error ?? 'The pattern is invalid.');
             }
 
-            $prover = new BacktrackProver(
-                $this->options->maxStates,
-                $this->options->maxSteps,
-                $this->options->boundedRepeatCutoff,
-            );
-
-            $outcome = $prover->prove($ast, $regex, $parser->target());
+            $outcome = $this->prover()->prove($ast, $regex, $parser->target());
             $proof = $outcome->result;
             $limit = $outcome->limit;
             $proofKind = match (true) {
@@ -181,6 +175,44 @@ final class RedosAnalyzer
         } catch (ExceptionInterface $e) {
             return RedosAnalysis::failed($mode, $e->getMessage(), 'Analysis incomplete: '.$e->getMessage());
         }
+    }
+
+    /**
+     * What analyze($regex)->isProvenSafe() answers, from the proof alone:
+     * no heuristics, no witness, no cost of the search, and nothing of the
+     * pattern kept in the parser.
+     *
+     * @internal the repair of a pattern asks it of every rewrite it tries
+     */
+    public function provesSafe(string $regex): bool
+    {
+        if ($this->shouldIgnore($regex)) {
+            return false;
+        }
+
+        try {
+            $parser = $this->parser->withoutCache();
+            // A valid pattern comes with the tree it was judged on, any
+            // other with none.
+            $ast = $parser->validate($regex)->ast;
+            if (null === $ast) {
+                return false;
+            }
+
+            // The outcome holds a result only where the model met no limit.
+            return RedosComplexity::Linear === $this->prover()->prove($ast, $regex, $parser->target())->result?->complexity;
+        } catch (ExceptionInterface) {
+            return false;
+        }
+    }
+
+    private function prover(): BacktrackProver
+    {
+        return new BacktrackProver(
+            $this->options->maxStates,
+            $this->options->maxSteps,
+            $this->options->boundedRepeatCutoff,
+        );
     }
 
     /**

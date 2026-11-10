@@ -136,6 +136,44 @@ final class RegexParserTest extends TestCase
         $this->assertSame($parser, $parser->withTarget($parser->target()));
     }
 
+    /**
+     * A parser that keeps no tree has every other option of the one it
+     * comes from, and reads a pattern as that one does: what it parses
+     * and judges never reaches the cache, nor the results the first keeps.
+     */
+    #[Test]
+    public function test_a_parser_without_cache_keeps_the_other_options_and_no_tree(): void
+    {
+        $cache = new ArrayCache();
+        $target = new PcreTarget(80200, '10.40', 'C');
+        $parser = RegexParser::create(['cache' => $cache, 'max_pattern_length' => 10, 'max_lookbehind_length' => 7, 'max_recursion_depth' => 64, 'runtime_pcre_validation' => true]);
+
+        foreach ([$parser, $parser->withTarget($target)] as $origin) {
+            $derived = $origin->withoutCache();
+
+            $this->assertNotSame($origin, $derived);
+            $this->assertInstanceOf(NullCache::class, $derived->getCache());
+            $this->assertSame($origin->target(), $derived->target());
+            foreach (['maxPatternLength', 'maxLookbehindLength', 'maxRecursionDepth', 'runtimePcreValidation', 'engine'] as $option) {
+                $this->assertSame((new \ReflectionProperty($origin, $option))->getValue($origin), (new \ReflectionProperty($derived, $option))->getValue($derived), $option);
+            }
+        }
+
+        $derived = $parser->withoutCache();
+        $this->assertEquals($parser->parse('/a+b/'), $derived->parse('/a+b/'));
+        $this->assertTrue($derived->validate('/a+c/')->isValid);
+        $this->assertFalse($derived->validate('/a{2,1}/')->isValid);
+        $this->assertSame(['hits' => 0, 'misses' => 1], $cache->getStats(), 'Only the first parser asked the cache.');
+        $this->assertSame([], (new \ReflectionProperty($parser, 'results'))->getValue($parser));
+
+        try {
+            $derived->parse('/abcdefghij/');
+            $this->fail('The length limit was lost.');
+        } catch (ResourceLimitException $e) {
+            $this->assertStringContainsString('10', $e->getMessage());
+        }
+    }
+
     #[Test]
     public function test_a_facade_for_another_target_keeps_the_other_options(): void
     {
