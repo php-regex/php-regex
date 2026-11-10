@@ -122,9 +122,9 @@ final class LanguageCountingTest extends TestCase
     {
         $best = \INF;
         for ($turn = 0; $turn < 3; $turn++) {
-            $start = CpuClock::seconds();
-            $language->countOfLength(self::TIMED_LENGTH);
-            $best = min($best, CpuClock::seconds() - $start);
+            $best = min($best, CpuClock::time(static function () use ($language): void {
+                $language->countOfLength(self::TIMED_LENGTH);
+            }));
         }
 
         return $best;

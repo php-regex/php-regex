@@ -175,16 +175,16 @@ final class RegexGenerateTest extends TestCase
     #[Test]
     public function test_a_sample_the_engine_gave_up_on_is_not_padded(): void
     {
-        $start = CpuClock::nanoseconds();
+        $seconds = CpuClock::time(function (): void {
+            try {
+                Regex::create(['cache' => null])->generate('/(?:\\w|\\w){25}\\z!/');
+                self::fail('A sample was given for a pattern nothing matches.');
+            } catch (SampleGenerationException $e) {
+                $this->assertStringEndsWith('the engine gave up checking 8 of the samples (Backtrack limit exhausted).', $e->getMessage());
+            }
+        });
 
-        try {
-            Regex::create(['cache' => null])->generate('/(?:\\w|\\w){25}\\z!/');
-            self::fail('A sample was given for a pattern nothing matches.');
-        } catch (SampleGenerationException $e) {
-            $this->assertStringEndsWith('the engine gave up checking 8 of the samples (Backtrack limit exhausted).', $e->getMessage());
-        }
-
-        $this->assertLessThan(4.0, (CpuClock::nanoseconds() - $start) / 1e9);
+        $this->assertLessThan(4.0, $seconds);
     }
 
     #[Test]
