@@ -1,19 +1,17 @@
 name: php74 twin
 
 on:
-  pull_request:
-    paths:
-      - 'src/Parser/**'
-      - 'build/**'
-      - 'tests/**'
-      - '.github/workflows/php74-twin.yml'
+  # A pull request starts ci.yml, which calls this workflow in its stage.
+  workflow_call:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: php74-twin-${{ github.ref }}
+  # The name is written out: called from ci.yml, github.workflow is the
+  # caller's, and the group would be the caller's own.
+  group: php74-twin-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
