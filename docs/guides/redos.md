@@ -488,7 +488,9 @@ $repairs[0]->isCertified(); // true: same subjects, proven linear
 ```
 
 It tries a repeat of a repeat flattened, `(?:a+)+` to `a+`; the optimizer's own rewrite;
-each greedy quantifier made possessive, then all of them. A rewrite proven to match other
+each greedy quantifier made possessive, then all of them. The rewrites of the quantifiers
+under a hotspot of the analysis are tried first, and none is left out: `/^\s*(?:\w+\s*)*$/`
+is repaired though the analysis names no hotspot in it. A rewrite proven to match other
 subjects is dropped. One the automata cannot judge stays listed with `sameSubjects` set to
 `null`, after the certified ones: the possessive forms mostly, as `/^(\w++\s?)+$/` for
 `/^(\w+\s?)+$/`, linear for sure, the same subjects for you to check. With ReDoS checks on,

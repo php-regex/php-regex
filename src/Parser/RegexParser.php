@@ -73,7 +73,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-c198773fd7ad6349c43cdb0acee690a4';
+    public const CACHE_VERSION = 'ast-2bf73a1d403e6941aebca2836c672c88';
 
     /**
      * ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, by the name the parser gave it first.
@@ -303,6 +303,26 @@ final class RegexParser
             $this->runtimePcreValidation && $target->isRunningEngine(),
             $this->maxRecursionDepth,
             $target,
+            $this->engine,
+        );
+    }
+
+    /**
+     * A parser with every other option of this one that keeps no tree: what
+     * it parses is read once, and the validate() results it keeps are its
+     * own, gone with it.
+     *
+     * @internal the proof of a rewrite nobody wrote reads it through one
+     */
+    public function withoutCache(): self
+    {
+        return new self(
+            $this->maxPatternLength,
+            $this->maxLookbehindLength,
+            new NullCache(),
+            $this->runtimePcreValidation,
+            $this->maxRecursionDepth,
+            $this->target,
             $this->engine,
         );
     }
