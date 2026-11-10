@@ -214,9 +214,52 @@ final class PatternFormatterTest extends TestCase
         foreach (explode("\n", $result->pattern) as $line) {
             $this->assertLessThanOrEqual(40, \strlen($line) - \strlen(ltrim($line, ' ')));
         }
-        $this->assertLessThan(\strlen($pattern) * 3, \strlen($result->pattern));
+        // 1,404 bytes come out as 1,977: the hundred comments, each still
+        // there, and the padding of ten levels.
+        $this->assertSame(100, substr_count($result->pattern, '# comment'));
+        $this->assertLessThan(\strlen($pattern) * 2, \strlen($result->pattern));
         $this->assertSameMeaning($pattern, $result->pattern);
         $this->assertSame($result->pattern, $formatter->format($this->parse($result->pattern))->pattern);
+    }
+
+    /**
+     * Ten levels are laid out, each comment in its column; past the tenth the
+     * rest stays at the margin, and only the line break that ends a comment
+     * is kept.
+     */
+    #[Test]
+    public function test_line_comments_past_the_indent_cap_keep_their_line_breaks_alone(): void
+    {
+        $pattern = '/'.str_repeat("(?:# c\n", 12).'a'.str_repeat(')', 12).'/x';
+        $this->assertSame(1, preg_match($pattern, 'a'));
+        $this->assertSame(0, preg_match($pattern, 'c'));
+
+        $this->assertFormatsTo($pattern, 1, implode("\n", [
+            '/',
+            '    (?:                                  # c',
+            '        (?:                              # c',
+            '            (?:                          # c',
+            '                (?:                      # c',
+            '                    (?:                  # c',
+            '                        (?:              # c',
+            '                            (?:          # c',
+            '                                (?:      # c',
+            '                                    (?:  # c',
+            '                                        (?:# c',
+            '(?:# c',
+            '(?:# c',
+            'a)))',
+            '                                    )',
+            '                                )',
+            '                            )',
+            '                        )',
+            '                    )',
+            '                )',
+            '            )',
+            '        )',
+            '    )',
+            '/x',
+        ]));
     }
 
     #[Test]
