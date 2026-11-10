@@ -58,9 +58,9 @@ final class ArgumentStateBaselineTest extends TestCase
         yield 'a constant of the file' => [
             'code' => "<?php\n\nconst RE = '/constant/';\n\nfunction run(string \$s): int\n{\n    return preg_match(RE, \$s);\n}\n",
             'expression' => 'RE',
-            'at' => 'RE, $s)',
             'state' => ArgumentState::Constant,
             'patterns' => ['/constant/'],
+            'at' => 'RE, $s)',
         ];
 
         yield 'a class constant' => [
@@ -87,17 +87,17 @@ final class ArgumentStateBaselineTest extends TestCase
         yield 'a local variable assigned once' => [
             'code' => self::inFunction('string $s', "\$re = '/assigned-once/';\n\n    return preg_match(\$re, \$s);"),
             'expression' => '$re',
-            'at' => '$re, $s)',
             'state' => ArgumentState::Constant,
             'patterns' => ['/assigned-once/'],
+            'at' => '$re, $s)',
         ];
 
         yield 'a local variable assigned a constant' => [
             'code' => self::inFinalClass("private const RE = '/through-a-variable/';", "\$re = self::RE;\n\n        return preg_match(\$re, \$s);"),
             'expression' => '$re',
-            'at' => '$re, $s)',
             'state' => ArgumentState::Constant,
             'patterns' => ['/through-a-variable/'],
+            'at' => '$re, $s)',
         ];
 
         yield 'a property of a final class' => [
@@ -110,9 +110,9 @@ final class ArgumentStateBaselineTest extends TestCase
         yield 'a local variable assigned in two branches' => [
             'code' => self::inFunction('string $s, bool $flag', "\$re = '/first-branch/';\n    if (\$flag) {\n        \$re = '/second-branch/';\n    }\n\n    return preg_match(\$re, \$s);"),
             'expression' => '$re',
-            'at' => '$re, $s)',
             'state' => ArgumentState::FiniteSet,
             'patterns' => ['/first-branch/', '/second-branch/'],
+            'at' => '$re, $s)',
         ];
 
         yield 'a concatenation with a parameter' => [
@@ -133,9 +133,9 @@ final class ArgumentStateBaselineTest extends TestCase
         yield 'a local variable assigned a concatenation with a local variable' => [
             'code' => self::inFunction('string $s', "\$part = 'abc';\n    \$re = '/' . \$part . '+/';\n\n    return preg_match(\$re, \$s);"),
             'expression' => '$re',
-            'at' => '$re, $s)',
             'state' => ArgumentState::Constant,
             'patterns' => ['/abc+/'],
+            'at' => '$re, $s)',
         ];
 
         // $part = 'abc'; "/^{$part}$/" is "/^abc$/" in PHP.
@@ -197,9 +197,9 @@ final class ArgumentStateBaselineTest extends TestCase
         yield 'a local variable assigned a ternary' => [
             'code' => self::inFunction('string $s, bool $flag', "\$re = \$flag ? '/then/' : '/else/';\n\n    return preg_match(\$re, \$s);"),
             'expression' => '$re',
-            'at' => '$re, $s)',
             'state' => ArgumentState::FiniteSet,
             'patterns' => ['/then/', '/else/'],
+            'at' => '$re, $s)',
         ];
 
         // sprintf('/^%s$/', 'abc') is "/^abc$/" in PHP.
@@ -243,48 +243,48 @@ final class ArgumentStateBaselineTest extends TestCase
         yield 'a local variable assigned an array of patterns' => [
             'code' => self::inFunction('string $s', "\$list = ['/item-a/', '/item-b/'];\n\n    return (string) preg_replace(\$list, '', \$s);", 'string'),
             'expression' => '$list',
-            'at' => "\$list, '', \$s)",
             'state' => ArgumentState::Opaque,
+            'at' => "\$list, '', \$s)",
         ];
 
         // Read with the arrays of patterns (row 3b): then a finite set.
         yield 'the value of a foreach over an array literal' => [
             'code' => self::inFunction('string $s', "\$found = 0;\n    foreach (['/loop-a/', '/loop-b/'] as \$re) {\n        \$found += preg_match(\$re, \$s);\n    }\n\n    return \$found;"),
             'expression' => '$re',
-            'at' => '$re, $s)',
             'state' => ArgumentState::Opaque,
+            'at' => '$re, $s)',
         ];
 
         // Read with the arrays of patterns (row 3b): then a finite set.
         yield 'the key of a foreach over an array literal' => [
             'code' => self::inFunction('string $s', "\$found = 0;\n    foreach (['/key-a/' => 1, '/key-b/' => 2] as \$re => \$weight) {\n        \$found += \$weight * preg_match(\$re, \$s);\n    }\n\n    return \$found;"),
             'expression' => '$re',
-            'at' => '$re, $s)',
             'state' => ArgumentState::Opaque,
+            'at' => '$re, $s)',
         ];
 
         // Read with the arrays of patterns (row 3c): then constant.
         yield 'an item of a local array, by its literal key' => [
             'code' => self::inFunction('string $s', "\$map = ['word' => '/\\\\w+/', 'digit' => '/\\\\d+/'];\n\n    return preg_match(\$map['word'], \$s);"),
             'expression' => "\$map['word']",
-            'at' => "\$map['word'], \$s)",
             'state' => ArgumentState::Opaque,
+            'at' => "\$map['word'], \$s)",
         ];
 
         // Read with the arrays of patterns (row 3c): then constant.
         yield 'an item of a constant array, by its literal key' => [
             'code' => self::inFinalClass("private const MAP = ['word' => '/\\\\w+/'];", "return preg_match(self::MAP['word'], \$s);"),
             'expression' => "self::MAP['word']",
-            'at' => "self::MAP['word'], \$s)",
             'state' => ArgumentState::Opaque,
+            'at' => "self::MAP['word'], \$s)",
         ];
 
         // Read with the variables at file level (row 4): then constant.
         yield 'a variable at file level' => [
             'code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\n",
             'expression' => '$re',
-            'at' => '$re, $subject)',
             'state' => ArgumentState::Opaque,
+            'at' => '$re, $subject)',
         ];
 
         // Read with self:: in a closure passed to a PHP function (row 6a):
@@ -292,8 +292,8 @@ final class ArgumentStateBaselineTest extends TestCase
         yield 'a class constant in a closure passed to array_filter()' => [
             'code' => self::inFinalClass("private const RE = '/in-a-closure/';", 'return \\count(array_filter([$s], static fn (string $item): bool => 1 === preg_match(self::RE, $item)));'),
             'expression' => 'self::RE',
-            'at' => 'self::RE, $item)',
             'state' => ArgumentState::Opaque,
+            'at' => 'self::RE, $item)',
         ];
 
         // Read with the constants holding branches (row 6c): then a finite
@@ -301,8 +301,8 @@ final class ArgumentStateBaselineTest extends TestCase
         yield 'a constant whose value is a ternary' => [
             'code' => self::inFinalClass("private const RE = \\PHP_INT_SIZE === 8 ? '/wide/' : '/narrow/';", 'return preg_match(self::RE, $s);'),
             'expression' => 'self::RE',
-            'at' => 'self::RE, $s)',
             'state' => ArgumentState::Opaque,
+            'at' => 'self::RE, $s)',
         ];
 
         // Read with the platform constants (row 6e): then a finite set.
