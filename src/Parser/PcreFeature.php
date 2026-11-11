@@ -183,7 +183,7 @@ enum PcreFeature
     case HugeBackreferenceNumberIsReference;
 
     /**
-     * A number past 65535 is reported past the whole number.
+     * A number past its limit, 65535 or the 1000 of the major of a version condition, is reported past the whole number.
      */
     case NumberTooBigPastWholeNumber;
 
