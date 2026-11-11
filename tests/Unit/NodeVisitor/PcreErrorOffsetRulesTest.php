@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -62,7 +63,11 @@ final class PcreErrorOffsetRulesTest extends TestCase
     }
 
     /**
-     * pcre2test 10.44, 10.45, 10.46, 10.47 and 10.49.
+     * pcre2test 10.44, 10.45, 10.46, 10.47 and 10.49, and PHP's own warning
+     * on the bundled 10.40, 10.42 and 10.44, on PHP 8.4.27 linked to 10.45,
+     * 10.46, 10.47 and 10.48, and on 10.49. Where the running PCRE2 is a
+     * release a row names, PHP is asked again: the offset of its warning is
+     * the row's.
      *
      * @param array<string, int> $offsets by release
      */
@@ -75,6 +80,10 @@ final class PcreErrorOffsetRulesTest extends TestCase
 
             $this->assertFalse($result->isValid, $pattern.' on '.$release);
             $this->assertSame($offset, $result->offset, $pattern.' on '.$release);
+
+            if (PcreTarget::runtime()->pcreVersion === $release) {
+                $this->assertSame($offset, PhpErrorOffset::of($pattern), \sprintf('Oracle: %s on PCRE2 %s: %s', $pattern, \PCRE_VERSION, EngineProbe::warning($pattern) ?? 'compiles'));
+            }
         }
     }
 
@@ -86,7 +95,7 @@ final class PcreErrorOffsetRulesTest extends TestCase
         // An unclosed "\g{ 1": on the space before 10.43, which takes no
         // padding, on "\g" until 10.47, past the number from then on
         // (pcre2test 10.40, 10.42, 10.44, 10.45, 10.46; PHP on 10.49).
-        yield 'unclosed padded \\g number' => ['/a\\g{ 1/', ['10.40' => 4, '10.42' => 4, '10.44' => 3, '10.45' => 3, '10.47' => 6, '10.49' => 6]];
+        yield 'unclosed padded \\g number' => ['/a\\g{ 1/', ['10.40' => 4, '10.42' => 4, '10.44' => 3, '10.45' => 3, '10.46' => 3, '10.47' => 6, '10.49' => 6]];
         // Before 10.47 a minor is two digits: PCRE stops at a third one.
         yield 'minor of four digits, then text' => ['/(?(VERSION>=10.1001x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.46' => 17, '10.47' => 19, '10.49' => 19]];
         yield 'minor of three digits, then text' => ['/(?(VERSION>=10.999x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.46' => 17, '10.47' => 19, '10.49' => 19]];
@@ -101,13 +110,13 @@ final class PcreErrorOffsetRulesTest extends TestCase
         yield 'major of 1001' => ['/(?(VERSION>=1001)a|b)/', ['10.44' => 16, '10.45' => 16, '10.46' => 16, '10.47' => 16, '10.49' => 16]];
         // Before 10.45 a range from a class escape is refused at the "-",
         // before the escape at its end is read.
-        yield 'range from a type to \N' => ['/[\\d-\\N]/', ['10.44' => 3, '10.45' => 6, '10.47' => 6, '10.49' => 6]];
-        yield 'range from a type to an unknown escape' => ['/[\\d-\\j]/', ['10.44' => 3, '10.45' => 5, '10.47' => 6, '10.49' => 6]];
-        yield 'range from a type to \R, after a member' => ['/[a\\d-\\R]/', ['10.44' => 4, '10.45' => 6, '10.47' => 7, '10.49' => 7]];
-        yield 'range from a POSIX class to \X' => ['/[[:alpha:]-\\X]/', ['10.44' => 10, '10.45' => 12, '10.47' => 13, '10.49' => 13]];
-        yield 'range from a property to \X' => ['/[\\p{L}-\\X]/', ['10.44' => 6, '10.45' => 8, '10.47' => 9, '10.49' => 9]];
-        yield 'range from a type to k, a letter from 10.45' => ['/[\\d-\\k]/', ['10.44' => 3, '10.45' => 4, '10.47' => 4, '10.49' => 4]];
-        yield 'range from a type to \X' => ['/[\\d-\\X]/', ['10.44' => 3, '10.45' => 5, '10.47' => 6, '10.49' => 6]];
+        yield 'range from a type to \N' => ['/[\\d-\\N]/', ['10.44' => 3, '10.45' => 6, '10.46' => 6, '10.47' => 6, '10.49' => 6]];
+        yield 'range from a type to an unknown escape' => ['/[\\d-\\j]/', ['10.44' => 3, '10.45' => 5, '10.46' => 5, '10.47' => 6, '10.49' => 6]];
+        yield 'range from a type to \R, after a member' => ['/[a\\d-\\R]/', ['10.44' => 4, '10.45' => 6, '10.46' => 6, '10.47' => 7, '10.49' => 7]];
+        yield 'range from a POSIX class to \X' => ['/[[:alpha:]-\\X]/', ['10.44' => 10, '10.45' => 12, '10.46' => 12, '10.47' => 13, '10.49' => 13]];
+        yield 'range from a property to \X' => ['/[\\p{L}-\\X]/', ['10.44' => 6, '10.45' => 8, '10.46' => 8, '10.47' => 9, '10.49' => 9]];
+        yield 'range from a type to k, a letter from 10.45' => ['/[\\d-\\k]/', ['10.44' => 3, '10.45' => 4, '10.46' => 4, '10.47' => 4, '10.49' => 4]];
+        yield 'range from a type to \X' => ['/[\\d-\\X]/', ['10.44' => 3, '10.45' => 5, '10.46' => 5, '10.47' => 6, '10.49' => 6]];
     }
 
     #[Test]
