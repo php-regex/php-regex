@@ -61,7 +61,7 @@ final class PcreErrorOffsetRulesTest extends TestCase
     }
 
     /**
-     * pcre2test 10.44, 10.45, 10.47 and 10.49.
+     * pcre2test 10.44, 10.45, 10.46, 10.47 and 10.49.
      *
      * @param array<string, int> $offsets by release
      */
@@ -87,10 +87,17 @@ final class PcreErrorOffsetRulesTest extends TestCase
         // (pcre2test 10.40, 10.42, 10.44, 10.45, 10.46; PHP on 10.49).
         yield 'unclosed padded \\g number' => ['/a\\g{ 1/', ['10.40' => 4, '10.42' => 4, '10.44' => 3, '10.45' => 3, '10.47' => 6, '10.49' => 6]];
         // Before 10.47 a minor is two digits: PCRE stops at a third one.
-        yield 'minor of four digits, then text' => ['/(?(VERSION>=10.1001x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.47' => 19, '10.49' => 19]];
-        yield 'minor of three digits, then text' => ['/(?(VERSION>=10.999x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.47' => 19, '10.49' => 19]];
-        yield 'minor of two digits, then text' => ['/(?(VERSION>=10.99x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.47' => 18, '10.49' => 18]];
-        yield 'minor of one digit, then text' => ['/(?(VERSION>=10.9x)a|b)/', ['10.44' => 16, '10.45' => 16, '10.47' => 17, '10.49' => 17]];
+        yield 'minor of four digits, then text' => ['/(?(VERSION>=10.1001x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.46' => 17, '10.47' => 19, '10.49' => 19]];
+        yield 'minor of three digits, then text' => ['/(?(VERSION>=10.999x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.46' => 17, '10.47' => 19, '10.49' => 19]];
+        yield 'minor of two digits, then text' => ['/(?(VERSION>=10.99x)a|b)/', ['10.44' => 17, '10.45' => 17, '10.46' => 17, '10.47' => 18, '10.49' => 18]];
+        yield 'minor of one digit, then text' => ['/(?(VERSION>=10.9x)a|b)/', ['10.44' => 16, '10.45' => 16, '10.46' => 16, '10.47' => 17, '10.49' => 17]];
+        // Before 10.45 a major stops past the digit that takes it over
+        // 1000; from 10.45 it is read whole, where the minor still is two
+        // digits up to 10.46.
+        yield 'major of eleven digits, then a group left open' => ['/(?(VERSION>=99999999999)a)(c/', ['10.44' => 16, '10.45' => 23, '10.46' => 23, '10.47' => 23, '10.49' => 23]];
+        yield 'major of five digits' => ['/(?(VERSION=99999)a|b)/', ['10.44' => 15, '10.45' => 16, '10.46' => 16, '10.47' => 16, '10.49' => 16]];
+        yield 'major of five digits, then a minor' => ['/(?(VERSION>=10010.5)a|b)/', ['10.44' => 16, '10.45' => 17, '10.46' => 17, '10.47' => 17, '10.49' => 17]];
+        yield 'major of 1001' => ['/(?(VERSION>=1001)a|b)/', ['10.44' => 16, '10.45' => 16, '10.46' => 16, '10.47' => 16, '10.49' => 16]];
         // Before 10.45 a range from a class escape is refused at the "-",
         // before the escape at its end is read.
         yield 'range from a type to \N' => ['/[\\d-\\N]/', ['10.44' => 3, '10.45' => 6, '10.47' => 6, '10.49' => 6]];

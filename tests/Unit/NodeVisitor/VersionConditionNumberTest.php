@@ -21,10 +21,11 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The numbers of "(?(VERSION>=n.m)...)". Up to PCRE2 10.46, the minor takes
- * two digits at most, refused on the third, and the major stops at 1000,
- * refused past the digit that goes over. PCRE2 10.47 reads both numbers
- * whole and refuses one over 1000 past its last digit. PHP 8.2 to 8.5
- * bundle 10.40 to 10.44 (every offset below is pcre2test's).
+ * two digits at most, refused on the third. The major stops at 1000: up to
+ * PCRE2 10.44 it is refused past the digit that goes over, and from 10.45
+ * past its last digit. PCRE2 10.47 reads both numbers whole and refuses one
+ * over 1000 past its last digit. PHP 8.2 to 8.5 bundle 10.40 to 10.44
+ * (every offset below is pcre2test's).
  */
 final class VersionConditionNumberTest extends TestCase
 {
@@ -69,6 +70,33 @@ final class VersionConditionNumberTest extends TestCase
         yield 'major of five digits' => ['pattern' => '/(?(VERSION=99999.1)yes|no)/', 'bundledOffset' => 15];
         yield 'two-digit minor' => ['pattern' => '/(?(VERSION=10.99)yes|no)/', 'bundledOffset' => null];
         yield 'major of 1000' => ['pattern' => '/(?(VERSION=1000.1)yes|no)/', 'bundledOffset' => null];
+    }
+
+    /**
+     * PCRE2 10.45 and 10.46 already read a major whole, as every number
+     * since 10.45, and still stop a minor at its third digit.
+     */
+    #[Test]
+    #[DataProvider('provideReleasesReadingTheMajorWhole')]
+    public function test_pcre2_10_45_reads_the_major_whole(string $release): void
+    {
+        $regex = Regex::create(['cache' => null, 'pcre_version' => $release]);
+
+        $this->assertSame(16, $regex->validate('/(?(VERSION=99999.1)yes|no)/')->offset);
+        $this->assertSame(16, $regex->validate('/(?(VERSION=99999)yes|no)/')->offset);
+        $this->assertSame(15, $regex->validate('/(?(VERSION=1001.1)yes|no)/')->offset);
+        $this->assertSame(16, $regex->validate('/(?(VERSION=10.101)yes|no)/')->offset);
+        $this->assertSame(16, $regex->validate('/(?(VERSION=10.1001)yes|no)/')->offset);
+        $this->assertTrue($regex->validate('/(?(VERSION=1000.1)yes|no)/')->isValid);
+    }
+
+    /**
+     * @return iterable<string, array{release: string}>
+     */
+    public static function provideReleasesReadingTheMajorWhole(): iterable
+    {
+        yield 'PCRE2 10.45' => ['release' => '10.45'];
+        yield 'PCRE2 10.46' => ['release' => '10.46'];
     }
 
     #[Test]
