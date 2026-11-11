@@ -239,6 +239,42 @@ final class DefineCallShapesTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{arguments: string}>
+     */
+    public static function provideThirdArguments(): iterable
+    {
+        yield 'false' => ['arguments' => "'/third/', false"];
+        yield 'true' => ['arguments' => "'/third/', true"];
+        yield 'false and a trailing comma' => ['arguments' => "'/third/', false,"];
+    }
+
+    /**
+     * The value is read when it is the second and the last argument: a
+     * define() given a third one is not read, in the file that declares
+     * it or in another one.
+     */
+    #[Test]
+    #[DataProvider('provideThirdArguments')]
+    public function test_a_define_given_a_third_argument_is_not_read(string $arguments): void
+    {
+        $declaration = "<?php\n\ndefine('THIRD', ".$arguments.");\ndefine('PLACED', '/placed/');\n";
+        $files = [
+            'Constants.php' => $declaration,
+            'Reader.php' => "<?php\n\npreg_match(THIRD, 'x');\npreg_match(PLACED, 'x');\n",
+        ];
+
+        $this->assertSame(['/placed/'], $this->patternsAcross($files));
+        $this->assertSame([
+            ['file' => 'Reader.php', 'expression' => 'THIRD', 'state' => 'opaque'],
+            ['file' => 'Reader.php', 'expression' => 'PLACED', 'state' => 'constant'],
+        ], $this->argumentsAcross($files));
+
+        $alone = $declaration."\npreg_match(THIRD, 'x');\npreg_match(PLACED, 'x');\n";
+        $this->assertSame(['/placed/'], $this->patternsReadByBoth($alone));
+        $this->assertSame(['opaque', 'constant'], $this->statesReadByBoth($alone));
+    }
+
+    /**
      * @return iterable<string, array{declarations: string}>
      */
     public static function provideDefinesOfANamespaceThatMayNotRun(): iterable

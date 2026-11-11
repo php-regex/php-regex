@@ -31,6 +31,9 @@ use PHPUnit\Framework\TestCase;
  * defines NEVER; "namespace App{\define('IN_BRACES','/in-braces/');const
  * BRACED='/braced/';if(false):$d=1;\define('IN_IF',1);endif;}" defines
  * IN_BRACES and App\BRACED and leaves defined('IN_IF') false.
+ * "define('THIRD','/third/',false);define('TRAILING','/trailing/',);"
+ * defines both; a define() given a third argument is not read, spaced
+ * out or not, as the file that writes it does not read it.
  *
  * Both strategies read the same.
  */
@@ -48,6 +51,20 @@ final class UnspacedDeclarationsTest extends TestCase
             'reader' => "<?php\n\npreg_match(ONE, 'x');\npreg_match(TWO, 'x');\n",
             'patterns' => ['/one/', '/two/'],
             'states' => ['constant', 'constant'],
+        ];
+
+        yield 'a trailing comma against the value' => [
+            'constants' => "<?php define('TRAILING','/trailing/',);define('PLAIN','/plain/');",
+            'reader' => "<?php\n\npreg_match(TRAILING, 'x');\npreg_match(PLAIN, 'x');\n",
+            'patterns' => ['/plain/', '/trailing/'],
+            'states' => ['constant', 'constant'],
+        ];
+
+        yield 'a third argument against its comma' => [
+            'constants' => "<?php define('THIRD','/third/',false);define('PLAIN','/plain/');",
+            'reader' => "<?php\n\npreg_match(THIRD, 'x');\npreg_match(PLAIN, 'x');\n",
+            'patterns' => ['/plain/'],
+            'states' => ['opaque', 'constant'],
         ];
 
         yield 'a function against the statement before it, whose body returns' => [
