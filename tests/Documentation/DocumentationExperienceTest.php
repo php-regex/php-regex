@@ -200,7 +200,10 @@ final class DocumentationExperienceTest extends TestCase
         $this->assertSame(1, preg_match($phone, $stylesheet, $links), 'A phone compacts the landing links.');
         $this->assertStringContainsString('font-size:', $links[1]);
         $this->assertSame(1, preg_match('/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.site-header--landing \.brand-name \{([^}]*)\}/', $stylesheet, $brand), 'A phone folds the wordmark into its mark.');
-        $this->assertStringContainsString('display: none;', $brand[1]);
+        $this->assertStringContainsString('clip-path: inset(50%);', $brand[1], 'Folded for the eye, still named for a voice: the home link keeps its name.');
+        $this->assertSame(1, preg_match('/@media \(max-width: 359px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.site-header--landing \.header-nav a \{([^}]*)\}/', $stylesheet, $tight), 'The narrowest phones tighten the row.');
+        $this->assertStringContainsString('font-size:', $tight[1]);
+        $this->assertStringContainsString('padding-inline:', $tight[1]);
     }
 
     /**
@@ -219,11 +222,24 @@ final class DocumentationExperienceTest extends TestCase
         ];
         foreach ($pages as $path => $least) {
             $page = (string) file_get_contents($path);
-            preg_match_all('/\]\(\/(?:#|%23)pattern=([^)&\s]+)/', $page, $matches, \PREG_SET_ORDER);
+            $matched = preg_match_all('/\]\(\/(?:#|%23)pattern=([^)&\s]+)&subject=([^)\s]+)\)/', $page, $matches, \PREG_SET_ORDER);
+            $this->assertNotFalse($matched, $path.': the pattern links read as the page ships them.');
             $this->assertGreaterThanOrEqual($least, \count($matches), $path.': at least '.$least.' example(s) open in the playground.');
             foreach ($matches as $match) {
                 $pattern = rawurldecode($match[1]);
                 $this->assertNotFalse(@preg_match($pattern, ''), $path.': the linked pattern '.\var_export($pattern, true).' is one the engine accepts.');
+                // The subject shows what the link promises: a match, a
+                // trace the tab can hold whole. A link that opens on
+                // "no match" or on a recording cut at its cap teaches the
+                // opposite of what it says.
+                $subject = rawurldecode($match[2]);
+                $matched = @preg_match($pattern, $subject);
+                if (1 !== $matched) {
+                    // A subject that does not match is the point of the
+                    // backtracking examples — the trace draws the failure.
+                    // It must be short enough for the tab to hold whole.
+                    $this->assertLessThanOrEqual(10, \strlen($subject), $path.': the linked subject '.\var_export($subject, true).' neither matches '.\var_export($pattern, true).' nor fits a trace the tab holds whole.');
+                }
             }
         }
     }

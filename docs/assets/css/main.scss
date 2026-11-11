@@ -1516,8 +1516,28 @@ main table::-webkit-scrollbar-thumb {
     padding-inline: .45rem;
     font-size: .85rem;
   }
+  /* Folded for the eye, still named for a voice: the home link keeps
+     its name. */
   .site-header--landing .brand-name {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+/* The narrowest phones — 320 pixels — cannot hold the whole row at the
+   phone sizes: the links and the controls tighten one step more so
+   nothing leaves the viewport. */
+@media (max-width: 359px) {
+  .site-header--landing .header-nav a {
+    padding-inline: .35rem;
+    font-size: .8rem;
+  }
+  .site-header--landing .site-header button,
+  .site-header--landing .icon-btn {
+    padding-inline: .5rem;
   }
 }
 

@@ -150,7 +150,7 @@ Each pattern includes:
 /^[a-z0-9]([a-z0-9._%+-]*[a-z0-9])?@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i
 ```
 
-[Try it in the playground](/#pattern=%2F%5E%5Ba-z0-9%5D%28%5Ba-z0-9._%25%2B-%5D%2A%5Ba-z0-9%5D%29%3F%40%5Ba-z0-9%5D%28%5Ba-z0-9-%5D%2A%5Ba-z0-9%5D%29%3F%28%5C.%5Ba-z0-9%5D%28%5Ba-z0-9-%5D%2A%5Ba-z0-9%5D%29%3F%29%2B%24%2Fi&subject=write%20to%20hello%40php-regex.com) — the tree and the verdict on the same screen.
+[Try it in the playground](/#pattern=%2F%5E%5Ba-z0-9%5D%28%5Ba-z0-9._%25%2B-%5D%2A%5Ba-z0-9%5D%29%3F%40%5Ba-z0-9%5D%28%5Ba-z0-9-%5D%2A%5Ba-z0-9%5D%29%3F%28%5C.%5Ba-z0-9%5D%28%5Ba-z0-9-%5D%2A%5Ba-z0-9%5D%29%3F%29%2B%24%2Fi&subject=hello%40php-regex.com) — the tree and the verdict on the same screen.
 
 ### What It Matches
 
@@ -286,7 +286,7 @@ echo $isMatch ? 'Matches' : 'Does not match';                 // Matches
 /^(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])){3}$/
 ```
 
-[Try it in the playground](/#pattern=%2F%5E%28%3F%3A25%5B0-5%5D%7C2%5B0-4%5D%5B0-9%5D%7C1%5B0-9%5D%5B0-9%5D%7C%5B1-9%5D%5B0-9%5D%7C%5B0-9%5D%29%28%3F%3A%5C.%28%3F%3A25%5B0-5%5D%7C2%5B0-4%5D%5B0-9%5D%7C1%5B0-9%5D%5B0-9%5D%7C%5B1-9%5D%5B0-9%5D%7C%5B0-9%5D%29%29%7B3%7D%24%2F&subject=IPs%3A%20192.168.1.10%20and%208.8.8.8.) — the ReDoS tab proves the pattern linear.
+[Try it in the playground](/#pattern=%2F%5E%28%3F%3A25%5B0-5%5D%7C2%5B0-4%5D%5B0-9%5D%7C1%5B0-9%5D%5B0-9%5D%7C%5B1-9%5D%5B0-9%5D%7C%5B0-9%5D%29%28%3F%3A%5C.%28%3F%3A25%5B0-5%5D%7C2%5B0-4%5D%5B0-9%5D%7C1%5B0-9%5D%5B0-9%5D%7C%5B1-9%5D%5B0-9%5D%7C%5B0-9%5D%29%29%7B3%7D%24%2F&subject=192.168.1.10) — the ReDoS tab proves the pattern linear.
 
 Each octet alternative is deterministic — one way to read it — which is what lets the analyzer prove the whole pattern linear.
 
