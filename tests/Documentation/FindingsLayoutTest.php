@@ -58,6 +58,12 @@ final class FindingsLayoutTest extends TestCase
         $count = $xpath->evaluate('string('.self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary/*'.self::has('pg-findings-count').')');
         $this->assertIsString($count);
         $this->assertSame('', trim($count), 'The count waits empty for the corpus: the door never reads half a sentence.');
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-findings-count \{([^}]*)\}/m', $stylesheet, $chip), 'The count\'s own rule exists.');
+        $this->assertStringContainsString('text-overflow: ellipsis;', $chip[1], 'A long repository name is cut, never the row it sits in.');
+        $this->assertStringContainsString('max-width:', $chip[1]);
+        $this->assertSame(1, preg_match('/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-quick-label \{([^}]*)\}/', $stylesheet, $gone), 'A phone drops the row\'s label.');
+        $this->assertStringContainsString('display: none;', $gone[1], 'The patterns and the door speak for themselves where the width is short.');
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/div'.self::has('pg-findings-body')), 'The panel is a body of its own, inside the door.');
 
         // A repository's page names its project in the door's count: the
@@ -85,15 +91,15 @@ final class FindingsLayoutTest extends TestCase
         ] as $line => $why) {
             $this->assertStringContainsString($line, $panel[1], $why);
         }
-        $this->assertSame(1, preg_match('/^\.pg-findings-browse \{([^}]*)\}/m', $stylesheet, $door), 'The door anchors the panel.');
-        $this->assertStringContainsString('position: relative;', $door[1], 'The trigger is the anchor: the panel opens under it, wherever the row put it.');
+        $this->assertSame(1, preg_match('/^\.pg-quickbar \{([^}]*)\}/m', $stylesheet, $row), 'The quick row anchors the panel.');
+        $this->assertStringContainsString('position: relative;', $row[1], 'The panel hangs from the row itself — never past the box that clips the tool, whatever the row\'s padding.');
         $this->assertStringNotContainsString('flex-basis: 100%', $stylesheet, 'Nothing wraps the row away: the trigger stays where it stood.');
 
         $script = self::source(self::SCRIPT);
         $outside = self::between($script, '// A click outside the panel closes it', "\n  });\n");
         $this->assertStringContainsString("document.addEventListener('click'", $outside, 'A click outside closes the popover.');
         $this->assertStringContainsString('el.findingsBrowse.open = false;', $outside);
-        $escape = self::between($script, "el.findingsBrowse.addEventListener('keydown', function (event) {", "\n  });\n");
+        $escape = self::between($script, "document.addEventListener('keydown', function (event) {", "\n  });\n");
         $this->assertStringContainsString("event.key === 'Escape'", $escape, 'An Escape closes it.');
         $this->assertStringContainsString('el.findingsDoor.focus();', $escape, 'And carries the hand back to the trigger.');
         $this->assertStringNotContainsString('el.findingsBrowse.open = true;', $script, 'No code opens the panel unasked: a repository\'s page names its project in the count instead.');

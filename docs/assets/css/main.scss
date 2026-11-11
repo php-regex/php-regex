@@ -5404,6 +5404,7 @@ body.search-open {
    scrolls under its fades, ten chips wrapped would push the panes a
    hand down. */
 .pg-quickbar {
+  position: relative;
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
@@ -5907,6 +5908,9 @@ body.search-open {
    the side-by-side layout the row keeps its two cells, the field taking
    what the controls leave. */
 @media (max-width: 639px) {
+  .pg-quick-label {
+    display: none;
+  }
   .pg-body {
     padding: .85rem .8rem .9rem;
   }
@@ -7172,7 +7176,6 @@ body.search-open {
 .pg-findings-browse {
   display: flex;
   flex: none;
-  position: relative;
 }
 .pg-findings-browse > summary {
   display: inline-flex;
@@ -7211,9 +7214,14 @@ body.search-open {
   outline: 2px solid var(--amber);
   outline-offset: 1px;
 }
+/* A long repository name is cut, never the row it sits in. */
 .pg-findings-count {
+  max-width: 32vw;
+  overflow: hidden;
   font-family: var(--font-mono);
   font-size: .72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--ink-soft);
 }
 /* The panel is a popover anchored to its trigger: it opens under the

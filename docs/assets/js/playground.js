@@ -5138,9 +5138,10 @@
       el.findingsBrowse.open = false;
     }
   });
-  // An Escape closes it too, and carries the hand back to the trigger
-  // that opened it.
-  el.findingsBrowse.addEventListener('keydown', function (event) {
+  // An Escape closes it too — from wherever the hand stands, inside the
+  // panel or past it — and carries the hand back to the trigger that
+  // opened it.
+  document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && el.findingsBrowse.open) {
       el.findingsBrowse.open = false;
       el.findingsDoor.focus();
