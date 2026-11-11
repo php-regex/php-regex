@@ -356,11 +356,28 @@ final class InFileValueResolver
     private \WeakMap $keyedItems;
 
     /**
-     * @var array<int, array<string, array<int, true>>> scope => variable => the assignments of an array, by their
-     *                                                  rank, that stand as statements of the body itself: every
-     *                                                  path to what follows runs them
+     * @var array<int, array<string, array<int, true>>> scope => variable => the assignments, by their rank, that
+     *                                                  stand as statements of the body itself: every path to
+     *                                                  what follows runs them
      */
     private array $certain = [];
+
+    /**
+     * @var array<int, array<string, array{list<int>, list<int>}>> scope => variable => where those assignments
+     *                                                             are written and where they end, in order
+     */
+    private array $certainPlaces = [];
+
+    /**
+     * @var array<int, array<string, list<int>>> scope => variable => where the variable is read as a pattern or
+     *                                           as a part of one, -1 for somewhere unknown
+     */
+    private array $uses = [];
+
+    /**
+     * @var array<int, array<string, true>> scope => variable => whether its uses are in order
+     */
+    private array $usesInOrder = [];
 
     /**
      * @var list<array{list<string>, string, ValueExpr}> the define() calls of the file, each with the functions it
@@ -704,8 +721,7 @@ final class InFileValueResolver
      */
     public function assign(int $scope, string $name, ValueExpr $value, int $at, ?int $end = null, bool $certain = false): void
     {
-        // Only an array is asked whether it is there on every path.
-        if ($certain && ValueExpr::ARRAY === $value->kind) {
+        if ($certain) {
             $this->certain[$scope][$name][\count($this->assignments[$scope][$name] ?? [])] = true;
         }
 
@@ -802,6 +818,8 @@ final class InFileValueResolver
             $name = $current->value;
             $last = $this->lastUses[$scope][$name] ?? null;
             $this->lastUses[$scope][$name] = $current->offset < 0 || -1 === $last ? -1 : max($last ?? 0, $current->offset);
+            $this->uses[$scope][$name][] = $current->offset;
+            unset($this->usesInOrder[$scope][$name]);
             if (isset($this->followed[$scope][$name])) {
                 continue;
             }
@@ -1458,13 +1476,80 @@ final class InFileValueResolver
     private function assignedValues(int $scope, string $name, int $read): ?array
     {
         $reaching = [];
-        foreach ($this->assignments[$scope][$name] ?? [] as $assignment => [, $at]) {
-            if ($this->reaches($scope, $at, $read)) {
+        foreach ($this->assignments[$scope][$name] ?? [] as $assignment => [, $at, $end]) {
+            if ($this->reaches($scope, $at, $read) && !$this->joinedIntoItsReplacement($scope, $name, $at, $end, $read)) {
                 $reaching[] = $assignment;
             }
         }
 
         return $this->union($scope, $name, $reaching);
+    }
+
+    /**
+     * Where the assignments of a variable that every path runs are
+     * written and where they end, in order: statements of one body, they
+     * follow each other.
+     *
+     * @return array{list<int>, list<int>}
+     */
+    private function certainPlaces(int $scope, string $name): array
+    {
+        if (!isset($this->certainPlaces[$scope][$name])) {
+            $places = [];
+            foreach ($this->certain[$scope][$name] ?? [] as $assignment => $_) {
+                [, $at, $end] = $this->assignments[$scope][$name][$assignment];
+                $places[$at] = $end;
+            }
+
+            ksort($places);
+            $this->certainPlaces[$scope][$name] = [array_keys($places), array_values($places)];
+        }
+
+        return $this->certainPlaces[$scope][$name];
+    }
+
+    /**
+     * Whether the value an assignment gives a variable is only a piece
+     * of the next one: "$re = '/a'; $re = $re . 'b/';". The assignment
+     * that follows it runs on every path, before the last read, and names
+     * the variable in its own value, which joins what the variable held;
+     * and neither a call nor the value of another variable a call reads
+     * names the variable between the two. Such a piece is given to no
+     * call: it is no pattern beside the one it is joined into. Written in
+     * a loop, the assignment reaches what the loop reads before it at the
+     * next turn: the loop counts from its start.
+     */
+    private function joinedIntoItsReplacement(int $scope, string $name, int $at, int $end, int $read): bool
+    {
+        if ($read < 0 || !isset($this->certain[$scope][$name]) || isset($this->jumpingScopes[$scope])) {
+            return false;
+        }
+
+        [$written, $ended] = $this->certainPlaces($scope, $name);
+        $next = self::before($written, $at + 1);
+        if (!isset($written[$next]) || $ended[$next] >= $read) {
+            return false;
+        }
+
+        if (!isset($this->usesInOrder[$scope][$name])) {
+            $uses = $this->uses[$scope][$name] ?? [];
+            sort($uses);
+            $this->uses[$scope][$name] = $uses;
+            $this->usesInOrder[$scope][$name] = true;
+        }
+
+        $uses = $this->uses[$scope][$name];
+        if ([] === $uses || $uses[0] < 0) {
+            return false;
+        }
+
+        // The first place that names the variable after the assignment
+        // is in the value of the one that replaces it.
+        $loop = $this->outerLoop($scope, $at);
+        $from = null === $loop ? $end : min($end, $loop[0]);
+        $use = self::before($uses, $from + 1);
+
+        return isset($uses[$use]) && $uses[$use] > $written[$next] && $uses[$use] <= $ended[$next];
     }
 
     /**
@@ -1660,7 +1745,7 @@ final class InFileValueResolver
         $reaching = [];
         for ($rank = 0; $rank < $started; $rank++) {
             [, $at, $end] = $assignments[$order[$rank]];
-            if ($end >= $read) {
+            if ($end >= $read || $this->joinedIntoItsReplacement(self::FILE, $name, $at, $end, $read)) {
                 continue;
             }
 
