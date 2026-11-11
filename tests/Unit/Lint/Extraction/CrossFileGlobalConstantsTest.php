@@ -348,6 +348,125 @@ final class CrossFileGlobalConstantsTest extends TestCase
     }
 
     /**
+     * A return at the level of the file ends it: what the file declares
+     * after one is declared only when the return did not run. Guarded by
+     * defined(), the return is the guard "if (!defined('X')) define(...)"
+     * written the other way round; under any condition, in a loop or in a
+     * switch, it is a branch around the declaration; alone, it leaves the
+     * declaration never run, as an exit that always runs does. A "const"
+     * of the file level is declared when its statement runs, as define()
+     * is.
+     *
+     * PHP 8.4 (php -r, each file required): "return; const AFTER = 1;
+     * define('AFTER_DEFINE', 1);" leaves defined('AFTER') and
+     * defined('AFTER_DEFINE') false. With define('GUARDED',
+     * '/set-elsewhere/') run first, "if (defined('GUARDED')) { return; }
+     * define('GUARDED', '/guarded/'); const BESIDE = '/beside/';" leaves
+     * GUARDED "/set-elsewhere/" and BESIDE undefined; run alone, it
+     * defines "/guarded/" and "/beside/". "exit; define('GUARDED',
+     * '/guarded/');" defines nothing.
+     *
+     * @return iterable<string, array{constants: string}>
+     */
+    public static function provideDeclarationsAfterAReturnOfTheFile(): iterable
+    {
+        $after = static fn (string $statements): string => "<?php\n\ndefine('BEFORE', '/before/');\n\n".$statements."\n";
+        $define = "define('GUARDED', '/guarded/');";
+        $const = "const GUARDED = '/guarded/';";
+        $guard = "if (defined('GUARDED')) {\n    return;\n}\n\n";
+
+        yield 'a define() after a return guarded by defined()' => ['constants' => $after($guard.$define)];
+        yield 'a const after a return guarded by defined()' => ['constants' => $after($guard.$const)];
+        yield 'a define() after a guarded return without braces' => ['constants' => $after("if (defined('GUARDED')) return;\n\n".$define)];
+        yield 'a define() after a guarded return in the alternative syntax' => ['constants' => $after("if (defined('GUARDED')):\n    return;\nendif;\n\n".$define)];
+        yield 'a define() after a return under another condition' => ['constants' => $after("if (false !== getenv('APP_SKIP')) {\n    return;\n}\n\n".$define)];
+        yield 'a const after a return under another condition' => ['constants' => $after("if (false !== getenv('APP_SKIP')) {\n    return;\n}\n\n".$const)];
+        yield 'a define() after a return in an else branch' => ['constants' => $after("if (false === getenv('APP_SKIP')) {\n    \$loaded = true;\n} else {\n    return;\n}\n\n".$define)];
+        yield 'a define() after a return in a loop' => ['constants' => $after("foreach (\$argv as \$argument) {\n    if ('--skip' === \$argument) {\n        return;\n    }\n}\n\n".$define)];
+        yield 'a define() after a return in a switch' => ['constants' => $after("switch (getenv('APP_SKIP')) {\n    case '1':\n        return;\n}\n\n".$define)];
+        yield 'a define() after a return that always runs' => ['constants' => $after("return;\n\n".$define)];
+        yield 'a const after a return that always runs' => ['constants' => $after("return;\n\n".$const)];
+        yield 'a define() after a return of a value' => ['constants' => $after("return ['loaded' => true];\n\n".$define)];
+        yield 'a define() after an exit that always runs' => ['constants' => $after("exit;\n\n".$define)];
+        yield 'a define() after a die that always runs' => ['constants' => $after("die('stopped');\n\n".$define)];
+        yield 'a define() after a return in the braces of a namespace' => ['constants' => "<?php\n\nnamespace App {\n    \\define('BEFORE', '/before/');\n\n    if (\\defined('GUARDED')) {\n        return;\n    }\n}\n\nnamespace {\n    define('GUARDED', '/guarded/');\n}\n"];
+    }
+
+    /**
+     * The constant is declared, with a value no file proves: nothing is
+     * known of it where it is read. What the file declares before the
+     * return is still read.
+     */
+    #[Test]
+    #[DataProvider('provideDeclarationsAfterAReturnOfTheFile')]
+    public function test_a_declaration_after_a_return_of_the_file_is_not_read(string $constants): void
+    {
+        $files = [
+            'Constants.php' => $constants,
+            'Reader.php' => "<?php\n\npreg_match(GUARDED, 'x');\npreg_match(BEFORE, 'x');\n",
+        ];
+
+        $this->assertSame(['/before/'], $this->patternsAcross($files));
+        $this->assertSame([
+            ['file' => 'Reader.php', 'expression' => 'GUARDED', 'state' => 'opaque'],
+            ['file' => 'Reader.php', 'expression' => 'BEFORE', 'state' => 'constant'],
+        ], $this->argumentsAcross($files));
+    }
+
+    /**
+     * A return that does not end the file hides nothing: one in a
+     * function, a method or a closure the file declares ends that body
+     * alone, and one written after the declaration runs after it.
+     *
+     * PHP 8.4 (php -r, the file required): "function helper() { return
+     * 1; } define('GUARDED', '/guarded/');" and "define('GUARDED',
+     * '/guarded/'); return;" both leave GUARDED "/guarded/". So does
+     * "defined('BEFORE') || exit; define('GUARDED', '/guarded/');" when
+     * BEFORE is defined; when it is not, the script ends there and nothing
+     * reads GUARDED.
+     *
+     * @return iterable<string, array{constants: string}>
+     */
+    public static function provideReturnsThatDoNotEndTheFileBeforeTheDeclaration(): iterable
+    {
+        $after = static fn (string $statements): string => "<?php\n\ndefine('BEFORE', '/before/');\n\n".$statements."\n";
+        $define = "define('GUARDED', '/guarded/');";
+        $const = "const GUARDED = '/guarded/';";
+
+        yield 'a return in a function, before a define()' => ['constants' => $after("function helper(): int\n{\n    return 1;\n}\n\n".$define)];
+        yield 'a return in a function, before a const' => ['constants' => $after("function helper(): int\n{\n    return 1;\n}\n\n".$const)];
+        yield 'a return in a function declared in a branch' => ['constants' => $after("if (!function_exists('helper')) {\n    function helper(): int\n    {\n        return 1;\n    }\n}\n\n".$define)];
+        yield 'a return in a method' => ['constants' => $after("final class Boot\n{\n    public static function run(): int\n    {\n        return 2;\n    }\n}\n\n".$define)];
+        yield 'a return in a closure' => ['constants' => $after("\$boot = static function (): int {\n    return 3;\n};\n\n".$define)];
+        yield 'an exit in a function' => ['constants' => $after("function stop(): never\n{\n    exit(1);\n}\n\n".$define)];
+        yield 'a return after a define()' => ['constants' => $after($define."\n\nreturn;")];
+        yield 'a return after a const' => ['constants' => $after($const."\n\nreturn;")];
+        yield 'a guarded return after a define()' => ['constants' => $after($define."\n\nif (defined('OTHER')) {\n    return;\n}")];
+        yield 'the word return in a comment and in a string' => ['constants' => $after("// return;\n\$message = 'return;';\n\n".$define)];
+        // An exit under a condition stops the script or lets the declaration run: no code reads the constant without it.
+        yield 'an exit after an or, before a define()' => ['constants' => $after("defined('BEFORE') || exit;\n\n".$define)];
+        yield 'an exit after an or, before a const' => ['constants' => $after("defined('BEFORE') || exit;\n\n".$const)];
+        yield 'an exit in a branch' => ['constants' => $after("if (!defined('BEFORE')) {\n    exit;\n}\n\n".$define)];
+        yield 'a die in a branch without braces' => ['constants' => $after("if (!defined('BEFORE')) die('No direct access.');\n\n".$define)];
+    }
+
+    #[Test]
+    #[DataProvider('provideReturnsThatDoNotEndTheFileBeforeTheDeclaration')]
+    public function test_a_return_that_does_not_end_the_file_before_a_declaration_hides_nothing(string $constants): void
+    {
+        $files = [
+            'Constants.php' => $constants,
+            'Reader.php' => "<?php\n\npreg_match(GUARDED, 'x');\npreg_match(BEFORE, 'x');\n",
+        ];
+
+        $this->assertSame(['/before/', '/guarded/'], $this->patternsAcross($files));
+        $this->assertSame([
+            ['file' => 'Reader.php', 'expression' => 'GUARDED', 'state' => 'constant'],
+            ['file' => 'Reader.php', 'expression' => 'BEFORE', 'state' => 'constant'],
+        ], $this->argumentsAcross($files));
+    }
+
+    /**
      * The braces of a namespace are the top level of the file: a const
      * and a define() standing in them are read.
      */

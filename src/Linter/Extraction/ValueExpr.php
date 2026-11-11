@@ -232,6 +232,26 @@ final class ValueExpr
     }
 
     /**
+     * What names an item of an array when true, false, null or a float
+     * is written as its key: the key PHP casts it to. True is the index
+     * 1 and false the index 0, null the empty string, a float its integer
+     * part, toward zero. A float no integer holds is a number whose key
+     * is not told.
+     */
+    public static function castKey(bool|float|null $value, int $offset, int $line): self
+    {
+        if (null === $value) {
+            return self::literal('', $offset, $line);
+        }
+
+        if (\is_bool($value)) {
+            return self::nonString((int) $value);
+        }
+
+        return is_finite($value) && $value >= (float) \PHP_INT_MIN && $value < (float) \PHP_INT_MAX ? self::nonString((int) $value) : self::nonString();
+    }
+
+    /**
      * A text known at run time only, where a string is read: what
      * preg_quote() returns, which reads as literal characters, or, not
      * quoted, anything.

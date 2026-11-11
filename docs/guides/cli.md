@@ -953,6 +953,8 @@ Each of the four literals is linted, where it is written:
 - **An item of such an array**, `$map['word']`, `$list[0]` or
   `self::MAP['word']`: that item under a literal key, each value of the
   array under any other key, nothing under a key the array does not hold.
+  An item may be missing, so its fallback is kept beside the values:
+  `self::MAP[$type] ?? '/^\w+$/'` is each value of `MAP` and `/^\w+$/`.
 
 ##### Constants of another file
 
@@ -979,9 +981,10 @@ A `const` or a `define()` outside a class is read from another file too,
 `preg_match(SLUG, $s)` or `preg_match('/^'.PART.'$/', $s)`, by the name PHP
 resolves: in the namespace of the call, then globally, or through a
 `use const`. The project must declare the name once, at the top level of
-its file: one declared in two files, in a function, or under a condition
-(`if (!defined('SLUG')) { define('SLUG', '...'); }`) is not read from
-another file. The libraries of `vendor/` give theirs for the names the
+its file: one declared in two files, in a function, under a condition
+(`if (!defined('SLUG')) { define('SLUG', '...'); }`) or after a `return` of
+its file is not read from another file, and neither is a `define()` that
+reaches a function of that name the namespace declares. The libraries of `vendor/` give theirs for the names the
 project does not declare.
 
 The language server reads the constants of another file as well, and

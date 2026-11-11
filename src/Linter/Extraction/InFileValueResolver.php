@@ -30,16 +30,17 @@ use PHPRegex\Parser\Text\Ascii;
  *
  * - a constant of the file: self::X and ClassName::X of a class (no trait)
  *   the file declares, static::X when the class or the constant is final,
- *   a namespace "const" or a define() with a literal name; an unqualified
- *   name tries the namespace, then the global constant. Its value may be
- *   a ternary, a match, "?:" or "??": one of the values of its arms. A
- *   constant of another file is read through the project's constants;
+ *   a namespace "const" or a define() with a literal name, when the call
+ *   reaches the function of PHP; an unqualified name tries the namespace,
+ *   then the global constant. Its value may be a ternary, a match, "?:"
+ *   or "??": one of the values of its arms. A constant of another file
+ *   is read through the project's constants;
  *   DIRECTORY_SEPARATOR, PHP_EOL and PATH_SEPARATOR are each one of the
  *   two values a system gives them;
  * - self::X and static::X in a closure or an arrow function, which may be
  *   bound to another class, only when each closure around the read is
- *   written in a call to a function of CALLING, which nothing declares
- *   again in the namespace of the call;
+ *   written as the callback of a call to a function of CALLING, which
+ *   nothing declares again in the namespace of the call;
  * - a property read as $this->p: a literal default, private, or protected,
  *   in a final class or final itself, never promoted, and never written in
  *   the file;
@@ -57,7 +58,8 @@ use PHPRegex\Parser\Text\Ascii;
  *   nothing else in the loop writes it;
  * - an array a variable is assigned, at a call PHP gives a list of
  *   patterns to, and an item of an array a variable or a constant holds:
- *   the one a key the file proves names, any of them otherwise;
+ *   the one a key the file proves names, any of them otherwise. An array
+ *   holds a key written twice once, with its last value;
  * - a variable of the file level, a global any code may write: by the
  *   rules of a local variable, in a file that includes no other, names no
  *   global from a function body and evaluates nothing, and where no call
@@ -69,7 +71,8 @@ use PHPRegex\Parser\Text\Ascii;
  * what is written around a part the file does not prove; preg_quote() is
  * a hole whose text reads as literal characters; an integer joined to a
  * string reads as PHP writes it. A ternary and a match are the values of
- * their arms; "A ?: B" and "A ?? B" the values PHP keeps of them;
+ * their arms; "A ?: B" and "A ?? B" the values PHP keeps of them, those
+ * of B among them when A is a variable or an item PHP may not find;
  * sprintf() and implode() the string PHP builds of what the file proves.
  * Every pattern argument ends in one state, from one pattern to nothing
  * static.
@@ -123,21 +126,31 @@ final class InFileValueResolver
     public const BY_VALUE = ['preg_quote' => true, 'sprintf' => true, 'implode' => true, 'join' => true];
 
     /**
-     * The functions of PHP that call a closure they are given and let it
-     * go: none of them keeps it, hands it on or binds it, so a closure
-     * written in a call to one of them keeps the class it is written in.
-     * A list of its own, not the functions of the PHP that runs: what a
-     * file proves does not depend on the extensions loaded.
+     * The function of PHP that declares a constant.
+     */
+    public const DEFINING = 'define';
+
+    /**
+     * The functions of PHP that call a closure they are given as a
+     * callback and let it go: none of them keeps it, hands it on or binds
+     * it, so a closure written there keeps the class it is written in.
+     * Each with where it takes its callback: the position of the
+     * parameter PHP names "callback", from zero; or, for a function that
+     * takes any number of arrays first, -1 for its last argument and -2
+     * for its last two. Any other argument is no callback: PHP hands it
+     * to the callback, or refuses it. A list of its own, not the
+     * functions of the PHP that runs: what a file proves does not depend
+     * on the extensions loaded.
      */
     public const CALLING = [
-        'array_map' => true, 'array_filter' => true, 'array_reduce' => true, 'array_walk' => true,
-        'array_walk_recursive' => true, 'array_find' => true, 'array_find_key' => true, 'array_any' => true,
-        'array_all' => true, 'usort' => true, 'uasort' => true, 'uksort' => true, 'array_udiff' => true,
-        'array_udiff_assoc' => true, 'array_udiff_uassoc' => true, 'array_uintersect' => true,
-        'array_uintersect_assoc' => true, 'array_uintersect_uassoc' => true, 'array_diff_ukey' => true,
-        'array_diff_uassoc' => true, 'array_intersect_ukey' => true, 'array_intersect_uassoc' => true,
-        'preg_replace_callback' => true, 'call_user_func' => true, 'call_user_func_array' => true,
-        'iterator_apply' => true,
+        'array_map' => 0, 'array_filter' => 1, 'array_reduce' => 1, 'array_walk' => 1,
+        'array_walk_recursive' => 1, 'array_find' => 1, 'array_find_key' => 1, 'array_any' => 1,
+        'array_all' => 1, 'usort' => 1, 'uasort' => 1, 'uksort' => 1, 'array_udiff' => -1,
+        'array_udiff_assoc' => -1, 'array_udiff_uassoc' => -2, 'array_uintersect' => -1,
+        'array_uintersect_assoc' => -1, 'array_uintersect_uassoc' => -2, 'array_diff_ukey' => -1,
+        'array_diff_uassoc' => -1, 'array_intersect_ukey' => -1, 'array_intersect_uassoc' => -1,
+        'preg_replace_callback' => 1, 'call_user_func' => 0, 'call_user_func_array' => 0,
+        'iterator_apply' => 1,
     ];
 
     /**
@@ -145,6 +158,12 @@ final class InFileValueResolver
      * code the file runs may write.
      */
     public const FILE = -1;
+
+    /**
+     * The name PHP gives the callback of a function of CALLING that takes
+     * it at a position of its own.
+     */
+    private const CALLBACK = 'callback';
 
     /**
      * The constants of PHP whose value depends on the system the code
@@ -321,6 +340,27 @@ final class InFileValueResolver
     private \WeakMap $localArrays;
 
     /**
+     * @var \WeakMap<ValueExpr, array<int|string, ValueExpr>|false> a folded array => its items under the keys PHP
+     *                                                              stores them by, read at its first item named by
+     *                                                              a key; false when a key is not proved
+     */
+    private \WeakMap $keyedItems;
+
+    /**
+     * @var array<int, array<string, array<int, true>>> scope => variable => the assignments of an array, by their
+     *                                                  rank, that stand as statements of the body itself: every
+     *                                                  path to what follows runs them
+     */
+    private array $certain = [];
+
+    /**
+     * @var list<array{list<string>, string, ValueExpr}> the define() calls of the file, each with the functions it
+     *                                                   may reach, the name it gives and the value: a constant
+     *                                                   when the call reaches the function of PHP
+     */
+    private array $defined = [];
+
+    /**
      * @var array<string, list<ValueExpr>> constant of PLATFORM => its values
      */
     private array $platformValues = [];
@@ -432,6 +472,34 @@ final class InFileValueResolver
         $this->sources = new \WeakMap();
         $this->variants = new \WeakMap();
         $this->localArrays = new \WeakMap();
+        $this->keyedItems = new \WeakMap();
+    }
+
+    /**
+     * Whether a function of CALLING calls what it is passed there: the
+     * argument at the position of its callback, or named as it; for a
+     * function that takes its callbacks last, one of them, when every
+     * argument of the call is written at its position.
+     *
+     * @param string      $function the lowercase function of PHP
+     * @param int|null    $position the position of the argument, from zero; null for one passed by name
+     * @param string|null $name     the name it is passed by
+     * @param int|null    $count    how many arguments the call passes, each at its position; null when one is
+     *                              named or spread
+     */
+    public static function callsArgument(string $function, ?int $position, ?string $name, ?int $count): bool
+    {
+        $callback = self::CALLING[$function] ?? null;
+        if (null === $callback) {
+            return false;
+        }
+
+        if ($callback >= 0) {
+            return null === $name ? $position === $callback : self::CALLBACK === $name;
+        }
+
+        // The first argument is an array, whatever follows.
+        return null !== $position && null !== $count && $position >= max(1, $count + $callback);
     }
 
     /**
@@ -530,6 +598,21 @@ final class InFileValueResolver
     }
 
     /**
+     * A define() with a literal name: it declares the constant when the
+     * call reaches the function of PHP, which is known once the whole
+     * file is read. A function of that name the namespace of the call
+     * declares, in the file or in another one of the project, is reached
+     * first, and declares nothing the file can know.
+     *
+     * @param list<string> $names the lowercase functions the call may reach, in the order PHP tries them
+     * @param string       $name  the constant's fully qualified name
+     */
+    public function define(array $names, string $name, ValueExpr $value): void
+    {
+        $this->defined[] = [$names, $name, $value];
+    }
+
+    /**
      * A function the file declares, by its fully qualified name: a call
      * that reaches it is not a call to the function of PHP of that name.
      */
@@ -594,11 +677,19 @@ final class InFileValueResolver
     }
 
     /**
-     * @param int      $at  where the assignment is written
-     * @param int|null $end where its value ends; null when it is not known, which reads as where it is written
+     * @param int      $at      where the assignment is written
+     * @param int|null $end     where its value ends; null when it is not known, which reads as where it is
+     *                          written
+     * @param bool     $certain whether the assignment stands as a statement of the function body itself, or of
+     *                          the file, in no branch and no loop: every path to what follows it runs it
      */
-    public function assign(int $scope, string $name, ValueExpr $value, int $at, ?int $end = null): void
+    public function assign(int $scope, string $name, ValueExpr $value, int $at, ?int $end = null, bool $certain = false): void
     {
+        // Only an array is asked whether it is there on every path.
+        if ($certain && ValueExpr::ARRAY === $value->kind) {
+            $this->certain[$scope][$name][\count($this->assignments[$scope][$name] ?? [])] = true;
+        }
+
         $this->assignments[$scope][$name][] = [$value, $at, max($at, $end ?? $at)];
     }
 
@@ -937,13 +1028,15 @@ final class InFileValueResolver
      * string the file proves: whether PHP keeps it is not known. A
      * variable is not proved to be assigned on every path, and PHP takes B
      * for one that is not: its values are kept, and those of B beside them.
+     * So are those of an item of an array, which the array may not hold.
      *
      * @param list<array{ValueExpr, string|null}>             $first      the values of A, each with the name it is
      *                                                                    read through
      * @param \Closure(): list<array{ValueExpr, string|null}> $second     the values of B, asked for only when one
      *                                                                    of A is passed over
      * @param bool                                            $coalescing whether the operator is "??"
-     * @param bool                                            $mayBeUnset whether A is a variable
+     * @param bool                                            $mayBeUnset whether A is a variable, or an item PHP
+     *                                                                    may not find
      *
      * @return list<array{ValueExpr, string|null}>
      */
@@ -1136,7 +1229,7 @@ final class InFileValueResolver
 
                 return $arms;
             case ValueExpr::FALLBACK:
-                return self::kept($this->written($expr->parts[0], $argument), fn (): array => $this->written($expr->parts[1], $argument), '??' === $expr->value, ValueExpr::VARIABLE === $expr->parts[0]->kind);
+                return self::kept($this->written($expr->parts[0], $argument), fn (): array => $this->written($expr->parts[1], $argument), '??' === $expr->value, $this->mayBeUnset($expr->parts[0], 0));
             default:
                 $composed = [];
                 foreach ($this->values($expr) as $value) {
@@ -1168,11 +1261,20 @@ final class InFileValueResolver
 
     /**
      * Counts the writes of the calls that reach a function of the file,
-     * and drops those of the calls that reach a function of PHP: every
+     * and drops those of the calls that reach a function of PHP; declares
+     * the constants of the define() calls that reach PHP's: every
      * declaration of the file is read by the time a value is asked for.
      */
     private function settleCalls(): void
     {
+        $defined = $this->defined;
+        $this->defined = [];
+        foreach ($defined as [$names, $name, $value]) {
+            if ($this->isNative($names)) {
+                $this->declareConstant($name, $value);
+            }
+        }
+
         $passed = $this->passed;
         $this->passed = [];
         foreach ($passed as [$names, $write, $owner, $name, $at]) {
@@ -1824,7 +1926,7 @@ final class InFileValueResolver
                     $pairs(ValueExpr::ARRAY === $expr->parts[0]->kind ? [self::rawHole()] : $this->selected($expr->parts[0])),
                     fn (): array => $pairs(ValueExpr::ARRAY === $second->kind ? [self::rawHole()] : $this->selected($second)),
                     '??' === $expr->value,
-                    ValueExpr::VARIABLE === $expr->parts[0]->kind,
+                    $this->mayBeUnset($expr->parts[0], 0),
                 ), 0);
 
             default:
@@ -2008,7 +2110,7 @@ final class InFileValueResolver
                     }
 
                     return $second;
-                }, '??' === $expr->value, ValueExpr::VARIABLE === $expr->parts[0]->kind);
+                }, '??' === $expr->value, $this->mayBeUnset($expr->parts[0], $depth));
                 $height = max($firstHeight, $secondHeight);
 
                 return array_column($kept, 0);
@@ -2042,7 +2144,7 @@ final class InFileValueResolver
                     $height = max($height, $keyHeight, $valueHeight);
                 }
 
-                return [ValueExpr::arrayOf($items)];
+                return [ValueExpr::arrayOf(self::stored($items))];
 
             case ValueExpr::CLASS_CONSTANT:
                 $class = $expr->class;
@@ -2181,7 +2283,7 @@ final class InFileValueResolver
             return self::valuesOf($array);
         }
 
-        $item = (self::keyed($array) ?? [])[$key] ?? null;
+        $item = ($this->keyedItems($array) ?: [])[$key] ?? null;
         if (null === $item || ValueExpr::ARRAY === $item->kind) {
             return [self::rawHole()];
         }
@@ -2193,6 +2295,111 @@ final class InFileValueResolver
         $source = $this->sources[$item] ?? null;
 
         return [] === $item->alternatives ? [self::rawHole()] : $item->alternatives;
+    }
+
+    /**
+     * Whether PHP may find nothing where "A ?: B" or "A ?? B" reads A, and
+     * take B: a variable, which no path is proved to assign, and an item
+     * of an array, unless a key the file proves names it in an array that
+     * holds the key, a constant or a variable that a statement of the
+     * body itself, or of the file, assigns before the read.
+     */
+    private function mayBeUnset(ValueExpr $expr, int $depth): bool
+    {
+        if (ValueExpr::ITEM !== $expr->kind) {
+            return ValueExpr::VARIABLE === $expr->kind;
+        }
+
+        [$held, $named] = $expr->parts;
+        $height = 0;
+        $array = $this->arrayOf($held, $depth, $height);
+        if (!$array instanceof ValueExpr || (ValueExpr::VARIABLE === $held->kind && !$this->assignedOnEveryPath($held))) {
+            return true;
+        }
+
+        $keys = $this->resolve($named, $depth, $height);
+        $key = 1 === \count($keys) ? self::keyOf($keys[0]) : null;
+
+        return null === $key || !isset(($this->keyedItems($array) ?: [])[$key]);
+    }
+
+    /**
+     * Whether the one assignment that reaches the read of a variable runs
+     * on every path to it: a statement of the function body itself, or of
+     * the file, which nothing jumps over.
+     */
+    private function assignedOnEveryPath(ValueExpr $variable): bool
+    {
+        $scope = $variable->scope;
+        $name = $variable->value;
+        if (null === $scope || !isset($this->certain[$scope][$name]) || isset($this->targets[$scope][$name]) || isset($this->jumpingScopes[$scope])) {
+            return false;
+        }
+
+        $assignment = $this->reaching($scope, $name, $variable->offset);
+
+        return null !== $assignment && isset($this->certain[$scope][$name][$assignment]);
+    }
+
+    /**
+     * The items of a folded array under the keys PHP stores them by,
+     * read once for all the items a key names in it; false when a key is
+     * not proved.
+     *
+     * @return array<int|string, ValueExpr>|false
+     */
+    private function keyedItems(ValueExpr $array): array|false
+    {
+        return $this->keyedItems[$array] ??= self::keyed($array) ?? false;
+    }
+
+    /**
+     * The items of an array literal as PHP keeps them: a key written
+     * twice holds its last value, at the place of the first. A key is
+     * written twice as PHP stores it: the index an item with no key
+     * takes, the integer a string of digits writes. An item whose key
+     * the file does not prove is kept beside the others, and so are the
+     * items with no key after it, whose index is then PHP's to say.
+     *
+     * @param list<array{0: ValueExpr|null, 1: ValueExpr}> $items the items, each key and each value folded
+     *
+     * @return list<array{0: ValueExpr|null, 1: ValueExpr}>
+     */
+    private static function stored(array $items): array
+    {
+        $stored = [];
+        $places = [];
+        $next = 0;
+        foreach ($items as $item) {
+            [$key, $value] = $item;
+            if (null === $key) {
+                $at = $next;
+                $next = null === $next ? null : $next + 1;
+            } else {
+                $at = self::keyOf($key);
+                if (null === $at) {
+                    $next = null;
+                } elseif (\is_int($at) && null !== $next) {
+                    // After a negative index alone, the next one is PHP's
+                    // to say.
+                    $next = $at < 0 && 0 === $next ? null : max($next, $at + 1);
+                }
+            }
+
+            if (null !== $at && isset($places[$at])) {
+                $stored[$places[$at]] = [$stored[$places[$at]][0], $value];
+
+                continue;
+            }
+
+            if (null !== $at) {
+                $places[$at] = \count($stored);
+            }
+
+            $stored[] = $item;
+        }
+
+        return $stored;
     }
 
     /**

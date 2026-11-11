@@ -863,6 +863,393 @@ final class ArrayOfPatternsTest extends TestCase
     }
 
     /**
+     * An array literal that writes a key twice holds one item under it:
+     * the last value, at the place of the first. A key is written twice
+     * as PHP stores it, the index an item with no key takes, the integer a
+     * string of digits writes, and the key a boolean, null or a float is
+     * cast to. The item PHP drops is in no string the code builds.
+     *
+     * PHP 8.4 (php -r): implode('|', ['(', 0 => 'a']) is "a"; implode('|',
+     * ['a', 0 => '(']) and implode('|', [1 => 'a', '1' => '(']) are "(";
+     * implode('|', ['a', 'b', 0 => 'c', 1 => 'd']) is "c|d";
+     * implode('|', ['k' => ')', 'k' => 'b']) is "b"; implode('|', ['x' =>
+     * 'p', 'y' => 'q', 'x' => 'r']) is "r|q"; implode('|', [true => 'a(',
+     * 1 => 'b']), implode('|', [null => 'a(', '' => 'b']) and
+     * implode('|', [1.7 => 'a(', 1 => 'b']) are "b", the last one with
+     * "Deprecated: Implicit conversion from float 1.7 to int loses
+     * precision". foreach (['x' => 'b(', 'x' => 'b'] as $v) runs once,
+     * with "b"; foreach (['/h(/', 0 => '/h/'] as $re) once, with "/h/";
+     * ['/l(/', 'k' => '/m/', 0 => '/l/'] is [0 => "/l/", 'k' => "/m/"].
+     * preg_match('/^((|a)$/', 'a') fails with "Compilation failed: missing
+     * closing parenthesis at offset 7"; preg_match('/^(a)$/', 'a') is 1.
+     *
+     * @return iterable<string, array{statements: string, constants: string, built: list<string>}>
+     */
+    public static function provideArraysWhoseKeysCollide(): iterable
+    {
+        $joined = static fn (string $array): string => "\$found += preg_match('/^(' . implode('|', ".$array.") . ')$/', \$s);";
+        $each = static fn (string $array): string => 'foreach ('.$array." as \$re) {\n            \$found += preg_match(\$re, \$s);\n        }";
+
+        yield 'implode(): the first item written again by its index' => [
+            'statements' => $joined("['(', 0 => 'a']"),
+            'constants' => '',
+            'built' => ['/^(a)$/'],
+        ];
+
+        yield 'implode(): an index written again, the last value kept' => [
+            'statements' => $joined("['a', 0 => 'b(']"),
+            'constants' => '',
+            'built' => ['/^(b()$/'],
+        ];
+
+        yield 'implode(): an index and the string of digits that writes it' => [
+            'statements' => $joined("[1 => 'a(', '1' => 'b']"),
+            'constants' => '',
+            'built' => ['/^(b)$/'],
+        ];
+
+        yield 'implode(): two items written again' => [
+            'statements' => $joined("['a(', 'b(', 0 => 'c', 1 => 'd']"),
+            'constants' => '',
+            'built' => ['/^(c|d)$/'],
+        ];
+
+        yield 'implode(): a string key written twice' => [
+            'statements' => $joined("['k' => 'a(', 'k' => 'b']"),
+            'constants' => '',
+            'built' => ['/^(b)$/'],
+        ];
+
+        // The last value stands at the place of the first.
+        yield 'implode(): a key written again after another key' => [
+            'statements' => $joined("['x' => 'p(', 'y' => 'q', 'x' => 'r']"),
+            'constants' => '',
+            'built' => ['/^(r|q)$/'],
+        ];
+
+        yield 'implode(): a local array' => [
+            'statements' => "\$words = ['(', 0 => 'a'];\n        ".$joined('$words'),
+            'constants' => '',
+            'built' => ['/^(a)$/'],
+        ];
+
+        yield 'implode(): a class constant' => [
+            'statements' => $joined('self::WORDS'),
+            'constants' => "    private const WORDS = ['(', 0 => 'a'];\n\n",
+            'built' => ['/^(a)$/'],
+        ];
+
+        yield 'join()' => [
+            'statements' => "\$found += preg_match('/^(' . join('|', ['(', 0 => 'a']) . ')$/', \$s);",
+            'constants' => '',
+            'built' => ['/^(a)$/'],
+        ];
+
+        yield 'implode(): true, cast to the index 1' => [
+            'statements' => $joined("[true => 'a(', 1 => 'b']"),
+            'constants' => '',
+            'built' => ['/^(b)$/'],
+        ];
+
+        yield 'implode(): null, cast to the empty key' => [
+            'statements' => $joined("[null => 'a(', '' => 'b']"),
+            'constants' => '',
+            'built' => ['/^(b)$/'],
+        ];
+
+        yield 'implode(): a float, cast to its integer part' => [
+            'statements' => $joined("[1.7 => 'a(', 1 => 'b']"),
+            'constants' => '',
+            'built' => ['/^(b)$/'],
+        ];
+
+        yield 'foreach: a string key written twice' => [
+            'statements' => "foreach (['x' => 'b(', 'x' => 'b'] as \$word) {\n            \$found += preg_match('/^' . \$word . '$/', \$s);\n        }",
+            'constants' => '',
+            'built' => ['/^b$/'],
+        ];
+
+        yield 'foreach: the first pattern written again by its index' => [
+            'statements' => $each("['/h(/', 0 => '/h/']"),
+            'constants' => '',
+            'built' => ['/h/'],
+        ];
+
+        yield 'foreach: a key written twice among other items' => [
+            'statements' => $each("['/first/', 'k' => '/k(/', '/second/', 'k' => '/k/']"),
+            'constants' => '',
+            'built' => ['/first/', '/k/', '/second/'],
+        ];
+
+        yield 'foreach: a local array' => [
+            'statements' => "\$local = ['x' => '/l(/', 'x' => '/l/'];\n        ".$each('$local'),
+            'constants' => '',
+            'built' => ['/l/'],
+        ];
+
+        yield 'foreach: a class constant' => [
+            'statements' => $each('self::TWICE'),
+            'constants' => "    private const TWICE = ['x' => '/c(/', 'x' => '/c/'];\n\n",
+            'built' => ['/c/'],
+        ];
+
+        yield 'an item of a local array named by a parameter' => [
+            'statements' => "\$twice = ['k' => '/first(/', 'k' => '/second/', 'other' => '/other/'];\n        \$found += preg_match(\$twice[\$k], \$s);",
+            'constants' => '',
+            'built' => ['/second/', '/other/'],
+        ];
+
+        yield 'an item of a class constant named by a parameter' => [
+            'statements' => '$found += preg_match(self::TWICE[$k], $s);',
+            'constants' => "    private const TWICE = ['x' => '/c(/', 'x' => '/c/', 'y' => '/d/'];\n\n",
+            'built' => ['/c/', '/d/'],
+        ];
+
+        yield 'a local array passed as a list of patterns' => [
+            'statements' => "\$list = ['/l(/', 'k' => '/m/', 0 => '/l/'];\n        \$found += \\strlen((string) preg_replace(\$list, '', \$s));",
+            'constants' => '',
+            'built' => ['/l/', '/m/'],
+        ];
+
+        yield 'a class constant passed as a list of patterns' => [
+            'statements' => "\$found += \\strlen((string) preg_replace(self::LIST, '', \$s));",
+            'constants' => "    private const LIST = ['/l(/', 'k' => '/m/', 0 => '/l/'];\n\n",
+            'built' => ['/l/', '/m/'],
+        ];
+    }
+
+    /**
+     * The keys of such an array are each read once, as PHP gives them.
+     *
+     * PHP 8.4: foreach (['k1' => 1, 'k2' => 2, 'k1' => 3] as $key =>
+     * $weight) gives "k1" then "k2"; foreach (['a(', 0 => 'b', 'c'] as
+     * $index => $word) gives 0 then 1; foreach (['/k/' => 1, '/k/' => 2]
+     * as $re => $weight) runs once, with "/k/".
+     *
+     * @return iterable<string, array{statements: string, constants: string, built: list<string>}>
+     */
+    public static function provideKeysOfArraysWhoseKeysCollide(): iterable
+    {
+        yield 'a string key written twice' => [
+            'statements' => "foreach (['k1' => 1, 'k2' => 2, 'k1' => 3] as \$key => \$weight) {\n            \$found += preg_match('/^' . \$key . '$/', \$s);\n        }",
+            'constants' => '',
+            'built' => ['/^k1$/', '/^k2$/'],
+        ];
+
+        yield 'the index of an item written again' => [
+            'statements' => "foreach (['a(', 0 => 'b', 'c'] as \$index => \$word) {\n            \$found += preg_match('/^.{' . \$index . '}$/', \$s);\n        }",
+            'constants' => '',
+            'built' => ['/^.{0}$/', '/^.{1}$/'],
+        ];
+
+        yield 'a pattern written twice as a key' => [
+            'statements' => "foreach (['/k/' => 1, '/k/' => 2] as \$re => \$weight) {\n            \$found += preg_match(\$re, \$s);\n        }",
+            'constants' => '',
+            'built' => ['/k/'],
+        ];
+
+        yield 'the keys of a class constant' => [
+            'statements' => "foreach (self::WEIGHTS as \$re => \$weight) {\n            \$found += preg_match(\$re, \$s);\n        }",
+            'constants' => "    private const WEIGHTS = ['/k-a/' => 1, '/k-b/' => 2, '/k-a/' => 3];\n\n",
+            'built' => ['/k-a/', '/k-b/'],
+        ];
+    }
+
+    /**
+     * No text PHP does not build is read; where every argument is
+     * judged, the patterns are exactly those PHP builds.
+     *
+     * @param list<string> $built
+     */
+    #[Test]
+    #[DataProvider('provideArraysWhoseKeysCollide')]
+    #[DataProvider('provideKeysOfArraysWhoseKeysCollide')]
+    public function test_an_array_whose_keys_collide_is_read_as_php_keeps_it(string $statements, string $constants, array $built): void
+    {
+        $this->assertReadsWhatPhpBuilds($built, self::reading($statements, $constants));
+    }
+
+    /**
+     * A foreach naming one variable as its key and its value assigns the
+     * value, then the key: the variable holds the key in the body.
+     *
+     * PHP 8.4 (php -r): foreach (['d' => 'd(', 'e' => 'e('] as $v => $v)
+     * { echo '/' . $v . '/'; } prints "/d/" then "/e/"; foreach (['/k1/'
+     * => '/v1(/', '/k2/' => '/v2(/'] as $re => $re) gives "/k1/" then
+     * "/k2/"; foreach (['i(', 'j('] as $i => $i) gives 0 then 1.
+     *
+     * @return iterable<string, array{statements: string, constants: string, built: list<string>}>
+     */
+    public static function provideLoopsNamingOneVariableTwice(): iterable
+    {
+        $composed = static fn (string $array): string => 'foreach ('.$array." as \$word => \$word) {\n            \$found += preg_match('/^' . \$word . '$/', \$s);\n        }";
+
+        yield 'an array literal, the target joined to literals' => [
+            'statements' => $composed("['d' => 'd(', 'e' => 'e(']"),
+            'constants' => '',
+            'built' => ['/^d$/', '/^e$/'],
+        ];
+
+        yield 'an array literal, the target read alone' => [
+            'statements' => "foreach (['/k1/' => '/v1(/', '/k2/' => '/v2(/'] as \$re => \$re) {\n            \$found += preg_match(\$re, \$s);\n        }",
+            'constants' => '',
+            'built' => ['/k1/', '/k2/'],
+        ];
+
+        yield 'a local array' => [
+            'statements' => "\$local = ['p' => 'p(', 'q' => 'q('];\n        ".$composed('$local'),
+            'constants' => '',
+            'built' => ['/^p$/', '/^q$/'],
+        ];
+
+        yield 'a class constant' => [
+            'statements' => $composed('self::PARTS'),
+            'constants' => "    private const PARTS = ['m' => 'm(', 'n' => 'n('];\n\n",
+            'built' => ['/^m$/', '/^n$/'],
+        ];
+
+        yield 'a list, whose keys are its indexes' => [
+            'statements' => "foreach (['i(', 'j('] as \$index => \$index) {\n            \$found += preg_match('/^.{' . \$index . '}$/', \$s);\n        }",
+            'constants' => '',
+            'built' => ['/^.{0}$/', '/^.{1}$/'],
+        ];
+
+        yield 'an array of one item' => [
+            'statements' => $composed("['only' => 'only(']"),
+            'constants' => '',
+            'built' => ['/^only$/'],
+        ];
+
+        yield 'the alternative syntax' => [
+            'statements' => "foreach (['r' => 'r(', 's' => 's('] as \$word => \$word):\n            \$found += preg_match('/^' . \$word . '$/', \$s);\n        endforeach;",
+            'constants' => '',
+            'built' => ['/^r$/', '/^s$/'],
+        ];
+    }
+
+    /**
+     * @param list<string> $built
+     */
+    #[Test]
+    #[DataProvider('provideLoopsNamingOneVariableTwice')]
+    public function test_a_foreach_naming_one_variable_as_key_and_value_holds_the_key(string $statements, string $constants, array $built): void
+    {
+        $this->assertReadsWhatPhpBuilds($built, self::reading($statements, $constants));
+    }
+
+    /**
+     * An item named by a literal that is no string and no integer is the
+     * one PHP reads after casting the key: true is 1 and false 0, null the
+     * empty string, a float its integer part. A key the cast leaves out of
+     * the array names nothing.
+     *
+     * PHP 8.4 (php -r), $a = ['01' => '/c(/', 1 => '/c/', '' => '/n/', 0
+     * => '/z/']: $a[true], $a[1.9], $a[1.0] and $a[1e0] are "/c/";
+     * $a[false], $a[0.5] and $a[-0.5] are "/z/"; $a[null] is "/n/";
+     * $a[2.5] and $a[-1.5] are null, with the warning "Undefined array
+     * key 2" ("Undefined array key -1"). A float that is no integer adds
+     * "Deprecated: Implicit conversion from float 1.9 to int loses
+     * precision". ['01' => '/c(/'][true] is not set.
+     *
+     * @return iterable<string, array{statements: string, constants: string, built: list<string>}>
+     */
+    public static function provideItemsNamedByABooleanNullOrAFloat(): iterable
+    {
+        $local = "\$a = ['01' => '/c(/', 1 => '/c/', '' => '/n/', 0 => '/z/'];\n        ";
+        $constant = "    private const KEYED = ['01' => '/c(/', 1 => '/c/', '' => '/n/', 0 => '/z/'];\n\n";
+        $keys = [
+            'true' => '/c/', 'false' => '/z/', 'null' => '/n/', '1.9' => '/c/', '1.0' => '/c/', '1e0' => '/c/',
+            '0.5' => '/z/', '-0.5' => '/z/', 'TRUE' => '/c/', '\\true' => '/c/', 'NULL' => '/n/', '\\false' => '/z/',
+        ];
+
+        foreach ($keys as $key => $pattern) {
+            yield 'a local array read by '.$key => [
+                'statements' => $local.'$found += preg_match($a['.$key.'], $s);',
+                'constants' => '',
+                'built' => [$pattern],
+            ];
+        }
+
+        foreach (['true' => '/c/', 'false' => '/z/', 'null' => '/n/', '1.9' => '/c/'] as $key => $pattern) {
+            yield 'a class constant read by '.$key => [
+                'statements' => '$found += preg_match(self::KEYED['.$key.'], $s);',
+                'constants' => $constant,
+                'built' => [$pattern],
+            ];
+        }
+
+        yield 'an item joined to literals, read by true' => [
+            'statements' => "\$parts = ['01' => 'c(', 1 => 'c'];\n        \$found += preg_match('/^' . \$parts[true] . '$/', \$s);",
+            'constants' => '',
+            'built' => ['/^c$/'],
+        ];
+
+        // No item stands under the key PHP reads: no pattern is built of
+        // the items the array holds.
+        yield 'a float whose integer part the array does not hold' => [
+            'statements' => $local.'$found += preg_match($a[2.5], $s);',
+            'constants' => '',
+            'built' => [],
+        ];
+
+        yield 'a negative float whose integer part the array does not hold' => [
+            'statements' => $local.'$found += preg_match($a[-1.5], $s);',
+            'constants' => '',
+            'built' => [],
+        ];
+
+        yield 'true, in an array that holds no index 1' => [
+            'statements' => "\$digits = ['01' => '/c(/', 'x' => '/x(/'];\n        \$found += preg_match(\$digits[true], \$s);",
+            'constants' => '',
+            'built' => [],
+        ];
+    }
+
+    /**
+     * Never a value another key holds.
+     *
+     * @param list<string> $built
+     */
+    #[Test]
+    #[DataProvider('provideItemsNamedByABooleanNullOrAFloat')]
+    public function test_an_item_named_by_a_boolean_null_or_a_float_is_the_one_php_reads(string $statements, string $constants, array $built): void
+    {
+        $this->assertReadsWhatPhpBuilds($built, self::reading($statements, $constants));
+    }
+
+    /**
+     * Asserts the code reads no text PHP does not build, and each one PHP
+     * builds once its arguments are all judged, constant or a finite set:
+     * an argument left unread says nothing false.
+     *
+     * @param list<string> $built the patterns PHP builds there
+     */
+    private function assertReadsWhatPhpBuilds(array $built, string $code): void
+    {
+        $read = array_values(array_unique($this->patternsReadByBoth($code)));
+        sort($read, \SORT_STRING);
+        sort($built, \SORT_STRING);
+        $states = $this->statesReadByBoth($code);
+
+        $this->assertNotSame([], $states, 'The code holds a pattern argument.');
+        $this->assertSame([], array_values(array_diff($read, $built)), 'A text PHP does not build is read; PHP builds '.json_encode($built, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE).'.');
+
+        if ([] === array_diff($states, ['constant', 'finite_set'])) {
+            $this->assertSame($built, $read, 'Every argument is judged: the patterns are those PHP builds.');
+        }
+    }
+
+    /**
+     * A final class, holding the constants, whose method run() runs the
+     * statements: they add to "$found" and read "$s" and the key "$k".
+     */
+    private static function reading(string $statements, string $constants = ''): string
+    {
+        return "<?php\n\nfinal class Reader\n{\n".$constants
+            ."    public function run(string \$s, string \$k): int\n    {\n        \$found = 0;\n        ".$statements."\n\n        return \$found;\n    }\n}\n";
+    }
+
+    /**
      * The class of the snippets, whose method run() runs the statements,
      * then the loop that reads "$re" in preg_match().
      */

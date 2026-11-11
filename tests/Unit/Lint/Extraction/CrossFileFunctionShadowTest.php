@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PHPRegex\Tests\Support\ExtractsAcrossFiles;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -22,10 +23,11 @@ use PHPUnit\Framework\TestCase;
  * the one of PHP, whichever file of the project declares it. A reading
  * that stands on the function being PHP's own, array_map() calling a
  * closure and letting it go, preg_quote() quoting a text, sprintf() and
- * implode() building a string, does not hold for a call of a namespace
- * where another file declares a function of that name, once the
- * declarations of the project are read. A fully qualified call reaches
- * PHP's, and a call of another namespace is not concerned.
+ * implode() building a string, define() declaring a constant, does not
+ * hold for a call of a namespace where another file declares a function
+ * of that name, once the declarations of the project are read. A fully
+ * qualified call reaches PHP's, and a call of another namespace is not
+ * concerned.
  *
  * Read alone, a file is judged on what it declares and imports itself.
  *
@@ -206,5 +208,169 @@ final class CrossFileFunctionShadowTest extends TestCase
         sort($patterns, \SORT_STRING);
         $this->assertSame(['/^qualified$/', '/^shadowed$/', '/qualified|joined/', '/shadowed|joined/'], $patterns);
         $this->assertSame(['quoted_shell', 'quoted_shell', 'constant', 'constant', 'constant', 'constant'], $this->statesReadByBoth(self::BUILDERS));
+    }
+
+    /**
+     * define() declares a constant when it is the function of PHP. A
+     * function of that name the namespace of the call declares, in the
+     * file or in another one, or one the file imports with "use
+     * function", is reached first, and declares nothing the files can
+     * know.
+     *
+     * PHP 8.4 (php -r): namespace Other; function define($n, $v) {}
+     * define('SHADOWED', '('); leaves defined('SHADOWED') false, and so
+     * does the call written before the declaration, which PHP hoists;
+     * function DEFINE() shadows the same. In a namespace Third, "use
+     * function Other\define;", "use function Other\{define, helper};"
+     * and "use function Other\helper as define;" each leave the constant
+     * undefined after define('SHADOWED', '('). With the declaration in
+     * one file and the call in another file of the namespace, the
+     * constant is not defined once the first is loaded.
+     *
+     * @return iterable<string, array{files: array<string, string>}>
+     */
+    public static function provideFunctionsNamedDefine(): iterable
+    {
+        $declared = "<?php\n\nnamespace Other;\n\nfunction define(string \$name, string \$value): void\n{\n}\n\nfunction helper(string \$name, string \$value): void\n{\n}\n";
+
+        yield 'declared in the namespace of the call, in its file' => ['files' => [
+            'Functions.php' => $declared."\ndefine('SHADOWED', '(');\n",
+        ]];
+
+        yield 'declared after the call' => ['files' => [
+            'Functions.php' => "<?php\n\nnamespace Other;\n\ndefine('SHADOWED', '(');\n\nfunction define(string \$name, string \$value): void\n{\n}\n",
+        ]];
+
+        yield 'declared in upper case' => ['files' => [
+            'Functions.php' => "<?php\n\nnamespace Other;\n\nfunction DEFINE(string \$name, string \$value): void\n{\n}\n\ndefine('SHADOWED', '(');\n",
+        ]];
+
+        yield 'declared in a namespace written with braces' => ['files' => [
+            'Functions.php' => "<?php\n\nnamespace Other {\n    function define(string \$name, string \$value): void\n    {\n    }\n}\n\nnamespace Other {\n    define('SHADOWED', '(');\n}\n",
+        ]];
+
+        yield 'declared in another file of the namespace' => ['files' => [
+            'Functions.php' => $declared,
+            'Calls.php' => "<?php\n\nnamespace Other;\n\ndefine('SHADOWED', '(');\n",
+        ]];
+
+        yield 'imported with use function' => ['files' => [
+            'Functions.php' => $declared,
+            'Calls.php' => "<?php\n\nnamespace Third;\n\nuse function Other\\define;\n\ndefine('SHADOWED', '(');\n",
+        ]];
+
+        yield 'imported in a group' => ['files' => [
+            'Functions.php' => $declared,
+            'Calls.php' => "<?php\n\nnamespace Third;\n\nuse function Other\\{define, helper};\n\ndefine('SHADOWED', '(');\n",
+        ]];
+
+        yield 'imported under the name define' => ['files' => [
+            'Functions.php' => $declared,
+            'Calls.php' => "<?php\n\nnamespace Third;\n\nuse function Other\\helper as define;\n\ndefine('SHADOWED', '(');\n",
+        ]];
+    }
+
+    /**
+     * The name is one no file declares as a constant: the pattern around
+     * it is a shell around a part built at run time. A define() of a
+     * namespace that declares and imports no such function is still
+     * PHP's.
+     *
+     * @param array<string, string> $files
+     */
+    #[Test]
+    #[DataProvider('provideFunctionsNamedDefine')]
+    public function test_a_function_named_define_declares_no_constant(array $files): void
+    {
+        $files['Real.php'] = "<?php\n\nnamespace App\\Real;\n\ndefine('REAL', '/real/');\n";
+        $files['Reader.php'] = "<?php\n\npreg_match('/' . SHADOWED . '/', 'x');\npreg_match(REAL, 'x');\n";
+
+        $this->assertSame(['/real/'], $this->patternsAcross($files));
+        $this->assertSame([
+            ['file' => 'Reader.php', 'expression' => "'/' . SHADOWED . '/'", 'state' => 'raw_shell'],
+            ['file' => 'Reader.php', 'expression' => 'REAL', 'state' => 'constant'],
+        ], $this->argumentsAcross($files));
+    }
+
+    /**
+     * A fully qualified \define() reaches PHP's, whatever the namespace
+     * declares or the file imports; a define() of another namespace of
+     * the file is not concerned, and a method named define hides nothing.
+     *
+     * PHP 8.4: in namespace Third with "use function Other\helper as
+     * define;", \define('QUALIFIED', '/q/') defines it; with function
+     * DEFINE() declared in namespace Other, define('ELSEWHERE', '/e/') in
+     * namespace Seventh defines it; with a class of namespace Other
+     * holding a method define(), define('METHOD_ONLY', '/m/') defines it.
+     */
+    #[Test]
+    public function test_a_define_that_reaches_the_one_of_php_declares_its_constant(): void
+    {
+        $files = [
+            'Functions.php' => "<?php\n\nnamespace Other {\n    function define(string \$name, string \$value): void\n    {\n    }\n\n    \\define('QUALIFIED', '/qualified/');\n}\n\n"
+                ."namespace Seventh {\n    define('ELSEWHERE', '/elsewhere/');\n}\n",
+            'Imports.php' => "<?php\n\nnamespace Third;\n\nuse function Other\\define;\n\n\\define('QUALIFIED_BESIDE_AN_IMPORT', '/qualified-beside-an-import/');\n",
+            'Methods.php' => "<?php\n\nnamespace Fourth;\n\nfinal class Registry\n{\n    public function define(string \$name, string \$value): void\n    {\n    }\n}\n\ndefine('METHOD_ONLY', '/method-only/');\n",
+            'Reader.php' => "<?php\n\npreg_match(QUALIFIED, 'x');\npreg_match(ELSEWHERE, 'x');\npreg_match(QUALIFIED_BESIDE_AN_IMPORT, 'x');\npreg_match(METHOD_ONLY, 'x');\n",
+        ];
+
+        $this->assertSame(['/elsewhere/', '/method-only/', '/qualified-beside-an-import/', '/qualified/'], $this->patternsAcross($files));
+        $this->assertSame(['constant', 'constant', 'constant', 'constant'], array_column($this->argumentsAcross($files), 'state'));
+    }
+
+    /**
+     * Read alone, a file is judged the same on what it declares and
+     * imports: its own function named define declares no constant, and
+     * the define() of a namespace with none still does.
+     *
+     * PHP 8.4: namespace Other; function define($n, $v) {}
+     * define('IN_FILE', '('); leaves both \IN_FILE and Other\IN_FILE
+     * undefined.
+     *
+     * @return iterable<string, array{code: string, patterns: list<string>, states: list<string>}>
+     */
+    public static function provideFilesReadAloneThatCallDefine(): iterable
+    {
+        $reads = "\npreg_match('/' . IN_FILE . '/', 'x');\npreg_match(DECLARED, 'x');\n";
+
+        yield 'a function named define declared in the namespace' => [
+            'code' => "<?php\n\nnamespace Other;\n\nconst DECLARED = '/declared/';\n\nfunction define(string \$name, string \$value): void\n{\n}\n\ndefine('IN_FILE', '(');\n".$reads,
+            'patterns' => ['/declared/'],
+            'states' => ['raw_shell', 'constant'],
+        ];
+
+        yield 'a function named define imported with use function' => [
+            'code' => "<?php\n\nnamespace Third;\n\nuse function Other\\define;\n\nconst DECLARED = '/declared/';\n\ndefine('IN_FILE', '(');\n".$reads,
+            'patterns' => ['/declared/'],
+            'states' => ['raw_shell', 'constant'],
+        ];
+
+        // '/' . 'x' . '/' is "/x/".
+        yield 'the define() of PHP, in a namespace' => [
+            'code' => "<?php\n\nnamespace App;\n\nconst DECLARED = '/declared/';\n\ndefine('IN_FILE', 'x');\n".$reads,
+            'patterns' => ['/declared/', '/x/'],
+            'states' => ['constant', 'constant'],
+        ];
+
+        yield 'a fully qualified define(), beside a function named define' => [
+            'code' => "<?php\n\nnamespace Other;\n\nconst DECLARED = '/declared/';\n\nfunction define(string \$name, string \$value): void\n{\n}\n\n\\define('IN_FILE', 'x');\n".$reads,
+            'patterns' => ['/declared/', '/x/'],
+            'states' => ['constant', 'constant'],
+        ];
+    }
+
+    /**
+     * @param list<string> $patterns
+     * @param list<string> $states
+     */
+    #[Test]
+    #[DataProvider('provideFilesReadAloneThatCallDefine')]
+    public function test_a_file_read_alone_judges_its_own_function_named_define(string $code, array $patterns, array $states): void
+    {
+        $read = $this->patternsReadByBoth($code);
+        sort($read, \SORT_STRING);
+
+        $this->assertSame($patterns, $read);
+        $this->assertSame($states, $this->statesReadByBoth($code));
     }
 }

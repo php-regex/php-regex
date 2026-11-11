@@ -36,15 +36,18 @@ use PHPRegex\Parser\Text\Path;
  * A global constant is one a "const" declares at the level of a
  * namespace, or a define() with a literal name standing alone at the top
  * level of its file: one declared in a branch, a loop or a function may
- * not be declared at all when a call runs. It is read when one
+ * not be declared at all when a call runs, nor one declared after a
+ * return of the file or an exit that always runs. It is read when one
  * declaration of the project gives it; a project constant hides a library
- * one of the same name.
+ * one of the same name. A define() written in a namespace by its bare
+ * name reaches a function of that name the namespace declares, in any
+ * file, before PHP's: it declares its constant when no file does.
  *
  * A contribution is a plain array holding ValueExpr trees, so that it
  * travels from a worker process; each literal knows the file, the line and
  * the column it is written at, where the pattern is reported.
  *
- * @phpstan-type Contribution array{classes: array<string, bool|null>, constants: array<string, array{ValueExpr, bool}>, globals?: array<string, ValueExpr|null>, functions?: list<string>}
+ * @phpstan-type Contribution array{classes: array<string, bool|null>, constants: array<string, array{ValueExpr, bool}>, globals?: array<string, ValueExpr|null>, functions?: list<string>, defines?: array<string, array<string, ValueExpr|null>>}
  *
  * @internal
  */
@@ -63,6 +66,12 @@ final class ProjectConstants
     private const CALLS_DEFINE = '/\bdefine\s*\(/i';
 
     /**
+     * The keywords a function or a class body follows: a return written
+     * in one ends that body, not the file.
+     */
+    private const DECLARES_BODY = [\T_FUNCTION => true, \T_CLASS => true, \T_INTERFACE => true, \T_ENUM => true, \T_TRAIT => true];
+
+    /**
      * The keywords that open a block of the alternative syntax, "if
      * (...):", and those that close one, "endif".
      */
@@ -70,6 +79,15 @@ final class ProjectConstants
         \T_IF => true, \T_WHILE => true, \T_FOR => true, \T_FOREACH => true, \T_SWITCH => true, \T_DECLARE => true,
         \T_ENDIF => true, \T_ENDWHILE => true, \T_ENDFOR => true, \T_ENDFOREACH => true, \T_ENDSWITCH => true, \T_ENDDECLARE => true,
     ];
+
+    /**
+     * The tokens a scan acts on, the name of a call left out: the
+     * keywords that declare, those of ALTERNATIVE_BLOCKS, and those that
+     * may end the file.
+     */
+    private const READ = [
+        \T_NAMESPACE => true, \T_USE => true, \T_CONST => true, \T_RETURN => true, \T_EXIT => true,
+    ] + self::DECLARES_BODY + self::ALTERNATIVE_BLOCKS;
 
     /**
      * @param array<string, bool|null>              $classes   lowercase class => whether it is final; null when ambiguous
@@ -120,6 +138,8 @@ final class ProjectConstants
      * The contribution of a PHP source: its classes and the constants they
      * prove, its global constants and the functions of a namespace it
      * declares under the name of one of PHP, each literal placed in $file.
+     * The constants of the define() calls that may reach a function of
+     * their namespace are kept apart, under the name of that function.
      *
      * @return Contribution
      */
@@ -152,6 +172,13 @@ final class ProjectConstants
             $visited[\T_FUNCTION] = true;
         }
 
+        // Most tokens are none of those the scan acts on; a call is named
+        // by a name.
+        $read = self::READ;
+        if ($defines) {
+            $read += [\T_STRING => true, \T_NAME_FULLY_QUALIFIED => true];
+        }
+
         $tokens = token_get_all($content);
         $offsets = PhpTokens::offsets($tokens);
         $closers = PhpTokens::closers($tokens);
@@ -159,11 +186,19 @@ final class ProjectConstants
         $context = new NameResolutionContext();
         /** @var array<string, ValueExpr|null> $defined */
         $defined = [];
+        /** @var array<string, array<string, ValueExpr|null>> $shadowable */
+        $shadowable = [];
         // Where the block the token stands in ends, when it is no block
         // of a namespace: out of every such block is the top level.
         $nestedUntil = -1;
         $alternativeBlocks = 0;
         $namespaceBrace = -1;
+        // Where the function or the class body the token stands in ends:
+        // out of every one, a return ends the file.
+        $bodyUntil = -1;
+        // The constants declared before the file may have ended; null
+        // while it runs to its last statement.
+        $beforeTheEnd = null;
         for ($i = 0, $totalTokens = \count($tokens); $i < $totalTokens; $i++) {
             $token = $tokens[$i];
             if (!\is_array($token)) {
@@ -174,14 +209,19 @@ final class ProjectConstants
                 continue;
             }
 
-            if (\T_NAMESPACE === $token[0]) {
+            $id = $token[0];
+            if (!isset($read[$id])) {
+                continue;
+            }
+
+            if (\T_NAMESPACE === $id) {
                 $i = TokenNameResolver::readNamespace($tokens, $i, $totalTokens, $context);
                 $namespaceBrace = '{' === $tokens[$i] ? $i : PhpTokens::nextSignificant($tokens, $i + 1, $totalTokens) ?? -1;
 
                 continue;
             }
 
-            if (\T_USE === $token[0]) {
+            if (\T_USE === $id) {
                 // An import moves on past its statement; a trait use, or a
                 // closure's, stays where it is and declares nothing here.
                 $i = TokenNameResolver::readUse($tokens, $i, $totalTokens, $context);
@@ -189,28 +229,53 @@ final class ProjectConstants
                 continue;
             }
 
-            if (isset($visited[$token[0]])) {
+            if (isset(self::DECLARES_BODY[$id]) && $i > $bodyUntil) {
+                $bodyUntil = self::bodyEnd($tokens, $i, $closers) ?? $bodyUntil;
+            }
+
+            if (isset($visited[$id])) {
                 $collector->visit($i, $context);
 
                 continue;
             }
 
-            if (!$defines) {
-                continue;
-            }
-
-            if (isset(self::ALTERNATIVE_BLOCKS[$token[0]])) {
+            if (isset(self::ALTERNATIVE_BLOCKS[$id])) {
                 $alternativeBlocks += $i > $nestedUntil ? self::alternativeBlock($tokens, $i, $closers) : 0;
 
                 continue;
             }
 
-            // A call is named by a name: most tokens are none.
-            $name = \T_STRING === $token[0] || \T_NAME_FULLY_QUALIFIED === $token[0] ? self::definedName($tokens, $i, $closers) : null;
-            if (null !== $name) {
-                $value = $i > $nestedUntil && 0 === $alternativeBlocks ? self::definedValue($tokens, $i, $closers, $collector, $context) : null;
-                $key = ValueExpr::constantKey($name);
+            // A return of the file level, under a condition or not, and an
+            // exit nothing guards: what the file declares after one is
+            // declared only when it did not run. An exit a condition
+            // guards stops the script, and nothing reads a constant then.
+            if (\T_RETURN === $id || \T_EXIT === $id) {
+                if (null === $beforeTheEnd && $i > $bodyUntil
+                    && (\T_RETURN === $id || ($i > $nestedUntil && 0 === $alternativeBlocks && self::startsStatement($tokens, $i)))) {
+                    $beforeTheEnd = $collector->values()->globalConstants();
+                }
+
+                continue;
+            }
+
+            // What is left is a name, read when the text calls define(),
+            // or a keyword the scan does not visit in this text.
+            $name = \T_STRING === $id || \T_NAME_FULLY_QUALIFIED === $id ? self::definedName($tokens, $i, $closers) : null;
+            // A function the file imports under the name is not PHP's.
+            if (null === $name || InFileValueResolver::DEFINING !== Ascii::lower($context->resolveFunction($token[1]))) {
+                continue;
+            }
+
+            $value = $i > $nestedUntil && 0 === $alternativeBlocks && null === $beforeTheEnd ? self::definedValue($tokens, $i, $closers, $collector, $context) : null;
+            $key = ValueExpr::constantKey($name);
+            // Written by its bare name in a namespace, the call reaches
+            // the function of the namespace first.
+            $namespaced = $context->namespacedFunction($token[1]);
+            if (null === $namespaced) {
                 $defined[$key] = \array_key_exists($key, $defined) ? null : $value;
+            } else {
+                $function = Ascii::lower($namespaced);
+                $shadowable[$function][$key] = \array_key_exists($key, $shadowable[$function] ?? []) ? null : $value;
             }
         }
 
@@ -228,9 +293,20 @@ final class ProjectConstants
             }
         }
 
+        // A "const" written after the file may have ended is declared
+        // with a value the file does not prove.
+        $constants = $collector->values()->globalConstants();
+        if (null !== $beforeTheEnd) {
+            foreach ($constants as $key => $_) {
+                if (!\array_key_exists($key, $beforeTheEnd)) {
+                    $constants[$key] = null;
+                }
+            }
+        }
+
         // A constant "const" and define() both declare is declared twice.
         $globals = [];
-        foreach ([$collector->values()->globalConstants(), $defined] as $declarations) {
+        foreach ([$constants, $defined] as $declarations) {
             foreach ($declarations as $key => $value) {
                 if (\array_key_exists($key, $globals) || null === $value || !self::proves($value)) {
                     $globals[$key] = null;
@@ -249,6 +325,24 @@ final class ProjectConstants
             if (false !== $separator && self::isFollowed(substr($function, $separator + 1))) {
                 $named[] = $function;
             }
+
+            // A function named define the file declares itself: its
+            // calls declare no constant.
+            unset($shadowable[$function]);
+        }
+
+        $defines = [];
+        foreach ($shadowable as $function => $declarations) {
+            foreach ($declarations as $key => $value) {
+                if (null !== $value && self::proves($value)) {
+                    $guards ??= TokenGuards::regions($tokens, $offsets, $closers, $content);
+                    $value = $value->inFile($file, $content, $guards);
+                } else {
+                    $value = null;
+                }
+
+                $defines[$function][$key] = $value;
+            }
         }
 
         $contribution = ['classes' => $classes, 'constants' => $kept];
@@ -258,6 +352,10 @@ final class ProjectConstants
 
         if ([] !== $named) {
             $contribution['functions'] = $named;
+        }
+
+        if ([] !== $defines) {
+            $contribution['defines'] = $defines;
         }
 
         return $contribution;
@@ -272,8 +370,17 @@ final class ProjectConstants
      */
     public static function of(array $project, array $libraries = []): self
     {
-        [$classes, $constants, $globals, $functions] = self::merge($project);
-        [$libraryClasses, $libraryConstants, $libraryGlobals, $libraryFunctions] = self::merge($libraries);
+        // A function of a namespace is reached by the calls of that
+        // namespace, in the project and in its libraries alike.
+        $functions = [];
+        foreach ([...$project, ...$libraries] as $contribution) {
+            foreach ($contribution['functions'] ?? [] as $function) {
+                $functions[$function] = true;
+            }
+        }
+
+        [$classes, $constants, $globals] = self::merge($project, $functions);
+        [$libraryClasses, $libraryConstants, $libraryGlobals] = self::merge($libraries, $functions);
         // The library constants grouped by their class once: a library tree
         // declares thousands of classes and of constants, and each class
         // takes its own group, not a pass over every constant.
@@ -292,7 +399,7 @@ final class ProjectConstants
         }
 
         // A constant of the project hides one a library declares.
-        return new self($classes, $constants, $globals + $libraryGlobals, $functions + $libraryFunctions);
+        return new self($classes, $constants, $globals + $libraryGlobals, $functions);
     }
 
     /**
@@ -397,48 +504,56 @@ final class ProjectConstants
     }
 
     /**
-     * The classes, the constants, the global constants and the functions
-     * of several contributions as one: a class two of them declare is
-     * ambiguous, and so is a global constant.
+     * The classes, the constants and the global constants of several
+     * contributions as one: a class two of them declare is ambiguous, and
+     * so is a global constant. A define() that may reach a function of
+     * its namespace declares its constant when no file declares that
+     * function.
      *
-     * @param list<Contribution> $contributions
+     * @param list<Contribution>  $contributions
+     * @param array<string, true> $functions     the lowercase functions the files declare in a namespace
      *
-     * @return array{array<string, bool|null>, array<string, array{ValueExpr, bool}>, array<string, ValueExpr|null>, array<string, true>}
+     * @return array{array<string, bool|null>, array<string, array{ValueExpr, bool}>, array<string, ValueExpr|null>}
      */
-    private static function merge(array $contributions): array
+    private static function merge(array $contributions, array $functions): array
     {
         $classes = [];
         $constants = [];
         $globals = [];
-        $functions = [];
         foreach ($contributions as $contribution) {
             foreach ($contribution['classes'] as $class => $final) {
                 $classes[$class] = \array_key_exists($class, $classes) ? null : $final;
             }
 
             $constants += $contribution['constants'];
-            foreach ($contribution['globals'] ?? [] as $key => $value) {
-                $globals[$key] = \array_key_exists($key, $globals) ? null : $value;
+            $declarations = [$contribution['globals'] ?? []];
+            foreach ($contribution['defines'] ?? [] as $function => $defined) {
+                if (!isset($functions[$function])) {
+                    $declarations[] = $defined;
+                }
             }
 
-            foreach ($contribution['functions'] ?? [] as $function) {
-                $functions[$function] = true;
+            foreach ($declarations as $declared) {
+                foreach ($declared as $key => $value) {
+                    $globals[$key] = \array_key_exists($key, $globals) ? null : $value;
+                }
             }
         }
 
-        return [$classes, $constants, $globals, $functions];
+        return [$classes, $constants, $globals];
     }
 
     /**
      * Matches a text declaring a function under the name of one of PHP
      * the extraction reads a call of: one that calls a closure and lets
-     * it go, or that takes its arguments by value.
+     * it go, that takes its arguments by value, or that declares a
+     * constant.
      */
     private static function declaresFunctions(): string
     {
         static $pattern = null;
 
-        return $pattern ??= '/\bfunction\s*&?\s*(?:'.implode('|', array_keys(InFileValueResolver::CALLING + InFileValueResolver::BY_VALUE)).')\s*\(/i';
+        return $pattern ??= '/\bfunction\s*&?\s*(?:'.implode('|', [...array_keys(InFileValueResolver::CALLING + InFileValueResolver::BY_VALUE), InFileValueResolver::DEFINING]).')\s*\(/i';
     }
 
     /**
@@ -447,7 +562,7 @@ final class ProjectConstants
      */
     private static function isFollowed(string $name): bool
     {
-        return isset(InFileValueResolver::CALLING[$name]) || isset(InFileValueResolver::BY_VALUE[$name]);
+        return isset(InFileValueResolver::CALLING[$name]) || isset(InFileValueResolver::BY_VALUE[$name]) || InFileValueResolver::DEFINING === $name;
     }
 
     /**
@@ -473,6 +588,56 @@ final class ProjectConstants
         $after = null === $close ? null : PhpTokens::nextSignificant($tokens, $close + 1, $count);
 
         return null !== $after && ':' === $tokens[$after] ? 1 : 0;
+    }
+
+    /**
+     * Where the body the keyword at $index declares ends: the brace
+     * closing the body of a function, a method, a closure, a class, an
+     * interface, an enum or a trait. Null when no body follows it: an
+     * abstract method, Foo::class, an argument named class.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     */
+    private static function bodyEnd(array $tokens, int $index, array $closers): ?int
+    {
+        $before = PhpTokens::previousSignificant($tokens, $index - 1);
+        if (null !== $before && PhpTokens::isDoubleColon($tokens[$before])) {
+            return null;
+        }
+
+        // The name, the parameters, what a class extends, a return type:
+        // the first brace after them opens the body.
+        for ($i = $index + 1, $count = \count($tokens); $i < $count; $i++) {
+            $token = $tokens[$i];
+            if ('{' === $token) {
+                return $closers[$i] ?? $count;
+            }
+
+            if (\in_array($token, [';', ')', ']', '}'], true)) {
+                return null;
+            }
+
+            if (PhpTokens::opensNesting($token)) {
+                $i = $closers[$i] ?? $count;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether the token at $index starts a statement: it follows one, or
+     * opens the file, a block or a namespace.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    private static function startsStatement(array $tokens, int $index): bool
+    {
+        $before = PhpTokens::previousSignificant($tokens, $index - 1);
+        $token = null === $before ? null : $tokens[$before];
+
+        return null === $token || \in_array($token, [';', '{', '}'], true) || (\is_array($token) && \T_OPEN_TAG === $token[0]);
     }
 
     /**

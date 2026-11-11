@@ -45,6 +45,15 @@ final class TokenValueCollector
         \T_PLUS_EQUAL => true, \T_MINUS_EQUAL => true, \T_MUL_EQUAL => true, \T_DIV_EQUAL => true,
         \T_CONCAT_EQUAL => true, \T_MOD_EQUAL => true, \T_AND_EQUAL => true, \T_OR_EQUAL => true,
         \T_XOR_EQUAL => true, \T_SL_EQUAL => true, \T_SR_EQUAL => true, \T_POW_EQUAL => true, \T_COALESCE_EQUAL => true,
+        '{' => true, \T_IF => true, \T_SWITCH => true, \T_DECLARE => true,
+    ] + self::ENDS_ALTERNATIVE_BLOCK;
+
+    /**
+     * The keywords that close a block of the alternative syntax, "if
+     * (...):" up to its "endif".
+     */
+    private const ENDS_ALTERNATIVE_BLOCK = [
+        \T_ENDIF => true, \T_ENDWHILE => true, \T_ENDFOR => true, \T_ENDFOREACH => true, \T_ENDSWITCH => true, \T_ENDDECLARE => true,
     ];
 
     /**
@@ -161,6 +170,23 @@ final class TokenValueCollector
     private int $attributeEnd = -1;
 
     /**
+     * @var array{int, int}|null the parentheses of the head of the last "for" met
+     */
+    private ?array $forHead = null;
+
+    /**
+     * @var array<int, int> function body, or the file level => where the block the last token read of it stands
+     *                      in ends: a branch, a loop, a try, whose statements may not run
+     */
+    private array $nestedUntil = [];
+
+    /**
+     * @var array<int, int> function body, or the file level => the blocks of the alternative syntax open among
+     *                      its statements
+     */
+    private array $alternativeBlocks = [];
+
+    /**
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $offsets           the byte offset of each token
      * @param array<int, int>                            $closers           the closing index of each bracket
@@ -224,6 +250,19 @@ final class TokenValueCollector
         }
 
         switch ($id) {
+            case '{':
+            case \T_IF:
+            case \T_SWITCH:
+            case \T_DECLARE:
+            case \T_ENDIF:
+            case \T_ENDWHILE:
+            case \T_ENDFOR:
+            case \T_ENDFOREACH:
+            case \T_ENDSWITCH:
+            case \T_ENDDECLARE:
+                $this->nest($index, $id);
+
+                break;
             case '$':
                 // $$name, ${'name'}: any variable of the body.
                 $this->bailScope($index);
@@ -289,11 +328,16 @@ final class TokenValueCollector
 
                 break;
             case \T_FOREACH:
+                $this->nest($index, $id);
                 $this->loop($index, $this->foreachTargets($index, $context));
 
                 break;
             case \T_FOR:
             case \T_WHILE:
+                $this->nest($index, $id);
+                $this->loop($index);
+
+                break;
             case \T_DO:
                 $this->loop($index);
 
@@ -461,6 +505,106 @@ final class TokenValueCollector
         }
 
         return ValueExpr::setOf([$this->expression($question + 1, $colon, $context), $otherwise], $offset, $this->lineAt($offset));
+    }
+
+    /**
+     * What a brace, or the keyword of a control structure, does to the
+     * statements of the function body it stands in, or of the file: a
+     * block that is no statement of its own, the body of a branch, of a
+     * loop or of a try, holds statements that may not run, up to its
+     * closing brace, and so does a block of the alternative syntax, up to
+     * its closing keyword. The brace of the body itself, the braces of a
+     * namespace and a block standing among the statements run with them.
+     */
+    private function nest(int $index, int|string $id): void
+    {
+        if (\T_FOR === $id) {
+            $open = $this->next($index + 1);
+            $this->forHead = null !== $open && '(' === $this->tokens[$open] ? [$open, $this->closers[$open] ?? \PHP_INT_MAX] : null;
+        }
+
+        // A class body holds no statement.
+        $body = $this->bodyAt($index);
+        $scope = null === $body ? InFileValueResolver::FILE : ($body['class'] ? null : $body['id']);
+        if (null === $scope || $index <= ($this->nestedUntil[$scope] ?? -1)) {
+            return;
+        }
+
+        if ('{' === $id) {
+            $before = $this->previous($index - 1);
+            if ($index !== ($body['ranges'][1][0] ?? null) && (null === $before || (!$this->endsStatement($before) && !$this->namesNamespace($before)))) {
+                $this->nestedUntil[$scope] = $this->closers[$index] ?? \PHP_INT_MAX;
+            }
+
+            return;
+        }
+
+        if (isset(self::ENDS_ALTERNATIVE_BLOCK[$id])) {
+            $this->alternativeBlocks[$scope] = ($this->alternativeBlocks[$scope] ?? 0) - 1;
+
+            return;
+        }
+
+        $after = $this->afterCondition($index);
+        if (null !== $after && ':' === $this->tokens[$after]) {
+            $this->alternativeBlocks[$scope] = ($this->alternativeBlocks[$scope] ?? 0) + 1;
+        }
+    }
+
+    /**
+     * Whether the token ends a statement, or opens the block or the PHP
+     * code the next one starts: what follows it is a statement. So is
+     * what follows the ":" of a label.
+     */
+    private function endsStatement(int $index): bool
+    {
+        if (\in_array($this->tokens[$index], [';', '{', '}'], true) || $this->is($index, \T_OPEN_TAG)) {
+            return true;
+        }
+
+        $label = ':' === $this->tokens[$index] ? $this->previous($index - 1) : null;
+        $before = null === $label || !$this->is($label, \T_STRING) ? null : $this->previous($label - 1);
+
+        return null !== $before && (\in_array($this->tokens[$before], [';', '{', '}'], true) || $this->is($before, \T_OPEN_TAG));
+    }
+
+    /**
+     * Whether the token is the name of "namespace Name {", whose braces
+     * hold the statements of the file.
+     */
+    private function namesNamespace(int $index): bool
+    {
+        $before = $this->previous($index - 1);
+
+        return null !== PhpTokens::name($this->tokens[$index]) && null !== $before && $this->is($before, \T_NAMESPACE);
+    }
+
+    /**
+     * Whether the assignment whose target is at $target and whose value
+     * ends before $end stands as a statement of its function body
+     * itself, or of the file, in no branch, no loop and no larger
+     * expression: every path to what follows it runs it.
+     */
+    private function standsAmongStatements(int $target, int $end): bool
+    {
+        // The statements of a function follow the brace of its body: an
+        // arrow function has none.
+        $body = $this->bodyAt($target);
+        $scope = null === $body ? InFileValueResolver::FILE : ($body['class'] ? null : $body['id']);
+        if (null === $scope || (null !== $body && $target < ($body['ranges'][1][0] ?? \PHP_INT_MAX))
+            || $target <= ($this->nestedUntil[$scope] ?? -1) || 0 !== ($this->alternativeBlocks[$scope] ?? 0)) {
+            return false;
+        }
+
+        // "for (; $a = [...];)": no statement, between two ";".
+        if (null !== $this->forHead && $target > $this->forHead[0] && $target < $this->forHead[1]) {
+            return false;
+        }
+
+        $before = $this->previous($target - 1);
+
+        return null !== $before && $this->endsStatement($before)
+            && isset($this->tokens[$end]) && (';' === $this->tokens[$end] || $this->is($end, \T_CLOSE_TAG));
     }
 
     /**
@@ -642,7 +786,7 @@ final class TokenValueCollector
             $array = $arrayLast === $first ? $this->singleToken($first, $context) : $this->operand($first, $arrayLast, $context);
 
             return \in_array($array->kind, [ValueExpr::VARIABLE, ValueExpr::CONSTANT, ValueExpr::CLASS_CONSTANT], true)
-                ? ValueExpr::item($array, $this->expression($opener + 1, $last, $context), $this->offsets[$first], $this->lineAt($this->offsets[$first]))
+                ? ValueExpr::item($array, $this->key($opener + 1, $last, $context), $this->offsets[$first], $this->lineAt($this->offsets[$first]))
                 : ValueExpr::unknown();
         }
 
@@ -761,10 +905,69 @@ final class TokenValueCollector
     }
 
     /**
+     * The tokens in [$start, $end) that name an item of an array, between
+     * the brackets of a read or before the "=>" of a literal. PHP casts a
+     * key that is no string and no integer: true and false are 1 and 0,
+     * null the empty string, a float its integer part.
+     */
+    private function key(int $start, int $end, NameResolutionContext $context): ValueExpr
+    {
+        $bounds = $this->bounds($start, $end);
+        if (null === $bounds) {
+            return ValueExpr::unknown();
+        }
+
+        [$first, $last] = $bounds;
+        $token = $this->tokens[$first];
+        $offset = $this->offsets[$first];
+        $name = $first === $last ? PhpTokens::name($token) : null;
+        $lower = null === $name ? null : Ascii::lower(ltrim($name, '\\'));
+        if ('true' === $lower || 'false' === $lower) {
+            return ValueExpr::castKey('true' === $lower, $offset, $this->lineAt($offset));
+        }
+
+        if ('null' === $lower) {
+            return ValueExpr::castKey(null, $offset, $this->lineAt($offset));
+        }
+
+        $number = $this->is($first, \T_DNUMBER) || '-' === $token || '+' === $token ? $this->signed($first, $last) : null;
+        $numberToken = null === $number ? null : $this->tokens[$number[0]];
+        $float = \is_array($numberToken) && \T_DNUMBER === $numberToken[0] ? PhpTokens::floatValue($numberToken[1]) : null;
+
+        return null === $number || null === $float
+            ? $this->expression($start, $end, $context)
+            : ValueExpr::castKey($number[1] ? -$float : $float, $offset, $this->lineAt($offset));
+    }
+
+    /**
      * -1, +2.5, - -3, -(3): a number under its signs, the parentheses PHP
      * drops around it left out. An integer keeps its value.
      */
     private function signedNumber(int $first, int $last): ValueExpr
+    {
+        $number = $this->signed($first, $last);
+        if (null === $number) {
+            return ValueExpr::unknown();
+        }
+
+        $token = $this->tokens[$number[0]];
+        if (!\is_array($token) || \T_DNUMBER === $token[0]) {
+            return ValueExpr::nonString();
+        }
+
+        $integer = PhpTokens::integerValue($token[1]);
+
+        return ValueExpr::nonString($number[1] ? -$integer : $integer);
+    }
+
+    /**
+     * The number of [$first, $last] under its signs, the parentheses PHP
+     * drops around it left out: its token, and whether the signs make it
+     * negative. Null when the tokens are no such number.
+     *
+     * @return array{int, bool}|null
+     */
+    private function signed(int $first, int $last): ?array
     {
         $negative = false;
         $index = $first;
@@ -777,7 +980,7 @@ final class TokenValueCollector
 
             $inner = $this->next($index + 1, $wrapped ? $last : $last + 1);
             if (null === $inner) {
-                return ValueExpr::unknown();
+                return null;
             }
 
             if ($wrapped) {
@@ -789,18 +992,7 @@ final class TokenValueCollector
             $index = $inner;
         }
 
-        $token = $this->tokens[$index];
-        if ($index !== $last || !\is_array($token) || (\T_LNUMBER !== $token[0] && \T_DNUMBER !== $token[0])) {
-            return ValueExpr::unknown();
-        }
-
-        if (\T_DNUMBER === $token[0]) {
-            return ValueExpr::nonString();
-        }
-
-        $integer = PhpTokens::integerValue($token[1]);
-
-        return ValueExpr::nonString($negative ? -$integer : $integer);
+        return $index === $last && $this->is($index, \T_LNUMBER, \T_DNUMBER) ? [$index, $negative] : null;
     }
 
     /**
@@ -1073,7 +1265,7 @@ final class TokenValueCollector
             $arrow = $this->find($from, $to, static fn (array|string $token): bool => \is_array($token) && \T_DOUBLE_ARROW === $token[0]);
             $items[] = null === $arrow
                 ? [null, $this->expression($from, $to, $context)]
-                : [$this->expression($from, $arrow, $context), $this->expression($arrow + 1, $to, $context)];
+                : [$this->key($from, $arrow, $context), $this->expression($arrow + 1, $to, $context)];
         }
 
         return ValueExpr::arrayOf($items);
@@ -1543,7 +1735,8 @@ final class TokenValueCollector
     /**
      * A foreach: its head assigns a target that is a plain variable at
      * each turn, one of the values of what the loop iterates, or one of
-     * its keys. Any other target, one taken by reference and one of a
+     * its keys; one variable named as both holds the key, which PHP
+     * assigns last. Any other target, one taken by reference and one of a
      * loop whose end is not known are written unseen. Gives back its
      * "as": what stands before it is read once, before the first turn.
      */
@@ -1564,6 +1757,7 @@ final class TokenValueCollector
         $end = $this->loopEnd($index);
         $arrow = $this->find($as + 1, $close, static fn (array|string $token): bool => \is_array($token) && \T_DOUBLE_ARROW === $token[0]);
         $iterated = null;
+        $key = null;
         foreach (null === $arrow ? [[$as + 1, $close, false]] : [[$as + 1, $arrow, true], [$arrow + 1, $close, false]] as [$from, $to, $isKey]) {
             $target = $this->next($from, $to);
             $token = null === $target ? null : $this->tokens[$target];
@@ -1573,6 +1767,13 @@ final class TokenValueCollector
                 continue;
             }
 
+            // "as $v => $v" assigns the value, then the key: the variable
+            // holds the key.
+            if ($token[1] === $key) {
+                continue;
+            }
+
+            $key = $isKey ? $token[1] : null;
             if (isset($this->watchedVariables[$token[1]])) {
                 $iterated ??= $this->expression($open + 1, $as, $context);
                 $this->values->iterate($scope, substr($token[1], 1), ValueExpr::each($iterated, $isKey), $this->offsets[$close], $this->offsets[$as], $this->offsets[$end]);
@@ -1995,7 +2196,7 @@ final class TokenValueCollector
                 $from = $to = $this->step[2];
             }
 
-            $this->values->assign($scope, substr($token[1], 1), $this->assignedValue($value, $end, $context), $from, $to);
+            $this->values->assign($scope, substr($token[1], 1), $this->assignedValue($value, $end, $context), $from, $to, $this->standsAmongStatements($target, $end));
         }
     }
 
@@ -2105,8 +2306,8 @@ final class TokenValueCollector
 
             if ('extract' === $resolved || 'compact' === $resolved) {
                 $this->bailScope($index);
-            } elseif ('define' === $resolved) {
-                $this->define($index, $close, $context);
+            } elseif (InFileValueResolver::DEFINING === $resolved) {
+                $this->define($index, $close, $this->functionNames($function, $context), $context);
             } elseif (('array_walk' === $resolved || 'array_walk_recursive' === $resolved) && !$this->walksLiteralArray($index, $close)) {
                 // array_walk() over an object writes each of its properties,
                 // private ones included, from any scope.
@@ -2158,20 +2359,42 @@ final class TokenValueCollector
     }
 
     /**
-     * Marks the closures and the arrow functions written as arguments of
+     * Marks the closures and the arrow functions written as a callback of
      * the call whose parentheses are at $open and $close, a call to a
-     * function of PHP that calls them and lets them go, with the
-     * functions the call may reach.
+     * function of PHP that calls it and lets it go, with the functions
+     * the call may reach. One written as any other argument is handed to
+     * the callback, or refused: it is not marked.
      *
-     * @param list<string> $names
+     * @param non-empty-list<string> $names
      */
     private function holdClosures(int $open, int $close, array $names): void
     {
-        foreach ($this->split($open + 1, $close) as [$from, $to]) {
+        $function = $names[\count($names) - 1];
+        $ranges = $this->split($open + 1, $close);
+        // A trailing comma leaves an empty slot.
+        $last = $ranges[\count($ranges) - 1];
+        if (null === $this->next($last[0], $last[1])) {
+            array_pop($ranges);
+        }
+
+        // How many arguments the call passes, when each stands at its
+        // position: a name or a spread leaves the last ones unknown.
+        $count = \count($ranges);
+        foreach ($ranges as [$from, $to]) {
+            $start = $this->next($from, $to);
+            if (null === $start || $start !== $this->argumentValue($from, $to)) {
+                $count = null;
+
+                break;
+            }
+        }
+
+        foreach ($ranges as $position => [$from, $to]) {
             // A spread passes no closure written here.
             $start = $this->next($from, $to);
             $value = null === $start || $this->is($start, \T_ELLIPSIS) ? null : $this->argumentValue($from, $to);
-            $bounds = null === $value ? null : $this->bounds($value, $to);
+            $name = null === $start || $value === $start ? null : PhpTokens::identifier($this->tokens[$start]);
+            $bounds = null === $value || !InFileValueResolver::callsArgument($function, null === $name ? $position : null, $name, $count) ? null : $this->bounds($value, $to);
             if (null === $bounds) {
                 continue;
             }
@@ -2265,9 +2488,12 @@ final class TokenValueCollector
     }
 
     /**
-     * define('NAME', value), the name a literal.
+     * define('NAME', value), the name a literal: a constant when the call
+     * reaches the function of PHP.
+     *
+     * @param list<string> $names the lowercase functions the call may reach
      */
-    private function define(int $open, int $close, NameResolutionContext $context): void
+    private function define(int $open, int $close, array $names, NameResolutionContext $context): void
     {
         $arguments = $this->split($open + 1, $close);
         if (2 !== \count($arguments)) {
@@ -2284,7 +2510,7 @@ final class TokenValueCollector
 
         $constant = PhpTokens::stringValue($nameToken[1]);
         if ('' !== $constant) {
-            $this->values->declareConstant($constant, $this->expression($arguments[1][0], $arguments[1][1], $context));
+            $this->values->define($names, $constant, $this->expression($arguments[1][0], $arguments[1][1], $context));
         }
     }
 

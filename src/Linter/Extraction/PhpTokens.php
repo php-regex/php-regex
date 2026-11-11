@@ -41,6 +41,11 @@ final class PhpTokens
      */
     private const IDENTIFIER = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
 
+    /**
+     * Matches a number with a fraction or an exponent, in decimal.
+     */
+    private const DECIMAL_FLOAT = '/^(?:\d+\.\d*|\.\d+|\d+(?=e))(?:e[+-]?\d+)?$/i';
+
     private const NAMES = [\T_STRING, \T_NAME_QUALIFIED, \T_NAME_FULLY_QUALIFIED, \T_NAME_RELATIVE];
 
     private const OBJECT_OR_STATIC_OPERATORS = [\T_OBJECT_OPERATOR, \T_NULLSAFE_OBJECT_OPERATOR, \T_DOUBLE_COLON];
@@ -169,6 +174,18 @@ final class PhpTokens
             str_starts_with($digits, '0') => octdec($digits),
             default => $digits,
         };
+    }
+
+    /**
+     * The float a T_DNUMBER spells in decimal: 1.5, .5, 1e3, 1_000.5. Null
+     * for an integer too large to be one, written in any base, which the
+     * tokenizer makes a T_DNUMBER too.
+     */
+    public static function floatValue(string $token): ?float
+    {
+        $digits = str_replace('_', '', $token);
+
+        return 1 === LibraryPcre::match(self::DECIMAL_FLOAT, $digits) ? (float) $digits : null;
     }
 
     /**

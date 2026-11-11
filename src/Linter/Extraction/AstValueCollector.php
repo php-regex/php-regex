@@ -53,6 +53,7 @@ use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\InterpolatedString;
 use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt\Block;
 use PhpParser\Node\Stmt\Catch_;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassConst;
@@ -63,12 +64,14 @@ use PhpParser\Node\Stmt\Declare_;
 use PhpParser\Node\Stmt\Do_;
 use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\EnumCase;
+use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Stmt\For_;
 use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\Global_;
 use PhpParser\Node\Stmt\Goto_;
 use PhpParser\Node\Stmt\If_;
+use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Stmt\Static_;
 use PhpParser\Node\Stmt\Switch_;
@@ -105,6 +108,8 @@ final class AstValueCollector extends NodeVisitorAbstract
     private const HELD = 'phpRegexHeld';
 
     private const RUNS_AT = 'phpRegexRunsAt';
+
+    private const CERTAIN = 'phpRegexCertain';
 
     private readonly InFileValueResolver $values;
 
@@ -161,6 +166,18 @@ final class AstValueCollector extends NodeVisitorAbstract
     public function values(): InFileValueResolver
     {
         return $this->values;
+    }
+
+    /**
+     * @param array<Node> $nodes
+     *
+     * @return null
+     */
+    public function beforeTraverse(array $nodes)
+    {
+        self::markStatements($nodes);
+
+        return null;
     }
 
     /**
@@ -351,7 +368,7 @@ final class AstValueCollector extends NodeVisitorAbstract
             $held = $this->expression($array);
 
             return \in_array($held->kind, [ValueExpr::VARIABLE, ValueExpr::CONSTANT, ValueExpr::CLASS_CONSTANT], true)
-                ? ValueExpr::item($held, $this->expression($expr->dim), max(0, $expr->getStartFilePos()), $expr->getStartLine())
+                ? ValueExpr::item($held, $this->key($expr->dim), max(0, $expr->getStartFilePos()), $expr->getStartLine())
                 : ValueExpr::unknown();
         }
 
@@ -408,6 +425,38 @@ final class AstValueCollector extends NodeVisitorAbstract
         }
 
         return $expr instanceof Float_ ? ValueExpr::nonString() : ValueExpr::unknown();
+    }
+
+    /**
+     * An expression that names an item of an array, between the brackets
+     * of a read or before the "=>" of a literal. PHP casts a key that is
+     * no string and no integer: true and false are 1 and 0, null the empty
+     * string, a float its integer part.
+     */
+    private function key(Expr $key): ValueExpr
+    {
+        $offset = max(0, $key->getStartFilePos());
+        if ($key instanceof ConstFetch) {
+            $lower = $key->name->toLowerString();
+            if ('true' === $lower || 'false' === $lower) {
+                return ValueExpr::castKey('true' === $lower, $offset, $key->getStartLine());
+            }
+
+            if ('null' === $lower) {
+                return ValueExpr::castKey(null, $offset, $key->getStartLine());
+            }
+        }
+
+        $negative = false;
+        $number = $key;
+        while ($number instanceof UnaryMinus || $number instanceof UnaryPlus) {
+            $negative = $negative !== $number instanceof UnaryMinus;
+            $number = $number->expr;
+        }
+
+        return $number instanceof Float_
+            ? ValueExpr::castKey($negative ? -$number->value : $number->value, $offset, $key->getStartLine())
+            : $this->expression($key);
     }
 
     /**
@@ -527,6 +576,10 @@ final class AstValueCollector extends NodeVisitorAbstract
             $this->values->declareFunction($function->namespacedName->toString());
         }
 
+        if (!$function instanceof ArrowFunction) {
+            self::markStatements($function->getStmts() ?? []);
+        }
+
         $outer = $this->scope();
         $scope = $this->nextScope++;
         $this->scopes[] = $scope;
@@ -551,6 +604,24 @@ final class AstValueCollector extends NodeVisitorAbstract
             // use (&$re) lets the closure write the variable of the body around it.
             if ($use->byRef && null !== $outer) {
                 $this->values->bail($outer, $name);
+            }
+        }
+    }
+
+    /**
+     * Marks the assignments that stand as statements of a function body
+     * itself, or of the file, those of a namespace and of a block written
+     * among them included: every path to what follows one runs it.
+     *
+     * @param array<Node> $statements
+     */
+    private static function markStatements(array $statements): void
+    {
+        foreach ($statements as $statement) {
+            if ($statement instanceof Expression && $statement->expr instanceof Assign) {
+                $statement->expr->setAttribute(self::CERTAIN, true);
+            } elseif ($statement instanceof Block || $statement instanceof Namespace_) {
+                self::markStatements($statement->stmts);
             }
         }
     }
@@ -613,6 +684,7 @@ final class AstValueCollector extends NodeVisitorAbstract
                     $this->expression($assign->expr),
                     \is_int($runsAt) ? $runsAt : $target->getStartFilePos(),
                     \is_int($runsAt) ? $runsAt : $assign->getEndFilePos(),
+                    true === $assign->getAttribute(self::CERTAIN),
                 );
             }
 
@@ -637,8 +709,8 @@ final class AstValueCollector extends NodeVisitorAbstract
                 $this->bailScope();
             }
 
-            if ('define' === $name) {
-                $this->define($call);
+            if (InFileValueResolver::DEFINING === $name) {
+                $this->define($call, self::functionNames($call->name));
             }
 
             // array_walk() over an object writes each of its properties,
@@ -705,9 +777,12 @@ final class AstValueCollector extends NodeVisitorAbstract
     }
 
     /**
-     * define('NAME', value), the name a literal.
+     * define('NAME', value), the name a literal: a constant when the call
+     * reaches the function of PHP.
+     *
+     * @param list<string> $names the lowercase functions the call may reach
      */
-    private function define(FuncCall $call): void
+    private function define(FuncCall $call, array $names): void
     {
         $args = $call->getRawArgs();
         $first = $args[0] ?? null;
@@ -724,7 +799,7 @@ final class AstValueCollector extends NodeVisitorAbstract
 
         $name = $first->value;
         if ($name instanceof String_ && \in_array($name->getAttribute('kind'), [String_::KIND_SINGLE_QUOTED, String_::KIND_DOUBLE_QUOTED], true) && '' !== $name->value) {
-            $this->values->declareConstant($name->value, $this->expression($second->value));
+            $this->values->define($names, $name->value, $this->expression($second->value));
         }
     }
 
@@ -901,7 +976,7 @@ final class AstValueCollector extends NodeVisitorAbstract
                 return ValueExpr::unknown();
             }
 
-            $items[] = [null === $item->key ? null : $this->expression($item->key), $this->expression($item->value)];
+            $items[] = [null === $item->key ? null : $this->key($item->key), $this->expression($item->value)];
         }
 
         return ValueExpr::arrayOf($items);
@@ -944,24 +1019,39 @@ final class AstValueCollector extends NodeVisitorAbstract
     }
 
     /**
-     * Marks the closures and the arrow functions written as arguments of
-     * a call to a function of PHP that calls them and lets them go, with
-     * the functions the call may reach.
+     * Marks the closures and the arrow functions written as a callback of
+     * a call to a function of PHP that calls it and lets it go, with the
+     * functions the call may reach. One written as any other argument is
+     * handed to the callback, or refused: it is not marked.
      */
     private function holdClosures(FuncCall $call, Name $name): void
     {
         $names = self::functionNames($name);
-        if (!isset(InFileValueResolver::CALLING[$names[\count($names) - 1]])) {
+        $function = $names[\count($names) - 1];
+        if (!isset(InFileValueResolver::CALLING[$function])) {
             return;
         }
 
-        foreach ($call->getRawArgs() as $arg) {
+        // How many arguments the call passes, when each stands at its
+        // position: a name or a spread leaves the last ones unknown.
+        $arguments = array_values($call->getRawArgs());
+        $count = \count($arguments);
+        foreach ($arguments as $arg) {
+            if (!$arg instanceof Arg || $arg->unpack || null !== $arg->name) {
+                $count = null;
+
+                break;
+            }
+        }
+
+        foreach ($arguments as $position => $arg) {
             if (!$arg instanceof Arg || $arg->unpack) {
                 continue;
             }
 
             $value = $arg->value;
-            if (($value instanceof Closure || $value instanceof ArrowFunction) && [] === $value->attrGroups) {
+            if (($value instanceof Closure || $value instanceof ArrowFunction) && [] === $value->attrGroups
+                && InFileValueResolver::callsArgument($function, null === $arg->name ? $position : null, $arg->name?->toString(), $count)) {
                 $value->setAttribute(self::HELD, \count($this->holders));
                 $this->holders[] = $names;
             }
@@ -971,7 +1061,8 @@ final class AstValueCollector extends NodeVisitorAbstract
     /**
      * A foreach, once its body is read: the head assigns a target that is
      * a plain variable at each turn, one of the values of what the loop
-     * iterates, or one of its keys. Any other target, one taken by
+     * iterates, or one of its keys; one variable named as both holds the
+     * key, which PHP assigns last. Any other target, one taken by
      * reference and one of a loop whose end is not known are written
      * unseen.
      */
@@ -980,8 +1071,16 @@ final class AstValueCollector extends NodeVisitorAbstract
         $scope = $this->scope();
         // As the tokenizer reads it: such a loop may hold anything.
         $iterated = null === $scope || self::runsAControlStructureUnbraced($loop) ? null : $this->expression($loop->expr);
+        $key = null;
         foreach ([[$loop->keyVar, true], [$loop->valueVar, false]] as [$target, $isKey]) {
             if (null !== $iterated && null !== $scope && $target instanceof Variable && \is_string($target->name) && 'this' !== $target->name && ($isKey || !$loop->byRef)) {
+                // "as $v => $v" assigns the value, then the key: the
+                // variable holds the key.
+                if ($target->name === $key) {
+                    continue;
+                }
+
+                $key = $isKey ? $target->name : null;
                 $this->values->iterate($scope, $target->name, ValueExpr::each($iterated, $isKey), $loop->valueVar->getEndFilePos(), $loop->expr->getEndFilePos() + 1, $loop->getEndFilePos());
             } else {
                 $this->writeEverything($target);

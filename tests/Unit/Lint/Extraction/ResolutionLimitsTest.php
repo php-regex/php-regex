@@ -32,8 +32,9 @@ use PHPUnit\Framework\TestCase;
  * string past 64 KiB proves nothing, a variable assigned and read
  * thousands of times in one body is read in time that grows with it, not
  * with its square, the values of several operands are not multiplied
- * past the most a composition may give, and an array read item by item
- * through a loop is read in time that grows with its items.
+ * past the most a composition may give, an array read item by item
+ * through a loop is read in time that grows with its items, and an item
+ * read by its literal key is found without a walk over the array.
  */
 final class ResolutionLimitsTest extends TestCase
 {
@@ -208,6 +209,95 @@ final class ResolutionLimitsTest extends TestCase
 
             $this->assertLessThan(24 * $small, $large, \sprintf('%s: %.3fs for 500 reads, %.3fs for 4000.', $name, $small, $large));
         }
+    }
+
+    /**
+     * A constant holding 2,000 patterns, each read once by its literal
+     * key: an item is found by its key, whatever the number of the items
+     * beside it. The reading takes about what reading 2,000 constants
+     * takes, each declared and read once; a walk over the array at each
+     * read takes six to ten times that at this size, and the bound sits
+     * between the two.
+     */
+    #[Test]
+    public function test_the_items_of_a_class_constant_read_by_literal_keys_cost_what_as_many_constants_cost(): void
+    {
+        $this->assertItemsReadByKeyCostWhatConstantsCost(false);
+    }
+
+    /**
+     * The same items in a local array, assigned once and read 2,000
+     * times by a literal key.
+     */
+    #[Test]
+    public function test_the_items_of_a_local_array_read_by_literal_keys_cost_what_as_many_constants_cost(): void
+    {
+        $this->assertItemsReadByKeyCostWhatConstantsCost(true);
+    }
+
+    private function assertItemsReadByKeyCostWhatConstantsCost(bool $local): void
+    {
+        $items = 2000;
+
+        // The best of three runs keeps a loaded machine from deciding.
+        foreach ($this->strategies() as $name => $strategy) {
+            $constants = min(array_map(fn (): float => $this->timeItems($strategy, self::constantsReadOnce($items), $items), range(1, 3)));
+            $byKey = min(array_map(fn (): float => $this->timeItems($strategy, self::itemsReadByKey($items, $local), $items), range(1, 3)));
+
+            $this->assertLessThan(3 * $constants, $byKey, \sprintf('%s: %.3fs for %d constants read once each, %.3fs for %d items read by their keys.', $name, $constants, $items, $byKey, $items));
+        }
+    }
+
+    /**
+     * The CPU time of reading a file that holds as many patterns, each
+     * read once.
+     */
+    private function timeItems(ExtractorInterface $strategy, string $code, int $items): float
+    {
+        $file = $this->makeProject(['items.php' => $code]).'/items.php';
+
+        $patterns = CpuClock::timed(static fn () => self::patterns($strategy, $file), $elapsed);
+
+        $this->assertCount($items, array_unique($patterns));
+
+        return max($elapsed, 0.001);
+    }
+
+    /**
+     * A class whose method reads each item of an array once, by its
+     * literal key: the array is a constant of the class, or a variable
+     * the method assigns once.
+     */
+    private static function itemsReadByKey(int $items, bool $local): string
+    {
+        $map = '';
+        $reads = '';
+        for ($i = 0; $i < $items; $i++) {
+            $map .= \sprintf("        'k%d' => '/item-%d/',\n", $i, $i);
+            $reads .= \sprintf("        \$found += preg_match(%s['k%d'], \$s);\n", $local ? '$map' : 'self::MAP', $i);
+        }
+
+        return "<?php\n\nfinal class Lookup\n{\n"
+            .($local ? '' : "    private const MAP = [\n".$map."    ];\n\n")
+            ."    public function f(string \$s): int\n    {\n"
+            .($local ? "        \$map = [\n".$map."        ];\n" : '')
+            ."        \$found = 0;\n".$reads."\n        return \$found;\n    }\n}\n";
+    }
+
+    /**
+     * The same patterns, each the value of a constant of its own, read
+     * once by its name.
+     */
+    private static function constantsReadOnce(int $items): string
+    {
+        $constants = '';
+        $reads = '';
+        for ($i = 0; $i < $items; $i++) {
+            $constants .= \sprintf("    private const K%d = '/item-%d/';\n", $i, $i);
+            $reads .= \sprintf("        \$found += preg_match(self::K%d, \$s);\n", $i);
+        }
+
+        return "<?php\n\nfinal class Lookup\n{\n".$constants."\n    public function f(string \$s): int\n    {\n        \$found = 0;\n".$reads."\n        return \$found;\n    }\n}\n";
     }
 
     private function timeLoop(ExtractorInterface $strategy, int $items): float

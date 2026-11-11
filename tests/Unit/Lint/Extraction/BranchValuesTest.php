@@ -23,7 +23,9 @@ use PHPUnit\Framework\TestCase;
  * the default arm of a match among them. The condition is not read: which
  * arm runs is decided at run time. A short ternary and a null coalescing
  * give what PHP gives: A ?: B keeps B only when a value of A is '' or
- * '0', A ?? B never keeps B when A is a string.
+ * '0', A ?? B never keeps B when A is a string. An item of an array may
+ * be missing: A[$k] ?? B and A[$k] ?: B keep B beside the values of the
+ * array, unless the key is a literal one the array holds for certain.
  *
  * Each arm that is one literal is reported where the literal is written,
  * once; an arm composed in the argument, where the argument starts. An
@@ -299,6 +301,217 @@ final class BranchValuesTest extends TestCase
         $this->assertExtractedByBoth($patterns, $code);
         $this->assertArgumentsReadByBoth([
             ['state' => $state, 'expression' => $argument, 'at' => $argument.', $s)', 'source' => 'preg_match()'],
+        ], $code);
+    }
+
+    /**
+     * An item of an array may be missing where a string never is: named
+     * by a key the file does not spell, or read in an array one path
+     * leaves unassigned, A[$k] ?? B and A[$k] ?: B give B as well as the
+     * values of the array. The fallback is read with them, or nothing is.
+     *
+     * MAP is ['int' => '/^\d+$/', 'word' => '/^\w+$/'], PARTS ['int' =>
+     * '\d+', 'word' => '\w+'], LIST ['/l-a/', '/l-b/'], ONE ['only' =>
+     * '/only/'], ACCENTS ['é' => '/^é+$/u'] and GLOBAL_MAP ['int' =>
+     * '/g-int/', 'word' => '/g-word/'].
+     *
+     * PHP 8.4 (php -r): self::MAP[$type] ?? '/^[a-z+$/' is "/^\d+$/" for
+     * "int", "/^\w+$/" for "word" and "/^[a-z+$/" for any other key, which
+     * preg_match() refuses with "Compilation failed: missing terminating ]
+     * for character class at offset 7"; $map[$type] ?? '/x(/' is "/x(/"
+     * for a key $map does not hold ("missing closing parenthesis at offset
+     * 2"); '/^' . (self::PARTS[$type] ?? '[a-z+') . '$/' is "/^[a-z+$/"
+     * then, and sprintf('/^%s$/', self::PARTS[$type] ?? 'f(') "/^f($/".
+     * if ($flag) { $a = ['k' => '/cond/']; } $a['k'] ?? '/d(/' is "/d(/"
+     * when $flag is false. self::MAP[$type] ?: '/short(/' is "/short(/"
+     * for a key MAP does not hold, with the warning 'Undefined array key'.
+     *
+     * @return iterable<string, array{setup: string, argument: string, built: list<string>}>
+     */
+    public static function provideItemsThatMayBeMissing(): iterable
+    {
+        $local = "\$map = ['a' => '/a/', 'b' => '/b/'];";
+        $onOnePath = "if (\$flag) {\n            \$a = ['k' => '/cond/'];\n        }";
+
+        yield 'an item of a class constant named by a parameter' => [
+            'setup' => '',
+            'argument' => "self::MAP[\$type] ?? '/^[a-z+$/'",
+            'built' => ['/^\d+$/', '/^\w+$/', '/^[a-z+$/'],
+        ];
+
+        yield 'an item of a global constant named by a parameter' => [
+            'setup' => '',
+            'argument' => "GLOBAL_MAP[\$type] ?? '/g(/'",
+            'built' => ['/g-int/', '/g-word/', '/g(/'],
+        ];
+
+        yield 'an item of a list named by an index' => [
+            'setup' => '',
+            'argument' => "self::LIST[\$kind] ?? '/l(/'",
+            'built' => ['/l-a/', '/l-b/', '/l(/'],
+        ];
+
+        yield 'an item of an array of one value' => [
+            'setup' => '',
+            'argument' => "self::ONE[\$type] ?? '/one(/'",
+            'built' => ['/only/', '/one(/'],
+        ];
+
+        yield 'an item named by a call' => [
+            'setup' => '',
+            'argument' => "self::MAP[strtolower(\$type)] ?? '/call(/'",
+            'built' => ['/^\d+$/', '/^\w+$/', '/call(/'],
+        ];
+
+        yield 'an item and a fallback of multi-byte patterns' => [
+            'setup' => '',
+            'argument' => "self::ACCENTS[\$type] ?? '/^[à-ÿ+$/u'",
+            'built' => ['/^é+$/u', '/^[à-ÿ+$/u'],
+        ];
+
+        yield 'an item of a local array named by a parameter' => [
+            'setup' => $local,
+            'argument' => "\$map[\$type] ?? '/x(/'",
+            'built' => ['/a/', '/b/', '/x(/'],
+        ];
+
+        yield 'an item with a fallback, joined to literals' => [
+            'setup' => '',
+            'argument' => "'/^' . (self::PARTS[\$type] ?? '[a-z+') . '$/'",
+            'built' => ['/^\d+$/', '/^\w+$/', '/^[a-z+$/'],
+        ];
+
+        yield 'an item with a fallback, in sprintf()' => [
+            'setup' => '',
+            'argument' => "sprintf('/^%s$/', self::PARTS[\$type] ?? 'f(')",
+            'built' => ['/^\d+$/', '/^\w+$/', '/^f($/'],
+        ];
+
+        yield 'an item, then an item, then a literal' => [
+            'setup' => $local,
+            'argument' => "self::MAP[\$type] ?? \$map[\$type] ?? '/chain(/'",
+            'built' => ['/^\d+$/', '/^\w+$/', '/a/', '/b/', '/chain(/'],
+        ];
+
+        yield 'a literal key of an array one path leaves unassigned' => [
+            'setup' => $onOnePath,
+            'argument' => "\$a['k'] ?? '/d(/'",
+            'built' => ['/cond/', '/d(/'],
+        ];
+
+        yield 'any key of an array one path leaves unassigned' => [
+            'setup' => $onOnePath,
+            'argument' => "\$a[\$type] ?? '/any(/'",
+            'built' => ['/cond/', '/any(/'],
+        ];
+
+        yield 'a short ternary on an item of a class constant' => [
+            'setup' => '',
+            'argument' => "self::MAP[\$type] ?: '/short(/'",
+            'built' => ['/^\d+$/', '/^\w+$/', '/short(/'],
+        ];
+
+        yield 'a short ternary on an item of an array of one value' => [
+            'setup' => '',
+            'argument' => "self::ONE[\$type] ?: '/short-one(/'",
+            'built' => ['/only/', '/short-one(/'],
+        ];
+
+        yield 'a short ternary on an item of a local array' => [
+            'setup' => $local,
+            'argument' => "\$map[\$type] ?: '/short-local(/'",
+            'built' => ['/a/', '/b/', '/short-local(/'],
+        ];
+
+        yield 'a short ternary on a literal key of an array one path leaves unassigned' => [
+            'setup' => $onOnePath,
+            'argument' => "\$a['k'] ?: '/short-cond(/'",
+            'built' => ['/cond/', '/short-cond(/'],
+        ];
+
+        // self::MAP['missing'] ?? '/not-held/' is "/not-held/", always:
+        // read alone, or not read.
+        yield 'a literal key the constant does not hold' => [
+            'setup' => '',
+            'argument' => "self::MAP['missing'] ?? '/not-held/'",
+            'built' => ['/not-held/'],
+        ];
+    }
+
+    /**
+     * The fallback is among the patterns of an argument that is judged,
+     * constant or a finite set, with every value of the array; an argument
+     * left unread gives no pattern.
+     *
+     * @param list<string> $built the patterns PHP builds there
+     */
+    #[Test]
+    #[DataProvider('provideItemsThatMayBeMissing')]
+    public function test_an_item_that_may_be_missing_keeps_its_fallback_or_is_not_read(string $setup, string $argument, array $built): void
+    {
+        $code = self::withMaps($setup, $argument);
+
+        $read = array_values(array_unique($this->patternsReadByBoth($code)));
+        sort($read, \SORT_STRING);
+        sort($built, \SORT_STRING);
+        $states = $this->statesReadByBoth($code);
+
+        $this->assertCount(1, $states);
+        if (\in_array($states[0], ['constant', 'finite_set'], true)) {
+            $this->assertSame($built, $read, 'The argument is judged as "'.$states[0].'": its patterns are those PHP builds, the fallback among them.');
+        } else {
+            $this->assertSame([], $read, 'An argument left unread gives no pattern.');
+        }
+    }
+
+    /**
+     * A literal key the array holds for certain, in a constant or in a
+     * local array every path assigns, always names its item: the
+     * fallback is never built, and is not read.
+     *
+     * PHP 8.4: self::MAP['int'] ?? '/held(/' and self::MAP['int'] ?:
+     * '/held(/' are "/^\d+$/"; self::LIST[0] ?? '/held(/' is "/l-a/";
+     * $map = ['a' => '/a/', 'b' => '/b/']; $map['a'] ?? '/held(/' is
+     * "/a/".
+     *
+     * @return iterable<string, array{setup: string, argument: string, pattern: string}>
+     */
+    public static function provideItemsPhpAlwaysFinds(): iterable
+    {
+        yield 'a null coalescing on a literal key of a class constant' => [
+            'setup' => '',
+            'argument' => "self::MAP['int'] ?? '/held(/'",
+            'pattern' => '/^\d+$/',
+        ];
+
+        yield 'a short ternary on a literal key of a class constant' => [
+            'setup' => '',
+            'argument' => "self::MAP['int'] ?: '/held(/'",
+            'pattern' => '/^\d+$/',
+        ];
+
+        yield 'a null coalescing on a literal index of a list' => [
+            'setup' => '',
+            'argument' => "self::LIST[0] ?? '/held(/'",
+            'pattern' => '/l-a/',
+        ];
+
+        yield 'a null coalescing on a literal key of a local array' => [
+            'setup' => "\$map = ['a' => '/a/', 'b' => '/b/'];",
+            'argument' => "\$map['a'] ?? '/held(/'",
+            'pattern' => '/a/',
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideItemsPhpAlwaysFinds')]
+    public function test_an_item_php_always_finds_does_not_read_its_fallback(string $setup, string $argument, string $pattern): void
+    {
+        $code = self::withMaps($setup, $argument);
+
+        $this->assertSame([$pattern], $this->patternsReadByBoth($code));
+        $this->assertArgumentsReadByBoth([
+            ['state' => 'constant', 'expression' => $argument, 'at' => $argument.', $s)', 'source' => 'preg_match()'],
         ], $code);
     }
 
@@ -598,6 +811,23 @@ final class BranchValuesTest extends TestCase
     {
         return "<?php\n\nfinal class Matcher\n{\n    private const A = '/const-a/';\n    private const B = '/const-b/';\n    private const EMPTY = '';\n    private const ZERO = '0';\n\n"
             ."    public function run(string \$s, string \$given, bool \$flag, int \$kind, array \$options): int\n    {\n        ".$setup."\n\n"
+            .'        return preg_match('.$argument.", \$s);\n    }\n}\n";
+    }
+
+    /**
+     * The global GLOBAL_MAP and a final class holding MAP, PARTS, LIST,
+     * ONE and ACCENTS, whose method run() runs the statements, then reads
+     * the argument in preg_match().
+     */
+    private static function withMaps(string $setup, string $argument): string
+    {
+        return "<?php\n\nconst GLOBAL_MAP = ['int' => '/g-int/', 'word' => '/g-word/'];\n\nfinal class Matcher\n{\n"
+            ."    private const MAP = ['int' => '/^\\d+$/', 'word' => '/^\\w+$/'];\n"
+            ."    private const PARTS = ['int' => '\\d+', 'word' => '\\w+'];\n"
+            ."    private const LIST = ['/l-a/', '/l-b/'];\n"
+            ."    private const ONE = ['only' => '/only/'];\n"
+            ."    private const ACCENTS = ['é' => '/^é+$/u'];\n\n"
+            ."    public function run(string \$s, string \$type, bool \$flag, int \$kind): int\n    {\n        ".$setup."\n\n"
             .'        return preg_match('.$argument.", \$s);\n    }\n}\n";
     }
 }

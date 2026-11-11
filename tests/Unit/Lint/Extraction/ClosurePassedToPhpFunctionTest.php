@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
+use PHPRegex\Linter\Extraction\InFileValueResolver;
 use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +29,13 @@ use PHPUnit\Framework\TestCase;
  * class around it, and static::X too where the file already proves it, in
  * a final class or for a final constant. Every closure between the read
  * and the class must stand so.
+ *
+ * PHP calls the closure it is given as a callback, and no other: the
+ * initial value of array_reduce(), the extra argument of array_walk() and
+ * the arguments call_user_func() passes on reach the callback, which may
+ * be a function of the project and bind them; in the place of an array or
+ * of a subject, a closure is a TypeError. A closure written there names
+ * no class.
  *
  * The function is the one of PHP: a name the file declares in the
  * namespace of the call, or imports with "use function", is another
@@ -81,6 +89,41 @@ final class ClosurePassedToPhpFunctionTest extends TestCase
         'call_user_func' => 'call_user_func(%s, $s)',
         'call_user_func_array' => 'call_user_func_array(%s, [$s])',
         'iterator_apply' => 'iterator_apply($rows, %s, [$s])',
+    ];
+
+    /**
+     * The same functions, each in a call that passes the closure, "%s",
+     * elsewhere than as a callback: in the place of an array, of a mode,
+     * of a subject, or as one argument too many. call_user_func() has no
+     * such place: what follows its callback is passed on to it.
+     */
+    private const BESIDE_THE_CALLBACK = [
+        'array_map' => "array_map('rebind', \$xs, %s)",
+        'array_filter' => "array_filter(\$xs, 'rebind', %s)",
+        'array_reduce' => "array_reduce(%s, 'rebind')",
+        'array_walk' => "array_walk(%s, 'rebind')",
+        'array_walk_recursive' => "array_walk_recursive(%s, 'rebind')",
+        'array_find' => "array_find(%s, 'rebind')",
+        'array_find_key' => "array_find_key(%s, 'rebind')",
+        'array_any' => "array_any(%s, 'rebind')",
+        'array_all' => "array_all(%s, 'rebind')",
+        'usort' => "usort(\$xs, 'rebind', %s)",
+        'uasort' => "uasort(\$xs, 'rebind', %s)",
+        'uksort' => "uksort(\$xs, 'rebind', %s)",
+        'array_udiff' => "array_udiff(\$xs, %s, 'rebind')",
+        'array_udiff_assoc' => "array_udiff_assoc(\$xs, %s, 'rebind')",
+        'array_udiff_uassoc' => "array_udiff_uassoc(\$xs, %s, 'rebind', 'rebind')",
+        'array_uintersect' => "array_uintersect(\$xs, %s, 'rebind')",
+        'array_uintersect_assoc' => "array_uintersect_assoc(\$xs, %s, 'rebind')",
+        'array_uintersect_uassoc' => "array_uintersect_uassoc(\$xs, %s, 'rebind', 'rebind')",
+        'array_diff_ukey' => "array_diff_ukey(\$xs, %s, 'rebind')",
+        'array_diff_uassoc' => "array_diff_uassoc(\$xs, %s, 'rebind')",
+        'array_intersect_ukey' => "array_intersect_ukey(\$xs, %s, 'rebind')",
+        'array_intersect_uassoc' => "array_intersect_uassoc(\$xs, %s, 'rebind')",
+        'preg_replace_callback' => "preg_replace_callback('/outer/', 'rebind', %s)",
+        'call_user_func' => "call_user_func('rebind', %s)",
+        'call_user_func_array' => "call_user_func_array('rebind', %s)",
+        'iterator_apply' => "iterator_apply(\$rows, 'rebind', %s)",
     ];
 
     /**
@@ -159,6 +202,201 @@ final class ClosurePassedToPhpFunctionTest extends TestCase
         $this->assertArgumentsReadByBoth([
             ['state' => 'constant', 'expression' => "'/outer/'", 'source' => 'preg_replace_callback()'],
             ['state' => 'constant', 'expression' => 'self::RE', 'at' => 'self::RE, ', 'source' => 'preg_match()'],
+        ], $code);
+    }
+
+    /**
+     * The list of this class names every function of the resolver's, and
+     * each with a call that hands the closure elsewhere than to its
+     * callback: a function added to one list says where it takes its
+     * callback in the others.
+     */
+    #[Test]
+    public function test_every_function_that_keeps_the_class_is_read_at_its_callback_and_beside_it(): void
+    {
+        $functions = array_keys(InFileValueResolver::CALLING);
+        sort($functions);
+
+        $atTheCallback = [...array_keys(self::CALLS), 'preg_replace_callback'];
+        sort($atTheCallback);
+        $besideTheCallback = array_keys(self::BESIDE_THE_CALLBACK);
+        sort($besideTheCallback);
+
+        $this->assertSame($functions, $atTheCallback);
+        $this->assertSame($functions, $besideTheCallback);
+    }
+
+    /**
+     * A function that takes two callbacks calls both; one that takes any
+     * number of arrays takes its callback last, after all of them; a
+     * callback passed by its name stands wherever it is written.
+     *
+     * PHP 8.4 (php -r), in a method of A: array_udiff($xs, $ys, $xs, fn
+     * ($a, $b) => self::RE), array_udiff_uassoc($xs, $ys, 'strcmp', fn
+     * ($a, $b) => self::RE), array_uintersect_uassoc($xs, $ys, 'strcmp',
+     * fn ($a, $b) => self::RE) and array_filter(callback: fn ($x) =>
+     * self::RE, array: $xs) each call the closure, which gives "/a/".
+     *
+     * @return iterable<string, array{call: string}>
+     */
+    public static function provideCallbackPositionsBesideTheUsualOne(): iterable
+    {
+        yield 'the key callback of array_udiff_uassoc()' => ['call' => "array_udiff_uassoc(\$xs, \$ys, 'strcmp', %s)"];
+        yield 'the key callback of array_uintersect_uassoc()' => ['call' => "array_uintersect_uassoc(\$xs, \$ys, 'strcmp', %s)"];
+        yield 'the value callback of array_udiff_uassoc() after three arrays' => ['call' => "array_udiff_uassoc(\$xs, \$ys, \$xs, %s, 'strcmp')"];
+
+        foreach (['array_udiff', 'array_udiff_assoc', 'array_uintersect', 'array_uintersect_assoc', 'array_diff_ukey', 'array_diff_uassoc', 'array_intersect_ukey', 'array_intersect_uassoc'] as $function) {
+            yield $function.'() after three arrays' => ['call' => $function.'($xs, $ys, $xs, %s)'];
+        }
+
+        yield 'array_filter() by name, before the array' => ['call' => 'array_filter(callback: %s, array: $xs)'];
+        yield 'array_reduce() by name, after the initial value' => ['call' => 'array_reduce($xs, initial: 0, callback: %s)'];
+        yield 'usort() by name' => ['call' => 'usort(callback: %s, array: $xs)'];
+        yield 'call_user_func() with arguments after the callback' => ['call' => 'call_user_func(%s, $s, $xs)'];
+    }
+
+    #[Test]
+    #[DataProvider('provideCallbackPositionsBesideTheUsualOne')]
+    public function test_a_closure_passed_as_any_callback_of_the_function_keeps_its_class(string $call): void
+    {
+        $code = self::matcher('return '.\sprintf($call, 'static fn (mixed ...$args): int => (int) preg_match(self::RE, (string) $args[0])').';');
+
+        $this->assertExtractedByBoth([
+            ['pattern' => '/a/', 'at' => "'/a/'", 'source' => 'preg_match()', 'location' => 'via self::RE'],
+        ], $code);
+        $this->assertArgumentsReadByBoth([
+            ['state' => 'constant', 'expression' => 'self::RE', 'at' => 'self::RE, ', 'source' => 'preg_match()'],
+        ], $code);
+    }
+
+    /**
+     * A closure a function of PHP is given elsewhere than as its
+     * callback is not called by PHP: the function hands it to the
+     * callback, a function of the project that may bind it.
+     *
+     * PHP 8.4 (php -r), in a method of A, with function rebind(...$args)
+     * calling Closure::bind($arg, null, B::class)() on the closure it is
+     * given: call_user_func('rebind', fn () => self::RE),
+     * call_user_func('rebind', $s, fn () => self::RE), array_reduce($xs,
+     * 'rebind', fn () => self::RE), array_reduce($xs, initial: fn () =>
+     * self::RE, callback: 'rebind'), array_walk($xs, 'rebind', fn () =>
+     * self::RE) and array_walk_recursive($xs, 'rebind', fn () =>
+     * self::RE) each give "/(/", the constant of B.
+     *
+     * @return iterable<string, array{read: string}>
+     */
+    public static function provideClosuresHandedToTheCallback(): iterable
+    {
+        $closure = 'fn () => preg_match(self::RE, $s)';
+
+        yield 'the argument of call_user_func()' => ['read' => 'return '.\sprintf(self::BESIDE_THE_CALLBACK['call_user_func'], $closure).';'];
+        yield 'a later argument of call_user_func()' => ['read' => "return call_user_func('rebind', \$s, ".$closure.');'];
+        yield 'the initial value of array_reduce()' => ['read' => "return array_reduce(\$xs, 'rebind', ".$closure.');'];
+        yield 'the initial value of array_reduce(), by name' => ['read' => 'return array_reduce($xs, initial: '.$closure.", callback: 'rebind');"];
+        yield 'the extra argument of array_walk()' => ['read' => "return array_walk(\$xs, 'rebind', ".$closure.');'];
+        yield 'the extra argument of array_walk(), by name' => ['read' => 'return array_walk($xs, arg: '.$closure.", callback: 'rebind');"];
+        yield 'the extra argument of array_walk_recursive()' => ['read' => "return array_walk_recursive(\$xs, 'rebind', ".$closure.');'];
+        yield 'a static closure as the initial value of array_reduce()' => ['read' => "return array_reduce(\$xs, 'rebind', static function () use (\$s) { return preg_match(self::RE, \$s); });"];
+        yield 'a closure written in a call, holding one handed to the callback' => ['read' => "return array_map(fn (\$x) => call_user_func('rebind', fn () => preg_match(self::RE, \$x)), \$xs);"];
+    }
+
+    #[Test]
+    #[DataProvider('provideClosuresHandedToTheCallback')]
+    public function test_a_closure_the_function_hands_to_its_callback_names_no_class(string $read): void
+    {
+        $code = self::matcher($read);
+
+        $this->assertExtractedByBoth([], $code);
+        $this->assertArgumentsReadByBoth([
+            ['state' => 'opaque', 'expression' => 'self::RE', 'at' => 'self::RE, ', 'source' => 'preg_match()'],
+        ], $code);
+    }
+
+    /**
+     * Elsewhere than as a callback, PHP calls the closure nowhere: in the
+     * place of an array, of a mode or of a subject it is a TypeError, and
+     * no pattern is built of it. call_user_func(), which passes it on to
+     * its callback, and preg_replace_callback(), which reads a pattern of
+     * its own, are read apart.
+     *
+     * PHP 8.4 (php -r): array_map('rebind', $xs, fn () => self::RE) is a
+     * TypeError, "array_map(): Argument #3 must be of type array, Closure
+     * given"; array_filter($xs, 'rebind', fn () => self::RE) "Argument #3
+     * ($mode) must be of type int, Closure given"; array_udiff($xs, fn ()
+     * => self::RE, 'rebind') "Argument #2 must be of type array, Closure
+     * given"; call_user_func_array('rebind', fn () => self::RE) "Argument
+     * #2 ($args) must be of type array, Closure given";
+     * iterator_apply($rows, 'rebind', fn () => self::RE) "Argument #3
+     * ($args) must be of type ?array, Closure given"; array_reduce(fn ()
+     * => self::RE, 'rebind') "Argument #1 ($array) must be of type array,
+     * Closure given"; array_walk(fn () => self::RE, 'rebind') is an
+     * Error, "Argument #1 ($array) could not be passed by reference";
+     * usort($xs, 'rebind', fn () => self::RE) is an ArgumentCountError,
+     * "usort() expects exactly 2 arguments, 3 given".
+     *
+     * @return iterable<string, array{call: string}>
+     */
+    public static function provideArgumentsThatAreNoCallback(): iterable
+    {
+        foreach (self::BESIDE_THE_CALLBACK as $function => $call) {
+            if ('preg_replace_callback' !== $function && 'call_user_func' !== $function) {
+                yield $function.'()' => ['call' => $call];
+            }
+        }
+    }
+
+    #[Test]
+    #[DataProvider('provideArgumentsThatAreNoCallback')]
+    public function test_a_closure_passed_beside_the_callback_names_no_class(string $call): void
+    {
+        $code = self::matcher('return '.\sprintf($call, 'fn () => preg_match(self::RE, $s)').';');
+
+        $this->assertExtractedByBoth([], $code);
+        $this->assertArgumentsReadByBoth([
+            ['state' => 'opaque', 'expression' => 'self::RE', 'at' => 'self::RE, ', 'source' => 'preg_match()'],
+        ], $code);
+    }
+
+    /**
+     * preg_replace_callback() takes its callback second: a closure
+     * written as its subject is none. PHP 8.4:
+     * preg_replace_callback('/outer/', 'rebind', fn () => self::RE) is a
+     * TypeError, "Argument #3 ($subject) must be of type array|string,
+     * Closure given".
+     */
+    #[Test]
+    public function test_a_closure_passed_as_the_subject_of_preg_replace_callback_names_no_class(): void
+    {
+        $code = self::matcher('return '.\sprintf(self::BESIDE_THE_CALLBACK['preg_replace_callback'], 'fn () => preg_match(self::RE, $s)').';');
+
+        $this->assertExtractedByBoth([
+            ['pattern' => '/outer/', 'at' => "'/outer/'", 'source' => 'preg_replace_callback()', 'location' => null],
+        ], $code);
+        $this->assertArgumentsReadByBoth([
+            ['state' => 'constant', 'expression' => "'/outer/'", 'source' => 'preg_replace_callback()'],
+            ['state' => 'opaque', 'expression' => 'self::RE', 'at' => 'self::RE, ', 'source' => 'preg_match()'],
+        ], $code);
+    }
+
+    /**
+     * Two closures in one call: the one PHP calls reads the class, the
+     * one handed to it does not.
+     *
+     * PHP 8.4: array_reduce(['x'], fn ($carry, $x) => self::RE, fn () =>
+     * self::RE) calls its callback, which gives "/a/", and passes it the
+     * other closure as $carry.
+     */
+    #[Test]
+    public function test_the_callback_is_read_and_the_closure_beside_it_is_not(): void
+    {
+        $code = self::matcher('return array_reduce($xs, fn ($carry, $x) => preg_match(self::RE, $x), fn () => preg_match(self::RE, $s));');
+
+        $this->assertExtractedByBoth([
+            ['pattern' => '/a/', 'at' => "'/a/'", 'source' => 'preg_match()', 'location' => 'via self::RE'],
+        ], $code);
+        $this->assertArgumentsReadByBoth([
+            ['state' => 'constant', 'expression' => 'self::RE', 'at' => 'self::RE, $x)', 'source' => 'preg_match()'],
+            ['state' => 'opaque', 'expression' => 'self::RE', 'at' => 'self::RE, $s)', 'source' => 'preg_match()'],
         ], $code);
     }
 
