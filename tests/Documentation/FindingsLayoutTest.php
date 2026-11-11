@@ -429,7 +429,9 @@ final class FindingsLayoutTest extends TestCase
         $toggle = self::between($script, "el.findingsBrowse.addEventListener('toggle', function () {", "\n  });\n");
         $this->assertStringNotContainsString('pageTouched', $toggle, 'A door a page opened is not a gesture.');
         $door = self::between($script, "el.findingsDoor.addEventListener('click', function () {", "\n  });\n");
-        $this->assertLessThan(strpos($door, 'pageTouched = true;'), strpos($door, 'if (!el.findingsBrowse.open)'), 'Only the opening is a gesture: closing a door a page opened cancels no finding.');
+        $guard = strpos($door, 'if (!el.findingsBrowse.open)');
+        $this->assertNotFalse($guard, 'The gesture is guarded by the opening, said before it is ordered.');
+        $this->assertLessThan(strpos($door, 'pageTouched = true;'), $guard, 'Only the opening is a gesture: closing a door a page opened cancels no finding.');
         $this->assertStringContainsString("findingsDoor: root.querySelector('.pg-findings-browse > summary')", $script);
         $this->assertStringContainsString("' is not in the latest run; '", $open, 'A link to a finding gone says so.');
         $this->assertSame(1, preg_match("/if \\(pageRepo && readHash\\(\\)\\) \\{\\s*window\\.location\\.replace\\('\\/' \\+ window\\.location\\.hash\\);/", $script), 'A findings page reached with a pattern hash sends it home.');
