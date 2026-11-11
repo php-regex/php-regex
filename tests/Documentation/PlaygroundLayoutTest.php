@@ -183,7 +183,7 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertNotFalse($labels);
         $label = $labels->item(0);
         $this->assertInstanceOf(\DOMElement::class, $label);
-        $this->assertStringContainsString('visually-hidden', $label->getAttribute('class'), 'A voice hears "Pattern"; the eye reads the delimiters.');
+        $this->assertStringContainsString('visually-hidden', (string) $label->getAttribute('class'), 'A voice hears "Pattern"; the eye reads the delimiters.');
         $count = $xpath->query('//*[@id="pg-pattern-count"]/ancestor::*[contains(concat(" ", normalize-space(@class), " "), " pg-editor-pattern ")]');
         $this->assertNotFalse($count);
         $this->assertGreaterThan(0, $count->length, 'The count lives inside the field, an editor\'s corner fact.');
