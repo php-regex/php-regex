@@ -249,7 +249,10 @@ final class ValidatorEdgeCaseTest extends TestCase
     #[DataProvider('provideClassErrorsBeforeAnUnclosedGroupAtTheEnd')]
     public function test_validate_reports_a_class_error_before_an_unclosed_group_ending_on_the_class(string $pattern, ErrorCode $code, int $offset): void
     {
+        // PCRE2 10.45 moved the offset of a POSIX name past its end, and
+        // 10.47 the offset of a reversed range past the range.
         $this->requiresPcre2('10.45', $pattern);
+        $this->requiresPcre2For($pattern, ['10.47' => ['/([z-a]/', '/(*pla:[z-a]/', '/([z-a]a/']]);
 
         $this->assertRefusedAsPcreRefuses($pattern, $code, $offset);
     }

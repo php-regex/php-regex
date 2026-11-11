@@ -77,10 +77,10 @@ final class CalloutTest extends TestCase
     public function test_validate_refuses_an_unclosed_callout_where_pcre_does(string $pattern, int $offset): void
     {
         // The offset PCRE reports for a callout run it never closes moved
-        // with the releases: the row below is verified against 10.45 and
-        // later.
+        // with the releases, past the character after "(?C" in 10.47: the
+        // row below is verified against 10.47 and later.
         if ('/(?C(?C/' === $pattern) {
-            $this->requiresPcre2('10.45', $pattern);
+            $this->requiresPcre2('10.47', $pattern);
         }
 
         $pcre = PcreMessageCodes::read(PcreMessageCodes::warningOf($pattern) ?? 'compiles');

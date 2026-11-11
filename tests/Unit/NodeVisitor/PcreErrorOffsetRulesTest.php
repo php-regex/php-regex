@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -112,10 +113,10 @@ final class PcreErrorOffsetRulesTest extends TestCase
     #[Test]
     public function test_unmatched_closing_parenthesis_is_reported_where_the_running_pcre_reports_it(): void
     {
-        // PCRE2 after 10.45 moved the offset past the ")": preg_match('/a)/', '')
+        // PCRE2 10.47 moved the offset past the ")": preg_match('/a)/', '')
         // warns "unmatched closing parenthesis at offset 2" on 10.48, and at
-        // offset 1 on the 10.44 that PHP 8.4 bundles.
-        $expected = version_compare(explode(' ', \PCRE_VERSION)[0], '10.46', '>=') ? 2 : 1;
+        // offset 1 on the 10.44 that PHP 8.4 bundles and on 10.46.
+        $expected = PcreTarget::runtime()->pcreAtLeast('10.47') ? 2 : 1;
 
         $result = Regex::create(['cache' => null])->validate('/a)/');
 
