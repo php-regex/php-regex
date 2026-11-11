@@ -65,8 +65,8 @@ final class IntegerOperandTest extends TestCase
         // PCRE refuses it ("number too big in {} quantifier"): an error of
         // the pattern, which is read all the same.
         yield 'a number too big for a quantifier' => ['operand' => '999999', 'pattern' => '/^a{999999}$/'];
-        // 9223372036854775807 is the largest integer of a 64-bit PHP.
-        yield 'the largest integer' => ['operand' => '9223372036854775807', 'pattern' => '/^a{9223372036854775807}$/'];
+        // The largest integer of the PHP that runs: 9223372036854775807 where an integer holds 64 bits.
+        yield 'the largest integer' => ['operand' => (string) \PHP_INT_MAX, 'pattern' => '/^a{'.\PHP_INT_MAX.'}$/'];
     }
 
     #[Test]
@@ -200,8 +200,10 @@ final class IntegerOperandTest extends TestCase
         yield 'a float with no integer part' => ['operand' => '.5'];
         yield 'a float with an exponent' => ['operand' => '1e3'];
         yield 'a negative float' => ['operand' => '-1.5'];
-        yield 'one past the largest integer' => ['operand' => '9223372036854775808'];
-        yield 'the smallest integer, a float as a literal' => ['operand' => '-9223372036854775808'];
+        // One past the largest integer of the PHP that runs, a power of two: "%.0F" writes its digits.
+        $pastTheLargest = \sprintf('%.0F', \PHP_INT_MAX + 1);
+        yield 'one past the largest integer' => ['operand' => $pastTheLargest];
+        yield 'the smallest integer, a float as a literal' => ['operand' => '-'.$pastTheLargest];
         yield 'true' => ['operand' => 'true'];
         yield 'false' => ['operand' => 'false'];
         yield 'null' => ['operand' => 'null'];
