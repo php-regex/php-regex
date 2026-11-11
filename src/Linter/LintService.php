@@ -554,8 +554,8 @@ final class LintService
     }
 
     /**
-     * The issues with each one reported twice dropped: a file a run is
-     * given twice is read twice. Two findings of one pattern that share
+     * The issues with each one reported twice dropped: an occurrence
+     * given twice is analysed twice. Two findings of one pattern that share
      * their message, as two useless quantifiers, stand apart by their
      * position in the pattern; the same finding of two patterns an
      * argument holds at one place, by the pattern.

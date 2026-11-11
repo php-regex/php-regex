@@ -99,6 +99,47 @@ final class PatternExtractorArgumentsTest extends TestCase
     }
 
     /**
+     * A file the paths name twice, by its own path and inside its
+     * directory, or under two spellings of one path, is read once: its
+     * arguments are counted once, as they are written once.
+     *
+     * @param class-string<ExtractorInterface> $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategiesAndWorkers')]
+    public function test_a_file_given_twice_gives_its_arguments_once(string $strategy, int $workers): void
+    {
+        if ($workers > 1 && !ForkedWorkerPool::canFork()) {
+            $workers = 1;
+        }
+
+        $project = $this->makeProject([
+            'src/a_whole.php' => self::WHOLE,
+            'src/b_dynamic.php' => self::DYNAMIC,
+        ]);
+        $extractor = new PatternExtractor(new $strategy([], PatternFunctionRegistry::native()));
+
+        $given = [
+            'the directory, then one of its files' => [$project.'/src', $project.'/src/b_dynamic.php'],
+            'a file, then its directory' => [$project.'/src/b_dynamic.php', $project.'/src'],
+            'the directory twice' => [$project.'/src', $project.'/src'],
+            'the directory, then another spelling of it' => [$project.'/src', $project.'/src/../src'],
+            'a file, then another spelling of it' => [$project.'/src/a_whole.php', $project.'/src/b_dynamic.php', $project.'/src/./b_dynamic.php'],
+        ];
+        foreach ($given as $name => $paths) {
+            $scanned = $extractor->scan($paths, [], null, $workers);
+
+            $this->assertSame([
+                ['constant', "'/whole/'", 'src/a_whole.php', 5, 23, 'preg_match()'],
+                ['opaque', '$re', 'src/b_dynamic.php', 5, 23, 'preg_match()'],
+            ], self::arguments($scanned, $project), $name);
+            $this->assertSame(['/whole/'], self::patterns($scanned), $name);
+            // Each file is read once.
+            $this->assertCount(2, array_filter($scanned, static fn (PatternOccurrence $occurrence): bool => null !== $occurrence->ignores), $name);
+        }
+    }
+
+    /**
      * A constant of one file that two files read is one pattern, where its
      * literal is written, and two arguments, each where its call names
      * the constant: the "reported once" rule passes the arguments through.

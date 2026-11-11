@@ -449,15 +449,21 @@ final class PatternExtractor
             }
         }
 
+        // A file the paths name twice, by its own path and inside its
+        // directory, or under two spellings, is one file: it is read once,
+        // under the first spelling that names it.
         $files = [];
+        $read = [];
         foreach ($paths as $path) {
             if ('' === $path) {
                 continue;
             }
 
             if (is_file($path) && str_ends_with($path, '.php') && !$this->isTemplateFile($path)) {
-                $files[] = $path;
-                self::reportFound($progress, \count($files));
+                if (self::isNew($path, $read)) {
+                    $files[] = $path;
+                    self::reportFound($progress, \count($files));
+                }
 
                 continue;
             }
@@ -506,8 +512,10 @@ final class PatternExtractor
 
             sort($found, \SORT_STRING);
             foreach ($found as $filePath) {
-                $files[] = $filePath;
-                self::reportFound($progress, \count($files));
+                if (self::isNew($filePath, $read)) {
+                    $files[] = $filePath;
+                    self::reportFound($progress, \count($files));
+                }
             }
         }
 
@@ -517,6 +525,26 @@ final class PatternExtractor
         }
 
         return $files;
+    }
+
+    /**
+     * Whether a file is met for the first time, whatever spells its path:
+     * it is kept by the path the filesystem resolves it to, and by the
+     * path given when it resolves to none.
+     *
+     * @param array<string, true> $read the files met so far
+     */
+    private static function isNew(string $file, array &$read): bool
+    {
+        $real = realpath($file);
+        $key = false === $real ? $file : $real;
+        if (isset($read[$key])) {
+            return false;
+        }
+
+        $read[$key] = true;
+
+        return true;
     }
 
     private static function reportFound(?LintProgress $progress, int $found): void
