@@ -263,6 +263,18 @@ final class CrossFileGlobalConstantsTest extends TestCase
             'Second.php' => "<?php\n\ndefine('TWICE', '/second/');\n",
         ]];
 
+        // PHP 8.4: "$ok = $flags & define('TWICE', '/first/');" defines TWICE, as any call of define() does.
+        yield 'a define() after a bitwise and in one file and a define() in another' => ['files' => [
+            'First.php' => "<?php\n\n\$ok = \$flags & define('TWICE', '/first/');\n",
+            'Second.php' => "<?php\n\ndefine('TWICE', '/second/');\n",
+        ]];
+
+        // PHP 8.4: "use function define as def; def('TWICE', '/first/');" defines TWICE.
+        yield 'a define() called under another name in one file and a define() in another' => ['files' => [
+            'First.php' => "<?php\n\nnamespace Lib;\n\nuse function define as def;\n\ndef('TWICE', '/first/');\n",
+            'Second.php' => "<?php\n\ndefine('TWICE', '/second/');\n",
+        ]];
+
         yield 'twice in one file' => ['files' => [
             'First.php' => "<?php\n\ndefine('TWICE', '/first/');\ndefine('TWICE', '/second/');\n",
         ]];

@@ -61,9 +61,9 @@ final class ProjectConstants
     private const DECLARES_CONSTANTS = '/\b(?:const\s+[A-Za-z_\x80-\xff]|case\s+[A-Za-z_\x80-\xff][\w\x80-\xff]*\s*=)/';
 
     /**
-     * A text calling define().
+     * A text calling define(), or importing it under another name.
      */
-    private const CALLS_DEFINE = '/\bdefine\s*\(/i';
+    private const CALLS_DEFINE = '/\bdefine(?:\s*\(|\s+as\b)/i';
 
     /**
      * The keywords a function or a class body follows: a return written
@@ -260,9 +260,14 @@ final class ProjectConstants
 
             // What is left is a name, read when the text calls define(),
             // or a keyword the scan does not visit in this text.
-            $name = \T_STRING === $id || \T_NAME_FULLY_QUALIFIED === $id ? self::definedName($tokens, $i, $closers) : null;
-            // A function the file imports under the name is not PHP's.
-            if (null === $name || InFileValueResolver::DEFINING !== Ascii::lower($context->resolveFunction($token[1]))) {
+            // A function the file imports under the name is not PHP's,
+            // and PHP's imported under another name is.
+            if ((\T_STRING !== $id && \T_NAME_FULLY_QUALIFIED !== $id) || InFileValueResolver::DEFINING !== Ascii::lower($context->resolveFunction($token[1]))) {
+                continue;
+            }
+
+            $name = self::definedName($tokens, $i, $closers);
+            if (null === $name) {
                 continue;
             }
 
@@ -641,28 +646,31 @@ final class ProjectConstants
     }
 
     /**
-     * The name a call to define() at $index gives its constant, when a
-     * string literal gives it: define('NAME', ...), \define("NAME", ...).
-     * Null for any other token, for a method or a function of another
-     * name, and for a name the file does not spell.
+     * The name the call at $index, one that reaches define(), gives its
+     * constant, when a string literal gives it: define('NAME', ...),
+     * \define("NAME", ...). Null for a method, a declaration or an
+     * instantiation of that name, and for a name the file does not spell.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $closers
      */
     private static function definedName(array $tokens, int $index, array $closers): ?string
     {
-        $name = PhpTokens::name($tokens[$index]);
-        if (null === $name || 'define' !== Ascii::lower(ltrim($name, '\\')) || substr_count($name, '\\') > (int) str_starts_with($name, '\\')) {
-            return null;
-        }
-
         $count = \count($tokens);
         $open = PhpTokens::nextSignificant($tokens, $index + 1, $count);
         $before = PhpTokens::previousSignificant($tokens, $index - 1);
         $beforeToken = null === $before ? null : $tokens[$before];
         if (null === $open || '(' !== $tokens[$open] || !isset($closers[$open])
-            || (null !== $beforeToken && (PhpTokens::isObjectOrStaticOperator($beforeToken) || (\is_array($beforeToken) && \in_array($beforeToken[0], [\T_FUNCTION, \T_NEW, \T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG, \T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG], true))))) {
+            || (null !== $beforeToken && (PhpTokens::isObjectOrStaticOperator($beforeToken) || (\is_array($beforeToken) && \in_array($beforeToken[0], [\T_FUNCTION, \T_NEW], true))))) {
             return null;
+        }
+
+        // "function &define()" declares a function; "$a & define(...)" calls PHP's.
+        if (\is_array($beforeToken) && \in_array($beforeToken[0], [\T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG, \T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG], true)) {
+            $declares = PhpTokens::previousSignificant($tokens, $before - 1);
+            if (null !== $declares && \is_array($tokens[$declares]) && \T_FUNCTION === $tokens[$declares][0]) {
+                return null;
+            }
         }
 
         $first = PhpTokens::nextSignificant($tokens, $open + 1, $closers[$open]);
