@@ -32,8 +32,15 @@ use PHPUnit\Framework\TestCase;
  *   as the one its head makes of a foreach target, is made again at each
  *   turn: there the calls between it and the read, within the turn, are
  *   the ones that count. A call in the value assigned runs before the
- *   assignment; isset(), empty(), array() and list() are no calls, and a
- *   declaration runs nothing.
+ *   assignment;
+ * - nothing else stands between that assignment and the read than what
+ *   a closed list holds, since PHP runs code where no call is written:
+ *   comments, plain assignments of literals and of variables proved the
+ *   same way, an if over such values or over a variable compared in a
+ *   way that runs no code, and the beginning of the statement that
+ *   holds the read; anything off the list leaves the variable unread,
+ *   whether it runs code or not (FileLevelImplicitCodeTest holds the
+ *   list).
  *
  * Then it is read as a local variable is. A variable of a function body
  * is never the one of the file.
@@ -113,6 +120,13 @@ final class FileLevelVariableTest extends TestCase
             'patterns' => [self::at('/in-a-branch/', 'via $re')],
         ];
 
+        yield 'read in a branch whose condition the file proves' => [
+            'code' => "<?php\n\n\$mode = 'cli';\n\$re = '/in-a-proved-branch/';\nif ('cli' === \$mode) {\n    preg_match(\$re, \$subject);\n}\n",
+            'argument' => '$re',
+            'state' => 'constant',
+            'patterns' => [self::at('/in-a-proved-branch/', 'via $re')],
+        ];
+
         // The call runs before the assignment: whatever it writes, the
         // assignment writes after it.
         yield 'a call before the assignment' => [
@@ -175,6 +189,13 @@ final class FileLevelVariableTest extends TestCase
             'patterns' => [self::at('/default/', 'via $re'), self::at('/override/', 'via $re')],
         ];
 
+        yield 'assigned, then assigned again in a branch whose condition the file proves' => [
+            'code' => "<?php\n\n\$mode = 'cli';\n\$re = '/default/';\nif ('cli' === \$mode) {\n    \$re = '/override/';\n}\npreg_match(\$re, \$subject);\n",
+            'argument' => '$re',
+            'state' => 'finite_set',
+            'patterns' => [self::at('/default/', 'via $re'), self::at('/override/', 'via $re')],
+        ];
+
         yield 'assigned a ternary' => [
             'code' => "<?php\n\n\$re = \$argc > 1 ? '/then/' : '/else/';\npreg_match(\$re, \$subject);\n",
             'argument' => '$re',
@@ -206,50 +227,13 @@ final class FileLevelVariableTest extends TestCase
             'patterns' => [['pattern' => '/a|b/', 'at' => "implode('|', ['/a', 'b/'])", 'location' => 'via $re']],
         ];
 
-        // isset(), empty(), array() and list() are written as calls and
-        // are none: they run no code.
-        yield 'isset() between' => [
-            'code' => "<?php\n\n\$re = '/past-isset/';\n\$known = isset(\$argv[1]);\npreg_match(\$re, \$subject);\n",
-            'argument' => '$re',
-            'state' => 'constant',
-            'patterns' => [self::at('/past-isset/', 'via $re')],
-        ];
-
-        yield 'empty() between' => [
-            'code' => "<?php\n\n\$re = '/past-empty/';\nif (empty(\$argv)) {\n    \$subject = '';\n}\npreg_match(\$re, \$subject);\n",
-            'argument' => '$re',
-            'state' => 'constant',
-            'patterns' => [self::at('/past-empty/', 'via $re')],
-        ];
-
+        // array() is written as a call and is none: it is an array, as
+        // [] is.
         yield 'array() between' => [
             'code' => "<?php\n\n\$re = '/past-array/';\n\$options = array('a', 'b');\npreg_match(\$re, \$subject);\n",
             'argument' => '$re',
             'state' => 'constant',
             'patterns' => [self::at('/past-array/', 'via $re')],
-        ];
-
-        yield 'list() between' => [
-            'code' => "<?php\n\n\$re = '/past-list/';\nlist(\$first, \$second) = \$argv;\npreg_match(\$re, \$subject);\n",
-            'argument' => '$re',
-            'state' => 'constant',
-            'patterns' => [self::at('/past-list/', 'via $re')],
-        ];
-
-        // A declaration runs nothing where it stands: the calls of its
-        // body run when it is called.
-        yield 'a function declared between' => [
-            'code' => "<?php\n\n\$re = '/past-a-function/';\n\nfunction helper(string \$text): string\n{\n    return trim(\$text);\n}\n\npreg_match(\$re, \$subject);\n",
-            'argument' => '$re',
-            'state' => 'constant',
-            'patterns' => [self::at('/past-a-function/', 'via $re')],
-        ];
-
-        yield 'a class declared between' => [
-            'code' => "<?php\n\n\$re = '/past-a-class/';\n\nfinal class Helper\n{\n    public function run(string \$text): string\n    {\n        return trim(\$text);\n    }\n}\n\npreg_match(\$re, \$subject);\n",
-            'argument' => '$re',
-            'state' => 'constant',
-            'patterns' => [self::at('/past-a-class/', 'via $re')],
         ];
 
         // The assignment is made again at each turn of the loop, and no
@@ -309,6 +293,57 @@ final class FileLevelVariableTest extends TestCase
         $this->assertExtractedByBoth($patterns, $code);
         $this->assertArgumentsReadByBoth([
             ['state' => $state, 'expression' => $argument, 'at' => $argument.', $subject)', 'source' => 'preg_match()'],
+        ], $code);
+    }
+
+    /**
+     * What stands between the assignment and the read is not on the
+     * closed list: the variable is not read, whether code runs there or
+     * not.
+     *
+     * PHP 8.4, $argv set to an object by another file before this one
+     * runs: isset($argv[1]) runs its offsetExists() and list() = $argv
+     * its offsetGet(), each of which leaves "/(/" in the global. Nothing
+     * runs in the other rows: empty() of a variable and a declaration
+     * run no code, and the variable is left unread because the list is
+     * closed.
+     *
+     * @return iterable<string, array{code: string}>
+     */
+    public static function provideFilesHoldingSomethingOffTheListBetween(): iterable
+    {
+        // isset(), empty() and list() are written as calls and are none;
+        // the list holds none of them.
+        yield 'isset() between' => [
+            'code' => "<?php\n\n\$re = '/past-isset/';\n\$known = isset(\$argv[1]);\npreg_match(\$re, \$subject);\n",
+        ];
+
+        yield 'empty() between' => [
+            'code' => "<?php\n\n\$re = '/past-empty/';\nif (empty(\$argv)) {\n    \$subject = '';\n}\npreg_match(\$re, \$subject);\n",
+        ];
+
+        yield 'list() between' => [
+            'code' => "<?php\n\n\$re = '/past-list/';\nlist(\$first, \$second) = \$argv;\npreg_match(\$re, \$subject);\n",
+        ];
+
+        // A declaration runs nothing where it stands: the calls of its
+        // body run when it is called. The list holds no declaration.
+        yield 'a function declared between' => [
+            'code' => "<?php\n\n\$re = '/past-a-function/';\n\nfunction helper(string \$text): string\n{\n    return trim(\$text);\n}\n\npreg_match(\$re, \$subject);\n",
+        ];
+
+        yield 'a class declared between' => [
+            'code' => "<?php\n\n\$re = '/past-a-class/';\n\nfinal class Helper\n{\n    public function run(string \$text): string\n    {\n        return trim(\$text);\n    }\n}\n\npreg_match(\$re, \$subject);\n",
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideFilesHoldingSomethingOffTheListBetween')]
+    public function test_a_variable_at_file_level_is_not_read_across_what_the_closed_list_does_not_hold(string $code): void
+    {
+        $this->assertExtractedByBoth([], $code);
+        $this->assertArgumentsReadByBoth([
+            ['state' => 'opaque', 'expression' => '$re', 'at' => '$re, $subject)', 'source' => 'preg_match()'],
         ], $code);
     }
 

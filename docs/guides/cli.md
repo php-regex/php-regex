@@ -766,11 +766,17 @@ final class Slug
   leave it read. A function body
   that writes `$$name`, or calls `extract()`, `compact()`, `eval()` or
   `include`, has none of its variables read. A variable does not cross into a closure.
-  One at file level, outside any function, is read by the same rules when
-  no call and no `new` stands between its assignment and the call that
-  reads it, and when the file holds no `include`, `require`, `eval()`,
-  `extract()`, `compact()`, `$$name`, `global` or `$GLOBALS`: each of them
-  may give the variable another value where the file does not show it.
+  One at file level, outside any function, is a global: whatever runs
+  between its assignment and the call that reads it may give it another
+  value, and PHP runs code where the file writes no call (a magic method,
+  an autoloader, a destructor). It is read when its assignment is a
+  statement of its own and nothing stands between the two but assignments
+  of literals to other variables, comments, and `if` conditions that
+  compare such values: `$pattern = '/^\d+$/'; if (preg_match($pattern, $line)) {`
+  is read; a call, a `new`, an `echo`, a property or an array access, a
+  loop or a declaration between them leaves it unread. Nor is it read
+  when the file holds an `include`, a `require`, `eval()`, `extract()`,
+  `compact()`, `$$name`, `global`, `$GLOBALS` or `declare(ticks=1)`.
 - **Properties**: `$this->p` with a literal default, `private` (in a `final`
   class, or a `final` property) or `protected` (in a `final` class that
   extends none), in a class using no trait the file does not declare,

@@ -337,6 +337,7 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
         if ([] !== $pending) {
             [$variables, $properties] = $this->watchedNames($pending, $tokens, $closers, $assigned);
             $collector = new TokenValueCollector($tokens, $tokenOffsets, $closers, $content, $variables, $properties);
+            $collector->values()->useFileLevel(new FileLevelCode($content, $tokens, $tokenOffsets));
             if (null !== $this->project) {
                 $collector->values()->useProject($this->project);
             }

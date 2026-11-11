@@ -14,7 +14,8 @@ CHANGELOG
    or a `??` as the value of a constant; an array of patterns held in a
    local variable, the target of a `foreach` over literals, and an item of
    such an array (`$map['word']`, `self::MAP['word']`); a variable at file
-   level, when no call stands between its assignment and its read;
+   level, when nothing but assignments of literals stands between its
+   assignment and its read;
    `self::X` in a closure written as
    an argument of `array_map()`, `array_filter()`, `usort()`,
    `preg_replace_callback()` and the other PHP functions that call it

@@ -63,7 +63,9 @@ use PHPRegex\Parser\Text\Ascii;
  * - a variable of the file level, a global any code may write: by the
  *   rules of a local variable, in a file that includes no other, names no
  *   global from a function body and evaluates nothing, and where no call
- *   and no "new" may run between the assignment and the read.
+ *   and no "new" may run between the assignment and the read, nor
+ *   anything else than what the closed list of FileLevelCode holds: PHP
+ *   runs code where no call is written.
  *
  * A value is read as the values it may take, each a list of parts: the
  * text the file proves, and a hole for each part it does not, a text
@@ -319,6 +321,13 @@ final class InFileValueResolver
     private bool $callsInOrder = true;
 
     /**
+     * What the file level holds that may run code no call shows; null
+     * when the source of the file was not given, and nothing is known of
+     * what stands between an assignment of that level and a read.
+     */
+    private ?FileLevelCode $fileLevel = null;
+
+    /**
      * Whether a "global" statement or $GLOBALS stands anywhere in the
      * file: a function body may then write a variable of the file level.
      */
@@ -510,6 +519,16 @@ final class InFileValueResolver
     public function useProject(ProjectConstants $project): void
     {
         $this->project = $project;
+    }
+
+    /**
+     * Read what stands between an assignment of the file level and a
+     * read of its variable from the code of the file: a variable of that
+     * level is read only across what the closed list holds.
+     */
+    public function useFileLevel(FileLevelCode $code): void
+    {
+        $this->fileLevel = $code;
     }
 
     /**
@@ -1556,7 +1575,7 @@ final class InFileValueResolver
         }
 
         [, $at, $end] = $this->assignments[$scope][$name][$assignment];
-        if (self::FILE === $scope && $this->calledBetween($at, $end, $read)) {
+        if (self::FILE === $scope && (!$this->assignsInAStatement($at) || $this->writtenBetween($at, $end, $read))) {
             return [self::rawHole()];
         }
 
@@ -1647,7 +1666,7 @@ final class InFileValueResolver
 
             // The first one written is the farthest from the read: a
             // call after it stands before the read whichever one runs.
-            if ([] === $reaching && $this->calledBetween($at, $end, $read)) {
+            if (!$this->assignsInAStatement($at) || ([] === $reaching && $this->writtenBetween($at, $end, $read))) {
                 return [self::rawHole()];
             }
 
@@ -1706,7 +1725,7 @@ final class InFileValueResolver
             }
         }
 
-        if ($this->passedBetween($scope, $name, $head, $read) || (self::FILE === $scope && $this->calledBetween($head, $head, $read))) {
+        if ($this->passedBetween($scope, $name, $head, $read) || (self::FILE === $scope && $this->writtenBetween($head, $head, $read))) {
             return [self::rawHole()];
         }
 
@@ -1751,22 +1770,21 @@ final class InFileValueResolver
     }
 
     /**
-     * Whether a call the file level runs may stand between an assignment
-     * of a variable of that level and a read of it: one that ends after
-     * the assignment and before the read, or anywhere in a loop that
-     * holds the read and not the assignment, which a later turn of the
-     * loop runs before the read.
+     * Whether a variable of the file level may be written between an
+     * assignment of it and a read: by a call the file level runs there,
+     * or by code PHP runs where no call is written, a magic method, a
+     * class loader, an output callback, which only what the closed list
+     * of FileLevelCode holds is known not to run. What stands between
+     * runs up to the read, or, in a loop that holds the read and not the
+     * assignment, up to the end of that loop, which a later turn runs
+     * before the read. Nothing is known of a read somewhere unknown, nor
+     * of a file whose code was not given.
      *
      * @param int $at  where the assignment is written
      * @param int $end where it ends
      */
-    private function calledBetween(int $at, int $end, int $read): bool
+    private function writtenBetween(int $at, int $end, int $read): bool
     {
-        if (!$this->callsInOrder) {
-            sort($this->calls);
-            $this->callsInOrder = true;
-        }
-
         $until = $read;
         foreach ($this->loopsHolding(self::FILE, $read) as $loop) {
             if ($loop[0] <= $at) {
@@ -1774,6 +1792,55 @@ final class InFileValueResolver
             }
 
             $until = $loop[1] + 1;
+        }
+
+        return $this->calledBetween($end, $until) || $read < 0
+            || true !== $this->fileLevel?->holdsOnlyTheList($end, $until, fn (string $name, int $offset): bool => $this->holdsStrings($name, $offset));
+    }
+
+    /**
+     * Whether an assignment of the file level, written at $at, is a
+     * statement of its own: one written in an argument, in a condition
+     * or in an interpolated string runs among what the expression around
+     * it runs, which is not followed, and leaves its variable unread. So
+     * does any assignment of a file whose code was not given.
+     */
+    private function assignsInAStatement(int $at): bool
+    {
+        return true === $this->fileLevel?->assignsInAStatement($at, fn (string $name, int $offset): bool => $this->holdsStrings($name, $offset));
+    }
+
+    /**
+     * Whether a variable of the file level a pattern is read through
+     * holds, where it is written, strings the file proves: joined to
+     * another string or compared with one, it runs no code then. One no
+     * pattern is read through is not followed, and proves nothing here.
+     */
+    private function holdsStrings(string $name, int $at): bool
+    {
+        if (!isset($this->followed[self::FILE][$name])) {
+            return false;
+        }
+
+        $values = $this->variable(ValueExpr::variable(self::FILE, $name, $at), self::SELECTED) ?? [];
+        foreach ($values as $value) {
+            if (ValueExpr::LITERAL !== $value->kind) {
+                return false;
+            }
+        }
+
+        return [] !== $values;
+    }
+
+    /**
+     * Whether a call the file level runs ends after the byte at $end and
+     * before the one at $until.
+     */
+    private function calledBetween(int $end, int $until): bool
+    {
+        if (!$this->callsInOrder) {
+            sort($this->calls);
+            $this->callsInOrder = true;
         }
 
         return self::before($this->calls, $until) > self::before($this->calls, $end + 1);
