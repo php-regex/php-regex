@@ -113,16 +113,25 @@ final class NestedAlternativesTest extends TestCase
         yield 'four thousand ternaries in their first arm' => ['argument' => str_repeat('$f ? ', 4000)."'/a/'".str_repeat(" : '/b/'", 4000)];
     }
 
+    /**
+     * One reading of four thousand values is timed. Read again from each
+     * value, the chain took half a minute on the machine that reads it
+     * in half a second now; a run that collects the coverage is several
+     * times slower for both. The limit stands between the two, far from
+     * each.
+     */
     #[Test]
     #[DataProvider('provideLongChains')]
     public function test_a_long_chain_is_not_read_again_for_each_of_its_values(string $argument): void
     {
         $code = self::classCalling($argument);
         $start = microtime(true);
+        $patterns = $this->patternsReadByBoth($code);
+        $elapsed = microtime(true) - $start;
 
-        $this->assertSame([], $this->patternsReadByBoth($code));
+        $this->assertSame([], $patterns);
         $this->assertSame(['opaque'], $this->statesReadByBoth($code));
-        $this->assertLessThan(5.0, microtime(true) - $start, 'A chain must not be scanned again from each of its values.');
+        $this->assertLessThan(20.0, $elapsed, 'A chain must not be scanned again from each of its values.');
     }
 
     private static function classCalling(string $argument): string
