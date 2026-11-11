@@ -15,14 +15,22 @@ namespace PHPRegex\Tests\Unit\Cli;
 
 use PHPRegex\Cli\Command\LintBaseline;
 use PHPRegex\Cli\Exception\CliException;
+use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Diagnostic;
+use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintRequest;
+use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\LintStatsCounter;
+use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Tests\Support\ArgumentCarriers;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -709,6 +717,182 @@ final class LintBaselineTest extends TestCase
         $this->assertIsArray($data['issues'] ?? null);
 
         $this->assertSame(['regex.lint.known', ErrorCode::BackrefMissingGroup->value], array_column($data['issues'], 'issue_id'));
+    }
+
+    /**
+     * An argument built at run time has no pattern to name it by: its
+     * entry gives the argument as the source writes it, and its hash is
+     * the hash of that text, taken as the hash of a pattern is. Two such
+     * arguments of one file are two entries, told apart by what they
+     * write.
+     */
+    #[Test]
+    public function test_generate_names_an_argument_built_at_run_time_by_its_expression(): void
+    {
+        $entries = self::entriesOf(LintBaseline::generate(self::lintReportingArguments([
+            PatternOccurrence::argument('opaque', 'src/a.php', 3, 12, 18, 'preg_match()', '$first'),
+            PatternOccurrence::argument('opaque', 'src/a.php', 4, 12, 44, 'preg_match()', '$second'),
+        ])));
+
+        $this->assertSame(
+            [
+                ['src/a.php', 3, 12, 'regex.lint.source.dynamic', 'info', '$first'],
+                ['src/a.php', 4, 12, 'regex.lint.source.dynamic', 'info', '$second'],
+            ],
+            array_map(static fn (array $entry): array => [$entry['file'] ?? null, $entry['line'] ?? null, $entry['column'] ?? null, $entry['issue_id'] ?? null, $entry['severity'] ?? null, $entry['expression'] ?? null], $entries),
+        );
+        $this->assertNotSame($entries[0]['pattern_hash'] ?? null, $entries[1]['pattern_hash'] ?? null);
+        $this->assertSame(self::entryFor('regex.lint.known', 'src/a.php', '$first', 3)['pattern_hash'] ?? null, $entries[0]['pattern_hash'] ?? null);
+        $this->assertSame(self::entryFor('regex.lint.known', 'src/a.php', '$second', 4)['pattern_hash'] ?? null, $entries[1]['pattern_hash'] ?? null);
+    }
+
+    /**
+     * Each of two arguments built at run time is hidden by its own entry
+     * and by no other: the baseline of one leaves the other reported.
+     */
+    #[Test]
+    public function test_filter_hides_an_argument_built_at_run_time_for_its_own_entry(): void
+    {
+        $report = self::lintReportingArguments([
+            PatternOccurrence::argument('opaque', 'src/a.php', 3, 12, 18, 'preg_match()', '$first'),
+            PatternOccurrence::argument('opaque', 'src/a.php', 4, 12, 44, 'preg_match()', '$second'),
+        ]);
+        $this->assertSame(['$first', '$second'], self::expressionsOf($report));
+        $entries = self::entriesOf(LintBaseline::generate($report));
+        $this->assertCount(2, $entries);
+
+        $this->assertSame(['$second'], self::expressionsOf($this->baselineFrom(['version' => 1, 'issues' => [$entries[0]]])->filter($report)));
+        $this->assertSame(['$first'], self::expressionsOf($this->baselineFrom(['version' => 1, 'issues' => [$entries[1]]])->filter($report)));
+        $this->assertSame([], $this->baselineFrom(['version' => 1, 'issues' => $entries])->filter($report)->results);
+    }
+
+    /**
+     * The same argument written twice is two entries that share their
+     * hash, as two copies of a pattern do: one entry takes out one of
+     * them, on its line first.
+     */
+    #[Test]
+    public function test_filter_gives_an_entry_to_one_copy_of_an_argument_built_at_run_time(): void
+    {
+        $report = self::lintReportingArguments([
+            PatternOccurrence::argument('opaque', 'src/a.php', 3, 12, 18, 'preg_match()', '$re'),
+            PatternOccurrence::argument('opaque', 'src/a.php', 3, 32, 38, 'preg_match()', '$re'),
+            PatternOccurrence::argument('opaque', 'src/a.php', 9, 12, 90, 'preg_match()', '$re'),
+        ]);
+        $entries = self::entriesOf(LintBaseline::generate($report));
+        $this->assertCount(3, $entries);
+        $hash = $entries[0]['pattern_hash'] ?? null;
+        $this->assertIsString($hash);
+        $this->assertSame([$hash, $hash], [$entries[1]['pattern_hash'] ?? null, $entries[2]['pattern_hash'] ?? null]);
+
+        $filtered = $this->baselineFrom(['version' => 1, 'issues' => [$entries[2]]])->filter($report);
+
+        $this->assertSame([3, 3], array_column($filtered->results, 'line'));
+        $this->assertSame([], $this->baselineFrom(['version' => 1, 'issues' => $entries])->filter($report)->results);
+    }
+
+    /**
+     * A baseline written before the arguments were reported names each
+     * issue by its pattern alone: it is read as it was, hides what it hid,
+     * and knows no argument. "/a{1}/" is "/a/" (the engine: it matches
+     * "a").
+     */
+    #[Test]
+    public function test_filter_reads_an_entry_written_without_an_expression(): void
+    {
+        $this->assertSame(1, preg_match('/^a{1}$/', 'a'));
+
+        $report = self::lintReportingArguments([
+            new PatternOccurrence('/a{1}/', 'src/a.php', 3, 'preg_match()', column: 12, fileOffset: 18),
+            PatternOccurrence::argument('constant', 'src/a.php', 3, 12, 18, 'preg_match()', "'/a{1}/'"),
+            PatternOccurrence::argument('opaque', 'src/a.php', 4, 12, 44, 'preg_match()', '$re'),
+        ]);
+        $entries = self::entriesOf(LintBaseline::generate($report));
+        $this->assertSame(['regex.lint.quantifier.useless', 'regex.lint.source.dynamic'], array_column($entries, 'issue_id'));
+
+        $older = $entries[0];
+        unset($older['expression']);
+        $this->assertSame(['file', 'line', 'column', 'issue_id', 'message', 'severity', 'pattern', 'pattern_hash'], array_keys($older));
+
+        $filtered = $this->baselineFrom(['version' => 1, 'issues' => [$older]])->filter($report);
+
+        $this->assertSame(['$re'], self::expressionsOf($filtered));
+        $this->assertSame(1, $filtered->stats['infos'] ?? null);
+        $this->assertSame(0, $filtered->stats['warnings']);
+    }
+
+    /**
+     * The arguments are no issue a baseline can know: their counts stay,
+     * whatever it takes out.
+     */
+    #[Test]
+    public function test_filter_keeps_the_counts_of_the_arguments(): void
+    {
+        $counts = ['constant' => 4, 'finite_set' => 1, 'quoted_shell' => 2, 'raw_shell' => 3, 'opaque' => 5];
+        $report = self::lintReportingArguments(ArgumentCarriers::of($counts));
+        $this->assertSame($counts, ArgumentCarriers::counts($report->stats));
+        $this->assertSame(10, $report->stats['infos'] ?? null);
+
+        $filtered = $this->baselineOf($report)->filter($report);
+
+        $this->assertSame([], $filtered->results);
+        $this->assertSame(0, $filtered->stats['infos'] ?? 0);
+        $this->assertSame($counts, ArgumentCarriers::counts($filtered->stats));
+    }
+
+    /**
+     * The report of a run asked to report the arguments it could not
+     * verify.
+     *
+     * @param list<PatternOccurrence> $occurrences
+     */
+    private static function lintReportingArguments(array $occurrences): LintReport
+    {
+        $service = new LintService(new AnalysisService(RegexParser::create(['cache' => null])), new PatternSourceCollection([]));
+
+        return $service->analyze($occurrences, new LintRequest(['.'], [], 0, checkOptimizations: false, reportDynamic: true));
+    }
+
+    /**
+     * The expression of each result of the report that holds no pattern,
+     * as the JSON report gives it.
+     *
+     * @return list<mixed>
+     */
+    private static function expressionsOf(LintReport $report): array
+    {
+        $document = json_decode((new JsonFormatter())->format($report), true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($document);
+        self::assertIsArray($document['results'] ?? null);
+
+        $expressions = [];
+        foreach ($document['results'] as $result) {
+            self::assertIsArray($result);
+            self::assertArrayHasKey('expression', $result);
+            if (null === $result['pattern']) {
+                $expressions[] = $result['expression'];
+            }
+        }
+
+        return $expressions;
+    }
+
+    /**
+     * @return list<array<mixed>>
+     */
+    private static function entriesOf(string $generated): array
+    {
+        $data = json_decode($generated, true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($data);
+        self::assertIsArray($data['issues'] ?? null);
+
+        $entries = [];
+        foreach ($data['issues'] as $entry) {
+            self::assertIsArray($entry);
+            $entries[] = $entry;
+        }
+
+        return $entries;
     }
 
     private function baselineOf(LintReport $report): LintBaseline

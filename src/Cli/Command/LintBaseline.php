@@ -30,7 +30,10 @@ use PHPRegex\Parser\Text\Path;
  *
  * Each entry names an issue by its identifier, its file relative to the
  * working directory and a hash of the exact bytes of its pattern: the issue
- * stays known when its line moves or its message is reworded. The file is
+ * stays known when its line moves or its message is reworded. An issue with
+ * no pattern, an argument built at run time, is named by the bytes of the
+ * argument as the source writes it; an entry written before such issues
+ * were reported has none, and is read as it was. The file is
  * read with its "." and ".." segments resolved, so "code", "./code" and
  * "code/../code" name the same files. One entry takes out one issue. The
  * line only settles which issues the entries take when there are more
@@ -55,6 +58,12 @@ final class LintBaseline
      * line order instead of the alignment that changes the shift least.
      */
     private const ALIGNMENT_BUDGET = 1_000_000;
+
+    /**
+     * The counts of a report that count no issue: taking issues out leaves
+     * them as they are.
+     */
+    private const KEPT_COUNTS = ['parserFallbacks', 'argumentsConstant', 'argumentsFiniteSet', 'argumentsQuotedShell', 'argumentsRawShell', 'argumentsOpaque'];
 
     /**
      * @param array<string, array<int, int>> $lines the line of each entry, by key
@@ -96,13 +105,17 @@ final class LintBaseline
      * command writes: one entry per issue, in the report's order, its keys
      * those of the report's issue. Each string is written with the bytes
      * that are not UTF-8 spelled "\xHH", so that the encoding cannot fail;
-     * the hash keeps the exact pattern.
+     * the hash keeps the exact pattern. The entry of an issue with no
+     * pattern, an argument built at run time, gives the argument as the
+     * source writes it under "expression", null beside a pattern, and its
+     * hash is the hash of that text.
      */
     public static function generate(LintReport $report): string
     {
         $issues = [];
         foreach ($report->results as $result) {
             $pattern = $result['pattern'] ?? '';
+            $expression = self::expression($result);
             foreach ($result['issues'] as $issue) {
                 $issues[] = [
                     'file' => self::relativePath($issue->file),
@@ -112,7 +125,8 @@ final class LintBaseline
                     'message' => $issue->message,
                     'severity' => $issue->severity->level(),
                     'pattern' => $pattern,
-                    'pattern_hash' => self::hash($pattern),
+                    'expression' => $expression,
+                    'pattern_hash' => self::hash($expression ?? $pattern),
                 ];
             }
         }
@@ -186,10 +200,13 @@ final class LintBaseline
             usort($results, static fn (array $left, array $right): int => [strcmp($left['file'], $right['file']) <=> 0, $left['line']] <=> [0, $right['line']]);
         }
 
-        // The files read with the tokenizer are no issue a baseline knows.
+        // The files read with the tokenizer and the pattern arguments of
+        // the calls are no issue a baseline knows: their counts stay.
         $stats = LintStatsCounter::count($results);
-        if (isset($report->stats['parserFallbacks'])) {
-            $stats['parserFallbacks'] = $report->stats['parserFallbacks'];
+        foreach (self::KEPT_COUNTS as $count) {
+            if (isset($report->stats[$count])) {
+                $stats[$count] = $report->stats[$count];
+            }
         }
 
         return new LintReport($results, $stats);
@@ -406,7 +423,19 @@ final class LintBaseline
      */
     private function keyOf(LintIssue $issue, array $result): string
     {
-        return self::key(self::issueId($issue), self::escape(self::relativePath($issue->file)), self::hash($result['pattern'] ?? ''));
+        return self::key(self::issueId($issue), self::escape(self::relativePath($issue->file)), self::hash(self::expression($result) ?? $result['pattern'] ?? ''));
+    }
+
+    /**
+     * The argument as the source writes it, of a result that holds no
+     * pattern and stands for an argument built at run time: what its
+     * entry names it by. Null for a result that has a pattern.
+     *
+     * @param LintResult $result
+     */
+    private static function expression(array $result): ?string
+    {
+        return null === $result['pattern'] ? $result['expression'] ?? null : null;
     }
 
     private static function key(string $issueId, string $file, string $patternHash): string

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Lint;
 
 use PHPRegex\Parser\Text\Path;
+use PHPRegex\Tests\Support\ArgumentCarriers;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\RunsRegexCli;
@@ -26,10 +27,12 @@ use PHPUnit\Framework\TestCase;
 /**
  * The baseline file is part of the JSON contract: {"version": 1, "issues"},
  * whose entries {file, line, column, issue_id, message, severity, pattern,
- * pattern_hash} are sorted like the report, ending with a newline. A
- * baseline matches an issue by file, issue_id and pattern, so a message
- * reworded in a minor does not resurface it; a 1.x list, whose entries have
- * no issue_id, is not a baseline at all: reading it is a usage error.
+ * expression, pattern_hash} are sorted like the report, ending with a
+ * newline. A baseline matches an issue by file, issue_id and pattern, so a
+ * message reworded in a minor does not resurface it; an issue with no
+ * pattern, an argument built at run time, is matched by the argument as the
+ * source writes it. A 1.x list, whose entries have no issue_id, is not a
+ * baseline at all: reading it is a usage error.
  */
 #[Group('documentation')]
 final class LintBaselineContractTest extends TestCase
@@ -55,6 +58,18 @@ final class LintBaselineContractTest extends TestCase
     ];
 
     private const LINT = ['lint', 'src', '--format=json', '--jobs=1', '--no-optimize'];
+
+    /**
+     * Two arguments built at run time on one line, and a pattern with a
+     * useless quantifier under them.
+     */
+    private const DYNAMIC_FILE = <<<'PHP'
+        <?php
+
+        preg_match($first, $s); preg_match($second, $s);
+        preg_match('/a{1}/', $s);
+
+        PHP;
 
     #[Test]
     public function test_generated_baseline_entries_have_exactly_the_documented_keys(): void
@@ -630,6 +645,103 @@ final class LintBaselineContractTest extends TestCase
         [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=baseline.json']);
         $this->assertSame(1, $exitCode, $stdout);
         $this->assertCount(4, self::issuesOf($stdout));
+    }
+
+    /**
+     * An argument built at run time is an issue with no pattern: its entry
+     * names it by the argument as the source writes it, and the hash is
+     * the hash of that text. Two of them on one line are two entries, and
+     * each is hidden by its own.
+     */
+    #[Test]
+    public function test_each_argument_built_at_run_time_has_an_entry_of_its_own(): void
+    {
+        $this->enterProject(['src/a.php' => self::DYNAMIC_FILE]);
+
+        [$exitCode, $stdout, $stderr] = $this->runRegex([...self::LINT, '--report-dynamic', '--generate-baseline=baseline.json']);
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+
+        $baseline = JsonContract::decodeDocument((string) file_get_contents('baseline.json'));
+        $this->assertSame(1, $baseline['version'] ?? null);
+        JsonContract::assertSnakeCaseKeys($baseline);
+        JsonContract::assertShape('baseline', $baseline);
+
+        $entries = [];
+        foreach (JsonContract::asArray($baseline['issues'] ?? null) as $entry) {
+            $entry = JsonContract::asArray($entry);
+            $entries[] = [$entry['file'], $entry['line'], $entry['column'], $entry['issue_id'], $entry['severity'], $entry['expression']];
+        }
+        $this->assertSame(
+            [
+                ['src/a.php', 3, 12, 'regex.lint.source.dynamic', 'info', '$first'],
+                ['src/a.php', 3, 36, 'regex.lint.source.dynamic', 'info', '$second'],
+                ['src/a.php', 4, 12, 'regex.lint.quantifier.useless', 'warning', null],
+            ],
+            $entries,
+        );
+        $hashes = [];
+        foreach (JsonContract::asArray($baseline['issues']) as $entry) {
+            $hash = JsonContract::asArray($entry)['pattern_hash'] ?? null;
+            $this->assertIsString($hash);
+            $hashes[$hash] = true;
+        }
+        $this->assertCount(3, $hashes);
+
+        // The whole baseline hides the three issues, and no argument: the
+        // run still counts them.
+        [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--report-dynamic', '--baseline=baseline.json']);
+        $this->assertSame(0, $exitCode, $stdout);
+        $this->assertSame([], self::issuesOf($stdout));
+        $stats = JsonContract::decodeDocument($stdout)['stats'] ?? null;
+        $this->assertSame(['constant' => 1, 'finite_set' => 0, 'quoted_shell' => 0, 'raw_shell' => 0, 'opaque' => 2], ArgumentCarriers::countsOf($stats));
+        $this->assertSame(0, JsonContract::asArray($stats)['infos'] ?? null);
+
+        // Without the entry of one argument, that argument alone is back.
+        foreach ([0 => '$first', 1 => '$second'] as $dropped => $expression) {
+            $kept = JsonContract::asArray($baseline['issues']);
+            unset($kept[$dropped]);
+            file_put_contents('partial.json', json_encode(['version' => 1, 'issues' => array_values($kept)], \JSON_THROW_ON_ERROR)."\n");
+
+            [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--report-dynamic', '--baseline=partial.json']);
+
+            $this->assertSame(0, $exitCode, $stdout);
+            $results = JsonContract::asArray(JsonContract::decodeDocument($stdout)['results'] ?? null);
+            $this->assertCount(1, $results);
+            $result = JsonContract::asArray($results[0]);
+            $this->assertArrayHasKey('pattern', $result);
+            $this->assertNull($result['pattern']);
+            $this->assertSame($expression, $result['expression'] ?? null);
+        }
+    }
+
+    /**
+     * A baseline written before the arguments were reported has no
+     * "expression" in its entries: it is read as it was, hides the issues
+     * it names, and knows no argument.
+     */
+    #[Test]
+    public function test_a_baseline_written_without_expressions_is_still_read(): void
+    {
+        $this->enterProject(['src/a.php' => self::DYNAMIC_FILE]);
+        $this->runRegex([...self::LINT, '--generate-baseline=baseline.json']);
+
+        $baseline = JsonContract::decodeDocument((string) file_get_contents('baseline.json'));
+        $older = [];
+        foreach (JsonContract::asArray($baseline['issues'] ?? null) as $entry) {
+            $entry = JsonContract::asArray($entry);
+            unset($entry['expression']);
+            $older[] = $entry;
+        }
+        $this->assertSame([['file', 'line', 'column', 'issue_id', 'message', 'severity', 'pattern', 'pattern_hash']], array_map(array_keys(...), $older));
+        file_put_contents('older.json', json_encode(['version' => 1, 'issues' => $older], \JSON_THROW_ON_ERROR)."\n");
+
+        [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=older.json']);
+        $this->assertSame(0, $exitCode, $stdout);
+        $this->assertSame([], self::issuesOf($stdout));
+
+        [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--report-dynamic', '--baseline=older.json']);
+        $this->assertSame(0, $exitCode, $stdout);
+        $this->assertSame(['regex.lint.source.dynamic', 'regex.lint.source.dynamic'], array_column(self::issuesOf($stdout), 2));
     }
 
     /**

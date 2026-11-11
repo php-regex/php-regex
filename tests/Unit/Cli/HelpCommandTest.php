@@ -104,6 +104,7 @@ final class HelpCommandTest extends TestCase
                 '--interop', '--no-interop', '--pattern-function', '--generate-baseline', '--baseline',
                 '--verbose', '--debug',
                 '--lint', '--enable-rule', '--disable-rule', '-j', '--no-redos',
+                '--report-dynamic',
             ],
             'compare' => ['--method', '--determinizer', '--minimizer', '--php-version', '--pcre-version', '--locale'],
             'diagram' => ['--format', '--output', '--php-version', '--pcre-version', '--locale'],
@@ -181,6 +182,23 @@ final class HelpCommandTest extends TestCase
         yield '--no-redos' => ['spelling' => '--no-redos'];
         yield '--baseline' => ['spelling' => '--baseline <file>'];
         yield '--generate-baseline' => ['spelling' => '--generate-baseline <file>'];
+        yield '--report-dynamic' => ['spelling' => '--report-dynamic'];
+    }
+
+    /**
+     * --report-dynamic is listed with what it does; the option that turns
+     * it off for one run, when regex.json turns it on, is read and not
+     * listed, as the two of the report of the markers are.
+     */
+    #[Test]
+    public function test_lint_help_lists_the_report_of_the_dynamic_arguments_and_not_what_turns_it_off(): void
+    {
+        $rows = self::section(self::commandHelp('lint'), 'Options');
+
+        $this->assertArrayHasKey('--report-dynamic', $rows);
+        $this->assertNotSame('', trim($rows['--report-dynamic']));
+        $this->assertNotContains('--no-report-dynamic', self::optionNames($rows));
+        $this->assertNotContains('--no-report-unmatched-ignores', self::optionNames($rows));
     }
 
     /**
@@ -617,8 +635,9 @@ final class HelpCommandTest extends TestCase
         $this->assertArrayHasKey('examples', $data);
         $this->assertIsArray($data['options']);
         $this->assertIsArray($data['notes']);
-        $this->assertCount(24, $data['options']);
+        $this->assertCount(25, $data['options']);
         $this->assertContains(['--json', 'Same as --format=json'], $data['options']);
+        $this->assertContains('--report-dynamic', array_column($data['options'], 0));
         $this->assertContains(['--no-twig', 'Skip the "matches" patterns of the Twig templates under the paths'], $data['options']);
         $this->assertCount(4, $data['notes']);
     }

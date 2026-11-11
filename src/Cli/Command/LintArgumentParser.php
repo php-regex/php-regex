@@ -47,6 +47,7 @@ final class LintArgumentParser
             Option::value('--output', '<file>', 'Write output to file'),
             Option::value('--baseline', '<file>', 'Leave out the issues a baseline file lists'),
             Option::value('--generate-baseline', '<file>', 'Write the issues found to a baseline file'),
+            Option::flag('--report-dynamic', 'Report each pattern argument built at run time as an info'),
             Option::flag('--redos', 'Run the ReDoS risk analysis, off by default'),
             Option::flag('--no-redos', 'Skip the ReDoS risk analysis when regex.json turns it on'),
             Option::value('--redos-mode', '<mode>', 'ReDoS mode (theoretical, confirmed)'),
@@ -66,8 +67,9 @@ final class LintArgumentParser
             Option::flag('--quiet', '', ['-q'])->hide(),
             Option::flag('--report-unmatched-ignores')->hide(),
             Option::flag('--no-report-unmatched-ignores')->hide(),
+            Option::flag('--no-report-dynamic')->hide(),
             Option::flag('--help', '', ['-h'])->hide(),
-        ], "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--json] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--no-report-unmatched-ignores] [--redos] [--no-redos] [--redos-mode=theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--lint|--no-lint] [--enable-rule=<id>] [--disable-rule=<id>] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n");
+        ], "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--json] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--no-report-unmatched-ignores] [--report-dynamic] [--redos] [--no-redos] [--redos-mode=theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--lint|--no-lint] [--enable-rule=<id>] [--disable-rule=<id>] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n");
     }
 
     /**
@@ -120,6 +122,8 @@ final class LintArgumentParser
             '--lint', '--no-lint' => $this->withCheckLint($arguments, '--lint' === $option->name),
             '--enable-rule', '--disable-rule' => $this->withRule($arguments, $option->name, $value),
             '--report-unmatched-ignores', '--no-report-unmatched-ignores' => $this->withReportUnmatchedIgnores($arguments, '--report-unmatched-ignores' === $option->name),
+            // The hidden one takes back what regex.json asks for, for one run.
+            '--report-dynamic', '--no-report-dynamic' => $arguments->with(reportDynamic: '--report-dynamic' === $option->name),
             '--no-interop' => $this->withInterop($arguments, []),
             '--no-twig' => $arguments->with(readTwig: false),
             '--interop' => $this->withInteropValue($arguments, $value),

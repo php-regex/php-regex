@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
+use PHPRegex\Tests\Support\ArgumentCarriers;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -46,6 +47,28 @@ final class JsonOutputContractTest extends TestCase
         PHP;
 
     private const LINT = ['lint', 'src', '--format=json', '--jobs=1', '--redos'];
+
+    /**
+     * Five pattern arguments, one in each state: one pattern, one of two
+     * patterns, a static pattern around a preg_quote() text, a static
+     * pattern around another part built at run time, nothing static. The
+     * three patterns that are known raise no issue.
+     */
+    private const DYNAMIC_FILE = <<<'PHP'
+        <?php
+
+        function each_state(string $s, string $word, string $re, bool $strict): int
+        {
+            return preg_match('/^constant$/', $s)
+                + preg_match($strict ? '/^strict$/' : '/^loose$/', $s)
+                + preg_match('/^été' . preg_quote($word, '/') . '$/u', $s)
+                + preg_match('/^' . $word . '$/', $s)
+                + preg_match($re, $s);
+        }
+
+        PHP;
+
+    private const LINT_DYNAMIC = ['lint', 'dynamic', '--format=json', '--jobs=1'];
 
     private const REDOS = ['--input', 'ab', '--iterations', '1', '--warmup', '0', '--format=json'];
 
@@ -130,6 +153,8 @@ final class JsonOutputContractTest extends TestCase
         yield 'lint, with a baseline' => ['arguments' => [...self::LINT, '--baseline=baseline.json'], 'address' => 'lint'];
         yield 'lint, quiet' => ['arguments' => ['--quiet', ...self::LINT], 'address' => 'lint'];
         yield 'lint, nothing to report' => ['arguments' => ['lint', 'empty', '--format=json', '--jobs=1'], 'address' => 'lint'];
+        yield 'lint, arguments built at run time' => ['arguments' => self::LINT_DYNAMIC, 'address' => 'lint'];
+        yield 'lint, arguments built at run time reported' => ['arguments' => [...self::LINT_DYNAMIC, '--report-dynamic'], 'address' => 'lint'];
         yield 'error envelope, a usage error' => ['arguments' => ['analyze', '/a/', '--bogus', '--json'], 'address' => 'error'];
         yield 'error envelope, an invalid pattern' => ['arguments' => ['transpile', '/(a/', '--format=json'], 'address' => 'error'];
         yield 'error envelope, an invalid pattern to format' => ['arguments' => ['format', '/(a/', '--format=json'], 'address' => 'error'];
@@ -337,13 +362,18 @@ final class JsonOutputContractTest extends TestCase
         JsonContract::assertShape('lint', $document);
         $this->assertSame(
             ['errors' => 1, 'warnings' => 3, 'optimizations' => 2, 'redos_errors' => 0, 'infos' => 1, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0],
-            $document['stats'],
+            JsonContract::issueCounts($document['stats']),
         );
+        // Four pattern arguments, each a literal.
+        $this->assertSame(['constant' => 4, 'finite_set' => 0, 'quoted_shell' => 0, 'raw_shell' => 0, 'opaque' => 0], ArgumentCarriers::countsOf($document['stats']));
 
         $byPattern = [];
         foreach (JsonContract::asArray($document['results']) as $result) {
             $this->assertIsArray($result);
             $this->assertIsString($result['pattern']);
+            // A result that has a pattern has no expression to give.
+            $this->assertArrayHasKey('expression', $result);
+            $this->assertNull($result['expression']);
             $byPattern[$result['pattern']] = $result;
             foreach (JsonContract::asArray($result['issues']) as $issue) {
                 $this->assertIsArray($issue);
@@ -393,7 +423,69 @@ final class JsonOutputContractTest extends TestCase
         $this->assertSame(0, $exitCode);
         $document = JsonContract::decodeDocument($stdout);
         $this->assertSame([], $document['results']);
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], $document['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], JsonContract::issueCounts($document['stats']));
+        $this->assertSame(ArgumentCarriers::none(), ArgumentCarriers::countsOf($document['stats']));
+    }
+
+    /**
+     * The stats count every pattern argument by the state it ends in, the
+     * five states on every run; an argument that holds a part built at run
+     * time is counted, and not reported unless the run asks.
+     */
+    #[Test]
+    public function test_lint_counts_the_pattern_arguments_by_state(): void
+    {
+        $this->enterLintedProject();
+
+        [$exitCode, $stdout] = $this->runRegex(self::LINT_DYNAMIC);
+
+        $this->assertSame(0, $exitCode, $stdout);
+        $document = JsonContract::decodeDocument($stdout);
+        $this->assertSame([], $document['results']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], JsonContract::issueCounts($document['stats']));
+        $this->assertSame(['constant' => 1, 'finite_set' => 1, 'quoted_shell' => 1, 'raw_shell' => 1, 'opaque' => 1], ArgumentCarriers::countsOf($document['stats']));
+    }
+
+    /**
+     * Asked for, each argument that holds a part built at run time is a
+     * result with no pattern: it gives the argument as the source writes
+     * it, where it stands, and one info. The column counts bytes.
+     */
+    #[Test]
+    public function test_lint_result_of_an_argument_built_at_run_time_gives_its_expression(): void
+    {
+        $this->enterLintedProject();
+
+        [$exitCode, $stdout] = $this->runRegex([...self::LINT_DYNAMIC, '--report-dynamic']);
+
+        $this->assertSame(0, $exitCode, $stdout);
+        $document = JsonContract::decodeDocument($stdout);
+        JsonContract::assertShape('lint', $document);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 3, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], JsonContract::issueCounts($document['stats']));
+        $this->assertSame(['constant' => 1, 'finite_set' => 1, 'quoted_shell' => 1, 'raw_shell' => 1, 'opaque' => 1], ArgumentCarriers::countsOf($document['stats']));
+
+        $reported = [];
+        foreach (JsonContract::asArray($document['results']) as $result) {
+            $result = JsonContract::asArray($result);
+            $issues = JsonContract::asArray($result['issues']);
+            $this->assertCount(1, $issues);
+            $issue = JsonContract::asArray($issues[0]);
+            $this->assertSame([$result['file'], $result['line'], $result['column'], $result['file_offset']], [$issue['file'], $issue['line'], $issue['column'], $issue['file_offset']]);
+            $this->assertNull($issue['validation']);
+            $this->assertNull($issue['analysis']);
+            $this->assertIsString($issue['docs_url']);
+            $this->assertSame([], $result['optimizations']);
+            $reported[] = [$result['file'], $result['line'], $result['column'], $result['file_offset'], $result['pattern'], $result['expression'], $issue['severity'], $issue['issue_id'], $issue['message']];
+        }
+
+        $this->assertSame(
+            [
+                ['dynamic/c.php', 7, 22, self::offsetInDynamicFile("'/^été'"), null, "'/^été' . preg_quote(\$word, '/') . '$/u'", 'info', 'regex.lint.source.quotedPart', 'The pattern holds a preg_quote() text: it is not verified.'],
+                ['dynamic/c.php', 8, 22, self::offsetInDynamicFile("'/^' . \$word"), null, "'/^' . \$word . '$/'", 'info', 'regex.lint.source.dynamicPart', 'The pattern holds a part built at run time: it is not verified.'],
+                ['dynamic/c.php', 9, 22, self::offsetInDynamicFile('$re, $s'), null, '$re', 'info', 'regex.lint.source.dynamic', 'The pattern is built at run time: it is not verified.'],
+            ],
+            $reported,
+        );
     }
 
     /**
@@ -543,8 +635,19 @@ final class JsonOutputContractTest extends TestCase
         $this->enterProject([
             'src/a.php' => self::LINTED_FILE,
             'empty/b.php' => "<?php\n",
+            'dynamic/c.php' => self::DYNAMIC_FILE,
             'baseline.json' => "{\"version\": 1, \"issues\": []}\n",
         ]);
+    }
+
+    /**
+     * The byte offset of a text the file of dynamic arguments holds once.
+     */
+    private static function offsetInDynamicFile(string $text): int
+    {
+        self::assertSame(1, substr_count(self::DYNAMIC_FILE, $text), $text);
+
+        return (int) strpos(self::DYNAMIC_FILE, $text);
     }
 
     private function assertInvalidValidation(mixed $validation, int $offset, string $errorCode, string $category): void

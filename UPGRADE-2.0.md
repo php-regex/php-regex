@@ -1436,8 +1436,8 @@ not change.
   reported no pattern and exited with 0.
 - The baseline file written by `--generate-baseline` is
   `{"version": 1, "issues": [...]}`, each entry holding
-  `{file, line, column, issue_id, message, severity, pattern, pattern_hash}`;
-  1.x wrote a plain list, with `type` and a `pattern` always `null`. A 1.x
+  `{file, line, column, issue_id, message, severity, pattern, expression,
+  pattern_hash}`; 1.x wrote a plain list, with `type` and a `pattern` always `null`. A 1.x
   baseline no longer loads: it is refused as a usage error, exit code 2 (see
   [`regex lint --baseline`](#regex-lint---baseline)). Regenerate it once so
   that a moved pattern or a reworded message no longer brings an issue back.

@@ -22,6 +22,8 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Tests\Support\ArgumentCarriers;
+use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\Test;
@@ -257,8 +259,14 @@ final class LintSeverityContractTest extends TestCase
         [, $json] = $this->runLint(['src', '--jobs=1', '--format=json', '--baseline=baseline.json']);
 
         $expected = ['errors' => 1, 'warnings' => 1, 'optimizations' => 2, 'redos_errors' => 0, 'infos' => 1, 'lint_errors' => 1, 'parser_fallbacks' => 0, 'not_analyzed' => 0];
-        $this->assertSame($expected, self::stats($withoutBaseline));
-        $this->assertSame($expected, self::stats($json));
+        $this->assertSame($expected, JsonContract::issueCounts(self::stats($withoutBaseline)));
+        $this->assertSame($expected, JsonContract::issueCounts(self::stats($json)));
+
+        // And each pattern argument, five literals: a baseline takes out
+        // issues, never an argument.
+        $arguments = ['constant' => 5, 'finite_set' => 0, 'quoted_shell' => 0, 'raw_shell' => 0, 'opaque' => 0];
+        $this->assertSame($arguments, ArgumentCarriers::countsOf(self::stats($withoutBaseline)));
+        $this->assertSame($arguments, ArgumentCarriers::countsOf(self::stats($json)));
     }
 
     /**

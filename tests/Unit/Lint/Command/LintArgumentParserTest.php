@@ -56,6 +56,55 @@ final class LintArgumentParserTest extends TestCase
         $this->assertFalse($arguments->checkOptimizations);
     }
 
+    /**
+     * --report-dynamic asks for each pattern argument built at run time,
+     * one by one: a flag among the others, off unless given.
+     */
+    #[Test]
+    public function test_parse_reads_the_report_of_the_arguments_built_at_run_time(): void
+    {
+        $parser = new LintArgumentParser();
+
+        $result = $parser->parse(['--report-dynamic', '--format', 'json', 'src']);
+
+        $this->assertNull($result->error);
+        $this->assertInstanceOf(LintArguments::class, $result->arguments);
+        $this->assertTrue($result->arguments->reportDynamic);
+        $this->assertSame(['src'], $result->arguments->paths);
+        $this->assertSame('json', $result->arguments->format);
+
+        $default = $parser->parse(['--format', 'json', 'src']);
+        $this->assertInstanceOf(LintArguments::class, $default->arguments);
+        $this->assertFalse($default->arguments->reportDynamic);
+
+        $overridden = $parser->parse(['--no-report-dynamic', 'src'], ['reportDynamic' => true]);
+        $this->assertNull($overridden->error);
+        $this->assertInstanceOf(LintArguments::class, $overridden->arguments);
+        $this->assertFalse($overridden->arguments->reportDynamic);
+    }
+
+    /**
+     * The help lists --report-dynamic and the usage line names it; the
+     * option that overrides regex.json for one run is read without being
+     * listed.
+     */
+    #[Test]
+    public function test_the_options_list_the_report_and_hide_what_turns_it_off(): void
+    {
+        $options = [];
+        foreach (LintArgumentParser::options()->options as $option) {
+            $options[$option->name] = $option;
+        }
+
+        $this->assertArrayHasKey('--report-dynamic', $options);
+        $this->assertFalse($options['--report-dynamic']->hidden);
+        $this->assertNotSame('', $options['--report-dynamic']->description);
+        $this->assertArrayHasKey('--no-report-dynamic', $options);
+        $this->assertTrue($options['--no-report-dynamic']->hidden);
+        $this->assertStringContainsString('[--report-dynamic]', LintArgumentParser::options()->usage);
+        $this->assertStringNotContainsString('--no-report-dynamic', LintArgumentParser::options()->usage);
+    }
+
     #[Test]
     public function test_parse_defaults_to_every_preset(): void
     {
