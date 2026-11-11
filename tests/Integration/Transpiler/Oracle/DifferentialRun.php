@@ -17,6 +17,14 @@ use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\Engine\NoJit;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Toolkit\Regex;
@@ -67,6 +75,13 @@ final class DifferentialRun
     public int $tableSkews = 0;
 
     /**
+     * Comparisons left out because the running PCRE2 compiles a class of
+     * the pattern without some of its characters, and the subject holds
+     * one of them.
+     */
+    public int $classDefects = 0;
+
+    /**
      * @var list<string>
      */
     public array $divergences = [];
@@ -77,7 +92,7 @@ final class DifferentialRun
      * For each case sent to the engine: the pattern, its transpiled form,
      * the flags, and what PCRE found on each subject from each start.
      *
-     * @var list<array{string, string, string, list<array{list<?array{int, int}>|null, list<string>, int}>, list<string>}>
+     * @var list<array{string, string, string, list<array{list<?array{int, int}>|null, list<string>, int}>, list<string>, list<array{string, string, bool}>}>
      */
     private array $expectations = [];
 
@@ -88,6 +103,16 @@ final class DifferentialRun
      * @var array<string, array<string, true>>
      */
     private array $tableSkew = [];
+
+    /**
+     * Whether the running PCRE2 reads a class whole as it reads its members
+     * one by one, on a character: class => character => whether it does.
+     *
+     * @var array<string, array<string, bool>>
+     */
+    private array $classReadings = [];
+
+    private static ?bool $dropsClassMembers = null;
 
     /**
      * @param list<string>          $patterns
@@ -151,13 +176,13 @@ final class DifferentialRun
             }
 
             $cases[] = ['pattern' => $result->pattern, 'flags' => $whole ? 'v' : $result->flags, 'whole' => $whole, 'subjects' => $subjects];
-            $this->expectations[] = [$pattern, $result->pattern, $result->flags, $expected, $this->atoms($ast, $unicode)];
+            $this->expectations[] = [$pattern, $result->pattern, $result->flags, $expected, $this->atoms($ast, $unicode), $this->classes($ast, $unicode)];
         }
 
         $this->probeTables($regex);
 
         foreach ($this->engine->run($cases) as $index => $outcome) {
-            [$pattern, $transpiled, $flags, $expected, $atoms] = $this->expectations[$index];
+            [$pattern, $transpiled, $flags, $expected, $atoms, $classes] = $this->expectations[$index];
             if ($outcome['timedOut'] ?? false) {
                 $this->timedOut++;
 
@@ -177,6 +202,12 @@ final class DifferentialRun
 
                 if ($this->skewed($atoms, $characters)) {
                     $this->tableSkews++;
+
+                    continue;
+                }
+
+                if ($this->miscompiled($classes, $characters)) {
+                    $this->classDefects++;
 
                     continue;
                 }
@@ -309,6 +340,135 @@ final class DifferentialRun
         }
 
         return false;
+    }
+
+    /**
+     * The classes of a pattern under u on an engine that compiles some
+     * classes without all their characters, none on any other engine: each
+     * class as the pattern writes it, and the same class written as its
+     * members one by one, "(?:[a]|[b-c])", which the engine compiles whole.
+     *
+     * PCRE2 10.45 to 10.47 compile a class that holds characters up to
+     * U+00FF beside characters from U+0100 and from U+8000 without some of
+     * them: "[\x{ff}-\x{104}\x{8000}\x{8002}\x{8004}\x{8006}\x{8008}\x{800a}\x{800c}\x{800e}]"
+     * no longer takes U+0100 to U+0104, which the target takes. PCRE2 10.48
+     * fixed it (ChangeLog, version 10.48, item 6, pull request 841). The
+     * engine is asked, never its release: a build may carry the fix.
+     *
+     * A class with a member that cannot be written alone is left out, and
+     * the comparison is made.
+     *
+     * @return list<array{string, string, bool}> the class, its members one by one, and whether it is negated
+     */
+    private function classes(RegexNode $ast, bool $unicode): array
+    {
+        if (!$unicode || !self::dropsClassMembers()) {
+            return [];
+        }
+
+        $closing = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'][$ast->delimiter] ?? $ast->delimiter;
+        $classes = [];
+        $nodes = [$ast->pattern];
+        while ([] !== $nodes) {
+            $node = array_pop($nodes);
+            array_push($nodes, ...$node->getChildren());
+            if (!$node instanceof CharClassNode) {
+                continue;
+            }
+
+            $members = [];
+            foreach ($node->expression instanceof AlternationNode ? $node->expression->getChildren() : [$node->expression] as $member) {
+                $members[] = self::alone($member, (string) $ast->source);
+            }
+
+            if (\count($members) < 2 || \in_array(null, $members, true)) {
+                continue;
+            }
+
+            $classes[] = [
+                $ast->delimiter.substr((string) $ast->source, $node->getStartPosition(), $node->getEndPosition() - $node->getStartPosition()).$closing.$ast->flags,
+                $ast->delimiter.'(?:['.implode(']|[', $members).'])'.$closing.$ast->flags,
+                $node->isNegated,
+            ];
+        }
+
+        return $classes;
+    }
+
+    /**
+     * A member of a class written so that it stands alone between "[" and
+     * "]": a character or a range by its code points, an escape, a POSIX
+     * name or a property as the pattern writes it. Null for anything else.
+     */
+    private static function alone(NodeInterface $member, string $source): ?string
+    {
+        if ($member instanceof RangeNode) {
+            $start = self::codePoint($member->start);
+            $end = self::codePoint($member->end);
+
+            return null === $start || null === $end ? null : \sprintf('\\x{%x}-\\x{%x}', $start, $end);
+        }
+
+        if ($member instanceof CharTypeNode || $member instanceof PosixClassNode || $member instanceof UnicodePropNode) {
+            return substr($source, $member->getStartPosition(), $member->getEndPosition() - $member->getStartPosition());
+        }
+
+        $codePoint = self::codePoint($member);
+
+        return null === $codePoint ? null : \sprintf('\\x{%x}', $codePoint);
+    }
+
+    private static function codePoint(NodeInterface $node): ?int
+    {
+        if ($node instanceof CharLiteralNode) {
+            return $node->codePoint;
+        }
+
+        if ($node instanceof LiteralNode && 1 === mb_strlen($node->value, 'UTF-8')) {
+            return mb_ord($node->value, 'UTF-8');
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether the subject holds a character the running PCRE2 reads in one
+     * of the classes otherwise than in its members: the engine's own two
+     * answers differ, and neither can be held against the target.
+     *
+     * @param list<array{string, string, bool}> $classes
+     * @param list<string>                      $characters
+     */
+    private function miscompiled(array $classes, array $characters): bool
+    {
+        foreach ($classes as [$class, $members, $negated]) {
+            foreach ($characters as $character) {
+                $this->classReadings[$class][$character] ??= self::readsAlike($class, $members, $negated, $character);
+                if (!$this->classReadings[$class][$character]) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static function readsAlike(string $class, string $members, bool $negated, string $character): bool
+    {
+        $whole = @preg_match($class, $character);
+        $apart = @preg_match($members, $character);
+
+        // A probe the engine does not compile says nothing of the class.
+        return false === $whole || false === $apart || (1 === $whole) === ($negated xor 1 === $apart);
+    }
+
+    /**
+     * Whether the running PCRE2 drops characters from the class its own
+     * suite holds for that defect.
+     */
+    private static function dropsClassMembers(): bool
+    {
+        return self::$dropsClassMembers ??= 1 !== preg_match('/[\x{ff}-\x{104}\x{8000}\x{8002}\x{8004}\x{8006}\x{8008}\x{800a}\x{800c}\x{800e}]/u', "\u{101}");
     }
 
     /**
