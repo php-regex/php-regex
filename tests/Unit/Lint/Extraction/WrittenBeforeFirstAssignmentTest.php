@@ -86,6 +86,12 @@ final class WrittenBeforeFirstAssignmentTest extends TestCase
             'code' => "<?php\n\nfunction run(string \$s, bool \$flag): void\n{\n    while (\$flag) {\n        preg_match('/^' . \$part . '$/', \$s);\n        \$flag = false;\n    }\n\n    fill(\$part);\n    \$part = 'x';\n}\n",
         ];
 
+        // The read stands in the value of the assignment: PHP joins
+        // nothing there, and the call that follows runs after it.
+        yield 'a variable read in the value of its only assignment, and passed to a call after it' => [
+            'code' => "<?php\n\nfunction run(string \$s): void\n{\n    \$part = preg_match('/^' . \$part . '$/', \$s) ? 'a' : 'b';\n    fill(\$part);\n}\n",
+        ];
+
         // The goto may run the assignment before the read: one value
         // then, and nothing at the first pass.
         yield 'a variable assigned after the read, in a body a goto runs again' => [
