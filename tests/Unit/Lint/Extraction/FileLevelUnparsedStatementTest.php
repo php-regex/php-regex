@@ -87,6 +87,8 @@ final class FileLevelUnparsedStatementTest extends TestCase
     {
         yield 'a comma in parentheses, before the call' => ['statement' => "\$found = ('a', preg_match(\$re, \$subject));"];
         yield 'an arrow in parentheses, before the call negated' => ['statement' => "\$found = ('k' => !preg_match(\$re, \$subject));"];
+        yield 'a ";" in parentheses, before the call negated' => ['statement' => "\$found = ('a'; !preg_match(\$re, \$subject));"];
+        yield 'a declare without its parentheses, before the call negated' => ['statement' => 'declare !preg_match($re, $subject);'];
         yield 'an assignment to a string, of the call' => ['statement' => "'label' = preg_match(\$re, \$subject);"];
         yield 'an assignment to a number, of the call' => ['statement' => '1 = preg_match($re, $subject);'];
         yield 'an attribute holding the call negated' => ['statement' => "#[!preg_match(\$re, \$subject)]\nfunction helper(): void\n{\n}"];

@@ -95,6 +95,10 @@ final class FileLevelStatementOfTheReadTest extends TestCase
         yield 'after a number equal to a variable, assigned' => ['statement' => '$found = 1 == $flag && preg_match($re, $subject);'];
 
         yield 'in the braces of a block' => ['statement' => "{\n    preg_match(\$re, \$subject);\n}"];
+        // The ";" is the whole body of the if, or of the else: the block
+        // after it runs whatever the condition gives.
+        yield 'in a block written after an if whose body is an empty statement' => ['statement' => "if (\$flag);\n{\n    preg_match(\$re, \$subject);\n}"];
+        yield 'in a block written after an else whose body is an empty statement' => ['statement' => "if (\$flag) {\n    \$label = 'a';\n} else;\n{\n    preg_match(\$re, \$subject);\n}"];
         yield 'in the condition of an if in the body of an if' => ['statement' => "if (\$flag) {\n    if (preg_match(\$re, \$subject)) {\n        \$label = 'a';\n    }\n}"];
     }
 
@@ -149,6 +153,35 @@ final class FileLevelStatementOfTheReadTest extends TestCase
     public function test_a_statement_beginning_with_what_the_list_does_not_hold_leaves_the_variable_unread(string $statement): void
     {
         $this->assertUnread("<?php\n\n\$re = '/file-level/';\n".$statement."\n");
+    }
+
+    /**
+     * A comparison, a negation and a conversion to a boolean are what
+     * only the beginning of the statement of the read may hold: assigned
+     * as a statement of its own, between the assignment and the read,
+     * each is off the list, over strings as over anything else.
+     *
+     * PHP 8.4: "/file-level/" in each case: nothing runs, and the
+     * variable is left unread because the list is closed.
+     *
+     * @return iterable<string, array{between: string}>
+     */
+    public static function provideComparisonsOfLiteralsAssigned(): iterable
+    {
+        yield 'an identity of strings' => ['between' => "\$same = 'a' === 'b';"];
+        yield 'an inequality of strings' => ['between' => "\$other = 'a' != 'b';"];
+        yield 'an ordering of strings' => ['between' => "\$less = 'a' < 'b';"];
+        yield 'an ordering or equality of strings' => ['between' => "\$most = 'a' >= 'b';"];
+        yield 'a negation of a string' => ['between' => "\$none = !'a';"];
+        yield 'two strings under &&' => ['between' => "\$both = 'a' && 'b';"];
+        yield 'two strings under xor' => ['between' => "\$either = ('a' xor 'b');"];
+    }
+
+    #[Test]
+    #[DataProvider('provideComparisonsOfLiteralsAssigned')]
+    public function test_a_comparison_of_literals_assigned_between_the_assignment_and_the_read_leaves_the_variable_unread(string $between): void
+    {
+        $this->assertUnread("<?php\n\n\$re = '/file-level/';\n".$between."\npreg_match(\$re, \$subject);\n");
     }
 
     /**
