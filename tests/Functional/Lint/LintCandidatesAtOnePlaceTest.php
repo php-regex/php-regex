@@ -169,6 +169,52 @@ final class LintCandidatesAtOnePlaceTest extends TestCase
     }
 
     /**
+     * Patterns that read as numbers are ordered as the bytes they are,
+     * not as the numbers: "10" before "2", and "1e1" beside "10", which
+     * is the same number and another pattern.
+     *
+     * The engine refuses each (PHP 8.4, php -r): preg_match('10', '')
+     * warns that a delimiter must not be alphanumeric, and so do '2' and
+     * '1e1'. As strings, strcmp('10', '2') is below zero where
+     * '10' <=> '2' is 1, and '10' <=> '1e1' is 0.
+     *
+     * @return iterable<string, array{arms: string, patterns: list<string>}>
+     */
+    public static function provideNumericPatterns(): iterable
+    {
+        yield 'two integers' => ['arms' => "'10' : '2'", 'patterns' => ['10', '2']];
+        yield 'two integers, the other way round' => ['arms' => "'2' : '10'", 'patterns' => ['10', '2']];
+        yield 'two writings of one number' => ['arms' => "'1e1' : '10'", 'patterns' => ['10', '1e1']];
+    }
+
+    /**
+     * @param list<string> $patterns the patterns of the argument, in byte order
+     */
+    #[Test]
+    #[DataProvider('provideNumericPatterns')]
+    public function test_patterns_that_read_as_numbers_come_in_byte_order(string $arms, array $patterns): void
+    {
+        foreach ($patterns as $pattern) {
+            $this->assertNotNull(EngineProbe::warning($pattern), $pattern);
+        }
+        $sorted = $patterns;
+        sort($sorted, \SORT_STRING);
+        $this->assertSame($sorted, $patterns);
+
+        $this->enterProject(['app/a.php' => "<?php\n\nfunction check(bool \$flag, string \$s): void\n{\n    preg_match(sprintf('%s', \$flag ? ".$arms."), \$s);\n}\n"]);
+        $runs = ['one worker' => fn (): array => $this->runRegex(['lint', 'app', '--format=json', '--jobs=1'])];
+        if (ForkedWorkerPool::canFork()) {
+            $runs['two workers, through the binary'] = fn (): array => $this->runRegexProcess(['lint', 'app', '--format=json', '--jobs=2']);
+        }
+
+        foreach ($runs as $name => $run) {
+            [, $stdout, $stderr] = $run();
+
+            $this->assertSame($patterns, array_column(self::results(JsonContract::decodeDocument($stdout)), 'pattern'), $name."\n".$stdout.$stderr);
+        }
+    }
+
+    /**
      * The console shows each pattern over what is told of it.
      */
     #[Test]

@@ -635,8 +635,20 @@ final class LintService
      */
     private static function compareLocations(array $left, array $right): int
     {
-        return [strcmp($left['file'], $right['file']) <=> 0, $left['line'], self::nullFirst($left['column'] ?? null), self::nullFirst($left['fileOffset'] ?? null), self::nullFirst($left['source'] ?? null), self::nullFirst($left['pattern'] ?? null)]
-            <=> [0, $right['line'], self::nullFirst($right['column'] ?? null), self::nullFirst($right['fileOffset'] ?? null), self::nullFirst($right['source'] ?? null), self::nullFirst($right['pattern'] ?? null)];
+        $order = [strcmp($left['file'], $right['file']) <=> 0, $left['line'], self::nullFirst($left['column'] ?? null), self::nullFirst($left['fileOffset'] ?? null), self::nullFirst($left['source'] ?? null)]
+            <=> [0, $right['line'], self::nullFirst($right['column'] ?? null), self::nullFirst($right['fileOffset'] ?? null), self::nullFirst($right['source'] ?? null)];
+        if (0 !== $order) {
+            return $order;
+        }
+
+        // Two patterns that read as numbers, "10" and "2", would compare
+        // as the numbers under "<=>".
+        $leftPattern = $left['pattern'] ?? null;
+        $rightPattern = $right['pattern'] ?? null;
+
+        return null === $leftPattern || null === $rightPattern
+            ? (null !== $leftPattern) <=> (null !== $rightPattern)
+            : strcmp($leftPattern, $rightPattern) <=> 0;
     }
 
     /**
@@ -651,7 +663,8 @@ final class LintService
 
     /**
      * A sort key where null comes before any value: arrays compare element
-     * by element, and a string against a string compares bytewise.
+     * by element. Two strings compare bytewise unless both read as numbers:
+     * a value that may be one is compared apart.
      *
      * @return array{int, int|string}
      */
