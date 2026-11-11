@@ -5116,7 +5116,11 @@
   // closed door has nowhere to scroll to: opening it brings the shown row
   // in.
   el.findingsDoor.addEventListener('click', function () {
-    pageTouched = true;
+    // Only the opening is the gesture: a repository's page arrives with
+    // its door open, and the hand that closes it again cancels nothing.
+    if (!el.findingsBrowse.open) {
+      pageTouched = true;
+    }
   });
   el.findingsBrowse.addEventListener('toggle', function () {
     if (!el.findingsBrowse.open) {
