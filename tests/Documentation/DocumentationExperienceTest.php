@@ -229,20 +229,23 @@ final class DocumentationExperienceTest extends TestCase
     }
 
     /**
-     * The four articles the runbook held as drafts are published, and the
-     * llms.txt index lists them: an agent reading the site reads them too.
+     * The four launch articles stay drafts until a hand validates them:
+     * the blog shows nothing of them and llms.txt indexes nothing of
+     * them — an agent reading the site does not read what a reader
+     * cannot. Publishing them is a flip of one flag each, plus the
+     * index the runbook describes.
      */
     #[Test]
-    public function test_the_four_blog_articles_are_published(): void
+    public function test_the_four_blog_articles_wait_for_validation(): void
     {
         foreach (self::ARTICLES as $slug) {
             $article = (string) file_get_contents(__DIR__.'/../../docs/_articles/'.$slug.'.md');
-            $this->assertSame(1, preg_match('/^published: true$/m', $article), $slug.' is published.');
+            $this->assertSame(1, preg_match('/^published: false$/m', $article), $slug.' stays a draft until a hand validates it.');
         }
         $llms = (string) file_get_contents(self::LLMS);
-        $this->assertStringContainsString('## Articles', $llms, 'The index carries an Articles section.');
+        $this->assertStringNotContainsString('## Articles', $llms, 'No index of what is not published.');
         foreach (self::ARTICLES as $slug) {
-            $this->assertStringContainsString('https://php-regex.com/blog/'.$slug.'/', $llms, $slug.' is listed at its real address.');
+            $this->assertStringNotContainsString('php-regex.com/blog/'.$slug, $llms, $slug.' is indexed nowhere.');
         }
     }
 }

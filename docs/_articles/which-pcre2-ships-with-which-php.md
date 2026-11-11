@@ -2,7 +2,7 @@
 date: 2026-07-14 15:47:00 +00:00
 last_modified_at: 2026-10-16 12:00:00 +00:00
 author: younes
-published: true
+published: false
 tags: [PCRE2, Compatibility]
 description: "The PCRE2 version each PHP release bundles, 7.3 to 8.6, how to check yours with PCRE_VERSION, and the lookbehind and \\K patterns that change between them."
 ---

@@ -86,8 +86,10 @@ to match).
 
 ## Blog articles
 
-- The four launch articles are published (2026-11-11), and
-  `docs/llms.txt` carries an `## Articles` section for each.
+- The four launch articles wait for a read and a go: the tour's pull
+  request publishes the blog list and the `## Articles` section of
+  `docs/llms.txt` in the same stroke as the flip — one commit once they
+  are validated.
 - On the day of the 8.6 GA, re-check the 8.6 row of the version matrix in
   `which-pcre2-ships-with-which-php` against the PHP-8.6 branch: the article
   promises it. On 2026-11-10 the branch and master still bundle PCRE2
@@ -404,7 +406,9 @@ pull request:
   each link to the playground with the pattern preloaded
   (`/#pattern=…&subject=…`), pinned by a contract that runs every linked
   pattern through the engine.
-- The four launch articles are published and indexed (see above).
+- The four launch articles stay drafts (their content is not validated
+  yet); the blog list and the `## Articles` section of `docs/llms.txt`
+  go with them in the same commit when they are.
 
 Deliberately left as they are:
 

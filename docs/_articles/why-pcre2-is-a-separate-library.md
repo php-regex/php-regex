@@ -1,7 +1,7 @@
 ---
 date: 2026-10-16 15:38:00 +00:00
 author: younes
-published: true
+published: false
 tags: [PCRE2, History]
 description: "PCRE2 is a separate library with a new API, not PCRE 9. How to tell which one your PHP runs, and the patterns PHP 7.3 broke or let through when it switched."
 ---
