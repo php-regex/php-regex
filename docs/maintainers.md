@@ -850,9 +850,9 @@ php bin/findings-report          # the site's findings, from the JSON parts
 `bin/corpus-lint` lints each repository twice under the same target: once
 for `var/log/corpus.log`, once with `--format=json` into
 `var/log/corpus-parts/<vendor>__<repo>.json` (`--no-json` skips it).
-`--report-dynamic` is passed to both runs, so that the log and the part
-list each pattern argument built at run time, which the linter does not
-verify.
+Given `--report-dynamic`, the script passes the flag on to both runs, so
+that the log and the part list each pattern argument built at run time,
+which the linter does not verify; without it, neither run lists them.
 `bin/findings-report` reads those parts and the clones, and writes:
 
 - `docs/assets/findings/index.json`: each repository with findings, its
