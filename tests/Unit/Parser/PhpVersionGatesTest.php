@@ -18,6 +18,7 @@ use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\LibrarySource;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -39,6 +40,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class PhpVersionGatesTest extends TestCase
 {
+    use PcreGates;
+
     private const GATE_CLASS = 'src/Parser/PhpVersionGates.php';
 
     private const COMPARISONS = [\T_IS_SMALLER_OR_EQUAL, \T_IS_GREATER_OR_EQUAL, \T_IS_EQUAL, \T_IS_IDENTICAL, \T_IS_NOT_EQUAL, \T_IS_NOT_IDENTICAL, \T_SPACESHIP];
@@ -89,10 +92,23 @@ final class PhpVersionGatesTest extends TestCase
         // compiles the rows that are valid and refuses the others, with the
         // error the library reports for it.
         $this->assertSame($valid, EngineProbe::compiles($pattern), 'Oracle: '.(EngineProbe::warning($pattern) ?? 'PHP compiles '.$pattern));
-        $this->assertMatchesTheRunningEngine($pattern);
         $this->assertSame($valid, $before->isValid, (string) $before->error);
         $this->assertSame($valid, $from->isValid, (string) $from->error);
         $this->assertSame($sameError, [$before->errorCode, $before->offset] === [$from->errorCode, $from->offset]);
+    }
+
+    /**
+     * The running engine is one side of the gate, or another target, where
+     * it checks the size limit as its release does.
+     */
+    #[Test]
+    #[DataProvider('providePatternsAroundTheSizeLimit')]
+    public function test_the_running_engine_reports_around_the_size_limit_what_the_library_reports(string $pattern, bool $valid, bool $sameError): void
+    {
+        unset($valid, $sameError);
+        $this->requiresSizeLimitCheckedAsReleased($pattern);
+
+        $this->assertMatchesTheRunningEngine($pattern);
     }
 
     /**
@@ -163,9 +179,8 @@ final class PhpVersionGatesTest extends TestCase
     }
 
     /**
-     * The running engine is one side of the gate, or another target: what
-     * PHP refuses the pattern with, and where, is what the library reports
-     * for this PHP, its patch release included, and this PCRE2.
+     * What PHP refuses the pattern with, and where, is what the library
+     * reports for this PHP, its patch release included, and this PCRE2.
      */
     private function assertMatchesTheRunningEngine(string $pattern): void
     {

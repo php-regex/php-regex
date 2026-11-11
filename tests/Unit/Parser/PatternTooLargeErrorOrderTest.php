@@ -17,6 +17,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -41,6 +42,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class PatternTooLargeErrorOrderTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * The engine messages these rows meet that the message table leaves
      * out: the size limit, and "\K" in a lookaround as PHP 8.5 reports it.
@@ -56,7 +59,6 @@ final class PatternTooLargeErrorOrderTest extends TestCase
     #[DataProvider('provideErrorsNeverReached')]
     public function test_an_error_after_the_limit_is_passed_is_never_reached(string $pattern, string $php, string $release, int $offset): void
     {
-        $this->assertMatchesTheRunningEngine($pattern);
         $result = self::validate($pattern, $php, $release);
 
         $this->assertSame(ErrorCode::PatternTooLarge, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
@@ -67,11 +69,26 @@ final class PatternTooLargeErrorOrderTest extends TestCase
     #[DataProvider('provideErrorsMetFirst')]
     public function test_an_error_before_the_limit_is_passed_is_reported(string $pattern, string $php, string $release, ErrorCode $error, int $offset): void
     {
-        $this->assertMatchesTheRunningEngine($pattern);
         $result = self::validate($pattern, $php, $release);
 
         $this->assertSame($error, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
         $this->assertSame($offset, $result->offset, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
+    }
+
+    /**
+     * The rows hold the error each PHP and PCRE2 target reports; the
+     * running engine is one more target, where it checks the size limit as
+     * its release does.
+     */
+    #[Test]
+    #[DataProvider('provideErrorsNeverReached')]
+    #[DataProvider('provideErrorsMetFirst')]
+    public function test_the_running_engine_refuses_the_pattern_with_the_error_the_library_reports(string $pattern, string $php, string $release, int $offset, ?ErrorCode $error = null): void
+    {
+        unset($php, $release, $offset, $error);
+        $this->requiresSizeLimitCheckedAsReleased($pattern);
+
+        $this->assertMatchesTheRunningEngine($pattern);
     }
 
     /**
@@ -235,10 +252,8 @@ final class PatternTooLargeErrorOrderTest extends TestCase
     }
 
     /**
-     * The rows hold the error each PHP and PCRE2 target reports; the
-     * running engine is one more target: what PHP refuses the pattern with
-     * here is what the library reports for this PHP, its patch release
-     * included, and this PCRE2.
+     * What PHP refuses the pattern with here is what the library reports
+     * for this PHP, its patch release included, and this PCRE2.
      */
     private function assertMatchesTheRunningEngine(string $pattern): void
     {

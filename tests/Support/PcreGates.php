@@ -162,6 +162,29 @@ trait PcreGates
     }
 
     /**
+     * Skip unless the running engine checks the size limit of a pattern as
+     * the library judges its release to — the probe, never a release. From
+     * PCRE2 10.48 each branch is checked on its own, and PCRE2 gives that
+     * fix to the distributors of 10.39 to 10.47: a build that carries it
+     * still names the release tagged without it, as the PCRE2 10.46 of
+     * Ubuntu 26.04 does from its package 10.46-1ubuntu0.1, and refuses a
+     * pattern too large that is wrong elsewhere too with another error, or
+     * at another offset, than the release as tagged. The library judges a
+     * release as PCRE2 tagged it, the 10.40 PHP bundles from 8.2.35 aside.
+     *
+     * The probe holds two branches too large only together, then a
+     * reference to no group: checked together, the pattern is too large;
+     * checked apart, the reference is met first.
+     */
+    private function requiresSizeLimitCheckedAsReleased(string $pattern): void
+    {
+        $apart = !str_contains((string) EngineProbe::warning('/(?:[^a]){5000}|(?:[^a]){4000}\\k<n>(?:[^a]){1000}/'), 'regular expression is too large');
+        if ($apart !== PcreTarget::runtime()->measuresBranchesApart()) {
+            $this->markTestSkipped(\sprintf('%s is verified against the size limit check of PCRE2 %s as released; this build checks %s.', $pattern, \PCRE_VERSION, $apart ? 'each branch on its own, as PCRE2 10.48 does' : 'a branch with those before it, as the releases before PCRE2 10.48 do'));
+        }
+    }
+
+    /**
      * Named for the trait, never for the class it lands in: a class's own
      * helper of another name must not silently replace the gate arithmetic.
      *
