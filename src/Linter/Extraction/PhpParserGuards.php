@@ -34,7 +34,7 @@ use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\Ternary;
 use PhpParser\Node\Expr\Throw_;
 use PhpParser\Node\Name;
-use PhpParser\Node\Scalar\Int_;
+use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt;
 use PhpParser\Node\Stmt\Break_;
@@ -258,10 +258,10 @@ final class PhpParserGuards
 
         $operator = self::COMPARISONS[$expr::class] ?? null;
         if (null !== $operator && $expr instanceof BinaryOp) {
-            if ($this->names($expr->left, 'PHP_VERSION_ID') && $expr->right instanceof Int_) {
+            if ($this->names($expr->left, 'PHP_VERSION_ID') && $expr->right instanceof LNumber) {
                 return VersionGuard::versionId($operator, $expr->right->value, true);
             }
-            if ($this->names($expr->right, 'PHP_VERSION_ID') && $expr->left instanceof Int_) {
+            if ($this->names($expr->right, 'PHP_VERSION_ID') && $expr->left instanceof LNumber) {
                 return VersionGuard::versionId($operator, $expr->left->value, false);
             }
 

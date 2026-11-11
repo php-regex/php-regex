@@ -15,10 +15,10 @@ namespace PHPRegex\Linter\Extraction;
 
 use PhpParser\Node;
 use PhpParser\Node\Arg;
-use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
+use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\AssignOp;
@@ -47,11 +47,11 @@ use PhpParser\Node\Expr\UnaryPlus;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Expr\Yield_;
 use PhpParser\Node\Identifier;
-use PhpParser\Node\InterpolatedStringPart;
 use PhpParser\Node\Name;
-use PhpParser\Node\Scalar\Float_;
-use PhpParser\Node\Scalar\Int_;
-use PhpParser\Node\Scalar\InterpolatedString;
+use PhpParser\Node\Scalar\DNumber;
+use PhpParser\Node\Scalar\Encapsed;
+use PhpParser\Node\Scalar\EncapsedStringPart;
+use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Block;
 use PhpParser\Node\Stmt\Catch_;
@@ -97,6 +97,12 @@ use PhpParser\NodeVisitorAbstract;
  */
 final class AstValueCollector extends NodeVisitorAbstract
 {
+    /**
+     * The flag of a final member, the same number in every PHP-Parser:
+     * Class_::MODIFIER_FINAL in 4, Modifiers::FINAL in 5.
+     */
+    private const FINAL = 32;
+
     private const SCOPE = 'phpRegexScope';
 
     private const CLASS_KEY = 'phpRegexClass';
@@ -380,10 +386,10 @@ final class AstValueCollector extends NodeVisitorAbstract
 
         // "/^{$part}$/", a heredoc that interpolates: the concatenation of
         // its pieces, which the parser decodes, and of its expressions.
-        if ($expr instanceof InterpolatedString) {
+        if ($expr instanceof Encapsed) {
             $parts = [];
             foreach ($expr->parts as $part) {
-                $parts[] = $part instanceof InterpolatedStringPart
+                $parts[] = $part instanceof EncapsedStringPart
                     ? ValueExpr::literal($part->value, max(0, $part->getStartFilePos()), $part->getStartLine())
                     : $this->expression($part);
             }
@@ -420,11 +426,11 @@ final class AstValueCollector extends NodeVisitorAbstract
             $expr = $expr->expr;
         }
 
-        if ($expr instanceof Int_) {
+        if ($expr instanceof LNumber) {
             return ValueExpr::nonString($negative ? -$expr->value : $expr->value);
         }
 
-        return $expr instanceof Float_ ? ValueExpr::nonString() : ValueExpr::unknown();
+        return $expr instanceof DNumber ? ValueExpr::nonString() : ValueExpr::unknown();
     }
 
     /**
@@ -454,7 +460,7 @@ final class AstValueCollector extends NodeVisitorAbstract
             $number = $number->expr;
         }
 
-        return $number instanceof Float_
+        return $number instanceof DNumber
             ? ValueExpr::castKey($negative ? -$number->value : $number->value, $offset, $key->getStartLine())
             : $this->expression($key);
     }
@@ -663,8 +669,10 @@ final class AstValueCollector extends NodeVisitorAbstract
         // Another file may write a public property, a subclass replace one
         // of an open class, a parent class write a protected one; a hook
         // computes its own value.
-        $proves = ($property->isPrivate() ? $final || $property->isFinal() : $property->isProtected() && $final && !$extends)
-            && !$property->isStatic() && [] === $property->hooks;
+        // PHP-Parser knows a final property and a hook from 5.2 only:
+        // before, the node has neither the method nor the list.
+        $proves = ($property->isPrivate() ? $final || 0 !== ($property->flags & self::FINAL) : $property->isProtected() && $final && !$extends)
+            && !$property->isStatic() && !isset($property->hooks[0]);
 
         foreach ($property->props as $item) {
             $this->values->declareProperty($key, $item->name->toString(), $proves && null !== $item->default ? $this->expression($item->default) : null);

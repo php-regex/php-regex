@@ -36,8 +36,8 @@ use PhpParser\Node\Expr\UnaryPlus;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
-use PhpParser\Node\Scalar\Float_;
-use PhpParser\Node\Scalar\Int_;
+use PhpParser\Node\Scalar\DNumber;
+use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
@@ -680,7 +680,7 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
             $key = $key->expr;
         }
 
-        if ($key instanceof Int_ || $key instanceof Float_) {
+        if ($key instanceof LNumber || $key instanceof DNumber) {
             return false;
         }
 
