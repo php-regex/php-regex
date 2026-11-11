@@ -373,7 +373,7 @@ Every count is present on every run, `0` when there is none.
 | `lint_errors` | int | Lint rules of error severity that fired, counted among `errors` |
 | `parser_fallbacks` | int | Files the PHP parser could not read, read with the tokenizer instead; their patterns are linted, and the count is no error (`--verbose` names each file) |
 | `not_analyzed` | int | Patterns past one of the library's own limits, counted among `warnings`: no verdict on them, and the exit code stays what the warnings leave |
-| `arguments_constant` | int | Pattern arguments read as one pattern |
+| `arguments_constant` | int | Pattern arguments read as one pattern. An empty literal, `preg_match('', $s)`, is counted here: the file writes it whole, and it is no pattern, so no rule runs on it |
 | `arguments_finite_set` | int | Pattern arguments read as several patterns, each of them linted: the arms of a ternary or a `match`, the values the target of a `foreach` takes, the values of a constant of the platform |
 | `arguments_quoted_shell` | int | Pattern arguments not verified, built around a `preg_quote()` text: the `around preg_quote()` figure of the console |
 | `arguments_raw_shell` | int | Pattern arguments not verified, built around another part known at run time only: the `around a dynamic part` figure of the console |
