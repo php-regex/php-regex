@@ -39,11 +39,11 @@ final class PlatformConstantPlaceTest extends TestCase
     {
         $code = <<<'PHP_WRAP'
             <?php
-        
+
             function run(string $first, string $second): array
             {
                 $eol = PHP_EOL;
-        
+
                 return [preg_split($eol, $first), preg_split($eol, $second)];
             }
             PHP_WRAP;

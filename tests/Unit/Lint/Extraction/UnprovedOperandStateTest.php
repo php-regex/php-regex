@@ -165,19 +165,19 @@ final class UnprovedOperandStateTest extends TestCase
     {
         $code = <<<'PHP_WRAP'
             <?php
-        
+
             final class Matcher
             {
                 private const OPENING = \PHP_INT_SIZE === 8 ? '/^a' : '/^b';
                 private const CLOSING = \PHP_OS_FAMILY === 'Windows' ? 'c$/' : 'd$/';
-        
+
                 public function run(string $s, bool $flag): int
                 {
                     $re = self::OPENING . self::CLOSING;
                     if ($flag) {
                         $re = '/written/';
                     }
-        
+
                     return preg_match($re, $s);
                 }
             }
