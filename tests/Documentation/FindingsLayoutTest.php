@@ -459,18 +459,18 @@ final class FindingsLayoutTest extends TestCase
         $this->assertLessThan(strpos($open, 'loadIndex()'), strpos($open, "var wanted = window.location.hash.replace(/^#/, '');"), 'The finding the link names is read before anything can rewrite the address.');
         $this->assertStringContainsString('if (pageTouched) {', $open, 'What the visitor typed while the findings loaded is never overwritten.');
         $this->assertStringContainsString("window.history.replaceState(null, '', '/');", self::between($open, 'if (pageTouched) {', "\n        }\n"), 'A visitor who acted first is in the sandbox: the address is the home\'s, where a pattern may be written.');
-        foreach (['function activateItem(item) {', "el.findingsDoor.addEventListener('click', function () {"] as $gesture) {
+        foreach (['function activateItem(item) {'] as $gesture) {
             $this->assertStringContainsString('pageTouched = true;', self::between($script, $gesture, "\n    });\n"), $gesture.': a gesture made while the findings load wins over the page\'s own finding.');
         }
+        // Opening the projects door is looking, not claiming: a hand that
+        // opens it while a repository's page loads keeps the finding the
+        // link asked for.
+        $this->assertStringNotContainsString("el.findingsDoor.addEventListener('click'", $script, 'No listener on the door says a gesture.');
         // The gesture is the hand that opens the door, not the door opening:
         // a page that opens it itself must not cancel its own finding,
         // and neither does a hand that closes it again.
         $toggle = self::between($script, "el.findingsBrowse.addEventListener('toggle', function () {", "\n  });\n");
         $this->assertStringNotContainsString('pageTouched', $toggle, 'A door a page opened is not a gesture.');
-        $door = self::between($script, "el.findingsDoor.addEventListener('click', function () {", "\n  });\n");
-        $guard = strpos($door, 'if (!el.findingsBrowse.open)');
-        $this->assertNotFalse($guard, 'The gesture is guarded by the opening, said before it is ordered.');
-        $this->assertLessThan(strpos($door, 'pageTouched = true;'), $guard, 'Only the opening is a gesture: closing a door a page opened cancels no finding.');
         $this->assertStringContainsString("findingsDoor: root.querySelector('.pg-findings-browse > summary')", $script);
         $this->assertStringContainsString("' is not in the latest run; '", $open, 'A link to a finding gone says so.');
         $this->assertSame(1, preg_match("/if \\(pageRepo && readHash\\(\\)\\) \\{\\s*window\\.location\\.replace\\('\\/' \\+ window\\.location\\.hash\\);/", $script), 'A findings page reached with a pattern hash sends it home.');

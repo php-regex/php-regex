@@ -5108,19 +5108,11 @@
     dragSplitter(handle);
   }
 
-  // The projects door: the hand that opens it is a gesture — whatever the
-  // visitor was doing wins over a finding a page was about to open — but
-  // a door a page opened itself is not one, and its first opening fetches
-  // the corpus. A finding's link may leave the door closed, and a row in a
-  // closed door has nowhere to scroll to: opening it brings the shown row
-  // in.
-  el.findingsDoor.addEventListener('click', function () {
-    // Only the opening is the gesture: a repository's page arrives with
-    // its door open, and the hand that closes it again cancels nothing.
-    if (!el.findingsBrowse.open) {
-      pageTouched = true;
-    }
-  });
+  // The projects door opens to look, never to claim: no hand on it says
+  // a gesture, so a repository's page keeps the finding its link asked
+  // for even when the door opens while it loads. Its first opening
+  // fetches the corpus, and a row in a closed door has nowhere to scroll
+  // to: opening it brings the shown row in.
   el.findingsBrowse.addEventListener('toggle', function () {
     if (!el.findingsBrowse.open) {
       return;
