@@ -5386,7 +5386,7 @@ body.search-open {
    hand down. */
 .pg-quickbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: .4rem .6rem;
   padding: 0 1rem .9rem;
@@ -7153,6 +7153,7 @@ body.search-open {
 .pg-findings-browse {
   display: flex;
   flex: none;
+  position: relative;
 }
 .pg-findings-browse > summary {
   display: inline-flex;
@@ -7196,20 +7197,46 @@ body.search-open {
   font-size: .72rem;
   color: var(--ink-soft);
 }
-/* Open, the door is a block: the panel stands under its summary
-   whatever the browser wraps a disclosure's content in. */
-.pg-findings-browse[open] {
-  display: block;
-  flex-basis: 100%;
-}
+/* The panel is a popover anchored to its trigger: it opens under the
+   chip, aligned to its end, floating on the page's own shadow — the
+   panes it serves never move. A caret points at the trigger, the
+   dialogs' own language. */
 .pg-findings-body {
+  position: absolute;
+  top: calc(100% + .55rem);
+  right: 0;
+  z-index: 3;
   display: grid;
   gap: .45rem;
-  min-width: 0;
-  padding: .6rem .75rem .7rem;
+  width: min(46rem, calc(100vw - 2.5rem));
+  padding: .65rem .8rem .75rem;
   background: var(--panel);
   border: 1px solid var(--line-soft);
-  border-radius: var(--radius-s);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-2);
+}
+.pg-findings-body::before {
+  content: '';
+  position: absolute;
+  top: -0.3rem;
+  right: 1.15rem;
+  width: .6rem;
+  height: .6rem;
+  background: var(--panel);
+  border-top: 1px solid var(--line-soft);
+  border-left: 1px solid var(--line-soft);
+  transform: rotate(45deg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pg-findings-browse[open] .pg-findings-body {
+    animation: pg-panel-rise .13s ease-out;
+  }
+}
+@keyframes pg-panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(.3rem);
+  }
 }
 .pg-findings-filter {
   box-sizing: border-box;

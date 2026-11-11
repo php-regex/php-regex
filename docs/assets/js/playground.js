@@ -4745,7 +4745,6 @@
     // The finding the link names, read before anything can rewrite the
     // address; and a gesture made while the data travels wins over it.
     var wanted = window.location.hash.replace(/^#/, '');
-    el.findingsBrowse.open = true;
     setStatus('Loading the findings of ' + name + '…', 'busy');
     loadIndex().then(function () {
       var repo = repoNamed(name);
@@ -5130,6 +5129,21 @@
     var shown = el.findingsTree.querySelector('[aria-selected="true"]');
     if (shown) {
       revealRow(shown);
+    }
+  });
+  // A click outside the panel closes it, as a popover's does: the tool
+  // beneath is a click away, never a scroll.
+  document.addEventListener('click', function (event) {
+    if (el.findingsBrowse.open && !el.findingsBrowse.contains(event.target)) {
+      el.findingsBrowse.open = false;
+    }
+  });
+  // An Escape closes it too, and carries the hand back to the trigger
+  // that opened it.
+  el.findingsBrowse.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && el.findingsBrowse.open) {
+      el.findingsBrowse.open = false;
+      el.findingsDoor.focus();
     }
   });
 

@@ -46,8 +46,9 @@
   projects — what the linter reports on the corpus of open-source
   projects (written daily by bin/findings-report under /assets/findings/,
   fetched when the door opens): a filter and a tree, owner, repository,
-  finding, in a panel that takes a row of its own once opened. A
-  repository's page arrives with the door already open, scoped to it.
+  finding, in a panel that overlays the tool from the trigger's own
+  place — the panes never move. A repository's page names its project in
+  the door's count; an Escape or a click outside closes the panel.
   Opening a finding is a run gesture: the engine answers it. In a finding
   the text field gives its place to a card that cannot be typed into:
   the code at the clone's commit, the literal in the field's token
@@ -89,7 +90,7 @@
       <li><button type="button" class="pg-example" data-regex="/^(a+)+$/" data-subject="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab" title="/^(a+)+$/"><span class="pg-example-name">catastrophic backtracking</span><span class="pg-example-pattern">/^(a+)+$/</span></button></li>
       <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega" title="/\p{Lu}\p{Ll}+/u"><span class="pg-example-name">Unicode properties</span><span class="pg-example-pattern">/\p{Lu}\p{Ll}+/u</span></button></li>
     </ul>
-    <details class="pg-findings-browse"{% if include.findings_repo %} open{% endif %}>
+    <details class="pg-findings-browse">
       <summary>Projects <span class="pg-findings-count"></span></summary>
       <div class="pg-findings-body">
         <input type="search" class="pg-findings-filter" placeholder="owner, repo or rule" aria-label="Filter by owner, repository or rule" spellcheck="false" autocapitalize="off" autocomplete="off">
