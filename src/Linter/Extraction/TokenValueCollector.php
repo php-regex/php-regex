@@ -513,9 +513,26 @@ final class TokenValueCollector
             return ValueExpr::unknown();
         }
 
+        // PHP 8 refuses a ternary written after the ":" of another
+        // without parentheses, and PHP 7 reads the two from the left:
+        // only "A ?: B ?: C" means the same both ways.
+        $short = null === $this->next($question + 1, $colon);
+        for ($i = $colon + 1; $i <= $last; $i++) {
+            $token = $this->tokens[$i];
+            $id = \is_array($token) ? $token[0] : $token;
+            if (PhpTokens::opensNesting($token)) {
+                $i = $this->closers[$i] ?? $last;
+            } elseif (\T_FN === $id || isset(self::TAKES_THE_REST[$id])) {
+                // What follows is the operand of that token.
+                break;
+            } elseif ('?' === $token && (!$short || ':' !== $this->tokens[$this->next($i + 1) ?? $i])) {
+                return ValueExpr::unknown();
+            }
+        }
+
         $offset = $this->offsets[$first];
         $otherwise = $this->expression($colon + 1, $last + 1, $context);
-        if (null === $this->next($question + 1, $colon)) {
+        if ($short) {
             return ValueExpr::fallback($this->expression($first, $question, $context), $otherwise, false, $offset, $this->lineAt($offset));
         }
 

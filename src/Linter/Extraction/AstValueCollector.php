@@ -407,6 +407,17 @@ final class AstValueCollector extends NodeVisitorAbstract
                 return ValueExpr::unknown();
             }
 
+            // PHP 8 refuses a ternary written after another without
+            // parentheses, and PHP 7 reads the two from the left: only
+            // "A ?: B ?: C" means the same both ways. A condition in
+            // parentheses starts after the ternary it belongs to.
+            if ($expr instanceof Ternary && $expr->cond instanceof Ternary
+                && $expr->cond->getStartFilePos() === $expr->getStartFilePos()
+                && (null !== $expr->if || null !== $expr->cond->if)
+            ) {
+                return ValueExpr::unknown();
+            }
+
             $this->alternatives++;
 
             try {

@@ -951,7 +951,10 @@ Each of the four literals is linted, where it is written:
   not prove (a parameter, a call, a `throw`), leaves the whole argument
   unread: none of its arms is linted. They are read one inside another 32
   levels deep, `A ?? B ?? C` being `A ?? (B ?? C)`; an arm written deeper
-  is not read.
+  is not read. A ternary written after another without parentheses
+  (`$a ? '/x/' : $b ? '/y/' : '/z/'`) is not read either: PHP 8 refuses
+  it and PHP 7 reads the two from the left. `A ?: B ?: C`, which means
+  the same both ways, is read.
 - **An array of patterns held in a local variable** feeds `preg_replace()`,
   `preg_replace_callback()` and `preg_filter()` its values, as a constant
   array does. `preg_replace_callback_array()` reads its keys from a
