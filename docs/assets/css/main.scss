@@ -7153,8 +7153,6 @@ body.search-open {
 .pg-findings-browse {
   display: flex;
   flex: none;
-  flex-wrap: wrap;
-  align-items: center;
 }
 .pg-findings-browse > summary {
   display: inline-flex;
@@ -7198,11 +7196,13 @@ body.search-open {
   font-size: .72rem;
   color: var(--ink-soft);
 }
+/* Open, the door is a block: the panel stands under its summary
+   whatever the browser wraps a disclosure's content in. */
 .pg-findings-browse[open] {
+  display: block;
   flex-basis: 100%;
 }
 .pg-findings-body {
-  flex: 1 1 100%;
   display: grid;
   gap: .45rem;
   min-width: 0;

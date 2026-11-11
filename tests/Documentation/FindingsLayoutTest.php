@@ -55,6 +55,7 @@ final class FindingsLayoutTest extends TestCase
         // holds, and opens on the row of its own the panel is.
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/ul'.self::has('pg-examples').'[@aria-label="Quick patterns"]'));
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary[contains(., "Projects")]/*'.self::has('pg-findings-count')), 'The door says how many projects it holds.');
+        $this->assertSame('', trim($xpath->evaluate('string('.self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary/*'.self::has('pg-findings-count').')')), 'The count waits empty for the corpus: the door never reads half a sentence.');
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/div'.self::has('pg-findings-body')), 'The panel is a body of its own, inside the door.');
 
         // A repository's page arrives with the door already open: the link
@@ -230,6 +231,8 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringContainsString("content: '›'", $door[1]);
         $this->assertSame(1, preg_match('/\.pg-findings-browse\[open\] > summary::after \{([^}]*)\}/', $stylesheet, $opened), 'And it pivots when the door stands open.');
         $this->assertStringContainsString('rotate(90deg)', $opened[1]);
+        $this->assertSame(1, preg_match('/\.pg-findings-browse\[open\] \{([^}]*)\}/', $stylesheet, $block), 'Open, the door is a block.');
+        $this->assertStringContainsString('display: block;', $block[1], 'The panel stands under its summary whatever wraps the content.');
 
         $this->assertStringNotContainsString('is-listing-hidden', $stylesheet, 'The fold is gone with the column it folded.');
         $this->assertStringNotContainsString('pg-listing-rail', $stylesheet, 'The rail of owners is gone with it.');
@@ -267,6 +270,9 @@ final class FindingsLayoutTest extends TestCase
         $clamp = self::between($script, 'function clampPaneWidths() {', "\n  }\n");
         $this->assertStringContainsString('Math.min(Math.max(', $clamp, 'A pane never drags past its floor or its ceiling.');
         $this->assertStringContainsString('dblclick', $script, 'A double click gives the default width back.');
+        foreach (['pointercancel', 'lostpointercapture'] as $end) {
+            $this->assertStringContainsString("'".$end."'", $drag, 'A drag the platform cancels ends like one the hand ended: '.$end.'.');
+        }
         $this->assertStringContainsString('ArrowRight', $script, 'The keys walk a separator as the pointer drags it.');
         $this->assertStringContainsString('applyPaneWidths()', $script, 'A stored width comes back on the next visit.');
     }
@@ -412,9 +418,14 @@ final class FindingsLayoutTest extends TestCase
         $this->assertLessThan(strpos($open, 'loadIndex()'), strpos($open, "var wanted = window.location.hash.replace(/^#/, '');"), 'The finding the link names is read before anything can rewrite the address.');
         $this->assertStringContainsString('if (pageTouched) {', $open, 'What the visitor typed while the findings loaded is never overwritten.');
         $this->assertStringContainsString("window.history.replaceState(null, '', '/');", self::between($open, 'if (pageTouched) {', "\n        }\n"), 'A visitor who acted first is in the sandbox: the address is the home\'s, where a pattern may be written.');
-        foreach (['function activateItem(item) {', "el.findingsBrowse.addEventListener('toggle', function () {"] as $gesture) {
+        foreach (['function activateItem(item) {', "el.findingsDoor.addEventListener('click', function () {"] as $gesture) {
             $this->assertStringContainsString('pageTouched = true;', self::between($script, $gesture, "\n    });\n"), $gesture.': a gesture made while the findings load wins over the page\'s own finding.');
         }
+        // The gesture is the hand that opens the door, not the door opening:
+        // a page that opens it itself must not cancel its own finding.
+        $toggle = self::between($script, "el.findingsBrowse.addEventListener('toggle', function () {", "\n  });\n");
+        $this->assertStringNotContainsString('pageTouched', $toggle, 'A door a page opened is not a gesture.');
+        $this->assertStringContainsString("findingsDoor: root.querySelector('.pg-findings-browse > summary')", $script);
         $this->assertStringContainsString("' is not in the latest run; '", $open, 'A link to a finding gone says so.');
         $this->assertSame(1, preg_match("/if \\(pageRepo && readHash\\(\\)\\) \\{\\s*window\\.location\\.replace\\('\\/' \\+ window\\.location\\.hash\\);/", $script), 'A findings page reached with a pattern hash sends it home.');
         $this->assertSame(1, preg_match("/function findingUrl\\(repo, finding\\) \\{\\s*return window\\.location\\.origin \\+ '\\/findings\\/' \\+ repo\\.repo \\+ '\\/#' \\+ finding\\.id;/", $script), 'A finding shares as its repository\'s page and its id.');

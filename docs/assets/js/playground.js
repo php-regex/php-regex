@@ -111,6 +111,7 @@
     },
     examplesList: root.querySelector('.pg-examples'),
     findingsBrowse: root.querySelector('.pg-findings-browse'),
+    findingsDoor: root.querySelector('.pg-findings-browse > summary'),
     findingsCount: root.querySelector('.pg-findings-count'),
     findingsFilter: root.querySelector('.pg-findings-filter'),
     body: root.querySelector('.pg-body'),
@@ -5040,15 +5041,21 @@
         paneWidth = start + (moveEvent.clientX - down.clientX);
         applyPaneWidths();
       };
+      // A drag the platform takes away — a scroll claims the pointer, the
+      // capture is lost — ends like one the hand ended.
       var up = function () {
         handle.removeEventListener('pointermove', move);
         handle.removeEventListener('pointerup', up);
+        handle.removeEventListener('pointercancel', up);
+        handle.removeEventListener('lostpointercapture', up);
         clampPaneWidths();
         applyPaneWidths();
         storePaneWidth();
       };
       handle.addEventListener('pointermove', move);
       handle.addEventListener('pointerup', up);
+      handle.addEventListener('pointercancel', up);
+      handle.addEventListener('lostpointercapture', up);
     });
     handle.addEventListener('keydown', function (event) {
       if (event.key === 'ArrowLeft') {
@@ -5102,13 +5109,16 @@
     dragSplitter(handle);
   }
 
-  // The projects door: opening it is a gesture — whatever the visitor was
-  // doing wins over a finding a page was about to open — and its first
-  // opening fetches the corpus. A finding's link may leave the door
-  // closed, and a row in a closed door has nowhere to scroll to: opening
-  // it brings the shown row in.
-  el.findingsBrowse.addEventListener('toggle', function () {
+  // The projects door: the hand that opens it is a gesture — whatever the
+  // visitor was doing wins over a finding a page was about to open — but
+  // a door a page opened itself is not one, and its first opening fetches
+  // the corpus. A finding's link may leave the door closed, and a row in a
+  // closed door has nowhere to scroll to: opening it brings the shown row
+  // in.
+  el.findingsDoor.addEventListener('click', function () {
     pageTouched = true;
+  });
+  el.findingsBrowse.addEventListener('toggle', function () {
     if (!el.findingsBrowse.open) {
       return;
     }
