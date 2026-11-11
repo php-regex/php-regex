@@ -4746,9 +4746,28 @@ body.search-open {
 .pg-patternbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
+  align-items: center;
   gap: .5rem .8rem;
-  padding: .35rem 1rem .95rem;
+  padding: .45rem 1rem .95rem;
+}
+/* The count reads inside the field's right corner, under a veil that
+   fades the field's own text past it — an editor's corner fact, said
+   and never clicked. */
+.pg-editor-pattern .pg-field-count {
+  position: absolute;
+  top: 50%;
+  right: .68rem;
+  z-index: 1;
+  padding-left: 1.6rem;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  pointer-events: none;
+  background: linear-gradient(to left, var(--paper) 38%, transparent);
+  border-radius: var(--radius-s);
 }
 .pg-controls {
   display: inline-flex;
@@ -5385,8 +5404,9 @@ body.search-open {
    scrolls under its fades, ten chips wrapped would push the panes a
    hand down. */
 .pg-quickbar {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: .4rem .6rem;
   padding: 0 1rem .9rem;
@@ -5888,6 +5908,9 @@ body.search-open {
    the side-by-side layout the row keeps its two cells, the field taking
    what the controls leave. */
 @media (max-width: 639px) {
+  .pg-quick-label {
+    display: none;
+  }
   .pg-body {
     padding: .85rem .8rem .9rem;
   }
@@ -7191,25 +7214,56 @@ body.search-open {
   outline: 2px solid var(--amber);
   outline-offset: 1px;
 }
+/* A long repository name is cut, never the row it sits in. */
 .pg-findings-count {
+  max-width: 32vw;
+  overflow: hidden;
   font-family: var(--font-mono);
   font-size: .72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--ink-soft);
 }
-/* Open, the door is a block: the panel stands under its summary
-   whatever the browser wraps a disclosure's content in. */
-.pg-findings-browse[open] {
-  display: block;
-  flex-basis: 100%;
-}
+/* The panel is a popover anchored to its trigger: it opens under the
+   chip, aligned to its end, floating on the page's own shadow — the
+   panes it serves never move. A caret points at the trigger, the
+   dialogs' own language. */
 .pg-findings-body {
+  position: absolute;
+  top: calc(100% + .55rem);
+  right: 0;
+  z-index: 3;
   display: grid;
   gap: .45rem;
-  min-width: 0;
-  padding: .6rem .75rem .7rem;
+  width: min(46rem, calc(100vw - 2.5rem));
+  padding: .65rem .8rem .75rem;
   background: var(--panel);
   border: 1px solid var(--line-soft);
-  border-radius: var(--radius-s);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-2);
+}
+.pg-findings-body::before {
+  content: '';
+  position: absolute;
+  top: -0.3rem;
+  right: 1.15rem;
+  width: .6rem;
+  height: .6rem;
+  background: var(--panel);
+  border-top: 1px solid var(--line-soft);
+  border-left: 1px solid var(--line-soft);
+  transform: rotate(45deg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pg-findings-browse[open] .pg-findings-body {
+    animation: pg-panel-rise .13s ease-out;
+  }
+}
+@keyframes pg-panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(.3rem);
+  }
 }
 .pg-findings-filter {
   box-sizing: border-box;

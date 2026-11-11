@@ -58,11 +58,51 @@ final class FindingsLayoutTest extends TestCase
         $count = $xpath->evaluate('string('.self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary/*'.self::has('pg-findings-count').')');
         $this->assertIsString($count);
         $this->assertSame('', trim($count), 'The count waits empty for the corpus: the door never reads half a sentence.');
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-findings-count \{([^}]*)\}/m', $stylesheet, $chip), 'The count\'s own rule exists.');
+        $this->assertStringContainsString('text-overflow: ellipsis;', $chip[1], 'A long repository name is cut, never the row it sits in.');
+        $this->assertStringContainsString('max-width:', $chip[1]);
+        $this->assertSame(1, preg_match('/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-quick-label \{([^}]*)\}/', $stylesheet, $gone), 'A phone drops the row\'s label.');
+        $this->assertStringContainsString('display: none;', $gone[1], 'The patterns and the door speak for themselves where the width is short.');
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/div'.self::has('pg-findings-body')), 'The panel is a body of its own, inside the door.');
 
-        // A repository's page arrives with the door already open: the link
-        // was the gesture.
-        $this->assertStringContainsString('{% if include.findings_repo %} open{% endif %}', self::source(self::INCLUDE));
+        // A repository's page names its project in the door's count: the
+        // link was the gesture, and the door stays shut until a hand opens
+        // it — the panel overlays, it never displaces the tool.
+        $this->assertStringNotContainsString('findings_repo %} open', self::source(self::INCLUDE), 'No page arrives with the panel over its content.');
+    }
+
+    /**
+     * The panel overlays the tool, it never displaces it: navigation
+     * recovers, content stays. A popover anchored to its trigger — under
+     * it, aligned to its end, floating on the page's own shadow — closed
+     * by an Escape or a click outside as a popover is, the hand carried
+     * back to the trigger that opened it.
+     */
+    #[Test]
+    public function test_the_projects_panel_overlays_the_tool_it_never_displaces(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-findings-body \{([^}]*)\}/m', $stylesheet, $panel), 'The panel\'s own rule exists.');
+        foreach ([
+            'position: absolute;' => 'A popover, not a row: the panes below never move.',
+            'box-shadow: var(--shadow-2);' => 'It floats one step above the page, as the dialogs do.',
+            'z-index:' => 'Above the panes it serves.',
+        ] as $line => $why) {
+            $this->assertStringContainsString($line, $panel[1], $why);
+        }
+        $this->assertSame(1, preg_match('/^\.pg-quickbar \{([^}]*)\}/m', $stylesheet, $row), 'The quick row anchors the panel.');
+        $this->assertStringContainsString('position: relative;', $row[1], 'The panel hangs from the row itself — never past the box that clips the tool, whatever the row\'s padding.');
+        $this->assertStringNotContainsString('flex-basis: 100%', $stylesheet, 'Nothing wraps the row away: the trigger stays where it stood.');
+
+        $script = self::source(self::SCRIPT);
+        $outside = self::between($script, '// A click outside the panel closes it', "\n  });\n");
+        $this->assertStringContainsString("document.addEventListener('click'", $outside, 'A click outside closes the popover.');
+        $this->assertStringContainsString('el.findingsBrowse.open = false;', $outside);
+        $escape = self::between($script, "document.addEventListener('keydown', function (event) {", "\n  });\n");
+        $this->assertStringContainsString("event.key === 'Escape'", $escape, 'An Escape closes it.');
+        $this->assertStringContainsString('el.findingsDoor.focus();', $escape, 'And carries the hand back to the trigger.');
+        $this->assertStringNotContainsString('el.findingsBrowse.open = true;', $script, 'No code opens the panel unasked: a repository\'s page names its project in the count instead.');
     }
 
     #[Test]
@@ -233,8 +273,7 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringContainsString("content: '›'", $door[1]);
         $this->assertSame(1, preg_match('/\.pg-findings-browse\[open\] > summary::after \{([^}]*)\}/', $stylesheet, $opened), 'And it pivots when the door stands open.');
         $this->assertStringContainsString('rotate(90deg)', $opened[1]);
-        $this->assertSame(1, preg_match('/\.pg-findings-browse\[open\] \{([^}]*)\}/', $stylesheet, $block), 'Open, the door is a block.');
-        $this->assertStringContainsString('display: block;', $block[1], 'The panel stands under its summary whatever wraps the content.');
+        $this->assertStringNotContainsString('.pg-findings-browse[open] {', $stylesheet, 'Open or closed, the door is one chip in one place: no rule moves its box; the panel is the thing that appears.');
 
         $this->assertStringNotContainsString('is-listing-hidden', $stylesheet, 'The fold is gone with the column it folded.');
         $this->assertStringNotContainsString('pg-listing-rail', $stylesheet, 'The rail of owners is gone with it.');
@@ -420,18 +459,18 @@ final class FindingsLayoutTest extends TestCase
         $this->assertLessThan(strpos($open, 'loadIndex()'), strpos($open, "var wanted = window.location.hash.replace(/^#/, '');"), 'The finding the link names is read before anything can rewrite the address.');
         $this->assertStringContainsString('if (pageTouched) {', $open, 'What the visitor typed while the findings loaded is never overwritten.');
         $this->assertStringContainsString("window.history.replaceState(null, '', '/');", self::between($open, 'if (pageTouched) {', "\n        }\n"), 'A visitor who acted first is in the sandbox: the address is the home\'s, where a pattern may be written.');
-        foreach (['function activateItem(item) {', "el.findingsDoor.addEventListener('click', function () {"] as $gesture) {
+        foreach (['function activateItem(item) {'] as $gesture) {
             $this->assertStringContainsString('pageTouched = true;', self::between($script, $gesture, "\n    });\n"), $gesture.': a gesture made while the findings load wins over the page\'s own finding.');
         }
+        // Opening the projects door is looking, not claiming: a hand that
+        // opens it while a repository's page loads keeps the finding the
+        // link asked for.
+        $this->assertStringNotContainsString("el.findingsDoor.addEventListener('click'", $script, 'No listener on the door says a gesture.');
         // The gesture is the hand that opens the door, not the door opening:
         // a page that opens it itself must not cancel its own finding,
         // and neither does a hand that closes it again.
         $toggle = self::between($script, "el.findingsBrowse.addEventListener('toggle', function () {", "\n  });\n");
         $this->assertStringNotContainsString('pageTouched', $toggle, 'A door a page opened is not a gesture.');
-        $door = self::between($script, "el.findingsDoor.addEventListener('click', function () {", "\n  });\n");
-        $guard = strpos($door, 'if (!el.findingsBrowse.open)');
-        $this->assertNotFalse($guard, 'The gesture is guarded by the opening, said before it is ordered.');
-        $this->assertLessThan(strpos($door, 'pageTouched = true;'), $guard, 'Only the opening is a gesture: closing a door a page opened cancels no finding.');
         $this->assertStringContainsString("findingsDoor: root.querySelector('.pg-findings-browse > summary')", $script);
         $this->assertStringContainsString("' is not in the latest run; '", $open, 'A link to a finding gone says so.');
         $this->assertSame(1, preg_match("/if \\(pageRepo && readHash\\(\\)\\) \\{\\s*window\\.location\\.replace\\('\\/' \\+ window\\.location\\.hash\\);/", $script), 'A findings page reached with a pattern hash sends it home.');
