@@ -109,16 +109,11 @@
       diagnostics: root.querySelector('#pg-tab-diagnostics .pg-tab-badge'),
       redos: root.querySelector('#pg-tab-redos .pg-tab-badge'),
     },
-    sources: root.querySelectorAll('.pg-source-option'),
     examplesList: root.querySelector('.pg-examples'),
-    exampleItems: root.querySelectorAll('.pg-examples > li:not(:first-child):not(.pg-findings-panel)'),
-    findingsPanel: root.querySelector('.pg-findings-panel'),
     findingsBrowse: root.querySelector('.pg-findings-browse'),
+    findingsDoor: root.querySelector('.pg-findings-browse > summary'),
     findingsCount: root.querySelector('.pg-findings-count'),
     findingsFilter: root.querySelector('.pg-findings-filter'),
-    listingTab: root.querySelector('.pg-listing-tab'),
-    listingRail: root.querySelector('.pg-listing-rail'),
-    listingRailOpen: root.querySelector('.pg-listing-rail-open'),
     body: root.querySelector('.pg-body'),
     findingsTree: root.querySelector('.pg-findings-tree'),
     findingsEmpty: root.querySelector('.pg-findings-empty'),
@@ -336,7 +331,7 @@
     // The text field keeps the height the stylesheet gives it on a wide
     // screen — as tall as the answers beside it — and scrolls inside for
     // a longer text; the mirror follows by its own insets.
-    var filled = area === el.subject && window.matchMedia('(min-width: 1280px)').matches;
+    var filled = area === el.subject && window.matchMedia('(min-width: 1024px)').matches;
     if (filled) {
       area.style.height = '';
     } else {
@@ -4371,7 +4366,6 @@
           el.findingsFilter.hidden = true;
         }
         buildTree();
-        buildRail();
         return index;
       });
       findingsLoading.catch(function () {
@@ -4751,7 +4745,7 @@
     // The finding the link names, read before anything can rewrite the
     // address; and a gesture made while the data travels wins over it.
     var wanted = window.location.hash.replace(/^#/, '');
-    setSource('findings', false);
+    el.findingsBrowse.open = true;
     setStatus('Loading the findings of ' + name + '…', 'busy');
     loadIndex().then(function () {
       var repo = repoNamed(name);
@@ -4956,285 +4950,198 @@
     window.clearTimeout(filterTimer);
     filterTimer = window.setTimeout(filterTree, 120);
   });
-  // The list column folds on its window's edge: reading a finding wants
-  // the card and the tools wide, browsing wants the list back — the tab
-  // says which side of that the visitor is on.
-  if (el.listingTab) {
-    el.listingTab.addEventListener('click', function () {
-      var hidden = root.classList.toggle('is-listing-hidden');
-      el.listingTab.setAttribute('aria-expanded', hidden ? 'false' : 'true');
-      el.listingTab.title = hidden ? 'Unfold the list column' : 'Fold the list column';
-      // The rail and its unfold control are in the page from the first
-      // paint, so a fold made before the index loads can be undone.
-      el.listingRail.hidden = !hidden;
-      applyColumnWidths();
-      // The control under the hand disappears with the fold: the focus
-      // moves to the one that undoes it. An avatar that unfolds the list
-      // then hands the focus on to the project it named.
-      var focused = document.activeElement;
-      if (focused === el.listingTab || el.listingRail.contains(focused)) {
-        (hidden ? el.listingRailOpen : el.listingTab).focus();
-      }
-    });
-    // The rail carries the unfold control of its own, at its head: the tab
-    // gives its edge to the avatars when the column folds.
-    el.listingRailOpen.addEventListener('click', function () {
-      el.listingTab.click();
-    });
-  }
+  // --- the pane separator --------------------------------------------------
 
-  // Folded, the list leaves its avatars behind: a rail of owners on the
-  // window's edge, each picturing its project, each unfolding the column
-  // onto that project — the ecosystem stays in reach while the finding
-  // reads wide. The rail pictures the owners the tree shows: on a
-  // repository's page, that project alone.
-  function buildRail() {
-    Array.prototype.forEach.call(el.listingRail.querySelectorAll('.pg-listing-rail-avatar'), function (avatar) {
-      avatar.remove();
-    });
-    Array.prototype.forEach.call(el.findingsTree.querySelectorAll('[data-owner]'), function (ownerItem) {
-      var login = ownerItem.getAttribute('data-owner');
-      var owner = findingsIndex.owners[login];
-      var avatar = document.createElement('button');
-      avatar.type = 'button';
-      avatar.className = 'pg-listing-rail-avatar';
-      avatar.setAttribute('aria-label', login);
-      var image = document.createElement('img');
-      image.src = owner.avatar;
-      image.alt = '';
-      image.width = 20;
-      image.height = 20;
-      image.loading = 'lazy';
-      avatar.appendChild(image);
-      avatar.title = login;
-      avatar.addEventListener('click', function () { openOwnerFromRail(login); });
-      el.listingRail.appendChild(avatar);
-    });
-  }
-
-  function openOwnerFromRail(login) {
-    if (root.classList.contains('is-listing-hidden') && el.listingTab) {
-      el.listingTab.click();
-    }
-    setSource('findings', false);
-    return loadIndex().then(function () {
-      var item = el.findingsTree.querySelector('[data-owner="' + login.replace(/"/g, '') + '"]');
-      if (!item) {
-        return;
-      }
-      // The avatar named a project: a filter that hides it gives way.
-      if (item.hidden && el.findingsFilter.value) {
-        el.findingsFilter.value = '';
-        filterTree();
-      }
-      openGroup(item);
-      focusItem(item);
-    });
-  }
-
-  // --- the column separators ---------------------------------------------
-
-  // The columns answer the hand: a separator on each boundary, dragged by
-  // the pointer, walked by the arrow keys, doubled back to its default by
-  // a double click, the chosen widths persisting between visits. The last
-  // column gives what is left; nothing ever disappears below its floor.
-  var COLUMNS_STORAGE_KEY = 'playground-columns';
-  var SPLIT_MIN = 144;      // a column nobody can read
+  // The two panes answer the hand: one separator on their boundary,
+  // dragged by the pointer, walked by the arrow keys, doubled back to
+  // its default by a double click, the chosen width persisting between
+  // visits. The answers pane gives what is left; nothing ever disappears
+  // below its floor.
+  var SPLIT_STORAGE_KEY = 'playground-split';
+  var SPLIT_MIN = 144;      // a pane nobody can read
   var SPLIT_LAST_MIN = 320; // the answers never disappear
   var SPLIT_STEP = 16;      // one key press, one notch
-  var columnWidths = null;  // { list, fields } in px, null = the stylesheet's word
-  var columnsMedia = window.matchMedia ? window.matchMedia('(min-width: 1280px)') : null;
+  var paneWidth = null;     // the text pane's width in px, null = the stylesheet's word
+  var panesMedia = window.matchMedia ? window.matchMedia('(min-width: 1024px)') : null;
 
-  // The columns share the body's content box: its padding (wider when
-  // the rail takes the edge) and its gaps are not column.
-  function columnBounds() {
+  // The panes share the body's content box: its padding and its one gap
+  // are not pane.
+  function paneBounds() {
     var style = getComputedStyle(el.body);
-    var folded = root.classList.contains('is-listing-hidden');
     var gap = parseFloat(style.columnGap) || 0;
     var total = el.body.clientWidth
       - (parseFloat(style.paddingLeft) || 0)
       - (parseFloat(style.paddingRight) || 0)
-      - gap * (folded ? 1 : 2);
-    return { total: total, listMax: Math.max(SPLIT_MIN, total - SPLIT_LAST_MIN - SPLIT_MIN), fieldsMax: Math.max(SPLIT_MIN, total - SPLIT_LAST_MIN) };
+      - gap * 1;
+    return { total: total };
   }
 
-  function clampColumnWidths() {
-    var bounds = columnBounds();
-    var folded = root.classList.contains('is-listing-hidden');
-    columnWidths.list = Math.min(Math.max(columnWidths.list, SPLIT_MIN), bounds.listMax);
-    // The answers width is bounded by what the list leaves: the two never
-    // add up past the last column's floor.
-    var fieldsMax = folded ? bounds.fieldsMax : Math.max(SPLIT_MIN, bounds.total - columnWidths.list - SPLIT_LAST_MIN);
-    columnWidths.fields = Math.min(Math.max(columnWidths.fields, SPLIT_MIN), fieldsMax);
+  function clampPaneWidths() {
+    var bounds = paneBounds();
+    paneWidth = Math.min(Math.max(paneWidth, SPLIT_MIN), Math.max(SPLIT_MIN, bounds.total - SPLIT_LAST_MIN));
   }
 
-  function applyColumnWidths() {
-    if (!columnsMedia || !columnsMedia.matches || !columnWidths) {
+  function applyPaneWidths() {
+    if (!panesMedia || !panesMedia.matches || !paneWidth) {
       el.body.style.gridTemplateColumns = '';
       positionSplitters();
       return;
     }
-    clampColumnWidths();
-    var folded = root.classList.contains('is-listing-hidden');
-    el.body.style.gridTemplateColumns = folded
-      ? columnWidths.fields + 'px minmax(0, 1fr)'
-      : columnWidths.list + 'px ' + columnWidths.fields + 'px minmax(0, 1fr)';
+    clampPaneWidths();
+    el.body.style.gridTemplateColumns = paneWidth + 'px minmax(0, 1fr)';
     positionSplitters();
   }
 
-  function storeColumnWidths() {
+  function storePaneWidth() {
     try {
-      localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(columnWidths));
-    } catch (error) {/* the widths simply do not persist */}
+      localStorage.setItem(SPLIT_STORAGE_KEY, JSON.stringify({ text: paneWidth }));
+    } catch (error) {/* the width simply does not persist */}
   }
 
-  function readColumnWidths() {
+  function readPaneWidth() {
     try {
-      var stored = JSON.parse(localStorage.getItem(COLUMNS_STORAGE_KEY) || 'null');
-      if (stored && typeof stored.list === 'number' && typeof stored.fields === 'number') {
-        columnWidths = stored;
+      var stored = JSON.parse(localStorage.getItem(SPLIT_STORAGE_KEY) || 'null');
+      if (stored && typeof stored.text === 'number') {
+        paneWidth = stored.text;
       }
-    } catch (error) {/* the stylesheet's widths stand */}
+    } catch (error) {/* the stylesheet's word stands */}
   }
 
-  function measureColumnWidths() {
+  function measurePaneWidth() {
     var tracks = getComputedStyle(el.body).gridTemplateColumns.split(' ').map(parseFloat);
-    var folded = root.classList.contains('is-listing-hidden');
-    if (folded && tracks.length >= 2) {
-      columnWidths = columnWidths || { list: 208, fields: tracks[0] };
-      columnWidths.fields = tracks[0];
-    } else if (tracks.length >= 3) {
-      columnWidths = { list: tracks[0], fields: tracks[1] };
+    if (tracks.length >= 2) {
+      paneWidth = tracks[0];
     }
   }
 
-  function nudgeColumn(which, delta) {
-    if (!columnWidths) {
-      measureColumnWidths();
+  function nudgePane(delta) {
+    if (!paneWidth) {
+      measurePaneWidth();
     }
-    clampColumnWidths();
-    var before = columnWidths[which];
-    columnWidths[which] = columnWidths[which] + delta;
-    applyColumnWidths();
-    if (columnWidths[which] !== before) {
-      storeColumnWidths();
+    clampPaneWidths();
+    var before = paneWidth;
+    paneWidth = paneWidth + delta;
+    applyPaneWidths();
+    if (paneWidth !== before) {
+      storePaneWidth();
     }
   }
 
-  function dragSplitter(handle, which) {
+  function dragSplitter(handle) {
     handle.addEventListener('pointerdown', function (down) {
-      if (!columnWidths) {
-        measureColumnWidths();
+      if (!paneWidth) {
+        measurePaneWidth();
       }
       down.preventDefault();
       try {
         handle.setPointerCapture(down.pointerId);
       } catch (error) {/* the drag simply follows the pointer */}
-      var start = columnWidths[which];
+      var start = paneWidth;
       var move = function (moveEvent) {
-        columnWidths[which] = start + (moveEvent.clientX - down.clientX);
-        applyColumnWidths();
+        paneWidth = start + (moveEvent.clientX - down.clientX);
+        applyPaneWidths();
       };
+      // A drag the platform takes away — a scroll claims the pointer, the
+      // capture is lost — ends like one the hand ended.
       var up = function () {
         handle.removeEventListener('pointermove', move);
         handle.removeEventListener('pointerup', up);
-        clampColumnWidths();
-        applyColumnWidths();
-        storeColumnWidths();
+        handle.removeEventListener('pointercancel', up);
+        handle.removeEventListener('lostpointercapture', up);
+        clampPaneWidths();
+        applyPaneWidths();
+        storePaneWidth();
       };
       handle.addEventListener('pointermove', move);
       handle.addEventListener('pointerup', up);
+      handle.addEventListener('pointercancel', up);
+      handle.addEventListener('lostpointercapture', up);
     });
     handle.addEventListener('keydown', function (event) {
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        nudgeColumn(which, -SPLIT_STEP);
+        nudgePane(-SPLIT_STEP);
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
-        nudgeColumn(which, SPLIT_STEP);
+        nudgePane(SPLIT_STEP);
       }
     });
     handle.addEventListener('dblclick', function () {
-      columnWidths = null;
-      el.body.style.gridTemplateColumns = '';
+      paneWidth = null;
       try {
-        localStorage.removeItem(COLUMNS_STORAGE_KEY);
-      } catch (error) {/* the default widths stand */}
+        localStorage.removeItem(SPLIT_STORAGE_KEY);
+      } catch (error) {/* nothing to drop */}
+      applyPaneWidths();
       positionSplitters();
     });
   }
 
-  // The handles ride the boundaries; where a boundary sits, the computed
+  // The handle rides the boundary; where the boundary sits, the computed
   // tracks say, whatever set them — the stylesheet or the hand.
   function positionSplitters() {
-    if (!columnsMedia || !columnsMedia.matches) {
+    if (!panesMedia || !panesMedia.matches) {
       return;
     }
-    var handles = el.body.querySelectorAll('.pg-splitter');
-    var folded = root.classList.contains('is-listing-hidden');
+    var handle = el.body.querySelector('.pg-splitter');
     var tracks = getComputedStyle(el.body).gridTemplateColumns.split(' ').map(parseFloat);
-    if (tracks.length < 2) {
+    if (!handle || tracks.length < 2) {
       return;
     }
     var style = getComputedStyle(el.body);
     var gap = parseFloat(style.columnGap) || 0;
     // An absolute box starts at the padding edge; the tracks, after it.
     var inset = parseFloat(style.paddingLeft) || 0;
-    handles.forEach(function (handle) {
-      var which = handle.getAttribute('data-column');
-      var hiddenByFold = folded && which === 'list';
-      handle.hidden = hiddenByFold;
-      var edge = which === 'list' ? tracks[0] : (folded ? tracks[0] : tracks[0] + gap + tracks[1]);
-      handle.style.left = Math.round(inset + edge + gap / 2 - handle.offsetWidth / 2) + 'px';
-    });
+    handle.hidden = false;
+    var edge = tracks[0];
+    handle.style.left = Math.round(inset + edge + gap / 2 - handle.offsetWidth / 2) + 'px';
   }
 
   function buildSplitters() {
-    [['list', 'Projects list width'], ['fields', 'Answers width']].forEach(function (pair) {
-      var handle = document.createElement('div');
-      handle.className = 'pg-splitter';
-      handle.setAttribute('role', 'separator');
-      handle.setAttribute('aria-orientation', 'vertical');
-      handle.setAttribute('aria-label', pair[1]);
-      handle.setAttribute('data-column', pair[0]);
-      handle.tabIndex = 0;
-      handle.title = pair[1] + ' — drag, or press the arrow keys';
-      el.body.appendChild(handle);
-      dragSplitter(handle, pair[0]);
-    });
+    var handle = document.createElement('div');
+    handle.className = 'pg-splitter';
+    handle.setAttribute('role', 'separator');
+    handle.setAttribute('aria-orientation', 'vertical');
+    handle.setAttribute('aria-label', 'Text width');
+    handle.setAttribute('data-pane', 'text');
+    handle.tabIndex = 0;
+    handle.title = 'Text width — drag, or press the arrow keys';
+    el.body.appendChild(handle);
+    dragSplitter(handle);
   }
 
-  // The widest screens show the list whole; below, a fold above the
-  // fields keeps them near.
-  var wideScreen = window.matchMedia ? window.matchMedia('(min-width: 1280px)') : null;
-  // A finding's link leaves the fold closed, and a row in a closed fold
-  // has nowhere to scroll to: opening it brings the shown row in.
+  // The projects door: the hand that opens it is a gesture — whatever the
+  // visitor was doing wins over a finding a page was about to open — but
+  // a door a page opened itself is not one, and its first opening fetches
+  // the corpus. A finding's link may leave the door closed, and a row in a
+  // closed door has nowhere to scroll to: opening it brings the shown row
+  // in.
+  el.findingsDoor.addEventListener('click', function () {
+    // Only the opening is the gesture: a repository's page arrives with
+    // its door open, and the hand that closes it again cancels nothing.
+    if (!el.findingsBrowse.open) {
+      pageTouched = true;
+    }
+  });
   el.findingsBrowse.addEventListener('toggle', function () {
-    var shown = el.findingsBrowse.open ? el.findingsTree.querySelector('[aria-selected="true"]') : null;
+    if (!el.findingsBrowse.open) {
+      return;
+    }
+    loadIndex();
+    var shown = el.findingsTree.querySelector('[aria-selected="true"]');
     if (shown) {
       revealRow(shown);
     }
   });
-  function syncBrowse() {
-    if (wideScreen && wideScreen.matches) {
-      el.findingsBrowse.open = true;
-    }
-  }
-  if (wideScreen) {
-    syncBrowse();
-    if (wideScreen.addEventListener) {
-      wideScreen.addEventListener('change', syncBrowse);
-    }
-  }
+
   buildSplitters();
-  readColumnWidths();
-  applyColumnWidths();
-  if (columnsMedia && columnsMedia.addEventListener) {
-    columnsMedia.addEventListener('change', applyColumnWidths);
+  readPaneWidth();
+  applyPaneWidths();
+  if (panesMedia && panesMedia.addEventListener) {
+    panesMedia.addEventListener('change', applyPaneWidths);
   }
-  // A smaller window clamps the stored widths again, then places the
-  // handles.
-  window.addEventListener('resize', applyColumnWidths);
+  // A smaller window clamps the stored width again, then places the
+  // handle.
+  window.addEventListener('resize', applyPaneWidths);
 
   el.findingCopy.addEventListener('click', editCopy);
   el.findingBack.addEventListener('click', function () {
@@ -5272,22 +5179,15 @@
     navigator.share({ title: activeRepo.repo + ': ' + activeFinding.issues[0].message, url: findingUrl(activeRepo, activeFinding) }).catch(function () {/* the visitor closed the sheet */});
   });
 
-  // --- the source ----------------------------------------------------------
+  // --- the projects panel --------------------------------------------------
 
-  // The column shows the examples or the findings: two radios, the arrow
-  // keys move between them. The choice is remembered, and so is the last
-  // finding opened, which the home lights in its list without opening it:
-  // the home stays the tool's face, a repository's page opens its finding.
-  var SOURCE_STORAGE_KEY = 'playground-source';
+  // The projects live behind a door of their own, closed until a hand or
+  // a repository's link opens it. The last finding opened is remembered,
+  // lit in the tree when the door opens, never opened unasked: the home
+  // stays the tool's face, a repository's page opens its finding.
   var FINDING_STORAGE_KEY = 'playground-finding';
-  var shownSource = 'examples';
-  var storedSource = null;
   var storedFinding = null;
-  try { storedSource = localStorage.getItem(SOURCE_STORAGE_KEY); } catch (error) {/* private mode keeps the default */}
   try { storedFinding = localStorage.getItem(FINDING_STORAGE_KEY); } catch (error) {/* private mode keeps the default */}
-  if (storedSource !== 'findings') {
-    storedSource = 'examples';
-  }
   if (/^[\w~-]+__[\w~-]+#f-[0-9a-f]{10}(?:-\d+)?$/.test(storedFinding || '')) {
     lastFinding = storedFinding;
   } else if (storedFinding !== null) {
@@ -5295,53 +5195,9 @@
     try { localStorage.removeItem(FINDING_STORAGE_KEY); } catch (error) {/* nothing to drop */}
   }
 
-  function setSource(source, persist) {
-    shownSource = source === 'findings' ? 'findings' : 'examples';
-    var findings = shownSource === 'findings';
-    Array.prototype.forEach.call(el.sources, function (option) {
-      var on = option.getAttribute('data-source') === shownSource;
-      option.setAttribute('aria-checked', on ? 'true' : 'false');
-      option.tabIndex = on ? 0 : -1;
-    });
-    Array.prototype.forEach.call(el.exampleItems, function (item) {
-      item.hidden = findings;
-    });
-    el.findingsPanel.hidden = !findings;
-    el.examplesList.classList.toggle('is-findings', findings);
-    el.examplesList.setAttribute('aria-label', findings ? 'Projects' : 'Examples');
-    if (findings) {
-      loadIndex();
-    }
-    if (persist) {
-      try { localStorage.setItem(SOURCE_STORAGE_KEY, shownSource); } catch (error) {/* the choice simply does not persist */}
-    }
-  }
-
   function storeFinding(key) {
     try { localStorage.setItem(FINDING_STORAGE_KEY, key); } catch (error) {/* the choice simply does not persist */}
   }
-
-  Array.prototype.forEach.call(el.sources, function (option) {
-    option.addEventListener('click', function () {
-      pageTouched = true;
-      setSource(option.getAttribute('data-source'), true);
-      if (shownSource === 'examples') {
-        leaveFinding('source');
-      }
-    });
-    option.addEventListener('keydown', function (event) {
-      if (event.altKey || event.ctrlKey || event.metaKey || ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].indexOf(event.key) === -1) {
-        return;
-      }
-      event.preventDefault();
-      setSource(shownSource === 'examples' ? 'findings' : 'examples', true);
-      Array.prototype.forEach.call(el.sources, function (other) {
-        if (other.getAttribute('data-source') === shownSource) {
-          other.focus();
-        }
-      });
-    });
-  });
 
   // --- the URL hash --------------------------------------------------------
 
@@ -5662,9 +5518,6 @@
     refreshFields();
     render(sample.analyze, { regex: sample.default.regex, subject: sample.default.subject, version: chosen }, true);
     renderLint(sample.lint ? sample.lint.lint : null);
-    // The home comes back to the list the visitor chose, the last finding
-    // lit in it: one click away, never opened unasked.
-    setSource(storedSource, false);
     startStroll();
   } else {
     refreshFields();
