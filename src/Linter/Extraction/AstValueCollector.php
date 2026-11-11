@@ -161,6 +161,11 @@ final class AstValueCollector extends NodeVisitorAbstract
     private int $nextScope = 0;
 
     /**
+     * How many ternaries, "?:" and "??" hold the expression being read.
+     */
+    private int $alternatives = 0;
+
+    /**
      * @param \Closure(Node): list<Arg> $patternArguments the arguments of a call that carry its pattern: a
      *                                                    variable passed there is read, not written
      */
@@ -397,15 +402,25 @@ final class AstValueCollector extends NodeVisitorAbstract
             return ValueExpr::concat($parts, $offset, $expr->getStartLine());
         }
 
-        // The set of the two arms, whatever the condition; or "A ?: B".
-        if ($expr instanceof Ternary) {
-            return null === $expr->if
-                ? ValueExpr::fallback($this->expression($expr->cond), $this->expression($expr->else), false, $offset, $expr->getStartLine())
-                : ValueExpr::setOf([$this->expression($expr->if), $this->expression($expr->else)], $offset, $expr->getStartLine());
-        }
+        if ($expr instanceof Ternary || $expr instanceof Coalesce) {
+            if ($this->alternatives >= InFileValueResolver::MAX_NESTED_ALTERNATIVES) {
+                return ValueExpr::unknown();
+            }
 
-        if ($expr instanceof Coalesce) {
-            return ValueExpr::fallback($this->expression($expr->left), $this->expression($expr->right), true, $offset, $expr->getStartLine());
+            $this->alternatives++;
+
+            try {
+                if ($expr instanceof Coalesce) {
+                    return ValueExpr::fallback($this->expression($expr->left), $this->expression($expr->right), true, $offset, $expr->getStartLine());
+                }
+
+                // The set of the two arms, whatever the condition; or "A ?: B".
+                return null === $expr->if
+                    ? ValueExpr::fallback($this->expression($expr->cond), $this->expression($expr->else), false, $offset, $expr->getStartLine())
+                    : ValueExpr::setOf([$this->expression($expr->if), $this->expression($expr->else)], $offset, $expr->getStartLine());
+            } finally {
+                $this->alternatives--;
+            }
         }
 
         // The set of the values of the arms, the default one among them.

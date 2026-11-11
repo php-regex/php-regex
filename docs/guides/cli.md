@@ -946,7 +946,9 @@ Each of the four literals is linted, where it is written:
   proves a variable assigned on every path. An arm that is `false`, `true`
   or a number is passed over. An arm that is `null`, or one the file does
   not prove (a parameter, a call, a `throw`), leaves the whole argument
-  unread: none of its arms is linted.
+  unread: none of its arms is linted. They are read one inside another 32
+  levels deep, `A ?? B ?? C` being `A ?? (B ?? C)`; an arm written deeper
+  is not read.
 - **An array of patterns held in a local variable** feeds `preg_replace()`,
   `preg_replace_callback()` and `preg_filter()` its values, as a constant
   array does. `preg_replace_callback_array()` reads its keys from a

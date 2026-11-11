@@ -101,6 +101,14 @@ final class InFileValueResolver
     public const MAX_DEPTH = 32;
 
     /**
+     * The ternaries, "?:" and "??" an argument holds one inside another:
+     * deeper, the innermost is not read. "A ?? B ?? C" is "A ?? (B ?? C)",
+     * and reading a chain again from each of its values would take the
+     * square of its length.
+     */
+    public const MAX_NESTED_ALTERNATIVES = 32;
+
+    /**
      * The longest string a concatenation folds to: constants that double
      * each other reach any size in a few lines, so past it nothing is read.
      */

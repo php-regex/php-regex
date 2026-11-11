@@ -170,6 +170,11 @@ final class TokenValueCollector
     private int $attributeEnd = -1;
 
     /**
+     * How many ternaries, "?:" and "??" hold the expression being read.
+     */
+    private int $alternatives = 0;
+
+    /**
      * @var array{int, int}|null the parentheses of the head of the last "for" met
      */
     private ?array $forHead = null;
@@ -442,13 +447,23 @@ final class TokenValueCollector
         }
 
         $offset = $this->offsets[$first];
-        if (null !== $question) {
-            return $this->ternary($first, $question, $last, $context);
-        }
+        $alternative = $question ?? $coalesce;
+        if (null !== $alternative) {
+            // Each level reads what is left of the expression again.
+            if ($this->alternatives >= InFileValueResolver::MAX_NESTED_ALTERNATIVES) {
+                return ValueExpr::unknown();
+            }
 
-        // "A ?? B ?? C" is "A ?? (B ?? C)".
-        if (null !== $coalesce) {
-            return ValueExpr::fallback($this->expression($first, $coalesce, $context), $this->expression($coalesce + 1, $last + 1, $context), true, $offset, $this->lineAt($offset));
+            $this->alternatives++;
+
+            try {
+                // "A ?? B ?? C" is "A ?? (B ?? C)".
+                return null !== $question
+                    ? $this->ternary($first, $question, $last, $context)
+                    : ValueExpr::fallback($this->expression($first, $alternative, $context), $this->expression($alternative + 1, $last + 1, $context), true, $offset, $this->lineAt($offset));
+            } finally {
+                $this->alternatives--;
+            }
         }
 
         // A comparison, a logical operator: the "." joins operands of
