@@ -153,12 +153,15 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
-     * No window, no title bar: the pattern is the tool's first row, a
-     * field as wide as the tool with its controls — the PHP version, Run,
-     * the state — standing at the row's far end, beside the field they
-     * act on. The desktop's lights are gone with the metaphor that drew
-     * them, and the tool answers a wide screen: to 1 720 pixels, where
-     * the reading pages keep their column.
+     * No window, no title bar: the pattern is the tool's first row, one
+     * line of it — a field as wide as the tool, its controls standing at
+     * the row's far end on the field's own middle. The delimiters are the
+     * field's label: "Pattern" is said to a voice, never shown to the
+     * eye, and the byte count reads inside the field's right corner,
+     * under a veil, the way an editor shows its corner facts. The
+     * desktop's lights are gone with the metaphor that drew them, and
+     * the tool answers a wide screen: to 1 720 pixels, where the reading
+     * pages keep their column.
      */
     #[Test]
     public function test_the_pattern_row_holds_the_field_and_its_controls(): void
@@ -168,17 +171,33 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(0, self::nodes($xpath, self::byClass('pg-lights').'|'.self::byClass('pg-titlebar').'|'.self::byClass('pg-title').'|'.self::byClass('pg-statusbar')), 'The window and its furniture are gone.');
 
         $row = self::byClass('pg-patternbar');
-        $this->assertSame(1, self::nodes($xpath, $row), 'One row above the columns.');
+        $this->assertSame(1, self::nodes($xpath, $row), 'One row above the panes.');
         $this->assertSame(1, self::nodes($xpath, $row.'//textarea[@id="pg-pattern"]'), 'The row opens on the pattern itself.');
         $this->assertSame(1, self::nodes($xpath, $row.'//select[@id="pg-version"]'));
         $this->assertSame(1, self::nodes($xpath, $row.'//'.self::self('pg-run')));
         $this->assertSame(1, self::nodes($xpath, $row.'//'.self::self('pg-state')), 'The state sits beside Run, where it is read.');
 
+        // The field's name is spoken, never drawn: one line above the
+        // panes, the delimiters its label.
+        $labels = $xpath->query('//label[@for="pg-pattern"]');
+        $this->assertNotFalse($labels);
+        $label = $labels->item(0);
+        $this->assertInstanceOf(\DOMElement::class, $label);
+        $this->assertStringContainsString('visually-hidden', $label->getAttribute('class'), 'A voice hears "Pattern"; the eye reads the delimiters.');
+        $count = $xpath->query('//*[@id="pg-pattern-count"]/ancestor::*[contains(concat(" ", normalize-space(@class), " "), " pg-editor-pattern ")]');
+        $this->assertNotFalse($count);
+        $this->assertGreaterThan(0, $count->length, 'The count lives inside the field, an editor\'s corner fact.');
+
         $stylesheet = self::source(self::STYLESHEET);
         $this->assertSame(1, preg_match('/^\.pg-patternbar \{([^}]*)\}/m', $stylesheet, $bar), 'The pattern row\'s own rule exists.');
         $this->assertStringContainsString('grid-template-columns: minmax(0, 1fr) auto;', $bar[1], 'The field takes the row; the controls keep to its end.');
+        $this->assertStringContainsString('align-items: center;', $bar[1], 'One line: the controls ride the field\'s middle, not its floor.');
         $this->assertSame(1, preg_match('/^\.pg-controls \{([^}]*)\}/m', $stylesheet, $controls));
         $this->assertStringContainsString('justify-self: end;', $controls[1], 'The controls keep to the row\'s far edge.');
+        $corner = '/\.pg-editor-pattern \.pg-field-count \{([^}]*)\}/';
+        $this->assertSame(1, preg_match($corner, $stylesheet, $fact), 'The corner fact\'s rule exists.');
+        $this->assertStringContainsString('pointer-events: none;', $fact[1], 'It says, it never takes a click.');
+        $this->assertStringContainsString('linear-gradient(', $stylesheet.$fact[1], 'A veil fades the field\'s text under it.');
         $this->assertSame(1, preg_match('/^\.hero-playground \.hero-inner \{([^}]*)\}/m', $stylesheet, $inner));
         $this->assertStringContainsString('padding-inline: max(1.25rem, calc(50vw - 53.75rem));', $inner[1], 'A tool page to 1 720 pixels; the prose keeps its column.');
     }

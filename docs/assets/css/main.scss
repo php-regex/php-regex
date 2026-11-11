@@ -4746,9 +4746,28 @@ body.search-open {
 .pg-patternbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
+  align-items: center;
   gap: .5rem .8rem;
-  padding: .35rem 1rem .95rem;
+  padding: .45rem 1rem .95rem;
+}
+/* The count reads inside the field's right corner, under a veil that
+   fades the field's own text past it — an editor's corner fact, said
+   and never clicked. */
+.pg-editor-pattern .pg-field-count {
+  position: absolute;
+  top: 50%;
+  right: .68rem;
+  z-index: 1;
+  padding-left: 1.6rem;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  pointer-events: none;
+  background: linear-gradient(to left, var(--paper) 38%, transparent);
+  border-radius: var(--radius-s);
 }
 .pg-controls {
   display: inline-flex;
