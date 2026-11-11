@@ -55,7 +55,9 @@ final class FindingsLayoutTest extends TestCase
         // holds, and opens on the row of its own the panel is.
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/ul'.self::has('pg-examples').'[@aria-label="Quick patterns"]'));
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary[contains(., "Projects")]/*'.self::has('pg-findings-count')), 'The door says how many projects it holds.');
-        $this->assertSame('', trim($xpath->evaluate('string('.self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary/*'.self::has('pg-findings-count').')')), 'The count waits empty for the corpus: the door never reads half a sentence.');
+        $count = $xpath->evaluate('string('.self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary/*'.self::has('pg-findings-count').')');
+        $this->assertIsString($count);
+        $this->assertSame('', trim($count), 'The count waits empty for the corpus: the door never reads half a sentence.');
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/div'.self::has('pg-findings-body')), 'The panel is a body of its own, inside the door.');
 
         // A repository's page arrives with the door already open: the link
