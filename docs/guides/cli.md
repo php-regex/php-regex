@@ -871,7 +871,10 @@ final class Version
   call reaches it, as `$number` above. With two, one in an `if` and one in
   its `else` say, the pattern is not read: nothing in the file tells which
   value meets which piece. The same variable passed alone is read, each of
-  its literals being a pattern of its own.
+  its literals being a pattern of its own. An assignment written in a
+  branch counts as the others do: the path that leaves the variable
+  undefined, where PHP raises a warning and joins an empty string, is not
+  followed.
 - **An interpolated string or a heredoc**: `"$x"`, `"{$x}"`, `"${x}"`,
   `"$this->p"`, `"{$this->p}"`, `"$a[key]"` and `"{$a['key']}"`, each read
   by the rules of the variable, the property or the array it names, and

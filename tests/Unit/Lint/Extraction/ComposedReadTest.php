@@ -116,6 +116,13 @@ final class ComposedReadTest extends TestCase
      * branch, in the loop that holds the read, or before a later one the
      * read does not see.
      *
+     * The path that leaves the variable undefined is not followed. PHP
+     * 8.4 (php -r): with $flag false, "if ($flag) { $part = 'a'; }" then
+     * '/' . $part . '/' raises "Warning: Undefined variable $part" and
+     * is "//"; with $flag true it is "/a/", the pattern read. A read
+     * the same condition guards never meets the first path, and the
+     * file does not tell the two apart.
+     *
      * @return iterable<string, array{body: string}>
      */
     public static function provideBodiesWhereOneAssignmentReaches(): iterable
