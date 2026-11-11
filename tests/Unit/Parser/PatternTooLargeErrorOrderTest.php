@@ -81,14 +81,28 @@ final class PatternTooLargeErrorOrderTest extends TestCase
      * its release does.
      */
     #[Test]
-    #[DataProvider('provideErrorsNeverReached')]
-    #[DataProvider('provideErrorsMetFirst')]
-    public function test_the_running_engine_refuses_the_pattern_with_the_error_the_library_reports(string $pattern, string $php, string $release, int $offset, ?ErrorCode $error = null): void
+    #[DataProvider('provideRefusedPatterns')]
+    public function test_the_running_engine_refuses_the_pattern_with_the_error_the_library_reports(string $pattern): void
     {
-        unset($php, $release, $offset, $error);
         $this->requiresSizeLimitCheckedAsReleased($pattern);
 
         $this->assertMatchesTheRunningEngine($pattern);
+    }
+
+    /**
+     * The pattern of every row of the two tables below, alone: the tables
+     * do not hold the same columns, and PHPUnit 10.5 hands a row to a test
+     * by position.
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideRefusedPatterns(): iterable
+    {
+        foreach ([self::provideErrorsNeverReached(), self::provideErrorsMetFirst()] as $rows) {
+            foreach ($rows as $name => $row) {
+                yield $name => ['pattern' => $row['pattern']];
+            }
+        }
     }
 
     /**
