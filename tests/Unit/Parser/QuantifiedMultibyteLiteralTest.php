@@ -94,13 +94,14 @@ final class QuantifiedMultibyteLiteralTest extends TestCase
      * The quantifier repeats the last byte, and a quantifier after that one
      * has nothing to repeat: PCRE refuses "é+{2}" without /u as it refuses
      * "a+{2}" ("quantifier does not follow a repeatable item"), at the end
-     * of the second quantifier. The offset is read from the running engine.
+     * of the second quantifier. The offset is read from the running engine:
+     * past the quantifier from PCRE2 10.47, one byte earlier before.
      */
     #[Test]
     #[DataProvider('provideStackedQuantifiers')]
     public function test_a_quantifier_stacked_on_a_quantified_multibyte_character_is_refused(string $pattern, int $offset): void
     {
-        $this->requiresPcre2('10.45', $pattern);
+        $this->requiresPcre2('10.47', $pattern);
 
         $pcre = PcreMessageCodes::read(PcreMessageCodes::warningOf($pattern) ?? 'compiles');
         $this->assertSame(['message' => 'quantifier does not follow a repeatable item', 'offset' => $offset], $pcre, 'Oracle: '.$pattern);

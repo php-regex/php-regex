@@ -95,7 +95,9 @@ final class VersionCondition
      * holds at least ten more characters. It stops on a character it cannot
      * take where it expects a digit, a "." or the ")"; from PCRE2 10.47,
      * past it, unless the comparison began with ">". Under $utf, past it is
-     * past the whole character. Up to PCRE2 10.45 the minor is two digits.
+     * past the whole character. Up to PCRE2 10.46 the minor is two digits;
+     * up to PCRE2 10.44 a major over 1000 is refused past the digit that
+     * takes it there, and from 10.45 past its last digit, as every number.
      */
     public static function errorOffsetFor(string $pattern, int $position, PcreTarget $target, bool $utf = false): ?int
     {
@@ -124,7 +126,7 @@ final class VersionCondition
             return $atLeast ? $at : self::faultAt($pattern, $at, $target, $utf);
         }
 
-        [$at, $tooBig] = $twoDigitMinor ? self::readVersionPartDigitByDigit($pattern, $at) : self::readVersionPart($pattern, $at);
+        [$at, $tooBig] = $target->supports(PcreFeature::NumberTooBigPastWholeNumber) ? self::readVersionPart($pattern, $at) : self::readVersionPartDigitByDigit($pattern, $at);
         if ($tooBig) {
             return $at;
         }
@@ -135,7 +137,7 @@ final class VersionCondition
                 return $at < $length ? self::faultAt($pattern, $at, $target, $utf) : $at;
             }
 
-            // Up to PCRE2 10.45 the minor is two digits, and a third one is
+            // Up to PCRE2 10.46 the minor is two digits, and a third one is
             // where PCRE stops.
             if ($twoDigitMinor) {
                 $at += strspn($pattern, '0123456789', $at, 2);
@@ -198,7 +200,7 @@ final class VersionCondition
     }
 
     /**
-     * As readVersionPart(), the way PCRE2 up to 10.45 reads a number: it
+     * As readVersionPart(), the way PCRE2 up to 10.44 reads a number: it
      * stops right past the digit that takes it over 1000.
      *
      * @return array{0: int, 1: bool}

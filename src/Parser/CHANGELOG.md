@@ -25,6 +25,12 @@ CHANGELOG
    at offset 0 there, and the missing group on PHP 8.2.34, as on any other
    10.40. No pattern changes verdict, so `PcreTarget::phpVersionBoundaries()`
    lists no new version.
+ * `validate()` reports a version condition whose major is over 1000 where
+   PCRE2 10.45 and 10.46 report it, past the last digit of the number: those
+   releases read every number whole, and only the minor as two digits, until
+   10.47. `/(?(VERSION>=99999999999)a)(c/` is `regex.conditional.version_syntax`
+   at offset 23 for them, as from 10.47, where the library gave 16, the offset
+   of 10.44 and earlier. No pattern changes verdict.
  * `validate()` reports an error PCRE meets measuring the lookbehinds before it
    estimates the compiled size, and one measure walks 10,000 branches at most:
    calls doubled level after level behind a branch reset are refused as

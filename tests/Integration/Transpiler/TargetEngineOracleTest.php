@@ -74,7 +74,7 @@ final class TargetEngineOracleTest extends TestCase
         $run = (new DifferentialRun($target, $engine, self::$corpus, self::$patterns, new TranspileOptions(pythonVersion: $pythonVersion)))->run();
 
         $summary = \sprintf(
-            '%d patterns, %d transpiled, %d refused; %d comparisons, %d differ; %d patterns unanswered by %s; %d subjects left out for a Unicode table of another version, %d for a match inside a surrogate pair.',
+            '%d patterns, %d transpiled, %d refused; %d comparisons, %d differ; %d patterns unanswered by %s; %d subjects left out for a Unicode table of another version, %d for a match inside a surrogate pair, %d for a class PCRE2 %s compiles without some of its characters.',
             $run->checked,
             $run->transpiled,
             $run->refused,
@@ -84,6 +84,8 @@ final class TargetEngineOracleTest extends TestCase
             $engine->name,
             $run->tableSkews,
             $run->insidePairs,
+            $run->classDefects,
+            \PCRE_VERSION,
         );
 
         $this->assertGreaterThanOrEqual(self::MINIMUM_COMPARISONS, $run->comparisons, $summary);

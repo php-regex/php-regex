@@ -1253,11 +1253,10 @@ main table::-webkit-scrollbar-thumb {
    (third raw-color block): text 12.60, soft/bar 6.51, keyword 5.72,
    string 7.79, number 6.97, ok 7.51, danger 6.26 — all >= 4.5:1 on the
    #182B45 panel. Ok and danger are the dark theme's: a ready or a
-   stopped engine reads on the navy.
+   stopped run reads on the navy.
    ========================================================================== */
 
-.terminal,
-.pg-titlebar {
+.terminal {
   --code-bg: #182B45;
   --code-ink: #EDF1F7;
   --ink-soft: #A3B0C4;
@@ -4725,64 +4724,31 @@ body.search-open {
 .hero-playground .hero-inner {
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  /* A tool page, not a reading one: the window breathes to 90rem while
-     the docs keep their 75rem column — three columns need the room the
+  /* A tool page, not a reading one: the tool breathes to 107.5rem while
+     the docs keep their 75rem column — the answers need the room the
      prose never did. */
-  padding-inline: max(1.25rem, calc(50vw - 45rem));
+  padding-inline: max(1.25rem, calc(50vw - 53.75rem));
 }
 
-/* The window: a title bar, a body, a status bar. It floats one step
-   above the page, like the dialogs do. The frame clips its children to
-   its rounded corners — `clip`, not `hidden`: a hidden overflow would
-   make the frame the scrollport of the sticky answers, which would then
-   never stick and sit below their row. Browsers without `clip` keep the
-   hidden fallback and lose the stick, nothing else. */
+/* The pattern row: the tool's first row. No window around the tool, no
+   title bar over it — the pattern is the name of this page, a field as
+   wide as the tool with the controls it acts with at the row's far end.
+   What is left of the window is its clip: `clip`, not `hidden`, for a
+   hidden overflow would make the tool the scrollport of the sticky
+   answers, which would then never stick and sit below their row.
+   Browsers without `clip` keep the hidden fallback and lose the stick,
+   nothing else. */
 .playground {
   min-width: 0;
   overflow: hidden;
   overflow: clip;
-  background: var(--panel);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-l);
-  box-shadow: var(--shadow-1);
 }
-.pg-titlebar {
-  /* Inside the frame the bar carries no chrome of its own: the frame
-     draws the border and the corners. The two outer tracks share what
-     the name leaves, so the name stays in the middle of the bar whatever
-     the state beside Run says; a crowded bar gives the controls their
-     width first and cuts the name. */
+.pg-patternbar {
   display: grid;
-  grid-template-columns: 1fr minmax(0, max-content) 1fr;
-  align-items: center;
-  gap: .75rem;
-  min-height: 2.75rem;
-  padding: .4rem .9rem;
-  border: 0;
-  border-radius: 0;
-  color: var(--code-ink);
-  background: var(--code-bg);
-}
-.pg-lights {
-  display: inline-flex;
-  gap: .4rem;
-}
-.pg-lights i {
-  width: .7rem;
-  height: .7rem;
-  background: var(--ink-soft);
-  border-radius: var(--radius-pill);
-  opacity: .8;
-}
-.pg-title {
-  overflow: hidden;
-  font-size: .8rem;
-  font-weight: 600;
-  letter-spacing: .02em;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--ink-soft);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: .5rem .8rem;
+  padding: .35rem 1rem .95rem;
 }
 .pg-controls {
   display: inline-flex;
@@ -4790,34 +4756,30 @@ body.search-open {
   align-items: center;
   gap: .5rem;
 }
-/* The version reads as one of the window's own controls, not the
-   browser's: the native chrome is dropped, the chevron is drawn in the
-   bar's soft ink — the bar is navy in both themes, so one color serves
-   them both — and the border sits at the terminal's hairline weight
+/* The version reads as one of the tool's own controls: the platform's
+   select, the page's ink and paper, its border at the hairline weight
    until a hand or the keyboard claims it. */
-.pg-titlebar .pg-version {
+.pg-patternbar .pg-version {
   min-height: 1.9rem;
-  padding: .25rem 1.7rem .25rem .6rem;
+  padding: .25rem .5rem;
   font-family: var(--font-mono);
   font-size: .78rem;
   line-height: 1;
-  color: var(--code-ink);
-  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1.5 1.5 5 4.5 8.5 1.5' fill='none' stroke='%23EDF1F7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right .55rem center;
-  border: 1px solid var(--term-hairline);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
   border-radius: var(--radius-s);
   cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
 }
-.pg-titlebar .pg-version:hover {
-  border-color: var(--ink-soft);
+.pg-patternbar .pg-version:hover,
+.pg-patternbar .pg-version:focus-visible {
+  border-color: var(--amber);
 }
-.pg-titlebar .pg-version:focus-visible {
-  border-color: var(--ink-soft);
+.pg-patternbar .pg-version:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 1px;
 }
-.pg-titlebar .pg-run {
+.pg-patternbar .pg-run {
   display: inline-flex;
   align-items: center;
   gap: .45rem;
@@ -4827,17 +4789,17 @@ body.search-open {
   font-size: .78rem;
   font-weight: 600;
   line-height: 1;
-  color: var(--code-bg);
-  background: var(--tk-key);
+  color: var(--paper);
+  background: var(--amber);
   border: 1px solid transparent;
   border-radius: var(--radius-s);
   cursor: pointer;
 }
-.pg-titlebar .pg-run:hover,
-.pg-titlebar .pg-run:focus-visible {
-  filter: brightness(1.08);
+.pg-patternbar .pg-run:hover,
+.pg-patternbar .pg-run:focus-visible {
+  background: var(--amber-deep);
 }
-.pg-titlebar .pg-run:focus-visible {
+.pg-patternbar .pg-run:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
@@ -4854,11 +4816,10 @@ body.search-open {
   border-left: 1px solid color-mix(in srgb, currentColor 35%, transparent);
   border-radius: 0;
 }
-.pg-titlebar .pg-run:disabled {
+.pg-patternbar .pg-run:disabled {
   cursor: progress;
   opacity: .7;
-}
-/* What the window is doing: a light and a word, not a pill — an outline
+}/* What the window is doing: a light and a word, not a pill — an outline
    beside Run would read as a second button. The same height as the
    select and the button, so the three sit on one line. The light is a
    border, hollow while the sample stands, full once the engine speaks:
@@ -4999,14 +4960,12 @@ body.search-open {
   min-width: 0;
   align-content: start;
 }
-.pg-statusbar {
+.pg-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: .4rem .75rem;
-  padding: .5rem .9rem;
-  background: var(--paper);
-  border-top: 1px solid var(--line-soft);
+  padding: .7rem 1.1rem 0;
 }
 /* What stays on the visitor's machine, said once, at the far end of the
    bar the engine's facts fill after a run. */
@@ -5041,15 +5000,26 @@ body.search-open {
     column-gap: 1.25rem;
     align-items: start;
   }
-  .pg-examples {
-    grid-column: 1;
-  }
   .pg-main {
     grid-column: 1;
+    grid-row: 1;
+    align-self: stretch;
+    /* The text and its status line; the pattern has a row of its own
+       above the panes. */
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .pg-field-text {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  /* The field's items align by baseline, for its label and its count
+     read on one line; the editor alone stretches into the row the
+     stylesheet gave it. */
+  .pg-field-text .pg-editor {
+    align-self: stretch;
   }
   .pg-body > .pg-results {
     grid-column: 2;
-    grid-row: 1 / 3;
+    grid-row: 1;
     position: sticky;
     top: calc(var(--header-h) + 1rem);
     /* A row the keyboard or the pointer brings into view stops under the
@@ -5061,6 +5031,16 @@ body.search-open {
     overflow: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--line) transparent;
+  }
+  .pg-editor-subject .pg-input {
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+  }
+  /* The mirror follows the input down: an opened list of matches takes
+     its height from the field, never from under it. */
+  .pg-editor-subject .pg-mirror {
+    min-height: 0;
   }
   .pg-results > .pg-tabs {
     position: sticky;
@@ -5399,35 +5379,52 @@ body.search-open {
   font-style: italic;
 }
 
-.pg-examples {
+/* The quick row, under the pattern: the patterns ready to run, and
+   beside them the door to the projects. Only the open door wraps — it
+   takes a row of its own — for the chips themselves never wrap: the row
+   scrolls under its fades, ten chips wrapped would push the panes a
+   hand down. */
+.pg-quickbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: .4rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: .4rem .6rem;
+  padding: 0 1rem .9rem;
 }
-/* The gap speaks; the browser's own item margins do not (a column would
-   show them as a crooked head). An item never shrinks below its chip:
-   a scrolling row scrolls, it does not squeeze. */
-.pg-examples li {
+.pg-quick-label {
   flex: none;
-  margin: 0;
-}
-/* One label voice in the column: "Examples" speaks as "Pattern" and
-   "Text" do. */
-.pg-examples-label {
   font-size: .78rem;
   font-weight: 600;
   letter-spacing: .02em;
   color: var(--ink-soft);
 }
-/* A chip of the row carries a name, not a state: the field's square
-   corners, not the pill the status chips wear, and the page's own voice —
-   a button left to the browser would speak its default font. The pattern
-   under the name waits for the column to have room for it. */
+.pg-examples {
+  position: relative;
+  display: flex;
+  flex: 1 1 14rem;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: .4rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0 .1rem .25rem 0;
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+/* The gap speaks; the browser's own item margins do not. An item never
+   shrinks below its chip: a scrolling row scrolls, it does not
+   squeeze. */
+.pg-examples li {
+  flex: none;
+  margin: 0;
+}
+/* A chip carries a name, not a state: the field's square corners, not
+   the pill the status chips wear, and the page's own voice — a button
+   left to the browser would speak its default font. */
 .pg-example {
+  flex: none;
   min-height: 1.75rem;
   padding: .3rem .65rem;
   font-family: var(--font-body);
@@ -5448,29 +5445,18 @@ body.search-open {
   outline: 2px solid var(--amber);
   outline-offset: 1px;
 }
-/* The example the fields hold: pressed, tinted — the row says what the
-   window is showing. */
-.pg-example[aria-pressed="true"] {
-  color: var(--ink);
-  background: var(--amber-tint);
-  border-color: var(--amber);
+/* The pattern the chip holds stays in its own words — read as the
+   chip's by a voice, out of the eye's way: the tooltip says the whole
+   of it to a pointer. */
+.pg-examples .pg-example-pattern {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
-.pg-example-pattern {
-  display: none;
-}
-/* Wherever the column folds back — phones, tablets and laptops alike —
-   the examples stand above the fields: the list is one row that scrolls
-   under its fade; ten chips wrapped would push the fields a hand down. */
-@media (max-width: 1279px) {
-  .pg-examples {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: .25rem;
-    scrollbar-width: thin;
-    scrollbar-color: var(--line) transparent;
-  }
-}
-/* The row fades on the edge where more examples wait, as the strip of
+/* The row fades on the edge where more patterns wait, as the strip of
    tabs does; the script sets the classes only where the row scrolls. */
 .pg-examples.has-more-right {
   -webkit-mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent);
@@ -5483,83 +5469,6 @@ body.search-open {
 .pg-examples.has-more-left.has-more-right {
   -webkit-mask-image: linear-gradient(to right, transparent, black 2rem, black calc(100% - 2rem), transparent);
   mask-image: linear-gradient(to right, transparent, black 2rem, black calc(100% - 2rem), transparent);
-}
-
-/* The widest screens: the examples stand in a column of their own
-   between the window's edge and the fields — one size of box, each
-   carrying its pattern under its name, in the mono voice, cut to one
-   line (the tooltip says the whole of it). The writing column stretches
-   to the answers' height, and the text field takes what is left: a
-   field as tall as the window says a long text belongs here. This block
-   comes last in the section: the widest screens have the final word
-   over every base rule above. */
-@media (min-width: 1280px) {
-  .pg-body {
-    grid-template-columns: minmax(11rem, 13rem) minmax(0, 2fr) minmax(0, 3fr);
-  }
-  .pg-examples {
-    grid-row: 1;
-    flex-direction: column;
-    align-items: stretch;
-    gap: .3rem;
-  }
-  .pg-examples-label {
-    display: block;
-    margin: 0 0 .1rem;
-    padding: 0 .55rem;
-  }
-  .pg-main {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: stretch;
-    grid-template-rows: auto minmax(0, 1fr) auto;
-  }
-  .pg-field-text {
-    grid-template-rows: auto minmax(0, 1fr) auto;
-  }
-  /* The field's items align by baseline, for its label and its count
-     read on one line; the editor alone stretches into the row the
-     stylesheet gave it. */
-  .pg-field-text .pg-editor {
-    align-self: stretch;
-  }
-  .pg-body > .pg-results {
-    grid-column: 3;
-    grid-row: 1;
-  }
-  .pg-example {
-    display: grid;
-    gap: .12rem;
-    width: 100%;
-    padding: .4rem .55rem;
-    text-align: left;
-  }
-  .pg-example:hover {
-    background: var(--code-bg);
-  }
-  .pg-examples .pg-example-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .pg-examples .pg-example-pattern {
-    display: block;
-    overflow: hidden;
-    font-family: var(--font-mono);
-    font-size: .7rem;
-    color: var(--ink-soft);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .pg-editor-subject .pg-input {
-    height: 100%;
-    min-height: 0;
-    max-height: none;
-  }
-  /* The mirror follows the input down: an opened list of matches takes
-     its height from the field, never from under it. */
-  .pg-editor-subject .pg-mirror {
-    min-height: 0;
-  }
 }
 
 /* The line keeps its height, said or not: the panels under it do not
@@ -5975,31 +5884,9 @@ body.search-open {
   font-weight: 600;
 }
 
-/* Below the side-by-side layout the bar has no room to hold its name in
-   the middle: the desktop's window lights give their room, and the bar
-   is a wrapping row. The name keeps to the left, where no state can move
-   it; controls too wide for one row — enlarged text, a narrow phone —
-   drop under the name and then wrap among themselves, inside the frame
-   that clips them. */
-@media (max-width: 1023px) {
-  .pg-titlebar {
-    display: flex;
-    flex-wrap: wrap;
-  }
-  .pg-lights {
-    display: none;
-  }
-  .pg-title {
-    flex: 1 0 auto;
-    text-align: left;
-  }
-  .pg-controls {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    margin-left: auto;
-  }
-}
-
+/* A phone gives the pattern field a line of its own; between a phone and
+   the side-by-side layout the row keeps its two cells, the field taking
+   what the controls leave. */
 @media (max-width: 639px) {
   .pg-body {
     padding: .85rem .8rem .9rem;
@@ -6007,21 +5894,17 @@ body.search-open {
   .pg-tool {
     padding: .75rem .75rem .85rem;
   }
-  /* A phone's bar: the header above already says the brand, so the bar
-     says "Playground" whole rather than the full name cut short; the
-     state says itself by its light — its word still read by the live
-     region, and named by the light's title. */
-  .pg-titlebar {
-    gap: .5rem;
+  /* A phone's pattern row: the field holds the row, the controls take
+     the next and wrap among themselves; the state says itself by its
+     light — its word still read by the live region, and named by the
+     light's title. */
+  .pg-patternbar {
+    grid-template-columns: minmax(0, 1fr);
+    padding: .25rem .8rem .85rem;
   }
   .pg-controls {
     gap: .4rem;
-  }
-  .pg-title-brand {
-    display: none;
-  }
-  .pg-title::first-letter {
-    text-transform: uppercase;
+    flex-wrap: wrap;
   }
   .pg-state-word {
     position: absolute;
@@ -6034,17 +5917,13 @@ body.search-open {
   .pg-run-key {
     display: none;
   }
-  .pg-titlebar .pg-version,
-  .pg-titlebar .pg-run,
-  .pg-titlebar .pg-state {
+  .pg-patternbar .pg-version,
+  .pg-patternbar .pg-run,
+  .pg-state {
     min-height: 2.5rem;
   }
-  .pg-titlebar .pg-run {
+  .pg-patternbar .pg-run {
     padding-inline: .9rem;
-  }
-  /* The select keeps room for its chevron; the button does not. */
-  .pg-titlebar .pg-version {
-    padding-inline: .7rem 1.8rem;
   }
   .pg-example {
     min-height: 2rem;
@@ -7262,74 +7141,80 @@ body.search-open {
   }
 }
 
-/* --- Findings: the column's second list, what the linter reports on the
-   corpus of open-source projects, filtered and walked as a tree; the card
-   that takes the text field's place in a finding; the head of a
-   repository's page. The voice toggle's dialect, the syntax tree's rows,
-   the field's marks, the house tokens: nothing new to learn. --- */
-.pg-source {
-  display: inline-flex;
-  padding: .15rem;
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-pill);
+/* --- Findings: the projects door of the quick row, what the linter
+   reports on the corpus of open-source projects, filtered and walked
+   as a tree; the card that takes the text field's place in a finding;
+   the head of a repository's page. The quick row's dialect, the syntax
+   tree's rows, the field's marks, the house tokens: nothing new to
+   learn. --- */
+/* The door: a chip of the quick row, the tree's own chevron saying
+   which way it opens. Open, it takes a row of its own and the panel is
+   a window — the tree scrolls inside it, the page never stretches. */
+.pg-findings-browse {
+  display: flex;
+  flex: none;
 }
-.pg-source-option {
-  min-height: 1.6rem;
-  padding: .2rem .7rem;
+.pg-findings-browse > summary {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: .35rem;
+  min-height: 1.75rem;
+  padding: .3rem .65rem;
   font-family: var(--font-body);
-  font-size: .76rem;
+  font-size: .78rem;
   font-weight: 500;
+  white-space: nowrap;
   color: var(--ink-soft);
   background: transparent;
-  border: 0;
-  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
   cursor: pointer;
+  list-style: none;
 }
-.pg-source-option:hover {
+.pg-findings-browse > summary::-webkit-details-marker {
+  display: none;
+}
+.pg-findings-browse > summary::after {
+  content: '›';
+  font-family: var(--font-mono);
+}
+.pg-findings-browse[open] > summary::after {
+  transform: rotate(90deg);
+}
+.pg-findings-browse > summary:hover,
+.pg-findings-browse > summary:focus-visible {
   color: var(--ink);
+  border-color: var(--amber);
 }
-.pg-source-option:focus-visible {
+.pg-findings-browse > summary:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 1px;
 }
-.pg-source-option[aria-checked="true"] {
-  color: var(--ink);
-  background: var(--amber-tint);
-  box-shadow: inset 0 0 0 1px var(--amber);
+.pg-findings-count {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--ink-soft);
 }
-/* In Findings, the row of examples gives its width to the list: it
-   wraps under the control instead of scrolling sideways. */
-.pg-examples.is-findings {
-  flex-wrap: wrap;
-  overflow-x: visible;
+/* Open, the door is a block: the panel stands under its summary
+   whatever the browser wraps a disclosure's content in. */
+.pg-findings-browse[open] {
+  display: block;
+  flex-basis: 100%;
 }
-/* Scoped to the list, so it outranks the item rule that holds every
-   other item to its own width: the panel takes a row of its own. */
-.pg-examples .pg-findings-panel {
-  flex: 1 1 100%;
+.pg-findings-body {
+  display: grid;
+  gap: .45rem;
   min-width: 0;
-}
-.pg-findings-panel[hidden] {
-  display: none;
-}
-.pg-findings-browse {
+  padding: .6rem .75rem .7rem;
+  background: var(--panel);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-s);
 }
-.pg-findings-browse > summary {
-  padding: .45rem .65rem;
-  font-size: .8rem;
-  font-weight: 500;
-  color: var(--ink);
-  cursor: pointer;
-}
-.pg-findings-browse[open] > summary {
-  border-bottom: 1px solid var(--line-soft);
-}
 .pg-findings-filter {
   box-sizing: border-box;
-  width: calc(100% - 1rem);
-  margin: .5rem;
+  width: 100%;
+  margin: 0;
   padding: .35rem .55rem;
   font-family: var(--font-mono);
   font-size: .76rem;
@@ -7349,9 +7234,9 @@ body.search-open {
   list-style: none;
 }
 .pg-findings-tree {
-  max-height: 22rem;
+  max-height: clamp(12rem, calc(100vh - var(--header-h) - 20rem), 28rem);
   overflow-y: auto;
-  padding: 0 .3rem .3rem;
+  padding: 0 .1rem .1rem 0;
 }
 .pg-tree-group[hidden],
 .pg-tree-item[hidden] {
@@ -7439,7 +7324,7 @@ body.search-open {
   box-shadow: inset 0 0 0 1px var(--amber);
 }
 .pg-findings-empty {
-  margin: .5rem .75rem;
+  margin: 0;
   font-size: .78rem;
   color: var(--ink-soft);
 }
@@ -7448,7 +7333,7 @@ body.search-open {
   flex-wrap: wrap;
   gap: .25rem .75rem;
   margin: 0;
-  padding: .45rem .75rem .55rem;
+  padding: .45rem 0 0;
   font-size: .74rem;
   border-top: 1px solid var(--line-soft);
 }
@@ -7458,73 +7343,16 @@ body.search-open {
 .pg-findings-links a:hover {
   color: var(--ink);
 }
-/* The fold tab lives on the stacked layouts' edge only as a hidden
-   thing: below the widest screens the list is a row, not a column. */
-.pg-listing-tab,
-.pg-listing-rail,
+/* Below the side-by-side layout the pane separator is a hidden thing:
+   one column has no boundary to ride. */
 .pg-splitter {
   display: none;
 }
 
-/* The widest screens: the list stands in its column, a window of its
-   own — never the page's longest column. A project with three hundred
-   findings opens as a scroll inside a frame that answers the viewport,
-   the way the answers panel beside it does. */
-@media (min-width: 1280px) {
-  .pg-findings-browse > summary {
-    display: none;
-  }
-  /* A column does not wrap: a wrapped column would size the list to its
-     longest line. */
-  .pg-examples.is-findings {
-    flex-wrap: nowrap;
-  }
-  .pg-findings-browse {
-    border: 0;
-  }
-  .pg-findings-filter {
-    width: 100%;
-    margin: 0 0 .4rem;
-  }
-  .pg-findings-tree {
-    max-height: clamp(19rem, calc(100vh - var(--header-h) - 15rem), 39rem);
-    padding: 0;
-    scrollbar-width: thin;
-    scrollbar-color: var(--line) transparent;
-  }
-  .pg-findings-links {
-    flex-direction: column;
-    padding: .45rem .35rem 0;
-  }
-
-  .pg-listing-tab {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.05rem;
-    padding: 0;
-    font-family: var(--font-mono);
-    font-size: .85rem;
-    line-height: 1;
-    color: var(--ink-soft);
-    background: var(--panel);
-    border: 0;
-    border-right: 1px solid var(--line-soft);
-    border-radius: 0 var(--radius-s) var(--radius-s) 0;
-    cursor: pointer;
-  }
-  .pg-listing-tab:hover,
-  .pg-listing-tab:focus-visible {
-    color: var(--ink);
-    border-color: var(--amber);
-  }
-  /* The separators ride the boundaries: a hairline the pointer thickens,
-    a notch the arrow keys walk. The last column gives what is left. */
+/* The separator rides the panes' boundary: a hairline the pointer
+   thickens, a notch the arrow keys walk. The answers pane gives what is
+   left. */
+@media (min-width: 1024px) {
   .pg-splitter {
     position: absolute;
     top: 1rem;
@@ -7559,76 +7387,6 @@ body.search-open {
   }
   .pg-splitter:focus-visible::after {
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 35%, transparent);
-  }
-  /* Folded, the window is two columns — the finding and the tools — the
-     tab turns to say which way the list went, and the rail of owners
-     keeps the ecosystem a hover away. */
-  .playground.is-listing-hidden .pg-body {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-    padding-left: 2.95rem;
-  }
-  .pg-listing-rail {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 1;
-    display: grid;
-    align-content: start;
-    justify-items: center;
-    gap: .35rem;
-    width: 2.6rem;
-    padding: 1rem .35rem 1.1rem;
-    overflow-y: auto;
-    scrollbar-gutter: stable;
-    background: var(--panel);
-    border-right: 1px solid var(--line-soft);
-    scrollbar-width: thin;
-    scrollbar-color: var(--line) transparent;
-  }
-  .pg-listing-rail[hidden] {
-    display: none;
-  }
-  .pg-listing-rail-avatar,
-  .pg-listing-rail-open {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    padding: 0;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 50%;
-    cursor: pointer;
-  }
-  .pg-listing-rail-open {
-    margin-bottom: .25rem;
-    font-family: var(--font-mono);
-    font-size: .95rem;
-    line-height: 1;
-    color: var(--ink-soft);
-  }
-  .pg-listing-rail-avatar:hover,
-  .pg-listing-rail-avatar:focus-visible,
-  .pg-listing-rail-open:hover,
-  .pg-listing-rail-open:focus-visible {
-    border-color: var(--amber);
-  }
-  /* The columns carry their places from the three-column layout; folded,
-     they take the two that remain. */
-  .playground.is-listing-hidden .pg-main {
-    grid-column: 1;
-  }
-  .playground.is-listing-hidden .pg-body > .pg-results {
-    grid-column: 2;
-    grid-row: 1;
-  }
-  .playground.is-listing-hidden .pg-examples {
-    display: none;
-  }
-  .playground.is-listing-hidden .pg-listing-tab {
-    display: none;
   }
 }
 

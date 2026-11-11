@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,16 +34,32 @@ use PHPUnit\Framework\TestCase;
  */
 final class PatternTooLargeOffsetTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideTooLargePatterns')]
     public function test_a_pattern_too_large_is_reported_where_pcre2_reports_it(string $pattern, string $php, string $release, int $offset): void
     {
-        $this->assertMatchesTheRunningEngine($pattern);
         $result = RegexParser::create(['cache' => null, 'php_version' => $php, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
         $this->assertSame(ErrorCode::PatternTooLarge, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
         $this->assertSame($offset, $result->offset, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
+    }
+
+    /**
+     * The rows hold the offset each PHP and PCRE2 target reports; the
+     * running engine is one more target, where it checks the size limit as
+     * its release does.
+     */
+    #[Test]
+    #[DataProvider('provideTooLargePatterns')]
+    public function test_the_running_engine_reports_a_pattern_too_large_where_the_library_does(string $pattern, string $php, string $release, int $offset): void
+    {
+        unset($php, $release, $offset);
+        $this->requiresSizeLimitCheckedAsReleased($pattern);
+
+        $this->assertMatchesTheRunningEngine($pattern);
     }
 
     #[Test]
@@ -183,11 +200,9 @@ final class PatternTooLargeOffsetTest extends TestCase
     }
 
     /**
-     * The rows hold the offset each PHP and PCRE2 target reports; the
-     * running engine is one more target: a pattern PHP finds too large here
-     * is too large for this PHP, its patch release included, and this PCRE2,
-     * at the offset PHP reports, and one PHP compiles or refuses otherwise
-     * is not.
+     * A pattern PHP finds too large here is too large for this PHP, its
+     * patch release included, and this PCRE2, at the offset PHP reports,
+     * and one PHP compiles or refuses otherwise is not.
      */
     private function assertMatchesTheRunningEngine(string $pattern): void
     {

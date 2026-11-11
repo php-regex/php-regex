@@ -52,11 +52,10 @@ final class AlphaAssertionBodyTest extends TestCase
 
     /**
      * The rows below hold what PCRE2 10.45 reports: the POSIX-class and
-     * property errors inside a body and a stacked quantifier there, the
-     * extended class "(?[...])" and a malformed property under x, the run
-     * of two unclosed properties, and "(*scs:" — that release moved their
-     * message or offset, and an older engine reports them differently.
-     * They are replayed where 10.45 runs.
+     * property errors inside a body, the extended class "(?[...])" and a
+     * malformed property under x, the run of two unclosed properties, and
+     * "(*scs:" — that release moved their message or offset, and an older
+     * engine reports them differently. They are replayed where 10.45 runs.
      */
     private const VERDICTS_OF_10_45 = [
         '/(*pla:[[::])])/',
@@ -70,11 +69,18 @@ final class AlphaAssertionBodyTest extends TestCase
         '/(?=[[::])])/',
         '/(*pla:\\p{a)b\\p{L}/',
         '/(?=\\p{a)b\\p{L}/',
-        '/(*pla:a{2}{2})b)/',
         '/(*pla:(?x)(?[ [a] # ]))/',
         '/(*pla:(?x)[\\p{]#}])/',
         '/a\\P{x\\p{y/',
         '(?(*scs:(1)a',
+    ];
+
+    /**
+     * The row below holds what PCRE2 10.47 reports: a stacked quantifier
+     * in a body, whose offset that release moved past the quantifier.
+     */
+    private const VERDICTS_OF_10_47 = [
+        '/(*pla:a{2}{2})b)/',
     ];
 
     /**
@@ -814,9 +820,7 @@ final class AlphaAssertionBodyTest extends TestCase
     #[DataProvider('provideBodiesReadInPlaceToTheEnd')]
     public function test_validate_reports_an_error_inside_a_body_as_pcre_does(string $pattern, ErrorCode $code, int $offset): void
     {
-        if (\in_array($pattern, self::VERDICTS_OF_10_45, true)) {
-            $this->requiresPcre2('10.45', $pattern);
-        }
+        $this->requiresPcre2For($pattern, ['10.45' => self::VERDICTS_OF_10_45, '10.47' => self::VERDICTS_OF_10_47]);
 
         $pcre = self::pcreError($pattern);
         $this->assertSame($offset, $pcre['offset'], \sprintf('Oracle: %s (%s).', $pattern, $pcre['message']));

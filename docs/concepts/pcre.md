@@ -475,7 +475,7 @@ and a target has it from the release it arrived in on
 | `ExtendedCharClass` | 10.45 | Perl extended character classes, "(?[ ... ])". |
 | `CasingSettingVerbs` | 10.45 | "(*CASELESS_RESTRICT)" and "(*TURKISH_CASING)". |
 | `HugeBackreferenceNumberIsReference` | 10.45 | "\8" or "\9" followed by eight digits or more is a reference, not a digit and text. |
-| `NumberTooBigPastWholeNumber` | 10.45 | A number past 65535 is reported past the whole number. |
+| `NumberTooBigPastWholeNumber` | 10.45 | A number past its limit, 65535 or the 1000 of the major of a version condition, is reported past the whole number. |
 | `LimitValueErrorOnFaultingCharacter` | 10.45 | An error in a "(*LIMIT_x=" value is reported on the faulty character. |
 | `PosixItemErrorPastItsEnd` | 10.45 | An unknown POSIX class or collating element is reported past its end. |
 | `MalformedPropertyName` | 10.45 | A character no property name holds makes "\p{...}" malformed at that character. |

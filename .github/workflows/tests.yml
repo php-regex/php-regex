@@ -183,8 +183,13 @@ jobs:
     # RegExp, under the u and v flags, and Python's re match what
     # preg_match() matches, pattern by pattern and subject by subject. The
     # engines are pinned here, as the test skips where they are missing.
+    # The runner is pinned too: the PHP a newer image installs bundles a
+    # newer PCRE2 (10.46 where this had 10.42), whose Unicode tables and
+    # case folding answer ten corpus patterns differently than the engines
+    # the transpiler writes for. Moving to it is the oracle's decision to
+    # make, not the runner's.
     name: Transpiler oracle (Node 24, Python 3.13)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:

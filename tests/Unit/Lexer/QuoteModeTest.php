@@ -108,7 +108,9 @@ final class QuoteModeTest extends TestCase
             return;
         }
 
-        $this->requiresPcre2('10.45', $pattern);
+        // PCRE2 10.47 reports a reversed range past its end, one byte
+        // earlier before.
+        $this->requiresPcre2('10.47', $pattern);
 
         $pcre = PcreMessageCodes::read($warning ?? 'compiles');
         $this->assertSame(['message' => 'range out of order in character class', 'offset' => $offset], $pcre, 'Oracle: '.$pattern);

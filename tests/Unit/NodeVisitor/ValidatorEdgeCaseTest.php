@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SemanticErrorException;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PcreGates;
@@ -244,12 +245,25 @@ final class ValidatorEdgeCaseTest extends TestCase
      * "(*pla:", "(?*"...). The offsets are the running engine's. A class
      * that ends right where the later error stands, at the end of the
      * pattern, is still read whole; the guards below put a byte after it.
+     *
+     * A reversed range comes first on every release, and the row holds the
+     * offset of PCRE2 10.47 and later, past the range: before, PCRE reports
+     * it one byte earlier, on the last character of the range ("/([z-a]/"
+     * at 4 and "/(*pla:[z-a]/" at 9 on PHP with 10.39, 10.40, 10.42, 10.44,
+     * 10.45 and 10.46, at 5 and 10 with 10.47, 10.48 and 10.49).
      */
     #[Test]
     #[DataProvider('provideClassErrorsBeforeAnUnclosedGroupAtTheEnd')]
     public function test_validate_reports_a_class_error_before_an_unclosed_group_ending_on_the_class(string $pattern, ErrorCode $code, int $offset): void
     {
-        $this->requiresPcre2('10.45', $pattern);
+        // PCRE2 10.45 moved the offset of a POSIX name past its end: those
+        // rows hold from it. A reversed range is held on every release, at
+        // the offset that release gives it.
+        if (ErrorCode::RangeReversed === $code) {
+            $offset = PcreTarget::runtime()->faultOffset($offset);
+        } else {
+            $this->requiresPcre2('10.45', $pattern);
+        }
 
         $this->assertRefusedAsPcreRefuses($pattern, $code, $offset);
     }
