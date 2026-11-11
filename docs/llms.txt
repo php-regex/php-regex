@@ -15,6 +15,13 @@ License: MIT
 - [Regex 101 tutorial](https://php-regex.com/tutorial/): regular expressions from basics to real-world PHP, ten chapters
 - [Regex in PHP](https://php-regex.com/guides/regex-in-php/): how PCRE behaves inside preg_* — delimiters, flags, the functions and their return values
 
+## Articles
+
+- [Catastrophic backtracking in PHP](https://php-regex.com/blog/catastrophic-backtracking-in-php/): why /^(\w+)+$/ doubles its time with each letter, and the one-character fix
+- [RE2 vs PCRE2](https://php-regex.com/blog/re2-vs-pcre2/): what a linear-time engine gives up to be linear, and when PHP cannot use it
+- [Which PCRE2 ships with which PHP](https://php-regex.com/blog/which-pcre2-ships-with-which-php/): the release table, by PHP version, with what each release changed
+- [Why PCRE2 is a separate library](https://php-regex.com/blog/why-pcre2-is-a-separate-library/): the engine behind preg_*(), maintained apart from PHP
+
 ## Integrations
 
 - [Guides index](https://php-regex.com/guides/): every integration on one page, with its install command

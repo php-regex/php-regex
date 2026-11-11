@@ -30,6 +30,23 @@ final class DocumentationExperienceTest extends TestCase
 
     private const EXTENDING = __DIR__.'/../../docs/extending.md';
 
+    private const HEADER = __DIR__.'/../../docs/_includes/header.html';
+
+    private const STYLESHEET = __DIR__.'/../../docs/assets/css/main.scss';
+
+    private const COOKBOOK = __DIR__.'/../../docs/cookbook.md';
+
+    private const HOW_PCRE2_MATCHES = __DIR__.'/../../docs/concepts/how-pcre2-matches.md';
+
+    private const ARTICLES = [
+        'catastrophic-backtracking-in-php',
+        're2-vs-pcre2',
+        'which-pcre2-ships-with-which-php',
+        'why-pcre2-is-a-separate-library',
+    ];
+
+    private const LLMS = __DIR__.'/../../docs/llms.txt';
+
     /**
      * Lint rules have no public registry in 2.0 (backward-compatibility.md):
      * the extending guide must not offer one as an extension point.
@@ -160,5 +177,72 @@ final class DocumentationExperienceTest extends TestCase
         $this->assertStringContainsString('## Install', $quickStart);
         $this->assertStringContainsString('## Run your first analysis', $quickStart);
         $this->assertStringContainsString('## Pick your integration', $quickStart);
+    }
+
+    /**
+     * The landing page has no drawer to carry its sections, and below
+     * 1024px the header's own words went with every other page's: a phone
+     * stood on the tool with no way to the docs, the tutorial or the
+     * articles but the footer, far below. On the landing page the words
+     * stay in the header at every width; on a phone the wordmark gives
+     * way to its mark so the three links fit beside the controls.
+     */
+    #[Test]
+    public function test_the_landing_header_keeps_its_sections_on_a_phone(): void
+    {
+        $header = (string) file_get_contents(self::HEADER);
+        $this->assertStringContainsString("class=\"site-header{% if page.layout == 'landing' %} site-header--landing{% endif %}\"", $header, 'The landing header says it is the landing header.');
+
+        $stylesheet = (string) file_get_contents(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.site-header--landing \.header-nav \{([^}]*)\}/m', $stylesheet, $nav), 'The landing nav rule exists.');
+        $this->assertStringContainsString('display: flex;', $nav[1], 'The sections stand in the header at every width.');
+        $phone = '/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.site-header--landing \.header-nav a \{([^}]*)\}/';
+        $this->assertSame(1, preg_match($phone, $stylesheet, $links), 'A phone compacts the landing links.');
+        $this->assertStringContainsString('font-size:', $links[1]);
+        $this->assertSame(1, preg_match('/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.site-header--landing \.brand-name \{([^}]*)\}/', $stylesheet, $brand), 'A phone folds the wordmark into its mark.');
+        $this->assertStringContainsString('display: none;', $brand[1]);
+    }
+
+    /**
+     * The documentation and the playground point at each other: a reader
+     * who just ran an example by hand is one link away from the tree, the
+     * lint findings and the step-through of the same pattern. Every link
+     * carries a pattern the engine accepts.
+     */
+    #[Test]
+    public function test_runnable_examples_open_in_the_playground(): void
+    {
+        $pages = [
+            self::QUICK_START => 2,
+            self::COOKBOOK => 2,
+            self::HOW_PCRE2_MATCHES => 1,
+        ];
+        foreach ($pages as $path => $least) {
+            $page = (string) file_get_contents($path);
+            preg_match_all('/\]\(\/(?:#|%23)pattern=([^)&\s]+)/', $page, $matches, \PREG_SET_ORDER);
+            $this->assertGreaterThanOrEqual($least, \count($matches), $path.': at least '.$least.' example(s) open in the playground.');
+            foreach ($matches as $match) {
+                $pattern = rawurldecode($match[1]);
+                $this->assertNotFalse(@preg_match($pattern, ''), $path.': the linked pattern '.\var_export($pattern, true).' is one the engine accepts.');
+            }
+        }
+    }
+
+    /**
+     * The four articles the runbook held as drafts are published, and the
+     * llms.txt index lists them: an agent reading the site reads them too.
+     */
+    #[Test]
+    public function test_the_four_blog_articles_are_published(): void
+    {
+        foreach (self::ARTICLES as $slug) {
+            $article = (string) file_get_contents(__DIR__.'/../../docs/_articles/'.$slug.'.md');
+            $this->assertSame(1, preg_match('/^published: true$/m', $article), $slug.' is published.');
+        }
+        $llms = (string) file_get_contents(self::LLMS);
+        $this->assertStringContainsString('## Articles', $llms, 'The index carries an Articles section.');
+        foreach (self::ARTICLES as $slug) {
+            $this->assertStringContainsString('https://php-regex.com/blog/'.$slug.'/', $llms, $slug.' is listed at its real address.');
+        }
     }
 }

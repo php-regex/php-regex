@@ -43,6 +43,8 @@ Regex matches
   Anchor: the end of the subject, or just before a newline (\n) that ends it
 ```
 
+[See the same pattern as a tree in the playground](/#pattern=%2F%5E%5Cd%7B4%7D-%5Cd%7B2%7D-%5Cd%7B2%7D%24%2F&subject=2026-11-19%0Anot%20a%20date) — the tree, the diagnostics and the step-through of the match, in your browser.
+
 Now try a pattern with catastrophic backtracking:
 
 ```bash
@@ -64,7 +66,7 @@ The verdict comes first, before the explanation of the pattern:
   Hotspot:   4-6
 ```
 
-`Attack:` is the input that makes the pattern blow up, written as PHP: `"a" x n . "!"` means `str_repeat("a", $n) . "!"`. The longer the run of `a`, the longer one match attempt takes: the time roughly doubles with every extra character.
+`Attack:` is the input that makes the pattern blow up, written as PHP: `"a" x n . "!"` means `str_repeat("a", $n) . "!"`. The longer the run of `a`, the longer one match attempt takes: the time roughly doubles with every extra character. [Watch it backtrack, step by step](/#pattern=%2F%5E%28%3F%3Aa%2B%29%2B%24%2F&subject=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab) — the Step through tab draws every retry the engine makes.
 
 The important distinction is the verdict label:
 

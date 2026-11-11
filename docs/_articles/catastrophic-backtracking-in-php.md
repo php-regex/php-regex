@@ -2,7 +2,7 @@
 date: 2026-08-19 11:23:00 +00:00
 last_modified_at: 2026-10-16 12:00:00 +00:00
 author: younes
-published: false
+published: true
 tags: [Performance, ReDoS]
 description: 'Why /^(\w+)+$/ doubles its time with each letter, why preg_match() then returns false, and the one-character fix. Measured on PHP 8.4, JIT on and off.'
 ---

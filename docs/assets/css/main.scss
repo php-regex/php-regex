@@ -1500,6 +1500,27 @@ main table::-webkit-scrollbar-thumb {
   }
 }
 
+/* The landing page has no drawer to carry its sections: its header keeps
+   the words at every width. On a phone the wordmark folds into its mark
+   so the three links fit beside the controls — the tool is the page, and
+   the pages it serves stay one tap away. */
+.site-header--landing .header-nav {
+  display: flex;
+}
+@media (max-width: 639px) {
+  .site-header--landing .header-nav {
+    gap: 0;
+    margin-inline-start: .35rem;
+  }
+  .site-header--landing .header-nav a {
+    padding-inline: .45rem;
+    font-size: .85rem;
+  }
+  .site-header--landing .brand-name {
+    display: none;
+  }
+}
+
 /* The header's actions cluster to the right: search, theme, repository,
    and below 1024px the drawer's handle. */
 .header-actions {
