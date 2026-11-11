@@ -122,7 +122,8 @@ final class OperandExpressionTest extends TestCase
         yield 'octal with its prefix' => ['operand' => '0o17', 'integer' => 15];
         yield 'binary' => ['operand' => '0b11', 'integer' => 3];
         yield 'with a digit separator' => ['operand' => '1_000', 'integer' => 1000];
-        yield 'the largest' => ['operand' => '9223372036854775807', 'integer' => \PHP_INT_MAX];
+        // The largest of the PHP that runs: 9223372036854775807 is a float where an integer holds 32 bits.
+        yield 'the largest' => ['operand' => (string) \PHP_INT_MAX, 'integer' => \PHP_INT_MAX];
     }
 
     #[Test]
@@ -137,8 +138,9 @@ final class OperandExpressionTest extends TestCase
     }
 
     /**
-     * PHP reads 9223372036854775808 as a float, and so its negation: no
-     * integer is kept for them, nor for any other float.
+     * PHP reads one past its largest integer as a float, 9223372036854775808
+     * where an integer holds 64 bits, and so its negation: no integer is
+     * kept for them, nor for any other float.
      *
      * @return iterable<string, array{operand: string}>
      */
@@ -148,8 +150,10 @@ final class OperandExpressionTest extends TestCase
         yield 'a float with no fraction' => ['operand' => '1.0'];
         yield 'a float with an exponent' => ['operand' => '1e3'];
         yield 'a negative float' => ['operand' => '-1.5'];
-        yield 'one past the largest integer' => ['operand' => '9223372036854775808'];
-        yield 'the smallest integer, a float as a literal' => ['operand' => '-9223372036854775808'];
+        // A power of two: the float holds it whole, and "%.0F" writes its digits.
+        $pastTheLargest = \sprintf('%.0F', \PHP_INT_MAX + 1);
+        yield 'one past the largest integer' => ['operand' => $pastTheLargest];
+        yield 'the smallest integer, a float as a literal' => ['operand' => '-'.$pastTheLargest];
     }
 
     #[Test]
