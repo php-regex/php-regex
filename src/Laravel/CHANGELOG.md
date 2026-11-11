@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:lint` reads the pattern arguments `regex lint` now reads: those
+   built from parts at the call, chosen by a ternary or a `match`, held in
+   an array, at file level or in a global constant of another file. Under
+   its summary line, the report says how many pattern arguments are built
+   at run time, which no rule could verify: `Not verifiable: 3 pattern
+   arguments (1 dynamic, 1 around a dynamic part, 1 around preg_quote())`.
  * `regex:explain --format=html` HTML-encodes every text it takes from the
    pattern, so a pattern holding `<img onerror=…>` no longer writes a tag
    into the page; `--highlight` colours the console format only.

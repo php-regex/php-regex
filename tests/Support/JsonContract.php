@@ -72,8 +72,11 @@ final class JsonContract
         'lint.host' => ['php', 'pcre'],
         'lint.target' => ['php', 'pcre', 'locale', 'source', 'range'],
         'lint.target.range[]' => ['php', 'pcre'],
-        'lint.stats' => ['errors', 'warnings', 'optimizations', 'redos_errors', 'infos', 'lint_errors', 'parser_fallbacks', 'not_analyzed'],
-        'lint.results[]' => ['file', 'line', 'column', 'file_offset', 'source', 'pattern', 'location', 'issues', 'optimizations'],
+        'lint.stats' => [
+            'errors', 'warnings', 'optimizations', 'redos_errors', 'infos', 'lint_errors', 'parser_fallbacks', 'not_analyzed',
+            'arguments_constant', 'arguments_finite_set', 'arguments_quoted_shell', 'arguments_raw_shell', 'arguments_opaque',
+        ],
+        'lint.results[]' => ['file', 'line', 'column', 'file_offset', 'source', 'pattern', 'expression', 'location', 'issues', 'optimizations'],
         'lint.results[].issues[]' => [
             'severity', 'file', 'line', 'column', 'file_offset', 'position', 'issue_id', 'docs_url', 'message', 'hint',
             'tip', 'source', 'validation', 'analysis', 'target',
@@ -111,7 +114,7 @@ final class JsonContract
 
         // regex lint --generate-baseline
         'baseline' => ['version', 'issues'],
-        'baseline.issues[]' => ['file', 'line', 'column', 'issue_id', 'message', 'severity', 'pattern', 'pattern_hash'],
+        'baseline.issues[]' => ['file', 'line', 'column', 'issue_id', 'message', 'severity', 'pattern', 'expression', 'pattern_hash'],
 
         // Symfony's regex:analyze --format=json
         'symfony_analyze' => ['sections'],
@@ -168,6 +171,27 @@ final class JsonContract
         'symfony_analyze.sections[].warnings[]' => 'symfony_analyze.sections[].summary[]',
         'symfony_analyze.sections[].debug[]' => 'symfony_analyze.sections[].meta[]',
     ];
+
+    /**
+     * The counts of the pattern arguments in the stats of a lint report,
+     * one per state: always there, 0 when the run anchored no argument in
+     * that state.
+     */
+    public const ARGUMENT_COUNTS = ['arguments_constant', 'arguments_finite_set', 'arguments_quoted_shell', 'arguments_raw_shell', 'arguments_opaque'];
+
+    /**
+     * The counts of the issues in the stats of a lint report, in the order
+     * the report writes them: the stats without the counts of the pattern
+     * arguments, which ArgumentCarriers::countsOf() reads.
+     *
+     * @return array<mixed>
+     */
+    public static function issueCounts(mixed $stats): array
+    {
+        Assert::assertIsArray($stats);
+
+        return array_diff_key($stats, array_flip(self::ARGUMENT_COUNTS));
+    }
 
     /**
      * Walk a decoded document and check that every key of every object is

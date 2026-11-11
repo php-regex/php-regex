@@ -46,6 +46,22 @@ final class RuleCatalog
     public const SOURCE_UNREADABLE = 'regex.lint.source.unreadable';
 
     /**
+     * A pattern argument with nothing static: no rule ran on it.
+     */
+    public const SOURCE_DYNAMIC = 'regex.lint.source.dynamic';
+
+    /**
+     * A pattern argument that holds a part built at run time: no rule ran
+     * on it.
+     */
+    public const SOURCE_DYNAMIC_PART = 'regex.lint.source.dynamicPart';
+
+    /**
+     * A pattern argument that holds a preg_quote() text: no rule ran on it.
+     */
+    public const SOURCE_QUOTED_PART = 'regex.lint.source.quotedPart';
+
+    /**
      * Every lint rule, in full: what it reports, whether it runs when
      * regex.json does not mention it, and its section of the docs.
      */
@@ -123,6 +139,9 @@ final class RuleCatalog
         RedosVerdict::ISSUE_ID => 'https://php-regex.com/reference/rules/#catastrophic-backtracking',
         self::COMPLEXITY => 'https://php-regex.com/reference/rules/#complexity-threshold',
         self::SOURCE_UNREADABLE => 'https://php-regex.com/reference/rules/#unreadable-source-file',
+        self::SOURCE_DYNAMIC => 'https://php-regex.com/reference/rules/#pattern-built-at-run-time',
+        self::SOURCE_DYNAMIC_PART => 'https://php-regex.com/reference/rules/#pattern-around-a-part-built-at-run-time',
+        self::SOURCE_QUOTED_PART => 'https://php-regex.com/reference/rules/#pattern-around-a-quoted-text',
         LintService::ISSUE_ID_UNMATCHED_IGNORE => 'https://php-regex.com/guides/cli/#markers-that-silence-nothing',
         LintService::ISSUE_ID_TARGET_INVALID => 'https://php-regex.com/guides/cli/#code-that-runs-on-some-php-versions-only',
         LintService::ISSUE_ID_TARGET_EMPTY => 'https://php-regex.com/guides/cli/#code-that-runs-on-some-php-versions-only',

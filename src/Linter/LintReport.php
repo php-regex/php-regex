@@ -20,20 +20,22 @@ use PHPRegex\Optimizer\OptimizationResult;
  *
  * A result gathers what was found in one pattern: its issues, each a
  * LintIssue, and its optimizations. problems() gives them as the GitHub,
- * Checkstyle and JUnit reports show them.
+ * Checkstyle and JUnit reports show them. A result that stands for a
+ * pattern argument built at run time holds no pattern: its "expression" is
+ * the argument as the source writes it.
  *
  * @internal
  *
  * @phpstan-type FlattenedProblem array{file: string, line: int, column?: int|null, source?: string|null, pattern?: string|null, location?: string|null, problem: Diagnostic}
  * @phpstan-type OptimizationEntry array{file: string, line: int, column?: int|null, fileOffset?: int|null, optimization: OptimizationResult, savings: int, source?: string}
- * @phpstan-type LintResult array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<LintIssue>, optimizations: array<OptimizationEntry>}
- * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, parserFallbacks?: int, notAnalyzed?: int}
+ * @phpstan-type LintResult array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<LintIssue>, optimizations: array<OptimizationEntry>, expression?: string|null}
+ * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, parserFallbacks?: int, notAnalyzed?: int, argumentsConstant?: int, argumentsFiniteSet?: int, argumentsQuotedShell?: int, argumentsRawShell?: int, argumentsOpaque?: int}
  */
 final class LintReport
 {
     /**
      * @param array<LintResult> $results
-     * @param LintStats         $stats   "redos" counts the errors that are ReDoS verdicts and "lintErrors" the lint rules at Error, both among "errors"; "infos" counts the info issues; "parserFallbacks" counts the files the tokenizer read because the PHP parser could not; "notAnalyzed" counts the warnings of the patterns the library gave up on, at one of its own limits, among "warnings". Each optional count is left out at zero; the JSON report always carries them, 0 when there are none
+     * @param LintStats         $stats   "redos" counts the errors that are ReDoS verdicts and "lintErrors" the lint rules at Error, both among "errors"; "infos" counts the info issues; "parserFallbacks" counts the files the tokenizer read because the PHP parser could not; "notAnalyzed" counts the warnings of the patterns the library gave up on, at one of its own limits, among "warnings"; "argumentsConstant", "argumentsFiniteSet", "argumentsQuotedShell", "argumentsRawShell" and "argumentsOpaque" count the pattern arguments of the calls read, by the state each ends in. Each optional count is left out at zero; the JSON report always carries them, 0 when there are none
      */
     public function __construct(
         /**

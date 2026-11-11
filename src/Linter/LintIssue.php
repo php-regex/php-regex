@@ -30,7 +30,13 @@ use PHPRegex\Redos\RedosAnalysis;
  * $position the finding in the pattern's body. $validation is the verdict
  * on a pattern that does not compile, at the floor or at the version of
  * $target; $analysis the verdict of a ReDoS finding; $target the PHP and
- * PCRE2 that reported the finding, when it is not the floor.
+ * PCRE2 that reported the finding, when it is not the floor. $variant is
+ * what the pattern says of a constant of PHP whose value depends on the
+ * system, 'DIRECTORY_SEPARATOR is "\"' for instance, when it is built of
+ * one: the argument holds a pattern for each value, and a finding of some
+ * of them only holds on those systems alone. $pattern is the pattern the
+ * finding is in, as the call gives it: an argument that holds several
+ * holds them at one place, and each is reported over its own findings.
  *
  * @internal
  *
@@ -70,6 +76,8 @@ final class LintIssue
          */
         public readonly ?array $target = null,
         ?array $hints = null,
+        public readonly ?string $variant = null,
+        public readonly ?string $pattern = null,
     ) {
         $this->hints = $hints ?? (null === $hint ? [] : [$hint]);
     }
@@ -93,7 +101,7 @@ final class LintIssue
         ?array $target = null,
         ?array $hints = null,
     ): self {
-        return new self($severity, $message, $occurrence->file, $occurrence->line, $occurrence->column, $occurrence->fileOffset, $position, $issueId, $hint, $tip, $occurrence->source, $validation, $analysis, $target, $hints);
+        return new self($severity, $message, $occurrence->file, $occurrence->line, $occurrence->column, $occurrence->fileOffset, $position, $issueId, $hint, $tip, $occurrence->source, $validation, $analysis, $target, $hints, $occurrence->variant, null === $occurrence->state ? $occurrence->pattern : null);
     }
 
     /**
@@ -122,7 +130,7 @@ final class LintIssue
      */
     public function withFile(string $file): self
     {
-        return new self($this->severity, $this->message, $file, $this->line, $this->column, $this->fileOffset, $this->position, $this->issueId, $this->hint, $this->tip, $this->source, $this->validation, $this->analysis, $this->target, $this->hints);
+        return new self($this->severity, $this->message, $file, $this->line, $this->column, $this->fileOffset, $this->position, $this->issueId, $this->hint, $this->tip, $this->source, $this->validation, $this->analysis, $this->target, $this->hints, $this->variant, $this->pattern);
     }
 
     /**
@@ -132,7 +140,40 @@ final class LintIssue
      */
     public function withTarget(array $target): self
     {
-        return new self($this->severity, $this->message, $this->file, $this->line, $this->column, $this->fileOffset, $this->position, $this->issueId, $this->hint, $this->tip, $this->source, $this->validation, $this->analysis, $target, $this->hints);
+        return new self($this->severity, $this->message, $this->file, $this->line, $this->column, $this->fileOffset, $this->position, $this->issueId, $this->hint, $this->tip, $this->source, $this->validation, $this->analysis, $target, $this->hints, $this->variant, $this->pattern);
+    }
+
+    /**
+     * The same finding, as one that holds on the systems of its $variant
+     * alone: a warning at most, an error among them brought down to one,
+     * and its message says which value of the constant it holds for. One
+     * whose pattern is built of no such constant is returned as it is.
+     */
+    public function onVariantAlone(): self
+    {
+        if (null === $this->variant) {
+            return $this;
+        }
+
+        return new self(
+            $this->severity->failsRun() ? LintSeverity::Warning : $this->severity,
+            $this->message.' Holds when '.$this->variant.'.',
+            $this->file,
+            $this->line,
+            $this->column,
+            $this->fileOffset,
+            $this->position,
+            $this->issueId,
+            $this->hint,
+            $this->tip,
+            $this->source,
+            $this->validation,
+            $this->analysis,
+            $this->target,
+            $this->hints,
+            $this->variant,
+            $this->pattern,
+        );
     }
 
     /**

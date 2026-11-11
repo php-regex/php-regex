@@ -89,6 +89,57 @@ final class LintIssueTest extends TestCase
         $this->assertEquals(new LintIssue(LintSeverity::Warning, 'M.', './a.php', 2, 5, 9, 1, 'regex.lint.x', 'H.', 'T.', 'preg_match()', target: $target), $judged);
     }
 
+    /**
+     * A finding in a pattern built of a constant whose value depends on
+     * the system keeps what the pattern says of it, and its pattern,
+     * through each copy: the file renamed, the target named, and the copy
+     * that holds on that system alone.
+     */
+    #[Test]
+    public function test_a_finding_of_a_pattern_of_one_system_keeps_its_pattern_and_what_it_holds_for(): void
+    {
+        $occurrence = new PatternOccurrence('~\~', './a.php', 3, 'preg_match()', column: 12, fileOffset: 18, variant: 'DIRECTORY_SEPARATOR is "\"');
+        $issue = LintIssue::at($occurrence, LintSeverity::Error, 'No closing delimiter.', 'regex.delimiter.unclosed');
+
+        $this->assertSame('~\~', $issue->pattern);
+        $this->assertSame('DIRECTORY_SEPARATOR is "\"', $issue->variant);
+
+        $target = ['php' => '8.4', 'pcre' => '10.44', 'guard' => '>=8.4'];
+        foreach ([$issue->withFile('a.php'), $issue->withTarget($target), $issue->onVariantAlone()] as $copy) {
+            $this->assertSame('~\~', $copy->pattern);
+            $this->assertSame('DIRECTORY_SEPARATOR is "\"', $copy->variant);
+        }
+
+        // An error of one system is a warning that names it; the rest is kept.
+        $alone = $issue->onVariantAlone();
+        $this->assertSame(LintSeverity::Warning, $alone->severity);
+        $this->assertSame('No closing delimiter. Holds when DIRECTORY_SEPARATOR is "\".', $alone->message);
+        $this->assertSame(['./a.php', 3, 12, 18, 'regex.delimiter.unclosed', 'preg_match()'], [$alone->file, $alone->line, $alone->column, $alone->fileOffset, $alone->issueId, $alone->source]);
+
+        // An info stays one.
+        $info = LintIssue::at($occurrence, LintSeverity::Info, 'Kept.', 'regex.lint.x')->onVariantAlone();
+        $this->assertSame(LintSeverity::Info, $info->severity);
+        $this->assertSame('Kept. Holds when DIRECTORY_SEPARATOR is "\".', $info->message);
+    }
+
+    /**
+     * A finding in a pattern built of no such constant holds everywhere:
+     * it is returned as it is. The state of an argument is no pattern: a
+     * finding placed at one holds none.
+     */
+    #[Test]
+    public function test_a_finding_of_a_pattern_of_every_system_is_left_as_it_is(): void
+    {
+        $issue = LintIssue::at(new PatternOccurrence('/(a/', 'a.php', 3, 'preg_match()'), LintSeverity::Error, 'Unclosed.', 'regex.group.unclosed');
+
+        $this->assertNull($issue->variant);
+        $this->assertSame('/(a/', $issue->pattern);
+        $this->assertSame($issue, $issue->onVariantAlone());
+
+        $argument = PatternOccurrence::argument('opaque', 'a.php', 3, 12, 18, 'preg_match()', '$re');
+        $this->assertNull(LintIssue::at($argument, LintSeverity::Info, 'Built at run time.', 'regex.lint.source.dynamic')->pattern);
+    }
+
     #[Test]
     public function test_a_lint_finding_is_a_lint_diagnostic_with_its_own_severity(): void
     {

@@ -6,6 +6,42 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The lint reads pattern arguments it left out: a pattern built at the call
+   from a local variable, an interpolated string or a heredoc
+   (`"/^{$part}$/"`), an integer, a `sprintf()` whose format holds only
+   `%s`, `%d` and `%%`, or an `implode()` of literals; a ternary, `?:`, `??`
+   or a `match`, at the call or as the value of a variable, and a ternary
+   or a `??` as the value of a constant; an array of patterns held in a
+   local variable, the target of a `foreach` over literals, and an item of
+   such an array (`$map['word']`, `self::MAP['word']`); a variable at file
+   level, when no call stands between its assignment and its read;
+   `self::X` in a closure written as
+   an argument of `array_map()`, `array_filter()`, `usort()`,
+   `preg_replace_callback()` and the other PHP functions that call it
+   themselves; a global `const` or `define()` of another file of the
+   project. A part that may take several values gives one pattern per
+   value, 32 at most. More patterns read means more findings on unchanged
+   code.
+ * `DIRECTORY_SEPARATOR`, `PHP_EOL` and `PATH_SEPARATOR` in a pattern give
+   one pattern per value the constant takes, on Windows and elsewhere. An
+   issue that holds for one value only is at most a warning, and its
+   message ends by naming it: `Holds when DIRECTORY_SEPARATOR is "\".`
+ * Every pattern argument of the PHP calls is counted. The report ends on
+   the number no rule could verify, `Not verifiable: 3 pattern arguments
+   (1 dynamic, 1 around a dynamic part, 1 around preg_quote())`, when there
+   are some, and the JSON `stats` carry five counts, always present:
+   `arguments_constant`, `arguments_finite_set`, `arguments_quoted_shell`,
+   `arguments_raw_shell` and `arguments_opaque`.
+ * `reportDynamic` in `regex.json`, off by default, lists each of these
+   arguments as an info, at the argument: `regex.lint.source.dynamic` (the
+   pattern is built at run time), `regex.lint.source.dynamicPart` (it holds
+   a part built at run time) or `regex.lint.source.quotedPart` (it holds a
+   `preg_quote()` text). Such a result has no `pattern` in the JSON report:
+   the new `expression` key, `null` on every other result, holds the
+   argument as the file writes it. None of the three is a lint rule, and a
+   marker naming one is passed over when the list is off. An earlier
+   release refuses a `regex.json` that holds `reportDynamic`, as any key it
+   does not know.
  * The overlapping branches of an alternation are found without comparing
    every pair of them: branches whose first characters never meet are not
    compared, and the texts the others start with are read in byte order,

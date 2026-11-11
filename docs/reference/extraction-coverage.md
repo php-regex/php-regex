@@ -80,11 +80,11 @@ An attribute is read from the PHP file, once.
 | A concatenation at the call, `'/'.self::PART.'/'` | Yes | Yes | No² | Types | Types | Yes | Yes |
 | A constant of the same file, `self::RE`, `Patterns::RE`, `RE` | Yes | Yes | Yes | Types | Types | Yes | Yes |
 | `static::RE` of a class that may be extended | No | No | No | No | No | No | No |
-| A constant of another file | No | No | No | Types | Types | No | No |
+| A constant of another file | Yes | Yes | Yes | Types | Types | Yes | Yes |
 | A local variable whose every assignment that may reach the call is a literal | Yes | Yes | Yes | Types | Types | Yes | Yes |
 | A private or protected property of a `final` class, `$this->re`, out of a closure (protected: the class extends none) | Yes | Yes | Yes | No³ | No³ | Yes | Yes |
-| A ternary or a `match` over literals | No | No | No | Types | No | No | No |
-| A concatenation with `preg_quote()` of a text not known | No | No | No | No | No⁴ | No | No |
+| A ternary or a `match` over literals | Yes | Yes | Yes | Types | No | Yes | Yes |
+| A concatenation with `preg_quote()` of a text not known | No⁵ | No⁵ | No | No | No⁴ | No⁵ | No⁵ |
 
 ² A diagnostic needs one string literal to land in; `regex lint` reports these
 patterns, the editor does not show them.
@@ -93,6 +93,15 @@ patterns, the editor does not show them.
 
 ⁴ Psalm types `$matches` from the rest of such a pattern, but judges no
 pattern it cannot read whole.
+
+⁵ Counted, not judged: the run ends on the number of pattern arguments it
+could not verify, those around a `preg_quote()` text apart, and
+`regex lint --report-dynamic` lists each one (see
+[Arguments built at run time](../guides/cli.md#arguments-built-at-run-time)).
+
+A pattern built at the call from a part that may take several values, a
+ternary inside a concatenation say, gives `regex lint` one pattern per
+value, up to 32: past that number it reads none of them.
 
 The rules `regex lint` follows to read a name, and where it reports a
 pattern read that way, are in [the CLI guide](../guides/cli.md#patterns-held-in-a-constant-a-variable-or-a-property).

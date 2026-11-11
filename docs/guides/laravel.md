@@ -268,7 +268,7 @@ header; the JSON report carries it as a top-level `target` object:
 ```json
 {
     "target": {"php": "8.2", "pcre": "10.40", "locale": "C", "source": "config php-regex.php_version", "range": [{"php": "8.2", "pcre": "10.40"}]},
-    "stats": {"errors": 0, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0, "not_analyzed": 0},
+    "stats": {"errors": 0, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0, "not_analyzed": 0, "arguments_constant": 0, "arguments_finite_set": 0, "arguments_quoted_shell": 0, "arguments_raw_shell": 0, "arguments_opaque": 0},
     "results": []
 }
 ```
@@ -307,6 +307,19 @@ app/Legacy`) go to stderr, as `regex lint` writes them, so
 the Laravel package run the same lint, and print it the same way. Under
 `-v` the title names the author and the report ends on a request for a
 GitHub star.
+
+Under its summary line, the report says how many pattern arguments of the
+PHP calls are built at run time, which no rule can verify, as `regex lint`
+says it:
+
+```
+  Not verifiable: 3 pattern arguments (1 dynamic, 1 around a dynamic part, 1 around preg_quote())
+```
+
+The line is left out when there is none (see
+[Arguments built at run time](cli.md#arguments-built-at-run-time)). The
+command does not list them one by one:
+`vendor/bin/regex lint --report-dynamic` does.
 
 Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration

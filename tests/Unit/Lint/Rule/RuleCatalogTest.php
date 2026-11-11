@@ -176,6 +176,42 @@ final class RuleCatalogTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{id: string}>
+     */
+    public static function provideIssuesOfArgumentsBuiltAtRunTime(): iterable
+    {
+        yield 'nothing static' => ['id' => 'regex.lint.source.dynamic'];
+        yield 'a part built at run time' => ['id' => 'regex.lint.source.dynamicPart'];
+        yield 'a preg_quote() text' => ['id' => 'regex.lint.source.quotedPart'];
+    }
+
+    /**
+     * The three issues of a pattern argument built at run time are issues
+     * of the catalogue: each links to a section of its own on the page of
+     * the rules. None is a lint rule, and a rules map names none of them:
+     * the report is asked for apart.
+     */
+    #[Test]
+    #[DataProvider('provideIssuesOfArgumentsBuiltAtRunTime')]
+    public function test_an_issue_of_an_argument_built_at_run_time_is_in_the_catalogue_and_in_no_rules_map(string $id): void
+    {
+        $url = RuleCatalog::docsUrl($id);
+        $this->assertIsString($url);
+        $this->assertMatchesRegularExpression('~^https://php-regex\.com/reference/rules/#[a-z0-9-]+$~', $url);
+        $this->assertSame($url, RuleCatalog::docsUrls()[$id] ?? null);
+
+        $others = array_diff_key(RuleCatalog::docsUrls(), [$id => true]);
+        $this->assertNotContains($url, $others, 'A section of its own.');
+
+        $short = substr($id, \strlen('regex.lint.'));
+        $this->assertFalse(RuleCatalog::isConfigurable($id));
+        $this->assertFalse(RuleCatalog::isConfigurable($short));
+        $this->assertNotContains($short, RuleCatalog::lintRuleIds());
+        $this->assertNotContains($short, RuleCatalog::configurableIds());
+        $this->assertNotContains($short, RuleCatalog::rulesOffByDefault());
+    }
+
+    /**
      * A rules map turns a check on or off under either spelling: false
      * under one of them wins, an id it does not name runs as the catalogue
      * runs it by default, and an id the catalogue does not know runs.

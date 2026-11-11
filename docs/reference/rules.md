@@ -31,7 +31,7 @@ This reference documents every lint rule that PHPRegex produces. It serves as th
 | [Bytes Without /u](#bytes-without-u)        | Multibyte text read as bytes      |
 | [Inline Flags](#inline-flags)                | Inline flag diagnostics           |
 | [Pattern Complexity](#pattern-complexity)    | When a pattern is too complex     |
-| [Sources](#sources)                          | A file the lint could not read    |
+| [Sources](#sources)                          | What the lint could not read      |
 | [ReDoS Security](#security-redos)            | Catastrophic backtracking         |
 | [Advanced Syntax](#advanced-syntax)          | Pointers to the tutorial          |
 | [Compatibility](#compatibility--limitations) | PHP and PCRE2 support             |
@@ -1453,6 +1453,93 @@ write, as a large generated file.
 
 ---
 
+### Pattern Built at Run Time
+
+**Identifier:** `regex.lint.source.dynamic` (info)
+
+**When it triggers:** Under `regex lint --report-dynamic`, or `"reportDynamic": true` in
+`regex.json`, on a pattern argument of which the file proves nothing: a parameter, the result
+of a method, a property the lint does not read, or a text that does not start with a literal,
+whose delimiter is then unknown. No rule ran on it: the issue says so, at the argument,
+instead of leaving the call out silently. Without the option the run only counts these
+arguments, as the `dynamic` figure of its `Not verifiable` line.
+
+**Message:** `The pattern is built at run time: it is not verified.`
+
+**Example:**
+```php
+public function matches(string $pattern, string $text): bool
+{
+    return 1 === preg_match($pattern, $text);  // reported at $pattern
+}
+```
+
+It is an info and never fails a run. It is no lint rule: `checks.lint.rules`, `--enable-rule`
+and `--disable-rule` do not name it, and `--report-dynamic` turns it on with the two below.
+In the JSON report its result has no `pattern`; the argument is under `expression`, as the
+file writes it.
+
+**Fix:** None is needed when the pattern is meant to come from elsewhere: validate it where
+it enters the program, with `Regex::create()->validate($pattern)` for a pattern a user or a
+configuration gives. A marker on the line silences the issue,
+`// @regex-ignore regex.lint.source.dynamic`. When the text is in the file after all,
+[the CLI guide](../guides/cli.md#patterns-held-in-a-constant-a-variable-or-a-property) lists
+what the lint follows and what it does not.
+
+---
+
+### Pattern Around a Part Built at Run Time
+
+**Identifier:** `regex.lint.source.dynamicPart` (info)
+
+**When it triggers:** Under `regex lint --report-dynamic`, on a pattern argument that starts
+with a literal and holds a part the file does not prove, other than a `preg_quote()` call. The
+part decides whether the pattern compiles and what it matches (`.*`, `a|`, an unclosed group),
+so no rule ran on the rest either. Without the option the run counts these arguments as the
+`around a dynamic part` figure of its `Not verifiable` line.
+
+**Message:** `The pattern holds a part built at run time: it is not verified.`
+
+**Example:**
+```php
+public function startsWith(string $prefix, string $text): bool
+{
+    return 1 === preg_match('/^' . $prefix . '\d+$/', $text);  // reported at '/^'
+}
+```
+
+**Fix:** When the part is a text to match as it is, pass it through `preg_quote()` with the
+delimiter of the pattern. When it is a fragment of a pattern on purpose, nothing is to fix:
+validate the whole pattern where it is built, or silence the line with
+`// @regex-ignore regex.lint.source.dynamicPart`.
+
+---
+
+### Pattern Around a Quoted Text
+
+**Identifier:** `regex.lint.source.quotedPart` (info)
+
+**When it triggers:** Under `regex lint --report-dynamic`, on a pattern argument that starts
+with a literal and whose every part the file does not prove is a `preg_quote()` call: written
+in the pattern, assigned to a variable first, or given to `sprintf()`. The text is known at run
+time only, so the pattern is not linted. Without the option the run counts these arguments as
+the `around preg_quote()` figure of its `Not verifiable` line.
+
+**Message:** `The pattern holds a preg_quote() text: it is not verified.`
+
+**Example:**
+```php
+public function hasWord(string $word, string $text): bool
+{
+    return 1 === preg_match('/\b' . preg_quote($word, '/') . '\b/i', $text);  // reported at '/\b'
+}
+```
+
+**Fix:** Nothing is wrong with the call. Silence the line with
+`// @regex-ignore regex.lint.source.quotedPart` when the list should stay short.
+
+---
+
 ## Security (ReDoS)
 
 ### Catastrophic Backtracking
@@ -1636,3 +1723,6 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | Targets     | `regex.lint.compat.meaningChanges`                                                        | warning  | Write it alike for every PHP      |
 | ReDoS       | `regex.lint.redos.search` (`regex.redos.search` in PHPStan)                               | warning in every mode; ReDoS severity `medium`, shown from `--redos-threshold=medium` | Anchor the pattern or bound the run |
 | Sources     | `regex.lint.source.unreadable`                                                       | error    | A source file could not be read, so its patterns were not linted — fix what the message names: raise `memory_limit`, or exclude the file |
+| Sources     | `regex.lint.source.dynamic` (under `--report-dynamic`)                               | info     | The pattern comes from elsewhere: validate it where it enters the program |
+| Sources     | `regex.lint.source.dynamicPart` (under `--report-dynamic`)                           | info     | Quote a text with `preg_quote()`, or validate the pattern where it is built |
+| Sources     | `regex.lint.source.quotedPart` (under `--report-dynamic`)                            | info     | Nothing to fix: the pattern holds a text known at run time only |

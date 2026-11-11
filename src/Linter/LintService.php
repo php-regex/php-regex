@@ -18,11 +18,13 @@ use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Resolution\ArgumentState;
 
 /**
  * Aggregates pattern sources and produces lint results.
@@ -120,26 +122,33 @@ final class LintService
      */
     public function analyze(array $patterns, LintRequest $request, ?LintProgress $progress = null): LintReport
     {
-        [$patterns, $markers, $targets] = self::readScans($patterns);
-        $progress?->step(LintProgress::STEP_ANALYSIS, \count($patterns));
+        [$occurrences, $markers, $targets, $arguments] = self::readScans($patterns);
+        $progress?->step(LintProgress::STEP_ANALYSIS, \count($occurrences));
         // The optimizations take what the analysis read: no pattern is
         // parsed or validated twice.
         [$issues, $analyzed] = $request->checkOptimizations
-            ? $this->analysis->lintForSuggestions($patterns, $progress, $request->analysisWorkers)
-            : [$this->analysis->lint($patterns, $progress, $request->analysisWorkers), null];
+            ? $this->analysis->lintForSuggestions($occurrences, $progress, $request->analysisWorkers)
+            : [$this->analysis->lint($occurrences, $progress, $request->analysisWorkers), null];
         $progress?->finish();
         $issues = $this->filterLintIssues($issues);
         $issues = $this->filterIssuesByRequest($issues, $request);
+        // Compared here, where the issues of every worker are together:
+        // the patterns of one argument may be analysed by two of them.
+        $issues = $this->heldOnSomeSystemsOnly($issues, $occurrences);
         $issues = $this->deduplicateIssues($issues);
 
         /** @var array<array{file: string, line: int, optimization: OptimizationResult, savings: int, source?: string}> $optimizations */
         $optimizations = [];
         if ($request->checkOptimizations) {
-            $progress?->step(LintProgress::STEP_OPTIMIZATIONS, \count($patterns));
-            $optimizations = $this->keepRouteFlags(array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $request->optimizations, $request->analysisWorkers, $progress, $analyzed)), $request->minSavings);
+            $progress?->step(LintProgress::STEP_OPTIMIZATIONS, \count($occurrences));
+            $optimizations = $this->keepRouteFlags(array_values($this->analysis->suggestOptimizations($occurrences, $request->minSavings, $request->optimizations, $request->analysisWorkers, $progress, $analyzed)), $request->minSavings);
             $progress?->finish();
         }
 
+        // Each argument is one issue, the copies of one expression
+        // included: they are added once the issues told twice are dropped.
+        $reported = $request->reportDynamic ? array_values(array_filter($arguments, self::isBuiltAtRunTime(...))) : [];
+        array_push($issues, ...self::argumentIssues($reported));
         array_push($issues, ...$this->targetMarkerIssues($targets));
         $used = [];
         $issues = self::silence(array_values($issues), $markers, $used, static fn (LintIssue $issue): array => [$issue->file, $issue->line, $issue->id()]);
@@ -148,24 +157,32 @@ final class LintService
             array_push($issues, ...self::unmatchedIgnores($markers, $used, fn (string $identifier): bool => $this->leavesOff($identifier, $request)));
         }
 
-        $results = $this->combineResults($issues, $optimizations, $patterns);
+        $results = $this->combineResults($issues, $optimizations, $occurrences, $reported);
 
+        // The arguments are counted whatever the run reports of them.
         $stats = LintStatsCounter::count($results, $patterns);
 
         return new LintReport($results, $stats);
     }
 
     /**
-     * Whether a run has nothing to analyse: no pattern, and no inline
-     * marker to report.
+     * Whether a run has nothing to analyse: no pattern, no inline marker
+     * to report, and no pattern argument built at run time to report when
+     * the run reports them.
      *
      * @param array<PatternOccurrence> $patterns
      */
-    public static function holdsNothing(array $patterns, bool $reportUnmatchedIgnores): bool
+    public static function holdsNothing(array $patterns, bool $reportUnmatchedIgnores, bool $reportDynamic = false): bool
     {
         foreach ($patterns as $pattern) {
-            // The state of an argument is no pattern to analyse.
+            // The state of an argument is no pattern to analyse: it is
+            // something to report only when the run reports the arguments
+            // built at run time.
             if (null !== $pattern->state) {
+                if ($reportDynamic && self::isBuiltAtRunTime($pattern)) {
+                    return false;
+                }
+
                 continue;
             }
 
@@ -178,13 +195,14 @@ final class LintService
     }
 
     /**
-     * The occurrences to analyse, and the inline markers of each file read:
-     * an occurrence a marker silences whole is analysed all the same when
-     * the markers of its file are known, its issues dropped afterwards.
+     * The occurrences to analyse, the inline markers of each file read,
+     * and the pattern arguments of the calls: an occurrence a marker
+     * silences whole is analysed all the same when the markers of its file
+     * are known, its issues dropped afterwards.
      *
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array{list<PatternOccurrence>, array<string, list<IgnoreMarker>>, array<string, list<TargetMarker>>}
+     * @return array{list<PatternOccurrence>, array<string, list<IgnoreMarker>>, array<string, list<TargetMarker>>, list<PatternOccurrence>}
      */
     private static function readScans(array $patterns): array
     {
@@ -198,16 +216,107 @@ final class LintService
         }
 
         $occurrences = [];
+        $arguments = [];
         foreach ($patterns as $pattern) {
-            // A file read and the state of an argument hold no pattern.
-            if (null !== $pattern->ignores || null !== $pattern->state) {
+            // A file read holds no pattern.
+            if (null !== $pattern->ignores) {
+                continue;
+            }
+
+            // Neither does the state of an argument.
+            if (null !== $pattern->state) {
+                $arguments[] = $pattern;
+
                 continue;
             }
 
             $occurrences[] = $pattern->isIgnored && isset($markers[$pattern->file]) ? $pattern->analysed() : $pattern;
         }
 
-        return [$occurrences, $markers, $targets];
+        return [$occurrences, $markers, $targets, $arguments];
+    }
+
+    /**
+     * Whether an occurrence is a pattern argument no rule ran on: one that
+     * holds a part known at run time only, quoted or not, or nothing
+     * static.
+     */
+    private static function isBuiltAtRunTime(PatternOccurrence $occurrence): bool
+    {
+        return \in_array(LintStatsCounter::state($occurrence), [ArgumentState::Opaque, ArgumentState::RawShell, ArgumentState::QuotedShell], true);
+    }
+
+    /**
+     * An info for each pattern argument built at run time, where the
+     * argument starts, under the identifier of its state.
+     *
+     * @param list<PatternOccurrence> $arguments
+     *
+     * @return list<LintIssue>
+     */
+    private static function argumentIssues(array $arguments): array
+    {
+        $issues = [];
+        foreach ($arguments as $argument) {
+            [$issueId, $message] = match (LintStatsCounter::state($argument)) {
+                ArgumentState::RawShell => [RuleCatalog::SOURCE_DYNAMIC_PART, 'The pattern holds a part built at run time: it is not verified.'],
+                ArgumentState::QuotedShell => [RuleCatalog::SOURCE_QUOTED_PART, 'The pattern holds a preg_quote() text: it is not verified.'],
+                default => [RuleCatalog::SOURCE_DYNAMIC, 'The pattern is built at run time: it is not verified.'],
+            };
+
+            $issues[] = LintIssue::at($argument, LintSeverity::Info, $message, $issueId);
+        }
+
+        return $issues;
+    }
+
+    /**
+     * An argument built of a constant of PHP whose value depends on the
+     * system holds one pattern for each value. Their issues are compared
+     * by identifier, at the place the patterns are reported: one every
+     * value raises is the issue of the code, and stays as it is; one some
+     * values raise only holds on those systems alone, is a warning at
+     * most, and says which value it holds for.
+     *
+     * @param list<LintIssue>         $issues
+     * @param list<PatternOccurrence> $occurrences
+     *
+     * @return list<LintIssue>
+     */
+    private function heldOnSomeSystemsOnly(array $issues, array $occurrences): array
+    {
+        // What the patterns of each place say of the constant.
+        $variants = [];
+        foreach ($occurrences as $occurrence) {
+            if (null !== $occurrence->variant) {
+                $variants[$this->createPatternKey($occurrence->file, $occurrence->line, $occurrence->source, $occurrence->fileOffset)][$occurrence->variant] = true;
+            }
+        }
+
+        if ([] === $variants) {
+            return $issues;
+        }
+
+        // What those that raise each identifier say of it.
+        $raisedBy = [];
+        foreach ($issues as $issue) {
+            if (null !== $issue->variant) {
+                $raisedBy[$this->createPatternKey($issue->file, $issue->line, $issue->source, $issue->fileOffset)][(string) $issue->id()][$issue->variant] = true;
+            }
+        }
+
+        foreach ($issues as $index => $issue) {
+            if (null === $issue->variant) {
+                continue;
+            }
+
+            $place = $this->createPatternKey($issue->file, $issue->line, $issue->source, $issue->fileOffset);
+            if (\count($raisedBy[$place][(string) $issue->id()]) < \count($variants[$place] ?? [])) {
+                $issues[$index] = $issue->onVariantAlone();
+            }
+        }
+
+        return $issues;
     }
 
     /**
@@ -335,12 +444,14 @@ final class LintService
     /**
      * Whether the run leaves off the check an issue identifier names: the
      * validation, the ReDoS analysis, the optimizations, the complexity
-     * report, or what the analysis leaves off itself. An identifier the
-     * library does not know is no check left off.
+     * report, the report of the pattern arguments built at run time, or
+     * what the analysis leaves off itself. An identifier the library does
+     * not know is no check left off.
      */
     private function leavesOff(string $identifier, LintRequest $request): bool
     {
         return match (true) {
+            RuleCatalog::SOURCE_DYNAMIC === $identifier, RuleCatalog::SOURCE_DYNAMIC_PART === $identifier, RuleCatalog::SOURCE_QUOTED_PART === $identifier => !$request->reportDynamic,
             null !== ErrorCode::tryFrom($identifier) => !$request->checkValidation,
             RedosVerdict::ISSUE_ID === $identifier, RedosVerdict::SEARCH_ISSUE_ID === $identifier => !$request->checkRedos || $this->analysis->leavesOff($identifier),
             self::ISSUE_ID_OPTIMIZATION === $identifier => !$request->checkOptimizations,
@@ -446,7 +557,8 @@ final class LintService
      * The issues with each one reported twice dropped: a file a run is
      * given twice is read twice. Two findings of one pattern that share
      * their message, as two useless quantifiers, stand apart by their
-     * position in the pattern.
+     * position in the pattern; the same finding of two patterns an
+     * argument holds at one place, by the pattern.
      *
      * @param list<LintIssue> $issues
      *
@@ -458,7 +570,7 @@ final class LintService
         $unique = [];
 
         foreach ($issues as $issue) {
-            $key = implode("\0", [$issue->file, $issue->line, $issue->column, $issue->fileOffset, $issue->position, $issue->issueId, $issue->message]);
+            $key = implode("\0", [$issue->file, $issue->line, $issue->column, $issue->fileOffset, $issue->position, $issue->issueId, $issue->message, $issue->pattern]);
             if (isset($seen[$key])) {
                 continue;
             }
@@ -473,16 +585,23 @@ final class LintService
     /**
      * @param list<LintIssue>          $issues
      * @param array<PatternOccurrence> $originalPatterns
+     * @param list<PatternOccurrence>  $arguments        the pattern arguments the run reports: the result of
+     *                                                   each holds no pattern, and gives the argument as the
+     *                                                   source writes it
      *
      * @phpstan-param array<OptimizationEntry> $optimizations
      *
      * @phpstan-return array<LintResult>
      */
-    private function combineResults(array $issues, array $optimizations, array $originalPatterns): array
+    private function combineResults(array $issues, array $optimizations, array $originalPatterns, array $arguments = []): array
     {
         $workingDirectory = getcwd();
         $workingDirectory = false === $workingDirectory ? null : $workingDirectory;
         $patternMap = $this->createPatternMap($originalPatterns, $workingDirectory);
+        $expressions = [];
+        foreach ($arguments as $argument) {
+            $expressions[$this->createPatternKey(RelativePathHelper::relativize($argument->file, $workingDirectory), $argument->line, $argument->source, $argument->fileOffset)] = $argument->expression;
+        }
         /** @var array<string, LintResult> $results */
         $results = [];
 
@@ -497,7 +616,7 @@ final class LintService
         }, $optimizations);
         usort($optimizations, self::compareLocations(...));
 
-        $this->addIssuesToResults($issues, $patternMap, $results);
+        $this->addIssuesToResults($issues, $patternMap, $results, $expressions);
         $this->addOptimizationsToResults($optimizations, $patternMap, $results);
 
         $results = array_values($results);
@@ -508,15 +627,16 @@ final class LintService
 
     /**
      * The order of the results: file (bytewise), line, column, offset in the
-     * file, then source; an unknown value sorts first.
+     * file, source, then pattern (bytewise), which orders the patterns an
+     * argument holds at one place; an unknown value sorts first.
      *
-     * @param array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, ...} $left
-     * @param array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, ...} $right
+     * @param array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern?: string|null, ...} $left
+     * @param array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern?: string|null, ...} $right
      */
     private static function compareLocations(array $left, array $right): int
     {
-        return [strcmp($left['file'], $right['file']) <=> 0, $left['line'], self::nullFirst($left['column'] ?? null), self::nullFirst($left['fileOffset'] ?? null), self::nullFirst($left['source'] ?? null)]
-            <=> [0, $right['line'], self::nullFirst($right['column'] ?? null), self::nullFirst($right['fileOffset'] ?? null), self::nullFirst($right['source'] ?? null)];
+        return [strcmp($left['file'], $right['file']) <=> 0, $left['line'], self::nullFirst($left['column'] ?? null), self::nullFirst($left['fileOffset'] ?? null), self::nullFirst($left['source'] ?? null), self::nullFirst($left['pattern'] ?? null)]
+            <=> [0, $right['line'], self::nullFirst($right['column'] ?? null), self::nullFirst($right['fileOffset'] ?? null), self::nullFirst($right['source'] ?? null), self::nullFirst($right['pattern'] ?? null)];
     }
 
     /**
@@ -541,22 +661,67 @@ final class LintService
     }
 
     /**
+     * The pattern each result shows, by the key of the result. A place
+     * that holds one pattern is one result. An argument composed at the
+     * call of a part that takes several values holds several patterns at
+     * one place: each is a result of its own, keyed by the place and the
+     * pattern.
+     *
      * @param array<PatternOccurrence> $originalPatterns
      *
      * @return array<string, array{pattern: string, location: string|null}>
      */
     private function createPatternMap(array $originalPatterns, ?string $workingDirectory): array
     {
-        $map = [];
+        $places = [];
         foreach ($originalPatterns as $pattern) {
             $key = $this->createPatternKey(RelativePathHelper::relativize($pattern->file, $workingDirectory), $pattern->line, $pattern->source, $pattern->fileOffset);
-            $map[$key] = [
+            $places[$key][$pattern->pattern] = [
                 'pattern' => $pattern->displayPattern ?? $pattern->pattern,
                 'location' => $pattern->location,
             ];
         }
 
+        $map = [];
+        foreach ($places as $key => $patterns) {
+            if (1 === \count($patterns)) {
+                $map[$key] = current($patterns);
+
+                continue;
+            }
+
+            foreach ($patterns as $pattern => $data) {
+                $map[self::keyOfPattern($key, (string) $pattern)] = $data;
+            }
+        }
+
         return $map;
+    }
+
+    /**
+     * The key of the result of one of the patterns a place holds.
+     */
+    private static function keyOfPattern(string $place, string $pattern): string
+    {
+        return $place."\0".$pattern;
+    }
+
+    /**
+     * The key of the result a finding or an optimization of $pattern at
+     * $place belongs to: that of the pattern when the place holds several,
+     * that of the place otherwise.
+     *
+     * @param array<string, array{pattern: string, location: string|null}> $patternMap
+     */
+    private static function resultKey(string $place, ?string $pattern, array $patternMap): string
+    {
+        if (null === $pattern || isset($patternMap[$place])) {
+            return $place;
+        }
+
+        $key = self::keyOfPattern($place, $pattern);
+
+        return isset($patternMap[$key]) ? $key : $place;
     }
 
     private function createPatternKey(string $file, int $line, ?string $source = null, ?int $fileOffset = null): string
@@ -567,21 +732,24 @@ final class LintService
     }
 
     /**
-     * @param list<LintIssue> $issues
+     * @param list<LintIssue>            $issues
+     * @param array<string, string|null> $expressions the argument each result that holds no pattern stands for, as the source writes it
      *
      * @phpstan-param array<string, array{pattern: string, location: string|null}> $patternMap
      * @phpstan-param array<string, LintResult> $results
      */
-    private function addIssuesToResults(array $issues, array $patternMap, array &$results): void
+    private function addIssuesToResults(array $issues, array $patternMap, array &$results, array $expressions = []): void
     {
         foreach ($issues as $issue) {
-            $key = $this->createPatternKey($issue->file, $issue->line, $issue->source, $issue->fileOffset);
+            $place = $this->createPatternKey($issue->file, $issue->line, $issue->source, $issue->fileOffset);
+            $key = self::resultKey($place, $issue->pattern, $patternMap);
 
             $patternData = $patternMap[$key] ?? null;
             $results[$key] ??= $this->createResultStructure(
                 ['file' => $issue->file, 'line' => $issue->line, 'column' => $issue->column, 'fileOffset' => $issue->fileOffset, 'source' => $issue->source],
                 $patternData['pattern'] ?? null,
                 $patternData['location'] ?? null,
+                null === $patternData ? $expressions[$place] ?? null : null,
             );
             $results[$key]['issues'][] = $issue;
         }
@@ -595,12 +763,12 @@ final class LintService
     private function addOptimizationsToResults(array $optimizations, array $patternMap, array &$results): void
     {
         foreach ($optimizations as $opt) {
-            $key = $this->createPatternKey(
+            $key = self::resultKey($this->createPatternKey(
                 $opt['file'],
                 $opt['line'],
                 $opt['source'] ?? null,
                 $opt['fileOffset'] ?? null,
-            );
+            ), $opt['optimization']->original, $patternMap);
             $patternData = $patternMap[$key] ?? null;
             $pattern = \is_array($patternData) ? $patternData['pattern'] : null;
             $pattern ??= $opt['optimization']->original;
@@ -620,9 +788,9 @@ final class LintService
      *
      * @return LintResult
      */
-    private function createResultStructure(array $item, ?string $pattern, ?string $location = null): array
+    private function createResultStructure(array $item, ?string $pattern, ?string $location = null, ?string $expression = null): array
     {
-        return [
+        $result = [
             'file' => $item['file'],
             'line' => $item['line'],
             'column' => $item['column'] ?? null,
@@ -633,5 +801,13 @@ final class LintService
             'issues' => [],
             'optimizations' => [],
         ];
+
+        // A result that stands for an argument built at run time holds no
+        // pattern: it gives the argument as the source writes it.
+        if (null !== $expression) {
+            $result['expression'] = $expression;
+        }
+
+        return $result;
     }
 }

@@ -50,6 +50,7 @@ namespace PHPRegex\Linter\Config;
  *     checkComplexity?: bool,
  *     complexityThreshold?: int,
  *     reportUnmatchedIgnores?: bool,
+ *     reportDynamic?: bool,
  * }
  *
  * @phpstan-import-type LintConfig from LintConfigResult
@@ -84,6 +85,9 @@ final class LintDefaultsBuilder
         }
         if (isset($config['reportUnmatchedIgnores'])) {
             $defaults['reportUnmatchedIgnores'] = $config['reportUnmatchedIgnores'];
+        }
+        if (isset($config['reportDynamic'])) {
+            $defaults['reportDynamic'] = $config['reportDynamic'];
         }
 
         $extraction = $config['extraction'] ?? [];
