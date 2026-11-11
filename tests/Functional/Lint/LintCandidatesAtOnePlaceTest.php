@@ -33,8 +33,12 @@ use PHPUnit\Framework\TestCase;
  * The engine, PHP 8.4.27 and PCRE2 10.49 (php -r, preg_match() and its
  * warning):
  *
- *   /^(a)+$/   matches "aa"
- *   /^(a+$/    missing closing parenthesis at offset 5
+ *   /^(a)+$/     matches "aa" and keeps "a", the last capture
+ *   /^(a+$/      missing closing parenthesis at offset 5
+ *   /^[aa]b$/    matches "ab" and not "b", as /^[a]b$/; /^[aa]c$/ the same with "c"
+ *   /^(?:a)x$/   matches "ax" and not "x", as /^ax$/; /^(?:a)y$/ the same with "y"
+ *   /^a$/        matches "a"
+ *   /^a{1}$/     matches "a" and not "aa", as /^a$/
  */
 final class LintCandidatesAtOnePlaceTest extends TestCase
 {
@@ -42,7 +46,7 @@ final class LintCandidatesAtOnePlaceTest extends TestCase
     use TemporaryProject;
 
     /**
-     * @return iterable<string, array{argument: string, patterns: list<string>}>
+     * @return iterable<string, array{argument: string, patterns: list<string>, refused: array<string, string>}>
      */
     public static function provideArguments(): iterable
     {
@@ -50,31 +54,38 @@ final class LintCandidatesAtOnePlaceTest extends TestCase
         yield 'an issue of each pattern' => [
             'argument' => "'/^(a' . (\$flag ? ')+' : '+') . '$/'",
             'patterns' => ['/^(a)+$/', '/^(a+$/'],
+            'refused' => ['/^(a+$/' => 'preg_match(): Compilation failed: missing closing parenthesis at offset 5'],
         ];
         // The class written twice stands in both: each pattern says it.
         yield 'an issue both patterns raise' => [
             'argument' => "'/^[aa]' . (\$flag ? 'b' : 'c') . '$/'",
             'patterns' => ['/^[aa]b$/', '/^[aa]c$/'],
+            'refused' => [],
         ];
         yield 'an optimization of each pattern' => [
             'argument' => "'/^(?:a)' . (\$flag ? 'x' : 'y') . '$/'",
             'patterns' => ['/^(?:a)x$/', '/^(?:a)y$/'],
+            'refused' => [],
         ];
         yield 'an issue of one pattern alone' => [
             'argument' => "'/^a' . (\$flag ? '' : '{1}') . '$/'",
             'patterns' => ['/^a$/', '/^a{1}$/'],
+            'refused' => [],
         ];
     }
 
     /**
-     * @param list<string> $patterns the patterns of the argument, in byte order
+     * @param list<string>          $patterns the patterns of the argument, in byte order
+     * @param array<string, string> $refused  what the engine says of each pattern it does not compile
      */
     #[Test]
     #[DataProvider('provideArguments')]
-    public function test_each_pattern_of_an_argument_is_reported_as_its_literal_is(string $argument, array $patterns): void
+    public function test_each_pattern_of_an_argument_is_reported_as_its_literal_is(string $argument, array $patterns, array $refused): void
     {
-        $this->assertTrue(EngineProbe::compiles('/^(a)+$/'));
-        $this->assertSame('preg_match(): Compilation failed: missing closing parenthesis at offset 5', EngineProbe::warning('/^(a+$/'));
+        // The engine compiles each pattern of the argument, or refuses it as the row says.
+        foreach ($patterns as $pattern) {
+            $this->assertSame($refused[$pattern] ?? null, EngineProbe::warning($pattern), $pattern);
+        }
 
         // What each pattern is told when a literal holds it, one call a line.
         $literals = "<?php\n\n";
@@ -105,6 +116,16 @@ final class LintCandidatesAtOnePlaceTest extends TestCase
             foreach ($results as $result) {
                 // All where the argument starts.
                 $this->assertSame(['app/a.php', 5, 16], $result['place'], $name);
+
+                // Each rewrite is of the pattern it stands under, and the engine matches both alike.
+                foreach ($result['optimizations'] as [$original, $optimized]) {
+                    $this->assertSame($result['pattern'], $original, $name);
+                    $this->assertIsString($original);
+                    $this->assertIsString($optimized);
+                    foreach (['ax', 'ay', 'a', 'x', 'aax', ''] as $subject) {
+                        $this->assertSame(preg_match($original, $subject), preg_match($optimized, $subject), $name.': '.$optimized.' on "'.$subject.'"');
+                    }
+                }
             }
 
             // In the byte order of the patterns, the order they are given in here.
@@ -113,6 +134,38 @@ final class LintCandidatesAtOnePlaceTest extends TestCase
             $this->assertSame($sorted, $patterns);
             $this->assertSame($told, array_column($results, 'pattern'), $name);
         }
+    }
+
+    /**
+     * What the rows say of their patterns, read by the engine: the group
+     * repeated keeps its last capture, the class written twice and the
+     * group that changes nothing match as the pattern without them, and
+     * the quantifier of one as the atom alone.
+     */
+    #[Test]
+    public function test_the_engine_reads_the_patterns_as_the_rows_say(): void
+    {
+        $this->assertSame(1, preg_match('/^(a)+$/', 'aa', $matches));
+        $this->assertSame(['aa', 'a'], $matches);
+
+        foreach (['ab', 'b', 'aab', 'ac', 'c', ''] as $subject) {
+            $this->assertSame(preg_match('/^[a]b$/', $subject), preg_match('/^[aa]b$/', $subject), $subject);
+            $this->assertSame(preg_match('/^[a]c$/', $subject), preg_match('/^[aa]c$/', $subject), $subject);
+        }
+        $this->assertSame(1, preg_match('/^[aa]b$/', 'ab'));
+        $this->assertSame(1, preg_match('/^[aa]c$/', 'ac'));
+
+        foreach (['ax', 'x', 'aax', 'ay', 'y', ''] as $subject) {
+            $this->assertSame(preg_match('/^ax$/', $subject), preg_match('/^(?:a)x$/', $subject), $subject);
+            $this->assertSame(preg_match('/^ay$/', $subject), preg_match('/^(?:a)y$/', $subject), $subject);
+        }
+        $this->assertSame(1, preg_match('/^(?:a)x$/', 'ax'));
+        $this->assertSame(1, preg_match('/^(?:a)y$/', 'ay'));
+
+        foreach (['a', 'aa', ''] as $subject) {
+            $this->assertSame(preg_match('/^a$/', $subject), preg_match('/^a{1}$/', $subject), $subject);
+        }
+        $this->assertSame(1, preg_match('/^a{1}$/', 'a'));
     }
 
     /**
