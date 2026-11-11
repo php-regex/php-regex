@@ -39,6 +39,11 @@ use PHPUnit\Framework\TestCase;
  * Node\Stmt\DeclareDeclare, PropertyProperty, StaticVar and UseUse, and
  * none of the names below; PHP-Parser 5 declares each of the former as an
  * alias of the latter.
+ *
+ * A property node has its list of hooks from PHP-Parser 5.2 and its
+ * isFinal() method from 5.4 (the changelog of PHP-Parser): before, the
+ * call throws and the list is an undefined property. The linter reads
+ * both from what every release has, the flags and isset().
  */
 final class PhpParserNodeNamesTest extends TestCase
 {
@@ -57,6 +62,16 @@ final class PhpParserNodeNamesTest extends TestCase
         StaticVar::class,
         UseItem::class,
     ];
+
+    #[Test]
+    public function test_a_property_is_read_without_what_php_parser_added_after_its_floor(): void
+    {
+        $source = (string) file_get_contents(\dirname(__DIR__, 4).'/src/Linter/Extraction/AstValueCollector.php');
+
+        $this->assertStringContainsString('$property->flags', $source);
+        $this->assertStringNotContainsString('$property->isFinal()', $source);
+        $this->assertStringNotContainsString('=== $property->hooks', $source);
+    }
 
     #[Test]
     public function test_the_linter_names_no_node_php_parser_4_does_not_know(): void

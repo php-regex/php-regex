@@ -684,8 +684,8 @@ final class AstValueCollector extends NodeVisitorAbstract
         // Another file may write a public property, a subclass replace one
         // of an open class, a parent class write a protected one; a hook
         // computes its own value.
-        // PHP-Parser knows a final property and a hook from 5.2 only:
-        // before, the node has neither the method nor the list.
+        // PHP-Parser gives the node its list of hooks from 5.2 and
+        // isFinal() from 5.4: the flags and isset() read every release.
         $proves = ($property->isPrivate() ? $final || 0 !== ($property->flags & self::FINAL) : $property->isProtected() && $final && !$extends)
             && !$property->isStatic() && !isset($property->hooks[0]);
 
