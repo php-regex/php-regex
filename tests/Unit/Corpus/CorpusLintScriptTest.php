@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Corpus;
 use PHPRegex\Tests\Support\Newlines;
 use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -443,6 +444,47 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertFileDoesNotExist($this->root.'/parts/ownerA__repoNew.json');
     }
 
+    /**
+     * @return iterable<string, array{repository: string, part: string, arguments: list<string>}>
+     */
+    public static function provideRepositoriesWithADynamicArgument(): iterable
+    {
+        // Judged under its own composer.json: the option before another.
+        yield 'a repository that requires a PHP' => ['repository' => 'corpus/ownerD/repoClean', 'part' => 'ownerD__repoClean', 'arguments' => ['--report-dynamic', '--only', 'ownerD']];
+        // Judged under the fallback PHP: the option last.
+        yield 'a repository that requires none' => ['repository' => 'corpus/ownerC/repoBare', 'part' => 'ownerC__repoBare', 'arguments' => ['--only', 'ownerC', '--report-dynamic']];
+    }
+
+    /**
+     * --report-dynamic is a flag of the sweep, passed on to the linter for
+     * both parts of each repository: the console part and the JSON part
+     * report each pattern argument built at run time. Without it neither
+     * does. Such a report is an info: the exit code of the repository does
+     * not move.
+     *
+     * @param list<string> $arguments
+     */
+    #[Test]
+    #[DataProvider('provideRepositoriesWithADynamicArgument')]
+    public function test_report_dynamic_reaches_the_console_part_and_the_json_part(string $repository, string $part, array $arguments): void
+    {
+        file_put_contents($this->root.'/'.$repository.'/dynamic.php', "<?php\n\npreg_match(\$re, \$x);\n");
+        $message = 'The pattern is built at run time: it is not verified.';
+
+        [$code, $output] = $this->script(array_values(array_diff($arguments, ['--report-dynamic'])));
+
+        $exit = $this->line((string) file_get_contents($this->root.'/corpus.log'), '### '.$repository);
+        $this->assertStringNotContainsString($message, (string) file_get_contents($this->root.'/parts/'.$part.'.log'), $output);
+        $this->assertNotContains('regex.lint.source.dynamic', self::issueIds($this->jsonPart($part, $output)));
+
+        [$reportedCode, $output] = $this->script($arguments);
+
+        $this->assertSame($code, $reportedCode, $output);
+        $this->assertSame($exit, $this->line((string) file_get_contents($this->root.'/corpus.log'), '### '.$repository), $output);
+        $this->assertStringContainsString($message, (string) file_get_contents($this->root.'/parts/'.$part.'.log'), $output);
+        $this->assertContains('regex.lint.source.dynamic', self::issueIds($this->jsonPart($part, $output)), $output);
+    }
+
     #[Test]
     public function test_the_json_plan_is_the_console_plan_written_as_json(): void
     {
@@ -582,6 +624,23 @@ final class CorpusLintScriptTest extends TestCase
         $part = json_decode((string) file_get_contents($this->root.'/parts/'.$name.'.json'), true, 512, \JSON_THROW_ON_ERROR);
 
         return $part;
+    }
+
+    /**
+     * The identifier of every issue of a JSON part.
+     *
+     * @param array{target: array{php: string}, results: list<array{line: int, issues: list<array{issue_id: string}>}>, head?: string} $part
+     *
+     * @return list<string>
+     */
+    private static function issueIds(array $part): array
+    {
+        $ids = [];
+        foreach ($part['results'] as $result) {
+            array_push($ids, ...array_column($result['issues'], 'issue_id'));
+        }
+
+        return $ids;
     }
 
     private function loadScriptFunctions(): void
