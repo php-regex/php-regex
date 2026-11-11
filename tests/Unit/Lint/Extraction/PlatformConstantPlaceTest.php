@@ -37,16 +37,16 @@ final class PlatformConstantPlaceTest extends TestCase
     #[Test]
     public function test_every_argument_reading_a_platform_constant_through_one_variable_reports_it(): void
     {
-        $code = <<<'PHP'
+        $code = <<<'PHP_WRAP'
             <?php
-
+        
             function run(string $first, string $second): array
             {
                 $eol = PHP_EOL;
-
+        
                 return [preg_split($eol, $first), preg_split($eol, $second)];
             }
-            PHP;
+            PHP_WRAP;
 
         $this->assertExtractedByBoth([
             ['pattern' => "\n", 'at' => '$eol, $first)', 'location' => null],

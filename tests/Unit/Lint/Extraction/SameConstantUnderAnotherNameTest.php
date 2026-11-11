@@ -75,21 +75,21 @@ final class SameConstantUnderAnotherNameTest extends TestCase
     #[DataProvider('provideCompositionsFollowingOneConstant')]
     public function test_what_follows_one_constant_has_its_value_in_each_pattern(string $argument, array $patterns): void
     {
-        $code = <<<'PHP'
+        $code = <<<'PHP_WRAP'
             <?php
-
+        
             final class Matcher
             {
                 private const WORD = \PHP_INT_SIZE === 8 ? 'cat' : 'dog';
                 private const ALIAS = self::WORD;
                 private const GROUP = '(' . self::WORD . ')';
-
+        
                 public function run(string $s): int
                 {
                     return preg_match(ARGUMENT, $s);
                 }
             }
-            PHP;
+            PHP_WRAP;
         $code = str_replace('ARGUMENT', $argument, $code);
 
         $expected = [];

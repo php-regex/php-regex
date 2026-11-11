@@ -40,7 +40,7 @@ final class ShortTernaryValuesTest extends TestCase
      * first or last, one that is '0', and their counterparts as parts of
      * a pattern.
      */
-    private const CONSTANTS = <<<'PHP'
+    private const CONSTANTS = <<<'PHP_WRAP'
             private const PAIR = \PHP_INT_SIZE === 8 ? '/wide/' : '/narrow/';
             private const BLANK_FIRST = \PHP_INT_SIZE === 8 ? '' : '/after-blank/';
             private const BLANK_LAST = \PHP_INT_SIZE === 8 ? '/before-blank/' : '';
@@ -48,7 +48,7 @@ final class ShortTernaryValuesTest extends TestCase
             private const PART = \PHP_INT_SIZE === 8 ? 'wide' : 'narrow';
             private const NO_PART = \PHP_INT_SIZE === 8 ? '' : 'given';
             private const EITHER_PART = self::NO_PART ?: self::PART;
-        PHP;
+        PHP_WRAP;
 
     /**
      * @return iterable<string, array{argument: string, patterns: list<string>}>
