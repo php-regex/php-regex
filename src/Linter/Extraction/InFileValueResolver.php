@@ -1899,15 +1899,18 @@ final class InFileValueResolver
      * Whether a variable of the file level a pattern is read through
      * holds, where it is written, strings the file proves: joined to
      * another string or compared with one, it runs no code then. One no
-     * pattern is read through is not followed, and proves nothing here.
+     * pattern is read through is not followed, and proves nothing here;
+     * neither does one whose assignment a branch may skip, which holds on
+     * that path whatever it held before.
      */
     private function holdsStrings(string $name, int $at): bool
     {
-        if (!isset($this->followed[self::FILE][$name])) {
+        $variable = ValueExpr::variable(self::FILE, $name, $at);
+        if (!isset($this->followed[self::FILE][$name]) || !$this->assignedOnEveryPath($variable)) {
             return false;
         }
 
-        $values = $this->variable(ValueExpr::variable(self::FILE, $name, $at), self::SELECTED) ?? [];
+        $values = $this->variable($variable, self::SELECTED) ?? [];
         foreach ($values as $value) {
             if (ValueExpr::LITERAL !== $value->kind) {
                 return false;
