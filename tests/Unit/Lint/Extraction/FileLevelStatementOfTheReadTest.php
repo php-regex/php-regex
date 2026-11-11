@@ -226,6 +226,19 @@ final class FileLevelStatementOfTheReadTest extends TestCase
     }
 
     /**
+     * An assignment written in the braces that name a property is no
+     * statement of its own: the property is read after it, through
+     * __get() when the object has one, before the call that reads $re.
+     *
+     * PHP 8.4: "/(__get/".
+     */
+    #[Test]
+    public function test_an_assignment_in_the_braces_that_name_a_property_is_no_statement_of_its_own(): void
+    {
+        $this->assertUnread("<?php\n\n\$found = \$object->{\$re = '/file-level/'} === preg_match(\$re, \$subject);\n");
+    }
+
+    /**
      * What is written before the assignment changes nothing to what the
      * statement of the read may begin with: parentheses, an array or a
      * call closed before leave nothing open.
