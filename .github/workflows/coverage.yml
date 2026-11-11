@@ -28,7 +28,9 @@ jobs:
     # infection.json.dist declares; those of the whole parser in the
     # parser-mutations job.
     name: Coverage and Mutations
-    runs-on: ubuntu-latest
+    # Pinned as the oracle is: the PHP a newer image installs bundles a
+    # newer PCRE2, whose tables the suite below has not judged yet.
+    runs-on: ubuntu-24.04
     timeout-minutes: 120
     outputs:
       base: ${{ steps.scope.outputs.base }}
@@ -140,7 +142,9 @@ jobs:
     name: Parser Mutations (${{ matrix.shard }}/8)
     needs: coverage
     if: needs.coverage.outputs.base == ''
-    runs-on: ubuntu-latest
+    # The same engine as the coverage above: the mutations' scores answer
+    # the PCRE2 the suite was calibrated on.
+    runs-on: ubuntu-24.04
     timeout-minutes: 150
     strategy:
       fail-fast: false
