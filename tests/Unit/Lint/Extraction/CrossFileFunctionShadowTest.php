@@ -173,6 +173,48 @@ final class CrossFileFunctionShadowTest extends TestCase
     }
 
     /**
+     * A comment may stand anywhere in the declaration: between "function"
+     * and the name, between the name and its parenthesis, after the "&"
+     * of a function that returns a reference. The function is declared
+     * all the same.
+     *
+     * PHP 8.4 (php, a file of namespace App\Text holding each line below
+     * and its body "{ return 'mine'; }"): sprintf('/^%s$/', 'x') is
+     * "mine" after every one of them.
+     *
+     * @return iterable<string, array{declaration: string}>
+     */
+    public static function provideDeclarationsHoldingAComment(): iterable
+    {
+        yield 'a block comment before the name' => ['declaration' => 'function /* why */ sprintf(string $format, string ...$values): string'];
+        yield 'a block comment after the name' => ['declaration' => 'function sprintf /* why */ (string $format, string ...$values): string'];
+        yield 'a line comment before the name' => ['declaration' => "function // why\nsprintf(string \$format, string ...\$values): string"];
+        yield 'a hash comment before the name' => ['declaration' => "function # why\nsprintf(string \$format, string ...\$values): string"];
+        yield 'a line comment after the name' => ['declaration' => "function sprintf // why (\n(string \$format, string ...\$values): string"];
+        yield 'a doc comment before the name' => ['declaration' => "function\n/** why */\nsprintf(string \$format, string ...\$values): string"];
+        yield 'a comment after the ampersand' => ['declaration' => 'function &/* why */sprintf(string $format, string ...$values): string'];
+        yield 'a comment before the ampersand' => ['declaration' => 'function/* why */&sprintf(string $format, string ...$values): string'];
+        yield 'a comment holding a parenthesis' => ['declaration' => 'function /* sprintf( */ sprintf /* ) */ (string $format, string ...$values): string'];
+        yield 'two comments in a row' => ['declaration' => "function /* why */ // and why\n sprintf(string \$format, string ...\$values): string"];
+    }
+
+    #[Test]
+    #[DataProvider('provideDeclarationsHoldingAComment')]
+    public function test_a_declaration_holding_a_comment_declares_the_function(string $declaration): void
+    {
+        $files = [
+            'Builders.php' => "<?php\n\nnamespace App\\Text;\n\nfunction build(string \$s): int\n{\n    return preg_match(sprintf('/^%s$/', 'shadowed'), \$s)\n        + preg_match(\\sprintf('/^%s$/', 'qualified'), \$s);\n}\n",
+            'Functions.php' => "<?php\n\nnamespace App\\Text;\n\n".$declaration."\n{\n    return 'mine';\n}\n",
+        ];
+
+        $this->assertSame(['/^qualified$/'], $this->patternsAcross($files));
+        $this->assertSame([
+            ['file' => 'Builders.php', 'expression' => "sprintf('/^%s$/', 'shadowed')", 'state' => 'opaque'],
+            ['file' => 'Builders.php', 'expression' => "\\sprintf('/^%s$/', 'qualified')", 'state' => 'constant'],
+        ], $this->argumentsAcross($files));
+    }
+
+    /**
      * A call of another namespace does not reach these functions: it
      * falls back to PHP's.
      */

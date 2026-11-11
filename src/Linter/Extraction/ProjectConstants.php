@@ -552,13 +552,17 @@ final class ProjectConstants
      * Matches a text declaring a function under the name of one of PHP
      * the extraction reads a call of: one that calls a closure and lets
      * it go, that takes its arguments by value, or that declares a
-     * constant.
+     * constant. A comment may stand on either side of the name, as PHP
+     * allows.
      */
     private static function declaresFunctions(): string
     {
         static $pattern = null;
+        // What PHP passes over between two tokens; each alternative
+        // opens on a character of its own, and none is tried twice.
+        $passed = '\s++|\/\*.*?\*\/|\/\/[^\r\n]*+|#[^\r\n]*+';
 
-        return $pattern ??= '/\bfunction\s*&?\s*(?:'.implode('|', [...array_keys(InFileValueResolver::CALLING + InFileValueResolver::BY_VALUE), InFileValueResolver::DEFINING]).')\s*\(/i';
+        return $pattern ??= '/\bfunction(?:'.$passed.'|&)*+(?:'.implode('|', [...array_keys(InFileValueResolver::CALLING + InFileValueResolver::BY_VALUE), InFileValueResolver::DEFINING]).')(?:'.$passed.')*+\(/is';
     }
 
     /**
