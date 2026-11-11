@@ -676,7 +676,8 @@ final class ErrorCodeSpecificityTest extends TestCase
 
     /**
      * The PCRE2 release that gives a row its meaning: an extended class, a
-     * substring scan, the groups a call returns, a padded count, a "\N{"
+     * substring scan, the error of its own for an item of its list that is
+     * no number or name, the groups a call returns, a padded count, a "\N{"
      * read as a name, a group name past 32 code units or the wording of a
      * version condition only exist from it. On an older engine the row cannot
      * be asked what it asks; the library must then agree with that engine,
@@ -686,6 +687,8 @@ final class ErrorCodeSpecificityTest extends TestCase
     {
         return match (true) {
             str_contains($pattern, '(?[') => PcreFeature::ExtendedCharClass,
+            // PCRE2 10.45 and 10.46 read the item as a reference to no group.
+            1 === preg_match('/\(\*scs:\((?![+-]?\d|[<\'])/', $pattern) => PcreFeature::GroupListErrors,
             str_contains($pattern, '(*scs:') => PcreFeature::ScanSubstring,
             1 === preg_match('/\(\?(?:R|[+-]?\d+)\(/', $pattern) => PcreFeature::CallsReturnCaptureGroups,
             // A named call no ")" ends is a group left open from that release,

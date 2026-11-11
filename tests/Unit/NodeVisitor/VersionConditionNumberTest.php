@@ -14,6 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,10 +24,11 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The numbers of "(?(VERSION>=n.m)...)". Up to PCRE2 10.46, the minor takes
- * two digits at most, refused on the third, and the major stops at 1000,
- * refused past the digit that goes over. PCRE2 10.47 reads both numbers
- * whole and refuses one over 1000 past its last digit. PHP 8.2 to 8.5
- * bundle 10.40 to 10.44 (every offset below is pcre2test's).
+ * two digits at most, refused on the third. The major stops at 1000: up to
+ * PCRE2 10.44 it is refused past the digit that goes over, and from 10.45
+ * past its last digit. PCRE2 10.47 reads both numbers whole and refuses one
+ * over 1000 past its last digit. PHP 8.2 to 8.5 bundle 10.40 to 10.44
+ * (every offset below is pcre2test's).
  */
 final class VersionConditionNumberTest extends TestCase
 {
@@ -69,6 +73,54 @@ final class VersionConditionNumberTest extends TestCase
         yield 'major of five digits' => ['pattern' => '/(?(VERSION=99999.1)yes|no)/', 'bundledOffset' => 15];
         yield 'two-digit minor' => ['pattern' => '/(?(VERSION=10.99)yes|no)/', 'bundledOffset' => null];
         yield 'major of 1000' => ['pattern' => '/(?(VERSION=1000.1)yes|no)/', 'bundledOffset' => null];
+    }
+
+    /**
+     * PCRE2 10.45 and 10.46 already read a major whole, as every number
+     * since 10.45, and still stop a minor at its third digit.
+     *
+     * PHP 8.4.27 linked to PCRE2 10.45 2025-02-05 and to 10.46 2025-08-27
+     * warns "Compilation failed: syntax error or number too big in
+     * (?(VERSION condition" at offset 16 for "/(?(VERSION=99999.1)yes|no)/"
+     * and "/(?(VERSION=99999)yes|no)/", where 10.44 says 15, at 15 for
+     * "1001.1", at 16 for the minors "10.101" and "10.1001", and compiles
+     * "1000.1". Where the running PCRE2 is the release of the row, PHP is
+     * asked again.
+     */
+    #[Test]
+    #[DataProvider('provideReleasesReadingTheMajorWhole')]
+    public function test_pcre2_10_45_reads_the_major_whole(string $release): void
+    {
+        $regex = Regex::create(['cache' => null, 'pcre_version' => $release]);
+        $running = PcreTarget::runtime()->pcreVersion === $release;
+
+        $offsets = [
+            '/(?(VERSION=99999.1)yes|no)/' => 16,
+            '/(?(VERSION=99999)yes|no)/' => 16,
+            '/(?(VERSION=1001.1)yes|no)/' => 15,
+            '/(?(VERSION=10.101)yes|no)/' => 16,
+            '/(?(VERSION=10.1001)yes|no)/' => 16,
+        ];
+        foreach ($offsets as $pattern => $offset) {
+            $this->assertSame($offset, $regex->validate($pattern)->offset, $pattern.' on '.$release);
+            if ($running) {
+                $this->assertSame($offset, PhpErrorOffset::of($pattern), \sprintf('Oracle: %s on PCRE2 %s: %s', $pattern, \PCRE_VERSION, EngineProbe::warning($pattern) ?? 'compiles'));
+            }
+        }
+
+        $this->assertTrue($regex->validate('/(?(VERSION=1000.1)yes|no)/')->isValid);
+        if ($running) {
+            $this->assertTrue(EngineProbe::compiles('/(?(VERSION=1000.1)yes|no)/'), 'Oracle: /(?(VERSION=1000.1)yes|no)/ on PCRE2 '.\PCRE_VERSION);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{release: string}>
+     */
+    public static function provideReleasesReadingTheMajorWhole(): iterable
+    {
+        yield 'PCRE2 10.45' => ['release' => '10.45'];
+        yield 'PCRE2 10.46' => ['release' => '10.46'];
     }
 
     #[Test]

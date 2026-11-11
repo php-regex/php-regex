@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Support;
 
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PcreGateLimits;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
@@ -315,6 +316,38 @@ final class PcreGatesTest extends TestCase
             $this->assertSame(['3', '4'], $inside, 'The gate skipped on an engine that gives the captures of a call back.');
             $this->assertSame(
                 \sprintf('%s reads the groups inside a called one, and the interpreter of PCRE2 %s keeps what a call captured in them.', '/(?&pair)/', \PCRE_VERSION),
+                $skip->getMessage(),
+            );
+        }
+    }
+
+    /**
+     * From PCRE2 10.48 each branch of a pattern is checked against the size
+     * limit on its own, and a build of an older release may carry that fix
+     * under the version tagged without it: the gate follows what the
+     * running engine does of two branches too large only together and what
+     * the library judges of its release.
+     */
+    #[Test]
+    public function test_the_size_limit_gate_follows_how_the_running_engine_checks_the_limit(): void
+    {
+        $warning = (string) EngineProbe::warning('/(?:[^a]){5000}|(?:[^a]){4000}\\k<n>(?:[^a]){1000}/');
+        $this->assertMatchesRegularExpression('/regular expression is too large|reference to non-existent subpattern/', $warning, 'The two answers engines give.');
+        $apart = !str_contains($warning, 'regular expression is too large');
+        $judged = PcreTarget::runtime()->measuresBranchesApart();
+
+        try {
+            $this->requiresSizeLimitCheckedAsReleased('/(?:a){8191}|b/');
+            $this->assertSame($judged, $apart, 'The gate let through an engine that checks the size limit otherwise than its release.');
+        } catch (SkippedWithMessageException $skip) {
+            $this->assertNotSame($judged, $apart, 'The gate skipped on an engine that checks the size limit as its release does.');
+            $this->assertSame(
+                \sprintf(
+                    '%s is verified against the size limit check of PCRE2 %s as released; this build checks %s.',
+                    '/(?:a){8191}|b/',
+                    \PCRE_VERSION,
+                    $apart ? 'each branch on its own, as PCRE2 10.48 does' : 'a branch with those before it, as the releases before PCRE2 10.48 do',
+                ),
                 $skip->getMessage(),
             );
         }
