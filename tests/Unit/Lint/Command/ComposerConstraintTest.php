@@ -108,6 +108,7 @@ final class ComposerConstraintTest extends TestCase
         yield 'a wildcard as the lower end of a hyphen range' => ['constraint' => '8.1.* - 8.3'];
         yield 'a wildcard as the upper end of a hyphen range' => ['constraint' => '8.1 - 8.3.*'];
         yield 'strictly above the one version allowed' => ['constraint' => '>8.4.24 <=8.4.24'];
+        yield 'the one version allowed excluded' => ['constraint' => '>=8.4.25 <8.4.26 !=8.4.25'];
     }
 
     /**
@@ -137,6 +138,33 @@ final class ComposerConstraintTest extends TestCase
         yield 'a tab in a hyphen range' => ['constraint' => "8.1\t-\t8.4", 'intervals' => [[80100, 80500]]];
         yield 'a bare wildcard' => ['constraint' => '8.1.*', 'intervals' => [[80100, 80200]]];
         yield 'strictly above a patch' => ['constraint' => '>8.5.9 <=8.5.10', 'intervals' => [[80510, 80511]]];
+    }
+
+    /**
+     * Where a PHP version is named, "!=" leaves its version out, as
+     * composer/semver does: "!=8.2" excludes 8.2.0, and 8.2.1 is allowed.
+     * require.php's reading keeps it as no bound.
+     *
+     * @param list<array{int, int|null}> $intervals
+     */
+    #[Test]
+    #[DataProvider('provideExclusions')]
+    public function test_a_strict_constraint_leaves_out_the_versions_it_excludes(string $constraint, array $intervals): void
+    {
+        $this->assertSame($intervals, ComposerConstraint::intervals($constraint, strict: true));
+    }
+
+    /**
+     * @return iterable<string, array{constraint: string, intervals: list<array{int, int|null}>}>
+     */
+    public static function provideExclusions(): iterable
+    {
+        yield 'a minor excluded from an open range' => ['constraint' => '>=8.1 !=8.2', 'intervals' => [[80100, 80200], [80201, null]]];
+        yield 'the upper version of a range excluded' => ['constraint' => '>=8.4.24 <8.4.26 !=8.4.25', 'intervals' => [[80424, 80425]]];
+        yield 'the lowest version excluded' => ['constraint' => '>=8.1 <8.3 !=8.1', 'intervals' => [[80101, 80300]]];
+        yield 'two versions excluded' => ['constraint' => '>=8.1 <8.3 !=8.1 !=8.2.0', 'intervals' => [[80101, 80200], [80201, 80300]]];
+        yield 'a version outside the range excluded' => ['constraint' => '>=8.1 !=8.0', 'intervals' => [[80100, null]]];
+        yield 'an exclusion in one branch' => ['constraint' => '^7.4 || >=8.1 !=8.2', 'intervals' => [[70400, 80000], [80100, 80200], [80201, null]]];
     }
 
     #[Test]

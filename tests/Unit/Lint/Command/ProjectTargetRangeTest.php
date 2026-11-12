@@ -360,6 +360,9 @@ final class ProjectTargetRangeTest extends TestCase
         yield 'regex.json, open-ended' => ['flag' => null, 'config' => ['phpVersion' => '>=8.1'], 'expected' => [80100, 80200, 80300, 80400, 80425, 80500, 80510]];
         yield 'regex.json, both bounds' => ['flag' => null, 'config' => ['phpVersion' => '^8.1 <8.4'], 'expected' => [80100, 80200, 80300]];
         yield 'regex.json, from the last gate point' => ['flag' => null, 'config' => ['phpVersion' => '>=8.5.10'], 'expected' => [80510]];
+        // An excluded gate point is not judged: the next release stands
+        // for its stretch.
+        yield 'regex.json, a gate point excluded' => ['flag' => null, 'config' => ['phpVersion' => '>=8.4 !=8.4.25'], 'expected' => [80400, 80426, 80500, 80510]];
         yield 'regex.json, above every gate point' => ['flag' => null, 'config' => ['phpVersion' => '>8.6'], 'expected' => [80601]];
         yield 'regex.json, object of strings' => ['flag' => null, 'config' => ['phpVersion' => ['min' => '8.1', 'max' => '8.3']], 'expected' => [80100, 80200, 80300]];
         yield '--php-version, open-ended' => ['flag' => '>=8.3', 'config' => [], 'expected' => [80300, 80400, 80425, 80500, 80510]];
@@ -490,6 +493,7 @@ final class ProjectTargetRangeTest extends TestCase
             yield $source.', a hyphen range written backwards' => ['source' => $source, 'constraint' => '8.6 - 8.1'];
             yield $source.', an upper bound below the lowest version' => ['source' => $source, 'constraint' => '>=8.4 <8.2'];
             yield $source.', strictly above the one version allowed' => ['source' => $source, 'constraint' => '>8.4.24 <=8.4.24'];
+            yield $source.', the one version allowed excluded' => ['source' => $source, 'constraint' => '>=8.4.25 <8.4.26 !=8.4.25'];
             yield $source.', a wildcard after an operator' => ['source' => $source, 'constraint' => '>=8.1.*'];
             yield $source.', an upper bound below the lowest version, comma-separated' => ['source' => $source, 'constraint' => '>=8.1,<8.0'];
             yield $source.', two exact versions ANDed' => ['source' => $source, 'constraint' => '8.1 8.2'];

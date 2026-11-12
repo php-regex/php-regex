@@ -44,7 +44,8 @@ final class ComposerConstraint
      * require.php's reading takes "80100" as a major. A
      * branch of a $strict constraint that allows no version, ">=8.4 <8.2",
      * is dropped; a $strict constraint whose every branch is dropped is
-     * unreadable.
+     * unreadable. "!=" leaves its version out of a $strict constraint, as
+     * composer/semver does, and bounds nothing in require.php's reading.
      *
      * @return non-empty-list<array{int, int|null}>|null
      */
@@ -52,14 +53,16 @@ final class ComposerConstraint
     {
         $intervals = [];
         foreach (LibraryPcre::split('/\s*\|\|?\s*/', trim($constraint, " \t\n\r\0\x0B")) ?: [] as $branch) {
-            $interval = self::branchInterval($branch, $openBelow, $strict);
-            if (null === $interval) {
+            $pieces = self::branchIntervals($branch, $openBelow, $strict);
+            if (null === $pieces) {
                 return null;
             }
-            if ($strict && null !== $interval[1] && $interval[1] <= $interval[0]) {
-                continue;
+            foreach ($pieces as $interval) {
+                if ($strict && null !== $interval[1] && $interval[1] <= $interval[0]) {
+                    continue;
+                }
+                $intervals[] = $interval;
             }
-            $intervals[] = $interval;
         }
 
         return [] === $intervals ? null : $intervals;
@@ -113,9 +116,9 @@ final class ComposerConstraint
      *                        it makes the constraint unreadable
      * @param bool $strict    whether a version must be x.y, x.y.z or x.y.*
      *
-     * @return array{int, int|null}|null
+     * @return list<array{int, int|null}>|null one interval, or the pieces a $strict "!=" leaves of it
      */
-    private static function branchInterval(string $branch, bool $openBelow, bool $strict): ?array
+    private static function branchIntervals(string $branch, bool $openBelow, bool $strict): ?array
     {
         // A partial upper version of a hyphen range allows its whole
         // branch: "8.2 - 8.4" is below 8.5; a full one is itself the last
@@ -132,7 +135,7 @@ final class ComposerConstraint
                 return null;
             }
 
-            return [$lowest[0], self::nextAt($upper[0], $upper[1])];
+            return [[$lowest[0], self::nextAt($upper[0], $upper[1])]];
         }
 
         // An operator may be followed by spaces: ">= 8.3".
@@ -140,6 +143,7 @@ final class ComposerConstraint
 
         $lowest = null;
         $below = null;
+        $excluded = [];
         // A $strict constraint keeps the empty term of a doubled separator,
         // ">=8.1,,<8.3", to refuse it.
         $separator = $strict ? '/[ \t]*,[ \t]*|[ \t]+/' : '/[\s,]+/';
@@ -176,13 +180,35 @@ final class ComposerConstraint
             if (null !== $until) {
                 $below = null === $below ? $until : min($below, $until);
             }
+            if ($strict && '!=' === $parts[1]) {
+                $excluded[] = $id;
+            }
         }
 
         if (null === $lowest && $openBelow && null !== $below) {
             $lowest = 0;
         }
+        if (null === $lowest) {
+            return null;
+        }
 
-        return null === $lowest ? null : [$lowest, $below];
+        // Each version left out splits the piece that holds it in two.
+        $pieces = [[$lowest, $below]];
+        foreach ($excluded as $out) {
+            $split = [];
+            foreach ($pieces as [$from, $until]) {
+                if ($out < $from || (null !== $until && $out >= $until)) {
+                    $split[] = [$from, $until];
+
+                    continue;
+                }
+                $split[] = [$from, $out];
+                $split[] = [$out + 1, $until];
+            }
+            $pieces = $split;
+        }
+
+        return $pieces;
     }
 
     /**

@@ -1514,7 +1514,8 @@ one that refuses the pattern under `target`
 of `require.php`: a Composer constraint that names a lowest version. Each
 of its versions is written `x.y`, `x.y.z` or `x.y.*`, the wildcard alone,
 never after an operator (`">=8.1.*"` is refused, as Composer refuses it).
-`>` is strict: `">8.4"` starts at 8.4.1. `regex.json` also
+`>` is strict: `">8.4"` starts at 8.4.1, and `!=` leaves its version out:
+`">=8.4 !=8.4.25"` judges 8.4.26 where 8.4.25 would stand. `regex.json` also
 takes an object `{"min": …, "max": …}`, each bound a version string
 (`"8.1"`) or a PHP_VERSION_ID (`80100`). `max` is included;
 a `max` written `x.y` takes in the whole series. A range named this way
