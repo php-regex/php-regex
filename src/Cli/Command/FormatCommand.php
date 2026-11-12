@@ -140,7 +140,9 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
                 'range' => $points,
             ]));
 
-            return self::exitCodeOverRange($points, self::SUCCESS);
+            // stdout holds the document alone: what the range finds goes
+            // to stderr, as on the console.
+            return $this->reportRange($output, $range, $pattern, self::exitCodeOverRange($points, self::SUCCESS));
         }
 
         // The pattern is what the command prints, not a status line: quiet

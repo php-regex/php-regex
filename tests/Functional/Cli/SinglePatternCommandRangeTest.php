@@ -164,10 +164,14 @@ final class SinglePatternCommandRangeTest extends TestCase
         self::assertEngineKeepInLookbehind();
         $directory = $this->enterProject();
 
-        [, $floorStdout] = $this->runRegex([self::FLOOR, ...$command, '--format=json']);
-        [$exitCode, $stdout] = $this->runRegex([self::RANGE, ...$command, '--format=json']);
+        [, $floorStdout, $floorStderr] = $this->runRegex([self::FLOOR, ...$command, '--format=json']);
+        [$exitCode, $stdout, $stderr] = $this->runRegex([self::RANGE, ...$command, '--format=json']);
 
         $this->assertSame(1, $exitCode, $stdout);
+        // stdout holds the document alone: the refusal is said on stderr,
+        // as the console says it.
+        $this->assertSame('Error: '.self::refusedOnMessage('PHP 8.5 and later', 80500, RangePatterns::KEEP_IN_LOOKBEHIND)."\n", $stderr);
+        $this->assertSame('', $floorStderr, 'A single version has no later version to compare with.');
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape($address, $document);
         $this->assertSame(ProjectTarget::resolve('>=8.1', null, [], $directory, [])->toArray(), $document['target'] ?? null);
@@ -212,9 +216,10 @@ final class SinglePatternCommandRangeTest extends TestCase
         $directory = $this->enterProject();
 
         [, $floorStdout] = $this->runRegex([self::FLOOR, 'transpile', RangePatterns::QUANTIFIER_WITHOUT_MIN, '--format=json']);
-        [$exitCode, $stdout] = $this->runRegex([self::RANGE, 'transpile', RangePatterns::QUANTIFIER_WITHOUT_MIN, '--format=json']);
+        [$exitCode, $stdout, $stderr] = $this->runRegex([self::RANGE, 'transpile', RangePatterns::QUANTIFIER_WITHOUT_MIN, '--format=json']);
 
         $this->assertSame(0, $exitCode, $stdout);
+        $this->assertSame('Warning: '.self::parsesDifferentlyMessage(self::firstPointReadingQuantifierOtherwise(RangePatterns::FROM_8_1))."\n", $stderr, 'stdout holds the document alone: the warning goes to stderr.');
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('transpile', $document);
         $this->assertSame('javascript', $document['target'] ?? null);

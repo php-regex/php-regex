@@ -1659,10 +1659,14 @@ later version of the range, as the lint validates it. A later version that
 refuses a pattern the floor accepts is an error and the command exits with 1;
 a version that reads it otherwise, or gives it another meaning with the same
 tree, is a warning. Both go to stderr, as the notes of the resolution do, so
-that stdout stays the product. A pattern the floor refuses keeps the exit
-code the command gives it at a single version. With `--format=json`, the
-document carries `target` and `range`
-([JSON output](../reference/json-output.md#range-point-range_point)).
+that stdout stays the product; `--quiet` silences the warnings and the notes,
+not the errors. A pattern the floor refuses keeps the exit code the command
+gives it at a single version. With `--format=json`, the document carries
+`target` and `range`; `transpile` names the PHP target `php_target`, its
+`target` being the dialect
+([JSON output](../reference/json-output.md#range-point-range_point)). The
+errors, warnings and notes still go to stderr: stdout holds the document
+alone. Without the banner (`--no-visuals`), the notes go to stderr too.
 
 Each version is chosen on its own. A PHP version does not decide the PCRE2 a
 build links, so every version judged (the target, each later version of the

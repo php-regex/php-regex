@@ -689,6 +689,28 @@ ASCII, and agree under `u` for UTF-8 subjects.
     ],
     "notes": [
         "Applied /D: \"$\" is written for the end of the subject alone."
+    ],
+    "php_target": {
+        "php": "8.4.27",
+        "pcre": "10.49",
+        "locale": "C",
+        "source": "running PHP",
+        "range": [
+            {
+                "php": "8.4.27",
+                "pcre": "10.49"
+            }
+        ]
+    },
+    "range": [
+        {
+            "php": "8.4.27",
+            "pcre": "10.49",
+            "is_valid": true,
+            "error": null,
+            "error_code": null,
+            "parses_differently": false
+        }
     ]
 }
 ```
@@ -704,7 +726,29 @@ ASCII, and agree under `u` for UTF-8 subjects.
     "pattern": "/^(?<year>\\d{4})-(?<month>\\d{2})$/",
     "formatted": "/\n    ^\n    (?<year>\\d{4})\n    -\n    (?<month>\\d{2})\n    $\n/x",
     "changed": true,
-    "refusal": null
+    "refusal": null,
+    "target": {
+        "php": "8.4.27",
+        "pcre": "10.49",
+        "locale": "C",
+        "source": "running PHP",
+        "range": [
+            {
+                "php": "8.4.27",
+                "pcre": "10.49"
+            }
+        ]
+    },
+    "range": [
+        {
+            "php": "8.4.27",
+            "pcre": "10.49",
+            "is_valid": true,
+            "error": null,
+            "error_code": null,
+            "parses_differently": false
+        }
+    ]
 }
 ```
 
@@ -745,7 +789,29 @@ apart, 0 and 1:
         "caret_snippet": "Line 1: (a\n          ^",
         "hint": null,
         "error_code": "regex.group.unclosed"
-    }
+    },
+    "target": {
+        "php": "8.4.27",
+        "pcre": "10.49",
+        "locale": "C",
+        "source": "running PHP",
+        "range": [
+            {
+                "php": "8.4.27",
+                "pcre": "10.49"
+            }
+        ]
+    },
+    "range": [
+        {
+            "php": "8.4.27",
+            "pcre": "10.49",
+            "is_valid": false,
+            "error": "Expected ) at end of input (found eof).",
+            "error_code": "regex.group.unclosed",
+            "parses_differently": false
+        }
+    ]
 }
 ```
 
@@ -775,7 +841,29 @@ plain language, the text the console prints. `--json` is short for
 ```json
 {
     "pattern": "/a+/",
-    "explanation": "Regex matches\n  'a', one or more times"
+    "explanation": "Regex matches\n  'a', one or more times",
+    "target": {
+        "php": "8.4.27",
+        "pcre": "10.49",
+        "locale": "C",
+        "source": "running PHP",
+        "range": [
+            {
+                "php": "8.4.27",
+                "pcre": "10.49"
+            }
+        ]
+    },
+    "range": [
+        {
+            "php": "8.4.27",
+            "pcre": "10.49",
+            "is_valid": true,
+            "error": null,
+            "error_code": null,
+            "parses_differently": false
+        }
+    ]
 }
 ```
 
@@ -1044,7 +1132,9 @@ version of a range, and `range` gives each version's verdict, the floor
 first. A later version that refuses a pattern the floor accepts makes the
 command exit with 1; a pattern the floor refuses keeps the exit code the
 command gives it at a single version, and a version that reads the pattern
-otherwise does not change the exit code.
+otherwise does not change the exit code. What a later version finds is also
+said on stderr in lint's words, as on the console: stdout holds the document
+alone.
 
 | key | type | meaning |
 |---|---|---|

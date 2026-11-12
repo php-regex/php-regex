@@ -120,7 +120,8 @@ abstract class AbstractCommand implements CommandInterface
      * Say on stderr what resolving the target noticed, as lint does when
      * its report is no console one: for a run whose stdout carries no
      * banner, a JSON document or another format. The console banner
-     * carries them instead. Silenced by -q.
+     * carries them instead. Silenced by -q; a control or a hidden
+     * character is spelled out.
      */
     protected function reportNotices(Output $output, TargetRange $range): void
     {
@@ -129,7 +130,7 @@ abstract class AbstractCommand implements CommandInterface
         }
 
         foreach ($range->target->notices() as $notice) {
-            $output->writeError('Note: '.$notice."\n");
+            $output->writeError('Note: '.ReportSpelling::displayField($notice)."\n");
         }
     }
 

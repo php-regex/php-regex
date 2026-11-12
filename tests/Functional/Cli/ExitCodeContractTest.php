@@ -15,6 +15,8 @@ namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Cli\ApplicationFactory;
 use PHPRegex\Cli\Output;
+use PHPRegex\Tests\Support\PcreRule;
+use PHPRegex\Tests\Support\RangeFixtureReadings;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExitCodeContractTest extends TestCase
 {
+    use PcreRule;
+    use RangeFixtureReadings;
     use TemporaryProject;
 
     private const BAD_PHP_FILE = <<<'PHP'
@@ -214,6 +218,7 @@ final class ExitCodeContractTest extends TestCase
     #[DataProvider('providePatternProblems')]
     public function test_a_pattern_with_a_problem_exits_1(array $arguments): void
     {
+        self::assertEngineReadings($arguments);
         $this->enterProject(['src/a.php' => self::BAD_PHP_FILE]);
 
         $this->assertSame(1, $this->runRegex($arguments));
@@ -267,6 +272,7 @@ final class ExitCodeContractTest extends TestCase
     #[DataProvider('provideSuccesses')]
     public function test_a_command_that_finds_nothing_wrong_exits_0(array $arguments): void
     {
+        self::assertEngineReadings($arguments);
         $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/a/', 'abc');\n", 'empty/b.php' => "<?php\n"]);
 
         $this->assertSame(0, $this->runRegex($arguments));
@@ -351,5 +357,31 @@ final class ExitCodeContractTest extends TestCase
             ob_end_clean();
             fclose($errors);
         }
+    }
+
+    /**
+     * The rows whose exit code depends on what a pattern means are read
+     * first on the running engine: "\K" in a lookbehind compiles up to PHP
+     * 8.4 and is refused from 8.5, "a{2,1}" is refused by every PCRE2, and
+     * "a{,3}" is a quantifier from PCRE2 10.43, text before.
+     *
+     * @param list<string> $arguments
+     */
+    private static function assertEngineReadings(array $arguments): void
+    {
+        if (\in_array('/(?<=a\\Kb)c/', $arguments, true)) {
+            self::assertEngineKeepInLookbehind();
+        }
+        if (\in_array('/a{2,1}/', $arguments, true)) {
+            self::assertEngineRefuses('/a{2,1}/');
+        }
+        if (\in_array('/a{,3}/', $arguments, true)) {
+            self::assertEngineReadsQuantifierWithoutMin();
+        }
+    }
+
+    private static function assertEngineRefuses(string $pattern): void
+    {
+        self::assertFalse(@preg_match($pattern, 'aa'), 'PCRE2 '.\PCRE_VERSION);
     }
 }

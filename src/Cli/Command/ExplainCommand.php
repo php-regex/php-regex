@@ -152,6 +152,8 @@ final class ExplainCommand extends AbstractCommand implements JsonCommandInterfa
         $points = $range->points($pattern);
         $output->writeDocument(JsonDocument::encode(['pattern' => $pattern, 'explanation' => $regex->explain($pattern), 'target' => $range->target->toArray(), 'range' => $points]));
 
-        return self::exitCodeOverRange($points, self::SUCCESS);
+        // stdout holds the document alone: what the range finds goes to
+        // stderr, as on the console.
+        return $this->reportRange($output, $range, $pattern, self::exitCodeOverRange($points, self::SUCCESS));
     }
 }

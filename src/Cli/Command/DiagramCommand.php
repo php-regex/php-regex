@@ -92,10 +92,13 @@ final class DiagramCommand extends AbstractCommand
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $meta = $this->targetMeta($output, $range);
         $showConsoleOutput = 'svg' !== $format && null === $outputPath;
-        if ($showConsoleOutput && $style->visualsEnabled()) {
-            $meta['Format'] = $output->warning('console');
+        if ($showConsoleOutput) {
+            if ($style->visualsEnabled()) {
+                $meta['Format'] = $output->warning('console');
+            }
+            // Without the banner, its notes go to stderr.
             $style->renderBanner('diagram', $meta, notes: $range->target->notices());
-        } elseif (!$showConsoleOutput) {
+        } else {
             // The SVG or the file is the product: stderr says what
             // resolving the target noticed.
             $this->reportNotices($output, $range);

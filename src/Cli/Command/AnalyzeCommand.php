@@ -79,8 +79,9 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
 
         $exitCode = $this->analyze($input, $output, $range, $parsed);
 
-        // The JSON document holds each version's verdict.
-        return 'json' === $parsed['format'] ? $exitCode : $this->reportRange($output, $range, $parsed['pattern'], $exitCode);
+        // The JSON document holds each version's verdict; stderr says what
+        // the range finds, as on the console.
+        return $this->reportRange($output, $range, $parsed['pattern'], $exitCode);
     }
 
     /**

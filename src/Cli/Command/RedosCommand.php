@@ -147,11 +147,13 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
             $safePoints = null !== $safePattern ? $range->points($safePattern) : null;
             $renderer->writeDocument($arguments, $runtime, $subject, $vuln, $safe, $range->target, $points, $safePoints);
             $verdict = self::exitCodeOverRange($points, $verdict);
-
-            return null !== $safePoints ? self::exitCodeOverRange($safePoints, $verdict) : $verdict;
+            $verdict = null !== $safePoints ? self::exitCodeOverRange($safePoints, $verdict) : $verdict;
+        } else {
+            $renderer->renderResults($vuln, $safe);
         }
 
-        $renderer->renderResults($vuln, $safe);
+        // What the range finds goes to stderr, beside the document as on
+        // the console.
         if (null === $safePattern) {
             return $this->reportRange($output, $range, $pattern, $verdict);
         }

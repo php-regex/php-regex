@@ -78,6 +78,58 @@ final class RangeDiagnosticsTest extends TestCase
     }
 
     /**
+     * A JSON run says the change of meaning on stderr too, as the console
+     * does: stdout holds the document alone, which gives each version's
+     * verdict, and -q silences the warning.
+     *
+     * @param list<string> $options the command line after the pattern
+     */
+    #[Test]
+    #[DataProvider('provideJsonCommands')]
+    public function test_a_json_run_says_a_change_of_meaning_on_stderr(string $command, string $pattern, array $options): void
+    {
+        // The readings of the running engine, PCRE2 10.40 or later on every
+        // PHP this suite runs on.
+        self::assertEngineBacktracksIntoSelfReference();
+        $this->assertSame(1, preg_match('/\p{Katakana}/u', "\u{30FB}"), 'U+30FB has Katakana among its script extensions: PCRE2 '.\PCRE_VERSION);
+        $this->enterProject(['src/a.php' => "<?php\n\npreg_match(".var_export($pattern, true).", \$s);\n"]);
+        $warning = $this->lintWarning($pattern);
+
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['--php-version=>=7.3', $command, $pattern, ...$options, '--format=json']);
+
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        JsonContract::assertShape($command, JsonContract::decodeDocument($stdout));
+        // stderr: the notes of the target, then the warning.
+        $this->assertStringEndsWith("\nWarning: ".$warning."\n", "\n".$stderr);
+        foreach (explode("\n", rtrim($stderr, "\n")) as $line) {
+            $this->assertMatchesRegularExpression('/^(Note|Warning): /', $line);
+        }
+
+        [, $quietStdout, $quietStderr] = $this->runRegex(['--quiet', '--php-version=>=7.3', $command, $pattern, ...$options, '--format=json']);
+
+        $this->assertStringNotContainsString($warning, $quietStdout.$quietStderr, '-q silences the warning, as on the console.');
+    }
+
+    /**
+     * @return iterable<string, array{command: string, pattern: string, options: list<string>}>
+     */
+    public static function provideJsonCommands(): iterable
+    {
+        $selfReference = '/^(a|ab|\1x)+b$/';
+
+        yield 'validate' => ['command' => 'validate', 'pattern' => $selfReference, 'options' => []];
+        yield 'analyze' => ['command' => 'analyze', 'pattern' => $selfReference, 'options' => []];
+        yield 'explain' => ['command' => 'explain', 'pattern' => $selfReference, 'options' => []];
+        yield 'format' => ['command' => 'format', 'pattern' => $selfReference, 'options' => []];
+        yield 'debug' => ['command' => 'debug', 'pattern' => $selfReference, 'options' => []];
+        yield 'redos' => ['command' => 'redos', 'pattern' => $selfReference, 'options' => ['--iterations=1', '--warmup=0']];
+        // No dialect carries a group that refers to itself: a script read
+        // otherwise from PHP 8.2 is translated, and judged the same way.
+        yield 'transpile' => ['command' => 'transpile', 'pattern' => '/\p{Katakana}/u', 'options' => []];
+        yield 'validate, a script' => ['command' => 'validate', 'pattern' => '/\p{Katakana}/u', 'options' => []];
+    }
+
+    /**
      * redos judges its --safe pattern for every version of the range too: a
      * later version that refuses it is an error, exit 1.
      */
@@ -104,9 +156,11 @@ final class RangeDiagnosticsTest extends TestCase
         self::assertEngineKeepInLookbehind();
         $this->enterProject();
 
-        [$exitCode, $stdout] = $this->runRegex([self::RANGE, 'redos', '/(a+)+$/', '--safe='.RangePatterns::KEEP_IN_LOOKBEHIND, '--format=json']);
+        [$exitCode, $stdout, $stderr] = $this->runRegex([self::RANGE, 'redos', '/(a+)+$/', '--safe='.RangePatterns::KEEP_IN_LOOKBEHIND, '--format=json']);
 
         $this->assertSame(1, $exitCode, $stdout);
+        // stderr says it as the console does, naming the --safe pattern.
+        $this->assertSame('Error: Safe: '.self::refusedOnMessage('PHP 8.5 and later', 80500, RangePatterns::KEEP_IN_LOOKBEHIND)."\n", $stderr);
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('redos', $document);
         self::assertRange(

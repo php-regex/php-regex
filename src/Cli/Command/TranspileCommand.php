@@ -98,7 +98,9 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
                 $points = $range->points($args['pattern']);
                 $output->writeDocument(JsonDocument::encode([...$result->jsonSerialize(), 'php_target' => $range->target->toArray(), 'range' => $points]));
 
-                return self::exitCodeOverRange($points, self::SUCCESS);
+                // stdout holds the document alone: what the range finds
+                // goes to stderr, as on the console.
+                return $this->reportRange($output, $range, $args['pattern'], self::exitCodeOverRange($points, self::SUCCESS));
             }
 
             // The translation is the product on stdout: what the range says

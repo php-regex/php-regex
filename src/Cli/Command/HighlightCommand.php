@@ -95,10 +95,13 @@ final class HighlightCommand extends AbstractCommand
         $meta = $this->targetMeta($output, $range);
 
         try {
-            if ('console' === $format && $style->visualsEnabled()) {
-                $meta['Format'] = $output->warning('console');
+            if ('console' === $format) {
+                if ($style->visualsEnabled()) {
+                    $meta['Format'] = $output->warning('console');
+                }
+                // Without the banner, its notes go to stderr.
                 $style->renderBanner('highlight', $meta, notes: $range->target->notices());
-            } elseif ('console' !== $format) {
+            } else {
                 $this->reportNotices($output, $range);
             }
 

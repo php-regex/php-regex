@@ -56,6 +56,51 @@ final class TargetNoticesTest extends TestCase
     }
 
     /**
+     * Without the banner, --no-visuals, the console has nowhere to say what
+     * resolving the target noticed but stderr: it says it there, for every
+     * command that reads one pattern, and stdout keeps the command's own
+     * output.
+     *
+     * @param list<string> $command
+     */
+    #[Test]
+    #[DataProvider('provideConsoleCommands')]
+    public function test_without_visuals_the_console_prints_each_notice_on_stderr(array $command): void
+    {
+        $this->enterProject();
+        $flags = ['--php-version=>=7.0', '--pcre-version=10.30'];
+        $notices = self::notices($flags);
+        $this->assertCount(2, $notices, 'The clip to 7.3 and the PCRE2 judged with older rules.');
+
+        [, $stdout, $stderr] = $this->runRegex([...$flags, ...$command]);
+
+        foreach ($notices as $notice) {
+            $this->assertStringContainsString('Note: '.$notice."\n", $stderr);
+            $this->assertStringNotContainsString($notice, $stdout);
+        }
+        $this->assertSame(\count($notices), substr_count($stderr, 'Note: '), 'Each notice is said once.');
+    }
+
+    /**
+     * @return iterable<string, array{command: list<string>}>
+     */
+    public static function provideConsoleCommands(): iterable
+    {
+        yield 'validate' => ['command' => ['validate', '/a/']];
+        yield 'analyze' => ['command' => ['analyze', '/a/']];
+        yield 'explain' => ['command' => ['explain', '/a/']];
+        yield 'parse' => ['command' => ['parse', '/a/']];
+        yield 'diagram' => ['command' => ['diagram', '/a/']];
+        yield 'highlight' => ['command' => ['highlight', '/a/']];
+        yield 'debug' => ['command' => ['debug', '/a/']];
+        yield 'compare' => ['command' => ['compare', '/a/', '/b/']];
+        yield 'redos' => ['command' => ['redos', '/a/', '--iterations=1', '--warmup=0']];
+        yield 'format' => ['command' => ['format', '/a/']];
+        yield 'transpile' => ['command' => ['transpile', '/a/']];
+        yield 'graph' => ['command' => ['graph', '/a/']];
+    }
+
+    /**
      * @param array<string, string> $files
      * @param list<string>          $flags
      */
@@ -87,10 +132,12 @@ final class TargetNoticesTest extends TestCase
 
         [, $console, $consoleErrors] = $this->runWithBanner(['--quiet', ...$flags, 'validate', '/a/']);
         [, $json, $jsonErrors] = $this->runRegex(['--quiet', ...$flags, 'validate', '/a/', '--format=json']);
+        [, $plain, $plainErrors] = $this->runRegex(['--quiet', ...$flags, 'validate', '/a/']);
 
         // The notice is the one the other two tests see.
         $this->assertNotSame('', $notice);
         $this->assertStringNotContainsString('Note: ', $console.$consoleErrors);
+        $this->assertStringNotContainsString('Note: ', $plain.$plainErrors, 'Nor on stderr when there is no banner.');
         $this->assertStringNotContainsString('Note: ', $json.$jsonErrors);
     }
 

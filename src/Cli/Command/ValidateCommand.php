@@ -95,7 +95,9 @@ final class ValidateCommand extends AbstractCommand implements JsonCommandInterf
             $points = $range->points($pattern);
             $output->writeDocument(JsonDocument::encode(['pattern' => $pattern, 'validation' => $validation, 'target' => $range->target->toArray(), 'range' => $points]));
 
-            return self::exitCodeOverRange($points, $validation->isValid ? self::SUCCESS : self::FAILURE);
+            // stdout holds the document alone: what the range finds goes
+            // to stderr, as on the console.
+            return $this->reportRange($output, $range, $pattern, self::exitCodeOverRange($points, $validation->isValid ? self::SUCCESS : self::FAILURE));
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
