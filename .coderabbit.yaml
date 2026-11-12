@@ -18,7 +18,8 @@ reviews:
   profile: chill
   high_level_summary: true
   high_level_summary_in_walkthrough: true
-  review_status: true
+  # No "Review skipped" notice on the pull requests nobody asked a review for.
+  review_status: false
   collapse_walkthrough: true
   changed_files_summary: true
   sequence_diagrams: false
@@ -55,8 +56,10 @@ reviews:
     changed lint rule, an optimizer rewrite, a transpiler target. Low: docs/,
     tests that only add cases, demo/, CI configuration.
 
+  # A pull request is reviewed on request only: comment `@coderabbitai review`
+  # (or `@coderabbitai full review`). A typo fix costs no review.
   auto_review:
-    enabled: true
+    enabled: false
     drafts: false
     auto_incremental_review: true
     # Every review comment is answered, however many commits a branch takes.
