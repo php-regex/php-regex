@@ -27,6 +27,7 @@ use PHPRegex\LanguageServer\Converter\DiagnosticConverter;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Handler\CodeActionHandler;
 use PHPRegex\LanguageServer\Handler\CompletionHandler;
+use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
 use PHPRegex\Linter\Config\LintConfigResult;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\ProjectTarget;
@@ -111,6 +112,7 @@ final class TypeAliasInventoryTest extends TestCase
         RedosBenchmark::class => ['BenchResult'],
         CompletionHandler::class => ['CompletionContext', 'CompletionItem'],
         CodeActionHandler::class => ['CodeAction', 'RewriteAction'],
+        TextDocumentHandler::class => ['Refusal', 'Analysis'],
         DiagnosticConverter::class => ['Diagnostic'],
         LintConfigResult::class => ['LintConfig'],
         LintDefaultsBuilder::class => ['LintDefaults'],

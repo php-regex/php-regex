@@ -276,11 +276,14 @@ function paginationPrefix(int $index, int $total): string
 }
 
 /**
- * The banner Target line ("PHP 8.2, PCRE2 10.40 (source)"), ANSI stripped.
+ * The banner Target line ("PHP 8.2, PCRE2 10.40 (source)"), ANSI stripped,
+ * without the later versions of a range ("; also PHP 8.3, …"): they follow
+ * from the source and the library, and would move every header of the
+ * merged log at each new gate point.
  */
 function extractTargetLine(string $console): string
 {
-    if (preg_match('/^Target\s*:\s*(.+)$/m', stripAnsi($console), $match)) {
+    if (preg_match('/^Target\s*:\s*(.+?)(?:; also PHP [^;]*)?$/m', stripAnsi($console), $match)) {
         return trim($match[1]);
     }
 
