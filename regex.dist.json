@@ -23,7 +23,13 @@
             "PhpCsFixer\\Preg::replaceCallback",
             "PhpCsFixer\\Preg::split",
             "Symplify\\CodingStandard\\Utils\\Regex::replace#1",
-            "Symplify\\CodingStandard\\Utils\\Regex::match#1"
+            "Symplify\\CodingStandard\\Utils\\Regex::match#1",
+            "Dotenv\\Util\\Regex::matches",
+            "Dotenv\\Util\\Regex::occurrences",
+            "Dotenv\\Util\\Regex::split",
+            "Dotenv\\Util\\Regex::replaceCallback",
+            "Tempest\\Support\\Regex\\replace#1",
+            "Tempest\\Support\\Regex\\matches#1"
         ]
     },
     "checks": {
