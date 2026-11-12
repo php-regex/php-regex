@@ -524,6 +524,81 @@ final class CorpusScriptTest extends TestCase
         $this->assertStringContainsString('Unknown command', $output);
     }
 
+    #[Test]
+    public function test_update_records_the_composer_platform_constraints(): void
+    {
+        file_put_contents($this->origin.'/composer.json', json_encode([
+            'require' => ['php' => '^8.1', 'ext-pcre' => '*', 'lib-pcre' => '>=10.0', 'symfony/console' => '^7'],
+            'config' => ['platform' => ['php' => '8.1.2']],
+        ], \JSON_UNESCAPED_SLASHES));
+        $this->git($this->origin, 'add', 'composer.json');
+        $this->git($this->origin, 'commit', '-m', 'declare a platform');
+
+        [$code, $output] = $this->script(['update']);
+        $this->assertSame(0, $code, $output);
+
+        $src = $this->manifestRepository('src');
+        $this->assertIsArray($src, $output);
+        $this->assertSame(
+            ['php' => '^8.1', 'ext-pcre' => '*', 'lib-pcre' => '>=10.0', 'platform' => '8.1.2'],
+            $src['composer'] ?? null,
+            $output,
+        );
+    }
+
+    #[Test]
+    public function test_a_repository_declaring_no_platform_constraint_keeps_no_composer_section(): void
+    {
+        [$code, $output] = $this->script(['install']);
+        $this->assertSame(0, $code, $output);
+        [$code, $output] = $this->script(['update', '--write-manifest']);
+        $this->assertSame(0, $code, $output);
+
+        $src = $this->manifestRepository('src');
+        $this->assertIsArray($src, $output);
+        $this->assertArrayNotHasKey('composer', $src, $output);
+    }
+
+    #[Test]
+    public function test_a_manifest_whose_composer_section_is_garbage_is_refused(): void
+    {
+        $manifest = $this->decodedManifest();
+        $this->assertIsArray($manifest['repositories'] ?? null);
+        $src = $manifest['repositories']['src'] ?? null;
+        $this->assertIsArray($src);
+        $src['composer'] = '>=8.1';
+        $manifest['repositories']['src'] = $src;
+        file_put_contents($this->root.'/corpus.json', json_encode($manifest, \JSON_UNESCAPED_SLASHES));
+
+        [$code, $output] = $this->script(['install']);
+
+        $this->assertNotSame(0, $code, $output);
+        $this->assertStringContainsString('invalid "composer" section', $output);
+    }
+
+    /**
+     * The manifest as json_decode() reads it.
+     *
+     * @return array<mixed>
+     */
+    private function decodedManifest(): array
+    {
+        $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
+
+        return \is_array($manifest) ? $manifest : [];
+    }
+
+    /**
+     * One repository's entry of the manifest, or null when it holds none.
+     */
+    private function manifestRepository(string $name): mixed
+    {
+        $manifest = $this->decodedManifest();
+        $repositories = $manifest['repositories'] ?? null;
+
+        return \is_array($repositories) ? ($repositories[$name] ?? null) : null;
+    }
+
     private function addSecondOriginRepository(): void
     {
         $second = $this->root.'-origin-other';
@@ -547,52 +622,6 @@ preg_match('/(b+)+\$/', \$input);
         $repositories['other'] = ['url' => 'file://'.$second, 'branch' => 'main', 'commit' => $this->secondCommit];
         $manifest['repositories'] = $repositories;
         file_put_contents($this->root.'/corpus.json', json_encode($manifest, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
-    }
-
-    #[Test]
-    public function test_update_records_the_composer_platform_constraints(): void
-    {
-        file_put_contents($this->origin.'/composer.json', json_encode([
-            'require' => ['php' => '^8.1', 'ext-pcre' => '*', 'lib-pcre' => '>=10.0', 'symfony/console' => '^7'],
-            'config' => ['platform' => ['php' => '8.1.2']],
-        ], \JSON_UNESCAPED_SLASHES));
-        $this->git($this->origin, 'add', 'composer.json');
-        $this->git($this->origin, 'commit', '-m', 'declare a platform');
-
-        [$code, $output] = $this->script(['update']);
-        $this->assertSame(0, $code, $output);
-
-        $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
-        $this->assertSame(
-            ['php' => '^8.1', 'ext-pcre' => '*', 'lib-pcre' => '>=10.0', 'platform' => '8.1.2'],
-            $manifest['repositories']['src']['composer'] ?? null,
-            $output,
-        );
-    }
-
-    #[Test]
-    public function test_a_repository_declaring_no_platform_constraint_keeps_no_composer_section(): void
-    {
-        [$code, $output] = $this->script(['install']);
-        $this->assertSame(0, $code, $output);
-        [$code, $output] = $this->script(['update', '--write-manifest']);
-        $this->assertSame(0, $code, $output);
-
-        $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
-        $this->assertArrayNotHasKey('composer', $manifest['repositories']['src'], $output);
-    }
-
-    #[Test]
-    public function test_a_manifest_whose_composer_section_is_garbage_is_refused(): void
-    {
-        $manifest = json_decode((string) file_get_contents($this->root.'/corpus.json'), true);
-        $manifest['repositories']['src']['composer'] = '>=8.1';
-        file_put_contents($this->root.'/corpus.json', json_encode($manifest, \JSON_UNESCAPED_SLASHES));
-
-        [$code, $output] = $this->script(['install']);
-
-        $this->assertNotSame(0, $code, $output);
-        $this->assertStringContainsString('invalid "composer" section', $output);
     }
 
     /**

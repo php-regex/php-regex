@@ -48,6 +48,8 @@ unparseable = "unparseable"
 [default.extend-identifiers]
 # Laravel's route property.
 wheres = "wheres"
+# The vendor behind the coding standard ecs wraps.
+Symplify = "Symplify"
 # "(?(VERSIONx)": a letter after the condition name.
 VERSIONx = "VERSIONx"
 # The character class of the escapes \p, \P and \N.
