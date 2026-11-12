@@ -18,6 +18,7 @@ use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Formatter\LintSummary;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Formatter\ReportSpelling;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Parser\PcreTarget;
@@ -128,7 +129,7 @@ final class LintOutputRenderer
         }
 
         foreach ($target->notices() as $notice) {
-            $banner .= $output->dim('Note: '.$notice)."\n";
+            $banner .= $output->dim('Note: '.ReportSpelling::displayField($notice))."\n";
         }
 
         $banner .= "\n";

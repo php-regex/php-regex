@@ -6,6 +6,8 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex lint` spells a control character a note quotes from
+   `composer.json` for the terminal (`\x1B`), in the banner as on stderr.
  * `regex lint` reads more pattern arguments (patterns built from parts,
    chosen by a ternary or a `match`, held in an array, at file level or in
    a global constant of another file), and ends its report on the number of

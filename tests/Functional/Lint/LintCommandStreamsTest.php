@@ -23,6 +23,7 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
@@ -45,6 +46,11 @@ final class LintCommandStreamsTest extends TestCase
     use TemporaryProject;
 
     private const PHP_FILE = "<?php\n\npreg_match('/^[a-z]+$/', 'abc');\n";
+
+    /**
+     * The note a require.php holding an ESC gives, spelled for the terminal.
+     */
+    private const SPELLED_NOTE = 'Note: composer.json require.php "<8.4\x1B" names no lowest PHP version: judging for the running PHP.';
 
     private const COMPOSER = '{"name": "acme/app", "require": {"php": "^8.3"}}';
 
@@ -85,6 +91,51 @@ final class LintCommandStreamsTest extends TestCase
     protected function tearDown(): void
     {
         LintFunctionOverrides::reset();
+    }
+
+    /**
+     * A note quotes what composer.json holds: a control character there is
+     * spelled for the terminal, in the console banner as on stderr, never
+     * written raw.
+     *
+     * @param list<string> $format
+     */
+    #[Test]
+    #[DataProvider('provideNoteStreams')]
+    public function test_lint_spells_a_control_character_of_a_note_for_the_terminal(array $format, bool $onStderr): void
+    {
+        $this->enterProject(['composer.json' => '{"require": {"php": "<8.4\u001b"}}', 'src/a.php' => self::PHP_FILE]);
+
+        [, $stdout, $stderr] = $this->runLint(['src', '--jobs=1', '--no-redos', ...$format]);
+
+        $written = $onStderr ? $stderr : $stdout;
+        $this->assertStringContainsString("\n".self::SPELLED_NOTE."\n", "\n".$written);
+        $this->assertStringNotContainsString("\e", $stdout.$stderr);
+    }
+
+    /**
+     * The banner holds each note on a line of its own, under the rows, and
+     * closes on a blank line.
+     */
+    #[Test]
+    public function test_lint_banner_ends_on_its_notes_then_a_blank_line(): void
+    {
+        $directory = $this->makeProject(['composer.json' => '{"require": {"php": "<8.4\u001b"}}']);
+        $target = ProjectTarget::resolve(null, null, [], $directory, []);
+
+        $banner = (new LintOutputRenderer())->renderBanner(new Output(false, false), $target);
+
+        $this->assertStringEndsWith("\n".self::SPELLED_NOTE."\n\n", $banner);
+        $this->assertStringNotContainsString("\n\n".self::SPELLED_NOTE, $banner);
+    }
+
+    /**
+     * @return iterable<string, array{format: list<string>, onStderr: bool}>
+     */
+    public static function provideNoteStreams(): iterable
+    {
+        yield 'the console banner' => ['format' => ['--format=console'], 'onStderr' => false];
+        yield 'stderr beside a report' => ['format' => ['--format=github'], 'onStderr' => true];
     }
 
     #[Test]
