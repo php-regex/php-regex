@@ -23,6 +23,7 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
@@ -45,6 +46,11 @@ final class LintCommandStreamsTest extends TestCase
     use TemporaryProject;
 
     private const PHP_FILE = "<?php\n\npreg_match('/^[a-z]+$/', 'abc');\n";
+
+    /**
+     * The note a require.php holding an ESC gives, spelled for the terminal.
+     */
+    private const SPELLED_NOTE = 'Note: composer.json require.php "<8.4\x1B" names no lowest PHP version: judging for the running PHP.';
 
     private const COMPOSER = '{"name": "acme/app", "require": {"php": "^8.3"}}';
 
@@ -103,8 +109,24 @@ final class LintCommandStreamsTest extends TestCase
         [, $stdout, $stderr] = $this->runLint(['src', '--jobs=1', '--no-redos', ...$format]);
 
         $written = $onStderr ? $stderr : $stdout;
-        $this->assertStringContainsString('Note: composer.json require.php "<8.4\x1B" names no lowest PHP version', $written);
+        $this->assertStringContainsString("\n".self::SPELLED_NOTE."\n", "\n".$written);
         $this->assertStringNotContainsString("\e", $stdout.$stderr);
+    }
+
+    /**
+     * The banner holds each note on a line of its own, under the rows, and
+     * closes on a blank line.
+     */
+    #[Test]
+    public function test_lint_banner_ends_on_its_notes_then_a_blank_line(): void
+    {
+        $directory = $this->makeProject(['composer.json' => '{"require": {"php": "<8.4\u001b"}}']);
+        $target = ProjectTarget::resolve(null, null, [], $directory, []);
+
+        $banner = (new LintOutputRenderer())->renderBanner(new Output(false, false), $target);
+
+        $this->assertStringEndsWith("\n".self::SPELLED_NOTE."\n\n", $banner);
+        $this->assertStringNotContainsString("\n\n".self::SPELLED_NOTE, $banner);
     }
 
     /**
