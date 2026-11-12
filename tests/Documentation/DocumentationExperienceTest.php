@@ -30,6 +30,23 @@ final class DocumentationExperienceTest extends TestCase
 
     private const EXTENDING = __DIR__.'/../../docs/extending.md';
 
+    private const HEADER = __DIR__.'/../../docs/_includes/header.html';
+
+    private const STYLESHEET = __DIR__.'/../../docs/assets/css/main.scss';
+
+    private const COOKBOOK = __DIR__.'/../../docs/cookbook.md';
+
+    private const HOW_PCRE2_MATCHES = __DIR__.'/../../docs/concepts/how-pcre2-matches.md';
+
+    private const ARTICLES = [
+        'catastrophic-backtracking-in-php',
+        're2-vs-pcre2',
+        'which-pcre2-ships-with-which-php',
+        'why-pcre2-is-a-separate-library',
+    ];
+
+    private const LLMS = __DIR__.'/../../docs/llms.txt';
+
     /**
      * Lint rules have no public registry in 2.0 (backward-compatibility.md):
      * the extending guide must not offer one as an extension point.
@@ -160,5 +177,91 @@ final class DocumentationExperienceTest extends TestCase
         $this->assertStringContainsString('## Install', $quickStart);
         $this->assertStringContainsString('## Run your first analysis', $quickStart);
         $this->assertStringContainsString('## Pick your integration', $quickStart);
+    }
+
+    /**
+     * The landing page has no drawer to carry its sections, and below
+     * 1024px the header's own words went with every other page's: a phone
+     * stood on the tool with no way to the docs, the tutorial or the
+     * articles but the footer, far below. On the landing page the words
+     * stay in the header at every width; on a phone the wordmark gives
+     * way to its mark so the three links fit beside the controls.
+     */
+    #[Test]
+    public function test_the_landing_header_keeps_its_sections_on_a_phone(): void
+    {
+        $header = (string) file_get_contents(self::HEADER);
+        $this->assertStringContainsString("class=\"site-header{% if page.layout == 'landing' %} site-header--landing{% endif %}\"", $header, 'The landing header says it is the landing header.');
+
+        $stylesheet = (string) file_get_contents(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.site-header--landing \.header-nav \{([^}]*)\}/m', $stylesheet, $nav), 'The landing nav rule exists.');
+        $this->assertStringContainsString('display: flex;', $nav[1], 'The sections stand in the header at every width.');
+        $phone = '/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.site-header--landing \.header-nav a \{([^}]*)\}/';
+        $this->assertSame(1, preg_match($phone, $stylesheet, $links), 'A phone compacts the landing links.');
+        $this->assertStringContainsString('font-size:', $links[1]);
+        $this->assertSame(1, preg_match('/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.site-header--landing \.brand-name \{([^}]*)\}/', $stylesheet, $brand), 'A phone folds the wordmark into its mark.');
+        $this->assertStringContainsString('clip-path: inset(50%);', $brand[1], 'Folded for the eye, still named for a voice: the home link keeps its name.');
+        $this->assertSame(1, preg_match('/@media \(max-width: 359px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.site-header--landing \.header-nav a \{([^}]*)\}/', $stylesheet, $tight), 'The narrowest phones tighten the row.');
+        $this->assertStringContainsString('font-size:', $tight[1]);
+        $this->assertStringContainsString('padding-inline:', $tight[1]);
+    }
+
+    /**
+     * The documentation and the playground point at each other: a reader
+     * who just ran an example by hand is one link away from the tree, the
+     * lint findings and the step-through of the same pattern. Every link
+     * carries a pattern the engine accepts.
+     */
+    #[Test]
+    public function test_runnable_examples_open_in_the_playground(): void
+    {
+        $pages = [
+            self::QUICK_START => 2,
+            self::COOKBOOK => 2,
+            self::HOW_PCRE2_MATCHES => 1,
+        ];
+        foreach ($pages as $path => $least) {
+            $page = (string) file_get_contents($path);
+            $matched = preg_match_all('/\]\(\/(?:#|%23)pattern=([^)&\s]+)&subject=([^)\s]+)\)/', $page, $matches, \PREG_SET_ORDER);
+            $this->assertNotFalse($matched, $path.': the pattern links read as the page ships them.');
+            $this->assertGreaterThanOrEqual($least, \count($matches), $path.': at least '.$least.' example(s) open in the playground.');
+            foreach ($matches as $match) {
+                $pattern = rawurldecode($match[1]);
+                $this->assertNotFalse(@preg_match($pattern, ''), $path.': the linked pattern '.\var_export($pattern, true).' is one the engine accepts.');
+                // The subject shows what the link promises: a match, a
+                // trace the tab can hold whole. A link that opens on
+                // "no match" or on a recording cut at its cap teaches the
+                // opposite of what it says.
+                $subject = rawurldecode($match[2]);
+                $matched = @preg_match($pattern, $subject);
+                if (1 !== $matched) {
+                    // A subject that does not match is the point of the
+                    // backtracking examples — the trace draws the failure.
+                    // It must be short enough for the tab to hold whole.
+                    $this->assertLessThanOrEqual(10, \strlen($subject), $path.': the linked subject '.\var_export($subject, true).' neither matches '.\var_export($pattern, true).' nor fits a trace the tab holds whole.');
+                }
+            }
+        }
+    }
+
+    /**
+     * The four launch articles stay drafts until a hand validates them:
+     * the blog shows nothing of them and llms.txt indexes nothing of
+     * them — an agent reading the site does not read what a reader
+     * cannot. Publishing them is a flip of one flag each, plus the
+     * index the runbook describes.
+     */
+    #[Test]
+    public function test_the_four_blog_articles_wait_for_validation(): void
+    {
+        foreach (self::ARTICLES as $slug) {
+            $article = (string) file_get_contents(__DIR__.'/../../docs/_articles/'.$slug.'.md');
+            $this->assertSame(1, preg_match('/^published: false$/m', $article), $slug.' stays a draft until a hand validates it.');
+        }
+        $llms = (string) file_get_contents(self::LLMS);
+        $this->assertStringNotContainsString('## Articles', $llms, 'No index of what is not published.');
+        foreach (self::ARTICLES as $slug) {
+            $this->assertStringNotContainsString('php-regex.com/blog/'.$slug, $llms, $slug.' is indexed nowhere.');
+        }
     }
 }

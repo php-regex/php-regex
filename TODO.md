@@ -86,10 +86,10 @@ to match).
 
 ## Blog articles
 
-- Publish the four drafts (`catastrophic-backtracking-in-php`,
-  `re2-vs-pcre2`, `which-pcre2-ships-with-which-php`,
-  `why-pcre2-is-a-separate-library`): flip `published`, and add an
-  `## Articles` section to `docs/llms.txt` with a line for each.
+- The four launch articles wait for a read and a go: the tour's pull
+  request publishes the blog list and the `## Articles` section of
+  `docs/llms.txt` in the same stroke as the flip — one commit once they
+  are validated.
 - On the day of the 8.6 GA, re-check the 8.6 row of the version matrix in
   `which-pcre2-ships-with-which-php` against the PHP-8.6 branch: the article
   promises it. On 2026-11-10 the branch and master still bundle PCRE2
@@ -392,3 +392,27 @@ captures. `static::X` and `self::X` in a closure stay unread on purpose.
   then its standard error: a process that fills the second first would
   block. The `Scope` job of `ci.yml` counts a moved file twice against
   GitHub's limit of 3,000 files.
+
+## Site and docs tour, 2026-11-11
+
+A full pass over the site with a fresh eye, after the playground lost
+its window (PR #355) and gained its popover (PR #357). Done in the tour's
+pull request:
+
+- The landing header keeps Docs, Tutorial and Blog at every width — a
+  phone stood on the tool with no way to the pages but the footer.
+- The documentation and the playground point at each other: the quick
+  start's first two examples, two cookbook recipes and the trace article
+  each link to the playground with the pattern preloaded
+  (`/#pattern=…&subject=…`), pinned by a contract that runs every linked
+  pattern through the engine.
+- The four launch articles stay drafts (their content is not validated
+  yet); the blog list and the `## Articles` section of `docs/llms.txt`
+  go with them in the same commit when they are.
+
+Deliberately left as they are:
+
+- No tagline above the tool on the home: the tool speaks first; the
+  footer tagline answers whoever scrolls.
+- The `2.x-dev` install commands still wait for the 2.0.0 tag (the
+  Release section above owns them).
