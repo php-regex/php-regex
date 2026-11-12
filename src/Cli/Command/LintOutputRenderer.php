@@ -139,9 +139,10 @@ final class LintOutputRenderer
     /**
      * The PHP versions of the range judged after the floor, as the Target
      * row ends with them ("; also PHP 8.4.25, 8.5, 8.5.10"): empty when
-     * one version is judged.
+     * one version is judged. The banner of every command that reads one
+     * pattern ends its target line alike.
      */
-    private static function laterPoints(Output $output, ProjectTarget $target): string
+    public static function laterPoints(Output $output, ProjectTarget $target): string
     {
         $later = array_map(
             static fn (PcreTarget $point): string => $output->warning(ProjectTarget::phpLabel($point->phpVersionId)),

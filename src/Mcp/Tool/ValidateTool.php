@@ -31,10 +31,11 @@ final class ValidateTool extends AbstractTool
         if ($pattern instanceof ToolResult) {
             return $pattern;
         }
-        $regex = $this->regex($arguments);
-        if ($regex instanceof ToolResult) {
-            return $regex;
+        $judged = $this->regex($arguments);
+        if ($judged instanceof ToolResult) {
+            return $judged;
         }
+        [$regex, $target] = $judged;
 
         $validation = $regex->validate($pattern);
 
@@ -48,6 +49,8 @@ final class ValidateTool extends AbstractTool
             }
         }
 
-        return ToolResult::document($text, ['pattern' => $pattern, 'validation' => $validation]);
+        [$text, $range] = self::overRange($text, $regex, $target, $pattern);
+
+        return ToolResult::document($text, ['pattern' => $pattern, 'validation' => $validation, ...$range]);
     }
 }

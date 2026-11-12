@@ -32,7 +32,7 @@ final class RedosToolTest extends TestCase
         $analyze = JsonContract::decodeDocument($stdout);
 
         $this->assertFalse($result->isError);
-        $this->assertSame(['pattern' => '/^(a+)+$/', 'redos' => $analyze['redos']], $result->structured);
+        $this->assertSame(['pattern' => '/^(a+)+$/', 'redos' => $analyze['redos'], 'target' => $analyze['target'], 'range' => $analyze['range']], $result->structured);
         JsonContract::assertShape('redos_analysis', $result->structured['redos']);
         $redos = JsonContract::asArray($result->structured['redos']);
         $this->assertSame('critical', $redos['severity']);

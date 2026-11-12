@@ -52,7 +52,7 @@ final class GlobalOptionsParser
     public static function target(): array
     {
         return [
-            Option::value('--php-version', '<ver>', 'Target PHP version for validation')->readByTheApplication(),
+            Option::value('--php-version', '<ver>', 'Target PHP version or range for validation, such as \'8.1\' or \'>=8.1\'')->readByTheApplication(),
             Option::value('--pcre-version', '<ver>', 'Target PCRE2 release for validation')->readByTheApplication(),
             Option::value('--locale', '<name>', 'Target LC_CTYPE locale for validation')->readByTheApplication(),
         ];

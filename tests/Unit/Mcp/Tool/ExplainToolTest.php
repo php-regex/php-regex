@@ -32,7 +32,7 @@ final class ExplainToolTest extends TestCase
 
         $this->assertFalse($result->isError);
         $this->assertSame(JsonContract::decodeDocument($stdout), $result->structured);
-        $this->assertSame(['pattern', 'explanation'], array_keys($result->structured));
+        $this->assertSame(['pattern', 'explanation', 'target', 'range'], array_keys($result->structured));
         $this->assertSame($result->structured['explanation'], $result->text);
         $this->assertStringContainsString('Regex matches', $result->text);
     }

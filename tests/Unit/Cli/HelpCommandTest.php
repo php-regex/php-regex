@@ -67,6 +67,8 @@ final class HelpCommandTest extends TestCase
 
         $this->assertArrayHasKey('lint', self::section($overview, 'Commands'));
         $this->assertArrayHasKey('--php-version <ver>', self::section($overview, 'Global Options'));
+        // --php-version takes a range as lint does: the help names one.
+        $this->assertStringContainsString("'>=8.1'", self::section($overview, 'Global Options')['--php-version <ver>']);
         $this->assertArrayHasKey('--locale <name>', self::section($overview, 'Global Options'));
         $this->assertArrayHasKey('--cache-dir <dir>', self::section($overview, 'Global Options'));
         $this->assertMatchesRegularExpression('/^  Run \S+ help <command> for the options of a command\.$/m', $overview);

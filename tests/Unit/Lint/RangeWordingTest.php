@@ -61,6 +61,13 @@ final class RangeWordingTest extends TestCase
     }
 
     #[Test]
+    public function test_refusal_names_the_versions_then_their_error(): void
+    {
+        $this->assertSame('On PHP 8.5 and later: \\K is not allowed.', RangeWording::refusal('PHP 8.5 and later', new ValidationResult(false, '\\K is not allowed.')));
+        $this->assertSame('On PHP 8.5 and later: Invalid regex.', RangeWording::refusal('PHP 8.5 and later', new ValidationResult(false)));
+    }
+
+    #[Test]
     public function test_silent_change_names_the_version_then_the_change(): void
     {
         $this->assertSame(

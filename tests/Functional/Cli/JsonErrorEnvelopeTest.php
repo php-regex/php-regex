@@ -172,12 +172,12 @@ final class JsonErrorEnvelopeTest extends TestCase
         yield 'redos, --input-file that does not exist' => ['arguments' => ['redos', '/a/', '--input-file=missing.txt', '--json'], 'error' => 'Input file not readable: missing.txt'];
         yield 'lint, invalid --pcre-version' => ['arguments' => ['--pcre-version=banana', 'lint', 'src', '--jobs=1', '--json'], 'error' => 'Invalid option: --pcre-version must be a PCRE2 release like "10.44", not "banana".'];
         yield 'lint, invalid --php-version beside a valid --pcre-version' => ['arguments' => ['--php-version=99', '--pcre-version=10.44', 'lint', 'src', '--jobs=1', '--json'], 'error' => 'Invalid option: --php-version 99 is no PHP_VERSION_ID: write PHP 9.9 as 90900 or "9.9".'];
-        // The commands that read one pattern take a single version until
-        // they judge every point of a range: a range is refused in the
-        // words they used before ranges.
-        yield 'validate, a --php-version range' => ['arguments' => ['--php-version=>=8.1', 'validate', '/(?<=a\\Kb)c/', '--json'], 'error' => 'Invalid option: --php-version must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".'];
-        yield 'validate, a --php-version hyphen range' => ['arguments' => ['--php-version=8.1 - 8.6', 'validate', '/a/', '--json'], 'error' => 'Invalid option: --php-version must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".'];
-        yield 'analyze, a --php-version range' => ['arguments' => ['--php-version=>=8.1', 'analyze', '/a/', '--json'], 'error' => 'Invalid option: --php-version must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".'];
+        // The commands that read one pattern read --php-version as lint
+        // does, a range included: one lint cannot read is refused in lint's
+        // words, which name every form the option takes.
+        yield 'validate, a --php-version range without a lowest version' => ['arguments' => ['--php-version=<8.4', 'validate', '/(?<=a\\Kb)c/', '--json'], 'error' => 'Invalid option: --php-version must be a version string like "8.2", a PHP_VERSION_ID integer, "runtime", or a Composer constraint like ">=8.1" that names a lowest version.'];
+        yield 'validate, a PHP_VERSION_ID inside a --php-version range' => ['arguments' => ['--php-version=>=80100', 'validate', '/a/', '--json'], 'error' => 'Invalid option: --php-version must be a version string like "8.2", a PHP_VERSION_ID integer, "runtime", or a Composer constraint like ">=8.1" that names a lowest version.'];
+        yield 'analyze, no version at all' => ['arguments' => ['--php-version=abc', 'analyze', '/a/', '--json'], 'error' => 'Invalid option: --php-version must be a version string like "8.2", a PHP_VERSION_ID integer, "runtime", or a Composer constraint like ">=8.1" that names a lowest version.'];
     }
 
     /**

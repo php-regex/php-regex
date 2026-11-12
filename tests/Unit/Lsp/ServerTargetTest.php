@@ -431,13 +431,16 @@ final class ServerTargetTest extends TestCase
      */
     private function diagnostics(): array
     {
+        // Over a range, the floor's diagnostics come first and every
+        // version's last: the last push is the document's state.
+        $last = null;
         foreach ($this->notifications('textDocument/publishDiagnostics') as $params) {
             if (self::DOCUMENT_URI === ($params['uri'] ?? null) && \is_array($params['diagnostics'] ?? null)) {
-                return array_values($params['diagnostics']);
+                $last = array_values($params['diagnostics']);
             }
         }
 
-        self::fail('The server published no diagnostics for the document.');
+        return $last ?? self::fail('The server published no diagnostics for the document.');
     }
 
     private function targetLog(): string

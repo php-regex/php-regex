@@ -28,7 +28,7 @@ use PHPUnit\Framework\Assert;
  * bridges' own reports), then ".key" for a nested object and "[]" for the
  * elements of a list.
  * An object several documents embed has an address of its own (runtime,
- * validation, redos_analysis, benchmark) and is described once.
+ * validation, redos_analysis, benchmark, range_point) and is described once.
  */
 final class JsonContract
 {
@@ -63,6 +63,9 @@ final class JsonContract
         ],
         'redos_analysis.confirmation.samples[]' => ['input_length', 'duration_ms', 'input_preview', 'preg_error_code', 'preg_error'],
         'benchmark' => ['label', 'result', 'wall_ms', 'avg_ms', 'cpu_ms', 'mem_bytes', 'peak_bytes', 'err_msg', 'err_code', 'iterations'],
+        // The verdict of one PHP version of the range a single-pattern
+        // command judged, the floor first.
+        'range_point' => ['php', 'pcre', 'is_valid', 'error', 'error_code', 'parses_differently'],
 
         // The error envelope.
         'error' => ['error', 'stage', 'validation'],
@@ -86,31 +89,32 @@ final class JsonContract
         'lint.results[].optimizations[].optimization' => ['original', 'optimized', 'changes'],
 
         // regex analyze --format=json
-        'analyze' => ['pattern', 'runtime', 'parse', 'validation', 'redos', 'explain'],
+        'analyze' => ['pattern', 'runtime', 'parse', 'validation', 'redos', 'explain', 'target', 'range'],
         'analyze.parse' => ['ok'],
 
         // regex debug --format=json
-        'debug' => ['pattern', 'runtime', 'validation', 'analysis', 'input'],
+        'debug' => ['pattern', 'runtime', 'validation', 'analysis', 'input', 'target', 'range'],
         'debug.input' => ['value', 'source'],
 
         // regex redos --format=json
-        'redos' => ['pattern', 'safe_pattern', 'runtime', 'input', 'settings', 'bench', 'summary'],
+        'redos' => ['pattern', 'safe_pattern', 'runtime', 'input', 'settings', 'bench', 'summary', 'target', 'range', 'safe_range'],
         'redos.input' => ['source', 'base_length', 'final_length', 'repeat', 'prefix', 'suffix', 'preview', 'value', 'note'],
         'redos.settings' => ['iterations', 'warmup'],
         'redos.bench' => ['vuln', 'safe'],
         'redos.summary' => ['result_parity', 'speedup', 'delta_ms'],
 
-        // regex transpile --format=json, and the Symfony and Laravel commands
-        'transpile' => ['target', 'source', 'pattern', 'flags', 'literal', 'constructor', 'warnings', 'notes'],
+        // regex transpile --format=json, and the Symfony and Laravel commands:
+        // "target" is the dialect, "php_target" the PHP versions judged.
+        'transpile' => ['target', 'source', 'pattern', 'flags', 'literal', 'constructor', 'warnings', 'notes', 'php_target', 'range'],
 
         // regex format --format=json
-        'format' => ['pattern', 'formatted', 'changed', 'refusal'],
+        'format' => ['pattern', 'formatted', 'changed', 'refusal', 'target', 'range'],
 
         // regex validate --format=json
-        'validate' => ['pattern', 'validation'],
+        'validate' => ['pattern', 'validation', 'target', 'range'],
 
         // regex explain --format=json
-        'explain' => ['pattern', 'explanation'],
+        'explain' => ['pattern', 'explanation', 'target', 'range'],
 
         // regex lint --generate-baseline
         'baseline' => ['version', 'issues'],
@@ -141,11 +145,13 @@ final class JsonContract
 
     /**
      * The keys an object may leave out: the envelope's sibling keys, and
-     * the second benchmark row, which only a run against --safe has.
+     * the second benchmark row and the range of the --safe pattern, which
+     * only a run against --safe has.
      */
     public const OPTIONAL_KEYS = [
         'error' => ['validation'],
         'redos.bench' => ['safe'],
+        'redos' => ['safe_range'],
         'symfony_analyze.sections[]' => ['debug'],
     ];
 
@@ -166,6 +172,23 @@ final class JsonContract
         'lint.results[].issues[].analysis' => 'redos_analysis',
         'redos.bench.vuln' => 'benchmark',
         'redos.bench.safe' => 'benchmark',
+        // The single-pattern commands name the PHP versions they judged as
+        // lint names them, and give each version's verdict.
+        'analyze.target' => 'lint.target',
+        'debug.target' => 'lint.target',
+        'explain.target' => 'lint.target',
+        'format.target' => 'lint.target',
+        'redos.target' => 'lint.target',
+        'validate.target' => 'lint.target',
+        'transpile.php_target' => 'lint.target',
+        'analyze.range[]' => 'range_point',
+        'debug.range[]' => 'range_point',
+        'explain.range[]' => 'range_point',
+        'format.range[]' => 'range_point',
+        'redos.range[]' => 'range_point',
+        'redos.safe_range[]' => 'range_point',
+        'transpile.range[]' => 'range_point',
+        'validate.range[]' => 'range_point',
         // Symfony's regex:analyze writes its warnings as its summary, and
         // its debug rows as its meta rows.
         'symfony_analyze.sections[].warnings[]' => 'symfony_analyze.sections[].summary[]',

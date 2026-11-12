@@ -15,12 +15,13 @@ namespace PHPRegex\Mcp\Exception;
 
 /**
  * A target a call names that no pattern can be judged for: an option
- * that is not a version, or a PHP that ships PCRE1.
+ * that is not a version, or a PHP that ships PCRE1; or the target of a
+ * facade the factory did not build, a bug.
  */
 final class TargetException extends \InvalidArgumentException implements ExceptionInterface
 {
     /**
-     * @param string $stage the stage of the CLI's error envelope: "usage" for an option that cannot be read, "target" for a PHP the library does not judge
+     * @param string $stage the stage of the CLI's error envelope: "usage" for an option that cannot be read, "target" for a PHP the library does not judge, "internal" for a facade the factory did not build, a bug
      */
     public function __construct(
         string $message,

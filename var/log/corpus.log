@@ -217,6 +217,12 @@ corpus/Automattic/jetpack/projects/packages/jetpack-mu-wpcom/src/features/newspa
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
+corpus/Automattic/jetpack/projects/packages/my-jetpack/src/class-google-analytics-settings.php:33:23
+    → /^(|UA-\d+-\d+|G-[A-Z0-9]+)$/i
+   ↳ via self::CODE_PATTERN
+   WARN  Alternation contains an empty alternative.
+       ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
+
 corpus/Automattic/jetpack/projects/packages/password-checker/src/class-password-checker.php:506:20
     → /[!|@|#|$|%|^|&|*|(|)]/
    WARN  Redundant elements detected in character class.
@@ -3727,7 +3733,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/ID3/getid3.php:1596:69
        - #[\x00\x01\x10\x11\x40\x41\x50\x51\x80\x81\x90\x91\xC0\xC1\xD0\xD1][\x20-37][\x00\x20\x40\x60\x80\xA0\xC0\xE0]#s
        + #[\x00\x01\x10\x11\x40\x41\x50\x51\x80\x81\x90\x91\xC0\xC1\xD0\xD1][\x20-37][\x00\x20\x40\x60\x80\xA0\xC0\xE0]#
 
-corpus/WordPress/wordpress-develop/src/wp-includes/ID3/module.audio-video.quicktime.php:1683:21
+corpus/WordPress/wordpress-develop/src/wp-includes/ID3/module.audio-video.quicktime.php:1701:21
     → #([\+\-][0-9\.]+)([\+\-][0-9\.]+)([\+\-][0-9\.]+)?/$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -3745,7 +3751,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/ID3/module.audio-video.riff.p
        - /^\xFF[\xE2-\xE7\xF2-\xF7\xFA-\xFF][\x00-\xEB]/s
        + /^\xFF[\xE2-\xE7\xF2-\xF7\xFA-\xFF][\x00-\xEB]/
 
-corpus/WordPress/wordpress-develop/src/wp-includes/ID3/module.tag.id3v2.php:2075:23
+corpus/WordPress/wordpress-develop/src/wp-includes/ID3/module.tag.id3v2.php:2083:23
     → #^([^\x00]+)*\x00(.)([^\x00]+)*\x00(.+)$#s
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "!" x n . "!\x00"

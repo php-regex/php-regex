@@ -82,7 +82,7 @@ final class ValidateToolTest extends TestCase
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
-        $this->assertSame('Invalid option: "php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".', $result->structured['error']);
+        $this->assertSame('Invalid option: "php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, "runtime", or a Composer constraint like ">=8.1" that names a lowest version.', $result->structured['error']);
     }
 
     #[Test]

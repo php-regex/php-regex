@@ -79,4 +79,29 @@ final class RangeFindings
 
         return new self(silentChange: SilentMeaningChange::first($ast, $floor->target(), $later));
     }
+
+    /**
+     * The finding in the words of lint and the language server, as a
+     * command that reads one pattern says it: the refusal, an error, else
+     * the other tree or the change of meaning, a warning; both null when
+     * nothing is found.
+     *
+     * @return array{refusal: string|null, warning: string|null}
+     */
+    public function wording(): array
+    {
+        if (null !== $this->refusedBy) {
+            return ['refusal' => RangeWording::refusal($this->refusedOn, $this->refusedBy->validation), 'warning' => null];
+        }
+
+        if (null !== $this->readsOtherwise) {
+            return ['refusal' => null, 'warning' => RangeWording::readsOtherwise($this->readsOtherwise)];
+        }
+
+        if (null !== $this->silentChange) {
+            return ['refusal' => null, 'warning' => RangeWording::silentChange($this->silentChange->target, $this->silentChange->message)];
+        }
+
+        return ['refusal' => null, 'warning' => null];
+    }
 }

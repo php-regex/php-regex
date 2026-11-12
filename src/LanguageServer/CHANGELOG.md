@@ -15,7 +15,8 @@ CHANGELOG
    validated at the versions of the range `regex lint` judges (its lowest,
    then each later one where a rule changes), from `composer.json`
    `require.php` too: a version that refuses it is an error, one that reads
-   it otherwise a warning.
+   it otherwise a warning. Opening a file publishes the lowest version's
+   diagnostics first, then every version's.
  * The "Add /u flag" quick fix names only the Unicode diagnostics whose
    range lies inside its own literal, and a literal without one is checked
    by the linter itself: a range over several literals no longer offers the

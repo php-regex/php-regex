@@ -40,8 +40,10 @@ final class TranspileJsonContractTest extends LaravelTestCase
 
         $this->assertSame($exitCode, $cliExitCode, $cli);
         $this->assertSame($exitCode, $status, $laravel);
-        JsonContract::assertShape($address, JsonContract::decodeDocument($laravel));
-        $this->assertSame($cli, $laravel);
+        JsonContract::assertShape($address, JsonContract::decodeDocument($cli));
+        // The bridge judges one PHP version until it reads a range: its document
+        // is the command line's without the range the command line judged.
+        $this->assertSame(self::withoutRange(JsonContract::decodeDocument($cli)), JsonContract::decodeDocument($laravel));
     }
 
     /**
@@ -78,8 +80,10 @@ final class TranspileJsonContractTest extends LaravelTestCase
 
         $this->assertSame($exitCode, $cliExitCode, $cli);
         $this->assertSame($exitCode, $status, $bridge);
-        JsonContract::assertShape($address, JsonContract::decodeDocument($bridge));
-        $this->assertSame($cli, $bridge);
+        JsonContract::assertShape($address, JsonContract::decodeDocument($cli));
+        // The bridge judges one PHP version until it reads a range: its document
+        // is the command line's without the range the command line judged.
+        $this->assertSame(self::withoutRange(JsonContract::decodeDocument($cli)), JsonContract::decodeDocument($bridge));
     }
 
     /**
@@ -118,5 +122,19 @@ final class TranspileJsonContractTest extends LaravelTestCase
         return [
             PHPRegexServiceProvider::class,
         ];
+    }
+
+    /**
+     * A command-line transpile document without the PHP range it judged.
+     *
+     * @param array<mixed> $document
+     *
+     * @return array<mixed>
+     */
+    private static function withoutRange(array $document): array
+    {
+        unset($document['php_target'], $document['range']);
+
+        return $document;
     }
 }

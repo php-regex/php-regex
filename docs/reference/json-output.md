@@ -34,7 +34,8 @@ This page lists every key of every document.
 | `regex explain` | the [explain document](#explain) |
 
 Symfony's and Laravel's `regex:lint` print the same lint report, and their
-`regex:transpile` the same transpile document, with the same error envelope —
+`regex:transpile` the same transpile document without `php_target` and
+`range` (the bridges judge one PHP version), with the same error envelope —
 the commands come with their bundles ([Symfony](../guides/symfony.md),
 [Laravel](../guides/laravel.md)). Three bridge commands print a report of
 their own, under the same rules and the same promise:
@@ -521,6 +522,8 @@ are `null`, and the exit code is 1.
 | `validation` | object | The verdict on the pattern: a [validation](#validation-validation) object |
 | `redos` | object \| null | The ReDoS verdict: a [ReDoS analysis](#redos-analysis-redos_analysis); `null` for an invalid pattern |
 | `explain` | string \| null | The pattern explained in plain language; `null` for an invalid pattern |
+| `target` | object | The PHP versions the pattern was judged for, as [lint's target](#target-linttarget): the command's own output is the floor's |
+| `range` | list of objects | The verdict of each PHP version judged, the floor first: one [range point](#range-point-range_point) each |
 
 ### Parse: `analyze.parse`
 
@@ -543,6 +546,8 @@ and the exit code is 1.
 | `validation` | object | The verdict on the pattern: a [validation](#validation-validation) object, `is_valid` true when it is valid |
 | `analysis` | object \| null | The ReDoS verdict: a [ReDoS analysis](#redos-analysis-redos_analysis); `null` for an invalid pattern |
 | `input` | object | The subject to try the pattern on |
+| `target` | object | The PHP versions the pattern was judged for, as [lint's target](#target-linttarget): the command's own output is the floor's |
+| `range` | list of objects | The verdict of each PHP version judged, the floor first: one [range point](#range-point-range_point) each |
 
 ### Debug input: `debug.input`
 
@@ -572,6 +577,9 @@ pattern, or an invalid `--safe` pattern, stops it with the envelope (see
 | `settings` | object | How the benchmark ran |
 | `bench` | object | One measurement per pattern |
 | `summary` | object \| null | The comparison of the two patterns; `null` without `--safe` |
+| `target` | object | The PHP versions the pattern was judged for, as [lint's target](#target-linttarget): the command's own output is the floor's |
+| `range` | list of objects | The verdict of each PHP version judged, the floor first: one [range point](#range-point-range_point) each |
+| `safe_range` | list of objects, optional | Present with `--safe`: the verdict of each PHP version judged on the safe pattern, the floor first, one [range point](#range-point-range_point) each |
 
 ### Benchmark input: `redos.input`
 
@@ -630,7 +638,8 @@ One measurement, under `redos.bench.vuln` and `redos.bench.safe`.
 
 `regex transpile <pattern> --format=json` rewrites a pattern for another
 regex dialect. Symfony's and Laravel's `regex:transpile --format=json` print
-the same document.
+the same document, without `php_target` and `range`: the bridges judge one
+PHP version.
 
 The pattern is validated first. An invalid pattern stops the command with the
 envelope, stage `pattern`, carrying `validation`, a semantic error such as
@@ -657,6 +666,8 @@ no equivalent for stops it with the envelope too, stage `pattern`, without a
 | `constructor` | string | Code that builds the pattern in the target language, as `new RegExp("a+b", "i")` |
 | `warnings` | list of strings | Where the target matches differently from PCRE |
 | `notes` | list of strings | What was rewritten on the way, matching the same |
+| `php_target` | object | The PHP versions the pattern was judged for, as [lint's target](#target-linttarget): the rewrite is the floor's; `target` names the dialect |
+| `range` | list of objects | The verdict of each PHP version judged, the floor first: one [range point](#range-point-range_point) each |
 
 Without `u`, PCRE takes one byte for a set where the targets take one
 character. A pattern holding a set that reaches past ASCII (the dot, a
@@ -678,6 +689,28 @@ ASCII, and agree under `u` for UTF-8 subjects.
     ],
     "notes": [
         "Applied /D: \"$\" is written for the end of the subject alone."
+    ],
+    "php_target": {
+        "php": "8.4.27",
+        "pcre": "10.49",
+        "locale": "C",
+        "source": "running PHP",
+        "range": [
+            {
+                "php": "8.4.27",
+                "pcre": "10.49"
+            }
+        ]
+    },
+    "range": [
+        {
+            "php": "8.4.27",
+            "pcre": "10.49",
+            "is_valid": true,
+            "error": null,
+            "error_code": null,
+            "parses_differently": false
+        }
     ]
 }
 ```
@@ -693,7 +726,29 @@ ASCII, and agree under `u` for UTF-8 subjects.
     "pattern": "/^(?<year>\\d{4})-(?<month>\\d{2})$/",
     "formatted": "/\n    ^\n    (?<year>\\d{4})\n    -\n    (?<month>\\d{2})\n    $\n/x",
     "changed": true,
-    "refusal": null
+    "refusal": null,
+    "target": {
+        "php": "8.4.27",
+        "pcre": "10.49",
+        "locale": "C",
+        "source": "running PHP",
+        "range": [
+            {
+                "php": "8.4.27",
+                "pcre": "10.49"
+            }
+        ]
+    },
+    "range": [
+        {
+            "php": "8.4.27",
+            "pcre": "10.49",
+            "is_valid": true,
+            "error": null,
+            "error_code": null,
+            "parses_differently": false
+        }
+    ]
 }
 ```
 
@@ -712,6 +767,8 @@ message naming the error code `regex.formatting.unsafe`.
 | `formatted` | string | The pattern laid out or compacted; the pattern given, as it was written, when it already fits (and holds no raw line break) or was refused |
 | `changed` | bool | Whether `formatted` differs from `pattern` |
 | `refusal` | string \| null | Why the pattern was given back as it was written: `newline_convention`, `spaced_quantifier`, `extended_mode_switched_off`, `line_break_in_name`, `parenthesis_in_comment` or `delimiter_misread`; an open set. `null` when it was not refused |
+| `target` | object | The PHP versions the pattern was judged for, as [lint's target](#target-linttarget): the command's own output is the floor's |
+| `range` | list of objects | The verdict of each PHP version judged, the floor first: one [range point](#range-point-range_point) each |
 
 ## Validate
 
@@ -732,7 +789,29 @@ apart, 0 and 1:
         "caret_snippet": "Line 1: (a\n          ^",
         "hint": null,
         "error_code": "regex.group.unclosed"
-    }
+    },
+    "target": {
+        "php": "8.4.27",
+        "pcre": "10.49",
+        "locale": "C",
+        "source": "running PHP",
+        "range": [
+            {
+                "php": "8.4.27",
+                "pcre": "10.49"
+            }
+        ]
+    },
+    "range": [
+        {
+            "php": "8.4.27",
+            "pcre": "10.49",
+            "is_valid": false,
+            "error": "Expected ) at end of input (found eof).",
+            "error_code": "regex.group.unclosed",
+            "parses_differently": false
+        }
+    ]
 }
 ```
 
@@ -747,6 +826,8 @@ usage error, exit code 2.
 |---|---|---|
 | `pattern` | string | The pattern given, delimiters and flags included |
 | `validation` | object | The verdict, as a [validation](#validation-validation) object |
+| `target` | object | The PHP versions the pattern was judged for, as [lint's target](#target-linttarget): the command's own output is the floor's |
+| `range` | list of objects | The verdict of each PHP version judged, the floor first: one [range point](#range-point-range_point) each |
 
 The MCP server's `regex_validate` tool answers this document as its
 structured content.
@@ -760,7 +841,29 @@ plain language, the text the console prints. `--json` is short for
 ```json
 {
     "pattern": "/a+/",
-    "explanation": "Regex matches\n  'a', one or more times"
+    "explanation": "Regex matches\n  'a', one or more times",
+    "target": {
+        "php": "8.4.27",
+        "pcre": "10.49",
+        "locale": "C",
+        "source": "running PHP",
+        "range": [
+            {
+                "php": "8.4.27",
+                "pcre": "10.49"
+            }
+        ]
+    },
+    "range": [
+        {
+            "php": "8.4.27",
+            "pcre": "10.49",
+            "is_valid": true,
+            "error": null,
+            "error_code": null,
+            "parses_differently": false
+        }
+    ]
 }
 ```
 
@@ -774,6 +877,8 @@ carrying `validation`, exit code 1.
 |---|---|---|
 | `pattern` | string | The pattern given, delimiters and flags included |
 | `explanation` | string | The explanation, as `Regex::explain()` writes it; its wording is not frozen |
+| `target` | object | The PHP versions the pattern was judged for, as [lint's target](#target-linttarget): the command's own output is the floor's |
+| `range` | list of objects | The verdict of each PHP version judged, the floor first: one [range point](#range-point-range_point) each |
 
 The MCP server's `regex_explain` tool answers this document as its
 structured content.
@@ -1015,6 +1120,37 @@ backreference, without `validation`.
 | `determinizer` | string | `subset` or `subset-indexed` |
 
 ## Shared Objects
+
+### Range point: `range_point`
+
+`regex validate`, `analyze`, `explain`, `redos`, `format`, `transpile` and
+`debug` judge their pattern for the PHP versions `--php-version` names, a
+range included, read as `regex lint` reads it; else for the running PHP
+alone. They read no `composer.json`, and no `regex.json` for their target
+(`debug` reads it for its ReDoS defaults only). Their own output is
+computed once, at the floor; the pattern is also validated at the later
+versions the lint judges for the same range, those
+[`lint.target.range`](#target-range-entry-linttargetrange) lists: each
+version above the floor where a rule of the library changes, and the lowest
+version of each branch of an OR constraint above the floor (`~8.3.0 ||
+>=8.5.3` adds 8.5.3), unless a version already judged with the same PCRE2
+stands for its stretch between two rule changes (`8.1.0 || 8.1.1 || 8.1.2`
+is judged at 8.1 alone). `range` gives each version's verdict, the floor
+first. A later version that refuses a pattern the floor accepts makes the
+command exit with 1; a pattern the floor refuses keeps the exit code the
+command gives it at a single version, and a version that reads the pattern
+otherwise does not change the exit code. What a later version finds is also
+said on stderr in lint's words, as on the console: stdout holds the document
+alone.
+
+| key | type | meaning |
+|---|---|---|
+| `php` | string | The PHP version, as in [a target range entry](#target-range-entry-linttargetrange) |
+| `pcre` | string | The PCRE2 release it was judged with, as `major.minor` |
+| `is_valid` | bool | Whether that version accepts the pattern |
+| `error` | string \| null | Why it refuses the pattern; `null` when it accepts it |
+| `error_code` | string \| null | The refusal's error code, as in a [validation](#validation-validation) object; `null` when it accepts the pattern |
+| `parses_differently` | bool | Whether that version reads the pattern into another tree than the floor, where both accept it; `false` for the floor and for a version that refuses it |
 
 ### Runtime: `runtime`
 

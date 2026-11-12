@@ -187,7 +187,8 @@ final class McpCommandTest extends TestCase
         // command's do, and the page lists the three target options.
         $this->assertMatchesRegularExpression('~^  \S.* mcp +# Start the server, as a client does$~m', $page);
         $this->assertMatchesRegularExpression('~^  \S.* mcp --php-version=8\.2 +# Judge every pattern for PHP 8\.2$~m', $page);
-        $this->assertMatchesRegularExpression('~^  --php-version <ver> +Target PHP version for validation$~m', $page);
+        // The server's --php-version takes a range too: the help names one.
+        $this->assertMatchesRegularExpression('~^  --php-version <ver> +Target PHP version\b.*\'>=8\.1\'~m', $page);
         $this->assertMatchesRegularExpression('~^  --pcre-version <ver> +Target PCRE2 release for validation$~m', $page);
         $this->assertMatchesRegularExpression('~^  --locale <name> +Target LC_CTYPE locale for validation$~m', $page);
     }

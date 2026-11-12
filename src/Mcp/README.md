@@ -31,7 +31,8 @@ Features
 - Five tools, each a question about one pattern written as in PHP source (`/…/flags`, delimiters included): `regex_validate`, `regex_explain`, `regex_format`, `regex_transpile` and `regex_redos`.
 - Every tool answers a text for a client that reads prose, and a structured document for one that reads data: the document `regex <command> --json` prints for the same question, one contract for the CLI and the server.
 - An invalid pattern, a construct a dialect cannot express, a limit of the library: a flagged tool result carrying the CLI's error envelope, so the agent reads the message and fixes the pattern. A protocol error is for the protocol only: an unknown tool, an argument the schema refuses.
-- Every tool takes `php_version` and `pcre_version`; the server's `--php-version`, `--pcre-version` and `--locale` are the defaults; without them, the running PHP.
+- Every tool takes `php_version` and `pcre_version`; the server's `--php-version`, `--pcre-version` and `--locale` are the defaults; without them, the running PHP. The server reads no `regex.json` and no `composer.json`.
+- `php_version` is a single version (`"8.2"`) or a Composer constraint (`">=8.1"`, `"^8.1 <8.7"`). A constraint is judged as `regex lint` judges a range: the tool's answer is computed for the lowest version, and the pattern is checked at every later version where one of the library's rules changes. What a later version finds, a refusal, another reading, a change of meaning, closes the text answer in the words of `regex lint`; the answer stays a success when the lowest version accepts the pattern.
 - Every tool is read-only and idempotent, and says so to the client; a client may call them without asking.
 - The `regex_redos` tool has a confirmed mode that replays the witness through the engine on this machine, bounded by the library's own caps.
 
@@ -74,7 +75,7 @@ The tools
 | `regex_transpile` | `pattern`, `target` (`js`, `html`, `python`), `python_version` | the pattern in the dialect, with every note on what was rewritten and every warning on what matches differently; a construct the dialect cannot express is refused with its reason |
 | `regex_redos` | `pattern`, `mode` (`theoretical`, `confirmed`), `threshold` | severity, complexity, the witness that pumps the backtracking, the hotspots, the recommendations |
 
-Every tool also takes `php_version` and `pcre_version`. The structured answer of each tool is the document the CLI prints: `regex validate --json`, `regex explain --json`, `regex format --json`, `regex transpile --json`, and the `redos` member of `regex analyze --json`, all described in the [JSON output reference](https://php-regex.com/reference/json-output/).
+Every tool also takes `php_version` and `pcre_version`. The structured answer of each tool is the document the CLI prints: `regex validate --json`, `regex explain --json`, `regex format --json`, `regex transpile --json`, and the `redos` member of `regex analyze --json`, all described in the [JSON output reference](https://php-regex.com/reference/json-output/). Each answer ends with `target`, the PHP versions judged (`php_target` for `regex_transpile`, whose `target` is the dialect), and `range`, the verdict of each of those versions on the pattern, the lowest first.
 
 A tool call with `/^(a+)+$/` answers, as text:
 
@@ -103,7 +104,7 @@ use PHPRegex\Mcp\ToolCatalog;
 
 $result = ToolCatalog::v1(['php_version' => '8.2'])->get('regex_validate')->tool->execute(['pattern' => '/a+/']);
 $result->text;       // "Valid."
-$result->structured; // ['pattern' => '/a+/', 'validation' => [...]]
+$result->structured; // ['pattern' => '/a+/', 'validation' => [...], 'target' => [...], 'range' => [...]]
 $result->isError;    // false
 ```
 

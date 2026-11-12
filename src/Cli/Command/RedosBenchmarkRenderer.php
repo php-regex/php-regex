@@ -17,6 +17,8 @@ use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\RangePoints;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
@@ -33,6 +35,7 @@ use PHPRegex\Toolkit\Regex;
  * @internal
  *
  * @phpstan-import-type BenchResult from RedosBenchmark
+ * @phpstan-import-type RangePoint from RangePoints
  */
 final class RedosBenchmarkRenderer
 {
@@ -64,12 +67,13 @@ final class RedosBenchmarkRenderer
      * What the console shows before the benchmark runs: the banner, the
      * patterns, the subject, and the heading of the benchmark.
      *
-     * @param array<string, string> $meta the banner lines
+     * @param array<string, string> $meta  the banner lines
+     * @param list<string>          $notes what resolving the target noticed, under the banner lines
      */
-    public function renderPreamble(ConsoleStyle $style, array $meta, string $vulnerable, ?string $safe, RedosArguments $arguments, RedosInput $input): void
+    public function renderPreamble(ConsoleStyle $style, array $meta, string $vulnerable, ?string $safe, RedosArguments $arguments, RedosInput $input, array $notes = []): void
     {
         $output = $this->output;
-        $style->renderBanner('redos', $meta);
+        $style->renderBanner('redos', $meta, notes: $notes);
 
         $steps = 3;
         $style->renderSection('Patterns', 1, $steps);
@@ -132,10 +136,13 @@ final class RedosBenchmarkRenderer
     /**
      * The JSON document of the run.
      *
-     * @param BenchResult      $vuln
-     * @param BenchResult|null $safe
+     * @param BenchResult           $vuln
+     * @param BenchResult|null      $safe
+     * @param ProjectTarget         $target    the PHP versions judged, written as lint writes them
+     * @param list<RangePoint>      $range     the verdict of each of them on the pattern
+     * @param list<RangePoint>|null $safeRange the verdict of each of them on the --safe pattern, when there is one
      */
-    public function writeDocument(RedosArguments $arguments, PcreRuntimeInfo $runtime, RedosInput $input, array $vuln, ?array $safe): void
+    public function writeDocument(RedosArguments $arguments, PcreRuntimeInfo $runtime, RedosInput $input, array $vuln, ?array $safe, ProjectTarget $target, array $range, ?array $safeRange = null): void
     {
         $rows = ['vuln' => $vuln];
         $summary = null;
@@ -144,7 +151,7 @@ final class RedosBenchmarkRenderer
             $summary = RedosBenchmark::summary($vuln, $safe);
         }
 
-        $this->output->writeDocument(JsonDocument::encode([
+        $document = [
             'pattern' => $arguments->pattern,
             'safe_pattern' => $arguments->safePattern,
             'runtime' => $runtime,
@@ -165,7 +172,15 @@ final class RedosBenchmarkRenderer
             ],
             'bench' => $rows,
             'summary' => $summary,
-        ]));
+            'target' => $target->toArray(),
+            'range' => $range,
+        ];
+        // Only a run against --safe has a second pattern to judge.
+        if (null !== $safeRange) {
+            $document['safe_range'] = $safeRange;
+        }
+
+        $this->output->writeDocument(JsonDocument::encode($document));
     }
 
     /**

@@ -26,6 +26,7 @@ use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Toolkit\Regex;
 
 /**
  * @internal
@@ -73,11 +74,23 @@ final class GraphCommand extends AbstractCommand
             return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=dot, --format=graphviz or --format=mermaid.", $format), $usage);
         }
 
-        $regex = $this->createRegex($output, $input->regexOptions);
-        if (null === $regex) {
+        $range = $this->resolveTarget($input, $output);
+        if (null === $range) {
             return self::INVALID;
         }
 
+        // The graph is the product, with no banner: stderr says what
+        // resolving the target noticed.
+        $this->reportNotices($output, $range);
+
+        return $this->reportRange($output, $range, $pattern, $this->draw($output, $range->regex, $pattern, $format, $outputFile));
+    }
+
+    /**
+     * The graph of the floor's automaton, printed or written to its file.
+     */
+    private function draw(Output $output, Regex $regex, string $pattern, string $format, ?string $outputFile): int
+    {
         try {
             $ast = $regex->parse($pattern);
 

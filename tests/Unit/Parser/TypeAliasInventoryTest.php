@@ -34,6 +34,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\ProjectConstants;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\RangePoints;
 use PHPRegex\Linter\Rule\GroupIndex;
 use PHPRegex\Mcp\RegexFactory;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -113,6 +114,7 @@ final class TypeAliasInventoryTest extends TestCase
         CompletionHandler::class => ['CompletionContext', 'CompletionItem'],
         CodeActionHandler::class => ['CodeAction', 'RewriteAction'],
         TextDocumentHandler::class => ['Refusal', 'Analysis'],
+        RangePoints::class => ['RangePoint'],
         DiagnosticConverter::class => ['Diagnostic'],
         LintConfigResult::class => ['LintConfig'],
         LintDefaultsBuilder::class => ['LintDefaults'],
