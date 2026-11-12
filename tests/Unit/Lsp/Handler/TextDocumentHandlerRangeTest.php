@@ -49,6 +49,8 @@ final class TextDocumentHandlerRangeTest extends TestCase
      */
     private const SELF_REFERENCE = "'/^(a|ab|\\\\1x)+b\$/'";
 
+    private TextDocumentHandler $handler;
+
     /**
      * @return iterable<string, array{code: string, refused: bool}>
      */
@@ -123,6 +125,108 @@ final class TextDocumentHandlerRangeTest extends TestCase
     }
 
     /**
+     * Opening a document over a range publishes the floor's diagnostics at
+     * once, then every version's: the editor shows what the lowest version
+     * says without waiting for the later ones. A marker that silences a
+     * finding only a later version gives is not reported early as silencing
+     * nothing.
+     */
+    #[Test]
+    public function test_opening_a_document_publishes_the_floor_first_then_every_version(): void
+    {
+        self::assertEngineKeepInLookbehind();
+
+        $stream = $this->open('>=8.2', 'preg_match('.self::KEEP_IN_LOOKBEHIND.", \$s); // @regex-ignore regex.lint.compat.meaningChanges\npreg_match('/(/', \$s);");
+        $publications = self::publications($stream);
+
+        $this->assertCount(2, $publications);
+        $floor = self::codes($publications[0]);
+        $every = self::codes($publications[1]);
+        // The floor refuses "/(/" already; only 8.5 refuses the \K.
+        $this->assertContains('regex.group.unclosed', array_column($floor, 0));
+        $this->assertNotContains('regex.keep.in_lookaround', array_column($floor, 0));
+        $this->assertNotContains('regex.ignore.unmatched', array_column($floor, 0));
+        $this->assertContains('regex.keep.in_lookaround', array_column($every, 0));
+        $this->assertContains('regex.ignore.unmatched', array_column($every, 0));
+        $this->assertSame($floor, array_values(array_filter($every, static fn (array $row): bool => !\in_array($row[0], ['regex.keep.in_lookaround', 'regex.ignore.unmatched'], true))));
+    }
+
+    /**
+     * The push of every version reuses what the floor's push read of each
+     * pattern (its lint issues, its ReDoS verdict): only the later versions'
+     * findings are added, so a pattern is linted once per document read.
+     */
+    #[Test]
+    public function test_the_full_push_reuses_the_floors_analysis(): void
+    {
+        $this->open('>=8.2', "preg_match('/a{1}b/', \$s);\npreg_match('/c+/', \$s);");
+
+        $floor = new \ReflectionProperty(TextDocumentHandler::class, 'analyses');
+        $this->assertCount(2, (array) $floor->getValue($this->handler), 'One floor analysis per pattern, kept for the second push.');
+        $later = new \ReflectionProperty(TextDocumentHandler::class, 'laterFindings');
+        $this->assertCount(2, (array) $later->getValue($this->handler), 'One set of later findings per pattern.');
+    }
+
+    /**
+     * One version judged: one publication, as before.
+     */
+    #[Test]
+    public function test_a_single_version_publishes_once(): void
+    {
+        $this->assertCount(1, self::publications($this->open('8.2', "preg_match('/(/', \$s);")));
+    }
+
+    /**
+     * A keystroke publishes once: the later versions cost little there, and
+     * a second push per keystroke would only flicker.
+     */
+    #[Test]
+    public function test_a_change_publishes_once(): void
+    {
+        self::assertEngineKeepInLookbehind();
+
+        $stream = $this->open('>=8.2', "preg_match('/a/', \$s);");
+        $before = \count(self::publications($stream));
+
+        $this->handler->didChange(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didChange',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///range.php', 'version' => 2], 'contentChanges' => [['text' => "<?php\n\npreg_match(".self::KEEP_IN_LOOKBEHIND.", \$s);\n"]]],
+        ));
+
+        $publications = self::publications($stream);
+        $this->assertCount($before + 1, $publications);
+        $this->assertContains('regex.keep.in_lookaround', array_column(self::codes($publications[\count($publications) - 1]), 0));
+    }
+
+    /**
+     * Opens a document judged for the range a constraint names, and gives
+     * the stream the handler writes to.
+     *
+     * @param string $code PHP code after the opening tag
+     *
+     * @return resource
+     */
+    private function open(string $constraint, string $code)
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+
+        $target = ProjectTarget::fromSources(['regex.json' => $constraint], [], null, [], ['regex.json' => 'C']);
+        $regex = Regex::create(['cache' => null] + $target->regexOptions());
+        $this->handler = new TextDocumentHandler(new Transport($stream), new DocumentManager(new RegexFinder()), $regex, [], judged: $target->judgedRange($regex->parser()));
+        $this->handler->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///range.php', 'version' => 1, 'text' => "<?php\n\n".$code."\n"]],
+        ));
+
+        return $stream;
+    }
+
+    /**
      * The diagnostics the handler publishes for a document, judged for the
      * range a constraint names.
      *
@@ -145,15 +249,46 @@ final class TextDocumentHandlerRangeTest extends TestCase
             params: ['textDocument' => ['uri' => 'file:///range.php', 'text' => "<?php\n\n".$code."\n"]],
         ));
 
+        $publications = self::publications($stream);
+        $this->assertNotSame([], $publications);
+
+        // The last publication holds every version judged.
+        return $publications[\count($publications) - 1];
+    }
+
+    /**
+     * The diagnostics of each publishDiagnostics notification written, in
+     * order.
+     *
+     * @param resource $stream
+     *
+     * @return list<list<array<array-key, mixed>>>
+     */
+    private static function publications($stream): array
+    {
         rewind($stream);
         $written = (string) stream_get_contents($stream);
-        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
-        $this->assertIsArray($payload);
-        $params = $payload['params'] ?? null;
-        $this->assertIsArray($params);
-        $diagnostics = $params['diagnostics'] ?? null;
-        $this->assertIsArray($diagnostics);
+        $publications = [];
+        foreach (preg_split('/Content-Length: \d+\r\n\r\n/', $written, -1, \PREG_SPLIT_NO_EMPTY) ?: [] as $body) {
+            $payload = json_decode($body, true);
+            if (!\is_array($payload) || 'textDocument/publishDiagnostics' !== ($payload['method'] ?? null) || !\is_array($payload['params'] ?? null) || !\is_array($payload['params']['diagnostics'] ?? null)) {
+                continue;
+            }
+            $publications[] = array_values(array_filter($payload['params']['diagnostics'], \is_array(...)));
+        }
 
-        return array_values(array_filter($diagnostics, \is_array(...)));
+        return $publications;
+    }
+
+    /**
+     * The codes and messages of a publication, to compare two of them.
+     *
+     * @param list<array<array-key, mixed>> $diagnostics
+     *
+     * @return list<array{mixed, mixed}>
+     */
+    private static function codes(array $diagnostics): array
+    {
+        return array_map(static fn (array $diagnostic): array => [$diagnostic['code'] ?? null, $diagnostic['message'] ?? null], $diagnostics);
     }
 }

@@ -87,14 +87,24 @@ final class TextDocumentHandler
     private array $narrowed = [];
 
     /**
-     * What each pattern was found to hold, by the versions that judged it
-     * and the pattern: the same for every place the pattern stands, so an
-     * edit analyses only the patterns whose text it changed. The lint rules
-     * and the ReDoS settings are the server's, fixed.
+     * What each pattern was found to hold at the lowest version judging
+     * it, by that version and the pattern: the same for every place the
+     * pattern stands, so an edit analyses only the patterns whose text it
+     * changed, and the push of every version reads again what the floor's
+     * push read. The lint rules and the ReDoS settings are the server's,
+     * fixed.
      *
      * @var array<string, Analysis>
      */
     private array $analyses = [];
+
+    /**
+     * What the later versions of a range find in a pattern the floor reads,
+     * by the floor, the later versions and the pattern.
+     *
+     * @var array<string, array{?Refusal, ?string}>
+     */
+    private array $laterFindings = [];
 
     /**
      * The parsers of the versions of the range after the floor, sharing
@@ -142,7 +152,7 @@ final class TextDocumentHandler
             return;
         }
 
-        $this->publishDiagnostics($uri, ...$this->documents->open($uri, $text, $version));
+        $this->publishFloorFirst($uri, ...$this->documents->open($uri, $text, $version));
     }
 
     /**
@@ -247,7 +257,7 @@ final class TextDocumentHandler
         }
 
         if ($changed) {
-            $this->publishDiagnostics(...$this->documents->refresh());
+            $this->publishFloorFirst(...$this->documents->refresh());
         }
     }
 
@@ -321,7 +331,30 @@ final class TextDocumentHandler
         }
     }
 
-    private function publishDocument(string $uri): void
+    /**
+     * Publish what the lowest version judged says of each document, then
+     * what every version says: the later versions of a range take most of
+     * the time of a document read whole, and the editor need not wait for
+     * them to show the floor's diagnostics. One version judged: one push.
+     */
+    private function publishFloorFirst(string ...$uris): void
+    {
+        if ([] !== $this->range) {
+            foreach ($uris as $uri) {
+                $this->publishDocument($uri, floorOnly: true);
+            }
+        }
+
+        $this->publishDiagnostics(...$uris);
+    }
+
+    /**
+     * @param bool $floorOnly whether to judge the lowest version alone: a
+     *                        first push, which says nothing of the markers
+     *                        silencing nothing, since a later version may
+     *                        give what they silence
+     */
+    private function publishDocument(string $uri, bool $floorOnly = false): void
     {
         $diagnostics = [];
         $content = $this->documents->getContent($uri) ?? '';
@@ -356,7 +389,7 @@ final class TextDocumentHandler
             $marker = TargetMarker::constraintAt($targets, $occurrence->line);
             $constraint = null === $occurrence->guard ? $marker : ($marker?->intersect($occurrence->guard) ?? $occurrence->guard);
             $regex = $this->regexFor($constraint);
-            foreach (null === $regex ? [] : $this->occurrenceDiagnostics($occurrence, $content, $positions, $regex, $this->rangeFor($constraint)) as $diagnostic) {
+            foreach (null === $regex ? [] : $this->occurrenceDiagnostics($occurrence, $content, $positions, $regex, $floorOnly ? [] : $this->rangeFor($constraint)) as $diagnostic) {
                 $silenced = false;
                 foreach ($covering as $index => $marker) {
                     if ($marker->silences($diagnostic['code'])) {
@@ -384,7 +417,7 @@ final class TextDocumentHandler
         }
 
         // A marker that silences nothing: a warning on the marker.
-        foreach ($this->reportUnmatchedIgnores ? $markers : [] as $index => $marker) {
+        foreach ($this->reportUnmatchedIgnores && !$floorOnly ? $markers : [] as $index => $marker) {
             $range = ['start' => $positions->offsetToPosition($marker->offset), 'end' => $positions->offsetToPosition($marker->offset + \strlen($marker->marker))];
             foreach ($marker->unmatched($used[$index] ?? [], $this->leavesOff(...)) as $message) {
                 $diagnostics[] = $this->diagnosticConverter->fromUnmatchedIgnore($message, $range);
@@ -517,11 +550,37 @@ final class TextDocumentHandler
      */
     private function analysis(string $pattern, Regex $regex, array $range): array
     {
+        $analysis = $this->floorAnalysis($pattern, $regex);
+        if ([] === $range || 'read' !== $analysis[0]) {
+            return $analysis;
+        }
+
         $key = spl_object_id($regex);
         foreach ($range as $parser) {
             $key .= ','.$parser->target()->key();
         }
         $key .= "\0".$pattern;
+        if (!isset($this->laterFindings[$key])) {
+            // The floor read the pattern: its tree is in the parser's cache.
+            $this->laterFindings[$key] = $this->rangeFindings($pattern, $regex->parse($pattern), $regex->parser(), $range);
+            if (\count($this->laterFindings) > self::MAX_KEPT_ANALYSES) {
+                unset($this->laterFindings[array_key_first($this->laterFindings)]);
+            }
+        }
+        [$analysis[4], $analysis[5]] = $this->laterFindings[$key];
+
+        return $analysis;
+    }
+
+    /**
+     * What a pattern holds at the lowest version judging it, without the
+     * later versions' findings.
+     *
+     * @return Analysis
+     */
+    private function floorAnalysis(string $pattern, Regex $regex): array
+    {
+        $key = spl_object_id($regex)."\0".$pattern;
         if (isset($this->analyses[$key])) {
             $analysis = $this->analyses[$key];
             // Read again, it is the latest.
@@ -541,8 +600,7 @@ final class TextDocumentHandler
                 $ast->accept($linter);
 
                 $redos = RedosMode::Off === $this->redosMode ? null : $regex->redos($pattern, $this->redosThreshold, $this->redosMode);
-                [$refusal, $change] = [] === $range ? [null, null] : $this->rangeFindings($pattern, $ast, $regex->parser(), $range);
-                $analysis = ['read', $ast->source ?? '', $linter->getIssues(), $redos, $refusal, $change];
+                $analysis = ['read', $ast->source ?? '', $linter->getIssues(), $redos, null, null];
             }
         } catch (LimitException $e) {
             $analysis = ['limit', $e->getMessage(), $e->errorCode];
