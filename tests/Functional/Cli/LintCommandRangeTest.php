@@ -394,8 +394,8 @@ final class LintCommandRangeTest extends TestCase
 
     /**
      * The warning "a{,3}" gets over the points, as [issue_id, target php]:
-     * none when the floor already reads the quantifier or no point does,
-     * else the first point whose PCRE2 is 10.43 or later.
+     * at the first point that reads it otherwise than the floor, none when
+     * no point does.
      *
      * @param list<int> $points the floor first
      *
@@ -403,18 +403,9 @@ final class LintCommandRangeTest extends TestCase
      */
     private static function meaningChanges(array $points): array
     {
-        $readsQuantifier = static fn (int $point): bool => version_compare(self::judgedPcre($point), '10.43', '>=');
-        if ($readsQuantifier($points[0])) {
-            return [];
-        }
+        $first = self::readsQuantifierOtherwiseFrom($points);
 
-        foreach (\array_slice($points, 1) as $point) {
-            if ($readsQuantifier($point)) {
-                return [['regex.lint.compat.meaningChanges', ProjectTarget::phpLabel($point)]];
-            }
-        }
-
-        return [];
+        return null === $first ? [] : [['regex.lint.compat.meaningChanges', ProjectTarget::phpLabel($first)]];
     }
 
     /**

@@ -84,7 +84,7 @@ final class RangeFindingsTest extends TestCase
         self::assertEngineReadsQuantifierWithoutMin();
 
         [$floor, $range] = self::range('>=8.1');
-        $expected = self::readsOtherwiseFrom([80100, 80200, 80300, 80400, 80425, 80500, 80510]);
+        $expected = self::readsQuantifierOtherwiseFrom([80100, 80200, 80300, 80400, 80425, 80500, 80510]);
         $this->assertNotNull($expected, 'No point of the range reads "a{,3}" otherwise than the floor here.');
 
         $findings = self::findings($floor, $range, self::QUANTIFIER_WITHOUT_MIN);
@@ -161,7 +161,7 @@ final class RangeFindingsTest extends TestCase
         self::assertEngineBacktracksIntoSelfReference();
 
         [$floor, $range] = self::range('>=7.4');
-        $expected = self::readsOtherwiseFrom([70400, 80000, 80100, 80200, 80300, 80400, 80425, 80500, 80510]);
+        $expected = self::readsQuantifierOtherwiseFrom([70400, 80000, 80100, 80200, 80300, 80400, 80425, 80500, 80510]);
         $this->assertNotNull($expected);
 
         $findings = self::findings($floor, $range, '/^(a|ab|\1x)+b{,3}$/');
@@ -247,25 +247,5 @@ final class RangeFindingsTest extends TestCase
         }
 
         self::fail(\sprintf('The range holds no point at %d.', $phpVersionId));
-    }
-
-    /**
-     * The first point after the floor whose PCRE2 reads "a{,3}" otherwise
-     * than the floor's (a quantifier from 10.43, text before), null when
-     * none does: 8.4 unless this machine links another PCRE2 to a minor,
-     * a newer one to the floor's making it 8.2.
-     *
-     * @param list<int> $points the floor first
-     */
-    private static function readsOtherwiseFrom(array $points): ?int
-    {
-        $reads = static fn (int $point): bool => version_compare(self::judgedPcre($point), '10.43', '>=');
-        foreach (\array_slice($points, 1) as $point) {
-            if ($reads($point) !== $reads($points[0])) {
-                return $point;
-            }
-        }
-
-        return null;
     }
 }

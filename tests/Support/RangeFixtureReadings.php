@@ -35,6 +35,27 @@ trait RangeFixtureReadings
     }
 
     /**
+     * The first point after the floor whose PCRE2 reads "a{,3}" otherwise
+     * than the floor's (a quantifier from 10.43, text before), in either
+     * direction, null when none does: 8.4 with the bundled releases, 8.2
+     * where the floor's PHP links 10.43 or later and 8.2 bundles 10.40.
+     * The class reads each point's PCRE2 with PcreRule::judgedPcre().
+     *
+     * @param list<int> $points the floor first
+     */
+    private static function readsQuantifierOtherwiseFrom(array $points): ?int
+    {
+        $reads = static fn (int $point): bool => version_compare(self::judgedPcre($point), '10.43', '>=');
+        foreach (\array_slice($points, 1) as $point) {
+            if ($reads($point) !== $reads($points[0])) {
+                return $point;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * "\K" in a lookbehind compiles up to PHP 8.4 and is refused from PHP
      * 8.5, which no longer sets PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.
      */

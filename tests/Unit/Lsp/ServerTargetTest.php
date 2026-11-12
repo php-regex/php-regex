@@ -363,37 +363,13 @@ final class ServerTargetTest extends TestCase
     {
         $toTheEnd = [80100, 80200, 80300, 80400, 80425, 80500, 80510];
 
-        yield 'composer.json require.php' => ['files' => ['composer.json' => '{"require": {"php": ">=8.1"}}'], 'first' => self::quantifierReadFrom($toTheEnd)];
-        yield 'a regex.json constraint' => ['files' => ['regex.json' => '{"phpVersion": ">=8.1"}'], 'first' => self::quantifierReadFrom($toTheEnd)];
-        yield 'a regex.json object to 8.6' => ['files' => ['regex.json' => '{"phpVersion": {"min": "8.1", "max": "8.6"}}'], 'first' => self::quantifierReadFrom($toTheEnd)];
+        yield 'composer.json require.php' => ['files' => ['composer.json' => '{"require": {"php": ">=8.1"}}'], 'first' => self::readsQuantifierOtherwiseFrom($toTheEnd)];
+        yield 'a regex.json constraint' => ['files' => ['regex.json' => '{"phpVersion": ">=8.1"}'], 'first' => self::readsQuantifierOtherwiseFrom($toTheEnd)];
+        yield 'a regex.json object to 8.6' => ['files' => ['regex.json' => '{"phpVersion": {"min": "8.1", "max": "8.6"}}'], 'first' => self::readsQuantifierOtherwiseFrom($toTheEnd)];
         // 8.4 is past the max: not judged.
-        yield 'a regex.json object to 8.3' => ['files' => ['regex.json' => '{"phpVersion": {"min": "8.1", "max": "8.3"}}'], 'first' => self::quantifierReadFrom([80100, 80200, 80300])];
+        yield 'a regex.json object to 8.3' => ['files' => ['regex.json' => '{"phpVersion": {"min": "8.1", "max": "8.3"}}'], 'first' => self::readsQuantifierOtherwiseFrom([80100, 80200, 80300])];
         // A single version stays exact.
         yield 'a single regex.json version' => ['files' => ['regex.json' => '{"phpVersion": "8.1"}', 'composer.json' => '{"require": {"php": ">=8.1"}}'], 'first' => null];
-    }
-
-    /**
-     * The first point after the floor whose PCRE2 reads "a{,3}" as a
-     * quantifier (10.43 or later), null when the floor already does or
-     * none does: 8.4 unless this machine links a newer PCRE2 to an older
-     * minor.
-     *
-     * @param list<int> $points the floor first
-     */
-    private static function quantifierReadFrom(array $points): ?int
-    {
-        $reads = static fn (int $point): bool => version_compare(self::judgedPcre($point), '10.43', '>=');
-        if ($reads($points[0])) {
-            return null;
-        }
-
-        foreach (\array_slice($points, 1) as $point) {
-            if ($reads($point)) {
-                return $point;
-            }
-        }
-
-        return null;
     }
 
     /**
