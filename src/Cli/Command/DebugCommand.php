@@ -25,6 +25,7 @@ use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
+use PHPRegex\Linter\Formatter\ReportSpelling;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Exception\LexerException;
@@ -88,7 +89,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 if ($json) {
                     $output->writeDocument(JsonDocument::error($configResult->error, JsonDocument::STAGE_CONFIG));
                 } else {
-                    $output->writeError($output->error('Error: '.$configResult->error."\n"));
+                    $output->writeError($output->error('Error: '.ReportSpelling::displayField($configResult->error)."\n"));
                 }
 
                 return self::INVALID;
@@ -98,7 +99,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             // on stderr, silenced by -q, and the command goes on.
             if (!$output->isQuiet()) {
                 foreach ($configResult->warnings as $warning) {
-                    $output->writeError('Warning: '.$warning."\n");
+                    $output->writeError('Warning: '.ReportSpelling::displayField($warning)."\n");
                 }
             }
 

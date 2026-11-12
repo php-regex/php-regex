@@ -1126,10 +1126,12 @@ backreference, without `validation`.
 `regex validate`, `analyze`, `explain`, `redos`, `format`, `transpile` and
 `debug` judge their pattern for the PHP versions `--php-version` names, a
 range included, read as `regex lint` reads it; else for the running PHP
-alone. They read no `regex.json` and no `composer.json`. Their own output is
-computed once, at the floor; the pattern is also validated at every later
-version of a range, and `range` gives each version's verdict, the floor
-first. A later version that refuses a pattern the floor accepts makes the
+alone. They read no `composer.json`, and no `regex.json` for their target
+(`debug` reads it for its ReDoS defaults only). Their own output is
+computed once, at the floor; the pattern is also validated at each later
+version of a range where a rule of the library changes, the versions
+[`lint.target.range`](#target-range-entry-linttargetrange) lists for the
+same range, and `range` gives each version's verdict, the floor first. A later version that refuses a pattern the floor accepts makes the
 command exit with 1; a pattern the floor refuses keeps the exit code the
 command gives it at a single version, and a version that reads the pattern
 otherwise does not change the exit code. What a later version finds is also
