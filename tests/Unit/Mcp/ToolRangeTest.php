@@ -19,7 +19,6 @@ use PHPRegex\Mcp\ToolCatalog;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\RangePatterns;
 use PHPRegex\Tests\Support\SinglePatternRange;
-use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,14 +29,13 @@ use PHPUnit\Framework\TestCase;
  * pattern at every version of the range, does its work at the floor, and
  * its structured answer gains the "target" ("php_target" for transpile,
  * whose "target" is the dialect) and the "range" of the CLI's documents,
- * which the v1 output schema declares. The server reads no
- * file from its working directory: the call, then the server's flag, then
- * the running PHP.
+ * which the v1 output schema declares. The target is the call's, then
+ * the server's flag, then the running PHP: ServerWorkingDirectoryTest
+ * shows that no file of the working directory names it.
  */
 final class ToolRangeTest extends TestCase
 {
     use SinglePatternRange;
-    use TemporaryProject;
 
     /**
      * @param array<string, mixed> $arguments
@@ -188,25 +186,6 @@ final class ToolRangeTest extends TestCase
         yield 'format' => ['tool' => 'regex_format', 'arguments' => []];
         yield 'redos' => ['tool' => 'regex_redos', 'arguments' => []];
         yield 'transpile' => ['tool' => 'regex_transpile', 'arguments' => ['target' => 'js']];
-    }
-
-    /**
-     * A regex.json and a composer.json in the server's working directory
-     * name a target the CLI would use: the server reads neither.
-     */
-    #[Test]
-    public function test_the_server_reads_no_file_from_its_working_directory(): void
-    {
-        $this->enterProject([
-            'composer.json' => '{"name": "acme/app", "require": {"php": ">=8.1"}}',
-            'regex.json' => '{"phpVersion": "8.2", "pcreVersion": "10.40"}',
-        ]);
-
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/a/']);
-
-        $this->assertFalse($result->isError, $result->text);
-        $this->assertSame(ProjectTarget::fromSources([], [], null, [])->toArray(), $result->structured['target'] ?? null);
-        $this->assertCount(1, JsonContract::asArray($result->structured['range'] ?? null));
     }
 
     /**

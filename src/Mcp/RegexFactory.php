@@ -19,6 +19,7 @@ use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Mcp\Exception\TargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -38,14 +39,22 @@ use PHPRegex\Toolkit\Regex;
 final class RegexFactory
 {
     /**
-     * @var array<string, array{Regex, ProjectTarget}> one facade per target, with the target it judges for the floor of, kept for the session
+     * @var array<string, Regex> one facade per target resolved, kept for the session: two spellings of one target share it
      */
     private array $instances = [];
 
     /**
+     * @var \SplObjectStorage<Regex, ProjectTarget> the target each facade judges for the floor of
+     */
+    private readonly \SplObjectStorage $targets;
+
+    /**
      * @param Target $target the server's target, the default of every call
      */
-    public function __construct(private readonly array $target = []) {}
+    public function __construct(private readonly array $target = [])
+    {
+        $this->targets = new \SplObjectStorage();
+    }
 
     /**
      * The facade judging for the floor of the call's target.
@@ -69,9 +78,15 @@ final class RegexFactory
             }
         }
 
-        $key = (string) json_encode($sources);
+        $target = self::resolve($sources);
+        $key = self::keyOf($target);
+        if (!isset($this->instances[$key])) {
+            $regex = Regex::create($target->regexOptions());
+            $this->instances[$key] = $regex;
+            $this->targets[$regex] = $target;
+        }
 
-        return ($this->instances[$key] ??= $this->create($sources))[0];
+        return $this->instances[$key];
     }
 
     /**
@@ -82,28 +97,34 @@ final class RegexFactory
      */
     public function targetOf(Regex $regex): ProjectTarget
     {
-        foreach ($this->instances as [$facade, $target]) {
-            if ($facade === $regex) {
-                return $target;
-            }
+        if (isset($this->targets[$regex])) {
+            return $this->targets[$regex];
         }
 
         throw new TargetException('The facade was not built for a call: this is a bug; please report it.', 'internal');
     }
 
     /**
-     * The facade for the floor of the target the sources name, and the
-     * target, the first set winning, read as lint reads a target: a
-     * constraint is a range. No file is read: the null project directory
-     * reads no composer.json.
+     * What tells a target from another in a tool's answer: each version of
+     * its range, the floor first, with its PCRE2 release and its locale;
+     * where it came from; and what resolving it noticed. Two spellings of
+     * one constraint, ">=8.1" and ">= 8.1", give one key.
+     */
+    private static function keyOf(ProjectTarget $target): string
+    {
+        return (string) json_encode([array_map(static fn (PcreTarget $point): string => $point->key(), $target->range()), $target->source(), $target->notices()]);
+    }
+
+    /**
+     * The target the sources name, the first set winning, read as lint
+     * reads a target: a constraint is a range. No file is read: the null
+     * project directory reads no composer.json.
      *
      * @param array{php_version: array<string, string>, pcre_version: array<string, string>, locale: array<string, string|null>} $sources source name => value
      *
      * @throws TargetException when the target cannot be judged for
-     *
-     * @return array{Regex, ProjectTarget}
      */
-    private function create(array $sources): array
+    private static function resolve(array $sources): ProjectTarget
     {
         try {
             $target = ProjectTarget::fromSources($sources['php_version'], $sources['pcre_version'], null, [], $sources['locale']);
@@ -117,6 +138,6 @@ final class RegexFactory
             throw new TargetException($e->getMessage(), 'target', $e);
         }
 
-        return [Regex::create($target->regexOptions()), $target];
+        return $target;
     }
 }
