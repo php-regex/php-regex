@@ -17,6 +17,7 @@ use PhpParser\Error;
 use PhpParser\ParserFactory;
 use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\TargetSpec;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\GuardRegions;
 use PHPRegex\Linter\Extraction\PhpParserGuards;
@@ -33,7 +34,10 @@ use Psalm\Codebase;
  * The versions a call is judged for: the PHP Psalm analyses for, or what
  * the plugin's options name, with the PCRE2 parser() gives it, narrowed by the
  * guards on PHP_VERSION_ID around the call and the "@regex-target" markers
- * of its line. A PHP below 7.3 is judged as regex lint judges it.
+ * of its line. A range <phpVersion> names is judged as regex lint judges
+ * it: from its lowest PHP on PCRE2, at every later version a rule of the
+ * library changes at that it allows. A PHP below 7.3 is judged as regex
+ * lint judges it.
  *
  * @internal
  */
@@ -41,14 +45,24 @@ final class CallTarget
 {
     private static ?string $phpVersion = null;
 
+    /**
+     * Whether <phpVersion> names a range, a Composer constraint, rather
+     * than one version.
+     */
+    private static bool $range = false;
+
     private static ?string $pcreVersion = null;
 
     private static ?string $locale = null;
 
     /**
-     * @var array<string, RegexParser> by PHP, PCRE2 pinned and locale
+     * The parser of the floor, the parsers of every version judged when
+     * nothing narrows a call, the floor first, and the versions a guard or
+     * a marker narrows: by PHP or range, PCRE2 pinned and locale.
+     *
+     * @var array<string, array{RegexParser, non-empty-list<RegexParser>, JudgedRange}>
      */
-    private static array $parsers = [];
+    private static array $targets = [];
 
     /**
      * The PCRE2 release composer.json pins in config.platform.lib-pcre, by
@@ -57,14 +71,6 @@ final class CallTarget
      * @var array<string, string|null>
      */
     private static array $composerPcre = [];
-
-    /**
-     * The PCRE2 release pinned for every version a marker narrows to, by
-     * target.
-     *
-     * @var array<string, string|null>
-     */
-    private static array $pinnedPcre = [];
 
     /**
      * The PHP each PHP below 7.3 Psalm analyses for is judged for, by the
@@ -83,27 +89,27 @@ final class CallTarget
     private static array $markers = [];
 
     /**
-     * The versions a marker narrows, by target.
-     *
-     * @var array<string, JudgedRange>
-     */
-    private static array $judgedRanges = [];
-
-    /**
      * The plugin's <phpVersion>, <pcreVersion> and <locale>, null when not
-     * given. A PHP below 7.3 is refused as regex lint refuses it: it ships
-     * PCRE1.
+     * given. <phpVersion> names one version, or a range as a Composer
+     * constraint, judged as given. A PHP below 7.3 is refused as regex lint
+     * refuses it: it ships PCRE1; so is a range that allows no PHP of 7.3 or
+     * later.
      *
      * @throws InvalidRegexOptionException when one cannot be read
-     * @throws UnsupportedTargetException  when <phpVersion> names a PHP that ships PCRE1
+     * @throws UnsupportedTargetException  when <phpVersion> names a PHP that ships PCRE1, or a range that allows
+     *                                     no PHP on PCRE2
      */
     public static function configure(?string $phpVersion, ?string $pcreVersion, ?string $locale = null): void
     {
-        self::check('phpVersion', 'php_version', $phpVersion, 'a version like "8.4", a PHP_VERSION_ID like 80400, or "runtime"');
+        self::check('phpVersion', 'php_version', $phpVersion, 'a version like "8.4", a PHP_VERSION_ID like 80400, "runtime", or a Composer constraint like ">=8.1" that names a lowest version');
         self::check('pcreVersion', 'pcre_version', $pcreVersion, 'a PCRE2 release like "10.44"');
         self::check('locale', 'locale', $locale, 'a locale this machine can set, like "tr_TR.UTF-8"');
 
-        if (null !== $phpVersion && 'runtime' !== $phpVersion) {
+        $range = null !== $phpVersion && null !== TargetSpec::intervals($phpVersion);
+        if ($range) {
+            // Refused now, as a single version on PCRE1 is, before Psalm reads any file.
+            self::project($phpVersion, $pcreVersion, $locale);
+        } elseif (null !== $phpVersion && 'runtime' !== $phpVersion) {
             $named = ParserOptions::phpVersionIdOf($phpVersion);
             if ($named < PcreTarget::phpVersionBoundaries()[0]) {
                 ProjectTarget::belowPcre2($named, '<phpVersion>', null, []);
@@ -111,13 +117,15 @@ final class CallTarget
         }
 
         self::$phpVersion = $phpVersion;
+        self::$range = $range;
         self::$pcreVersion = $pcreVersion;
         self::$locale = $locale;
     }
 
     /**
      * Why a "@regex-target" marker is reported: it cannot be read, or it
-     * keeps no version of the series of Psalm's PHP. Null when it is not.
+     * keeps no version the patterns are judged for, the range <phpVersion>
+     * names or the series of Psalm's PHP. Null when it is not.
      */
     public static function markerError(TargetMarker $marker, Codebase $codebase): ?string
     {
@@ -125,7 +133,7 @@ final class CallTarget
             return $marker->error;
         }
 
-        $judged = self::judgedRange(self::parser($codebase));
+        $judged = self::target($codebase)[2];
 
         return [] === $judged->narrow($marker->constraint)
             ? \sprintf('The %s marker "%s" keeps no version the project is judged for (PHP %s): the patterns it covers are not judged.', $marker->marker, $marker->text, $judged->describe())
@@ -134,7 +142,8 @@ final class CallTarget
 
     /**
      * The parser judging patterns for the PHP Psalm analyses for, or the
-     * one <phpVersion> names, with the PCRE2 <pcreVersion> names, else the
+     * one <phpVersion> names, the lowest on PCRE2 of the range it names,
+     * with the PCRE2 <pcreVersion> names, else the
      * one the composer.json of Psalm's base directory pins in
      * config.platform.lib-pcre, used as is; else the running PCRE2 when the
      * PHP is the running PHP's minor version; else the one it bundles. A PHP
@@ -147,35 +156,20 @@ final class CallTarget
      */
     public static function parser(Codebase $codebase): RegexParser
     {
-        $phpVersion = self::$phpVersion ?? $codebase->analysis_php_version_id;
-        if (\is_int($phpVersion) && $phpVersion < PcreTarget::phpVersionBoundaries()[0]) {
-            $composer = 'composer' === $codebase->php_version_source ? $codebase->config->base_dir : null;
-            $phpVersion = self::$belowPcre2[$phpVersion.'@'.($composer ?? '')] ??= ProjectTarget::belowPcre2($phpVersion, 'Psalm phpVersion', $composer, getenv())->target()->phpVersionId;
-        }
-
-        $baseDir = $codebase->config->base_dir;
-        if (!\array_key_exists($baseDir, self::$composerPcre)) {
-            self::$composerPcre[$baseDir] = ProjectTarget::composerPcre($baseDir, getenv());
-        }
-        $pinned = self::$pcreVersion ?? self::$composerPcre[$baseDir];
-        $key = serialize([$phpVersion, $pinned, self::$locale]);
-        if (!isset(self::$parsers[$key])) {
-            $target = ParserOptions::resolveTarget(ParserOptions::phpVersionIdOf($phpVersion), $pinned, self::$locale, true);
-            self::$parsers[$key] = RegexParser::fromOptions(new ParserOptions(ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH, new ArrayCache(), target: $target));
-            self::$pinnedPcre[$target->key()] = $pinned;
-        }
-
-        return self::$parsers[$key];
+        return self::target($codebase)[0];
     }
 
     /**
-     * The parser judging a call the guards around it and the
-     * "@regex-target" markers of its line cover: that of the lowest version
-     * they keep, Psalm's when they keep it or none covers the call; null
-     * when they keep no version.
+     * The parsers judging a call the guards around it and the
+     * "@regex-target" markers of its line cover: those of the versions they
+     * keep, the lowest first; every version judged when none covers the
+     * call, the floor first; none when they keep no version.
+     *
+     * @return list<RegexParser>
      */
-    public static function judgedBy(RegexParser $parser, Codebase $codebase, string $file, int $line, int $offset): ?RegexParser
+    public static function judgedBy(Codebase $codebase, string $file, int $line, int $offset): array
     {
+        [, $points, $judged] = self::target($codebase);
         // Read again when the file changed, as under the language server.
         $content = $codebase->getFileContents($file);
         $hash = hash('xxh128', $content);
@@ -187,12 +181,10 @@ final class CallTarget
         $guard = $guards->at($offset);
         $constraint = null === $guard ? $constraint : ($constraint?->intersect($guard) ?? $guard);
         if (null === $constraint) {
-            return $parser;
+            return $points;
         }
 
-        $lowest = self::judgedRange($parser)->narrow($constraint)[0] ?? null;
-
-        return null === $lowest ? null : self::judgedRange($parser)->parserFor($lowest);
+        return array_map($judged->parserFor(...), $judged->narrow($constraint));
     }
 
     /**
@@ -229,13 +221,65 @@ final class CallTarget
     }
 
     /**
-     * The series of Psalm's PHP: the versions a marker narrows.
+     * The parser of the floor, the parsers of every version judged, the
+     * floor first, and the versions a guard or a marker narrows: the range
+     * <phpVersion> names, else the series of the one version judged.
+     *
+     * @throws UnsupportedTargetException  when the PHP Psalm analyses for ships PCRE1
+     * @throws InvalidRegexOptionException when composer.json's lib-pcre names no PCRE2 release
+     *
+     * @return array{RegexParser, non-empty-list<RegexParser>, JudgedRange}
      */
-    private static function judgedRange(RegexParser $parser): JudgedRange
+    private static function target(Codebase $codebase): array
     {
-        $target = $parser->target();
+        $phpVersion = self::$phpVersion ?? $codebase->analysis_php_version_id;
+        if (\is_int($phpVersion) && $phpVersion < PcreTarget::phpVersionBoundaries()[0]) {
+            $composer = 'composer' === $codebase->php_version_source ? $codebase->config->base_dir : null;
+            $phpVersion = self::$belowPcre2[$phpVersion.'@'.($composer ?? '')] ??= ProjectTarget::belowPcre2($phpVersion, 'Psalm phpVersion', $composer, getenv())->target()->phpVersionId;
+        }
 
-        return self::$judgedRanges[self::key($parser)] ??= new JudgedRange([$target], [[$target->phpVersionId, (intdiv($target->phpVersionId, 100) + 1) * 100]], self::$pinnedPcre[$target->key()] ?? self::$pcreVersion, $parser);
+        $baseDir = $codebase->config->base_dir;
+        if (!\array_key_exists($baseDir, self::$composerPcre)) {
+            self::$composerPcre[$baseDir] = ProjectTarget::composerPcre($baseDir, getenv());
+        }
+        $pinned = self::$pcreVersion ?? self::$composerPcre[$baseDir];
+        $key = serialize([$phpVersion, self::$range, $pinned, self::$locale]);
+        if (isset(self::$targets[$key])) {
+            return self::$targets[$key];
+        }
+
+        if (self::$range && \is_string($phpVersion)) {
+            $project = self::project($phpVersion, $pinned, self::$locale);
+            $floor = self::parserFor($project->target());
+            $judged = $project->judgedRange($floor);
+
+            return self::$targets[$key] = [$floor, [$floor, ...$project->rangeParsers($floor)], $judged];
+        }
+
+        $target = ParserOptions::resolveTarget(ParserOptions::phpVersionIdOf($phpVersion), $pinned, self::$locale, true);
+        $floor = self::parserFor($target);
+        // The series of the version: what a marker narrows.
+        $judged = new JudgedRange([$target], [[$target->phpVersionId, (intdiv($target->phpVersionId, 100) + 1) * 100]], $pinned, $floor);
+
+        return self::$targets[$key] = [$floor, [$floor], $judged];
+    }
+
+    /**
+     * The range <phpVersion> names, judged as regex lint judges a range:
+     * from its lowest PHP on PCRE2, at every later version a rule of the
+     * library changes at that it allows.
+     *
+     * @throws InvalidRegexOptionException when the range names no lowest version
+     * @throws UnsupportedTargetException  when it allows no PHP on PCRE2
+     */
+    private static function project(string $range, ?string $pinned, ?string $locale): ProjectTarget
+    {
+        return ProjectTarget::fromSources(['<phpVersion>' => $range], ['<pcreVersion>' => $pinned], null, [], ['<locale>' => $locale]);
+    }
+
+    private static function parserFor(PcreTarget $target): RegexParser
+    {
+        return RegexParser::fromOptions(new ParserOptions(ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH, new ArrayCache(), target: $target));
     }
 
     /**
@@ -249,7 +293,7 @@ final class CallTarget
 
         try {
             // A PHP on PCRE1 is refused after, with its own reason.
-            'php_version' === $option ? ParserOptions::phpVersionIdOf($value) : ParserOptions::fromArray([$option => $value]);
+            'php_version' === $option ? TargetSpec::intervals($value) ?? ParserOptions::phpVersionIdOf($value) : ParserOptions::fromArray([$option => $value]);
         } catch (InvalidRegexOptionException $e) {
             throw new InvalidRegexOptionException(\sprintf('The <%s> option of %s must be %s; got "%s".', $element, Plugin::class, $expected, $value), 0, $e);
         }

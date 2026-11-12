@@ -39,17 +39,21 @@ use Psalm\Plugin\RegistrationInterface;
  *         <locale>tr_TR.UTF-8</locale>
  *     </pluginClass>
  *
- * <phpVersion> takes a version ("8.4"), a PHP_VERSION_ID (80400) or
- * "runtime", the PHP running Psalm with the PCRE2 it links; <pcreVersion>
- * a PCRE2 release; <locale> the LC_CTYPE locale the patterns run under,
- * the one of the PHP running Psalm by default.
+ * <phpVersion> takes a version ("8.4"), a PHP_VERSION_ID (80400),
+ * "runtime", the PHP running Psalm with the PCRE2 it links, or a Composer
+ * constraint (">=8.1"): a range, judged as given, as regex lint judges it,
+ * from its lowest PHP on PCRE2 and at every later version where a rule of
+ * the library changes; <pcreVersion> a PCRE2 release; <locale> the LC_CTYPE
+ * locale the patterns run under, the one of the PHP running Psalm by
+ * default.
  */
 final class Plugin implements PluginEntryPointInterface
 {
     /**
      * @throws InvalidRegexOptionException when <phpVersion>, <pcreVersion> or <locale> cannot be read; Psalm stops on it before reading any
      *                                     file
-     * @throws UnsupportedTargetException  when <phpVersion> names a PHP that ships PCRE1, as regex lint refuses it
+     * @throws UnsupportedTargetException  when <phpVersion> names a PHP that ships PCRE1, or a range that allows
+     *                                     none on PCRE2, as regex lint refuses it
      */
     public function __invoke(RegistrationInterface $registration, ?\SimpleXMLElement $config = null): void
     {

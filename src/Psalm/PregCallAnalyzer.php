@@ -160,14 +160,14 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         $parser = CallTarget::parser($codebase);
         // A guard on PHP_VERSION_ID and a "@regex-target" marker narrow
         // the versions the call is judged for; the types stay those of
-        // Psalm's PHP.
-        $judgedBy = CallTarget::judgedBy($parser, $codebase, $source->getFilePath(), $call->getStartLine(), $call->getStartFilePos());
+        // the floor.
+        $judgedBy = CallTarget::judgedBy($codebase, $source->getFilePath(), $call->getStartLine(), $call->getStartFilePos());
 
         $judged = null;
         foreach (CallArguments::constantPatterns($function, $arguments['pattern'], $nodeTypes) as [$pattern, $node]) {
             $verdict = PatternVerdicts::verdict($parser, $pattern);
             $judged = [$pattern, $verdict];
-            $error = null === $judgedBy ? null : ($judgedBy === $parser ? $verdict : PatternVerdicts::verdict($judgedBy, $pattern))['error'];
+            $error = PatternVerdicts::firstError($judgedBy, $pattern);
             if (null !== $error) {
                 IssueBuffer::maybeAdd(new InvalidRegexPattern($error, new CodeLocation($source, $node)), $source->getSuppressedIssues());
             }

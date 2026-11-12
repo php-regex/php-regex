@@ -410,8 +410,12 @@ names the locale:
 </plugins>
 ```
 
-`<phpVersion>` takes a version (`8.2`), a `PHP_VERSION_ID` (`80200`) or
-`runtime`, the PHP running Psalm and the PCRE2 it links. `<pcreVersion>`
+`<phpVersion>` takes a version (`8.2`), a `PHP_VERSION_ID` (`80200`),
+`runtime`, the PHP running Psalm and the PCRE2 it links, or a Composer
+constraint (`>=8.1`, `^8.1 <8.5`, `8.1 - 8.6`) for a library that installs on
+several PHP versions (see [Several PHP versions](#several-php-versions)). In
+the XML, `<` and `>` are escaped: `&lt;` and `&gt;`, `&gt;=8.1` for `>=8.1`
+(`&lt;` is required, `>` alone is accepted). `<pcreVersion>`
 takes a PCRE2 release, for a PHP linked against another PCRE2 than the one it
 bundles. A `config.platform.lib-pcre` that names no release stops Psalm.
 A `(?(VERSION>=10.45)...)` condition in a pattern is read as the target's
@@ -459,10 +463,61 @@ When Psalm analyses for a PHP older than 8.2, a pattern with the `n` modifier,
 which PHP reads from 8.2 only, is not typed, and is reported as
 `InvalidRegexPattern`.
 
+### Several PHP versions
+
+A single version is exact: `<phpVersion>8.1</phpVersion>` judges PHP 8.1
+alone, and so does Psalm's own PHP version, read from `composer.json` or not.
+The plugin never reads `require.php` as a range. To judge every PHP a library
+installs on, name the range:
+
+```xml
+<pluginClass class="PHPRegex\Psalm\Plugin">
+    <phpVersion>&gt;=8.1</phpVersion>
+</pluginClass>
+```
+
+The range is judged as given, whatever PHP Psalm analyses for, at the
+versions [`regex lint`](cli.md#several-php-versions) judges: from its lowest
+PHP on PCRE2, then at every later PHP where a rule of the library changes
+that the range allows. Only a refusal is reported: the lint's warning that a
+later PHP reads a pattern otherwise is not. A pattern PHP 8.1 compiles and
+PHP 8.5 refuses is reported for PHP 8.5, in `app/keep.php`:
+
+```php
+<?php
+
+function after_a(string $s): bool
+{
+    return 1 === preg_match('/(?<=a\Kb)c/', $s);
+}
+```
+
+```
+ERROR: InvalidRegexPattern - app/keep.php:5:29 - Regex pattern is invalid for PHP 8.5 with PCRE2 10.44: \K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK (offset 10).
+```
+
+`^8.1 &lt;8.5` (`^8.1 <8.5` once the XML is read) or `8.1 - 8.4` stop before
+PHP 8.5 and report nothing there. A
+range that starts above the last version the library knows a rule change
+at, `>8.6` for one, is judged at its lowest version alone. The types of
+`$matches` are those of the lowest version.
+
+A constraint with no lowest version (`<8.4`), one that names a
+`PHP_VERSION_ID` (`>=80100`), or `*` stops Psalm before it reads any file.
+So does a range that allows no PHP on PCRE2, in the lint's words:
+
+```text
+<phpVersion> allows PHP 7.1: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.
+```
+
+A range that also allows 7.3 or later, `^7.1 || ^8.0` for one, is judged
+from the lowest PHP on PCRE2 it allows. Psalm shows no note.
+
 ### Code that runs on some PHP versions only
 
 A call under a guard on `PHP_VERSION_ID`, or under `@regex-target`, is
-judged for the versions they keep of the series Psalm analyses for. The
+judged for the versions they keep of the series Psalm analyses for, or of the
+range `<phpVersion>` names. The
 plugin reads the guards from the file as `regex lint` reads them with
 `nikic/php-parser` (see
 [the CLI guide](cli.md#code-that-runs-on-some-php-versions-only)): with
