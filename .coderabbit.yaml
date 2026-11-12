@@ -18,7 +18,8 @@ reviews:
   profile: chill
   high_level_summary: true
   high_level_summary_in_walkthrough: true
-  review_status: true
+  # No "Review skipped" notice on the pull requests nobody asked a review for.
+  review_status: false
   collapse_walkthrough: true
   changed_files_summary: true
   sequence_diagrams: false
