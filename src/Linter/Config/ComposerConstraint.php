@@ -192,20 +192,27 @@ final class ComposerConstraint
             return null;
         }
 
-        // Each version left out splits the piece that holds it in two.
-        $pieces = [[$lowest, $below]];
-        foreach ($excluded as $out) {
-            $split = [];
-            foreach ($pieces as [$from, $until]) {
-                if ($out < $from || (null !== $until && $out >= $until)) {
-                    $split[] = [$from, $until];
+        if ([] === $excluded) {
+            return [[$lowest, $below]];
+        }
 
-                    continue;
-                }
-                $split[] = [$from, $out];
-                $split[] = [$out + 1, $until];
+        // The versions left out, in order, cut the interval in one pass:
+        // each piece runs up to the next one, and none is left empty.
+        $excluded = array_unique($excluded);
+        sort($excluded);
+        $pieces = [];
+        $from = $lowest;
+        foreach ($excluded as $out) {
+            if (null !== $below && $out >= $below) {
+                break;
             }
-            $pieces = $split;
+            if ($out > $from) {
+                $pieces[] = [$from, $out];
+            }
+            $from = max($from, $out + 1);
+        }
+        if (null === $below || $from < $below) {
+            $pieces[] = [$from, $below];
         }
 
         return $pieces;

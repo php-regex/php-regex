@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Command;
 
 use PHPRegex\Linter\Config\ComposerConstraint;
+use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ComposerConstraintTest extends TestCase
 {
+    use LinearTimeAssertions;
+
     /**
      * @param list<array{int, int|null}>|null $intervals
      */
@@ -164,7 +167,25 @@ final class ComposerConstraintTest extends TestCase
         yield 'the lowest version excluded' => ['constraint' => '>=8.1 <8.3 !=8.1', 'intervals' => [[80101, 80300]]];
         yield 'two versions excluded' => ['constraint' => '>=8.1 <8.3 !=8.1 !=8.2.0', 'intervals' => [[80101, 80200], [80201, 80300]]];
         yield 'a version outside the range excluded' => ['constraint' => '>=8.1 !=8.0', 'intervals' => [[80100, null]]];
+        yield 'exclusions out of order and repeated' => ['constraint' => '>=8.1 <8.3 !=8.2.0 !=8.1 !=8.2.0', 'intervals' => [[80101, 80200], [80201, 80300]]];
+        yield 'every version of a range excluded but the last' => ['constraint' => '>=8.1 <8.1.3 !=8.1.1 !=8.1.0', 'intervals' => [[80102, 80103]]];
         yield 'an exclusion in one branch' => ['constraint' => '^7.4 || >=8.1 !=8.2', 'intervals' => [[70400, 80000], [80100, 80200], [80201, null]]];
+    }
+
+    /**
+     * A range named with thousands of exclusions is read in one pass over
+     * them, not once per piece they leave.
+     */
+    #[Test]
+    public function test_exclusions_are_read_in_linear_time(): void
+    {
+        $this->assertLinearTime(static function (int $size): void {
+            $constraint = '>=8.0';
+            for ($i = 0; $i < $size; $i++) {
+                $constraint .= ' !=8.'.intdiv($i, 100).'.'.($i % 100);
+            }
+            ComposerConstraint::intervals($constraint, strict: true);
+        }, 1000, 'exclusions');
     }
 
     #[Test]
