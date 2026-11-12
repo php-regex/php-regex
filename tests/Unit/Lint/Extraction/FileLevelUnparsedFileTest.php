@@ -111,34 +111,34 @@ final class FileLevelUnparsedFileTest extends TestCase
      * What PHP does not parse stands after the read, before the
      * assignment, or between the two with nothing else: reading the file
      * ends, both strategies anchor the one argument, and they agree on
-     * what they read of it.
+     * what they read of it: the one string the file assigns it, or
+     * nothing where a bracket that closes nothing, or an array left
+     * open, stands before the read.
      *
-     * @return iterable<string, array{code: string}>
+     * @return iterable<string, array{state: string, code: string}>
      */
     public static function provideFilesToReadToTheirEnd(): iterable
     {
-        yield 'a function whose parentheses are left open, after the read' => ['code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\nfunction ("];
-        yield 'a function whose body is left open, after the read' => ['code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\nfunction helper(): void\n{"];
-        yield 'a heredoc left open, after the read' => ['code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\n\$label = <<<TXT\n    never closed\n"];
-        yield 'a string left open, after the read' => ['code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\n\$label = \"x \$object;\n"];
-        yield 'brackets closed that nothing opened, after the read' => ['code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\n}\n)\n]\n"];
-        yield 'a brace closed that nothing opened, before the assignment' => ['code' => "<?php\n\n}\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\n"];
-        yield 'an array left open in a body, between' => ['code' => self::between("if (\$argc > 1) {\n    \$options = ['a', 'b'\n}")];
-        yield 'an array left open, between' => ['code' => self::between("\$options = ['a', 'b';")];
-        yield 'a call left open, holding the call' => ['code' => "<?php\n\n\$re = '/file-level/';\nvar_dump(preg_match(\$re, \$subject);\n"];
-        yield 'the body of an if left open, holding the call' => ['code' => "<?php\n\n\$re = '/file-level/';\nif (\$argc > 1) {\n    preg_match(\$re, \$subject);\n"];
+        yield 'a function whose parentheses are left open, after the read' => ['state' => 'constant', 'code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\nfunction ("];
+        yield 'a function whose body is left open, after the read' => ['state' => 'constant', 'code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\nfunction helper(): void\n{"];
+        yield 'a heredoc left open, after the read' => ['state' => 'constant', 'code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\n\$label = <<<TXT\n    never closed\n"];
+        yield 'a string left open, after the read' => ['state' => 'constant', 'code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\n\$label = \"x \$object;\n"];
+        yield 'brackets closed that nothing opened, after the read' => ['state' => 'constant', 'code' => "<?php\n\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\n}\n)\n]\n"];
+        yield 'a brace closed that nothing opened, before the assignment' => ['state' => 'opaque', 'code' => "<?php\n\n}\n\$re = '/file-level/';\npreg_match(\$re, \$subject);\n"];
+        yield 'an array left open in a body, between' => ['state' => 'constant', 'code' => self::between("if (\$argc > 1) {\n    \$options = ['a', 'b'\n}")];
+        yield 'an array left open, between' => ['state' => 'opaque', 'code' => self::between("\$options = ['a', 'b';")];
+        yield 'a call left open, holding the call' => ['state' => 'constant', 'code' => "<?php\n\n\$re = '/file-level/';\nvar_dump(preg_match(\$re, \$subject);\n"];
+        yield 'the body of an if left open, holding the call' => ['state' => 'constant', 'code' => "<?php\n\n\$re = '/file-level/';\nif (\$argc > 1) {\n    preg_match(\$re, \$subject);\n"];
     }
 
     #[Test]
     #[DataProvider('provideFilesToReadToTheirEnd')]
-    public function test_a_file_php_does_not_parse_is_read_to_its_end_by_both_strategies(string $code): void
+    public function test_a_file_php_does_not_parse_is_read_to_its_end_by_both_strategies(string $state, string $code): void
     {
         $read = $this->readByBoth($code);
 
-        $this->assertCount(1, $read['arguments']);
-        $this->assertSame('$re', $read['arguments'][0]['expression']);
-        // Read, it holds the one string the file assigns it.
-        $this->assertSame('constant' === $read['arguments'][0]['state'] ? ['/file-level/'] : [], $read['patterns']);
+        $this->assertSame([['state' => $state, 'expression' => '$re']], $read['arguments']);
+        $this->assertSame('constant' === $state ? ['/file-level/'] : [], $read['patterns']);
     }
 
     /**

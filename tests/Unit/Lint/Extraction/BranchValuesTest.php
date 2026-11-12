@@ -326,7 +326,7 @@ final class BranchValuesTest extends TestCase
      * when $flag is false. self::MAP[$type] ?: '/short(/' is "/short(/"
      * for a key MAP does not hold, with the warning 'Undefined array key'.
      *
-     * @return iterable<string, array{setup: string, argument: string, built: list<string>}>
+     * @return iterable<string, array{setup: string, argument: string, built: list<string>, state: string}>
      */
     public static function provideItemsThatMayBeMissing(): iterable
     {
@@ -337,96 +337,112 @@ final class BranchValuesTest extends TestCase
             'setup' => '',
             'argument' => "self::MAP[\$type] ?? '/^[a-z+$/'",
             'built' => ['/^\d+$/', '/^\w+$/', '/^[a-z+$/'],
+            'state' => 'finite_set',
         ];
 
         yield 'an item of a global constant named by a parameter' => [
             'setup' => '',
             'argument' => "GLOBAL_MAP[\$type] ?? '/g(/'",
             'built' => ['/g-int/', '/g-word/', '/g(/'],
+            'state' => 'finite_set',
         ];
 
         yield 'an item of a list named by an index' => [
             'setup' => '',
             'argument' => "self::LIST[\$kind] ?? '/l(/'",
             'built' => ['/l-a/', '/l-b/', '/l(/'],
+            'state' => 'finite_set',
         ];
 
         yield 'an item of an array of one value' => [
             'setup' => '',
             'argument' => "self::ONE[\$type] ?? '/one(/'",
             'built' => ['/only/', '/one(/'],
+            'state' => 'finite_set',
         ];
 
         yield 'an item named by a call' => [
             'setup' => '',
             'argument' => "self::MAP[strtolower(\$type)] ?? '/call(/'",
             'built' => ['/^\d+$/', '/^\w+$/', '/call(/'],
+            'state' => 'finite_set',
         ];
 
         yield 'an item and a fallback of multi-byte patterns' => [
             'setup' => '',
             'argument' => "self::ACCENTS[\$type] ?? '/^[à-ÿ+$/u'",
             'built' => ['/^é+$/u', '/^[à-ÿ+$/u'],
+            'state' => 'finite_set',
         ];
 
         yield 'an item of a local array named by a parameter' => [
             'setup' => $local,
             'argument' => "\$map[\$type] ?? '/x(/'",
             'built' => ['/a/', '/b/', '/x(/'],
+            'state' => 'finite_set',
         ];
 
         yield 'an item with a fallback, joined to literals' => [
             'setup' => '',
             'argument' => "'/^' . (self::PARTS[\$type] ?? '[a-z+') . '$/'",
             'built' => ['/^\d+$/', '/^\w+$/', '/^[a-z+$/'],
+            'state' => 'finite_set',
         ];
 
         yield 'an item with a fallback, in sprintf()' => [
             'setup' => '',
             'argument' => "sprintf('/^%s$/', self::PARTS[\$type] ?? 'f(')",
             'built' => ['/^\d+$/', '/^\w+$/', '/^f($/'],
+            'state' => 'finite_set',
         ];
 
         yield 'an item, then an item, then a literal' => [
             'setup' => $local,
             'argument' => "self::MAP[\$type] ?? \$map[\$type] ?? '/chain(/'",
             'built' => ['/^\d+$/', '/^\w+$/', '/a/', '/b/', '/chain(/'],
+            'state' => 'finite_set',
         ];
 
         yield 'a literal key of an array one path leaves unassigned' => [
             'setup' => $onOnePath,
             'argument' => "\$a['k'] ?? '/d(/'",
             'built' => ['/cond/', '/d(/'],
+            'state' => 'finite_set',
         ];
 
         yield 'any key of an array one path leaves unassigned' => [
             'setup' => $onOnePath,
             'argument' => "\$a[\$type] ?? '/any(/'",
             'built' => ['/cond/', '/any(/'],
+            'state' => 'finite_set',
         ];
 
         yield 'a short ternary on an item of a class constant' => [
             'setup' => '',
             'argument' => "self::MAP[\$type] ?: '/short(/'",
             'built' => ['/^\d+$/', '/^\w+$/', '/short(/'],
+            'state' => 'finite_set',
         ];
 
         yield 'a short ternary on an item of an array of one value' => [
             'setup' => '',
             'argument' => "self::ONE[\$type] ?: '/short-one(/'",
             'built' => ['/only/', '/short-one(/'],
+            'state' => 'finite_set',
         ];
 
         yield 'a short ternary on an item of a local array' => [
             'setup' => $local,
             'argument' => "\$map[\$type] ?: '/short-local(/'",
             'built' => ['/a/', '/b/', '/short-local(/'],
+            'state' => 'finite_set',
         ];
 
         yield 'a short ternary on a literal key of an array one path leaves unassigned' => [
             'setup' => $onOnePath,
             'argument' => "\$a['k'] ?: '/short-cond(/'",
             'built' => ['/cond/', '/short-cond(/'],
+            'state' => 'finite_set',
         ];
 
         // self::MAP['missing'] ?? '/not-held/' is "/not-held/", always:
@@ -435,33 +451,29 @@ final class BranchValuesTest extends TestCase
             'setup' => '',
             'argument' => "self::MAP['missing'] ?? '/not-held/'",
             'built' => ['/not-held/'],
+            'state' => 'opaque',
         ];
     }
 
     /**
      * The fallback is among the patterns of an argument that is judged,
-     * constant or a finite set, with every value of the array; an argument
-     * left unread gives no pattern.
+     * a finite set here, with every value of the array; an argument left
+     * unread gives no pattern. Each row says which it is.
      *
      * @param list<string> $built the patterns PHP builds there
      */
     #[Test]
     #[DataProvider('provideItemsThatMayBeMissing')]
-    public function test_an_item_that_may_be_missing_keeps_its_fallback_or_is_not_read(string $setup, string $argument, array $built): void
+    public function test_an_item_that_may_be_missing_keeps_its_fallback_or_is_not_read(string $setup, string $argument, array $built, string $state): void
     {
         $code = self::withMaps($setup, $argument);
 
         $read = array_values(array_unique($this->patternsReadByBoth($code)));
         sort($read, \SORT_STRING);
         sort($built, \SORT_STRING);
-        $states = $this->statesReadByBoth($code);
 
-        $this->assertCount(1, $states);
-        if (\in_array($states[0], ['constant', 'finite_set'], true)) {
-            $this->assertSame($built, $read, 'The argument is judged as "'.$states[0].'": its patterns are those PHP builds, the fallback among them.');
-        } else {
-            $this->assertSame([], $read, 'An argument left unread gives no pattern.');
-        }
+        $this->assertSame([$state], $this->statesReadByBoth($code));
+        $this->assertSame('opaque' === $state ? [] : $built, $read, 'An argument that is judged gives the patterns PHP builds, the fallback among them; one left unread gives none.');
     }
 
     /**
