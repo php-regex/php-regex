@@ -87,6 +87,35 @@ final class LintCommandStreamsTest extends TestCase
         LintFunctionOverrides::reset();
     }
 
+    /**
+     * A note quotes what composer.json holds: a control character there is
+     * spelled for the terminal, in the console banner as on stderr, never
+     * written raw.
+     *
+     * @param list<string> $format
+     */
+    #[Test]
+    #[DataProvider('provideNoteStreams')]
+    public function test_lint_spells_a_control_character_of_a_note_for_the_terminal(array $format, bool $onStderr): void
+    {
+        $this->enterProject(['composer.json' => '{"require": {"php": "<8.4\u001b"}}', 'src/a.php' => self::PHP_FILE]);
+
+        [, $stdout, $stderr] = $this->runLint(['src', '--jobs=1', '--no-redos', ...$format]);
+
+        $written = $onStderr ? $stderr : $stdout;
+        $this->assertStringContainsString('Note: composer.json require.php "<8.4\x1B" names no lowest PHP version', $written);
+        $this->assertStringNotContainsString("\e", $stdout.$stderr);
+    }
+
+    /**
+     * @return iterable<string, array{format: list<string>, onStderr: bool}>
+     */
+    public static function provideNoteStreams(): iterable
+    {
+        yield 'the console banner' => ['format' => ['--format=console'], 'onStderr' => false];
+        yield 'stderr beside a report' => ['format' => ['--format=github'], 'onStderr' => true];
+    }
+
     #[Test]
     public function test_lint_prints_the_target_in_the_banner_for_the_console_format(): void
     {

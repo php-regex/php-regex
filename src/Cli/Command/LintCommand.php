@@ -203,7 +203,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         // one. The console banner carries them instead.
         if (OutputConfiguration::VERBOSITY_QUIET !== $verbosity && !$output->isQuiet() && 'console' !== $format) {
             foreach ($target->notices() as $notice) {
-                $output->writeError('Note: '.$notice."\n");
+                $output->writeError('Note: '.ReportSpelling::displayField($notice)."\n");
             }
             if (!$json) {
                 $output->writeError(\sprintf("Target: %s (%s)\n", $target->label(), $target->source()));
