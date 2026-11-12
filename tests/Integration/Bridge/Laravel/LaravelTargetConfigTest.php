@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
+use PHPRegex\Linter\Config\TargetSpec;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Toolkit\Regex;
@@ -123,13 +124,14 @@ final class LaravelTargetConfigTest extends LaravelTestCase
     }
 
     /**
-     * php_version takes a single version until the bridge judges every
-     * point of a range: a range, or any text that is no version, is
-     * refused as it was before ranges, never judged at its floor alone.
+     * php_version takes a single version or a Composer constraint, as
+     * `regex lint --php-version` does (LintCommandRangeTest judges the
+     * range): a constraint lint refuses, or any text that is no version,
+     * stops the lint in lint's words.
      */
     #[Test]
-    #[DataProvider('providePhpVersionsTheBridgeRefuses')]
-    public function test_a_php_version_the_bridge_cannot_take_stops_the_lint_in_its_former_words(string $phpVersion): void
+    #[DataProvider('providePhpVersionsLintRefuses')]
+    public function test_a_php_version_lint_refuses_stops_the_lint_in_lints_words(string $phpVersion): void
     {
         config()->set('php-regex.php_version', $phpVersion);
 
@@ -137,7 +139,7 @@ final class LaravelTargetConfigTest extends LaravelTestCase
 
         $this->assertSame(2, $status);
         $this->assertSame(
-            ['error' => 'Invalid config/php-regex.php: "php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".', 'stage' => 'config'],
+            ['error' => 'Invalid config/php-regex.php: '.TargetSpec::RANGE_EXPECTED, 'stage' => 'config'],
             $json,
         );
     }
@@ -145,12 +147,80 @@ final class LaravelTargetConfigTest extends LaravelTestCase
     /**
      * @return iterable<string, array{phpVersion: string}>
      */
-    public static function providePhpVersionsTheBridgeRefuses(): iterable
+    public static function providePhpVersionsLintRefuses(): iterable
     {
-        yield 'an open range' => ['phpVersion' => '>=8.1'];
-        yield 'a hyphen range' => ['phpVersion' => '8.1 - 8.6'];
         yield 'a constraint without a lowest version' => ['phpVersion' => '<8.4'];
+        yield 'a PHP_VERSION_ID inside a constraint' => ['phpVersion' => '>=80100'];
+        yield 'any version' => ['phpVersion' => '*'];
         yield 'no version at all' => ['phpVersion' => 'eight'];
+    }
+
+    /**
+     * A value of another type is refused naming what php_version takes, the
+     * constraint form included; {min, max} is regex.json's, not this file's.
+     */
+    #[Test]
+    #[DataProvider('providePhpVersionsOfAnotherType')]
+    public function test_a_php_version_of_another_type_names_the_constraint_form(mixed $phpVersion, string $type): void
+    {
+        config()->set('php-regex.php_version', $phpVersion);
+
+        [$status, $json] = $this->lintJson();
+
+        $this->assertSame(2, $status);
+        $this->assertSame(
+            ['error' => 'Invalid config/php-regex.php: '.rtrim(TargetSpec::RANGE_EXPECTED, '.').', not a '.$type.'.', 'stage' => 'config'],
+            $json,
+        );
+    }
+
+    /**
+     * @return iterable<string, array{phpVersion: mixed, type: string}>
+     */
+    public static function providePhpVersionsOfAnotherType(): iterable
+    {
+        yield 'a float' => ['phpVersion' => 8.1, 'type' => 'float'];
+        yield 'min and max' => ['phpVersion' => ['min' => '8.1', 'max' => '8.6'], 'type' => 'array'];
+    }
+
+    /**
+     * A constraint is judged, never refused: the target names the setting
+     * and the range runs past the floor.
+     *
+     * @param list<string> $points
+     */
+    #[Test]
+    #[DataProvider('providePhpVersionConstraints')]
+    public function test_a_php_version_constraint_is_judged_as_a_range(string $phpVersion, array $points): void
+    {
+        config()->set('php-regex.php_version', $phpVersion);
+
+        [, $json] = $this->lintJson();
+
+        $target = $json['target'] ?? null;
+        $this->assertIsArray($target, (string) json_encode($json));
+        $this->assertSame('config php-regex.php_version', $target['source'] ?? null);
+        $range = $target['range'] ?? null;
+        $this->assertIsArray($range);
+        $this->assertSame($points, array_map(static fn (mixed $row): mixed => \is_array($row) ? ($row['php'] ?? null) : null, $range));
+    }
+
+    /**
+     * @return iterable<string, array{phpVersion: string, points: list<string>}>
+     */
+    public static function providePhpVersionConstraints(): iterable
+    {
+        yield 'an open range' => ['phpVersion' => '>=8.1', 'points' => ['8.1', '8.2', '8.3', '8.4', '8.4.25', '8.5', '8.5.10']];
+        yield 'a hyphen range' => ['phpVersion' => '8.1 - 8.6', 'points' => ['8.1', '8.2', '8.3', '8.4', '8.4.25', '8.5', '8.5.10']];
+        yield 'from the last gate point' => ['phpVersion' => '>=8.5.10', 'points' => ['8.5.10']];
+        yield 'above every gate point' => ['phpVersion' => '>8.6', 'points' => ['8.6.1']];
+    }
+
+    #[Test]
+    #[WithConfig('php-regex.php_version', '>=8.1')]
+    public function test_a_php_version_constraint_leaves_the_regex_service_on_the_running_engine(): void
+    {
+        $this->assertTrue($this->regexService()->target()->isRunningEngine());
     }
 
     #[Test]

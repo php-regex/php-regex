@@ -18,6 +18,7 @@ use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\TargetSpec;
 use PHPRegex\Linter\Console\ConsoleLintRequest;
 use PHPRegex\Linter\Console\ConsoleLintRunner;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
@@ -29,7 +30,6 @@ use PHPRegex\Linter\LintSetup;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -187,20 +187,18 @@ final class LintCommand extends Command
 
     /**
      * A version of config/php-regex.php, as written: an int or a string
-     * naming one version; a range is refused.
+     * naming one version, or a Composer constraint the lint judges as the
+     * range it allows. ProjectTarget reads it, and refuses what it cannot.
      */
     private function configVersion(string $key): string|int|null
     {
         $value = config('php-regex.'.$key);
         if (null === $value || \is_string($value) || \is_int($value)) {
-            if (null !== $value) {
-                ParserOptions::phpVersionIdOf($value);
-            }
-
             return $value;
         }
 
-        throw new InvalidRegexOptionException(\sprintf('"%s" must be a version string like "8.2" or a PHP_VERSION_ID like 80200, not a %s.', $key, get_debug_type($value)));
+        // In lint's words, as for a text it cannot read.
+        throw new InvalidRegexOptionException(\sprintf('%s, not a %s.', str_replace('"php_version"', '"'.$key.'"', rtrim(TargetSpec::RANGE_EXPECTED, '.')), get_debug_type($value)));
     }
 
     private function configRelease(string $key): ?string

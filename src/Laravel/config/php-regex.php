@@ -57,6 +57,9 @@ return [
     |
     | The PHP version ("8.2", "8.2.4" or 80200), the PCRE2 release ("10.42")
     | and the LC_CTYPE locale ("tr_TR.UTF-8") regex:lint judges patterns for.
+    | A single version is judged alone. A Composer constraint (">=8.1",
+    | "^8.1 <8.7") is judged from its lowest PHP, then at every later PHP it
+    | allows where a pattern can be refused or read otherwise.
     | Left null, the PHP version is the lowest one composer.json allows
     | (base_path('composer.json')), else the running PHP, the PCRE2 release
     | is the one that PHP bundles, and the locale is the one of the PHP
