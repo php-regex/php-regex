@@ -145,28 +145,35 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, list<string>, mixed}>
+     * @return iterable<string, array{neon: string, path: list<string>, expected: mixed}>
      */
     public static function provideAcceptedSettings(): iterable
     {
-        yield 'complexity switch' => ["checks:\n            complexity:\n                enabled: true", ['checks', 'complexity', 'enabled'], true];
-        yield 'complexity threshold' => ["checks:\n            complexity:\n                threshold: 20", ['checks', 'complexity', 'threshold'], 20];
-        yield 'complexity threshold of one' => ["checks:\n            complexity:\n                threshold: 1", ['checks', 'complexity', 'threshold'], 1];
-        yield 'lint switch' => ["checks:\n            lint:\n                enabled: true", ['checks', 'lint', 'enabled'], true];
-        yield 'threshold low' => ["checks:\n            redos:\n                threshold: low", ['checks', 'redos', 'threshold'], 'low'];
-        yield 'threshold medium' => ["checks:\n            redos:\n                threshold: medium", ['checks', 'redos', 'threshold'], 'medium'];
-        yield 'threshold high' => ["checks:\n            redos:\n                threshold: high", ['checks', 'redos', 'threshold'], 'high'];
-        yield 'threshold critical' => ["checks:\n            redos:\n                threshold: critical", ['checks', 'redos', 'threshold'], 'critical'];
-        yield 'php version as a string' => ["phpVersion: '8.2'", ['phpVersion'], '8.2'];
-        yield 'php version as an integer' => ['phpVersion: 80200', ['phpVersion'], 80200];
-        yield 'pcre version' => ["pcreVersion: '10.42'", ['pcreVersion'], '10.42'];
-        yield 'php version runtime' => ['phpVersion: runtime', ['phpVersion'], 'runtime'];
-        yield 'php version with a patch' => ["phpVersion: '8.4.10'", ['phpVersion'], '8.4.10'];
-        yield 'php version id as a string' => ["phpVersion: '80400'", ['phpVersion'], '80400'];
-        yield 'pcre version as PCRE_VERSION spells it' => ["pcreVersion: '10.44 2024-06-07'", ['pcreVersion'], '10.44 2024-06-07'];
-        yield 'pcre pre-release' => ["pcreVersion: '10.45-RC1'", ['pcreVersion'], '10.45-RC1'];
-        yield 'interop presets' => ['interop: [composer-pcre, nette-utils]', ['interop'], ['composer-pcre', 'nette-utils']];
-        yield 'no interop preset' => ['interop: []', ['interop'], []];
+        yield 'complexity switch' => ['neon' => "checks:\n            complexity:\n                enabled: true", 'path' => ['checks', 'complexity', 'enabled'], 'expected' => true];
+        yield 'complexity threshold' => ['neon' => "checks:\n            complexity:\n                threshold: 20", 'path' => ['checks', 'complexity', 'threshold'], 'expected' => 20];
+        yield 'complexity threshold of one' => ['neon' => "checks:\n            complexity:\n                threshold: 1", 'path' => ['checks', 'complexity', 'threshold'], 'expected' => 1];
+        yield 'lint switch' => ['neon' => "checks:\n            lint:\n                enabled: true", 'path' => ['checks', 'lint', 'enabled'], 'expected' => true];
+        yield 'threshold low' => ['neon' => "checks:\n            redos:\n                threshold: low", 'path' => ['checks', 'redos', 'threshold'], 'expected' => 'low'];
+        yield 'threshold medium' => ['neon' => "checks:\n            redos:\n                threshold: medium", 'path' => ['checks', 'redos', 'threshold'], 'expected' => 'medium'];
+        yield 'threshold high' => ['neon' => "checks:\n            redos:\n                threshold: high", 'path' => ['checks', 'redos', 'threshold'], 'expected' => 'high'];
+        yield 'threshold critical' => ['neon' => "checks:\n            redos:\n                threshold: critical", 'path' => ['checks', 'redos', 'threshold'], 'expected' => 'critical'];
+        yield 'php version as a string' => ['neon' => "phpVersion: '8.2'", 'path' => ['phpVersion'], 'expected' => '8.2'];
+        yield 'php version as an integer' => ['neon' => 'phpVersion: 80200', 'path' => ['phpVersion'], 'expected' => 80200];
+        yield 'pcre version' => ['neon' => "pcreVersion: '10.42'", 'path' => ['pcreVersion'], 'expected' => '10.42'];
+        yield 'php version runtime' => ['neon' => 'phpVersion: runtime', 'path' => ['phpVersion'], 'expected' => 'runtime'];
+        yield 'php version with a patch' => ['neon' => "phpVersion: '8.4.10'", 'path' => ['phpVersion'], 'expected' => '8.4.10'];
+        yield 'php version id as a string' => ['neon' => "phpVersion: '80400'", 'path' => ['phpVersion'], 'expected' => '80400'];
+        yield 'php version as an open constraint' => ['neon' => "phpVersion: '>=8.1'", 'path' => ['phpVersion'], 'expected' => '>=8.1'];
+        yield 'php version as a constraint with a ceiling' => ['neon' => "phpVersion: '^8.1 <8.7'", 'path' => ['phpVersion'], 'expected' => '^8.1 <8.7'];
+        yield 'php version as a hyphen range' => ['neon' => "phpVersion: '8.1 - 8.6'", 'path' => ['phpVersion'], 'expected' => '8.1 - 8.6'];
+        yield 'php version from the last gate point' => ['neon' => "phpVersion: '>=8.5.10'", 'path' => ['phpVersion'], 'expected' => '>=8.5.10'];
+        yield 'php version above every gate point' => ['neon' => "phpVersion: '>8.6'", 'path' => ['phpVersion'], 'expected' => '>8.6'];
+        yield 'php version as min and max ids' => ['neon' => "phpVersion:\n            min: 80100\n            max: 80699", 'path' => ['phpVersion'], 'expected' => ['min' => 80100, 'max' => 80699]];
+        yield 'php version as min and max versions' => ['neon' => "phpVersion:\n            min: '8.1'\n            max: '8.6'", 'path' => ['phpVersion'], 'expected' => ['min' => '8.1', 'max' => '8.6']];
+        yield 'pcre version as PCRE_VERSION spells it' => ['neon' => "pcreVersion: '10.44 2024-06-07'", 'path' => ['pcreVersion'], 'expected' => '10.44 2024-06-07'];
+        yield 'pcre pre-release' => ['neon' => "pcreVersion: '10.45-RC1'", 'path' => ['pcreVersion'], 'expected' => '10.45-RC1'];
+        yield 'interop presets' => ['neon' => 'interop: [composer-pcre, nette-utils]', 'path' => ['interop'], 'expected' => ['composer-pcre', 'nette-utils']];
+        yield 'no interop preset' => ['neon' => 'interop: []', 'path' => ['interop'], 'expected' => []];
     }
 
     /**
@@ -174,19 +181,26 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
      * configuration, naming the key, rather than as an internal error on the
      * first file the rule is built for.
      *
-     * @return iterable<string, array{string, string}>
+     * @return iterable<string, array{neon: string, key: string}>
      */
     public static function provideUnreadableVersions(): iterable
     {
-        yield 'php version word' => ['phpVersion: banana', 'phpVersion'];
-        yield 'php version empty' => ["phpVersion: ''", 'phpVersion'];
-        yield 'php version zero' => ['phpVersion: 0', 'phpVersion'];
-        yield 'php version negative' => ['phpVersion: -80200', 'phpVersion'];
-        yield 'php version with text after it' => ["phpVersion: '8.2foo'", 'phpVersion'];
-        yield 'php version with a patch past 99' => ["phpVersion: '8.2.100'", 'phpVersion'];
-        yield 'php version with four parts' => ["phpVersion: '8.2.1.9'", 'phpVersion'];
-        yield 'pcre version word' => ['pcreVersion: ten', 'pcreVersion'];
-        yield 'pcre version without a minor' => ["pcreVersion: '10'", 'pcreVersion'];
+        yield 'php version word' => ['neon' => 'phpVersion: banana', 'key' => 'phpVersion'];
+        yield 'php version empty' => ['neon' => "phpVersion: ''", 'key' => 'phpVersion'];
+        yield 'php version zero' => ['neon' => 'phpVersion: 0', 'key' => 'phpVersion'];
+        yield 'php version negative' => ['neon' => 'phpVersion: -80200', 'key' => 'phpVersion'];
+        yield 'php version with text after it' => ['neon' => "phpVersion: '8.2foo'", 'key' => 'phpVersion'];
+        yield 'php version with a patch past 99' => ['neon' => "phpVersion: '8.2.100'", 'key' => 'phpVersion'];
+        yield 'php version with four parts' => ['neon' => "phpVersion: '8.2.1.9'", 'key' => 'phpVersion'];
+        yield 'php version range without max' => ['neon' => "phpVersion:\n            min: 80100", 'key' => 'phpVersion'];
+        yield 'php version range without min' => ['neon' => "phpVersion:\n            max: 80699", 'key' => 'phpVersion'];
+        yield 'php version range with another key' => ['neon' => "phpVersion:\n            min: 80100\n            max: 80699\n            step: 1", 'key' => 'phpVersion'];
+        yield 'php version range with a bound that is no version' => ['neon' => "phpVersion:\n            min: true\n            max: 80699", 'key' => 'phpVersion'];
+        yield 'php version range with a bound of PHP 10' => ['neon' => "phpVersion:\n            min: '8.1'\n            max: '10.1'", 'key' => 'phpVersion'];
+        yield 'php version range with a PHP_VERSION_ID before PHP 7' => ['neon' => "phpVersion:\n            min: 60000\n            max: 80699", 'key' => 'phpVersion'];
+        yield 'php version range with float bounds' => ['neon' => "phpVersion:\n            min: 8.1\n            max: 8.6", 'key' => 'phpVersion'];
+        yield 'pcre version word' => ['neon' => 'pcreVersion: ten', 'key' => 'pcreVersion'];
+        yield 'pcre version without a minor' => ['neon' => "pcreVersion: '10'", 'key' => 'pcreVersion'];
     }
 
     #[Test]
@@ -197,6 +211,18 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
         $this->expectExceptionMessageIsOrContains("'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}".$key."'");
 
         $this->loadExtensionWith($neon);
+    }
+
+    /**
+     * Unquoted, 8.1 is a float in neon: the error says a version is quoted.
+     */
+    #[Test]
+    public function test_schema_asks_float_bounds_to_be_quoted(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageIsOrContains("{min, max}, each a quoted version like '8.1' or a PHP_VERSION_ID");
+
+        $this->loadExtensionWith("phpVersion:\n            min: 8.1\n            max: 8.6");
     }
 
     /**

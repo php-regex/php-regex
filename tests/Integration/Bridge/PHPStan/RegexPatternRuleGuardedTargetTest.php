@@ -158,8 +158,8 @@ final class RegexPatternRuleGuardedTargetTest extends RuleTestCase
     }
 
     /**
-     * One version named for the rule, or by PHPStan, is judged alone, as
-     * PHPStan analyses the other branch as dead: nothing changes.
+     * One version named for the rule is judged alone at every call: the
+     * guards are not read, even one that keeps the call off that version.
      */
     #[Test]
     public function test_one_version_judged_ignores_the_guards(): void

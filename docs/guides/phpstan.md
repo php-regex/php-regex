@@ -118,11 +118,56 @@ Regex pattern is invalid for PHP 8.5 with PCRE2 10.44: \K is not allowed in a lo
 🪪 regex.invalidForTarget
 ```
 
-A `phpRegex.phpVersion` naming one version judges that version alone.
+A `phpRegex.phpVersion` naming one version judges that version alone, even
+under a PHPStan range.
+
+`phpRegex.phpVersion` can name a range too: a Composer constraint, or `{min,
+max}` with each bound a quoted version or a `PHP_VERSION_ID`, `max` included
+(a two-part `max` such as `'8.6'` covers the whole 8.6 series; unquoted, `8.1`
+is a float, which the schema refuses). Its versions are those
+[`regex lint`](cli.md#several-php-versions) judges for the same range, but
+only a version that refuses a pattern is reported: the lint's warning that a
+later version reads a pattern otherwise is not.
+
+```neon
+parameters:
+    phpRegex:
+        phpVersion: '>=8.1'          # 8.1 up to the last version the library knows
+        # phpVersion: '^8.1 <8.5'    # 8.1 to 8.4
+        # phpVersion:
+        #     min: '8.1'
+        #     max: '8.6'
+```
+{: data-file="phpstan.neon" }
+
+When PHPStan's own `phpVersion` is a `{min, max}` range as well, only the
+versions both allow are judged: those PHPStan analyses the code for, so a guard
+on `PHP_VERSION_ID` narrows them as below. `phpRegex.phpVersion: '>=8.1'` under
+`phpVersion: {min: 80100, max: 80399}` judges 8.1 to 8.3. Two ranges that share
+no version stop the analysis when it starts:
+
+```text
+phpRegex.phpVersion ">=8.5" shares no version with phpVersion {min: 80100, max: 80399}, the PHP versions PHPStan analyses the code for: name a range that overlaps it.
+```
+
+When PHPStan names one version, or none, the range is judged as given, and a
+guard on `PHP_VERSION_ID` narrows it all the same (see below). `composer.json`'s
+`require.php` is not read for it: name the range in the extension's settings.
+A constraint the lint would refuse (`'<8.4'`, which has no lowest version,
+`'*'`, or `'>=80100'`) stops the analysis with the lint's error.
+
+A range the extension refuses stops PHPStan while it starts, before any file
+is analysed: PHPStan names the extension's bootstrap file and prints the
+error after it, then stops with exit code 1:
+
+```text
+PHPRegex\Parser\Exception\InvalidRegexOptionException thrown in …/TargetScope.php on line … while loading bootstrap file …/bootstrap.php: phpRegex.phpVersion ">=8.5" shares no version with phpVersion {min: 80100, max: 80399}, the PHP versions PHPStan analyses the code for: name a range that overlaps it.
+```
 
 ### Guarded calls
 
-A call that runs on some PHP versions of the range only is judged for those.
+A call that runs on some PHP versions of the range only is judged for those,
+whether the range is PHPStan's or the one `phpRegex.phpVersion` names.
 PHPStan narrows `PHP_VERSION_ID` under a guard, and the extension reads that
 narrowed type at the call: the versions judged are the lowest one the guard
 keeps, with the PCRE2 the order above gives it, then each later
@@ -142,8 +187,12 @@ whole range is judged, as it is for a comparison with a variable. A guard that
 keeps no version of the range (`PHP_VERSION_ID >= 90000` under 8.2 to 8.5)
 leaves the call unjudged: it never runs there. An unqualified
 `PHP_VERSION_ID` that names a constant of its namespace is no PHP version,
-and its guard is not read. With `phpRegex.phpVersion`, or one PHP version for
-PHPStan, nothing changes: PHPStan already treats the other branch as dead.
+and its guard is not read. With a `phpRegex.phpVersion` that names one version,
+or one PHP version for PHPStan and no range for the extension, the guards are
+not read: that version is judged at every call, under a guard that keeps it
+off too. Under `phpVersion: 80100`,
+`if (PHP_VERSION_ID >= 80200) { preg_match('/(a)/n', $s); }` is still reported
+for PHP 8.1.
 
 A `@regex-target` marker narrows the versions a call is judged for as the
 lint reads it (see [the CLI guide](cli.md#code-that-runs-on-some-php-versions-only)),
@@ -173,11 +222,14 @@ phpVersion names PHP 7.1: PHP 7.2 and earlier ship PCRE1, which this library doe
 ```
 
 A range that starts below 7.3 and reaches it, `phpVersion: {min: 70100, max:
-80499}`, is judged from 7.3. When PHPStan read a PHP below 7.3 from
+80499}` or `phpRegex.phpVersion: '>=7.1'`, is judged from 7.3; one that does
+not reach it, `phpRegex.phpVersion: '~7.1.0'`, is refused (`phpRegex.phpVersion
+allows PHP 7.1: PHP 7.2 and earlier ship PCRE1, …`). When PHPStan read a PHP below 7.3 from
 `composer.json`, the extension reads `composer.json` as the lint does: a
 `require.php` that also allows 7.3 or later, or a `config.platform.php` below
 7.3 beside one, is judged from the lowest PHP on PCRE2 it allows; one that
-allows none is refused. PHPStan shows no note: the lint's note is not printed.
+allows none is refused. The extension shows no note, as the Psalm plugin
+shows none: the lint's note that the range is judged from 7.3 is not printed.
 
 ## Pattern parameters
 
@@ -414,8 +466,9 @@ parameters:
 parameters:
     phpRegex:
         # The PHP patterns are judged for: null for PHPStan's phpVersion,
-        # 'runtime' for the PHP running PHPStan, a version like '8.2', or a
-        # PHP_VERSION_ID like 80200.
+        # 'runtime' for the PHP running PHPStan, a version like '8.2', a
+        # PHP_VERSION_ID like 80200, or a range: a Composer constraint like
+        # '>=8.1', or {min, max}, kept within PHPStan's phpVersion range.
         phpVersion: null
         # The PCRE2 release, like '10.42', used as is; null for the one
         # composer.json pins in config.platform.lib-pcre, else the running

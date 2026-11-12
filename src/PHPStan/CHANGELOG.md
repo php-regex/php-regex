@@ -37,6 +37,15 @@ CHANGELOG
  * PHPStan's `phpVersion: {min, max}` is read whole: each later PHP up to
    `max` where a rule changes validates the patterns too, reported as
    `regex.invalidForTarget`.
+ * `phpRegex.phpVersion` takes a range: a Composer constraint (`'>=8.1'`,
+   `'^8.1 <8.7'`) or `{min, max}`, each bound a quoted version or a
+   `PHP_VERSION_ID`. It is judged at the versions `regex lint` judges, kept
+   within PHPStan's `phpVersion` when that is `{min, max}` too, and a guard
+   on `PHP_VERSION_ID` narrows it; only a version that refuses a pattern is
+   reported. A range the extension refuses, or two ranges sharing no
+   version, stop PHPStan while it loads the extension's bootstrap file,
+   before any file is analysed. A single version still overrides PHPStan's
+   range, and `composer.json`'s `require.php` is not read for it.
  * The `$phpVersionRange` constructor parameter of `RegexPatternRule` and
    `RegexPatternArgumentRule` is typed `int|array|null`, as PHPStan's
    `phpVersion` parameter is, where it took `mixed`.
