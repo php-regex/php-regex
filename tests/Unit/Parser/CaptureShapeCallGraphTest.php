@@ -80,14 +80,17 @@ final class CaptureShapeCallGraphTest extends TestCase
         $ast = RegexParser::create()->parse('/(?(DEFINE)(?<d>\d))(?&d)(?&d)/');
         $facts = new CaptureFacts(groups: GroupIndex::of($ast->pattern));
 
-        $this->assertSame(0, $facts->bodiesRead());
-
+        // Each count is read into a variable: the count moves with every
+        // fact asked, and an assertion on the call itself would freeze it.
+        $before = $facts->bodiesRead();
         $facts->of($ast->pattern);
         $read = $facts->bodiesRead();
         $facts->of($ast->pattern);
+        $again = $facts->bodiesRead();
 
+        $this->assertSame(0, $before);
         $this->assertGreaterThan(0, $read);
-        $this->assertSame($read, $facts->bodiesRead());
+        $this->assertSame($read, $again);
     }
 
     /**
