@@ -32,6 +32,13 @@ final class RangePatterns
     public const QUANTIFIER_WITHOUT_MIN = '/a{,3}/';
 
     /**
+     * A PHP file calling preg_match() with QUANTIFIER_WITHOUT_MIN, for a
+     * lint command to read: preg_match('/^a{,3}$/', 'aa') returns 1 on
+     * PCRE2 10.49, 0 on the text "a{,3}".
+     */
+    public const QUANTIFIER_WITHOUT_MIN_FILE = "<?php\n\npreg_match('/a{,3}/', \$s);\n";
+
+    /**
      * The versions ">=8.1" is judged at: its floor, then every PHP version
      * a rule of the library changes at above it, up to the last it knows.
      */

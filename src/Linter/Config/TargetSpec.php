@@ -50,6 +50,11 @@ final class TargetSpec
      */
     public const OBJECT_EXPECTED = '"php_version" must be {"min": …, "max": …}, each bound a version like "8.1" or a PHP_VERSION_ID like 80100, min not above max.';
 
+    /**
+     * A version bound of a major 7 to 9: "8.1" or "8.1.10".
+     */
+    private const VERSION_BOUND = '/^([7-9])\.([0-9]{1,2})(?:\.([0-9]{1,2}))?$/D';
+
     private function __construct() {}
 
     /**
@@ -99,6 +104,20 @@ final class TargetSpec
     }
 
     /**
+     * Whether a value is a bound of a {"min", "max"} object: a
+     * PHP_VERSION_ID of PHP 7.0 up to 9.99.99, or a version "x.y" or "x.y.z"
+     * of a major 7 to 9, as the schema of regex.json takes it, never "08.1"
+     * nor PHP 10. Every entry point that checks a bound before reading the
+     * range asks it here; minMax() reads what it accepts.
+     */
+    public static function isBound(int|float|string|bool|null $bound): bool
+    {
+        return \is_int($bound)
+            ? $bound >= ParserOptions::OLDEST_PHP_VERSION_ID && $bound <= ParserOptions::LATEST_PHP_VERSION_ID
+            : \is_string($bound) && 1 === LibraryPcre::match(self::VERSION_BOUND, $bound);
+    }
+
+    /**
      * A bound as a PHP_VERSION_ID, and the number of parts it was written
      * with: 3 for a PHP_VERSION_ID, which names one release.
      *
@@ -108,16 +127,16 @@ final class TargetSpec
      */
     private static function bound(string|int $bound): array
     {
-        if (\is_int($bound) && $bound >= ParserOptions::OLDEST_PHP_VERSION_ID && $bound <= ParserOptions::LATEST_PHP_VERSION_ID) {
+        if (!self::isBound($bound)) {
+            throw new InvalidRegexOptionException(self::OBJECT_EXPECTED);
+        }
+
+        if (\is_int($bound)) {
             return [$bound, 3];
         }
 
-        // A major of 7 to 9, written as the schema of regex.json takes it:
-        // from PHP 7.0 up to 9.99.99, never "08.1" nor PHP 10.
-        if (\is_string($bound) && 1 === LibraryPcre::match('/^([7-9])\.([0-9]{1,2})(?:\.([0-9]{1,2}))?$/D', $bound, $parts)) {
-            return [(int) $parts[1] * 10000 + (int) $parts[2] * 100 + (int) ($parts[3] ?? 0), isset($parts[3]) ? 3 : 2];
-        }
+        LibraryPcre::match(self::VERSION_BOUND, $bound, $parts);
 
-        throw new InvalidRegexOptionException(self::OBJECT_EXPECTED);
+        return [(int) ($parts[1] ?? 0) * 10000 + (int) ($parts[2] ?? 0) * 100 + (int) ($parts[3] ?? 0), isset($parts[3]) ? 3 : 2];
     }
 }
