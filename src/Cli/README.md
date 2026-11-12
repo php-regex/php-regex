@@ -77,7 +77,7 @@ Global options:
 | `--ansi` / `--no-ansi` | Force or disable ANSI output |
 | `-q`, `--quiet`, `--silent` | Suppress output |
 | `--no-visuals` | Disable banner and section visuals |
-| `--php-version <ver>` | Target PHP version for validation |
+| `--php-version <ver>` | Target PHP version or range for validation, as `8.1` or `>=8.1` |
 | `--pcre-version <ver>` | Target PCRE2 release for validation |
 | `--locale <name>` | Target `LC_CTYPE` locale for validation |
 | `--cache-dir <dir>` | Keep the Unicode class scans in `<dir>` for the next run |

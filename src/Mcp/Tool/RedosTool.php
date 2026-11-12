@@ -50,10 +50,11 @@ final class RedosTool extends AbstractTool
                 return ToolResult::failure('Invalid value for "threshold": '.$e->getMessage(), 'usage');
             }
         }
-        $regex = $this->regex($arguments);
-        if ($regex instanceof ToolResult) {
-            return $regex;
+        $judged = $this->regex($arguments);
+        if ($judged instanceof ToolResult) {
+            return $judged;
         }
+        [$regex, $target] = $judged;
         $refusal = self::refusal($regex, $pattern);
         if (null !== $refusal) {
             return $refusal;
@@ -61,6 +62,8 @@ final class RedosTool extends AbstractTool
 
         $analysis = $regex->redos($pattern, $threshold, RedosMode::from($mode));
 
-        return ToolResult::document(implode("\n", [$analysis->headline(), ...$analysis->recommendations]), ['pattern' => $pattern, 'redos' => $analysis]);
+        [$text, $range] = self::overRange(implode("\n", [$analysis->headline(), ...$analysis->recommendations]), $regex, $target, $pattern);
+
+        return ToolResult::document($text, ['pattern' => $pattern, 'redos' => $analysis, ...$range]);
     }
 }

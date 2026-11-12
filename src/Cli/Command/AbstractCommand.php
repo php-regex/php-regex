@@ -19,10 +19,11 @@ use PHPRegex\Cli\Option\ParsedOption;
 use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
+use PHPRegex\Linter\Formatter\ReportSpelling;
+use PHPRegex\Linter\RangePoints;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
@@ -32,26 +33,31 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * @internal
+ *
+ * @phpstan-import-type RangePoint from RangePoints
  */
 abstract class AbstractCommand implements CommandInterface
 {
     /**
-     * @param array{php_version?: string, pcre_version?: string, locale?: string} $options the target the command line names
-     * @param bool                                                                $json    whether the command line asked for JSON: the error is then the envelope
+     * The PHP versions the command judges its pattern for: the target the
+     * command line names (--php-version, a range included, --pcre-version
+     * and --locale, as Input holds them), read as lint reads them, else the
+     * running PHP. No file of the working directory is read. A version the
+     * library cannot read or does not judge is reported in lint's words, as
+     * the JSON error envelope when the command line asked for JSON; null
+     * then, and the command exits 2.
+     *
+     * @param bool $json whether the command line asked for JSON: the error is then the envelope
      */
-    protected function createRegex(Output $output, array $options, bool $json = false): ?Regex
+    protected function resolveTarget(Input $input, Output $output, bool $json = false): ?TargetRange
     {
-        try {
-            // A PHP the command line names is the target, as lint takes it:
-            // one that ships PCRE1 is refused.
-            if (isset($options['php_version'])) {
-                // These commands judge one version: a range is the lint's
-                // alone, and is refused here in the words of a single one.
-                ParserOptions::phpVersionIdOf($options['php_version']);
-                $options = ProjectTarget::fromSources(['--php-version' => $options['php_version']], ['--pcre-version' => $options['pcre_version'] ?? null], null, [], ['--locale' => $options['locale'] ?? null])->regexOptions();
-            }
+        $options = $input->regexOptions;
 
-            return Regex::fromOptions(ParserOptions::fromArray($options));
+        try {
+            $target = ProjectTarget::fromSources(['--php-version' => $options['php_version'] ?? null], ['--pcre-version' => $options['pcre_version'] ?? null], null, [], ['--locale' => $options['locale'] ?? null]);
+            $regex = Regex::create($target->regexOptions());
+
+            return new TargetRange($target, $regex, $target->rangeParsers($regex->parser()));
         } catch (UnsupportedTargetException $e) {
             if ($json) {
                 $output->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_TARGET));
@@ -69,6 +75,62 @@ abstract class AbstractCommand implements CommandInterface
             }
 
             return null;
+        }
+    }
+
+    /**
+     * The exit code of a JSON run once the range judged the pattern: a
+     * later version that refuses a pattern the floor accepts is a problem
+     * with the pattern, exit 1; every other exit code stays, the floor's
+     * refusal being the command's own verdict.
+     *
+     * @param non-empty-list<RangePoint> $points
+     */
+    protected static function exitCodeOverRange(array $points, int $exitCode): int
+    {
+        return self::SUCCESS === $exitCode && TargetRange::refusedLater($points) ? self::FAILURE : $exitCode;
+    }
+
+    /**
+     * Say on stderr what the later versions of the range find in a
+     * pattern the floor accepts, in lint's words: an error for the lowest
+     * that refuses it, which makes the run exit 1, a warning for the
+     * lowest that reads it into another tree or gives it another meaning.
+     * stdout keeps the command's own output.
+     *
+     * @param string $about what names the pattern when the command reads more than one, "Pattern 1: "
+     */
+    protected function reportRange(Output $output, TargetRange $range, string $pattern, int $exitCode, string $about = ''): int
+    {
+        $findings = $range->findings($pattern);
+        if (null !== $findings['refusal']) {
+            $output->writeError($output->error('Error: '.$about.ReportSpelling::displayField($findings['refusal']))."\n");
+
+            return self::SUCCESS === $exitCode ? self::FAILURE : $exitCode;
+        }
+
+        if (null !== $findings['warning'] && !$output->isQuiet()) {
+            $output->writeError($output->warning('Warning: '.$about.ReportSpelling::displayField($findings['warning']))."\n");
+        }
+
+        return $exitCode;
+    }
+
+    /**
+     * Say on stderr what resolving the target noticed, as lint does when
+     * its report is no console one: for a run whose stdout carries no
+     * banner, a JSON document or another format. The console banner
+     * carries them instead. Silenced by -q; a control or a hidden
+     * character is spelled out.
+     */
+    protected function reportNotices(Output $output, TargetRange $range): void
+    {
+        if ($output->isQuiet()) {
+            return;
+        }
+
+        foreach ($range->target->notices() as $notice) {
+            $output->writeError('Note: '.ReportSpelling::displayField($notice)."\n");
         }
     }
 
@@ -203,24 +265,21 @@ abstract class AbstractCommand implements CommandInterface
     }
 
     /**
-     * The banner lines naming the PHP version, the PCRE2 release and the
-     * locale asked for on the command line.
+     * The banner line naming the target judged, as lint's Target row names
+     * it: the PHP, the PCRE2 release and the locale resolved, where they
+     * came from, and the later versions of the range. None when the
+     * command line names none of them: the target is then the runtime,
+     * which the banner's Runtime line names already.
      *
      * @return array<string, string>
      */
-    protected function targetMeta(Input $input, Output $output): array
+    protected function targetMeta(Output $output, TargetRange $range): array
     {
-        $meta = [];
-        if (null !== $input->globalOptions->phpVersion) {
-            $meta['Target PHP'] = $output->warning('PHP '.$input->globalOptions->phpVersion);
-        }
-        if (null !== $input->globalOptions->pcreVersion) {
-            $meta['Target PCRE2'] = $output->warning('PCRE2 '.$input->globalOptions->pcreVersion);
-        }
-        if (null !== $input->globalOptions->locale) {
-            $meta['Target locale'] = $output->warning($input->globalOptions->locale);
+        $target = $range->target;
+        if ('running PHP' === $target->source()) {
+            return [];
         }
 
-        return $meta;
+        return ['Target PHP' => $output->warning($target->label()).' ('.$target->source().')'.LintOutputRenderer::laterPoints($output, $target)];
     }
 }

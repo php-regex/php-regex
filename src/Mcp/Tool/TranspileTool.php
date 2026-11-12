@@ -52,10 +52,11 @@ final class TranspileTool extends AbstractTool
         } catch (InvalidRegexOptionException $e) {
             return ToolResult::failure(strtr($e->getMessage(), ['"pythonVersion"' => '"python_version"']), 'usage');
         }
-        $regex = $this->regex($arguments);
-        if ($regex instanceof ToolResult) {
-            return $regex;
+        $judged = $this->regex($arguments);
+        if ($judged instanceof ToolResult) {
+            return $judged;
         }
+        [$regex, $phpTarget] = $judged;
         $refusal = self::refusal($regex, $pattern);
         if (null !== $refusal) {
             return $refusal;
@@ -75,6 +76,9 @@ final class TranspileTool extends AbstractTool
             $lines[] = 'Note: '.$note;
         }
 
-        return ToolResult::document(implode("\n", $lines), $result->jsonSerialize());
+        // "target" is the dialect: the PHP versions judged are "php_target".
+        [$text, $range] = self::overRange(implode("\n", $lines), $regex, $phpTarget, $pattern, 'php_target');
+
+        return ToolResult::document($text, [...$result->jsonSerialize(), ...$range]);
     }
 }

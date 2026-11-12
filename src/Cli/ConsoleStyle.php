@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli;
 
+use PHPRegex\Linter\Formatter\ReportSpelling;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -32,16 +33,31 @@ final class ConsoleStyle
     }
 
     /**
+     * The banner, and what resolving the target noticed: one "Note: " line
+     * each under its rows, as lint's banner says it, else on stderr when
+     * the banner is off, never under -q. A control or a hidden character
+     * of a note is spelled out.
+     *
      * @param array<string, string> $meta
+     * @param list<string>          $notes what resolving the target noticed
      */
-    public function renderBanner(string $command, array $meta = [], ?string $tagline = null): void
+    public function renderBanner(string $command, array $meta = [], ?string $tagline = null, array $notes = []): void
     {
         if (!$this->visuals) {
+            if (!$this->output->isQuiet()) {
+                foreach ($notes as $note) {
+                    $this->output->writeError('Note: '.ReportSpelling::displayField($note)."\n");
+                }
+            }
+
             return;
         }
 
         $this->writeTitleBlock($tagline);
         $this->writeRuntimeInfo($command, $meta);
+        foreach ($notes as $note) {
+            $this->output->write($this->output->dim('Note: '.ReportSpelling::displayField($note))."\n");
+        }
         $this->output->write("\n");
     }
 

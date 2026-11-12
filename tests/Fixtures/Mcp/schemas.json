@@ -11,7 +11,7 @@
                 },
                 "php_version": {
                     "type": "string",
-                    "description": "The PHP release to judge for, as \"8.2\". Default: the server's target, else the running PHP."
+                    "description": "The PHP release to judge for, as \"8.2\", or a Composer constraint, as \">=8.1\" or \"^8.1 <8.7\": the pattern is judged at every version of the range a rule of the library changes at, and the answer is computed for the lowest. Default: the server's target, else the running PHP."
                 },
                 "pcre_version": {
                     "type": "string",
@@ -88,11 +88,100 @@
                                 "error_code"
                             ],
                             "additionalProperties": false
+                        },
+                        "target": {
+                            "type": "object",
+                            "properties": {
+                                "php": {
+                                    "type": "string"
+                                },
+                                "pcre": {
+                                    "type": "string"
+                                },
+                                "locale": {
+                                    "type": "string"
+                                },
+                                "source": {
+                                    "type": "string"
+                                },
+                                "range": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "php": {
+                                                "type": "string"
+                                            },
+                                            "pcre": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "php",
+                                            "pcre"
+                                        ],
+                                        "additionalProperties": false
+                                    },
+                                    "minItems": 1
+                                }
+                            },
+                            "required": [
+                                "php",
+                                "pcre",
+                                "locale",
+                                "source",
+                                "range"
+                            ],
+                            "additionalProperties": false
+                        },
+                        "range": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "php": {
+                                        "type": "string"
+                                    },
+                                    "pcre": {
+                                        "type": "string"
+                                    },
+                                    "is_valid": {
+                                        "type": "boolean"
+                                    },
+                                    "error": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "error_code": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "parses_differently": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "php",
+                                    "pcre",
+                                    "is_valid",
+                                    "error",
+                                    "error_code",
+                                    "parses_differently"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "minItems": 1
                         }
                     },
                     "required": [
                         "pattern",
-                        "validation"
+                        "validation",
+                        "target",
+                        "range"
                     ],
                     "additionalProperties": false
                 },
@@ -191,7 +280,7 @@
                 },
                 "php_version": {
                     "type": "string",
-                    "description": "The PHP release to judge for, as \"8.2\". Default: the server's target, else the running PHP."
+                    "description": "The PHP release to judge for, as \"8.2\", or a Composer constraint, as \">=8.1\" or \"^8.1 <8.7\": the pattern is judged at every version of the range a rule of the library changes at, and the answer is computed for the lowest. Default: the server's target, else the running PHP."
                 },
                 "pcre_version": {
                     "type": "string",
@@ -213,11 +302,100 @@
                         },
                         "explanation": {
                             "type": "string"
+                        },
+                        "target": {
+                            "type": "object",
+                            "properties": {
+                                "php": {
+                                    "type": "string"
+                                },
+                                "pcre": {
+                                    "type": "string"
+                                },
+                                "locale": {
+                                    "type": "string"
+                                },
+                                "source": {
+                                    "type": "string"
+                                },
+                                "range": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "php": {
+                                                "type": "string"
+                                            },
+                                            "pcre": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "php",
+                                            "pcre"
+                                        ],
+                                        "additionalProperties": false
+                                    },
+                                    "minItems": 1
+                                }
+                            },
+                            "required": [
+                                "php",
+                                "pcre",
+                                "locale",
+                                "source",
+                                "range"
+                            ],
+                            "additionalProperties": false
+                        },
+                        "range": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "php": {
+                                        "type": "string"
+                                    },
+                                    "pcre": {
+                                        "type": "string"
+                                    },
+                                    "is_valid": {
+                                        "type": "boolean"
+                                    },
+                                    "error": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "error_code": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "parses_differently": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "php",
+                                    "pcre",
+                                    "is_valid",
+                                    "error",
+                                    "error_code",
+                                    "parses_differently"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "minItems": 1
                         }
                     },
                     "required": [
                         "pattern",
-                        "explanation"
+                        "explanation",
+                        "target",
+                        "range"
                     ],
                     "additionalProperties": false
                 },
@@ -325,7 +503,7 @@
                 },
                 "php_version": {
                     "type": "string",
-                    "description": "The PHP release to judge for, as \"8.2\". Default: the server's target, else the running PHP."
+                    "description": "The PHP release to judge for, as \"8.2\", or a Composer constraint, as \">=8.1\" or \"^8.1 <8.7\": the pattern is judged at every version of the range a rule of the library changes at, and the answer is computed for the lowest. Default: the server's target, else the running PHP."
                 },
                 "pcre_version": {
                     "type": "string",
@@ -356,13 +534,102 @@
                                 "string",
                                 "null"
                             ]
+                        },
+                        "target": {
+                            "type": "object",
+                            "properties": {
+                                "php": {
+                                    "type": "string"
+                                },
+                                "pcre": {
+                                    "type": "string"
+                                },
+                                "locale": {
+                                    "type": "string"
+                                },
+                                "source": {
+                                    "type": "string"
+                                },
+                                "range": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "php": {
+                                                "type": "string"
+                                            },
+                                            "pcre": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "php",
+                                            "pcre"
+                                        ],
+                                        "additionalProperties": false
+                                    },
+                                    "minItems": 1
+                                }
+                            },
+                            "required": [
+                                "php",
+                                "pcre",
+                                "locale",
+                                "source",
+                                "range"
+                            ],
+                            "additionalProperties": false
+                        },
+                        "range": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "php": {
+                                        "type": "string"
+                                    },
+                                    "pcre": {
+                                        "type": "string"
+                                    },
+                                    "is_valid": {
+                                        "type": "boolean"
+                                    },
+                                    "error": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "error_code": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "parses_differently": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "php",
+                                    "pcre",
+                                    "is_valid",
+                                    "error",
+                                    "error_code",
+                                    "parses_differently"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "minItems": 1
                         }
                     },
                     "required": [
                         "pattern",
                         "formatted",
                         "changed",
-                        "refusal"
+                        "refusal",
+                        "target",
+                        "range"
                     ],
                     "additionalProperties": false
                 },
@@ -474,7 +741,7 @@
                 },
                 "php_version": {
                     "type": "string",
-                    "description": "The PHP release to judge for, as \"8.2\". Default: the server's target, else the running PHP."
+                    "description": "The PHP release to judge for, as \"8.2\", or a Composer constraint, as \">=8.1\" or \"^8.1 <8.7\": the pattern is judged at every version of the range a rule of the library changes at, and the answer is computed for the lowest. Default: the server's target, else the running PHP."
                 },
                 "pcre_version": {
                     "type": "string",
@@ -521,6 +788,93 @@
                             "items": {
                                 "type": "string"
                             }
+                        },
+                        "php_target": {
+                            "type": "object",
+                            "properties": {
+                                "php": {
+                                    "type": "string"
+                                },
+                                "pcre": {
+                                    "type": "string"
+                                },
+                                "locale": {
+                                    "type": "string"
+                                },
+                                "source": {
+                                    "type": "string"
+                                },
+                                "range": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "php": {
+                                                "type": "string"
+                                            },
+                                            "pcre": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "php",
+                                            "pcre"
+                                        ],
+                                        "additionalProperties": false
+                                    },
+                                    "minItems": 1
+                                }
+                            },
+                            "required": [
+                                "php",
+                                "pcre",
+                                "locale",
+                                "source",
+                                "range"
+                            ],
+                            "additionalProperties": false
+                        },
+                        "range": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "php": {
+                                        "type": "string"
+                                    },
+                                    "pcre": {
+                                        "type": "string"
+                                    },
+                                    "is_valid": {
+                                        "type": "boolean"
+                                    },
+                                    "error": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "error_code": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "parses_differently": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "php",
+                                    "pcre",
+                                    "is_valid",
+                                    "error",
+                                    "error_code",
+                                    "parses_differently"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "minItems": 1
                         }
                     },
                     "required": [
@@ -531,7 +885,9 @@
                         "literal",
                         "constructor",
                         "warnings",
-                        "notes"
+                        "notes",
+                        "php_target",
+                        "range"
                     ],
                     "additionalProperties": false
                 },
@@ -648,7 +1004,7 @@
                 },
                 "php_version": {
                     "type": "string",
-                    "description": "The PHP release to judge for, as \"8.2\". Default: the server's target, else the running PHP."
+                    "description": "The PHP release to judge for, as \"8.2\", or a Composer constraint, as \">=8.1\" or \"^8.1 <8.7\": the pattern is judged at every version of the range a rule of the library changes at, and the answer is computed for the lowest. Default: the server's target, else the running PHP."
                 },
                 "pcre_version": {
                     "type": "string",
@@ -670,11 +1026,100 @@
                         },
                         "redos": {
                             "type": "object"
+                        },
+                        "target": {
+                            "type": "object",
+                            "properties": {
+                                "php": {
+                                    "type": "string"
+                                },
+                                "pcre": {
+                                    "type": "string"
+                                },
+                                "locale": {
+                                    "type": "string"
+                                },
+                                "source": {
+                                    "type": "string"
+                                },
+                                "range": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "php": {
+                                                "type": "string"
+                                            },
+                                            "pcre": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "php",
+                                            "pcre"
+                                        ],
+                                        "additionalProperties": false
+                                    },
+                                    "minItems": 1
+                                }
+                            },
+                            "required": [
+                                "php",
+                                "pcre",
+                                "locale",
+                                "source",
+                                "range"
+                            ],
+                            "additionalProperties": false
+                        },
+                        "range": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "php": {
+                                        "type": "string"
+                                    },
+                                    "pcre": {
+                                        "type": "string"
+                                    },
+                                    "is_valid": {
+                                        "type": "boolean"
+                                    },
+                                    "error": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "error_code": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "parses_differently": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "php",
+                                    "pcre",
+                                    "is_valid",
+                                    "error",
+                                    "error_code",
+                                    "parses_differently"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "minItems": 1
                         }
                     },
                     "required": [
                         "pattern",
-                        "redos"
+                        "redos",
+                        "target",
+                        "range"
                     ],
                     "additionalProperties": false
                 },

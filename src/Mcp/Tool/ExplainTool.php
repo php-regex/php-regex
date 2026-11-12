@@ -29,10 +29,11 @@ final class ExplainTool extends AbstractTool
         if ($pattern instanceof ToolResult) {
             return $pattern;
         }
-        $regex = $this->regex($arguments);
-        if ($regex instanceof ToolResult) {
-            return $regex;
+        $judged = $this->regex($arguments);
+        if ($judged instanceof ToolResult) {
+            return $judged;
         }
+        [$regex, $target] = $judged;
         $refusal = self::refusal($regex, $pattern);
         if (null !== $refusal) {
             return $refusal;
@@ -41,6 +42,8 @@ final class ExplainTool extends AbstractTool
         // A pattern the target compiles is one the explainer reads.
         $explanation = $regex->explain($pattern);
 
-        return ToolResult::document($explanation, ['pattern' => $pattern, 'explanation' => $explanation]);
+        [$text, $range] = self::overRange($explanation, $regex, $target, $pattern);
+
+        return ToolResult::document($text, ['pattern' => $pattern, 'explanation' => $explanation, ...$range]);
     }
 }

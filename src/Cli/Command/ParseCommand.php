@@ -69,30 +69,30 @@ final class ParseCommand extends AbstractCommand
 
         $pattern = $arguments->argument();
         $validate = $arguments->has('--validate');
-        $regex = $this->createRegex($output, $input->regexOptions);
-        if (null === $regex) {
+        $range = $this->resolveTarget($input, $output);
+        if (null === $range) {
             return self::INVALID;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
-        $meta = $this->buildRuntimeMeta($input, $output, $validate);
-        $style->renderBanner('parse', $meta);
+        $meta = $this->buildRuntimeMeta($output, $range, $validate);
+        $style->renderBanner('parse', $meta, notes: $range->target->notices());
 
         try {
-            return $this->executeParsing($output, $regex, $style, $pattern, $validate);
+            $exitCode = $this->executeParsing($output, $range->regex, $style, $pattern, $validate);
         } catch (LexerException|LimitException|ParserException $e) {
             return $this->handleParseError($output, $e->getMessage());
         }
+
+        return $this->reportRange($output, $range, $pattern, $exitCode);
     }
 
     /**
      * @return array<string, string>
      */
-    private function buildRuntimeMeta(Input $input, Output $output, bool $validate): array
+    private function buildRuntimeMeta(Output $output, TargetRange $range, bool $validate): array
     {
-        $meta = [];
-
-        $meta += $this->targetMeta($input, $output);
+        $meta = $this->targetMeta($output, $range);
 
         if ($validate) {
             $meta['Validation'] = $output->warning('on');

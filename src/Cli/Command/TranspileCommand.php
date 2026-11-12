@@ -60,10 +60,14 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
             return $this->usageError($output, $args['error'], self::options()->usage, $json);
         }
 
-        $regex = $this->createRegex($output, $input->regexOptions, $json);
-        if (null === $regex) {
+        $range = $this->resolveTarget($input, $output, $json);
+        if (null === $range) {
             return self::INVALID;
         }
+        $regex = $range->regex;
+        // The translation is the product, with no banner: stderr says what
+        // resolving the target noticed.
+        $this->reportNotices($output, $range);
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
 
@@ -89,18 +93,26 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
             $result = $transpiler->transpile($args['pattern'], $args['target'], new TranspileOptions(pythonVersion: $args['pythonVersion']));
 
             if ('json' === $args['format']) {
-                $output->writeDocument(JsonDocument::encode($result->jsonSerialize()));
+                // "target" is the dialect: the PHP versions judged are
+                // "php_target".
+                $points = $range->points($args['pattern']);
+                $output->writeDocument(JsonDocument::encode([...$result->jsonSerialize(), 'php_target' => $range->target->toArray(), 'range' => $points]));
 
-                return self::SUCCESS;
+                // stdout holds the document alone: what the range finds
+                // goes to stderr, as on the console.
+                return $this->reportRange($output, $range, $args['pattern'], self::exitCodeOverRange($points, self::SUCCESS));
             }
 
-            return $this->renderConsoleOutput($output, $style, $result);
+            // The translation is the product on stdout: what the range says
+            // of the pattern goes to stderr.
+            return $this->reportRange($output, $range, $args['pattern'], $this->renderConsoleOutput($output, $style, $result));
         } catch (LexerException|ParserException|TranspileException $e) {
-            // A valid pattern the target cannot express.
+            // A valid pattern the target cannot express: what the range says
+            // of it still goes to stderr.
             if ('json' === $args['format']) {
                 $output->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_PATTERN));
 
-                return self::FAILURE;
+                return $this->reportRange($output, $range, $args['pattern'], self::FAILURE);
             }
             $output->write('  '.$output->error('Transpile failed: '.$e->getMessage())."\n");
 
@@ -108,7 +120,7 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
                 $output->write('  At offset '.$e->position."\n");
             }
 
-            return self::FAILURE;
+            return $this->reportRange($output, $range, $args['pattern'], self::FAILURE);
         }
     }
 

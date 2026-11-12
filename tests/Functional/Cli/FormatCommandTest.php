@@ -208,7 +208,8 @@ final class FormatCommandTest extends TestCase
         $this->assertSame(0, $exitCode, $stdout.$stderr);
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('format', $document);
-        $this->assertSame($expected, $document);
+        // The PHP versions judged are the range tests' (SinglePatternCommandRangeTest).
+        $this->assertSame($expected, array_diff_key($document, ['target' => true, 'range' => true]));
     }
 
     /**

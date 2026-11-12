@@ -322,7 +322,10 @@ that keeps none, or cannot be read, is an error on the marker. When the
 target is a range, each pattern is also validated at the later versions it
 allows, as the lint validates it: a version that refuses the pattern is an
 error naming it, and one that reads it otherwise a warning,
-`regex.lint.compat.meaningChanges`. A namespace that declares its own function shadows a global
+`regex.lint.compat.meaningChanges`. On opening a file, and when a
+watched file changes, the server publishes the lowest version's diagnostics
+first, then every version's, so the editor shows the first ones without
+waiting for the later versions; a keystroke publishes once. A namespace that declares its own function shadows a global
 pattern function of the same name, as in the lint: an unqualified call in
 that namespace is not read.
 

@@ -15,6 +15,8 @@ namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Cli\ApplicationFactory;
 use PHPRegex\Cli\Output;
+use PHPRegex\Tests\Support\PcreRule;
+use PHPRegex\Tests\Support\RangeFixtureReadings;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExitCodeContractTest extends TestCase
 {
+    use PcreRule;
+    use RangeFixtureReadings;
     use TemporaryProject;
 
     private const BAD_PHP_FILE = <<<'PHP'
@@ -141,14 +145,14 @@ final class ExitCodeContractTest extends TestCase
         yield 'lint with a --php-version range from a major past every integer' => [['--php-version=>=99999999999999999999.1', 'lint', '.', '--jobs=1']];
         yield 'lint with a doubled separator in a --php-version range' => [['--php-version=>=8.1,,<8.3', 'lint', '.', '--jobs=1']];
 
-        // The commands that read one pattern take a single version until
-        // they judge every point of a range: a range is refused, as before.
+        // The commands that read one pattern read --php-version as lint
+        // does: a constraint lint cannot read, they cannot either.
         foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'transpile', 'redos', 'graph', 'format'] as $command) {
-            yield $command.' with a --php-version range' => [['--php-version=>=8.1', $command, '/a/']];
-            yield $command.' with a --php-version hyphen range' => [['--php-version=8.1 - 8.6', $command, '/a/']];
+            yield $command.' with a --php-version range without a lowest version' => [['--php-version=<8.4', $command, '/a/']];
+            yield $command.' with a PHP_VERSION_ID inside a --php-version range' => [['--php-version=>=80100', $command, '/a/']];
         }
-        yield 'compare with a --php-version range' => [['--php-version=>=8.1', 'compare', '/a/', '/b/']];
-        yield 'compare with a --php-version hyphen range' => [['--php-version=8.1 - 8.6', 'compare', '/a/', '/b/']];
+        yield 'compare with a --php-version range without a lowest version' => [['--php-version=<8.4', 'compare', '/a/', '/b/']];
+        yield 'compare with a PHP_VERSION_ID inside a --php-version range' => [['--php-version=>=80100', 'compare', '/a/', '/b/']];
     }
 
     /**
@@ -214,6 +218,7 @@ final class ExitCodeContractTest extends TestCase
     #[DataProvider('providePatternProblems')]
     public function test_a_pattern_with_a_problem_exits_1(array $arguments): void
     {
+        self::assertEngineReadings($arguments);
         $this->enterProject(['src/a.php' => self::BAD_PHP_FILE]);
 
         $this->assertSame(1, $this->runRegex($arguments));
@@ -247,6 +252,17 @@ final class ExitCodeContractTest extends TestCase
         yield 'compare on a pattern with a backreference' => [['compare', '/(a)\\1/', '/a/']];
         yield 'compare --method=subset on a pattern that is no subset' => [['compare', '/a|b/', '/a/', '--method=subset']];
         yield 'graph on a pattern it cannot draw' => [['graph', '/a\\1/']];
+        // PHP 8.1 compiles "\K" in a lookbehind and PHP 8.5 refuses it: a
+        // later version of the range that refuses the pattern is a problem
+        // with it, the floor's output printed or not.
+        foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'redos', 'format'] as $command) {
+            yield $command.' on a pattern a later PHP of the --php-version range refuses' => [['--php-version=>=8.1', $command, '/(?<=a\\Kb)c/']];
+        }
+        // "a{2,1}" is refused by every PCRE2: the benchmark cannot compile
+        // it, at the floor of a range as at a single version.
+        yield 'redos on a pattern the target refuses' => [['redos', '/a{2,1}/']];
+        yield 'redos on a pattern the floor of a --php-version range refuses' => [['--php-version=>=8.1', 'redos', '/a{2,1}/']];
+        yield 'validate on a pattern a later PHP of the --php-version range refuses, as JSON' => [['--php-version=>=8.1', 'validate', '/(?<=a\\Kb)c/', '--format=json']];
     }
 
     /**
@@ -256,6 +272,7 @@ final class ExitCodeContractTest extends TestCase
     #[DataProvider('provideSuccesses')]
     public function test_a_command_that_finds_nothing_wrong_exits_0(array $arguments): void
     {
+        self::assertEngineReadings($arguments);
         $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/a/', 'abc');\n", 'empty/b.php' => "<?php\n"]);
 
         $this->assertSame(0, $this->runRegex($arguments));
@@ -290,6 +307,22 @@ final class ExitCodeContractTest extends TestCase
         yield 'validate with --php-version=runtime' => [['--php-version=runtime', 'validate', '/a/']];
         yield 'analyze with a single --php-version' => [['--php-version=8.1', 'analyze', '/a/']];
         yield 'analyze with --php-version=runtime' => [['--php-version=runtime', 'analyze', '/a/']];
+        // A range is judged at every version: a pattern each accepts is fine.
+        foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'transpile', 'redos', 'graph', 'format'] as $command) {
+            yield $command.' over a --php-version range' => [['--php-version=>=8.1', $command, '/a/']];
+            yield $command.' over a --php-version hyphen range' => [['--php-version=8.1 - 8.6', $command, '/a/']];
+        }
+        yield 'compare over a --php-version range' => [['--php-version=>=8.1', 'compare', '/a/', '/b/']];
+        yield 'compare over a --php-version hyphen range' => [['--php-version=8.1 - 8.6', 'compare', '/a/', '/b/']];
+        // A later version that reads the pattern otherwise is a warning.
+        yield 'validate on a pattern a later PHP of the range parses differently' => [['--php-version=>=8.1', 'validate', '/a{,3}/']];
+        // A pattern the floor refuses keeps the exit code these commands
+        // give it at a single version: they print what they read of it.
+        foreach (['explain', 'parse', 'diagram', 'format', 'highlight', 'graph'] as $command) {
+            yield $command.' on a pattern the target refuses' => [[$command, '/a{2,1}/']];
+            yield $command.' on a pattern the floor of a --php-version range refuses' => [['--php-version=>=8.1', $command, '/a{2,1}/']];
+        }
+        yield 'format on a pattern the floor of a --php-version range refuses, as JSON' => [['--php-version=>=8.1', 'format', '/a{2,1}/', '--format=json']];
         yield 'compare --method=subset on a subset' => [['compare', '/a/', '/a|b/', '--method=subset']];
         yield 'compare --method=equivalence on equivalent patterns' => [['compare', '/a/', '/a/', '--method=equivalence']];
         yield 'diagram written to a file' => [['diagram', '/a/', '--output=a.txt']];
@@ -324,5 +357,31 @@ final class ExitCodeContractTest extends TestCase
             ob_end_clean();
             fclose($errors);
         }
+    }
+
+    /**
+     * The rows whose exit code depends on what a pattern means are read
+     * first on the running engine: "\K" in a lookbehind compiles up to PHP
+     * 8.4 and is refused from 8.5, "a{2,1}" is refused by every PCRE2, and
+     * "a{,3}" is a quantifier from PCRE2 10.43, text before.
+     *
+     * @param list<string> $arguments
+     */
+    private static function assertEngineReadings(array $arguments): void
+    {
+        if (\in_array('/(?<=a\\Kb)c/', $arguments, true)) {
+            self::assertEngineKeepInLookbehind();
+        }
+        if (\in_array('/a{2,1}/', $arguments, true)) {
+            self::assertEngineRefuses('/a{2,1}/');
+        }
+        if (\in_array('/a{,3}/', $arguments, true)) {
+            self::assertEngineReadsQuantifierWithoutMin();
+        }
+    }
+
+    private static function assertEngineRefuses(string $pattern): void
+    {
+        self::assertFalse(@preg_match($pattern, 'aa'), 'PCRE2 '.\PCRE_VERSION);
     }
 }

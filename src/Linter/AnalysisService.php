@@ -436,7 +436,7 @@ final class AnalysisService
         $refusedBy = $findings->refusedBy;
         if (null !== $refusedBy) {
             $rangeValidation = $refusedBy->validation;
-            $message = \sprintf('On %s: %s', $findings->refusedOn, $rangeValidation->error ?? 'Invalid regex.');
+            $message = RangeWording::refusal($findings->refusedOn, $rangeValidation);
 
             return [LintIssue::at(
                 $occurrence,
