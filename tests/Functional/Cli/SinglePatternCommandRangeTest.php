@@ -64,7 +64,9 @@ final class SinglePatternCommandRangeTest extends TestCase
         [$exitCode, $stdout, $stderr] = $this->runRegex([self::RANGE, ...$command]);
 
         // PHP 8.1 alone compiles the pattern: the command does its work.
-        $this->assertSame(0, $floorExitCode, $floorStdout.$floorStderr);
+        // redos also runs the pattern on the running engine, which refuses
+        // it from PHP 8.5: there, the benchmark itself fails.
+        $this->assertSame('redos' === $command[0] && \PHP_VERSION_ID >= 80500 ? 1 : 0, $floorExitCode, $floorStdout.$floorStderr);
         $this->assertSame(1, $exitCode, $stdout.$stderr);
         $refusal = self::refusedOnMessage('PHP 8.5 and later', 80500, RangePatterns::KEEP_IN_LOOKBEHIND);
 

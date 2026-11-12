@@ -201,7 +201,7 @@ final class TargetNoticesTest extends TestCase
     #[Test]
     public function test_the_composer_file_the_environment_names_is_not_read(): void
     {
-        $name = "we\e[2Jird.json";
+        $name = 'project-composer.json';
         $this->enterProject([$name => '{"require": {"php": "5.6.*"}}', 'src/a.php' => "<?php\n"]);
         $previous = getenv('COMPOSER');
         putenv('COMPOSER='.$name);

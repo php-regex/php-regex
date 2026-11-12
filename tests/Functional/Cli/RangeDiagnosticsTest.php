@@ -88,10 +88,12 @@ final class RangeDiagnosticsTest extends TestCase
     #[DataProvider('provideJsonCommands')]
     public function test_a_json_run_says_a_change_of_meaning_on_stderr(string $command, string $pattern, array $options): void
     {
-        // The readings of the running engine, PCRE2 10.40 or later on every
-        // PHP this suite runs on.
+        // The readings of the running engine: from PCRE2 10.40 a script
+        // name matches the characters whose script extensions name it, as
+        // U+30FB, whose script is Common; before, the script alone.
         self::assertEngineBacktracksIntoSelfReference();
-        $this->assertSame(1, preg_match('/\p{Katakana}/u', "\u{30FB}"), 'U+30FB has Katakana among its script extensions: PCRE2 '.\PCRE_VERSION);
+        $extensions = version_compare(explode(' ', \PCRE_VERSION)[0], '10.40', '>=');
+        $this->assertSame($extensions ? 1 : 0, preg_match('/\p{Katakana}/u', "\u{30FB}"), 'U+30FB and the script extensions of Katakana: PCRE2 '.\PCRE_VERSION);
         $this->enterProject(['src/a.php' => "<?php\n\npreg_match(".var_export($pattern, true).", \$s);\n"]);
         $warning = $this->lintWarning($pattern);
 

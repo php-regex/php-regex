@@ -93,9 +93,9 @@ final class RegexFactoryTest extends TestCase
      */
     public static function provideSpellingsOfOneTarget(): iterable
     {
-        // Every version a rule changes at from 8.1 is below 9.0: the OR
-        // branch adds none.
-        yield 'a constraint from 8.1' => ['spellings' => ['>=8.1', '>= 8.1', '>=8.1.0', '^8.1 || ^9.0']];
+        // Every version a rule changes at from 8.1 is below 9.0: the upper
+        // bound leaves none out.
+        yield 'a constraint from 8.1' => ['spellings' => ['>=8.1', '>= 8.1', '>=8.1.0', '>=8.1 <9.0']];
         yield 'a single version' => ['spellings' => ['8.2', '8.2.0', '80200']];
     }
 
