@@ -34,17 +34,29 @@ final class ComposerConstraint
      * or space), OR (| or ||), a hyphen range. A branch without a lower
      * bound makes the whole constraint unreadable, unless $openBelow: then
      * it starts at the first version, as a guard or a "@regex-target"
-     * marker narrows a project range, never the range itself.
+     * marker narrows a project range, never the range itself. A $strict
+     * constraint, one named where the library takes a PHP version, holds
+     * no version but x.y, x.y.z and x.y.*, a major of one digit, up to PHP
+     * 9.99.99 (ParserOptions::LATEST_PHP_VERSION_ID), and each part after
+     * it of one or two digits: a PHP_VERSION_ID, "runtime", a bare major, a
+     * branch name, PHP 10 or a doubled separator in it makes it
+     * unreadable, where require.php's reading takes "80100" as a major. A
+     * branch of a $strict constraint that allows no version, ">=8.4 <8.2",
+     * is dropped; a $strict constraint whose every branch is dropped is
+     * unreadable.
      *
      * @return non-empty-list<array{int, int|null}>|null
      */
-    public static function intervals(string $constraint, bool $openBelow = false): ?array
+    public static function intervals(string $constraint, bool $openBelow = false, bool $strict = false): ?array
     {
         $intervals = [];
         foreach (LibraryPcre::split('/\s*\|\|?\s*/', trim($constraint, " \t\n\r\0\x0B")) ?: [] as $branch) {
-            $interval = self::branchInterval($branch, $openBelow);
+            $interval = self::branchInterval($branch, $openBelow, $strict);
             if (null === $interval) {
                 return null;
+            }
+            if ($strict && null !== $interval[1] && $interval[1] <= $interval[0]) {
+                continue;
             }
             $intervals[] = $interval;
         }
@@ -98,17 +110,22 @@ final class ComposerConstraint
     /**
      * @param bool $openBelow whether a branch without a lower bound starts at the first version, where
      *                        it makes the constraint unreadable
+     * @param bool $strict    whether a version must be x.y, x.y.z or x.y.*
      *
      * @return array{int, int|null}|null
      */
-    private static function branchInterval(string $branch, bool $openBelow = false): ?array
+    private static function branchInterval(string $branch, bool $openBelow, bool $strict): ?array
     {
         // A partial upper version of a hyphen range allows its whole
         // branch: "8.2 - 8.4" is below 8.5; a full one is itself the last
         // allowed, "8.2 - 8.4.25" is below 8.4.26.
-        if (1 === LibraryPcre::match('/^(\S+)\s+-\s+(\S+)$/', $branch, $range)) {
-            $lowest = self::version($range[1]);
-            $upper = self::version($range[2]);
+        // A $strict constraint is spaced with spaces and tabs only, as the
+        // schema of regex.json reads it; and an operator is never split,
+        // "> =8.1" is no ">=8.1".
+        $hyphen = $strict ? '/^([^ \t]+)[ \t]+-[ \t]+([^ \t]+)$/D' : '/^(\S+)\s+-\s+(\S+)$/';
+        if (1 === LibraryPcre::match($hyphen, $branch, $range)) {
+            $lowest = self::version($range[1], $strict);
+            $upper = self::version($range[2], $strict);
             if (null === $lowest || null === $upper) {
                 return null;
             }
@@ -117,15 +134,18 @@ final class ComposerConstraint
         }
 
         // An operator may be followed by spaces: ">= 8.3".
-        $branch = (string) LibraryPcre::replace('/(>=|<=|!=|==|[<>=^~])\s+/', '$1', $branch);
+        $branch = (string) LibraryPcre::replace($strict ? '/(>=|<=|!=|==|[<>=^~])[ \t]+(?=[0-9v])/' : '/(>=|<=|!=|==|[<>=^~])\s+/', '$1', $branch);
 
         $lowest = null;
         $below = null;
-        foreach (LibraryPcre::split('/[\s,]+/', trim($branch, " \t\n\r\0\x0B")) ?: [] as $term) {
+        // A $strict constraint keeps the empty term of a doubled separator,
+        // ">=8.1,,<8.3", to refuse it.
+        $separator = $strict ? '/[ \t]*,[ \t]*|[ \t]+/' : '/[\s,]+/';
+        foreach (LibraryPcre::split($separator, trim($branch, " \t\n\r\0\x0B")) ?: [] as $term) {
             if (1 !== LibraryPcre::match('/^(>=|<=|!=|==|[<>=^~])?(.+)$/', $term, $parts)) {
                 return null;
             }
-            $version = self::version($parts[2]);
+            $version = self::version($parts[2], $strict);
             if (null === $version) {
                 return null;
             }
@@ -158,13 +178,17 @@ final class ComposerConstraint
     /**
      * "8.3", "8.3.4", "8.3.*", "v8.3" as a PHP_VERSION_ID, the number of
      * parts given before any wildcard, and whether a wildcard ends it; "*"
-     * and branch names as null.
+     * and branch names as null. $strict reads "8.3", "8.3.4" and "8.3.*"
+     * only, of a major below 10.
      *
      * @return array{int, int, bool}|null
      */
-    private static function version(string $version): ?array
+    private static function version(string $version, bool $strict): ?array
     {
-        if (1 !== LibraryPcre::match('/^v?(\d+)(?:\.(\d+|\*))?(?:\.(\d+|\*))?(?:\.\d+)?$/', $version, $parts)) {
+        // A strict major of one digit bounds the version at PHP 9.99.99
+        // before any product is taken: "99999999999999999999.1" is no int.
+        $shape = $strict ? '/^(\d)\.(\d{1,2})(?:\.(\d{1,2}|\*))?$/D' : '/^v?(\d+)(?:\.(\d+|\*))?(?:\.(\d+|\*))?(?:\.\d+)?$/';
+        if (1 !== LibraryPcre::match($shape, $version, $parts)) {
             return null;
         }
 

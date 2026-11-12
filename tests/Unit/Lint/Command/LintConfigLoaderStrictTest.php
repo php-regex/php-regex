@@ -251,6 +251,40 @@ final class LintConfigLoaderStrictTest extends TestCase
         yield 'phpVersion as a string' => ['{"phpVersion": "8.3"}', 80300, '10.42'];
         yield 'phpVersion as a PHP_VERSION_ID' => ['{"phpVersion": 80300}', 80300, '10.42'];
         yield 'both versions' => ['{"phpVersion": "8.2", "pcreVersion": "10.42"}', 80200, '10.42'];
+        // A range is judged from its floor.
+        yield 'phpVersion as a constraint' => ['{"phpVersion": ">=8.1"}', 80100, '10.39'];
+        yield 'phpVersion as an object' => ['{"phpVersion": {"min": "8.2", "max": "8.6"}}', 80200, '10.40'];
+        yield 'phpVersion as an object of PHP_VERSION_IDs' => ['{"phpVersion": {"min": 80300, "max": 80699}}', 80300, '10.42'];
+    }
+
+    /**
+     * phpVersion is one setting, whatever its form: regex.json's replaces
+     * regex.dist.json's whole, an object never merged key by key into
+     * another.
+     *
+     * @param array<string, mixed> $expected
+     */
+    #[Test]
+    #[DataProvider('providePhpVersionOverrides')]
+    public function test_load_replaces_the_php_version_of_the_dist_file_whole(string $dist, string $local, array $expected): void
+    {
+        $result = $this->load(['regex.dist.json' => $dist, 'regex.json' => $local]);
+
+        $this->assertNull($result->error);
+        $this->assertSame($expected, $result->config);
+    }
+
+    /**
+     * @return iterable<string, array{dist: string, local: string, expected: array<string, mixed>}>
+     */
+    public static function providePhpVersionOverrides(): iterable
+    {
+        yield 'an object over a string' => ['dist' => '{"phpVersion": "8.2"}', 'local' => '{"phpVersion": {"min": "8.1", "max": "8.6"}}', 'expected' => ['phpVersion' => ['min' => '8.1', 'max' => '8.6']]];
+        yield 'an object over an object' => ['dist' => '{"phpVersion": {"min": 80100, "max": 80699}}', 'local' => '{"phpVersion": {"min": "8.3", "max": "8.4"}}', 'expected' => ['phpVersion' => ['min' => '8.3', 'max' => '8.4']]];
+        yield 'an object written max first over another' => ['dist' => '{"phpVersion": {"min": "8.1", "max": "8.6"}}', 'local' => '{"phpVersion": {"max": 80499, "min": 80200}}', 'expected' => ['phpVersion' => ['max' => 80499, 'min' => 80200]]];
+        yield 'a constraint over an object' => ['dist' => '{"phpVersion": {"min": "8.1", "max": "8.6"}}', 'local' => '{"phpVersion": ">=8.2"}', 'expected' => ['phpVersion' => '>=8.2']];
+        yield 'a single version over an object' => ['dist' => '{"phpVersion": {"min": "8.1", "max": "8.6"}}', 'local' => '{"phpVersion": 80300}', 'expected' => ['phpVersion' => 80300]];
+        yield 'an object kept where regex.json names none' => ['dist' => '{"phpVersion": {"min": "8.1", "max": "8.6"}}', 'local' => '{"jobs": 2}', 'expected' => ['phpVersion' => ['min' => '8.1', 'max' => '8.6'], 'jobs' => 2]];
     }
 
     #[Test]

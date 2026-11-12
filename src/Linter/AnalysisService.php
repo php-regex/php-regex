@@ -42,8 +42,6 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\PatternParser;
-use PHPRegex\Parser\Validation\RangeDiff;
-use PHPRegex\Parser\Validation\RangeVerdict;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\ConfirmationOptions;
@@ -433,46 +431,37 @@ final class AnalysisService
      */
     private function rangeIssues(PatternOccurrence $occurrence, RegexNode $ast): array
     {
-        if ([] === $this->range) {
-            return [];
-        }
+        $findings = RangeFindings::of($this->regex, $this->range, $occurrence->pattern, $ast, $this->comparesTrees());
 
-        $issues = [];
-        $diff = (new RangeDiff($this->regex, $this->range))->diff($occurrence->pattern, $this->comparesTrees());
-        $rangeError = self::rangeError($diff);
-        if (null !== $rangeError) {
-            [$target, $refusedOn, $rangeValidation] = $rangeError;
-            $message = \sprintf('On %s: %s', $refusedOn, $rangeValidation->error ?? 'Invalid regex.');
-            $issues[] = LintIssue::at(
+        $refusedBy = $findings->refusedBy;
+        if (null !== $refusedBy) {
+            $rangeValidation = $refusedBy->validation;
+            $message = \sprintf('On %s: %s', $findings->refusedOn, $rangeValidation->error ?? 'Invalid regex.');
+
+            return [LintIssue::at(
                 $occurrence,
                 LintSeverity::Error,
                 $message,
                 position: $rangeValidation->offset,
                 tip: $this->badEscapeTip($occurrence->pattern) ?? ValidationTips::forError($message, $occurrence->pattern, $rangeValidation),
                 validation: $rangeValidation,
-                target: ProjectTarget::describe($target),
-            );
+                target: ProjectTarget::describe($refusedBy->target),
+            )];
         }
 
-        $readsOtherwise = $diff->readsOtherwise;
+        $readsOtherwise = $findings->readsOtherwise;
         if (null !== $readsOtherwise) {
-            $issues[] = LintIssue::at(
+            return [LintIssue::at(
                 $occurrence,
                 LintSeverity::Warning,
-                \sprintf('From PHP %s (PCRE2 %s) the pattern parses differently: the same text means something else there.', ProjectTarget::phpLabel($readsOtherwise->phpVersionId), $readsOtherwise->pcreVersion),
+                RangeWording::readsOtherwise($readsOtherwise),
                 self::ISSUE_ID_MEANING_CHANGES,
                 hint: 'Write the part that differs in a form every PHP of the range reads alike: "a{0,3}" for a quantifier, "a\{,3}" for the text.',
                 target: ProjectTarget::describe($readsOtherwise),
-            );
+            )];
         }
 
-        if ([] !== $issues) {
-            return $issues;
-        }
-
-        $silentChange = $this->comparesTrees()
-            ? SilentMeaningChange::first($ast, $this->regex->target(), array_map(static fn (RegexParser $parser): PcreTarget => $parser->target(), $this->range))
-            : null;
+        $silentChange = $findings->silentChange;
         if (null === $silentChange) {
             return [];
         }
@@ -480,7 +469,7 @@ final class AnalysisService
         return [LintIssue::at(
             $occurrence,
             LintSeverity::Warning,
-            \sprintf('From PHP %s (PCRE2 %s) %s', ProjectTarget::phpLabel($silentChange->target->phpVersionId), $silentChange->target->pcreVersion, $silentChange->message),
+            RangeWording::silentChange($silentChange->target, $silentChange->message),
             self::ISSUE_ID_MEANING_CHANGES,
             hint: $silentChange->hint,
             target: ProjectTarget::describe($silentChange->target),
@@ -633,44 +622,6 @@ final class AnalysisService
         }
 
         return array_map(static fn (LintIssue $issue): LintIssue => $issue->withTarget(($issue->target ?? ProjectTarget::describe($narrowed->regex->target())) + $constraint), $issues);
-    }
-
-    /**
-     * What the PHP versions of the range after the floor refuse in a
-     * pattern the floor accepts: the lowest target that refuses it, the
-     * versions that do ("8.5 and later"), and its verdict. Null when every
-     * one accepts it.
-     *
-     * @return array{PcreTarget, string, ValidationResult}|null
-     */
-    private static function rangeError(RangeVerdict $diff): ?array
-    {
-        $lowest = $diff->refusedBy();
-        if (null === $lowest) {
-            return null;
-        }
-
-        $runs = [];
-        $from = null;
-        foreach ($diff->later as $verdict) {
-            if ($verdict->validation->isValid) {
-                // Unreachable with today's rules: none stops refusing a
-                // pattern at a later PHP. It names the stretch the day one does.
-                if (null !== $from) {
-                    $runs[] = \sprintf('PHP %s and later, before %s', $from, ProjectTarget::phpLabel($verdict->target->phpVersionId));
-                    $from = null;
-                }
-
-                continue;
-            }
-
-            $from ??= ProjectTarget::phpLabel($verdict->target->phpVersionId);
-        }
-        if (null !== $from) {
-            $runs[] = \sprintf('PHP %s and later', $from);
-        }
-
-        return [$lowest->target, implode('; ', $runs), $lowest->validation];
     }
 
     /**

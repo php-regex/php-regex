@@ -480,6 +480,20 @@
           "default": 50
         }
       }
+    },
+    "phpVersionBound": {
+      "description": "A bound of a range of PHP versions: a PHP_VERSION_ID like 80100, or a version like \"8.1\" or \"8.1.4\".",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 70000,
+          "maximum": 99999
+        },
+        {
+          "type": "string",
+          "pattern": "^[7-9]\\.[0-9]{1,2}(\\.[0-9]{1,2})?$"
+        }
+      ]
     }
   },
   "properties": {
@@ -520,18 +534,44 @@
       ]
     },
     "phpVersion": {
-      "description": "The PHP version the patterns are judged for, as \"8.3\" or a PHP_VERSION_ID like 80300, or \"runtime\" for the PHP running the command with the PCRE2 it links. Omit to read it from composer.json (config.platform.php, else the lowest PHP require.php allows), else to use the running PHP. The --php-version option wins over it.",
-      "x-expected": "a version like \"8.3\", a PHP_VERSION_ID like 80300, or \"runtime\"",
-      "type": [
-        "string",
-        "integer"
+      "description": "The PHP version the patterns are judged for, or the range of versions. A single version is exact: \"8.3\", a PHP_VERSION_ID like 80300, or \"runtime\" for the PHP running the command with the PCRE2 it links. A range is judged as composer.json's require.php is, from its lowest PHP and again at every later version where a rule of the library changes: a Composer constraint like \">=8.1\" or \"^8.1 <8.7\", or {\"min\": \"8.1\", \"max\": \"8.6\"}, whose max is inclusive and covers its whole series when it names no patch. Omit to read it from composer.json (config.platform.php, else require.php), else to use the running PHP. The --php-version option wins over it.",
+      "x-expected": "a version like \"8.3\", a PHP_VERSION_ID like 80300, \"runtime\", a Composer constraint like \">=8.1\", or {\"min\": \"8.1\", \"max\": \"8.6\"}",
+      "x-php-version": true,
+      "pattern": "^([Rr][Uu][Nn][Tt][Ii][Mm][Ee]|[0-9]+\\.[0-9]{1,2}(\\.[0-9]{1,2})?|[ \\t]*([0-9]\\.[0-9]{1,2}(\\.([0-9]{1,2}|\\*))?[ \\t]+-[ \\t]+[0-9]\\.[0-9]{1,2}(\\.([0-9]{1,2}|\\*))?|((<=|!=|<)[ \\t]*[0-9]\\.[0-9]{1,2}(\\.([0-9]{1,2}|\\*))?([ \\t]*,[ \\t]*|[ \\t]+))*((>=|==|[>=^~])[ \\t]*)?[0-9]\\.[0-9]{1,2}(\\.([0-9]{1,2}|\\*))?(([ \\t]*,[ \\t]*|[ \\t]+)((>=|<=|!=|==|[<>=^~])[ \\t]*)?[0-9]\\.[0-9]{1,2}(\\.([0-9]{1,2}|\\*))?)*)([ \\t]*\\|\\|?[ \\t]*([0-9]\\.[0-9]{1,2}(\\.([0-9]{1,2}|\\*))?[ \\t]+-[ \\t]+[0-9]\\.[0-9]{1,2}(\\.([0-9]{1,2}|\\*))?|((<=|!=|<)[ \\t]*[0-9]\\.[0-9]{1,2}(\\.([0-9]{1,2}|\\*))?([ \\t]*,[ \\t]*|[ \\t]+))*((>=|==|[>=^~])[ \\t]*)?[0-9]\\.[0-9]{1,2}(\\.([0-9]{1,2}|\\*))?(([ \\t]*,[ \\t]*|[ \\t]+)((>=|<=|!=|==|[<>=^~])[ \\t]*)?[0-9]\\.[0-9]{1,2}(\\.([0-9]{1,2}|\\*))?)*))*[ \\t]*)$",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer",
+          "minimum": 70000
+        },
+        {
+          "type": "object",
+          "required": [
+            "min",
+            "max"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "min": {
+              "$ref": "#/$defs/phpVersionBound"
+            },
+            "max": {
+              "$ref": "#/$defs/phpVersionBound"
+            }
+          }
+        }
       ],
-      "pattern": "^([0-9]+\\.[0-9]{1,2}(\\.[0-9]{1,2})?|[Rr][Uu][Nn][Tt][Ii][Mm][Ee])$",
-      "minimum": 70000,
       "examples": [
         "8.2",
-        "8.4",
-        80300
+        80300,
+        ">=8.1",
+        "^8.1 <8.7",
+        {
+          "min": "8.1",
+          "max": "8.6"
+        }
       ]
     },
     "pcreVersion": {

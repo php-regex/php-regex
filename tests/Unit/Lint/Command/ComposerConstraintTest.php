@@ -61,6 +61,67 @@ final class ComposerConstraintTest extends TestCase
         yield 'empty' => ['constraint' => '', 'intervals' => null];
     }
 
+    /**
+     * A constraint named where the library takes a PHP version, regex.json
+     * or --php-version, holds x.y[.z] versions only: a PHP_VERSION_ID or
+     * "runtime" inside it names nothing, where require.php's reading takes
+     * "80100" as a major.
+     */
+    #[Test]
+    #[DataProvider('provideTokensAStrictConstraintRefuses')]
+    public function test_a_strict_constraint_refuses_a_token_that_is_no_version(string $constraint): void
+    {
+        $this->assertNull(ComposerConstraint::intervals($constraint, strict: true));
+    }
+
+    /**
+     * @return iterable<string, array{constraint: string}>
+     */
+    public static function provideTokensAStrictConstraintRefuses(): iterable
+    {
+        yield 'a PHP_VERSION_ID as the lower bound' => ['constraint' => '>=80100'];
+        yield 'a PHP_VERSION_ID as the upper bound' => ['constraint' => '>=8.1 <80700'];
+        yield 'a PHP_VERSION_ID in one branch' => ['constraint' => '^8.1 || 80100'];
+        yield 'a PHP_VERSION_ID as a hyphen bound' => ['constraint' => '8.1 - 80600'];
+        yield 'runtime in a branch' => ['constraint' => 'runtime || ^9.0'];
+        yield 'runtime alone' => ['constraint' => 'runtime'];
+        yield 'no lower bound' => ['constraint' => '<8.4'];
+        yield 'any version' => ['constraint' => '*'];
+        yield 'a branch name' => ['constraint' => 'dev-main'];
+
+        yield 'a line break between two bounds' => ['constraint' => ">=8.1\n<8.4"];
+        yield 'a form feed between two bounds' => ['constraint' => ">=8.1\f<8.4"];
+        yield 'a line break in a hyphen range' => ['constraint' => "8.1\n- 8.4"];
+        yield 'a space inside an operator' => ['constraint' => '> =8.1'];
+    }
+
+    /**
+     * @param list<array{int, int|null}> $intervals
+     */
+    #[Test]
+    #[DataProvider('provideStrictConstraints')]
+    public function test_a_strict_constraint_reads_its_versions_as_require_php_does(string $constraint, array $intervals): void
+    {
+        $this->assertSame($intervals, ComposerConstraint::intervals($constraint, strict: true));
+        $this->assertSame(ComposerConstraint::intervals($constraint), ComposerConstraint::intervals($constraint, strict: true));
+    }
+
+    /**
+     * @return iterable<string, array{constraint: string, intervals: list<array{int, int|null}>}>
+     */
+    public static function provideStrictConstraints(): iterable
+    {
+        yield 'lower bound' => ['constraint' => '>=8.1', 'intervals' => [[80100, null]]];
+        yield 'caret with an upper bound' => ['constraint' => '^8.1 <8.7', 'intervals' => [[80100, 80700]]];
+        yield 'hyphen range' => ['constraint' => '8.1 - 8.6', 'intervals' => [[80100, 80700]]];
+        yield 'OR of carets' => ['constraint' => '^7.3 || ^8.0', 'intervals' => [[70300, 80000], [80000, 90000]]];
+        yield 'a patch' => ['constraint' => '>=8.5.10', 'intervals' => [[80510, null]]];
+        yield 'inclusive upper bound' => ['constraint' => '>=8.1 <=8.6', 'intervals' => [[80100, 80601]]];
+        yield 'a space after an operator' => ['constraint' => '>= 8.1', 'intervals' => [[80100, null]]];
+        yield 'a tab between two bounds' => ['constraint' => ">=8.1\t<8.4", 'intervals' => [[80100, 80400]]];
+        yield 'a tab in a hyphen range' => ['constraint' => "8.1\t-\t8.4", 'intervals' => [[80100, 80500]]];
+    }
+
     #[Test]
     public function test_a_constraint_open_below_starts_at_the_first_version(): void
     {

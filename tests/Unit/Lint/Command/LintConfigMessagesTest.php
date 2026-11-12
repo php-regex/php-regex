@@ -32,6 +32,8 @@ final class LintConfigMessagesTest extends TestCase
 {
     use TemporaryProject;
 
+    private const PHP_VERSION_EXPECTED = 'a version like "8.3", a PHP_VERSION_ID like 80300, "runtime", a Composer constraint like ">=8.1", or {"min": "8.1", "max": "8.6"}';
+
     #[Test]
     #[DataProvider('provideMessages')]
     public function test_load_says_what_the_value_should_be(string $json, string $message): void
@@ -75,6 +77,76 @@ final class LintConfigMessagesTest extends TestCase
         yield 'PHP_VERSION_ID too small' => ['{"phpVersion": 83}', 'a PHP_VERSION_ID like 80300'];
         yield 'PHP_VERSION_ID below PHP 7' => ['{"phpVersion": 69999}', 'a PHP_VERSION_ID like 80300'];
         yield 'patch past 99' => ['{"phpVersion": "8.2.100"}', 'a version like "8.3"'];
+    }
+
+    /**
+     * Each form phpVersion takes is named where a value is refused: a
+     * single version, a PHP_VERSION_ID, "runtime", a Composer constraint
+     * and the {"min", "max"} object.
+     */
+    #[Test]
+    #[DataProvider('provideRefusedPhpVersions')]
+    public function test_load_names_every_form_of_php_version_it_takes(string $json): void
+    {
+        $directory = $this->makeProject(['regex.json' => $json]);
+        $error = (new LintConfigLoader())->load($directory)->error;
+
+        $this->assertNotNull($error, 'The configuration should have been refused.');
+        $this->assertStringContainsString('Invalid "phpVersion" in ', (string) $error);
+        $this->assertStringContainsString('regex.json: expected '.self::PHP_VERSION_EXPECTED.'.', (string) $error);
+    }
+
+    /**
+     * @return iterable<string, array{json: string}>
+     */
+    public static function provideRefusedPhpVersions(): iterable
+    {
+        yield 'not a version' => ['json' => '{"phpVersion": "eight"}'];
+        yield 'a constraint without a lowest version' => ['json' => '{"phpVersion": "<8.4"}'];
+        yield 'any version' => ['json' => '{"phpVersion": "*"}'];
+        yield 'a branch name' => ['json' => '{"phpVersion": "dev-main"}'];
+        yield 'a PHP_VERSION_ID inside a constraint' => ['json' => '{"phpVersion": ">=80100"}'];
+        yield 'runtime inside a constraint' => ['json' => '{"phpVersion": "runtime || ^9.0"}'];
+        yield 'a float' => ['json' => '{"phpVersion": 8.3}'];
+        yield 'an empty object' => ['json' => '{"phpVersion": {}}'];
+        yield 'an object without max' => ['json' => '{"phpVersion": {"min": "8.1"}}'];
+        yield 'an object with another key' => ['json' => '{"phpVersion": {"min": "8.1", "max": "8.6", "x": 1}}'];
+        yield 'a boolean bound' => ['json' => '{"phpVersion": {"min": true, "max": "8.6"}}'];
+        yield 'runtime as a bound' => ['json' => '{"phpVersion": {"min": "runtime", "max": "8.6"}}'];
+        // No schema compares two values: the loader refuses it, in the
+        // same words.
+        yield 'min above max, as strings' => ['json' => '{"phpVersion": {"min": "8.6", "max": "8.1"}}'];
+        yield 'min above max, as PHP_VERSION_IDs' => ['json' => '{"phpVersion": {"min": 80600, "max": 80100}}'];
+        // A two-part max covers its whole series: 8.4.25 is past "8.4" only
+        // as a PHP_VERSION_ID.
+        yield 'min above max, a patch past a PHP_VERSION_ID' => ['json' => '{"phpVersion": {"min": "8.4.25", "max": 80400}}'];
+        // A constraint no PHP satisfies names no range, as min above max
+        // does.
+        yield 'a hyphen range written backwards' => ['json' => '{"phpVersion": "8.6 - 8.1"}'];
+        yield 'an upper bound below the lowest version' => ['json' => '{"phpVersion": ">=8.4 <8.2"}'];
+        yield 'an upper bound below the lowest version, comma-separated' => ['json' => '{"phpVersion": ">=8.1,<8.0"}'];
+        yield 'two exact versions ANDed' => ['json' => '{"phpVersion": "8.1 8.2"}'];
+        // A version past PHP 9.99 is refused inside a constraint as alone.
+        yield 'a constraint from PHP 10' => ['json' => '{"phpVersion": ">=10.0"}'];
+        yield 'a constraint from PHP 99.1' => ['json' => '{"phpVersion": ">=99.1"}'];
+        yield 'a constraint from a major past every integer' => ['json' => '{"phpVersion": ">=99999999999999999999.1"}'];
+        // What every other reader of a named PHP version refuses too.
+        yield 'a doubled separator' => ['json' => '{"phpVersion": ">=8.1,,<8.3"}'];
+        yield 'a bound with a leading zero' => ['json' => '{"phpVersion": {"min": "08.1", "max": "8.3"}}'];
+        yield 'a bound past PHP 9.99' => ['json' => '{"phpVersion": {"min": "8.1", "max": "10.0"}}'];
+    }
+
+    /**
+     * The words the schema gives the editor are those the loader prints.
+     */
+    #[Test]
+    public function test_schema_names_every_form_of_php_version_it_takes(): void
+    {
+        $definition = LintConfigSchema::definition();
+        $this->assertIsArray($definition['properties'] ?? null);
+        $this->assertIsArray($definition['properties']['phpVersion'] ?? null);
+
+        $this->assertSame(self::PHP_VERSION_EXPECTED, $definition['properties']['phpVersion']['x-expected'] ?? null);
     }
 
     /**

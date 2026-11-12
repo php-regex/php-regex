@@ -17,6 +17,7 @@ use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Linter\Rule\RuleId;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\NearMiss;
 
@@ -74,7 +75,8 @@ final class LintConfigValidator
             return;
         }
 
-        if ($this->accepts($schema, $value)) {
+        $phpVersion = true === ($schema['x-php-version'] ?? false) && ($value instanceof \stdClass || \is_string($value));
+        if ($this->accepts($schema, $value) && (!$phpVersion || self::readsAsPhpVersion($value))) {
             return;
         }
 
@@ -193,6 +195,25 @@ final class LintConfigValidator
             return false;
         }
 
+        // An object in a branch of an anyOf, which checkObject() does not
+        // walk: the properties it requires, each as its schema says, and no
+        // other when the node allows none.
+        if ($value instanceof \stdClass) {
+            foreach ($this->map($schema['required'] ?? []) as $name) {
+                if (!\is_string($name) || !property_exists($value, $name)) {
+                    return false;
+                }
+            }
+
+            $properties = $this->map($schema['properties'] ?? []);
+            foreach (get_object_vars($value) as $name => $property) {
+                $known = \array_key_exists($name, $properties);
+                if ($known ? !$this->accepts($this->map($properties[$name]), $property) : false === ($schema['additionalProperties'] ?? true)) {
+                    return false;
+                }
+            }
+        }
+
         if (\is_array($value)) {
             if (isset($schema['items'])) {
                 foreach ($value as $item) {
@@ -222,6 +243,33 @@ final class LintConfigValidator
         }
 
         return true;
+    }
+
+    /**
+     * Whether a value the schema accepts reads as a setting of a PHP version
+     * does: a constraint that names a lowest version, a {"min", "max"}
+     * object whose min is not above its max. A single version is left as
+     * the schema reads it.
+     */
+    private static function readsAsPhpVersion(\stdClass|string $value): bool
+    {
+        try {
+            if (\is_string($value)) {
+                TargetSpec::intervals($value);
+
+                return true;
+            }
+
+            // The schema has checked each bound: one of another type would
+            // be refused as a bound that names no version.
+            $min = $value->min ?? null;
+            $max = $value->max ?? null;
+            TargetSpec::minMax(\is_string($min) || \is_int($min) ? $min : '', \is_string($max) || \is_int($max) ? $max : '');
+
+            return true;
+        } catch (InvalidRegexOptionException) {
+            return false;
+        }
     }
 
     private function hasType(mixed $types, mixed $value): bool

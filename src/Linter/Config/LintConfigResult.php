@@ -22,7 +22,7 @@ namespace PHPRegex\Linter\Config;
  *     '$id'?: string,
  *     paths?: string|list<string>,
  *     exclude?: string|list<string>,
- *     phpVersion?: string|int,
+ *     phpVersion?: string|int|array{min: string|int, max: string|int},
  *     pcreVersion?: string,
  *     locale?: string,
  *     extraction?: array{interop?: list<string>, functions?: list<string>},
