@@ -200,7 +200,7 @@ final class RegexPatternRuleVersionRangeTest extends RuleTestCase
 
         $this->analyse([__DIR__.'/Fixtures/NamedRangeGuardFixture.php'], [
             ...self::refusalFrom85(26),
-            ...self::refusalAt81(self::VARIABLE_LENGTH_LOOKBEHIND, 37),
+            ...self::firstRefusalTo83(self::VARIABLE_LENGTH_LOOKBEHIND, 37),
         ]);
     }
 
@@ -218,7 +218,7 @@ final class RegexPatternRuleVersionRangeTest extends RuleTestCase
         $this->range = ['min' => 80100, 'max' => 80399];
         $this->config = ['phpVersion' => '>=8.1'];
 
-        $this->analyse([__DIR__.'/Fixtures/NamedRangeGuardFixture.php'], self::refusalAt81(self::VARIABLE_LENGTH_LOOKBEHIND, 37));
+        $this->analyse([__DIR__.'/Fixtures/NamedRangeGuardFixture.php'], self::firstRefusalTo83(self::VARIABLE_LENGTH_LOOKBEHIND, 37));
     }
 
     protected function getRule(): Rule
@@ -243,19 +243,28 @@ final class RegexPatternRuleVersionRangeTest extends RuleTestCase
     }
 
     /**
-     * The error PHP 8.1, the floor, gives a pattern, when the running engine
-     * compiles it.
+     * The error the first of 8.1, 8.2 and 8.3 that refuses a pattern gives
+     * it, each judged with the PCRE2 it is judged with here (the running
+     * one for the running minor, else the one it bundles), when the
+     * running engine compiles the pattern: where PHP 8.1 links PCRE2 10.43
+     * or later, a lookbehind of variable length is refused from 8.2.
      *
      * @return list<array{string, int, string|null}>
      */
-    private static function refusalAt81(string $pattern, int $line): array
+    private static function firstRefusalTo83(string $pattern, int $line): array
     {
-        $refusal = RegexParser::create(['php_version' => '8.1'])->validate($pattern);
-        self::assertFalse($refusal->isValid);
+        if (!self::runningEngineCompiles($pattern)) {
+            return [];
+        }
 
-        return self::runningEngineCompiles($pattern)
-            ? [['Regex pattern is invalid for PHP 8.1 with PCRE2 '.self::judgedPcre(80100).': '.($refusal->error ?? 'Invalid regex.'), $line, $refusal->hint]]
-            : [];
+        foreach (['8.1' => 80100, '8.2' => 80200, '8.3' => 80300] as $label => $phpVersionId) {
+            $refusal = RegexParser::create(['php_version' => $label, 'pcre_version' => self::judgedPcre($phpVersionId)])->validate($pattern);
+            if (!$refusal->isValid) {
+                return [['Regex pattern is invalid for PHP '.$label.' with PCRE2 '.self::judgedPcre($phpVersionId).': '.($refusal->error ?? 'Invalid regex.'), $line, $refusal->hint]];
+            }
+        }
+
+        self::fail('No version from 8.1 to 8.3 refuses '.$pattern.'.');
     }
 
     private static function runningEngineCompiles(string $pattern): bool
