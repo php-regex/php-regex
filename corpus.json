@@ -208,7 +208,6 @@
         "phpspec/phpspec": { "url": "https://github.com/phpspec/phpspec.git", "branch": "main", "commit": "6653d98c99ef1ed0eb135318572572dc8ea74339" },
         "phpspec/prophecy": { "url": "https://github.com/phpspec/prophecy", "branch": "master", "commit": "09c2e5949d676286358a62af818f8407167a9dd6" },
         "phpstan/phpdoc-parser": { "url": "https://github.com/phpstan/phpdoc-parser.git", "branch": "2.3.x", "commit": "88d1b98f3bb34b2a1316ed6a85b675bf6c98cbb4" },
-        "phpstan/phpstan": { "url": "https://github.com/phpstan/phpstan", "branch": "2.3.x", "commit": "c588ead4cc8a9059f93b2792030d2575208c86bc" },
         "phpstan/phpstan-deprecation-rules": { "url": "https://github.com/phpstan/phpstan-deprecation-rules", "branch": "2.0.x", "commit": "c94893ec4291c14dd7dcc22718d1848e93236073" },
         "phpstan/phpstan-src": { "url": "https://github.com/phpstan/phpstan-src.git", "branch": "2.3.x", "commit": "c588eadcccb3577da10d1378305849436cdd6113" },
         "phpstan/phpstan-strict-rules": { "url": "https://github.com/phpstan/phpstan-strict-rules", "branch": "2.1.x", "commit": "63d8e41ed26c3944a89d5dc42cf857fbc432b88d" },
