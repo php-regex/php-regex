@@ -54,6 +54,10 @@ final class ComposerConstraintTest extends TestCase
         yield 'hyphen range, partial upper' => ['constraint' => '8.2 - 8.4', 'intervals' => [[80200, 80500]]];
         yield 'hyphen range, full upper' => ['constraint' => '8.2 - 8.4.25', 'intervals' => [[80200, 80426]]];
         yield 'with a v' => ['constraint' => '^v8.2', 'intervals' => [[80200, 90000]]];
+        // Strictly above: the next release, as composer/semver's lower
+        // bound, so a floor of ">8.5.9" is no version the range excludes.
+        yield 'strictly above' => ['constraint' => '>8.1', 'intervals' => [[80101, null]]];
+        yield 'strictly above a patch' => ['constraint' => '>8.5.9 <=8.5.10', 'intervals' => [[80510, 80511]]];
         yield 'not equal is no bound' => ['constraint' => '>=8.1 !=8.2.0', 'intervals' => [[80100, null]]];
         yield 'no lower bound' => ['constraint' => '<8.4', 'intervals' => null];
         yield 'a branch name' => ['constraint' => 'dev-main', 'intervals' => null];
@@ -93,6 +97,17 @@ final class ComposerConstraintTest extends TestCase
         yield 'a form feed between two bounds' => ['constraint' => ">=8.1\f<8.4"];
         yield 'a line break in a hyphen range' => ['constraint' => "8.1\n- 8.4"];
         yield 'a space inside an operator' => ['constraint' => '> =8.1'];
+
+        // composer/semver refuses a wildcard after an operator or in a
+        // hyphen range: ">=8.1.*" is no constraint.
+        yield 'a wildcard after a lower bound' => ['constraint' => '>=8.1.*'];
+        yield 'a wildcard after a caret' => ['constraint' => '^8.1.*'];
+        yield 'a wildcard after a tilde' => ['constraint' => '~8.1.*'];
+        yield 'a wildcard after an upper bound' => ['constraint' => '>=8.1 <8.4.*'];
+        yield 'a wildcard after an equals sign' => ['constraint' => '=8.1.*'];
+        yield 'a wildcard as the lower end of a hyphen range' => ['constraint' => '8.1.* - 8.3'];
+        yield 'a wildcard as the upper end of a hyphen range' => ['constraint' => '8.1 - 8.3.*'];
+        yield 'strictly above the one version allowed' => ['constraint' => '>8.4.24 <=8.4.24'];
     }
 
     /**
@@ -120,6 +135,8 @@ final class ComposerConstraintTest extends TestCase
         yield 'a space after an operator' => ['constraint' => '>= 8.1', 'intervals' => [[80100, null]]];
         yield 'a tab between two bounds' => ['constraint' => ">=8.1\t<8.4", 'intervals' => [[80100, 80400]]];
         yield 'a tab in a hyphen range' => ['constraint' => "8.1\t-\t8.4", 'intervals' => [[80100, 80500]]];
+        yield 'a bare wildcard' => ['constraint' => '8.1.*', 'intervals' => [[80100, 80200]]];
+        yield 'strictly above a patch' => ['constraint' => '>8.5.9 <=8.5.10', 'intervals' => [[80510, 80511]]];
     }
 
     #[Test]

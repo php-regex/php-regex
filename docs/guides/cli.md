@@ -1512,7 +1512,9 @@ one that refuses the pattern under `target`
 
 `--php-version` and `phpVersion` in `regex.json` take a range in the words
 of `require.php`: a Composer constraint that names a lowest version. Each
-of its versions is written `x.y`, `x.y.z` or `x.y.*`. `regex.json` also
+of its versions is written `x.y`, `x.y.z` or `x.y.*`, the wildcard alone,
+never after an operator (`">=8.1.*"` is refused, as Composer refuses it).
+`>` is strict: `">8.4"` starts at 8.4.1. `regex.json` also
 takes an object `{"min": …, "max": …}`, each bound a version string
 (`"8.1"`) or a PHP_VERSION_ID (`80100`). `max` is included;
 a `max` written `x.y` takes in the whole series. A range named this way
@@ -1545,6 +1547,13 @@ Quote a range on the command line: an unquoted `>` redirects the output,
 
 ```bash
 vendor/bin/regex lint src/ --php-version='>=8.1'
+```
+
+`cmd.exe` takes no single quotes: there, the range goes between double
+quotes (PowerShell takes either):
+
+```bat
+vendor\bin\regex lint src/ --php-version=">=8.1"
 ```
 
 To judge one version of a project whose `require.php` spans

@@ -124,6 +124,7 @@ final class LintConfigMessagesTest extends TestCase
         // does.
         yield 'a hyphen range written backwards' => ['json' => '{"phpVersion": "8.6 - 8.1"}'];
         yield 'an upper bound below the lowest version' => ['json' => '{"phpVersion": ">=8.4 <8.2"}'];
+        yield 'strictly above the one version allowed' => ['json' => '{"phpVersion": ">8.4.24 <=8.4.24"}'];
         yield 'an upper bound below the lowest version, comma-separated' => ['json' => '{"phpVersion": ">=8.1,<8.0"}'];
         yield 'two exact versions ANDed' => ['json' => '{"phpVersion": "8.1 8.2"}'];
         // A version past PHP 9.99 is refused inside a constraint as alone.

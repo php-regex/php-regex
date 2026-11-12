@@ -259,6 +259,9 @@ final class LintConfigSchema
         // editor reads as PCRE does, where "\s" would take every Unicode
         // space. A single version keeps its own shape, read and refused as
         // it was before ranges.
+        // A wildcard stands alone, never after an operator or in a hyphen
+        // range, as composer/semver reads it.
+        $plain = '[0-9]\.[0-9]{1,2}(\.[0-9]{1,2})?';
         $version = '[0-9]\.[0-9]{1,2}(\.([0-9]{1,2}|\*))?';
         $single = '[0-9]+\.[0-9]{1,2}(\.[0-9]{1,2})?';
         $separator = '([ \t]*,[ \t]*|[ \t]+)';
@@ -266,9 +269,10 @@ final class LintConfigSchema
         // operator or one that bounds it from below, after any term that
         // only bounds it from above.
         $branch = \sprintf(
-            '(%1$s[ \t]+-[ \t]+%1$s|((<=|!=|<)[ \t]*%1$s%2$s)*((>=|==|[>=^~])[ \t]*)?%1$s(%2$s((>=|<=|!=|==|[<>=^~])[ \t]*)?%1$s)*)',
+            '(%3$s[ \t]+-[ \t]+%3$s|((<=|!=|<)[ \t]*%3$s%2$s)*((>=|==|[>=^~])[ \t]*%3$s|%1$s)(%2$s((>=|<=|!=|==|[<>=^~])[ \t]*%3$s|%1$s))*)',
             $version,
             $separator,
+            $plain,
         );
         $bound = ['$ref' => '#/$defs/phpVersionBound'];
 

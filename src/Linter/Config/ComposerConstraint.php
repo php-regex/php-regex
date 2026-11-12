@@ -39,8 +39,9 @@ final class ComposerConstraint
      * no version but x.y, x.y.z and x.y.*, a major of one digit, up to PHP
      * 9.99.99 (ParserOptions::LATEST_PHP_VERSION_ID), and each part after
      * it of one or two digits: a PHP_VERSION_ID, "runtime", a bare major, a
-     * branch name, PHP 10 or a doubled separator in it makes it
-     * unreadable, where require.php's reading takes "80100" as a major. A
+     * branch name, PHP 10, a doubled separator or a wildcard after an
+     * operator or in a hyphen range in it makes it unreadable, where
+     * require.php's reading takes "80100" as a major. A
      * branch of a $strict constraint that allows no version, ">=8.4 <8.2",
      * is dropped; a $strict constraint whose every branch is dropped is
      * unreadable.
@@ -126,7 +127,8 @@ final class ComposerConstraint
         if (1 === LibraryPcre::match($hyphen, $branch, $range)) {
             $lowest = self::version($range[1], $strict);
             $upper = self::version($range[2], $strict);
-            if (null === $lowest || null === $upper) {
+            // composer/semver takes no wildcard in a hyphen range.
+            if (null === $lowest || null === $upper || ($strict && ($lowest[2] || $upper[2]))) {
                 return null;
             }
 
@@ -150,12 +152,20 @@ final class ComposerConstraint
                 return null;
             }
             [$id, $precision, $wildcard] = $version;
+            // composer/semver takes a wildcard alone, never after an
+            // operator: ">=8.1.*" is no constraint.
+            if ($strict && $wildcard && '' !== $parts[1]) {
+                return null;
+            }
 
+            // ">" is strict, as composer/semver's lower bound: ">8.5.9"
+            // starts at 8.5.10, a version a rule may change at.
             [$from, $until] = match ($parts[1]) {
                 '!=' => [null, null],
                 '<' => [null, $id],
                 '<=' => [null, $id + 1],
-                '>=', '>' => [$id, null],
+                '>=' => [$id, null],
+                '>' => [$id + 1, null],
                 '^' => [$id, self::nextAt($id, 1)],
                 '~' => [$id, self::nextAt($id, max(1, $precision - 1))],
                 default => [$id, $wildcard ? self::nextAt($id, $precision) : $id + 1],

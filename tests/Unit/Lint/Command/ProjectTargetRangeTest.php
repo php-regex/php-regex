@@ -308,7 +308,7 @@ final class ProjectTargetRangeTest extends TestCase
         $this->assertSame('regex.json', $fromConfig->source());
         $this->assertSame('--php-version', $fromFlag->source());
         foreach ([$fromConfig, $fromFlag] as $named) {
-            $this->assertEquals($fromComposer->target(), $named->target());
+            $this->assertSame([$fromComposer->target()->phpVersionId, $fromComposer->target()->pcreVersion, $fromComposer->target()->locale], [$named->target()->phpVersionId, $named->target()->pcreVersion, $named->target()->locale]);
             $this->assertSame($fromComposer->toArray()['range'], $named->toArray()['range']);
             $this->assertSame(self::admitted($fromComposer), self::admitted($named));
             $this->assertSame($fromComposer->notices(), $named->notices());
@@ -360,12 +360,12 @@ final class ProjectTargetRangeTest extends TestCase
         yield 'regex.json, open-ended' => ['flag' => null, 'config' => ['phpVersion' => '>=8.1'], 'expected' => [80100, 80200, 80300, 80400, 80425, 80500, 80510]];
         yield 'regex.json, both bounds' => ['flag' => null, 'config' => ['phpVersion' => '^8.1 <8.4'], 'expected' => [80100, 80200, 80300]];
         yield 'regex.json, from the last gate point' => ['flag' => null, 'config' => ['phpVersion' => '>=8.5.10'], 'expected' => [80510]];
-        yield 'regex.json, above every gate point' => ['flag' => null, 'config' => ['phpVersion' => '>8.6'], 'expected' => [80600]];
+        yield 'regex.json, above every gate point' => ['flag' => null, 'config' => ['phpVersion' => '>8.6'], 'expected' => [80601]];
         yield 'regex.json, object of strings' => ['flag' => null, 'config' => ['phpVersion' => ['min' => '8.1', 'max' => '8.3']], 'expected' => [80100, 80200, 80300]];
         yield '--php-version, open-ended' => ['flag' => '>=8.3', 'config' => [], 'expected' => [80300, 80400, 80425, 80500, 80510]];
         yield '--php-version over a single version in regex.json' => ['flag' => '>=8.4', 'config' => ['phpVersion' => '8.1'], 'expected' => [80400, 80425, 80500, 80510]];
         // An OR branch that starts a stretch no point stands for keeps its
-        // own point (docs/guides/cli.md), whatever the bound on the points.
+        // own point, as the CLI guide says, whatever the bound on the points.
         yield 'regex.json, an OR branch starting between gates' => ['flag' => null, 'config' => ['phpVersion' => '~8.3.0 || >=8.5.3'], 'expected' => [80300, 80503, 80510]];
         yield '--php-version, an OR branch starting between gates' => ['flag' => '~8.3.0 || >=8.5.3', 'config' => [], 'expected' => [80300, 80503, 80510]];
         yield '--php-version, OR of carets' => ['flag' => '^7.3 || ^8.0', 'config' => [], 'expected' => [70300, 70400, 80000, 80100, 80200, 80300, 80400, 80425, 80500, 80510]];
@@ -489,6 +489,8 @@ final class ProjectTargetRangeTest extends TestCase
         foreach (['--php-version', 'regex.json'] as $source) {
             yield $source.', a hyphen range written backwards' => ['source' => $source, 'constraint' => '8.6 - 8.1'];
             yield $source.', an upper bound below the lowest version' => ['source' => $source, 'constraint' => '>=8.4 <8.2'];
+            yield $source.', strictly above the one version allowed' => ['source' => $source, 'constraint' => '>8.4.24 <=8.4.24'];
+            yield $source.', a wildcard after an operator' => ['source' => $source, 'constraint' => '>=8.1.*'];
             yield $source.', an upper bound below the lowest version, comma-separated' => ['source' => $source, 'constraint' => '>=8.1,<8.0'];
             yield $source.', two exact versions ANDed' => ['source' => $source, 'constraint' => '8.1 8.2'];
             yield $source.', every OR branch empty' => ['source' => $source, 'constraint' => '>=8.4 <8.2 || 8.6 - 8.1'];
