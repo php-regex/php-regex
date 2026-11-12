@@ -4800,6 +4800,10 @@ body.search-open {
 .pg-editor.pg-editor-pattern .pg-input,
 .pg-editor.pg-editor-pattern .pg-mirror {
   max-height: 5.6rem;
+  /* The gutter is reserved on both, with or without a scrollbar showing:
+     the input's glyphs are transparent and the mirror paints them —
+     the two must wrap the text at the same point. */
+  scrollbar-gutter: stable;
 }
 .pg-editor.pg-editor-pattern .pg-input {
   overflow-y: auto;
