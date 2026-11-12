@@ -164,6 +164,35 @@ final class LintPlatformCandidatesTest extends TestCase
     }
 
     /**
+     * What the engine matches with the patterns the rows above compile:
+     * the quantifier of "~a/{1}~" is one, and "~a\{1}~" holds none.
+     *
+     * @return iterable<string, array{pattern: string, subject: string, matches: list<string>|null}>
+     */
+    public static function provideSubjects(): iterable
+    {
+        yield 'the separator alone' => ['pattern' => '~/~', 'subject' => '/', 'matches' => ['/']];
+        yield 'a quantifier after the separator' => ['pattern' => '~a/{1}~', 'subject' => 'a/', 'matches' => ['a/']];
+        yield 'a quantifier after the separator, the separator missing' => ['pattern' => '~a/{1}~', 'subject' => 'a', 'matches' => null];
+        yield 'a brace escaped, the braces in the subject' => ['pattern' => '~a\{1}~', 'subject' => 'a{1}', 'matches' => ['a{1}']];
+        yield 'a brace escaped, the separator in the subject' => ['pattern' => '~a\{1}~', 'subject' => 'a/', 'matches' => null];
+        yield 'a quantifier before the separator' => ['pattern' => '~a{1}/b~', 'subject' => 'a/b', 'matches' => ['a/b']];
+        yield 'a quantifier before a word boundary' => ['pattern' => '~a{1}\b~', 'subject' => 'a/b', 'matches' => ['a']];
+        yield 'a group repeated keeps its last capture' => ['pattern' => '~(a/)+~', 'subject' => 'a/a/', 'matches' => ['a/a/', 'a/']];
+    }
+
+    /**
+     * @param list<string>|null $matches what preg_match() writes, null when it finds nothing
+     */
+    #[Test]
+    #[DataProvider('provideSubjects')]
+    public function test_the_engine_matches_what_the_rows_say_of_each_pattern(string $pattern, string $subject, ?array $matches): void
+    {
+        $this->assertSame(null === $matches ? 0 : 1, preg_match($pattern, $subject, $written));
+        $this->assertSame($matches ?? [], $written);
+    }
+
+    /**
      * The example of a path pattern: '~' . DIRECTORY_SEPARATOR . '~' is
      * "~/~" where the separator is "/", and "~\~", which has no ending
      * delimiter, on Windows. One warning, naming "\", and the run passes.
