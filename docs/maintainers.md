@@ -745,7 +745,11 @@ not part of the automated CI differential tests; its lint results are in
 
 The corpus checkouts themselves are not committed. `corpus.json`, at the root
 next to `composer.json`, lists every repository with its URL, branch and the
-commit it was pinned to, much like a lock file. `bin/corpus` manages the
+commit it was pinned to, much like a lock file. Each entry also carries the
+platform constraints the repository's own `composer.json` declares — `php`,
+`ext-pcre`, `lib-pcre` under `require`, and `config.platform.php` — so the
+manifest can be filtered by target without opening every checkout again;
+`bin/corpus update` refreshes them with the commit. `bin/corpus` manages the
 checkouts, composer-style:
 
 ```bash

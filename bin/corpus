@@ -488,7 +488,7 @@ function manifestPath(string $root): string
  * A manifest entry is either a URL string or an object with url/branch/depth,
  * plus the commit the checkout was on at the last run (written by this script).
  *
- * @return array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>}
+ * @return array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string, composer: array<string, string>|null}>}
  */
 function loadManifest(string $path): array
 {
@@ -585,12 +585,52 @@ function normalizeManifestEntry(string $relPath, mixed $entry, array $defaults):
         $commit = strtolower($entry['commit']);
     }
 
+    $composer = null;
+    if (\array_key_exists('composer', $entry)) {
+        $composer = normalizeComposerConstraints($relPath, $entry['composer']);
+    }
+
     return [
         'url' => normalizeCloneUrl($url, $defaults['protocol']),
         'branch' => $branch,
         'depth' => $depth,
         'commit' => $commit,
+        'composer' => $composer,
     ];
+}
+
+/**
+ * The composer constraints a manifest entry records, kept as they were
+ * written: a constraint is a free-form Composer string ("^8.1", ">=7.4 || ^8.0"),
+ * judged by whoever filters, not by the manifest. Only the keys
+ * readComposerConstraints() writes are known; an entry that declares none
+ * keeps its null.
+ *
+ * @return array<string, string>|null
+ */
+function normalizeComposerConstraints(string $relPath, mixed $composer): ?array
+{
+    if (null === $composer) {
+        return null;
+    }
+
+    if (!\is_array($composer)) {
+        throw new RuntimeException(sprintf('Manifest entry "%s" has an invalid "composer" section: an object or null, got %s.', $relPath, get_debug_type($composer)));
+    }
+
+    $constraints = [];
+    foreach ($composer as $package => $constraint) {
+        if (!\is_string($constraint)) {
+            throw new RuntimeException(sprintf('Manifest entry "%s" has an invalid composer constraint for "%s": a string, got %s.', $relPath, \is_string($package) ? $package : get_debug_type($package), get_debug_type($constraint)));
+        }
+
+        $constraints[$package] = trim($constraint);
+        if ('' === $constraints[$package]) {
+            throw new RuntimeException(sprintf('Manifest entry "%s" has an empty composer constraint for "%s".', $relPath, $package));
+        }
+    }
+
+    return [] === $constraints ? null : $constraints;
 }
 
 /**
@@ -599,6 +639,48 @@ function normalizeManifestEntry(string $relPath, mixed $entry, array $defaults):
 function isCommitHash(string $hash): bool
 {
     return 1 === preg_match('/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i', $hash);
+}
+
+/**
+ * The platform constraints a repository's composer.json declares, or null
+ * when it declares none it reads: require.php, config.platform.php, and
+ * the pcre ones (ext-pcre carries no version of its own, lib-pcre does).
+ * Recorded so corpus.json can be filtered by target without opening every
+ * composer.json again; refreshed with the commit, since a new commit may
+ * change them.
+ *
+ * @return array<string, string>|null
+ */
+function readComposerConstraints(string $repoDir): ?array
+{
+    $path = $repoDir.\DIRECTORY_SEPARATOR.'composer.json';
+    if (!is_file($path) || !is_readable($path)) {
+        return null;
+    }
+
+    $composer = json_decode((string) file_get_contents($path), true);
+    if (!\is_array($composer)) {
+        return null;
+    }
+
+    $constraints = [];
+
+    $require = $composer['require'] ?? null;
+    if (\is_array($require)) {
+        foreach (['php' => 'php', 'ext-pcre' => 'ext-pcre', 'lib-pcre' => 'lib-pcre'] as $package => $key) {
+            $constraint = $require[$package] ?? null;
+            if (\is_string($constraint) && '' !== trim($constraint)) {
+                $constraints[$key] = trim($constraint);
+            }
+        }
+    }
+
+    $platform = $composer['config']['platform']['php'] ?? null;
+    if (\is_string($platform) && '' !== trim($platform)) {
+        $constraints['platform'] = trim($platform);
+    }
+
+    return [] === $constraints ? null : $constraints;
 }
 
 function isValidRepoUrl(string $url): bool
@@ -660,7 +742,7 @@ function normalizeManifestPath(string $relPath): string
 }
 
 /**
- * @param array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>} $manifest
+ * @param array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string, composer: array<string, string>|null}>} $manifest
  */
 function encodeManifest(array $manifest): string
 {
@@ -691,6 +773,9 @@ function encodeManifest(array $manifest): string
         if (null !== $entry['commit']) {
             $parts[] = '"commit": '.$encode($entry['commit']);
         }
+        if (null !== ($entry['composer'] ?? null)) {
+            $parts[] = '"composer": '.$encode($entry['composer']);
+        }
 
         $entries[] = '        '.$encode($relPath).': { '.implode(', ', $parts).' }';
     }
@@ -703,7 +788,7 @@ function encodeManifest(array $manifest): string
 }
 
 /**
- * @param array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>} $manifest
+ * @param array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string, composer: array<string, string>|null}>} $manifest
  */
 function saveManifest(string $path, array $manifest): void
 {
@@ -718,7 +803,7 @@ function saveManifest(string $path, array $manifest): void
  * @param array<string>                                       $repos
  * @param array{remote: string, depth: int, protocol: string} $defaults
  *
- * @return array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>, skipped: array<string>}
+ * @return array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string, composer: array<string, string>|null}>, skipped: array<string>}
  */
 function buildManifestFromDisk(string $corpusDir, array $repos, array $defaults, int $timeout): array
 {
@@ -746,6 +831,7 @@ function buildManifestFromDisk(string $corpusDir, array $repos, array $defaults,
             'branch' => getCurrentBranch($repoPath, $timeout),
             'depth' => $defaults['depth'],
             'commit' => getHeadCommit($repoPath, $timeout),
+            'composer' => readComposerConstraints($repoPath),
         ];
     }
 
@@ -1915,6 +2001,7 @@ function addCommand(
 
         $entry['branch'] ??= getCurrentBranch($corpusDir.\DIRECTORY_SEPARATOR.$relPath, $timeout);
         $entry['commit'] = $result['commit'] ?? getHeadCommit($corpusDir.\DIRECTORY_SEPARATOR.$relPath, $timeout);
+        $entry['composer'] = readComposerConstraints($corpusDir.\DIRECTORY_SEPARATOR.$relPath);
         $manifest['repositories'][$relPath] = $entry;
         saveManifest($manifestFile, $manifest);
 
@@ -2098,7 +2185,7 @@ function removeEmptyParents(string $dir, string $corpusDir): void
  * Write the commit each checkout ended on back into the manifest, the way a
  * lock file pins what was installed.
  *
- * @param array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string}>}                                                  $manifest
+ * @param array{defaults: array{remote: string, depth: int, protocol: string}, repositories: array<string, array{url: string, branch: ?string, depth: int, commit: ?string, composer: array<string, string>|null}>}                                                  $manifest
  * @param list<array{path: string, status: string, output: string, command: string, code: int, log: list<string>, change?: string|null, commit?: string|null, previous?: string|null, count?: int|null, notes?: list<string>}> $results
  */
 function recordCommits(string $manifestFile, array $manifest, array $results, string $corpusDir, ConsoleStyle $io): void
@@ -2124,6 +2211,9 @@ function recordCommits(string $manifestFile, array $manifest, array $results, st
         $commitChanged = $manifest['repositories'][$relPath]['commit'] !== $commit;
         if ($commitChanged) {
             $manifest['repositories'][$relPath]['commit'] = $commit;
+            // The commit the checkout moved to may declare other platform
+            // constraints than the one recorded.
+            $manifest['repositories'][$relPath]['composer'] = readComposerConstraints($corpusDir.\DIRECTORY_SEPARATOR.$relPath);
         }
 
         // A checkout that had to leave its configured branch (renamed or

@@ -139,6 +139,24 @@ parameters:
 			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleSearchCostTest.php
 
 		-
+			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertGreaterThan() with 60 and 110 will always evaluate to true.'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Lint/Extraction/MemoryBudgetTest.php
+
+		-
+			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertGreaterThan() with 0 and 0 will always evaluate to false.'
+			identifier: method.impossibleType
+			count: 1
+			path: tests/Unit/Parser/CaptureShapeCallGraphTest.php
+
+		-
+			rawMessage: 'Parameter #1 $expected of method PHPUnit\Framework\Assert::assertSame() contains unresolvable type.'
+			identifier: argument.unresolvableType
+			count: 1
+			path: tests/Unit/Parser/CaptureShapeCallGraphTest.php
+
+		-
 			rawMessage: Access to constant on internal class Psalm\Internal\Analyzer\StatementsAnalyzer.
 			identifier: classConstant.internalClass
 			count: 2
