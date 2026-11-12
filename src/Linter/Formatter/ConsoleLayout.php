@@ -125,7 +125,8 @@ final class ConsoleLayout
 
     /**
      * The run summed up after a blank line: what fails it, else what it
-     * found and the rewrites it suggests.
+     * found and the rewrites it suggests; then, on a line of its own, how
+     * many pattern arguments it could not verify, when there are some.
      *
      * @phpstan-param LintStats $stats
      */
@@ -137,7 +138,20 @@ final class ConsoleLayout
             default => [ConsoleBadge::Pass, LintSummary::passCounts($stats), ConsoleStyle::SuccessBold, \sprintf(', %d optimizations available.', $stats['optimizations'])],
         };
 
-        return "\n  ".$this->markup->badge($badge).' '.$this->markup->style($lead, $leadStyle).$this->markup->style($rest, ConsoleStyle::Muted)."\n";
+        return "\n  ".$this->markup->badge($badge).' '.$this->markup->style($lead, $leadStyle).$this->markup->style($rest, ConsoleStyle::Muted)."\n".$this->notVerifiable($stats);
+    }
+
+    /**
+     * The line that says how many pattern arguments the run could not
+     * verify, under the summary; nothing when there is none.
+     *
+     * @phpstan-param LintStats $stats
+     */
+    private function notVerifiable(array $stats): string
+    {
+        $line = LintSummary::notVerifiable($stats);
+
+        return null === $line ? '' : '  '.$this->markup->style($this->markup->escape($line), ConsoleStyle::Muted)."\n";
     }
 
     /**

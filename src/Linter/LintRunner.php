@@ -105,7 +105,7 @@ final class LintRunner
      */
     public static function patternCount(array $patterns): int
     {
-        return \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback && null === $pattern->ignores));
+        return \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback && null === $pattern->ignores && null === $pattern->state));
     }
 
     /**

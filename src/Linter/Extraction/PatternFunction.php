@@ -166,6 +166,16 @@ final class PatternFunction
     }
 
     /**
+     * The same function, once its option path has led to an item of the
+     * array written at the call: that item is the pattern itself, and is
+     * not looked into for the path again.
+     */
+    public function readingTheItem(): self
+    {
+        return $this->with(optionPath: [], optionPathRequired: false);
+    }
+
+    /**
      * The same function, appending a suffix to every pattern it reads.
      */
     public function withPatternSuffix(string $suffix): self
@@ -215,6 +225,7 @@ final class PatternFunction
      * @param list<int>|null          $moreArgumentIndexes
      * @param list<string>|null       $parameterNames
      * @param list<list<string>>|null $moreParameterNames
+     * @param list<string>|null       $optionPath
      */
     private function with(
         ?int $argumentIndex = null,
@@ -224,6 +235,8 @@ final class PatternFunction
         ?array $parameterNames = null,
         ?array $moreParameterNames = null,
         ?string $patternSuffix = null,
+        ?array $optionPath = null,
+        ?bool $optionPathRequired = null,
     ): self {
         return new self(
             $this->label,
@@ -234,8 +247,8 @@ final class PatternFunction
             $parameterNames ?? $this->parameterNames,
             $moreParameterNames ?? $this->moreParameterNames,
             $this->kind,
-            $this->optionPath,
-            $this->optionPathRequired,
+            $optionPath ?? $this->optionPath,
+            $optionPathRequired ?? $this->optionPathRequired,
             $this->filterArgument,
             $this->utf8Argument,
             $patternSuffix ?? $this->patternSuffix,

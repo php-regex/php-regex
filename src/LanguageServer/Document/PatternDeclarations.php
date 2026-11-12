@@ -553,7 +553,9 @@ final class PatternDeclarations
 
     /**
      * Keeps the constants a text declares, under its path in one of the
-     * three stores; a text declaring none, or none to read, leaves none.
+     * three stores, with the functions of a namespace it declares under
+     * the name of one of PHP's and the constants of the define() calls
+     * such a function may hide; a text declaring none leaves none.
      *
      * @param 'files'|'libraries'|'documents' $store
      */
@@ -563,7 +565,7 @@ final class PatternDeclarations
         // An open document stands for its file, even once it declares none
         // where its file declares some.
         $standsFor = 'documents' === $store && (isset($this->constantFiles[$path]) || isset($this->constantLibraries[$path]));
-        if ([] === $contribution['classes'] && !$standsFor) {
+        if ([] === $contribution['classes'] && !isset($contribution['globals']) && !isset($contribution['functions']) && !isset($contribution['defines']) && !$standsFor) {
             if ('files' === $store) {
                 unset($this->constantFiles[$path]);
             } elseif ('libraries' === $store) {
@@ -585,7 +587,13 @@ final class PatternDeclarations
             $this->constantDocuments[$path] = $contribution;
         }
 
-        $this->constantPrints[$store][$path] = md5(serialize([$contribution['classes'], array_map(static fn (array $constant): array => [self::shape($constant[0]), $constant[1]], $contribution['constants'])]));
+        $this->constantPrints[$store][$path] = md5(serialize([
+            $contribution['classes'],
+            array_map(static fn (array $constant): array => [self::shape($constant[0]), $constant[1]], $contribution['constants']),
+            array_map(static fn (?ValueExpr $value): ?string => null === $value ? null : self::shape($value), $contribution['globals'] ?? []),
+            $contribution['functions'] ?? [],
+            array_map(static fn (array $defined): array => array_map(static fn (?ValueExpr $value): ?string => null === $value ? null : self::shape($value), $defined), $contribution['defines'] ?? []),
+        ]));
     }
 
     /**
@@ -603,8 +611,13 @@ final class PatternDeclarations
             $value->scope,
             $value->written,
             $value->file,
+            $value->integer,
+            $value->quoted,
+            $value->delimiter,
+            $value->calls,
             null === $value->guard ? null : serialize($value->guard),
             array_map(self::shape(...), $value->parts),
+            array_map(self::shape(...), $value->alternatives),
             array_map(static fn (array $item): array => [null === $item[0] ? null : self::shape($item[0]), self::shape($item[1])], $value->items),
         ]);
     }

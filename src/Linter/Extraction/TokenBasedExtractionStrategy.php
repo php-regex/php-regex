@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Extraction;
 
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Parser\Resolution\ArgumentState;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -25,11 +26,12 @@ use PHPRegex\Parser\Text\Ascii;
  * for which argument holds the pattern, ArrayLiteralPatterns for the items
  * of an array of patterns, StringExpressionReader for what a constant
  * string expression folds to. A pattern no literal gives is held, and read
- * by TokenValueCollector in a second walk of the file.
+ * by TokenValueCollector in a second walk of the file. Every pattern
+ * argument is held with it, so that each can say what is known of it.
  *
  * @internal
  */
-final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface, ProjectConstantsAwareInterface
+final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, ExtractorInterface, PatternFunctionAwareInterface, ProjectConstantsAwareInterface
 {
     private readonly PatternFunctionRegistry $registry;
 
@@ -62,12 +64,12 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
 
     public function extract(array $files): array
     {
-        // Used on its own, the functions the files mark with #[RegexPattern]
-        // join the registry for this run.
-        $specs = $this->registry->declarationsRead() ? [] : PatternAttributeScanner::specs($files);
-        $strategy = [] === $specs ? $this : new self([], $this->registry->withDeclaredFunctions($specs), $this->project);
+        return $this->forFiles($files)->extractFiles($files, false);
+    }
 
-        return $strategy->extractFiles($files);
+    public function extractWithArguments(array $files): array
+    {
+        return $this->forFiles($files)->extractFiles($files, true);
     }
 
     /**
@@ -81,6 +83,40 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      * @return list<PatternOccurrence>
      */
     public function extractSource(string $content, string $file = ''): array
+    {
+        return $this->readSource($content, $file, false);
+    }
+
+    /**
+     * Whether extractSource() reads the source at all: one that names none
+     * of the calls the registry knows holds no pattern of theirs, and is
+     * not tokenized.
+     */
+    public function readsContent(string $content): bool
+    {
+        return '' !== $content && !$this->shouldSkipContent($content);
+    }
+
+    /**
+     * The strategy that reads the files: used on its own, the functions
+     * the files mark with #[RegexPattern] join the registry for this run.
+     *
+     * @param array<string> $files
+     */
+    private function forFiles(array $files): self
+    {
+        $specs = $this->registry->declarationsRead() ? [] : PatternAttributeScanner::specs($files);
+
+        return [] === $specs ? $this : new self([], $this->registry->withDeclaredFunctions($specs), $this->project);
+    }
+
+    /**
+     * The patterns of a source, and, with $arguments, its pattern
+     * arguments.
+     *
+     * @return list<PatternOccurrence>
+     */
+    private function readSource(string $content, string $file, bool $arguments): array
     {
         if (!$this->readsContent($content)) {
             return [];
@@ -140,19 +176,9 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
 
         // Each pattern judged for the versions the guards around it keep.
         return TokenGuards::regions($tokens, $tokenOffsets, $closers, $content)->apply(
-            $this->settle(array_values($found->getArrayCopy()), $patternArguments, $tokens, $tokenOffsets, $closers, $file, $content),
+            $this->settle(array_values($found->getArrayCopy()), $patternArguments, $tokens, $tokenOffsets, $closers, $file, $content, $arguments),
             $file,
         );
-    }
-
-    /**
-     * Whether extractSource() reads the source at all: one that names none
-     * of the calls the registry knows holds no pattern of theirs, and is
-     * not tokenized.
-     */
-    public function readsContent(string $content): bool
-    {
-        return '' !== $content && !$this->shouldSkipContent($content);
     }
 
     /**
@@ -160,11 +186,11 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      *
      * @return list<PatternOccurrence>
      */
-    private function extractFiles(array $files): array
+    private function extractFiles(array $files, bool $arguments): array
     {
         $occurrences = [];
         foreach ($files as $file) {
-            $this->appendOccurrences($occurrences, $this->extractFromFile($file));
+            $this->appendOccurrences($occurrences, $this->extractFromFile($file, $arguments));
         }
 
         return $occurrences;
@@ -173,7 +199,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     /**
      * @return array<PatternOccurrence>
      */
-    private function extractFromFile(string $file): array
+    private function extractFromFile(string $file, bool $arguments): array
     {
         if (!is_file($file)) {
             return [];
@@ -184,7 +210,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             return [PatternOccurrence::unread($file, 'Not linted: the file could not be read.')];
         }
 
-        return $this->extractSource($content, $file);
+        return $this->readSource($content, $file, $arguments);
     }
 
     /**
@@ -205,24 +231,53 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     }
 
     /**
-     * The variables the file assigns with a plain "=", whatever the scope.
+     * The variables the file assigns, whatever the scope, with a plain
+     * "=" or as the target of a foreach, each with the tokens its values
+     * are read from: [$from, $to), what follows the "=" up to the end of
+     * its statement, $to left null until it is asked for, or what the
+     * loop iterates.
      *
      * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
      *
-     * @return array<string, true>
+     * @return array<string, non-empty-list<array{int, int|null}>>
      */
-    private function assignedVariables(array $tokens): array
+    private function assignedVariables(array $tokens, array $closers): array
     {
         $assigned = [];
         foreach ($tokens as $index => $token) {
-            if ('=' !== $token) {
+            if ('=' === $token) {
+                $target = PhpTokens::previousSignificant($tokens, $index - 1);
+                $targetToken = null === $target ? null : $tokens[$target];
+                if (\is_array($targetToken) && \T_VARIABLE === $targetToken[0]) {
+                    $assigned[$targetToken[1]][] = [$index + 1, null];
+                }
+
                 continue;
             }
 
-            $target = PhpTokens::previousSignificant($tokens, $index - 1);
-            $targetToken = null === $target ? null : $tokens[$target];
-            if (\is_array($targetToken) && \T_VARIABLE === $targetToken[0]) {
-                $assigned[$targetToken[1]] = true;
+            if (!\is_array($token) || \T_FOREACH !== $token[0]) {
+                continue;
+            }
+
+            // foreach (<iterated> as $key => $value): each target that
+            // is a variable takes its values from what is iterated.
+            $open = PhpTokens::nextSignificant($tokens, $index + 1, \count($tokens));
+            $close = null === $open ? null : $closers[$open] ?? null;
+            if (null === $open || null === $close) {
+                continue;
+            }
+
+            $as = null;
+            for ($i = $open + 1; $i < $close; $i++) {
+                $inner = $tokens[$i];
+                if (\is_array($inner) && \T_AS === $inner[0]) {
+                    $as = $i;
+                } elseif (null !== $as && \is_array($inner) && \T_VARIABLE === $inner[0]) {
+                    $assigned[$inner[1]][] = [$open + 1, $as];
+                } elseif (PhpTokens::opensNesting($inner)) {
+                    $i = $closers[$i] ?? $close;
+                }
             }
         }
 
@@ -261,10 +316,11 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      * The occurrences in the order of their calls. A pattern no literal
      * gives is read, when the file holds one, in a second pass over the
      * file: what the file proves about its names is known once all of it
-     * is read.
+     * is read. With $arguments, each pattern argument follows the patterns
+     * it holds, with what is known of it.
      *
-     * @param list<PatternOccurrence|PendingPattern<array{int, int}>> $found            a pattern argument that is no
-     *                                                                                  literal is its token range
+     * @param list<PatternOccurrence|PendingPattern<array{int, int}>> $found            a pattern argument is its token
+     *                                                                                  range
      * @param list<int>                                               $patternArguments where the pattern arguments start
      * @param array<int, array{int, string, int}|string>              $tokens
      * @param array<int, int>                                         $tokenOffsets
@@ -272,29 +328,32 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      *
      * @return list<PatternOccurrence>
      */
-    private function settle(array $found, array $patternArguments, array $tokens, array $tokenOffsets, array $closers, string $file, string $content): array
+    private function settle(array $found, array $patternArguments, array $tokens, array $tokenOffsets, array $closers, string $file, string $content, bool $arguments): array
     {
-        $pending = $this->pendingRanges($found, $tokens);
-        if ([] === $pending) {
-            return array_values(array_filter($found, static fn (PatternOccurrence|PendingPattern $item): bool => $item instanceof PatternOccurrence));
+        $values = [];
+        $resolver = null;
+        $assigned = null;
+        $pending = $this->pendingRanges($found, $tokens, $closers, $assigned);
+        if ([] !== $pending) {
+            [$variables, $properties] = $this->watchedNames($pending, $tokens, $closers, $assigned);
+            $collector = new TokenValueCollector($tokens, $tokenOffsets, $closers, $content, $variables, $properties);
+            $collector->values()->useFileLevel(new FileLevelCode($content, $tokens, $tokenOffsets));
+            if (null !== $this->project) {
+                $collector->values()->useProject($this->project);
+            }
+            foreach ($patternArguments as $start) {
+                $collector->markPatternArgument($start);
+            }
+
+            $values = $this->readValues($collector, $pending, $tokens);
+            $resolver = $collector->values();
+            // Every read is known before the first is resolved: a value
+            // assigned after the last never reaches any.
+            foreach ($values as $value) {
+                $resolver->read($value);
+            }
         }
 
-        [$variables, $properties] = $this->watchedNames($pending, $tokens);
-        $collector = new TokenValueCollector($tokens, $tokenOffsets, $closers, $content, $variables, $properties);
-        if (null !== $this->project) {
-            $collector->values()->useProject($this->project);
-        }
-        foreach ($patternArguments as $start) {
-            $collector->markPatternArgument($start);
-        }
-
-        $values = $this->readValues($collector, $pending, $tokens);
-        $resolver = $collector->values();
-        // Every read is known before the first is resolved: a value
-        // assigned after the last never reaches any.
-        foreach ($values as $value) {
-            $resolver->read($value);
-        }
         $occurrences = [];
         foreach ($found as $item) {
             if ($item instanceof PatternOccurrence) {
@@ -304,9 +363,21 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             }
 
             [$start, $end] = $item->place;
-            $value = $values[$start.':'.$end] ?? null;
-            if (null !== $value && $value->isResolvable()) {
-                array_push($occurrences, ...$item->occurrences($resolver, $value, $file, $content, self::span($tokens, $tokenOffsets, $start, $end)));
+            // None for an argument whose state the call itself gave, or
+            // for a variable the file never assigns.
+            $value = null === $resolver || null !== $item->state ? null : $values[$start.':'.$end] ?? null;
+            $place = self::argumentPlace($tokens, $tokenOffsets, $closers, $start, $end);
+            if (null !== $resolver && null !== $value) {
+                array_push($occurrences, ...$item->occurrences($resolver, $value, $file, $content, self::span($tokens, $tokenOffsets, $start, $end), $place[1] ?? null));
+            }
+
+            if (!$arguments) {
+                continue;
+            }
+
+            if (null !== $place) {
+                $states = null === $resolver || null === $value ? [$item->state ?? ArgumentState::Opaque->value] : $resolver->states($value, $item->function);
+                array_push($occurrences, ...$item->arguments($states, $file, $content, $place[0], $place[1], $place[2]));
             }
         }
 
@@ -314,28 +385,31 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     }
 
     /**
-     * The token ranges of the held arguments a second pass may resolve,
-     * start => end => true: a variable gets a value from an assignment, or
-     * none, so one the file never assigns is left out.
+     * The token ranges of the held arguments a second pass reads, start =>
+     * end => true: one whose state the call itself gave needs none, and a
+     * variable gets a value from an assignment, or none, so one the file
+     * never assigns is left out.
      *
-     * @param list<PatternOccurrence|PendingPattern<array{int, int}>> $found
-     * @param array<int, array{int, string, int}|string>              $tokens
+     * @param list<PatternOccurrence|PendingPattern<array{int, int}>>  $found
+     * @param array<int, array{int, string, int}|string>               $tokens
+     * @param array<int, int>                                          $closers
+     * @param array<string, non-empty-list<array{int, int|null}>>|null $assigned the variables the file assigns, read
+     *                                                                           when first asked for
      *
      * @return array<int, non-empty-array<int, true>>
      */
-    private function pendingRanges(array $found, array $tokens): array
+    private function pendingRanges(array $found, array $tokens, array $closers, ?array &$assigned): array
     {
         $pending = [];
-        $assigned = null;
         foreach ($found as $item) {
-            if (!$item instanceof PendingPattern) {
+            if (!$item instanceof PendingPattern || null !== $item->state) {
                 continue;
             }
 
             [$start, $end] = $item->place;
             $variable = $this->soleVariable($tokens, $start, $end);
             if (null !== $variable) {
-                $assigned ??= $this->assignedVariables($tokens);
+                $assigned ??= $this->assignedVariables($tokens, $closers);
                 if (!isset($assigned[$variable])) {
                     continue;
                 }
@@ -350,34 +424,93 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     /**
      * The variables the held arguments name, and whether they name a
      * property: the writes to any other change no pattern, and are not
-     * followed.
+     * followed. A variable named in the value assigned to one of them, or
+     * in what a foreach whose target is one of them iterates, is one of
+     * them, and so on until none is added: a pattern is read through any
+     * number of variables.
      *
-     * @param array<int, non-empty-array<int, true>>     $pending
-     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, non-empty-array<int, true>>                   $pending
+     * @param array<int, array{int, string, int}|string>               $tokens
+     * @param array<int, int>                                          $closers
+     * @param array<string, non-empty-list<array{int, int|null}>>|null $assigned the variables the file assigns, read
+     *                                                                           when first asked for
      *
      * @return array{array<string, true>, bool}
      */
-    private function watchedNames(array $pending, array $tokens): array
+    private function watchedNames(array $pending, array $tokens, array $closers, ?array &$assigned): array
     {
         $variables = [];
+        $met = [];
         $properties = false;
         foreach ($pending as $start => $ends) {
-            for ($i = $start, $last = max(array_keys($ends)); $i < $last; $i++) {
-                $token = $tokens[$i];
-                if (!\is_array($token)) {
-                    continue;
-                }
+            $this->namesIn($tokens, $start, max(array_keys($ends)), $variables, $met, $properties);
+        }
 
-                if (\T_VARIABLE === $token[0]) {
-                    $variables[$token[1]] = true;
-                } elseif (!$properties && \T_STRING === $token[0]) {
-                    $before = PhpTokens::previousSignificant($tokens, $i - 1);
-                    $properties = null !== $before && PhpTokens::isObjectOrStaticOperator($tokens[$before]);
-                }
+        // Each name is followed once, in the order they are met.
+        for ($next = 0; isset($met[$next]); $next++) {
+            $assigned ??= $this->assignedVariables($tokens, $closers);
+            foreach ($assigned[$met[$next]] ?? [] as [$from, $to]) {
+                $this->namesIn($tokens, $from, $to ?? self::statementEnd($tokens, $from), $variables, $met, $properties);
             }
         }
 
         return [$variables, $properties];
+    }
+
+    /**
+     * Adds the variables the tokens in [$start, $end) name to those met
+     * so far, and says whether the tokens name a property.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<string, true>                        $variables
+     * @param list<string>                               $met       the same variables, in the order they are met
+     */
+    private function namesIn(array $tokens, int $start, int $end, array &$variables, array &$met, bool &$properties): void
+    {
+        for ($i = $start; $i < $end; $i++) {
+            $token = $tokens[$i];
+            if (!\is_array($token)) {
+                continue;
+            }
+
+            // "${re}" names $re.
+            $variable = \T_VARIABLE === $token[0] ? $token[1] : (\T_STRING_VARNAME === $token[0] ? '$'.$token[1] : null);
+            if (null !== $variable) {
+                if (!isset($variables[$variable])) {
+                    $variables[$variable] = true;
+                    $met[] = $variable;
+                }
+            } elseif (!$properties && \T_STRING === $token[0]) {
+                $before = PhpTokens::previousSignificant($tokens, $i - 1);
+                $properties = null !== $before && PhpTokens::isObjectOrStaticOperator($tokens[$before]);
+            }
+        }
+    }
+
+    /**
+     * Where the statement holding the token at $start ends: its ";", the
+     * bracket that closes what it stands in, a close tag, or the end of
+     * the file. An assigned value runs no further.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    private static function statementEnd(array $tokens, int $start): int
+    {
+        $depth = 0;
+        for ($i = $start, $count = \count($tokens); $i < $count; $i++) {
+            $token = $tokens[$i];
+            if (PhpTokens::opensNesting($token)) {
+                $depth++;
+            } elseif (')' === $token || ']' === $token || '}' === $token) {
+                if (0 === $depth--) {
+                    return $i;
+                }
+            } elseif (0 === $depth && (';' === $token || (\is_array($token) && \T_CLOSE_TAG === $token[0]))) {
+                return $i;
+            }
+        }
+
+        return \count($tokens);
     }
 
     /**
@@ -416,6 +549,9 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             // Most tokens declare, write and hold nothing.
             if (isset(TokenValueCollector::READ[$id])) {
                 $collector->visit($i, $context);
+            } elseif ((\T_VARIABLE === $id && '$GLOBALS' === $token[1]) || (\T_STRING_VARNAME === $id && 'GLOBALS' === $token[1])) {
+                // The variables of the file level, named from anywhere.
+                $collector->values()->nameGlobals();
             }
 
             if (isset($pending[$i])) {
@@ -682,10 +818,13 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         }
 
         // Nette's utf8: true appends "u" to every pattern; anything but
-        // true or false leaves its flags unknown.
+        // true or false leaves its flags unknown, and the argument with
+        // them.
         if (null !== $patternFunction->utf8Argument) {
             $utf8 = CallArguments::utf8($tokens, $startIndex, $totalTokens, $patternFunction->utf8Argument, $closers);
             if (null === $utf8) {
+                $this->holdPattern($tokens, $argument[0], $argument[1], $patternFunction, $sink, ArgumentState::Opaque->value);
+
                 return [];
             }
 
@@ -704,9 +843,22 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             }
         }
 
-        $range = CallArguments::optionRange($tokens, $argument[0], $argument[1], $patternFunction, $closers, $tokenOffsets, $content);
+        $followed = true;
+        $range = CallArguments::optionRange($tokens, $argument[0], $argument[1], $patternFunction, $closers, $tokenOffsets, $content, $followed);
         if (null === $range) {
+            // Options that hold no pattern give no argument; options the
+            // call does not spell out may hold one.
+            if (!$followed) {
+                $this->holdPattern($tokens, $argument[0], $argument[1], $patternFunction, $sink, ArgumentState::Opaque->value);
+            }
+
             return [];
+        }
+
+        // An item of the options written at the call is the pattern
+        // itself; options read through a name are looked into for it.
+        if ($range !== $argument) {
+            $patternFunction = $patternFunction->readingTheItem();
         }
 
         [$argumentTokens, $argumentIndexes] = PhpTokens::slice($tokens, $range[0], $range[1]);
@@ -745,96 +897,52 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             ?? StringExpressionReader::read($stripped, $strippedIndexes, $tokenOffsets, $content);
 
         if (null === $patternInfo) {
-            $this->holdPattern($stripped, $tokenIndexes, $patternFunction, $sink);
+            $this->holdTokens($tokens, $tokenIndexes, $patternFunction, $sink);
 
             return [];
         }
 
-        if ('' === $patternInfo['pattern']) {
-            return [];
+        // The empty string is an argument, and no pattern.
+        $occurrences = [];
+        if ('' !== $patternInfo['pattern']) {
+            $occurrences[] = $this->createOccurrence($patternInfo, $file, $patternFunction);
+            $sink?->append($occurrences[0]);
         }
 
-        $occurrence = $this->createOccurrence($patternInfo, $file, $patternFunction);
-        $sink?->append($occurrence);
+        $this->holdTokens($tokens, $tokenIndexes, $patternFunction, $sink, ArgumentState::Constant->value);
 
-        return [$occurrence];
+        return $occurrences;
     }
 
     /**
-     * Hold a pattern no literal gives as its token range, for the names it
-     * may go through: a concatenation, a variable, $this->name, a constant
-     * or a class constant. Any other expression names no value the file
-     * proves.
+     * Hold a pattern argument as the range of its tokens, [$start, $end):
+     * what it reads as is known once the whole file is read. One the call
+     * site settles is held with its state, a literal as "constant".
      *
-     * @param array<int, array{int, string, int}|string>                                $tokens       the expression, its outer parentheses stripped
+     * @param array<int, array{int, string, int}|string>                                $tokens the tokens of the file
+     * @param \ArrayObject<int, PatternOccurrence|PendingPattern<array{int, int}>>|null $sink
+     */
+    private function holdPattern(array $tokens, int $start, int $end, PatternFunction $patternFunction, ?\ArrayObject $sink, ?string $state = null): void
+    {
+        // An empty slot is no argument.
+        if (null !== $sink && null !== PhpTokens::nextSignificant($tokens, $start, $end)) {
+            $sink->append(new PendingPattern([$start, $end], $patternFunction, $state));
+        }
+    }
+
+    /**
+     * Hold a pattern argument given as its tokens and their indexes in the
+     * file.
+     *
+     * @param array<int, array{int, string, int}|string>                                $tokens       the tokens of the argument
      * @param array<int, int>                                                           $tokenIndexes the indexes of its tokens in the file
      * @param \ArrayObject<int, PatternOccurrence|PendingPattern<array{int, int}>>|null $sink
      */
-    private function holdPattern(array $tokens, array $tokenIndexes, PatternFunction $patternFunction, ?\ArrayObject $sink): void
+    private function holdTokens(array $tokens, array $tokenIndexes, PatternFunction $patternFunction, ?\ArrayObject $sink, ?string $state = null): void
     {
-        if (null !== $sink && [] !== $tokenIndexes && $this->mayName($tokens)) {
-            $sink->append(new PendingPattern([min($tokenIndexes), max($tokenIndexes) + 1], $patternFunction));
+        if (null !== $sink && [] !== $tokenIndexes && null !== PhpTokens::nextSignificant($tokens, 0, \count($tokens))) {
+            $sink->append(new PendingPattern([min($tokenIndexes), max($tokenIndexes) + 1], $patternFunction, $state));
         }
-    }
-
-    /**
-     * @param array<int, array{int, string, int}|string> $tokens
-     */
-    private function mayName(array $tokens): bool
-    {
-        $significant = array_values(array_filter($tokens, static fn (array|string $token): bool => !PhpTokens::isIgnorable($token)));
-        if (\in_array('.', $significant, true)) {
-            return true;
-        }
-
-        [$first, $second, $third] = $significant + [null, null, null];
-        $count = \count($significant);
-        if (1 === $count && \is_array($first)) {
-            $name = PhpTokens::name($first);
-
-            return \T_VARIABLE === $first[0] ? '$this' !== $first[1] : null !== $name && !\in_array(Ascii::lower(ltrim($name, '\\')), ['true', 'false', 'null'], true);
-        }
-
-        // (Kind::Re)->value: PHP drops the parentheses around the case.
-        if ($count > 5 && '(' === $first && PhpTokens::isObjectOrStaticOperator($significant[$count - 2]) && 'value' === PhpTokens::identifier($significant[$count - 1])) {
-            $case = self::unwrapped(\array_slice($significant, 0, -2));
-
-            return 3 === \count($case) && \is_array($case[0]) && PhpTokens::isDoubleColon($case[1]) && (\T_STATIC === $case[0][0] || null !== PhpTokens::name($case[0]));
-        }
-
-        // Kind::Re->value: an enum case's backing value, a class constant
-        // followed by "->value".
-        if (5 === $count && \is_array($first) && PhpTokens::isDoubleColon($significant[1]) && PhpTokens::isObjectOrStaticOperator($significant[3]) && 'value' === PhpTokens::identifier($significant[4])) {
-            return \T_STATIC === $first[0] || null !== PhpTokens::name($first);
-        }
-
-        if (3 !== $count || !\is_array($first) || !\is_array($second) || !\is_array($third)) {
-            return false;
-        }
-
-        if (\T_DOUBLE_COLON === $second[0]) {
-            return \T_STATIC === $first[0] || null !== PhpTokens::name($first);
-        }
-
-        return \T_VARIABLE === $first[0] && '$this' === $first[1] && \T_OBJECT_OPERATOR === $second[0];
-    }
-
-    /**
-     * The significant tokens without the parentheses at both ends, however
-     * many: ((a)) is a. Whether they wrapped everything is not asked here:
-     * (a)(b) becomes a)(b, which names nothing either.
-     *
-     * @param list<array{int, string, int}|string> $significant
-     *
-     * @return list<array{int, string, int}|string>
-     */
-    private static function unwrapped(array $significant): array
-    {
-        while (['(', ')'] === [$significant[0] ?? null, $significant[\count($significant) - 1] ?? null]) {
-            $significant = \array_slice($significant, 1, -1);
-        }
-
-        return $significant;
     }
 
     /**
@@ -866,6 +974,10 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     }
 
     /**
+     * Read one item of an array literal: each is a pattern argument of its
+     * own. A spread may hold any number of patterns, and nothing is known
+     * of it; an item taken by reference is read as what it refers to.
+     *
      * @param list<PatternOccurrence>                                                   $occurrences
      * @param array<int, array{int, string, int}|string>                                $tokens
      * @param array<int, int>                                                           $tokenIndexes
@@ -882,21 +994,65 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         PatternFunction $patternFunction,
         ?\ArrayObject $sink = null,
     ): void {
-        [$tokens, $tokenIndexes] = StringExpressionReader::stripParentheses($tokens, $tokenIndexes);
-        $patternInfo = StringExpressionReader::read($tokens, $tokenIndexes, $tokenOffsets, $content);
+        $lead = PhpTokens::nextSignificant($tokens, 0, \count($tokens));
+        $leadToken = null === $lead ? null : $tokens[$lead];
+        if (null !== $lead && \is_array($leadToken) && \in_array($leadToken[0], [\T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG, \T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG], true)) {
+            $tokens = \array_slice($tokens, $lead + 1);
+            $tokenIndexes = \array_slice($tokenIndexes, $lead + 1);
+        } elseif (\is_array($leadToken) && \T_ELLIPSIS === $leadToken[0]) {
+            $this->holdTokens($tokens, $tokenIndexes, $patternFunction, $sink, ArgumentState::Opaque->value);
+
+            return;
+        }
+
+        [$stripped, $strippedIndexes] = StringExpressionReader::stripParentheses($tokens, $tokenIndexes);
+        $patternInfo = StringExpressionReader::read($stripped, $strippedIndexes, $tokenOffsets, $content);
         if (null === $patternInfo) {
-            $this->holdPattern($tokens, $tokenIndexes, $patternFunction, $sink);
+            $this->holdTokens($tokens, $tokenIndexes, $patternFunction, $sink);
 
             return;
         }
 
-        if ('' === $patternInfo['pattern']) {
-            return;
+        // The empty string is an argument, and no pattern.
+        if ('' !== $patternInfo['pattern']) {
+            $occurrence = $this->createOccurrence($patternInfo, $file, $patternFunction);
+            $occurrences[] = $occurrence;
+            $sink?->append($occurrence);
         }
 
-        $occurrence = $this->createOccurrence($patternInfo, $file, $patternFunction);
-        $occurrences[] = $occurrence;
-        $sink?->append($occurrence);
+        $this->holdTokens($tokens, $tokenIndexes, $patternFunction, $sink, ArgumentState::Constant->value);
+    }
+
+    /**
+     * Where a pattern argument stands, given the range of its tokens,
+     * [$start, $end): the line and the byte offset of its first token,
+     * the parentheses around the whole of it left out, and its length up
+     * to the end of its last token. The whitespace and the comments around
+     * it are no part of it. Null for a range that holds no token.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $tokenOffsets
+     * @param array<int, int>                            $closers
+     *
+     * @return array{int, int, int}|null the line, the offset and the length
+     */
+    private static function argumentPlace(array $tokens, array $tokenOffsets, array $closers, int $start, int $end): ?array
+    {
+        $first = PhpTokens::nextSignificant($tokens, $start, $end);
+        $last = null === $first ? null : PhpTokens::previousSignificant($tokens, $end - 1, $first);
+        while (null !== $first && null !== $last && '(' === $tokens[$first] && ($closers[$first] ?? null) === $last) {
+            $first = PhpTokens::nextSignificant($tokens, $first + 1, $last);
+            $last = null === $first ? null : PhpTokens::previousSignificant($tokens, $last - 1, $first);
+        }
+
+        if (null === $first || null === $last) {
+            return null;
+        }
+
+        $lastToken = $tokens[$last];
+        $offset = $tokenOffsets[$first];
+
+        return [PhpTokens::lineOf($tokens, $first), $offset, $tokenOffsets[$last] + \strlen(\is_array($lastToken) ? $lastToken[1] : $lastToken) - $offset];
     }
 
     /**

@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A ternary or a `match` whose arms are literals is diagnosed at each
+   arm, and a global constant of another file of the workspace, a
+   `const` or a `define()` at the top level of its file, is read like a
+   class constant: the pattern is reported at the argument naming it.
  * `initializationOptions.phpVersion` and `phpVersion` in `regex.json` take a
    range, as a Composer constraint or `{"min": …, "max": …}`. A pattern is
    validated at the versions of the range `regex lint` judges (its lowest,

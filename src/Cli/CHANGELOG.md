@@ -6,6 +6,20 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex lint` reads more pattern arguments (patterns built from parts,
+   chosen by a ternary or a `match`, held in an array, at file level or in
+   a global constant of another file), and ends its report on the number of
+   those built at run time, which no rule could verify: `Not verifiable: 3
+   pattern arguments (1 dynamic, 1 around a dynamic part, 1 around
+   preg_quote())`. The line goes to stderr with `--format=json`, `github`,
+   `checkstyle` or `junit`, and `--quiet` prints none.
+ * `--report-dynamic` lists each pattern argument built at run time as an
+   info (`regex.lint.source.dynamic`, `regex.lint.source.dynamicPart`,
+   `regex.lint.source.quotedPart`), a `notice` with `--format=github`; the
+   exit code does not move. `--no-report-dynamic` turns the list off for one
+   run when `regex.json` turns it on. A baseline entry gains `expression`,
+   the argument as written for such an issue and `null` otherwise; a
+   baseline written before the key is read as it was.
  * `regex lint --php-version` takes a range, as a Composer constraint
    (`--php-version='>=8.1'`), and the banner's `Target` row names the later
    versions judged after the floor.

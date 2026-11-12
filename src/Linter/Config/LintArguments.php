@@ -36,6 +36,8 @@ final class LintArguments
      *                                                                   that silences nothing is reported
      * @param bool                               $readTwig               whether the Twig templates under the paths
      *                                                                   are read for their "matches" patterns
+     * @param bool                               $reportDynamic          whether each pattern argument built at run
+     *                                                                   time is reported where it stands
      */
     public function __construct(
         public readonly array $paths,
@@ -62,6 +64,7 @@ final class LintArguments
         public readonly int $complexityThreshold = 50,
         public readonly bool $reportUnmatchedIgnores = true,
         public readonly bool $readTwig = true,
+        public readonly bool $reportDynamic = false,
     ) {}
 
     /**
@@ -102,6 +105,7 @@ final class LintArguments
         ?int $complexityThreshold = null,
         ?bool $reportUnmatchedIgnores = null,
         ?bool $readTwig = null,
+        ?bool $reportDynamic = null,
     ): self {
         return new self(
             paths: $paths ?? $this->paths,
@@ -128,6 +132,7 @@ final class LintArguments
             complexityThreshold: $complexityThreshold ?? $this->complexityThreshold,
             reportUnmatchedIgnores: $reportUnmatchedIgnores ?? $this->reportUnmatchedIgnores,
             readTwig: $readTwig ?? $this->readTwig,
+            reportDynamic: $reportDynamic ?? $this->reportDynamic,
         );
     }
 
@@ -216,6 +221,11 @@ final class LintArguments
         $reportUnmatchedIgnores = $defaults['reportUnmatchedIgnores'] ?? true;
         if (!\is_bool($reportUnmatchedIgnores)) {
             $reportUnmatchedIgnores = true;
+        }
+
+        $reportDynamic = $defaults['reportDynamic'] ?? false;
+        if (!\is_bool($reportDynamic)) {
+            $reportDynamic = false;
         }
 
         $jobs = $defaults['jobs'] ?? -1; // -1 means auto-detect
@@ -315,6 +325,7 @@ final class LintArguments
             checkComplexity: $checkComplexity,
             complexityThreshold: $complexityThreshold,
             reportUnmatchedIgnores: $reportUnmatchedIgnores,
+            reportDynamic: $reportDynamic,
         );
     }
 

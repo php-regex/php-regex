@@ -146,6 +146,30 @@ final class LintConfigSchemaTest extends TestCase
         $this->assertSame('C', $loaded->config['locale'] ?? null);
     }
 
+    /**
+     * reportDynamic is a boolean, false unless the file says otherwise:
+     * the schema says so and describes it, and the loader gives the value
+     * it reads.
+     */
+    #[Test]
+    public function test_the_report_of_the_arguments_built_at_run_time_is_a_boolean_off_by_default(): void
+    {
+        $definition = LintConfigSchema::definition();
+        $this->assertIsArray($definition['properties'] ?? null);
+        $this->assertIsArray($definition['properties']['reportDynamic'] ?? null);
+        $property = $definition['properties']['reportDynamic'];
+
+        $this->assertSame('boolean', $property['type'] ?? null);
+        $this->assertFalse($property['default'] ?? null);
+        $this->assertIsString($property['description'] ?? null);
+        $this->assertNotSame('', trim((string) $property['description']));
+
+        $this->enterProject(['regex.json' => '{"reportDynamic": true}']);
+        $loaded = (new LintConfigLoader())->load();
+        $this->assertNull($loaded->error);
+        $this->assertTrue($loaded->config['reportDynamic'] ?? null);
+    }
+
     #[Test]
     #[DataProvider('provideRefusedConfigs')]
     public function test_schema_and_loader_both_refuse(string $json): void
@@ -194,6 +218,10 @@ final class LintConfigSchemaTest extends TestCase
         yield 'complexity threshold as a float' => ['json' => '{"checks": {"complexity": {"threshold": 12.5}}}'];
         yield 'complexity enabled as a string' => ['json' => '{"checks": {"complexity": {"enabled": "yes"}}}'];
         yield 'unknown complexity key' => ['json' => '{"checks": {"complexity": {"max": 20}}}'];
+        yield 'reportDynamic as a string' => ['json' => '{"reportDynamic": "yes"}'];
+        yield 'reportDynamic as a number' => ['json' => '{"reportDynamic": 1}'];
+        yield 'reportDynamic as null' => ['json' => '{"reportDynamic": null}'];
+        yield 'reportDynamic among the checks' => ['json' => '{"checks": {"reportDynamic": true}}'];
         // A PHP version range: a Composer constraint with a lowest version
         // and x.y[.z] versions only, or a {"min", "max"} object with both
         // bounds and nothing else.
@@ -292,6 +320,9 @@ final class LintConfigSchemaTest extends TestCase
         yield 'complexity threshold of one' => ['json' => '{"checks": {"complexity": {"threshold": 1}}}'];
         yield 'empty lists' => ['json' => '{"paths": [], "exclude": [], "extraction": {"interop": [], "functions": []}}'];
         yield 'lint rules in full' => ['json' => '{"checks": {"lint": {"rules": {"regex.lint.quantifier.useless": false, "regex.lint.redos.search": false, "regex.lint.compat.meaningChanges": true}}}}'];
+        yield 'reportDynamic on' => ['json' => '{"reportDynamic": true}'];
+        yield 'reportDynamic off' => ['json' => '{"reportDynamic": false}'];
+        yield 'reportDynamic beside the report of the markers' => ['json' => '{"reportDynamic": true, "reportUnmatchedIgnores": false}'];
         // A single version stays as it was read: exact.
         yield 'phpVersion as a major.minor' => ['json' => '{"phpVersion": "8.1"}'];
         yield 'phpVersion with a patch' => ['json' => '{"phpVersion": "8.1.4"}'];

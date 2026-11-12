@@ -15,6 +15,8 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Tests\Support\ArgumentCarriers;
+use PHPRegex\Tests\Support\JsonContract;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -40,7 +42,8 @@ final class JsonFormatterTest extends TestCase
         /** @var array{stats: array{errors: int, warnings: int, optimizations: int, redos_errors: int, infos: int, lint_errors: int, parser_fallbacks: int, not_analyzed: int}, results: array<int, array<string, mixed>>} $decoded */
         $decoded = json_decode($payload, true, 512, \JSON_THROW_ON_ERROR);
 
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], $decoded['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], JsonContract::issueCounts($decoded['stats']));
+        $this->assertSame(ArgumentCarriers::none(), ArgumentCarriers::countsOf($decoded['stats']));
         $this->assertSame('/a+/', $decoded['results'][0]['pattern']);
         $this->assertArrayNotHasKey('problems', $decoded['results'][0]);
     }

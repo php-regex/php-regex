@@ -19,7 +19,10 @@ use PHPRegex\Parser\Text\Ascii;
 /**
  * An expression of a PHP file as the in-file resolution reads it: a
  * literal, a concatenation, a reference to a constant, a local variable or
- * a property, an array, or something it does not follow.
+ * a property, an array, an item of one or each of them in turn, a text
+ * known at run time only, one of several values, a value with another to
+ * fall back on, a sprintf() or an implode() call, or something it does not
+ * follow.
  *
  * Both extraction strategies translate their own syntax tree into this
  * form, so the rules deciding what a name proves are written once, in
@@ -38,30 +41,64 @@ final class ValueExpr
     public const ARRAY = 'array';
     public const NON_STRING = 'non-string';
     public const UNKNOWN = 'unknown';
+    public const HOLE = 'hole';
+    public const SET = 'set';
+    public const FALLBACK = 'fallback';
+    public const FORMAT = 'format';
+    public const JOIN = 'join';
+    public const ITEM = 'item';
+    public const EACH = 'each';
 
     /**
-     * @param string                             $kind       one of the constants above
-     * @param string                             $value      the literal's value, or the name of the constant,
-     *                                                       variable or property
-     * @param int                                $offset     where the expression starts in the file
-     * @param int                                $line       the line it starts on
-     * @param list<self>                         $parts      the operands of a concatenation
-     * @param list<array{0: self|null, 1: self}> $items      the key, if any, and the value of each array item
-     * @param string|null                        $class      the lowercase class a class constant or a property
-     *                                                       belongs to; null when no class of the file is known
-     * @param bool                               $lateStatic a class constant read through static::
-     * @param list<string>                       $names      the constant keys a name may reach, in the order PHP
-     *                                                       tries them
-     * @param int|null                           $scope      the function body a variable belongs to; null at file
-     *                                                       scope
-     * @param string                             $written    the reference as the source writes it: "self::RE"
-     * @param string|null                        $file       the file a literal or a concatenation of another file
-     *                                                       is written in; null for one of the file being read
-     * @param int|null                           $column     its column on its line, one-based, in bytes, known
-     *                                                       with the file
-     * @param TargetConstraint|null              $guard      the versions the guards of that file keep around it;
-     *                                                       null when none holds there, or for one of the file
-     *                                                       being read, whose guards the reader applies
+     * What a loop takes of an array at each turn.
+     */
+    public const KEYS = 'keys';
+    public const VALUES = 'values';
+
+    /**
+     * @param string                             $kind         one of the constants above
+     * @param string                             $value        the literal's value, the name of the constant,
+     *                                                         variable or property, the operator of a
+     *                                                         fallback, "?:" or "??", or what a loop takes of
+     *                                                         an array, its keys or its values
+     * @param int                                $offset       where the expression starts in the file
+     * @param int                                $line         the line it starts on
+     * @param list<self>                         $parts        the operands of a concatenation; the two sides of a
+     *                                                         fallback; the format of a sprintf() and its
+     *                                                         arguments; the separator of an implode(), when it is
+     *                                                         given one, and its items; an array and the key
+     *                                                         of the item read in it; the array a loop
+     *                                                         iterates
+     * @param list<array{0: self|null, 1: self}> $items        the key, if any, and the value of each array item
+     * @param string|null                        $class        the lowercase class a class constant or a property
+     *                                                         belongs to; null when no class of the file is known
+     * @param bool                               $lateStatic   a class constant read through static::
+     * @param list<string>                       $names        the constant keys a name may reach, in the order PHP
+     *                                                         tries them; for a hole, a sprintf() or an implode(),
+     *                                                         the lowercase functions its call may reach
+     * @param int|null                           $scope        the function body a variable belongs to,
+     *                                                         InFileValueResolver::FILE at the level of the
+     *                                                         file; null in a class body
+     * @param string                             $written      the reference as the source writes it: "self::RE";
+     *                                                         for a hole, the operand as written
+     * @param string|null                        $file         the file a literal or a concatenation of another file
+     *                                                         is written in; null for one of the file being read
+     * @param int|null                           $column       its column on its line, one-based, in bytes, known
+     *                                                         with the file
+     * @param TargetConstraint|null              $guard        the versions the guards of that file keep around it;
+     *                                                         null when none holds there, or for one of the file
+     *                                                         being read, whose guards the reader applies
+     * @param bool                               $quoted       a hole that is a preg_quote() call
+     * @param string|null                        $delimiter    the delimiter that call is given, when a string
+     *                                                         literal gives it
+     * @param list<self>                         $alternatives the values a set may take, in the order the source
+     *                                                         gives them
+     * @param int|null                           $integer      the integer a scalar that is no string is
+     * @param list<list<string>>                 $calls        for a class constant read in a closure, the
+     *                                                         lowercase functions the call each closure around
+     *                                                         it is written in may reach: the class is the one
+     *                                                         around them when each is a function of PHP that
+     *                                                         calls its closure and lets it go
      */
     private function __construct(
         public readonly string $kind,
@@ -78,11 +115,16 @@ final class ValueExpr
         public readonly ?string $file = null,
         public readonly ?int $column = null,
         public readonly ?TargetConstraint $guard = null,
+        public readonly bool $quoted = false,
+        public readonly ?string $delimiter = null,
+        public readonly array $alternatives = [],
+        public readonly ?int $integer = null,
+        public readonly array $calls = [],
     ) {}
 
-    public static function literal(string $value, int $offset, int $line, ?string $file = null, ?int $column = null): self
+    public static function literal(string $value, int $offset, int $line, ?string $file = null, ?int $column = null, ?TargetConstraint $guard = null): self
     {
-        return new self(self::LITERAL, $value, $offset, $line, file: $file, column: $column);
+        return new self(self::LITERAL, $value, $offset, $line, file: $file, column: $column, guard: $guard);
     }
 
     /**
@@ -102,6 +144,8 @@ final class ValueExpr
             // need no place of their own.
             self::CONCAT => new self(self::CONCAT, offset: $this->offset, line: $this->line, parts: $this->parts, file: $file, column: PendingPattern::column($content, $this->offset), guard: $guards->at($this->offset)),
             self::ARRAY => new self(self::ARRAY, items: array_map(static fn (array $item): array => [$item[0]?->inFile($file, $content, $guards), $item[1]->inFile($file, $content, $guards)], $this->items)),
+            self::SET => new self(self::SET, alternatives: array_map(static fn (self $alternative): self => $alternative->inFile($file, $content, $guards), $this->alternatives)),
+            self::FALLBACK => new self(self::FALLBACK, $this->value, $this->offset, $this->line, parts: array_map(static fn (self $part): self => $part->inFile($file, $content, $guards), $this->parts)),
             default => $this,
         };
     }
@@ -114,9 +158,12 @@ final class ValueExpr
         return new self(self::CONCAT, offset: $offset, line: $line, parts: $parts);
     }
 
-    public static function classConstant(?string $class, string $name, bool $lateStatic, string $written): self
+    /**
+     * @param list<list<string>> $calls the functions the call each closure around the read is written in may reach
+     */
+    public static function classConstant(?string $class, string $name, bool $lateStatic, string $written, array $calls = []): self
     {
-        return new self(self::CLASS_CONSTANT, $name, class: $class, lateStatic: $lateStatic, written: $written);
+        return new self(self::CLASS_CONSTANT, $name, class: $class, lateStatic: $lateStatic, written: $written, calls: $calls);
     }
 
     /**
@@ -133,7 +180,7 @@ final class ValueExpr
             return self::unknown();
         }
 
-        return new self(self::CLASS_CONSTANT, self::enumCaseName($case->value), class: $case->class, lateStatic: $case->lateStatic, written: $case->written.'->value');
+        return new self(self::CLASS_CONSTANT, self::enumCaseName($case->value), class: $case->class, lateStatic: $case->lateStatic, written: $case->written.'->value', calls: $case->calls);
     }
 
     /**
@@ -176,11 +223,113 @@ final class ValueExpr
 
     /**
      * A scalar that is no string, a number, true or false: never a pattern,
-     * and, as an array key, an int.
+     * and, as an array key, an int. An integer keeps its value: joined to
+     * a string, it reads as PHP writes it, in decimal.
      */
-    public static function nonString(): self
+    public static function nonString(?int $integer = null): self
     {
-        return new self(self::NON_STRING);
+        return new self(self::NON_STRING, integer: $integer);
+    }
+
+    /**
+     * What names an item of an array when true, false, null or a float
+     * is written as its key: the key PHP casts it to. True is the index
+     * 1 and false the index 0, null the empty string, a float its integer
+     * part, toward zero. A float no integer holds is a number whose key
+     * is not told.
+     */
+    public static function castKey(bool|float|null $value, int $offset, int $line): self
+    {
+        if (null === $value) {
+            return self::literal('', $offset, $line);
+        }
+
+        if (\is_bool($value)) {
+            return self::nonString((int) $value);
+        }
+
+        return is_finite($value) && $value >= (float) \PHP_INT_MIN && $value < (float) \PHP_INT_MAX ? self::nonString((int) $value) : self::nonString();
+    }
+
+    /**
+     * A text known at run time only, where a string is read: what
+     * preg_quote() returns, which reads as literal characters, or, not
+     * quoted, anything.
+     *
+     * @param string|null  $delimiter the second argument of preg_quote(), when a string literal gives it
+     * @param string       $written   the operand as the source writes it
+     * @param list<string> $names     the lowercase functions the call may reach, in the order PHP tries
+     *                                them: one the file declares is not the function of PHP
+     */
+    public static function hole(bool $quoted, ?string $delimiter, string $written, array $names = []): self
+    {
+        return new self(self::HOLE, names: $names, written: $written, quoted: $quoted, delimiter: $delimiter);
+    }
+
+    /**
+     * One of several values, whichever path the code takes: the arms of a
+     * ternary or of a match.
+     *
+     * @param list<self> $alternatives
+     * @param int        $offset       where the expression starts, -1 when unknown
+     */
+    public static function setOf(array $alternatives, int $offset = -1, int $line = 0): self
+    {
+        return new self(self::SET, offset: $offset, line: $line, alternatives: $alternatives);
+    }
+
+    /**
+     * A value, and the one PHP takes when it passes over the first: "A ?:
+     * B" passes over an empty A, "A ?? B" over a null one.
+     *
+     * @param bool $coalescing whether the operator is "??"
+     */
+    public static function fallback(self $first, self $second, bool $coalescing, int $offset, int $line): self
+    {
+        return new self(self::FALLBACK, $coalescing ? '??' : '?:', $offset, $line, parts: [$first, $second]);
+    }
+
+    /**
+     * A call to sprintf(): its format, then its arguments.
+     *
+     * @param non-empty-list<self> $parts
+     * @param list<string>         $names the lowercase functions the call may reach, in the order PHP tries them
+     */
+    public static function format(array $parts, array $names, int $offset, int $line): self
+    {
+        return new self(self::FORMAT, offset: $offset, line: $line, parts: $parts, names: $names);
+    }
+
+    /**
+     * A call to implode() or join(): its separator and its items, or its
+     * items alone, which PHP joins with nothing.
+     *
+     * @param non-empty-list<self> $parts
+     * @param list<string>         $names the lowercase functions the call may reach, in the order PHP tries them
+     */
+    public static function join(array $parts, array $names, int $offset, int $line): self
+    {
+        return new self(self::JOIN, offset: $offset, line: $line, parts: $parts, names: $names);
+    }
+
+    /**
+     * An item of an array, $map['word'] or self::LIST[0]: the array, a
+     * variable or a constant, and the key the item is read by.
+     */
+    public static function item(self $array, self $key, int $offset, int $line): self
+    {
+        return new self(self::ITEM, offset: $offset, line: $line, parts: [$array, $key]);
+    }
+
+    /**
+     * What the target of a foreach holds at each turn: one of the values
+     * of the array the loop iterates, or one of its keys.
+     *
+     * @param bool $keys whether the target is the key
+     */
+    public static function each(self $array, bool $keys): self
+    {
+        return new self(self::EACH, $keys ? self::KEYS : self::VALUES, parts: [$array]);
     }
 
     public static function unknown(): self
@@ -223,6 +372,6 @@ final class ValueExpr
      */
     public function isResolvable(): bool
     {
-        return self::CONCAT === $this->kind || $this->isReference();
+        return \in_array($this->kind, [self::CONCAT, self::SET, self::FALLBACK, self::FORMAT, self::JOIN, self::ITEM, self::EACH], true) || $this->isReference();
     }
 }

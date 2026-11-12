@@ -23,6 +23,7 @@ use PhpParser\Node\Name;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Resolution\QuotedPattern;
 use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Context;

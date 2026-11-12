@@ -30,6 +30,7 @@ use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\ArgumentCarriers;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\Newlines;
@@ -247,6 +248,85 @@ final class ConsoleLintRunnerTest extends TestCase
     }
 
     /**
+     * A run that found no pattern, in a project whose pattern arguments
+     * are all built at run time, still says how many it could not verify:
+     * on one line after "No regex patterns found." on the console, as the
+     * five counts in a machine report.
+     */
+    #[Test]
+    public function test_no_pattern_still_says_how_many_arguments_were_not_verified(): void
+    {
+        $status = $this->lint(self::request([], arguments: ['raw_shell' => 1, 'opaque' => 2]));
+
+        $this->assertSame(0, $status);
+        $this->assertSame(
+            ['PASS No regex patterns found.', 'Not verifiable: 3 pattern arguments (2 dynamic, 1 around a dynamic part)'],
+            self::fromTheSummary($this->standard()),
+        );
+    }
+
+    #[Test]
+    public function test_no_pattern_still_counts_the_arguments_in_the_machine_report(): void
+    {
+        $status = $this->lint(self::request([], format: 'json', arguments: ['raw_shell' => 1, 'opaque' => 2]));
+
+        $this->assertSame(0, $status);
+        $document = JsonContract::decodeDocument($this->standard());
+        JsonContract::assertShape('lint', $document);
+        $this->assertSame([], $document['results'] ?? null);
+        $this->assertSame(['constant' => 0, 'finite_set' => 0, 'quoted_shell' => 0, 'raw_shell' => 1, 'opaque' => 2], ArgumentCarriers::countsOf($document['stats'] ?? null));
+    }
+
+    /**
+     * The bridges sum the arguments built at run time up on the line
+     * after the summary, as `regex lint` does, and report none of them one
+     * by one.
+     */
+    #[Test]
+    public function test_a_report_is_followed_by_the_arguments_not_verified(): void
+    {
+        $status = $this->lint(self::request(['/a/'], arguments: ['constant' => 1, 'quoted_shell' => 1, 'raw_shell' => 1, 'opaque' => 2]));
+
+        $this->assertSame(0, $status);
+        $lines = self::fromTheSummary($this->standard());
+        $this->assertSame('PASS No issues found, 0 optimizations available.', $lines[0] ?? null);
+        // Somewhere after the summary line, once: before or after the line
+        // that times the run is not read here.
+        $this->assertSame(
+            ['Not verifiable: 4 pattern arguments (2 dynamic, 1 around a dynamic part, 1 around preg_quote())'],
+            array_values(array_filter(\array_slice($lines, 1), static fn (string $line): bool => str_contains($line, 'Not verifiable'))),
+        );
+        $this->assertSame(1, substr_count($this->standard(), 'Not verifiable'));
+        $this->assertStringNotContainsString('it is not verified', $this->standard());
+        $this->assertStringNotContainsString('Not verifiable', $this->error());
+    }
+
+    /**
+     * Under --quiet the console still writes nothing.
+     */
+    #[Test]
+    public function test_quiet_console_says_nothing_of_the_arguments_not_verified(): void
+    {
+        $status = $this->lint(self::request(['/a/'], arguments: ['opaque' => 2]), OutputInterface::VERBOSITY_QUIET);
+
+        $this->assertSame(0, $status);
+        $this->assertSame('', $this->standard());
+        $this->assertSame('', $this->error());
+    }
+
+    /**
+     * A run whose arguments are all verified adds no line.
+     */
+    #[Test]
+    public function test_a_report_is_followed_by_nothing_when_every_argument_is_verified(): void
+    {
+        $this->lint(self::request(['/a/'], arguments: ['constant' => 3, 'finite_set' => 1]));
+
+        $this->assertStringNotContainsString('Not verifiable', $this->standard());
+        $this->assertStringNotContainsString('Not verifiable', $this->error());
+    }
+
+    /**
      * A file a source could not read fails the run, even when no pattern
      * was found, and takes its place by file and line in the report.
      */
@@ -431,12 +511,35 @@ final class ConsoleLintRunnerTest extends TestCase
     }
 
     /**
+     * The summary line of the standard output and every line written
+     * after it that is not blank, each trimmed, its runs of spaces made
+     * one.
+     *
+     * @return list<string>
+     */
+    private static function fromTheSummary(string $standard): array
+    {
+        $lines = [];
+        foreach (explode("\n", $standard) as $line) {
+            $line = (string) preg_replace('/ {2,}/', ' ', trim($line));
+            if (1 === preg_match('/^(?:PASS|WARN|FAIL)\b/', $line)) {
+                $lines = [$line];
+            } elseif ([] !== $lines && '' !== $line) {
+                $lines[] = $line;
+            }
+        }
+
+        return $lines;
+    }
+
+    /**
      * @param list<string>                 $patterns
      * @param list<string>|null            $paths
      * @param list<string>                 $exclude
      * @param list<string>                 $warnings
      * @param list<LintResult>             $unread
-     * @param (\Closure(): LintSetup)|null $setup    a setup that fails
+     * @param (\Closure(): LintSetup)|null $setup     a setup that fails
+     * @param array<string, int>           $arguments the pattern arguments the source anchored, by state
      *
      * @return \Closure(self): ConsoleLintRequest
      */
@@ -453,9 +556,13 @@ final class ConsoleLintRunnerTest extends TestCase
         array $unread = [],
         ?\Closure $setup = null,
         ?\Throwable $failure = null,
+        array $arguments = [],
     ): \Closure {
-        return static function (self $test) use ($patterns, $format, $paths, $pathsSetting, $jobs, $exclude, $excludeBase, $projectDir, $warnings, $unread, $setup, $failure): ConsoleLintRequest {
-            $occurrences = array_map(static fn (string $pattern): PatternOccurrence => new PatternOccurrence($pattern, 'test.php', 3, 'php'), $patterns);
+        return static function (self $test) use ($patterns, $format, $paths, $pathsSetting, $jobs, $exclude, $excludeBase, $projectDir, $warnings, $unread, $setup, $failure, $arguments): ConsoleLintRequest {
+            $occurrences = [
+                ...array_map(static fn (string $pattern): PatternOccurrence => new PatternOccurrence($pattern, 'test.php', 3, 'php'), $patterns),
+                ...ArgumentCarriers::of($arguments, 'other.php'),
+            ];
             $source = new class($test, $occurrences, $failure) implements PatternSourceInterface {
                 /**
                  * @param list<PatternOccurrence> $patterns

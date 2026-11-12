@@ -290,8 +290,12 @@ regex.json ignored: Invalid "extraction.interop" in /app/regex.json: unknown pre
 A pattern held in a constant, a local variable or a property of the same
 document is diagnosed where its literal is written, once, as `regex lint`
 reports it; `@regex-ignore` on that line silences it, and a marker on the
-call does not. A class constant or an enum case of another file of the
-workspace, or of `vendor/`, holding a pattern, `preg_match(Patterns::BROKEN, $s)`,
+call does not. A ternary or a `match` whose arms are literals is
+diagnosed at each arm. A pattern built at the call from several parts, a
+concatenation or an interpolated string, is not diagnosed in the editor:
+`regex lint` reads it. A class constant, an enum case or a global constant
+(`const` or `define()`) of another file of the workspace, or of `vendor/`,
+holding a pattern, `preg_match(Patterns::BROKEN, $s)`,
 is read as `regex lint` reads it, an open document standing for its file;
 the lint reports the pattern at its literal, the editor reports it at the
 argument naming it, each message saying which constant and where it is

@@ -18,12 +18,14 @@ use PHPRegex\Linter\Formatter\ConsoleTagFormatter;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
+use PHPRegex\Linter\Formatter\LintSummary;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintRunner;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSetup;
+use PHPRegex\Linter\LintStatsCounter;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\Parallel\WorkerCount;
 use PHPRegex\Parser\Json\JsonDocument;
@@ -138,13 +140,20 @@ final class ConsoleLintRunner
         }
 
         if ([] === $unread && LintService::holdsNothing($patterns, $request->reportUnmatchedIgnores)) {
+            // A run that found no pattern still counts the pattern
+            // arguments it read: those built at run time are all it holds.
+            $stats = LintStatsCounter::count([], $patterns);
             if ($console) {
                 $output->writeln('');
                 $output->writeln('  <bg=green;fg=white;options=bold> PASS </> <fg=gray>No regex patterns found.</>');
+                $notVerifiable = LintSummary::notVerifiable($stats);
+                if (null !== $notVerifiable) {
+                    $output->writeln('  <fg=gray>'.OutputFormatter::escape($notVerifiable).'</>');
+                }
                 $output->writeln('');
                 ConsoleWriter::footer($output);
             } else {
-                $this->writeReport($format, $output, $this->formatters->get($format)->format(new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0])));
+                $this->writeReport($format, $output, $this->formatters->get($format)->format(new LintReport([], $stats)));
             }
 
             return 0;

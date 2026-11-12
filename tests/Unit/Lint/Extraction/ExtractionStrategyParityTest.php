@@ -21,6 +21,7 @@ use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\CpuClock;
+use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresMethod;
 use PHPUnit\Framework\Attributes\Test;
@@ -35,6 +36,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExtractionStrategyParityTest extends TestCase
 {
+    use ExtractsWithBothStrategies;
+
     /**
      * @var list<string>
      */
@@ -519,6 +522,136 @@ final class ExtractionStrategyParityTest extends TestCase
             'Preg::replaceCallbackArray()',
         ], $fromAst);
         $this->assertSame($fromAst, $fromTokens);
+    }
+
+    /**
+     * The fixture holds one pattern argument of each shape, the items of
+     * an array literal, those of an array held in a variable and the keys
+     * of a callback array included: both
+     * strategies anchor the same arguments, at the same places, and give
+     * each the same state. They return them beside the patterns extract()
+     * returns, one per argument and no more.
+     */
+    #[Test]
+    public function test_both_strategies_give_each_argument_of_the_states_fixture_its_state(): void
+    {
+        $code = file_get_contents(__DIR__.'/../../../Fixtures/Extractor/parity_states.php');
+        $this->assertIsString($code);
+
+        $this->assertSame([
+            '/state-namespace-const/',
+            '/state-enum-case/',
+            '/state-class-const/',
+            '/state-closure/',
+            '/state-const-wide/',
+            '/state-const-narrow/',
+            '/state-property/',
+            '/state-literal/',
+            '/state-concat/',
+            '/state-abc+/',
+            '/^state-a{3}$/',
+            '/state-variable/',
+            // Composed at the call, as PHP 8.4 builds them: $part is 'abc',
+            // sprintf('/state-%s-%d/', 'sprintf', 7) is "/state-sprintf-7/",
+            // implode('|', ['/state-implode', 'joined/']) is
+            // "/state-implode|joined/".
+            '/state-abc-operand/',
+            '/state-abc-interpolated/',
+            '/state-sprintf-7/',
+            '/state-implode|joined/',
+            // The two items of $words: one named by its key, either of
+            // them by a key the file does not spell.
+            '/state-item-by-key/',
+            '/state-item-other/',
+            '/state-branch-a/',
+            '/state-branch-b/',
+            '/state-then/',
+            '/state-else/',
+            '/state-match-a/',
+            '/state-match-b/',
+            '/state-loop-value-a/',
+            '/state-loop-value-b/',
+            '/state-loop-key-a/',
+            '/state-loop-key-b/',
+            // '~^state' . DIRECTORY_SEPARATOR . '~' where the separator is
+            // a slash, then where it is a backslash.
+            '~^state/~',
+            '~^state\\~',
+            '/state-item/',
+            '/state-key/',
+            '/state-list-a/',
+            '/state-list-b/',
+            // At file level, under the rule FileLevelVariableTest holds.
+            '/state-file-level/',
+            '/state-loop-a/',
+            '/state-loop-b/',
+        ], $this->patternsReadByBoth($code));
+
+        $expected = [
+            // One pattern.
+            ['state' => 'constant', 'expression' => "'/state-literal/'"],
+            ['state' => 'constant', 'expression' => "'/state-' . 'concat/'"],
+            ['state' => 'constant', 'expression' => 'NAMESPACED', 'at' => 'NAMESPACED, $subject)'],
+            ['state' => 'constant', 'expression' => 'self::RE'],
+            ['state' => 'constant', 'expression' => 'StateKind::Word->value'],
+            ['state' => 'constant', 'expression' => "'/state-' . self::PART . '+/'"],
+            ['state' => 'constant', 'expression' => '$this->property'],
+            ['state' => 'constant', 'expression' => "'/^state-a{' . self::MAX . '}$/'"],
+            ['state' => 'constant', 'expression' => '$once', 'at' => '$once, $subject)'],
+            ['state' => 'constant', 'expression' => "'/state-' . \$part . '-operand/'"],
+            ['state' => 'constant', 'expression' => '"/state-{$part}-interpolated/"'],
+            ['state' => 'constant', 'expression' => "sprintf('/state-%s-%d/', 'sprintf', 7)"],
+            ['state' => 'constant', 'expression' => "implode('|', ['/state-implode', 'joined/'])"],
+            ['state' => 'constant', 'expression' => "\$words['word']"],
+            ['state' => 'constant', 'expression' => 'self::CLOSED'],
+            // One of several patterns.
+            ['state' => 'finite_set', 'expression' => '$branches', 'at' => '$branches, $subject)'],
+            ['state' => 'finite_set', 'expression' => "\$flag ? '/state-then/' : '/state-else/'"],
+            ['state' => 'finite_set', 'expression' => "match (\$flag) { true => '/state-match-a/', false => '/state-match-b/' }"],
+            ['state' => 'finite_set', 'expression' => '$looped', 'at' => '$looped, $subject)'],
+            ['state' => 'finite_set', 'expression' => '$key', 'at' => '$key, $subject)'],
+            ['state' => 'finite_set', 'expression' => '$words[$given]'],
+            ['state' => 'finite_set', 'expression' => 'self::BRANCHING'],
+            ['state' => 'finite_set', 'expression' => "'~^state' . \\DIRECTORY_SEPARATOR . '~'"],
+            // A static pattern around preg_quote() texts.
+            ['state' => 'quoted_shell', 'expression' => "'/^state-' . preg_quote(\$word, '/') . '$/'"],
+            ['state' => 'quoted_shell', 'expression' => "'/^state-' . preg_quote(\$word) . '$/'"],
+            // A static pattern around another part built at run time.
+            ['state' => 'raw_shell', 'expression' => "'/^state-' . \$word . '$/'"],
+            ['state' => 'raw_shell', 'expression' => "'/^state-' . 1.5 . '$/'"],
+            ['state' => 'raw_shell', 'expression' => '"/^state-{$word}$/"'],
+            // Nothing static.
+            ['state' => 'opaque', 'expression' => '$given', 'at' => '$given, $subject)'],
+            ['state' => 'opaque', 'expression' => '$this->build()'],
+            ['state' => 'opaque', 'expression' => 'build_state()'],
+            ['state' => 'opaque', 'expression' => '$other->pattern'],
+            ['state' => 'opaque', 'expression' => "\$map['state']"],
+            ['state' => 'opaque', 'expression' => "\$word . 'state' . \$word"],
+            ['state' => 'opaque', 'expression' => "preg_quote(\$word) . '/state/'"],
+            // An array literal: one argument per item, a key per pattern.
+            ['state' => 'constant', 'expression' => "'/state-item/'"],
+            ['state' => 'opaque', 'expression' => "\$given . '/item/'"],
+            ['state' => 'raw_shell', 'expression' => "'/^state-item-' . \$word . '/'"],
+            ['state' => 'constant', 'expression' => "'/state-key/'"],
+            ['state' => 'quoted_shell', 'expression' => "'/^state-key-' . preg_quote(\$word, '/') . '/'"],
+            // An array held in a variable: one argument per item, where
+            // the call names it.
+            ['state' => 'constant', 'expression' => '$list', 'at' => "\$list, '', \$subject)"],
+            ['state' => 'constant', 'expression' => '$list', 'at' => "\$list, '', \$subject)"],
+            // Outside any class. The two at file level are read under the
+            // rule FileLevelVariableTest holds, and move with its rows.
+            ['state' => 'constant', 'expression' => '$fileLevel', 'at' => '$fileLevel, $subject)'],
+            ['state' => 'finite_set', 'expression' => '$each', 'at' => '$each, $subject)'],
+            ['state' => 'opaque', 'expression' => '$captured', 'at' => '$captured, $subject)'],
+        ];
+
+        $this->assertArgumentsReadByBoth($expected, $code);
+
+        // Every argument of the fixture ends in exactly one state.
+        $counts = array_count_values($this->statesReadByBoth($code));
+        ksort($counts);
+        $this->assertSame(['constant' => 20, 'finite_set' => 9, 'opaque' => 9, 'quoted_shell' => 3, 'raw_shell' => 4], $counts);
+        $this->assertSame(45, array_sum($counts));
     }
 
     private function write(string $content): string

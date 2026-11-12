@@ -334,7 +334,7 @@ final class AnalysisService
     {
         // A file read with the tokenizer instead of the PHP parser is
         // counted in the stats, never reported.
-        if ($occurrence->isIgnored || null !== $occurrence->parserFallback || null !== $occurrence->ignores) {
+        if ($occurrence->isIgnored || null !== $occurrence->parserFallback || null !== $occurrence->ignores || null !== $occurrence->state) {
             return [];
         }
 
@@ -687,7 +687,7 @@ final class AnalysisService
      */
     private function suggestOptimization(PatternOccurrence $occurrence, int $minSavings, OptimizerOptions $options, ?array $analyzed = null): ?array
     {
-        if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback || null !== $occurrence->ignores) {
+        if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback || null !== $occurrence->ignores || null !== $occurrence->state) {
             return null;
         }
 

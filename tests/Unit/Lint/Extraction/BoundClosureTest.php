@@ -20,9 +20,14 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Closure::bind(), bindTo() and call() give a closure another class and
- * another $this: in a closure or an arrow function, self::, static:: and
- * $this-> name no class the file can know. PHP 8.4 prints "/(/" for both
- * bindings below.
+ * another $this: in a closure or an arrow function some code may hold,
+ * self::, static:: and $this-> name no class the file can know. PHP 8.4
+ * prints "/(/" for both bindings below.
+ *
+ * A closure written directly in a call of a function of PHP that only
+ * calls it is held by nothing else: ClosurePassedToPhpFunctionTest holds
+ * what is read there. The closures here are returned, and whoever takes
+ * them may bind them.
  */
 final class BoundClosureTest extends TestCase
 {
@@ -38,6 +43,9 @@ final class BoundClosureTest extends TestCase
         yield '$this-> in a closure' => ['read' => 'return function ($s) { return preg_match($this->re, $s); };'];
         yield 'self:: in an arrow function' => ['read' => 'return fn ($s) => preg_match(self::RE, $s);'];
         yield '$this-> in an arrow function in a closure' => ['read' => 'return function () { return fn ($s) => preg_match($this->re, $s); };'];
+        yield 'static:: in an arrow function' => ['read' => 'return static fn ($s) => preg_match(static::RE, $s);'];
+        yield 'self:: in a closure assigned to a property' => ['read' => '$this->check = function ($s) { return preg_match(self::RE, $s); };'];
+        yield 'self:: in a closure held in an array' => ['read' => 'return [\'check\' => fn ($s) => preg_match(self::RE, $s)];'];
     }
 
     #[Test]
@@ -45,6 +53,8 @@ final class BoundClosureTest extends TestCase
     public function test_a_closure_may_be_bound_to_another_class(string $read): void
     {
         $this->assertExtractedByBoth([], self::matcher($read));
+        // The argument is held all the same: nothing is known of it.
+        $this->assertSame(['opaque'], $this->statesReadByBoth(self::matcher($read)));
     }
 
     #[Test]

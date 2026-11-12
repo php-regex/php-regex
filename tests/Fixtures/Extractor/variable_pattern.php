@@ -1,4 +1,4 @@
 <?php
 
-$pattern = "/test/";
+$pattern = (string) getenv('PATTERN');
 preg_match($pattern, (string) $subject);

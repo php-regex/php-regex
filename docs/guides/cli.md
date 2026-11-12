@@ -736,13 +736,19 @@ final class Slug
   the enum's own methods), never the case itself or its `->name`. A constant
   built from other constants (`'/'.self::PART.'/'`, `self::Re->value`) is
   folded, up to 32 constants deep; a cycle reads nothing, and neither does a value folded past 64 KiB. A
+  constant holding an integer is folded as the text PHP makes of it
+  (`'/^\d{1,'.self::MAX.'}$/'`), and one whose value is a ternary or a `??`
+  gives each value it may take. A
   constant array feeds `preg_replace()` its values and
   `preg_replace_callback_array()` its keys, and Symfony's `Regex` its
   `pattern` option alone. A `define()` or a global `const` of a name PHP
-  already defines, `PHP_EOL` say, is not read: PHP keeps its own value.
+  already defines, `PHP_EOL` say, is not read: PHP keeps its own value
+  (three of those are read with the values PHP gives them, see
+  [Constants of the platform](#constants-of-the-platform)).
 - **Local variables**: a variable of the function body whose every assignment
-  that may reach the call is a literal, a concatenation of literals or a
-  constant the file proves; each of those literals is a pattern the call may
+  that may reach the call is a literal, a concatenation of literals, a
+  constant the file proves, another such variable (`$b = $a`), or a ternary,
+  a `??` or a `match` over them; each of those literals is a pattern the call may
   receive. An assignment written after the variable's last read as a pattern
   never reaches it, unless a loop (`for`, `foreach`, `while`, `do`) holds
   both or the body has a `goto`: `$type = 'int'` after `preg_match($type,
@@ -751,12 +757,26 @@ final class Slug
   ends at its `while`, whatever its body is. The variable is
   not read when it may hold anything else: a parameter, a reference (`=&`),
   a compound assignment (`.=`, `??=`), `global`, `static`, a destructuring,
-  a `foreach` or `catch` target, `unset()`, `++` or `--`, a `yield` in a
+  a `catch` target, a `foreach` target (but the one of a `foreach` over
+  literals, see [Patterns chosen among several](#patterns-chosen-among-several)),
+  `unset()`, `++` or `--`, a `yield` in a
   generator that returns by reference (`function &gen()`), or the variable
-  passed to any other call, as `preg_match()`'s `$matches`. A function body
+  passed to any other call, as `preg_match()`'s `$matches`; `preg_quote()`,
+  `sprintf()`, `implode()` and `join()` take their arguments by value, and
+  leave it read. A function body
   that writes `$$name`, or calls `extract()`, `compact()`, `eval()` or
-  `include`, has none of its variables read. A variable does not cross into a closure,
-  and one at file scope is not read.
+  `include`, has none of its variables read. A variable does not cross into a closure.
+  One at file level, outside any function, is a global: whatever runs
+  between its assignment and the call that reads it may give it another
+  value, and PHP runs code where the file writes no call (a magic method,
+  an autoloader, a destructor). It is read when its assignment is a
+  statement of its own and nothing stands between the two but assignments
+  of literals to other variables, comments, and `if` conditions that
+  compare such values: `$pattern = '/^\d+$/'; if (preg_match($pattern, $line)) {`
+  is read; a call, a `new`, an `echo`, a property or an array access, a
+  loop or a declaration between them leaves it unread. Nor is it read
+  when the file holds an `include`, a `require`, `eval()`, `extract()`,
+  `compact()`, `$$name`, `global`, `$GLOBALS` or `declare(ticks=1)`.
 - **Properties**: `$this->p` with a literal default, `private` (in a `final`
   class, or a `final` property) or `protected` (in a `final` class that
   extends none), in a class using no trait the file does not declare,
@@ -773,7 +793,20 @@ final class Slug
   another file; a private one of a class that may be extended is left out as
   well, a rule deliberately stricter than PHP, which lets no subclass write it.
   In a closure or an arrow function, which `Closure::bind()` may give another
-  class, neither `$this->p` nor `self::X` nor `static::X` is read.
+  class, `$this->p` is not read, and `self::X` or `static::X` is read only
+  where the closure cannot be bound again: every closure around the call is
+  written as an argument of one of the PHP functions that call it
+  themselves, `array_map()`, `array_filter()`, `array_reduce()`,
+  `array_walk()`, `array_walk_recursive()`, `array_find()`,
+  `array_find_key()`, `array_any()`, `array_all()`, `usort()`, `uasort()`,
+  `uksort()`, `array_udiff()` and `array_uintersect()` with their `_assoc`
+  and `_uassoc` forms, `array_diff_ukey()`, `array_diff_uassoc()`,
+  `array_intersect_ukey()`, `array_intersect_uassoc()`,
+  `preg_replace_callback()`, `call_user_func()`, `call_user_func_array()`
+  and `iterator_apply()`. A closure kept in a variable first, or passed to a
+  method or to any other function, is not followed, and neither is one
+  passed to a function of the project that takes one of these names in the
+  namespace of the call.
   Writes the file does not show are not seen: those of another file, of
   Reflection, of `Closure::bind()`, or of `array_walk()` on the object from
   another scope. The default is still linted, as one of the values the
@@ -797,6 +830,146 @@ reported at the call. To silence a pattern read through a name,
 put `@regex-ignore` on the line of its declaration: a marker on the call does
 not reach it.
 
+##### Patterns built from parts
+
+A pattern put together where it is used is read when each of its parts is:
+
+```php
+final class Version
+{
+    private const MAJOR = 2;
+    private const MAX_DIGITS = 4;
+
+    public function isTag(string $tag): bool
+    {
+        $number = '\d{1,' . self::MAX_DIGITS . '}';
+
+        return 1 === preg_match("/^v($number\.)+$number$/", $tag);
+    }
+
+    public function isBranch(string $name): bool
+    {
+        return 1 === preg_match(sprintf('/^(%s)+-%d\.x$/', implode('|', ['feature', 'fix']), self::MAJOR), $name);
+    }
+}
+```
+
+```
+  app/Version.php:12:33
+      → /^v(\d{1,4}\.)+\d{1,4}$/
+    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  app/Version.php:17:33
+      → /^(feature|fix)+-2\.x$/
+    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+```
+
+- **A concatenation** of literals, constants, properties and local
+  variables. A variable is followed when one assignment written before the
+  call reaches it, as `$number` above. With two, one in an `if` and one in
+  its `else` say, the pattern is not read: nothing in the file tells which
+  value meets which piece. The same variable passed alone is read, each of
+  its literals being a pattern of its own. An assignment written in a
+  branch counts as the others do: the path that leaves the variable
+  undefined, where PHP raises a warning and joins an empty string, is not
+  followed.
+- **An interpolated string or a heredoc**: `"$x"`, `"{$x}"`, `"${x}"`,
+  `"$this->p"`, `"{$this->p}"`, `"$a[key]"` and `"{$a['key']}"`, each read
+  by the rules of the variable, the property or the array it names, and
+  the rest of the string as PHP decodes it (`\t`, `\$`, `\x41`). Any other
+  expression between the braces, a method call say, is a part built at run
+  time.
+- **An integer**, written in the call or held in a constant or a variable,
+  reads as PHP prints it: `'/^\d{' . 3 . '}$/'` is `/^\d{3}$/`. A float, a
+  boolean or `null` is not read.
+- **`sprintf()`** whose format is a literal or a constant holding no
+  directive but `%s`, `%d` and `%%`. A `%d` takes an integer; an argument
+  past the last directive is ignored, as PHP ignores it. A padding or a
+  position (`%05d`, `%1$s`), a named or a spread argument, or an argument
+  missing leaves the call unread, and so does `vsprintf()`.
+- **`implode()` and `join()`** of an array of literals, written in the call
+  or held in a constant, with a literal separator or none.
+
+One part may take several values: a ternary, a `match`, the target of a
+`foreach` over literals, a variable assigned one of these, a
+[constant of the platform](#constants-of-the-platform). The call then
+receives one pattern per value, each of them linted, 32 at most: past
+that number nothing is read. Two such parts in one pattern, or the same
+variable written twice, would give combinations the code may never build
+(`$open` and `$close` set together in each branch of an `if`), so the
+pattern is not read.
+
+##### Patterns chosen among several
+
+```php
+final class Tags
+{
+    private const RULES = ['/^v\d+$/', '/^(\d+\.)+\d+$/'];
+
+    public function isVersion(string $tag, bool $strict): bool
+    {
+        return 1 === preg_match($strict ? '/^v\d+\.\d+\.\d+$/' : '/^v?\d+(\.\d+)*$/', $tag);
+    }
+
+    public function isKnown(string $tag): bool
+    {
+        foreach (self::RULES as $rule) {
+            if (1 === preg_match($rule, $tag)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+```
+
+Each of the four literals is linted, where it is written:
+
+```
+  app/Tags.php:5:40
+      → /^(\d+\.)+\d+$/
+     ↳ via $rule
+    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  app/Tags.php:9:66
+      → /^v?\d+(\.\d+)*$/
+    INFO Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+```
+
+- **A ternary, `?:`, `??` or a `match`**, written in the call or assigned
+  to a variable: each arm is a pattern. `A ?: B` and `A ?? B` over a
+  constant give what PHP gives: `self::A ?? '/b/'` is `self::A` alone, and
+  `self::A ?: '/b/'` too unless `A` is `''` or `'0'`. Over a variable the
+  right side is always kept beside the values of the left one, as no file
+  proves a variable assigned on every path. An arm that is `false`, `true`
+  or a number is passed over. An arm that is `null`, or one the file does
+  not prove (a parameter, a call, a `throw`), leaves the whole argument
+  unread: none of its arms is linted. They are read one inside another 32
+  levels deep, `A ?? B ?? C` being `A ?? (B ?? C)`; an arm written deeper
+  is not read. A ternary written after another without parentheses
+  (`$a ? '/x/' : $b ? '/y/' : '/z/'`) is not read either: PHP 8 refuses
+  it and PHP 7 reads the two from the left. `A ?: B ?: C`, which means
+  the same both ways, is read.
+- **An array of patterns held in a local variable** feeds `preg_replace()`,
+  `preg_replace_callback()` and `preg_filter()` its values, as a constant
+  array does. `preg_replace_callback_array()` reads its keys from a
+  constant array only.
+- **The target of a `foreach`** over an array of literals, written in the
+  loop, held in a local variable or in a constant: the value target is each
+  value, the key target each key. A `foreach` by reference, a target
+  assigned again in the loop, a target read after the loop and a `foreach`
+  over a property are not read.
+- **An item of such an array**, `$map['word']`, `$list[0]` or
+  `self::MAP['word']`: that item under a literal key, each value of the
+  array under any other key, nothing under a key the array does not hold.
+  An item may be missing, so its fallback is kept beside the values:
+  `self::MAP[$type] ?? '/^\w+$/'` is each value of `MAP` and `/^\w+$/`.
+
 ##### Constants of another file
 
 A class constant, or a backed enum case, of another file of the project is
@@ -816,14 +989,157 @@ constant built from constants of other files is folded, 32 constants deep
 at most. A class the project declares in two files, in a fixture or a stub
 say, is ambiguous: nothing is read through it. A constant inherited from a
 parent class is read through the parent's own name, never through
-`self::`, `static::` or `parent::`. A `const` or a `define()` outside a
-class is read in its own file only. The language server reads the file it
-analyses on its own: it does not reach the constants of another file.
+`self::`, `static::` or `parent::`.
 
-Not read: `self::` inside a trait, a ternary or a
-`match` over literals, a variable captured by a closure's `use` or an arrow
-function, an array of patterns held in a local variable, a concatenation with
-`preg_quote()` (its text is not known), a method called on an object
+A `const` or a `define()` outside a class is read from another file too,
+`preg_match(SLUG, $s)` or `preg_match('/^'.PART.'$/', $s)`, by the name PHP
+resolves: in the namespace of the call, then globally, or through a
+`use const`. The project must declare the name once, at the top level of
+its file: one declared in two files, in a function, under a condition
+(`if (!defined('SLUG')) { define('SLUG', '...'); }`) or after a `return` of
+its file is not read from another file, and neither is a `define()` that
+reaches a function of that name the namespace declares. The libraries of `vendor/` give theirs for the names the
+project does not declare.
+
+The language server reads the constants of another file as well, and
+reports the pattern at the argument naming it (see
+[the language server guide](lsp.md)).
+
+##### Constants of the platform
+
+`DIRECTORY_SEPARATOR`, `PHP_EOL` and `PATH_SEPARATOR` have one value on
+Windows and another elsewhere: `\` or `/`, `"\r\n"` or `"\n"`, `;` or `:`.
+A pattern built with one of them is read as two patterns, one per value,
+and both are linted:
+
+```php
+final class Path
+{
+    public function segments(string $path): array
+    {
+        return preg_split('~' . DIRECTORY_SEPARATOR . '~', $path);
+    }
+}
+```
+
+```
+  app/Path.php:7:27
+      → ~\~
+    WARN No closing delimiter "~" found. You opened with "~"; expected closing "~". Tip: escape "~" inside the pattern
+         (\~) or use a different delimiter, e.g. #\~#. Holds when DIRECTORY_SEPARATOR is "\".
+
+
+  PASS 1 warnings found, 0 optimizations available.
+```
+
+`~/~` compiles; `~\~` does not, as the backslash escapes the closing
+delimiter. An issue that holds for one of the two values only is at most a
+warning, where an invalid pattern is otherwise an error, and its message
+ends by naming the value: a project that runs on one system is not failed
+by the other. An issue both values share keeps its level. The same
+constant written twice in a pattern takes the same value at both places;
+two different ones in one pattern are not read. A class that names both
+separators, `'~[/\\\\]~'`, is the same pattern on every system.
+
+##### Arguments built at run time
+
+What is left is a pattern the file does not hold: one its caller gives, one
+read from a configuration, one built around such a text. No rule runs on
+it, and the lint gives no verdict on the part it could read, since the text
+that joins it at run time decides whether the pattern compiles and what it
+matches. The run counts these arguments instead of passing over them:
+
+```php
+final class Search
+{
+    public function matches(string $pattern, string $text): bool
+    {
+        return 1 === preg_match($pattern, $text);
+    }
+
+    public function startsWith(string $prefix, string $text): bool
+    {
+        return 1 === preg_match('/^' . $prefix . '\d+$/', $text);
+    }
+
+    public function hasWord(string $word, string $text): bool
+    {
+        return 1 === preg_match('/\b' . preg_quote($word, '/') . '\b/i', $text);
+    }
+}
+```
+
+```bash
+vendor/bin/regex lint app/
+```
+
+```
+  PASS No regex patterns found.
+  Not verifiable: 3 pattern arguments (1 dynamic, 1 around a dynamic part, 1 around preg_quote())
+```
+
+- **dynamic**: nothing of the argument is known where it is written, as
+  `$pattern` above, the result of a method, or a text that does not start
+  with a literal, whose delimiter is then unknown.
+- **around a dynamic part**: the argument starts with a literal and holds a
+  part the file does not prove, as `$prefix` above.
+- **around `preg_quote()`**: the argument starts with a literal, and every
+  part the file does not prove is a `preg_quote()` call, written in the
+  pattern, assigned to a variable first, or given to `sprintf()`.
+
+The line counts the pattern arguments of the PHP calls the lint reads: an
+array written in the call counts once per item. A figure that is zero is
+left out, and a run where every argument was read prints no such line.
+`--quiet` prints none either. With `--format=json`, `github`, `checkstyle`
+or `junit` the line goes to stderr, and the JSON report carries the five
+counts under `stats` (see [JSON](#json)).
+
+`--report-dynamic`, or `"reportDynamic": true` in `regex.json`, lists each
+of these arguments as an issue of severity `info`, at the argument:
+
+```bash
+vendor/bin/regex lint app/ --report-dynamic
+```
+
+```
+  app/Search.php:7:33
+    INFO The pattern is built at run time: it is not verified.
+
+  app/Search.php:12:33
+    INFO The pattern holds a part built at run time: it is not verified.
+
+  app/Search.php:17:33
+    INFO The pattern holds a preg_quote() text: it is not verified.
+
+
+  PASS 0 warnings, 3 infos found, 0 optimizations available.
+  Not verifiable: 3 pattern arguments (1 dynamic, 1 around a dynamic part, 1 around preg_quote())
+```
+
+Their identifiers are `regex.lint.source.dynamic`,
+`regex.lint.source.dynamicPart` and `regex.lint.source.quotedPart` (see the
+[rule reference](../reference/rules.md#pattern-built-at-run-time)). An info
+never fails a run: the exit code is the one the other issues leave. In the
+JSON report such a result has no `pattern`: the argument is under
+`expression`, as the file writes it. A marker on the line silences the
+issue as any other; name the identifier in it, as
+`// @regex-ignore regex.lint.source.dynamic`, so that a run without
+`--report-dynamic` passes the marker over instead of reporting that it
+silences nothing. `--no-report-dynamic` turns the list off for one run
+when `regex.json` turns it on.
+
+##### What is not read
+
+Counted among the arguments built at run time, though the text is in the
+file: `self::` inside a trait, `static::X` of a class that may be extended,
+a constant a class inherits read through `self::`, a private property of a
+class that is not `final`, a variable captured by a closure's `use` or an
+arrow function, a variable built with `.=`, a variable two assignments
+reach when it is one piece of a larger pattern, and a pattern with a
+`preg_quote()` call, whose text is not known.
+
+Not read and not counted, as the lint does not take them for a pattern
+argument: a method called on an object
 (`$str->matches()`: Laravel's `Stringable`, Symfony String, Finder's
 `->name()`, Pest's `->toMatch()`, beberlei's `Assert::that($v)->regex()`), and
 `mb_ereg()` and `mb_split()`, whose patterns are not PCRE.
@@ -1246,6 +1562,7 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `jobs`                          | int              | Number of parallel workers, at least 1 (default: the logical CPUs the process may use, see [Parallel workers](#parallel-workers)) |
 | `ide`                           | string           | IDE for clickable links                                  |
 | `reportUnmatchedIgnores`        | boolean          | Report the inline markers and baseline entries that silence nothing, as `regex.ignore.unmatched` (default `true`, see [Markers that silence nothing](#markers-that-silence-nothing)) |
+| `reportDynamic`                 | boolean          | List each pattern argument built at run time as an info (default `false`, see [Arguments built at run time](#arguments-built-at-run-time)) |
 | `phpVersion`                    | string, int or object | PHP version the patterns are judged for: `"8.3"`, `80300`, or `"runtime"` for the PHP running the command; or a range, as a Composer constraint (`">=8.1"`) or `{"min": "8.1", "max": "8.6"}` (see [Several PHP versions](#several-php-versions)) |
 | `pcreVersion`                   | string           | PCRE2 release the patterns are judged for: `"10.44"`     |
 | `locale`                        | string           | `LC_CTYPE` locale the patterns run under: `"tr_TR.UTF-8"` (default: the one of the PHP running the command) |
@@ -1856,7 +2173,9 @@ in a run without `--redos`, a lint rule `checks.lint.rules` turns off (or one
 off by default and not turned on), `regex.optimization` under `--no-optimize`,
 `regex.lint.complexity` without `checks.complexity`, an error code under
 `--no-validate`, `regex.lint.compat.meaningChanges` when one PHP version is
-judged. A marker whose every identifier is passed over is not reported. An
+judged, `regex.lint.source.dynamic`, `regex.lint.source.dynamicPart` or
+`regex.lint.source.quotedPart` without `--report-dynamic`. A marker whose
+every identifier is passed over is not reported. An
 identifier that names no check the library knows is reported all the same,
 by name. `--no-report-unmatched-ignores` turns the report off for one run,
 and `"reportUnmatchedIgnores": false` in `regex.json` for every run. The
@@ -1887,6 +2206,20 @@ UTF mode, under `u` or after a leading `(*UTF)` (`\x{202E}`), and the pattern
 is then printed without colours. The caret stays under the character at
 fault. JSON output keeps the pattern as given, except that each invalid
 UTF-8 byte becomes the text `\xNN`, in uppercase hexadecimal (`\xFF`).
+
+`lint` ends its report on a summary line, then, when some pattern arguments
+are built at run time, on the number it could not verify:
+
+```
+  PASS 1 warnings, 1 infos found, 0 optimizations available.
+  Not verifiable: 3 pattern arguments (1 dynamic, 1 around a dynamic part, 1 around preg_quote())
+```
+
+The three figures are those of
+[Arguments built at run time](#arguments-built-at-run-time); one that is
+zero is left out, and the line is not printed when all three are. On a
+large codebase it reads, for example,
+`Not verifiable: 5805 pattern arguments (2168 dynamic, 2416 around a dynamic part, 1221 around preg_quote())`.
 
 ### JSON
 
@@ -1919,7 +2252,12 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
         "infos": 0,
         "lint_errors": 0,
         "parser_fallbacks": 0,
-        "not_analyzed": 0
+        "not_analyzed": 0,
+        "arguments_constant": 2,
+        "arguments_finite_set": 0,
+        "arguments_quoted_shell": 0,
+        "arguments_raw_shell": 0,
+        "arguments_opaque": 0
     },
     "results": [
         {
@@ -1929,6 +2267,7 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
             "file_offset": 18,
             "source": "preg_match()",
             "pattern": "/(?<=a+)b/",
+            "expression": null,
             "location": null,
             "issues": [
                 {
@@ -1982,6 +2321,13 @@ the files the PHP parser could not read, whose patterns the tokenizer read inste
 among the warnings: the run has no verdict on them, and the summary says so,
 `PASS 1 warnings (1 not analyzed) found`. Such a run still exits as its warnings
 leave it, 0 when nothing else fails.
+The five `stats.arguments_*` keys count the pattern arguments of the PHP calls
+the lint reads, each under what the lint made of it: `arguments_constant` for one
+pattern, `arguments_finite_set` for several, and, for those it could not verify,
+`arguments_opaque`, `arguments_raw_shell` and `arguments_quoted_shell`, the
+`dynamic`, `around a dynamic part` and `around preg_quote()` figures of the
+console's `Not verifiable` line (see
+[Arguments built at run time](#arguments-built-at-run-time)).
 Every key is always present,
 `0` when there is none, and every issue carries every key, `null` when it does
 not apply. An issue's `severity` is `error`, `warning` or `info`, from the
@@ -2049,6 +2395,8 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--generate-baseline <file>` | Write every issue of this run to a baseline file; `--generate-baseline=<file>` works too |
 | `--no-report-unmatched-ignores` | Do not report the inline markers and baseline entries that silence nothing |
 | `--report-unmatched-ignores` | Report them when `regex.json` turns the report off (the default) |
+| `--report-dynamic`  | List each pattern argument built at run time as an info (see [Arguments built at run time](#arguments-built-at-run-time)) |
+| `--no-report-dynamic` | Do not list them when `regex.json` turns the list on (the default) |
 | `--redos`           | Run the ReDoS analysis, off by default             |
 | `--no-redos`        | Skip it when `regex.json` turns it on              |
 | `--redos-mode <mode>` | `theoretical` or `confirmed`                     |
@@ -2074,6 +2422,12 @@ error (exit code 2), as is an unknown `--format`, and an `--enable-rule` or
 `--disable-rule` id that `checks.lint.rules` in `regex.json` would refuse
 (`Unknown lint rule "quantifer.nested" in --disable-rule. Did you mean "quantifier.nested"?`).
 Both options take the id without `regex.lint.` or in full.
+
+`--report-dynamic` adds one issue of severity `info` per pattern argument
+built at run time, and leaves the exit code as it is. With
+`--format=github` each one is a `notice` annotation, and GitHub shows only
+the first few annotations of a step, ten of each level today: on a large
+project, read the list from the console or the JSON report.
 
 When `nikic/php-parser` is installed, and the lint reads files with it, a
 file the PHP parser cannot read (a syntax error, for one) is read again
@@ -2186,7 +2540,9 @@ Both options take their file after a space or an `=`.
   second, identical pattern in the same file is reported. When copies of a
   pattern are added, the entries are aligned with the issues in line order,
   as a diff aligns two versions of a file, so the copy reported is the one
-  inserted, not one that moved.
+  inserted, not one that moved. An argument built at run time, listed under
+  `--report-dynamic`, has no pattern: its entry is compared by the argument
+  as the file writes it.
 - **Every format.** A baselined issue is gone from the console, JSON, GitHub,
   Checkstyle and JUnit reports alike, and the exit code is computed without
   it.
@@ -2194,8 +2550,8 @@ Both options take their file after a space or an `=`.
   from: generate and apply the baseline from the same directory, usually the
   project root.
 - **The file.** `{"version": 1, "issues": [...]}`, each issue with its `file`,
-  `line`, `column`, `issue_id`, `message`, `severity`, `pattern` and
-  `pattern_hash`; the [JSON output reference](../reference/json-output.md#baseline-file)
+  `line`, `column`, `issue_id`, `message`, `severity`, `pattern`,
+  `expression` and `pattern_hash`; the [JSON output reference](../reference/json-output.md#baseline-file)
   lists them. Bytes that are not valid UTF-8 are written `\xHH`, so the file
   is always valid JSON.
 - **Entries that match nothing.** An entry no issue takes any more, the
@@ -2204,7 +2560,11 @@ Both options take their file after a space or an `=`.
   The entries of a file gone since, under a path the run lints and out of
   those it excludes, are stale and reported too. A run over `src/Controller`
   says nothing of the entries of `src/Legacy`, read or gone. `--no-report-unmatched-ignores`
-  turns the report off, as it does for the inline markers.
+  turns the report off, as it does for the inline markers. A baseline holds
+  what the run that wrote it reported: one written with `--report-dynamic`
+  holds an entry for each argument built at run time, and a run without the
+  flag, which reports none of them, finds those entries unmatched. Apply a
+  baseline with the options it was generated with.
 - **A 1.x baseline**, a plain list, is refused like any non-baseline file:
   exit code 2, `stage: "usage"` in JSON, before anything is scanned — even on
   a run that also passes `--generate-baseline`. Regenerate it once.

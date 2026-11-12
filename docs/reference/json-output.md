@@ -139,6 +139,9 @@ Every position counts bytes.
   and reported once however many calls use it: its `source` is the first of
   those calls in the file, and its `location` the name that call reads it
   through (see [`location`](#result-lintresults)).
+- A pattern argument built at run time, listed under `--report-dynamic`, is
+  placed at the first byte of the argument, the `$` of `$pattern`, and its
+  issue has no `position`.
 - The pattern body is what sits between the delimiters. In `/(a/`, offset 0
   is the `(`. This is the coordinate PCRE2's own error offsets use. An error
   in the modifiers counts on past the body and its closing delimiter.
@@ -263,7 +266,7 @@ short for `--format=json`.
         "range": [{"php": "8.2", "pcre": "10.40"}, {"php": "8.3", "pcre": "10.42"}, {"php": "8.4", "pcre": "10.44"}, {"php": "8.4.25", "pcre": "10.44"}, {"php": "8.5", "pcre": "10.44"}, {"php": "8.5.10", "pcre": "10.44"}]
     },
     "host": {"php": "8.4.26", "pcre": "10.49"},
-    "stats": {"errors": 1, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0, "not_analyzed": 0},
+    "stats": {"errors": 1, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0, "not_analyzed": 0, "arguments_constant": 1, "arguments_finite_set": 0, "arguments_quoted_shell": 0, "arguments_raw_shell": 0, "arguments_opaque": 0},
     "results": [
         {
             "file": "src/Example.php",
@@ -272,6 +275,7 @@ short for `--format=json`.
             "file_offset": 18,
             "source": "preg_match()",
             "pattern": "/(a/",
+            "expression": null,
             "location": null,
             "issues": [
                 {
@@ -314,7 +318,7 @@ short for `--format=json`.
 | `target` | object | The PHP, PCRE2 and locale the patterns were judged for, and every PHP and PCRE2 they were validated at |
 | `host` | object | The PHP and PCRE2 that ran the lint |
 | `stats` | object | The counts of the run |
-| `results` | list of objects | One entry per pattern with at least one issue or optimization; `[]` when there is nothing to report |
+| `results` | list of objects | One entry per pattern with at least one issue or optimization, and, under `--report-dynamic`, one per pattern argument built at run time; `[]` when there is nothing to report |
 
 ### Target: `lint.target`
 
@@ -371,6 +375,21 @@ Every count is present on every run, `0` when there is none.
 | `lint_errors` | int | Lint rules of error severity that fired, counted among `errors` |
 | `parser_fallbacks` | int | Files the PHP parser could not read, read with the tokenizer instead; their patterns are linted, and the count is no error (`--verbose` names each file) |
 | `not_analyzed` | int | Patterns past one of the library's own limits, counted among `warnings`: no verdict on them, and the exit code stays what the warnings leave |
+| `arguments_constant` | int | Pattern arguments read as one pattern. An empty literal, `preg_match('', $s)`, is counted here: the file writes it whole, and it is no pattern, so no rule runs on it |
+| `arguments_finite_set` | int | Pattern arguments read as several patterns, each of them linted: the arms of a ternary or a `match`, the values the target of a `foreach` takes, the values of a constant of the platform |
+| `arguments_quoted_shell` | int | Pattern arguments not verified, built around a `preg_quote()` text: the `around preg_quote()` figure of the console |
+| `arguments_raw_shell` | int | Pattern arguments not verified, built around another part known at run time only: the `around a dynamic part` figure of the console |
+| `arguments_opaque` | int | Pattern arguments not verified, of which the file proves nothing: the `dynamic` figure of the console |
+
+The five `arguments_*` counts are about the pattern arguments of the PHP
+calls the lint reads, not about the results: an argument is counted where it
+is written, so a constant two calls name counts twice and is reported once,
+and each item of an array written in the call counts once. Each argument is
+in one of the five, for all of 2.x, so their sum is the number of arguments
+read. A pattern that is no argument of a PHP call, the `matches` operator of
+a Twig template for one, is in none. The last three are the arguments no
+rule ran on; `--report-dynamic` lists each of them as a result (see
+[Arguments built at run time](../guides/cli.md#arguments-built-at-run-time)).
 
 ### Result: `lint.results[]`
 
@@ -381,10 +400,47 @@ Every count is present on every run, `0` when there is none.
 | `column` | int \| null | The column of the pattern, 1-based, in bytes; `null` when unknown |
 | `file_offset` | int \| null | The byte offset of the pattern in the file, 0-based; `null` when unknown |
 | `source` | string \| null | What the pattern was read from: the call, as `preg_match()` or `Preg::match()`; a constructor, as `new RegexIterator()` or `new Regex()`; an attribute, as `#[Regex]`; a framework source, as `route:<name>:<parameter>`; or `twig:matches` for the operator of a Twig template |
-| `pattern` | string \| null | The pattern as written; `null` for a result no pattern holds: an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`) |
+| `pattern` | string \| null | The pattern as written; `null` for a result no pattern holds: an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`), or a pattern argument built at run time, listed under `--report-dynamic` |
+| `expression` | string \| null | For a pattern argument built at run time, the argument as the file writes it, byte for byte (`'/^' . $prefix . '\d+$/'`), the result's `line`, `column` and `file_offset` being those of its first byte; `null` for every other result |
 | `location` | string \| null | How the pattern was reached when the file and line do not say it alone: a route's name and controller, or, for a pattern a call reads through a name, `via ` and that name as the first call writes it (`via self::RE`, `via static::RE`, `via Patterns::RE`, `via RE`, `via $re`, `via $this->re`); `null` for a pattern written in the call |
 | `issues` | list of objects | The issues found in the pattern, possibly empty |
 | `optimizations` | list of objects | The optimizations suggested for the pattern, possibly empty |
+
+Under `--report-dynamic`, `preg_match('/^' . $prefix . '\d+$/', $text)` on
+line 12 of `app/Search.php`, where `$prefix` is a parameter, is this result:
+
+```json
+{
+    "file": "app/Search.php",
+    "line": 12,
+    "column": 33,
+    "file_offset": 261,
+    "source": "preg_match()",
+    "pattern": null,
+    "expression": "'/^' . $prefix . '\\d+$/'",
+    "location": null,
+    "issues": [
+        {
+            "severity": "info",
+            "file": "app/Search.php",
+            "line": 12,
+            "column": 33,
+            "file_offset": 261,
+            "position": null,
+            "issue_id": "regex.lint.source.dynamicPart",
+            "docs_url": "https://php-regex.com/reference/rules/#pattern-around-a-part-built-at-run-time",
+            "message": "The pattern holds a part built at run time: it is not verified.",
+            "hint": null,
+            "tip": null,
+            "source": "preg_match()",
+            "validation": null,
+            "analysis": null,
+            "target": null
+        }
+    ],
+    "optimizations": []
+}
+```
 
 ### Issue: `lint.results[].issues[]`
 
@@ -398,7 +454,7 @@ An issue repeats the location of its result, so it can be read alone.
 | `column` | int \| null | As in the result |
 | `file_offset` | int \| null | As in the result |
 | `position` | int \| null | Where in the pattern body the issue lies, 0-based, in bytes; `null` when it concerns the whole pattern |
-| `issue_id` | string \| null | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), the cost of an unanchored search (`regex.lint.redos.search`), a complexity warning (`regex.lint.complexity`), an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`), a `@regex-target` marker that cannot be read (`regex.target.invalid`) or keeps no version judged (`regex.target.empty`), or the error code of an invalid pattern (`regex.group.unclosed`); an open set, and a baseline matches on it. Every issue the library reports today carries one; `null` is kept for an invalid pattern without an error code |
+| `issue_id` | string \| null | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), the cost of an unanchored search (`regex.lint.redos.search`), a complexity warning (`regex.lint.complexity`), a pattern argument built at run time (`regex.lint.source.dynamic`, `regex.lint.source.dynamicPart`, `regex.lint.source.quotedPart`), an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`), a `@regex-target` marker that cannot be read (`regex.target.invalid`) or keeps no version judged (`regex.target.empty`), or the error code of an invalid pattern (`regex.group.unclosed`); an open set, and a baseline matches on it. Every issue the library reports today carries one; `null` is kept for an invalid pattern without an error code |
 | `docs_url` | string \| null | The page of php-regex.com that explains what was found, as `https://php-regex.com/reference/rules/#useless-quantifier`: every lint rule, the ReDoS verdict and the search cost, the complexity warning, a file the lint could not read, a marker that silences nothing or cannot be read; `null` for the error code of an invalid pattern, which [Diagnostics: Error Codes](diagnostics.md#error-codes) lists. For people: a link may move with the docs, so match on `issue_id` |
 | `message` | string | The finding, for people; not frozen |
 | `hint` | string \| null | How to fix it, for people |
@@ -1145,6 +1201,7 @@ entries included, is a usage error (exit code 2, `stage: "usage"`).
             "message": "Expected ) at end of input (found eof).",
             "severity": "error",
             "pattern": "/(a/",
+            "expression": null,
             "pattern_hash": "280856e984a6cedd308bdb41caaa4672"
         }
     ]
@@ -1168,5 +1225,9 @@ entries included, is a usage error (exit code 2, `stage: "usage"`).
 | `issue_id` | string | As in the issue, or `""` for an issue without one; what a baseline matches on |
 | `message` | string | As in the issue, for people |
 | `severity` | string | As in the issue |
-| `pattern` | string | The pattern of the issue's result, for people |
-| `pattern_hash` | string | A hash of the exact bytes of the pattern; what a baseline matches on |
+| `pattern` | string | The pattern of the issue's result, for people; `""` for an entry that has an `expression` |
+| `expression` | string \| null | For an issue on a pattern argument built at run time, the argument as the file writes it; `null` for every other entry |
+| `pattern_hash` | string | A hash of the exact bytes of the pattern, or of the `expression` of an entry that has one; what a baseline matches on |
+
+A baseline written before `expression` existed has no such key: it is read
+as it was, each entry matching on its pattern.

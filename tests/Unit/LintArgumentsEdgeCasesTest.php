@@ -111,6 +111,7 @@ final class LintArgumentsEdgeCasesTest extends TestCase
         yield 'interop' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(interop: []), 'changes' => ['interop' => []]];
         yield 'patternFunctions' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(patternFunctions: ['acme_match:0']), 'changes' => ['patternFunctions' => ['acme_match:0']]];
         yield 'reportUnmatchedIgnores' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(reportUnmatchedIgnores: true), 'changes' => ['reportUnmatchedIgnores' => true]];
+        yield 'reportDynamic' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(reportDynamic: true), 'changes' => ['reportDynamic' => true]];
         yield 'ide' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(ide: 'vscode'), 'changes' => ['ide' => 'vscode']];
         yield 'optimizations' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(optimizations: []), 'changes' => ['optimizations' => []]];
         yield 'checkComplexity and complexityThreshold' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(checkComplexity: false, complexityThreshold: 10), 'changes' => ['checkComplexity' => false, 'complexityThreshold' => 10]];

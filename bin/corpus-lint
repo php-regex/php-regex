@@ -58,6 +58,9 @@ declare(strict_types=1);
  *   --only <text>   sweep only the repositories whose path contains <text>
  *   --limit <n>     sweep at most <n> repositories, after --only
  *   --no-json       write the console parts only, not the JSON parts
+ *   --report-dynamic
+ *                   report, in both parts, each pattern argument built at
+ *                   run time, which the linter does not verify
  *   --help          this message
  *
  * Exit codes: 0 every repository was judged clean, 1 findings were reported
@@ -191,16 +194,20 @@ const PINNED_ENVIRONMENT = ['COLUMNS' => '120'];
  * COMPOSER environment variable, or under the fallback flag when it pins no
  * platform PHP and declares no require.php of its own.
  *
+ * With $reportDynamic the linter is asked to report each pattern argument
+ * it does not verify, the ones built at run time.
+ *
  * @return array{env: ?string, environment: array<string, string>, args: list<string>, fallback: bool}
  */
-function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFile): array
+function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFile, bool $reportDynamic = false): array
 {
     $composer = $repoDir.'/composer.json';
+    $dynamic = $reportDynamic ? ['--report-dynamic'] : [];
     if (null !== requirePhpConstraint($repoDir) || null !== pinnedPlatformPhp($repoDir)) {
         return [
             'env' => $composer,
             'environment' => PINNED_ENVIRONMENT,
-            'args' => ['--ansi', 'lint', $repoDir, '--redos', '--redos-mode=confirmed', '--output', $partFile],
+            'args' => ['--ansi', 'lint', $repoDir, '--redos', '--redos-mode=confirmed', '--output', $partFile, ...$dynamic],
             'fallback' => false,
         ];
     }
@@ -208,7 +215,7 @@ function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFi
     return [
         'env' => null,
         'environment' => PINNED_ENVIRONMENT,
-        'args' => ['--ansi', 'lint', $repoDir, '--php-version', $fallbackPhp, '--redos', '--redos-mode=confirmed', '--output', $partFile],
+        'args' => ['--ansi', 'lint', $repoDir, '--php-version', $fallbackPhp, '--redos', '--redos-mode=confirmed', '--output', $partFile, ...$dynamic],
         'fallback' => true,
     ];
 }
@@ -456,6 +463,9 @@ function printCorpusLintUsage(): void
           --only <text>   sweep only the repositories whose path contains <text>
           --limit <n>     sweep at most <n> repositories, after --only
           --no-json       write the console parts only, not the JSON parts
+          --report-dynamic
+                          report, in both parts, each pattern argument built at
+                          run time, which the linter does not verify
           --help          this message
 
         Every repository under corpus/ is judged under the PHP its own
@@ -471,7 +481,7 @@ function printCorpusLintUsage(): void
 /**
  * @param list<string> $argv
  *
- * @return array{root: ?string, output: ?string, parts: ?string, php: string, only: ?string, limit: ?int, json: bool, help: bool}
+ * @return array{root: ?string, output: ?string, parts: ?string, php: string, only: ?string, limit: ?int, json: bool, report_dynamic: bool, help: bool}
  */
 function parseCorpusLintArgs(array $argv): array
 {
@@ -482,6 +492,7 @@ function parseCorpusLintArgs(array $argv): array
     $only = null;
     $limit = null;
     $json = true;
+    $reportDynamic = false;
     $help = false;
 
     for ($i = 1, $count = \count($argv); $i < $count; $i++) {
@@ -495,6 +506,12 @@ function parseCorpusLintArgs(array $argv): array
 
         if ('--no-json' === $arg) {
             $json = false;
+
+            continue;
+        }
+
+        if ('--report-dynamic' === $arg) {
+            $reportDynamic = true;
 
             continue;
         }
@@ -529,6 +546,7 @@ function parseCorpusLintArgs(array $argv): array
         'only' => $only,
         'limit' => $limit,
         'json' => $json,
+        'report_dynamic' => $reportDynamic,
         'help' => $help,
     ];
 }
@@ -704,7 +722,7 @@ function corpusLintMain(array $argv): int
         $repoDir = $corpusDir.'/'.$repo;
         $partFile = $partsDir.'/'.str_replace('/', '__', $repo).'.log';
 
-        $plan = planRepositoryLint($repoDir, $options['php'], $partFile);
+        $plan = planRepositoryLint($repoDir, $options['php'], $partFile, $options['report_dynamic']);
         [$exitCode, $console] = runLint($plan);
         if ($options['json']) {
             // A refused repository writes no JSON: yesterday's part goes

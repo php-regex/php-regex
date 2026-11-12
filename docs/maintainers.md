@@ -247,7 +247,12 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
     "infos": 0,
     "lint_errors": 0,
     "parser_fallbacks": 0,
-    "not_analyzed": 0
+    "not_analyzed": 0,
+    "arguments_constant": 1,
+    "arguments_finite_set": 0,
+    "arguments_quoted_shell": 0,
+    "arguments_raw_shell": 0,
+    "arguments_opaque": 0
   },
   "results": [
     {
@@ -257,6 +262,7 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
       "file_offset": 147,
       "source": "preg_match()",
       "pattern": "/^(?:[0-9]+\\s?)+$/",
+      "expression": null,
       "location": null,
       "issues": [
         {
@@ -844,6 +850,9 @@ php bin/findings-report          # the site's findings, from the JSON parts
 `bin/corpus-lint` lints each repository twice under the same target: once
 for `var/log/corpus.log`, once with `--format=json` into
 `var/log/corpus-parts/<vendor>__<repo>.json` (`--no-json` skips it).
+Given `--report-dynamic`, the script passes the flag on to both runs, so
+that the log and the part list each pattern argument built at run time,
+which the linter does not verify; without it, neither run lists them.
 `bin/findings-report` reads those parts and the clones, and writes:
 
 - `docs/assets/findings/index.json`: each repository with findings, its

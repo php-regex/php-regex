@@ -30,6 +30,7 @@ namespace PHPRegex\Linter\Config;
  *     format?: string,
  *     ide?: string,
  *     reportUnmatchedIgnores?: bool,
+ *     reportDynamic?: bool,
  *     checks?: array{
  *         validation?: bool,
  *         redos?: array{enabled?: bool, mode?: string, threshold?: string},
