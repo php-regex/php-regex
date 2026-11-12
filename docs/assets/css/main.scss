@@ -4794,6 +4794,17 @@ body.search-open {
 /* The count reads inside the field's right corner, under a veil that
    fades the field's own text past it — an editor's corner fact, said
    and never clicked. */
+/* A long pattern scrolls inside its field, the row never grows: the
+   field is an editor, not a page. A twenty-five-line pattern meets a
+   field three lines tall. */
+.pg-editor.pg-editor-pattern .pg-input,
+.pg-editor.pg-editor-pattern .pg-mirror {
+  max-height: 5.6rem;
+}
+.pg-editor.pg-editor-pattern .pg-input {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
 .pg-editor-pattern .pg-field-count {
   position: absolute;
   top: 50%;
