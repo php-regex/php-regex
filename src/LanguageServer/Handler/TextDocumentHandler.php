@@ -142,7 +142,7 @@ final class TextDocumentHandler
             return;
         }
 
-        $this->publishDiagnostics($uri, ...$this->documents->open($uri, $text, $version));
+        $this->publishFloorFirst($uri, ...$this->documents->open($uri, $text, $version));
     }
 
     /**
@@ -247,7 +247,7 @@ final class TextDocumentHandler
         }
 
         if ($changed) {
-            $this->publishDiagnostics(...$this->documents->refresh());
+            $this->publishFloorFirst(...$this->documents->refresh());
         }
     }
 
@@ -321,7 +321,30 @@ final class TextDocumentHandler
         }
     }
 
-    private function publishDocument(string $uri): void
+    /**
+     * Publish what the lowest version judged says of each document, then
+     * what every version says: the later versions of a range take most of
+     * the time of a document read whole, and the editor need not wait for
+     * them to show the floor's diagnostics. One version judged: one push.
+     */
+    private function publishFloorFirst(string ...$uris): void
+    {
+        if ([] !== $this->range) {
+            foreach ($uris as $uri) {
+                $this->publishDocument($uri, floorOnly: true);
+            }
+        }
+
+        $this->publishDiagnostics(...$uris);
+    }
+
+    /**
+     * @param bool $floorOnly whether to judge the lowest version alone: a
+     *                        first push, which says nothing of the markers
+     *                        silencing nothing, since a later version may
+     *                        give what they silence
+     */
+    private function publishDocument(string $uri, bool $floorOnly = false): void
     {
         $diagnostics = [];
         $content = $this->documents->getContent($uri) ?? '';
@@ -356,7 +379,7 @@ final class TextDocumentHandler
             $marker = TargetMarker::constraintAt($targets, $occurrence->line);
             $constraint = null === $occurrence->guard ? $marker : ($marker?->intersect($occurrence->guard) ?? $occurrence->guard);
             $regex = $this->regexFor($constraint);
-            foreach (null === $regex ? [] : $this->occurrenceDiagnostics($occurrence, $content, $positions, $regex, $this->rangeFor($constraint)) as $diagnostic) {
+            foreach (null === $regex ? [] : $this->occurrenceDiagnostics($occurrence, $content, $positions, $regex, $floorOnly ? [] : $this->rangeFor($constraint)) as $diagnostic) {
                 $silenced = false;
                 foreach ($covering as $index => $marker) {
                     if ($marker->silences($diagnostic['code'])) {
@@ -384,7 +407,7 @@ final class TextDocumentHandler
         }
 
         // A marker that silences nothing: a warning on the marker.
-        foreach ($this->reportUnmatchedIgnores ? $markers : [] as $index => $marker) {
+        foreach ($this->reportUnmatchedIgnores && !$floorOnly ? $markers : [] as $index => $marker) {
             $range = ['start' => $positions->offsetToPosition($marker->offset), 'end' => $positions->offsetToPosition($marker->offset + \strlen($marker->marker))];
             foreach ($marker->unmatched($used[$index] ?? [], $this->leavesOff(...)) as $message) {
                 $diagnostics[] = $this->diagnosticConverter->fromUnmatchedIgnore($message, $range);
