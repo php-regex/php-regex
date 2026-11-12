@@ -21,7 +21,9 @@
             "PhpCsFixer\\Preg::matchAll",
             "PhpCsFixer\\Preg::replace",
             "PhpCsFixer\\Preg::replaceCallback",
-            "PhpCsFixer\\Preg::split"
+            "PhpCsFixer\\Preg::split",
+            "Symplify\\CodingStandard\\Utils\\Regex::replace#1",
+            "Symplify\\CodingStandard\\Utils\\Regex::match#1"
         ]
     },
     "checks": {
