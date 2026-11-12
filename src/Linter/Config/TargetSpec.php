@@ -94,8 +94,8 @@ final class TargetSpec
     public static function minMax(string|int $min, string|int $max): array
     {
         [$from] = self::bound($min);
-        [$last, $precision] = self::bound($max);
-        $below = ComposerConstraint::nextAt($last, $precision);
+        [$last, $series] = self::bound($max);
+        $below = $series ? ComposerConstraint::nextAt($last, 2) : $last + 1;
         if ($from >= $below) {
             throw new InvalidRegexOptionException(self::OBJECT_EXPECTED);
         }
@@ -118,25 +118,25 @@ final class TargetSpec
     }
 
     /**
-     * A bound as a PHP_VERSION_ID, and the number of parts it was written
-     * with: 3 for a PHP_VERSION_ID, which names one release.
+     * A bound as a PHP_VERSION_ID, and whether it names a whole series: a
+     * version written x.y does, x.y.z and a PHP_VERSION_ID name one release.
      *
      * @throws InvalidRegexOptionException when the bound names no version of PHP 7.0 or later
      *
-     * @return array{int, int}
+     * @return array{int, bool}
      */
     private static function bound(string|int $bound): array
     {
-        if (!self::isBound($bound)) {
+        if (\is_int($bound) && self::isBound($bound)) {
+            return [$bound, false];
+        }
+
+        if (!\is_string($bound) || 1 !== LibraryPcre::match(self::VERSION_BOUND, $bound, $parts)) {
             throw new InvalidRegexOptionException(self::OBJECT_EXPECTED);
         }
 
-        if (\is_int($bound)) {
-            return [$bound, 3];
-        }
+        $patch = $parts[3] ?? null;
 
-        LibraryPcre::match(self::VERSION_BOUND, $bound, $parts);
-
-        return [(int) ($parts[1] ?? 0) * 10000 + (int) ($parts[2] ?? 0) * 100 + (int) ($parts[3] ?? 0), isset($parts[3]) ? 3 : 2];
+        return [(int) $parts[1] * 10000 + (int) $parts[2] * 100 + (int) $patch, null === $patch];
     }
 }

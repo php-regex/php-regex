@@ -88,4 +88,43 @@ final class TargetSpecBoundTest extends TestCase
 
         TargetSpec::minMax('10.1', '10.2');
     }
+
+    /**
+     * A PHP_VERSION_ID below PHP 7.0 is no bound either, as min or as max.
+     */
+    #[Test]
+    public function test_min_max_refuses_a_php_version_id_below_php_7(): void
+    {
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessageIsOrContains(TargetSpec::OBJECT_EXPECTED);
+
+        TargetSpec::minMax(60000, 80100);
+    }
+
+    /**
+     * The interval a {min, max} object reads as: min is the first version
+     * judged; a max written x.y takes in its whole series, a max of three
+     * parts or a PHP_VERSION_ID names one release.
+     *
+     * @param array{int, int} $interval
+     */
+    #[Test]
+    #[DataProvider('provideMinMaxIntervals')]
+    public function test_min_max_reads_its_bounds_into_an_interval(int|string $min, int|string $max, array $interval): void
+    {
+        $this->assertSame($interval, TargetSpec::minMax($min, $max));
+    }
+
+    /**
+     * @return iterable<string, array{min: int|string, max: int|string, interval: array{int, int}}>
+     */
+    public static function provideMinMaxIntervals(): iterable
+    {
+        yield 'two minors' => ['min' => '8.1', 'max' => '8.6', 'interval' => [80100, 80700]];
+        yield 'two releases' => ['min' => '8.1.4', 'max' => '8.4.24', 'interval' => [80104, 80425]];
+        yield 'two PHP_VERSION_IDs' => ['min' => 80100, 'max' => 80600, 'interval' => [80100, 80601]];
+        yield 'a minor up to a PHP_VERSION_ID' => ['min' => '8.1', 'max' => 80699, 'interval' => [80100, 80700]];
+        yield 'one minor' => ['min' => '8.1', 'max' => '8.1', 'interval' => [80100, 80200]];
+        yield 'a two-digit minor' => ['min' => '7.4', 'max' => '7.10.3', 'interval' => [70400, 71004]];
+    }
 }
