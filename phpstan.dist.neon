@@ -164,6 +164,12 @@ parameters:
           identifier: method.deprecated
           path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
           reportUnmatched: false
+        # The test pins the order of two budget constants, so that a change
+        # to either fails it: the analysis reads both and knows the answer.
+        - message: '#^Call to method PHPUnit\\Framework\\Assert::assertGreaterThan\(\) with \d+ and \d+ will always evaluate to true\.$#'
+          identifier: method.alreadyNarrowedType
+          path: tests/Unit/Lint/Extraction/MemoryBudgetTest.php
+          reportUnmatched: false
         # The generator's twister draws through PHP 8.2's randomizer on a
         # 32-bit PHP that has one, behind a class_exists() check: the
         # analysis for 8.1 has no such class, the one for 8.2 sees it whole.
