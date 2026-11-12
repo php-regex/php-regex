@@ -3583,7 +3583,7 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Calculation/TextData/Format.p
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/DefinedName.php:110:32
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/DefinedName.php:117:32
     → /[^_\p{N}\p{L}:, \$'!]/miu
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -3898,7 +3898,7 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Worksheet/Worksheet.php:60:53
    ↳ via self::SHEET_NAME_REQUIRES_NO_QUOTES
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Worksheet/Worksheet.php:1304:30
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Worksheet/Worksheet.php:1307:30
     → /^((([^\s,!&%^\/\*\+<>=-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?([_\p{L}][_\p{L}\p{N}\.]*)$/iu
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -18603,19 +18603,19 @@ corpus/owncloud/core/lib/private/legacy/helper.php:611:14
 
 
 ### corpus/paratestphp/paratest — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
-corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:259:32
+corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:264:32
     → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-\w+)?\n\n/
    TIP 
        - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-\w+)?\n\n/
        + /^Processes: {5}\d+\nRuntime: {7}PHP \d+\.\d+\.\w+(-\w+)?\n\n/
 
-corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:282:32
+corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:287:32
     → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
    TIP 
        - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
        + /^Processes: {5}\d+\nRuntime: {7}PHP \d+\.\d+\.\w+(-.+)?\n\n/
 
-corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:307:32
+corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:312:32
     → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
    TIP 
        - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
@@ -25253,7 +25253,7 @@ corpus/symfony/symfony/src/Symfony/Component/HttpClient/DataCollector/HttpClient
    WARN  An anchor holds for its own alternative only: "(Host: )" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:[*<]|(Host: ))".
 
-corpus/symfony/symfony/src/Symfony/Component/HttpClient/HttpClientTrait.php:381:28
+corpus/symfony/symfony/src/Symfony/Component/HttpClient/HttpClientTrait.php:383:28
     → {multipart/form-data; boundary=(?|"([^"\r\n]++)"|([-!#$%&'*+.^_`|~_A-Za-z0-9]++))}
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '_' (duplicate)
@@ -27125,6 +27125,18 @@ corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:1982:25
    ↳ via $html5_email_regexp
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+corpus/wikimedia/mediawiki/includes/Rest/MarkdownFormatter.php:59:4
+    → /\[\[([^\[\]|]+)(?:\|([^\[\]]*))?\]\](?!\()/
+   TIP 
+       - /\[\[([^\[\]|]+)(?:\|([^\[\]]*))?\]\](?!\()/
+       + /\[\[([^[\]|]+)(?:\|([^[\]]*))?\]\](?!\()/
+
+corpus/wikimedia/mediawiki/includes/Rest/MarkdownFormatter.php:106:25
+    → /'''''(.+?)'''''/
+   TIP 
+       - /'''''(.+?)'''''/
+       + /'{5}(.+?)'{5}/
 
 corpus/wikimedia/mediawiki/includes/Rest/Router.php:37:33
     → !^/([-_.\w]+(?:/v[-_.\w]+)?)(/.*)$!
