@@ -19,6 +19,7 @@ use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\RangeFixtureReadings;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -32,6 +33,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class TextDocumentHandlerRangeTest extends TestCase
 {
+    use PcreRule;
     use RangeFixtureReadings;
 
     /**
@@ -100,6 +102,8 @@ final class TextDocumentHandlerRangeTest extends TestCase
     #[Test]
     public function test_the_change_of_meaning_is_not_judged_when_its_rule_is_off(): void
     {
+        self::assertEngineBacktracksIntoSelfReference();
+
         $diagnostics = $this->publish('>=7.4 <8.1', 'preg_match('.self::SELF_REFERENCE.', $s); // @regex-ignore regex.lint.compat.meaningChanges', ['regex.lint.compat.meaningChanges' => false]);
 
         $this->assertSame([], array_values(array_filter(array_map(static fn (array $diagnostic): mixed => $diagnostic['code'] ?? null, $diagnostics), static fn (mixed $code): bool => 'regex.lint.compat.meaningChanges' === $code || 'regex.ignore.unmatched' === $code)));

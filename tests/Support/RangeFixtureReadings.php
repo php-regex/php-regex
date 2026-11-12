@@ -24,6 +24,11 @@ use PHPUnit\Framework\Assert;
 trait RangeFixtureReadings
 {
     /**
+     * The PCRE2 a point is judged with, as PcreRule gives it.
+     */
+    abstract private static function judgedPcre(int $phpVersionId): string;
+
+    /**
      * "a{,3}" is a quantifier from PCRE2 10.43 ("{0,3}"), text before.
      */
     private static function assertEngineReadsQuantifierWithoutMin(): void
@@ -39,7 +44,6 @@ trait RangeFixtureReadings
      * than the floor's (a quantifier from 10.43, text before), in either
      * direction, null when none does: 8.4 with the bundled releases, 8.2
      * where the floor's PHP links 10.43 or later and 8.2 bundles 10.40.
-     * The class reads each point's PCRE2 with PcreRule::judgedPcre().
      *
      * @param list<int> $points the floor first
      */

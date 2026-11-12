@@ -179,6 +179,10 @@ final class RangeFindingsTest extends TestCase
     #[Test]
     public function test_range_findings_without_the_meaning_rule_give_refusals_only(): void
     {
+        self::assertEngineReadsQuantifierWithoutMin();
+        self::assertEngineKeepInLookbehind();
+        self::assertEngineBacktracksIntoSelfReference();
+
         [$floor, $range] = self::range('>=8.1');
         $quantifier = self::findings($floor, $range, self::QUANTIFIER_WITHOUT_MIN, comparesTrees: false);
         $refused = self::findings($floor, $range, self::KEEP_IN_LOOKBEHIND, comparesTrees: false);
@@ -201,6 +205,10 @@ final class RangeFindingsTest extends TestCase
     #[Test]
     public function test_range_findings_without_a_later_version_find_nothing(): void
     {
+        self::assertEngineKeepInLookbehind();
+        self::assertEngineReadsQuantifierWithoutMin();
+        self::assertEngineBacktracksIntoSelfReference();
+
         foreach (['8.1' => self::KEEP_IN_LOOKBEHIND, '8.2' => self::QUANTIFIER_WITHOUT_MIN, '7.4' => self::SELF_REFERENCE] as $php => $pattern) {
             $floor = RegexParser::create(['php_version' => (string) $php]);
 

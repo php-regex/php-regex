@@ -22,6 +22,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * The words of the range findings, from verdicts built by hand: these tests
+ * check the text alone, never what a pattern means. The patterns quoted in
+ * the verdicts are labels; the tests that find them run each one through
+ * the engine first (RangeFindingsTest, TextDocumentHandlerRangeTest).
+ */
 final class RangeWordingTest extends TestCase
 {
     /**
