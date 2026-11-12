@@ -197,6 +197,10 @@ final class PlaygroundLayoutTest extends TestCase
         $corner = '/\.pg-editor-pattern \.pg-field-count \{([^}]*)\}/';
         $this->assertSame(1, preg_match($corner, $stylesheet, $fact), 'The corner fact\'s rule exists.');
         $this->assertStringContainsString('pointer-events: none;', $fact[1], 'It says, it never takes a click.');
+        // A long pattern scrolls inside its field, it never grows the row:
+        // the field is an editor, not a page.
+        $this->assertSame(1, preg_match('/^.pg-editor.pg-editor-pattern \.pg-input,\s*^.pg-editor.pg-editor-pattern \.pg-mirror \{([^}]*)\}/m', $stylesheet, $cap), 'The pattern field is capped.');
+        $this->assertStringContainsString('max-height:', $cap[1], 'A twenty-line pattern meets a field a few lines tall, scrolling inside.');
         $this->assertStringContainsString('linear-gradient(', $fact[1], 'A veil fades the field\'s text under it — in the count\'s own rule, not wherever a gradient may live.');
         $this->assertSame(1, preg_match('/^\.hero-playground \.hero-inner \{([^}]*)\}/m', $stylesheet, $inner));
         $this->assertStringContainsString('padding-inline: max(1.25rem, calc(50vw - 53.75rem));', $inner[1], 'A tool page to 1 720 pixels; the prose keeps its column.');
