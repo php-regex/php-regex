@@ -16,6 +16,7 @@ namespace PHPRegex\Linter;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Validation\RangeVerdict;
+use PHPRegex\Parser\Validation\ValidationResult;
 
 /**
  * How the lint and the language server word what the later PHP versions
@@ -52,6 +53,17 @@ final class RangeWording
         }
 
         return implode('; ', $runs);
+    }
+
+    /**
+     * The message of a pattern later versions refuse: the versions, as
+     * refusedOn() names them, then the error of the lowest one.
+     *
+     * @param string $refusedOn the versions that refuse it, "PHP 8.5 and later"
+     */
+    public static function refusal(string $refusedOn, ValidationResult $validation): string
+    {
+        return \sprintf('On %s: %s', $refusedOn, $validation->error ?? 'Invalid regex.');
     }
 
     /**
