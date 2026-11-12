@@ -196,6 +196,29 @@ final class DynamicArgumentIssuesTest extends TestCase
     }
 
     /**
+     * A source may place a pattern where an argument that is not verified
+     * starts, a list whose first item is known and whose second is not:
+     * the argument is a result of its own, with its expression, and its
+     * info is not listed under the pattern.
+     */
+    #[Test]
+    public function test_an_argument_not_verified_at_the_place_of_a_pattern_is_a_result_of_its_own(): void
+    {
+        // The engine: a{1} is a, "/a{1}/" matches "a".
+        $this->assertSame(1, preg_match('/^a{1}$/', 'a'));
+
+        $report = $this->lint([
+            PatternOccurrence::argument('opaque', self::FILE, 3, 14, 20, 'preg_replace()', '$list'),
+            new PatternOccurrence('/a{1}/', self::FILE, 3, 'preg_replace()', column: 14, fileOffset: 20),
+        ], self::asked());
+
+        $this->assertSame([
+            [3, 14, null, '$list', ['regex.lint.source.dynamic']],
+            [3, 14, '/a{1}/', null, ['regex.lint.quantifier.useless']],
+        ], self::reported($report));
+    }
+
+    /**
      * A marker silences the arguments of its line as it silences a
      * pattern: every one when it names no issue, those of the issue it
      * names otherwise. Each marker here silences something: none is

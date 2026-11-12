@@ -755,7 +755,12 @@ final class LintService
     {
         foreach ($issues as $issue) {
             $place = $this->createPatternKey($issue->file, $issue->line, $issue->source, $issue->fileOffset);
-            $key = self::resultKey($place, $issue->pattern, $patternMap);
+            // An argument that is not verified stays out of the result of
+            // the pattern a source placed where it starts: no place
+            // begins with a null byte.
+            $key = null === $issue->pattern && isset($patternMap[$place]) && \array_key_exists($place, $expressions)
+                ? "\0".$place
+                : self::resultKey($place, $issue->pattern, $patternMap);
 
             $patternData = $patternMap[$key] ?? null;
             $results[$key] ??= $this->createResultStructure(
