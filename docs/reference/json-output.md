@@ -324,14 +324,16 @@ short for `--format=json`.
 | `pcre` | string | The PCRE2 release, as `major.minor` |
 | `locale` | string | The `LC_CTYPE` locale the patterns were judged under, as the C library names it: `C` for PCRE2's own character tables; the same at every `range` entry |
 | `source` | string | Where the target came from, such as `--php-version`, `regex.json`, `composer.json require.php` or `running PHP`, then where the PCRE2 release and the locale came from when it was elsewhere (`running PHP; --locale`) |
-| `range` | list of objects | Every PHP and PCRE2 the patterns were validated at, the floor first; a single entry, the target, unless the PHP came from `composer.json require.php` |
+| `range` | list of objects | Every PHP and PCRE2 the patterns were validated at, the floor first; a single entry, the target, unless the PHP is a range: read from `composer.json require.php`, or named by `--php-version` or `phpVersion` as a constraint or `{min, max}` |
 
 `php`, `pcre` and `source` name the floor: the lint rules and the ReDoS
-analysis judge every pattern there. When the PHP comes from `require.php`,
+analysis judge every pattern there. When the PHP is a range,
 each pattern is also validated (parsed and checked, without the lint rules)
 at every PHP version above the floor that a rule of the library changes at
-and that the constraint allows, and at the lowest version of each branch of an
-OR constraint above the floor (`~8.3.0 || >=8.5.3` adds `8.5.3`), with the
+and that the range allows, and at the lowest version of each branch of an
+OR constraint above the floor (`~8.3.0 || >=8.5.3` adds `8.5.3`), unless a
+version already judged with the same PCRE2 stands for its stretch between two
+rule changes (`8.1.0 || 8.1.1 || 8.1.2` is judged at 8.1 alone), with the
 PCRE2 the [target order](../guides/cli.md#target-php-and-pcre2) gives it: the
 release pinned, else the running one for the running PHP's minor, else the one
 that PHP bundles. See
@@ -352,7 +354,7 @@ which Unicode data a caseless verdict was computed with, see
 
 | key | type | meaning |
 |---|---|---|
-| `php` | string | The PHP version, as `major.minor`, or `major.minor.patch` when the version is a patch release a rule changes at (`8.4.25`), the floor's own patch (`8.4.30` for `^8.4.30`, the running PHP's patch for `running PHP`) or the lowest patch of an OR branch (`8.5.3` for `~8.3.0 \|\| >=8.5.3`) |
+| `php` | string | The PHP version, as `major.minor`, or `major.minor.patch` when the version is a patch release a rule changes at (`8.4.25`), the floor's own patch (`8.4.30` for `^8.4.30`, the running PHP's patch for `running PHP`) or the lowest patch of an OR branch when no other version judged with the same PCRE2 stands for its stretch between two rule changes (`8.5.3` for `~8.3.0 \|\| >=8.5.3`) |
 | `pcre` | string | The PCRE2 release, as `major.minor` |
 
 ### Stats: `lint.stats`

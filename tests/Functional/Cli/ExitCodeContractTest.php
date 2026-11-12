@@ -128,6 +128,62 @@ final class ExitCodeContractTest extends TestCase
         yield 'lint with an unknown --disable-rule' => [['lint', '--disable-rule=quantifer.nested']];
         yield 'lint with an unknown --enable-rule' => [['lint', '--enable-rule=nope.nope']];
         yield 'lint with an invalid --php-version' => [['--php-version=abc', 'lint', '.', '--jobs=1']];
+        yield 'lint with a --php-version range without a lowest version' => [['--php-version=<8.4', 'lint', '.', '--jobs=1']];
+        yield 'lint with a PHP_VERSION_ID inside a --php-version range' => [['--php-version=>=80100', 'lint', '.', '--jobs=1']];
+        yield 'lint with runtime inside a --php-version range' => [['--php-version=runtime || ^9.0', 'lint', '.', '--jobs=1']];
+        // A constraint no PHP satisfies names no range, as min above max
+        // does: refused, never judged at its floor.
+        yield 'lint with a --php-version hyphen range written backwards' => [['--php-version=8.6 - 8.1', 'lint', '.', '--jobs=1']];
+        yield 'lint with a --php-version range below its lowest version' => [['--php-version=>=8.4 <8.2', 'lint', '.', '--jobs=1']];
+        yield 'lint with two exact --php-version versions ANDed' => [['--php-version=8.1 8.2', 'lint', '.', '--jobs=1']];
+        // A version past PHP 9.99 is refused inside a range as it is alone.
+        yield 'lint with a --php-version range from PHP 10' => [['--php-version=>=10.0', 'lint', '.', '--jobs=1']];
+        yield 'lint with a --php-version range from a major past every integer' => [['--php-version=>=99999999999999999999.1', 'lint', '.', '--jobs=1']];
+        yield 'lint with a doubled separator in a --php-version range' => [['--php-version=>=8.1,,<8.3', 'lint', '.', '--jobs=1']];
+
+        // The commands that read one pattern take a single version until
+        // they judge every point of a range: a range is refused, as before.
+        foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'transpile', 'redos', 'graph', 'format'] as $command) {
+            yield $command.' with a --php-version range' => [['--php-version=>=8.1', $command, '/a/']];
+            yield $command.' with a --php-version hyphen range' => [['--php-version=8.1 - 8.6', $command, '/a/']];
+        }
+        yield 'compare with a --php-version range' => [['--php-version=>=8.1', 'compare', '/a/', '/b/']];
+        yield 'compare with a --php-version hyphen range' => [['--php-version=8.1 - 8.6', 'compare', '/a/', '/b/']];
+    }
+
+    /**
+     * @param list<string> $arguments
+     */
+    #[Test]
+    #[DataProvider('provideUnreadablePhpVersionsInTheConfiguration')]
+    public function test_a_php_version_regex_json_cannot_read_exits_2(string $configuration, array $arguments): void
+    {
+        $this->enterProject(['regex.json' => $configuration, 'src/a.php' => "<?php\n\npreg_match('/a/', 'abc');\n"]);
+
+        $this->assertSame(2, $this->runRegex($arguments));
+    }
+
+    /**
+     * @return iterable<string, array{configuration: string, arguments: list<string>}>
+     */
+    public static function provideUnreadablePhpVersionsInTheConfiguration(): iterable
+    {
+        $lint = ['lint', 'src', '--jobs=1'];
+
+        yield 'a constraint without a lowest version' => ['configuration' => '{"phpVersion": "<8.4"}', 'arguments' => $lint];
+        yield 'a PHP_VERSION_ID inside a constraint' => ['configuration' => '{"phpVersion": ">=80100"}', 'arguments' => $lint];
+        yield 'an object without max' => ['configuration' => '{"phpVersion": {"min": "8.1"}}', 'arguments' => $lint];
+        yield 'an object with another key' => ['configuration' => '{"phpVersion": {"min": "8.1", "max": "8.6", "x": 1}}', 'arguments' => $lint];
+        yield 'min above max' => ['configuration' => '{"phpVersion": {"min": "8.6", "max": "8.1"}}', 'arguments' => $lint];
+        // A constraint no PHP satisfies is refused as min above max is.
+        yield 'a hyphen range written backwards' => ['configuration' => '{"phpVersion": "8.6 - 8.1"}', 'arguments' => $lint];
+        yield 'an upper bound below the lowest version' => ['configuration' => '{"phpVersion": ">=8.4 <8.2"}', 'arguments' => $lint];
+        yield 'an upper bound below the lowest version, comma-separated' => ['configuration' => '{"phpVersion": ">=8.1,<8.0"}', 'arguments' => $lint];
+        yield 'two exact versions ANDed' => ['configuration' => '{"phpVersion": "8.1 8.2"}', 'arguments' => $lint];
+        // A version past PHP 9.99, refused alone ("past PHP 9.99").
+        yield 'a constraint from PHP 10' => ['configuration' => '{"phpVersion": ">=10.0"}', 'arguments' => $lint];
+        yield 'a constraint from PHP 99.1' => ['configuration' => '{"phpVersion": ">=99.1"}', 'arguments' => $lint];
+        yield 'a constraint from a major past every integer' => ['configuration' => '{"phpVersion": ">=99999999999999999999.1"}', 'arguments' => $lint];
     }
 
     /**
@@ -226,6 +282,14 @@ final class ExitCodeContractTest extends TestCase
         yield 'version' => [['version']];
         yield 'lint on valid files' => [['lint', 'src', '--jobs=1', '--format=json']];
         yield 'lint on files without patterns' => [['lint', 'empty', '--jobs=1']];
+        yield 'lint over a --php-version range' => [['--php-version=>=8.1', 'lint', 'src', '--jobs=1', '--format=json']];
+        yield 'lint over a --php-version hyphen range' => [['--php-version=8.1 - 8.6', 'lint', 'src', '--jobs=1', '--format=json']];
+        // A single version, and the running PHP, stay what the commands
+        // that read one pattern take.
+        yield 'validate with a single --php-version' => [['--php-version=8.1', 'validate', '/a/']];
+        yield 'validate with --php-version=runtime' => [['--php-version=runtime', 'validate', '/a/']];
+        yield 'analyze with a single --php-version' => [['--php-version=8.1', 'analyze', '/a/']];
+        yield 'analyze with --php-version=runtime' => [['--php-version=runtime', 'analyze', '/a/']];
         yield 'compare --method=subset on a subset' => [['compare', '/a/', '/a|b/', '--method=subset']];
         yield 'compare --method=equivalence on equivalent patterns' => [['compare', '/a/', '/a/', '--method=equivalence']];
         yield 'diagram written to a file' => [['diagram', '/a/', '--output=a.txt']];

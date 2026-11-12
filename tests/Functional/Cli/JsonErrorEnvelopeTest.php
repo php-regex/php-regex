@@ -172,6 +172,12 @@ final class JsonErrorEnvelopeTest extends TestCase
         yield 'redos, --input-file that does not exist' => ['arguments' => ['redos', '/a/', '--input-file=missing.txt', '--json'], 'error' => 'Input file not readable: missing.txt'];
         yield 'lint, invalid --pcre-version' => ['arguments' => ['--pcre-version=banana', 'lint', 'src', '--jobs=1', '--json'], 'error' => 'Invalid option: --pcre-version must be a PCRE2 release like "10.44", not "banana".'];
         yield 'lint, invalid --php-version beside a valid --pcre-version' => ['arguments' => ['--php-version=99', '--pcre-version=10.44', 'lint', 'src', '--jobs=1', '--json'], 'error' => 'Invalid option: --php-version 99 is no PHP_VERSION_ID: write PHP 9.9 as 90900 or "9.9".'];
+        // The commands that read one pattern take a single version until
+        // they judge every point of a range: a range is refused in the
+        // words they used before ranges.
+        yield 'validate, a --php-version range' => ['arguments' => ['--php-version=>=8.1', 'validate', '/(?<=a\\Kb)c/', '--json'], 'error' => 'Invalid option: --php-version must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".'];
+        yield 'validate, a --php-version hyphen range' => ['arguments' => ['--php-version=8.1 - 8.6', 'validate', '/a/', '--json'], 'error' => 'Invalid option: --php-version must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".'];
+        yield 'analyze, a --php-version range' => ['arguments' => ['--php-version=>=8.1', 'analyze', '/a/', '--json'], 'error' => 'Invalid option: --php-version must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".'];
     }
 
     /**
@@ -466,6 +472,84 @@ final class JsonErrorEnvelopeTest extends TestCase
     {
         yield 'not JSON' => ['configuration' => '{"redosMode": 5', 'error' => 'Invalid JSON'];
         yield 'an unknown key' => ['configuration' => '{"bogusKey": 1}', 'error' => 'Unknown key "bogusKey"'];
+    }
+
+    /**
+     * A phpVersion regex.json names no version or range with stops lint
+     * before it reads a file: the envelope, stage "config", naming the file
+     * and every form the key takes.
+     */
+    #[Test]
+    #[DataProvider('provideUnreadablePhpVersions')]
+    public function test_lint_refuses_an_unreadable_php_version_in_regex_json_with_the_config_stage(string $configuration): void
+    {
+        $directory = $this->enterProject(['regex.json' => $configuration, 'src/a.php' => "<?php\n\npreg_match('/a/', \$s);\n"]);
+
+        [$exitCode, $stdout] = $this->runRegex(['lint', 'src', '--jobs=1', '--json']);
+
+        $this->assertSame(2, $exitCode, $stdout);
+        $document = JsonContract::decodeDocument($stdout);
+        $this->assertSame(['error', 'stage'], array_keys($document), $stdout);
+        $this->assertSame('config', $document['stage']);
+        $this->assertIsString($document['error']);
+        $this->assertStringStartsWith('Invalid "phpVersion" in ', (string) $document['error']);
+        $this->assertStringEndsWith('regex.json: expected a version like "8.3", a PHP_VERSION_ID like 80300, "runtime", a Composer constraint like ">=8.1", or {"min": "8.1", "max": "8.6"}.', (string) $document['error']);
+        $this->assertStringContainsString(basename($directory), (string) $document['error']);
+    }
+
+    /**
+     * @return iterable<string, array{configuration: string}>
+     */
+    public static function provideUnreadablePhpVersions(): iterable
+    {
+        yield 'a constraint without a lowest version' => ['configuration' => '{"phpVersion": "<8.4"}'];
+        yield 'any version' => ['configuration' => '{"phpVersion": "*"}'];
+        yield 'a PHP_VERSION_ID inside a constraint' => ['configuration' => '{"phpVersion": ">=80100"}'];
+        yield 'runtime inside a constraint' => ['configuration' => '{"phpVersion": "runtime || ^9.0"}'];
+        yield 'an empty object' => ['configuration' => '{"phpVersion": {}}'];
+        yield 'an object with another key' => ['configuration' => '{"phpVersion": {"min": "8.1", "max": "8.6", "x": 1}}'];
+        yield 'runtime as a bound' => ['configuration' => '{"phpVersion": {"min": "runtime", "max": "8.6"}}'];
+        yield 'min above max' => ['configuration' => '{"phpVersion": {"min": 80600, "max": 80100}}'];
+        // A constraint no PHP satisfies, as min above max.
+        yield 'a hyphen range written backwards' => ['configuration' => '{"phpVersion": "8.6 - 8.1"}'];
+        yield 'an upper bound below the lowest version' => ['configuration' => '{"phpVersion": ">=8.4 <8.2"}'];
+        // A version past PHP 9.99, refused by the loader in its own words,
+        // not later as a PHP_VERSION_ID regex.json never held.
+        yield 'a constraint from PHP 10' => ['configuration' => '{"phpVersion": ">=10.0"}'];
+        yield 'a constraint from PHP 99.1' => ['configuration' => '{"phpVersion": ">=99.1"}'];
+        yield 'a constraint from a major past every integer' => ['configuration' => '{"phpVersion": ">=99999999999999999999.1"}'];
+    }
+
+    /**
+     * A --php-version lint cannot read as a version or a range is the
+     * command line's error: the envelope, stage "usage".
+     */
+    #[Test]
+    #[DataProvider('provideUnreadablePhpVersionFlags')]
+    public function test_lint_refuses_an_unreadable_php_version_range_with_the_usage_stage(string $range): void
+    {
+        $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/a/', \$s);\n"]);
+
+        [$exitCode, $stdout] = $this->runRegex(['--php-version='.$range, 'lint', 'src', '--jobs=1', '--json']);
+
+        $this->assertSame(2, $exitCode, $stdout);
+        $document = JsonContract::decodeDocument($stdout);
+        $this->assertSame(['error', 'stage'], array_keys($document), $stdout);
+        $this->assertSame('usage', $document['stage']);
+        $this->assertIsString($document['error']);
+        $this->assertStringStartsWith('Invalid option: --php-version must be a version string like "8.2"', (string) $document['error']);
+        $this->assertStringContainsString('a Composer constraint like ">=8.1"', (string) $document['error']);
+    }
+
+    /**
+     * @return iterable<string, array{range: string}>
+     */
+    public static function provideUnreadablePhpVersionFlags(): iterable
+    {
+        yield 'no lowest version' => ['range' => '<8.4'];
+        yield 'a branch name' => ['range' => 'dev-main'];
+        yield 'a PHP_VERSION_ID inside a constraint' => ['range' => '>=80100'];
+        yield 'runtime inside a constraint' => ['range' => 'runtime || ^9.0'];
     }
 
     /**

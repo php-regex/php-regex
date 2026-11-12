@@ -97,7 +97,7 @@ final class LintOutputRenderer
 
         $lines = [
             'Runtime' => 'PHP '.$output->warning(\PHP_VERSION).', PCRE2 '.$output->warning($runningPcre),
-            'Target' => 'PHP '.$output->warning($target->php()).', PCRE2 '.$output->warning($target->target()->pcreVersion).('C' === $target->target()->locale ? '' : ', locale '.$output->warning($target->target()->locale)).' ('.$target->source().')',
+            'Target' => 'PHP '.$output->warning($target->php()).', PCRE2 '.$output->warning($target->target()->pcreVersion).('C' === $target->target()->locale ? '' : ', locale '.$output->warning($target->target()->locale)).' ('.$target->source().')'.self::laterPoints($output, $target),
             // What the run planned; where this PHP cannot fork, Windows among
             // others, the workers asked for run in this process, and the
             // banner says so beside the count asked for.
@@ -124,6 +124,21 @@ final class LintOutputRenderer
         $banner .= "\n";
 
         return $banner;
+    }
+
+    /**
+     * The PHP versions of the range judged after the floor, as the Target
+     * row ends with them ("; also PHP 8.4.25, 8.5, 8.5.10"): empty when
+     * one version is judged.
+     */
+    private static function laterPoints(Output $output, ProjectTarget $target): string
+    {
+        $later = array_map(
+            static fn (PcreTarget $point): string => $output->warning(ProjectTarget::phpLabel($point->phpVersionId)),
+            \array_slice($target->range(), 1),
+        );
+
+        return [] === $later ? '' : '; also PHP '.implode(', ', $later);
     }
 
     private function showFooter(Output $output): void
