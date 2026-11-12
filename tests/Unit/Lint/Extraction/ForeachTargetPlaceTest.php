@@ -345,8 +345,11 @@ final class ForeachTargetPlaceTest extends TestCase
     }
 
     /**
-     * A goto may run the body again from anywhere, past the head: the
-     * target is not followed there.
+     * A goto runs the statements of a function again in an order the
+     * file does not write: no target is followed in a body that holds
+     * one. The label stands before the head, where PHP allows it: a jump
+     * into the loop is refused ("'goto' into loop or switch statement is
+     * disallowed", PHP 8.4).
      */
     #[Test]
     public function test_a_target_in_a_body_a_goto_runs_again_is_not_read(): void
