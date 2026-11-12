@@ -152,6 +152,22 @@ final class TextDocumentHandlerRangeTest extends TestCase
     }
 
     /**
+     * The push of every version reuses what the floor's push read of each
+     * pattern (its lint issues, its ReDoS verdict): only the later versions'
+     * findings are added, so a pattern is linted once per document read.
+     */
+    #[Test]
+    public function test_the_full_push_reuses_the_floors_analysis(): void
+    {
+        $this->open('>=8.2', "preg_match('/a{1}b/', \$s);\npreg_match('/c+/', \$s);");
+
+        $floor = new \ReflectionProperty(TextDocumentHandler::class, 'analyses');
+        $this->assertCount(2, (array) $floor->getValue($this->handler), 'One floor analysis per pattern, kept for the second push.');
+        $later = new \ReflectionProperty(TextDocumentHandler::class, 'laterFindings');
+        $this->assertCount(2, (array) $later->getValue($this->handler), 'One set of later findings per pattern.');
+    }
+
+    /**
      * One version judged: one publication, as before.
      */
     #[Test]
@@ -167,6 +183,8 @@ final class TextDocumentHandlerRangeTest extends TestCase
     #[Test]
     public function test_a_change_publishes_once(): void
     {
+        self::assertEngineKeepInLookbehind();
+
         $stream = $this->open('>=8.2', "preg_match('/a/', \$s);");
         $before = \count(self::publications($stream));
 

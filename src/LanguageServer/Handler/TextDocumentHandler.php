@@ -87,14 +87,24 @@ final class TextDocumentHandler
     private array $narrowed = [];
 
     /**
-     * What each pattern was found to hold, by the versions that judged it
-     * and the pattern: the same for every place the pattern stands, so an
-     * edit analyses only the patterns whose text it changed. The lint rules
-     * and the ReDoS settings are the server's, fixed.
+     * What each pattern was found to hold at the lowest version judging
+     * it, by that version and the pattern: the same for every place the
+     * pattern stands, so an edit analyses only the patterns whose text it
+     * changed, and the push of every version reads again what the floor's
+     * push read. The lint rules and the ReDoS settings are the server's,
+     * fixed.
      *
      * @var array<string, Analysis>
      */
     private array $analyses = [];
+
+    /**
+     * What the later versions of a range find in a pattern the floor reads,
+     * by the floor, the later versions and the pattern.
+     *
+     * @var array<string, array{?Refusal, ?string}>
+     */
+    private array $laterFindings = [];
 
     /**
      * The parsers of the versions of the range after the floor, sharing
@@ -540,11 +550,37 @@ final class TextDocumentHandler
      */
     private function analysis(string $pattern, Regex $regex, array $range): array
     {
+        $analysis = $this->floorAnalysis($pattern, $regex);
+        if ([] === $range || 'read' !== $analysis[0]) {
+            return $analysis;
+        }
+
         $key = spl_object_id($regex);
         foreach ($range as $parser) {
             $key .= ','.$parser->target()->key();
         }
         $key .= "\0".$pattern;
+        if (!isset($this->laterFindings[$key])) {
+            // The floor read the pattern: its tree is in the parser's cache.
+            $this->laterFindings[$key] = $this->rangeFindings($pattern, $regex->parse($pattern), $regex->parser(), $range);
+            if (\count($this->laterFindings) > self::MAX_KEPT_ANALYSES) {
+                unset($this->laterFindings[array_key_first($this->laterFindings)]);
+            }
+        }
+        [$analysis[4], $analysis[5]] = $this->laterFindings[$key];
+
+        return $analysis;
+    }
+
+    /**
+     * What a pattern holds at the lowest version judging it, without the
+     * later versions' findings.
+     *
+     * @return Analysis
+     */
+    private function floorAnalysis(string $pattern, Regex $regex): array
+    {
+        $key = spl_object_id($regex)."\0".$pattern;
         if (isset($this->analyses[$key])) {
             $analysis = $this->analyses[$key];
             // Read again, it is the latest.
@@ -564,8 +600,7 @@ final class TextDocumentHandler
                 $ast->accept($linter);
 
                 $redos = RedosMode::Off === $this->redosMode ? null : $regex->redos($pattern, $this->redosThreshold, $this->redosMode);
-                [$refusal, $change] = [] === $range ? [null, null] : $this->rangeFindings($pattern, $ast, $regex->parser(), $range);
-                $analysis = ['read', $ast->source ?? '', $linter->getIssues(), $redos, $refusal, $change];
+                $analysis = ['read', $ast->source ?? '', $linter->getIssues(), $redos, null, null];
             }
         } catch (LimitException $e) {
             $analysis = ['limit', $e->getMessage(), $e->errorCode];
