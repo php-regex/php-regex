@@ -238,7 +238,6 @@
         "spipu/html2pdf": { "url": "https://github.com/spipu/html2pdf.git", "branch": "master", "commit": "98416dd8eadd3b966f41430b841d3e4dd6eadc6f" },
         "spiral/framework": { "url": "https://github.com/spiral/framework.git", "branch": "3.x", "commit": "f1fb63cbe7c3318e995a3d865cdd37640f7f63b1" },
         "Spomky-Labs/otphp": { "url": "https://github.com/Spomky-Labs/otphp", "branch": "11.6.x", "commit": "49d6fa7207f2dada014f0ef27205c4494c684c9f" },
-        "squizlabs/PHP_CodeSniffer": { "url": "https://github.com/squizlabs/PHP_CodeSniffer.git", "branch": "master", "commit": "c6c65ca0dc8608ba87631523b97b2f8d5351a854" },
         "staabm/phpstan-baseline-analysis": { "url": "https://github.com/staabm/phpstan-baseline-analysis", "branch": "main", "commit": "cdfc85305f58d68c322f2d57390f7dae685311bc" },
         "staabm/phpstan-dba": { "url": "https://github.com/staabm/phpstan-dba", "branch": "main", "commit": "39d256956f4bfc5588eec21af941638832b09b77" },
         "staabm/phpstan-todo-by": { "url": "https://github.com/staabm/phpstan-todo-by", "branch": "main", "commit": "d2d449a4954115675c0e2565affee8ecd8884ce2" },
