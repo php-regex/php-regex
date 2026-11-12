@@ -24275,7 +24275,7 @@ corpus/woocommerce/woocommerce/packages/php/email-editor/src/Engine/Renderer/cla
        - /\n> >/im
        + /\n> >/i
 
-corpus/woocommerce/woocommerce/packages/php/email-editor/src/Engine/class-personalizer.php:311:4
+corpus/woocommerce/woocommerce/packages/php/email-editor/src/Engine/class-personalizer.php:316:4
     → /\]\((\[[a-zA-Z0-9\-\/]+(?:\s(?:=(?:"[^"]*"(?=[\s\]])|'[^']*'(?=[\s\]]))|[^\]])*+)?\]|(?:[^()\s]++|\([^()\s]*\))++)\)/
    TIP 
        - /\]\((\[[a-zA-Z0-9\-\/]+(?:\s(?:=(?:"[^"]*"(?=[\s\]])|'[^']*'(?=[\s\]]))|[^\]])*+)?\]|(?:[^()\s]++|\([^()\s]*\))++)\)/
@@ -24602,7 +24602,7 @@ corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooC
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/Logging/RemoteLogger.php:516:28
+corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/Logging/RemoteLogger.php:563:28
     → /(\d{4}[- ]?){3}\d{4}/
    INFO  Quantified capturing group "(...)" with "{3}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
