@@ -224,7 +224,6 @@
         "QafooLabs/php-refactoring-browser": { "url": "https://github.com/QafooLabs/php-refactoring-browser", "branch": "master", "commit": "3ff0f7bc955ec253ad7fa1bfaf44cc02604aaa1d" },
         "reactphp/http": { "url": "https://github.com/reactphp/http.git", "branch": "3.x", "commit": "a58e432c146ffb84e3aab4c16eb7d9d497bfbd02" },
         "reactphp/socket": { "url": "https://github.com/reactphp/socket.git", "branch": "3.x", "commit": "340413907bf1922204de508223d275e30b6c495a" },
-        "rectorphp/rector": { "url": "https://github.com/rectorphp/rector", "branch": "main", "commit": "1be7b7916c500b9d8060bb4a01d26d00012554ff" },
         "rectorphp/rector-src": { "url": "https://github.com/rectorphp/rector-src.git", "branch": "main", "commit": "6029e8ddbb90ab57874e6ea575dda80d7fdba338" },
         "Respect/Validation": { "url": "https://github.com/Respect/Validation.git", "branch": "main", "commit": "10f7787d752576bedc80a654d66d17879a5e73d2" },
         "Roave/BackwardCompatibilityCheck": { "url": "https://github.com/Roave/BackwardCompatibilityCheck", "branch": "8.24.x", "commit": "a1a9ac5d65c2205844cf7eddff8db88aa6e0a466" },
