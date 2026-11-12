@@ -23,3 +23,11 @@ use PHPStan\DependencyInjection\Container;
 $container = get_defined_vars()['container'] ?? null;
 $tmpDir = $container instanceof Container ? $container->getParameter('tmpDir') : null;
 ClassSetProvider::persistIn(\is_string($tmpDir) ? $tmpDir.'/php-regex' : null);
+
+// A target the rules cannot judge stops PHPStan here, while it starts, as
+// an error of its configuration, rather than inside the analysis of the
+// first file, where PHPStan would report it as an internal error of its
+// own.
+if ($container instanceof Container) {
+    TargetScope::checkSettings($container);
+}

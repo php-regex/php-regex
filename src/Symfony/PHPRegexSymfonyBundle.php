@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony;
 
 use PhpParser\ParserFactory;
+use PHPRegex\Linter\Config\TargetSpec;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
@@ -72,7 +73,7 @@ final class PHPRegexSymfonyBundle extends AbstractBundle
                 ->end()
                 ->scalarNode('php_version')
                     ->defaultNull()
-                    ->info('The PHP version regex:lint judges patterns for ("8.2", "8.2.4" or 80200). Unset: the lowest PHP composer.json allows, else the running PHP. The php_regex.regex service always judges for the running PHP.')
+                    ->info('The PHP version regex:lint judges patterns for: one version ("8.2", "8.2.4" or 80200), or a Composer constraint (">=8.1", "^8.1 <8.5"), judged from its lowest version and at each later one it allows. Unset: the range composer.json allows, else the running PHP. The php_regex.regex service always judges for the running PHP.')
                     ->validate()
                         ->always($target('php_version'))
                     ->end()
@@ -540,9 +541,11 @@ final class PHPRegexSymfonyBundle extends AbstractBundle
 
     /**
      * The version or the locale as given, once Regex::create() could read
-     * it.
+     * it; for php_version, a Composer constraint as given, once
+     * `regex lint --php-version` could read it.
      *
-     * @throws InvalidRegexOptionException when it names no version, or a locale the machine cannot set
+     * @throws InvalidRegexOptionException when it names no version and no range, or a locale the machine
+     *                                     cannot set
      */
     private static function targetVersion(string $key, mixed $version): string|int|null
     {
@@ -553,6 +556,13 @@ final class PHPRegexSymfonyBundle extends AbstractBundle
         if (!\is_string($version) && !\is_int($version)) {
             // YAML reads an unquoted 8.2 as a float, and 8.10 as 8.1.
             throw new InvalidRegexOptionException(\sprintf('"%s" must be a quoted version like "8.2", not a %s.', $key, get_debug_type($version)));
+        }
+
+        // A constraint is kept as written, the node scalar: regex:lint
+        // reads it again as the range it judges. A string that names no
+        // version and no range is refused here, in lint's words.
+        if ('php_version' === $key && null !== TargetSpec::intervals($version)) {
+            return $version;
         }
 
         ParserOptions::fromArray([$key => $version]);

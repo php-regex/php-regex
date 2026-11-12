@@ -2,8 +2,21 @@ parametersSchema:
     phpRegex: structure([
         # PHP version patterns are judged for: null for PHPStan's phpVersion
         # (the PHP running PHPStan unless configured), 'runtime' for the PHP
-        # running PHPStan, a version like '8.2' or a PHP_VERSION_ID like 80200
-        phpVersion: schema(anyOf(schema(string(), pattern('runtime|\d{5,}|\d+\.\d{1,2}(\.\d{1,2})?')), schema(int(), min(1))), nullable()),
+        # running PHPStan, a version like '8.2' or a PHP_VERSION_ID like
+        # 80200; or a range, judged from its lowest PHP at each later one it
+        # allows where a rule changes: a Composer constraint like '>=8.1',
+        # or {min, max}, each a quoted version like '8.1' (unquoted, 8.1 is
+        # a float) or a PHP_VERSION_ID, max included ('8.6' covers the 8.6
+        # series). A range is kept within PHPStan's phpVersion when that is
+        # {min, max} too.
+        phpVersion: schema(anyOf(
+            schema(string(), pattern('runtime|\d{5,}|\d+\.\d{1,2}(\.\d{1,2})?')),
+            schema(string(), pattern('[\d.*\s^~<>=!|,-]*[*^~<>=!|,\s-][\d.*\s^~<>=!|,-]*')),
+            schema(int(), min(1)),
+            # Checked whole, so that a missing, extra or unreadable bound
+            # names phpVersion itself
+            schema(arrayOf(scalar()), assert('PHPRegex\PHPStan\TargetScope::isMinMax', "{min, max}, each a quoted version like '8.1' or a PHP_VERSION_ID"))
+        ), nullable()),
         # PCRE2 release patterns are judged for, like '10.42' or PCRE_VERSION
         # ('10.44 2024-06-07'), used as is; null for the one composer.json
         # pins in config.platform.lib-pcre, else the running PCRE2 for the

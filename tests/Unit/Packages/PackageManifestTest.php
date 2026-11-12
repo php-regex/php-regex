@@ -175,6 +175,9 @@ final class PackageManifestTest extends TestCase
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
             'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\Path',
             'Transpiler\Target\TargetRegistry',
+            // A php_version of another type is refused in lint's words,
+            // naming the Composer constraint it takes.
+            'Linter\Config\TargetSpec',
         ],
         // The overlap rule asks PCRE2 for the characters of a branch's first
         // atom where the byte sets stop, above ASCII, and compares the
@@ -212,6 +215,10 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\TargetMarkers', 'Parser\Hir\ClassSetProvider',
             'Parser\Printer\DisplayEscaper', 'Parser\Engine\LibraryPcre',
             'Linter\Extraction\PatternAttributeScanner', 'Linter\Extraction\PregFunctions', 'Linter\Rule\RuleCatalog',
+            // phpRegex.phpVersion takes a Composer constraint or {min, max}:
+            // the extension reads it as regex.json's phpVersion is read, to
+            // keep it within PHPStan's own range, refused in lint's words.
+            'Linter\Config\TargetSpec',
         ],
         // The plugin reads the key layout CaptureShape renders for
         // PHPStan, so both type systems say the same keys, and a pattern
@@ -222,6 +229,9 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\TargetMarkers', 'Parser\Hir\ClassSetProvider', 'Parser\Text\Ascii',
             'Parser\Analysis\CaptureKey', 'Linter\Extraction\PregFunctions',
             'Parser\Analysis\CaptureLayout', 'Parser\Resolution\QuotedPattern',
+            // <phpVersion> takes a Composer constraint: the plugin reads it
+            // as regex.json's phpVersion is read, refused in lint's words.
+            'Linter\Config\TargetSpec',
         ],
         'Redos' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Hir\CharSet',
@@ -249,6 +259,9 @@ final class PackageManifestTest extends TestCase
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource', 'Linter\Source\TwigTemplatePatternSource',
             'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
             'Parser\Text\Path', 'Transpiler\Target\TargetRegistry',
+            // php_version takes a Composer constraint: the bundle reads it
+            // as regex.json's phpVersion is read, refused in lint's words.
+            'Linter\Config\TargetSpec',
         ],
         // The HTML pattern attribute takes no flag: /i is spelled out
         // with the characters the running PCRE takes for each atom.

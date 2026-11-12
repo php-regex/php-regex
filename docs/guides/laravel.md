@@ -57,7 +57,7 @@ return [
     'runtime_pcre_validation' => false,
     // The PHP version, PCRE2 release and LC_CTYPE locale regex:lint judges
     // patterns for.
-    'php_version' => null,   // "8.2", "8.2.4" or 80200
+    'php_version' => null,   // "8.2", "8.2.4", 80200, or a constraint like ">=8.1"
     'pcre_version' => null,  // "10.42"
     'locale' => null,        // "tr_TR.UTF-8"; the locale of the PHP running the command
     'cache' => [
@@ -236,7 +236,16 @@ running it, under the locale it runs under, and `php_version` /
 `regex:lint` judges the patterns of your code for the PHP your project
 supports. It picks the target in this order:
 
-1. `php_version` and `pcre_version` in `config/php-regex.php`;
+1. `php_version` and `pcre_version` in `config/php-regex.php`. A single
+   version (`"8.2"`, `"8.2.4"`, `80200`) is judged alone. A Composer
+   constraint (`">=8.1"`, `"^8.1 <8.7"`) is judged as a `require.php` range:
+   from its lowest PHP, then at every later PHP it allows, and the report
+   names `config php-regex.php_version` as its source. A constraint that
+   names no lowest version (`"<8.4"`, `"*"`), or a PHP_VERSION_ID inside a
+   constraint (`">=80100"`), stops the command with exit code 2 (see
+   [Naming a range](cli.md#naming-a-range)). A single version hides the wider
+   range `composer.json` allows: write `">=8.1"`, or leave the key `null` to
+   read `composer.json`;
 2. `composer.json` at `base_path()`: `config.platform.php` if set, else the
    lowest version `require.php` allows, and then every pattern is also validated on
    the later PHP versions the constraint allows, as

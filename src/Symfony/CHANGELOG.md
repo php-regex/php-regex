@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `php_regex.php_version` takes a Composer constraint (`">=8.1"`,
+   `"^8.1 <8.7"`) besides a single version: `regex:lint` judges the range as
+   `regex lint --php-version` does, from its lowest PHP and at every later
+   PHP it allows, with `php_regex.php_version` as the target's source. A
+   constraint that names no lowest version (`"<8.4"`, `"*"`) stops the
+   container compile with the message `regex lint` gives it. The
+   `php_regex.regex` service still judges for the running PHP.
  * `regex:lint` reads the pattern arguments `regex lint` now reads: those
    built from parts at the call, chosen by a ternary or a `match`, held in
    an array, at file level or in a global constant of another file. Under

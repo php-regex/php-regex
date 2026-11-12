@@ -73,7 +73,7 @@ parameters:
 			path: src/Psalm/PsalmInternals.php
 
 		-
-			rawMessage: 'Parameter #1 $config of class PHPRegex\PHPStan\PatternChecker constructor expects array{phpVersion?: int|string|null, pcreVersion?: string|null, locale?: string|null, interop?: list<string>|null, checks?: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, optimizations?: array{enabled?: bool, minSavings?: int, options?: array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool}}, complexity?: array{enabled?: bool, threshold?: int}}}, array{checks: array{complexity: array{enabled: false, threshold: mixed}}} given.'
+			rawMessage: 'Parameter #1 $config of class PHPRegex\PHPStan\PatternChecker constructor expects array{phpVersion?: array{min: int|string, max: int|string}|int|string|null, pcreVersion?: string|null, locale?: string|null, interop?: list<string>|null, checks?: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, optimizations?: array{enabled?: bool, minSavings?: int, options?: array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool}}, complexity?: array{enabled?: bool, threshold?: int}}}, array{checks: array{complexity: array{enabled: false, threshold: mixed}}} given.'
 			identifier: argument.type
 			count: 1
 			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleComplexityTest.php
@@ -381,19 +381,13 @@ parameters:
 		-
 			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
 			identifier: property.internalClass
-			count: 5
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
-
-		-
-			rawMessage: Access to property $selected_text of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
+			count: 4
 			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
 
 		-
 			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
 			identifier: property.internalClass
-			count: 5
+			count: 3
 			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
 
 		-
@@ -495,18 +489,36 @@ parameters:
 		-
 			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
 			identifier: property.internalClass
-			count: 3
+			count: 4
 			path: tests/Integration/Bridge/Psalm/PsalmRun.php
 
 		-
 			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
 			identifier: property.internalClass
-			count: 1
+			count: 2
 			path: tests/Integration/Bridge/Psalm/PsalmRun.php
 
 		-
 			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
 			identifier: property.internalClass
+			count: 2
+			path: tests/Integration/Bridge/Psalm/PsalmRun.php
+
+		-
+			rawMessage: Access to property $selected_text of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/PsalmRun.php
+
+		-
+			rawMessage: 'Parameter $issues of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmRun::invalidPatterns() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
+			identifier: parameter.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/PsalmRun.php
+
+		-
+			rawMessage: 'Parameter $issues of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmRun::reported() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
+			identifier: parameter.internalClass
 			count: 1
 			path: tests/Integration/Bridge/Psalm/PsalmRun.php
 
@@ -715,7 +727,7 @@ parameters:
 			path: tests/Integration/Bridge/Rector/RuleContractTest.php
 
 		-
-			rawMessage: 'Parameter #1 $config of class PHPRegex\PHPStan\RegexPatternRule constructor expects array{phpVersion?: int|string|null, pcreVersion?: string|null, locale?: string|null, interop?: list<string>|null, checks?: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, optimizations?: array{enabled?: bool, minSavings?: int, options?: array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool}}, complexity?: array{enabled?: bool, threshold?: int}}}, array{checks: array{redos: array{enabled: true, threshold: 3}}} given.'
+			rawMessage: 'Parameter #1 $config of class PHPRegex\PHPStan\RegexPatternRule constructor expects array{phpVersion?: array{min: int|string, max: int|string}|int|string|null, pcreVersion?: string|null, locale?: string|null, interop?: list<string>|null, checks?: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, optimizations?: array{enabled?: bool, minSavings?: int, options?: array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool}}, complexity?: array{enabled?: bool, threshold?: int}}}, array{checks: array{redos: array{enabled: true, threshold: 3}}} given.'
 			identifier: argument.type
 			count: 1
 			path: tests/Unit/Bridge/PHPStan/RegexPatternRuleThresholdTypeTest.php

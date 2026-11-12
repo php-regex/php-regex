@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Support;
 
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPUnit\Framework\Assert;
 
 /**
@@ -27,6 +28,18 @@ trait RangeFixtureReadings
      * The PCRE2 a point is judged with, as PcreRule gives it.
      */
     abstract private static function judgedPcre(int $phpVersionId): string;
+
+    /**
+     * Each version of a range as the JSON report of a lint names it.
+     *
+     * @param list<int> $points
+     *
+     * @return list<array{php: string, pcre: string}>
+     */
+    private static function rangeRows(array $points): array
+    {
+        return array_map(static fn (int $point): array => ['php' => ProjectTarget::phpLabel($point), 'pcre' => self::judgedPcre($point)], $points);
+    }
 
     /**
      * "a{,3}" is a quantifier from PCRE2 10.43 ("{0,3}"), text before.
@@ -68,6 +81,17 @@ trait RangeFixtureReadings
         $compiles = \PHP_VERSION_ID < 80500;
 
         Assert::assertSame($compiles ? 1 : false, @preg_match('/(?<=a\Kb)c/', 'abc'), 'PHP '.\PHP_VERSION.', PCRE2 '.\PCRE_VERSION);
+    }
+
+    /**
+     * A lookbehind of variable length compiles from PCRE2 10.43, which PHP
+     * bundles from 8.4, and is refused before.
+     */
+    private static function assertEngineVariableLengthLookbehind(): void
+    {
+        $compiles = version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
+
+        Assert::assertSame($compiles ? 1 : false, @preg_match('/(?<=ab?)c/', 'abc'), 'PCRE2 '.\PCRE_VERSION);
     }
 
     /**

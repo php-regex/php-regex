@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
 use PHPRegex\Psalm\Plugin;
+use PHPUnit\Framework\Assert;
 use Psalm\Config;
 use Psalm\Internal\Analyzer\IssueData;
 use Psalm\Internal\Analyzer\ProjectAnalyzer;
@@ -138,6 +139,46 @@ final class PsalmRun
     public static function describe(IssueData $issue): string
     {
         return \sprintf('%s %d:%d %s', $issue->type, $issue->line_from, $issue->column_from, $issue->message);
+    }
+
+    /**
+     * The InvalidRegexPattern issues by the argument they select, each with
+     * its message; a Trace is left out, and any other issue fails the test.
+     *
+     * @param list<IssueData> $issues
+     *
+     * @return array<string, string>
+     */
+    public static function invalidPatterns(array $issues): array
+    {
+        $reported = [];
+        foreach (self::reported($issues) as [, $type, $message, $selected]) {
+            Assert::assertSame('InvalidRegexPattern', $type, $type.' '.$message);
+            $reported[$selected] = $message;
+        }
+
+        return $reported;
+    }
+
+    /**
+     * Each issue but a Trace: its line, its type, its message and the text
+     * it selects, in order.
+     *
+     * @param list<IssueData> $issues
+     *
+     * @return list<array{int, string, string, string}>
+     */
+    public static function reported(array $issues): array
+    {
+        $reported = [];
+        foreach ($issues as $issue) {
+            $type = $issue->type;
+            if ('Trace' !== $type) {
+                $reported[] = [$issue->line_from, $type, $issue->message, $issue->selected_text];
+            }
+        }
+
+        return $reported;
     }
 
     /**

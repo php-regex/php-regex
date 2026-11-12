@@ -53,7 +53,7 @@ use PHPStan\Type\Type;
  * built by hand.
  *
  * @phpstan-type ConfigArray array{
- *     phpVersion?: string|int|null,
+ *     phpVersion?: string|int|array{min: string|int, max: string|int}|null,
  *     pcreVersion?: string|null,
  *     locale?: string|null,
  *     interop?: list<string>|null,
@@ -128,10 +128,12 @@ final class RegexPatternRule implements Rule
      *                                                               every key optional
      * @param PhpVersion|null                    $phpVersion         the PHP version PHPStan analyses the project for: patterns are
      *                                                               judged for it, with the PCRE2 it bundles, unless "phpVersion"
-     *                                                               is "runtime" or names a version, and "pcreVersion" a release
+     *                                                               is "runtime" or names a version or a range, and "pcreVersion"
+     *                                                               a release
      * @param int|array{min: int, max: int}|null $phpVersionRange    PHPStan's "phpVersion" parameter: with {min, max}, a pattern is
      *                                                               also validated at each later PHP up to max where a rule of the
-     *                                                               library changes, unless "phpVersion" names one version
+     *                                                               library changes, unless "phpVersion" names one version; a
+     *                                                               range "phpVersion" names is kept within it
      * @param ReflectionProvider|null            $reflectionProvider tells whether PHP_VERSION_ID names the global constant
      *                                                               in a namespace, for a guard written without a leading backslash
      *

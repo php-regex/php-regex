@@ -81,14 +81,7 @@ final class PsalmPluginTargetTest extends TestCase
 
         $issues = PsalmRun::inFile(PsalmRun::issues([self::FILE], $phpVersion, $options), self::FILE);
 
-        $found = [];
-        foreach ($issues as $issue) {
-            if ('Trace' === $issue->type) {
-                continue;
-            }
-            $this->assertSame('InvalidRegexPattern', $issue->type, PsalmRun::describe($issue));
-            $found[$issue->selected_text] = $issue->message;
-        }
+        $found = PsalmRun::invalidPatterns($issues);
         $expected = [];
         foreach ($reported as $pattern => $target) {
             $expected["'".$pattern."'"] = $target;

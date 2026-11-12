@@ -10,7 +10,7 @@ php_regex:
     # Whether the php_regex.regex service also compiles every pattern with the running PHP (preg_match compile check). regex:lint never does: it judges for php_version / pcre_version.
     runtime_pcre_validation: false
 
-    # The PHP version regex:lint judges patterns for ("8.2", "8.2.4" or 80200). Unset: the lowest PHP composer.json allows, else the running PHP. The php_regex.regex service always judges for the running PHP.
+    # The PHP version regex:lint judges patterns for: one version ("8.2", "8.2.4" or 80200), or a Composer constraint (">=8.1", "^8.1 <8.5"), judged from its lowest version and at each later one it allows. Unset: the range composer.json allows, else the running PHP. The php_regex.regex service always judges for the running PHP.
     php_version:          null
 
     # The PCRE2 release regex:lint judges patterns for ("10.42"). Unset: the release php_version bundles.

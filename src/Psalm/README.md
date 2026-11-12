@@ -344,8 +344,15 @@ The plugin's options override the version and the release:
 </plugins>
 ```
 
-* `<phpVersion>`: a version (`8.2`), a `PHP_VERSION_ID` (`80200`), or
-  `runtime`, the PHP running Psalm with the PCRE2 it links.
+* `<phpVersion>`: a version (`8.2`), a `PHP_VERSION_ID` (`80200`),
+  `runtime`, the PHP running Psalm with the PCRE2 it links, or a Composer
+  constraint (`>=8.1`, written `&gt;=8.1` in the XML) for a library that
+  installs on several PHP versions: the range is judged at the versions
+  `regex lint` judges, from its lowest PHP and at every later PHP where a
+  rule of the library changes, and a pattern a later PHP refuses is reported
+  for that PHP. Only refusals are reported: the lint's warning that a later
+  PHP reads a pattern otherwise is not. `require.php` is never read as a
+  range.
 * `<pcreVersion>`: a PCRE2 release (`10.40`), for a PHP built against another
   PCRE2 than the one it bundles, as some Linux distributions do.
 * `<locale>`: the `LC_CTYPE` locale the patterns run under (`tr_TR.UTF-8`),

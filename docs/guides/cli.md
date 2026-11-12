@@ -1909,8 +1909,9 @@ vendor/bin/regex lint src/ --php-version=8.2
 ```
 
 Symfony's and Laravel's `regex:lint` judge the same range when they read
-`composer.json`; their `php_version` setting names one version, as
-`--php-version` does.
+`composer.json`; their `php_version` setting takes a single version or a
+Composer constraint, as `--php-version` does (`'>=8.1'`), but not the
+`{min, max}` object, which is `regex.json`'s.
 
 #### Code that runs on some PHP versions only
 

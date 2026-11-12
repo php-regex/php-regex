@@ -1,0 +1,11 @@
+includes:
+    - ../../../../../src/PHPStan/extension.neon
+
+parameters:
+    phpVersion:
+        min: 80100
+        max: 80599
+    phpRegex:
+        phpVersion:
+            min: 80100
+            max: 80499

@@ -51,11 +51,40 @@ final class PatternVerdicts
     private static array $verdicts = [];
 
     /**
+     * The error a version judged reports for a pattern, null when it
+     * accepts it, read once per process for a pattern no verdict was read
+     * for.
+     *
+     * @var array<string, array{?string}> by target and pattern
+     */
+    private static array $errors = [];
+
+    /**
      * @return PatternVerdict
      */
     public static function verdict(RegexParser $parser, string $pattern): array
     {
         return self::$verdicts[CallTarget::key($parser)."\0".$pattern] ??= self::judge($parser, $pattern);
+    }
+
+    /**
+     * The error the first of the versions judged that refuses the pattern
+     * reports, in their order, the floor first; null when each accepts it.
+     * A later version is validated only: its verdict is the error alone.
+     *
+     * @param list<RegexParser> $parsers
+     */
+    public static function firstError(array $parsers, string $pattern): ?string
+    {
+        foreach ($parsers as $parser) {
+            $key = CallTarget::key($parser)."\0".$pattern;
+            $error = isset(self::$verdicts[$key]) ? self::$verdicts[$key]['error'] : (self::$errors[$key] ??= [self::refusal($parser, $parser->validate($pattern))])[0];
+            if (null !== $error) {
+                return $error;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -70,13 +99,8 @@ final class PatternVerdicts
         }
 
         $validation = $parser->validate($pattern);
-        // The library's own limits, not PCRE's: it cannot judge the pattern, which PCRE may well accept.
-        if (ValidationErrorCategory::Limit === $validation->category) {
-            return ['error' => null, 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false, 'fewStrings' => false];
-        }
-
-        if (!$validation->isValid) {
-            return ['error' => self::message($parser, $validation), 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false, 'fewStrings' => false];
+        if (ValidationErrorCategory::Limit === $validation->category || !$validation->isValid) {
+            return ['error' => self::refusal($parser, $validation), 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false, 'fewStrings' => false];
         }
 
         // A pattern the running engine does not compile leaves $matches as it was: nothing is asserted on it.
@@ -166,6 +190,16 @@ final class PatternVerdicts
         }
 
         return false;
+    }
+
+    /**
+     * The error a target reports for a pattern it refuses, null when it
+     * accepts it. The library's own limits, not PCRE's, report nothing: it
+     * cannot judge the pattern, which PCRE may well accept.
+     */
+    private static function refusal(RegexParser $parser, ValidationResult $validation): ?string
+    {
+        return ValidationErrorCategory::Limit === $validation->category || $validation->isValid ? null : self::message($parser, $validation);
     }
 
     /**

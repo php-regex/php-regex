@@ -50,6 +50,11 @@ final class TargetSpec
      */
     public const OBJECT_EXPECTED = '"php_version" must be {"min": …, "max": …}, each bound a version like "8.1" or a PHP_VERSION_ID like 80100, min not above max.';
 
+    /**
+     * A version bound of a major 7 to 9: "8.1" or "8.1.10".
+     */
+    private const VERSION_BOUND = '/^([7-9])\.([0-9]{1,2})(?:\.([0-9]{1,2}))?$/D';
+
     private function __construct() {}
 
     /**
@@ -89,8 +94,8 @@ final class TargetSpec
     public static function minMax(string|int $min, string|int $max): array
     {
         [$from] = self::bound($min);
-        [$last, $precision] = self::bound($max);
-        $below = ComposerConstraint::nextAt($last, $precision);
+        [$last, $series] = self::bound($max);
+        $below = $series ? ComposerConstraint::nextAt($last, 2) : $last + 1;
         if ($from >= $below) {
             throw new InvalidRegexOptionException(self::OBJECT_EXPECTED);
         }
@@ -99,25 +104,39 @@ final class TargetSpec
     }
 
     /**
-     * A bound as a PHP_VERSION_ID, and the number of parts it was written
-     * with: 3 for a PHP_VERSION_ID, which names one release.
+     * Whether a value is a bound of a {"min", "max"} object: a
+     * PHP_VERSION_ID of PHP 7.0 up to 9.99.99, or a version "x.y" or "x.y.z"
+     * of a major 7 to 9, as the schema of regex.json takes it, never "08.1"
+     * nor PHP 10. Every entry point that checks a bound before reading the
+     * range asks it here; minMax() reads what it accepts.
+     */
+    public static function isBound(int|float|string|bool|null $bound): bool
+    {
+        return \is_int($bound)
+            ? $bound >= ParserOptions::OLDEST_PHP_VERSION_ID && $bound <= ParserOptions::LATEST_PHP_VERSION_ID
+            : \is_string($bound) && 1 === LibraryPcre::match(self::VERSION_BOUND, $bound);
+    }
+
+    /**
+     * A bound as a PHP_VERSION_ID, and whether it names a whole series: a
+     * version written x.y does, x.y.z and a PHP_VERSION_ID name one release.
      *
      * @throws InvalidRegexOptionException when the bound names no version of PHP 7.0 or later
      *
-     * @return array{int, int}
+     * @return array{int, bool}
      */
     private static function bound(string|int $bound): array
     {
-        if (\is_int($bound) && $bound >= ParserOptions::OLDEST_PHP_VERSION_ID && $bound <= ParserOptions::LATEST_PHP_VERSION_ID) {
-            return [$bound, 3];
+        if (\is_int($bound) && self::isBound($bound)) {
+            return [$bound, false];
         }
 
-        // A major of 7 to 9, written as the schema of regex.json takes it:
-        // from PHP 7.0 up to 9.99.99, never "08.1" nor PHP 10.
-        if (\is_string($bound) && 1 === LibraryPcre::match('/^([7-9])\.([0-9]{1,2})(?:\.([0-9]{1,2}))?$/D', $bound, $parts)) {
-            return [(int) $parts[1] * 10000 + (int) $parts[2] * 100 + (int) ($parts[3] ?? 0), isset($parts[3]) ? 3 : 2];
+        if (!\is_string($bound) || 1 !== LibraryPcre::match(self::VERSION_BOUND, $bound, $parts)) {
+            throw new InvalidRegexOptionException(self::OBJECT_EXPECTED);
         }
 
-        throw new InvalidRegexOptionException(self::OBJECT_EXPECTED);
+        $patch = $parts[3] ?? null;
+
+        return [(int) $parts[1] * 10000 + (int) $parts[2] * 100 + (int) $patch, null === $patch];
     }
 }
