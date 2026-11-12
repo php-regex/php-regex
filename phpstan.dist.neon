@@ -207,6 +207,7 @@ parameters:
             - tests/Unit/Parser/ScanSubstringTest.php
             - tests/Unit/Parser/ValidationHintTest.php
             - tests/Unit/Redos/Proven/RedosInlineOptionsTest.php
+            - tests/Support/RangeFixtureReadings.php
         # The tests use each PHPUnit compatibility trait by its feature's
         # name, which class_alias() gives the implementation the installed
         # PHPUnit calls for: the analysis reads that one through the alias,

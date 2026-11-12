@@ -10,6 +10,12 @@ CHANGELOG
    arm, and a global constant of another file of the workspace, a
    `const` or a `define()` at the top level of its file, is read like a
    class constant: the pattern is reported at the argument naming it.
+ * `initializationOptions.phpVersion` and `phpVersion` in `regex.json` take a
+   range, as a Composer constraint or `{"min": …, "max": …}`. A pattern is
+   validated at the versions of the range `regex lint` judges (its lowest,
+   then each later one where a rule changes), from `composer.json`
+   `require.php` too: a version that refuses it is an error, one that reads
+   it otherwise a warning.
  * The "Add /u flag" quick fix names only the Unicode diagnostics whose
    range lies inside its own literal, and a literal without one is checked
    by the linter itself: a range over several literals no longer offers the

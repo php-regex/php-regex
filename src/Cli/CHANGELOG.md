@@ -20,6 +20,9 @@ CHANGELOG
    run when `regex.json` turns it on. A baseline entry gains `expression`,
    the argument as written for such an issue and `null` otherwise; a
    baseline written before the key is read as it was.
+ * `regex lint --php-version` takes a range, as a Composer constraint
+   (`--php-version='>=8.1'`), and the banner's `Target` row names the later
+   versions judged after the floor.
  * `regex self-update` stages the download in a private directory of a random
    name instead of a predictable file in the shared temporary directory, and
    removes it after a failure as after a success.

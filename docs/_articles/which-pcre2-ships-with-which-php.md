@@ -308,7 +308,7 @@ $ vendor/bin/regex lint lib/
 PHPRegex {{ site.data.product.version }} by Younes ENNAJI
 
 Runtime   : PHP 8.4.26, PCRE2 10.49
-Target    : PHP 8.2, PCRE2 10.40 (composer.json require.php)
+Target    : PHP 8.2, PCRE2 10.40 (composer.json require.php); also PHP 8.3, 8.4, 8.4.25, 8.5, 8.5.10
 Processes : 10
 PCRE JIT  : 1
 Backtrack : 1000000

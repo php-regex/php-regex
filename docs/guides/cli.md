@@ -128,7 +128,7 @@ vendor/bin/regex lint src/
 PHPRegex {{ site.data.product.version }}
 
 Runtime   : PHP 8.4.27, PCRE2 10.49
-Target    : PHP 8.2, PCRE2 10.40 (composer.json require.php)
+Target    : PHP 8.2, PCRE2 10.40 (composer.json require.php); also PHP 8.3, 8.4, 8.4.25, 8.5, 8.5.10
 Processes : 10
 PCRE JIT  : 1
 Backtrack : 1000000
@@ -1239,7 +1239,7 @@ without any configuration.
 PHPRegex {{ site.data.product.version }}
 
 Runtime       : PHP 8.4.26, PCRE2 10.49
-Target        : PHP 8.2, PCRE2 10.40 (composer.json require.php)
+Target        : PHP 8.2, PCRE2 10.40 (composer.json require.php); also PHP 8.3, 8.4, 8.4.25, 8.5, 8.5.10
 Processes     : 10
 PCRE JIT      : 1
 Backtrack     : 1000000
@@ -1563,7 +1563,7 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `ide`                           | string           | IDE for clickable links                                  |
 | `reportUnmatchedIgnores`        | boolean          | Report the inline markers and baseline entries that silence nothing, as `regex.ignore.unmatched` (default `true`, see [Markers that silence nothing](#markers-that-silence-nothing)) |
 | `reportDynamic`                 | boolean          | List each pattern argument built at run time as an info (default `false`, see [Arguments built at run time](#arguments-built-at-run-time)) |
-| `phpVersion`                    | string or int    | PHP version the patterns are judged for: `"8.3"`, `80300`, or `"runtime"` for the PHP running the command |
+| `phpVersion`                    | string, int or object | PHP version the patterns are judged for: `"8.3"`, `80300`, or `"runtime"` for the PHP running the command; or a range, as a Composer constraint (`">=8.1"`) or `{"min": "8.1", "max": "8.6"}` (see [Several PHP versions](#several-php-versions)) |
 | `pcreVersion`                   | string           | PCRE2 release the patterns are judged for: `"10.44"`     |
 | `locale`                        | string           | `LC_CTYPE` locale the patterns run under: `"tr_TR.UTF-8"` (default: the one of the PHP running the command) |
 | `extraction.interop`            | array            | Libraries whose calls carry patterns (default: every preset; a list reads exactly those, `[]` none: the native calls, configured functions and Twig templates are still read) |
@@ -1630,6 +1630,9 @@ pattern for one target, chosen in this order:
 
 1. `--php-version` and `--pcre-version` on the command line;
 2. `phpVersion` and `pcreVersion` in `regex.json`;
+   a range named there (`">=8.1"`, `{"min": "8.1", "max": "8.6"}`) is judged
+   from its lowest PHP, then on the later versions it allows, as a
+   `require.php` range is ([Several PHP versions](#several-php-versions));
 3. `composer.json` in the working directory: `config.platform.php` if set
    (one below 7.3 gives way to `require.php`, see below), else the lowest
    version `require.php` allows (`^8.2|^8.3` is PHP 8.2),
@@ -1698,7 +1701,8 @@ on PCRE2 (10.32), with no release in between. What happens to a project that
 allows such a PHP depends on where the version comes from:
 
 - A `require.php` that starts below 7.3 but also allows PHP 7.3 or later,
-  `^7.1|^8.0` or `>=5.4` for instance, is judged from the lowest PHP of
+  `^7.1|^8.0` or `>=5.4` for instance, or such a range named by
+  `--php-version` or `phpVersion`, is judged from the lowest PHP of
   7.3 or later it allows, usually 7.3, as any other floor. The versions below
   7.3 are left out, and a note says so; the note does not change the exit
   code:
@@ -1718,7 +1722,8 @@ allows such a PHP depends on where the version comes from:
 
 - A `require.php` that allows no PHP of 7.3 or later (`7.2.*`, `~7.1.0`,
   `>=5.6 <7.3`) is refused, and so is a `config.platform.php` below 7.3 with
-  no such `require.php` beside it. So is a
+  no such `require.php` beside it, and a range named by `--php-version` or
+  `phpVersion` that ends below 7.3. So is a
   version below 7.3 named by `--php-version`, `phpVersion` in `regex.json` or
   a bridge setting: that names a PHP on PCRE1 outright. The run stops until
   a PHP version of 7.3 or later is named:
@@ -1763,16 +1768,18 @@ print the stderr line for the JSON format too.
 
 A pattern valid on the lowest PHP may be refused by a later one the project
 installs on: PHP 8.5 refuses `\K` in a lookaround, which PHP 8.4 compiles.
-When the target comes from `require.php`, the command therefore also
+When the target is a range, read from `require.php` or named by
+`--php-version` or `phpVersion`, the command therefore also
 validates every pattern at each PHP version above the floor where a rule of
 the library changes, as long as the constraint allows it: today 8.3, 8.4,
 8.4.25, 8.5 and 8.5.10. Each is judged with the PCRE2 release the order above
 gives it. `>=8.2 <8.5` stops at
 8.4.25, `~8.3.0` is 8.3 alone, and an open constraint such as `>=8.2` runs to
 the newest version the library knows. Each branch of an OR constraint is also
-validated at its own lowest version, which no rule change stands for:
-`~8.3.0 || >=8.5.3` is judged at 8.3, 8.5.3 and 8.5.10, and a pattern PHP 8.5
-refuses is reported "On PHP 8.5.3 and later".
+validated at its own lowest version, unless a version already judged with
+the same PCRE2 stands for its stretch between two rule changes: `~8.3.0 || >=8.5.3` is judged at
+8.3, 8.5.3 and 8.5.10, and a pattern PHP 8.5 refuses is reported "On PHP 8.5.3
+and later"; `8.1.0 || 8.1.1 || 8.1.2` is judged at 8.1 alone.
 
 What runs where:
 
@@ -1807,14 +1814,67 @@ What runs where:
   assertion holding a group and `(*UCP)` casing without UTF (10.35), a bare
   script name (10.40); see [the rules reference](../reference/rules.md#meaning-that-changes-across-php-versions).
 
-The console banner still names the floor. The JSON report lists every PHP and
+The console banner names the floor, then the later versions judged:
+
+```text
+Target    : PHP 8.1, PCRE2 10.39 (regex.json); also PHP 8.2, 8.3, 8.4, 8.4.25, 8.5, 8.5.10
+```
+
+The JSON report lists every PHP and
 PCRE2 it validated at under `target.range`, and the issue carries the lowest
 one that refuses the pattern under `target`
 ([JSON output](../reference/json-output.md#target-linttarget)).
 
-Every other source names one version, and only that version is judged:
-`--php-version`, `phpVersion` in `regex.json`, `config.platform.php`, and the
-running PHP. To judge one version of a project whose `require.php` spans
+##### Naming a range
+
+`--php-version` and `phpVersion` in `regex.json` take a range in the words
+of `require.php`: a Composer constraint that names a lowest version. Each
+of its versions is written `x.y`, `x.y.z` or `x.y.*`, the wildcard alone,
+never after an operator (`">=8.1.*"` is refused, as Composer refuses it).
+`>` is strict: `">8.4"` starts at 8.4.1, and `!=` leaves its version out:
+`">=8.4 !=8.4.25"` judges 8.4.26 where 8.4.25 would stand. `regex.json` also
+takes an object `{"min": …, "max": …}`, each bound a version string
+(`"8.1"`) or a PHP_VERSION_ID (`80100`). `max` is included;
+a `max` written `x.y` takes in the whole series. A range named this way
+replaces `require.php`, so a project can judge fewer versions than it
+installs on, or a range of its own where no `composer.json` sits beside
+the code. In `regex.json`, an object `phpVersion` replaces the one of
+`regex.dist.json` as a whole: a local file cannot override `max` alone.
+
+| `phpVersion`                     | Versions judged                 |
+|----------------------------------|---------------------------------|
+| `"8.5"`                          | 8.5 alone                       |
+| `">=8.5"`                        | 8.5, 8.5.10                     |
+| `"8.4 - 8.5"`                    | 8.4, 8.4.25, 8.5, 8.5.10        |
+| `{"min": "8.4", "max": "8.5"}`   | 8.4, 8.4.25, 8.5, 8.5.10        |
+| `{"min": 80400, "max": 80599}`   | 8.4, 8.4.25, 8.5, 8.5.10        |
+| `{"min": 80400, "max": 80500}`   | 8.4, 8.4.25, 8.5                |
+| `"^8.1 <8.7"`                    | 8.1, 8.2, 8.3, 8.4, 8.4.25, 8.5, 8.5.10 |
+
+A single version names that version only, even when `require.php` allows
+more: `"8.5"` misses the rule that changes at 8.5.10, and `"8.1"` in a
+library whose `require.php` is `>=8.1` judges 8.1 alone. To judge every
+version the library installs on, write `">=8.1"`, or remove the key and let
+`require.php` speak. A constraint with no lowest version (`"<=8.5"`, `"*"`),
+a PHP_VERSION_ID inside a constraint (`">=80100"`), a bare major (`">=8"`)
+and `runtime` inside a constraint are refused: the run stops with exit
+code 2 and says what to write.
+
+Quote a range on the command line: an unquoted `>` redirects the output,
+`||` runs a second command, and Windows' `cmd.exe` drops a `^`:
+
+```bash
+vendor/bin/regex lint src/ --php-version='>=8.1'
+```
+
+`cmd.exe` takes no single quotes: there, the range goes between double
+quotes (PowerShell takes either):
+
+```bat
+vendor\bin\regex lint src/ --php-version=">=8.1"
+```
+
+To judge one version of a project whose `require.php` spans
 several, name it:
 
 ```bash

@@ -43,6 +43,14 @@ CHANGELOG
    marker naming one is passed over when the list is off. An earlier
    release refuses a `regex.json` that holds `reportDynamic`, as any key it
    does not know.
+ * `phpVersion` in `regex.json` takes a range, as a Composer constraint
+   (`">=8.1"`, `"^8.1 <8.7"`) or as `{"min": "8.1", "max": "8.6"}`,
+   and a range named there is judged as a `composer.json` `require.php`
+   range: from its lowest PHP on PCRE2, then at each later version where a
+   rule changes. A single version still names that version alone. An object
+   in `regex.json` replaces the one of `regex.dist.json` whole. A constraint
+   no PHP satisfies (`">=8.4 <8.2"`), or one naming PHP 10 or later, is
+   refused.
  * The overlapping branches of an alternation are found without comparing
    every pair of them: branches whose first characters never meet are not
    compared, and the texts the others start with are read in byte order,

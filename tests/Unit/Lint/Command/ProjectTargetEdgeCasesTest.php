@@ -17,6 +17,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -557,17 +558,131 @@ final class ProjectTargetEdgeCasesTest extends TestCase
         $this->assertSame(70300, $fromBelow->target()->phpVersionId);
         $this->assertContains('phpVersion allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.', $fromBelow->notices());
 
+        // The range runs to its max: 7.4 and 8.0 are judged too, each with
+        // a release older than the library knows in full.
         $this->assertSame([
             'phpVersion allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.',
-            'PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.',
+            'PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.',
         ], $fromBelow->notices());
 
         $fromFirst = ProjectTarget::fromRange(70300, 80499, 'phpVersion');
-        $this->assertSame(['PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.'], $fromFirst->notices());
+        $this->assertSame(['PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.'], $fromFirst->notices());
         $this->assertSame(70300, ProjectTarget::fromRange(70100, 70300, 'phpVersion')->target()->phpVersionId);
 
         $this->expectException(UnsupportedTargetException::class);
         $this->expectExceptionMessageIsOrContains('phpVersion allows PHP 7.0: PHP 7.2 and earlier ship PCRE1');
         ProjectTarget::fromRange(70000, 70299, 'phpVersion');
+    }
+
+    /**
+     * A range an analyser names keeps its max: every gate point up to it
+     * is judged, as for a require.php range, and the versions installed on
+     * stop there. The max is inclusive, a PHP_VERSION_ID as PHPStan gives
+     * it.
+     *
+     * @param list<int> $expected PHP_VERSION_IDs, floor first
+     */
+    #[Test]
+    #[DataProvider('provideAnalyserRanges')]
+    public function test_a_range_an_analyser_names_keeps_its_max(int $min, int $max, array $expected, string $admitted): void
+    {
+        $target = ProjectTarget::fromRange($min, $max, 'phpVersion');
+
+        $this->assertSame($expected, array_map(static fn (PcreTarget $point): int => $point->phpVersionId, $target->range()));
+        foreach ($target->range() as $point) {
+            $this->assertSame(self::judgedPcre($point->phpVersionId), $point->pcreVersion, (string) $point->phpVersionId);
+        }
+        $this->assertSame($admitted, $target->judgedRange(RegexParser::create($target->regexOptions()))->describe());
+        $this->assertSame('phpVersion', $target->source());
+    }
+
+    /**
+     * @return iterable<string, array{min: int, max: int, expected: list<int>, admitted: string}>
+     */
+    public static function provideAnalyserRanges(): iterable
+    {
+        yield 'to the end of 8.6' => ['min' => 80100, 'max' => 80699, 'expected' => [80100, 80200, 80300, 80400, 80425, 80500, 80510], 'admitted' => '>=8.1 <8.7'];
+        yield 'to the end of 8.3' => ['min' => 80100, 'max' => 80399, 'expected' => [80100, 80200, 80300], 'admitted' => '>=8.1 <8.4'];
+        yield 'to the patch before a gate' => ['min' => 80200, 'max' => 80424, 'expected' => [80200, 80300, 80400], 'admitted' => '>=8.2 <8.4.25'];
+        yield 'to a patch gate' => ['min' => 80200, 'max' => 80425, 'expected' => [80200, 80300, 80400, 80425], 'admitted' => '>=8.2 <8.4.26'];
+        yield 'one release' => ['min' => 80400, 'max' => 80400, 'expected' => [80400], 'admitted' => '>=8.4 <8.4.1'];
+        yield 'from below 7.3' => ['min' => 70100, 'max' => 80099, 'expected' => [70300, 70400, 80000], 'admitted' => '>=7.3 <8.1'];
+    }
+
+    /**
+     * A range named in regex.json or by --php-version that starts below
+     * 7.3 and reaches it is judged from 7.3, as a require.php range is, and
+     * the notice names where the range was named.
+     *
+     * @param array{phpVersion?: string|array{min: string|int, max: string|int}} $config
+     * @param list<array{php: string, pcre: string}>                             $range
+     * @param list<string>                                                       $notices
+     */
+    #[Test]
+    #[DataProvider('provideNamedRangesReachingPcre2')]
+    public function test_a_named_range_from_below_7_3_is_judged_from_7_3_with_a_notice(?string $flag, array $config, string $source, array $range, array $notices): void
+    {
+        // composer.json allows less: it is not read, the range is named.
+        $directory = $this->makeProject(['composer.json' => '{"require": {"php": "^8.3"}}']);
+
+        $resolved = ProjectTarget::resolve($flag, null, $config, $directory, []);
+
+        $this->assertSame(70300, $resolved->target()->phpVersionId);
+        $this->assertSame($source, $resolved->source());
+        $this->assertSame($notices, $resolved->notices());
+        $this->assertSame(array_map(self::judgedRow(...), $range), \array_slice($resolved->toArray()['range'], 0, \count($range)));
+    }
+
+    /**
+     * @return iterable<string, array{flag: string|null, config: array{phpVersion?: string|array{min: string|int, max: string|int}}, source: string, range: list<array{php: string, pcre: string}>, notices: list<string>}>
+     */
+    public static function provideNamedRangesReachingPcre2(): iterable
+    {
+        $older = 'PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.';
+        $below = static fn (string $name, string $floor): string => \sprintf(
+            '%s allows PHP %s, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.',
+            $name,
+            $floor,
+        );
+        $fromSevenThree = [['php' => '7.3', 'pcre' => '10.32'], ['php' => '7.4', 'pcre' => '10.33'], ['php' => '8.0', 'pcre' => '10.35']];
+
+        yield 'regex.json, a constraint' => ['flag' => null, 'config' => ['phpVersion' => '>=7.1'], 'source' => 'regex.json', 'range' => $fromSevenThree, 'notices' => [$below('regex.json', '7.1'), $older]];
+        yield '--php-version, an OR of majors' => ['flag' => '^7.1 || ^8.0', 'config' => [], 'source' => '--php-version', 'range' => $fromSevenThree, 'notices' => [$below('--php-version', '7.1'), $older]];
+        yield 'regex.json, an object of strings' => ['flag' => null, 'config' => ['phpVersion' => ['min' => '7.0', 'max' => '8.0']], 'source' => 'regex.json', 'range' => $fromSevenThree, 'notices' => [$below('regex.json', '7.0'), $older]];
+        yield 'regex.json, an object of PHP_VERSION_IDs' => ['flag' => null, 'config' => ['phpVersion' => ['min' => 70100, 'max' => 80099]], 'source' => 'regex.json', 'range' => $fromSevenThree, 'notices' => [$below('regex.json', '7.1'), $older]];
+    }
+
+    /**
+     * A range named in regex.json or by --php-version that ends below 7.3
+     * allows no PHP the library judges: refused as a require.php range is,
+     * naming where it was named.
+     *
+     * @param array{phpVersion?: string|array{min: string|int, max: string|int}} $config
+     */
+    #[Test]
+    #[DataProvider('provideNamedRangesOnPcre1')]
+    public function test_a_named_range_ending_below_7_3_is_refused(?string $flag, array $config, string $message): void
+    {
+        $directory = $this->makeProject(['composer.json' => '{"require": {"php": "^8.3"}}']);
+
+        try {
+            ProjectTarget::resolve($flag, null, $config, $directory, []);
+            self::fail('A range on PCRE1 was judged.');
+        } catch (UnsupportedTargetException $e) {
+            $this->assertSame($message, $e->getMessage());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{flag: string|null, config: array{phpVersion?: string|array{min: string|int, max: string|int}}, message: string}>
+     */
+    public static function provideNamedRangesOnPcre1(): iterable
+    {
+        $refusal = 'PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.';
+
+        yield 'regex.json, a constraint closed below 7.3' => ['flag' => null, 'config' => ['phpVersion' => '>=7.0 <7.3'], 'message' => 'regex.json allows PHP 7.0: '.$refusal];
+        yield '--php-version, one PCRE1 series' => ['flag' => '7.2.*', 'config' => [], 'message' => '--php-version allows PHP 7.2: '.$refusal];
+        yield 'regex.json, an object of strings' => ['flag' => null, 'config' => ['phpVersion' => ['min' => '7.0', 'max' => '7.2']], 'message' => 'regex.json allows PHP 7.0: '.$refusal];
+        yield 'regex.json, an object of PHP_VERSION_IDs' => ['flag' => null, 'config' => ['phpVersion' => ['min' => 70100, 'max' => 70299]], 'message' => 'regex.json allows PHP 7.1: '.$refusal];
     }
 }

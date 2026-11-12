@@ -102,7 +102,7 @@ final class LintCommandStreamsTest extends TestCase
         $runningPcre = PcreTarget::runtime()->pcreVersion;
         $this->assertStringContainsString(
             self::bannerRow('Runtime', 'PHP '.\PHP_VERSION.', PCRE2 '.$runningPcre)
-            .self::bannerRow('Target', 'PHP 8.3, PCRE2 '.self::judgedPcre(80300).' (composer.json require.php)')
+            .self::bannerRow('Target', 'PHP 8.3, PCRE2 '.self::judgedPcre(80300).' (composer.json require.php); also PHP 8.4, 8.4.25, 8.5, 8.5.10')
             .self::bannerRow('Processes', '1'),
             $stdout,
         );
@@ -472,7 +472,7 @@ final class LintCommandStreamsTest extends TestCase
 
         $this->assertSame(0, $exitCode, $stdout.$stderr);
         $this->assertStringContainsString(
-            "\n".self::bannerRow('Target', 'PHP 7.3, PCRE2 10.32 (composer.json require.php)'),
+            "\n".self::bannerRow('Target', 'PHP 7.3, PCRE2 10.32 (composer.json require.php); also PHP 7.4, 8.0, 8.1, 8.2, 8.3, 8.4, 8.4.25, 8.5, 8.5.10'),
             $stdout,
         );
         $this->assertStringContainsString('Note: '.self::BELOW_7_3_NOTICE, $stdout);

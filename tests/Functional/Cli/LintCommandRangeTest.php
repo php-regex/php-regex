@@ -13,8 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
+use PHPRegex\Cli\Command\LintOutputRenderer;
+use PHPRegex\Cli\Output;
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\PcreRule;
+use PHPRegex\Tests\Support\RangeFixtureReadings;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -33,6 +37,7 @@ use PHPUnit\Framework\TestCase;
 final class LintCommandRangeTest extends TestCase
 {
     use PcreRule;
+    use RangeFixtureReadings;
     use RunsRegexCli;
     use TemporaryProject;
 
@@ -44,6 +49,15 @@ final class LintCommandRangeTest extends TestCase
      * (pcre2test 10.49: error 199).
      */
     private const KEEP_IN_LOOKBEHIND = "<?php\n\npreg_match('/(?<=a\\Kb)c/', \$s);\n";
+
+    /**
+     * "a{,3}" is text before PCRE2 10.43 and a quantifier from it
+     * (preg_match('/^a{,3}$/', 'aa') returns 1 on 10.49, 0 on the text
+     * "a{,3}"): judged from 8.1, the first PHP of the range whose PCRE2
+     * reads the quantifier is named, 8.4 unless this machine links a newer
+     * PCRE2 to an older minor.
+     */
+    private const QUANTIFIER_WITHOUT_MIN = "<?php\n\npreg_match('/a{,3}/', \$s);\n";
 
     #[Test]
     public function test_lint_reports_a_pattern_a_later_php_of_the_range_refuses(): void
@@ -229,6 +243,188 @@ final class LintCommandRangeTest extends TestCase
 
         $this->assertSame(1, $exitCode, $stdout);
         $this->assertStringContainsString('PHP 8.5 and later', $stdout);
+    }
+
+    /**
+     * A constraint in regex.json is judged as require.php is: every point it
+     * allows, the floor first, named as regex.json's.
+     */
+    #[Test]
+    public function test_lint_judges_a_regex_json_constraint_as_a_range(): void
+    {
+        self::assertEngineReadsQuantifierWithoutMin();
+
+        $this->enterProject(['regex.json' => '{"phpVersion": ">=8.1"}', 'src/a.php' => self::QUANTIFIER_WITHOUT_MIN]);
+
+        [$exitCode, $stdout] = $this->runRegex(['lint', 'src', '--format=json', '--jobs=1', '--no-redos']);
+
+        $this->assertSame(0, $exitCode, $stdout);
+        $document = JsonContract::decodeDocument($stdout);
+        JsonContract::assertShape('lint', $document);
+        $points = [80100, 80200, 80300, 80400, 80425, 80500, 80510];
+        $this->assertSame(
+            ['php' => '8.1', 'pcre' => self::judgedPcre(80100), 'locale' => 'C', 'source' => 'regex.json', 'range' => self::rows($points)],
+            $document['target'] ?? null,
+        );
+        $this->assertSame(self::meaningChanges($points), self::warnings($document), $stdout);
+    }
+
+    /**
+     * {"min", "max"} stops at its max: "8.3" leaves 8.4 out, and its
+     * reading of "a{,3}" with it.
+     */
+    #[Test]
+    public function test_lint_judges_a_regex_json_object_up_to_its_max(): void
+    {
+        self::assertEngineReadsQuantifierWithoutMin();
+
+        $this->enterProject(['regex.json' => '{"phpVersion": {"min": "8.1", "max": "8.3"}}', 'src/a.php' => self::QUANTIFIER_WITHOUT_MIN]);
+
+        [$exitCode, $stdout] = $this->runRegex(['lint', 'src', '--format=json', '--jobs=1', '--no-redos']);
+
+        $this->assertSame(0, $exitCode, $stdout);
+        $document = JsonContract::decodeDocument($stdout);
+        JsonContract::assertShape('lint', $document);
+        $points = [80100, 80200, 80300];
+        $this->assertSame(
+            ['php' => '8.1', 'pcre' => self::judgedPcre(80100), 'locale' => 'C', 'source' => 'regex.json', 'range' => self::rows($points)],
+            $document['target'] ?? null,
+        );
+        $this->assertSame(self::meaningChanges($points), self::warnings($document), $stdout);
+    }
+
+    /**
+     * A single version stays exact: "8.1" judges 8.1 alone, whatever
+     * require.php allows.
+     */
+    #[Test]
+    public function test_lint_judges_a_single_regex_json_version_alone(): void
+    {
+        self::assertEngineReadsQuantifierWithoutMin();
+
+        $this->enterProject([
+            'composer.json' => '{"name": "acme/app", "require": {"php": ">=8.1"}}',
+            'regex.json' => '{"phpVersion": "8.1"}',
+            'src/a.php' => self::QUANTIFIER_WITHOUT_MIN,
+        ]);
+
+        [$exitCode, $stdout] = $this->runRegex(['lint', 'src', '--format=json', '--jobs=1', '--no-redos']);
+
+        $this->assertSame(0, $exitCode, $stdout);
+        $document = JsonContract::decodeDocument($stdout);
+        $this->assertSame([], $document['results'] ?? null, $stdout);
+        $this->assertSame(self::rows([80100]), JsonContract::asArray($document['target'] ?? null)['range'] ?? null);
+    }
+
+    #[Test]
+    public function test_lint_judges_a_php_version_constraint_over_regex_json(): void
+    {
+        self::assertEngineReadsQuantifierWithoutMin();
+
+        $this->enterProject(['regex.json' => '{"phpVersion": "8.1"}', 'src/a.php' => self::QUANTIFIER_WITHOUT_MIN]);
+
+        [$exitCode, $stdout] = $this->runRegex(['--php-version=>=8.1', 'lint', 'src', '--format=json', '--jobs=1', '--no-redos']);
+
+        $this->assertSame(0, $exitCode, $stdout);
+        $document = JsonContract::decodeDocument($stdout);
+        JsonContract::assertShape('lint', $document);
+        $points = [80100, 80200, 80300, 80400, 80425, 80500, 80510];
+        $target = JsonContract::asArray($document['target'] ?? null);
+        $this->assertSame('--php-version', $target['source'] ?? null);
+        $this->assertSame(self::rows($points), $target['range'] ?? null);
+        $this->assertSame(self::meaningChanges($points), self::warnings($document), $stdout);
+    }
+
+    /**
+     * A pattern a later PHP of a named range refuses is the error a
+     * require.php range gives it, in the same words.
+     */
+    #[Test]
+    public function test_lint_reports_a_pattern_a_later_php_of_a_named_range_refuses(): void
+    {
+        self::assertEngineKeepInLookbehind();
+
+        $this->enterProject(['regex.json' => '{"phpVersion": {"min": 80200, "max": 80699}}', 'src/a.php' => self::KEEP_IN_LOOKBEHIND]);
+
+        [$exitCode, $stdout] = $this->runRegex(['lint', 'src', '--format=json', '--jobs=1', '--no-redos']);
+
+        $this->assertSame(1, $exitCode, $stdout);
+        $document = JsonContract::decodeDocument($stdout);
+        JsonContract::assertShape('lint', $document);
+        $issues = self::issues($document);
+        $this->assertCount(1, $issues, $stdout);
+        $this->assertSame('error', $issues[0]['severity'] ?? null);
+        $this->assertSame('regex.keep.in_lookaround', $issues[0]['issue_id'] ?? null);
+        $message = $issues[0]['message'] ?? null;
+        $this->assertIsString($message);
+        $this->assertStringStartsWith('On PHP 8.5 and later: ', (string) $message);
+        $this->assertSame(['php' => '8.5', 'pcre' => self::judgedPcre(80500), 'guard' => null, 'guard_pcre' => null], $issues[0]['target'] ?? null);
+    }
+
+    /**
+     * The banner's Target row names the versions judged after the floor,
+     * not only the floor.
+     */
+    #[Test]
+    public function test_lint_banner_target_row_names_the_points_judged(): void
+    {
+        $target = ProjectTarget::resolve(null, null, [], $this->makeProject(['composer.json' => '{"name": "acme/app", "require": {"php": ">=8.4"}}']), []);
+
+        $banner = (new LintOutputRenderer())->renderBanner(new Output(false, false), $target);
+
+        $this->assertSame(1, preg_match('/^Target\s*: (.*)$/m', $banner, $row), $banner);
+        $this->assertStringStartsWith('PHP 8.4, PCRE2 '.self::judgedPcre(80400), $row[1]);
+        $this->assertStringContainsString('composer.json require.php', $row[1]);
+        foreach (['8.4.25', '8.5', '8.5.10'] as $point) {
+            $this->assertStringContainsString($point, $row[1]);
+        }
+    }
+
+    /**
+     * Each version of the range as the JSON report names it.
+     *
+     * @param list<int> $points
+     *
+     * @return list<array{php: string, pcre: string}>
+     */
+    private static function rows(array $points): array
+    {
+        return array_map(static fn (int $point): array => ['php' => ProjectTarget::phpLabel($point), 'pcre' => self::judgedPcre($point)], $points);
+    }
+
+    /**
+     * The warning "a{,3}" gets over the points, as [issue_id, target php]:
+     * at the first point that reads it otherwise than the floor, none when
+     * no point does.
+     *
+     * @param list<int> $points the floor first
+     *
+     * @return list<array{string, string}>
+     */
+    private static function meaningChanges(array $points): array
+    {
+        $first = self::readsQuantifierOtherwiseFrom($points);
+
+        return null === $first ? [] : [['regex.lint.compat.meaningChanges', ProjectTarget::phpLabel($first)]];
+    }
+
+    /**
+     * The warnings of the report, as [issue_id, target php].
+     *
+     * @param array<mixed> $document
+     *
+     * @return list<array{mixed, mixed}>
+     */
+    private static function warnings(array $document): array
+    {
+        $warnings = [];
+        foreach (self::issues($document) as $issue) {
+            if ('warning' === ($issue['severity'] ?? null)) {
+                $warnings[] = [$issue['issue_id'] ?? null, JsonContract::asArray($issue['target'] ?? null)['php'] ?? null];
+            }
+        }
+
+        return $warnings;
     }
 
     /**

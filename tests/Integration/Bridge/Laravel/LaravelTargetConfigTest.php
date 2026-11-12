@@ -23,6 +23,7 @@ use PHPRegex\Tests\Support\InstalledLocales;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
 use Orchestra\Testbench\Attributes\WithEnv;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -119,6 +120,37 @@ final class LaravelTargetConfigTest extends LaravelTestCase
         [, $json] = $this->lintJson();
 
         $this->assertSame(PcreTarget::runtime()->pcreVersion, $json['target']['pcre'] ?? null);
+    }
+
+    /**
+     * php_version takes a single version until the bridge judges every
+     * point of a range: a range, or any text that is no version, is
+     * refused as it was before ranges, never judged at its floor alone.
+     */
+    #[Test]
+    #[DataProvider('providePhpVersionsTheBridgeRefuses')]
+    public function test_a_php_version_the_bridge_cannot_take_stops_the_lint_in_its_former_words(string $phpVersion): void
+    {
+        config()->set('php-regex.php_version', $phpVersion);
+
+        [$status, $json] = $this->lintJson();
+
+        $this->assertSame(2, $status);
+        $this->assertSame(
+            ['error' => 'Invalid config/php-regex.php: "php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".', 'stage' => 'config'],
+            $json,
+        );
+    }
+
+    /**
+     * @return iterable<string, array{phpVersion: string}>
+     */
+    public static function providePhpVersionsTheBridgeRefuses(): iterable
+    {
+        yield 'an open range' => ['phpVersion' => '>=8.1'];
+        yield 'a hyphen range' => ['phpVersion' => '8.1 - 8.6'];
+        yield 'a constraint without a lowest version' => ['phpVersion' => '<8.4'];
+        yield 'no version at all' => ['phpVersion' => 'eight'];
     }
 
     #[Test]

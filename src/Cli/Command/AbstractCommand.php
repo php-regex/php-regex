@@ -45,6 +45,9 @@ abstract class AbstractCommand implements CommandInterface
             // A PHP the command line names is the target, as lint takes it:
             // one that ships PCRE1 is refused.
             if (isset($options['php_version'])) {
+                // These commands judge one version: a range is the lint's
+                // alone, and is refused here in the words of a single one.
+                ParserOptions::phpVersionIdOf($options['php_version']);
                 $options = ProjectTarget::fromSources(['--php-version' => $options['php_version']], ['--pcre-version' => $options['pcre_version'] ?? null], null, [], ['--locale' => $options['locale'] ?? null])->regexOptions();
             }
 

@@ -17,6 +17,7 @@ use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Tests\TestUtils\JsonSchemaSubsetValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -180,47 +181,118 @@ final class LintConfigSchemaTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * @return iterable<string, array{json: string}>
      */
     public static function provideRefusedConfigs(): iterable
     {
-        yield 'removed rules' => ['{"rules": {"redos": true}}'];
-        yield 'removed redosMode' => ['{"redosMode": "confirmed"}'];
-        yield 'removed redosThreshold' => ['{"redosThreshold": "high"}'];
-        yield 'removed redosNoJit' => ['{"redosNoJit": true}'];
-        yield 'removed optimizations' => ['{"optimizations": {"digits": true}}'];
-        yield 'removed top-level minSavings' => ['{"minSavings": 2}'];
-        yield 'removed checks.redos.noJit' => ['{"checks": {"redos": {"noJit": true}}}'];
-        yield 'redos mode off' => ['{"checks": {"redos": {"mode": "off"}}}'];
-        yield 'redos as a boolean' => ['{"checks": {"redos": true}}'];
-        yield 'optimizations as a boolean' => ['{"checks": {"optimizations": false}}'];
-        yield 'lint as a boolean' => ['{"checks": {"lint": true}}'];
-        yield 'unknown top-level key' => ['{"unknownTop": 1}'];
-        yield 'unknown option' => ['{"checks": {"optimizations": {"options": {"unknownOption": true}}}}'];
-        yield 'unknown extraction key' => ['{"extraction": {"unknownExtraction": []}}'];
-        yield 'unknown lint rule id' => ['{"checks": {"lint": {"rules": {"not.a.rule": true}}}}'];
-        yield 'unknown full lint rule id' => ['{"checks": {"lint": {"rules": {"regex.lint.not.a.rule": true}}}}'];
-        yield 'full lint rule id not a boolean' => ['{"checks": {"lint": {"rules": {"regex.lint.quantifier.useless": 1}}}}'];
-        yield 'a lint rule id with a prefix and a suffix' => ['{"checks": {"lint": {"rules": {"regex.lint.quantifier.uselessX": true}}}}'];
-        yield 'a lint rule id inside another' => ['{"checks": {"lint": {"rules": {"x.regex.lint.quantifier.useless": true}}}}'];
-        yield 'threshold safe' => ['{"checks": {"redos": {"threshold": "safe"}}}'];
-        yield 'threshold unknown' => ['{"checks": {"redos": {"threshold": "unknown"}}}'];
-        yield 'minQuantifierCount below 2' => ['{"checks": {"optimizations": {"options": {"minQuantifierCount": 1}}}}'];
-        yield 'jobs below 1' => ['{"jobs": 0}'];
-        yield 'locale as a number' => ['{"locale": 5}'];
-        yield 'empty locale' => ['{"locale": ""}'];
-        yield 'complexity as a boolean' => ['{"checks": {"complexity": true}}'];
-        yield 'complexity off as a boolean' => ['{"checks": {"complexity": false}}'];
-        yield 'complexity threshold zero' => ['{"checks": {"complexity": {"threshold": 0}}}'];
-        yield 'complexity threshold negative' => ['{"checks": {"complexity": {"threshold": -5}}}'];
-        yield 'complexity threshold as a string' => ['{"checks": {"complexity": {"threshold": "50"}}}'];
-        yield 'complexity threshold as a float' => ['{"checks": {"complexity": {"threshold": 12.5}}}'];
-        yield 'complexity enabled as a string' => ['{"checks": {"complexity": {"enabled": "yes"}}}'];
-        yield 'unknown complexity key' => ['{"checks": {"complexity": {"max": 20}}}'];
-        yield 'reportDynamic as a string' => ['{"reportDynamic": "yes"}'];
-        yield 'reportDynamic as a number' => ['{"reportDynamic": 1}'];
-        yield 'reportDynamic as null' => ['{"reportDynamic": null}'];
-        yield 'reportDynamic among the checks' => ['{"checks": {"reportDynamic": true}}'];
+        yield 'removed rules' => ['json' => '{"rules": {"redos": true}}'];
+        yield 'removed redosMode' => ['json' => '{"redosMode": "confirmed"}'];
+        yield 'removed redosThreshold' => ['json' => '{"redosThreshold": "high"}'];
+        yield 'removed redosNoJit' => ['json' => '{"redosNoJit": true}'];
+        yield 'removed optimizations' => ['json' => '{"optimizations": {"digits": true}}'];
+        yield 'removed top-level minSavings' => ['json' => '{"minSavings": 2}'];
+        yield 'removed checks.redos.noJit' => ['json' => '{"checks": {"redos": {"noJit": true}}}'];
+        yield 'redos mode off' => ['json' => '{"checks": {"redos": {"mode": "off"}}}'];
+        yield 'redos as a boolean' => ['json' => '{"checks": {"redos": true}}'];
+        yield 'optimizations as a boolean' => ['json' => '{"checks": {"optimizations": false}}'];
+        yield 'lint as a boolean' => ['json' => '{"checks": {"lint": true}}'];
+        yield 'unknown top-level key' => ['json' => '{"unknownTop": 1}'];
+        yield 'unknown option' => ['json' => '{"checks": {"optimizations": {"options": {"unknownOption": true}}}}'];
+        yield 'unknown extraction key' => ['json' => '{"extraction": {"unknownExtraction": []}}'];
+        yield 'unknown lint rule id' => ['json' => '{"checks": {"lint": {"rules": {"not.a.rule": true}}}}'];
+        yield 'unknown full lint rule id' => ['json' => '{"checks": {"lint": {"rules": {"regex.lint.not.a.rule": true}}}}'];
+        yield 'full lint rule id not a boolean' => ['json' => '{"checks": {"lint": {"rules": {"regex.lint.quantifier.useless": 1}}}}'];
+        yield 'a lint rule id with a prefix and a suffix' => ['json' => '{"checks": {"lint": {"rules": {"regex.lint.quantifier.uselessX": true}}}}'];
+        yield 'a lint rule id inside another' => ['json' => '{"checks": {"lint": {"rules": {"x.regex.lint.quantifier.useless": true}}}}'];
+        yield 'threshold safe' => ['json' => '{"checks": {"redos": {"threshold": "safe"}}}'];
+        yield 'threshold unknown' => ['json' => '{"checks": {"redos": {"threshold": "unknown"}}}'];
+        yield 'minQuantifierCount below 2' => ['json' => '{"checks": {"optimizations": {"options": {"minQuantifierCount": 1}}}}'];
+        yield 'jobs below 1' => ['json' => '{"jobs": 0}'];
+        yield 'locale as a number' => ['json' => '{"locale": 5}'];
+        yield 'empty locale' => ['json' => '{"locale": ""}'];
+        yield 'complexity as a boolean' => ['json' => '{"checks": {"complexity": true}}'];
+        yield 'complexity off as a boolean' => ['json' => '{"checks": {"complexity": false}}'];
+        yield 'complexity threshold zero' => ['json' => '{"checks": {"complexity": {"threshold": 0}}}'];
+        yield 'complexity threshold negative' => ['json' => '{"checks": {"complexity": {"threshold": -5}}}'];
+        yield 'complexity threshold as a string' => ['json' => '{"checks": {"complexity": {"threshold": "50"}}}'];
+        yield 'complexity threshold as a float' => ['json' => '{"checks": {"complexity": {"threshold": 12.5}}}'];
+        yield 'complexity enabled as a string' => ['json' => '{"checks": {"complexity": {"enabled": "yes"}}}'];
+        yield 'unknown complexity key' => ['json' => '{"checks": {"complexity": {"max": 20}}}'];
+        yield 'reportDynamic as a string' => ['json' => '{"reportDynamic": "yes"}'];
+        yield 'reportDynamic as a number' => ['json' => '{"reportDynamic": 1}'];
+        yield 'reportDynamic as null' => ['json' => '{"reportDynamic": null}'];
+        yield 'reportDynamic among the checks' => ['json' => '{"checks": {"reportDynamic": true}}'];
+        // A PHP version range: a Composer constraint with a lowest version
+        // and x.y[.z] versions only, or a {"min", "max"} object with both
+        // bounds and nothing else.
+        yield 'phpVersion, an empty object' => ['json' => '{"phpVersion": {}}'];
+        yield 'phpVersion, an object without max' => ['json' => '{"phpVersion": {"min": "8.1"}}'];
+        yield 'phpVersion, an object without min' => ['json' => '{"phpVersion": {"max": "8.6"}}'];
+        yield 'phpVersion, an object with another key' => ['json' => '{"phpVersion": {"min": "8.1", "max": "8.6", "x": 1}}'];
+        yield 'phpVersion, a boolean bound' => ['json' => '{"phpVersion": {"min": true, "max": "8.6"}}'];
+        yield 'phpVersion, a float bound' => ['json' => '{"phpVersion": {"min": "8.1", "max": 8.6}}'];
+        yield 'phpVersion, a null bound' => ['json' => '{"phpVersion": {"min": "8.1", "max": null}}'];
+        yield 'phpVersion, runtime as a bound' => ['json' => '{"phpVersion": {"min": "runtime", "max": "8.6"}}'];
+        yield 'phpVersion, a constraint as a bound' => ['json' => '{"phpVersion": {"min": ">=8.1", "max": "8.6"}}'];
+        yield 'phpVersion, a PHP_VERSION_ID bound below PHP 7' => ['json' => '{"phpVersion": {"min": 69999, "max": 80600}}'];
+        yield 'phpVersion, a constraint without a lowest version' => ['json' => '{"phpVersion": "<8.4"}'];
+        yield 'phpVersion, any version' => ['json' => '{"phpVersion": "*"}'];
+        yield 'phpVersion, a branch name' => ['json' => '{"phpVersion": "dev-main"}'];
+        yield 'phpVersion, a PHP_VERSION_ID inside a constraint' => ['json' => '{"phpVersion": ">=80100"}'];
+        yield 'phpVersion, runtime inside a constraint' => ['json' => '{"phpVersion": "runtime || ^9.0"}'];
+        yield 'phpVersion, a float' => ['json' => '{"phpVersion": 8.3}'];
+        yield 'phpVersion, a list' => ['json' => '{"phpVersion": ["8.1", "8.6"]}'];
+        // A version past PHP 9.99 (ParserOptions::LATEST_PHP_VERSION_ID),
+        // which "phpVersion": "10.0" alone is refused for.
+        yield 'phpVersion, a constraint from PHP 10' => ['json' => '{"phpVersion": ">=10.0"}'];
+        yield 'phpVersion, a constraint from PHP 99.1' => ['json' => '{"phpVersion": ">=99.1"}'];
+        yield 'phpVersion, a constraint from a major past every integer' => ['json' => '{"phpVersion": ">=99999999999999999999.1"}'];
+        yield 'phpVersion, a string bound past PHP 9.99' => ['json' => '{"phpVersion": {"min": "8.1", "max": "10.0"}}'];
+        yield 'phpVersion, a PHP_VERSION_ID bound past PHP 9.99' => ['json' => '{"phpVersion": {"min": 80100, "max": 100000}}'];
+        yield 'phpVersion, a doubled separator' => ['json' => '{"phpVersion": ">=8.1,,<8.3"}'];
+        yield 'phpVersion, a wildcard after an operator' => ['json' => '{"phpVersion": ">=8.1.*"}'];
+        yield 'phpVersion, a wildcard in a hyphen range' => ['json' => '{"phpVersion": "8.1 - 8.3.*"}'];
+        yield 'phpVersion, a bound with a leading zero' => ['json' => '{"phpVersion": {"min": "08.1", "max": "8.3"}}'];
+    }
+
+    /**
+     * An editor reads the patterns of the published schema as ECMA-262,
+     * where "\s" matches every Unicode space, U+00A0 and U+2003 among
+     * them; the loader reads the value with PCRE, which refuses them: a
+     * space is written as what both read alike, "[ \t]" or "\x20".
+     */
+    #[Test]
+    public function test_the_published_php_version_patterns_hold_no_unicode_space_class(): void
+    {
+        $schema = self::decodeFile(self::ROOT.'/src/Linter/regex.schema.json');
+        $this->assertIsArray($schema['properties'] ?? null);
+        $this->assertIsArray($schema['$defs'] ?? null);
+        $patterns = self::patternsIn([$schema['properties']['phpVersion'] ?? null, $schema['$defs']['phpVersionBound'] ?? null]);
+
+        $this->assertNotSame([], $patterns, 'The phpVersion schema holds no pattern to check.');
+        foreach ($patterns as $pattern) {
+            $this->assertStringNotContainsString('\\s', $pattern);
+        }
+    }
+
+    /**
+     * A PHP_VERSION_ID bound of {"min", "max"} stops where "phpVersion"
+     * does, at PHP 9.99.99.
+     */
+    #[Test]
+    public function test_a_php_version_id_bound_stops_at_the_latest_php(): void
+    {
+        $schema = self::decodeFile(self::ROOT.'/src/Linter/regex.schema.json');
+        $this->assertIsArray($schema['$defs'] ?? null);
+        $bound = $schema['$defs']['phpVersionBound'] ?? null;
+        $this->assertIsArray($bound);
+        $this->assertIsArray($bound['anyOf'] ?? null);
+        $integers = array_values(array_filter($bound['anyOf'], static fn (mixed $branch): bool => \is_array($branch) && 'integer' === ($branch['type'] ?? null)));
+
+        $this->assertCount(1, $integers);
+        $this->assertIsArray($integers[0]);
+        $this->assertSame(ParserOptions::OLDEST_PHP_VERSION_ID, $integers[0]['minimum'] ?? null);
+        $this->assertSame(ParserOptions::LATEST_PHP_VERSION_ID, $integers[0]['maximum'] ?? null);
     }
 
     #[Test]
@@ -234,23 +306,44 @@ final class LintConfigSchemaTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * @return iterable<string, array{json: string}>
      */
     public static function provideAcceptedConfigs(): iterable
     {
-        yield 'empty object' => ['{}'];
-        yield 'schema pointer' => ['{"$schema": "./regex.schema.json"}'];
-        yield 'target as strings' => ['{"phpVersion": "8.3", "pcreVersion": "10.42"}'];
-        yield 'target as a PHP_VERSION_ID' => ['{"phpVersion": 80300}'];
-        yield 'every check as an object' => ['{"checks": {"validation": true, "redos": {"enabled": true, "mode": "confirmed", "threshold": "high"}, "optimizations": {"enabled": true, "minSavings": 2, "options": {"digits": true, "minQuantifierCount": 2}}, "lint": {"enabled": true, "rules": {"unicode.shorthandWithoutU": true}}}}'];
-        yield 'complexity on with a threshold' => ['{"checks": {"complexity": {"enabled": true, "threshold": 20}}}'];
-        yield 'complexity off' => ['{"checks": {"complexity": {"enabled": false}}}'];
-        yield 'complexity threshold of one' => ['{"checks": {"complexity": {"threshold": 1}}}'];
-        yield 'empty lists' => ['{"paths": [], "exclude": [], "extraction": {"interop": [], "functions": []}}'];
-        yield 'lint rules in full' => ['{"checks": {"lint": {"rules": {"regex.lint.quantifier.useless": false, "regex.lint.redos.search": false, "regex.lint.compat.meaningChanges": true}}}}'];
-        yield 'reportDynamic on' => ['{"reportDynamic": true}'];
-        yield 'reportDynamic off' => ['{"reportDynamic": false}'];
-        yield 'reportDynamic beside the report of the markers' => ['{"reportDynamic": true, "reportUnmatchedIgnores": false}'];
+        yield 'empty object' => ['json' => '{}'];
+        yield 'schema pointer' => ['json' => '{"$schema": "./regex.schema.json"}'];
+        yield 'target as strings' => ['json' => '{"phpVersion": "8.3", "pcreVersion": "10.42"}'];
+        yield 'target as a PHP_VERSION_ID' => ['json' => '{"phpVersion": 80300}'];
+        yield 'every check as an object' => ['json' => '{"checks": {"validation": true, "redos": {"enabled": true, "mode": "confirmed", "threshold": "high"}, "optimizations": {"enabled": true, "minSavings": 2, "options": {"digits": true, "minQuantifierCount": 2}}, "lint": {"enabled": true, "rules": {"unicode.shorthandWithoutU": true}}}}'];
+        yield 'complexity on with a threshold' => ['json' => '{"checks": {"complexity": {"enabled": true, "threshold": 20}}}'];
+        yield 'complexity off' => ['json' => '{"checks": {"complexity": {"enabled": false}}}'];
+        yield 'complexity threshold of one' => ['json' => '{"checks": {"complexity": {"threshold": 1}}}'];
+        yield 'empty lists' => ['json' => '{"paths": [], "exclude": [], "extraction": {"interop": [], "functions": []}}'];
+        yield 'lint rules in full' => ['json' => '{"checks": {"lint": {"rules": {"regex.lint.quantifier.useless": false, "regex.lint.redos.search": false, "regex.lint.compat.meaningChanges": true}}}}'];
+        yield 'reportDynamic on' => ['json' => '{"reportDynamic": true}'];
+        yield 'reportDynamic off' => ['json' => '{"reportDynamic": false}'];
+        yield 'reportDynamic beside the report of the markers' => ['json' => '{"reportDynamic": true, "reportUnmatchedIgnores": false}'];
+        // A single version stays as it was read: exact.
+        yield 'phpVersion as a major.minor' => ['json' => '{"phpVersion": "8.1"}'];
+        yield 'phpVersion with a patch' => ['json' => '{"phpVersion": "8.1.4"}'];
+        yield 'phpVersion as a PHP_VERSION_ID of 8.1' => ['json' => '{"phpVersion": 80100}'];
+        yield 'phpVersion as the running PHP' => ['json' => '{"phpVersion": "runtime"}'];
+        // A Composer constraint, as require.php reads it.
+        yield 'phpVersion as an open constraint' => ['json' => '{"phpVersion": ">=8.1"}'];
+        yield 'phpVersion as a constraint with both bounds' => ['json' => '{"phpVersion": "^8.1 <8.7"}'];
+        yield 'phpVersion as a hyphen range' => ['json' => '{"phpVersion": "8.1 - 8.6"}'];
+        yield 'phpVersion as an OR of carets' => ['json' => '{"phpVersion": "^7.3 || ^8.0"}'];
+        yield 'phpVersion as a constraint from the last gate point' => ['json' => '{"phpVersion": ">=8.5.10"}'];
+        yield 'phpVersion as a constraint above every gate point' => ['json' => '{"phpVersion": ">8.6"}'];
+        yield 'phpVersion as a hyphen range of one minor' => ['json' => '{"phpVersion": "8.1 - 8.1"}'];
+        yield 'phpVersion as a wildcard' => ['json' => '{"phpVersion": "8.1.*"}'];
+        yield 'phpVersion as a wildcard beside an upper bound' => ['json' => '{"phpVersion": "8.1.* <8.1.20"}'];
+        // The {min, max} object, its bounds as strings or PHP_VERSION_IDs.
+        yield 'phpVersion as an object of strings' => ['json' => '{"phpVersion": {"min": "8.1", "max": "8.6"}}'];
+        yield 'phpVersion as an object of PHP_VERSION_IDs' => ['json' => '{"phpVersion": {"min": 80100, "max": 80699}}'];
+        yield 'phpVersion as an object of patch versions' => ['json' => '{"phpVersion": {"min": "8.1.4", "max": "8.4.24"}}'];
+        yield 'phpVersion as an object of mixed bounds' => ['json' => '{"phpVersion": {"min": "8.1", "max": 80600}}'];
+        yield 'phpVersion as an object of one version' => ['json' => '{"phpVersion": {"min": "8.1", "max": "8.1"}}'];
     }
 
     /**
@@ -275,6 +368,29 @@ final class LintConfigSchemaTest extends TestCase
         $decoded = json_decode(json_encode($definition, \JSON_THROW_ON_ERROR), true, 512, \JSON_THROW_ON_ERROR);
 
         return $decoded;
+    }
+
+    /**
+     * Every "pattern" the schema nodes hold, at any depth.
+     *
+     * @param list<mixed> $nodes
+     *
+     * @return list<string>
+     */
+    private static function patternsIn(array $nodes): array
+    {
+        $patterns = [];
+        foreach ($nodes as $node) {
+            if (!\is_array($node)) {
+                continue;
+            }
+            if (\is_string($node['pattern'] ?? null)) {
+                $patterns[] = $node['pattern'];
+            }
+            $patterns = [...$patterns, ...self::patternsIn(array_values(array_filter($node, \is_array(...))))];
+        }
+
+        return $patterns;
     }
 
     /**

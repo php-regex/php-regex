@@ -151,9 +151,9 @@ final class ProjectTargetTest extends TestCase
     /**
      * Floors of 8.3 and above, so that no case can pass by landing on the
      * 8.1 clamp. Each floor agrees with composer/semver's lower bound
-     * (VersionParser::parseConstraints()->getLowerBound()), except `>8.3`:
-     * its bound is exclusive, and the target stays on 8.3 by design, since
-     * no rule depends on a patch release.
+     * (VersionParser::parseConstraints()->getLowerBound()): `>8.3` is
+     * exclusive and starts at 8.3.1, as a rule may depend on a patch
+     * release (8.4.25, 8.5.10).
      *
      * @return iterable<string, array{string, int}>
      */
@@ -161,7 +161,7 @@ final class ProjectTargetTest extends TestCase
     {
         yield 'greater or equal' => ['>=8.3', 80300];
         yield 'greater or equal with a space' => ['>= 8.3', 80300];
-        yield 'strictly greater stays on the named version' => ['>8.3', 80300];
+        yield 'strictly greater starts at the next release' => ['>8.3', 80301];
         yield 'caret' => ['^8.3', 80300];
         yield 'tilde with a patch' => ['~8.3.1', 80301];
         yield 'bare version' => ['8.3.4', 80304];

@@ -167,7 +167,7 @@ target, chosen once, when the editor sends `initialize`:
 2. `phpVersion` and `pcreVersion` in `regex.json` (and `regex.dist.json`) at
    the root folder;
 3. `composer.json` at the root folder: `config.platform.php` if set, else the
-   lowest version `require.php` allows;
+   lowest version `require.php` allows, with the later versions it allows;
 4. the PHP running the server.
 
 The locale is chosen the same way: `initializationOptions.locale`, then
@@ -201,7 +201,9 @@ a notice.
 }
 ```
 
-`phpVersion` takes `"8.2"`, `"8.2.4"` or `80200`; `pcreVersion` takes a
+`phpVersion` takes `"8.2"`, `"8.2.4"` or `80200`, or a range: a Composer
+constraint such as `">=8.1"`, or `{"min": "8.1", "max": "8.6"}`, as in
+[`regex.json`](cli.md#naming-a-range); `pcreVersion` takes a
 release such as `"10.42"`; `locale` a locale this machine can set. A value
 the server cannot read is logged as a warning and the next source is used. A
 `locale` in `regex.json` the machine cannot set is shown as an error, and no
@@ -316,7 +318,11 @@ guard on `PHP_VERSION_ID` (the forms the tokenizer reads) or under
 `@regex-target` is judged for the lowest version they keep of the project's
 range (see
 [the CLI guide](cli.md#code-that-runs-on-some-php-versions-only)); a marker
-that keeps none, or cannot be read, is an error on the marker. A namespace that declares its own function shadows a global
+that keeps none, or cannot be read, is an error on the marker. When the
+target is a range, each pattern is also validated at the later versions it
+allows, as the lint validates it: a version that refuses the pattern is an
+error naming it, and one that reads it otherwise a warning,
+`regex.lint.compat.meaningChanges`. A namespace that declares its own function shadows a global
 pattern function of the same name, as in the lint: an unqualified call in
 that namespace is not read.
 

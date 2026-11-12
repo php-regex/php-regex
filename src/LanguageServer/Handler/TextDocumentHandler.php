@@ -30,6 +30,8 @@ use PHPRegex\Linter\Extraction\LiteralSpelling;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Linter\RangeFindings;
+use PHPRegex\Linter\RangeWording;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
 use PHPRegex\Linter\Rule\RuleCatalog;
@@ -39,6 +41,8 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
@@ -47,6 +51,15 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * Handles text document notifications and requests.
+ *
+ * A pattern is judged as `regex lint` judges it: at the lowest version of
+ * the project's range, then at each later version of the range, a later
+ * PHP that refuses it being an error, one that reads it otherwise a
+ * warning. A guard on PHP_VERSION_ID and a "@regex-target" marker narrow
+ * the versions judged.
+ *
+ * @phpstan-type Refusal array{string, ErrorCode, ?int, ?string}
+ * @phpstan-type Analysis array{0: 'invalid', 1: ValidationResult}|array{0: 'read', 1: string, 2: list<RuleViolation>, 3: ?RedosAnalysis, 4: ?Refusal, 5: ?string}|array{0: 'limit', 1: string, 2: ErrorCode}|array{0: 'unread', 1: string, 2: ErrorCode, 3: ?int, 4: ?string}
  *
  * @phpstan-import-type Diagnostic from DiagnosticConverter
  *
@@ -74,14 +87,22 @@ final class TextDocumentHandler
     private array $narrowed = [];
 
     /**
-     * What each pattern was found to hold, by the Regex that judged it and
-     * the pattern: the same for every place the pattern stands, so an edit
-     * analyses only the patterns whose text it changed. The lint rules and
-     * the ReDoS settings are the server's, fixed.
+     * What each pattern was found to hold, by the versions that judged it
+     * and the pattern: the same for every place the pattern stands, so an
+     * edit analyses only the patterns whose text it changed. The lint rules
+     * and the ReDoS settings are the server's, fixed.
      *
-     * @var array<string, array{0: 'invalid', 1: ValidationResult}|array{0: 'read', 1: string, 2: list<RuleViolation>, 3: ?RedosAnalysis}|array{0: 'limit', 1: string, 2: ErrorCode}|array{0: 'unread', 1: string, 2: ErrorCode, 3: ?int, 4: ?string}>
+     * @var array<string, Analysis>
      */
     private array $analyses = [];
+
+    /**
+     * The parsers of the versions of the range after the floor, sharing
+     * the floor's cache: none when the project is judged for one version.
+     *
+     * @var list<RegexParser>
+     */
+    private readonly array $range;
 
     /**
      * @param array<string, bool> $lintRules              the lint rules regex.json turns on or off, by id
@@ -102,6 +123,7 @@ final class TextDocumentHandler
         private readonly ?JudgedRange $judged = null,
     ) {
         $this->diagnosticConverter = new DiagnosticConverter();
+        $this->range = null === $judged ? [] : array_map($judged->parserFor(...), \array_slice($judged->points(), 1));
     }
 
     /**
@@ -332,8 +354,9 @@ final class TextDocumentHandler
             // for the versions they keep, from the lowest; for none, not at
             // all.
             $marker = TargetMarker::constraintAt($targets, $occurrence->line);
-            $regex = $this->regexFor(null === $occurrence->guard ? $marker : ($marker?->intersect($occurrence->guard) ?? $occurrence->guard));
-            foreach (null === $regex ? [] : $this->occurrenceDiagnostics($occurrence, $content, $positions, $regex) as $diagnostic) {
+            $constraint = null === $occurrence->guard ? $marker : ($marker?->intersect($occurrence->guard) ?? $occurrence->guard);
+            $regex = $this->regexFor($constraint);
+            foreach (null === $regex ? [] : $this->occurrenceDiagnostics($occurrence, $content, $positions, $regex, $this->rangeFor($constraint)) as $diagnostic) {
                 $silenced = false;
                 foreach ($covering as $index => $marker) {
                     if ($marker->silences($diagnostic['code'])) {
@@ -386,11 +409,13 @@ final class TextDocumentHandler
     /**
      * What `regex lint` reports for one pattern, before any marker.
      *
+     * @param list<RegexParser> $range the parsers of the later versions judged
+     *
      * @return list<Diagnostic>
      */
-    private function occurrenceDiagnostics(RegexOccurrence $occurrence, string $content, PositionConverter $positions, Regex $regex): array
+    private function occurrenceDiagnostics(RegexOccurrence $occurrence, string $content, PositionConverter $positions, Regex $regex, array $range): array
     {
-        $diagnostics = $this->patternDiagnostics($occurrence, $content, $positions, $regex);
+        $diagnostics = $this->patternDiagnostics($occurrence, $content, $positions, $regex, $range);
         if (null === $occurrence->writtenElsewhere) {
             return $diagnostics;
         }
@@ -404,16 +429,18 @@ final class TextDocumentHandler
      * What `regex lint` reports for one pattern, before any marker, each
      * diagnostic placed through the span of its pattern.
      *
+     * @param list<RegexParser> $range the parsers of the later versions judged
+     *
      * @return list<Diagnostic>
      */
-    private function patternDiagnostics(RegexOccurrence $occurrence, string $content, PositionConverter $positions, Regex $regex): array
+    private function patternDiagnostics(RegexOccurrence $occurrence, string $content, PositionConverter $positions, Regex $regex, array $range): array
     {
         $diagnostics = [];
 
         // Offsets count in bytes of the pattern body; the span places
         // them through the literal's escapes, in UTF-16 columns.
         $span = PatternSpan::of($occurrence, $positions);
-        $analysis = $this->analysis($occurrence->pattern, $regex);
+        $analysis = $this->analysis($occurrence->pattern, $regex, $range);
 
         if ('invalid' === $analysis[0]) {
             // A pattern PCRE refuses gets that error, and no lint issue.
@@ -437,7 +464,17 @@ final class TextDocumentHandler
             return [$this->diagnosticConverter->fromParseError($analysis[1], $analysis[2], $span, $analysis[3], $analysis[4])];
         }
 
-        [, $source, $issues, $redos] = $analysis;
+        [, $source, $issues, $redos, $refusal, $change] = $analysis;
+
+        // A later PHP of the range that refuses the pattern, or reads it
+        // otherwise, as `regex lint` reports it.
+        if (null !== $refusal) {
+            $diagnostics[] = $this->diagnosticConverter->fromValidationError($refusal[0], $refusal[1], $span, $refusal[2], $refusal[3]);
+        }
+        if (null !== $change) {
+            $diagnostics[] = $this->diagnosticConverter->fromMeaningChange($change, $span);
+        }
+
         $spelling = null;
         foreach ($issues as $issue) {
             // The heuristic rules guess what the analysis just proved:
@@ -471,14 +508,20 @@ final class TextDocumentHandler
     }
 
     /**
-     * What the pattern holds for the Regex, wherever it stands: worked out
-     * once, then kept.
+     * What the pattern holds for the Regex of the floor and the later
+     * versions judged, wherever it stands: worked out once, then kept.
      *
-     * @return array{0: 'invalid', 1: ValidationResult}|array{0: 'read', 1: string, 2: list<RuleViolation>, 3: ?RedosAnalysis}|array{0: 'limit', 1: string, 2: ErrorCode}|array{0: 'unread', 1: string, 2: ErrorCode, 3: ?int, 4: ?string}
+     * @param list<RegexParser> $range the parsers of the later versions judged
+     *
+     * @return Analysis
      */
-    private function analysis(string $pattern, Regex $regex): array
+    private function analysis(string $pattern, Regex $regex, array $range): array
     {
-        $key = spl_object_id($regex)."\0".$pattern;
+        $key = spl_object_id($regex);
+        foreach ($range as $parser) {
+            $key .= ','.$parser->target()->key();
+        }
+        $key .= "\0".$pattern;
         if (isset($this->analyses[$key])) {
             $analysis = $this->analyses[$key];
             // Read again, it is the latest.
@@ -498,7 +541,8 @@ final class TextDocumentHandler
                 $ast->accept($linter);
 
                 $redos = RedosMode::Off === $this->redosMode ? null : $regex->redos($pattern, $this->redosThreshold, $this->redosMode);
-                $analysis = ['read', $ast->source ?? '', $linter->getIssues(), $redos];
+                [$refusal, $change] = [] === $range ? [null, null] : $this->rangeFindings($pattern, $ast, $regex->parser(), $range);
+                $analysis = ['read', $ast->source ?? '', $linter->getIssues(), $redos, $refusal, $change];
             }
         } catch (LimitException $e) {
             $analysis = ['limit', $e->getMessage(), $e->errorCode];
@@ -515,10 +559,45 @@ final class TextDocumentHandler
     }
 
     /**
+     * What the later versions of the range find in a pattern the floor
+     * accepts, worded as `regex lint` words it: the refusal of the lowest
+     * that refuses it, as its message, error code, offset and hint; else
+     * the first that reads it into another tree, or matches the same tree
+     * otherwise, unless the rules map turns that check off.
+     *
+     * @param list<RegexParser> $range the parsers of the later versions judged, not empty
+     *
+     * @return array{?Refusal, ?string}
+     */
+    private function rangeFindings(string $pattern, RegexNode $ast, RegexParser $floor, array $range): array
+    {
+        $findings = RangeFindings::of($floor, $range, $pattern, $ast, RuleCatalog::enables($this->lintRules, RuleCatalog::MEANING_CHANGES));
+
+        $refused = $findings->refusedBy;
+        if (null !== $refused) {
+            return [[
+                \sprintf('On %s: %s', $findings->refusedOn, $refused->validation->error ?? 'Invalid regex.'),
+                $refused->validation->errorCode ?? ErrorCode::PcreRuntime,
+                $refused->validation->offset,
+                $refused->validation->hint,
+            ], null];
+        }
+
+        if (null !== $findings->readsOtherwise) {
+            return [null, RangeWording::readsOtherwise($findings->readsOtherwise)];
+        }
+
+        $silentChange = $findings->silentChange;
+
+        return [null, null === $silentChange ? null : RangeWording::silentChange($silentChange->target, $silentChange->message)];
+    }
+
+    /**
      * Whether the editor leaves off the check an issue identifier names: a
-     * lint rule the rules map turns off, the ReDoS analysis when off, and
-     * what it never reports, the optimizations, the complexity score and
-     * the changes of meaning across a range.
+     * lint rule the rules map turns off, the ReDoS analysis when off, the
+     * change of meaning across the range when its rule is off or the range
+     * is one version, and what it never reports, the optimizations and the
+     * complexity score.
      */
     private function leavesOff(string $identifier): bool
     {
@@ -526,15 +605,17 @@ final class TextDocumentHandler
             RedosVerdict::ISSUE_ID => RedosMode::Off === $this->redosMode,
             RedosVerdict::SEARCH_ISSUE_ID => RedosMode::Off === $this->redosMode
                 || !RuleCatalog::enables($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID),
-            'regex.optimization', 'regex.lint.complexity', 'regex.lint.compat.meaningChanges' => true,
+            RuleCatalog::MEANING_CHANGES => [] === $this->range || !RuleCatalog::enables($this->lintRules, RuleCatalog::MEANING_CHANGES),
+            'regex.optimization', 'regex.lint.complexity' => true,
             default => RuleId::isLintRule($identifier) && !RuleCatalog::enables($this->lintRules, $identifier),
         };
     }
 
     /**
-     * The Regex judging a pattern a "@regex-target" constraint covers: that
-     * of the lowest version it keeps, the server's when it keeps it or when
-     * no constraint covers the pattern; null when it keeps no version.
+     * The Regex judging a pattern a guard or a "@regex-target" constraint
+     * covers: that of the lowest version it keeps, the server's when it
+     * keeps it or when no constraint covers the pattern; null when it keeps
+     * no version.
      */
     private function regexFor(?TargetConstraint $constraint): ?Regex
     {
@@ -549,6 +630,23 @@ final class TextDocumentHandler
 
         // The server's options, its locale included, for the lowest version.
         return $this->narrowed[$lowest->key()] ??= $this->regex->withTarget($lowest);
+    }
+
+    /**
+     * The parsers of the versions after the lowest that judge a pattern a
+     * guard or a "@regex-target" constraint covers: those it keeps, the
+     * server's range when no constraint covers the pattern. They share the
+     * cache of the server's parser.
+     *
+     * @return list<RegexParser>
+     */
+    private function rangeFor(?TargetConstraint $constraint): array
+    {
+        if (null === $constraint || null === $this->judged) {
+            return $this->range;
+        }
+
+        return array_map($this->judged->parserFor(...), \array_slice($this->judged->narrow($constraint), 1));
     }
 
     /**

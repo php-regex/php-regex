@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Config;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Rule\RuleCatalog;
+use PHPRegex\Parser\ParserOptions;
 
 /**
  * What regex.json and regex.dist.json may hold, as one JSON Schema.
@@ -24,8 +25,11 @@ use PHPRegex\Linter\Rule\RuleCatalog;
  * written from it, so an editor and the lint command accept the same files.
  * Annotations only the loader reads: "x-case-insensitive" lets an enum
  * match whatever the case (editors still suggest the lower-case spelling),
- * "x-expected" is what an error message says the value should be, and
- * "x-item" names what a list holds, for the message about an item refused.
+ * "x-expected" is what an error message says the value should be,
+ * "x-item" names what a list holds, for the message about an item refused,
+ * and "x-php-version" marks a value the loader also reads with TargetSpec,
+ * for what no keyword can say: that min is not above max, and that a
+ * constraint admits a PHP.
  *
  * @internal
  */
@@ -112,6 +116,13 @@ final class LintConfigSchema
                 'checksOptimizations' => self::checksOptimizations(),
                 'checksLint' => self::checksLint(),
                 'checksComplexity' => self::checksComplexity(),
+                'phpVersionBound' => [
+                    'description' => 'A bound of a range of PHP versions: a PHP_VERSION_ID like 80100, or a version like "8.1" or "8.1.4".',
+                    'anyOf' => [
+                        ['type' => 'integer', 'minimum' => ParserOptions::OLDEST_PHP_VERSION_ID, 'maximum' => ParserOptions::LATEST_PHP_VERSION_ID],
+                        ['type' => 'string', 'pattern' => '^[7-9]\.[0-9]{1,2}(\.[0-9]{1,2})?$'],
+                    ],
+                ],
             ],
             'properties' => [
                 '$schema' => [
@@ -135,14 +146,7 @@ final class LintConfigSchema
                     'description' => 'Paths to exclude from scanning. Omit to use the CLI default (vendor).',
                     'examples' => ['vendor', ['vendor', 'tests', 'Fixtures']],
                 ],
-                'phpVersion' => [
-                    'description' => 'The PHP version the patterns are judged for, as "8.3" or a PHP_VERSION_ID like 80300, or "runtime" for the PHP running the command with the PCRE2 it links. Omit to read it from composer.json (config.platform.php, else the lowest PHP require.php allows), else to use the running PHP. The --php-version option wins over it.',
-                    'x-expected' => 'a version like "8.3", a PHP_VERSION_ID like 80300, or "runtime"',
-                    'type' => ['string', 'integer'],
-                    'pattern' => '^([0-9]+\.[0-9]{1,2}(\.[0-9]{1,2})?|[Rr][Uu][Nn][Tt][Ii][Mm][Ee])$',
-                    'minimum' => 70000,
-                    'examples' => ['8.2', '8.4', 80300],
-                ],
+                'phpVersion' => self::phpVersion(),
                 'pcreVersion' => [
                     'description' => 'The PCRE2 release the patterns are judged for, as "10.44", used as is. Omit to use the one composer.json pins in config.platform.lib-pcre, else the running PCRE2 when the target is the running PHP\'s minor version, else the release bundled with the target PHP. The --pcre-version option wins over it.',
                     'x-expected' => 'a PCRE2 release like "10.44"',
@@ -234,6 +238,65 @@ final class LintConfigSchema
                     ],
                 ],
             ],
+        ];
+    }
+
+    /**
+     * The PHP version, or the range of versions, the patterns are judged
+     * for: a branch of an anyOf for each type it takes, and one pattern for
+     * the strings, which a JSON Schema reads for strings only. "8.1" is both
+     * a single version and a constraint: a single version is read first.
+     *
+     * @return array{
+     *     description: string,
+     *     'x-expected': string,
+     *     'x-php-version': true,
+     *     pattern: string,
+     *     anyOf: list<array<string, string|int|false|list<string>|array<string, array{'$ref': string}>>>,
+     *     examples: list<string|int|array{min: string, max: string}>,
+     * }
+     */
+    private static function phpVersion(): array
+    {
+        // x.y, x.y.z or x.y.* of a major below 10, a version of a
+        // constraint: a PHP_VERSION_ID, "runtime", a bare major or PHP 10
+        // inside a constraint names nothing. A space is "[ \t]", which an
+        // editor reads as PCRE does, where "\s" would take every Unicode
+        // space. A single version keeps its own shape, read and refused as
+        // it was before ranges.
+        // A wildcard stands alone, never after an operator or in a hyphen
+        // range, as composer/semver reads it.
+        $plain = '[0-9]\.[0-9]{1,2}(\.[0-9]{1,2})?';
+        $version = '[0-9]\.[0-9]{1,2}(\.([0-9]{1,2}|\*))?';
+        $single = '[0-9]+\.[0-9]{1,2}(\.[0-9]{1,2})?';
+        $separator = '([ \t]*,[ \t]*|[ \t]+)';
+        // A branch names a lowest version: a hyphen range, or a term with no
+        // operator or one that bounds it from below, after any term that
+        // only bounds it from above.
+        $branch = \sprintf(
+            '(%3$s[ \t]+-[ \t]+%3$s|((<=|!=|<)[ \t]*%3$s%2$s)*((>=|==|[>=^~])[ \t]*%3$s|%1$s)(%2$s((>=|<=|!=|==|[<>=^~])[ \t]*%3$s|%1$s))*)',
+            $version,
+            $separator,
+            $plain,
+        );
+        $bound = ['$ref' => '#/$defs/phpVersionBound'];
+
+        return [
+            'description' => 'The PHP version the patterns are judged for, or the range of versions. A single version is exact: "8.3", a PHP_VERSION_ID like 80300, or "runtime" for the PHP running the command with the PCRE2 it links. A range is judged as composer.json\'s require.php is, from its lowest PHP and again at every later version where a rule of the library changes: a Composer constraint like ">=8.1" or "^8.1 <8.7", or {"min": "8.1", "max": "8.6"}, whose max is inclusive and covers its whole series when it names no patch. Omit to read it from composer.json (config.platform.php, else require.php), else to use the running PHP. The --php-version option wins over it.',
+            'x-expected' => TargetSpec::EXPECTED,
+            'x-php-version' => true,
+            'pattern' => '^([Rr][Uu][Nn][Tt][Ii][Mm][Ee]|'.$single.'|[ \t]*'.$branch.'([ \t]*\|\|?[ \t]*'.$branch.')*[ \t]*)$',
+            'anyOf' => [
+                ['type' => 'string'],
+                ['type' => 'integer', 'minimum' => 70000],
+                [
+                    'type' => 'object',
+                    'required' => ['min', 'max'],
+                    'additionalProperties' => false,
+                    'properties' => ['min' => $bound, 'max' => $bound],
+                ],
+            ],
+            'examples' => ['8.2', 80300, '>=8.1', '^8.1 <8.7', ['min' => '8.1', 'max' => '8.6']],
         ];
     }
 

@@ -95,4 +95,84 @@ final class ErrorStreamTest extends TestCase
         yield 'a locale beside a PHP version' => [['--locale=xx_YY.NOWHERE', '--php-version=8.4', 'validate', '/a/'], 'Invalid option: --locale names "xx_YY.NOWHERE", which this machine cannot set'];
         yield 'a locale, for lint' => [['--locale=xx_YY.NOWHERE', 'lint', __FILE__, '--jobs=1'], 'Invalid option: --locale names "xx_YY.NOWHERE", which this machine cannot set'];
     }
+
+    /**
+     * A --php-version lint cannot read as a version or a range is a usage
+     * error on stderr that says what to write: the forms it takes, a
+     * Composer constraint among them, and a lowest version when the
+     * constraint has none.
+     *
+     * @param list<string> $expected
+     */
+    #[Test]
+    #[DataProvider('provideUnreadableRanges')]
+    public function test_an_unreadable_php_version_range_says_what_to_write(string $range, array $expected): void
+    {
+        $command = [\PHP_BINARY, \dirname(__DIR__, 3).'/src/Cli/bin/regex', '--no-ansi', '--php-version='.$range, 'lint', __FILE__, '--jobs=1'];
+        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $this->assertIsResource($process);
+        $stdout = (string) stream_get_contents($pipes[1]);
+        $stderr = (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $this->assertSame(2, proc_close($process), $stdout.$stderr);
+        $this->assertSame('', $stdout);
+        $this->assertStringContainsString('Invalid option: --php-version must be a version string like "8.2"', $stderr);
+        $this->assertStringContainsString('a Composer constraint like ">=8.1"', $stderr);
+        foreach ($expected as $words) {
+            $this->assertStringContainsString($words, $stderr);
+        }
+        $this->assertStringNotContainsString('php_version', $stderr);
+    }
+
+    /**
+     * @return iterable<string, array{range: string, expected: list<string>}>
+     */
+    public static function provideUnreadableRanges(): iterable
+    {
+        yield 'no lowest version' => ['range' => '<8.4', 'expected' => ['lowest']];
+        yield 'any version' => ['range' => '*', 'expected' => ['lowest']];
+        yield 'a branch name' => ['range' => 'dev-main', 'expected' => ['lowest']];
+        yield 'a PHP_VERSION_ID inside a constraint' => ['range' => '>=80100', 'expected' => []];
+        yield 'runtime inside a constraint' => ['range' => 'runtime || ^9.0', 'expected' => []];
+    }
+
+    /**
+     * The commands that read one pattern take a single version until they
+     * judge every point of a range: a --php-version they cannot take is
+     * refused in the words they used before ranges, which name no
+     * constraint, and nothing reaches stdout.
+     *
+     * @param list<string> $arguments
+     */
+    #[Test]
+    #[DataProvider('provideSinglePatternVersionRefusals')]
+    public function test_a_single_pattern_command_refuses_a_php_version_it_cannot_take_in_its_former_words(array $arguments): void
+    {
+        $command = [\PHP_BINARY, \dirname(__DIR__, 3).'/src/Cli/bin/regex', '--no-ansi', ...$arguments];
+        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $this->assertIsResource($process);
+        $stdout = (string) stream_get_contents($pipes[1]);
+        $stderr = (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $this->assertSame(2, proc_close($process), $stdout.$stderr);
+        $this->assertSame('', $stdout);
+        $this->assertSame("Invalid option: --php-version must be a version string like \"8.2\", a PHP_VERSION_ID integer, or \"runtime\".\n", $stderr);
+    }
+
+    /**
+     * @return iterable<string, array{arguments: list<string>}>
+     */
+    public static function provideSinglePatternVersionRefusals(): iterable
+    {
+        yield 'validate, an open range' => ['arguments' => ['--php-version=>=8.1', 'validate', '/(?<=a\\Kb)c/']];
+        yield 'validate, a hyphen range' => ['arguments' => ['--php-version=8.1 - 8.6', 'validate', '/(?<=a\\Kb)c/']];
+        yield 'validate, a constraint without a lowest version' => ['arguments' => ['--php-version=<8.4', 'validate', '/a/']];
+        yield 'validate, no version at all' => ['arguments' => ['--php-version=abc', 'validate', '/a/']];
+        yield 'analyze, an open range' => ['arguments' => ['--php-version=>=8.1', 'analyze', '/a/']];
+        yield 'analyze, a hyphen range' => ['arguments' => ['--php-version=8.1 - 8.6', 'analyze', '/a/']];
+    }
 }

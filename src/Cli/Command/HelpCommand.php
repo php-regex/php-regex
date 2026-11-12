@@ -342,7 +342,7 @@ final class HelpCommand extends AbstractCommand
                 declaration: LintCommand::options(),
                 notes: [
                     'Config: regex.json or regex.dist.json in the working directory sets lint defaults.',
-                    'Target: --php-version, else regex.json phpVersion, else the lowest PHP composer.json allows, else the running PHP.',
+                    'Target: --php-version, else regex.json phpVersion, else the PHP range composer.json allows, else the running PHP; a range (">=8.1") is judged at each version where a rule changes.',
                     'Exit codes: 0 clean, 1 errors found, 2 unusable configuration or command line.',
                     'Inline ignore: // @regex-ignore-next-line or // @regex-ignore',
                 ],

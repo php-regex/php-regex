@@ -24,7 +24,8 @@ use PHPRegex\Linter\Rule\RuleId;
  * preset included. A spec of "extraction.functions" the lint cannot read is
  * a warning, never a problem: it is left out of the result.
  * regex.json overrides regex.dist.json: objects merge key by key, anything
- * else (a list included) is replaced whole; a lint rule named in full is
+ * else (a list included) is replaced whole, and so is phpVersion, one
+ * setting whatever its form; a lint rule named in full is
  * read under its short identifier first. The result keeps the shape of
  * the file.
  *
@@ -188,15 +189,17 @@ final class LintConfigLoader
 
     /**
      * An object merged into another key by key: an object value merges in
-     * turn, anything else (a list included) replaces.
+     * turn, anything else (a list included) replaces. A {"min", "max"}
+     * phpVersion is one value, never merged into another.
      */
-    private static function merge(\stdClass $base, \stdClass $override): \stdClass
+    private static function merge(\stdClass $base, \stdClass $override, bool $top = true): \stdClass
     {
         $merged = clone $base;
         foreach (get_object_vars($override) as $key => $value) {
             $key = (string) $key;
             $current = $merged->{$key} ?? null;
-            $merged->{$key} = $current instanceof \stdClass && $value instanceof \stdClass ? self::merge($current, $value) : $value;
+            $whole = $top && 'phpVersion' === $key;
+            $merged->{$key} = !$whole && $current instanceof \stdClass && $value instanceof \stdClass ? self::merge($current, $value, false) : $value;
         }
 
         return $merged;

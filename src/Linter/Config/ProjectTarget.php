@@ -39,18 +39,20 @@ use PHPRegex\Parser\Validation\RangeDiff;
  * A project is judged for its lowest PHP because a pattern must compile on
  * every version the project installs on.
  *
- * When require.php gives the PHP, the range also holds every PHP version a
- * rule of the library changes at that the constraint allows above its
- * floor, up to its ceiling: a pattern valid on the floor may be refused by
- * a later PHP the project installs on. Every other source names one
- * version, and the range is that version.
+ * When require.php gives the PHP, or a source names a range (a Composer
+ * constraint, or a {"min", "max"} object, TargetSpec), the range also holds
+ * every PHP version a rule of the library changes at that the constraint
+ * allows above its floor, up to its ceiling: a pattern valid on the floor
+ * may be refused by a later PHP the project installs on. A range is judged
+ * alike wherever it is named. A single version is exact: the range is that
+ * version.
  *
  * A PCRE2 release older than 10.39, the oldest whose rules the library
  * knows in full, is judged with the 10.39 rules but for the few older
  * changes it names, and a notice says so. A PHP that ships PCRE1, 7.2 and
  * earlier, is never judged: no verdict of the library holds for it. A
- * version named below 7.3 is refused, and so is a composer.json whose
- * require.php allows no PHP of 7.3 or later. A require.php that also allows
+ * version named below 7.3 is refused, and so is a range, named or read from
+ * require.php, that allows no PHP of 7.3 or later. A range that also allows
  * one is judged from the lowest it allows, even under a config.platform.php
  * below 7.3, which only pins the PHP Composer resolves the dependencies
  * for, and a notice says the versions below 7.3 are not judged.
@@ -104,7 +106,7 @@ final class ProjectTarget
         $configLocale = $config['locale'] ?? null;
 
         return self::fromSources(
-            ['--php-version' => $phpFlag, 'regex.json' => \is_string($configPhp) || \is_int($configPhp) ? $configPhp : null],
+            ['--php-version' => $phpFlag, 'regex.json' => $configPhp],
             ['--pcre-version' => $pcreFlag, 'regex.json' => \is_string($configPcre) ? $configPcre : null],
             $projectDir,
             $env,
@@ -119,15 +121,19 @@ final class ProjectTarget
      * release, the one the PHP version bundles, and for the locale, the
      * runtime's.
      *
-     * @param array<string, string|int|null> $php        source name => version, e.g. "php_regex.php_version" => "8.2"
-     * @param array<string, string|null>     $pcre       source name => PCRE2 release
-     * @param string|null                    $projectDir where composer.json is read, never a parent of it; null reads none
-     * @param array<string, string>          $env        the environment, for COMPOSER
-     * @param array<string, string|null>     $locale     source name => LC_CTYPE locale
+     * @param array<string, string|int|array{min: string|int, max: string|int}|null> $php        source name => version or range,
+     *                                                                                           as TargetSpec reads it, e.g.
+     *                                                                                           "php_regex.php_version" => "8.2"
+     * @param array<string, string|null>                                             $pcre       source name => PCRE2 release
+     * @param string|null                                                            $projectDir where composer.json is read, never
+     *                                                                                           a parent of it; null reads none
+     * @param array<string, string>                                                  $env        the environment, for COMPOSER
+     * @param array<string, string|null>                                             $locale     source name => LC_CTYPE locale
      *
-     * @throws InvalidRegexOptionException when a source that is set names no version, or a locale the machine
-     *                                     cannot set
-     * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1
+     * @throws InvalidRegexOptionException when a source that is set names no version and no range, or a
+     *                                     locale the machine cannot set
+     * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1, or the range named allows
+     *                                     no PHP on PCRE2
      */
     public static function fromSources(array $php, array $pcre, ?string $projectDir, array $env, array $locale = []): self
     {
@@ -135,22 +141,35 @@ final class ProjectTarget
         $runningPhp = false;
         $phpVersionId = null;
         $phpSource = null;
-        $constraint = null;
+        $intervals = null;
 
         foreach ($php as $name => $version) {
             if (null === $version) {
                 continue;
             }
 
-            // "runtime", as PHPStan's phpVersion takes it: the PHP running
-            // the command, with the PCRE2 it links.
-            if (\is_string($version) && 'runtime' === Ascii::lower(trim($version, " \t\n\r\0\x0B"))) {
-                [$phpVersionId, $phpSource, $runningPhp] = [\PHP_VERSION_ID, $name.' (running PHP)', true];
+            if (\is_array($version)) {
+                $intervals = [TargetSpec::minMax($version['min'], $version['max'])];
+            } else {
+                $intervals = TargetSpec::intervals($version);
+                if (null === $intervals) {
+                    // "runtime", as PHPStan's phpVersion takes it: the PHP
+                    // running the command, with the PCRE2 it links.
+                    if (\is_string($version) && 'runtime' === Ascii::lower(trim($version, " \t\n\r\0\x0B"))) {
+                        [$phpVersionId, $phpSource, $runningPhp] = [\PHP_VERSION_ID, $name.' (running PHP)', true];
 
-                break;
+                        break;
+                    }
+
+                    [$phpVersionId, $phpSource] = [self::onPcre2(ParserOptions::phpVersionIdOf($version), $name.' names'), (string) $name];
+
+                    break;
+                }
             }
 
-            [$phpVersionId, $phpSource] = [self::onPcre2(self::phpVersionId($version), $name.' names'), (string) $name];
+            // A range is judged as a require.php range: from its lowest PHP
+            // on PCRE2, at every gate point it allows above it.
+            [$phpVersionId, $phpSource] = [self::rangeFloor($intervals, (string) $name, $notices), (string) $name];
 
             break;
         }
@@ -161,6 +180,7 @@ final class ProjectTarget
                 [$phpVersionId, $phpSource, $runningPhp] = [\PHP_VERSION_ID, 'running PHP', true];
             } else {
                 [$phpVersionId, $phpSource, $constraint] = $fromComposer;
+                $intervals = null === $constraint ? null : ComposerConstraint::intervals($constraint);
             }
         }
 
@@ -195,8 +215,8 @@ final class ProjectTarget
         $source = null === $pcreSource || $pcreSource === $phpSource ? $phpSource : $phpSource.'; '.$pcreSource;
         $source = null === $localeSource || str_contains('; '.$source.';', '; '.$localeSource.';') ? $source : $source.'; '.$localeSource;
         $target = ParserOptions::resolveTarget($runningPhp ? null : $phpVersionId, $pcreVersion, $localeName, true);
-        $range = self::rangeFor($target, $constraint, $pinnedPcre);
-        $admitted = null === $constraint ? null : self::admittedFrom($phpVersionId, ComposerConstraint::intervals($constraint) ?? []);
+        $range = self::rangeFor($target, $intervals ?? [], $pinnedPcre);
+        $admitted = null === $intervals ? null : self::admittedFrom($phpVersionId, $intervals);
 
         // A release older than the library knows in full is judged with
         // the rules of the oldest it does: said once for the whole range,
@@ -240,8 +260,11 @@ final class ProjectTarget
     /**
      * The target of a range of PHP versions a static analyser names, judged
      * as lint judges a require.php range: from its lowest PHP on PCRE2, with
-     * a note when the range starts below it, refused when it allows none.
+     * a note when the range starts below it, at every gate point up to max,
+     * refused when it allows no PHP on PCRE2.
      *
+     * @param int                        $min    the lowest version, a PHP_VERSION_ID
+     * @param int                        $max    the highest version, a PHP_VERSION_ID, inclusive
      * @param string                     $name   what named the range, as "phpVersion"
      * @param array<string, string|null> $locale source name => LC_CTYPE locale
      *
@@ -250,25 +273,7 @@ final class ProjectTarget
      */
     public static function fromRange(int $min, int $max, string $name, array $locale = []): self
     {
-        $firstOnPcre2 = PcreTarget::phpVersionBoundaries()[0];
-        if ($max < $firstOnPcre2) {
-            throw self::onPcre1($min, $name.' allows');
-        }
-
-        if ($min >= $firstOnPcre2) {
-            return self::fromSources([$name => $min], [], null, [], $locale);
-        }
-
-        $target = self::fromSources([$name => $firstOnPcre2], [], null, [], $locale);
-        $note = \sprintf(
-            '%s allows PHP %d.%d, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP %s, the lowest version it allows on PCRE2.',
-            $name,
-            intdiv($min, 10000),
-            intdiv($min, 100) % 100,
-            self::phpLabel($firstOnPcre2),
-        );
-
-        return new self($target->target, $target->source, [$note, ...$target->notices], $target->range, $target->admitted, $target->pinnedPcre);
+        return self::fromSources([$name => ['min' => $min, 'max' => $max]], [], null, [], $locale);
     }
 
     public function target(): PcreTarget
@@ -278,9 +283,10 @@ final class ProjectTarget
 
     /**
      * The targets the patterns are validated at, the floor first: then,
-     * when require.php gives the PHP, each PHP version above the floor a
+     * when a range gives the PHP, each PHP version above the floor a
      * rule changes at that the constraint allows, and the lowest version of
-     * each OR branch above the floor, in ascending order.
+     * each OR branch above the floor, unless a version already judged
+     * stands for its stretch between two of them, in ascending order.
      *
      * @return list<PcreTarget>
      */
@@ -491,7 +497,38 @@ final class ProjectTarget
     }
 
     /**
-     * The intervals require.php allows, from the floor up: the versions on
+     * The lowest PHP on PCRE2 a named range allows, as a require.php range
+     * is judged from: a range that starts below 7.3 is judged from the
+     * lowest version it allows from there, and a notice says so.
+     *
+     * @param non-empty-list<array{int, int|null}> $intervals
+     * @param string                               $name      what named the range, as "regex.json"
+     * @param list<string>                         $notices
+     *
+     * @throws UnsupportedTargetException when the range allows no PHP on PCRE2
+     */
+    private static function rangeFloor(array $intervals, string $name, array &$notices): int
+    {
+        $firstOnPcre2 = PcreTarget::phpVersionBoundaries()[0];
+        $floor = min(array_column($intervals, 0));
+        if ($floor >= $firstOnPcre2) {
+            return $floor;
+        }
+
+        $lowest = ComposerConstraint::lowestFrom($intervals, $firstOnPcre2) ?? throw self::onPcre1($floor, $name.' allows');
+        $notices[] = \sprintf(
+            '%s allows PHP %d.%d, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP %s, the lowest version it allows on PCRE2.',
+            $name,
+            intdiv($floor, 10000),
+            intdiv($floor, 100) % 100,
+            self::phpLabel($lowest),
+        );
+
+        return $lowest;
+    }
+
+    /**
+     * The intervals a range allows, from the floor up: the versions on
      * PCRE1 and those below a pinned platform are not installed on.
      *
      * @param list<array{int, int|null}> $intervals
@@ -513,20 +550,25 @@ final class ProjectTarget
 
     /**
      * The floor, then, in ascending order, each gate point above it the
-     * constraint allows and the lowest version of each OR branch above it:
-     * "~8.3.0 || >=8.5.3" allows 8.5.3 to 8.5.9, which no gate point stands
-     * for.
+     * constraint allows and the lowest version of an OR branch above it
+     * that starts a stretch between two gate points no version judged
+     * with the same PCRE2 stands for: "~8.3.0 || >=8.5.3" allows 8.5.3 to
+     * 8.5.9, which no gate point stands for; a thousand releases of 8.1
+     * after an 8.1 floor add none. The running PHP's minor is judged with
+     * the running PCRE2, so a branch of that minor inside a stretch judged
+     * with another release adds its lowest version.
      *
-     * @param string|null $constraint require.php, when the floor was read from it
-     * @param string|null $pinnedPcre the PCRE2 release named for every point
+     * @param list<array{int, int|null}> $intervals  the versions the range allows; none for a single version
+     * @param string|null                $pinnedPcre the PCRE2 release named for every point
      *
      * @return list<PcreTarget>
      */
-    private static function rangeFor(PcreTarget $floor, ?string $constraint, ?string $pinnedPcre): array
+    private static function rangeFor(PcreTarget $floor, array $intervals, ?string $pinnedPcre): array
     {
+        $gates = PcreTarget::phpVersionBoundaries();
         $range = [$floor];
-        $intervals = null === $constraint ? [] : (ComposerConstraint::intervals($constraint) ?? []);
-        $points = array_unique([...PcreTarget::phpVersionBoundaries(), ...array_column($intervals, 0)]);
+        $judged = [self::stretchOf($floor->phpVersionId, $gates).'/'.$floor->pcreVersion => true];
+        $points = array_unique([...$gates, ...array_column($intervals, 0)]);
         sort($points);
         foreach ($points as $point) {
             if ($point <= $floor->phpVersionId) {
@@ -535,7 +577,14 @@ final class ProjectTarget
             // A branch that allows nothing, ">=8.4 <8.2", holds no point.
             foreach ($intervals as [$lowest, $below]) {
                 if ($point >= $lowest && (null === $below || $point < $below)) {
-                    $range[] = ParserOptions::resolveTarget($point, $pinnedPcre, $floor->locale, true);
+                    // A gate point starts its stretch: only the floor, or
+                    // the gate itself, comes before it there.
+                    $target = ParserOptions::resolveTarget($point, $pinnedPcre, $floor->locale, true);
+                    $stretch = self::stretchOf($point, $gates).'/'.$target->pcreVersion;
+                    if (!isset($judged[$stretch])) {
+                        $range[] = $target;
+                        $judged[$stretch] = true;
+                    }
 
                     continue 2;
                 }
@@ -546,10 +595,21 @@ final class ProjectTarget
     }
 
     /**
-     * @throws InvalidRegexOptionException
+     * The stretch between two gate points a version lies in: the number of
+     * gate points at or below it.
+     *
+     * @param list<int> $gates in ascending order
      */
-    private static function phpVersionId(string|int $version): int
+    private static function stretchOf(int $phpVersionId, array $gates): int
     {
-        return ParserOptions::phpVersionIdOf($version);
+        $stretch = 0;
+        foreach ($gates as $gate) {
+            if ($gate > $phpVersionId) {
+                break;
+            }
+            $stretch++;
+        }
+
+        return $stretch;
     }
 }
