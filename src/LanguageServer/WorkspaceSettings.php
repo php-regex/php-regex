@@ -21,6 +21,7 @@ use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintConfigResult;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\TargetSpec;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
@@ -33,7 +34,10 @@ use PHPRegex\Redos\RedosSeverity;
  * initializationOptions the server reads.
  *
  * The target is initializationOptions.phpVersion / pcreVersion, then
- * regex.json, then composer.json at the root, then the running PHP; the
+ * regex.json, then composer.json at the root, then the running PHP: a
+ * phpVersion, in either place, names a single version, a Composer
+ * constraint or a {"min", "max"} object, a range being judged at each
+ * version it allows, as `regex lint` judges it; the
  * LC_CTYPE locale initializationOptions.locale, then regex.json, then the
  * runtime's. The ReDoS analysis runs when initializationOptions.redos, else
  * checks.redos.enabled in regex.json, turns it on. A value that cannot be
@@ -129,9 +133,9 @@ final class WorkspaceSettings
 
     /**
      * The PHP, the PCRE2 and the locale the workspace's patterns are judged
-     * for.
+     * for, and the versions of the range the PHP named allows.
      *
-     * @throws UnsupportedTargetException  when the PHP named ships PCRE1
+     * @throws UnsupportedTargetException  when the PHP named ships PCRE1, or the range named allows no PHP on PCRE2
      * @throws InvalidRegexOptionException when regex.json names a locale this machine cannot set
      */
     public function target(): ProjectTarget
@@ -145,8 +149,8 @@ final class WorkspaceSettings
         // regex.json was checked against its schema when it was loaded.
         return ProjectTarget::fromSources(
             [
-                'initializationOptions' => $this->readOption('phpVersion', 'php_version'),
-                'regex.json' => \is_string($configPhp) || \is_int($configPhp) ? $configPhp : null,
+                'initializationOptions' => $this->phpVersionOption(),
+                'regex.json' => $configPhp,
             ],
             [
                 'initializationOptions' => \is_string($pcre) ? $pcre : null,
@@ -182,6 +186,49 @@ final class WorkspaceSettings
     }
 
     /**
+     * initializationOptions.phpVersion, as regex.json takes it: a single
+     * version, a Composer constraint, or {"min", "max"} and no other key;
+     * null when it is unset or cannot be read: what cannot be read is a
+     * warning, and the next source is used.
+     *
+     * @return string|int|array{min: string|int, max: string|int}|null
+     */
+    private function phpVersionOption(): string|int|array|null
+    {
+        $value = $this->options['phpVersion'] ?? null;
+        if (null === $value) {
+            return null;
+        }
+
+        try {
+            if (\is_string($value) || \is_int($value)) {
+                // A single version is read as it always was.
+                if (null === TargetSpec::intervals($value)) {
+                    ParserOptions::fromArray(['php_version' => $value]);
+                }
+
+                return $value;
+            }
+
+            if (\is_array($value) && 2 === \count($value)) {
+                $min = $value['min'] ?? null;
+                $max = $value['max'] ?? null;
+                if ((\is_string($min) || \is_int($min)) && (\is_string($max) || \is_int($max))) {
+                    TargetSpec::minMax($min, $max);
+
+                    return ['min' => $min, 'max' => $max];
+                }
+            }
+        } catch (InvalidRegexOptionException) {
+            // Reported below, like a value of the wrong type.
+        }
+
+        $this->ignored('phpVersion', \is_string($value) || \is_int($value) ? '"'.$value.'"' : get_debug_type($value), 'a version');
+
+        return null;
+    }
+
+    /**
      * An initializationOptions version or locale, or null when it is unset
      * or cannot be read: what cannot be read is a warning, and the next
      * source is used.
@@ -205,14 +252,20 @@ final class WorkspaceSettings
             }
         }
 
-        self::log($this->transport, Transport::LOG_WARNING, \sprintf(
-            'initializationOptions.%s %s is not %s: ignored.',
-            $key,
-            \is_string($value) || \is_int($value) ? '"'.$value.'"' : get_debug_type($value),
-            $what,
-        ));
+        $this->ignored($key, \is_string($value) || \is_int($value) ? '"'.$value.'"' : get_debug_type($value), $what);
 
         return null;
+    }
+
+    /**
+     * The warning on an initializationOptions value that cannot be read.
+     *
+     * @param string $value the value, quoted, or its type
+     * @param string $what  what the value must be
+     */
+    private function ignored(string $key, string $value, string $what): void
+    {
+        self::log($this->transport, Transport::LOG_WARNING, \sprintf('initializationOptions.%s %s is not %s: ignored.', $key, $value, $what));
     }
 
     /**

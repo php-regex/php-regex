@@ -109,6 +109,23 @@ final class DiagnosticConverter
     }
 
     /**
+     * A later PHP of the range that reads the pattern otherwise, as `regex
+     * lint` reports it: a warning over the whole body.
+     *
+     * @return Diagnostic
+     */
+    public function fromMeaningChange(string $message, PatternSpan $span): array
+    {
+        return self::linked([
+            'range' => $span->range(0, $span->bodyLength()),
+            'severity' => self::SEVERITY_WARNING,
+            'code' => RuleCatalog::MEANING_CHANGES,
+            'source' => 'php-regex',
+            'message' => $message,
+        ]);
+    }
+
+    /**
      * A ReDoS verdict, as `regex lint` reports it: over the risky part of
      * the body when the analysis names one, over the whole body otherwise.
      *

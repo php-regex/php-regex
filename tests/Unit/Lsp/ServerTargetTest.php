@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\TestUtils\FileUri;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -42,6 +44,19 @@ final class ServerTargetTest extends TestCase
     private const NEWER_ENGINE_ONLY = '/(?a)x/';
 
     private const DOCUMENT_URI = 'file:///workspace/src/Pattern.php';
+
+    /**
+     * Compiles on PHP 8.4 (preg_match() returns 1 on 8.4.27, PCRE2 10.49);
+     * PHP 8.5 compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK, and PCRE2
+     * refuses it there: `regex lint` reports it under ">=8.2".
+     */
+    private const KEEP_IN_LOOKBEHIND = '/(?<=a\\Kb)c/';
+
+    /**
+     * Text before PCRE2 10.43, a quantifier from it: preg_match() of
+     * "/^a{,3}$/" matches "aa" on 10.49, and not the text "a{,3}".
+     */
+    private const QUANTIFIER_WITHOUT_MIN = '/a{,3}/';
 
     /**
      * @var resource
@@ -203,6 +218,29 @@ final class ServerTargetTest extends TestCase
         $this->assertNotSame([], $this->diagnostics());
     }
 
+    /**
+     * An initializationOptions.phpVersion the server cannot read is passed
+     * over with a warning, and the next source judges: "initialize" gets
+     * its one answer, never a second one for a failure while reading it.
+     */
+    #[Test]
+    public function test_a_php_version_past_every_integer_is_passed_over_and_initialize_answered_once(): void
+    {
+        file_put_contents($this->root.'/regex.json', (string) json_encode(['phpVersion' => '8.4']));
+
+        $this->serve(['rootUri' => $this->rootUri(), 'initializationOptions' => ['phpVersion' => '>=99999999999999999999.1']]);
+
+        $answers = $this->responses(1);
+        $this->assertCount(1, $answers, (string) json_encode($answers));
+        $this->assertArrayHasKey('result', $answers[0]);
+        $this->assertArrayNotHasKey('error', $answers[0]);
+        $this->assertContains(
+            ['type' => 2, 'message' => 'initializationOptions.phpVersion ">=99999999999999999999.1" is not a version: ignored.'],
+            $this->notifications('window/logMessage'),
+        );
+        $this->assertStringEndsWith('(regex.json)', $this->targetLog());
+    }
+
     #[Test]
     public function test_the_target_is_logged_once(): void
     {
@@ -254,14 +292,113 @@ final class ServerTargetTest extends TestCase
     }
 
     /**
+     * The server judges every version of the range, as `regex lint` does:
+     * a pattern the floor compiles and a later PHP refuses is an error,
+     * with lint's words, whatever named the range.
+     *
+     * @param array<string, mixed>  $initializeParams
+     * @param array<string, string> $files
+     */
+    #[Test]
+    #[DataProvider('provideRangeSources')]
+    public function test_a_pattern_a_later_php_of_the_range_refuses_is_an_error(array $initializeParams, array $files): void
+    {
+        foreach ($files as $name => $contents) {
+            file_put_contents($this->root.'/'.$name, $contents);
+        }
+
+        $this->serve(['rootUri' => $this->rootUri()] + $initializeParams, pattern: self::KEEP_IN_LOOKBEHIND);
+
+        $refusals = array_values(array_filter($this->diagnostics(), static fn (mixed $diagnostic): bool => \is_array($diagnostic) && 'regex.keep.in_lookaround' === ($diagnostic['code'] ?? null)));
+        $this->assertCount(1, $refusals, (string) json_encode($this->diagnostics()));
+        $this->assertIsArray($refusals[0]);
+        $this->assertSame(1, $refusals[0]['severity'] ?? null);
+        $this->assertIsString($refusals[0]['message'] ?? null);
+        $this->assertStringStartsWith('On PHP 8.5 and later: \\K is not allowed in a lookaround from PHP 8.5', $refusals[0]['message']);
+    }
+
+    /**
+     * @return iterable<string, array{initializeParams: array<string, mixed>, files: array<string, string>}>
+     */
+    public static function provideRangeSources(): iterable
+    {
+        yield 'composer.json require.php' => ['initializeParams' => [], 'files' => ['composer.json' => '{"require": {"php": ">=8.2"}}']];
+        yield 'a regex.json constraint' => ['initializeParams' => [], 'files' => ['regex.json' => '{"phpVersion": "^8.2"}']];
+        yield 'a regex.json object' => ['initializeParams' => [], 'files' => ['regex.json' => '{"phpVersion": {"min": 80200, "max": 80699}}']];
+        yield 'an initializationOptions constraint' => ['initializeParams' => ['initializationOptions' => ['phpVersion' => '>=8.2']], 'files' => []];
+        yield 'an initializationOptions object' => ['initializeParams' => ['initializationOptions' => ['phpVersion' => ['min' => '8.2', 'max' => '8.6']]], 'files' => []];
+    }
+
+    /**
+     * A pattern a later PHP of the range reads otherwise is a warning, with
+     * lint's words; the PCRE2 named is the one that PHP is judged with.
+     *
+     * @param array<string, string> $files
+     */
+    #[Test]
+    #[DataProvider('provideMeaningChangeSources')]
+    public function test_a_pattern_a_later_php_of_the_range_parses_differently_is_a_warning(array $files, ?int $first): void
+    {
+        foreach ($files as $name => $contents) {
+            file_put_contents($this->root.'/'.$name, $contents);
+        }
+
+        $this->serve(['rootUri' => $this->rootUri()], pattern: self::QUANTIFIER_WITHOUT_MIN);
+
+        $changes = array_values(array_filter($this->diagnostics(), static fn (mixed $diagnostic): bool => \is_array($diagnostic) && 'regex.lint.compat.meaningChanges' === ($diagnostic['code'] ?? null)));
+        $expected = null === $first ? [] : [[2, \sprintf('From PHP %s (PCRE2 %s) the pattern parses differently: the same text means something else there.', ProjectTarget::phpLabel($first), self::judgedPcre($first))]];
+        $this->assertSame($expected, array_map(static fn (mixed $diagnostic): array => \is_array($diagnostic) ? [$diagnostic['severity'] ?? null, $diagnostic['message'] ?? null] : [], $changes));
+    }
+
+    /**
+     * @return iterable<string, array{files: array<string, string>, first: int|null}>
+     */
+    public static function provideMeaningChangeSources(): iterable
+    {
+        $toTheEnd = [80100, 80200, 80300, 80400, 80425, 80500, 80510];
+
+        yield 'composer.json require.php' => ['files' => ['composer.json' => '{"require": {"php": ">=8.1"}}'], 'first' => self::quantifierReadFrom($toTheEnd)];
+        yield 'a regex.json constraint' => ['files' => ['regex.json' => '{"phpVersion": ">=8.1"}'], 'first' => self::quantifierReadFrom($toTheEnd)];
+        yield 'a regex.json object to 8.6' => ['files' => ['regex.json' => '{"phpVersion": {"min": "8.1", "max": "8.6"}}'], 'first' => self::quantifierReadFrom($toTheEnd)];
+        // 8.4 is past the max: not judged.
+        yield 'a regex.json object to 8.3' => ['files' => ['regex.json' => '{"phpVersion": {"min": "8.1", "max": "8.3"}}'], 'first' => self::quantifierReadFrom([80100, 80200, 80300])];
+        // A single version stays exact.
+        yield 'a single regex.json version' => ['files' => ['regex.json' => '{"phpVersion": "8.1"}', 'composer.json' => '{"require": {"php": ">=8.1"}}'], 'first' => null];
+    }
+
+    /**
+     * The first point after the floor whose PCRE2 reads "a{,3}" as a
+     * quantifier (10.43 or later), null when the floor already does or
+     * none does: 8.4 unless this machine links a newer PCRE2 to an older
+     * minor.
+     *
+     * @param list<int> $points the floor first
+     */
+    private static function quantifierReadFrom(array $points): ?int
+    {
+        $reads = static fn (int $point): bool => version_compare(self::judgedPcre($point), '10.43', '>=');
+        if ($reads($points[0])) {
+            return null;
+        }
+
+        foreach (\array_slice($points, 1) as $point) {
+            if ($reads($point)) {
+                return $point;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @param array<string, mixed> $initializeParams
      */
-    private function serve(array $initializeParams, int $extraDocuments = 0, ?Regex $regex = null, bool $hover = false): void
+    private function serve(array $initializeParams, int $extraDocuments = 0, ?Regex $regex = null, bool $hover = false, ?string $pattern = null): void
     {
         $messages = [
             ['id' => 1, 'method' => 'initialize', 'params' => $initializeParams],
             ['method' => 'initialized', 'params' => []],
-            $this->didOpen(self::DOCUMENT_URI),
+            $this->didOpen(self::DOCUMENT_URI, $pattern),
         ];
         if ($hover) {
             $messages[] = ['id' => 2, 'method' => 'textDocument/hover', 'params' => [
@@ -292,13 +429,13 @@ final class ServerTargetTest extends TestCase
     /**
      * @return array<string, mixed>
      */
-    private function didOpen(string $uri): array
+    private function didOpen(string $uri, ?string $pattern = null): array
     {
         return ['method' => 'textDocument/didOpen', 'params' => ['textDocument' => [
             'uri' => $uri,
             'languageId' => 'php',
             'version' => 1,
-            'text' => "<?php\n\npreg_match('".self::NEWER_ENGINE_ONLY."', \$subject);\n",
+            'text' => "<?php\n\npreg_match('".($pattern ?? self::NEWER_ENGINE_ONLY)."', \$subject);\n",
         ]]];
     }
 
@@ -365,6 +502,26 @@ final class ServerTargetTest extends TestCase
         }
 
         return null;
+    }
+
+    /**
+     * Every response to the request of that id, in the order written.
+     *
+     * @return list<array<array-key, mixed>>
+     */
+    private function responses(int $id): array
+    {
+        rewind($this->output);
+        $responses = [];
+        foreach (explode('Content-Length: ', (string) stream_get_contents($this->output)) as $frame) {
+            $json = strstr($frame, '{');
+            $decoded = false === $json ? null : json_decode($json, true);
+            if (\is_array($decoded) && $id === ($decoded['id'] ?? null) && !isset($decoded['method'])) {
+                $responses[] = $decoded;
+            }
+        }
+
+        return $responses;
     }
 
     /**

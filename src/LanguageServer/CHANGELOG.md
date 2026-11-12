@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `initializationOptions.phpVersion` and `phpVersion` in `regex.json` take a
+   range, as a Composer constraint or `{"min": …, "max": …}`. A pattern is
+   validated at every later version of the range, from `composer.json`
+   `require.php` too, as `regex lint` validates it: a version that refuses it
+   is an error, one that reads it otherwise a warning.
  * The "Add /u flag" quick fix names only the Unicode diagnostics whose
    range lies inside its own literal, and a literal without one is checked
    by the linter itself: a range over several literals no longer offers the

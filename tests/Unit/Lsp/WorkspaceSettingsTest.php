@@ -270,6 +270,115 @@ final class WorkspaceSettingsTest extends TestCase
         $this->assertSame([], $this->frames());
     }
 
+    /**
+     * initializationOptions.phpVersion takes what regex.json takes: a
+     * single version, a Composer constraint, or {"min", "max"}; a range is
+     * judged at each point it allows.
+     *
+     * @param array<string, mixed> $options
+     * @param list<int>            $expected PHP_VERSION_IDs, floor first
+     */
+    #[Test]
+    #[DataProvider('provideRangeOptions')]
+    public function test_workspace_target_reads_a_range_from_the_options(array $options, array $expected): void
+    {
+        $root = $this->workspace();
+        file_put_contents($root.'/regex.json', '{"phpVersion": "8.0"}');
+
+        $target = $this->read(['rootUri' => FileUri::of($root), 'initializationOptions' => $options])->target();
+
+        $this->assertSame($expected, array_map(static fn (PcreTarget $point): int => $point->phpVersionId, $target->range()));
+        $this->assertSame('initializationOptions', $target->source());
+        $this->assertSame([], $this->frames());
+    }
+
+    /**
+     * @return iterable<string, array{options: array<string, mixed>, expected: list<int>}>
+     */
+    public static function provideRangeOptions(): iterable
+    {
+        yield 'a constraint' => ['options' => ['phpVersion' => '>=8.3'], 'expected' => [80300, 80400, 80425, 80500, 80510]];
+        yield 'a hyphen range' => ['options' => ['phpVersion' => '8.1 - 8.3'], 'expected' => [80100, 80200, 80300]];
+        yield 'an object of strings' => ['options' => ['phpVersion' => ['min' => '8.2', 'max' => '8.4']], 'expected' => [80200, 80300, 80400, 80425]];
+        yield 'an object of PHP_VERSION_IDs' => ['options' => ['phpVersion' => ['min' => 80200, 'max' => 80400]], 'expected' => [80200, 80300, 80400]];
+        yield 'a single version stays exact' => ['options' => ['phpVersion' => '8.4'], 'expected' => [80400]];
+    }
+
+    /**
+     * @param list<int> $expected PHP_VERSION_IDs, floor first
+     */
+    #[Test]
+    #[DataProvider('provideRangeConfigs')]
+    public function test_workspace_target_reads_a_range_from_regex_json(string $config, array $expected): void
+    {
+        $root = $this->workspace();
+        file_put_contents($root.'/regex.json', $config);
+        file_put_contents($root.'/composer.json', '{"require": {"php": "8.0.*"}}');
+
+        $target = $this->read(['rootUri' => FileUri::of($root)])->target();
+
+        $this->assertSame($expected, array_map(static fn (PcreTarget $point): int => $point->phpVersionId, $target->range()));
+        $this->assertSame('regex.json', $target->source());
+        $this->assertSame([], $this->frames());
+    }
+
+    /**
+     * @return iterable<string, array{config: string, expected: list<int>}>
+     */
+    public static function provideRangeConfigs(): iterable
+    {
+        yield 'a constraint' => ['config' => '{"phpVersion": "^8.4"}', 'expected' => [80400, 80425, 80500, 80510]];
+        yield 'an object of strings' => ['config' => '{"phpVersion": {"min": "8.1", "max": "8.3"}}', 'expected' => [80100, 80200, 80300]];
+        yield 'an object of PHP_VERSION_IDs' => ['config' => '{"phpVersion": {"min": 80300, "max": 80699}}', 'expected' => [80300, 80400, 80425, 80500, 80510]];
+    }
+
+    /**
+     * A range the options cannot name is passed over with the warning any
+     * value that is not a version gets, and the next source is read.
+     *
+     * @param list<string> $warnings
+     */
+    #[Test]
+    #[DataProvider('provideUnreadableRangeOptions')]
+    public function test_workspace_target_passes_over_a_range_it_cannot_read_with_a_warning(mixed $phpVersion, array $warnings): void
+    {
+        $root = $this->workspace();
+        file_put_contents($root.'/regex.json', '{"phpVersion": "8.2"}');
+
+        $target = $this->read(['rootUri' => FileUri::of($root), 'initializationOptions' => ['phpVersion' => $phpVersion]])->target();
+
+        $this->assertSame([80200], array_map(static fn (PcreTarget $point): int => $point->phpVersionId, $target->range()));
+        $this->assertSame('regex.json', $target->source());
+        $this->assertSame($warnings, $this->logged(2));
+    }
+
+    /**
+     * @return iterable<string, array{phpVersion: mixed, warnings: list<string>}>
+     */
+    public static function provideUnreadableRangeOptions(): iterable
+    {
+        yield 'no lowest version' => ['phpVersion' => '<8.4', 'warnings' => ['initializationOptions.phpVersion "<8.4" is not a version: ignored.']];
+        yield 'a PHP_VERSION_ID inside a constraint' => ['phpVersion' => '>=80100', 'warnings' => ['initializationOptions.phpVersion ">=80100" is not a version: ignored.']];
+        yield 'runtime inside a constraint' => ['phpVersion' => 'runtime || ^9.0', 'warnings' => ['initializationOptions.phpVersion "runtime || ^9.0" is not a version: ignored.']];
+        yield 'an object without max' => ['phpVersion' => ['min' => '8.1'], 'warnings' => ['initializationOptions.phpVersion array is not a version: ignored.']];
+        yield 'an object with another key' => ['phpVersion' => ['min' => '8.1', 'max' => '8.6', 'x' => 1], 'warnings' => ['initializationOptions.phpVersion array is not a version: ignored.']];
+        yield 'min above max' => ['phpVersion' => ['min' => '8.6', 'max' => '8.1'], 'warnings' => ['initializationOptions.phpVersion array is not a version: ignored.']];
+        yield 'runtime as a bound' => ['phpVersion' => ['min' => 'runtime', 'max' => '8.6'], 'warnings' => ['initializationOptions.phpVersion array is not a version: ignored.']];
+        // A constraint no PHP satisfies names no range, as min above max
+        // does.
+        yield 'a hyphen range written backwards' => ['phpVersion' => '8.6 - 8.1', 'warnings' => ['initializationOptions.phpVersion "8.6 - 8.1" is not a version: ignored.']];
+        yield 'an upper bound below the lowest version' => ['phpVersion' => '>=8.4 <8.2', 'warnings' => ['initializationOptions.phpVersion ">=8.4 <8.2" is not a version: ignored.']];
+        yield 'two exact versions ANDed' => ['phpVersion' => '8.1 8.2', 'warnings' => ['initializationOptions.phpVersion "8.1 8.2" is not a version: ignored.']];
+        // A version past PHP 9.99 is refused inside a constraint as alone;
+        // one past every integer is no TypeError.
+        yield 'a constraint from PHP 10' => ['phpVersion' => '>=10.0', 'warnings' => ['initializationOptions.phpVersion ">=10.0" is not a version: ignored.']];
+        yield 'a constraint from PHP 99.1' => ['phpVersion' => '>=99.1', 'warnings' => ['initializationOptions.phpVersion ">=99.1" is not a version: ignored.']];
+        yield 'a constraint from a major past every integer' => ['phpVersion' => '>=99999999999999999999.1', 'warnings' => ['initializationOptions.phpVersion ">=99999999999999999999.1" is not a version: ignored.']];
+        // What regex.json and --php-version refuse too.
+        yield 'a doubled separator' => ['phpVersion' => '>=8.1,,<8.3', 'warnings' => ['initializationOptions.phpVersion ">=8.1,,<8.3" is not a version: ignored.']];
+        yield 'a bound with a leading zero' => ['phpVersion' => ['min' => '08.1', 'max' => '8.3'], 'warnings' => ['initializationOptions.phpVersion array is not a version: ignored.']];
+    }
+
     #[Test]
     public function test_workspace_target_refuses_a_php_on_pcre1(): void
     {
