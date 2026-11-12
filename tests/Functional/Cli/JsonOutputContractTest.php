@@ -471,6 +471,9 @@ final class JsonOutputContractTest extends TestCase
             $this->assertCount(1, $issues);
             $issue = JsonContract::asArray($issues[0]);
             $this->assertSame([$result['file'], $result['line'], $result['column'], $result['file_offset']], [$issue['file'], $issue['line'], $issue['column'], $issue['file_offset']]);
+            // No pattern is read: the issue stands at no offset of one.
+            $this->assertArrayHasKey('position', $issue);
+            $this->assertNull($issue['position']);
             $this->assertNull($issue['validation']);
             $this->assertNull($issue['analysis']);
             $this->assertIsString($issue['docs_url']);
