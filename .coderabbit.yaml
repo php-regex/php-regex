@@ -55,8 +55,10 @@ reviews:
     changed lint rule, an optimizer rewrite, a transpiler target. Low: docs/,
     tests that only add cases, demo/, CI configuration.
 
+  # A pull request is reviewed on request only: comment `@coderabbitai review`
+  # (or `@coderabbitai full review`). A typo fix costs no review.
   auto_review:
-    enabled: true
+    enabled: false
     drafts: false
     auto_incremental_review: true
     # Every review comment is answered, however many commits a branch takes.
