@@ -18,6 +18,7 @@ use PHPRegex\LanguageServer\Server;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreRule;
+use PHPRegex\Tests\Support\RangeFixtureReadings;
 use PHPRegex\Tests\TestUtils\FileUri;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -35,6 +36,7 @@ final class ServerTargetTest extends TestCase
 {
     use InstalledLocales;
     use PcreRule;
+    use RangeFixtureReadings;
 
     /**
      * "(?a)", ASCII-only classes, arrived in PCRE2 10.43
@@ -303,6 +305,8 @@ final class ServerTargetTest extends TestCase
     #[DataProvider('provideRangeSources')]
     public function test_a_pattern_a_later_php_of_the_range_refuses_is_an_error(array $initializeParams, array $files): void
     {
+        self::assertEngineKeepInLookbehind();
+
         foreach ($files as $name => $contents) {
             file_put_contents($this->root.'/'.$name, $contents);
         }
@@ -339,6 +343,8 @@ final class ServerTargetTest extends TestCase
     #[DataProvider('provideMeaningChangeSources')]
     public function test_a_pattern_a_later_php_of_the_range_parses_differently_is_a_warning(array $files, ?int $first): void
     {
+        self::assertEngineReadsQuantifierWithoutMin();
+
         foreach ($files as $name => $contents) {
             file_put_contents($this->root.'/'.$name, $contents);
         }

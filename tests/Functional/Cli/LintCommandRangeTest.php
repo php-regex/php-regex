@@ -18,6 +18,7 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\PcreRule;
+use PHPRegex\Tests\Support\RangeFixtureReadings;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -36,6 +37,7 @@ use PHPUnit\Framework\TestCase;
 final class LintCommandRangeTest extends TestCase
 {
     use PcreRule;
+    use RangeFixtureReadings;
     use RunsRegexCli;
     use TemporaryProject;
 
@@ -250,6 +252,8 @@ final class LintCommandRangeTest extends TestCase
     #[Test]
     public function test_lint_judges_a_regex_json_constraint_as_a_range(): void
     {
+        self::assertEngineReadsQuantifierWithoutMin();
+
         $this->enterProject(['regex.json' => '{"phpVersion": ">=8.1"}', 'src/a.php' => self::QUANTIFIER_WITHOUT_MIN]);
 
         [$exitCode, $stdout] = $this->runRegex(['lint', 'src', '--format=json', '--jobs=1', '--no-redos']);
@@ -272,6 +276,8 @@ final class LintCommandRangeTest extends TestCase
     #[Test]
     public function test_lint_judges_a_regex_json_object_up_to_its_max(): void
     {
+        self::assertEngineReadsQuantifierWithoutMin();
+
         $this->enterProject(['regex.json' => '{"phpVersion": {"min": "8.1", "max": "8.3"}}', 'src/a.php' => self::QUANTIFIER_WITHOUT_MIN]);
 
         [$exitCode, $stdout] = $this->runRegex(['lint', 'src', '--format=json', '--jobs=1', '--no-redos']);
@@ -294,6 +300,8 @@ final class LintCommandRangeTest extends TestCase
     #[Test]
     public function test_lint_judges_a_single_regex_json_version_alone(): void
     {
+        self::assertEngineReadsQuantifierWithoutMin();
+
         $this->enterProject([
             'composer.json' => '{"name": "acme/app", "require": {"php": ">=8.1"}}',
             'regex.json' => '{"phpVersion": "8.1"}',
@@ -311,6 +319,8 @@ final class LintCommandRangeTest extends TestCase
     #[Test]
     public function test_lint_judges_a_php_version_constraint_over_regex_json(): void
     {
+        self::assertEngineReadsQuantifierWithoutMin();
+
         $this->enterProject(['regex.json' => '{"phpVersion": "8.1"}', 'src/a.php' => self::QUANTIFIER_WITHOUT_MIN]);
 
         [$exitCode, $stdout] = $this->runRegex(['--php-version=>=8.1', 'lint', 'src', '--format=json', '--jobs=1', '--no-redos']);
@@ -332,6 +342,8 @@ final class LintCommandRangeTest extends TestCase
     #[Test]
     public function test_lint_reports_a_pattern_a_later_php_of_a_named_range_refuses(): void
     {
+        self::assertEngineKeepInLookbehind();
+
         $this->enterProject(['regex.json' => '{"phpVersion": {"min": 80200, "max": 80699}}', 'src/a.php' => self::KEEP_IN_LOOKBEHIND]);
 
         [$exitCode, $stdout] = $this->runRegex(['lint', 'src', '--format=json', '--jobs=1', '--no-redos']);

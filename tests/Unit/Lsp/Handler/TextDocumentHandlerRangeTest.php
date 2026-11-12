@@ -19,6 +19,7 @@ use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Tests\Support\RangeFixtureReadings;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +32,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class TextDocumentHandlerRangeTest extends TestCase
 {
+    use RangeFixtureReadings;
+
     /**
      * Compiles up to PHP 8.4 and is refused from PHP 8.5: `regex lint`
      * reports it under ">=8.2" unless a guard or a marker keeps 8.5 out.
@@ -62,6 +65,8 @@ final class TextDocumentHandlerRangeTest extends TestCase
     #[DataProvider('provideNarrowings')]
     public function test_a_guard_or_a_marker_narrows_the_versions_of_the_range_judged(string $code, bool $refused): void
     {
+        self::assertEngineKeepInLookbehind();
+
         $diagnostics = $this->publish('>=8.2', $code);
 
         $refusal = 'On PHP 8.5 and later: \\K is not allowed in a lookaround from PHP 8.5,';
@@ -76,6 +81,8 @@ final class TextDocumentHandlerRangeTest extends TestCase
     #[Test]
     public function test_a_change_of_meaning_that_keeps_the_tree_is_a_warning(): void
     {
+        self::assertEngineBacktracksIntoSelfReference();
+
         $diagnostics = array_values(array_filter($this->publish('>=7.4 <8.1', 'preg_match('.self::SELF_REFERENCE.', $s);'), static fn (array $diagnostic): bool => 'regex.lint.compat.meaningChanges' === ($diagnostic['code'] ?? null)));
 
         $this->assertCount(1, $diagnostics);

@@ -148,6 +148,9 @@ final class PackageManifestTest extends TestCase
             'Linter\Config\JudgedRange', 'Linter\Config\LintArguments', 'Linter\Config\LintConfigLoader',
             'Linter\Config\LintConfigResult', 'Linter\Config\LintDefaultsBuilder',
             'Linter\Config\ProjectTarget', 'Linter\Config\TargetConstraint',
+            // A range in initializationOptions is read, judged and worded
+            // as the lint reads, judges and words it.
+            'Linter\Config\TargetSpec', 'Linter\RangeFindings', 'Linter\RangeWording',
             'Linter\Extraction\IgnoreMarker', 'Linter\Extraction\InlineIgnores', 'Linter\Extraction\LiteralSpelling',
             'Linter\Extraction\MemoryBudget', 'Linter\Extraction\PatternAttributeScanner',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpStringLiteral',

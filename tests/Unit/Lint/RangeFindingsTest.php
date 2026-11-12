@@ -20,6 +20,7 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\TargetVerdict;
 use PHPRegex\Tests\Support\PcreRule;
+use PHPRegex\Tests\Support\RangeFixtureReadings;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -36,6 +37,7 @@ use PHPUnit\Framework\TestCase;
 final class RangeFindingsTest extends TestCase
 {
     use PcreRule;
+    use RangeFixtureReadings;
 
     /**
      * Compiles on PHP 8.4 (preg_match() returns 1 on 8.4.27, PCRE2 10.49);
@@ -61,6 +63,8 @@ final class RangeFindingsTest extends TestCase
     #[Test]
     public function test_range_findings_name_the_lowest_version_that_refuses(): void
     {
+        self::assertEngineKeepInLookbehind();
+
         [$floor, $range] = self::range('>=8.1');
 
         $findings = self::findings($floor, $range, self::KEEP_IN_LOOKBEHIND);
@@ -77,8 +81,10 @@ final class RangeFindingsTest extends TestCase
     #[Test]
     public function test_range_findings_name_the_lowest_version_that_reads_another_tree(): void
     {
+        self::assertEngineReadsQuantifierWithoutMin();
+
         [$floor, $range] = self::range('>=8.1');
-        $expected = self::quantifierReadFrom([80100, 80200, 80300, 80400, 80425, 80500, 80510]);
+        $expected = self::readsOtherwiseFrom([80100, 80200, 80300, 80400, 80425, 80500, 80510]);
         $this->assertNotNull($expected, 'No point of the range reads "a{,3}" otherwise than the floor here.');
 
         $findings = self::findings($floor, $range, self::QUANTIFIER_WITHOUT_MIN);
@@ -94,6 +100,8 @@ final class RangeFindingsTest extends TestCase
     #[Test]
     public function test_range_findings_name_a_silent_change_of_meaning_when_nothing_else(): void
     {
+        self::assertEngineBacktracksIntoSelfReference();
+
         [$floor, $range] = self::range('>=7.4 <8.1');
 
         $findings = self::findings($floor, $range, self::SELF_REFERENCE);
@@ -115,6 +123,9 @@ final class RangeFindingsTest extends TestCase
     #[Test]
     public function test_range_findings_give_a_refusal_alone_over_another_tree(): void
     {
+        self::assertEngineKeepInLookbehind();
+        self::assertEngineReadsQuantifierWithoutMin();
+
         [$floor, $range] = self::range('>=8.1');
         $this->assertInstanceOf(PcreTarget::class, self::findings($floor, $range, '/(?<=ab)c{,3}/')->readsOtherwise, 'The quantifier is read otherwise without the refusal.');
 
@@ -130,6 +141,9 @@ final class RangeFindingsTest extends TestCase
     #[Test]
     public function test_range_findings_give_a_refusal_alone_over_a_silent_change(): void
     {
+        self::assertEngineKeepInLookbehind();
+        self::assertEngineBacktracksIntoSelfReference();
+
         [$floor, $range] = self::range('>=7.4');
 
         $findings = self::findings($floor, $range, '/(?<=a\Kb)^(a|ab|\1x)+b$/');
@@ -143,8 +157,11 @@ final class RangeFindingsTest extends TestCase
     #[Test]
     public function test_range_findings_give_another_tree_alone_over_a_silent_change(): void
     {
+        self::assertEngineReadsQuantifierWithoutMin();
+        self::assertEngineBacktracksIntoSelfReference();
+
         [$floor, $range] = self::range('>=7.4');
-        $expected = self::quantifierReadFrom([70400, 80000, 80100, 80200, 80300, 80400, 80425, 80500, 80510]);
+        $expected = self::readsOtherwiseFrom([70400, 80000, 80100, 80200, 80300, 80400, 80425, 80500, 80510]);
         $this->assertNotNull($expected);
 
         $findings = self::findings($floor, $range, '/^(a|ab|\1x)+b{,3}$/');
@@ -233,22 +250,18 @@ final class RangeFindingsTest extends TestCase
     }
 
     /**
-     * The first point after the floor whose PCRE2 reads "a{,3}" as a
-     * quantifier (10.43 or later), null when the floor already does or
-     * none does: 8.4 unless this machine links a newer PCRE2 to an older
-     * minor.
+     * The first point after the floor whose PCRE2 reads "a{,3}" otherwise
+     * than the floor's (a quantifier from 10.43, text before), null when
+     * none does: 8.4 unless this machine links another PCRE2 to a minor,
+     * a newer one to the floor's making it 8.2.
      *
      * @param list<int> $points the floor first
      */
-    private static function quantifierReadFrom(array $points): ?int
+    private static function readsOtherwiseFrom(array $points): ?int
     {
         $reads = static fn (int $point): bool => version_compare(self::judgedPcre($point), '10.43', '>=');
-        if ($reads($points[0])) {
-            return null;
-        }
-
         foreach (\array_slice($points, 1) as $point) {
-            if ($reads($point)) {
+            if ($reads($point) !== $reads($points[0])) {
                 return $point;
             }
         }
