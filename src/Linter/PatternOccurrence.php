@@ -45,6 +45,17 @@ use PHPRegex\Linter\Extraction\TargetMarker;
  * silences: an analysis given it alone leaves it out. The lint, given the
  * markers of the file, analyses it and drops its issues itself.
  *
+ * One with a $state stands for a pattern argument of a call, beside the
+ * occurrences of the patterns the argument holds: it holds no pattern, and
+ * says what is known of the argument before any text reaches it, as one of
+ * the values of ArgumentState, where the argument starts, and, in
+ * $expression, how the source writes it.
+ *
+ * $variant is set on a pattern built of a constant of PHP whose value
+ * depends on the system the code runs on, DIRECTORY_SEPARATOR, PHP_EOL or
+ * PATH_SEPARATOR: the argument holds one pattern for each value, and each
+ * says the one it stands for, 'DIRECTORY_SEPARATOR is "\"' for instance.
+ *
  * An extractor of your own builds its occurrences with found(), and reads
  * $pattern, $file, $line, $column and $source; the other members are the
  * library's.
@@ -77,6 +88,9 @@ final class PatternOccurrence
         public readonly array $targets = [],
         public readonly ?int $argumentOffset = null,
         public readonly ?int $argumentLength = null,
+        public readonly ?string $state = null,
+        public readonly ?string $expression = null,
+        public readonly ?string $variant = null,
     ) {}
 
     /**
@@ -107,6 +121,20 @@ final class PatternOccurrence
     }
 
     /**
+     * A pattern argument of a call, and what is known of it: its state, one
+     * of the values of ArgumentState, the line, the column and the byte
+     * offset of its first token, the parentheses around the whole of it
+     * left out, the call that reads it, and the argument as the source
+     * writes it from that token to its last.
+     *
+     * @internal
+     */
+    public static function argument(string $state, string $file, int $line, ?int $column, ?int $fileOffset, string $source, string $expression): self
+    {
+        return new self('', $file, $line, $source, column: $column, fileOffset: $fileOffset, state: $state, expression: $expression);
+    }
+
+    /**
      * The same occurrence, its line silenced whole by a marker naming no
      * issue.
      *
@@ -114,7 +142,7 @@ final class PatternOccurrence
      */
     public function ignoredWhole(): self
     {
-        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, true, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength);
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, true, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant);
     }
 
     /**
@@ -125,7 +153,7 @@ final class PatternOccurrence
      */
     public function guardedBy(?TargetConstraint $guard): self
     {
-        return null === $guard ? $this : new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, $this->isIgnored, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard?->intersect($guard) ?? $guard, $this->targets, $this->argumentOffset, $this->argumentLength);
+        return null === $guard ? $this : new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, $this->isIgnored, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard?->intersect($guard) ?? $guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant);
     }
 
     /**
@@ -136,7 +164,7 @@ final class PatternOccurrence
      */
     public function analysed(): self
     {
-        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, false, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength);
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, false, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant);
     }
 
     /**

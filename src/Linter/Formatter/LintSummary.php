@@ -19,7 +19,8 @@ use PHPRegex\Linter\LintReport;
  * The errors of a lint summary, each under its own label: a pattern PCRE
  * refuses is an invalid pattern, a ReDoS verdict that fails the run is a
  * ReDoS error and a lint rule at Error a lint error, never an invalid
- * pattern (the pattern compiles).
+ * pattern (the pattern compiles). After them, the line that says how many
+ * pattern arguments the run could not verify.
  *
  * @phpstan-import-type LintStats from LintReport
  *
@@ -92,6 +93,41 @@ final class LintSummary
         }
 
         return 'No issues found';
+    }
+
+    /**
+     * The pattern arguments no rule ran on, summed up on one line: those
+     * with nothing static, those around a part built at run time and those
+     * around a preg_quote() text, as "Not verifiable: 5 pattern arguments
+     * (3 dynamic, 2 around preg_quote())". A count of zero is left out;
+     * null when the three count none.
+     *
+     * @phpstan-param LintStats $stats
+     */
+    public static function notVerifiable(array $stats): ?string
+    {
+        $dynamic = $stats['argumentsOpaque'] ?? 0;
+        $aroundDynamic = $stats['argumentsRawShell'] ?? 0;
+        $aroundQuoted = $stats['argumentsQuotedShell'] ?? 0;
+        $total = $dynamic + $aroundDynamic + $aroundQuoted;
+        if (0 === $total) {
+            return null;
+        }
+
+        $figures = [];
+        if ($dynamic > 0) {
+            $figures[] = \sprintf('%d dynamic', $dynamic);
+        }
+
+        if ($aroundDynamic > 0) {
+            $figures[] = \sprintf('%d around a dynamic part', $aroundDynamic);
+        }
+
+        if ($aroundQuoted > 0) {
+            $figures[] = \sprintf('%d around preg_quote()', $aroundQuoted);
+        }
+
+        return \sprintf('Not verifiable: %d pattern %s (%s)', $total, 1 === $total ? 'argument' : 'arguments', implode(', ', $figures));
     }
 
     /**

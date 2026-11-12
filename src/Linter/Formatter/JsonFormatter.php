@@ -95,6 +95,13 @@ final class JsonFormatter extends AbstractOutputFormatter
                 'lint_errors' => $report->stats['lintErrors'] ?? 0,
                 'parser_fallbacks' => $report->stats['parserFallbacks'] ?? 0,
                 'not_analyzed' => $report->stats['notAnalyzed'] ?? 0,
+                // The pattern arguments of the calls read, by the state
+                // each ends in: the five sum to the arguments.
+                'arguments_constant' => $report->stats['argumentsConstant'] ?? 0,
+                'arguments_finite_set' => $report->stats['argumentsFiniteSet'] ?? 0,
+                'arguments_quoted_shell' => $report->stats['argumentsQuotedShell'] ?? 0,
+                'arguments_raw_shell' => $report->stats['argumentsRawShell'] ?? 0,
+                'arguments_opaque' => $report->stats['argumentsOpaque'] ?? 0,
             ],
             'results' => $this->mapResults($report->results),
         ];
@@ -118,7 +125,7 @@ final class JsonFormatter extends AbstractOutputFormatter
     /**
      * @phpstan-param array<LintResult> $results
      *
-     * @return list<array{file: string, line: int, column: int|null, file_offset: int|null, source: string|null, pattern: string|null, location: string|null, issues: list<JsonIssue>, optimizations: list<JsonOptimization>}>
+     * @return list<array{file: string, line: int, column: int|null, file_offset: int|null, source: string|null, pattern: string|null, expression: string|null, location: string|null, issues: list<JsonIssue>, optimizations: list<JsonOptimization>}>
      */
     private function mapResults(array $results): array
     {
@@ -137,6 +144,10 @@ final class JsonFormatter extends AbstractOutputFormatter
                 'file_offset' => $result['fileOffset'] ?? null,
                 'source' => $result['source'] ?? null,
                 'pattern' => $result['pattern'],
+                // The argument as the source writes it, for a result that
+                // stands for an argument built at run time: it holds no
+                // pattern. Null beside a pattern.
+                'expression' => null === $result['pattern'] ? $result['expression'] ?? null : null,
                 'location' => $result['location'] ?? null,
                 'issues' => array_map($this->mapIssue(...), array_values($result['issues'])),
                 'optimizations' => array_map($this->mapOptimization(...), array_values($result['optimizations'])),

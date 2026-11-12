@@ -30,6 +30,7 @@ use PHPRegex\Linter\Formatter\ConsoleFormatter;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
+use PHPRegex\Linter\Formatter\LintSummary;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
@@ -274,6 +275,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 vendorPaths: [(getcwd() ?: '.').'/vendor'],
                 checkComplexity: $arguments->checkComplexity,
                 reportUnmatchedIgnores: $arguments->reportUnmatchedIgnores,
+                reportDynamic: $arguments->reportDynamic,
             );
             $patterns = $runner->collect($request, $progress);
         } catch (LintRunFailureException $e) {
@@ -289,16 +291,32 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
 
         $progress?->endScan();
 
+        // What the run counts before it analyses anything: the pattern
+        // arguments it read, by the state each ends in.
+        $scanStats = LintStatsCounter::count([], $patterns);
+
+        // Outside the console format, how many of them the run could not
+        // verify is said on stderr, with the other status lines: stdout
+        // holds the report alone. The console summary carries it.
+        $notVerifiable = 'console' === $format || OutputConfiguration::VERBOSITY_QUIET === $verbosity || $output->isQuiet()
+            ? null
+            : LintSummary::notVerifiable($scanStats);
+
         // A baseline whose entries may match nothing any more is read even
         // when no pattern is left.
-        if (LintService::holdsNothing($patterns, $arguments->reportUnmatchedIgnores) && !(null !== $baseline && $arguments->reportUnmatchedIgnores)) {
-            $emptyReport = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+        if (LintService::holdsNothing($patterns, $arguments->reportUnmatchedIgnores, $arguments->reportDynamic) && !(null !== $baseline && $arguments->reportUnmatchedIgnores)) {
+            // A run that found no pattern still counts the arguments it
+            // read: those built at run time are all it holds.
+            $emptyReport = new LintReport([], $scanStats);
             if (!$this->writeBaselineFile($arguments, $emptyReport)) {
                 return $this->failToWriteBaseline($output, $json, (string) $arguments->generateBaseline);
             }
             if ('console' === $format) {
                 $this->outputRenderer->renderSummary($output, $emptyReport->stats, true, $verbose);
             } else {
+                if (null !== $notVerifiable) {
+                    $output->writeError($notVerifiable."\n");
+                }
                 $this->writeReport($output, $format, $formatter->format($emptyReport));
             }
 
@@ -321,6 +339,10 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         if (null !== $progress && $showSteps) {
             $patternCount = LintRunner::patternCount($patterns);
             $output->writeError('  '.$output->dim("Scanned {$progress->files()} files, found {$patternCount} patterns.")."\n\n");
+        }
+
+        if (null !== $notVerifiable) {
+            $output->writeError($notVerifiable."\n");
         }
 
         try {

@@ -145,6 +145,30 @@ final class LintConfigSchemaTest extends TestCase
         $this->assertSame('C', $loaded->config['locale'] ?? null);
     }
 
+    /**
+     * reportDynamic is a boolean, false unless the file says otherwise:
+     * the schema says so and describes it, and the loader gives the value
+     * it reads.
+     */
+    #[Test]
+    public function test_the_report_of_the_arguments_built_at_run_time_is_a_boolean_off_by_default(): void
+    {
+        $definition = LintConfigSchema::definition();
+        $this->assertIsArray($definition['properties'] ?? null);
+        $this->assertIsArray($definition['properties']['reportDynamic'] ?? null);
+        $property = $definition['properties']['reportDynamic'];
+
+        $this->assertSame('boolean', $property['type'] ?? null);
+        $this->assertFalse($property['default'] ?? null);
+        $this->assertIsString($property['description'] ?? null);
+        $this->assertNotSame('', trim((string) $property['description']));
+
+        $this->enterProject(['regex.json' => '{"reportDynamic": true}']);
+        $loaded = (new LintConfigLoader())->load();
+        $this->assertNull($loaded->error);
+        $this->assertTrue($loaded->config['reportDynamic'] ?? null);
+    }
+
     #[Test]
     #[DataProvider('provideRefusedConfigs')]
     public function test_schema_and_loader_both_refuse(string $json): void
@@ -193,6 +217,10 @@ final class LintConfigSchemaTest extends TestCase
         yield 'complexity threshold as a float' => ['{"checks": {"complexity": {"threshold": 12.5}}}'];
         yield 'complexity enabled as a string' => ['{"checks": {"complexity": {"enabled": "yes"}}}'];
         yield 'unknown complexity key' => ['{"checks": {"complexity": {"max": 20}}}'];
+        yield 'reportDynamic as a string' => ['{"reportDynamic": "yes"}'];
+        yield 'reportDynamic as a number' => ['{"reportDynamic": 1}'];
+        yield 'reportDynamic as null' => ['{"reportDynamic": null}'];
+        yield 'reportDynamic among the checks' => ['{"checks": {"reportDynamic": true}}'];
     }
 
     #[Test]
@@ -220,6 +248,9 @@ final class LintConfigSchemaTest extends TestCase
         yield 'complexity threshold of one' => ['{"checks": {"complexity": {"threshold": 1}}}'];
         yield 'empty lists' => ['{"paths": [], "exclude": [], "extraction": {"interop": [], "functions": []}}'];
         yield 'lint rules in full' => ['{"checks": {"lint": {"rules": {"regex.lint.quantifier.useless": false, "regex.lint.redos.search": false, "regex.lint.compat.meaningChanges": true}}}}'];
+        yield 'reportDynamic on' => ['{"reportDynamic": true}'];
+        yield 'reportDynamic off' => ['{"reportDynamic": false}'];
+        yield 'reportDynamic beside the report of the markers' => ['{"reportDynamic": true, "reportUnmatchedIgnores": false}'];
     }
 
     /**

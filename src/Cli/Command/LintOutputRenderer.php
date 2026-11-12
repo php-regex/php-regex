@@ -31,6 +31,10 @@ use PHPRegex\Toolkit\Regex;
 final class LintOutputRenderer
 {
     /**
+     * The summary of a run; of one that found no pattern, the line that
+     * says so and, under it, how many pattern arguments it could not
+     * verify, when there are some.
+     *
      * @param LintStats $stats
      * @param bool      $verbose whether the run is verbose, which ends it on the request for a star
      */
@@ -40,6 +44,12 @@ final class LintOutputRenderer
 
         if ($isEmpty) {
             $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->dim('No regex patterns found.')."\n");
+            // A run that read no pattern is not one that read no argument:
+            // those built at run time are all it holds.
+            $notVerifiable = LintSummary::notVerifiable($stats);
+            if (null !== $notVerifiable) {
+                $output->write('  '.$output->dim($notVerifiable)."\n");
+            }
             if ($verbose) {
                 $this->showFooter($output);
             }

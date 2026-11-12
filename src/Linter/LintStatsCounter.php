@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Parser\Resolution\ArgumentState;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 
 /**
@@ -32,8 +33,11 @@ final class LintStatsCounter
      * "lintErrors"), and infos on their own; among the warnings, the
      * patterns the library gave up on at one of its own limits
      * ("notAnalyzed"); of the patterns collected, the files the tokenizer
-     * read because the PHP parser could not ("parserFallbacks"). A kind that
-     * counts zero is left out.
+     * read because the PHP parser could not ("parserFallbacks"), and the
+     * pattern arguments of the calls read, by the state each ends in
+     * ("argumentsConstant", "argumentsFiniteSet", "argumentsQuotedShell",
+     * "argumentsRawShell", "argumentsOpaque"). A kind that counts zero is
+     * left out.
      *
      * @param array<PatternOccurrence> $patterns
      *
@@ -95,7 +99,23 @@ final class LintStatsCounter
             $stats['parserFallbacks'] = $parserFallbacks;
         }
 
+        foreach (self::arguments($patterns) as $key => $count) {
+            if ($count > 0) {
+                $stats[$key] = $count;
+            }
+        }
+
         return $stats;
+    }
+
+    /**
+     * The state of a pattern argument, null for an occurrence that is
+     * none. A state the library does not name tells nothing of the
+     * argument: nothing static.
+     */
+    public static function state(PatternOccurrence $occurrence): ?ArgumentState
+    {
+        return null === $occurrence->state ? null : ArgumentState::tryFrom($occurrence->state) ?? ArgumentState::Opaque;
     }
 
     /**
@@ -119,5 +139,35 @@ final class LintStatsCounter
         }
 
         return array_values($fallbacks);
+    }
+
+    /**
+     * The pattern arguments by the state each ends in, under the key of
+     * the stats that counts them: every argument is counted once, so the
+     * five sum to the arguments. The unit is the argument, not the
+     * pattern: a constant two calls read is two arguments.
+     *
+     * @param array<PatternOccurrence> $patterns
+     *
+     * @return array{argumentsConstant: int, argumentsFiniteSet: int, argumentsQuotedShell: int, argumentsRawShell: int, argumentsOpaque: int}
+     */
+    private static function arguments(array $patterns): array
+    {
+        $counts = ['argumentsConstant' => 0, 'argumentsFiniteSet' => 0, 'argumentsQuotedShell' => 0, 'argumentsRawShell' => 0, 'argumentsOpaque' => 0];
+        foreach ($patterns as $pattern) {
+            $key = match (self::state($pattern)) {
+                null => null,
+                ArgumentState::Constant => 'argumentsConstant',
+                ArgumentState::FiniteSet => 'argumentsFiniteSet',
+                ArgumentState::QuotedShell => 'argumentsQuotedShell',
+                ArgumentState::RawShell => 'argumentsRawShell',
+                ArgumentState::Opaque => 'argumentsOpaque',
+            };
+            if (null !== $key) {
+                $counts[$key]++;
+            }
+        }
+
+        return $counts;
     }
 }

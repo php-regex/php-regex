@@ -22,7 +22,8 @@ use PHPRegex\Parser\Text\Ascii;
  * \v \e \f \\ \$ \", an octal \0 to \777, a hexadecimal \x0 to \xFF (or \X) and
  * \u{...}; any other backslash is kept as written, so the regex escapes of
  * "/\d+\.x/" reach the pattern. A heredoc reads the same escapes but \",
- * a nowdoc none.
+ * a nowdoc none. A string that interpolates is read piece by piece, each
+ * of the texts around its expressions decoded the same way.
  *
  * @internal
  */
@@ -117,9 +118,74 @@ final class PhpStringLiteral
     }
 
     /**
-     * @param string $char the indentation character, a space or a tab
+     * The value of a piece of text of a double-quoted string that
+     * interpolates, as the tokenizer gives it between two expressions.
      */
-    private static function removeIndentation(string $body, int $indentation, string $char): ?string
+    public static function decodeInterpolated(string $piece): string
+    {
+        return self::decodeDoubleQuoted($piece, true);
+    }
+
+    /**
+     * The values of the pieces of text of a heredoc that interpolates,
+     * given in the order of the body with null for each expression between
+     * them: read as decodeHeredoc() reads a whole body, a piece that
+     * follows an expression carrying on the line the expression is on.
+     *
+     * Null when PHP refuses the body.
+     *
+     * @param list<string|null> $pieces
+     *
+     * @return list<string|null>|null
+     */
+    public static function decodeHeredocPieces(array $pieces, string $closing): ?array
+    {
+        $indentation = \strlen($closing) - \strlen(ltrim($closing, " \t"));
+        $indent = substr($closing, 0, $indentation);
+        if (str_contains($indent, ' ') && str_contains($indent, "\t")) {
+            return null;
+        }
+
+        $decoded = [];
+        $last = \count($pieces) - 1;
+        $lineStart = true;
+        foreach ($pieces as $position => $piece) {
+            if (null === $piece) {
+                $decoded[] = null;
+                $lineStart = false;
+
+                continue;
+            }
+
+            if ($position === $last) {
+                if (str_ends_with($piece, "\r\n")) {
+                    $piece = substr($piece, 0, -2);
+                } elseif (str_ends_with($piece, "\n") || str_ends_with($piece, "\r")) {
+                    $piece = substr($piece, 0, -1);
+                }
+            }
+
+            $endsLine = str_ends_with($piece, "\n") || str_ends_with($piece, "\r");
+            if ($indentation > 0) {
+                $piece = self::removeIndentation($piece, $indentation, $indent[0], $lineStart);
+                if (null === $piece) {
+                    return null;
+                }
+            }
+
+            $decoded[] = self::decodeDoubleQuoted($piece, false);
+            $lineStart = $endsLine;
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * @param string $char      the indentation character, a space or a tab
+     * @param bool   $lineStart whether the body starts a line: a piece that follows an expression does not, and
+     *                          its first line keeps what it holds
+     */
+    private static function removeIndentation(string $body, int $indentation, string $char, bool $lineStart = true): ?string
     {
         $result = '';
         $length = \strlen($body);
@@ -139,11 +205,13 @@ final class PhpStringLiteral
 
             // A whitespace-only line may be indented less; any other may not,
             // and tabs and spaces may not mix.
-            for ($skip = 0; $skip < $indentation && $i < $lineEnd; $skip++, $i++) {
+            for ($skip = 0; $lineStart && $skip < $indentation && $i < $lineEnd; $skip++, $i++) {
                 if ($char !== $body[$i]) {
                     return null;
                 }
             }
+
+            $lineStart = true;
 
             $result .= substr($body, $i, $lineEnd - $i + $newline);
             if (0 === $newline) {

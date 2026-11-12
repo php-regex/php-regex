@@ -748,6 +748,11 @@
       "description": "Report as regex.ignore.unmatched each @regex-ignore marker, each issue identifier it names, and each baseline entry of a file the run reads, that silences nothing. The --no-report-unmatched-ignores option turns it off for one run.",
       "default": true
     },
+    "reportDynamic": {
+      "type": "boolean",
+      "description": "Report each pattern argument built at run time where it stands, as an info: regex.lint.source.dynamic when nothing of it is static, regex.lint.source.dynamicPart when it holds a part built at run time, regex.lint.source.quotedPart when it holds a preg_quote() text. No rule runs on such an argument; the run counts them either way, and sums them up on one line. The --report-dynamic option turns it on for one run.",
+      "default": false
+    },
     "checks": {
       "type": "object",
       "description": "Which checks run, and how.",

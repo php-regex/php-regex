@@ -37,11 +37,15 @@ final class CallArguments
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $closers
      * @param array<int, int>                            $tokenOffsets
+     * @param bool                                       $followed     set to false when the path leads nowhere the
+     *                                                                 call spells out: options that are no array
+     *                                                                 literal, or one whose spread may hold the key
      *
      * @return array{int, int}|null
      */
-    public static function optionRange(array $tokens, int $start, int $end, PatternFunction $function, array $closers, array $tokenOffsets, string $content): ?array
+    public static function optionRange(array $tokens, int $start, int $end, PatternFunction $function, array $closers, array $tokenOffsets, string $content, bool &$followed = true): ?array
     {
+        $followed = true;
         if ([] === $function->optionPath) {
             return [$start, $end];
         }
@@ -50,16 +54,24 @@ final class CallArguments
             $items = self::arrayItems($tokens, $start, $end, $closers);
             if (null === $items) {
                 // Only the first level may be the pattern itself.
-                return $function->optionPathRequired || $key !== $function->optionPath[0] ? null : [$start, $end];
+                if ($function->optionPathRequired || $key !== $function->optionPath[0]) {
+                    $followed = false;
+
+                    return null;
+                }
+
+                return [$start, $end];
             }
 
             $found = null;
+            $spread = false;
             foreach ($items as [$keyRange, $valueRange]) {
                 if (null === $keyRange) {
                     // A spread may hold the key, replacing what came before.
                     $first = PhpTokens::nextSignificant($tokens, $valueRange[0], $valueRange[1]);
                     if (null !== $first && \is_array($tokens[$first]) && \T_ELLIPSIS === $tokens[$first][0]) {
                         $found = null;
+                        $spread = true;
                     }
 
                     continue;
@@ -74,6 +86,8 @@ final class CallArguments
             }
 
             if (null === $found) {
+                $followed = !$spread;
+
                 return null;
             }
 

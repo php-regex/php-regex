@@ -19,9 +19,11 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\LintStatsCounter;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\ArgumentCarriers;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -94,6 +96,46 @@ final class LintOutputRendererSummaryTest extends TestCase
             $this->assertStringNotContainsString('GitHub star', self::summary(['errors' => 0, 'warnings' => 0, 'optimizations' => 0], $isEmpty));
             $this->assertStringEndsWith("a GitHub star is appreciated: https://github.com/php-regex/php-regex\n\n", self::summary(['errors' => 0, 'warnings' => 0, 'optimizations' => 0], $isEmpty, true));
         }
+    }
+
+    /**
+     * @return iterable<string, array{counts: array<string, int>, line: string|null}>
+     */
+    public static function provideArgumentsOfARunWithoutPattern(): iterable
+    {
+        yield 'dynamic arguments alone' => ['counts' => ['opaque' => 3], 'line' => 'Not verifiable: 3 pattern arguments (3 dynamic)'];
+        yield 'one argument' => ['counts' => ['raw_shell' => 1], 'line' => 'Not verifiable: 1 pattern argument (1 around a dynamic part)'];
+        yield 'the three figures' => ['counts' => ArgumentCarriers::COUNTS, 'line' => ArgumentCarriers::LINE];
+        yield 'no argument' => ['counts' => [], 'line' => null];
+    }
+
+    /**
+     * A run that found no pattern still says how many arguments it could
+     * not verify, on one line after "No regex patterns found.": a project
+     * whose patterns are all built at run time is not an empty one.
+     *
+     * @param array<string, int> $counts
+     */
+    #[Test]
+    #[DataProvider('provideArgumentsOfARunWithoutPattern')]
+    public function test_the_empty_run_says_how_many_arguments_were_not_verified(array $counts, ?string $line): void
+    {
+        $without = self::summary(LintStatsCounter::count([]), true);
+        $this->assertStringContainsString('No regex patterns found.', $without);
+        $this->assertStringNotContainsString('Not verifiable', $without);
+
+        $written = self::summary(LintStatsCounter::count([], ArgumentCarriers::of($counts)), true);
+
+        if (null === $line) {
+            $this->assertSame($without, $written);
+
+            return;
+        }
+
+        $this->assertNotSame('', $without);
+        $this->assertStringStartsWith($without, $written);
+        $this->assertSame($line, trim(substr($written, \strlen($without))));
+        $this->assertStringEndsWith("\n", $written);
     }
 
     /**

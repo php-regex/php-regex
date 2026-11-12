@@ -15,6 +15,7 @@ namespace PHPRegex\Linter;
 
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Exception\LintException;
+use PHPRegex\Linter\Extraction\ArgumentAwareInterface;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\InlineIgnores;
@@ -448,15 +449,21 @@ final class PatternExtractor
             }
         }
 
+        // A file the paths name twice, by its own path and inside its
+        // directory, or under two spellings, is one file: it is read once,
+        // under the first spelling that names it.
         $files = [];
+        $read = [];
         foreach ($paths as $path) {
             if ('' === $path) {
                 continue;
             }
 
             if (is_file($path) && str_ends_with($path, '.php') && !$this->isTemplateFile($path)) {
-                $files[] = $path;
-                self::reportFound($progress, \count($files));
+                if (self::isNew($path, $read)) {
+                    $files[] = $path;
+                    self::reportFound($progress, \count($files));
+                }
 
                 continue;
             }
@@ -505,8 +512,10 @@ final class PatternExtractor
 
             sort($found, \SORT_STRING);
             foreach ($found as $filePath) {
-                $files[] = $filePath;
-                self::reportFound($progress, \count($files));
+                if (self::isNew($filePath, $read)) {
+                    $files[] = $filePath;
+                    self::reportFound($progress, \count($files));
+                }
             }
         }
 
@@ -516,6 +525,26 @@ final class PatternExtractor
         }
 
         return $files;
+    }
+
+    /**
+     * Whether a file is met for the first time, whatever spells its path:
+     * it is kept by the path the filesystem resolves it to, and by the
+     * path given when it resolves to none.
+     *
+     * @param array<string, true> $read the files met so far
+     */
+    private static function isNew(string $file, array &$read): bool
+    {
+        $real = realpath($file);
+        $key = false === $real ? $file : $real;
+        if (isset($read[$key])) {
+            return false;
+        }
+
+        $read[$key] = true;
+
+        return true;
     }
 
     private static function reportFound(?LintProgress $progress, int $found): void
@@ -528,13 +557,14 @@ final class PatternExtractor
     /**
      * The occurrences of one file, those a marker naming no issue silences
      * marked, each judged for the versions its "@regex-target" markers
-     * keep; with $scanned, followed by the file's markers.
+     * keep; with $scanned, the pattern arguments of the file among them,
+     * where the extractor gives them, and the file's markers after them.
      *
      * @return list<PatternOccurrence>
      */
     private function read(ExtractorInterface $extractor, string $file, bool $scanned): array
     {
-        $occurrences = array_values($extractor->extract([$file]));
+        $occurrences = array_values($scanned && $extractor instanceof ArgumentAwareInterface ? $extractor->extractWithArguments([$file]) : $extractor->extract([$file]));
         $markers = [];
         $unread = false;
         foreach ($occurrences as $occurrence) {
@@ -561,8 +591,9 @@ final class PatternExtractor
         $result = [];
         foreach ($occurrences as $occurrence) {
             // A file read with the tokenizer, or not read at all, holds no
-            // pattern a marker could silence.
-            if (!$occurrence instanceof PatternOccurrence || null !== $occurrence->unread || null !== $occurrence->parserFallback) {
+            // pattern a marker could silence; neither does a pattern
+            // argument, which is passed on as it is.
+            if (!$occurrence instanceof PatternOccurrence || null !== $occurrence->unread || null !== $occurrence->parserFallback || null !== $occurrence->state) {
                 $result[] = $occurrence;
 
                 continue;

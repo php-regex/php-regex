@@ -256,7 +256,12 @@ vendor/bin/regex lint app/ --format=json
         "infos": 0,
         "lint_errors": 0,
         "parser_fallbacks": 0,
-        "not_analyzed": 0
+        "not_analyzed": 0,
+        "arguments_constant": 1,
+        "arguments_finite_set": 0,
+        "arguments_quoted_shell": 0,
+        "arguments_raw_shell": 0,
+        "arguments_opaque": 0
     },
     "results": [
         {
@@ -266,6 +271,7 @@ vendor/bin/regex lint app/ --format=json
             "file_offset": 147,
             "source": "preg_match()",
             "pattern": "/^(?:[0-9]+\\s?)+$/",
+            "expression": null,
             "location": null,
             "issues": [
                 {
@@ -342,6 +348,16 @@ is none:
 | `infos`         | Every issue of severity `info`                                                |
 | `lint_errors`   | The lint rules of error severity that fired, among `errors`                   |
 | `parser_fallbacks` | The files the PHP parser could not read, read with the tokenizer instead   |
+| `not_analyzed`  | The patterns past one of the library's own limits, among `warnings`           |
+| `arguments_constant` | The pattern arguments read as one pattern                                |
+| `arguments_finite_set` | The pattern arguments read as several patterns, each of them linted    |
+| `arguments_quoted_shell` | The pattern arguments not verified, built around a `preg_quote()` text |
+| `arguments_raw_shell` | The pattern arguments not verified, built around another part known at run time only |
+| `arguments_opaque` | The pattern arguments not verified, of which the file proves nothing       |
+
+The last three are the figures of the console's `Not verifiable` line, printed under the
+summary when a pattern argument is built at run time; `--report-dynamic` lists each of them
+(see [Arguments built at run time](../guides/cli.md#arguments-built-at-run-time)).
 
 The console summary names each kind of error apart: `1 invalid patterns, 1 ReDoS errors,
 1 lint errors, 2 warnings, 0 optimizations.` An invalid pattern is one PCRE refuses to

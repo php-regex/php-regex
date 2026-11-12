@@ -38,6 +38,10 @@ final class LintRequest
      *                                                 that silences nothing is reported as regex.ignore.unmatched
      * @param string|null      $excludeBase            the directory the excludes are read from, the project's when
      *                                                 the paths are; null reads them as the files are walked
+     * @param bool             $reportDynamic          whether each pattern argument built at run time is reported
+     *                                                 where it stands, as regex.lint.source.dynamic,
+     *                                                 regex.lint.source.dynamicPart or regex.lint.source.quotedPart;
+     *                                                 the run counts them either way
      */
     public function __construct(
         public readonly array $paths,
@@ -54,6 +58,7 @@ final class LintRequest
         public readonly bool $checkComplexity = false,
         public readonly bool $reportUnmatchedIgnores = true,
         public readonly ?string $excludeBase = null,
+        public readonly bool $reportDynamic = false,
     ) {}
 
     /**

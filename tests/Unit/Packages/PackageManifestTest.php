@@ -181,6 +181,7 @@ final class PackageManifestTest extends TestCase
             'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
             'Parser\Syntax\PropertyNames', 'Parser\Syntax\StartOptions', 'Parser\Cache\StaticCaches',
             'Parser\Lexer', 'Parser\NodeWalker', 'Parser\TraversalAction',
+            'Parser\Resolution\ArgumentState', 'Parser\Resolution\Hole', 'Parser\Resolution\PatternArgument',
         ],
         // The tools answer the document the CLI prints: the same encoder
         // spells every string, an invalid byte as \xNN.
@@ -201,13 +202,14 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\PatternAttributeScanner', 'Linter\Extraction\PregFunctions', 'Linter\Rule\RuleCatalog',
         ],
         // The plugin reads the key layout CaptureShape renders for
-        // PHPStan, so both type systems say the same keys.
+        // PHPStan, so both type systems say the same keys, and a pattern
+        // written around preg_quote() texts as the parser package reads it.
         'Psalm' => [
             'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget',
             'Linter\Extraction\GuardRegions', 'Linter\Extraction\PhpParserGuards', 'Linter\Extraction\TargetMarker',
             'Linter\Extraction\TargetMarkers', 'Parser\Hir\ClassSetProvider', 'Parser\Text\Ascii',
             'Parser\Analysis\CaptureKey', 'Linter\Extraction\PregFunctions',
-            'Parser\Analysis\CaptureLayout', 'Parser\Engine\LibraryPcre',
+            'Parser\Analysis\CaptureLayout', 'Parser\Resolution\QuotedPattern',
         ],
         'Redos' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Hir\CharSet',

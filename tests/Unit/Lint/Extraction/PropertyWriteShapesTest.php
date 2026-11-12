@@ -17,6 +17,7 @@ use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -357,6 +358,24 @@ final class PropertyWriteShapesTest extends TestCase
         $this->assertExtractedByBoth([
             ['pattern' => '/control/', 'at' => "'/control/'"],
         ], "<?php\n\npreg_match('', \$subject);\n".self::CONTROL);
+    }
+
+    /**
+     * It is an argument all the same, and one the file writes whole:
+     * nothing of it is built at run time. It is counted with the
+     * arguments that hold one pattern, and no rule runs on it.
+     *
+     * PHP 8.4, PCRE2 10.49: preg_match('', '') is false, "preg_match():
+     * Empty regular expression".
+     */
+    #[Test]
+    public function test_an_empty_literal_is_an_argument_the_file_writes_whole(): void
+    {
+        $this->assertSame('preg_match(): Empty regular expression', EngineProbe::warning(''));
+
+        $states = array_column($this->argumentsReadByBoth("<?php\n\npreg_match('', \$subject);\n"), 'state');
+
+        $this->assertSame(['constant'], $states);
     }
 
     /**

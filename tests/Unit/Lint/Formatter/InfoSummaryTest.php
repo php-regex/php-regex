@@ -25,6 +25,7 @@ use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\ArgumentCarriers;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -41,6 +42,12 @@ use PHPUnit\Framework\TestCase;
  */
 final class InfoSummaryTest extends TestCase
 {
+    /**
+     * The pattern arguments of a run by state: four of them hold a part
+     * known at run time only, and no rule ran on them.
+     */
+    private const ARGUMENTS = ['constant' => 3, 'quoted_shell' => 1, 'raw_shell' => 1, 'opaque' => 2];
+
     /**
      * @return iterable<string, array{formatter: string, patterns: list<string>, summary: string}>
      */
@@ -126,6 +133,101 @@ final class InfoSummaryTest extends TestCase
         $this->assertSame($summary, self::summaryLine(self::format($formatter, $report)));
     }
 
+    /**
+     * @return iterable<string, array{formatter: string}>
+     */
+    public static function provideFormattersThatSayMore(): iterable
+    {
+        yield 'console' => ['formatter' => 'console'];
+        yield 'symfony' => ['formatter' => 'symfony'];
+        yield 'laravel' => ['formatter' => 'laravel'];
+    }
+
+    /**
+     * A run that anchored arguments it could not verify says how many on
+     * the line after its summary, and reports none of them: the summary
+     * still reads "No issues found".
+     */
+    #[Test]
+    #[DataProvider('provideFormattersThatSayMore')]
+    public function test_summary_is_followed_by_the_arguments_not_verified(string $formatter): void
+    {
+        $report = self::lint(['/a/'], self::ARGUMENTS);
+
+        $this->assertSame([], $report->results);
+        $this->assertSame(0, $report->stats['infos'] ?? 0);
+        $this->assertSame(
+            ['PASS No issues found, 0 optimizations available.', 'Not verifiable: 4 pattern arguments (2 dynamic, 1 around a dynamic part, 1 around preg_quote())'],
+            self::summaryAndWhatFollows(self::format($formatter, $report)),
+        );
+    }
+
+    /**
+     * Asked for one by one, the arguments not verified are infos: the
+     * summary counts them, and the line after it still sums them up.
+     */
+    #[Test]
+    #[DataProvider('provideFormattersThatSayMore')]
+    public function test_summary_counts_the_arguments_reported_one_by_one_as_infos(string $formatter): void
+    {
+        $report = self::lint(['/a/'], self::ARGUMENTS, new LintRequest(['.'], [], 0, checkOptimizations: false, reportDynamic: true));
+
+        $this->assertSame(0, $report->stats['errors']);
+        $this->assertSame(0, $report->stats['warnings']);
+        $this->assertSame(4, $report->stats['infos'] ?? null);
+        $this->assertSame(
+            ['PASS 0 warnings, 4 infos found, 0 optimizations available.', 'Not verifiable: 4 pattern arguments (2 dynamic, 1 around a dynamic part, 1 around preg_quote())'],
+            self::summaryAndWhatFollows(self::format($formatter, $report)),
+        );
+    }
+
+    /**
+     * A failing run says it the same way, after its FAIL line. "[é]"
+     * without /u is a lint error: the class holds the two bytes of "é".
+     */
+    #[Test]
+    #[DataProvider('provideFormattersThatSayMore')]
+    public function test_failing_summary_is_followed_by_the_arguments_not_verified(string $formatter): void
+    {
+        $this->assertSame(0, preg_match('/^[é]$/', 'é'));
+        $this->assertSame(1, preg_match('/^[é]$/u', 'é'));
+
+        $report = self::lint(['/[é]/'], ['opaque' => 1]);
+
+        $this->assertSame(1, $report->stats['errors']);
+        $this->assertSame(
+            ['FAIL 1 lint errors, 0 warnings, 0 optimizations.', 'Not verifiable: 1 pattern argument (1 dynamic)'],
+            self::summaryAndWhatFollows(self::format($formatter, $report)),
+        );
+    }
+
+    /**
+     * Under --quiet the report stays its summary line, reported one by
+     * one or not.
+     */
+    #[Test]
+    public function test_quiet_summary_says_nothing_of_the_arguments_not_verified(): void
+    {
+        $this->assertSame("PASS: No issues found, 0 optimizations available.\n", self::format('quiet', self::lint(['/a/'], self::ARGUMENTS)));
+        $this->assertSame(
+            "PASS: 0 warnings, 4 infos found, 0 optimizations available.\n",
+            self::format('quiet', self::lint(['/a/'], self::ARGUMENTS, new LintRequest(['.'], [], 0, checkOptimizations: false, reportDynamic: true))),
+        );
+    }
+
+    /**
+     * A run whose arguments are all verified adds no line.
+     */
+    #[Test]
+    #[DataProvider('provideFormattersThatSayMore')]
+    public function test_summary_is_followed_by_nothing_when_every_argument_is_verified(string $formatter): void
+    {
+        $this->assertSame(
+            ['PASS No issues found, 0 optimizations available.'],
+            self::summaryAndWhatFollows(self::format($formatter, self::lint(['/a/'], ['constant' => 1, 'finite_set' => 2]))),
+        );
+    }
+
     private static function format(string $name, LintReport $report): string
     {
         $service = new AnalysisService(RegexParser::create(['cache' => null]));
@@ -140,9 +242,10 @@ final class InfoSummaryTest extends TestCase
     }
 
     /**
-     * @param list<string> $patterns
+     * @param list<string>       $patterns
+     * @param array<string, int> $arguments the pattern arguments the run anchored in another file, by state
      */
-    private static function lint(array $patterns): LintReport
+    private static function lint(array $patterns, array $arguments = [], ?LintRequest $request = null): LintReport
     {
         $service = new LintService(new AnalysisService(RegexParser::create(['cache' => null])), new PatternSourceCollection([]));
         $occurrences = [];
@@ -150,7 +253,31 @@ final class InfoSummaryTest extends TestCase
             $occurrences[] = new PatternOccurrence($pattern, 'f.php', $line + 1, 'php:preg_match()');
         }
 
-        return $service->analyze($occurrences, new LintRequest(['.'], [], 0, checkOptimizations: false));
+        return $service->analyze([...$occurrences, ...ArgumentCarriers::of($arguments, 'g.php')], $request ?? new LintRequest(['.'], [], 0, checkOptimizations: false));
+    }
+
+    /**
+     * The summary line and every line written after it that is not blank,
+     * their console tags removed and their runs of spaces made one.
+     *
+     * @return list<string>
+     */
+    private static function summaryAndWhatFollows(string $output): array
+    {
+        $plain = preg_replace('/<(?:[a-z]+=[^<>]*|\/)>/', '', $output);
+        self::assertIsString($plain);
+
+        $lines = [];
+        foreach (explode("\n", $plain) as $line) {
+            $line = (string) preg_replace('/ {2,}/', ' ', trim($line));
+            if (1 === preg_match('/^(?:PASS|WARN|FAIL)\b/', $line)) {
+                $lines = [$line];
+            } elseif ([] !== $lines && '' !== $line) {
+                $lines[] = $line;
+            }
+        }
+
+        return $lines;
     }
 
     /**

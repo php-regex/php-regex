@@ -23,6 +23,8 @@ use PHPRegex\Parser\Exception\JsonEncodingException;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\ArgumentCarriers;
+use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\LintIssueFixtures;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -46,7 +48,8 @@ final class JsonFormatterTest extends TestCase
 
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], $decoded['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], JsonContract::issueCounts($decoded['stats']));
+        $this->assertSame(ArgumentCarriers::none(), ArgumentCarriers::countsOf($decoded['stats']));
         $this->assertSame([], $decoded['results']);
     }
 
@@ -206,7 +209,8 @@ final class JsonFormatterTest extends TestCase
         /** @var array{stats: array<string, int>, results: array<array<string, mixed>>} $decoded */
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 1, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], $decoded['stats']);
+        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 1, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], JsonContract::issueCounts($decoded['stats']));
+        $this->assertSame(ArgumentCarriers::none(), ArgumentCarriers::countsOf($decoded['stats']));
         $this->assertIsArray($decoded['results']);
         $this->assertCount(2, $decoded['results']);
 

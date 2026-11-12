@@ -452,16 +452,21 @@ final class InFileResolutionShapesTest extends TestCase
 
     /**
      * A local variable holds what its assignments give it: a ternary gives
-     * no literal, an assignment in each branch of one gives two, an array
-     * in parentheses is still an array, which a local variable never
-     * proves.
+     * the literal of each of its arms, whatever its condition (PHP 8.4:
+     * PHP_OS_FAMILY === 'Windows' ? '/windows/' : '/unix/' is one of the
+     * two), an assignment in each branch of one gives two, an array in
+     * parentheses is still an array, read item by item where a function
+     * takes a list of patterns.
      */
     #[Test]
     public function test_a_local_variable_assigned_in_a_ternary(): void
     {
         $this->assertExtractedByBoth([
+            ['pattern' => '/windows/', 'at' => "'/windows/'", 'location' => 'via $ternary'],
+            ['pattern' => '/unix/', 'at' => "'/unix/'", 'location' => 'via $ternary'],
             ['pattern' => '/then/', 'at' => "'/then/'", 'location' => 'via $branches'],
             ['pattern' => '/else/', 'at' => "'/else/'", 'location' => 'via $branches'],
+            ['pattern' => '/parenthesised-array/', 'at' => "'/parenthesised-array/'", 'source' => 'preg_replace()', 'location' => 'via $list'],
         ], <<<'CODE'
             <?php
 
