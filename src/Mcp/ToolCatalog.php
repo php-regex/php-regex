@@ -30,6 +30,56 @@ use PHPRegex\Mcp\Tool\ValidateTool;
 final class ToolCatalog
 {
     /**
+     * The target judged, as the CLI's documents name it: the floor's PHP,
+     * PCRE2 and locale, where they came from, and every version judged, the
+     * floor first.
+     */
+    private const TARGET = [
+        'type' => 'object',
+        'properties' => [
+            'php' => ['type' => 'string'],
+            'pcre' => ['type' => 'string'],
+            'locale' => ['type' => 'string'],
+            'source' => ['type' => 'string'],
+            'range' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => ['php' => ['type' => 'string'], 'pcre' => ['type' => 'string']],
+                    'required' => ['php', 'pcre'],
+                    'additionalProperties' => false,
+                ],
+                'minItems' => 1,
+            ],
+        ],
+        'required' => ['php', 'pcre', 'locale', 'source', 'range'],
+        'additionalProperties' => false,
+    ];
+
+    /**
+     * The verdict of each version of the range on the pattern, the floor
+     * first: whether it accepts the pattern, its error when it does not, and
+     * whether it reads the pattern into another tree than the floor.
+     */
+    private const RANGE = [
+        'type' => 'array',
+        'items' => [
+            'type' => 'object',
+            'properties' => [
+                'php' => ['type' => 'string'],
+                'pcre' => ['type' => 'string'],
+                'is_valid' => ['type' => 'boolean'],
+                'error' => ['type' => ['string', 'null']],
+                'error_code' => ['type' => ['string', 'null']],
+                'parses_differently' => ['type' => 'boolean'],
+            ],
+            'required' => ['php', 'pcre', 'is_valid', 'error', 'error_code', 'parses_differently'],
+            'additionalProperties' => false,
+        ],
+        'minItems' => 1,
+    ];
+
+    /**
      * @param array<string, ToolDefinition> $tools by name, in the order a client lists them
      */
     private function __construct(private readonly array $tools) {}
@@ -95,7 +145,7 @@ final class ToolCatalog
                     'constructor' => ['type' => 'string'],
                     'warnings' => ['type' => 'array', 'items' => ['type' => 'string']],
                     'notes' => ['type' => 'array', 'items' => ['type' => 'string']],
-                ], ['target', 'source', 'pattern', 'flags', 'literal', 'constructor', 'warnings', 'notes']),
+                ], ['target', 'source', 'pattern', 'flags', 'literal', 'constructor', 'warnings', 'notes'], 'php_target'),
                 new TranspileTool($regexes),
             ))
             ->with(new ToolDefinition(
@@ -155,7 +205,7 @@ final class ToolCatalog
             'properties' => [
                 'pattern' => ['type' => 'string', 'description' => 'The pattern as written in PHP source, delimiters and flags included, as /^\d+$/i. The delimiters are required.'],
                 ...$properties,
-                'php_version' => ['type' => 'string', 'description' => 'The PHP release to judge for, as "8.2". Default: the server\'s target, else the running PHP.'],
+                'php_version' => ['type' => 'string', 'description' => 'The PHP release to judge for, as "8.2", or a Composer constraint, as ">=8.1" or "^8.1 <8.7": the pattern is judged at every version of the range a rule of the library changes at, and the answer is computed for the lowest. Default: the server\'s target, else the running PHP.'],
                 'pcre_version' => ['type' => 'string', 'description' => 'The PCRE2 release to judge for, as "10.44". Default: the one the PHP release bundles.'],
             ],
             'required' => $required,
@@ -164,17 +214,22 @@ final class ToolCatalog
     }
 
     /**
-     * The structured answer: the success document, or the CLI's error
-     * envelope, which carries the pattern's validation when the pattern is
-     * what failed.
+     * The structured answer: the success document, which ends with the
+     * target judged and the verdict of each version of its range, or the
+     * CLI's error envelope, which carries the pattern's validation when the
+     * pattern is what failed.
      *
      * @param array<string, array<string, mixed>> $properties
      * @param list<string>                        $required
+     * @param string                              $targetKey  the key of the target judged: "php_target" where "target" is the tool's own
      *
      * @return array<string, mixed>
      */
-    private static function output(array $properties, array $required): array
+    private static function output(array $properties, array $required, string $targetKey = 'target'): array
     {
+        $properties = [...$properties, $targetKey => self::TARGET, 'range' => self::RANGE];
+        $required = [...$required, $targetKey, 'range'];
+
         return [
             'oneOf' => [
                 ['type' => 'object', 'properties' => $properties, 'required' => $required, 'additionalProperties' => false],

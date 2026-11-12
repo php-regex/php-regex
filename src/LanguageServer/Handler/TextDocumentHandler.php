@@ -634,7 +634,7 @@ final class TextDocumentHandler
         $refused = $findings->refusedBy;
         if (null !== $refused) {
             return [[
-                \sprintf('On %s: %s', $findings->refusedOn, $refused->validation->error ?? 'Invalid regex.'),
+                RangeWording::refusal($findings->refusedOn, $refused->validation),
                 $refused->validation->errorCode ?? ErrorCode::PcreRuntime,
                 $refused->validation->offset,
                 $refused->validation->hint,

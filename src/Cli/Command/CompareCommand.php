@@ -65,10 +65,41 @@ final class CompareCommand extends AbstractCommand
             return self::INVALID;
         }
 
-        $regex = $this->createRegex($output, $input->regexOptions);
-        if (null === $regex) {
+        $range = $this->resolveTarget($input, $output);
+        if (null === $range) {
             return self::INVALID;
         }
+
+        // Each pattern is judged over the range: the comparison itself is
+        // the floor's.
+        $exitCode = $this->compare($input, $output, $range, $parsed);
+        // Each line names the pattern it is about, as the banner does.
+        $exitCode = $this->reportRange($output, $range, $parsed['pattern1'], $exitCode, 'Pattern 1: ');
+
+        return $this->reportRange($output, $range, $parsed['pattern2'], $exitCode, 'Pattern 2: ');
+    }
+
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::Patterns, [
+            Option::value('--method', '<method>', 'intersection (default), subset, or equivalence'),
+            Option::value('--determinizer', '<algo>', 'subset-indexed (default) or subset'),
+            Option::value('--minimizer', '<algo>', 'hopcroft (default) or moore'),
+            ...GlobalOptionsParser::target(),
+        ], "Usage: regex compare <pattern1> <pattern2> [--method intersection|subset|equivalence] [--minimizer hopcroft|moore] [--determinizer subset|subset-indexed]\n");
+    }
+
+    /**
+     * The comparison of the two patterns, at the floor.
+     *
+     * @param CompareArguments $parsed
+     */
+    private function compare(Input $input, Output $output, TargetRange $range, array $parsed): int
+    {
+        $regex = $range->regex;
 
         $solver = new LanguageSolver($regex->parser());
         $options = new SolverOptions(
@@ -83,9 +114,9 @@ final class CompareCommand extends AbstractCommand
             'Minimizer' => $output->warning($parsed['minimizer']),
             'Determinizer' => $output->warning($parsed['determinizer']),
         ];
-        $meta += $this->targetMeta($input, $output);
+        $meta += $this->targetMeta($output, $range);
 
-        $style->renderBanner('compare', $meta, 'Automata-based regex comparison.');
+        $style->renderBanner('compare', $meta, 'Automata-based regex comparison.', $range->target->notices());
         $style->renderPattern($parsed['pattern1'], 'Pattern 1');
         $style->renderPattern($parsed['pattern2'], 'Pattern 2');
         $output->write("\n");
@@ -106,19 +137,6 @@ final class CompareCommand extends AbstractCommand
 
             return self::FAILURE;
         }
-    }
-
-    /**
-     * The options of the command, which its help lists.
-     */
-    public static function options(): Options
-    {
-        return new Options(Arguments::Patterns, [
-            Option::value('--method', '<method>', 'intersection (default), subset, or equivalence'),
-            Option::value('--determinizer', '<algo>', 'subset-indexed (default) or subset'),
-            Option::value('--minimizer', '<algo>', 'hopcroft (default) or moore'),
-            ...GlobalOptionsParser::target(),
-        ], "Usage: regex compare <pattern1> <pattern2> [--method intersection|subset|equivalence] [--minimizer hopcroft|moore] [--determinizer subset|subset-indexed]\n");
     }
 
     /**

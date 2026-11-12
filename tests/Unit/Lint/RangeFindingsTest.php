@@ -76,6 +76,9 @@ final class RangeFindingsTest extends TestCase
         $this->assertSame('PHP 8.5 and later', $findings->refusedOn);
         $this->assertNull($findings->readsOtherwise);
         $this->assertNull($findings->silentChange);
+        $error = $findings->refusedBy->validation->error;
+        $this->assertIsString($error);
+        $this->assertSame(['refusal' => 'On PHP 8.5 and later: '.$error, 'warning' => null], $findings->wording());
     }
 
     #[Test]
@@ -95,6 +98,7 @@ final class RangeFindingsTest extends TestCase
         $this->assertSame($expected, $findings->readsOtherwise->phpVersionId);
         $this->assertSame(self::judgedPcre($expected), $findings->readsOtherwise->pcreVersion);
         $this->assertNull($findings->silentChange);
+        $this->assertSame(['refusal' => null, 'warning' => \sprintf('From PHP %s (PCRE2 %s) the pattern parses differently: the same text means something else there.', ProjectTarget::phpLabel($expected), self::judgedPcre($expected))], $findings->wording());
     }
 
     #[Test]
@@ -114,6 +118,7 @@ final class RangeFindingsTest extends TestCase
         $this->assertSame(self::judgedPcre(80000), $findings->silentChange->target->pcreVersion);
         $this->assertSame(self::SELF_REFERENCE_CHANGE, $findings->silentChange->message);
         $this->assertSame('Wrap the group in an atomic group, "(?>(...))", to keep the older reading on every PHP.', $findings->silentChange->hint);
+        $this->assertSame(['refusal' => null, 'warning' => 'From PHP 8.0 (PCRE2 '.self::judgedPcre(80000).') '.self::SELF_REFERENCE_CHANGE], $findings->wording());
     }
 
     /**
@@ -136,6 +141,9 @@ final class RangeFindingsTest extends TestCase
         $this->assertSame('PHP 8.5 and later', $findings->refusedOn);
         $this->assertNull($findings->readsOtherwise);
         $this->assertNull($findings->silentChange);
+        $error = $findings->refusedBy->validation->error;
+        $this->assertIsString($error);
+        $this->assertSame(['refusal' => 'On PHP 8.5 and later: '.$error, 'warning' => null], $findings->wording());
     }
 
     #[Test]
@@ -218,6 +226,7 @@ final class RangeFindingsTest extends TestCase
             $this->assertSame('', $findings->refusedOn, $pattern);
             $this->assertNull($findings->readsOtherwise, $pattern);
             $this->assertNull($findings->silentChange, $pattern);
+            $this->assertSame(['refusal' => null, 'warning' => null], $findings->wording(), $pattern);
         }
     }
 

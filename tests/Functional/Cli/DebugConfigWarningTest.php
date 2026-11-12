@@ -74,6 +74,27 @@ final class DebugConfigWarningTest extends TestCase
         $this->assertStringContainsString('unknown preset "laravel-str"; did you mean "illuminate-support"?', [] === $format ? $stderr : stripslashes($stdout));
     }
 
+    /**
+     * A control character the file holds is spelled for the terminal, in a
+     * warning as in an error, as regex lint spells it: never written raw.
+     */
+    #[Test]
+    public function test_a_control_character_of_regex_json_is_spelled_for_the_terminal(): void
+    {
+        $this->enterProject(['regex.json' => '{"extraction": {"functions": ["x\\u001b#a"]}}']);
+        [$exitCode, , $warning] = $this->runDebug(['/abc/']);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertSame("Warning: Malformed pattern function \"x\\x1B#a\", ignored.\n", $warning);
+
+        $this->enterProject(['regex.json' => '{"\\u001bnope": 1}']);
+        [$exitCode, , $error] = $this->runDebug(['/abc/']);
+
+        $this->assertSame(2, $exitCode);
+        $this->assertStringContainsString('Unknown key "\\x1Bnope"', $error);
+        $this->assertStringNotContainsString("\e", $error);
+    }
+
     #[Test]
     public function test_quiet_hides_the_warning(): void
     {

@@ -49,7 +49,8 @@ Usage: regex-mcp [options]
 Options:
   --help, -h             Show this help message
   --version, -v          Show version information
-  --php-version=<ver>    The PHP release every tool judges for (default: the running PHP)
+  --php-version=<ver>    The PHP release every tool judges for, or a Composer constraint
+                         such as '>=8.1' (default: the running PHP)
   --pcre-version=<ver>   The PCRE2 release every tool judges for (default: the one the PHP release bundles)
   --locale=<name>        The LC_CTYPE locale every tool judges for
 

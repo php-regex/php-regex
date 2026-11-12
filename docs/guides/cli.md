@@ -1646,6 +1646,33 @@ pattern for one target, chosen in this order:
 the command and the PCRE2 it links, as PHPStan's `phpVersion` does: a project
 that lints for its floor can still ask what the engine at hand says.
 
+The commands that read one pattern (`validate`, `analyze`, `explain`,
+`redos`, `parse`, `diagram`, `format`, `transpile`, `highlight`, `compare`,
+`graph`, `debug`) take their target from the command line alone:
+`--php-version`, `--pcre-version` and `--locale`, read as the lint reads
+them, else the running PHP. They read no `composer.json`, and no
+`regex.json` for their target: `debug` alone reads `regex.json`, for its
+ReDoS defaults, and stops with exit code 2 on a file it cannot read.
+`--php-version` takes a range as the lint does:
+`regex validate '/(?<=a\Kb)c/' --php-version='>=8.1'` judges the pattern
+for PHP 8.1 and the later versions the lint judges. Their own output (the
+explanation, the tree, the rewrite) is the floor's; the pattern is also
+validated at the later versions the lint validates it at: each version of
+the range where a rule of the library changes, and the lowest version of
+each branch of an OR constraint unless a version already judged with the
+same PCRE2 stands for it ([Several PHP versions](#several-php-versions)). A later version that
+refuses a pattern the floor accepts is an error and the command exits with 1;
+a version that reads it otherwise, or gives it another meaning with the same
+tree, is a warning. Both go to stderr, as the notes of the resolution do, so
+that stdout stays the product; `--quiet` silences the warnings and the notes,
+not the errors. A pattern the floor refuses keeps the exit code the command
+gives it at a single version. With `--format=json`, the document carries
+`target` and `range`; `transpile` names the PHP target `php_target`, its
+`target` being the dialect
+([JSON output](../reference/json-output.md#range-point-range_point)). The
+errors, warnings and notes still go to stderr: stdout holds the document
+alone. Without the banner (`--no-visuals`), the notes go to stderr too.
+
 Each version is chosen on its own. A PHP version does not decide the PCRE2 a
 build links, so every version judged (the target, each later version of the
 range, each version a guard or a marker keeps) gets its PCRE2 in this order:
@@ -1979,9 +2006,12 @@ The PHPStan extension, the Psalm plugin and the language server read the
 same markers.
 
 Single-pattern commands, such as `analyze` or `validate`, judge for the
-running PHP unless `--php-version`, `--pcre-version` or `--locale` is given;
-their banners show `Target PHP` / `Target PCRE2` / `Target locale` rows only
-when those flags are passed.
+running PHP unless `--php-version`, `--pcre-version` or `--locale` is given
+(see [Target PHP and PCRE2](#target-php-and-pcre2)). Their banner shows a
+`Target PHP` row only when one of those flags is passed: the PHP, PCRE2 and
+locale judged, where they came from, and the later versions of a range.
+Guards and markers do not apply to them: they read no code around the
+pattern.
 
 ### Errors and Exit Codes
 
@@ -1991,15 +2021,15 @@ when those flags are passed.
 | Command                                      | Exits with 1 when                                                                  |
 |----------------------------------------------|------------------------------------------------------------------------------------|
 | `lint`                                       | A pattern does not compile, a ReDoS verdict reproduced at high or above, or a lint rule of error severity fires (warnings and infos alone leave 0); or the files cannot be read; or a worker fails or exits |
-| `validate`, `parse --validate`, `analyze`    | The pattern is invalid                                                             |
-| `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse                                                         |
-| `graph`                                      | The pattern does not parse, or cannot be drawn as an automaton                     |
-| `transpile`                                  | The pattern is invalid, or cannot be written for the target                        |
-| `format`                                     | The pattern does not parse, or the formatter could not prove its output the same pattern; a refusal leaves 0 |
-| `debug`                                      | The pattern is invalid, a semantic error such as `/(?<=a+)b/` included, in every format |
+| `validate`, `parse --validate`, `analyze`    | The pattern is invalid, or a later version of a range named with `--php-version` refuses it |
+| `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse, or a later version of a range named with `--php-version` refuses it |
+| `graph`                                      | The pattern does not parse, a later version of a range named with `--php-version` refuses it, or it cannot be drawn as an automaton |
+| `transpile`                                  | The pattern is invalid, cannot be written for the target, or a later version of a range named with `--php-version` refuses it |
+| `format`                                     | The pattern does not parse, a later version of a range named with `--php-version` refuses it, or the formatter could not prove its output the same pattern; a refusal leaves 0 |
+| `debug`                                      | The pattern is invalid, a semantic error such as `/(?<=a+)b/` included, in every format, or a later version of a range named with `--php-version` refuses it |
 | `analyze`, `debug`                           | `--redos-mode=confirmed` reproduces a ReDoS verdict of high severity or more, at or above `--redos-threshold`, on the running PCRE, or proves one it cannot replay because `ini_set()` is disabled |
-| `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared |
-| `redos`                                      | PHP refuses to compile the pattern or the `--safe` one; a slow run alone leaves 0 |
+| `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared; or a later version of a range named with `--php-version` refuses either pattern |
+| `redos`                                      | PHP refuses to compile the pattern or the `--safe` one, or a later version of a range named with `--php-version` refuses either; a slow run alone leaves 0 |
 | `self-update`                                | The update fails                                                                   |
 
 Every command also exits with 1, `Error: A regex of the library gave up: …` on
