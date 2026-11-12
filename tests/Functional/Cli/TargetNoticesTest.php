@@ -24,12 +24,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * What the commands that read one pattern found on the way to their
- * target, they say as lint says it: each notice of the resolution
- * ("Note: …") under the banner on the console, on stderr beside a JSON
- * document, and nothing under -q; each warning of regex.json once on
- * stderr, nothing under -q. A target error is spelled as lint spells it,
- * its control characters escaped.
+ * What the commands that read one pattern found on the way to the target
+ * the command line names, they say as lint says it: each notice of the
+ * resolution ("Note: …") under the banner on the console, on stderr beside
+ * a JSON document, and nothing under -q. They read no file of the working
+ * directory: what regex.json or composer.json holds is never noted.
  */
 final class TargetNoticesTest extends TestCase
 {
@@ -44,13 +43,13 @@ final class TargetNoticesTest extends TestCase
     #[DataProvider('provideNotices')]
     public function test_the_console_prints_each_notice_under_the_banner(array $files, array $flags, string $notice): void
     {
-        $directory = $this->enterProject($files);
-        $this->assertContains($notice, self::notices($directory, $flags), 'The resolver gives the notice lint prints.');
+        $this->enterProject($files);
+        $this->assertContains($notice, self::notices($flags), 'The resolver gives the notice lint prints.');
 
         [$exitCode, $stdout, $stderr] = $this->runWithBanner([...$flags, 'validate', '/a/']);
 
         $this->assertSame(0, $exitCode, $stdout.$stderr);
-        foreach (self::notices($directory, $flags) as $each) {
+        foreach (self::notices($flags) as $each) {
             $this->assertStringContainsString('Note: '.$each."\n", $stdout);
         }
         $this->assertLessThan(strpos($stdout, 'Note: '.$notice), (int) strpos($stdout, 'Target PHP'), 'The notes follow the banner\'s target.');
@@ -64,14 +63,14 @@ final class TargetNoticesTest extends TestCase
     #[DataProvider('provideNotices')]
     public function test_json_prints_each_notice_on_stderr(array $files, array $flags, string $notice): void
     {
-        $directory = $this->enterProject($files);
+        $this->enterProject($files);
 
         [$exitCode, $stdout, $stderr] = $this->runRegex([...$flags, 'validate', '/a/', '--format=json']);
 
         $this->assertSame(0, $exitCode, $stdout.$stderr);
         JsonContract::decodeDocument($stdout);
         $this->assertStringContainsString('Note: '.$notice."\n", $stderr);
-        foreach (self::notices($directory, $flags) as $each) {
+        foreach (self::notices($flags) as $each) {
             $this->assertStringContainsString('Note: '.$each."\n", $stderr);
         }
     }
@@ -100,11 +99,6 @@ final class TargetNoticesTest extends TestCase
      */
     public static function provideNotices(): iterable
     {
-        yield 'a composer.json cut short' => [
-            'files' => ['composer.json' => '{"require": {"php": ">=8.1"'],
-            'flags' => [],
-            'notice' => 'composer.json is not a JSON object: judging for the running PHP.',
-        ];
         yield 'a range that starts on PCRE1' => [
             'files' => [],
             'flags' => ['--php-version=>=7.0'],
@@ -118,32 +112,32 @@ final class TargetNoticesTest extends TestCase
     }
 
     /**
-     * What regex.json holds that is ignored is a warning on stderr, once,
-     * as lint and debug say it; stdout keeps the command's output.
+     * What regex.json holds that is ignored, or a composer.json cut short,
+     * is lint's to say: these commands read neither, and say nothing of
+     * them, where lint warns and notes.
      *
      * @param list<string> $command
      */
     #[Test]
-    #[DataProvider('provideCommandsReadingRegexJson')]
-    public function test_a_regex_json_warning_is_said_once_on_stderr(array $command): void
+    #[DataProvider('provideCommands')]
+    public function test_the_files_of_the_working_directory_are_never_noted(array $command): void
     {
-        $this->enterProject(['regex.json' => '{"extraction": {"functions": ["x#a"]}}']);
+        $this->enterProject(['regex.json' => '{"extraction": {"functions": ["x#a"]}}', 'composer.json' => '{"require": {"php": ">=8.1"', 'src/a.php' => "<?php\n"]);
 
         [$exitCode, $stdout, $stderr] = $this->runRegex($command);
+        [, , $lint] = $this->runRegex(['lint', 'src', '--jobs=1']);
 
+        $this->assertStringContainsString('Malformed pattern function "x#a", ignored.', $lint, 'lint reads regex.json.');
         $this->assertSame(0, $exitCode, $stdout.$stderr);
-        $this->assertSame("Warning: Malformed pattern function \"x#a\", ignored.\n", $stderr);
+        $this->assertSame('', $stderr);
         $this->assertStringNotContainsString('Malformed pattern function', $stdout);
-
-        [, $quietStdout, $quietStderr] = $this->runRegex(['--quiet', ...$command]);
-
-        $this->assertStringNotContainsString('Malformed pattern function', $quietStdout.$quietStderr);
+        $this->assertStringNotContainsString('composer.json', $stdout);
     }
 
     /**
      * @return iterable<string, array{command: list<string>}>
      */
-    public static function provideCommandsReadingRegexJson(): iterable
+    public static function provideCommands(): iterable
     {
         yield 'validate' => ['command' => ['validate', '/a/']];
         yield 'validate, as JSON' => ['command' => ['validate', '/a/', '--format=json']];
@@ -154,12 +148,11 @@ final class TargetNoticesTest extends TestCase
     }
 
     /**
-     * A target error names the file it read: a COMPOSER file name holding
-     * an escape sequence is spelled with it escaped, as lint spells it,
-     * never written raw to the terminal.
+     * A COMPOSER file lint refuses to judge for is not read either: the
+     * command judges the running PHP.
      */
     #[Test]
-    public function test_a_target_error_is_spelled_as_lint_spells_it(): void
+    public function test_the_composer_file_the_environment_names_is_not_read(): void
     {
         $name = "we\e[2Jird.json";
         $this->enterProject([$name => '{"require": {"php": "5.6.*"}}', 'src/a.php' => "<?php\n"]);
@@ -168,26 +161,26 @@ final class TargetNoticesTest extends TestCase
 
         try {
             [$exitCode, $stdout, $stderr] = $this->runRegex(['validate', '/a/']);
-            [, , $lint] = $this->runRegex(['lint', 'src', '--jobs=1']);
+            [$lintExitCode, , $lint] = $this->runRegex(['lint', 'src', '--jobs=1']);
         } finally {
             putenv(false === $previous ? 'COMPOSER' : 'COMPOSER='.$previous);
         }
 
-        $this->assertSame(2, $exitCode, $stdout.$stderr);
-        $this->assertStringContainsString('Error: we\x1B[2Jird.json require.php allows PHP 5.6', $lint, 'lint escapes it.');
-        $this->assertSame($lint, $stderr);
-        $this->assertStringNotContainsString("\e", $stderr);
+        $this->assertSame(2, $lintExitCode, $lint);
+        $this->assertStringContainsString('require.php allows PHP 5.6', $lint, 'lint reads it.');
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        $this->assertSame('', $stderr);
     }
 
     /**
-     * The notices of the target the flags and the files of a directory
-     * resolve to, as lint reads them.
+     * The notices of the target the flags resolve to, as lint reads them
+     * from the same flags: no file is read.
      *
      * @param list<string> $flags
      *
      * @return list<string>
      */
-    private static function notices(string $directory, array $flags): array
+    private static function notices(array $flags): array
     {
         $values = ['--php-version' => null, '--pcre-version' => null];
         foreach ($flags as $flag) {
@@ -195,7 +188,7 @@ final class TargetNoticesTest extends TestCase
             $values[$name] = $value;
         }
 
-        return ProjectTarget::resolve($values['--php-version'], $values['--pcre-version'], [], $directory, [])->notices();
+        return ProjectTarget::fromSources(['--php-version' => $values['--php-version']], ['--pcre-version' => $values['--pcre-version']], null, [])->notices();
     }
 
     /**

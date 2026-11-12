@@ -17,7 +17,6 @@ use PHPRegex\Cli\Command\GraphCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -28,8 +27,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class GraphCommandParseErrorTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     #[Test]
     public function test_a_parse_error_is_reported_as_a_parse_error(): void
     {

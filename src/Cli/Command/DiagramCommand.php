@@ -94,7 +94,7 @@ final class DiagramCommand extends AbstractCommand
         $showConsoleOutput = 'svg' !== $format && null === $outputPath;
         if ($showConsoleOutput && $style->visualsEnabled()) {
             $meta['Format'] = $output->warning('console');
-            $style->renderBanner('diagram', $meta, notes: $range->target->notices(missingProject: false));
+            $style->renderBanner('diagram', $meta, notes: $range->target->notices());
         } elseif (!$showConsoleOutput) {
             // The SVG or the file is the product: stderr says what
             // resolving the target noticed.

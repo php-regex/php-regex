@@ -24,7 +24,6 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,8 +36,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosModelLineTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     /**
      * {1,20} is past the cutoff of 16 and analysed as {1,}; a…a! fails at
      * n=19 (PCRE2 10.49).

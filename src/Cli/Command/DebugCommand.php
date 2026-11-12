@@ -80,21 +80,37 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
     {
         $json = JsonRequest::in($input->args);
 
-        // regex.json as lint reads it: the target, and the defaults of
-        // the command when it was given a builder for them.
-        $configuration = $this->loadConfiguration($output, $json, $this->configLoader);
-        if (null === $configuration) {
-            return self::INVALID;
-        }
+        // The configuration file's defaults, when there is one to read.
+        $defaults = [];
+        if (null !== $this->configLoader && null !== $this->defaultsBuilder) {
+            $configResult = $this->configLoader->load();
+            if (null !== $configResult->error) {
+                if ($json) {
+                    $output->writeDocument(JsonDocument::error($configResult->error, JsonDocument::STAGE_CONFIG));
+                } else {
+                    $output->writeError($output->error('Error: '.$configResult->error."\n"));
+                }
 
-        $defaults = null === $this->defaultsBuilder ? [] : $this->defaultsBuilder->build($configuration->config);
+                return self::INVALID;
+            }
+
+            // What the file holds that is ignored, as regex lint says it:
+            // on stderr, silenced by -q, and the command goes on.
+            if (!$output->isQuiet()) {
+                foreach ($configResult->warnings as $warning) {
+                    $output->writeError('Warning: '.$warning."\n");
+                }
+            }
+
+            $defaults = $this->defaultsBuilder->build($configResult->config);
+        }
 
         $parsed = $this->parseArguments($input->args, $defaults);
         if (null !== $parsed['error']) {
             return $this->usageError($output, $parsed['error'], self::options()->usage, $json);
         }
 
-        $range = $this->resolveTarget($input, $output, $json, $configuration);
+        $range = $this->resolveTarget($input, $output, $json);
         if (null === $range) {
             return self::INVALID;
         }
@@ -128,7 +144,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
         $meta['Recursion'] = $output->warning((string) ($runtime->recursionLimit ?? 'unknown'));
 
         if ('json' !== $format) {
-            $style->renderBanner('debug', $meta, notes: $range->target->notices(missingProject: false));
+            $style->renderBanner('debug', $meta, notes: $range->target->notices());
         } else {
             $this->reportNotices($output, $range);
         }

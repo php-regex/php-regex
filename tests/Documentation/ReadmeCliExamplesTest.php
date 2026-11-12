@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,8 +20,6 @@ use PHPUnit\Framework\TestCase;
 #[Group('documentation')]
 final class ReadmeCliExamplesTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     #[Test]
     public function cli_analyze_example(): void
     {
@@ -46,36 +43,27 @@ final class ReadmeCliExamplesTest extends TestCase
     #[Test]
     public function cli_lint_example(): void
     {
-        // The README runs it at the root of this repository, on its src/
-        // and with its regex.dist.json.
-        [$output, $exitCode] = $this->runCli(['--no-ansi', 'lint', 'src/', '--format=console', '--min-savings=2', '--no-validate'], \dirname(__DIR__, 2));
+        [$output, $exitCode] = $this->runCli(['--no-ansi', 'lint', 'src/', '--format=console', '--min-savings=2', '--no-validate']);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('PASS', $output);
     }
 
     /**
-     * @param list<string> $args
-     * @param string|null  $directory where the command runs; the test's working directory when null
+     * @param array<string> $args
      *
      * @return array{0: string, 1: int}
      */
-    private function runCli(array $args, ?string $directory = null): array
+    private function runCli(array $args): array
     {
         $script = \dirname(__DIR__, 2).'/bin/regex';
-        // stderr to a file: a pipe left unread while stdout is read could fill and stall the run.
-        $errors = (string) tempnam(sys_get_temp_dir(), 'regex-readme-err-');
+        $command = array_merge([\PHP_BINARY, $script], $args);
+        $escaped = array_map(escapeshellarg(...), $command);
+        $output = [];
+        $exitCode = 0;
 
-        try {
-            $process = proc_open([\PHP_BINARY, $script, ...$args], [1 => ['pipe', 'w'], 2 => ['file', $errors, 'w']], $pipes, $directory);
-            $this->assertIsResource($process);
-            $output = (string) stream_get_contents($pipes[1]);
-            fclose($pipes[1]);
-            $exitCode = proc_close($process);
+        exec(implode(' ', $escaped).' 2>&1', $output, $exitCode);
 
-            return [$output.(string) file_get_contents($errors), $exitCode];
-        } finally {
-            @unlink($errors);
-        }
+        return [implode("\n", $output), $exitCode];
     }
 }

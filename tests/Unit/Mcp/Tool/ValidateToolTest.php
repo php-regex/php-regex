@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Unit\Mcp\Tool;
 
 use PHPRegex\Mcp\ToolCatalog;
 use PHPRegex\Tests\Support\JsonContract;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,7 +25,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class ValidateToolTest extends TestCase
 {
-    use RunsInAnEmptyProject;
     use RunsRegexCli;
 
     #[Test]

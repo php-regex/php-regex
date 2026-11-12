@@ -298,9 +298,9 @@ add one to yet.
 - The **configuration keys** of `regex.json`, of the Symfony bundle, of the
   Laravel config file and of the PHPStan extension, and the **exit codes** of
   every command (0 done, 1 a pattern or file problem, 2 a usage or
-  configuration error). A command that reads one pattern exits with 1 when
-  any PHP version of the range it judges refuses the pattern, the floor
-  accepting it or not.
+  configuration error). A command that reads one pattern also exits with 1
+  when a later version of a range named with `--php-version` refuses a
+  pattern the floor accepts.
 - The **names of the extraction presets** (`composer-pcre`, `nette-utils`,
   `spatie-regex`, `illuminate-support`, `phpunit`, `webmozart-assert`,
   `beberlei-assert`, `symfony-validator`): a preset may read more calls of its

@@ -116,7 +116,7 @@ final class CompareCommand extends AbstractCommand
         ];
         $meta += $this->targetMeta($output, $range);
 
-        $style->renderBanner('compare', $meta, 'Automata-based regex comparison.', $range->target->notices(missingProject: false));
+        $style->renderBanner('compare', $meta, 'Automata-based regex comparison.', $range->target->notices());
         $style->renderPattern($parsed['pattern1'], 'Pattern 1');
         $style->renderPattern($parsed['pattern2'], 'Pattern 2');
         $output->write("\n");

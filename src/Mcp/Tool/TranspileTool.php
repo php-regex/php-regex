@@ -77,6 +77,8 @@ final class TranspileTool extends AbstractTool
         }
 
         // "target" is the dialect: the PHP versions judged are "php_target".
-        return ToolResult::document(self::withRange(implode("\n", $lines), $regex, $phpTarget, $pattern), [...$result->jsonSerialize(), ...self::range($regex, $phpTarget, $pattern, 'php_target')]);
+        [$text, $range] = self::overRange(implode("\n", $lines), $regex, $phpTarget, $pattern, 'php_target');
+
+        return ToolResult::document($text, [...$result->jsonSerialize(), ...$range]);
     }
 }

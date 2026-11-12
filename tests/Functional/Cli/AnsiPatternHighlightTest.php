@@ -17,7 +17,6 @@ use PHPRegex\Cli\ApplicationFactory;
 use PHPRegex\Cli\Output;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Tests\Support\EngineProbe;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,8 +29,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class AnsiPatternHighlightTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     private const PATTERN = '/a+/';
 
     #[Test]

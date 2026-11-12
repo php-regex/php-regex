@@ -17,7 +17,6 @@ use PHPRegex\Cli\Command\RedosCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -27,8 +26,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosCommandTimeLimitTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     private string $timeLimit = '';
 
     protected function setUp(): void

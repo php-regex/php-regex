@@ -17,8 +17,6 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Option\Option;
 use PHPRegex\Cli\Option\ParsedOption;
 use PHPRegex\Cli\Output;
-use PHPRegex\Linter\Config\LintConfigLoader;
-use PHPRegex\Linter\Config\LintConfigResult;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Linter\Formatter\ReportSpelling;
@@ -41,34 +39,22 @@ use PHPRegex\Toolkit\Regex;
 abstract class AbstractCommand implements CommandInterface
 {
     /**
-     * The PHP versions the command judges its pattern for, found where lint
-     * finds them: --php-version (the target the command line names, as
-     * Input holds it), then regex.json's phpVersion, then
-     * composer.json (config.platform.php, then require.php), then the
-     * running PHP, read from the working directory. A regex.json lint
-     * cannot read, or a version no source can read, is reported in lint's
-     * words, as the JSON error envelope when the command line asked for
-     * JSON; null then, and the command exits 2.
+     * The PHP versions the command judges its pattern for: the target the
+     * command line names (--php-version, a range included, --pcre-version
+     * and --locale, as Input holds them), read as lint reads them, else the
+     * running PHP. No file of the working directory is read. A version the
+     * library cannot read or does not judge is reported in lint's words, as
+     * the JSON error envelope when the command line asked for JSON; null
+     * then, and the command exits 2.
      *
-     * @param bool                  $json          whether the command line asked for JSON: the error is then the envelope
-     * @param LintConfigResult|null $configuration regex.json as the command loaded it already; loaded here when null
+     * @param bool $json whether the command line asked for JSON: the error is then the envelope
      */
-    protected function resolveTarget(Input $input, Output $output, bool $json = false, ?LintConfigResult $configuration = null): ?TargetRange
+    protected function resolveTarget(Input $input, Output $output, bool $json = false): ?TargetRange
     {
-        $configuration ??= $this->loadConfiguration($output, $json);
-        if (null === $configuration) {
-            return null;
-        }
+        $options = $input->regexOptions;
 
         try {
-            $target = ProjectTarget::resolve(
-                $input->regexOptions['php_version'] ?? null,
-                $input->regexOptions['pcre_version'] ?? null,
-                $configuration->config,
-                getcwd() ?: '.',
-                getenv(),
-                $input->regexOptions['locale'] ?? null,
-            );
+            $target = ProjectTarget::fromSources(['--php-version' => $options['php_version'] ?? null], ['--pcre-version' => $options['pcre_version'] ?? null], null, [], ['--locale' => $options['locale'] ?? null]);
             $regex = Regex::create($target->regexOptions());
 
             return new TargetRange($target, $regex, $target->rangeParsers($regex->parser()));
@@ -76,21 +62,16 @@ abstract class AbstractCommand implements CommandInterface
             if ($json) {
                 $output->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_TARGET));
             } else {
-                // The message may name a file: spelled as lint spells it.
-                $output->writeError($output->error('Error: '.ReportSpelling::displayField($e->getMessage())."\n"));
+                $output->writeError($output->error('Error: '.$e->getMessage()."\n"));
             }
 
             return null;
         } catch (InvalidRegexOptionException $e) {
-            $message = $this->invalidOptionMessage($e, $input->regexOptions);
-            // A version given on the command line is a usage error; one
-            // read from regex.json or the environment, a configuration one,
-            // as lint tells them apart.
-            $fromCommandLine = [] !== $input->regexOptions;
+            $message = $this->invalidOptionMessage($e, $options);
             if ($json) {
-                $output->writeDocument(JsonDocument::error($message, $fromCommandLine ? JsonDocument::STAGE_USAGE : JsonDocument::STAGE_CONFIG));
+                $output->writeDocument(JsonDocument::error($message, JsonDocument::STAGE_USAGE));
             } else {
-                $output->writeError($output->error(($fromCommandLine ? '' : 'Error: ').ReportSpelling::displayField($message)."\n"));
+                $output->writeError($output->error($message."\n"));
             }
 
             return null;
@@ -98,50 +79,21 @@ abstract class AbstractCommand implements CommandInterface
     }
 
     /**
-     * regex.json and regex.dist.json of the working directory, read by
-     * lint's loader; null when lint could not read them, once the error is
-     * reported, stage "config". What they hold that is ignored is a
-     * warning on stderr, as lint says it, silenced by -q.
-     *
-     * @param bool $json whether the command line asked for JSON: the error is then the envelope
-     */
-    protected function loadConfiguration(Output $output, bool $json, ?LintConfigLoader $loader = null): ?LintConfigResult
-    {
-        $configuration = ($loader ?? new LintConfigLoader())->load();
-        if (null === $configuration->error) {
-            if (!$output->isQuiet()) {
-                foreach (array_unique($configuration->warnings) as $warning) {
-                    $output->writeError('Warning: '.ReportSpelling::displayField($warning)."\n");
-                }
-            }
-
-            return $configuration;
-        }
-
-        if ($json) {
-            $output->writeDocument(JsonDocument::error($configuration->error, JsonDocument::STAGE_CONFIG));
-        } else {
-            $output->writeError($output->error('Error: '.ReportSpelling::displayField($configuration->error)."\n"));
-        }
-
-        return null;
-    }
-
-    /**
      * The exit code of a JSON run once the range judged the pattern: a
-     * version that refuses it, the floor included, is a problem with the
-     * pattern, exit 1; every other exit code stays.
+     * later version that refuses a pattern the floor accepts is a problem
+     * with the pattern, exit 1; every other exit code stays, the floor's
+     * refusal being the command's own verdict.
      *
      * @param non-empty-list<RangePoint> $points
      */
     protected static function exitCodeOverRange(array $points, int $exitCode): int
     {
-        return self::SUCCESS === $exitCode && TargetRange::refused($points) ? self::FAILURE : $exitCode;
+        return self::SUCCESS === $exitCode && TargetRange::refusedLater($points) ? self::FAILURE : $exitCode;
     }
 
     /**
-     * Say on stderr what the versions judged find in the pattern, in
-     * lint's words: an error for the floor or the lowest later version
+     * Say on stderr what the later versions of the range find in a
+     * pattern the floor accepts, in lint's words: an error for the lowest
      * that refuses it, which makes the run exit 1, a warning for the
      * lowest that reads it into another tree or gives it another meaning.
      * stdout keeps the command's own output.
@@ -176,7 +128,7 @@ abstract class AbstractCommand implements CommandInterface
             return;
         }
 
-        foreach ($range->target->notices(missingProject: false) as $notice) {
+        foreach ($range->target->notices() as $notice) {
             $output->writeError('Note: '.$notice."\n");
         }
     }
@@ -314,9 +266,9 @@ abstract class AbstractCommand implements CommandInterface
     /**
      * The banner line naming the target judged, as lint's Target row names
      * it: the PHP, the PCRE2 release and the locale resolved, where they
-     * came from, and the later versions of the range. None when no source
-     * named any of them: the target is then the runtime, which the
-     * banner's Runtime line names already.
+     * came from, and the later versions of the range. None when the
+     * command line names none of them: the target is then the runtime,
+     * which the banner's Runtime line names already.
      *
      * @return array<string, string>
      */

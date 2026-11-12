@@ -62,12 +62,14 @@ final class FormatTool extends AbstractTool
             $text .= "\nNote: ".$result->refusal->note();
         }
 
-        return ToolResult::document(self::withRange($text, $regex, $target, $pattern), [
+        [$text, $range] = self::overRange($text, $regex, $target, $pattern);
+
+        return ToolResult::document($text, [
             'pattern' => $pattern,
             'formatted' => $result->pattern,
             'changed' => $result->changed,
             'refusal' => $result->refusal?->value,
-            ...self::range($regex, $target, $pattern),
+            ...$range,
         ]);
     }
 }

@@ -25,32 +25,26 @@ CHANGELOG
    versions judged after the floor.
  * The commands that read one pattern (`validate`, `analyze`, `explain`,
    `redos`, `parse`, `diagram`, `format`, `transpile`, `highlight`,
-   `compare`, `graph`, `debug`) find their target where `regex lint` finds
-   it: `--php-version`, then `phpVersion` in `regex.json`, then
-   `composer.json` (`config.platform.php`, then `require.php`), then the
-   running PHP. They now read `regex.json` and `composer.json` in the working
-   directory: run inside a project, they judge its `require.php` range, and a
-   `regex.json` lint cannot read stops them with exit code 2, as it stops
-   lint. `--php-version` takes a range (`--php-version='>=8.1'`).
- * Over a range, those commands compute their output at the lowest version
-   and validate the pattern at every later version lint judges: one that
-   refuses the pattern is an error and the command exits 1, its output still
-   printed; one that reads it into another tree, or gives it another meaning
-   with the same tree, is a warning, exit code unchanged. Both are written on
-   stderr in lint's words, so `format`, `transpile` and `highlight` keep
-   stdout for what they produce; `compare` starts each line with the pattern
-   it is about (`Pattern 1: `, `Pattern 2: `), and `redos --safe` judges the
-   safe pattern too. Their JSON gains lint's `target` object (`php_target`
-   for `transpile`, whose `target` is the dialect) and a `range` list, the
-   verdict of each version, with `safe_range` for `redos --safe`; no existing
-   key changes. The banner's `Target PHP` line names the target resolved,
-   where it came from and the later versions judged, followed by lint's
-   `Note:` lines (on stderr beside JSON and the other formats), and what
-   `regex.json` holds that is ignored is a warning on stderr, as lint says it.
- * `explain`, `parse`, `diagram`, `format`, `highlight`, `graph` and `redos`
-   exit 1 when the PHP version judged refuses the pattern, a single version
-   included, where they exited 0 (1 for `redos`, without saying why): their
-   output is still printed and stderr names the error and the PHP version.
+   `compare`, `graph`, `debug`) take a range in `--php-version`, as
+   `regex lint` does (`--php-version='>=8.1'`). They compute their output at
+   the lowest version and validate the pattern at every later version lint
+   judges: one that refuses a pattern the floor accepts is an error and the
+   command exits 1, its output still printed; one that reads it into another
+   tree, or gives it another meaning with the same tree, is a warning, exit
+   code unchanged. Both are written on stderr in lint's words, so `format`,
+   `transpile` and `highlight` keep stdout for what they produce; `compare`
+   starts each line with the pattern it is about (`Pattern 1: `,
+   `Pattern 2: `), and `redos --safe` judges the safe pattern too. Their
+   JSON gains lint's `target` object (`php_target` for `transpile`, whose
+   `target` is the dialect) and a `range` list, the verdict of each version,
+   with `safe_range` for `redos --safe`; no existing key changes. The
+   banner's `Target PHP` line, shown when `--php-version`, `--pcre-version`
+   or `--locale` is given, names the target resolved, where it came from and
+   the later versions judged, followed by lint's `Note:` lines (on stderr
+   beside JSON and the other formats). Without `--php-version` they judge
+   the running PHP alone, as before, and read no `regex.json` or
+   `composer.json`; a pattern the lowest version refuses keeps the exit code
+   it had.
  * `regex self-update` stages the download in a private directory of a random
    name instead of a predictable file in the shared temporary directory, and
    removes it after a failure as after a success.

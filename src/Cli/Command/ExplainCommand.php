@@ -104,7 +104,7 @@ final class ExplainCommand extends AbstractCommand implements JsonCommandInterfa
         }
 
         if ('console' === $format) {
-            $style->renderBanner('explain', $meta, notes: $range->target->notices(missingProject: false));
+            $style->renderBanner('explain', $meta, notes: $range->target->notices());
         }
 
         try {

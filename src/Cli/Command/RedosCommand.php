@@ -128,7 +128,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
             $meta['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');
             $meta['Backtrack'] = $output->warning((string) ($runtime->backtrackLimit ?? 'unknown'));
             $meta['Recursion'] = $output->warning((string) ($runtime->recursionLimit ?? 'unknown'));
-            $renderer->renderPreamble(new ConsoleStyle($output, $input->globalOptions->visuals), $meta, $highlightedVuln, $highlightedSafe, $arguments, $subject, $range->target->notices(missingProject: false));
+            $renderer->renderPreamble(new ConsoleStyle($output, $input->globalOptions->visuals), $meta, $highlightedVuln, $highlightedSafe, $arguments, $subject, $range->target->notices());
         }
 
         $benchmark = new RedosBenchmark();

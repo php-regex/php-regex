@@ -170,12 +170,6 @@ final class ExitCodeContractTest extends TestCase
     {
         $lint = ['lint', 'src', '--jobs=1'];
 
-        // The commands that read one pattern read regex.json as lint does.
-        foreach ([['validate', '/a/'], ['format', '/a/'], ['highlight', '/a/'], ['compare', '/a/', '/b/']] as $command) {
-            yield $command[0].', a constraint without a lowest version' => ['configuration' => '{"phpVersion": "<8.4"}', 'arguments' => $command];
-            yield $command[0].', min above max' => ['configuration' => '{"phpVersion": {"min": "8.6", "max": "8.1"}}', 'arguments' => $command];
-        }
-
         yield 'a constraint without a lowest version' => ['configuration' => '{"phpVersion": "<8.4"}', 'arguments' => $lint];
         yield 'a PHP_VERSION_ID inside a constraint' => ['configuration' => '{"phpVersion": ">=80100"}', 'arguments' => $lint];
         yield 'an object without max' => ['configuration' => '{"phpVersion": {"min": "8.1"}}', 'arguments' => $lint];
@@ -211,12 +205,6 @@ final class ExitCodeContractTest extends TestCase
     {
         yield 'debug' => [['debug', '/a/']];
         yield 'lint' => [['lint', '.', '--jobs=1']];
-        // The other commands that read one pattern read regex.json for
-        // their target, as lint does.
-        foreach (['analyze', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'transpile', 'redos', 'graph', 'format'] as $command) {
-            yield $command => [[$command, '/a/']];
-        }
-        yield 'compare' => [['compare', '/a/', '/b/']];
     }
 
     /**
@@ -265,13 +253,10 @@ final class ExitCodeContractTest extends TestCase
         foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'redos', 'format'] as $command) {
             yield $command.' on a pattern a later PHP of the --php-version range refuses' => [['--php-version=>=8.1', $command, '/(?<=a\\Kb)c/']];
         }
-        // A pattern the PHP judged refuses is a problem with it, whatever
-        // the command prints of it: "a{2,1}" is refused by every PCRE2.
-        foreach (['explain', 'parse', 'diagram', 'format', 'highlight', 'graph', 'redos'] as $command) {
-            yield $command.' on a pattern the target refuses' => [[$command, '/a{2,1}/']];
-            yield $command.' on a pattern a single --php-version refuses' => [['--php-version=8.1', $command, '/a{2,1}/']];
-        }
-        yield 'format on a pattern the target refuses, as JSON' => [['format', '/a{2,1}/', '--format=json']];
+        // "a{2,1}" is refused by every PCRE2: the benchmark cannot compile
+        // it, at the floor of a range as at a single version.
+        yield 'redos on a pattern the target refuses' => [['redos', '/a{2,1}/']];
+        yield 'redos on a pattern the floor of a --php-version range refuses' => [['--php-version=>=8.1', 'redos', '/a{2,1}/']];
         yield 'validate on a pattern a later PHP of the --php-version range refuses, as JSON' => [['--php-version=>=8.1', 'validate', '/(?<=a\\Kb)c/', '--format=json']];
     }
 
@@ -325,6 +310,13 @@ final class ExitCodeContractTest extends TestCase
         yield 'compare over a --php-version hyphen range' => [['--php-version=8.1 - 8.6', 'compare', '/a/', '/b/']];
         // A later version that reads the pattern otherwise is a warning.
         yield 'validate on a pattern a later PHP of the range parses differently' => [['--php-version=>=8.1', 'validate', '/a{,3}/']];
+        // A pattern the floor refuses keeps the exit code these commands
+        // give it at a single version: they print what they read of it.
+        foreach (['explain', 'parse', 'diagram', 'format', 'highlight', 'graph'] as $command) {
+            yield $command.' on a pattern the target refuses' => [[$command, '/a{2,1}/']];
+            yield $command.' on a pattern the floor of a --php-version range refuses' => [['--php-version=>=8.1', $command, '/a{2,1}/']];
+        }
+        yield 'format on a pattern the floor of a --php-version range refuses, as JSON' => [['--php-version=>=8.1', 'format', '/a{2,1}/', '--format=json']];
         yield 'compare --method=subset on a subset' => [['compare', '/a/', '/a|b/', '--method=subset']];
         yield 'compare --method=equivalence on equivalent patterns' => [['compare', '/a/', '/a/', '--method=equivalence']];
         yield 'diagram written to a file' => [['diagram', '/a/', '--output=a.txt']];

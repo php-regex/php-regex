@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Cli\ApplicationFactory;
 use PHPRegex\Cli\Output;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,8 +27,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class PatternPastTheLimitTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     /**
      * @return iterable<string, array{command: string}>
      */

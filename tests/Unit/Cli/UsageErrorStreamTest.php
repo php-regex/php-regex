@@ -24,7 +24,6 @@ use PHPRegex\Cli\Command\ValidateCommand;
 use PHPRegex\Cli\Command\VersionCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -36,8 +35,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class UsageErrorStreamTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     /**
      * @param list<string>                                       $arguments
      * @param array{php_version?: string, pcre_version?: string} $regexOptions

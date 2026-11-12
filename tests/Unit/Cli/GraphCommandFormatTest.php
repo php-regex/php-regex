@@ -16,7 +16,6 @@ namespace PHPRegex\Tests\Unit\Cli;
 use PHPRegex\Cli\Command\GraphCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,8 +27,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class GraphCommandFormatTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     /**
      * @return iterable<string, array{format: string, expected: non-empty-string}>
      */

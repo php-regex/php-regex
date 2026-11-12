@@ -22,12 +22,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Any version judged that refuses the pattern makes a command that reads
- * one pattern exit 1, the floor included, a single version included: the
- * explanation, the tree, the diagram, the laid-out pattern, the colours,
- * the graph and the benchmark are still printed, and stderr names the
- * error and the PHP that refuses the pattern. validate, analyze, debug,
- * compare and transpile exited 1 there already.
+ * A pattern the floor refuses keeps the exit code each command that reads
+ * one pattern gives it at a single version, a range included: explain,
+ * parse, diagram, format, highlight and graph print what they read of it
+ * and exit 0, redos exits 1, its benchmark failing to compile it. Only a
+ * later version of a range that refuses a pattern the floor accepts makes
+ * them exit 1 (SinglePatternCommandRangeTest): the floor's refusal is the
+ * command's own verdict, and stderr adds nothing to it.
  *
  * "a{2,1}" is refused by every PCRE2 (pcre2test and preg_match():
  * "numbers out of order in {} quantifier"), read first on the running
@@ -46,64 +47,64 @@ final class FloorRefusalExitCodeTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideCommandsOnAPatternTheFloorRefuses')]
-    public function test_a_command_exits_1_when_the_floor_refuses_and_still_prints_its_output(string $phpVersion, array $command, string $printed): void
+    public function test_a_command_keeps_its_exit_code_when_the_floor_refuses(string $phpVersion, array $command, int $expected, string $printed): void
     {
         self::assertEngineRefuses(self::REFUSED_EVERYWHERE);
         $this->enterProject();
 
         [$exitCode, $stdout, $stderr] = $this->runRegex(['--php-version='.$phpVersion, ...$command]);
+        [$singleExitCode] = $this->runRegex(['--php-version=8.1', ...$command]);
 
-        $this->assertSame(1, $exitCode, $stdout.$stderr);
+        $this->assertSame($expected, $exitCode, $stdout.$stderr);
+        $this->assertSame($singleExitCode, $exitCode, 'The range keeps the exit code of its floor alone.');
         $this->assertStringContainsString($printed, $stdout, 'The output is still printed.');
-        $error = self::verdictAt(80100, self::REFUSED_EVERYWHERE)['error'];
-        $this->assertIsString($error);
-        $this->assertStringContainsString($error, $stderr);
-        $this->assertStringContainsString('PHP 8.1', $stderr, 'stderr names the PHP that refuses the pattern.');
+        $this->assertSame('', $stderr, 'The floor\'s refusal adds nothing on stderr.');
     }
 
     /**
-     * @return iterable<string, array{phpVersion: string, command: list<string>, printed: string}>
+     * @return iterable<string, array{phpVersion: string, command: list<string>, expected: int, printed: string}>
      */
     public static function provideCommandsOnAPatternTheFloorRefuses(): iterable
     {
         $commands = [
-            'explain' => [['explain', self::REFUSED_EVERYWHERE], 'at least 2 but not more than 1 times'],
-            'parse' => [['parse', self::REFUSED_EVERYWHERE], 'Recompiled: /a{2,1}/'],
-            'diagram' => [['diagram', self::REFUSED_EVERYWHERE], 'Quantifier ({2,1}, greedy)'],
-            'format' => [['format', self::REFUSED_EVERYWHERE], '/a{2,1}/'],
-            'highlight' => [['highlight', self::REFUSED_EVERYWHERE], '/a{2,1}/'],
-            'graph' => [['graph', self::REFUSED_EVERYWHERE], 'digraph NFA'],
-            // redos exits 1 already, its benchmark failing to compile the
-            // pattern; stderr did not say why.
-            'redos' => [['redos', self::REFUSED_EVERYWHERE], 'Vulnerable: /a{2,1}/'],
+            'explain' => [['explain', self::REFUSED_EVERYWHERE], 0, 'at least 2 but not more than 1 times'],
+            'parse' => [['parse', self::REFUSED_EVERYWHERE], 0, 'Recompiled: /a{2,1}/'],
+            'diagram' => [['diagram', self::REFUSED_EVERYWHERE], 0, 'Quantifier ({2,1}, greedy)'],
+            'format' => [['format', self::REFUSED_EVERYWHERE], 0, '/a{2,1}/'],
+            'highlight' => [['highlight', self::REFUSED_EVERYWHERE], 0, '/a{2,1}/'],
+            'graph' => [['graph', self::REFUSED_EVERYWHERE], 0, 'digraph NFA'],
+            'redos' => [['redos', self::REFUSED_EVERYWHERE], 1, 'Vulnerable: /a{2,1}/'],
         ];
         foreach (['a single version' => '8.1', 'a range' => '>=8.1'] as $label => $phpVersion) {
-            foreach ($commands as $name => [$command, $printed]) {
-                yield $name.', '.$label => ['phpVersion' => $phpVersion, 'command' => $command, 'printed' => $printed];
+            foreach ($commands as $name => [$command, $expected, $printed]) {
+                yield $name.', '.$label => ['phpVersion' => $phpVersion, 'command' => $command, 'expected' => $expected, 'printed' => $printed];
             }
         }
     }
 
     /**
      * format's JSON document is the answer, the pattern laid out or given
-     * back: it is still printed, its "range" says the floor refuses the
-     * pattern, and the run exits 1.
+     * back: its "range" says the floor refuses the pattern, and the run
+     * exits 0, as at a single version.
      */
     #[Test]
-    public function test_format_as_json_exits_1_when_the_floor_refuses(): void
+    public function test_format_as_json_keeps_exit_code_0_when_the_floor_refuses(): void
     {
         self::assertEngineRefuses(self::REFUSED_EVERYWHERE);
         $this->enterProject();
 
-        [$exitCode, $stdout, $stderr] = $this->runRegex(['--php-version=8.1', 'format', self::REFUSED_EVERYWHERE, '--format=json']);
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['--php-version=>=8.1', 'format', self::REFUSED_EVERYWHERE, '--format=json']);
 
-        $this->assertSame(1, $exitCode, $stdout.$stderr);
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('format', $document);
         $this->assertSame('/a{2,1}/', $document['formatted'] ?? null);
-        $floor = JsonContract::asArray(JsonContract::asArray($document['range'] ?? null)[0] ?? null);
+        $range = JsonContract::asArray($document['range'] ?? null);
+        $floor = JsonContract::asArray($range[0] ?? null);
         $this->assertFalse($floor['is_valid'] ?? null);
         $this->assertSame('8.1', $floor['php'] ?? null);
+        $this->assertSame(self::verdictAt(80100, self::REFUSED_EVERYWHERE)['error'], $floor['error'] ?? null);
+        $this->assertGreaterThan(1, \count($range), 'The later versions are judged too, and refuse it as well.');
     }
 
     /**

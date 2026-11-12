@@ -99,7 +99,7 @@ final class ValidateCommand extends AbstractCommand implements JsonCommandInterf
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
-        $style->renderBanner('validate', $this->targetMeta($output, $range), notes: $range->target->notices(missingProject: false));
+        $style->renderBanner('validate', $this->targetMeta($output, $range), notes: $range->target->notices());
 
         $highlightedPattern = $this->highlightPattern($regex, $pattern, $output, $validation);
 

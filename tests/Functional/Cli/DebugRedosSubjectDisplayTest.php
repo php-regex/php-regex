@@ -17,7 +17,6 @@ use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\Command\RedosCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,8 +29,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class DebugRedosSubjectDisplayTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     /**
      * @return iterable<string, array{command: string}>
      */

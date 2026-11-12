@@ -16,11 +16,11 @@ namespace PHPRegex\Mcp\Tool;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\RangeFindings;
 use PHPRegex\Linter\RangePoints;
-use PHPRegex\Linter\RangeWording;
 use PHPRegex\Mcp\Exception\TargetException;
 use PHPRegex\Mcp\RegexFactory;
 use PHPRegex\Mcp\ToolInterface;
 use PHPRegex\Mcp\ToolResult;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -76,32 +76,27 @@ abstract class AbstractTool implements ToolInterface
     }
 
     /**
-     * The target judged, under $key, and the verdict of each version of its
-     * range on the pattern, the floor first: the keys every document of a
-     * tool ends with.
-     *
-     * @return array<string, array{php: string, pcre: string, locale: string, source: string, range: list<TargetDescription>}|non-empty-list<RangePoint>>
-     */
-    protected static function range(Regex $regex, ProjectTarget $target, string $pattern, string $key = 'target'): array
-    {
-        $floor = $regex->parser();
-
-        return [$key => $target->toArray(), 'range' => RangePoints::of($floor, $target->rangeParsers($floor), $pattern)];
-    }
-
-    /**
      * The text answer, then what the later versions of the range find in a
      * pattern the floor accepts and what resolving the target changed on
      * the way, a line each, in lint's words: an error for the lowest
      * version that refuses the pattern, else a warning for the lowest that
      * reads it into another tree, else for the first change of meaning
      * that keeps the tree; then a note per notice. None of them makes the
-     * answer a failure of the tool: the floor accepts the pattern.
+     * answer a failure of the tool: the floor accepts the pattern. Beside
+     * it, the keys every document of a tool ends with: the target judged,
+     * under $key, and the verdict of each version of its range on the
+     * pattern, the floor first. The parsers of the later versions are
+     * built once for both.
+     *
+     * @return array{string, array<string, array{php: string, pcre: string, locale: string, source: string, range: list<TargetDescription>}|non-empty-list<RangePoint>>}
      */
-    protected static function withRange(string $text, Regex $regex, ProjectTarget $target, string $pattern): string
+    protected static function overRange(string $text, Regex $regex, ProjectTarget $target, string $pattern, string $key = 'target'): array
     {
+        $floor = $regex->parser();
+        $later = $target->rangeParsers($floor);
+
         $lines = [$text];
-        $finding = self::rangeFinding($regex, $target, $pattern);
+        $finding = self::rangeFinding($floor, $later, $pattern);
         if (null !== $finding) {
             $lines[] = $finding;
         }
@@ -109,7 +104,7 @@ abstract class AbstractTool implements ToolInterface
             $lines[] = 'Note: '.$notice;
         }
 
-        return implode("\n", $lines);
+        return [implode("\n", $lines), [$key => $target->toArray(), 'range' => RangePoints::of($floor, $later, $pattern)]];
     }
 
     /**
@@ -130,28 +125,24 @@ abstract class AbstractTool implements ToolInterface
 
     /**
      * What the later versions of the range find in the pattern, as
-     * withRange() words it, or null: for a single version, a pattern the
+     * overRange() words it, or null: for a single version, a pattern the
      * floor refuses, or one every later version reads as the floor does.
+     *
+     * @param list<RegexParser> $later a parser for each version after the floor
      */
-    private static function rangeFinding(Regex $regex, ProjectTarget $target, string $pattern): ?string
+    private static function rangeFinding(RegexParser $floor, array $later, string $pattern): ?string
     {
-        $floor = $regex->parser();
-        $range = $target->rangeParsers($floor);
         // A pattern the floor accepts comes with the tree it read.
-        $ast = $floor->validate($pattern)->ast;
-        if ([] === $range || null === $ast) {
+        $ast = [] === $later ? null : $floor->validate($pattern)->ast;
+        if (null === $ast) {
             return null;
         }
 
-        $findings = RangeFindings::of($floor, $range, $pattern, $ast, true);
-        if (null !== $findings->refusedBy) {
-            return 'Error: '.RangeWording::refusal($findings->refusedOn, $findings->refusedBy->validation);
+        $wording = RangeFindings::of($floor, $later, $pattern, $ast, true)->wording();
+        if (null !== $wording['refusal']) {
+            return 'Error: '.$wording['refusal'];
         }
-        if (null !== $findings->readsOtherwise) {
-            return 'Warning: '.RangeWording::readsOtherwise($findings->readsOtherwise);
-        }
-        $silentChange = $findings->silentChange;
 
-        return null === $silentChange ? null : 'Warning: '.RangeWording::silentChange($silentChange->target, $silentChange->message);
+        return null === $wording['warning'] ? null : 'Warning: '.$wording['warning'];
     }
 }

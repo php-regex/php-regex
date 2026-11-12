@@ -49,6 +49,8 @@ final class ValidateTool extends AbstractTool
             }
         }
 
-        return ToolResult::document(self::withRange($text, $regex, $target, $pattern), ['pattern' => $pattern, 'validation' => $validation, ...self::range($regex, $target, $pattern)]);
+        [$text, $range] = self::overRange($text, $regex, $target, $pattern);
+
+        return ToolResult::document($text, ['pattern' => $pattern, 'validation' => $validation, ...$range]);
     }
 }

@@ -42,6 +42,8 @@ final class ExplainTool extends AbstractTool
         // A pattern the target compiles is one the explainer reads.
         $explanation = $regex->explain($pattern);
 
-        return ToolResult::document(self::withRange($explanation, $regex, $target, $pattern), ['pattern' => $pattern, 'explanation' => $explanation, ...self::range($regex, $target, $pattern)]);
+        [$text, $range] = self::overRange($explanation, $regex, $target, $pattern);
+
+        return ToolResult::document($text, ['pattern' => $pattern, 'explanation' => $explanation, ...$range]);
     }
 }

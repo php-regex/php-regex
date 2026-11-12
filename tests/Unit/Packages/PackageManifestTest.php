@@ -118,9 +118,9 @@ final class PackageManifestTest extends TestCase
             'LanguageServer\Server', 'Linter\AnalysisService',
             'Linter\Config\LintArguments', 'Linter\Config\LintConfigLoader', 'Linter\Config\LintDefaultsBuilder',
             'Linter\Config\LintExtractorFactory', 'Linter\Config\ProjectTarget',
-            // The commands that read one pattern find their target in the
-            // regex.json lint loads, and judge and word the range as lint does.
-            'Linter\Config\LintConfigResult', 'Linter\RangeFindings', 'Linter\RangePoints', 'Linter\RangeWording',
+            // The commands that read one pattern judge and word a range as
+            // lint does.
+            'Linter\RangeFindings', 'Linter\RangePoints',
             'Linter\Extraction\InteropPresets',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\LintIssue',
             'Linter\Formatter\ConsoleFormatter', 'Linter\Formatter\FormatterRegistry', 'Linter\Formatter\JsonFormatter',
@@ -196,7 +196,7 @@ final class PackageManifestTest extends TestCase
         // versions find is said in the text answer in lint's words.
         'Mcp' => [
             'Linter\Config\ProjectTarget', 'Linter\Config\TargetSpec', 'Linter\RangeFindings', 'Linter\RangePoints',
-            'Linter\RangeWording', 'Parser\Json\JsonDocument',
+            'Parser\Json\JsonDocument',
         ],
         // The modernizer reads (*UCP) among the opening verbs the parser
         // recognises as start options.

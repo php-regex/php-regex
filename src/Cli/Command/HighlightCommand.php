@@ -97,7 +97,7 @@ final class HighlightCommand extends AbstractCommand
         try {
             if ('console' === $format && $style->visualsEnabled()) {
                 $meta['Format'] = $output->warning('console');
-                $style->renderBanner('highlight', $meta, notes: $range->target->notices(missingProject: false));
+                $style->renderBanner('highlight', $meta, notes: $range->target->notices());
             } elseif ('console' !== $format) {
                 $this->reportNotices($output, $range);
             }

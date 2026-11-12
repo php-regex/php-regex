@@ -1036,13 +1036,15 @@ backreference, without `validation`.
 ### Range point: `range_point`
 
 `regex validate`, `analyze`, `explain`, `redos`, `format`, `transpile` and
-`debug` judge their pattern for the PHP versions they resolve as `regex
-lint` does: `--php-version`, then `phpVersion` in `regex.json`, then
-`composer.json`, then the running PHP. Their own output is computed once,
-at the floor; the pattern is also validated at every later version of a
-range, and `range` gives each version's verdict, the floor first. A
-version that refuses the pattern, the floor included, makes the command exit
-with 1; a version that reads it otherwise does not change the exit code.
+`debug` judge their pattern for the PHP versions `--php-version` names, a
+range included, read as `regex lint` reads it; else for the running PHP
+alone. They read no `regex.json` and no `composer.json`. Their own output is
+computed once, at the floor; the pattern is also validated at every later
+version of a range, and `range` gives each version's verdict, the floor
+first. A later version that refuses a pattern the floor accepts makes the
+command exit with 1; a pattern the floor refuses keeps the exit code the
+command gives it at a single version, and a version that reads the pattern
+otherwise does not change the exit code.
 
 | key | type | meaning |
 |---|---|---|
@@ -1052,7 +1054,6 @@ with 1; a version that reads it otherwise does not change the exit code.
 | `error` | string \| null | Why it refuses the pattern; `null` when it accepts it |
 | `error_code` | string \| null | The refusal's error code, as in a [validation](#validation-validation) object; `null` when it accepts the pattern |
 | `parses_differently` | bool | Whether that version reads the pattern into another tree than the floor, where both accept it; `false` for the floor and for a version that refuses it |
-
 
 ### Runtime: `runtime`
 

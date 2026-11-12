@@ -19,7 +19,6 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\ConfirmationOptions;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,8 +31,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosNoJitRemovedTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     #[Test]
     #[DataProvider('provideCommands')]
     public function test_the_option_is_refused_as_an_unknown_one(string $name): void

@@ -109,7 +109,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
         $meta = $this->buildRuntimeMeta($output, $range, $runtime);
 
         if ('json' !== $parsed['format']) {
-            $style->renderBanner('analyze', $meta, notes: $range->target->notices(missingProject: false));
+            $style->renderBanner('analyze', $meta, notes: $range->target->notices());
         } else {
             $this->reportNotices($output, $range);
         }

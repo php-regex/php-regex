@@ -62,6 +62,8 @@ final class RedosTool extends AbstractTool
 
         $analysis = $regex->redos($pattern, $threshold, RedosMode::from($mode));
 
-        return ToolResult::document(self::withRange(implode("\n", [$analysis->headline(), ...$analysis->recommendations]), $regex, $target, $pattern), ['pattern' => $pattern, 'redos' => $analysis, ...self::range($regex, $target, $pattern)]);
+        [$text, $range] = self::overRange(implode("\n", [$analysis->headline(), ...$analysis->recommendations]), $regex, $target, $pattern);
+
+        return ToolResult::document($text, ['pattern' => $pattern, 'redos' => $analysis, ...$range]);
     }
 }

@@ -76,7 +76,7 @@ final class ParseCommand extends AbstractCommand
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $meta = $this->buildRuntimeMeta($output, $range, $validate);
-        $style->renderBanner('parse', $meta, notes: $range->target->notices(missingProject: false));
+        $style->renderBanner('parse', $meta, notes: $range->target->notices());
 
         try {
             $exitCode = $this->executeParsing($output, $range->regex, $style, $pattern, $validate);

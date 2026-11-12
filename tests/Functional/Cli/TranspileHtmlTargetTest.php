@@ -16,7 +16,6 @@ namespace PHPRegex\Tests\Functional\Cli;
 use PHPRegex\Cli\ApplicationFactory;
 use PHPRegex\Cli\Command\TranspileCommand;
 use PHPRegex\Cli\Output;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -26,8 +25,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class TranspileHtmlTargetTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     #[Test]
     public function test_the_html_target_prints_the_attribute_value(): void
     {

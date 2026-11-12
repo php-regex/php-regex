@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Cli;
 
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,8 +25,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosCommandDisabledIniTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     #[Test]
     #[DataProvider('provideSettingOptions')]
     public function test_an_option_that_needs_ini_set_is_refused_without_it(string $option): void

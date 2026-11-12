@@ -16,7 +16,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 use Illuminate\Support\Facades\Artisan;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\JsonContract;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,7 +27,6 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class TranspileJsonContractTest extends LaravelTestCase
 {
-    use RunsInAnEmptyProject;
     use RunsRegexCli;
 
     #[Test]

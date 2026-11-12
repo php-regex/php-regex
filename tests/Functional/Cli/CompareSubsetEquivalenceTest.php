@@ -16,7 +16,6 @@ namespace PHPRegex\Tests\Functional\Cli;
 use PHPRegex\Cli\Command\CompareCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,8 +28,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class CompareSubsetEquivalenceTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     /**
      * @param list<string> $subjects strings both patterns match whole, or both do not
      */

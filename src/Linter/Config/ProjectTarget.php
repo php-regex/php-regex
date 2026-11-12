@@ -83,7 +83,6 @@ final class ProjectTarget
         private readonly array $range,
         private readonly ?array $admitted = null,
         private readonly ?string $pinnedPcre = null,
-        private readonly ?string $missingProject = null,
     ) {}
 
     /**
@@ -175,16 +174,8 @@ final class ProjectTarget
             break;
         }
 
-        $missingProject = null;
         if (null === $phpVersionId || null === $phpSource) {
-            $found = true;
-            $fromComposer = null === $projectDir ? null : ComposerPlatform::read($projectDir, $env, $notices, $found);
-            // No composer.json at all is said apart: the usual place of a
-            // command that judges one pattern, where the lint expects a
-            // project.
-            if (!$found) {
-                $missingProject = array_pop($notices);
-            }
+            $fromComposer = null === $projectDir ? null : ComposerPlatform::read($projectDir, $env, $notices);
             if (null === $fromComposer) {
                 [$phpVersionId, $phpSource, $runningPhp] = [\PHP_VERSION_ID, 'running PHP', true];
             } else {
@@ -235,7 +226,7 @@ final class ProjectTarget
             $notices[] = $older;
         }
 
-        return new self($target, $source, $notices, $range, $admitted, $pinnedPcre, $missingProject);
+        return new self($target, $source, $notices, $range, $admitted, $pinnedPcre);
     }
 
     /**
@@ -373,13 +364,11 @@ final class ProjectTarget
     /**
      * What could not be read, or was changed, on the way.
      *
-     * @param bool $missingProject whether to say that the directory holds no composer.json
-     *
      * @return list<string>
      */
-    public function notices(bool $missingProject = true): array
+    public function notices(): array
     {
-        return $missingProject && null !== $this->missingProject ? [$this->missingProject, ...$this->notices] : $this->notices;
+        return $this->notices;
     }
 
     /**

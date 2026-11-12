@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
 use PHPRegex\Symfony\Command\TranspileCommand;
 use PHPRegex\Tests\Support\JsonContract;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -29,7 +28,6 @@ use Symfony\Component\Console\Tester\CommandTester;
  */
 final class TranspileJsonContractTest extends TestCase
 {
-    use RunsInAnEmptyProject;
     use RunsRegexCli;
 
     #[Test]

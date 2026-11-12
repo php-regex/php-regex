@@ -28,11 +28,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The commands that read one pattern find their target where lint finds
- * it, in the working directory: --php-version, then regex.json's
- * phpVersion, then composer.json (config.platform.php, then require.php),
- * then the running PHP. A regex.json lint cannot read stops them as it
- * stops lint, stage "config", exit 2.
+ * The commands that read one pattern take their target from the command
+ * line alone: --php-version, a range included, --pcre-version and
+ * --locale, else the running PHP. They read neither regex.json nor
+ * composer.json of the working directory, whatever lint reads there: a
+ * range is judged only when --php-version names one.
  */
 final class AbstractCommandTargetTest extends TestCase
 {
@@ -45,36 +45,32 @@ final class AbstractCommandTargetTest extends TestCase
     private const PHP_FILE = "<?php\n\npreg_match('/a/', \$s);\n";
 
     /**
-     * No --php-version, a composer.json that allows ">=8.1": the pattern is
-     * judged for 8.1 and every later version, as lint judges it there.
+     * No --php-version, a composer.json that allows ">=8.1" and a
+     * regex.json that names a range: the pattern is judged for the running
+     * PHP alone, where lint judges the range.
      */
     #[Test]
-    public function test_a_command_without_a_flag_is_judged_for_the_range_composer_json_allows(): void
+    public function test_a_command_without_a_flag_judges_the_running_php_inside_a_project(): void
     {
-        self::assertEngineKeepInLookbehind();
-        $directory = $this->enterProject(['composer.json' => self::COMPOSER, 'src/a.php' => self::PHP_FILE]);
+        $this->enterProject(['composer.json' => self::COMPOSER, 'regex.json' => '{"phpVersion": ">=8.2"}', 'src/a.php' => self::PHP_FILE]);
 
-        [$exitCode, $stdout] = $this->runRegex(['validate', RangePatterns::KEEP_IN_LOOKBEHIND, '--format=json']);
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['validate', '/a/', '--format=json']);
         [, $lint] = $this->runRegex(['lint', 'src', '--jobs=1', '--no-redos', '--format=json']);
 
-        $this->assertSame(1, $exitCode, $stdout);
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        $this->assertSame('', $stderr, 'Nothing is read, so nothing is noted.');
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('validate', $document);
-        $target = $document['target'] ?? null;
-        $this->assertSame(JsonContract::decodeDocument($lint)['target'] ?? null, $target);
-        $this->assertSame(ProjectTarget::resolve(null, null, [], $directory, [])->toArray(), $target);
-        $this->assertSame('composer.json require.php', JsonContract::asArray($target)['source'] ?? null);
-        self::assertRange(
-            $document['range'] ?? null,
-            RangePatterns::FROM_8_1,
-            RangePatterns::KEEP_IN_LOOKBEHIND,
-            static fn (int $point): bool => $point < 80500,
-            static fn (int $point): bool => false,
-        );
+        $target = JsonContract::asArray($document['target'] ?? null);
+        $running = ProjectTarget::fromSources([], [], null, [])->toArray();
+        $this->assertSame('running PHP', $running['source']);
+        $this->assertSame($running, $target);
+        $this->assertCount(1, JsonContract::asArray($document['range'] ?? null), 'The running PHP alone is judged.');
+        $this->assertSame('regex.json', JsonContract::asArray(JsonContract::decodeDocument($lint)['target'] ?? null)['source'] ?? null, 'lint reads the project.');
     }
 
     /**
-     * Every command reads composer.json: "a{,3}" judged from 8.1 is read
+     * No command reads composer.json: "a{,3}" judged from 8.1 would be read
      * otherwise from the first version whose PCRE2 reads the quantifier,
      * which the running PHP alone never says.
      *
@@ -82,12 +78,19 @@ final class AbstractCommandTargetTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideEveryCommand')]
-    public function test_every_command_reads_the_range_of_composer_json(array $command): void
+    public function test_no_command_reads_the_range_of_composer_json(array $command): void
     {
         self::assertEngineReadsQuantifierWithoutMin();
-        $this->enterProject(['composer.json' => self::COMPOSER]);
+        $this->enterProject(['composer.json' => self::COMPOSER, 'regex.json' => '{"phpVersion": ">=8.1"}']);
 
         [, $stdout, $stderr] = $this->runRegex($command);
+
+        $this->assertStringNotContainsString('parses differently', $stdout.$stderr);
+        $this->assertStringNotContainsString('composer.json', $stdout.$stderr);
+        $this->assertStringNotContainsString('regex.json', $stdout.$stderr);
+
+        // --php-version names the range: then it is judged.
+        [, $stdout, $stderr] = $this->runRegex(['--php-version=>=8.1', ...$command]);
 
         $this->assertStringContainsString(self::parsesDifferentlyMessage(self::firstPointReadingQuantifierOtherwise(RangePatterns::FROM_8_1)), $stdout.$stderr);
     }
@@ -104,77 +107,59 @@ final class AbstractCommandTargetTest extends TestCase
     }
 
     /**
-     * config.platform.php is the PHP Composer resolves for: a single
-     * version, judged alone, before require.php.
-     */
-    #[Test]
-    public function test_config_platform_php_beats_require_php(): void
-    {
-        $directory = $this->enterProject(['composer.json' => '{"name": "acme/app", "require": {"php": ">=8.1"}, "config": {"platform": {"php": "8.2.0"}}}']);
-
-        [$exitCode, $stdout] = $this->runRegex(['validate', RangePatterns::KEEP_IN_LOOKBEHIND, '--format=json']);
-
-        $this->assertSame(0, $exitCode, $stdout);
-        $expected = ProjectTarget::resolve(null, null, [], $directory, [])->toArray();
-        $this->assertSame(['8.2', 'composer.json config.platform.php'], [$expected['php'], $expected['source']]);
-        $this->assertSame($expected, JsonContract::decodeDocument($stdout)['target'] ?? null);
-    }
-
-    /**
-     * regex.json's phpVersion, and the pcreVersion beside it, win over
-     * composer.json; --php-version wins over both.
+     * --php-version is the target, as lint takes it before regex.json and
+     * composer.json: the same flag names the same target in both.
      *
-     * @param list<string> $flags
-     * @param list<int>    $points
+     * @param list<int> $points
      */
     #[Test]
-    #[DataProvider('provideSourcesInOrder')]
-    public function test_the_target_comes_from_the_first_source_that_names_one(string $regexJson, array $flags, string $source, array $points): void
+    #[DataProvider('provideFlags')]
+    public function test_the_target_is_the_one_the_flag_names_as_lint_reads_it(string $phpVersion, array $points): void
     {
-        $this->enterProject(['composer.json' => self::COMPOSER, 'regex.json' => $regexJson, 'src/a.php' => self::PHP_FILE]);
+        $this->enterProject(['composer.json' => self::COMPOSER, 'regex.json' => '{"phpVersion": "8.2"}', 'src/a.php' => self::PHP_FILE]);
 
-        [$exitCode, $stdout] = $this->runRegex([...$flags, 'validate', '/a/', '--format=json']);
-        [, $lint] = $this->runRegex([...$flags, 'lint', 'src', '--jobs=1', '--no-redos', '--format=json']);
+        [$exitCode, $stdout] = $this->runRegex(['--php-version='.$phpVersion, 'validate', '/a/', '--format=json']);
+        [, $lint] = $this->runRegex(['--php-version='.$phpVersion, 'lint', 'src', '--jobs=1', '--no-redos', '--format=json']);
 
         $this->assertSame(0, $exitCode, $stdout);
         $target = JsonContract::asArray(JsonContract::decodeDocument($stdout)['target'] ?? null, $stdout);
         $this->assertSame(JsonContract::decodeDocument($lint)['target'] ?? null, $target);
-        $this->assertSame($source, $target['source'] ?? null);
+        $this->assertSame('--php-version', $target['source'] ?? null);
         $this->assertSame(array_map(ProjectTarget::phpLabel(...), $points), array_column(JsonContract::asArray($target['range'] ?? null), 'php'));
     }
 
     /**
-     * @return iterable<string, array{regexJson: string, flags: list<string>, source: string, points: list<int>}>
+     * @return iterable<string, array{phpVersion: string, points: list<int>}>
      */
-    public static function provideSourcesInOrder(): iterable
+    public static function provideFlags(): iterable
     {
-        yield 'a single version in regex.json beats require.php' => ['regexJson' => '{"phpVersion": "8.2"}', 'flags' => [], 'source' => 'regex.json', 'points' => [80200]];
-        yield 'a range in regex.json beats require.php' => ['regexJson' => '{"phpVersion": ">=8.4"}', 'flags' => [], 'source' => 'regex.json', 'points' => [80400, 80425, 80500, 80510]];
-        yield 'a min/max object in regex.json' => ['regexJson' => '{"phpVersion": {"min": "8.2", "max": "8.3"}}', 'flags' => [], 'source' => 'regex.json', 'points' => [80200, 80300]];
-        yield 'the PCRE2 regex.json pins' => ['regexJson' => '{"phpVersion": "8.2", "pcreVersion": "10.42"}', 'flags' => [], 'source' => 'regex.json', 'points' => [80200]];
-        yield '--php-version beats regex.json and require.php' => ['regexJson' => '{"phpVersion": "8.2"}', 'flags' => ['--php-version=>=8.3'], 'source' => '--php-version', 'points' => [80300, 80400, 80425, 80500, 80510]];
-        yield 'a regex.json without phpVersion leaves require.php' => ['regexJson' => '{"paths": ["src"]}', 'flags' => [], 'source' => 'composer.json require.php', 'points' => RangePatterns::FROM_8_1];
+        yield 'a single version' => ['phpVersion' => '8.3', 'points' => [80300]];
+        yield 'a range' => ['phpVersion' => '>=8.3', 'points' => [80300, 80400, 80425, 80500, 80510]];
+        yield 'a hyphen range' => ['phpVersion' => '8.2 - 8.3', 'points' => [80200, 80300]];
     }
 
     /**
-     * A regex.json lint cannot read stops each command as it stops lint:
-     * the same message, stage "config", exit 2.
+     * A regex.json lint cannot read stops lint, not these commands: they
+     * do not read it.
      *
      * @param list<string> $command
      */
     #[Test]
     #[DataProvider('provideBrokenConfigurationsForEveryJsonCommand')]
-    public function test_a_regex_json_lint_cannot_read_is_a_config_error(string $regexJson, array $command): void
+    public function test_a_regex_json_lint_cannot_read_does_not_stop_a_json_command(string $regexJson, array $command): void
     {
         $this->enterProject(['regex.json' => $regexJson, 'src/a.php' => self::PHP_FILE]);
 
-        [$exitCode, $stdout] = $this->runRegex([...$command, '--format=json']);
-        [, $lint] = $this->runRegex(['lint', 'src', '--jobs=1', '--format=json']);
+        [$exitCode, $stdout, $stderr] = $this->runRegex([...$command, '--format=json']);
+        [$lintExitCode, $lint] = $this->runRegex(['lint', 'src', '--jobs=1', '--format=json']);
 
-        $this->assertSame(2, $exitCode, $stdout);
-        $lintEnvelope = JsonContract::decodeDocument($lint);
-        $this->assertSame('config', $lintEnvelope['stage'] ?? null, $lint);
-        $this->assertSame($lintEnvelope, JsonContract::decodeDocument($stdout));
+        $this->assertSame(2, $lintExitCode, $lint);
+        $this->assertSame('config', JsonContract::decodeDocument($lint)['stage'] ?? null, $lint);
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        $this->assertSame('', $stderr);
+        // transpile's "target" is the dialect: the PHP judged is "php_target".
+        $key = 'transpile' === $command[0] ? 'php_target' : 'target';
+        $this->assertSame('running PHP', JsonContract::asArray(JsonContract::decodeDocument($stdout)[$key] ?? null)['source'] ?? null);
     }
 
     /**
@@ -185,49 +170,42 @@ final class AbstractCommandTargetTest extends TestCase
         $configurations = [
             'not JSON' => '{',
             'a constraint without a lowest version' => '{"phpVersion": "<8.4"}',
-            'a PHP_VERSION_ID inside a constraint' => '{"phpVersion": ">=80100"}',
-            'an object without max' => '{"phpVersion": {"min": "8.1"}}',
             'min above max' => '{"phpVersion": {"min": "8.6", "max": "8.1"}}',
             'no version at all' => '{"phpVersion": "abc"}',
         ];
-        // debug loaded regex.json for its defaults before ranges, through
-        // the loader lint uses: it refuses each of these already, and
-        // ExitCodeContractTest keeps it.
+        // debug reads regex.json for its own defaults, through the loader
+        // lint uses: it refuses each of these, and ExitCodeContractTest
+        // keeps it.
         foreach (['validate', 'analyze', 'explain', 'redos', 'format'] as $name) {
             foreach ($configurations as $label => $regexJson) {
                 yield $name.', '.$label => ['regexJson' => $regexJson, 'command' => [$name, '/a/']];
             }
         }
         yield 'transpile, not JSON' => ['regexJson' => '{', 'command' => ['transpile', '/a/']];
-        yield 'transpile, a constraint without a lowest version' => ['regexJson' => '{"phpVersion": "<8.4"}', 'command' => ['transpile', '/a/']];
     }
 
     /**
-     * The commands without JSON stop as well, with lint's message on
-     * stderr and nothing on stdout.
+     * The commands without JSON go on as well, nothing on stderr.
      *
      * @param list<string> $command
      */
     #[Test]
-    #[DataProvider('provideBrokenConfigurationsForEveryConsoleCommand')]
-    public function test_a_regex_json_lint_cannot_read_stops_a_console_command(array $command): void
+    #[DataProvider('provideConsoleCommands')]
+    public function test_a_regex_json_lint_cannot_read_does_not_stop_a_console_command(array $command): void
     {
         $this->enterProject(['regex.json' => '{"phpVersion": "<8.4"}', 'src/a.php' => self::PHP_FILE]);
 
         [$exitCode, $stdout, $stderr] = $this->runRegex($command);
-        [, $lint] = $this->runRegex(['lint', 'src', '--jobs=1', '--format=json']);
 
-        $this->assertSame(2, $exitCode, $stdout.$stderr);
-        $this->assertSame('', $stdout);
-        $error = JsonContract::decodeDocument($lint)['error'] ?? null;
-        $this->assertIsString($error, $lint);
-        $this->assertStringContainsString($error, $stderr);
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        $this->assertNotSame('', $stdout);
+        $this->assertSame('', $stderr);
     }
 
     /**
      * @return iterable<string, array{command: list<string>}>
      */
-    public static function provideBrokenConfigurationsForEveryConsoleCommand(): iterable
+    public static function provideConsoleCommands(): iterable
     {
         foreach (['parse', 'diagram', 'highlight', 'graph', 'validate'] as $command) {
             yield $command => ['command' => [$command, '/a/']];
@@ -236,14 +214,14 @@ final class AbstractCommandTargetTest extends TestCase
     }
 
     /**
-     * A --php-version no source can read stays the command line's error,
-     * stage "usage", in lint's words, whatever regex.json says.
+     * A --php-version no source can read is the command line's error,
+     * stage "usage", in lint's words.
      */
     #[Test]
     #[DataProvider('provideUnreadableFlags')]
-    public function test_an_unreadable_php_version_stays_a_usage_error_in_the_words_of_lint(string $phpVersion): void
+    public function test_an_unreadable_php_version_is_a_usage_error_in_the_words_of_lint(string $phpVersion): void
     {
-        $this->enterProject(['composer.json' => self::COMPOSER, 'regex.json' => '{"phpVersion": "8.2"}', 'src/a.php' => self::PHP_FILE]);
+        $this->enterProject(['src/a.php' => self::PHP_FILE]);
 
         [$exitCode, $stdout] = $this->runRegex(['--php-version='.$phpVersion, 'validate', '/a/', '--format=json']);
         [, $lint] = $this->runRegex(['--php-version='.$phpVersion, 'lint', 'src', '--jobs=1', '--format=json']);
@@ -267,26 +245,26 @@ final class AbstractCommandTargetTest extends TestCase
     }
 
     /**
-     * The banner's "Target PHP" line names the target resolved, where it
-     * came from and the later versions judged, as lint's Target row does,
-     * never the raw text of the flag.
+     * The banner has a "Target PHP" line only when the command line names
+     * a target, inside a project as anywhere: it names the target resolved,
+     * where it came from and the later versions judged, as lint's Target
+     * row does, never the raw text of the flag.
      *
      * @param list<string> $command
      */
     #[Test]
     #[DataProvider('provideCommandsWithABanner')]
-    public function test_the_banner_names_the_resolved_target_its_source_and_its_points(array $command): void
+    public function test_the_banner_names_the_target_the_flag_names_and_its_points(array $command): void
     {
-        $directory = $this->enterProject(['composer.json' => self::COMPOSER]);
-        $target = ProjectTarget::resolve(null, null, [], $directory, []);
+        $this->enterProject(['composer.json' => self::COMPOSER]);
 
         [, $stdout] = $this->runWithBanner($command);
 
-        $this->assertMatchesRegularExpression('/^Target PHP *: '.preg_quote(self::bannerValue($target), '/').'$/m', $stdout);
+        $this->assertDoesNotMatchRegularExpression('/^Target PHP/m', $stdout);
 
         [, $stdout] = $this->runWithBanner(['--php-version=>=8.3', ...$command]);
 
-        $this->assertMatchesRegularExpression('/^Target PHP *: '.preg_quote(self::bannerValue(ProjectTarget::resolve('>=8.3', null, [], $directory, [])), '/').'$/m', $stdout);
+        $this->assertMatchesRegularExpression('/^Target PHP *: '.preg_quote(self::bannerValue(ProjectTarget::fromSources(['--php-version' => '>=8.3'], [], null, [])), '/').'$/m', $stdout);
         $this->assertStringNotContainsString('>=8.3', $stdout);
     }
 
@@ -302,8 +280,8 @@ final class AbstractCommandTargetTest extends TestCase
     }
 
     /**
-     * "PHP 8.1, PCRE2 10.39 (composer.json require.php); also PHP 8.2,
-     * 8.3, 8.4, 8.4.25, 8.5, 8.5.10".
+     * "PHP 8.3, PCRE2 10.42 (--php-version); also PHP 8.4, 8.4.25, 8.5,
+     * 8.5.10".
      */
     private static function bannerValue(ProjectTarget $target): string
     {

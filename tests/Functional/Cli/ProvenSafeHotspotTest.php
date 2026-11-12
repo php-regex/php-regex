@@ -18,7 +18,6 @@ use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Redos\RedosAnalyzer;
-use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,8 +31,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class ProvenSafeHotspotTest extends TestCase
 {
-    use RunsInAnEmptyProject;
-
     private const PROVEN_SAFE = '/a+/';
 
     private const VULNERABLE = '/(a+)+$/';

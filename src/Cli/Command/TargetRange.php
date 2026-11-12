@@ -16,18 +16,15 @@ namespace PHPRegex\Cli\Command;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\RangeFindings;
 use PHPRegex\Linter\RangePoints;
-use PHPRegex\Linter\RangeWording;
-use PHPRegex\Parser\Exception\LexerException;
-use PHPRegex\Parser\Exception\LimitException;
-use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 
 /**
- * The PHP versions a command that reads one pattern judges it for, found
- * where lint finds them: the floor, whose facade computes the command's
- * own output, and each later version of the range, at which the pattern
- * is validated as lint and the language server validate it.
+ * The PHP versions a command that reads one pattern judges it for, as the
+ * command line names them: the floor, whose facade computes the command's
+ * own output, and each later version of a range, at which the pattern is
+ * validated as lint and the language server validate it. The parsers of
+ * the later versions are built once and serve every judgement of the run.
  *
  * @internal
  *
@@ -58,13 +55,18 @@ final class TargetRange
     }
 
     /**
-     * Whether a version of the range refuses the pattern, the floor
-     * included, as the points say it.
+     * Whether a later version of the range refuses a pattern the floor
+     * accepts, as the points say it: the floor's refusal is the command's
+     * own verdict.
      *
      * @param non-empty-list<RangePoint> $points
      */
-    public static function refused(array $points): bool
+    public static function refusedLater(array $points): bool
     {
+        if (!$points[0]['is_valid']) {
+            return false;
+        }
+
         foreach ($points as $point) {
             if (!$point['is_valid']) {
                 return true;
@@ -75,46 +77,23 @@ final class TargetRange
     }
 
     /**
-     * What the versions judged say of the pattern, in the words of lint
-     * and the language server: the refusal of the floor, else the refusal
-     * of the lowest later version that refuses it, else the lowest that
-     * reads it into another tree, else the first change of meaning that
-     * keeps the tree.
+     * What the later versions of the range say of a pattern the floor
+     * accepts, in the words of lint and the language server: the refusal
+     * of the lowest that refuses it, else the lowest that reads it into
+     * another tree, else the first change of meaning that keeps the tree.
+     * Nothing for a pattern the floor refuses: the command's own output
+     * says so.
      *
      * @return array{refusal: string|null, warning: string|null}
      */
     public function findings(string $pattern): array
     {
-        $none = ['refusal' => null, 'warning' => null];
-        $floor = $this->regex->parser();
-        $validation = $floor->validate($pattern);
-        if (!$validation->isValid) {
-            return ['refusal' => RangeWording::refusal('PHP '.ProjectTarget::phpLabel($floor->target()->phpVersionId), $validation), 'warning' => null];
+        // A pattern the floor accepts comes with the tree it read.
+        $ast = [] === $this->later ? null : $this->regex->parser()->validate($pattern)->ast;
+        if (null === $ast) {
+            return ['refusal' => null, 'warning' => null];
         }
 
-        if ([] === $this->later) {
-            return $none;
-        }
-
-        try {
-            $ast = $floor->parse($pattern);
-        } catch (LexerException|LimitException|ParserException) {
-            return $none;
-        }
-
-        $findings = RangeFindings::of($floor, $this->later, $pattern, $ast, true);
-        if (null !== $findings->refusedBy) {
-            return ['refusal' => RangeWording::refusal($findings->refusedOn, $findings->refusedBy->validation), 'warning' => null];
-        }
-
-        if (null !== $findings->readsOtherwise) {
-            return ['refusal' => null, 'warning' => RangeWording::readsOtherwise($findings->readsOtherwise)];
-        }
-
-        if (null !== $findings->silentChange) {
-            return ['refusal' => null, 'warning' => RangeWording::silentChange($findings->silentChange->target, $findings->silentChange->message)];
-        }
-
-        return $none;
+        return RangeFindings::of($this->regex->parser(), $this->later, $pattern, $ast, true)->wording();
     }
 }
