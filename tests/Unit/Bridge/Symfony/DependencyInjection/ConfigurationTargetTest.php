@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection;
 
+use PHPRegex\Linter\Config\TargetSpec;
 use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -22,9 +23,12 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 
 /**
- * php_version takes what Regex::create() takes ("8.2", "8.2.4", 80200) and
- * pcre_version a release; a value neither can read stops the container
- * compile. A 1.x key is refused like any key the tree never knew.
+ * php_version takes what Regex::create() takes ("8.2", "8.2.4", 80200), or
+ * a Composer constraint as `regex lint --php-version` takes it (">=8.1"),
+ * kept as written: the node stays scalar. pcre_version takes a release; a
+ * value neither can read stops the container compile, a constraint lint
+ * refuses with lint's words. A 1.x key is refused like any key the tree
+ * never knew.
  */
 final class ConfigurationTargetTest extends TestCase
 {
@@ -34,6 +38,49 @@ final class ConfigurationTargetTest extends TestCase
     public function test_php_version_takes_a_version_id(): void
     {
         $this->assertSame(80200, $this->process(['php_version' => 80200])['php_version']);
+    }
+
+    /**
+     * @return iterable<string, array{constraint: string}>
+     */
+    public static function provideConstraints(): iterable
+    {
+        yield 'an open range' => ['constraint' => '>=8.1'];
+        yield 'a caret range with a ceiling' => ['constraint' => '^8.1 <8.7'];
+        yield 'a hyphen range' => ['constraint' => '8.1 - 8.6'];
+        yield 'from the last gate point' => ['constraint' => '>=8.5.10'];
+        yield 'above every gate point' => ['constraint' => '>8.6'];
+    }
+
+    #[Test]
+    #[DataProvider('provideConstraints')]
+    public function test_php_version_takes_a_composer_constraint_as_written(string $constraint): void
+    {
+        $this->assertSame($constraint, $this->process(['php_version' => $constraint])['php_version']);
+    }
+
+    /**
+     * @return iterable<string, array{constraint: string}>
+     */
+    public static function provideConstraintsLintRefuses(): iterable
+    {
+        yield 'no lowest version' => ['constraint' => '<8.4'];
+        yield 'a PHP_VERSION_ID inside a constraint' => ['constraint' => '>=80100'];
+        yield 'any version' => ['constraint' => '*'];
+    }
+
+    /**
+     * Refused as `regex lint --php-version` refuses it, in its words, under
+     * the path of the setting.
+     */
+    #[Test]
+    #[DataProvider('provideConstraintsLintRefuses')]
+    public function test_a_constraint_lint_refuses_is_refused_with_lints_message(string $constraint): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessageIsOrContains('Invalid configuration for path "php_regex.php_version": '.TargetSpec::RANGE_EXPECTED);
+
+        $this->process(['php_version' => $constraint]);
     }
 
     #[Test]
