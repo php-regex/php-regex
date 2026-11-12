@@ -29,6 +29,7 @@ use PHPRegex\Linter\LintSetup;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -185,12 +186,17 @@ final class LintCommand extends Command
     }
 
     /**
-     * A version of config/php-regex.php, as written: an int or a string.
+     * A version of config/php-regex.php, as written: an int or a string
+     * naming one version; a range is refused.
      */
     private function configVersion(string $key): string|int|null
     {
         $value = config('php-regex.'.$key);
         if (null === $value || \is_string($value) || \is_int($value)) {
+            if (null !== $value) {
+                ParserOptions::phpVersionIdOf($value);
+            }
+
             return $value;
         }
 
