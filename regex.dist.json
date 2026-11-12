@@ -16,7 +16,21 @@
             "spatie-regex",
             "illuminate-support"
         ],
-        "functions": []
+        "functions": [
+            "PhpCsFixer\\Preg::match",
+            "PhpCsFixer\\Preg::matchAll",
+            "PhpCsFixer\\Preg::replace",
+            "PhpCsFixer\\Preg::replaceCallback",
+            "PhpCsFixer\\Preg::split",
+            "Symplify\\CodingStandard\\Utils\\Regex::replace#1",
+            "Symplify\\CodingStandard\\Utils\\Regex::match#1",
+            "Dotenv\\Util\\Regex::matches",
+            "Dotenv\\Util\\Regex::occurrences",
+            "Dotenv\\Util\\Regex::split",
+            "Dotenv\\Util\\Regex::replaceCallback",
+            "Tempest\\Support\\Regex\\replace#1",
+            "Tempest\\Support\\Regex\\matches#1"
+        ]
     },
     "checks": {
         "validation": true,
