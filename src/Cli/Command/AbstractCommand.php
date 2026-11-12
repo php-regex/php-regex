@@ -17,12 +17,15 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Option\Option;
 use PHPRegex\Cli\Option\ParsedOption;
 use PHPRegex\Cli\Output;
+use PHPRegex\Linter\Config\LintConfigLoader;
+use PHPRegex\Linter\Config\LintConfigResult;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
+use PHPRegex\Linter\Formatter\ReportSpelling;
+use PHPRegex\Linter\RangePoints;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
@@ -32,43 +35,149 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * @internal
+ *
+ * @phpstan-import-type RangePoint from RangePoints
  */
 abstract class AbstractCommand implements CommandInterface
 {
     /**
-     * @param array{php_version?: string, pcre_version?: string, locale?: string} $options the target the command line names
-     * @param bool                                                                $json    whether the command line asked for JSON: the error is then the envelope
+     * The PHP versions the command judges its pattern for, found where lint
+     * finds them: --php-version (the target the command line names, as
+     * Input holds it), then regex.json's phpVersion, then
+     * composer.json (config.platform.php, then require.php), then the
+     * running PHP, read from the working directory. A regex.json lint
+     * cannot read, or a version no source can read, is reported in lint's
+     * words, as the JSON error envelope when the command line asked for
+     * JSON; null then, and the command exits 2.
+     *
+     * @param bool                  $json          whether the command line asked for JSON: the error is then the envelope
+     * @param LintConfigResult|null $configuration regex.json as the command loaded it already; loaded here when null
      */
-    protected function createRegex(Output $output, array $options, bool $json = false): ?Regex
+    protected function resolveTarget(Input $input, Output $output, bool $json = false, ?LintConfigResult $configuration = null): ?TargetRange
     {
-        try {
-            // A PHP the command line names is the target, as lint takes it:
-            // one that ships PCRE1 is refused.
-            if (isset($options['php_version'])) {
-                // These commands judge one version: a range is the lint's
-                // alone, and is refused here in the words of a single one.
-                ParserOptions::phpVersionIdOf($options['php_version']);
-                $options = ProjectTarget::fromSources(['--php-version' => $options['php_version']], ['--pcre-version' => $options['pcre_version'] ?? null], null, [], ['--locale' => $options['locale'] ?? null])->regexOptions();
-            }
+        $configuration ??= $this->loadConfiguration($output, $json);
+        if (null === $configuration) {
+            return null;
+        }
 
-            return Regex::fromOptions(ParserOptions::fromArray($options));
+        try {
+            $target = ProjectTarget::resolve(
+                $input->regexOptions['php_version'] ?? null,
+                $input->regexOptions['pcre_version'] ?? null,
+                $configuration->config,
+                getcwd() ?: '.',
+                getenv(),
+                $input->regexOptions['locale'] ?? null,
+            );
+            $regex = Regex::create($target->regexOptions());
+
+            return new TargetRange($target, $regex, $target->rangeParsers($regex->parser()));
         } catch (UnsupportedTargetException $e) {
             if ($json) {
                 $output->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_TARGET));
             } else {
-                $output->writeError($output->error('Error: '.$e->getMessage()."\n"));
+                // The message may name a file: spelled as lint spells it.
+                $output->writeError($output->error('Error: '.ReportSpelling::displayField($e->getMessage())."\n"));
             }
 
             return null;
         } catch (InvalidRegexOptionException $e) {
-            $message = $this->invalidOptionMessage($e, $options);
+            $message = $this->invalidOptionMessage($e, $input->regexOptions);
+            // A version given on the command line is a usage error; one
+            // read from regex.json or the environment, a configuration one,
+            // as lint tells them apart.
+            $fromCommandLine = [] !== $input->regexOptions;
             if ($json) {
-                $output->writeDocument(JsonDocument::error($message, JsonDocument::STAGE_USAGE));
+                $output->writeDocument(JsonDocument::error($message, $fromCommandLine ? JsonDocument::STAGE_USAGE : JsonDocument::STAGE_CONFIG));
             } else {
-                $output->writeError($output->error($message."\n"));
+                $output->writeError($output->error(($fromCommandLine ? '' : 'Error: ').ReportSpelling::displayField($message)."\n"));
             }
 
             return null;
+        }
+    }
+
+    /**
+     * regex.json and regex.dist.json of the working directory, read by
+     * lint's loader; null when lint could not read them, once the error is
+     * reported, stage "config". What they hold that is ignored is a
+     * warning on stderr, as lint says it, silenced by -q.
+     *
+     * @param bool $json whether the command line asked for JSON: the error is then the envelope
+     */
+    protected function loadConfiguration(Output $output, bool $json, ?LintConfigLoader $loader = null): ?LintConfigResult
+    {
+        $configuration = ($loader ?? new LintConfigLoader())->load();
+        if (null === $configuration->error) {
+            if (!$output->isQuiet()) {
+                foreach (array_unique($configuration->warnings) as $warning) {
+                    $output->writeError('Warning: '.ReportSpelling::displayField($warning)."\n");
+                }
+            }
+
+            return $configuration;
+        }
+
+        if ($json) {
+            $output->writeDocument(JsonDocument::error($configuration->error, JsonDocument::STAGE_CONFIG));
+        } else {
+            $output->writeError($output->error('Error: '.ReportSpelling::displayField($configuration->error)."\n"));
+        }
+
+        return null;
+    }
+
+    /**
+     * The exit code of a JSON run once the range judged the pattern: a
+     * version that refuses it, the floor included, is a problem with the
+     * pattern, exit 1; every other exit code stays.
+     *
+     * @param non-empty-list<RangePoint> $points
+     */
+    protected static function exitCodeOverRange(array $points, int $exitCode): int
+    {
+        return self::SUCCESS === $exitCode && TargetRange::refused($points) ? self::FAILURE : $exitCode;
+    }
+
+    /**
+     * Say on stderr what the versions judged find in the pattern, in
+     * lint's words: an error for the floor or the lowest later version
+     * that refuses it, which makes the run exit 1, a warning for the
+     * lowest that reads it into another tree or gives it another meaning.
+     * stdout keeps the command's own output.
+     *
+     * @param string $about what names the pattern when the command reads more than one, "Pattern 1: "
+     */
+    protected function reportRange(Output $output, TargetRange $range, string $pattern, int $exitCode, string $about = ''): int
+    {
+        $findings = $range->findings($pattern);
+        if (null !== $findings['refusal']) {
+            $output->writeError($output->error('Error: '.$about.ReportSpelling::displayField($findings['refusal']))."\n");
+
+            return self::SUCCESS === $exitCode ? self::FAILURE : $exitCode;
+        }
+
+        if (null !== $findings['warning'] && !$output->isQuiet()) {
+            $output->writeError($output->warning('Warning: '.$about.ReportSpelling::displayField($findings['warning']))."\n");
+        }
+
+        return $exitCode;
+    }
+
+    /**
+     * Say on stderr what resolving the target noticed, as lint does when
+     * its report is no console one: for a run whose stdout carries no
+     * banner, a JSON document or another format. The console banner
+     * carries them instead. Silenced by -q.
+     */
+    protected function reportNotices(Output $output, TargetRange $range): void
+    {
+        if ($output->isQuiet()) {
+            return;
+        }
+
+        foreach ($range->target->notices(missingProject: false) as $notice) {
+            $output->writeError('Note: '.$notice."\n");
         }
     }
 
@@ -203,24 +312,21 @@ abstract class AbstractCommand implements CommandInterface
     }
 
     /**
-     * The banner lines naming the PHP version, the PCRE2 release and the
-     * locale asked for on the command line.
+     * The banner line naming the target judged, as lint's Target row names
+     * it: the PHP, the PCRE2 release and the locale resolved, where they
+     * came from, and the later versions of the range. None when no source
+     * named any of them: the target is then the runtime, which the
+     * banner's Runtime line names already.
      *
      * @return array<string, string>
      */
-    protected function targetMeta(Input $input, Output $output): array
+    protected function targetMeta(Output $output, TargetRange $range): array
     {
-        $meta = [];
-        if (null !== $input->globalOptions->phpVersion) {
-            $meta['Target PHP'] = $output->warning('PHP '.$input->globalOptions->phpVersion);
-        }
-        if (null !== $input->globalOptions->pcreVersion) {
-            $meta['Target PCRE2'] = $output->warning('PCRE2 '.$input->globalOptions->pcreVersion);
-        }
-        if (null !== $input->globalOptions->locale) {
-            $meta['Target locale'] = $output->warning($input->globalOptions->locale);
+        $target = $range->target;
+        if ('running PHP' === $target->source()) {
+            return [];
         }
 
-        return $meta;
+        return ['Target PHP' => $output->warning($target->label()).' ('.$target->source().')'.LintOutputRenderer::laterPoints($output, $target)];
     }
 }

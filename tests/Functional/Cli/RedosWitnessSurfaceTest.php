@@ -18,6 +18,7 @@ use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -33,6 +34,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosWitnessSurfaceTest extends TestCase
 {
+    use RunsInAnEmptyProject;
+
     #[Test]
     #[DataProvider('provideConsoleCases')]
     public function test_console_attack_line_is_escaped(string $command, string $pattern, string $attack): void

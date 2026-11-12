@@ -25,7 +25,6 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Toolkit\Regex;
 
 /**
  * @internal
@@ -74,24 +73,38 @@ final class ExplainCommand extends AbstractCommand implements JsonCommandInterfa
             return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=console, --format=html or --format=json.", $format), $usage);
         }
 
-        $regex = $this->createRegex($output, $input->regexOptions, $json);
-        if (null === $regex) {
+        $range = $this->resolveTarget($input, $output, $json);
+        if (null === $range) {
             return self::INVALID;
         }
 
-        if ($json) {
-            return $this->runJson($output, $regex, $pattern);
+        // The console banner says what resolving the target noticed; stderr
+        // does beside a document.
+        if ('console' !== $format) {
+            $this->reportNotices($output, $range);
         }
 
+        if ($json) {
+            return $this->runJson($output, $range, $pattern);
+        }
+
+        return $this->reportRange($output, $range, $pattern, $this->explain($input, $output, $range, $pattern, $format));
+    }
+
+    /**
+     * The explanation, at the floor, with its banner.
+     */
+    private function explain(Input $input, Output $output, TargetRange $range, string $pattern, string $format): int
+    {
+        $regex = $range->regex;
+        $meta = $this->targetMeta($output, $range);
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
-        $meta = [];
-        $meta += $this->targetMeta($input, $output);
         if ('console' === $format && $style->visualsEnabled()) {
             $meta['Format'] = $output->warning('console');
         }
 
         if ('console' === $format) {
-            $style->renderBanner('explain', $meta);
+            $style->renderBanner('explain', $meta, notes: $range->target->notices(missingProject: false));
         }
 
         try {
@@ -125,8 +138,9 @@ final class ExplainCommand extends AbstractCommand implements JsonCommandInterfa
      * is explained: a semantic error parses, and would otherwise be
      * explained as what PHP never runs.
      */
-    private function runJson(Output $output, Regex $regex, string $pattern): int
+    private function runJson(Output $output, TargetRange $range, string $pattern): int
     {
+        $regex = $range->regex;
         $validation = $regex->validate($pattern);
         if (!$validation->isValid) {
             $output->writeDocument(JsonDocument::error($validation->error ?? 'Invalid pattern.', JsonDocument::STAGE_PATTERN, ['validation' => $validation]));
@@ -135,8 +149,9 @@ final class ExplainCommand extends AbstractCommand implements JsonCommandInterfa
         }
 
         // A pattern the target compiles is one the explainer reads.
-        $output->writeDocument(JsonDocument::encode(['pattern' => $pattern, 'explanation' => $regex->explain($pattern)]));
+        $points = $range->points($pattern);
+        $output->writeDocument(JsonDocument::encode(['pattern' => $pattern, 'explanation' => $regex->explain($pattern), 'target' => $range->target->toArray(), 'range' => $points]));
 
-        return self::SUCCESS;
+        return self::exitCodeOverRange($points, self::SUCCESS);
     }
 }

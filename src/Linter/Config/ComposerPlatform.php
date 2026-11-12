@@ -38,16 +38,18 @@ final class ComposerPlatform
      *
      * @param array<string, string> $env
      * @param list<string>          $notices
+     * @param bool                  $found   whether a composer.json was there to read
      *
      * @throws UnsupportedTargetException when the floor ships PCRE1 and require.php allows no PHP on PCRE2
      *
      * @return array{int, string, string|null}|null the floor, its source, and require.php when it was read
      */
-    public static function read(string $projectDir, array $env, array &$notices): ?array
+    public static function read(string $projectDir, array $env, array &$notices, bool &$found = true): ?array
     {
         [$name, $path] = self::locate($projectDir, $env);
 
         $contents = is_file($path) ? @file_get_contents($path) : false;
+        $found = false !== $contents;
         if (false === $contents) {
             $notices[] = \sprintf('No %s in %s: judging for the running PHP.', $name, $projectDir);
 

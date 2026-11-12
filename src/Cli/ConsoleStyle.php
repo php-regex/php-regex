@@ -33,8 +33,9 @@ final class ConsoleStyle
 
     /**
      * @param array<string, string> $meta
+     * @param list<string>          $notes what resolving the target noticed, one "Note: " line each under the rows, as lint's banner says it
      */
-    public function renderBanner(string $command, array $meta = [], ?string $tagline = null): void
+    public function renderBanner(string $command, array $meta = [], ?string $tagline = null, array $notes = []): void
     {
         if (!$this->visuals) {
             return;
@@ -42,6 +43,9 @@ final class ConsoleStyle
 
         $this->writeTitleBlock($tagline);
         $this->writeRuntimeInfo($command, $meta);
+        foreach ($notes as $note) {
+            $this->output->write($this->output->dim('Note: '.$note)."\n");
+        }
         $this->output->write("\n");
     }
 

@@ -30,6 +30,7 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\SelfUpdate\SelfUpdater;
 use PHPRegex\Tests\Support\LocalReleaseDownloader;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,6 +38,8 @@ use PHPUnit\Framework\TestCase;
 
 final class CommandTest extends TestCase
 {
+    use RunsInAnEmptyProject;
+
     #[Test]
     public function test_analyze_command_reports_missing_pattern(): void
     {

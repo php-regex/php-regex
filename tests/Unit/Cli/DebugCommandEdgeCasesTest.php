@@ -17,6 +17,7 @@ use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,6 +25,8 @@ use PHPUnit\Framework\TestCase;
 
 final class DebugCommandEdgeCasesTest extends TestCase
 {
+    use RunsInAnEmptyProject;
+
     #[Test]
     public function test_debug_command_renders_unknown_severity_details(): void
     {

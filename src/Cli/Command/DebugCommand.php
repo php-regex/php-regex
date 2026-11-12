@@ -80,50 +80,47 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
     {
         $json = JsonRequest::in($input->args);
 
-        // The configuration file's defaults, when there is one to read.
-        $defaults = [];
-        if (null !== $this->configLoader && null !== $this->defaultsBuilder) {
-            $configResult = $this->configLoader->load();
-            if (null !== $configResult->error) {
-                if ($json) {
-                    $output->writeDocument(JsonDocument::error($configResult->error, JsonDocument::STAGE_CONFIG));
-                } else {
-                    $output->writeError($output->error('Error: '.$configResult->error."\n"));
-                }
-
-                return self::INVALID;
-            }
-
-            // What the file holds that is ignored, as regex lint says it:
-            // on stderr, silenced by -q, and the command goes on.
-            if (!$output->isQuiet()) {
-                foreach ($configResult->warnings as $warning) {
-                    $output->writeError('Warning: '.$warning."\n");
-                }
-            }
-
-            $defaults = $this->defaultsBuilder->build($configResult->config);
+        // regex.json as lint reads it: the target, and the defaults of
+        // the command when it was given a builder for them.
+        $configuration = $this->loadConfiguration($output, $json, $this->configLoader);
+        if (null === $configuration) {
+            return self::INVALID;
         }
+
+        $defaults = null === $this->defaultsBuilder ? [] : $this->defaultsBuilder->build($configuration->config);
 
         $parsed = $this->parseArguments($input->args, $defaults);
         if (null !== $parsed['error']) {
             return $this->usageError($output, $parsed['error'], self::options()->usage, $json);
         }
 
+        $range = $this->resolveTarget($input, $output, $json, $configuration);
+        if (null === $range) {
+            return self::INVALID;
+        }
+
+        $exitCode = $this->debug($input, $output, $range, $parsed);
+
+        // The JSON document holds each version's verdict.
+        return 'json' === $parsed['format'] ? $exitCode : $this->reportRange($output, $range, $parsed['pattern'], $exitCode);
+    }
+
+    /**
+     * The analysis, at the floor.
+     *
+     * @param array{pattern: string, inputValue: ?string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, error: ?string} $parsed
+     */
+    private function debug(Input $input, Output $output, TargetRange $range, array $parsed): int
+    {
+        $regex = $range->regex;
         $pattern = $parsed['pattern'];
         $inputValue = $parsed['inputValue'];
         $format = $parsed['format'];
         $redosMode = $parsed['redosMode'];
         $redosThreshold = $parsed['redosThreshold'];
 
-        $regex = $this->createRegex($output, $input->regexOptions, $json);
-        if (null === $regex) {
-            return self::INVALID;
-        }
-
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
-        $meta = [];
-        $meta += $this->targetMeta($input, $output);
+        $meta = $this->targetMeta($output, $range);
         $runtime = PcreRuntimeInfo::fromIni();
         $meta['PCRE'] = $output->warning($runtime->version);
         $meta['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');
@@ -131,7 +128,9 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
         $meta['Recursion'] = $output->warning((string) ($runtime->recursionLimit ?? 'unknown'));
 
         if ('json' !== $format) {
-            $style->renderBanner('debug', $meta);
+            $style->renderBanner('debug', $meta, notes: $range->target->notices(missingProject: false));
+        } else {
+            $this->reportNotices($output, $range);
         }
 
         $target = $regex->target();
@@ -148,6 +147,8 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                     'value' => $inputValue,
                     'source' => null === $inputValue ? null : 'user',
                 ],
+                'target' => $range->target->toArray(),
+                'range' => $range->points($pattern),
             ]));
 
             return self::FAILURE;
@@ -195,6 +196,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             }
 
             if ('json' === $format) {
+                $points = $range->points($pattern);
                 $output->writeDocument(JsonDocument::encode([
                     'pattern' => $pattern,
                     'runtime' => $runtime,
@@ -204,9 +206,11 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                         'value' => $inputValue,
                         'source' => $inputSourceLabel,
                     ],
+                    'target' => $range->target->toArray(),
+                    'range' => $points,
                 ]));
 
-                return $verdict;
+                return self::exitCodeOverRange($points, $verdict);
             }
 
             $style->renderSection('Heatmap', 1, $steps);

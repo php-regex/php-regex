@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,6 +33,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class AnalyzeCommandDisabledIniTest extends TestCase
 {
+    use RunsInAnEmptyProject;
+
     /**
      * The exit code of a confirmed critical risk: the replay ran and
      * reproduced the attack.

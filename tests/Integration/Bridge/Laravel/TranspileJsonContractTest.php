@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 use Illuminate\Support\Facades\Artisan;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,6 +28,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class TranspileJsonContractTest extends LaravelTestCase
 {
+    use RunsInAnEmptyProject;
     use RunsRegexCli;
 
     #[Test]
@@ -40,8 +42,10 @@ final class TranspileJsonContractTest extends LaravelTestCase
 
         $this->assertSame($exitCode, $cliExitCode, $cli);
         $this->assertSame($exitCode, $status, $laravel);
-        JsonContract::assertShape($address, JsonContract::decodeDocument($laravel));
-        $this->assertSame($cli, $laravel);
+        JsonContract::assertShape($address, JsonContract::decodeDocument($cli));
+        // The bridge judges one PHP version until it reads a range: its document
+        // is the command line's without the range the command line judged.
+        $this->assertSame(self::withoutRange(JsonContract::decodeDocument($cli)), JsonContract::decodeDocument($laravel));
     }
 
     /**
@@ -78,8 +82,10 @@ final class TranspileJsonContractTest extends LaravelTestCase
 
         $this->assertSame($exitCode, $cliExitCode, $cli);
         $this->assertSame($exitCode, $status, $bridge);
-        JsonContract::assertShape($address, JsonContract::decodeDocument($bridge));
-        $this->assertSame($cli, $bridge);
+        JsonContract::assertShape($address, JsonContract::decodeDocument($cli));
+        // The bridge judges one PHP version until it reads a range: its document
+        // is the command line's without the range the command line judged.
+        $this->assertSame(self::withoutRange(JsonContract::decodeDocument($cli)), JsonContract::decodeDocument($bridge));
     }
 
     /**
@@ -118,5 +124,19 @@ final class TranspileJsonContractTest extends LaravelTestCase
         return [
             PHPRegexServiceProvider::class,
         ];
+    }
+
+    /**
+     * A command-line transpile document without the PHP range it judged.
+     *
+     * @param array<mixed> $document
+     *
+     * @return array<mixed>
+     */
+    private static function withoutRange(array $document): array
+    {
+        unset($document['php_target'], $document['range']);
+
+        return $document;
     }
 }

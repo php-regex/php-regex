@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
 use PHPRegex\Symfony\Command\TranspileCommand;
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,6 +29,7 @@ use Symfony\Component\Console\Tester\CommandTester;
  */
 final class TranspileJsonContractTest extends TestCase
 {
+    use RunsInAnEmptyProject;
     use RunsRegexCli;
 
     #[Test]
@@ -42,8 +44,10 @@ final class TranspileJsonContractTest extends TestCase
 
         $this->assertSame($exitCode, $cliExitCode, $cli);
         $this->assertSame($exitCode, $status, $symfony);
-        JsonContract::assertShape($address, JsonContract::decodeDocument($symfony));
-        $this->assertSame($cli, $symfony);
+        JsonContract::assertShape($address, JsonContract::decodeDocument($cli));
+        // The bridge judges one PHP version until it reads a range: its document
+        // is the command line's without the range the command line judged.
+        $this->assertSame(self::withoutRange(JsonContract::decodeDocument($cli)), JsonContract::decodeDocument($symfony));
     }
 
     /**
@@ -81,8 +85,10 @@ final class TranspileJsonContractTest extends TestCase
 
         $this->assertSame($exitCode, $cliExitCode, $cli);
         $this->assertSame($exitCode, $status, $bridge);
-        JsonContract::assertShape($address, JsonContract::decodeDocument($bridge));
-        $this->assertSame($cli, $bridge);
+        JsonContract::assertShape($address, JsonContract::decodeDocument($cli));
+        // The bridge judges one PHP version until it reads a range: its document
+        // is the command line's without the range the command line judged.
+        $this->assertSame(self::withoutRange(JsonContract::decodeDocument($cli)), JsonContract::decodeDocument($bridge));
     }
 
     /**
@@ -131,5 +137,19 @@ final class TranspileJsonContractTest extends TestCase
         $this->assertIsArray($validation);
         $this->assertSame('regex.lookbehind.unbounded', $validation['error_code'] ?? null);
         $this->assertSame(0, $validation['offset'] ?? null);
+    }
+
+    /**
+     * A command-line transpile document without the PHP range it judged.
+     *
+     * @param array<mixed> $document
+     *
+     * @return array<mixed>
+     */
+    private static function withoutRange(array $document): array
+    {
+        unset($document['php_target'], $document['range']);
+
+        return $document;
     }
 }

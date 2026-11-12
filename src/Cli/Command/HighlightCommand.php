@@ -75,19 +75,31 @@ final class HighlightCommand extends AbstractCommand
             return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=auto, --format=console or --format=html.", $format), self::options()->usage);
         }
 
-        $regex = $this->createRegex($output, $input->regexOptions);
-        if (null === $regex) {
+        $range = $this->resolveTarget($input, $output);
+        if (null === $range) {
             return self::INVALID;
         }
 
+        // The highlighted pattern is the product on stdout: what the range
+        // says of it goes to stderr.
+        return $this->reportRange($output, $range, $pattern, $this->highlight($input, $output, $range, $pattern, $format));
+    }
+
+    /**
+     * The pattern highlighted, as the floor reads it.
+     */
+    private function highlight(Input $input, Output $output, TargetRange $range, string $pattern, string $format): int
+    {
+        $regex = $range->regex;
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
-        $meta = [];
-        $meta += $this->targetMeta($input, $output);
+        $meta = $this->targetMeta($output, $range);
 
         try {
             if ('console' === $format && $style->visualsEnabled()) {
                 $meta['Format'] = $output->warning('console');
-                $style->renderBanner('highlight', $meta);
+                $style->renderBanner('highlight', $meta, notes: $range->target->notices(missingProject: false));
+            } elseif ('console' !== $format) {
+                $this->reportNotices($output, $range);
             }
 
             $visitor = 'console' === $format ? new ConsoleHighlighter() : new HtmlHighlighter();

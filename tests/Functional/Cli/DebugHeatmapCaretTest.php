@@ -19,6 +19,7 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Redos\Hotspot;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +32,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class DebugHeatmapCaretTest extends TestCase
 {
+    use RunsInAnEmptyProject;
+
     /**
      * @param list<string> $arguments
      */

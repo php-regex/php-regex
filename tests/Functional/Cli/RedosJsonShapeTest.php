@@ -18,6 +18,7 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\Support\StringListAssertions;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -29,6 +30,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosJsonShapeTest extends TestCase
 {
+    use RunsInAnEmptyProject;
     use StringListAssertions;
 
     private const KEYS = [

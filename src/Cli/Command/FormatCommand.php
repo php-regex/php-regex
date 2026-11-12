@@ -85,10 +85,14 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
             return $this->usageError($output, 'The --width value must be a positive integer.', $usage, $json);
         }
 
-        $regex = $this->createRegex($output, $input->regexOptions, $json);
-        if (null === $regex) {
+        $range = $this->resolveTarget($input, $output, $json);
+        if (null === $range) {
             return self::INVALID;
         }
+        $regex = $range->regex;
+        // The pattern is the product, with no banner: stderr says what
+        // resolving the target noticed.
+        $this->reportNotices($output, $range);
 
         $pattern = $arguments->argument();
 
@@ -126,14 +130,17 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
         }
 
         if ($json) {
+            $points = $range->points($pattern);
             $output->writeDocument(JsonDocument::encode([
                 'pattern' => $pattern,
                 'formatted' => $result->pattern,
                 'changed' => $result->changed,
                 'refusal' => $result->refusal?->value,
+                'target' => $range->target->toArray(),
+                'range' => $points,
             ]));
 
-            return self::SUCCESS;
+            return self::exitCodeOverRange($points, self::SUCCESS);
         }
 
         // The pattern is what the command prints, not a status line: quiet
@@ -144,7 +151,9 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
             $output->writeError($output->warning('Note: '.$result->refusal->note())."\n");
         }
 
-        return self::SUCCESS;
+        // The laid-out pattern is the product on stdout: what the range
+        // says of it goes to stderr, as the note does.
+        return $this->reportRange($output, $range, $pattern, self::SUCCESS);
     }
 
     /**

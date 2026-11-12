@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ErrorStreamTest extends TestCase
 {
+    use RunsInAnEmptyProject;
+
     /**
      * @param list<string> $arguments
      */
@@ -139,16 +142,15 @@ final class ErrorStreamTest extends TestCase
     }
 
     /**
-     * The commands that read one pattern take a single version until they
-     * judge every point of a range: a --php-version they cannot take is
-     * refused in the words they used before ranges, which name no
-     * constraint, and nothing reaches stdout.
+     * The commands that read one pattern read --php-version as lint does, a
+     * range included: one lint cannot read is refused in lint's words, which
+     * name every form the option takes, and nothing reaches stdout.
      *
      * @param list<string> $arguments
      */
     #[Test]
     #[DataProvider('provideSinglePatternVersionRefusals')]
-    public function test_a_single_pattern_command_refuses_a_php_version_it_cannot_take_in_its_former_words(array $arguments): void
+    public function test_a_single_pattern_command_refuses_a_php_version_it_cannot_read_in_the_words_of_lint(array $arguments): void
     {
         $command = [\PHP_BINARY, \dirname(__DIR__, 3).'/src/Cli/bin/regex', '--no-ansi', ...$arguments];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
@@ -160,7 +162,7 @@ final class ErrorStreamTest extends TestCase
 
         $this->assertSame(2, proc_close($process), $stdout.$stderr);
         $this->assertSame('', $stdout);
-        $this->assertSame("Invalid option: --php-version must be a version string like \"8.2\", a PHP_VERSION_ID integer, or \"runtime\".\n", $stderr);
+        $this->assertSame("Invalid option: --php-version must be a version string like \"8.2\", a PHP_VERSION_ID integer, \"runtime\", or a Composer constraint like \">=8.1\" that names a lowest version.\n", $stderr);
     }
 
     /**
@@ -168,11 +170,11 @@ final class ErrorStreamTest extends TestCase
      */
     public static function provideSinglePatternVersionRefusals(): iterable
     {
-        yield 'validate, an open range' => ['arguments' => ['--php-version=>=8.1', 'validate', '/(?<=a\\Kb)c/']];
-        yield 'validate, a hyphen range' => ['arguments' => ['--php-version=8.1 - 8.6', 'validate', '/(?<=a\\Kb)c/']];
-        yield 'validate, a constraint without a lowest version' => ['arguments' => ['--php-version=<8.4', 'validate', '/a/']];
+        yield 'validate, a range without a lowest version' => ['arguments' => ['--php-version=<8.4', 'validate', '/(?<=a\\Kb)c/']];
+        yield 'validate, a hyphen range written backwards' => ['arguments' => ['--php-version=8.6 - 8.1', 'validate', '/(?<=a\\Kb)c/']];
+        yield 'validate, a PHP_VERSION_ID inside a range' => ['arguments' => ['--php-version=>=80100', 'validate', '/a/']];
         yield 'validate, no version at all' => ['arguments' => ['--php-version=abc', 'validate', '/a/']];
-        yield 'analyze, an open range' => ['arguments' => ['--php-version=>=8.1', 'analyze', '/a/']];
-        yield 'analyze, a hyphen range' => ['arguments' => ['--php-version=8.1 - 8.6', 'analyze', '/a/']];
+        yield 'analyze, runtime inside a range' => ['arguments' => ['--php-version=runtime || ^9.0', 'analyze', '/a/']];
+        yield 'analyze, any version' => ['arguments' => ['--php-version=*', 'analyze', '/a/']];
     }
 }

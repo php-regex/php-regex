@@ -23,6 +23,8 @@ use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\RangePoints;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
@@ -41,6 +43,8 @@ use PHPRegex\Redos\RedosSeverity;
  * @internal
  *
  * @phpstan-type AnalyzeArguments array{pattern: string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, error: ?string}
+ *
+ * @phpstan-import-type RangePoint from RangePoints
  */
 final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterface
 {
@@ -68,17 +72,46 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             return $this->usageError($output, $parsed['error'], self::options()->usage, $json);
         }
 
-        $regex = $this->createRegex($output, $input->regexOptions, $json);
-        if (null === $regex) {
+        $range = $this->resolveTarget($input, $output, $json);
+        if (null === $range) {
             return self::INVALID;
         }
 
+        $exitCode = $this->analyze($input, $output, $range, $parsed);
+
+        // The JSON document holds each version's verdict.
+        return 'json' === $parsed['format'] ? $exitCode : $this->reportRange($output, $range, $parsed['pattern'], $exitCode);
+    }
+
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::Pattern, [
+            Option::value('--format', '<format>', 'Output format (console, json)'),
+            Option::flag('--json', 'Same as --format=json'),
+            ...GlobalOptionsParser::target(),
+            ...self::redosOptions(),
+        ], "Usage: regex analyze <pattern> [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n");
+    }
+
+    /**
+     * The analysis, at the floor.
+     *
+     * @param AnalyzeArguments $parsed
+     */
+    private function analyze(Input $input, Output $output, TargetRange $range, array $parsed): int
+    {
+        $regex = $range->regex;
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $runtime = PcreRuntimeInfo::fromIni();
-        $meta = $this->buildRuntimeMeta($input, $output, $runtime);
+        $meta = $this->buildRuntimeMeta($output, $range, $runtime);
 
         if ('json' !== $parsed['format']) {
-            $style->renderBanner('analyze', $meta);
+            $style->renderBanner('analyze', $meta, notes: $range->target->notices(missingProject: false));
+        } else {
+            $this->reportNotices($output, $range);
         }
 
         try {
@@ -98,6 +131,8 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
                     'validation' => $validation,
                     'redos' => null,
                     'explain' => null,
+                    'target' => $range->target->toArray(),
+                    'range' => $range->points($pattern),
                 ]));
 
                 return self::FAILURE;
@@ -114,33 +149,21 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
                 ? $ast->accept(new ConsoleHighlighter())
                 : $echoed;
 
+            $exitCode = !$validation->isValid || $this->isConfirmedRedos($analysis, $redosThreshold) ? self::FAILURE : self::SUCCESS;
+
             if ('json' === $format) {
-                $this->renderJsonOutput($output, $pattern, $runtime, $validation, $analysis, $explain);
-            } else {
-                $this->renderConsoleOutput($output, $style, $highlightedPattern, $validation, $analysis, $explain);
+                $points = $range->points($pattern);
+                $this->renderJsonOutput($output, $pattern, $runtime, $validation, $analysis, $explain, $range->target, $points);
+
+                return self::exitCodeOverRange($points, $exitCode);
             }
 
-            if (!$validation->isValid || $this->isConfirmedRedos($analysis, $redosThreshold)) {
-                return self::FAILURE;
-            }
+            $this->renderConsoleOutput($output, $style, $highlightedPattern, $validation, $analysis, $explain);
 
-            return self::SUCCESS;
+            return $exitCode;
         } catch (LexerException|LimitException|ParserException $e) {
             return $this->handleAnalysisError($output, $parsed['format'], $e->getMessage());
         }
-    }
-
-    /**
-     * The options of the command, which its help lists.
-     */
-    public static function options(): Options
-    {
-        return new Options(Arguments::Pattern, [
-            Option::value('--format', '<format>', 'Output format (console, json)'),
-            Option::flag('--json', 'Same as --format=json'),
-            ...GlobalOptionsParser::target(),
-            ...self::redosOptions(),
-        ], "Usage: regex analyze <pattern> [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n");
     }
 
     /**
@@ -202,11 +225,9 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
     /**
      * @return array<string, string>
      */
-    private function buildRuntimeMeta(Input $input, Output $output, PcreRuntimeInfo $runtime): array
+    private function buildRuntimeMeta(Output $output, TargetRange $range, PcreRuntimeInfo $runtime): array
     {
-        $meta = [];
-
-        $meta += $this->targetMeta($input, $output);
+        $meta = $this->targetMeta($output, $range);
 
         $meta['PCRE'] = $output->warning($runtime->version);
         $meta['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');
@@ -216,7 +237,11 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
         return $meta;
     }
 
-    private function renderJsonOutput(Output $output, string $pattern, PcreRuntimeInfo $runtime, ValidationResult $validation, RedosAnalysis $analysis, string $explain): void
+    /**
+     * @param ProjectTarget    $target the target judged, written as lint writes it
+     * @param list<RangePoint> $points the verdict of each version of the range
+     */
+    private function renderJsonOutput(Output $output, string $pattern, PcreRuntimeInfo $runtime, ValidationResult $validation, RedosAnalysis $analysis, string $explain, ProjectTarget $target, array $points): void
     {
         $payload = [
             'pattern' => $pattern,
@@ -225,6 +250,8 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             'validation' => $validation,
             'redos' => $analysis,
             'explain' => $explain,
+            'target' => $target->toArray(),
+            'range' => $points,
         ];
 
         $output->writeDocument(JsonDocument::encode($payload));

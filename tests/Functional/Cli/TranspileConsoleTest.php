@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class TranspileConsoleTest extends TestCase
 {
+    use RunsInAnEmptyProject;
     use RunsRegexCli;
 
     #[Test]

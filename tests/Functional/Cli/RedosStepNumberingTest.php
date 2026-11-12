@@ -19,6 +19,7 @@ use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +32,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosStepNumberingTest extends TestCase
 {
+    use RunsInAnEmptyProject;
+
     /**
      * @param list<string> $arguments
      */

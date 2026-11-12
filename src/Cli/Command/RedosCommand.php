@@ -82,14 +82,16 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
         $pattern = $arguments->pattern;
         $safePattern = null !== $arguments->safePattern && '' !== $arguments->safePattern ? $arguments->safePattern : null;
 
-        $regex = $this->createRegex($output, $input->regexOptions, $json);
-        if (null === $regex) {
+        $range = $this->resolveTarget($input, $output, $json);
+        if (null === $range) {
             return self::INVALID;
         }
+        $regex = $range->regex;
 
         // A JSON run stops on an invalid pattern, with its validation: there
         // is no benchmark of it to report.
         if ('json' === $arguments->format) {
+            $this->reportNotices($output, $range);
             $validation = $regex->validate($pattern);
             if (!$validation->isValid) {
                 $output->writeDocument(JsonDocument::error($validation->error ?? 'Invalid pattern.', JsonDocument::STAGE_PATTERN, ['validation' => $validation]));
@@ -121,12 +123,12 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
         $highlightedSafe = null !== $safePattern ? $renderer->highlight($regex, $safePattern) : null;
 
         if ('json' !== $arguments->format) {
-            $meta = $this->targetMeta($input, $output);
+            $meta = $this->targetMeta($output, $range);
             $meta['PCRE'] = $output->warning($runtime->version);
             $meta['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');
             $meta['Backtrack'] = $output->warning((string) ($runtime->backtrackLimit ?? 'unknown'));
             $meta['Recursion'] = $output->warning((string) ($runtime->recursionLimit ?? 'unknown'));
-            $renderer->renderPreamble(new ConsoleStyle($output, $input->globalOptions->visuals), $meta, $highlightedVuln, $highlightedSafe, $arguments, $subject);
+            $renderer->renderPreamble(new ConsoleStyle($output, $input->globalOptions->visuals), $meta, $highlightedVuln, $highlightedSafe, $arguments, $subject, $range->target->notices(missingProject: false));
         }
 
         $benchmark = new RedosBenchmark();
@@ -139,13 +141,25 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
             ? self::FAILURE
             : self::SUCCESS;
 
+        // The --safe pattern is judged over the range too.
         if ('json' === $arguments->format) {
-            $renderer->writeDocument($arguments, $runtime, $subject, $vuln, $safe);
-        } else {
-            $renderer->renderResults($vuln, $safe);
+            $points = $range->points($pattern);
+            $safePoints = null !== $safePattern ? $range->points($safePattern) : null;
+            $renderer->writeDocument($arguments, $runtime, $subject, $vuln, $safe, $range->target, $points, $safePoints);
+            $verdict = self::exitCodeOverRange($points, $verdict);
+
+            return null !== $safePoints ? self::exitCodeOverRange($safePoints, $verdict) : $verdict;
         }
 
-        return $verdict;
+        $renderer->renderResults($vuln, $safe);
+        if (null === $safePattern) {
+            return $this->reportRange($output, $range, $pattern, $verdict);
+        }
+
+        // Each line names the pattern it is about, as the banner does.
+        $verdict = $this->reportRange($output, $range, $pattern, $verdict, 'Vulnerable: ');
+
+        return $this->reportRange($output, $range, $safePattern, $verdict, 'Safe: ');
     }
 
     /**

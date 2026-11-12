@@ -21,6 +21,7 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosWitness;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,6 +35,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosVerdictConsoleTest extends TestCase
 {
+    use RunsInAnEmptyProject;
+
     private const OVER_BUDGET_CRITICAL = '/^(?:(?:a{16}){16}){16}(a+)+$/';
 
     /**

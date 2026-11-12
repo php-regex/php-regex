@@ -52,6 +52,10 @@ Regex matches
   Anchor: the end of the subject, or just before a newline (\n) that ends it
 ```
 
+Run inside a project, the banner adds a `Target PHP` row: the PHP versions
+the pattern is judged for, read from `composer.json` as the lint reads them
+(see [Target PHP and PCRE2](#target-php-and-pcre2)).
+
 ### Analyze a pattern
 
 `analyze` adds a validation pass and the [ReDoS](redos.md) verdict. When a
@@ -1646,6 +1650,21 @@ pattern for one target, chosen in this order:
 the command and the PCRE2 it links, as PHPStan's `phpVersion` does: a project
 that lints for its floor can still ask what the engine at hand says.
 
+The commands that read one pattern (`validate`, `analyze`, `explain`,
+`redos`, `parse`, `diagram`, `format`, `transpile`, `highlight`, `compare`,
+`graph`, `debug`) choose their target in the same order, from the working
+directory: `regex validate` run inside a project whose `require.php` is
+`>=8.1` judges the pattern for that range. Their own output (the
+explanation, the tree, the rewrite) is the floor's; the pattern is also
+validated at every later version of a range, as the lint validates it. A
+version that refuses it, the floor included, is an error and the command exits
+with 1; a version that reads it otherwise, or gives it another meaning with
+the same tree, is a warning. Both go to stderr, as the notes of the
+resolution do, so that stdout stays the product. A `regex.json` the command cannot read stops it with exit code 2,
+as it stops the lint. To judge one version, name it: `--php-version=8.2`.
+With `--format=json`, the document carries `target` and `range`
+([JSON output](../reference/json-output.md#range-point-range_point)).
+
 Each version is chosen on its own. A PHP version does not decide the PCRE2 a
 build links, so every version judged (the target, each later version of the
 range, each version a guard or a marker keeps) gets its PCRE2 in this order:
@@ -1741,8 +1760,9 @@ no pattern. `validate`, `analyze` and the other commands that read one pattern
 refuse a `--php-version` below 7.3 the same way, with exit code 2 and, under
 `--json` where the command takes it, the envelope with stage `target`; the
 PHPStan extension and the Psalm plugin refuse one too. A constraint the command cannot read (`*`, `<9`, a branch name)
-falls back to the running PHP, with a note naming it: a `composer.json` the
-command cannot read never stops a run.
+falls back to the running PHP, with a note naming it, in every command that
+reads one pattern too: a `composer.json` the command cannot read never stops a
+run.
 
 Where the target is recorded depends on the format. The console format shows
 it as a `Target` row in the banner, right under `Runtime`, with any `Note:`
@@ -1978,10 +1998,12 @@ later.
 The PHPStan extension, the Psalm plugin and the language server read the
 same markers.
 
-Single-pattern commands, such as `analyze` or `validate`, judge for the
-running PHP unless `--php-version`, `--pcre-version` or `--locale` is given;
-their banners show `Target PHP` / `Target PCRE2` / `Target locale` rows only
-when those flags are passed.
+Single-pattern commands, such as `analyze` or `validate`, choose their
+target as the lint does (see [Target PHP and PCRE2](#target-php-and-pcre2)).
+Their banner shows a `Target PHP` row, the PHP, PCRE2 and locale judged with
+where they came from and the later versions of a range, unless the target is
+the running PHP, which the `Runtime` row names already. Guards and markers do
+not apply to them: they read no code around the pattern.
 
 ### Errors and Exit Codes
 
@@ -1992,14 +2014,14 @@ when those flags are passed.
 |----------------------------------------------|------------------------------------------------------------------------------------|
 | `lint`                                       | A pattern does not compile, a ReDoS verdict reproduced at high or above, or a lint rule of error severity fires (warnings and infos alone leave 0); or the files cannot be read; or a worker fails or exits |
 | `validate`, `parse --validate`, `analyze`    | The pattern is invalid                                                             |
-| `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse                                                         |
-| `graph`                                      | The pattern does not parse, or cannot be drawn as an automaton                     |
+| `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse, or a PHP version judged refuses it                     |
+| `graph`                                      | The pattern does not parse, a PHP version judged refuses it, or it cannot be drawn as an automaton |
 | `transpile`                                  | The pattern is invalid, or cannot be written for the target                        |
-| `format`                                     | The pattern does not parse, or the formatter could not prove its output the same pattern; a refusal leaves 0 |
+| `format`                                     | The pattern does not parse, a PHP version judged refuses it, or the formatter could not prove its output the same pattern; a pattern the formatter gives back as written leaves 0 |
 | `debug`                                      | The pattern is invalid, a semantic error such as `/(?<=a+)b/` included, in every format |
 | `analyze`, `debug`                           | `--redos-mode=confirmed` reproduces a ReDoS verdict of high severity or more, at or above `--redos-threshold`, on the running PCRE, or proves one it cannot replay because `ini_set()` is disabled |
 | `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared |
-| `redos`                                      | PHP refuses to compile the pattern or the `--safe` one; a slow run alone leaves 0 |
+| `redos`                                      | PHP, or a PHP version judged, refuses the pattern or the `--safe` one; a slow run alone leaves 0 |
 | `self-update`                                | The update fails                                                                   |
 
 Every command also exits with 1, `Error: A regex of the library gave up: …` on
@@ -2028,11 +2050,10 @@ a missing pattern, an argument the command does not take (one pattern more
 than it reads, or anything after `version`, `self-update`, `lsp` or `mcp`),
 a target given to `lsp` (the server reads it from the editor), an
 `--input-file` that cannot be read, an `--output` file that cannot be written,
-a `regex.json` that cannot be read (`lint` and `debug`), and, for `lint`, a
-target PHP of 7.2 or earlier, which ships PCRE1: one named outright, or a
-`composer.json` that allows no PHP of 7.3 or later (see
-[Target PHP and PCRE2](#target-php-and-pcre2)) — in which case nothing was
-scanned. `regex` run without a command prints the help and exits
+a `regex.json` that cannot be read, and a target PHP of 7.2 or earlier,
+which ships PCRE1: one named outright, or a `composer.json` that allows no
+PHP of 7.3 or later (see [Target PHP and PCRE2](#target-php-and-pcre2)) — in
+which case `lint` scanned nothing and the other commands judged nothing. `regex` run without a command prints the help and exits
 with 2, as `regex help` with an unknown command does.
 
 For `lint`, code 2 also covers the paths it is given, as it does for

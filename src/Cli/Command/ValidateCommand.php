@@ -79,46 +79,37 @@ final class ValidateCommand extends AbstractCommand implements JsonCommandInterf
         }
 
         $pattern = $arguments->argument();
-        $regex = $this->createRegex($output, $input->regexOptions, $json);
-        if (null === $regex) {
+        $range = $this->resolveTarget($input, $output, $json);
+        if (null === $range) {
             return self::INVALID;
         }
+        $regex = $range->regex;
 
+        // The floor's verdict: the later versions of the range add theirs.
         $validation = $regex->validate($pattern);
 
         // The verdict is the document, valid or not: an invalid pattern is
         // what the command reports on, never a failure of the run.
         if ($json) {
-            $output->writeDocument(JsonDocument::encode(['pattern' => $pattern, 'validation' => $validation]));
+            $this->reportNotices($output, $range);
+            $points = $range->points($pattern);
+            $output->writeDocument(JsonDocument::encode(['pattern' => $pattern, 'validation' => $validation, 'target' => $range->target->toArray(), 'range' => $points]));
 
-            return $validation->isValid ? self::SUCCESS : self::FAILURE;
+            return self::exitCodeOverRange($points, $validation->isValid ? self::SUCCESS : self::FAILURE);
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
-        $meta = $this->buildRuntimeMeta($input, $output);
-        $style->renderBanner('validate', $meta);
+        $style->renderBanner('validate', $this->targetMeta($output, $range), notes: $range->target->notices(missingProject: false));
 
         $highlightedPattern = $this->highlightPattern($regex, $pattern, $output, $validation);
 
         $this->renderValidationSection($style, $highlightedPattern);
 
         if ($validation->isValid) {
-            return $this->renderSuccessResult($style, $output);
+            return $this->reportRange($output, $range, $pattern, $this->renderSuccessResult($style, $output));
         }
 
         return $this->renderErrorResult($style, $output, $validation);
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function buildRuntimeMeta(Input $input, Output $output): array
-    {
-        $meta = [];
-
-        $meta += $this->targetMeta($input, $output);
-
-        return $meta;
     }
 
     private function highlightPattern(Regex $regex, string $pattern, Output $output, ValidationResult $validation): string

@@ -75,18 +75,30 @@ final class DiagramCommand extends AbstractCommand
             return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=console or --format=svg.", $format), $usage);
         }
 
-        $regex = $this->createRegex($output, $input->regexOptions);
-        if (null === $regex) {
+        $range = $this->resolveTarget($input, $output);
+        if (null === $range) {
             return self::INVALID;
         }
 
+        return $this->reportRange($output, $range, $pattern, $this->draw($input, $output, $range, $pattern, $format, $outputPath));
+    }
+
+    /**
+     * The diagram, at the floor, printed or written to its file.
+     */
+    private function draw(Input $input, Output $output, TargetRange $range, string $pattern, string $format, ?string $outputPath): int
+    {
+        $regex = $range->regex;
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
-        $meta = [];
-        $meta += $this->targetMeta($input, $output);
+        $meta = $this->targetMeta($output, $range);
         $showConsoleOutput = 'svg' !== $format && null === $outputPath;
         if ($showConsoleOutput && $style->visualsEnabled()) {
             $meta['Format'] = $output->warning('console');
-            $style->renderBanner('diagram', $meta);
+            $style->renderBanner('diagram', $meta, notes: $range->target->notices(missingProject: false));
+        } elseif (!$showConsoleOutput) {
+            // The SVG or the file is the product: stderr says what
+            // resolving the target noticed.
+            $this->reportNotices($output, $range);
         }
 
         try {
