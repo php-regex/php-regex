@@ -320,9 +320,7 @@ final class ResolutionLimitsTest extends TestCase
     {
         $file = $this->makeProject(['product.php' => self::productOf($operands, 33)]).'/product.php';
 
-        $start = CpuClock::nanoseconds();
-        $patterns = self::patterns($strategy, $file);
-        $elapsed = (CpuClock::nanoseconds() - $start) / 1e9;
+        $patterns = CpuClock::timed(static fn () => self::patterns($strategy, $file), $elapsed);
 
         $this->assertSame([], $patterns);
 
@@ -360,9 +358,8 @@ final class ResolutionLimitsTest extends TestCase
         $file = $this->makeProject(['composed.php' => $code."}\n"]).'/composed.php';
 
         $this->assertInstanceOf(ArgumentAwareInterface::class, $strategy);
-        $start = CpuClock::nanoseconds();
-        $read = $strategy->extractWithArguments([$file]);
-        $elapsed = (CpuClock::nanoseconds() - $start) / 1e9;
+        // The cycle collector is held: the larger read alone sets it off.
+        $read = CpuClock::timed(static fn (): array => $strategy->extractWithArguments([$file]), $elapsed);
 
         $patterns = [];
         $states = [];
