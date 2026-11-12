@@ -1659,7 +1659,8 @@ for PHP 8.1 and the later versions the lint judges. Their own output (the
 explanation, the tree, the rewrite) is the floor's; the pattern is also
 validated at the later versions the lint validates it at: each version of
 the range where a rule of the library changes, and the lowest version of
-each branch of an OR constraint ([Several PHP versions](#several-php-versions)). A later version that
+each branch of an OR constraint unless a version already judged with the
+same PCRE2 stands for it ([Several PHP versions](#several-php-versions)). A later version that
 refuses a pattern the floor accepts is an error and the command exits with 1;
 a version that reads it otherwise, or gives it another meaning with the same
 tree, is a warning. Both go to stderr, as the notes of the resolution do, so
