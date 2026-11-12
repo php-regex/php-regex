@@ -118,6 +118,9 @@ final class PackageManifestTest extends TestCase
             'LanguageServer\Server', 'Linter\AnalysisService',
             'Linter\Config\LintArguments', 'Linter\Config\LintConfigLoader', 'Linter\Config\LintDefaultsBuilder',
             'Linter\Config\LintExtractorFactory', 'Linter\Config\ProjectTarget',
+            // The commands that read one pattern find their target in the
+            // regex.json lint loads, and judge and word the range as lint does.
+            'Linter\Config\LintConfigResult', 'Linter\RangeFindings', 'Linter\RangePoints', 'Linter\RangeWording',
             'Linter\Extraction\InteropPresets',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\LintIssue',
             'Linter\Formatter\ConsoleFormatter', 'Linter\Formatter\FormatterRegistry', 'Linter\Formatter\JsonFormatter',
@@ -188,7 +191,13 @@ final class PackageManifestTest extends TestCase
         ],
         // The tools answer the document the CLI prints: the same encoder
         // spells every string, an invalid byte as \xNN.
-        'Mcp' => ['Parser\Json\JsonDocument'],
+        // A php_version range is read, resolved and judged at every
+        // version as the CLI's single-pattern commands do; what the later
+        // versions find is said in the text answer in lint's words.
+        'Mcp' => [
+            'Linter\Config\ProjectTarget', 'Linter\Config\TargetSpec', 'Linter\RangeFindings', 'Linter\RangePoints',
+            'Linter\RangeWording', 'Parser\Json\JsonDocument',
+        ],
         // The modernizer reads (*UCP) among the opening verbs the parser
         // recognises as start options.
         'Optimizer' => [

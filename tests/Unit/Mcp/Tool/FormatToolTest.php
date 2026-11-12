@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Mcp\Tool;
 use PHPRegex\Mcp\ToolCatalog;
 use PHPRegex\Parser\Printer\FormatRefusal;
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,6 +24,7 @@ use PHPUnit\Framework\TestCase;
 
 final class FormatToolTest extends TestCase
 {
+    use RunsInAnEmptyProject;
     use RunsRegexCli;
 
     private const DATE = '/^(?<year>\d{4})-(?<month>\d{2})$/';

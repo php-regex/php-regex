@@ -15,12 +15,14 @@ namespace PHPRegex\Tests\Unit\Mcp\Tool;
 
 use PHPRegex\Mcp\ToolCatalog;
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RedosToolTest extends TestCase
 {
+    use RunsInAnEmptyProject;
     use RunsRegexCli;
 
     #[Test]
@@ -32,7 +34,7 @@ final class RedosToolTest extends TestCase
         $analyze = JsonContract::decodeDocument($stdout);
 
         $this->assertFalse($result->isError);
-        $this->assertSame(['pattern' => '/^(a+)+$/', 'redos' => $analyze['redos']], $result->structured);
+        $this->assertSame(['pattern' => '/^(a+)+$/', 'redos' => $analyze['redos'], 'target' => $analyze['target'], 'range' => $analyze['range']], $result->structured);
         JsonContract::assertShape('redos_analysis', $result->structured['redos']);
         $redos = JsonContract::asArray($result->structured['redos']);
         $this->assertSame('critical', $redos['severity']);

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Mcp\Tool;
 
 use PHPRegex\Mcp\ToolCatalog;
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\RunsInAnEmptyProject;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,6 +26,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class ValidateToolTest extends TestCase
 {
+    use RunsInAnEmptyProject;
     use RunsRegexCli;
 
     #[Test]
@@ -82,7 +84,7 @@ final class ValidateToolTest extends TestCase
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
-        $this->assertSame('Invalid option: "php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".', $result->structured['error']);
+        $this->assertSame('Invalid option: "php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, "runtime", or a Composer constraint like ">=8.1" that names a lowest version.', $result->structured['error']);
     }
 
     #[Test]

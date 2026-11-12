@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Mcp;
 
 use PHPRegex\Mcp\Exception\TargetException;
 use PHPRegex\Mcp\RegexFactory;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -50,6 +51,31 @@ final class RegexFactoryTest extends TestCase
         } catch (TargetException $e) {
             $this->assertStringStartsWith('"php_version" names PHP 7.2: PHP 7.2 and earlier ship PCRE1', $e->getMessage());
         }
+    }
+
+    /**
+     * A Composer constraint is a target as a single version is: the
+     * facade judges for its floor, as lint judges a range from it.
+     */
+    #[Test]
+    public function test_a_constraint_is_judged_from_its_floor(): void
+    {
+        $factory = new RegexFactory();
+
+        $this->assertSame(80100, $factory->for(['php_version' => '>=8.1'])->target()->phpVersionId);
+        $this->assertSame(80200, (new RegexFactory(['php_version' => '^8.2 <8.6']))->for([])->target()->phpVersionId, 'The server\'s constraint is the default.');
+    }
+
+    /**
+     * The target of a facade the factory did not build is a bug of the
+     * caller, refused as such.
+     */
+    #[Test]
+    public function test_the_target_of_a_facade_built_elsewhere_is_refused(): void
+    {
+        $this->expectException(TargetException::class);
+
+        (new RegexFactory())->targetOf(Regex::create());
     }
 
     #[Test]

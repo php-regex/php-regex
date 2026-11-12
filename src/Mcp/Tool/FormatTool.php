@@ -41,10 +41,11 @@ final class FormatTool extends AbstractTool
         if (!\is_bool($compact)) {
             return ToolResult::failure('The "compact" argument must be true or false.', 'usage');
         }
-        $regex = $this->regex($arguments);
-        if ($regex instanceof ToolResult) {
-            return $regex;
+        $judged = $this->regex($arguments);
+        if ($judged instanceof ToolResult) {
+            return $judged;
         }
+        [$regex, $target] = $judged;
 
         try {
             $result = $compact ? $regex->compact($pattern) : $regex->format($pattern, $width);
@@ -61,11 +62,12 @@ final class FormatTool extends AbstractTool
             $text .= "\nNote: ".$result->refusal->note();
         }
 
-        return ToolResult::document($text, [
+        return ToolResult::document(self::withRange($text, $regex, $target, $pattern), [
             'pattern' => $pattern,
             'formatted' => $result->pattern,
             'changed' => $result->changed,
             'refusal' => $result->refusal?->value,
+            ...self::range($regex, $target, $pattern),
         ]);
     }
 }
