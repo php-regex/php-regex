@@ -1128,10 +1128,13 @@ backreference, without `validation`.
 range included, read as `regex lint` reads it; else for the running PHP
 alone. They read no `composer.json`, and no `regex.json` for their target
 (`debug` reads it for its ReDoS defaults only). Their own output is
-computed once, at the floor; the pattern is also validated at each later
-version of a range where a rule of the library changes, the versions
-[`lint.target.range`](#target-range-entry-linttargetrange) lists for the
-same range, and `range` gives each version's verdict, the floor first. A later version that refuses a pattern the floor accepts makes the
+computed once, at the floor; the pattern is also validated at the later
+versions the lint judges for the same range, those
+[`lint.target.range`](#target-range-entry-linttargetrange) lists: each
+version above the floor where a rule of the library changes, and the lowest
+version of each branch of an OR constraint above the floor (`~8.3.0 ||
+>=8.5.3` adds 8.5.3). `range` gives each version's verdict, the floor
+first. A later version that refuses a pattern the floor accepts makes the
 command exit with 1; a pattern the floor refuses keeps the exit code the
 command gives it at a single version, and a version that reads the pattern
 otherwise does not change the exit code. What a later version finds is also
