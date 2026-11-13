@@ -249,14 +249,12 @@ the probes hold no whitespace.
   full Unicode set where PCRE takes 0xA0 and 0x85. Warning or refusal is
   the decision.
 
-- Under `u`, `regex.lint.overlap.charset` still compares the first bytes of
-  a branch no probe can be written for, and reports two characters that
-  share a lead byte (all three seen 2026-11-13, PHP 8.4, PCRE2 10.49, the
-  same on 2.x before #372): an optional first item, `/(?:ö?è|ê)+x/u`, whose
-  first characters are the union of the optional one and what follows; a
-  branch reset group, `/(?:(?|ö|ê)|è)+x/u`, read as its branches; and the
-  options of `a`, `/(?:(?a:ö)|è)+x/u`, which the probe is not told about,
-  where the decision is what `a` changes of a set past ASCII.
+- `regex.lint.overlap.charset` probes an atom under the options of `a` that
+  stand where it does, but the flags it reads them from keep letters only:
+  the D and S of `(?aD)` and `(?aS)` read as the pattern's own `/D` and
+  `/S`. Under a pattern that sets either, such a branch is left unjudged
+  (`/(?:(?aD:\w)x|éy)+z/uD` reports nothing, though `é` starts both).
+  Keeping the options of `a` apart from the letters would judge it.
 
 - `CaptureFacts::reaches()` walks the call graph again for each group:
   quadratic in the groups, nothing measurable at eighty levels.
