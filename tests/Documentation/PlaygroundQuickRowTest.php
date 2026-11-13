@@ -42,13 +42,15 @@ final class PlaygroundQuickRowTest extends TestCase
 
         $glyphs = [];
         foreach ($examples as $example) {
-            \assert($example instanceof \DOMElement);
+            $this->assertInstanceOf(\DOMElement::class, $example);
             $glyph = $xpath->query('./*'.self::has('pg-example-glyph').'[@aria-hidden="true"]', $example);
             $this->assertNotFalse($glyph);
             $this->assertSame(1, $glyph->length, 'One glyph, first in the chip, hidden from a voice that reads the name and the pattern.');
-            $text = trim((string) $glyph->item(0)?->textContent);
+            $first = $glyph->item(0);
+            $this->assertInstanceOf(\DOMElement::class, $first);
+            $text = trim($first->textContent);
             $this->assertNotSame('', $text);
-            $this->assertStringContainsString($text, $example->getAttribute('data-regex'), 'The glyph is a piece of the pattern the chip loads: the construct, not a decoration.');
+            $this->assertStringContainsString($text, (string) $example->getAttribute('data-regex'), 'The glyph is a piece of the pattern the chip loads: the construct, not a decoration.');
             $this->assertSame($glyph->item(0), $example->firstElementChild, 'The construct leads; the name follows.');
             $glyphs[] = $text;
         }
@@ -67,10 +69,11 @@ final class PlaygroundQuickRowTest extends TestCase
         $this->assertNotFalse($warning);
         $this->assertSame(1, $warning->length, 'One example is the ReDoS one, and it says so.');
         $button = $warning->item(0);
-        \assert($button instanceof \DOMElement);
+        $this->assertInstanceOf(\DOMElement::class, $button);
         // The engine itself gives up on it, as the page's engine does
         // (JIT off, the default backtrack limit): the warning is earned.
         $jit = ini_set('pcre.jit', '0');
+
         try {
             $this->assertFalse(@preg_match($button->getAttribute('data-regex'), $button->getAttribute('data-subject')));
             $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
@@ -127,9 +130,10 @@ final class PlaygroundQuickRowTest extends TestCase
         $xpath = self::include();
 
         $this->assertSame(1, self::nodes($xpath, '//*'.self::has('pg-findings-body').'/*[1]'.self::has('pg-findings-intro')), 'The panel opens on one sentence that says what the tree is.');
-        $intro = (string) $xpath->evaluate('string(//*'.self::has('pg-findings-intro').')');
-        $this->assertStringContainsString('open-source PHP', $intro);
-        $this->assertStringContainsString('own PHP version', $intro, 'Each project is judged for the PHP it declares, and the sentence says so.');
+        $intro = $xpath->evaluate('string(//*'.self::has('pg-findings-intro').')');
+        $this->assertIsString($intro);
+        $this->assertStringContainsString('open-source PHP', (string) $intro);
+        $this->assertStringContainsString('own PHP version', (string) $intro, 'Each project is judged for the PHP it declares, and the sentence says so.');
     }
 
     #[Test]

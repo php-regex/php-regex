@@ -61,7 +61,7 @@ final class IconsTest extends TestCase
                 $this->assertStringContainsString('viewBox="0 0 24 24"', $attributes);
                 $this->assertStringContainsString('aria-hidden="true"', $attributes, 'An icon is for the eye; the words carry the meaning.');
                 $this->assertSame(self::inner($name[1]), $inner, basename($file).': '.$name[1].' is drawn as Lucide draws it.');
-                ++$seen;
+                $seen++;
             }
         }
         $this->assertGreaterThanOrEqual(17, $seen);

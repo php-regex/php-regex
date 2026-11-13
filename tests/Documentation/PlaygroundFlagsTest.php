@@ -68,7 +68,7 @@ final class PlaygroundFlagsTest extends TestCase
 
         $seen = [];
         foreach ($buttons as $button) {
-            \assert($button instanceof \DOMElement);
+            $this->assertInstanceOf(\DOMElement::class, $button);
             $letter = $button->getAttribute('data-flag');
             $seen[] = $letter;
             $this->assertSame('button', $button->getAttribute('type'));
@@ -216,7 +216,7 @@ final class PlaygroundFlagsTest extends TestCase
             '[a]m' => 'm',
             '<a>U' => 'U',
             '/a\/b/i' => 'i',
-            ' /a/i' => 'i',
+            "\x20/a/i" => 'i', // A leading space, before the delimiter.
             "/a/i\n" => 'i',
         ];
     }

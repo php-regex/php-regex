@@ -53,7 +53,7 @@ final class PlaygroundTabsTest extends TestCase
         $this->assertNotFalse($tabs);
         $this->assertSame(7, $tabs->length);
         foreach ($tabs as $tab) {
-            \assert($tab instanceof \DOMElement);
+            $this->assertInstanceOf(\DOMElement::class, $tab);
             $icon = $xpath->query('./*[1][self::svg][contains(@class, "pg-tab-icon")][@aria-hidden="true"]', $tab);
             $this->assertNotFalse($icon);
             $this->assertSame(1, $icon->length, $tab->getAttribute('data-tool').' leads with its icon, hidden from a voice that reads its name.');
@@ -97,7 +97,7 @@ final class PlaygroundTabsTest extends TestCase
         $tabs = (new \DOMXPath($document))->query('//*[@role="tab"]');
         $this->assertNotFalse($tabs);
         foreach ($tabs as $tab) {
-            \assert($tab instanceof \DOMElement);
+            $this->assertInstanceOf(\DOMElement::class, $tab);
             $this->assertSame(trim((string) $tab->firstElementChild?->nextSibling?->textContent), $tab->getAttribute('title'), 'A tab folded to its icon names itself in its tip.');
         }
     }
@@ -258,7 +258,7 @@ final class PlaygroundTabsTest extends TestCase
         $this->assertStringContainsString('PARITY_TIMEOUT_MS', $check, 'A pattern that backtracks in JavaScript too is stopped, and said.');
         $this->assertStringContainsString('current.payload.matches', $check, 'Compared with what PHP found on the same text.');
         $this->assertStringContainsString('URL.revokeObjectURL(', $check);
-        $this->assertStringContainsString("subject.matchAll(", $script, 'Every match, as preg_match_all walks them.');
+        $this->assertStringContainsString('subject.matchAll(', $script, 'Every match, as preg_match_all walks them.');
 
         $render = self::between($script, 'function renderTranspile(panel, payload, announceResult) {', "\n  }\n");
         $this->assertStringContainsString("toolSettings.transpile.target === 'js'", $render, 'Only JavaScript runs here; Python and the HTML attribute are not checked.');

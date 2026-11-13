@@ -57,7 +57,7 @@ final class FindingsLayoutTest extends TestCase
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary[contains(., "regex issues in")]/*'.self::has('pg-findings-count')), 'The door says what it holds and how many projects: "Projects" alone said nothing.');
         $count = $xpath->evaluate('string('.self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary/*'.self::has('pg-findings-count').')');
         $this->assertIsString($count);
-        $this->assertStringContainsString('{{ findings_ranked.size }} projects', $count, 'The build writes the count: the door reads a whole sentence from the first paint.');
+        $this->assertStringContainsString('{{ findings_ranked.size }} projects', (string) $count, 'The build writes the count: the door reads a whole sentence from the first paint.');
         $stylesheet = self::source(self::STYLESHEET);
         $this->assertSame(1, preg_match('/^\.pg-findings-count \{([^}]*)\}/m', $stylesheet, $chip), 'The count\'s own rule exists.');
         $this->assertStringContainsString('text-overflow: ellipsis;', $chip[1], 'A long repository name is cut, never the row it sits in.');

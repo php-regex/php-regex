@@ -108,7 +108,7 @@ final class PlaygroundTakeAwayTest extends TestCase
     {
         $out = '';
         $length = \strlen($value);
-        for ($i = 0; $i < $length; ++$i) {
+        for ($i = 0; $i < $length; $i++) {
             $character = $value[$i];
             if ("'" === $character) {
                 $out .= "\\'";
