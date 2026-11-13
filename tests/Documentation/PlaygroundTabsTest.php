@@ -204,6 +204,19 @@ final class PlaygroundTabsTest extends TestCase
         $this->assertStringContainsString('color: var(--ink-soft);', $ws[1]);
     }
 
+    // --- Format --------------------------------------------------------------
+
+    #[Test]
+    public function test_a_laid_out_pattern_can_take_the_field_s_place(): void
+    {
+        $format = self::between(self::source(self::SCRIPT), 'function renderFormat(panel, payload, announceResult) {', "\n  }\n");
+
+        $this->assertStringContainsString("toolButton('Use in the field'", $format);
+        $this->assertStringContainsString('el.pattern.value = result.pattern;', $format);
+        $this->assertStringContainsString("el.pattern.dispatchEvent(new Event('input', { bubbles: true }));", $format, 'An edit of the field like any other: the address and the counts follow.');
+        $this->assertStringContainsString('if (result.changed) {', $format, 'Offered only when there is something to use.');
+    }
+
     private static function between(string $haystack, string $from, string $to): string
     {
         $start = strpos($haystack, $from);

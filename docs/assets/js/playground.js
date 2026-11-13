@@ -2738,6 +2738,15 @@
     row.appendChild(toolButton('Copy', function () {
       copyText(result.pattern, toolSettings.format.compact ? 'the compacted pattern' : 'the laid-out pattern', panel);
     }));
+    // The layout can take the field's place: an edit like any other, so
+    // the address and the counts follow, and the engine answers it.
+    if (result.changed) {
+      row.appendChild(toolButton('Use in the field', function () {
+        el.pattern.value = result.pattern;
+        el.pattern.dispatchEvent(new Event('input', { bubbles: true }));
+        analyzeNow();
+      }));
+    }
     var lines = result.pattern.split('\n').length;
     row.appendChild(text('span', 'pg-tool-line', result.changed ? (toolSettings.format.compact ? 'Written on one line; it matches what the pattern above matches.' : 'Laid out over ' + lines + ' line' + (lines === 1 ? '' : 's') + ' under x; it matches what the pattern above matches.') : 'The pattern fits the width: unchanged.'));
     panel.appendChild(row);
