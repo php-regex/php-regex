@@ -30,8 +30,8 @@ final class HostRequirements
      * cannot. That behaviour has tests of its own, run in a process that
      * disables the function; the tests of what the two keep fail without it.
      *
-     * The tests of the CI workflows and of bin/ci-answer answer for gh with
-     * a stand-in that filters through jq, as `gh --jq` does: the runners of
+     * The tests of the CI workflows and of bin/ci-answer stand in for gh and
+     * filter its answers through jq, as `gh --jq` does: the runners of
      * GitHub and Homebrew hosts have it, a minimal Linux may not.
      *
      * @param bool $windows    the host is Windows, where neither is used
@@ -51,7 +51,7 @@ final class HostRequirements
             $missing[] = 'posix_geteuid() is missing or disabled: the AST file cache and the class-set store keep nothing where they cannot check who owns their directory, and the tests of what they keep fail on this host.';
         }
         if (!$jq) {
-            $missing[] = 'jq is not on the PATH: the tests of the CI workflows and of bin/ci-answer answer for gh with a stand-in that filters through it, as gh --jq does, and fail on this host.';
+            $missing[] = 'jq is not on the PATH: the tests of the CI workflows and of bin/ci-answer stand in for gh and filter its answers through jq, as gh --jq does, and fail on this host.';
         }
 
         return $missing;
