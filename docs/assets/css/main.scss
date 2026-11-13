@@ -1387,6 +1387,16 @@ main table::-webkit-scrollbar-thumb {
   border-bottom: 1px solid var(--line);
 }
 
+/* The brand and its release tag move as one: the tag is a link now — it
+   answers the question it provokes — and the group keeps the .6rem the
+   tag had inside the brand link, whatever gap the header carries. */
+.brand-group {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  min-height: 44px;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -1434,6 +1444,17 @@ main table::-webkit-scrollbar-thumb {
   line-height: 1.5;
   letter-spacing: .02em;
   white-space: nowrap;
+  text-decoration: none;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+/* A pill is already a control: it answers a hover with a fill, never
+   with an underline. */
+a.version-tag:hover,
+a.version-tag:focus-visible {
+  color: var(--paper);
+  background: var(--amber);
+  text-decoration: none;
 }
 
 .site-header button {
@@ -1631,7 +1652,7 @@ main table::-webkit-scrollbar-thumb {
     padding-inline: .7rem;
   }
 
-  .brand .version-tag {
+  .site-header .version-tag {
     display: none;
   }
 

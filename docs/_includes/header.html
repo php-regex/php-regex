@@ -1,20 +1,24 @@
 <header class="site-header{% if page.layout == 'landing' %} site-header--landing{% endif %}">
-  <a class="brand" href="/">
-    <svg class="mark" viewBox="-168 -120 336 240" aria-hidden="true" focusable="false">
-      <g fill="none" stroke="currentColor" stroke-width="27" stroke-linecap="round">
-        <path d="M-112-120H-168V120H-112"/>
-        <path d="M112-120H168V120H112"/>
-      </g>
-      <g transform="translate(0 14)">
-        <path d="M0-78L-64 58M0-78L64 58" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round"/>
-        <circle class="mark-node" cx="0" cy="-78" r="38"/>
-        <circle class="mark-node" cx="-64" cy="58" r="30"/>
-        <circle class="mark-node" cx="64" cy="58" r="30"/>
-      </g>
-    </svg>
-    <span class="brand-name">PHPRegex</span>
-    <span class="version-tag">{{ site.data.product.version_label }}</span>
-  </a>
+  <div class="brand-group">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="-168 -120 336 240" aria-hidden="true" focusable="false">
+        <g fill="none" stroke="currentColor" stroke-width="27" stroke-linecap="round">
+          <path d="M-112-120H-168V120H-112"/>
+          <path d="M112-120H168V120H112"/>
+        </g>
+        <g transform="translate(0 14)">
+          <path d="M0-78L-64 58M0-78L64 58" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round"/>
+          <circle class="mark-node" cx="0" cy="-78" r="38"/>
+          <circle class="mark-node" cx="-64" cy="58" r="30"/>
+          <circle class="mark-node" cx="64" cy="58" r="30"/>
+        </g>
+      </svg>
+      <span class="brand-name">PHPRegex</span>
+    </a>
+    {%- comment -%}The release tag answers the question it provokes — what
+      changed, what breaks — on the page that answers it.{% endcomment -%}
+    <a class="version-tag" href="/reference/backward-compatibility/">{{ site.data.product.version_label }}</a>
+  </div>
   {%- comment -%}
     The sidebar maps the documentation; the header names the three
     places a reader moves between - the docs, the tutorial, the articles -
