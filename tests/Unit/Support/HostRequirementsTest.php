@@ -17,6 +17,7 @@ use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\HostRequirements;
 use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -61,7 +62,12 @@ final class HostRequirementsTest extends TestCase
         $this->assertCount(2, HostRequirements::missing(windows: false, ownerCheck: false, jq: false));
     }
 
+    /**
+     * Outside Windows, where a program is a file with its execute bit set:
+     * Windows reads it by its extension, and needs none of these.
+     */
     #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_a_program_is_found_on_the_path_where_it_can_be_run(): void
     {
         $directory = TemporaryDirectory::create('php-regex-host');
