@@ -62,6 +62,36 @@ site and its assets never drift apart.
 Theming is explicit files, never `@media` inside a file: every themed asset
 ships a light and a dark file, and a README picks one with `<picture>`.
 
+## A card for every page
+
+`art/og.py` writes one Open Graph image per page of the site under
+`docs/assets/og/`, at the page's path (`/guides/cli/` →
+`docs/assets/og/guides/cli.jpg`): 1200×630, the page's title and
+description, an eyebrow naming its section, the section's hue in the glow
+(Learn orange, Tutorial green, Integrations sky, Concepts violet, Reference
+teal, Internals amber, Articles pink, Findings red), the chapter's number
+on a tutorial page and the mark elsewhere, and the page's address. A link
+shared on WhatsApp, X, LinkedIn or Slack shows what it leads to.
+
+The page list is read from the built site, so every page is covered —
+documentation, tutorial, articles, and the findings of every project —
+with no list to maintain. `docs/_includes/head.html` serves the page's card
+when the file exists and falls back to the page's own `image`, then to the
+site card, so a page added since the last run never shows a broken image.
+The home page keeps the site card (`social-dark`). Run it after adding or
+retitling pages:
+
+```console
+$ (cd docs && bundle exec jekyll build)
+$ python3 art/og.py --site docs/_site \
+    --inter-display /path/to/inter/extras/otf \
+    --mono docs/assets/fonts/jetbrains-mono-var.woff2
+```
+
+The cards are JPEG at quality 85 with full chroma, about 50 KB each: the
+glows stay smooth, which a palette PNG bands. The output is deterministic,
+so a run that changes no page rewrites no file.
+
 ## Site copies
 
 The script also writes the documentation site's copies: `docs/favicon.svg`,
