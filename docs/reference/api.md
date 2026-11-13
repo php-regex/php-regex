@@ -678,7 +678,8 @@ Notes:
   `$result->warnings` names the first such set with its offset in the pattern, once per pattern:
   `Without the u flag "\S" at offset 1 takes one byte in PCRE and one character in this target, so the two differ on a
   subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.` The advice is the one a
-  refusal gives, checked against the engine the same way and to be weighed the same way: under `u` PHP also reads
+  refusal gives, checked against the engine the same way and to be weighed the same way; where the target refuses the
+  pattern under `u`, as Python does `\w`, the advice names that refusal instead: under `u` PHP also reads
   `\d`, `\w`, `\s`, `\b` and case in Unicode. Which bytes a set takes is asked of the running PCRE, under the
   inline `(?xx)` in force, which Python carries: `[^\S]`, six ASCII bytes, gets no warning, and `[ ^a]`, which is
   `[^a]` under `(?xx)`, gets one there. Under `u` there is none, and a set the target refuses (`\H`, `\V`, `\N`, `\C`,

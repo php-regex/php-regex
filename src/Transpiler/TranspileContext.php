@@ -41,11 +41,13 @@ final class TranspileContext
     private array $notes = [];
 
     /**
-     * @param bool        $scriptsAlone whether a bare script name, "\p{Han}", is the
-     *                                  script alone, as before PCRE2 10.40, rather
-     *                                  than its script extensions
-     * @param string|null $sourceBody   the body of the pattern, without its delimiters
-     *                                  and flags, which the positions of a refusal count in
+     * @param bool                       $scriptsAlone whether a bare script name, "\p{Han}", is the
+     *                                                 script alone, as before PCRE2 10.40, rather
+     *                                                 than its script extensions
+     * @param string|null                $sourceBody   the body of the pattern, without its delimiters
+     *                                                 and flags, which the positions of a refusal count in
+     * @param (\Closure(): ?string)|null $underU       the message of the refusal the target gives the
+     *                                                 pattern with u added, null when it carries it
      */
     public function __construct(
         public string $sourcePattern,
@@ -53,7 +55,17 @@ final class TranspileContext
         public TranspileOptions $options,
         public bool $scriptsAlone = false,
         public ?string $sourceBody = null,
+        private readonly ?\Closure $underU = null,
     ) {}
+
+    /**
+     * Why the target refuses the pattern with u added, or null when it
+     * carries it there, or when nothing can tell.
+     */
+    public function refusalUnderU(): ?string
+    {
+        return null === $this->underU ? null : ($this->underU)();
+    }
 
     /**
      * The text a refusal's snippet shows: the body of the pattern, where

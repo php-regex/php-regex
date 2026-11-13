@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The advice to add `u` looks at the target: where the target refuses the
+   pattern under `u`, as Python does `\w` or `\b`, which UCP widens, the
+   warning or the refusal names that refusal instead of advising `u`.
  * The snippet of a `TranspileException` points at the construct refused:
    its position counts in the body of the pattern, which the snippet now
    shows, as a parse error's does, where it showed the pattern with its

@@ -87,7 +87,7 @@ final class SetsWithoutUtfTest extends TestCase
         $result = Regex::create()->transpile('/^'.$set.'$/', $target);
 
         $this->assertSame($literal, $result->literal);
-        $this->assertSame([self::warning($set, 1)], $result->warnings);
+        $this->assertSame([self::warningFor('/^'.$set.'$/', $target, $set, 1)], $result->warnings);
     }
 
     #[Test]
@@ -163,7 +163,7 @@ final class SetsWithoutUtfTest extends TestCase
         // Without the byte the pattern fails: the set is what took it.
         $this->assertSame(0, preg_match($pattern, str_replace("\xE9", '', $subject)), $pattern);
 
-        $this->assertSame([self::warning($set, $offset)], Regex::create()->transpile($pattern, $target)->warnings);
+        $this->assertSame([self::warningFor($pattern, $target, $set, $offset)], Regex::create()->transpile($pattern, $target)->warnings);
     }
 
     /**
@@ -274,6 +274,39 @@ final class SetsWithoutUtfTest extends TestCase
             ['Without the u flag "\S" at offset 1 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.'],
             Regex::create()->transpile('/^\S$/', 'javascript')->warnings,
         );
+    }
+
+    /**
+     * The advice looks at the target: where u makes the target refuse the
+     * pattern, the warning names that refusal instead of advising u.
+     */
+    #[Test]
+    #[DataProvider('provideAdviceTheTargetRefuses')]
+    public function test_the_advice_names_the_refusal_u_leads_to(string $pattern, string $target, string $set, int $offset, string $refusal): void
+    {
+        // The oracle: PCRE compiles the pattern with u, the target refuses it there.
+        $this->assertSame(0, preg_match($pattern.'u', ''));
+
+        try {
+            Regex::create()->transpile($pattern.'u', $target);
+            $this->fail($pattern.'u must be refused.');
+        } catch (TranspileException $e) {
+            $this->assertSame($refusal, $e->getMessage());
+        }
+
+        $this->assertSame(
+            [\sprintf('Without the u flag "%s" at offset %d takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Adding u does not carry the pattern either: %s', $set, $offset, $refusal)],
+            Regex::create()->transpile($pattern, $target)->warnings,
+        );
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, target: string, set: string, offset: int, refusal: string}>
+     */
+    public static function provideAdviceTheTargetRefuses(): iterable
+    {
+        yield 'Python: a word character beside the set' => ['pattern' => '/\S\w/', 'target' => 'python', 'set' => '\S', 'offset' => 0, 'refusal' => 'Python re reads \w otherwise than PCRE under u, which reads a word character with UCP: combining marks and connector punctuation are word characters to PCRE alone.'];
+        yield 'Python: a word boundary beside the set' => ['pattern' => '/\b\S/', 'target' => 'python', 'set' => '\S', 'offset' => 2, 'refusal' => 'Python re reads \b otherwise than PCRE under u, which reads a word character with UCP: combining marks and connector punctuation are word characters to PCRE alone.'];
     }
 
     /**
@@ -423,5 +456,20 @@ final class SetsWithoutUtfTest extends TestCase
     private static function warning(string $set, int $offset): string
     {
         return \sprintf('Without the u flag "%s" at offset %d takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.', $set, $offset);
+    }
+
+    /**
+     * The warning with the advice the target takes: u, or the refusal the
+     * target gives the pattern under u, as Python gives "\w".
+     */
+    private static function warningFor(string $pattern, string $target, string $set, int $offset): string
+    {
+        try {
+            Regex::create()->transpile($pattern.'u', $target);
+        } catch (TranspileException $e) {
+            return substr(self::warning($set, $offset), 0, -\strlen('Add u.')).'Adding u does not carry the pattern either: '.$e->getMessage();
+        }
+
+        return self::warning($set, $offset);
     }
 }
