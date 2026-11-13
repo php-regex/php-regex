@@ -33,16 +33,40 @@
   {% else %}
   {% assign head_image_version = site.time | date: '%s' %}
   {% endif %}
+  {% comment %}
+    The card a shared link shows. Every page has its own, written by
+    art/og.py under /assets/og/ at the page's path (its title, its
+    description, its section's hue); a page added since the last run, or
+    one the script skips (the home page keeps the site card), falls back to
+    the page's own image, then to the site card. The file is looked up among
+    the static files, so a missing card never yields a broken image.
+  {% endcomment %}
+  {% assign head_og_rel = page.url | remove_first: '/' | remove: '.html' | split: '/' | join: '/' %}
+  {% if head_og_rel == '' %}{% assign head_og_rel = 'index' %}{% endif %}
+  {% assign head_og_file = '/assets/og/' | append: head_og_rel | append: '.jpg' %}
+  {% assign head_og_found = site.static_files | where: 'path', head_og_file | first %}
+  {% if head_og_found %}
+  {% assign head_image = head_og_file %}
+  {% assign head_image_w = 1200 %}
+  {% assign head_image_h = 630 %}
+  {% capture head_image_alt %}{% if page.title %}{{ page.title | strip_html }} — {% endif %}PHPRegex{% endcapture %}
+  {% else %}
+  {% assign head_image = page.image | default: '/assets/img/social.png' %}
+  {% assign head_image_w = 1280 %}
+  {% assign head_image_h = 640 %}
+  {% assign head_image_alt = page.image_alt | default: 'PHPRegex — static analysis, linter and logic solver for PHP regular expressions.' %}
+  {% endif %}
   <meta property="og:site_name" content="PHPRegex">
   <meta property="og:url" content="{{ page.url | absolute_url }}">
-  <meta property="og:image" content="{{ page.image | default: '/assets/img/social.png' | absolute_url }}?v={{ head_image_version }}">
-  <meta property="og:image:width" content="1280">
-  <meta property="og:image:height" content="640">
-  <meta property="og:image:alt" content="{{ page.image_alt | default: 'PHPRegex — static analysis, linter and logic solver for PHP regular expressions.' | escape }}">
+  <meta property="og:image" content="{{ head_image | absolute_url }}?v={{ head_image_version }}">
+  <meta property="og:image:width" content="{{ head_image_w }}">
+  <meta property="og:image:height" content="{{ head_image_h }}">
+  <meta property="og:image:alt" content="{{ head_image_alt | escape_once }}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{% if page.title %}{{ page.title | strip_html | escape }} — {% endif %}PHPRegex">
   <meta name="twitter:description" content="{{ page.description | default: site.description | strip_html | escape }}">
-  <meta name="twitter:image" content="{{ page.image | default: '/assets/img/social.png' | absolute_url }}?v={{ head_image_version }}">
+  <meta name="twitter:image" content="{{ head_image | absolute_url }}?v={{ head_image_version }}">
+  <meta name="twitter:image:alt" content="{{ head_image_alt | escape_once }}">
   <link rel="icon" href="/favicon.ico" sizes="48x48">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
