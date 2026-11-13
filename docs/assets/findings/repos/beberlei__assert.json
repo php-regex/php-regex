@@ -1,6 +1,6 @@
 {
     "repo": "beberlei/assert",
-    "sha": "f193f4613c7d7fbcee2c05e4daff4061d49c040e",
+    "sha": "ce7c21d7e29c52b448a75f7704f61363eea89baa",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -40,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/beberlei/assert/blob/f193f4613c7d7fbcee2c05e4daff4061d49c040e/bin/MethodDocGenerator.php#L55-L61",
+            "permalink": "https://github.com/beberlei/assert/blob/ce7c21d7e29c52b448a75f7704f61363eea89baa/bin/MethodDocGenerator.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -204,7 +204,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/beberlei/assert/blob/f193f4613c7d7fbcee2c05e4daff4061d49c040e/bin/MethodDocGenerator.php#L153-L159",
+            "permalink": "https://github.com/beberlei/assert/blob/ce7c21d7e29c52b448a75f7704f61363eea89baa/bin/MethodDocGenerator.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -344,7 +344,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/beberlei/assert/blob/f193f4613c7d7fbcee2c05e4daff4061d49c040e/bin/MethodDocGenerator.php#L160-L166",
+            "permalink": "https://github.com/beberlei/assert/blob/ce7c21d7e29c52b448a75f7704f61363eea89baa/bin/MethodDocGenerator.php#L160-L166",
             "snippet": [
                 {
                     "number": 160,
@@ -452,6 +452,120 @@
                     "runs": [
                         [
                             "                );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-1e910e6116",
+            "file": "lib/Assert/Assertion.php",
+            "line": 1754,
+            "column": 20,
+            "pattern": "~^\n            (http|https)://                                                             # protocol\n            (([\\.\\pL\\pN-]+:)?([\\.\\pL\\pN-]+)@)?                                  # basic auth\n            (\n                ([\\pL\\pN\\pS\\-\\.])+(\\.?([\\pL\\pN]|xn\\-\\-[\\pL\\pN-]+)+\\.?)          # a domain name\n                |                                                               # or\n                \\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}                              # an IP address\n                |                                                               # or\n                \\[\n                    (?:(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){6})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:::(?:(?:(?:[0-9a-f]{1,4})):){5})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:[0-9a-f]{1,4})))?::(?:(?:(?:[0-9a-f]{1,4})):){4})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,1}(?:(?:[0-9a-f]{1,4})))?::(?:(?:(?:[0-9a-f]{1,4})):){3})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,2}(?:(?:[0-9a-f]{1,4})))?::(?:(?:(?:[0-9a-f]{1,4})):){2})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,3}(?:(?:[0-9a-f]{1,4})))?::(?:(?:[0-9a-f]{1,4})):)(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,4}(?:(?:[0-9a-f]{1,4})))?::)(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,5}(?:(?:[0-9a-f]{1,4})))?::)(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,6}(?:(?:[0-9a-f]{1,4})))?::))))\n                \\]                                                              # an IPv6 address\n            )\n            (:[0-9]+)?                                                          # a port (optional)\n            (?:/ (?:[\\pL\\pN\\-._\\~!$&'()*+,;=:@]|%[0-9A-Fa-f]{2})* )*          # a path\n            (?:\\? (?:[\\pL\\pN\\-._\\~!$&'\\[\\]()*+,;=:@/?]|%[0-9A-Fa-f]{2})* )?   # a query (optional)\n            (?:\\# (?:[\\pL\\pN\\-._\\~!$&'()*+,;=:@/?]|%[0-9A-Fa-f]{2})* )?       # a fragment (optional)\n        $~ixuD",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"[\\pL\\pN]\" and \"xn\\-\\-[\\pL\\pN-]+\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": {
+                "optimized": "~^\n            (http|https)://                                                             # protocol\n            (([\\.\\pL\\pN-]+:)?([\\.\\pL\\pN-]+)@)?                                  # basic auth\n            (\n                ([\\pL\\pN\\pS\\-\\.])+(\\.?([\\pL\\pN]|xn\\-\\-[\\pL\\pN-]+)+\\.?)          # a domain name\n                |                                                               # or\n                \\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}                              # an IP address\n                |                                                               # or\n                \\[\n                    (?:(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){6})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:::(?:(?:(?:[0-9a-f]{1,4})):){5})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:[0-9a-f]{1,4})))?::(?:(?:(?:[0-9a-f]{1,4})):){4})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):)?(?:(?:[0-9a-f]{1,4})))?::(?:(?:(?:[0-9a-f]{1,4})):){3})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,2}(?:(?:[0-9a-f]{1,4})))?::(?:(?:(?:[0-9a-f]{1,4})):){2})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,3}(?:(?:[0-9a-f]{1,4})))?::(?:(?:[0-9a-f]{1,4})):)(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,4}(?:(?:[0-9a-f]{1,4})))?::)(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,5}(?:(?:[0-9a-f]{1,4})))?::)(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,6}(?:(?:[0-9a-f]{1,4})))?::))))\n                \\]                                                              # an IPv6 address\n            )\n            (:[0-9]+)?                                                          # a port (optional)\n            (?:/ (?:[\\pL\\pN\\-._\\~!$&'()*+,;=:@]|%[0-9A-Fa-f]{2})* )*          # a path\n            (?:\\? (?:[\\pL\\pN\\-._\\~!$&'\\[\\]()*+,;=:@/?]|%[0-9A-Fa-f]{2})* )?   # a query (optional)\n            (?:\\# (?:[\\pL\\pN\\-._\\~!$&'()*+,;=:@/?]|%[0-9A-Fa-f]{2})* )?       # a fragment (optional)\n        $~ixuD",
+                "changes": [
+                    "Wrote a quantifier in its short form."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/beberlei/assert/blob/ce7c21d7e29c52b448a75f7704f61363eea89baa/lib/Assert/Assertion.php#L1751-L1757",
+            "snippet": [
+                {
+                    "number": 1751,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            (?:\\# (?:[\\pL\\pN\\-._\\~!$&\\'()*+,;=:@/?]|%%[0-9A-Fa-f]{2})* )?       # a fragment (optional)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1752,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $~ixuD';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1753,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1754,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $pattern = \\sprintf($pattern, \\implode('|', $protocols));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1755,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1756,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!\\preg_match($pattern, $value)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1757,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $message = \\sprintf(",
                             ""
                         ]
                     ]

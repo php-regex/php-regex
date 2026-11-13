@@ -1,6 +1,6 @@
 {
     "repo": "nikic/PHP-Parser",
-    "sha": "1ee86c89e58a23810602e78ca445784bb7b2ad3e",
+    "sha": "679d41ede0ad4236c22dbb52155aaa1b159b4d5c",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nikic/PHP-Parser/blob/1ee86c89e58a23810602e78ca445784bb7b2ad3e/lib/PhpParser/ParserAbstract.php#L718-L724",
+            "permalink": "https://github.com/nikic/PHP-Parser/blob/679d41ede0ad4236c22dbb52155aaa1b159b4d5c/lib/PhpParser/ParserAbstract.php#L718-L724",
             "snippet": [
                 {
                     "number": 718,

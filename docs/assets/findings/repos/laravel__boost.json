@@ -1,12 +1,202 @@
 {
     "repo": "laravel/boost",
-    "sha": "541d0f85ecdb7707a83d6fc30058b41600d07efe",
+    "sha": "0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
         "source": "composer.json require.php"
     },
     "findings": [
+        {
+            "id": "f-efaa0bdeb7",
+            "file": "src/Concerns/RendersBladeGuidelines.php",
+            "line": 82,
+            "column": 13,
+            "pattern": "/@verbatim.*?@endverbatim(*SKIP)(*FAIL)|(?<!@)@\\{!!(?:(?!\\n[ \\t]*\\n|\\n[ \\t]*`{3,}|\\n[ \\t]*~{3,}).)*?!!\\}/s",
+            "source": "preg_replace_callback()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Concerns/RendersBladeGuidelines.php#L79-L85",
+            "snippet": [
+                {
+                    "number": 79,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $bounded = '(?:(?!\\n[ \\t]*\\n|\\n[ \\t]*`{3,}|\\n[ \\t]*~{3,}).)*?';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 80,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 81,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $patterns = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 82,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            '/'.$skipVerbatim.'(?<!@)@\\{!!'.$bounded.'!!\\}/s',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 83,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/'.$skipVerbatim.'(?<!@)@\\{\\{'.$bounded.'\\}\\}/s',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 84,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/'.$skipVerbatim.'(?<!@)@(?:\\{!!|\\{\\{)/s',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 85,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/'.$skipVerbatim.'(?<![\\w@])@@(?=\\w)/s',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a271405c8c",
+            "file": "src/Concerns/RendersBladeGuidelines.php",
+            "line": 83,
+            "column": 13,
+            "pattern": "/@verbatim.*?@endverbatim(*SKIP)(*FAIL)|(?<!@)@\\{\\{(?:(?!\\n[ \\t]*\\n|\\n[ \\t]*`{3,}|\\n[ \\t]*~{3,}).)*?\\}\\}/s",
+            "source": "preg_replace_callback()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Concerns/RendersBladeGuidelines.php#L80-L86",
+            "snippet": [
+                {
+                    "number": 80,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 81,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $patterns = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 82,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/'.$skipVerbatim.'(?<!@)@\\{!!'.$bounded.'!!\\}/s',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 83,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            '/'.$skipVerbatim.'(?<!@)@\\{\\{'.$bounded.'\\}\\}/s',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 84,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/'.$skipVerbatim.'(?<!@)@(?:\\{!!|\\{\\{)/s',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 85,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/'.$skipVerbatim.'(?<![\\w@])@@(?=\\w)/s',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 86,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
         {
             "id": "f-106074f475",
             "file": "src/Concerns/RendersBladeGuidelines.php",
@@ -35,7 +225,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/541d0f85ecdb7707a83d6fc30058b41600d07efe/src/Concerns/RendersBladeGuidelines.php#L100-L106",
+            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Concerns/RendersBladeGuidelines.php#L100-L106",
             "snippet": [
                 {
                     "number": 100,
@@ -375,7 +565,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/541d0f85ecdb7707a83d6fc30058b41600d07efe/src/Concerns/RendersBladeGuidelines.php#L128-L134",
+            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Concerns/RendersBladeGuidelines.php#L128-L134",
             "snippet": [
                 {
                     "number": 128,
@@ -639,7 +829,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/541d0f85ecdb7707a83d6fc30058b41600d07efe/src/Install/MarkdownFormatter.php#L19-L25",
+            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Install/MarkdownFormatter.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,
@@ -794,7 +984,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/541d0f85ecdb7707a83d6fc30058b41600d07efe/src/Install/SkillComposer.php#L275-L281",
+            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Install/SkillComposer.php#L275-L281",
             "snippet": [
                 {
                     "number": 275,
@@ -976,7 +1166,7 @@
                 "limit": 100000
             },
             "subject": "EXPLAIN ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 !DELETE",
-            "permalink": "https://github.com/laravel/boost/blob/541d0f85ecdb7707a83d6fc30058b41600d07efe/src/Mcp/Tools/DatabaseQuery.php#L164-L170",
+            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Mcp/Tools/DatabaseQuery.php#L164-L170",
             "snippet": [
                 {
                     "number": 164,
@@ -1071,7 +1261,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/541d0f85ecdb7707a83d6fc30058b41600d07efe/src/Rules/RuleFrontmatter.php#L16-L22",
+            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Rules/RuleFrontmatter.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,

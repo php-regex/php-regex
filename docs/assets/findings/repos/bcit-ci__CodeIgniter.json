@@ -1715,6 +1715,377 @@
             ]
         },
         {
+            "id": "f-e2aec844a5",
+            "file": "system/database/drivers/mssql/mssql_driver.php",
+            "line": 457,
+            "column": 29,
+            "pattern": "/(?:\\s|\\.)(\"[^\\\"]+\")$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/bcit-ci/CodeIgniter/blob/3658d731eaabe6117298a105ffb5b9dd59e190ce/system/database/drivers/mssql/mssql_driver.php#L454-L460",
+            "snippet": [
+                {
+                    "number": 454,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t? '(\"[^\\\"]+\")' : '(\\[[^\\]]+\\])';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 455,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tfor ($i = 0, $c = count($this->qb_select); $i < $c; $i++)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 456,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 457,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t$select[] = preg_match('/(?:\\s|\\.)'.$field_regexp.'$/i', $this->qb_select[$i], $m)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 458,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t? $m[1] : $this->qb_select[$i];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 459,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 460,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$select = implode(', ', $select);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-8c4c8ee927",
+            "file": "system/database/drivers/mssql/mssql_driver.php",
+            "line": 457,
+            "column": 29,
+            "pattern": "/(?:\\s|\\.)(\\[[^\\]]+\\])$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/bcit-ci/CodeIgniter/blob/3658d731eaabe6117298a105ffb5b9dd59e190ce/system/database/drivers/mssql/mssql_driver.php#L454-L460",
+            "snippet": [
+                {
+                    "number": 454,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t? '(\"[^\\\"]+\")' : '(\\[[^\\]]+\\])';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 455,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tfor ($i = 0, $c = count($this->qb_select); $i < $c; $i++)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 456,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 457,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t$select[] = preg_match('/(?:\\s|\\.)'.$field_regexp.'$/i', $this->qb_select[$i], $m)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 458,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t? $m[1] : $this->qb_select[$i];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 459,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 460,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$select = implode(', ', $select);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-f11fac67b3",
+            "file": "system/database/drivers/oci8/oci8_driver.php",
+            "line": 150,
+            "column": 13,
+            "pattern": "/^\\(DESCRIPTION=(\\(.+\\)){2,}\\)$/",
+            "source": "preg_match()",
+            "location": "via $regexp",
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"(DESCRIPTION=(!)\" . \"(!)(!)\" x n Replayed on PCRE2 10.49: preg_match fails from length 58 (backtrack_limit 100000, JIT off). The risky part is: .+ Hotspot offsets: 18-20 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.dotstar.nested",
+                    "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
+                    "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "(DESCRIPTION=(!)",
+                "pump": "(!)(!)",
+                "suffix": "",
+                "n": 28,
+                "length": 58,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "(DESCRIPTION=(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)",
+            "permalink": "https://github.com/bcit-ci/CodeIgniter/blob/3658d731eaabe6117298a105ffb5b9dd59e190ce/system/database/drivers/oci8/oci8_driver.php#L147-L153",
+            "snippet": [
+                {
+                    "number": 147,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tparent::__construct($params);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 148,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 149,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$valid_dsns = array(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 150,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t'tns'\t=> ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\(DESCRIPTION=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\(",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "{2,}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", // TNS",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 151,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t// Easy Connect string (Oracle 10g+)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 152,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'ec'\t=> '/^(\\/\\/)?[a-z0-9.:_-]+(:[1-9][0-9]{0,4})?(\\/[a-z0-9$_]+)?(:[^\\/])?(\\/[a-z0-9$_]+)?$/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 153,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'in'\t=> '/^[a-z0-9$_]+$/i' // Instance name (defined in tnsnames.ora)",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-32ea364e37",
             "file": "system/database/drivers/odbc/odbc_driver.php",
             "line": 176,
@@ -2096,6 +2467,196 @@
                     "runs": [
                         [
                             "\t\t}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-2c16ce97b7",
+            "file": "system/database/drivers/pdo/subdrivers/pdo_dblib_driver.php",
+            "line": 300,
+            "column": 29,
+            "pattern": "/(?:\\s|\\.)(\"[^\\\"]+\")$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/bcit-ci/CodeIgniter/blob/3658d731eaabe6117298a105ffb5b9dd59e190ce/system/database/drivers/pdo/subdrivers/pdo_dblib_driver.php#L297-L303",
+            "snippet": [
+                {
+                    "number": 297,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t? '(\"[^\\\"]+\")' : '(\\[[^\\]]+\\])';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 298,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tfor ($i = 0, $c = count($this->qb_select); $i < $c; $i++)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 299,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 300,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t$select[] = preg_match('/(?:\\s|\\.)'.$field_regexp.'$/i', $this->qb_select[$i], $m)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 301,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t? $m[1] : $this->qb_select[$i];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 302,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 303,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$select = implode(', ', $select);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-e14c85b6dc",
+            "file": "system/database/drivers/pdo/subdrivers/pdo_dblib_driver.php",
+            "line": 300,
+            "column": 29,
+            "pattern": "/(?:\\s|\\.)(\\[[^\\]]+\\])$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/bcit-ci/CodeIgniter/blob/3658d731eaabe6117298a105ffb5b9dd59e190ce/system/database/drivers/pdo/subdrivers/pdo_dblib_driver.php#L297-L303",
+            "snippet": [
+                {
+                    "number": 297,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t? '(\"[^\\\"]+\")' : '(\\[[^\\]]+\\])';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 298,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tfor ($i = 0, $c = count($this->qb_select); $i < $c; $i++)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 299,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 300,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t$select[] = preg_match('/(?:\\s|\\.)'.$field_regexp.'$/i', $this->qb_select[$i], $m)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 301,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t? $m[1] : $this->qb_select[$i];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 302,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 303,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$select = implode(', ', $select);",
                             ""
                         ]
                     ]
@@ -2537,6 +3098,196 @@
             ]
         },
         {
+            "id": "f-20ac809cc6",
+            "file": "system/database/drivers/pdo/subdrivers/pdo_sqlsrv_driver.php",
+            "line": 332,
+            "column": 29,
+            "pattern": "/(?:\\s|\\.)(\"[^\\\"]+\")$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/bcit-ci/CodeIgniter/blob/3658d731eaabe6117298a105ffb5b9dd59e190ce/system/database/drivers/pdo/subdrivers/pdo_sqlsrv_driver.php#L329-L335",
+            "snippet": [
+                {
+                    "number": 329,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t? '(\"[^\\\"]+\")' : '(\\[[^\\]]+\\])';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 330,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tfor ($i = 0, $c = count($this->qb_select); $i < $c; $i++)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 331,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 332,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t$select[] = preg_match('/(?:\\s|\\.)'.$field_regexp.'$/i', $this->qb_select[$i], $m)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 333,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t? $m[1] : $this->qb_select[$i];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 334,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 335,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$select = implode(', ', $select);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-7687ec2c25",
+            "file": "system/database/drivers/pdo/subdrivers/pdo_sqlsrv_driver.php",
+            "line": 332,
+            "column": 29,
+            "pattern": "/(?:\\s|\\.)(\\[[^\\]]+\\])$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/bcit-ci/CodeIgniter/blob/3658d731eaabe6117298a105ffb5b9dd59e190ce/system/database/drivers/pdo/subdrivers/pdo_sqlsrv_driver.php#L329-L335",
+            "snippet": [
+                {
+                    "number": 329,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t? '(\"[^\\\"]+\")' : '(\\[[^\\]]+\\])';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 330,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tfor ($i = 0, $c = count($this->qb_select); $i < $c; $i++)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 331,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 332,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t$select[] = preg_match('/(?:\\s|\\.)'.$field_regexp.'$/i', $this->qb_select[$i], $m)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 333,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t? $m[1] : $this->qb_select[$i];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 334,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 335,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$select = implode(', ', $select);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-7234563620",
             "file": "system/database/drivers/postgre/postgre_driver.php",
             "line": 277,
@@ -2747,6 +3498,196 @@
                     "runs": [
                         [
                             "\t\t}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-084c8812f5",
+            "file": "system/database/drivers/sqlsrv/sqlsrv_driver.php",
+            "line": 494,
+            "column": 29,
+            "pattern": "/(?:\\s|\\.)(\"[^\\\"]+\")$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/bcit-ci/CodeIgniter/blob/3658d731eaabe6117298a105ffb5b9dd59e190ce/system/database/drivers/sqlsrv/sqlsrv_driver.php#L491-L497",
+            "snippet": [
+                {
+                    "number": 491,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t? '(\"[^\\\"]+\")' : '(\\[[^\\]]+\\])';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 492,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tfor ($i = 0, $c = count($this->qb_select); $i < $c; $i++)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 493,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 494,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t$select[] = preg_match('/(?:\\s|\\.)'.$field_regexp.'$/i', $this->qb_select[$i], $m)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 495,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t? $m[1] : $this->qb_select[$i];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 496,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 497,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$select = implode(', ', $select);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-8d435a8bb9",
+            "file": "system/database/drivers/sqlsrv/sqlsrv_driver.php",
+            "line": 494,
+            "column": 29,
+            "pattern": "/(?:\\s|\\.)(\\[[^\\]]+\\])$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/bcit-ci/CodeIgniter/blob/3658d731eaabe6117298a105ffb5b9dd59e190ce/system/database/drivers/sqlsrv/sqlsrv_driver.php#L491-L497",
+            "snippet": [
+                {
+                    "number": 491,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t? '(\"[^\\\"]+\")' : '(\\[[^\\]]+\\])';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 492,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tfor ($i = 0, $c = count($this->qb_select); $i < $c; $i++)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 493,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 494,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t$select[] = preg_match('/(?:\\s|\\.)'.$field_regexp.'$/i', $this->qb_select[$i], $m)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 495,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t? $m[1] : $this->qb_select[$i];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 496,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 497,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$select = implode(', ', $select);",
                             ""
                         ]
                     ]
@@ -3126,6 +4067,315 @@
                     "runs": [
                         [
                             "\t\t\t\t{",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-696ea06873",
+            "file": "system/helpers/inflector_helper.php",
+            "line": 77,
+            "column": 4,
+            "pattern": "/([octop|vir])i$/",
+            "source": "preg_match()",
+            "location": "via $rule",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: 'o' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.suspiciousPipe",
+                    "message": "Character class contains \"|\" which is literal inside []. It looks like an alternation typo.",
+                    "hint": "Did you mean an alternation like \"(error|failure)\" instead of a character class?",
+                    "docs": "https://php-regex.com/reference/rules/#alternation-like-character-classes"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/bcit-ci/CodeIgniter/blob/3658d731eaabe6117298a105ffb5b9dd59e190ce/system/helpers/inflector_helper.php#L74-L80",
+            "snippet": [
+                {
+                    "number": 74,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/(vert|ind)ices$/'\t=> '\\1ex',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 75,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/^(ox)en/'\t\t=> '\\1',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 76,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/(alias)es$/'\t\t=> '\\1',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 77,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "octop|vir",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "\t=> '\\1us',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 78,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/(cris|ax|test)es$/'\t=> '\\1is',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 79,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/(shoe)s$/'\t\t=> '\\1',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 80,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/(o)es$/'\t\t=> '\\1',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-fb7c655271",
+            "file": "system/helpers/inflector_helper.php",
+            "line": 141,
+            "column": 4,
+            "pattern": "/(matr|vert|ind)ix|ex$/",
+            "source": "preg_match()",
+            "location": "via $rule",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"(matr|vert|ind)ix\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"(?:(matr|vert|ind)ix|ex)$\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/bcit-ci/CodeIgniter/blob/3658d731eaabe6117298a105ffb5b9dd59e190ce/system/helpers/inflector_helper.php#L138-L144",
+            "snippet": [
+                {
+                    "number": 138,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/(quiz)$/'                => '\\1zes',      // quizzes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 139,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/^(ox)$/'                 => '\\1\\2en',     // ox",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 140,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/([m|l])ouse$/'           => '\\1ice',      // mouse, louse",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 141,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "matr",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "vert",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ind",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "ix",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ex",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "  => '\\1ices',     // matrix, vertex, index",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 142,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/(x|ch|ss|sh)$/'          => '\\1es',       // search, switch, fix, box, process, address",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 143,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/([^aeiouy]|qu)y$/'       => '\\1ies',      // query, ability, agency",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 144,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/(hive)$/'                => '\\1s',        // archive, hive",
                             ""
                         ]
                     ]

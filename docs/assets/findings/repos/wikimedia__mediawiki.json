@@ -1,12 +1,107 @@
 {
     "repo": "wikimedia/mediawiki",
-    "sha": "d4dca2e8e13888b26d959517240339165af06f68",
+    "sha": "3faa2c4b672e6f2f8babaf959ae6f6024db37c19",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
         "source": "composer.json require.php"
     },
     "findings": [
+        {
+            "id": "f-5fd4123ebc",
+            "file": "includes/ExternalLinks/LinkFilter.php",
+            "line": 140,
+            "column": 20,
+            "pattern": "/^(?:(?:0*25[0-5]|0*2[0-4][0-9]|0*1[0-9][0-9]|0*[0-9]?[0-9])\\.){3}(?:0*25[0-5]|0*2[0-4][0-9]|0*1[0-9][0-9]|0*[0-9]?[0-9])$|^(?:(?:0*25[0-5]|0*2[0-4][0-9]|0*1[0-9][0-9]|0*[0-9]?[0-9])\\.){1,3}\\*$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/ExternalLinks/LinkFilter.php#L137-L143",
+            "snippet": [
+                {
+                    "number": 137,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 138,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// IPv4?",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 139,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$b = '(?:0*25[0-5]|0*2[0-4][0-9]|0*1[0-9][0-9]|0*[0-9]?[0-9])';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 140,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tif ( preg_match( \"/^(?:{$b}\\.){3}{$b}$|^(?:{$b}\\.){1,3}\\*$/\", $host ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 141,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tif ( !$reverse ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 142,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\treturn $host;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 143,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
         {
             "id": "f-1e50d106e7",
             "file": "includes/Installer/WebInstallerReleaseNotes.php",
@@ -28,7 +123,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Installer/WebInstallerReleaseNotes.php#L16-L22",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Installer/WebInstallerReleaseNotes.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -195,7 +290,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/JobQueue/JobRunner.php#L600-L606",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/JobQueue/JobRunner.php#L600-L606",
             "snippet": [
                 {
                     "number": 600,
@@ -366,7 +461,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Language/Converters/MniConverter.php#L81-L87",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Language/Converters/MniConverter.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -509,7 +604,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Language/Language.php#L3060-L3066",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Language/Language.php#L3060-L3066",
             "snippet": [
                 {
                     "number": 3060,
@@ -744,6 +839,101 @@
             ]
         },
         {
+            "id": "f-44f2af4080",
+            "file": "includes/Language/Language.php",
+            "line": 3092,
+            "column": 21,
+            "pattern": "/^([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*)|[ \\-\\(\\)\\}\\{\\.,\\?!]([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*)/",
+            "source": "preg_replace_callback()",
+            "location": "via $replaceRegexp",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"[ \\-\\(\\)\\}\\{\\.,\\?!]([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*)\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*)|[ \\-\\(\\)\\}\\{\\.,\\?!]([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*))\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Language/Language.php#L3089-L3095",
+            "snippet": [
+                {
+                    "number": 3089,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$breaks = \"[ \\-\\(\\)\\}\\{\\.,\\?!]\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3090,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3091,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t// find the first letter after word break",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3092,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t$replaceRegexp = \"/^([a-z]|[\\\\xc0-\\\\xff][\\\\x80-\\\\xbf]*)|\" .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3093,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\"$breaks([a-z]|[\\\\xc0-\\\\xff][\\\\x80-\\\\xbf]*)/\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3094,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3095,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\treturn preg_replace_callback(",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-6f6219d32d",
             "file": "includes/Language/Language.php",
             "line": 4320,
@@ -764,7 +954,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Language/Language.php#L4317-L4323",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Language/Language.php#L4317-L4323",
             "snippet": [
                 {
                     "number": 4317,
@@ -895,7 +1085,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Languages/LanguageFi.php#L30-L36",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Languages/LanguageFi.php#L30-L36",
             "snippet": [
                 {
                     "number": 30,
@@ -1053,7 +1243,7 @@
                 "limit": 100000
             },
             "subject": "<H1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/OutputTransform/Stages/HandleSectionLinks.php#L24-L30",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/OutputTransform/Stages/HandleSectionLinks.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -1414,7 +1604,7 @@
                 "limit": 100000
             },
             "subject": "<STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE>!",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Parser/BlockLevelPass.php#L369-L375",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Parser/BlockLevelPass.php#L369-L375",
             "snippet": [
                 {
                     "number": 369,
@@ -1621,9 +1811,294 @@
             ]
         },
         {
+            "id": "f-b3a58d1255",
+            "file": "includes/Parser/CoreParserFunctions.php",
+            "line": 2073,
+            "column": 25,
+            "pattern": "/(?:\\t|&nbsp;|&\\#0*160;|&\\#[Xx]0*[Aa]0;|\\p{Zs})/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{Zs}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Parser/CoreParserFunctions.php#L2070-L2076",
+            "snippet": [
+                {
+                    "number": 2070,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tif ( !preg_match( $regex, $isbn ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2071,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\treturn [ 'found' => false ];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2072,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2073,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$isbn = preg_replace( \"/$space/\", ' ', $isbn );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2074,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$num = strtr( $isbn, [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2075,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'-' => '',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2076,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t' ' => '',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-41af314050",
+            "file": "includes/Parser/Parser.php",
+            "line": 1778,
+            "column": 26,
+            "pattern": "/(?:\\t|&nbsp;|&\\#0*160;|&\\#[Xx]0*[Aa]0;|\\p{Zs})/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{Zs}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Parser/Parser.php#L1775-L1781",
+            "snippet": [
+                {
+                    "number": 1775,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t# ISBN",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1776,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$isbn = $m[6];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1777,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$space = self::SPACE_NOT_NL; #  non-newline space",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1778,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t$isbn = preg_replace( \"/$space/\", ' ', $isbn );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1779,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$num = strtr( $isbn, [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1780,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t'-' => '',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1781,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t' ' => '',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-54051f59d4",
+            "file": "includes/Parser/Parser.php",
+            "line": 2226,
+            "column": 20,
+            "pattern": "<^(?:[a-z][a-z0-9+.-]*:)?//(?:(?:[a-z0-9\\-._~!$&'()*+,;=:]|%[0-9a-f]{2})*@)?\\[((?:[0-9a-f:]|%3[0-A]|%[46][1-6])+)\\](?:[:/?#].*|)$>i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.alternation.empty",
+                    "message": "Alternation contains an empty alternative.",
+                    "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
+                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Parser/Parser.php#L2223-L2229",
+            "snippet": [
+                {
+                    "number": 2223,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$scheme = '[a-z][a-z0-9+.-]*:';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2224,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$userinfo = '(?:[a-z0-9\\-._~!$&\\'()*+,;=:]|%[0-9a-f]{2})*';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2225,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$ipv6Host = '\\\\[((?:[0-9a-f:]|%3[0-A]|%[46][1-6])+)\\\\]';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2226,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tif ( preg_match( \"<^(?:{$scheme})?//(?:{$userinfo}@)?{$ipv6Host}(?:[:/?#].*|)$>i\", $url, $m ) &&",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2227,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tIPUtils::isValid( rawurldecode( $m[1] ) )",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2228,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2229,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$isIPv6 = rawurldecode( $m[1] );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-efe7b3c0d7",
             "file": "includes/Parser/Parser.php",
-            "line": 5783,
+            "line": 5749,
             "column": 28,
             "pattern": "/\n\t\t\t&\t\t\t# 1. entity prefix\n\t\t\t(?=\t\t\t# 2. followed by:\n\t\t\t(?:\t\t\t#  a. one of the legacy semicolon-less named entities\n\t\t\t\tA(?:Elig|MP|acute|circ|grave|ring|tilde|uml)|\n\t\t\t\tC(?:OPY|cedil)|E(?:TH|acute|circ|grave|uml)|\n\t\t\t\tGT|I(?:acute|circ|grave|uml)|LT|Ntilde|\n\t\t\t\tO(?:acute|circ|grave|slash|tilde|uml)|QUOT|REG|THORN|\n\t\t\t\tU(?:acute|circ|grave|uml)|Yacute|\n\t\t\t\ta(?:acute|c(?:irc|ute)|elig|grave|mp|ring|tilde|uml)|brvbar|\n\t\t\t\tc(?:cedil|edil|urren)|cent(?!erdot;)|copy(?!sr;)|deg|\n\t\t\t\tdivide(?!ontimes;)|e(?:acute|circ|grave|th|uml)|\n\t\t\t\tfrac(?:1(?:2|4)|34)|\n\t\t\t\tgt(?!c(?:c|ir)|dot|lPar|quest|r(?:a(?:pprox|rr)|dot|eq(?:less|qless)|less|sim);)|\n\t\t\t\ti(?:acute|circ|excl|grave|quest|uml)|laquo|\n\t\t\t\tlt(?!c(?:c|ir)|dot|hree|imes|larr|quest|r(?:Par|i(?:e|f|));)|\n\t\t\t\tm(?:acr|i(?:cro|ddot))|n(?:bsp|tilde)|\n\t\t\t\tnot(?!in(?:E|dot|v(?:a|b|c)|)|ni(?:v(?:a|b|c)|);)|\n\t\t\t\to(?:acute|circ|grave|rd(?:f|m)|slash|tilde|uml)|\n\t\t\t\tp(?:lusmn|ound)|para(?!llel;)|quot|r(?:aquo|eg)|\n\t\t\t\ts(?:ect|hy|up(?:1|2|3)|zlig)|thorn|times(?!b(?:ar|)|d;)|\n\t\t\t\tu(?:acute|circ|grave|ml|uml)|y(?:acute|en|uml)\n\t\t\t)\n\t\t\t(?:[^;]|$))\t#  b. and not followed by a semicolon\n\t\t\t# S = study, for efficiency\n\t\t\t/Sx",
             "source": "preg_replace()",
@@ -1668,10 +2143,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Parser/Parser.php#L5780-L5786",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Parser/Parser.php#L5746-L5752",
             "snippet": [
                 {
-                    "number": 5780,
+                    "number": 5746,
                     "focus": false,
                     "runs": [
                         [
@@ -1681,7 +2156,7 @@
                     ]
                 },
                 {
-                    "number": 5781,
+                    "number": 5747,
                     "focus": false,
                     "runs": [
                         [
@@ -1691,7 +2166,7 @@
                     ]
                 },
                 {
-                    "number": 5782,
+                    "number": 5748,
                     "focus": false,
                     "runs": [
                         [
@@ -1701,7 +2176,7 @@
                     ]
                 },
                 {
-                    "number": 5783,
+                    "number": 5749,
                     "focus": true,
                     "runs": [
                         [
@@ -1711,7 +2186,7 @@
                     ]
                 },
                 {
-                    "number": 5784,
+                    "number": 5750,
                     "focus": false,
                     "runs": [
                         [
@@ -1721,7 +2196,7 @@
                     ]
                 },
                 {
-                    "number": 5785,
+                    "number": 5751,
                     "focus": false,
                     "runs": [
                         [
@@ -1731,7 +2206,7 @@
                     ]
                 },
                 {
-                    "number": 5786,
+                    "number": 5752,
                     "focus": false,
                     "runs": [
                         [
@@ -1763,7 +2238,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Parser/Sanitizer.php#L44-L50",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Parser/Sanitizer.php#L44-L50",
             "snippet": [
                 {
                     "number": 44,
@@ -1865,7 +2340,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Parser/Sanitizer.php#L94-L100",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Parser/Sanitizer.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -1960,7 +2435,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Parser/Sanitizer.php#L574-L580",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Parser/Sanitizer.php#L574-L580",
             "snippet": [
                 {
                     "number": 574,
@@ -2115,7 +2590,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Parser/Sanitizer.php#L1092-L1098",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Parser/Sanitizer.php#L1092-L1098",
             "snippet": [
                 {
                     "number": 1092,
@@ -2290,7 +2765,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Parser/Sanitizer.php#L1913-L1919",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Parser/Sanitizer.php#L1913-L1919",
             "snippet": [
                 {
                     "number": 1913,
@@ -2496,7 +2971,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Rest/Router.php#L34-L40",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Rest/Router.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -2703,7 +3178,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Search/SearchHighlighter.php#L390-L396",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Search/SearchHighlighter.php#L390-L396",
             "snippet": [
                 {
                     "number": 390,
@@ -2822,7 +3297,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Search/SearchHighlighter.php#L474-L480",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Search/SearchHighlighter.php#L474-L480",
             "snippet": [
                 {
                     "number": 474,
@@ -2972,7 +3447,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Title/Title.php#L2207-L2213",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Title/Title.php#L2207-L2213",
             "snippet": [
                 {
                     "number": 2207,
@@ -3175,7 +3650,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Title/TitleValue.php#L188-L194",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Title/TitleValue.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,
@@ -3331,7 +3806,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Upload/UploadVerification.php#L361-L367",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Upload/UploadVerification.php#L361-L367",
             "snippet": [
                 {
                     "number": 361,
@@ -3547,7 +4022,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Upload/UploadVerification.php#L367-L373",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Upload/UploadVerification.php#L367-L373",
             "snippet": [
                 {
                     "number": 367,
@@ -3767,7 +4242,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Upload/UploadVerification.php#L373-L379",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Upload/UploadVerification.php#L373-L379",
             "snippet": [
                 {
                     "number": 373,
@@ -3963,7 +4438,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Upload/UploadVerification.php#L852-L858",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Upload/UploadVerification.php#L852-L858",
             "snippet": [
                 {
                     "number": 852,
@@ -4127,7 +4602,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Upload/UploadVerification.php#L863-L869",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Upload/UploadVerification.php#L863-L869",
             "snippet": [
                 {
                     "number": 863,
@@ -4291,7 +4766,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/Upload/UploadVerification.php#L903-L909",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/Upload/UploadVerification.php#L903-L909",
             "snippet": [
                 {
                     "number": 903,
@@ -4458,7 +4933,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/libs/Leximorph/Handler/Overrides/Grammar/GrammarFi.php#L37-L43",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/libs/Leximorph/Handler/Overrides/Grammar/GrammarFi.php#L37-L43",
             "snippet": [
                 {
                     "number": 37,
@@ -4607,7 +5082,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"\\\\s*<!ENTITY\\\\s+\\\\S+\\\\s+(?:\"(?:&[^…\" and \"\\\\s*<!--(?:[^\\\\-]|-[^\\\\-])*-->\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\s*<!ENTITY\\s+\\S+\\s+(?:\"(?:&[^…\" and \"\\s*<!--(?:[^-]|-[^-])*-->\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -4637,7 +5112,7 @@
                 "limit": 100000
             },
             "subject": " <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\">!",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/libs/Mime/XmlTypeCheck.php#L437-L443",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/libs/Mime/XmlTypeCheck.php#L437-L443",
             "snippet": [
                 {
                     "number": 437,
@@ -4738,7 +5213,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"\\\\{?\"([^\"\\\\\\\\]|\\\\\\\\.)*\"\" and \"[^,{}]+\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\{?\"([^\"\\\\]|\\\\.)*\"\" and \"[^,{}]+\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -4754,7 +5229,7 @@
                 "limit": 100000
             },
             "subject": "{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/libs/Rdbms/Database/DatabasePostgres.php#L616-L622",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/libs/Rdbms/Database/DatabasePostgres.php#L616-L622",
             "snippet": [
                 {
                     "number": 616,
@@ -4969,7 +5444,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/libs/Rdbms/Database/Position/MySQLPrimaryPos.php#L267-L273",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/libs/Rdbms/Database/Position/MySQLPrimaryPos.php#L267-L273",
             "snippet": [
                 {
                     "number": 267,
@@ -5196,7 +5671,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/includes/libs/Rdbms/Platform/PostgresPlatform.php#L236-L242",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/includes/libs/Rdbms/Platform/PostgresPlatform.php#L236-L242",
             "snippet": [
                 {
                     "number": 236,
@@ -5363,7 +5838,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/d4dca2e8e13888b26d959517240339165af06f68/maintenance/storage/trackBlobs.php#L116-L122",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/3faa2c4b672e6f2f8babaf959ae6f6024db37c19/maintenance/storage/trackBlobs.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,

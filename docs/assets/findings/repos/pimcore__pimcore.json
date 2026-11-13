@@ -1,6 +1,6 @@
 {
     "repo": "pimcore/pimcore",
-    "sha": "8bb83f68ad47f1051ca97ac0014be6831cfc4748",
+    "sha": "0763bbfaa3040456723dfbf1c5b6868900306442",
     "target": {
         "php": "8.4",
         "pcre": "10.49",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php#L181-L187",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php#L181-L187",
             "snippet": [
                 {
                     "number": 181,
@@ -160,7 +160,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/lib/Helper/Mail.php#L221-L227",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/lib/Helper/Mail.php#L221-L227",
             "snippet": [
                 {
                     "number": 221,
@@ -408,7 +408,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/lib/Mail/Plugins/RedirectingPlugin.php#L123-L129",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/lib/Mail/Plugins/RedirectingPlugin.php#L123-L129",
             "snippet": [
                 {
                     "number": 123,
@@ -568,7 +568,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/lib/Mail/Plugins/RedirectingPlugin.php#L124-L130",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/lib/Mail/Plugins/RedirectingPlugin.php#L124-L130",
             "snippet": [
                 {
                     "number": 124,
@@ -738,7 +738,7 @@
                 "limit": 100000
             },
             "subject": "href=\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/lib/Tool/Text.php#L88-L94",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/lib/Tool/Text.php#L88-L94",
             "snippet": [
                 {
                     "number": 88,
@@ -904,7 +904,7 @@
                 "limit": 100000
             },
             "subject": "width=\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/lib/Tool/Text.php#L132-L138",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/lib/Tool/Text.php#L132-L138",
             "snippet": [
                 {
                     "number": 132,
@@ -1070,7 +1070,7 @@
                 "limit": 100000
             },
             "subject": "height=\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/lib/Tool/Text.php#L133-L139",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/lib/Tool/Text.php#L133-L139",
             "snippet": [
                 {
                     "number": 133,
@@ -1236,7 +1236,7 @@
                 "limit": 100000
             },
             "subject": "style=\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/lib/Tool/Text.php#L134-L140",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/lib/Tool/Text.php#L134-L140",
             "snippet": [
                 {
                     "number": 134,
@@ -1402,7 +1402,7 @@
                 "limit": 100000
             },
             "subject": "pimcore_disable_thumbnail=\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/lib/Tool/Text.php#L162-L168",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/lib/Tool/Text.php#L162-L168",
             "snippet": [
                 {
                     "number": 162,
@@ -1565,7 +1565,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/lib/Tool/Text.php#L255-L261",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/lib/Tool/Text.php#L255-L261",
             "snippet": [
                 {
                     "number": 255,
@@ -1952,7 +1952,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/lib/Workflow/Dumper/GraphvizDumper.php#L217-L223",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/lib/Workflow/Dumper/GraphvizDumper.php#L217-L223",
             "snippet": [
                 {
                     "number": 217,
@@ -2080,7 +2080,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/lib/helper-functions.php#L252-L258",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/lib/helper-functions.php#L252-L258",
             "snippet": [
                 {
                     "number": 252,
@@ -2235,7 +2235,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/pimcore/pimcore/blob/8bb83f68ad47f1051ca97ac0014be6831cfc4748/models/Element/Service.php#L557-L563",
+            "permalink": "https://github.com/pimcore/pimcore/blob/0763bbfaa3040456723dfbf1c5b6868900306442/models/Element/Service.php#L557-L563",
             "snippet": [
                 {
                     "number": 557,

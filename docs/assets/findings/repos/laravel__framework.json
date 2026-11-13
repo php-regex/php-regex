@@ -1,6 +1,6 @@
 {
     "repo": "laravel/framework",
-    "sha": "64dc24f5d965add4d402b4b8b64f59b561112af5",
+    "sha": "6ba5a0ba058389f3b72338a3fe2c9cd04240c93c",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/Console/Scheduling/Schedule.php#L362-L368",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Console/Scheduling/Schedule.php#L362-L368",
             "snippet": [
                 {
                     "number": 362,
@@ -187,7 +187,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/Console/View/Components/Task.php#L29-L35",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Console/View/Components/Task.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -330,6 +330,101 @@
             ]
         },
         {
+            "id": "f-586d30a252",
+            "file": "src/Illuminate/Database/Query/Builder.php",
+            "line": 3808,
+            "column": 32,
+            "pattern": "~\\.~i",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Database/Query/Builder.php#L3805-L3811",
+            "snippet": [
+                {
+                    "number": 3805,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3806,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $separator = str_contains(strtolower($columnString), ' as ') ? ' as ' : '\\.';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3807,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3808,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return last(preg_split('~'.$separator.'~i', $columnString));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3809,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3810,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3811,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-8111932035",
             "file": "src/Illuminate/Foundation/Exceptions/Renderer/Mappers/BladeMapper.php",
             "line": 260,
@@ -362,7 +457,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/Foundation/Exceptions/Renderer/Mappers/BladeMapper.php#L257-L263",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Foundation/Exceptions/Renderer/Mappers/BladeMapper.php#L257-L263",
             "snippet": [
                 {
                     "number": 257,
@@ -542,7 +637,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/Foundation/Exceptions/Renderer/Mappers/BladeMapper.php#L316-L322",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Foundation/Exceptions/Renderer/Mappers/BladeMapper.php#L316-L322",
             "snippet": [
                 {
                     "number": 316,
@@ -709,7 +804,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/Mail/Transport/SesTransport.php#L102-L108",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Mail/Transport/SesTransport.php#L102-L108",
             "snippet": [
                 {
                     "number": 102,
@@ -928,7 +1023,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/Mail/Transport/SesV2Transport.php#L106-L112",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Mail/Transport/SesV2Transport.php#L106-L112",
             "snippet": [
                 {
                     "number": 106,
@@ -1127,6 +1222,410 @@
             ]
         },
         {
+            "id": "f-322e7658d7",
+            "file": "src/Illuminate/Support/Str.php",
+            "line": 1616,
+            "column": 33,
+            "pattern": "~^[\\s\\x{0009}\\x{0020}\\x{00A0}\\x{00AD}\\x{034F}\\x{061C}\\x{115F}\\x{1160}\\x{17B4}\\x{17B5}\\x{180E}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200A}\\x{200B}\\x{200C}\\x{200D}\\x{200E}\\x{200F}\\x{202F}\\x{205F}\\x{2060}\\x{2061}\\x{2062}\\x{2063}\\x{2064}\\x{2065}\\x{206A}\\x{206B}\\x{206C}\\x{206D}\\x{206E}\\x{206F}\\x{3000}\\x{2800}\\x{3164}\\x{FEFF}\\x{FFA0}\\x{1D159}\\x{1D173}\\x{1D174}\\x{1D175}\\x{1D176}\\x{1D177}\\x{1D178}\\x{1D179}\\x{1D17A}\\x{E0020} \n\r\t\u000b\u0000]+|[\\s\\x{0009}\\x{0020}\\x{00A0}\\x{00AD}\\x{034F}\\x{061C}\\x{115F}\\x{1160}\\x{17B4}\\x{17B5}\\x{180E}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200A}\\x{200B}\\x{200C}\\x{200D}\\x{200E}\\x{200F}\\x{202F}\\x{205F}\\x{2060}\\x{2061}\\x{2062}\\x{2063}\\x{2064}\\x{2065}\\x{206A}\\x{206B}\\x{206C}\\x{206D}\\x{206E}\\x{206F}\\x{3000}\\x{2800}\\x{3164}\\x{FEFF}\\x{FFA0}\\x{1D159}\\x{1D173}\\x{1D174}\\x{1D175}\\x{1D176}\\x{1D177}\\x{1D178}\\x{1D179}\\x{1D17A}\\x{E0020} \n\r\t\u000b\u0000](?<![\\s\\x{0009}\\x{0020}\\x{00A0}\\x{00AD}\\x{034F}\\x{061C}\\x{115F}\\x{1160}\\x{17B4}\\x{17B5}\\x{180E}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200A}\\x{200B}\\x{200C}\\x{200D}\\x{200E}\\x{200F}\\x{202F}\\x{205F}\\x{2060}\\x{2061}\\x{2062}\\x{2063}\\x{2064}\\x{2065}\\x{206A}\\x{206B}\\x{206C}\\x{206D}\\x{206E}\\x{206F}\\x{3000}\\x{2800}\\x{3164}\\x{FEFF}\\x{FFA0}\\x{1D159}\\x{1D173}\\x{1D174}\\x{1D175}\\x{1D176}\\x{1D177}\\x{1D178}\\x{1D179}\\x{1D17A}\\x{E0020} \n\r\t\u000b\u0000][\\s\\x{0009}\\x{0020}\\x{00A0}\\x{00AD}\\x{034F}\\x{061C}\\x{115F}\\x{1160}\\x{17B4}\\x{17B5}\\x{180E}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200A}\\x{200B}\\x{200C}\\x{200D}\\x{200E}\\x{200F}\\x{202F}\\x{205F}\\x{2060}\\x{2061}\\x{2062}\\x{2063}\\x{2064}\\x{2065}\\x{206A}\\x{206B}\\x{206C}\\x{206D}\\x{206E}\\x{206F}\\x{3000}\\x{2800}\\x{3164}\\x{FEFF}\\x{FFA0}\\x{1D159}\\x{1D173}\\x{1D174}\\x{1D175}\\x{1D176}\\x{1D177}\\x{1D178}\\x{1D179}\\x{1D17A}\\x{E0020} \n\r\t\u000b\u0000])[\\s\\x{0009}\\x{0020}\\x{00A0}\\x{00AD}\\x{034F}\\x{061C}\\x{115F}\\x{1160}\\x{17B4}\\x{17B5}\\x{180E}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200A}\\x{200B}\\x{200C}\\x{200D}\\x{200E}\\x{200F}\\x{202F}\\x{205F}\\x{2060}\\x{2061}\\x{2062}\\x{2063}\\x{2064}\\x{2065}\\x{206A}\\x{206B}\\x{206C}\\x{206D}\\x{206E}\\x{206F}\\x{3000}\\x{2800}\\x{3164}\\x{FEFF}\\x{FFA0}\\x{1D159}\\x{1D173}\\x{1D174}\\x{1D175}\\x{1D176}\\x{1D177}\\x{1D178}\\x{1D179}\\x{1D17A}\\x{E0020} \n\r\t\u000b\u0000]*+$~u",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Support/Str.php#L1613-L1619",
+            "snippet": [
+                {
+                    "number": 1613,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $whitespace = '[\\s'.self::INVISIBLE_CHARACTERS.$trimDefaultCharacters.']';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1614,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1615,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // The trailing match may only begin at the first character of a whitespace run, keeping this linear...",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1616,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            return preg_replace('~^'.$whitespace.'+|'.$whitespace.'(?<!'.$whitespace.$whitespace.')'.$whitespace.'*+$~u', '', $value) ?? trim($value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1617,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1618,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1619,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return trim($value, $charlist);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-c5686b50e6",
+            "file": "src/Illuminate/Support/Str.php",
+            "line": 1634,
+            "column": 33,
+            "pattern": "~^[\\s\\x{0009}\\x{0020}\\x{00A0}\\x{00AD}\\x{034F}\\x{061C}\\x{115F}\\x{1160}\\x{17B4}\\x{17B5}\\x{180E}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200A}\\x{200B}\\x{200C}\\x{200D}\\x{200E}\\x{200F}\\x{202F}\\x{205F}\\x{2060}\\x{2061}\\x{2062}\\x{2063}\\x{2064}\\x{2065}\\x{206A}\\x{206B}\\x{206C}\\x{206D}\\x{206E}\\x{206F}\\x{3000}\\x{2800}\\x{3164}\\x{FEFF}\\x{FFA0}\\x{1D159}\\x{1D173}\\x{1D174}\\x{1D175}\\x{1D176}\\x{1D177}\\x{1D178}\\x{1D179}\\x{1D17A}\\x{E0020} \n\r\t\u000b\u0000]+~u",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Support/Str.php#L1631-L1637",
+            "snippet": [
+                {
+                    "number": 1631,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($charlist === null) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1632,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $ltrimDefaultCharacters = \" \\n\\r\\t\\v\\0\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1633,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1634,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            return preg_replace('~^[\\s'.self::INVISIBLE_CHARACTERS.$ltrimDefaultCharacters.']+~u', '', $value) ?? ltrim($value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1635,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1636,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1637,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return ltrim($value, $charlist);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-857b0b7ca1",
+            "file": "src/Illuminate/Support/Str.php",
+            "line": 1655,
+            "column": 33,
+            "pattern": "~[\\s\\x{0009}\\x{0020}\\x{00A0}\\x{00AD}\\x{034F}\\x{061C}\\x{115F}\\x{1160}\\x{17B4}\\x{17B5}\\x{180E}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200A}\\x{200B}\\x{200C}\\x{200D}\\x{200E}\\x{200F}\\x{202F}\\x{205F}\\x{2060}\\x{2061}\\x{2062}\\x{2063}\\x{2064}\\x{2065}\\x{206A}\\x{206B}\\x{206C}\\x{206D}\\x{206E}\\x{206F}\\x{3000}\\x{2800}\\x{3164}\\x{FEFF}\\x{FFA0}\\x{1D159}\\x{1D173}\\x{1D174}\\x{1D175}\\x{1D176}\\x{1D177}\\x{1D178}\\x{1D179}\\x{1D17A}\\x{E0020} \n\r\t\u000b\u0000](?<![\\s\\x{0009}\\x{0020}\\x{00A0}\\x{00AD}\\x{034F}\\x{061C}\\x{115F}\\x{1160}\\x{17B4}\\x{17B5}\\x{180E}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200A}\\x{200B}\\x{200C}\\x{200D}\\x{200E}\\x{200F}\\x{202F}\\x{205F}\\x{2060}\\x{2061}\\x{2062}\\x{2063}\\x{2064}\\x{2065}\\x{206A}\\x{206B}\\x{206C}\\x{206D}\\x{206E}\\x{206F}\\x{3000}\\x{2800}\\x{3164}\\x{FEFF}\\x{FFA0}\\x{1D159}\\x{1D173}\\x{1D174}\\x{1D175}\\x{1D176}\\x{1D177}\\x{1D178}\\x{1D179}\\x{1D17A}\\x{E0020} \n\r\t\u000b\u0000][\\s\\x{0009}\\x{0020}\\x{00A0}\\x{00AD}\\x{034F}\\x{061C}\\x{115F}\\x{1160}\\x{17B4}\\x{17B5}\\x{180E}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200A}\\x{200B}\\x{200C}\\x{200D}\\x{200E}\\x{200F}\\x{202F}\\x{205F}\\x{2060}\\x{2061}\\x{2062}\\x{2063}\\x{2064}\\x{2065}\\x{206A}\\x{206B}\\x{206C}\\x{206D}\\x{206E}\\x{206F}\\x{3000}\\x{2800}\\x{3164}\\x{FEFF}\\x{FFA0}\\x{1D159}\\x{1D173}\\x{1D174}\\x{1D175}\\x{1D176}\\x{1D177}\\x{1D178}\\x{1D179}\\x{1D17A}\\x{E0020} \n\r\t\u000b\u0000])[\\s\\x{0009}\\x{0020}\\x{00A0}\\x{00AD}\\x{034F}\\x{061C}\\x{115F}\\x{1160}\\x{17B4}\\x{17B5}\\x{180E}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200A}\\x{200B}\\x{200C}\\x{200D}\\x{200E}\\x{200F}\\x{202F}\\x{205F}\\x{2060}\\x{2061}\\x{2062}\\x{2063}\\x{2064}\\x{2065}\\x{206A}\\x{206B}\\x{206C}\\x{206D}\\x{206E}\\x{206F}\\x{3000}\\x{2800}\\x{3164}\\x{FEFF}\\x{FFA0}\\x{1D159}\\x{1D173}\\x{1D174}\\x{1D175}\\x{1D176}\\x{1D177}\\x{1D178}\\x{1D179}\\x{1D17A}\\x{E0020} \n\r\t\u000b\u0000]*+$~u",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Support/Str.php#L1652-L1658",
+            "snippet": [
+                {
+                    "number": 1652,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $whitespace = '[\\s'.self::INVISIBLE_CHARACTERS.$rtrimDefaultCharacters.']';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1653,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1654,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // The match may only begin at the first character of a whitespace run, keeping this linear...",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1655,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            return preg_replace('~'.$whitespace.'(?<!'.$whitespace.$whitespace.')'.$whitespace.'*+$~u', '', $value) ?? rtrim($value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1656,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1657,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1658,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return rtrim($value, $charlist);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-b6b9427159",
             "file": "src/Illuminate/Testing/Concerns/TestDatabases.php",
             "line": 183,
@@ -1147,7 +1646,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/Testing/Concerns/TestDatabases.php#L180-L186",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Testing/Concerns/TestDatabases.php#L180-L186",
             "snippet": [
                 {
                     "number": 180,
@@ -1334,7 +1833,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/Translation/MessageSelector.php#L58-L64",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Translation/MessageSelector.php#L58-L64",
             "snippet": [
                 {
                     "number": 58,
@@ -1529,7 +2028,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/Translation/MessageSelector.php#L92-L98",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/Translation/MessageSelector.php#L92-L98",
             "snippet": [
                 {
                     "number": 92,
@@ -1688,7 +2187,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/View/Compilers/BladeCompiler.php#L984-L990",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/View/Compilers/BladeCompiler.php#L984-L990",
             "snippet": [
                 {
                     "number": 984,
@@ -1846,7 +2345,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?:@(?:class)(\\\\((?:(?>[^()]+)|…\" and \"(?:[\\\\w\\\\-:.@%]+(=(?:\"[^\"]*\"|'[^…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"(?:\\n                         …\" and \"(?:\\n                         …\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -1854,7 +2353,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L103-L109",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L103-L109",
             "snippet": [
                 {
                     "number": 103,
@@ -1948,7 +2447,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?:@(?:class)(\\\\((?:(?>[^()]+)|…\" and \"(?:[\\\\w\\\\-:.@%]+(=(?:\"[^\"]*\"|'[^…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"(?:\\n                         …\" and \"(?:\\n                         …\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -1956,7 +2455,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L167-L173",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -2033,7 +2532,7 @@
         {
             "id": "f-fba1b4c527",
             "file": "src/Illuminate/View/Compilers/ComponentTagCompiler.php",
-            "line": 518,
+            "line": 526,
             "column": 20,
             "pattern": "/\n            <\n                \\s*\n                x[\\-\\:]slot\n                (?:\\:(?<inlineName>\\w+(?:-\\w+)*))?\n                (?:\\s+name=(?<name>(\"[^\"]+\"|\\\\'[^\\\\']+\\\\'|[^\\s>]+)))?\n                (?:\\s+\\:name=(?<boundName>(\"[^\"]+\"|\\\\'[^\\\\']+\\\\'|[^\\s>]+)))?\n                (?<attributes>\n                    (?:\n                        \\s+\n                        (?:\n                            (?:\n                                @(?:class)(\\( (?: (?>[^()]+) | (?-1) )* \\))\n                            )\n                            |\n                            (?:\n                                @(?:style)(\\( (?: (?>[^()]+) | (?-1) )* \\))\n                            )\n                            |\n                            (?:\n                                \\{\\{\\s*\\$attributes(?:[^}]+?)?\\s*\\}\\}\n                            )\n                            |\n                            (?:\n                                [\\w\\-:.@]+\n                                (\n                                    =\n                                    (?:\n                                        \\\"[^\\\"]*\\\"\n                                        |\n                                        \\'[^\\']*\\'\n                                        |\n                                        [^\\'\\\"=<>]+\n                                    )\n                                )?\n                            )\n                        )\n                    )*\n                    \\s*\n                )\n                (?<![\\/=\\-])\n            >\n        /x",
             "source": "preg_replace_callback()",
@@ -2050,7 +2549,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?:@(?:class)(\\\\((?:(?>[^()]+)|…\" and \"(?:[\\\\w\\\\-:.@]+(=(?:\"[^\"]*\"|'[^'…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"(?:\\n                         …\" and \"(?:\\n                         …\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -2058,10 +2557,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L515-L521",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L523-L529",
             "snippet": [
                 {
-                    "number": 515,
+                    "number": 523,
                     "focus": false,
                     "runs": [
                         [
@@ -2071,7 +2570,7 @@
                     ]
                 },
                 {
-                    "number": 516,
+                    "number": 524,
                     "focus": false,
                     "runs": [
                         [
@@ -2081,7 +2580,7 @@
                     ]
                 },
                 {
-                    "number": 517,
+                    "number": 525,
                     "focus": false,
                     "runs": [
                         [
@@ -2091,7 +2590,7 @@
                     ]
                 },
                 {
-                    "number": 518,
+                    "number": 526,
                     "focus": true,
                     "runs": [
                         [
@@ -2101,7 +2600,7 @@
                     ]
                 },
                 {
-                    "number": 519,
+                    "number": 527,
                     "focus": false,
                     "runs": [
                         [
@@ -2111,7 +2610,7 @@
                     ]
                 },
                 {
-                    "number": 520,
+                    "number": 528,
                     "focus": false,
                     "runs": [
                         [
@@ -2121,7 +2620,7 @@
                     ]
                 },
                 {
-                    "number": 521,
+                    "number": 529,
                     "focus": false,
                     "runs": [
                         [
@@ -2135,7 +2634,7 @@
         {
             "id": "f-a50ba9798f",
             "file": "src/Illuminate/View/Compilers/ComponentTagCompiler.php",
-            "line": 661,
+            "line": 669,
             "column": 20,
             "pattern": "/\\s\\:\\$(\\w+)/x",
             "source": "preg_replace_callback()",
@@ -2153,10 +2652,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L658-L664",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L666-L672",
             "snippet": [
                 {
-                    "number": 658,
+                    "number": 666,
                     "focus": false,
                     "runs": [
                         [
@@ -2166,7 +2665,7 @@
                     ]
                 },
                 {
-                    "number": 659,
+                    "number": 667,
                     "focus": false,
                     "runs": [
                         [
@@ -2176,7 +2675,7 @@
                     ]
                 },
                 {
-                    "number": 660,
+                    "number": 668,
                     "focus": false,
                     "runs": [
                         [
@@ -2186,7 +2685,7 @@
                     ]
                 },
                 {
-                    "number": 661,
+                    "number": 669,
                     "focus": true,
                     "runs": [
                         [
@@ -2244,7 +2743,7 @@
                     ]
                 },
                 {
-                    "number": 662,
+                    "number": 670,
                     "focus": false,
                     "runs": [
                         [
@@ -2254,7 +2753,7 @@
                     ]
                 },
                 {
-                    "number": 663,
+                    "number": 671,
                     "focus": false,
                     "runs": [
                         [
@@ -2264,7 +2763,7 @@
                     ]
                 },
                 {
-                    "number": 664,
+                    "number": 672,
                     "focus": false,
                     "runs": [
                         [
@@ -2296,7 +2795,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/64dc24f5d965add4d402b4b8b64f59b561112af5/types/Support/Str.php#L98-L104",
+            "permalink": "https://github.com/laravel/framework/blob/6ba5a0ba058389f3b72338a3fe2c9cd04240c93c/types/Support/Str.php#L98-L104",
             "snippet": [
                 {
                     "number": 98,

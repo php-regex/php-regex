@@ -1,6 +1,6 @@
 {
     "repo": "canyongbs/aidingapp",
-    "sha": "d548378e4a3a57f7386c5ca68d84e5b55f11eb8d",
+    "sha": "895aaf1821d6e43bdfc939f9e4424bc3906b0b50",
     "target": {
         "php": "8.4",
         "pcre": "10.49",
@@ -10,7 +10,7 @@
         {
             "id": "f-59ffcb33be",
             "file": "app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php",
-            "line": 604,
+            "line": 609,
             "column": 28,
             "pattern": "/^[ \\t]*From:[ \\t]*.+(?:\\r?\\n.*){0,5}?\\r?\\n[ \\t]*Subject:[ \\t]*.*$/im",
             "source": "preg_match()",
@@ -35,10 +35,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/canyongbs/aidingapp/blob/d548378e4a3a57f7386c5ca68d84e5b55f11eb8d/app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php#L601-L607",
+            "permalink": "https://github.com/canyongbs/aidingapp/blob/895aaf1821d6e43bdfc939f9e4424bc3906b0b50/app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php#L606-L612",
             "snippet": [
                 {
-                    "number": 601,
+                    "number": 606,
                     "focus": false,
                     "runs": [
                         [
@@ -48,7 +48,7 @@
                     ]
                 },
                 {
-                    "number": 602,
+                    "number": 607,
                     "focus": false,
                     "runs": [
                         [
@@ -58,7 +58,7 @@
                     ]
                 },
                 {
-                    "number": 603,
+                    "number": 608,
                     "focus": false,
                     "runs": [
                         [
@@ -68,7 +68,7 @@
                     ]
                 },
                 {
-                    "number": 604,
+                    "number": 609,
                     "focus": true,
                     "runs": [
                         [
@@ -242,7 +242,7 @@
                     ]
                 },
                 {
-                    "number": 605,
+                    "number": 610,
                     "focus": false,
                     "runs": [
                         [
@@ -252,7 +252,7 @@
                     ]
                 },
                 {
-                    "number": 606,
+                    "number": 611,
                     "focus": false,
                     "runs": [
                         [
@@ -262,7 +262,7 @@
                     ]
                 },
                 {
-                    "number": 607,
+                    "number": 612,
                     "focus": false,
                     "runs": [
                         [
@@ -276,7 +276,7 @@
         {
             "id": "f-a20ef549f2",
             "file": "app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php",
-            "line": 652,
+            "line": 657,
             "column": 43,
             "pattern": "/^(?:\\s*(?:fwd?|fw)\\s*:\\s*)+/i",
             "source": "preg_replace()",
@@ -294,10 +294,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/canyongbs/aidingapp/blob/d548378e4a3a57f7386c5ca68d84e5b55f11eb8d/app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php#L649-L655",
+            "permalink": "https://github.com/canyongbs/aidingapp/blob/895aaf1821d6e43bdfc939f9e4424bc3906b0b50/app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php#L654-L660",
             "snippet": [
                 {
-                    "number": 649,
+                    "number": 654,
                     "focus": false,
                     "runs": [
                         [
@@ -307,7 +307,7 @@
                     ]
                 },
                 {
-                    "number": 650,
+                    "number": 655,
                     "focus": false,
                     "runs": [
                         [
@@ -317,7 +317,7 @@
                     ]
                 },
                 {
-                    "number": 651,
+                    "number": 656,
                     "focus": false,
                     "runs": [
                         [
@@ -327,7 +327,7 @@
                     ]
                 },
                 {
-                    "number": 652,
+                    "number": 657,
                     "focus": true,
                     "runs": [
                         [
@@ -429,7 +429,7 @@
                     ]
                 },
                 {
-                    "number": 653,
+                    "number": 658,
                     "focus": false,
                     "runs": [
                         [
@@ -439,7 +439,7 @@
                     ]
                 },
                 {
-                    "number": 654,
+                    "number": 659,
                     "focus": false,
                     "runs": [
                         [
@@ -449,7 +449,7 @@
                     ]
                 },
                 {
-                    "number": 655,
+                    "number": 660,
                     "focus": false,
                     "runs": [
                         [
@@ -481,7 +481,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/canyongbs/aidingapp/blob/d548378e4a3a57f7386c5ca68d84e5b55f11eb8d/app-modules/engagement/src/Notifications/EngagementNotification.php#L88-L94",
+            "permalink": "https://github.com/canyongbs/aidingapp/blob/895aaf1821d6e43bdfc939f9e4424bc3906b0b50/app-modules/engagement/src/Notifications/EngagementNotification.php#L88-L94",
             "snippet": [
                 {
                     "number": 88,
@@ -676,7 +676,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/canyongbs/aidingapp/blob/d548378e4a3a57f7386c5ca68d84e5b55f11eb8d/app-modules/service-management/src/Models/ServiceRequestTypeEmailTemplate.php#L119-L125",
+            "permalink": "https://github.com/canyongbs/aidingapp/blob/895aaf1821d6e43bdfc939f9e4424bc3906b0b50/app-modules/service-management/src/Models/ServiceRequestTypeEmailTemplate.php#L119-L125",
             "snippet": [
                 {
                     "number": 119,
@@ -893,7 +893,7 @@
                 "limit": 100000
             },
             "subject": ", , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , \"",
-            "permalink": "https://github.com/canyongbs/aidingapp/blob/d548378e4a3a57f7386c5ca68d84e5b55f11eb8d/app-modules/service-management/src/Rules/ValidServiceMonitoringKeywordValues.php#L129-L135",
+            "permalink": "https://github.com/canyongbs/aidingapp/blob/895aaf1821d6e43bdfc939f9e4424bc3906b0b50/app-modules/service-management/src/Rules/ValidServiceMonitoringKeywordValues.php#L129-L135",
             "snippet": [
                 {
                     "number": 129,

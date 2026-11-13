@@ -1,6 +1,6 @@
 {
     "repo": "laravel/pint",
-    "sha": "855ea2557ae59e74995756cefdb207a11da820b1",
+    "sha": "1cf8e0320bed4b3c6e51df92039a5636c3887728",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/pint/blob/855ea2557ae59e74995756cefdb207a11da820b1/app/PrettierFormatters/EmbeddedBladeMasker.php#L67-L73",
+            "permalink": "https://github.com/laravel/pint/blob/1cf8e0320bed4b3c6e51df92039a5636c3887728/app/PrettierFormatters/EmbeddedBladeMasker.php#L67-L73",
             "snippet": [
                 {
                     "number": 67,

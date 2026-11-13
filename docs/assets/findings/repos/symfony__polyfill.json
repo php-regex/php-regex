@@ -760,6 +760,106 @@
             ]
         },
         {
+            "id": "f-a13e44534f",
+            "file": "src/Intl/Icu/NumberFormatter.php",
+            "line": 511,
+            "column": 24,
+            "pattern": "/^-?(?:\\.\\d++|(?P<grouping>\\d++(,{1}\\d+)++(\\.\\d*+)?)|\\d++(\\.\\d*+)?)/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.useless",
+                    "message": "Quantifier is redundant; it matches exactly once.",
+                    "hint": "Remove the {1} quantifier; it does not change the match.",
+                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^-?(?:\\.\\d++|(?P<grouping>\\d++(,\\d+)++(\\.\\d*+)?)|\\d++(\\.\\d*+)?)/",
+                "changes": [
+                    "Removed a quantifier that repeats once."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/symfony/polyfill/blob/c999eaf54db0e673e7624d2edd8666c75b4dc1bf/src/Intl/Icu/NumberFormatter.php#L508-L514",
+            "snippet": [
+                {
+                    "number": 508,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Only numbers and the fraction separator is expected in the string.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 509,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // If grouping is used, grouping separator also becomes a valid character.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 510,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $groupingMatch = $this->getAttribute(self::GROUPING_USED) ? '|(?P<grouping>\\d++(,{1}\\d+)++(\\.\\d*+)?)' : '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 511,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(\"/^-?(?:\\.\\d++{$groupingMatch}|\\d++(\\.\\d*+)?)/\", $string, $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 512,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $string = $matches[0];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 513,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $offset = \\strlen($string);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 514,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // value is not valid if grouping is used, but digits are not grouped in groups of three",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-e5ea66c03b",
             "file": "src/Intl/Idn/Idn.php",
             "line": 829,

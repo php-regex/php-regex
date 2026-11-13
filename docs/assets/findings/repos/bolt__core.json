@@ -1,6 +1,6 @@
 {
     "repo": "bolt/core",
-    "sha": "fb466ce155996b5c33c22acc2e84c3a9c6713ed5",
+    "sha": "19ed188f259079fe64d47b445c6c519779f3294a",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/bolt/core/blob/fb466ce155996b5c33c22acc2e84c3a9c6713ed5/src/DataFixtures/ContentFixtures.php#L273-L279",
+            "permalink": "https://github.com/bolt/core/blob/19ed188f259079fe64d47b445c6c519779f3294a/src/DataFixtures/ContentFixtures.php#L273-L279",
             "snippet": [
                 {
                     "number": 273,
@@ -179,7 +179,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/bolt/core/blob/fb466ce155996b5c33c22acc2e84c3a9c6713ed5/src/Utils/ContentHelper.php#L125-L131",
+            "permalink": "https://github.com/bolt/core/blob/19ed188f259079fe64d47b445c6c519779f3294a/src/Utils/ContentHelper.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -330,7 +330,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/bolt/core/blob/fb466ce155996b5c33c22acc2e84c3a9c6713ed5/src/Utils/ContentHelper.php#L204-L210",
+            "permalink": "https://github.com/bolt/core/blob/19ed188f259079fe64d47b445c6c519779f3294a/src/Utils/ContentHelper.php#L204-L210",
             "snippet": [
                 {
                     "number": 204,
@@ -481,7 +481,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/bolt/core/blob/fb466ce155996b5c33c22acc2e84c3a9c6713ed5/src/Widget/Injector/QueueProcessor.php#L28-L34",
+            "permalink": "https://github.com/bolt/core/blob/19ed188f259079fe64d47b445c6c519779f3294a/src/Widget/Injector/QueueProcessor.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,

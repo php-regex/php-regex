@@ -1,6 +1,6 @@
 {
     "repo": "WordPress/wordpress-develop",
-    "sha": "2f8310cf9170dc1766316c62fcc7f01c89709004",
+    "sha": "331d6d6f1d68621da2d50176d100a6cbbd62527d",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-admin/includes/ajax-actions.php#L4285-L4291",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/ajax-actions.php#L4285-L4291",
             "snippet": [
                 {
                     "number": 4285,
@@ -177,7 +177,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-admin/includes/ajax-actions.php#L4380-L4386",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/ajax-actions.php#L4380-L4386",
             "snippet": [
                 {
                     "number": 4380,
@@ -312,7 +312,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-admin/includes/class-ftp-pure.php#L106-L112",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/class-ftp-pure.php#L106-L112",
             "snippet": [
                 {
                     "number": 106,
@@ -643,7 +643,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-admin/includes/class-ftp-sockets.php#L127-L133",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/class-ftp-sockets.php#L127-L133",
             "snippet": [
                 {
                     "number": 127,
@@ -956,7 +956,7 @@
         {
             "id": "f-1c74f0c4d2",
             "file": "src/wp-admin/includes/class-wp-debug-data.php",
-            "line": 553,
+            "line": 628,
             "column": 53,
             "pattern": "/\\# BEGIN WordPress[\\s\\S]+?# END WordPress/si",
             "source": "preg_replace()",
@@ -979,10 +979,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-admin/includes/class-wp-debug-data.php#L550-L556",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/class-wp-debug-data.php#L625-L631",
             "snippet": [
                 {
-                    "number": 550,
+                    "number": 625,
                     "focus": false,
                     "runs": [
                         [
@@ -992,7 +992,7 @@
                     ]
                 },
                 {
-                    "number": 551,
+                    "number": 626,
                     "focus": false,
                     "runs": [
                         [
@@ -1002,7 +1002,7 @@
                     ]
                 },
                 {
-                    "number": 552,
+                    "number": 627,
                     "focus": false,
                     "runs": [
                         [
@@ -1012,7 +1012,7 @@
                     ]
                 },
                 {
-                    "number": 553,
+                    "number": 628,
                     "focus": true,
                     "runs": [
                         [
@@ -1070,7 +1070,7 @@
                     ]
                 },
                 {
-                    "number": 554,
+                    "number": 629,
                     "focus": false,
                     "runs": [
                         [
@@ -1080,7 +1080,7 @@
                     ]
                 },
                 {
-                    "number": 555,
+                    "number": 630,
                     "focus": false,
                     "runs": [
                         [
@@ -1090,7 +1090,7 @@
                     ]
                 },
                 {
-                    "number": 556,
+                    "number": 631,
                     "focus": false,
                     "runs": [
                         [
@@ -1127,7 +1127,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-admin/includes/class-wp-filesystem-base.php#L243-L249",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/class-wp-filesystem-base.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -1291,7 +1291,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-admin/includes/upgrade.php#L3083-L3089",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/upgrade.php#L3083-L3089",
             "snippet": [
                 {
                     "number": 3083,
@@ -1439,7 +1439,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/ID3/getid3.php#L1593-L1599",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/ID3/getid3.php#L1593-L1599",
             "snippet": [
                 {
                     "number": 1593,
@@ -1568,7 +1568,7 @@
         {
             "id": "f-8c59e524cd",
             "file": "src/wp-includes/ID3/module.audio-video.quicktime.php",
-            "line": 1683,
+            "line": 1701,
             "column": 21,
             "pattern": "#([\\+\\-][0-9\\.]+)([\\+\\-][0-9\\.]+)([\\+\\-][0-9\\.]+)?/$#i",
             "source": "preg_match()",
@@ -1586,10 +1586,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/ID3/module.audio-video.quicktime.php#L1680-L1686",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/ID3/module.audio-video.quicktime.php#L1698-L1704",
             "snippet": [
                 {
-                    "number": 1680,
+                    "number": 1698,
                     "focus": false,
                     "runs": [
                         [
@@ -1599,7 +1599,7 @@
                     ]
                 },
                 {
-                    "number": 1681,
+                    "number": 1699,
                     "focus": false,
                     "runs": [
                         [
@@ -1609,7 +1609,7 @@
                     ]
                 },
                 {
-                    "number": 1682,
+                    "number": 1700,
                     "focus": false,
                     "runs": [
                         [
@@ -1619,7 +1619,7 @@
                     ]
                 },
                 {
-                    "number": 1683,
+                    "number": 1701,
                     "focus": true,
                     "runs": [
                         [
@@ -1777,7 +1777,7 @@
                     ]
                 },
                 {
-                    "number": 1684,
+                    "number": 1702,
                     "focus": false,
                     "runs": [
                         [
@@ -1787,7 +1787,7 @@
                     ]
                 },
                 {
-                    "number": 1685,
+                    "number": 1703,
                     "focus": false,
                     "runs": [
                         [
@@ -1797,7 +1797,7 @@
                     ]
                 },
                 {
-                    "number": 1686,
+                    "number": 1704,
                     "focus": false,
                     "runs": [
                         [
@@ -1834,7 +1834,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/ID3/module.audio-video.riff.php#L1645-L1651",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/ID3/module.audio-video.riff.php#L1645-L1651",
             "snippet": [
                 {
                     "number": 1645,
@@ -2014,7 +2014,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/ID3/module.audio-video.riff.php#L1726-L1732",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/ID3/module.audio-video.riff.php#L1726-L1732",
             "snippet": [
                 {
                     "number": 1726,
@@ -2171,7 +2171,7 @@
         {
             "id": "f-4061339c3f",
             "file": "src/wp-includes/ID3/module.tag.id3v2.php",
-            "line": 2075,
+            "line": 2083,
             "column": 23,
             "pattern": "#^([^\\x00]+)*\\x00(.)([^\\x00]+)*\\x00(.+)$#s",
             "source": "preg_match()",
@@ -2211,10 +2211,10 @@
                 "limit": 100000
             },
             "subject": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\u0000",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/ID3/module.tag.id3v2.php#L2072-L2078",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/ID3/module.tag.id3v2.php#L2080-L2086",
             "snippet": [
                 {
-                    "number": 2072,
+                    "number": 2080,
                     "focus": false,
                     "runs": [
                         [
@@ -2224,7 +2224,7 @@
                     ]
                 },
                 {
-                    "number": 2073,
+                    "number": 2081,
                     "focus": false,
                     "runs": [
                         [
@@ -2234,7 +2234,7 @@
                     ]
                 },
                 {
-                    "number": 2074,
+                    "number": 2082,
                     "focus": false,
                     "runs": [
                         [
@@ -2244,7 +2244,7 @@
                     ]
                 },
                 {
-                    "number": 2075,
+                    "number": 2083,
                     "focus": true,
                     "runs": [
                         [
@@ -2378,7 +2378,7 @@
                     ]
                 },
                 {
-                    "number": 2076,
+                    "number": 2084,
                     "focus": false,
                     "runs": [
                         [
@@ -2388,7 +2388,7 @@
                     ]
                 },
                 {
-                    "number": 2077,
+                    "number": 2085,
                     "focus": false,
                     "runs": [
                         [
@@ -2398,7 +2398,7 @@
                     ]
                 },
                 {
-                    "number": 2078,
+                    "number": 2086,
                     "focus": false,
                     "runs": [
                         [
@@ -2435,7 +2435,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/PHPMailer/PHPMailer.php#L943-L949",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L943-L949",
             "snippet": [
                 {
                     "number": 943,
@@ -2548,7 +2548,7 @@
         {
             "id": "f-2835c824dd",
             "file": "src/wp-includes/PHPMailer/PHPMailer.php",
-            "line": 1542,
+            "line": 1544,
             "column": 21,
             "pattern": "/^(?!(?>(?1)\"?(?>\\\\[ -~]|[^\"])\"?(?1)){255,})(?!(?>(?1)\"?(?>\\\\[ -~]|[^\"])\"?(?1)){65,}@)((?>(?>(?>((?>(?>(?>\\x0D\\x0A)?[\\t ])+|(?>[\\t ]*\\x0D\\x0A)?[\\t ]+)?)(\\((?>(?2)(?>[\\x01-\\x08\\x0B\\x0C\\x0E-'*-\\[\\]-\\x7F]|\\\\[\\x00-\\x7F]|(?3)))*(?2)\\)))+(?2))|(?2))?)([!#-'*+\\/-9=?^-~-]+|\"(?>(?2)(?>[\\x01-\\x08\\x0B\\x0C\\x0E-!#-\\[\\]-\\x7F]|\\\\[\\x00-\\x7F]))*(?2)\")(?>(?1)\\.(?1)(?4))*(?1)@(?!(?1)[a-z0-9-]{64,})(?1)(?>([a-z0-9](?>[a-z0-9-]*[a-z0-9])?)(?>(?1)\\.(?!(?1)[a-z0-9-]{64,})(?1)(?5)){0,126}|\\[(?:(?>IPv6:(?>([a-f0-9]{1,4})(?>:(?6)){7}|(?!(?:.*[a-f0-9][:\\]]){8,})((?6)(?>:(?6)){0,6})?::(?7)?))|(?>(?>IPv6:(?>(?6)(?>:(?6)){5}:|(?!(?:.*[a-f0-9]:){6,})(?8)?::(?>((?6)(?>:(?6)){0,4}):)?))?(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?>\\.(?9)){3}))\\])(?1)$/isD",
             "source": "preg_match()",
@@ -2587,10 +2587,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/PHPMailer/PHPMailer.php#L1539-L1545",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L1541-L1547",
             "snippet": [
                 {
-                    "number": 1539,
+                    "number": 1541,
                     "focus": false,
                     "runs": [
                         [
@@ -2600,7 +2600,7 @@
                     ]
                 },
                 {
-                    "number": 1540,
+                    "number": 1542,
                     "focus": false,
                     "runs": [
                         [
@@ -2610,7 +2610,7 @@
                     ]
                 },
                 {
-                    "number": 1541,
+                    "number": 1543,
                     "focus": false,
                     "runs": [
                         [
@@ -2620,7 +2620,7 @@
                     ]
                 },
                 {
-                    "number": 1542,
+                    "number": 1544,
                     "focus": true,
                     "runs": [
                         [
@@ -2630,7 +2630,7 @@
                     ]
                 },
                 {
-                    "number": 1543,
+                    "number": 1545,
                     "focus": false,
                     "runs": [
                         [
@@ -2640,7 +2640,7 @@
                     ]
                 },
                 {
-                    "number": 1544,
+                    "number": 1546,
                     "focus": false,
                     "runs": [
                         [
@@ -2650,7 +2650,7 @@
                     ]
                 },
                 {
-                    "number": 1545,
+                    "number": 1547,
                     "focus": false,
                     "runs": [
                         [
@@ -2664,7 +2664,7 @@
         {
             "id": "f-41641970da",
             "file": "src/wp-includes/PHPMailer/PHPMailer.php",
-            "line": 1560,
+            "line": 1562,
             "column": 21,
             "pattern": "/^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/sD",
             "source": "preg_match()",
@@ -2687,10 +2687,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/PHPMailer/PHPMailer.php#L1557-L1563",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L1559-L1565",
             "snippet": [
                 {
-                    "number": 1557,
+                    "number": 1559,
                     "focus": false,
                     "runs": [
                         [
@@ -2700,7 +2700,7 @@
                     ]
                 },
                 {
-                    "number": 1558,
+                    "number": 1560,
                     "focus": false,
                     "runs": [
                         [
@@ -2710,7 +2710,7 @@
                     ]
                 },
                 {
-                    "number": 1559,
+                    "number": 1561,
                     "focus": false,
                     "runs": [
                         [
@@ -2720,7 +2720,7 @@
                     ]
                 },
                 {
-                    "number": 1560,
+                    "number": 1562,
                     "focus": true,
                     "runs": [
                         [
@@ -2730,7 +2730,7 @@
                     ]
                 },
                 {
-                    "number": 1561,
+                    "number": 1563,
                     "focus": false,
                     "runs": [
                         [
@@ -2740,7 +2740,7 @@
                     ]
                 },
                 {
-                    "number": 1562,
+                    "number": 1564,
                     "focus": false,
                     "runs": [
                         [
@@ -2750,7 +2750,7 @@
                     ]
                 },
                 {
-                    "number": 1563,
+                    "number": 1565,
                     "focus": false,
                     "runs": [
                         [
@@ -2764,7 +2764,7 @@
         {
             "id": "f-45e353a84d",
             "file": "src/wp-includes/PHPMailer/PHPMailer.php",
-            "line": 1577,
+            "line": 1579,
             "column": 21,
             "pattern": "/^[-\\p{L}\\p{N}\\p{M}.!#$%&'*+\\/=?^_`{|}~]+@[\\p{L}\\p{N}\\p{M}](?:[\\p{L}\\p{N}\\p{M}-]{0,61}[\\p{L}\\p{N}\\p{M}])?(?:\\.[\\p{L}\\p{N}\\p{M}](?:[-\\p{L}\\p{N}\\p{M}]{0,61}[\\p{L}\\p{N}\\p{M}])?)*$/usD",
             "source": "preg_match()",
@@ -2787,10 +2787,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/PHPMailer/PHPMailer.php#L1574-L1580",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L1576-L1582",
             "snippet": [
                 {
-                    "number": 1574,
+                    "number": 1576,
                     "focus": false,
                     "runs": [
                         [
@@ -2800,7 +2800,7 @@
                     ]
                 },
                 {
-                    "number": 1575,
+                    "number": 1577,
                     "focus": false,
                     "runs": [
                         [
@@ -2810,7 +2810,7 @@
                     ]
                 },
                 {
-                    "number": 1576,
+                    "number": 1578,
                     "focus": false,
                     "runs": [
                         [
@@ -2820,7 +2820,7 @@
                     ]
                 },
                 {
-                    "number": 1577,
+                    "number": 1579,
                     "focus": true,
                     "runs": [
                         [
@@ -2830,7 +2830,7 @@
                     ]
                 },
                 {
-                    "number": 1578,
+                    "number": 1580,
                     "focus": false,
                     "runs": [
                         [
@@ -2840,7 +2840,7 @@
                     ]
                 },
                 {
-                    "number": 1579,
+                    "number": 1581,
                     "focus": false,
                     "runs": [
                         [
@@ -2850,7 +2850,7 @@
                     ]
                 },
                 {
-                    "number": 1580,
+                    "number": 1582,
                     "focus": false,
                     "runs": [
                         [
@@ -2864,7 +2864,7 @@
         {
             "id": "f-e76c63e2d6",
             "file": "src/wp-includes/PHPMailer/PHPMailer.php",
-            "line": 2599,
+            "line": 2616,
             "column": 29,
             "pattern": "/^\\$PHPMAILER_LANG\\['([a-z\\d_]+)'\\]\\s*=\\s*([\"'])(.+)*?\\2;/",
             "source": "preg_match()",
@@ -2889,10 +2889,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/PHPMailer/PHPMailer.php#L2596-L2602",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L2613-L2619",
             "snippet": [
                 {
-                    "number": 2596,
+                    "number": 2613,
                     "focus": false,
                     "runs": [
                         [
@@ -2902,7 +2902,7 @@
                     ]
                 },
                 {
-                    "number": 2597,
+                    "number": 2614,
                     "focus": false,
                     "runs": [
                         [
@@ -2912,7 +2912,7 @@
                     ]
                 },
                 {
-                    "number": 2598,
+                    "number": 2615,
                     "focus": false,
                     "runs": [
                         [
@@ -2922,7 +2922,7 @@
                     ]
                 },
                 {
-                    "number": 2599,
+                    "number": 2616,
                     "focus": true,
                     "runs": [
                         [
@@ -3068,7 +3068,7 @@
                     ]
                 },
                 {
-                    "number": 2600,
+                    "number": 2617,
                     "focus": false,
                     "runs": [
                         [
@@ -3078,7 +3078,7 @@
                     ]
                 },
                 {
-                    "number": 2601,
+                    "number": 2618,
                     "focus": false,
                     "runs": [
                         [
@@ -3088,7 +3088,7 @@
                     ]
                 },
                 {
-                    "number": 2602,
+                    "number": 2619,
                     "focus": false,
                     "runs": [
                         [
@@ -3102,7 +3102,7 @@
         {
             "id": "f-6da28df0d1",
             "file": "src/wp-includes/PHPMailer/PHPMailer.php",
-            "line": 5026,
+            "line": 5059,
             "column": 24,
             "pattern": "#^(.*?)[\\\\/]*(([^/\\\\]*?)(\\.([^.\\\\/]+?)|))[\\\\/.]*$#m",
             "source": "preg_match()",
@@ -3120,10 +3120,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/PHPMailer/PHPMailer.php#L5023-L5029",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L5056-L5062",
             "snippet": [
                 {
-                    "number": 5023,
+                    "number": 5056,
                     "focus": false,
                     "runs": [
                         [
@@ -3133,7 +3133,7 @@
                     ]
                 },
                 {
-                    "number": 5024,
+                    "number": 5057,
                     "focus": false,
                     "runs": [
                         [
@@ -3143,7 +3143,7 @@
                     ]
                 },
                 {
-                    "number": 5025,
+                    "number": 5058,
                     "focus": false,
                     "runs": [
                         [
@@ -3153,7 +3153,7 @@
                     ]
                 },
                 {
-                    "number": 5026,
+                    "number": 5059,
                     "focus": true,
                     "runs": [
                         [
@@ -3303,7 +3303,7 @@
                     ]
                 },
                 {
-                    "number": 5027,
+                    "number": 5060,
                     "focus": false,
                     "runs": [
                         [
@@ -3313,7 +3313,7 @@
                     ]
                 },
                 {
-                    "number": 5028,
+                    "number": 5061,
                     "focus": false,
                     "runs": [
                         [
@@ -3323,7 +3323,7 @@
                     ]
                 },
                 {
-                    "number": 5029,
+                    "number": 5062,
                     "focus": false,
                     "runs": [
                         [
@@ -3337,7 +3337,7 @@
         {
             "id": "f-b6c0132948",
             "file": "src/wp-includes/PHPMailer/SMTP.php",
-            "line": 322,
+            "line": 331,
             "column": 37,
             "pattern": "/\\r\\n|\\r/m",
             "source": "preg_replace()",
@@ -3360,10 +3360,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/PHPMailer/SMTP.php#L319-L325",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/SMTP.php#L328-L334",
             "snippet": [
                 {
-                    "number": 319,
+                    "number": 328,
                     "focus": false,
                     "runs": [
                         [
@@ -3373,7 +3373,7 @@
                     ]
                 },
                 {
-                    "number": 320,
+                    "number": 329,
                     "focus": false,
                     "runs": [
                         [
@@ -3383,7 +3383,7 @@
                     ]
                 },
                 {
-                    "number": 321,
+                    "number": 330,
                     "focus": false,
                     "runs": [
                         [
@@ -3393,7 +3393,7 @@
                     ]
                 },
                 {
-                    "number": 322,
+                    "number": 331,
                     "focus": true,
                     "runs": [
                         [
@@ -3439,7 +3439,7 @@
                     ]
                 },
                 {
-                    "number": 323,
+                    "number": 332,
                     "focus": false,
                     "runs": [
                         [
@@ -3449,7 +3449,7 @@
                     ]
                 },
                 {
-                    "number": 324,
+                    "number": 333,
                     "focus": false,
                     "runs": [
                         [
@@ -3459,7 +3459,7 @@
                     ]
                 },
                 {
-                    "number": 325,
+                    "number": 334,
                     "focus": false,
                     "runs": [
                         [
@@ -3496,7 +3496,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/Requests/src/IdnaEncoder.php#L141-L147",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/Requests/src/IdnaEncoder.php#L141-L147",
             "snippet": [
                 {
                     "number": 141,
@@ -3621,7 +3621,7 @@
         {
             "id": "f-8054530b8b",
             "file": "src/wp-includes/Requests/src/Requests.php",
-            "line": 767,
+            "line": 768,
             "column": 17,
             "pattern": "#(\\s+)#i",
             "source": "preg_replace()",
@@ -3639,10 +3639,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/Requests/src/Requests.php#L764-L770",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/Requests/src/Requests.php#L765-L771",
             "snippet": [
                 {
-                    "number": 764,
+                    "number": 765,
                     "focus": false,
                     "runs": [
                         [
@@ -3652,7 +3652,7 @@
                     ]
                 },
                 {
-                    "number": 765,
+                    "number": 766,
                     "focus": false,
                     "runs": [
                         [
@@ -3662,17 +3662,17 @@
                     ]
                 },
                 {
-                    "number": 766,
+                    "number": 767,
                     "focus": false,
                     "runs": [
                         [
-                            "\t\t\t$value             = trim($value);",
+                            "\t\t\t$value             = trim($value, Trim::WHITESPACE_CHARS_NO_FF);",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 767,
+                    "number": 768,
                     "focus": true,
                     "runs": [
                         [
@@ -3722,7 +3722,7 @@
                     ]
                 },
                 {
-                    "number": 768,
+                    "number": 769,
                     "focus": false,
                     "runs": [
                         [
@@ -3732,7 +3732,7 @@
                     ]
                 },
                 {
-                    "number": 769,
+                    "number": 770,
                     "focus": false,
                     "runs": [
                         [
@@ -3742,7 +3742,7 @@
                     ]
                 },
                 {
-                    "number": 770,
+                    "number": 771,
                     "focus": false,
                     "runs": [
                         [
@@ -3756,7 +3756,7 @@
         {
             "id": "f-668ae9674d",
             "file": "src/wp-includes/Requests/src/Requests.php",
-            "line": 855,
+            "line": 856,
             "column": 19,
             "pattern": "/^([0-9a-f]+)(?:;(?:[\\w-]*)(?:=(?:(?:[\\w-]*)*|\"(?:[^\\r\\n])*\"))?)*\\r\\n/i",
             "source": "preg_match()",
@@ -3801,10 +3801,10 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/Requests/src/Requests.php#L852-L858",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/Requests/src/Requests.php#L853-L859",
             "snippet": [
                 {
-                    "number": 852,
+                    "number": 853,
                     "focus": false,
                     "runs": [
                         [
@@ -3814,7 +3814,7 @@
                     ]
                 },
                 {
-                    "number": 853,
+                    "number": 854,
                     "focus": false,
                     "runs": [
                         [
@@ -3824,7 +3824,7 @@
                     ]
                 },
                 {
-                    "number": 854,
+                    "number": 855,
                     "focus": false,
                     "runs": [
                         [
@@ -3834,7 +3834,7 @@
                     ]
                 },
                 {
-                    "number": 855,
+                    "number": 856,
                     "focus": true,
                     "runs": [
                         [
@@ -4034,17 +4034,7 @@
                             "pg-snippet-pattern pg-snippet-quote"
                         ],
                         [
-                            ", trim($data))) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 856,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\treturn $data;",
+                            ", trim($data, Trim::WHITESPACE_CHARS_NO_FF))) {",
                             ""
                         ]
                     ]
@@ -4054,13 +4044,23 @@
                     "focus": false,
                     "runs": [
                         [
-                            "\t\t}",
+                            "\t\t\treturn $data;",
                             ""
                         ]
                     ]
                 },
                 {
                     "number": 858,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 859,
                     "focus": false,
                     "runs": [
                         [
@@ -4074,7 +4074,7 @@
         {
             "id": "f-668ae9674d-2",
             "file": "src/wp-includes/Requests/src/Requests.php",
-            "line": 863,
+            "line": 864,
             "column": 36,
             "pattern": "/^([0-9a-f]+)(?:;(?:[\\w-]*)(?:=(?:(?:[\\w-]*)*|\"(?:[^\\r\\n])*\"))?)*\\r\\n/i",
             "source": "preg_match()",
@@ -4119,10 +4119,10 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/Requests/src/Requests.php#L860-L866",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/Requests/src/Requests.php#L861-L867",
             "snippet": [
                 {
-                    "number": 860,
+                    "number": 861,
                     "focus": false,
                     "runs": [
                         [
@@ -4132,7 +4132,7 @@
                     ]
                 },
                 {
-                    "number": 861,
+                    "number": 862,
                     "focus": false,
                     "runs": [
                         [
@@ -4142,7 +4142,7 @@
                     ]
                 },
                 {
-                    "number": 862,
+                    "number": 863,
                     "focus": false,
                     "runs": [
                         [
@@ -4152,7 +4152,7 @@
                     ]
                 },
                 {
-                    "number": 863,
+                    "number": 864,
                     "focus": true,
                     "runs": [
                         [
@@ -4358,7 +4358,7 @@
                     ]
                 },
                 {
-                    "number": 864,
+                    "number": 865,
                     "focus": false,
                     "runs": [
                         [
@@ -4368,7 +4368,7 @@
                     ]
                 },
                 {
-                    "number": 865,
+                    "number": 866,
                     "focus": false,
                     "runs": [
                         [
@@ -4378,7 +4378,7 @@
                     ]
                 },
                 {
-                    "number": 866,
+                    "number": 867,
                     "focus": false,
                     "runs": [
                         [
@@ -4422,7 +4422,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/SimplePie/src/Item.php#L2301-L2307",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Item.php#L2301-L2307",
             "snippet": [
                 {
                     "number": 2301,
@@ -4713,7 +4713,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/SimplePie/src/Item.php#L2326-L2332",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Item.php#L2326-L2332",
             "snippet": [
                 {
                     "number": 2326,
@@ -5007,7 +5007,7 @@
                 "limit": 100000
             },
             "subject": "</A ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! =",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/SimplePie/src/Sanitize.php#L418-L424",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Sanitize.php#L418-L424",
             "snippet": [
                 {
                     "number": 418,
@@ -5107,7 +5107,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/SimplePie/src/Sanitize.php#L574-L580",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Sanitize.php#L574-L580",
             "snippet": [
                 {
                     "number": 574,
@@ -5214,7 +5214,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/SimplePie/src/SimplePie.php#L2984-L2990",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/SimplePie.php#L2984-L2990",
             "snippet": [
                 {
                     "number": 2984,
@@ -5505,7 +5505,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/SimplePie/src/SimplePie.php#L3009-L3015",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/SimplePie.php#L3009-L3015",
             "snippet": [
                 {
                     "number": 3009,
@@ -5796,7 +5796,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/SimplePie/src/Source.php#L469-L475",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Source.php#L469-L475",
             "snippet": [
                 {
                     "number": 469,
@@ -6087,7 +6087,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/SimplePie/src/Source.php#L485-L491",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Source.php#L485-L491",
             "snippet": [
                 {
                     "number": 485,
@@ -6366,7 +6366,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/blocks/cover.php#L150-L156",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/blocks/cover.php#L150-L156",
             "snippet": [
                 {
                     "number": 150,
@@ -6557,7 +6557,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/canonical.php#L569-L575",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/canonical.php#L569-L575",
             "snippet": [
                 {
                     "number": 569,
@@ -6692,7 +6692,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/canonical.php#L672-L678",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/canonical.php#L672-L678",
             "snippet": [
                 {
                     "number": 672,
@@ -6827,7 +6827,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/class-json.php#L823-L829",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-json.php#L823-L829",
             "snippet": [
                 {
                     "number": 823,
@@ -7026,7 +7026,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/class-json.php#L832-L838",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-json.php#L832-L838",
             "snippet": [
                 {
                     "number": 832,
@@ -7165,6 +7165,319 @@
             ]
         },
         {
+            "id": "f-9cfb84fdfc",
+            "file": "src/wp-includes/class-snoopy.php",
+            "line": 681,
+            "column": 7,
+            "pattern": "'<[\\/\\!]*?[^<>]*?>'si",
+            "source": "preg_replace()",
+            "location": "via $search",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": {
+                "optimized": "'<[\\/\\!]*?[^<>]*?>'i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-snoopy.php#L678-L684",
+            "snippet": [
+                {
+                    "number": 678,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// more common ones.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 679,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 680,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$search = array(\"'<script[^>]*?>.*?</script>'si\",\t// strip out javascript",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 681,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t",
+                            ""
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\/\\!",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "si",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",\t\t\t// strip out html tags",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 682,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t\"'([\\r\\n])[\\s]+'\",\t\t\t\t\t// strip out white space",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 683,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t\"'&(quot|#34|#034|#x22);'i\",\t\t// replace html entities",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 684,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t\"'&(amp|#38|#038|#x26);'i\",\t\t\t// added hexadecimal values",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-b2ba97ef58",
+            "file": "src/wp-includes/class-snoopy.php",
+            "line": 754,
+            "column": 8,
+            "pattern": "|^(\\/)|i",
+            "source": "preg_replace()",
+            "location": "via $search",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-snoopy.php#L751-L757",
+            "snippet": [
+                {
+                    "number": 751,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$match_part[\"scheme\"].\"://\".$match_part[\"host\"];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 752,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 753,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$search = array( \t\"|^http://\".preg_quote($this->host).\"|i\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 754,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t\t",
+                            ""
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 755,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t\t\"|^(?!http://)(?!mailto:)|i\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 756,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t\t\"|/\\./|\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 757,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t\t\"|/[^\\/]+/\\.\\./|\"",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-3cc476cd82",
             "file": "src/wp-includes/class-wp-simplepie-sanitize-kses.php",
             "line": 42,
@@ -7200,7 +7513,7 @@
                 "limit": 100000
             },
             "subject": "</A ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! =",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/class-wp-simplepie-sanitize-kses.php#L39-L45",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wp-simplepie-sanitize-kses.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -7277,7 +7590,7 @@
         {
             "id": "f-9604d24da8",
             "file": "src/wp-includes/class-wp-theme.php",
-            "line": 1973,
+            "line": 1971,
             "column": 23,
             "pattern": "/^[A-z0-9\\/_-]+$/",
             "source": "preg_match()",
@@ -7302,10 +7615,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/class-wp-theme.php#L1970-L1976",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wp-theme.php#L1968-L1974",
             "snippet": [
                 {
-                    "number": 1970,
+                    "number": 1968,
                     "focus": false,
                     "runs": [
                         [
@@ -7315,7 +7628,7 @@
                     ]
                 },
                 {
-                    "number": 1971,
+                    "number": 1969,
                     "focus": false,
                     "runs": [
                         [
@@ -7325,7 +7638,7 @@
                     ]
                 },
                 {
-                    "number": 1972,
+                    "number": 1970,
                     "focus": false,
                     "runs": [
                         [
@@ -7335,7 +7648,7 @@
                     ]
                 },
                 {
-                    "number": 1973,
+                    "number": 1971,
                     "focus": true,
                     "runs": [
                         [
@@ -7405,7 +7718,7 @@
                     ]
                 },
                 {
-                    "number": 1974,
+                    "number": 1972,
                     "focus": false,
                     "runs": [
                         [
@@ -7415,7 +7728,7 @@
                     ]
                 },
                 {
-                    "number": 1975,
+                    "number": 1973,
                     "focus": false,
                     "runs": [
                         [
@@ -7425,7 +7738,7 @@
                     ]
                 },
                 {
-                    "number": 1976,
+                    "number": 1974,
                     "focus": false,
                     "runs": [
                         [
@@ -7462,7 +7775,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/class-wp-xmlrpc-server.php#L7212-L7218",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wp-xmlrpc-server.php#L7212-L7218",
             "snippet": [
                 {
                     "number": 7212,
@@ -7618,7 +7931,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/class-wpdb.php#L2118-L2124",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wpdb.php#L2118-L2124",
             "snippet": [
                 {
                     "number": 2118,
@@ -7854,7 +8167,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/class-wpdb.php#L3898-L3904",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wpdb.php#L3898-L3904",
             "snippet": [
                 {
                     "number": 3898,
@@ -8016,7 +8329,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"\\\\s+LOW_PRIORITY\" and \"\\\\s+QUICK\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\s+LOW_PRIORITY\" and \"\\s+QUICK\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -8024,7 +8337,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/class-wpdb.php#L3905-L3911",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wpdb.php#L3905-L3911",
             "snippet": [
                 {
                     "number": 3905,
@@ -8119,7 +8432,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/class-wpdb.php#L3930-L3936",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wpdb.php#L3930-L3936",
             "snippet": [
                 {
                     "number": 3930,
@@ -8512,7 +8825,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/class-wpdb.php#L3936-L3942",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wpdb.php#L3936-L3942",
             "snippet": [
                 {
                     "number": 3936,
@@ -8612,7 +8925,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/comment.php#L3341-L3347",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/comment.php#L3341-L3347",
             "snippet": [
                 {
                     "number": 3341,
@@ -8797,7 +9110,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/deprecated.php#L5155-L5161",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/deprecated.php#L5155-L5161",
             "snippet": [
                 {
                     "number": 5155,
@@ -9127,7 +9440,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/deprecated.php#L5172-L5178",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/deprecated.php#L5172-L5178",
             "snippet": [
                 {
                     "number": 5172,
@@ -9399,7 +9712,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/embed.php#L963-L969",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/embed.php#L963-L969",
             "snippet": [
                 {
                     "number": 963,
@@ -9590,7 +9903,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/formatting.php#L2058-L2064",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/formatting.php#L2058-L2064",
             "snippet": [
                 {
                     "number": 2058,
@@ -9718,7 +10031,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/formatting.php#L2648-L2654",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/formatting.php#L2648-L2654",
             "snippet": [
                 {
                     "number": 2648,
@@ -9884,7 +10197,7 @@
                 "limit": 100000
             },
             "subject": "<a-------------------------------------------------------------!>",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/formatting.php#L2665-L2671",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/formatting.php#L2665-L2671",
             "snippet": [
                 {
                     "number": 2665,
@@ -9984,7 +10297,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/formatting.php#L3266-L3272",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/formatting.php#L3266-L3272",
             "snippet": [
                 {
                     "number": 3266,
@@ -10179,7 +10492,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/formatting.php#L4955-L4961",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/formatting.php#L4955-L4961",
             "snippet": [
                 {
                     "number": 4955,
@@ -10383,7 +10696,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"[^`!()[\\\\]{}:'\".,<>\\\\xC2\\\\xAB\\\\xC2…\" and \"(?:[:]\\\\d+)?\\\\/?\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"[^`!()\\[\\]{}:'\".,<>«»“”‘’\\s]\" and \"(?:[:]\\d+)?/?\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -10391,7 +10704,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/functions.php#L855-L861",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/functions.php#L855-L861",
             "snippet": [
                 {
                     "number": 855,
@@ -10466,9 +10779,167 @@
             ]
         },
         {
+            "id": "f-227d09e90b",
+            "file": "src/wp-includes/functions.php",
+            "line": 5438,
+            "column": 12,
+            "pattern": "/[A-Z\\xc0-\\xd6\\xd8-\\xde]?[a-z\\xdf-\\xf6\\xf8-\\xff]+(?=[\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf\\x{2000}-\\x{206f} \\t\\x0b\\f\\xa0\\x{feff}\\n\\r\\x{2028}\\x{2029}\\x{1680}\\x{180e}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200a}\\x{202f}\\x{205f}\\x{3000}]|[A-Z\\xc0-\\xd6\\xd8-\\xde]|$)|(?:[A-Z\\xc0-\\xd6\\xd8-\\xde]|[^\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf\\x{2000}-\\x{206f} \\t\\x0b\\f\\xa0\\x{feff}\\n\\r\\x{2028}\\x{2029}\\x{1680}\\x{180e}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200a}\\x{202f}\\x{205f}\\x{3000}\\d+a-z\\xdf-\\xf6\\xf8-\\xffA-Z\\xc0-\\xd6\\xd8-\\xde])+(?=[\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf\\x{2000}-\\x{206f} \\t\\x0b\\f\\xa0\\x{feff}\\n\\r\\x{2028}\\x{2029}\\x{1680}\\x{180e}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200a}\\x{202f}\\x{205f}\\x{3000}]|[A-Z\\xc0-\\xd6\\xd8-\\xde](?:[a-z\\xdf-\\xf6\\xf8-\\xff]|[^\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf\\x{2000}-\\x{206f} \\t\\x0b\\f\\xa0\\x{feff}\\n\\r\\x{2028}\\x{2029}\\x{1680}\\x{180e}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200a}\\x{202f}\\x{205f}\\x{3000}\\d+a-z\\xdf-\\xf6\\xf8-\\xffA-Z\\xc0-\\xd6\\xd8-\\xde])|$)|[A-Z\\xc0-\\xd6\\xd8-\\xde]?(?:[a-z\\xdf-\\xf6\\xf8-\\xff]|[^\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf\\x{2000}-\\x{206f} \\t\\x0b\\f\\xa0\\x{feff}\\n\\r\\x{2028}\\x{2029}\\x{1680}\\x{180e}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200a}\\x{202f}\\x{205f}\\x{3000}\\d+a-z\\xdf-\\xf6\\xf8-\\xffA-Z\\xc0-\\xd6\\xd8-\\xde])+|[A-Z\\xc0-\\xd6\\xd8-\\xde]+|\\d*(?:1ST|2ND|3RD|(?![123])\\dTH)(?=\\b|[a-z_])|\\d*(?:1st|2nd|3rd|(?![123])\\dth)(?=\\b|[A-Z_])|\\d+/u",
+            "source": "preg_match_all()",
+            "location": "via $regexp",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (covered by range '\\x00'-'/'), '\\x09' (covered by range '\\x00'-'/'), '\\x0B' (covered by range '\\x00'-'/'), '\\x0C' (covered by range '\\x00'-'/') (and 18 more).",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (covered by range '\\x00'-'/'), '\\x09' (covered by range '\\x00'-'/'), '\\x0B' (covered by range '\\x00'-'/'), '\\x0C' (covered by range '\\x00'-'/') (and 19 more).",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (covered by range '\\x00'-'/'), '\\x09' (covered by range '\\x00'-'/'), '\\x0B' (covered by range '\\x00'-'/'), '\\x0C' (covered by range '\\x00'-'/') (and 18 more).",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (covered by range '\\x00'-'/'), '\\x09' (covered by range '\\x00'-'/'), '\\x0B' (covered by range '\\x00'-'/'), '\\x0C' (covered by range '\\x00'-'/') (and 19 more).",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ' ' (covered by range '\\x00'-'/'), '\\x09' (covered by range '\\x00'-'/'), '\\x0B' (covered by range '\\x00'-'/'), '\\x0C' (covered by range '\\x00'-'/') (and 19 more).",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/functions.php#L5435-L5441",
+            "snippet": [
+                {
+                    "number": 5435,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t$rsOrdLower  = '\\\\d*(?:1st|2nd|3rd|(?![123])\\\\dth)(?=\\\\b|[A-Z_])';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5436,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t$rsOrdUpper  = '\\\\d*(?:1ST|2ND|3RD|(?![123])\\\\dTH)(?=\\\\b|[a-z_])';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5437,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5438,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t$regexp = '/' . implode(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5439,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t'|',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5440,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tarray(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5441,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$rsUpper . '?' . $rsLower . '+' . '(?=' . implode( '|', array( $rsBreak, $rsUpper, '$' ) ) . ')',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-a084fe8356",
             "file": "src/wp-includes/functions.php",
-            "line": 6554,
+            "line": 6583,
             "column": 26,
             "pattern": "#/(wp-admin/?.*|wp-login\\.php.*)#i",
             "source": "preg_replace()",
@@ -10486,10 +10957,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/functions.php#L6551-L6557",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/functions.php#L6580-L6586",
             "snippet": [
                 {
-                    "number": 6551,
+                    "number": 6580,
                     "focus": false,
                     "runs": [
                         [
@@ -10499,7 +10970,7 @@
                     ]
                 },
                 {
-                    "number": 6552,
+                    "number": 6581,
                     "focus": false,
                     "runs": [
                         [
@@ -10509,7 +10980,7 @@
                     ]
                 },
                 {
-                    "number": 6553,
+                    "number": 6582,
                     "focus": false,
                     "runs": [
                         [
@@ -10519,7 +10990,7 @@
                     ]
                 },
                 {
-                    "number": 6554,
+                    "number": 6583,
                     "focus": true,
                     "runs": [
                         [
@@ -10597,7 +11068,7 @@
                     ]
                 },
                 {
-                    "number": 6555,
+                    "number": 6584,
                     "focus": false,
                     "runs": [
                         [
@@ -10607,7 +11078,7 @@
                     ]
                 },
                 {
-                    "number": 6556,
+                    "number": 6585,
                     "focus": false,
                     "runs": [
                         [
@@ -10617,7 +11088,7 @@
                     ]
                 },
                 {
-                    "number": 6557,
+                    "number": 6586,
                     "focus": false,
                     "runs": [
                         [
@@ -10631,7 +11102,7 @@
         {
             "id": "f-ce3a9b582a",
             "file": "src/wp-includes/functions.php",
-            "line": 6559,
+            "line": 6588,
             "column": 26,
             "pattern": "#/[^/]*$#i",
             "source": "preg_replace()",
@@ -10649,10 +11120,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/functions.php#L6556-L6562",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/functions.php#L6585-L6591",
             "snippet": [
                 {
-                    "number": 6556,
+                    "number": 6585,
                     "focus": false,
                     "runs": [
                         [
@@ -10662,7 +11133,7 @@
                     ]
                 },
                 {
-                    "number": 6557,
+                    "number": 6586,
                     "focus": false,
                     "runs": [
                         [
@@ -10672,7 +11143,7 @@
                     ]
                 },
                 {
-                    "number": 6558,
+                    "number": 6587,
                     "focus": false,
                     "runs": [
                         [
@@ -10682,7 +11153,7 @@
                     ]
                 },
                 {
-                    "number": 6559,
+                    "number": 6588,
                     "focus": true,
                     "runs": [
                         [
@@ -10740,7 +11211,7 @@
                     ]
                 },
                 {
-                    "number": 6560,
+                    "number": 6589,
                     "focus": false,
                     "runs": [
                         [
@@ -10750,7 +11221,7 @@
                     ]
                 },
                 {
-                    "number": 6561,
+                    "number": 6590,
                     "focus": false,
                     "runs": [
                         [
@@ -10760,7 +11231,7 @@
                     ]
                 },
                 {
-                    "number": 6562,
+                    "number": 6591,
                     "focus": false,
                     "runs": [
                         [
@@ -10774,7 +11245,7 @@
         {
             "id": "f-ce3a9b582a-2",
             "file": "src/wp-includes/functions.php",
-            "line": 6571,
+            "line": 6600,
             "column": 27,
             "pattern": "#/[^/]*$#i",
             "source": "preg_replace()",
@@ -10792,10 +11263,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/functions.php#L6568-L6574",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/functions.php#L6597-L6603",
             "snippet": [
                 {
-                    "number": 6568,
+                    "number": 6597,
                     "focus": false,
                     "runs": [
                         [
@@ -10805,7 +11276,7 @@
                     ]
                 },
                 {
-                    "number": 6569,
+                    "number": 6598,
                     "focus": false,
                     "runs": [
                         [
@@ -10815,7 +11286,7 @@
                     ]
                 },
                 {
-                    "number": 6570,
+                    "number": 6599,
                     "focus": false,
                     "runs": [
                         [
@@ -10825,7 +11296,7 @@
                     ]
                 },
                 {
-                    "number": 6571,
+                    "number": 6600,
                     "focus": true,
                     "runs": [
                         [
@@ -10883,7 +11354,7 @@
                     ]
                 },
                 {
-                    "number": 6572,
+                    "number": 6601,
                     "focus": false,
                     "runs": [
                         [
@@ -10893,7 +11364,7 @@
                     ]
                 },
                 {
-                    "number": 6573,
+                    "number": 6602,
                     "focus": false,
                     "runs": [
                         [
@@ -10903,7 +11374,7 @@
                     ]
                 },
                 {
-                    "number": 6574,
+                    "number": 6603,
                     "focus": false,
                     "runs": [
                         [
@@ -10935,7 +11406,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/html-api/class-wp-html-tag-processor.php#L4003-L4009",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/html-api/class-wp-html-tag-processor.php#L4003-L4009",
             "snippet": [
                 {
                     "number": 4003,
@@ -11064,7 +11535,7 @@
         {
             "id": "f-d6c9cd38e9",
             "file": "src/wp-includes/interactivity-api/class-wp-interactivity-api.php",
-            "line": 949,
+            "line": 1009,
             "column": 26,
             "pattern": "/^([\\w\\-_\\/]+)::./",
             "source": "preg_match()",
@@ -11082,10 +11553,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L946-L952",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1006-L1012",
             "snippet": [
                 {
-                    "number": 946,
+                    "number": 1006,
                     "focus": false,
                     "runs": [
                         [
@@ -11095,7 +11566,7 @@
                     ]
                 },
                 {
-                    "number": 947,
+                    "number": 1007,
                     "focus": false,
                     "runs": [
                         [
@@ -11105,7 +11576,7 @@
                     ]
                 },
                 {
-                    "number": 948,
+                    "number": 1008,
                     "focus": false,
                     "runs": [
                         [
@@ -11115,7 +11586,7 @@
                     ]
                 },
                 {
-                    "number": 949,
+                    "number": 1009,
                     "focus": true,
                     "runs": [
                         [
@@ -11181,7 +11652,7 @@
                     ]
                 },
                 {
-                    "number": 950,
+                    "number": 1010,
                     "focus": false,
                     "runs": [
                         [
@@ -11191,7 +11662,7 @@
                     ]
                 },
                 {
-                    "number": 951,
+                    "number": 1011,
                     "focus": false,
                     "runs": [
                         [
@@ -11201,7 +11672,7 @@
                     ]
                 },
                 {
-                    "number": 952,
+                    "number": 1012,
                     "focus": false,
                     "runs": [
                         [
@@ -11215,7 +11686,7 @@
         {
             "id": "f-771454314f",
             "file": "src/wp-includes/interactivity-api/class-wp-interactivity-api.php",
-            "line": 1099,
+            "line": 1162,
             "column": 68,
             "pattern": "/^([\\w\\-_\\/]+)/",
             "source": "preg_match()",
@@ -11233,10 +11704,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1096-L1102",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1159-L1165",
             "snippet": [
                 {
-                    "number": 1096,
+                    "number": 1159,
                     "focus": false,
                     "runs": [
                         [
@@ -11246,7 +11717,7 @@
                     ]
                 },
                 {
-                    "number": 1097,
+                    "number": 1160,
                     "focus": false,
                     "runs": [
                         [
@@ -11256,7 +11727,7 @@
                     ]
                 },
                 {
-                    "number": 1098,
+                    "number": 1161,
                     "focus": false,
                     "runs": [
                         [
@@ -11266,7 +11737,7 @@
                     ]
                 },
                 {
-                    "number": 1099,
+                    "number": 1162,
                     "focus": true,
                     "runs": [
                         [
@@ -11328,7 +11799,7 @@
                     ]
                 },
                 {
-                    "number": 1100,
+                    "number": 1163,
                     "focus": false,
                     "runs": [
                         [
@@ -11338,7 +11809,7 @@
                     ]
                 },
                 {
-                    "number": 1101,
+                    "number": 1164,
                     "focus": false,
                     "runs": [
                         [
@@ -11348,11 +11819,11 @@
                     ]
                 },
                 {
-                    "number": 1102,
+                    "number": 1165,
                     "focus": false,
                     "runs": [
                         [
-                            "\t}",
+                            "",
                             ""
                         ]
                     ]
@@ -11380,7 +11851,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/link-template.php#L4620-L4626",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/link-template.php#L4620-L4626",
             "snippet": [
                 {
                     "number": 4620,
@@ -11509,7 +11980,7 @@
         {
             "id": "f-57e2ad7120",
             "file": "src/wp-includes/load.php",
-            "line": 2074,
+            "line": 2090,
             "column": 46,
             "pattern": "/(^|\\s|,)application\\/([\\w!#\\$&-\\^\\.\\+]+\\+)?json(\\+oembed)?($|\\s|;|,)/i",
             "source": "preg_match()",
@@ -11527,10 +11998,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/load.php#L2071-L2077",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/load.php#L2087-L2093",
             "snippet": [
                 {
-                    "number": 2071,
+                    "number": 2087,
                     "focus": false,
                     "runs": [
                         [
@@ -11540,7 +12011,7 @@
                     ]
                 },
                 {
-                    "number": 2072,
+                    "number": 2088,
                     "focus": false,
                     "runs": [
                         [
@@ -11550,7 +12021,7 @@
                     ]
                 },
                 {
-                    "number": 2073,
+                    "number": 2089,
                     "focus": false,
                     "runs": [
                         [
@@ -11560,7 +12031,7 @@
                     ]
                 },
                 {
-                    "number": 2074,
+                    "number": 2090,
                     "focus": true,
                     "runs": [
                         [
@@ -11726,7 +12197,7 @@
                     ]
                 },
                 {
-                    "number": 2075,
+                    "number": 2091,
                     "focus": false,
                     "runs": [
                         [
@@ -11736,7 +12207,7 @@
                     ]
                 },
                 {
-                    "number": 2076,
+                    "number": 2092,
                     "focus": false,
                     "runs": [
                         [
@@ -11746,7 +12217,7 @@
                     ]
                 },
                 {
-                    "number": 2077,
+                    "number": 2093,
                     "focus": false,
                     "runs": [
                         [
@@ -11790,7 +12261,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L307-L313",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L307-L313",
             "snippet": [
                 {
                     "number": 307,
@@ -12069,7 +12540,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L315-L321",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L315-L321",
             "snippet": [
                 {
                     "number": 315,
@@ -12256,7 +12727,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L554-L560",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L554-L560",
             "snippet": [
                 {
                     "number": 554,
@@ -12356,7 +12827,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/2f8310cf9170dc1766316c62fcc7f01c89709004/src/wp-includes/script-loader.php#L4345-L4351",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/script-loader.php#L4345-L4351",
             "snippet": [
                 {
                     "number": 4345,

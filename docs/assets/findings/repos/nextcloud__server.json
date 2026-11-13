@@ -1,6 +1,6 @@
 {
     "repo": "nextcloud/server",
-    "sha": "c7d83959814e875d964618839ccea0afa97652a2",
+    "sha": "04556a42112151ca21d2e3a81451b4b8787107cb",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -10,7 +10,7 @@
         {
             "id": "f-01748f7228",
             "file": "apps/files/lib/Service/OwnershipTransferService.php",
-            "line": 236,
+            "line": 249,
             "column": 23,
             "pattern": "/-{2,}/s",
             "source": "preg_replace()",
@@ -33,10 +33,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/apps/files/lib/Service/OwnershipTransferService.php#L233-L239",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/apps/files/lib/Service/OwnershipTransferService.php#L246-L252",
             "snippet": [
                 {
-                    "number": 233,
+                    "number": 246,
                     "focus": false,
                     "runs": [
                         [
@@ -46,7 +46,7 @@
                     ]
                 },
                 {
-                    "number": 234,
+                    "number": 247,
                     "focus": false,
                     "runs": [
                         [
@@ -56,7 +56,7 @@
                     ]
                 },
                 {
-                    "number": 235,
+                    "number": 248,
                     "focus": false,
                     "runs": [
                         [
@@ -66,7 +66,7 @@
                     ]
                 },
                 {
-                    "number": 236,
+                    "number": 249,
                     "focus": true,
                     "runs": [
                         [
@@ -108,7 +108,7 @@
                     ]
                 },
                 {
-                    "number": 237,
+                    "number": 250,
                     "focus": false,
                     "runs": [
                         [
@@ -118,7 +118,7 @@
                     ]
                 },
                 {
-                    "number": 238,
+                    "number": 251,
                     "focus": false,
                     "runs": [
                         [
@@ -128,7 +128,7 @@
                     ]
                 },
                 {
-                    "number": 239,
+                    "number": 252,
                     "focus": false,
                     "runs": [
                         [
@@ -142,7 +142,7 @@
         {
             "id": "f-3a683665f0",
             "file": "apps/theming/lib/Controller/ThemingController.php",
-            "line": 449,
+            "line": 482,
             "column": 19,
             "pattern": "/(@[^{]+{(?:[^{}]*|(?R))*})/",
             "source": "preg_match_all()",
@@ -160,10 +160,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/apps/theming/lib/Controller/ThemingController.php#L446-L452",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/apps/theming/lib/Controller/ThemingController.php#L479-L485",
             "snippet": [
                 {
-                    "number": 446,
+                    "number": 479,
                     "focus": false,
                     "runs": [
                         [
@@ -173,7 +173,7 @@
                     ]
                 },
                 {
-                    "number": 447,
+                    "number": 480,
                     "focus": false,
                     "runs": [
                         [
@@ -183,7 +183,7 @@
                     ]
                 },
                 {
-                    "number": 448,
+                    "number": 481,
                     "focus": false,
                     "runs": [
                         [
@@ -193,7 +193,7 @@
                     ]
                 },
                 {
-                    "number": 449,
+                    "number": 482,
                     "focus": true,
                     "runs": [
                         [
@@ -295,7 +295,7 @@
                     ]
                 },
                 {
-                    "number": 450,
+                    "number": 483,
                     "focus": false,
                     "runs": [
                         [
@@ -305,7 +305,7 @@
                     ]
                 },
                 {
-                    "number": 451,
+                    "number": 484,
                     "focus": false,
                     "runs": [
                         [
@@ -315,7 +315,7 @@
                     ]
                 },
                 {
-                    "number": 452,
+                    "number": 485,
                     "focus": false,
                     "runs": [
                         [
@@ -329,7 +329,7 @@
         {
             "id": "f-3a683665f0-2",
             "file": "apps/theming/lib/Controller/ThemingController.php",
-            "line": 451,
+            "line": 484,
             "column": 30,
             "pattern": "/(@[^{]+{(?:[^{}]*|(?R))*})/",
             "source": "preg_replace()",
@@ -347,10 +347,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/apps/theming/lib/Controller/ThemingController.php#L448-L454",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/apps/theming/lib/Controller/ThemingController.php#L481-L487",
             "snippet": [
                 {
-                    "number": 448,
+                    "number": 481,
                     "focus": false,
                     "runs": [
                         [
@@ -360,7 +360,7 @@
                     ]
                 },
                 {
-                    "number": 449,
+                    "number": 482,
                     "focus": false,
                     "runs": [
                         [
@@ -370,7 +370,7 @@
                     ]
                 },
                 {
-                    "number": 450,
+                    "number": 483,
                     "focus": false,
                     "runs": [
                         [
@@ -380,7 +380,7 @@
                     ]
                 },
                 {
-                    "number": 451,
+                    "number": 484,
                     "focus": true,
                     "runs": [
                         [
@@ -482,7 +482,7 @@
                     ]
                 },
                 {
-                    "number": 452,
+                    "number": 485,
                     "focus": false,
                     "runs": [
                         [
@@ -492,7 +492,7 @@
                     ]
                 },
                 {
-                    "number": 453,
+                    "number": 486,
                     "focus": false,
                     "runs": [
                         [
@@ -502,7 +502,7 @@
                     ]
                 },
                 {
-                    "number": 454,
+                    "number": 487,
                     "focus": false,
                     "runs": [
                         [
@@ -546,7 +546,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/apps/updatenotification/lib/Manager.php#L84-L90",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/apps/updatenotification/lib/Manager.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -762,7 +762,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/build/integration/features/bootstrap/Auth.php#L67-L73",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/build/integration/features/bootstrap/Auth.php#L67-L73",
             "snippet": [
                 {
                     "number": 67,
@@ -942,7 +942,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/build/integration/features/bootstrap/BasicStructure.php#L278-L284",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/build/integration/features/bootstrap/BasicStructure.php#L278-L284",
             "snippet": [
                 {
                     "number": 278,
@@ -1117,7 +1117,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/build/integration/features/bootstrap/FakeSMTPHelper.php#L45-L51",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/build/integration/features/bootstrap/FakeSMTPHelper.php#L45-L51",
             "snippet": [
                 {
                     "number": 45,
@@ -1273,7 +1273,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/build/triple-dot-checker.php#L20-L26",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/build/triple-dot-checker.php#L20-L26",
             "snippet": [
                 {
                     "number": 20,
@@ -1551,7 +1551,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/core/Migrations/Version13000Date20170718121200.php#L1021-L1027",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/core/Migrations/Version13000Date20170718121200.php#L1021-L1027",
             "snippet": [
                 {
                     "number": 1021,
@@ -1731,7 +1731,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/lib/private/Comments/Comment.php#L214-L220",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/lib/private/Comments/Comment.php#L214-L220",
             "snippet": [
                 {
                     "number": 214,
@@ -2227,7 +2227,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/lib/private/DB/Connection.php#L438-L444",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/lib/private/DB/Connection.php#L438-L444",
             "snippet": [
                 {
                     "number": 438,
@@ -2371,7 +2371,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/lib/private/Files/FilenameValidator.php#L192-L198",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/lib/private/Files/FilenameValidator.php#L192-L198",
             "snippet": [
                 {
                     "number": 192,
@@ -2446,6 +2446,546 @@
             ]
         },
         {
+            "id": "f-00d26de02c",
+            "file": "lib/private/Files/Filesystem.php",
+            "line": 649,
+            "column": 4,
+            "pattern": "#\\\\#s",
+            "source": "preg_replace()",
+            "location": "via $patterns",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#\\\\#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/lib/private/Files/Filesystem.php#L646-L652",
+            "snippet": [
+                {
+                    "number": 646,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$path = '/' . $path;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 647,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 648,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$patterns = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 649,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",       // no windows style '\\\\' slashes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 650,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#/\\.(/\\.)*/#s', // remove '/./'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 651,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#\\//+#s',       // remove sequence of slashes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 652,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#/\\.$#s',       // remove trailing '/.'",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-29a7c6c216",
+            "file": "lib/private/Files/Filesystem.php",
+            "line": 650,
+            "column": 4,
+            "pattern": "#/\\.(/\\.)*/#s",
+            "source": "preg_replace()",
+            "location": "via $patterns",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\.(/\\.)*/#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/lib/private/Files/Filesystem.php#L647-L653",
+            "snippet": [
+                {
+                    "number": 647,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 648,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$patterns = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 649,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#\\\\\\\\#s',       // no windows style '\\\\' slashes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 650,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", // remove '/./'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 651,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#\\//+#s',       // remove sequence of slashes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 652,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#/\\.$#s',       // remove trailing '/.'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 653,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ebba7730e2",
+            "file": "lib/private/Files/Filesystem.php",
+            "line": 651,
+            "column": 4,
+            "pattern": "#\\//+#s",
+            "source": "preg_replace()",
+            "location": "via $patterns",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#\\//+#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/lib/private/Files/Filesystem.php#L648-L654",
+            "snippet": [
+                {
+                    "number": 648,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$patterns = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 649,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#\\\\\\\\#s',       // no windows style '\\\\' slashes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 650,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#/\\.(/\\.)*/#s', // remove '/./'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 651,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\//",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",       // remove sequence of slashes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 652,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#/\\.$#s',       // remove trailing '/.'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 653,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 654,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-9fde5779d4",
+            "file": "lib/private/Files/Filesystem.php",
+            "line": 652,
+            "column": 4,
+            "pattern": "#/\\.$#s",
+            "source": "preg_replace()",
+            "location": "via $patterns",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\.$#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/lib/private/Files/Filesystem.php#L649-L655",
+            "snippet": [
+                {
+                    "number": 649,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#\\\\\\\\#s',       // no windows style '\\\\' slashes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 650,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#/\\.(/\\.)*/#s', // remove '/./'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 651,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'#\\//+#s',       // remove sequence of slashes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 652,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",       // remove trailing '/.'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 653,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 654,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 655,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tdo {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-84c09be516",
             "file": "lib/private/Preview/MarkDown.php",
             "line": 51,
@@ -2478,7 +3018,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/lib/private/Preview/MarkDown.php#L48-L54",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/lib/private/Preview/MarkDown.php#L48-L54",
             "snippet": [
                 {
                     "number": 48,
@@ -2662,7 +3202,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nextcloud/server/blob/c7d83959814e875d964618839ccea0afa97652a2/lib/public/Util.php#L396-L402",
+            "permalink": "https://github.com/nextcloud/server/blob/04556a42112151ca21d2e3a81451b4b8787107cb/lib/public/Util.php#L396-L402",
             "snippet": [
                 {
                     "number": 396,

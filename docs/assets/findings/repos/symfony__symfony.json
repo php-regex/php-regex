@@ -1,6 +1,6 @@
 {
     "repo": "symfony/symfony",
-    "sha": "b333b2838318554dd09e262f87c7be7bb600cd91",
+    "sha": "08c6fc5956af2b31ca97f558232080da15775438",
     "target": {
         "php": "8.4.1",
         "pcre": "10.49",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php#L153-L159",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -169,7 +169,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Bundle/FrameworkBundle/Resources/bin/check-unused-known-tags.php#L19-L24",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Bundle/FrameworkBundle/Resources/bin/check-unused-known-tags.php#L19-L24",
             "snippet": [
                 {
                     "number": 19,
@@ -302,7 +302,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/AssetMapper/Compiler/JavaScriptImportPathCompiler.php#L28-L34",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/AssetMapper/Compiler/JavaScriptImportPathCompiler.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -397,7 +397,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/AssetMapper/ImportMap/ImportMapManager.php#L72-L78",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/AssetMapper/ImportMap/ImportMapManager.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -645,7 +645,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Cache/Adapter/CouchbaseCollectionAdapter.php#L60-L66",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Cache/Adapter/CouchbaseCollectionAdapter.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -908,7 +908,7 @@
                 "limit": 100000
             },
             "subject": "<0=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,0!>",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Console/Helper/Table.php#L671-L677",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Console/Helper/Table.php#L671-L677",
             "snippet": [
                 {
                     "number": 671,
@@ -1171,253 +1171,6 @@
             ]
         },
         {
-            "id": "f-27eedc30ed",
-            "file": "src/Symfony/Component/Console/Helper/Table.php",
-            "line": 921,
-            "column": 28,
-            "pattern": "#<(?:[a-z](?:[^\\\\<>]*+|\\\\.)*|/(?:[a-z][^<>]*+)?)>#i",
-            "source": "preg_match_all()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.emptyRepeat",
-                    "message": "Quantifier \"*\" repeats an item that can match the empty string: an empty iteration matches nothing more.",
-                    "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Console/Helper/Table.php#L918-L924",
-            "snippet": [
-                {
-                    "number": 918,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        $openTags = [[]];",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 919,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        foreach ($lines as $i => $line) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 920,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            $tags = $openTags[$i];",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 921,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "            preg_match_all(",
-                            ""
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            "#",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "<",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(?:",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "a",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "(?:",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[^",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\\\\\\\<>",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "*+",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\\\\\\\",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ".",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(?:",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "a",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "][^",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "<>",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "*+",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            ">",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "#",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "i",
-                            "pg-snippet-pattern pg-tok-flag"
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            ", $line, $matches, \\PREG_OFFSET_CAPTURE);",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 922,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 923,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            foreach ($matches[0] as [$tag, $offset]) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 924,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "                if ($offset && '\\\\' === $line[$offset - 1]) {",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
             "id": "f-638c87ea45",
             "file": "src/Symfony/Component/Console/Input/StringInput.php",
             "line": 69,
@@ -1438,7 +1191,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Console/Input/StringInput.php#L66-L72",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Console/Input/StringInput.php#L66-L72",
             "snippet": [
                 {
                     "number": 66,
@@ -1533,7 +1286,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/DependencyInjection/Dumper/GraphvizDumper.php#L232-L238",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/DependencyInjection/Dumper/GraphvizDumper.php#L232-L238",
             "snippet": [
                 {
                     "number": 232,
@@ -1661,7 +1414,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1731-L1737",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1731-L1737",
             "snippet": [
                 {
                     "number": 1731,
@@ -1837,7 +1590,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1738-L1744",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1738-L1744",
             "snippet": [
                 {
                     "number": 1738,
@@ -2008,7 +1761,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Dotenv/Dotenv.php#L518-L524",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Dotenv/Dotenv.php#L518-L524",
             "snippet": [
                 {
                     "number": 518,
@@ -2184,7 +1937,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Emoji/Resources/bin/build.php#L234-L240",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Emoji/Resources/bin/build.php#L234-L240",
             "snippet": [
                 {
                     "number": 234,
@@ -2334,7 +2087,7 @@
                 "limit": 100000
             },
             "subject": "\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA!",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1027-L1033",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1027-L1033",
             "snippet": [
                 {
                     "number": 1027,
@@ -2579,7 +2332,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1423-L1429",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1423-L1429",
             "snippet": [
                 {
                     "number": 1423,
@@ -2912,7 +2665,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1460-L1466",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1460-L1466",
             "snippet": [
                 {
                     "number": 1460,
@@ -3225,7 +2978,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1484-L1490",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1484-L1490",
             "snippet": [
                 {
                     "number": 1484,
@@ -3524,7 +3277,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/HttpClient/DataCollector/HttpClientDataCollector.php#L259-L265",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/HttpClient/DataCollector/HttpClientDataCollector.php#L259-L265",
             "snippet": [
                 {
                     "number": 259,
@@ -3649,7 +3402,7 @@
         {
             "id": "f-82161ccb2e",
             "file": "src/Symfony/Component/HttpClient/HttpClientTrait.php",
-            "line": 381,
+            "line": 383,
             "column": 28,
             "pattern": "{multipart/form-data; boundary=(?|\"([^\"\\r\\n]++)\"|([-!#$%&'*+.^_`|~_A-Za-z0-9]++))}",
             "source": "preg_match()",
@@ -3667,10 +3420,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/HttpClient/HttpClientTrait.php#L378-L384",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/HttpClient/HttpClientTrait.php#L380-L386",
             "snippet": [
                 {
-                    "number": 378,
+                    "number": 380,
                     "focus": false,
                     "runs": [
                         [
@@ -3680,7 +3433,7 @@
                     ]
                 },
                 {
-                    "number": 379,
+                    "number": 381,
                     "focus": false,
                     "runs": [
                         [
@@ -3690,7 +3443,7 @@
                     ]
                 },
                 {
-                    "number": 380,
+                    "number": 382,
                     "focus": false,
                     "runs": [
                         [
@@ -3700,7 +3453,7 @@
                     ]
                 },
                 {
-                    "number": 381,
+                    "number": 383,
                     "focus": true,
                     "runs": [
                         [
@@ -3822,7 +3575,7 @@
                     ]
                 },
                 {
-                    "number": 382,
+                    "number": 384,
                     "focus": false,
                     "runs": [
                         [
@@ -3832,7 +3585,7 @@
                     ]
                 },
                 {
-                    "number": 383,
+                    "number": 385,
                     "focus": false,
                     "runs": [
                         [
@@ -3842,7 +3595,7 @@
                     ]
                 },
                 {
-                    "number": 384,
+                    "number": 386,
                     "focus": false,
                     "runs": [
                         [
@@ -3879,7 +3632,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/HttpKernel/HttpCache/Esi.php#L69-L75",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/HttpKernel/HttpCache/Esi.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -4028,7 +3781,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Intl/Resources/bin/update-data.php#L77-L83",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Intl/Resources/bin/update-data.php#L77-L83",
             "snippet": [
                 {
                     "number": 77,
@@ -4193,7 +3946,7 @@
         {
             "id": "f-58d92056f6",
             "file": "src/Symfony/Component/JsonPath/JsonCrawler.php",
-            "line": 389,
+            "line": 485,
             "column": 28,
             "pattern": "/^(\\w+)\\s*\\([^()]*\\)\\s*([<>=!]+.*)?$/",
             "source": "preg_match()",
@@ -4211,10 +3964,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/JsonPath/JsonCrawler.php#L386-L392",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/JsonPath/JsonCrawler.php#L482-L488",
             "snippet": [
                 {
-                    "number": 386,
+                    "number": 482,
                     "focus": false,
                     "runs": [
                         [
@@ -4224,7 +3977,7 @@
                     ]
                 },
                 {
-                    "number": 387,
+                    "number": 483,
                     "focus": false,
                     "runs": [
                         [
@@ -4234,7 +3987,7 @@
                     ]
                 },
                 {
-                    "number": 388,
+                    "number": 484,
                     "focus": false,
                     "runs": [
                         [
@@ -4244,7 +3997,7 @@
                     ]
                 },
                 {
-                    "number": 389,
+                    "number": 485,
                     "focus": true,
                     "runs": [
                         [
@@ -4374,7 +4127,7 @@
                     ]
                 },
                 {
-                    "number": 390,
+                    "number": 486,
                     "focus": false,
                     "runs": [
                         [
@@ -4384,7 +4137,7 @@
                     ]
                 },
                 {
-                    "number": 391,
+                    "number": 487,
                     "focus": false,
                     "runs": [
                         [
@@ -4394,7 +4147,7 @@
                     ]
                 },
                 {
-                    "number": 392,
+                    "number": 488,
                     "focus": false,
                     "runs": [
                         [
@@ -4426,7 +4179,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesApiAsyncAwsTransport.php#L128-L134",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesApiAsyncAwsTransport.php#L128-L134",
             "snippet": [
                 {
                     "number": 128,
@@ -4645,7 +4398,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesHttpAsyncAwsTransport.php#L101-L107",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesHttpAsyncAwsTransport.php#L101-L107",
             "snippet": [
                 {
                     "number": 101,
@@ -4844,6 +4597,196 @@
             ]
         },
         {
+            "id": "f-e91ba00261",
+            "file": "src/Symfony/Component/Mime/Email.php",
+            "line": 478,
+            "column": 32,
+            "pattern": "/<\\w+\\s+[^>]*background\\s*=\\s*(?:(['\"])cid:(.+?)\\1|cid:([^>\\s]+))/i",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Mime/Email.php#L475-L481",
+            "snippet": [
+                {
+                    "number": 475,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            ];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 476,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $tmpMatches = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 477,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            foreach ($regexes as $regex) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 478,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                preg_match_all('/'.$regex.'/i', $html, $tmpMatches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 479,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $names = array_merge($names, $tmpMatches[2], $tmpMatches[3]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 480,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 481,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $names = array_filter(array_unique($names));",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-5183fdcfcc",
+            "file": "src/Symfony/Component/Mime/Email.php",
+            "line": 478,
+            "column": 32,
+            "pattern": "/<img\\s+[^>]*src\\s*=\\s*(?:(['\"])cid:(.+?)\\1|cid:([^>\\s]+))/i",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Mime/Email.php#L475-L481",
+            "snippet": [
+                {
+                    "number": 475,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            ];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 476,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $tmpMatches = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 477,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            foreach ($regexes as $regex) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 478,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                preg_match_all('/'.$regex.'/i', $html, $tmpMatches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 479,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $names = array_merge($names, $tmpMatches[2], $tmpMatches[3]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 480,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 481,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $names = array_filter(array_unique($names));",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-8cccf44650",
             "file": "src/Symfony/Component/Mime/Header/AbstractHeader.php",
             "line": 99,
@@ -4863,7 +4806,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?:(?:(?:(?:(?:[ \\\\t]*(?:\\\\r\\\\n))…\" and \"(?:(?:(?:(?:(?:[ \\\\t]*(?:\\\\r\\\\n))…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…\" and \"(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -4877,28 +4820,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?:(?:(?:[ \\\\t]*(?:\\\\r\\\\n))?[ \\\\t]…\" and \"(?:(?:[ \\\\t]*(?:\\\\r\\\\n))?[ \\\\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
-                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?:(?:(?:[ \\\\t]*(?:\\\\r\\\\n))?[ \\\\t]…\" and \"(?:(?:[ \\\\t]*(?:\\\\r\\\\n))?[ \\\\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -4919,7 +4841,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?:(?:(?:[ \\\\t]*(?:\\\\r\\\\n))?[ \\\\t]…\" and \"(?:(?:[ \\\\t]*(?:\\\\r\\\\n))?[ \\\\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -4939,6 +4861,20 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -4947,7 +4883,21 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?:(?:(?:[ \\\\t]*(?:\\\\r\\\\n))?[ \\\\t]…\" and \"(?:(?:[ \\\\t]*(?:\\\\r\\\\n))?[ \\\\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"(?:[\\x01-\\x08\\x0B\\x0C\\x0E-\\x19…\" and \"(?:\\[\\x00-\\x08\\x0B\\x0C\\x0E-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -4962,7 +4912,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Mime/Header/AbstractHeader.php#L96-L102",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Mime/Header/AbstractHeader.php#L96-L102",
             "snippet": [
                 {
                     "number": 96,
@@ -5057,7 +5007,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Notifier/Bridge/Smsbox/SmsboxTransport.php#L66-L72",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Notifier/Bridge/Smsbox/SmsboxTransport.php#L66-L72",
             "snippet": [
                 {
                     "number": 66,
@@ -5202,7 +5152,7 @@
         {
             "id": "f-269f08ef2c",
             "file": "src/Symfony/Component/PropertyInfo/Extractor/PhpStanExtractor.php",
-            "line": 271,
+            "line": 273,
             "column": 47,
             "pattern": "/^#@[+-]{1}/m",
             "source": "preg_replace()",
@@ -5225,10 +5175,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/PropertyInfo/Extractor/PhpStanExtractor.php#L268-L274",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/PropertyInfo/Extractor/PhpStanExtractor.php#L270-L276",
             "snippet": [
                 {
-                    "number": 268,
+                    "number": 270,
                     "focus": false,
                     "runs": [
                         [
@@ -5238,7 +5188,7 @@
                     ]
                 },
                 {
-                    "number": 269,
+                    "number": 271,
                     "focus": false,
                     "runs": [
                         [
@@ -5248,7 +5198,7 @@
                     ]
                 },
                 {
-                    "number": 270,
+                    "number": 272,
                     "focus": false,
                     "runs": [
                         [
@@ -5258,7 +5208,7 @@
                     ]
                 },
                 {
-                    "number": 271,
+                    "number": 273,
                     "focus": true,
                     "runs": [
                         [
@@ -5316,7 +5266,7 @@
                     ]
                 },
                 {
-                    "number": 272,
+                    "number": 274,
                     "focus": false,
                     "runs": [
                         [
@@ -5326,7 +5276,7 @@
                     ]
                 },
                 {
-                    "number": 273,
+                    "number": 275,
                     "focus": false,
                     "runs": [
                         [
@@ -5336,7 +5286,7 @@
                     ]
                 },
                 {
-                    "number": 274,
+                    "number": 276,
                     "focus": false,
                     "runs": [
                         [
@@ -5368,7 +5318,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L182-L188",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,
@@ -5579,7 +5529,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L242-L248",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L242-L248",
             "snippet": [
                 {
                     "number": 242,
@@ -5805,7 +5755,7 @@
                 "limit": 100000
             },
             "subject": "\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA!",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Routing/Loader/AttributeClassLoader.php#L246-L252",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Routing/Loader/AttributeClassLoader.php#L246-L252",
             "snippet": [
                 {
                     "number": 246,
@@ -6018,7 +5968,7 @@
         {
             "id": "f-9676c0b4f4",
             "file": "src/Symfony/Component/Routing/RouteCompiler.php",
-            "line": 190,
+            "line": 212,
             "column": 53,
             "pattern": "/[\\x80-\\xFF]|(?<!\\\\)\\\\(?:\\\\\\\\)*+(?-i:X|[pP][\\{CLMNPSZ]|x\\{[A-Fa-f0-9]{3})/",
             "source": "preg_match()",
@@ -6036,10 +5986,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Routing/RouteCompiler.php#L187-L193",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Routing/RouteCompiler.php#L209-L215",
             "snippet": [
                 {
-                    "number": 187,
+                    "number": 209,
                     "focus": false,
                     "runs": [
                         [
@@ -6049,7 +5999,7 @@
                     ]
                 },
                 {
-                    "number": 188,
+                    "number": 210,
                     "focus": false,
                     "runs": [
                         [
@@ -6059,7 +6009,7 @@
                     ]
                 },
                 {
-                    "number": 189,
+                    "number": 211,
                     "focus": false,
                     "runs": [
                         [
@@ -6069,7 +6019,7 @@
                     ]
                 },
                 {
-                    "number": 190,
+                    "number": 212,
                     "focus": true,
                     "runs": [
                         [
@@ -6231,7 +6181,7 @@
                     ]
                 },
                 {
-                    "number": 191,
+                    "number": 213,
                     "focus": false,
                     "runs": [
                         [
@@ -6241,7 +6191,7 @@
                     ]
                 },
                 {
-                    "number": 192,
+                    "number": 214,
                     "focus": false,
                     "runs": [
                         [
@@ -6251,7 +6201,7 @@
                     ]
                 },
                 {
-                    "number": 193,
+                    "number": 215,
                     "focus": false,
                     "runs": [
                         [
@@ -6283,7 +6233,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Serializer/Encoder/XmlEncoder.php#L239-L245",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Serializer/Encoder/XmlEncoder.php#L239-L245",
             "snippet": [
                 {
                     "number": 239,
@@ -6450,7 +6400,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Serializer/NameConverter/CamelCaseToSnakeCaseNameConverter.php#L75-L81",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Serializer/NameConverter/CamelCaseToSnakeCaseNameConverter.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,
@@ -6609,7 +6559,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Serializer/NameConverter/SnakeCaseToCamelCaseNameConverter.php#L45-L51",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Serializer/NameConverter/SnakeCaseToCamelCaseNameConverter.php#L45-L51",
             "snippet": [
                 {
                     "number": 45,
@@ -6750,8 +6700,8 @@
         {
             "id": "f-c19144ea9e",
             "file": "src/Symfony/Component/Serializer/Normalizer/DataUriNormalizer.php",
-            "line": 88,
-            "column": 43,
+            "line": 96,
+            "column": 47,
             "pattern": "/^data:([a-z0-9][a-z0-9\\!\\#\\$\\&\\-\\^\\_\\+\\.]{0,126}\\/[a-z0-9][a-z0-9\\!\\#\\$\\&\\-\\^\\_\\+\\.]{0,126}(;[a-z0-9\\-]+\\=[a-z0-9\\-]+)?)?(;base64)?,[a-z0-9\\!\\$\\&\\'\\,\\(\\)\\*\\+\\;\\=\\-\\.\\_\\~\\:\\@\\/\\?\\%\\s]*\\s*$/i",
             "source": "preg_match()",
             "location": null,
@@ -6768,44 +6718,44 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Serializer/Normalizer/DataUriNormalizer.php#L85-L91",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Serializer/Normalizer/DataUriNormalizer.php#L93-L99",
             "snippet": [
                 {
-                    "number": 85,
+                    "number": 93,
                     "focus": false,
                     "runs": [
                         [
-                            "     */",
+                            "            throw NotNormalizableValueException::createForUnexpectedDataType(\\sprintf('Data expected to be an instance of \"%s\" (\"%s\" given).', $type, get_debug_type($data)), $data, [$type], $context['deserialization_path'] ?? null, true);",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 86,
+                    "number": 94,
                     "focus": false,
                     "runs": [
                         [
-                            "    public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): \\SplFileInfo",
+                            "        }",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 87,
+                    "number": 95,
                     "focus": false,
                     "runs": [
                         [
-                            "    {",
+                            "",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 88,
+                    "number": 96,
                     "focus": true,
                     "runs": [
                         [
-                            "        if (null === $data || !preg_match(",
+                            "        if (!\\is_string($data) || !preg_match(",
                             ""
                         ],
                         [
@@ -7123,7 +7073,7 @@
                     ]
                 },
                 {
-                    "number": 89,
+                    "number": 97,
                     "focus": false,
                     "runs": [
                         [
@@ -7133,7 +7083,7 @@
                     ]
                 },
                 {
-                    "number": 90,
+                    "number": 98,
                     "focus": false,
                     "runs": [
                         [
@@ -7143,7 +7093,7 @@
                     ]
                 },
                 {
-                    "number": 91,
+                    "number": 99,
                     "focus": false,
                     "runs": [
                         [
@@ -7182,7 +7132,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Translation/Dumper/PoFileDumper.php#L183-L189",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Translation/Dumper/PoFileDumper.php#L183-L189",
             "snippet": [
                 {
                     "number": 183,
@@ -7282,7 +7232,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/Validator/Constraints/Isin.php#L25-L31",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/Validator/Constraints/Isin.php#L25-L31",
             "snippet": [
                 {
                     "number": 25,
@@ -7473,7 +7423,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/VarExporter/ProxyHelper.php#L405-L411",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/VarExporter/ProxyHelper.php#L405-L411",
             "snippet": [
                 {
                     "number": 405,
@@ -7659,7 +7609,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Component/VarExporter/ProxyHelper.php#L425-L431",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Component/VarExporter/ProxyHelper.php#L425-L431",
             "snippet": [
                 {
                     "number": 425,
@@ -7905,7 +7855,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/b333b2838318554dd09e262f87c7be7bb600cd91/src/Symfony/Contracts/Translation/TranslatorTrait.php#L61-L67",
+            "permalink": "https://github.com/symfony/symfony/blob/08c6fc5956af2b31ca97f558232080da15775438/src/Symfony/Contracts/Translation/TranslatorTrait.php#L61-L67",
             "snippet": [
                 {
                     "number": 61,

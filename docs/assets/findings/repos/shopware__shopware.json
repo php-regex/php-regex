@@ -1,6 +1,6 @@
 {
     "repo": "shopware/shopware",
-    "sha": "7824d4267e896d1230c1f2f9813ffe0de0e38f3f",
+    "sha": "4a398e183a55bc6127e9f2ccca29d087bbfec924",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/7824d4267e896d1230c1f2f9813ffe0de0e38f3f/src/Core/Content/Cms/DataResolver/Element/AbstractCmsElementResolver.php#L181-L187",
+            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/Content/Cms/DataResolver/Element/AbstractCmsElementResolver.php#L181-L187",
             "snippet": [
                 {
                     "number": 181,
@@ -207,7 +207,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/7824d4267e896d1230c1f2f9813ffe0de0e38f3f/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L28-L34",
+            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -370,7 +370,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/7824d4267e896d1230c1f2f9813ffe0de0e38f3f/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L29-L35",
+            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -538,7 +538,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/7824d4267e896d1230c1f2f9813ffe0de0e38f3f/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L117-L123",
+            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -686,7 +686,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/7824d4267e896d1230c1f2f9813ffe0de0e38f3f/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L122-L128",
+            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L122-L128",
             "snippet": [
                 {
                     "number": 122,
@@ -834,7 +834,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/7824d4267e896d1230c1f2f9813ffe0de0e38f3f/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L126-L132",
+            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L126-L132",
             "snippet": [
                 {
                     "number": 126,
@@ -982,7 +982,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/7824d4267e896d1230c1f2f9813ffe0de0e38f3f/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L131-L137",
+            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L131-L137",
             "snippet": [
                 {
                     "number": 131,
@@ -1140,7 +1140,7 @@
                 "limit": 100000
             },
             "subject": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!",
-            "permalink": "https://github.com/shopware/shopware/blob/7824d4267e896d1230c1f2f9813ffe0de0e38f3f/src/Core/DevOps/Test/AnnotationTagTester.php#L187-L193",
+            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/Test/AnnotationTagTester.php#L187-L193",
             "snippet": [
                 {
                     "number": 187,
@@ -1348,7 +1348,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/7824d4267e896d1230c1f2f9813ffe0de0e38f3f/src/Core/Test/FixtureLoader.php#L54-L60",
+            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/Test/FixtureLoader.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -1483,7 +1483,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/7824d4267e896d1230c1f2f9813ffe0de0e38f3f/src/Storefront/Theme/ThemeConfigValueAccessor.php#L253-L259",
+            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Storefront/Theme/ThemeConfigValueAccessor.php#L253-L259",
             "snippet": [
                 {
                     "number": 253,
@@ -1634,34 +1634,27 @@
             ]
         },
         {
-            "id": "f-35f24887a9",
+            "id": "f-130eeae23b",
             "file": "src/Storefront/Theme/Validator/SCSSValidator.php",
             "line": 199,
             "column": 24,
-            "pattern": "/.*?(\\$(?![0-9])(?:[a-zA-Z0-9-_]|(?:\\[!\"#$%&'\\(\\)*+,.\\/:;<=>?@\\[\\]^{|}~]))+)/D",
+            "pattern": "/.*?(\\$(?![0-9])(?:[a-zA-Z0-9-_]|(?:\\\\[!\"#$%&'()*+,.\\/:;<=>?@\\[\\]^{|}~]))+)/D",
             "source": "preg_match_all()",
             "location": null,
             "level": "warn",
             "issues": [
                 {
                     "level": "warn",
-                    "rule": "regex.lint.anchor.impossible.end",
-                    "message": "End anchor '$' appears before consuming characters, making it impossible to match.",
+                    "rule": "regex.lint.flag.useless.D",
+                    "message": "Flag 'D' is useless: the pattern contains no $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#anchor-conflicts"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.anchor.impossible.start",
-                    "message": "Start anchor '^' appears after consuming characters, making it impossible to match.",
-                    "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#anchor-conflicts"
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-d-dollar-end-only"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/7824d4267e896d1230c1f2f9813ffe0de0e38f3f/src/Storefront/Theme/Validator/SCSSValidator.php#L196-L202",
+            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Storefront/Theme/Validator/SCSSValidator.php#L196-L202",
             "snippet": [
                 {
                     "number": 196,
@@ -1790,56 +1783,20 @@
                             "pg-snippet-pattern pg-tok-group"
                         ],
                         [
-                            "\\\\[!\"#",
+                            "\\\\\\\\",
                             "pg-snippet-pattern pg-tok-literal"
                         ],
                         [
-                            "$",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "%&\\'\\(\\)",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "*+",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ",",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ".",
+                            "[",
                             "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
-                            "\\/:;<=>",
+                            "!\"#$%&\\'()*+,.\\/:;<=>?@\\[\\]^{|}~",
                             "pg-snippet-pattern pg-tok-literal"
                         ],
                         [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "@\\[\\]",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "^",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "{",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|",
+                            "]",
                             "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "}~]",
-                            "pg-snippet-pattern pg-tok-literal"
                         ],
                         [
                             "))",

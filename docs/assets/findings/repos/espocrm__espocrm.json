@@ -1,6 +1,6 @@
 {
     "repo": "espocrm/espocrm",
-    "sha": "23f49d926eb84610cff724acd16862d3b764adaa",
+    "sha": "a694c6f0d51902bd901f7687e4ce3c84c6c949b4",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/23f49d926eb84610cff724acd16862d3b764adaa/application/Espo/Core/Mail/Account/GroupAccount/BouncedRecognizer.php#L86-L92",
+            "permalink": "https://github.com/espocrm/espocrm/blob/a694c6f0d51902bd901f7687e4ce3c84c6c949b4/application/Espo/Core/Mail/Account/GroupAccount/BouncedRecognizer.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -178,7 +178,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/23f49d926eb84610cff724acd16862d3b764adaa/application/Espo/Core/Utils/File/Manager.php#L978-L984",
+            "permalink": "https://github.com/espocrm/espocrm/blob/a694c6f0d51902bd901f7687e4ce3c84c6c949b4/application/Espo/Core/Utils/File/Manager.php#L978-L984",
             "snippet": [
                 {
                     "number": 978,
@@ -305,7 +305,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/23f49d926eb84610cff724acd16862d3b764adaa/application/Espo/Core/Utils/Preload.php#L77-L83",
+            "permalink": "https://github.com/espocrm/espocrm/blob/a694c6f0d51902bd901f7687e4ce3c84c6c949b4/application/Espo/Core/Utils/Preload.php#L77-L83",
             "snippet": [
                 {
                     "number": 77,
@@ -456,7 +456,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/23f49d926eb84610cff724acd16862d3b764adaa/application/Espo/Core/Utils/System.php#L42-L48",
+            "permalink": "https://github.com/espocrm/espocrm/blob/a694c6f0d51902bd901f7687e4ce3c84c6c949b4/application/Espo/Core/Utils/System.php#L42-L48",
             "snippet": [
                 {
                     "number": 42,
@@ -599,7 +599,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/23f49d926eb84610cff724acd16862d3b764adaa/application/Espo/Core/Utils/System.php#L45-L51",
+            "permalink": "https://github.com/espocrm/espocrm/blob/a694c6f0d51902bd901f7687e4ce3c84c6c949b4/application/Espo/Core/Utils/System.php#L45-L51",
             "snippet": [
                 {
                     "number": 45,

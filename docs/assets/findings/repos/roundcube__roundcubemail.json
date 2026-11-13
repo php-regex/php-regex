@@ -1,6 +1,6 @@
 {
     "repo": "roundcube/roundcubemail",
-    "sha": "e46005c613dd67420594c40c3ae98ee9cf872283",
+    "sha": "058b11d0535af2007af825c42f29f745e97b8f0b",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/plugins/archive/archive.php#L490-L496",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/plugins/archive/archive.php#L490-L496",
             "snippet": [
                 {
                     "number": 490,
@@ -191,7 +191,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/plugins/enigma/lib/enigma_engine.php#L608-L614",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/plugins/enigma/lib/enigma_engine.php#L608-L614",
             "snippet": [
                 {
                     "number": 608,
@@ -345,7 +345,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/plugins/identity_select/identity_select.php#L86-L92",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/plugins/identity_select/identity_select.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -532,7 +532,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L749-L755",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L749-L755",
             "snippet": [
                 {
                     "number": 749,
@@ -691,7 +691,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L1112-L1118",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L1112-L1118",
             "snippet": [
                 {
                     "number": 1112,
@@ -842,7 +842,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/plugins/markasjunk/drivers/cmd_learn.php#L50-L56",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/plugins/markasjunk/drivers/cmd_learn.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -989,7 +989,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/actions/mail/headers.php#L54-L60",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/actions/mail/headers.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -1128,7 +1128,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/actions/mail/index.php#L924-L930",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/actions/mail/index.php#L924-L930",
             "snippet": [
                 {
                     "number": 924,
@@ -1323,7 +1323,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/actions/mail/index.php#L1258-L1264",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/actions/mail/index.php#L1258-L1264",
             "snippet": [
                 {
                     "number": 1258,
@@ -1474,7 +1474,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/actions/mail/search.php#L252-L258",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/actions/mail/search.php#L252-L258",
             "snippet": [
                 {
                     "number": 252,
@@ -1665,7 +1665,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/actions/mail/search.php#L381-L387",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/actions/mail/search.php#L381-L387",
             "snippet": [
                 {
                     "number": 381,
@@ -1912,7 +1912,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/actions/mail/send.php#L107-L113",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/actions/mail/send.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -2055,9 +2055,140 @@
             ]
         },
         {
+            "id": "f-67d76e723d",
+            "file": "program/actions/mail/sendmdn.php",
+            "line": 125,
+            "column": 56,
+            "pattern": "/[\\r\\n\\t\\s]+/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/actions/mail/sendmdn.php#L122-L128",
+            "snippet": [
+                {
+                    "number": 122,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // For security reasons do not allow new-line characters in headers",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 123,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            foreach ($headers as $idx => $value) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 124,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                if (is_string($value)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 125,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    $headers[$idx] = trim(preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n\\t",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", ' ', $value));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 126,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 127,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 128,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-2edf8bd603",
             "file": "program/actions/settings/index.php",
-            "line": 1769,
+            "line": 1785,
             "column": 19,
             "pattern": "/\\s(poster|src)\\s*=\\s*['\"]*\\S+upload-display\\S+file=rcmfile(\\w+)[\\s'\"]*/",
             "source": "preg_match()",
@@ -2075,10 +2206,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/actions/settings/index.php#L1766-L1772",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/actions/settings/index.php#L1782-L1788",
             "snippet": [
                 {
-                    "number": 1766,
+                    "number": 1782,
                     "focus": false,
                     "runs": [
                         [
@@ -2088,7 +2219,7 @@
                     ]
                 },
                 {
-                    "number": 1767,
+                    "number": 1783,
                     "focus": false,
                     "runs": [
                         [
@@ -2098,7 +2229,7 @@
                     ]
                 },
                 {
-                    "number": 1768,
+                    "number": 1784,
                     "focus": false,
                     "runs": [
                         [
@@ -2108,7 +2239,7 @@
                     ]
                 },
                 {
-                    "number": 1769,
+                    "number": 1785,
                     "focus": true,
                     "runs": [
                         [
@@ -2258,7 +2389,7 @@
                     ]
                 },
                 {
-                    "number": 1770,
+                    "number": 1786,
                     "focus": false,
                     "runs": [
                         [
@@ -2268,7 +2399,7 @@
                     ]
                 },
                 {
-                    "number": 1771,
+                    "number": 1787,
                     "focus": false,
                     "runs": [
                         [
@@ -2278,7 +2409,7 @@
                     ]
                 },
                 {
-                    "number": 1772,
+                    "number": 1788,
                     "focus": false,
                     "runs": [
                         [
@@ -2315,7 +2446,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/include/rcmail_output_html.php#L1091-L1097",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/include/rcmail_output_html.php#L1091-L1097",
             "snippet": [
                 {
                     "number": 1091,
@@ -2479,7 +2610,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/include/rcmail_output_html.php#L1092-L1098",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/include/rcmail_output_html.php#L1092-L1098",
             "snippet": [
                 {
                     "number": 1092,
@@ -2666,7 +2797,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"[^>]\" and \"\\\\\\\\>\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"[^>]\" and \"\\\\>\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -2674,7 +2805,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/include/rcmail_output_html.php#L1309-L1315",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/include/rcmail_output_html.php#L1309-L1315",
             "snippet": [
                 {
                     "number": 1309,
@@ -2881,7 +3012,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/include/rcmail_output_html.php#L2401-L2407",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/include/rcmail_output_html.php#L2401-L2407",
             "snippet": [
                 {
                     "number": 2401,
@@ -3012,7 +3143,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/include/rcmail_sendmail.php#L243-L249",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/include/rcmail_sendmail.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -3167,7 +3298,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/include/rcmail_sendmail.php#L266-L272",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/include/rcmail_sendmail.php#L266-L272",
             "snippet": [
                 {
                     "number": 266,
@@ -3278,6 +3409,296 @@
             ]
         },
         {
+            "id": "f-2c5a59e13f",
+            "file": "program/include/rcmail_sendmail.php",
+            "line": 766,
+            "column": 20,
+            "pattern": "/[,;]\\s*[\r\n]+/",
+            "source": "preg_replace()",
+            "location": "via $regexp",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the second quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/include/rcmail_sendmail.php#L763-L769",
+            "snippet": [
+                {
+                    "number": 763,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $email_regexp = '(\\S+|(\"[^\"]+\"))@\\S+';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 764,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 765,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $delim = ',;';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 766,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $regexp = [\"/[{$delim}]\\\\s*[\\r\\n]+/\", '/[\\r\\n]+/', \"/[{$delim}]\\\\s*\\$/m\", '/;/', '/(\\S{1})(<' . $email_regexp . '>)/U'];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 767,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $replace = [', ', ', ', '', ',', '\\1 \\2'];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 768,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 769,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // replace new lines and strip ending ', ', make address input more valid",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a5c3889aa5",
+            "file": "program/include/rcmail_sendmail.php",
+            "line": 766,
+            "column": 90,
+            "pattern": "/(\\S{1})(<(\\S+|(\"[^\"]+\"))@\\S+>)/U",
+            "source": "preg_replace()",
+            "location": "via $regexp",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.useless",
+                    "message": "Quantifier is redundant; it matches exactly once.",
+                    "hint": "Remove the {1} quantifier; it does not change the match.",
+                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(\\S)(<(\\S+|(\"[^\"]+\"))@\\S+>)/U",
+                "changes": [
+                    "Removed a quantifier that repeats once."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/include/rcmail_sendmail.php#L763-L769",
+            "snippet": [
+                {
+                    "number": 763,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $email_regexp = '(\\S+|(\"[^\"]+\"))@\\S+';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 764,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 765,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $delim = ',;';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 766,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $regexp = [\"/[{$delim}]\\\\s*[\\r\\n]+/\", '/[\\r\\n]+/', \"/[{$delim}]\\\\s*\\$/m\", '/;/', '/(\\S{1})(<' . $email_regexp . '>)/U'];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 767,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $replace = [', ', ', ', '', ',', '\\1 \\2'];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 768,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 769,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // replace new lines and strip ending ', ', make address input more valid",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6f4822acad",
+            "file": "program/include/rcmail_sendmail.php",
+            "line": 789,
+            "column": 32,
+            "pattern": "/<*(\\S+|(\"[^\"]+\"))@\\S+>*$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/include/rcmail_sendmail.php#L786-L792",
+            "snippet": [
+                {
+                    "number": 786,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $result[] = $item;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 787,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 788,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // address with name (handle name)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 789,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            elseif (preg_match('/<*' . $email_regexp . '>*$/', $item, $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 790,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $address = $matches[0];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 791,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $name = trim(str_replace($address, '', $item));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 792,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                if ($name[0] == '\"' && $name[strlen($name) - 1] == '\"') {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-44e7a6b033",
             "file": "program/lib/Roundcube/rcube_charset.php",
             "line": 583,
@@ -3303,7 +3724,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_charset.php#L580-L586",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_charset.php#L580-L586",
             "snippet": [
                 {
                     "number": 580,
@@ -3398,7 +3819,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_db.php#L1470-L1476",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_db.php#L1470-L1476",
             "snippet": [
                 {
                     "number": 1470,
@@ -3570,7 +3991,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_enriched.php#L70-L76",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_enriched.php#L70-L76",
             "snippet": [
                 {
                     "number": 70,
@@ -3770,7 +4191,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_enriched.php#L81-L87",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_enriched.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -3970,7 +4391,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_html2text.php#L649-L655",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_html2text.php#L649-L655",
             "snippet": [
                 {
                     "number": 649,
@@ -4138,7 +4559,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_html2text.php#L661-L667",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_html2text.php#L661-L667",
             "snippet": [
                 {
                     "number": 661,
@@ -4298,7 +4719,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_imap_generic.php#L137-L143",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_imap_generic.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -4457,7 +4878,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_imap_generic.php#L1304-L1310",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_imap_generic.php#L1304-L1310",
             "snippet": [
                 {
                     "number": 1304,
@@ -4605,7 +5026,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_imap_generic.php#L2203-L2209",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_imap_generic.php#L2203-L2209",
             "snippet": [
                 {
                     "number": 2203,
@@ -4736,7 +5157,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_imap_generic.php#L2606-L2612",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_imap_generic.php#L2606-L2612",
             "snippet": [
                 {
                     "number": 2606,
@@ -4875,7 +5296,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_imap_generic.php#L2669-L2675",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_imap_generic.php#L2669-L2675",
             "snippet": [
                 {
                     "number": 2669,
@@ -5000,7 +5421,7 @@
         {
             "id": "f-e553611642",
             "file": "program/lib/Roundcube/rcube_message.php",
-            "line": 1274,
+            "line": 1277,
             "column": 28,
             "pattern": "/begin [0-7]{3,4} ([^\\r\\n]+)\\r?\\n/s",
             "source": "preg_match()",
@@ -5023,10 +5444,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_message.php#L1271-L1277",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_message.php#L1274-L1280",
             "snippet": [
                 {
-                    "number": 1271,
+                    "number": 1274,
                     "focus": false,
                     "runs": [
                         [
@@ -5036,7 +5457,7 @@
                     ]
                 },
                 {
-                    "number": 1272,
+                    "number": 1275,
                     "focus": false,
                     "runs": [
                         [
@@ -5046,7 +5467,7 @@
                     ]
                 },
                 {
-                    "number": 1273,
+                    "number": 1276,
                     "focus": false,
                     "runs": [
                         [
@@ -5056,7 +5477,7 @@
                     ]
                 },
                 {
-                    "number": 1274,
+                    "number": 1277,
                     "focus": true,
                     "runs": [
                         [
@@ -5158,7 +5579,7 @@
                     ]
                 },
                 {
-                    "number": 1275,
+                    "number": 1278,
                     "focus": false,
                     "runs": [
                         [
@@ -5168,7 +5589,7 @@
                     ]
                 },
                 {
-                    "number": 1276,
+                    "number": 1279,
                     "focus": false,
                     "runs": [
                         [
@@ -5178,7 +5599,7 @@
                     ]
                 },
                 {
-                    "number": 1277,
+                    "number": 1280,
                     "focus": false,
                     "runs": [
                         [
@@ -5192,7 +5613,7 @@
         {
             "id": "f-31294f0d98",
             "file": "program/lib/Roundcube/rcube_message.php",
-            "line": 1275,
+            "line": 1278,
             "column": 26,
             "pattern": "/`\\r?\\nend((\\r?\\n)|($))/s",
             "source": "preg_match()",
@@ -5215,10 +5636,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_message.php#L1272-L1278",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_message.php#L1275-L1281",
             "snippet": [
                 {
-                    "number": 1272,
+                    "number": 1275,
                     "focus": false,
                     "runs": [
                         [
@@ -5228,7 +5649,7 @@
                     ]
                 },
                 {
-                    "number": 1273,
+                    "number": 1276,
                     "focus": false,
                     "runs": [
                         [
@@ -5238,7 +5659,7 @@
                     ]
                 },
                 {
-                    "number": 1274,
+                    "number": 1277,
                     "focus": false,
                     "runs": [
                         [
@@ -5248,7 +5669,7 @@
                     ]
                 },
                 {
-                    "number": 1275,
+                    "number": 1278,
                     "focus": true,
                     "runs": [
                         [
@@ -5330,7 +5751,7 @@
                     ]
                 },
                 {
-                    "number": 1276,
+                    "number": 1279,
                     "focus": false,
                     "runs": [
                         [
@@ -5340,7 +5761,7 @@
                     ]
                 },
                 {
-                    "number": 1277,
+                    "number": 1280,
                     "focus": false,
                     "runs": [
                         [
@@ -5350,7 +5771,7 @@
                     ]
                 },
                 {
-                    "number": 1278,
+                    "number": 1281,
                     "focus": false,
                     "runs": [
                         [
@@ -5382,7 +5803,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_message_part.php#L158-L164",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_message_part.php#L158-L164",
             "snippet": [
                 {
                     "number": 158,
@@ -5521,7 +5942,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_message_part.php#L210-L216",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_message_part.php#L210-L216",
             "snippet": [
                 {
                     "number": 210,
@@ -5640,6 +6061,357 @@
             ]
         },
         {
+            "id": "f-217f0dfab5",
+            "file": "program/lib/Roundcube/rcube_mime.php",
+            "line": 352,
+            "column": 28,
+            "pattern": "/(.*)<(([^\\s:]+|(\"\\s*(?:[^\"\\f\\n\\r\\t\\v\\b\\s]+\\s*)+\"))@\\S+)$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"<\\\"\" . \"!\" x n . \"!@\" Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off). The risky part is: .* Hotspot offsets: 1-3 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "<\\\"",
+                "pump": "!",
+                "suffix": "!@",
+                "n": 56,
+                "length": 18,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "<\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_mime.php#L349-L355",
+            "snippet": [
+                {
+                    "number": 349,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $val = '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 350,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 351,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 352,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match('/(.*)<(' . $email_rx . ')$/', $val, $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 353,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // Note: There are cases like \"Test<test@domain.tld\" with no closing bracket,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 354,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // therefor we do not include it in the regexp above, but we have to",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 355,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // remove it later, because $email_rx will catch it (#8164)",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4da3ca3774",
+            "file": "program/lib/Roundcube/rcube_mime.php",
+            "line": 358,
+            "column": 34,
+            "pattern": "/^(([^\\s:]+|(\"\\s*(?:[^\"\\f\\n\\r\\t\\v\\b\\s]+\\s*)+\"))@\\S+)$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"\\\"\" . \"!\" x n . \"!@\" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). The risky part is: [^\\s:]+ Hotspot offsets: 3-10 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "\\\"",
+                "pump": "!",
+                "suffix": "!@",
+                "n": 56,
+                "length": 17,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_mime.php#L355-L361",
+            "snippet": [
+                {
+                    "number": 355,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // remove it later, because $email_rx will catch it (#8164)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 356,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $address = rtrim($m[2], '>');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 357,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $name = trim($m[1]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 358,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            } elseif (preg_match('/^(' . $email_rx . ')$/', $val, $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 359,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $address = $m[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 360,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $name = '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 361,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4430f424c7",
+            "file": "program/lib/Roundcube/rcube_mime.php",
+            "line": 366,
+            "column": 34,
+            "pattern": "/(([^\\s:]+|(\"\\s*(?:[^\"\\f\\n\\r\\t\\v\\b\\s]+\\s*)+\"))@\\S+)/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"\\\"\" . \"!\" x n . \"!@\" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). The risky part is: [^\\s:]+ Hotspot offsets: 2-9 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "\\\"",
+                "pump": "!",
+                "suffix": "!@",
+                "n": 56,
+                "length": 17,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_mime.php#L363-L369",
+            "snippet": [
+                {
+                    "number": 363,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            elseif (preg_match('/(\\s*<MAILER-DAEMON>)$/', $val, $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 364,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $address = 'MAILER-DAEMON';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 365,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $name = substr($val, 0, -strlen($m[1]));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 366,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            } elseif (preg_match('/(' . $email_rx . ')/', $val, $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 367,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $name = $m[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 368,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 369,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $name = $val;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-439ee70877",
             "file": "program/lib/Roundcube/rcube_smtp.php",
             "line": 509,
@@ -5667,7 +6439,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_smtp.php#L506-L512",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_smtp.php#L506-L512",
             "snippet": [
                 {
                     "number": 506,
@@ -5790,11 +6562,11 @@
             ]
         },
         {
-            "id": "f-abb207eb8b",
+            "id": "f-0dfd98713f",
             "file": "program/lib/Roundcube/rcube_utils.php",
-            "line": 299,
-            "column": 55,
-            "pattern": "/^[\\w.-]+$/i",
+            "line": 300,
+            "column": 67,
+            "pattern": "/[^\\w.-]/i",
             "source": "preg_match()",
             "location": null,
             "level": "warn",
@@ -5810,10 +6582,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_utils.php#L296-L302",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_utils.php#L297-L303",
             "snippet": [
                 {
-                    "number": 296,
+                    "number": 297,
                     "focus": false,
                     "runs": [
                         [
@@ -5823,7 +6595,7 @@
                     ]
                 },
                 {
-                    "number": 297,
+                    "number": 298,
                     "focus": false,
                     "runs": [
                         [
@@ -5833,7 +6605,7 @@
                     ]
                 },
                 {
-                    "number": 298,
+                    "number": 299,
                     "focus": false,
                     "runs": [
                         [
@@ -5843,11 +6615,11 @@
                     ]
                 },
                 {
-                    "number": 299,
+                    "number": 300,
                     "focus": true,
                     "runs": [
                         [
-                            "        return is_string($input) && (bool) preg_match(",
+                            "        return is_string($input) && strlen($input) && !preg_match(",
                             ""
                         ],
                         [
@@ -5855,15 +6627,7 @@
                             "pg-snippet-pattern pg-snippet-quote"
                         ],
                         [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "^",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "[",
+                            "/[^",
                             "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
@@ -5875,19 +6639,7 @@
                             "pg-snippet-pattern pg-tok-literal"
                         ],
                         [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "+",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "$",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "/",
+                            "]/",
                             "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
@@ -5905,7 +6657,7 @@
                     ]
                 },
                 {
-                    "number": 300,
+                    "number": 301,
                     "focus": false,
                     "runs": [
                         [
@@ -5915,7 +6667,7 @@
                     ]
                 },
                 {
-                    "number": 301,
+                    "number": 302,
                     "focus": false,
                     "runs": [
                         [
@@ -5925,7 +6677,7 @@
                     ]
                 },
                 {
-                    "number": 302,
+                    "number": 303,
                     "focus": false,
                     "runs": [
                         [
@@ -5939,7 +6691,7 @@
         {
             "id": "f-19dd4065ec",
             "file": "program/lib/Roundcube/rcube_utils.php",
-            "line": 866,
+            "line": 928,
             "column": 29,
             "pattern": "#/\\*.*\\*/#Ums",
             "source": "preg_replace()",
@@ -5962,10 +6714,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_utils.php#L863-L869",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_utils.php#L925-L931",
             "snippet": [
                 {
-                    "number": 863,
+                    "number": 925,
                     "focus": false,
                     "runs": [
                         [
@@ -5975,7 +6727,7 @@
                     ]
                 },
                 {
-                    "number": 864,
+                    "number": 926,
                     "focus": false,
                     "runs": [
                         [
@@ -5985,7 +6737,7 @@
                     ]
                 },
                 {
-                    "number": 865,
+                    "number": 927,
                     "focus": false,
                     "runs": [
                         [
@@ -5995,7 +6747,7 @@
                     ]
                 },
                 {
-                    "number": 866,
+                    "number": 928,
                     "focus": true,
                     "runs": [
                         [
@@ -6045,7 +6797,7 @@
                     ]
                 },
                 {
-                    "number": 867,
+                    "number": 929,
                     "focus": false,
                     "runs": [
                         [
@@ -6055,7 +6807,7 @@
                     ]
                 },
                 {
-                    "number": 868,
+                    "number": 930,
                     "focus": false,
                     "runs": [
                         [
@@ -6065,7 +6817,7 @@
                     ]
                 },
                 {
-                    "number": 869,
+                    "number": 931,
                     "focus": false,
                     "runs": [
                         [
@@ -6097,7 +6849,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_vcard.php#L754-L760",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_vcard.php#L754-L760",
             "snippet": [
                 {
                     "number": 754,
@@ -6229,7 +6981,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/e46005c613dd67420594c40c3ae98ee9cf872283/program/lib/Roundcube/rcube_washtml.php#L761-L767",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_washtml.php#L761-L767",
             "snippet": [
                 {
                     "number": 761,
@@ -6377,6 +7129,170 @@
                     "runs": [
                         [
                             "            $this->config['base_url'] = '';",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-00fc12960b",
+            "file": "program/lib/Roundcube/rcube_washtml.php",
+            "line": 844,
+            "column": 13,
+            "pattern": "/<\\!doctype[^>]+>[^<]*/im",
+            "source": "preg_replace()",
+            "location": "via $html_search",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<\\!doctype[^>]+>[^<]*/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/058b11d0535af2007af825c42f29f745e97b8f0b/program/lib/Roundcube/rcube_washtml.php#L841-L847",
+            "snippet": [
+                {
+                    "number": 841,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // TODO: This is an old libxml2 bug, maybe we could drop this at some point",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 842,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/<title[^>]*>.*<\\/title>/iU',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 843,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // remove <!doctype> before BOM (#1490291)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 844,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<\\!doctype",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "im",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 845,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // byte-order mark (only outlook?)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 846,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/^(\\0\\0\\xFE\\xFF|\\xFF\\xFE\\0\\0|\\xFE\\xFF|\\xFF\\xFE|\\xEF\\xBB\\xBF)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 847,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // washtml/DOMDocument cannot handle xml namespaces",
                             ""
                         ]
                     ]

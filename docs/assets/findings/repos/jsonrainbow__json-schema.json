@@ -1,0 +1,121 @@
+{
+    "repo": "jsonrainbow/json-schema",
+    "sha": "e54745a680fa2eeb2b7516c834bd40404fa6c6da",
+    "target": {
+        "php": "7.3",
+        "pcre": "10.32",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-b8caa39784",
+            "file": "src/JsonSchema/Tool/Validator/UriValidator.php",
+            "line": 12,
+            "column": 32,
+            "pattern": "/^\n            ([a-z][a-z0-9+\\-.]*):\\/\\/                # Scheme (http, https, ftp, etc.)\n            (?:([^:@\\/?#]+)(?::([^@\\/?#]*))?@)?      # Optional userinfo (user:pass@)\n            ([a-z0-9._~-]+|\\[[a-f0-9:.]+\\])          # Hostname or IPv6 in brackets\n            (?::(\\d{1,5}))?                          # Optional port\n            (\\/[a-zA-Z0-9._~!$&'()*+,;=:@\\/%-]*)*   # Path (valid characters only)\n            (\\?([^#]*))?                             # Optional query\n            (\\#(.*))?                                # Optional fragment\n        $/ix",
+            "source": "preg_match()",
+            "location": "via $hierarchicalPattern",
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"A://-\" . \"//\" x n . \"\\\"\" Replayed on PCRE2 10.49: preg_match fails from length 20 (backtrack_limit 100000, JIT off). The risky part is: [a-zA-Z0-9._~!$&'()*+,;=:@\\/%\\-]* Hotspot offsets: 343-375 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested bounded quantifiers detected. May cause polynomial backtracking. Consider simplifying the pattern or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Flatten nested quantifiers or introduce atomic groups. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "A://-",
+                "pump": "//",
+                "suffix": "\\\"",
+                "n": 28,
+                "length": 20,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "A://-////////////////////////////////////////////////////////\"",
+            "permalink": "https://github.com/jsonrainbow/json-schema/blob/e54745a680fa2eeb2b7516c834bd40404fa6c6da/src/JsonSchema/Tool/Validator/UriValidator.php#L9-L15",
+            "snippet": [
+                {
+                    "number": 9,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function isValid(string $uri): bool",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 10,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 11,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // RFC 3986: Hierarchical URIs (http, https, ftp, etc.)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 12,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $hierarchicalPattern = '/^",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            ([a-z][a-z0-9+\\-.]*):\\/\\/                # Scheme (http, https, ftp, etc.)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 14,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            (?:([^:@\\/?#]+)(?::([^@\\/?#]*))?@)?      # Optional userinfo (user:pass@)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 15,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            ([a-z0-9._~-]+|\\[[a-f0-9:.]+\\])          # Hostname or IPv6 in brackets",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

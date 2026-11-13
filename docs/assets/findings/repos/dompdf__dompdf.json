@@ -8,6 +8,203 @@
     },
     "findings": [
         {
+            "id": "f-f8cd87d2c1",
+            "file": "src/Css/Style.php",
+            "line": 1104,
+            "column": 24,
+            "pattern": "/^(-?[_a-zA-Z]+[_a-zA-Z0-9-]*)\\(.*\\)$/i",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/dompdf/dompdf/blob/c41f2f4871f130386118575564f95cd12a7c6aae/src/Css/Style.php#L1101-L1107",
+            "snippet": [
+                {
+                    "number": 1101,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1102,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!preg_match($pattern, $l, $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1103,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $ident = self::CSS_IDENTIFIER;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1104,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            $pattern = \"/^($ident)\\(.*\\)$/i\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1105,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (preg_match($pattern, $l)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1106,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $value = $this->evaluate_func($this->parse_func($l), $ref_size, $font_size);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1107,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                return $cache[$key] = $value;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ead5931ff7",
+            "file": "src/Css/Style.php",
+            "line": 2546,
+            "column": 20,
+            "pattern": "/\n\\s* (?<string>\"(?>(?:\\\\[\"]|[^\"])*)(?<!\\\\)\"|'(?>(?:\\\\[']|[^'])*)(?<!\\\\)')                                        |\n\\s* (url \\( (?> (\\\\[\"'()] | [^\"'()])* ) (?<!\\\\)\\) )     |\n\\s* (-?[_a-zA-Z]+[_a-zA-Z0-9-]* (\\( ((?> \\g<string> | [^\"'()]+ ) | (?-2))* \\)) ) |\n\\s* (-?[_a-zA-Z]+[_a-zA-Z0-9-]*)                                                  |\n\\s* (\\#[0-9a-fA-F]*)                                          |\n\\s* ([+-]?\\d*\\.?\\d+(?:[eE][+-]?\\d+)? [a-zA-Z%]*)                                      |\n\\s* ([\\/,;])                                                   \n/iSx",
+            "source": "preg_match_all()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/dompdf/dompdf/blob/c41f2f4871f130386118575564f95cd12a7c6aae/src/Css/Style.php#L2543-L2549",
+            "snippet": [
+                {
+                    "number": 2543,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $ident = self::CSS_IDENTIFIER;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2544,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $number = self::CSS_NUMBER;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2545,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2546,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $pattern = \"/\\n\" .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2547,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"\\s* (?<string>$string)                                        |\\n\" . // String",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2548,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"\\s* (url \\( (?> (\\\\\\\\[\\\"'()] | [^\\\"'()])* ) (?<!\\\\\\\\)\\) )     |\\n\" . // URL without quotes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2549,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"\\s* ($ident (\\( ((?> \\g<string> | [^\\\"'()]+ ) | (?-2))* \\)) ) |\\n\" . // Function (with balanced parentheses)",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-f1564a9382",
             "file": "src/Css/Style.php",
             "line": 2568,
@@ -148,6 +345,313 @@
                     "runs": [
                         [
                             "    /**",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-0bd4a71587",
+            "file": "src/Css/Style.php",
+            "line": 3954,
+            "column": 49,
+            "pattern": "/^-?[_a-zA-Z]+[_a-zA-Z0-9-]*$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/dompdf/dompdf/blob/c41f2f4871f130386118575564f95cd12a7c6aae/src/Css/Style.php#L3951-L3957",
+            "snippet": [
+                {
+                    "number": 3951,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3952,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3953,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $ident = self::CSS_IDENTIFIER;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3954,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return $val !== \"default\" && preg_match(\"/^$ident$/\", $val)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3955,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            ? $val",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3956,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            : null;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 3957,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-04e398ea04",
+            "file": "src/Css/Style.php",
+            "line": 4039,
+            "column": 30,
+            "pattern": "/^(-?[_a-zA-Z]+[_a-zA-Z0-9-]*)(?:\\s+([+-]?\\d+))?(\\s+(-?[_a-zA-Z]+[_a-zA-Z0-9-]*)(?:\\s+([+-]?\\d+))?)*$/",
+            "source": "preg_match()",
+            "location": "via $validationPattern",
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"A\" . \" AA\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 41 (backtrack_limit 100000, JIT off). The risky part is: [_a-zA-Z0-9\\-]* Hotspot offsets: 64-78 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested bounded quantifiers detected. May cause polynomial backtracking. Consider simplifying the pattern or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Flatten nested quantifiers or introduce atomic groups. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "A",
+                "pump": " AA",
+                "suffix": "!",
+                "n": 52,
+                "length": 41,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "A AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA AA!",
+            "permalink": "https://github.com/dompdf/dompdf/blob/c41f2f4871f130386118575564f95cd12a7c6aae/src/Css/Style.php#L4036-L4042",
+            "snippet": [
+                {
+                    "number": 4036,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $ident = self::CSS_IDENTIFIER;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4037,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $integer = self::CSS_INTEGER;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4038,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $counterDef = \"($ident)(?:\\s+($integer))?\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4039,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $validationPattern = \"/^$counterDef(\\s+$counterDef)*$/\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4040,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4041,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!preg_match($validationPattern, $value)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4042,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return null;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-683a3dac6c",
+            "file": "src/Css/Style.php",
+            "line": 4045,
+            "column": 24,
+            "pattern": "/(-?[_a-zA-Z]+[_a-zA-Z0-9-]*)(?:\\s+([+-]?\\d+))?/",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/dompdf/dompdf/blob/c41f2f4871f130386118575564f95cd12a7c6aae/src/Css/Style.php#L4042-L4048",
+            "snippet": [
+                {
+                    "number": 4042,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return null;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4043,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4044,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4045,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        preg_match_all(\"/$counterDef/\", $value, $matches, PREG_SET_ORDER);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4046,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $counters = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4047,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 4048,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($matches as $match) {",
                             ""
                         ]
                     ]
@@ -427,6 +931,101 @@
         {
             "id": "f-92e57606f4",
             "file": "src/Css/Stylesheet.php",
+            "line": 1346,
+            "column": 30,
+            "pattern": "/(?<CSS_MEDIA_QUERY>(?:(?:(?:(?<CSS_MEDIA_QUERY_OP>only|not)\\s+)?(?<CSS_MEDIA_QUERY_TYPE>all|aural|bitmap|braille|dompdf|embossed|handheld|paged|print|projection|screen|speech|static|tty|tv|visual))|(?:\\(\\s*(?<CSS_MEDIA_QUERY_FEATURE>(?:(?:(?:min|max)-)?(?:width|height))|orientation|[^:]*?)\\s*(?:\\:\\s*(?<CSS_MEDIA_QUERY_CONDITION>.*?)\\s*)?\\))))/isx",
+            "source": "preg_match_all()",
+            "location": "via $media_query_regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.x",
+                    "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/dompdf/dompdf/blob/c41f2f4871f130386118575564f95cd12a7c6aae/src/Css/Stylesheet.php#L1343-L1349",
+            "snippet": [
+                {
+                    "number": 1343,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1344,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1345,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1346,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $media_query_regex = \"/{$pattern_media_query}/isx\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1347,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $accepted_media = self::$ACCEPTED_GENERIC_MEDIA_TYPES;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1348,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $accepted_media[] = $this->_dompdf->getOptions()->getDefaultMediaType();",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1349,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($matches as $match) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-92e57606f4-2",
+            "file": "src/Css/Stylesheet.php",
             "line": 1565,
             "column": 30,
             "pattern": "/(?<CSS_MEDIA_QUERY>(?:(?:(?:(?<CSS_MEDIA_QUERY_OP>only|not)\\s+)?(?<CSS_MEDIA_QUERY_TYPE>all|aural|bitmap|braille|dompdf|embossed|handheld|paged|print|projection|screen|speech|static|tty|tv|visual))|(?:\\(\\s*(?<CSS_MEDIA_QUERY_FEATURE>(?:(?:(?:min|max)-)?(?:width|height))|orientation|[^:]*?)\\s*(?:\\:\\s*(?<CSS_MEDIA_QUERY_CONDITION>.*?)\\s*)?\\))))/isx",
@@ -513,6 +1112,306 @@
                     "runs": [
                         [
                             "            $this->load_css_file($url, $this->_current_origin);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-34e573c551",
+            "file": "src/Dompdf.php",
+            "line": 470,
+            "column": 13,
+            "pattern": "/<meta \\s[^>]* http-equiv\\s*=\\s* ([\"']?)\\s* Content-Type \\s*\\g1\\s* content\\s*=\\s* ([\"']?)\\s* [\\w\\/]+ \\s*;\\s* charset\\s*=\\s* (?<charset>[a-z0-9\\-]+) \\s*\\g2 [^>]*>/isx",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<meta \\s[^>]* http-equiv\\s*=\\s* ([\"']?)\\s* Content-Type \\s*\\g1\\s* content\\s*=\\s* ([\"']?)\\s* [\\w\\/]+ \\s*;\\s* charset\\s*=\\s* (?<charset>[a-z0-9\\-]+) \\s*\\g2 [^>]*>/ix",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/dompdf/dompdf/blob/c41f2f4871f130386118575564f95cd12a7c6aae/src/Dompdf.php#L467-L473",
+            "snippet": [
+                {
+                    "number": 467,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $contentType = \"http-equiv\\s*=\\s* ([\\\"']?)\\s* Content-Type\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 468,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $contentStart = \"content\\s*=\\s* ([\\\"']?)\\s* [\\w\\/]+ \\s*;\\s* charset\\s*=\\s*\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 469,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $metaTags = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 470,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            \"/<meta \\s[^>]* $contentType \\s*\\g1\\s* $contentStart $charset \\s*\\g2 [^>]*>/isx\", // <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 471,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"/<meta \\s[^>]* $contentStart $charset \\s*\\g1\\s* $contentType \\s*\\g3 [^>]*>/isx\", // <meta content=\"text/html; charset=UTF-8\" http-equiv=\"Content-Type\">",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 472,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"/<meta \\s[^>]* charset\\s*=\\s* ([\\\"']?)\\s* $charset \\s*\\g1 [^>]*>/isx\",           // <meta charset=\"UTF-8\">",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 473,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-0b82a73682",
+            "file": "src/Dompdf.php",
+            "line": 471,
+            "column": 13,
+            "pattern": "/<meta \\s[^>]* content\\s*=\\s* ([\"']?)\\s* [\\w\\/]+ \\s*;\\s* charset\\s*=\\s* (?<charset>[a-z0-9\\-]+) \\s*\\g1\\s* http-equiv\\s*=\\s* ([\"']?)\\s* Content-Type \\s*\\g3 [^>]*>/isx",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<meta \\s[^>]* content\\s*=\\s* ([\"']?)\\s* [\\w\\/]+ \\s*;\\s* charset\\s*=\\s* (?<charset>[a-z0-9\\-]+) \\s*\\g1\\s* http-equiv\\s*=\\s* ([\"']?)\\s* Content-Type \\s*\\g3 [^>]*>/ix",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/dompdf/dompdf/blob/c41f2f4871f130386118575564f95cd12a7c6aae/src/Dompdf.php#L468-L474",
+            "snippet": [
+                {
+                    "number": 468,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $contentStart = \"content\\s*=\\s* ([\\\"']?)\\s* [\\w\\/]+ \\s*;\\s* charset\\s*=\\s*\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 469,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $metaTags = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 470,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"/<meta \\s[^>]* $contentType \\s*\\g1\\s* $contentStart $charset \\s*\\g2 [^>]*>/isx\", // <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 471,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            \"/<meta \\s[^>]* $contentStart $charset \\s*\\g1\\s* $contentType \\s*\\g3 [^>]*>/isx\", // <meta content=\"text/html; charset=UTF-8\" http-equiv=\"Content-Type\">",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 472,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"/<meta \\s[^>]* charset\\s*=\\s* ([\\\"']?)\\s* $charset \\s*\\g1 [^>]*>/isx\",           // <meta charset=\"UTF-8\">",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 473,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 474,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-3f5cb4b0f3",
+            "file": "src/Dompdf.php",
+            "line": 472,
+            "column": 13,
+            "pattern": "/<meta \\s[^>]* charset\\s*=\\s* ([\"']?)\\s* (?<charset>[a-z0-9\\-]+) \\s*\\g1 [^>]*>/isx",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<meta \\s[^>]* charset\\s*=\\s* ([\"']?)\\s* (?<charset>[a-z0-9\\-]+) \\s*\\g1 [^>]*>/ix",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/dompdf/dompdf/blob/c41f2f4871f130386118575564f95cd12a7c6aae/src/Dompdf.php#L469-L475",
+            "snippet": [
+                {
+                    "number": 469,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $metaTags = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 470,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"/<meta \\s[^>]* $contentType \\s*\\g1\\s* $contentStart $charset \\s*\\g2 [^>]*>/isx\", // <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 471,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"/<meta \\s[^>]* $contentStart $charset \\s*\\g1\\s* $contentType \\s*\\g3 [^>]*>/isx\", // <meta content=\"text/html; charset=UTF-8\" http-equiv=\"Content-Type\">",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 472,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            \"/<meta \\s[^>]* charset\\s*=\\s* ([\\\"']?)\\s* $charset \\s*\\g1 [^>]*>/isx\",           // <meta charset=\"UTF-8\">",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 473,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 474,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 475,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($metaTags as $pattern) {",
                             ""
                         ]
                     ]

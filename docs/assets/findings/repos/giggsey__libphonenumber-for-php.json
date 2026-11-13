@@ -1,0 +1,229 @@
+{
+    "repo": "giggsey/libphonenumber-for-php",
+    "sha": "75a801c3dbf9a675e4bc83e0da2c2142fcc5344d",
+    "target": {
+        "php": "8.1",
+        "pcre": "10.39",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-2844bd7297",
+            "file": "src/AsYouTypeFormatter.php",
+            "line": 492,
+            "column": 27,
+            "pattern": "/\\p{Nd}/ui",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/giggsey/libphonenumber-for-php/blob/75a801c3dbf9a675e4bc83e0da2c2142fcc5344d/src/AsYouTypeFormatter.php#L489-L495",
+            "snippet": [
+                {
+                    "number": 489,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 490,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $plusCharsMatcher = new Matcher(PhoneNumberUtil::PLUS_CHARS_PATTERN, $nextChar);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 491,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 492,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_match('/' . PhoneNumberUtil::DIGITS . '/' . PhoneNumberUtil::REGEX_FLAGS, $nextChar) === 1",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 493,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            || (mb_strlen($this->accruedInput) === 1 && $plusCharsMatcher->matches());",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 494,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 495,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-1f5cfbf903",
+            "file": "src/PhoneNumberMatcher.php",
+            "line": 332,
+            "column": 28,
+            "pattern": "/\\p{Latin}/u",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.compat.meaningChanges",
+                    "message": "From PHP 8.2 (PCRE2 10.40) \\p{Latin} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \\p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.",
+                    "hint": "No spelling reads alike on both: \"\\p{sc:Latin}\" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.",
+                    "docs": "https://php-regex.com/reference/rules/#meaning-that-changes-across-php-versions"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/giggsey/libphonenumber-for-php/blob/75a801c3dbf9a675e4bc83e0da2c2142fcc5344d/src/PhoneNumberMatcher.php#L329-L335",
+            "snippet": [
+                {
+                    "number": 329,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return false;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 330,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 331,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 332,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\p{Latin}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "u",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $letter) === 1)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 333,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        || (preg_match('/\\pM+/u', $letter) === 1);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 334,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 335,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

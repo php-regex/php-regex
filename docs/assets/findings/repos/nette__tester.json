@@ -1,6 +1,6 @@
 {
     "repo": "nette/tester",
-    "sha": "7618b45a2998c86d85646f563a0c8ae6859806fc",
+    "sha": "a1d7d757fdc1c42ba3f9f3795ecac957a2c45a22",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/tester/blob/7618b45a2998c86d85646f563a0c8ae6859806fc/src/Framework/Dumper.php#L355-L361",
+            "permalink": "https://github.com/nette/tester/blob/a1d7d757fdc1c42ba3f9f3795ecac957a2c45a22/src/Framework/Dumper.php#L355-L361",
             "snippet": [
                 {
                     "number": 355,
@@ -191,7 +191,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/tester/blob/7618b45a2998c86d85646f563a0c8ae6859806fc/src/Framework/Helpers.php#L112-L118",
+            "permalink": "https://github.com/nette/tester/blob/a1d7d757fdc1c42ba3f9f3795ecac957a2c45a22/src/Framework/Helpers.php#L112-L118",
             "snippet": [
                 {
                     "number": 112,
@@ -358,7 +358,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/tester/blob/7618b45a2998c86d85646f563a0c8ae6859806fc/src/Framework/Helpers.php#L116-L122",
+            "permalink": "https://github.com/nette/tester/blob/a1d7d757fdc1c42ba3f9f3795ecac957a2c45a22/src/Framework/Helpers.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,

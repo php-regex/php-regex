@@ -1,6 +1,6 @@
 {
     "repo": "php-debugger/php-debugger",
-    "sha": "c854ce29804c1b6fcd744ffa59a7113404bdcba2",
+    "sha": "d4633d4189dca3ea30d804e5cdf620a47fe7d4cc",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php-debugger/php-debugger/blob/c854ce29804c1b6fcd744ffa59a7113404bdcba2/run-xdebug-tests.php#L3703-L3709",
+            "permalink": "https://github.com/php-debugger/php-debugger/blob/d4633d4189dca3ea30d804e5cdf620a47fe7d4cc/run-xdebug-tests.php#L3703-L3709",
             "snippet": [
                 {
                     "number": 3703,

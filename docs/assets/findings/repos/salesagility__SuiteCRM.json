@@ -1,6 +1,6 @@
 {
     "repo": "salesagility/SuiteCRM",
-    "sha": "ccb02b1e110489a1d91fe6343087723e4912710f",
+    "sha": "be6191927d643872942a364bc5877493a6ae25a2",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/SugarSecurity.php#L103-L109",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/SugarSecurity.php#L103-L109",
             "snippet": [
                 {
                     "number": 103,
@@ -201,7 +201,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/SugarSecurity.php#L108-L114",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/SugarSecurity.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -369,7 +369,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/SugarSecurity.php#L113-L119",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/SugarSecurity.php#L113-L119",
             "snippet": [
                 {
                     "number": 113,
@@ -537,7 +537,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/SugarSecurity.php#L118-L124",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/SugarSecurity.php#L118-L124",
             "snippet": [
                 {
                     "number": 118,
@@ -705,7 +705,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/SugarSecurity.php#L123-L129",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/SugarSecurity.php#L123-L129",
             "snippet": [
                 {
                     "number": 123,
@@ -890,7 +890,7 @@
                 "limit": 100000
             },
             "subject": " ORDER BY!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()(",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/data/SugarBean.php#L998-L1004",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/data/SugarBean.php#L998-L1004",
             "snippet": [
                 {
                     "number": 998,
@@ -1141,7 +1141,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/data/SugarBean.php#L4443-L4449",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/data/SugarBean.php#L4443-L4449",
             "snippet": [
                 {
                     "number": 4443,
@@ -1317,7 +1317,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/EditView/EditView2.php#L891-L897",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/EditView/EditView2.php#L891-L897",
             "snippet": [
                 {
                     "number": 891,
@@ -1501,7 +1501,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/EditView/QuickCreate.php#L73-L79",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/EditView/QuickCreate.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -1685,7 +1685,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/InlineEditing/InlineEditing.php#L193-L199",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/InlineEditing/InlineEditing.php#L193-L199",
             "snippet": [
                 {
                     "number": 193,
@@ -1864,7 +1864,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/Localization/Localization.php#L802-L808",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Localization/Localization.php#L802-L808",
             "snippet": [
                 {
                     "number": 802,
@@ -1992,7 +1992,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SearchForm/SearchForm2.php#L213-L219",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SearchForm/SearchForm2.php#L213-L219",
             "snippet": [
                 {
                     "number": 213,
@@ -2176,7 +2176,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/Smarty/plugins/block.minify.php#L8-L14",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/block.minify.php#L8-L14",
             "snippet": [
                 {
                     "number": 8,
@@ -2403,7 +2403,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/Smarty/plugins/function.fetch.php#L95-L101",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/function.fetch.php#L95-L101",
             "snippet": [
                 {
                     "number": 95,
@@ -2551,7 +2551,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/Smarty/plugins/function.sugar_evalcolumn.php#L89-L95",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/function.sugar_evalcolumn.php#L89-L95",
             "snippet": [
                 {
                     "number": 89,
@@ -2755,7 +2755,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/Smarty/plugins/function.sugar_evalcolumn.php#L98-L104",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/function.sugar_evalcolumn.php#L98-L104",
             "snippet": [
                 {
                     "number": 98,
@@ -2959,7 +2959,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/Smarty/plugins/function.sugar_include.php#L78-L84",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/function.sugar_include.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,
@@ -3099,7 +3099,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/Smarty/plugins/function.sugar_include.php#L80-L86",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/function.sugar_include.php#L80-L86",
             "snippet": [
                 {
                     "number": 80,
@@ -3239,7 +3239,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/Smarty/plugins/modifier.regex_replace.php#L36-L42",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/modifier.regex_replace.php#L36-L42",
             "snippet": [
                 {
                     "number": 36,
@@ -3411,7 +3411,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/Smarty/plugins/outputfilter.trimwhitespace.php#L56-L62",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/outputfilter.trimwhitespace.php#L56-L62",
             "snippet": [
                 {
                     "number": 56,
@@ -3571,7 +3571,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Fields/Collection/ViewSugarFieldCollection.php#L386-L392",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Fields/Collection/ViewSugarFieldCollection.php#L386-L392",
             "snippet": [
                 {
                     "number": 386,
@@ -3731,7 +3731,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Fields/Relate/SugarFieldRelate.php#L98-L104",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Fields/Relate/SugarFieldRelate.php#L98-L104",
             "snippet": [
                 {
                     "number": 98,
@@ -3859,7 +3859,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Fields/Relate/SugarFieldRelate.php#L226-L232",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Fields/Relate/SugarFieldRelate.php#L226-L232",
             "snippet": [
                 {
                     "number": 226,
@@ -3982,7 +3982,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/DetailViewMetaParser.php#L143-L149",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/DetailViewMetaParser.php#L143-L149",
             "snippet": [
                 {
                     "number": 143,
@@ -4158,7 +4158,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/EditViewMetaParser.php#L88-L94",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/EditViewMetaParser.php#L88-L94",
             "snippet": [
                 {
                     "number": 88,
@@ -4286,7 +4286,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/EditViewMetaParser.php#L190-L196",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/EditViewMetaParser.php#L190-L196",
             "snippet": [
                 {
                     "number": 190,
@@ -4445,7 +4445,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/EditViewMetaParser.php#L201-L207",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/EditViewMetaParser.php#L201-L207",
             "snippet": [
                 {
                     "number": 201,
@@ -4616,7 +4616,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/EditViewMetaParser.php#L215-L221",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/EditViewMetaParser.php#L215-L221",
             "snippet": [
                 {
                     "number": 215,
@@ -4792,7 +4792,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/EditViewMetaParser.php#L261-L267",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/EditViewMetaParser.php#L261-L267",
             "snippet": [
                 {
                     "number": 261,
@@ -4920,7 +4920,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/MetaParser.php#L92-L98",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/MetaParser.php#L92-L98",
             "snippet": [
                 {
                     "number": 92,
@@ -5124,7 +5124,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/MetaParser.php#L109-L115",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/MetaParser.php#L109-L115",
             "snippet": [
                 {
                     "number": 109,
@@ -5419,7 +5419,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/MetaParser.php#L234-L240",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/MetaParser.php#L234-L240",
             "snippet": [
                 {
                     "number": 234,
@@ -5567,7 +5567,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/MetaParser.php#L341-L347",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/MetaParser.php#L341-L347",
             "snippet": [
                 {
                     "number": 341,
@@ -5771,7 +5771,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/MetaParser.php#L739-L745",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/MetaParser.php#L739-L745",
             "snippet": [
                 {
                     "number": 739,
@@ -5995,7 +5995,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/QuickCreateMetaParser.php#L125-L131",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -6154,7 +6154,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/QuickCreateMetaParser.php#L136-L142",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L136-L142",
             "snippet": [
                 {
                     "number": 136,
@@ -6325,7 +6325,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/QuickCreateMetaParser.php#L147-L153",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L147-L153",
             "snippet": [
                 {
                     "number": 147,
@@ -6496,7 +6496,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/QuickCreateMetaParser.php#L150-L156",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L150-L156",
             "snippet": [
                 {
                     "number": 150,
@@ -6640,7 +6640,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/QuickCreateMetaParser.php#L190-L196",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L190-L196",
             "snippet": [
                 {
                     "number": 190,
@@ -6768,7 +6768,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/QuickCreateMetaParser.php#L243-L249",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -6924,7 +6924,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/QuickCreateMetaParser.php#L254-L260",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L254-L260",
             "snippet": [
                 {
                     "number": 254,
@@ -7052,7 +7052,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L64-L70",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L64-L70",
             "snippet": [
                 {
                     "number": 64,
@@ -7175,7 +7175,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L73-L79",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -7326,7 +7326,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L83-L89",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -7482,7 +7482,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L84-L90",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -7618,7 +7618,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L85-L91",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L85-L91",
             "snippet": [
                 {
                     "number": 85,
@@ -7754,7 +7754,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L86-L92",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -7890,7 +7890,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L100-L106",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L100-L106",
             "snippet": [
                 {
                     "number": 100,
@@ -8018,7 +8018,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFields/Parsers/SearchFormMetaParser.php#L210-L216",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/SearchFormMetaParser.php#L210-L216",
             "snippet": [
                 {
                     "number": 210,
@@ -8153,7 +8153,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFolders/SugarFolders.php#L586-L592",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFolders/SugarFolders.php#L586-L592",
             "snippet": [
                 {
                     "number": 586,
@@ -8329,7 +8329,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarFolders/SugarFolders.php#L593-L599",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFolders/SugarFolders.php#L593-L599",
             "snippet": [
                 {
                     "number": 593,
@@ -8468,7 +8468,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarHtml/SugarHtml.php#L350-L356",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarHtml/SugarHtml.php#L350-L356",
             "snippet": [
                 {
                     "number": 350,
@@ -8603,7 +8603,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/SugarPHPMailer.php#L348-L354",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarPHPMailer.php#L348-L354",
             "snippet": [
                 {
                     "number": 348,
@@ -8815,7 +8815,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/TemplateHandler/TemplateHandler.php#L435-L441",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L435-L441",
             "snippet": [
                 {
                     "number": 435,
@@ -8959,7 +8959,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/TemplateHandler/TemplateHandler.php#L438-L444",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L438-L444",
             "snippet": [
                 {
                     "number": 438,
@@ -9135,7 +9135,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/TemplateHandler/TemplateHandler.php#L553-L559",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L553-L559",
             "snippet": [
                 {
                     "number": 553,
@@ -9279,7 +9279,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/TemplateHandler/TemplateHandler.php#L557-L563",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L557-L563",
             "snippet": [
                 {
                     "number": 557,
@@ -9411,7 +9411,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/TemplateHandler/TemplateHandler.php#L558-L564",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L558-L564",
             "snippet": [
                 {
                     "number": 558,
@@ -9543,7 +9543,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/TemplateHandler/TemplateHandler.php#L559-L565",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L559-L565",
             "snippet": [
                 {
                     "number": 559,
@@ -9719,7 +9719,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/TemplateHandler/TemplateHandler.php#L611-L617",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L611-L617",
             "snippet": [
                 {
                     "number": 611,
@@ -9853,7 +9853,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/database/DBManager.php#L2301-L2307",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/DBManager.php#L2301-L2307",
             "snippet": [
                 {
                     "number": 2301,
@@ -10080,7 +10080,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/database/DBManager.php#L2577-L2583",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/DBManager.php#L2577-L2583",
             "snippet": [
                 {
                     "number": 2577,
@@ -10331,7 +10331,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/database/DBManager.php#L2907-L2913",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/DBManager.php#L2907-L2913",
             "snippet": [
                 {
                     "number": 2907,
@@ -10474,7 +10474,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/database/MssqlManager.php#L519-L525",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MssqlManager.php#L519-L525",
             "snippet": [
                 {
                     "number": 519,
@@ -10617,7 +10617,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/database/MssqlManager.php#L521-L527",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MssqlManager.php#L521-L527",
             "snippet": [
                 {
                     "number": 521,
@@ -10748,7 +10748,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/database/MssqlManager.php#L1461-L1467",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MssqlManager.php#L1461-L1467",
             "snippet": [
                 {
                     "number": 1461,
@@ -10915,7 +10915,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/database/MssqlManager.php#L2089-L2095",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MssqlManager.php#L2089-L2095",
             "snippet": [
                 {
                     "number": 2089,
@@ -11074,7 +11074,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/database/MysqlManager.php#L344-L350",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MysqlManager.php#L344-L350",
             "snippet": [
                 {
                     "number": 344,
@@ -11301,7 +11301,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/database/MysqlManager.php#L607-L613",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MysqlManager.php#L607-L613",
             "snippet": [
                 {
                     "number": 607,
@@ -11436,7 +11436,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/database/MysqlManager.php#L609-L615",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MysqlManager.php#L609-L615",
             "snippet": [
                 {
                     "number": 609,
@@ -11571,7 +11571,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/database/SqlsrvManager.php#L420-L426",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/SqlsrvManager.php#L420-L426",
             "snippet": [
                 {
                     "number": 420,
@@ -11745,7 +11745,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/export_utils.php#L293-L299",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/export_utils.php#L293-L299",
             "snippet": [
                 {
                     "number": 293,
@@ -11891,7 +11891,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/export_utils.php#L727-L733",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/export_utils.php#L727-L733",
             "snippet": [
                 {
                     "number": 727,
@@ -12030,7 +12030,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/nusoap/class.soap_parser.php#L300-L306",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/nusoap/class.soap_parser.php#L300-L306",
             "snippet": [
                 {
                     "number": 300,
@@ -12357,7 +12357,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/nusoap/nusoap.php#L8551-L8557",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/nusoap/nusoap.php#L8551-L8557",
             "snippet": [
                 {
                     "number": 8551,
@@ -12696,7 +12696,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/parsecsv.lib.php#L626-L632",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/parsecsv.lib.php#L626-L632",
             "snippet": [
                 {
                     "number": 626,
@@ -12866,7 +12866,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/parsecsv.lib.php#L704-L710",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/parsecsv.lib.php#L704-L710",
             "snippet": [
                 {
                     "number": 704,
@@ -13049,7 +13049,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/utils.php#L1634-L1640",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L1634-L1640",
             "snippet": [
                 {
                     "number": 1634,
@@ -13243,7 +13243,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/utils.php#L2089-L2095",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2089-L2095",
             "snippet": [
                 {
                     "number": 2089,
@@ -13498,7 +13498,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/utils.php#L2200-L2206",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2200-L2206",
             "snippet": [
                 {
                     "number": 2200,
@@ -13634,7 +13634,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"\\\\w\" and \"\\\\w[\\\\w\\\\-]*\\\\w\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\w\" and \"\\w[\\w-]*\\w\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -13655,7 +13655,7 @@
                 "limit": 100000
             },
             "subject": "<0 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\"!>",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/utils.php#L2284-L2290",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2284-L2290",
             "snippet": [
                 {
                     "number": 2284,
@@ -13966,6 +13966,391 @@
             ]
         },
         {
+            "id": "f-dd4bee43ef",
+            "file": "include/utils.php",
+            "line": 2380,
+            "column": 21,
+            "pattern": "#[^0-9\\-]#i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2377-L2383",
+            "snippet": [
+                {
+                    "number": 2377,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'STANDARD' => '#[^A-Z0-9\\-_\\.\\@]#i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2378,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'STANDARDSPACE' => '#[^A-Z0-9\\-_\\.\\@\\ ]#i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2379,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'FILE' => '#[^A-Z0-9\\-_\\.]#i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2380,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        'NUMBER' => ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9\\-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2381,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'SQL_COLUMN_LIST' => '#[^A-Z0-9\\(\\),_\\.]#i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2382,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'PATH_NO_URL' => '#://#i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2383,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'SAFED_GET' => '#[^A-Z0-9\\@\\=\\&\\?\\.\\/\\-_~+]#i', /* range of allowed characters in a GET string */",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6873b77c93",
+            "file": "include/utils.php",
+            "line": 2382,
+            "column": 26,
+            "pattern": "#://#i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2379-L2385",
+            "snippet": [
+                {
+                    "number": 2379,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'FILE' => '#[^A-Z0-9\\-_\\.]#i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2380,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'NUMBER' => '#[^0-9\\-]#i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2381,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'SQL_COLUMN_LIST' => '#[^A-Z0-9\\(\\),_\\.]#i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2382,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        'PATH_NO_URL' => ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "://",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2383,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'SAFED_GET' => '#[^A-Z0-9\\@\\=\\&\\?\\.\\/\\-_~+]#i', /* range of allowed characters in a GET string */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2384,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'UNIFIED_SEARCH' => '#[\\\\x00]#', /* cn: bug 3356 & 9236 - MBCS search strings */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2385,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'AUTO_INCREMENT' => '#[^0-9\\-,\\ ]#i',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-bb74651397",
+            "file": "include/utils.php",
+            "line": 2385,
+            "column": 29,
+            "pattern": "#[^0-9\\-,\\ ]#i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2382-L2388",
+            "snippet": [
+                {
+                    "number": 2382,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'PATH_NO_URL' => '#://#i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2383,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'SAFED_GET' => '#[^A-Z0-9\\@\\=\\&\\?\\.\\/\\-_~+]#i', /* range of allowed characters in a GET string */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2384,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'UNIFIED_SEARCH' => '#[\\\\x00]#', /* cn: bug 3356 & 9236 - MBCS search strings */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2385,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        'AUTO_INCREMENT' => ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9\\-,\\ ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2386,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        'ALPHANUM' => '#[^A-Z0-9\\-]#i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2387,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2388,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-1b91b7c2ba",
             "file": "include/utils.php",
             "line": 4995,
@@ -13986,7 +14371,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/utils.php#L4992-L4998",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L4992-L4998",
             "snippet": [
                 {
                     "number": 4992,
@@ -14138,7 +14523,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/utils.php#L5313-L5319",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L5313-L5319",
             "snippet": [
                 {
                     "number": 5313,
@@ -14341,7 +14726,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/utils.php#L5331-L5337",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L5331-L5337",
             "snippet": [
                 {
                     "number": 5331,
@@ -14504,7 +14889,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/utils.php#L5854-L5860",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L5854-L5860",
             "snippet": [
                 {
                     "number": 5854,
@@ -14663,7 +15048,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/utils.php#L6196-L6202",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L6196-L6202",
             "snippet": [
                 {
                     "number": 6196,
@@ -14813,7 +15198,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/include/utils/file_utils.php#L523-L529",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils/file_utils.php#L523-L529",
             "snippet": [
                 {
                     "number": 523,
@@ -14948,7 +15333,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/install/checkDBSettings.php#L115-L121",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/install/checkDBSettings.php#L115-L121",
             "snippet": [
                 {
                     "number": 115,
@@ -15079,7 +15464,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/install/checkDBSettings.php#L124-L130",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/install/checkDBSettings.php#L124-L130",
             "snippet": [
                 {
                     "number": 124,
@@ -15210,7 +15595,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/install/install_utils.php#L338-L344",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/install/install_utils.php#L338-L344",
             "snippet": [
                 {
                     "number": 338,
@@ -15321,7 +15706,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/AOD_Index/LuceneUtils.php#L107-L113",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/AOD_Index/LuceneUtils.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -15472,7 +15857,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/AOD_Index/PdfParser.php#L110-L116",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/AOD_Index/PdfParser.php#L110-L116",
             "snippet": [
                 {
                     "number": 110,
@@ -15628,7 +16013,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/AOP_Case_Updates/CaseUpdatesHook.php#L320-L326",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/AOP_Case_Updates/CaseUpdatesHook.php#L320-L326",
             "snippet": [
                 {
                     "number": 320,
@@ -15775,7 +16160,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/AOR_Scheduled_Reports/lib/Cron/DayOfMonthField.php#L98-L104",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/AOR_Scheduled_Reports/lib/Cron/DayOfMonthField.php#L98-L104",
             "snippet": [
                 {
                     "number": 98,
@@ -15943,7 +16328,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/AOW_WorkFlow/aow_utils.php#L494-L500",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/AOW_WorkFlow/aow_utils.php#L494-L500",
             "snippet": [
                 {
                     "number": 494,
@@ -16142,7 +16527,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Administration/SyncInboundEmailAccounts/SyncInboundEmailAccountsSubActionHandler.php#L455-L461",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Administration/SyncInboundEmailAccounts/SyncInboundEmailAccountsSubActionHandler.php#L455-L461",
             "snippet": [
                 {
                     "number": 455,
@@ -16330,7 +16715,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Calls/CallFormBase.php#L245-L251",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Calls/CallFormBase.php#L245-L251",
             "snippet": [
                 {
                     "number": 245,
@@ -16514,7 +16899,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Calls/Reschedule.php#L18-L24",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Calls/Reschedule.php#L18-L24",
             "snippet": [
                 {
                     "number": 18,
@@ -16705,7 +17090,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Campaigns/Campaign.php#L440-L446",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Campaigns/Campaign.php#L440-L446",
             "snippet": [
                 {
                     "number": 440,
@@ -16881,7 +17266,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/DynamicFields/templates/Fields/TemplateEnum.php#L176-L182",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/DynamicFields/templates/Fields/TemplateEnum.php#L176-L182",
             "snippet": [
                 {
                     "number": 176,
@@ -17004,7 +17389,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/EmailMan/EmailImage.php#L42-L48",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/EmailMan/EmailImage.php#L42-L48",
             "snippet": [
                 {
                     "number": 42,
@@ -17147,7 +17532,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/EmailTemplates/EmailTemplateFormBase.php#L185-L191",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/EmailTemplates/EmailTemplateFormBase.php#L185-L191",
             "snippet": [
                 {
                     "number": 185,
@@ -17424,7 +17809,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Emails/Email.php#L4523-L4529",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Emails/Email.php#L4523-L4529",
             "snippet": [
                 {
                     "number": 4523,
@@ -17741,7 +18126,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Emails/Email.php#L4568-L4574",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Emails/Email.php#L4568-L4574",
             "snippet": [
                 {
                     "number": 4568,
@@ -18058,7 +18443,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Emails/Email.php#L4612-L4618",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Emails/Email.php#L4612-L4618",
             "snippet": [
                 {
                     "number": 4612,
@@ -18338,7 +18723,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Home/QuickSearch.php#L492-L498",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Home/QuickSearch.php#L492-L498",
             "snippet": [
                 {
                     "number": 492,
@@ -18470,7 +18855,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Home/QuickSearch.php#L493-L499",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Home/QuickSearch.php#L493-L499",
             "snippet": [
                 {
                     "number": 493,
@@ -18602,7 +18987,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Import/Forms.php#L135-L141",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Import/Forms.php#L135-L141",
             "snippet": [
                 {
                     "number": 135,
@@ -18781,7 +19166,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Import/views/view.error.php#L105-L111",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Import/views/view.error.php#L105-L111",
             "snippet": [
                 {
                     "number": 105,
@@ -18924,7 +19309,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/InboundEmail/InboundEmail.php#L4940-L4946",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/InboundEmail/InboundEmail.php#L4940-L4946",
             "snippet": [
                 {
                     "number": 4940,
@@ -19087,7 +19472,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/InboundEmail/InboundEmail.php#L8417-L8423",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/InboundEmail/InboundEmail.php#L8417-L8423",
             "snippet": [
                 {
                     "number": 8417,
@@ -19275,7 +19660,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Meetings/MeetingFormBase.php#L210-L216",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Meetings/MeetingFormBase.php#L210-L216",
             "snippet": [
                 {
                     "number": 210,
@@ -19454,7 +19839,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/ModuleBuilder/parsers/relationships/AbstractRelationship.php#L621-L627",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/ModuleBuilder/parsers/relationships/AbstractRelationship.php#L621-L627",
             "snippet": [
                 {
                     "number": 621,
@@ -19585,7 +19970,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/ModuleBuilder/parsers/relationships/AbstractRelationship.php#L624-L630",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/ModuleBuilder/parsers/relationships/AbstractRelationship.php#L624-L630",
             "snippet": [
                 {
                     "number": 624,
@@ -19728,7 +20113,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/ModuleBuilder/views/view.labels.php#L133-L139",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/ModuleBuilder/views/view.labels.php#L133-L139",
             "snippet": [
                 {
                     "number": 133,
@@ -19908,7 +20293,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Studio/parsers/StudioParser.php#L99-L105",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L99-L105",
             "snippet": [
                 {
                     "number": 99,
@@ -20152,7 +20537,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Studio/parsers/StudioParser.php#L107-L113",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -20332,7 +20717,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Studio/parsers/StudioParser.php#L108-L114",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -20507,7 +20892,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Studio/parsers/StudioParser.php#L126-L132",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L126-L132",
             "snippet": [
                 {
                     "number": 126,
@@ -20906,7 +21291,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Studio/parsers/StudioParser.php#L143-L149",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L143-L149",
             "snippet": [
                 {
                     "number": 143,
@@ -21310,7 +21695,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Studio/parsers/StudioParser.php#L368-L374",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L368-L374",
             "snippet": [
                 {
                     "number": 368,
@@ -21502,7 +21887,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Studio/parsers/StudioParser.php#L446-L452",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L446-L452",
             "snippet": [
                 {
                     "number": 446,
@@ -21706,7 +22091,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Studio/parsers/StudioParser.php#L451-L457",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L451-L457",
             "snippet": [
                 {
                     "number": 451,
@@ -21910,7 +22295,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/SugarFeed/Dashlets/SugarFeedDashlet/SugarFeedDashlet.php#L596-L602",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/SugarFeed/Dashlets/SugarFeedDashlet/SugarFeedDashlet.php#L596-L602",
             "snippet": [
                 {
                     "number": 596,
@@ -22113,7 +22498,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/SugarFeed/Dashlets/SugarFeedDashlet/SugarFeedDashlet.php#L598-L604",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/SugarFeed/Dashlets/SugarFeedDashlet/SugarFeedDashlet.php#L598-L604",
             "snippet": [
                 {
                     "number": 598,
@@ -22321,7 +22706,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/Tasks/Save.php#L60-L66",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Tasks/Save.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -22505,7 +22890,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/UpgradeWizard/SugarMerge/SugarMerge.php#L107-L113",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/UpgradeWizard/SugarMerge/SugarMerge.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -22645,7 +23030,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/UpgradeWizard/upgradeMetaHelper.php#L313-L319",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/UpgradeWizard/upgradeMetaHelper.php#L313-L319",
             "snippet": [
                 {
                     "number": 313,
@@ -22820,7 +23205,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/UpgradeWizard/uw_utils.php#L4539-L4545",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/UpgradeWizard/uw_utils.php#L4539-L4545",
             "snippet": [
                 {
                     "number": 4539,
@@ -22955,7 +23340,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/jjwg_Areas/jjwg_Areas.php#L86-L92",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/jjwg_Areas/jjwg_Areas.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -23086,7 +23471,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/modules/jjwg_Maps/jjwg_Maps.php#L1224-L1230",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/jjwg_Maps/jjwg_Maps.php#L1224-L1230",
             "snippet": [
                 {
                     "number": 1224,
@@ -23224,7 +23609,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/ccb02b1e110489a1d91fe6343087723e4912710f/service/JsonRPCServer/JsonRPCServerCalls.php#L126-L132",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/service/JsonRPCServer/JsonRPCServerCalls.php#L126-L132",
             "snippet": [
                 {
                     "number": 126,

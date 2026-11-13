@@ -1,6 +1,6 @@
 {
     "repo": "laravel/valet",
-    "sha": "01b8cef4b5ddbec44761053f50bdea9deeaa52d0",
+    "sha": "54d23bcd48eea289f48d1c61f4d0a202cf7b20f2",
     "target": {
         "php": "8.0",
         "pcre": "10.35",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/valet/blob/01b8cef4b5ddbec44761053f50bdea9deeaa52d0/cli/Valet/PhpFpm.php#L272-L278",
+            "permalink": "https://github.com/laravel/valet/blob/54d23bcd48eea289f48d1c61f4d0a202cf7b20f2/cli/Valet/PhpFpm.php#L272-L278",
             "snippet": [
                 {
                     "number": 272,

@@ -1,6 +1,6 @@
 {
     "repo": "api-platform/core",
-    "sha": "01d1f0123e8de75961fa60ed06b5103bcb5db597",
+    "sha": "f37d6d101fb9a8c055748e51e90ada64dac73979",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -10,7 +10,7 @@
         {
             "id": "f-5426a4ccb5",
             "file": "src/JsonApi/Serializer/ItemNormalizerTrait.php",
-            "line": 166,
+            "line": 172,
             "column": 27,
             "pattern": "/^\\w[-\\w_]*$/",
             "source": "preg_match()",
@@ -28,10 +28,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/api-platform/core/blob/01d1f0123e8de75961fa60ed06b5103bcb5db597/src/JsonApi/Serializer/ItemNormalizerTrait.php#L163-L169",
+            "permalink": "https://github.com/api-platform/core/blob/f37d6d101fb9a8c055748e51e90ada64dac73979/src/JsonApi/Serializer/ItemNormalizerTrait.php#L169-L175",
             "snippet": [
                 {
-                    "number": 163,
+                    "number": 169,
                     "focus": false,
                     "runs": [
                         [
@@ -41,7 +41,7 @@
                     ]
                 },
                 {
-                    "number": 164,
+                    "number": 170,
                     "focus": false,
                     "runs": [
                         [
@@ -51,7 +51,7 @@
                     ]
                 },
                 {
-                    "number": 165,
+                    "number": 171,
                     "focus": false,
                     "runs": [
                         [
@@ -61,7 +61,7 @@
                     ]
                 },
                 {
-                    "number": 166,
+                    "number": 172,
                     "focus": true,
                     "runs": [
                         [
@@ -127,7 +127,7 @@
                     ]
                 },
                 {
-                    "number": 167,
+                    "number": 173,
                     "focus": false,
                     "runs": [
                         [
@@ -137,7 +137,7 @@
                     ]
                 },
                 {
-                    "number": 168,
+                    "number": 174,
                     "focus": false,
                     "runs": [
                         [
@@ -147,7 +147,7 @@
                     ]
                 },
                 {
-                    "number": 169,
+                    "number": 175,
                     "focus": false,
                     "runs": [
                         [
@@ -179,7 +179,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/api-platform/core/blob/01d1f0123e8de75961fa60ed06b5103bcb5db597/src/Metadata/Util/CamelCaseToSnakeCaseNameConverter.php#L53-L59",
+            "permalink": "https://github.com/api-platform/core/blob/f37d6d101fb9a8c055748e51e90ada64dac73979/src/Metadata/Util/CamelCaseToSnakeCaseNameConverter.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -338,7 +338,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/api-platform/core/blob/01d1f0123e8de75961fa60ed06b5103bcb5db597/src/Metadata/Util/CompositeIdentifierParser.php#L22-L28",
+            "permalink": "https://github.com/api-platform/core/blob/f37d6d101fb9a8c055748e51e90ada64dac73979/src/Metadata/Util/CompositeIdentifierParser.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,

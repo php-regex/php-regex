@@ -1,6 +1,6 @@
 {
     "repo": "hyperf/hyperf",
-    "sha": "3516cd114cf71bb100c0668283d0820500f1e362",
+    "sha": "27198f21ddefc708860984b9fd792e557b2ea0b0",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/3516cd114cf71bb100c0668283d0820500f1e362/src/crontab/src/Parser.php#L68-L74",
+            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/crontab/src/Parser.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,
@@ -675,7 +675,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/3516cd114cf71bb100c0668283d0820500f1e362/src/crontab/src/Parser.php#L69-L75",
+            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/crontab/src/Parser.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -1234,7 +1234,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/3516cd114cf71bb100c0668283d0820500f1e362/src/crontab/src/Parser.php#L149-L155",
+            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/crontab/src/Parser.php#L149-L155",
             "snippet": [
                 {
                     "number": 149,
@@ -1366,7 +1366,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/3516cd114cf71bb100c0668283d0820500f1e362/src/database/src/Commands/Ast/ModelRewriteInheritanceVisitor.php#L28-L34",
+            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/database/src/Commands/Ast/ModelRewriteInheritanceVisitor.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -1618,7 +1618,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/3516cd114cf71bb100c0668283d0820500f1e362/src/rpn/src/Calculator.php#L90-L96",
+            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/rpn/src/Calculator.php#L90-L96",
             "snippet": [
                 {
                     "number": 90,
@@ -1773,6 +1773,298 @@
             ]
         },
         {
+            "id": "f-60286a7d8a",
+            "file": "src/stringable/src/Str.php",
+            "line": 1258,
+            "column": 33,
+            "pattern": "~^[\\s\\x{FEFF}\\x{200B}\\x{200E} \n\r\t\u000b]+|[\\s\\x{FEFF}\\x{200B}\\x{200E} \n\r\t\u000b]+$~u",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/stringable/src/Str.php#L1255-L1261",
+            "snippet": [
+                {
+                    "number": 1255,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($charlist === null) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1256,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $trimDefaultCharacters = \" \\n\\r\\t\\v\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1257,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1258,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            return preg_replace('~^[\\s\\x{FEFF}\\x{200B}\\x{200E}' . $trimDefaultCharacters . ']+|[\\s\\x{FEFF}\\x{200B}\\x{200E}' . $trimDefaultCharacters . ']+$~u', '', $value) ?? trim($value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1259,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1260,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1261,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return trim($value, $charlist);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6ec98478b7",
+            "file": "src/stringable/src/Str.php",
+            "line": 1276,
+            "column": 33,
+            "pattern": "~^[\\s\\x{FEFF}\\x{200B}\\x{200E} \n\r\t\u000b]+~u",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/stringable/src/Str.php#L1273-L1279",
+            "snippet": [
+                {
+                    "number": 1273,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($charlist === null) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1274,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $ltrimDefaultCharacters = \" \\n\\r\\t\\v\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1275,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1276,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            return preg_replace('~^[\\s\\x{FEFF}\\x{200B}\\x{200E}' . $ltrimDefaultCharacters . ']+~u', '', $value) ?? ltrim($value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1277,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1278,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1279,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return ltrim($value, $charlist);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-0804c09b56",
+            "file": "src/stringable/src/Str.php",
+            "line": 1294,
+            "column": 33,
+            "pattern": "~[\\s\\x{FEFF}\\x{200B}\\x{200E} \n\r\t\u000b]+$~u",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/stringable/src/Str.php#L1291-L1297",
+            "snippet": [
+                {
+                    "number": 1291,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($charlist === null) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1292,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $rtrimDefaultCharacters = \" \\n\\r\\t\\v\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1293,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1294,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            return preg_replace('~[\\s\\x{FEFF}\\x{200B}\\x{200E}' . $rtrimDefaultCharacters . ']+$~u', '', $value) ?? rtrim($value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1295,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1296,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1297,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return rtrim($value, $charlist);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-ef5334ce66",
             "file": "src/view-engine/src/Compiler/BladeCompiler.php",
             "line": 379,
@@ -1793,7 +2085,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/3516cd114cf71bb100c0668283d0820500f1e362/src/view-engine/src/Compiler/BladeCompiler.php#L376-L382",
+            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/view-engine/src/Compiler/BladeCompiler.php#L376-L382",
             "snippet": [
                 {
                     "number": 376,
@@ -1967,7 +2259,7 @@
                 "limit": 100000
             },
             "subject": "<x- -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=! \">",
-            "permalink": "https://github.com/hyperf/hyperf/blob/3516cd114cf71bb100c0668283d0820500f1e362/src/view-engine/src/Compiler/ComponentTagCompiler.php#L252-L258",
+            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/view-engine/src/Compiler/ComponentTagCompiler.php#L252-L258",
             "snippet": [
                 {
                     "number": 252,
@@ -2077,7 +2369,7 @@
                 "limit": 100000
             },
             "subject": "<x- -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=! \"/>",
-            "permalink": "https://github.com/hyperf/hyperf/blob/3516cd114cf71bb100c0668283d0820500f1e362/src/view-engine/src/Compiler/ComponentTagCompiler.php#L301-L307",
+            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/view-engine/src/Compiler/ComponentTagCompiler.php#L301-L307",
             "snippet": [
                 {
                     "number": 301,

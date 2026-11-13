@@ -1,6 +1,6 @@
 {
     "repo": "livewire/livewire",
-    "sha": "822a4fa9b1e1123691133a2e2eb379a3dab11191",
+    "sha": "e03c29c8181804cdafe9d5819b7ab5cc93adbf12",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/.github/scripts/get-browser-test-shard.php#L18-L24",
+            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/.github/scripts/get-browser-test-shard.php#L18-L24",
             "snippet": [
                 {
                     "number": 18,
@@ -173,7 +173,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/src/Compiler/Parser/MultiFileParser.php#L153-L159",
+            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Compiler/Parser/MultiFileParser.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -312,6 +312,101 @@
             ]
         },
         {
+            "id": "f-98eb83b6e2",
+            "file": "src/Compiler/Parser/Parser.php",
+            "line": 229,
+            "column": 30,
+            "pattern": "/(?:\\/\\/[^\\n]*|\\/\\*.*?\\*\\/)(*SKIP)(*FAIL)|\\buse\\s+[^;()]+;/s",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Compiler/Parser/Parser.php#L226-L232",
+            "snippet": [
+                {
+                    "number": 226,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $skipComments = '(?:\\/\\/[^\\n]*|\\/\\*.*?\\*\\/)(*SKIP)(*FAIL)';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 227,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 228,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Extract all use statements (excluding closure `use (...)` clauses)...",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 229,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (! preg_match_all('/' . $skipComments . '|\\buse\\s+[^;()]+;/s', $contents, $useMatches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 230,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return null;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 231,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 232,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-ee0d00ea2f",
             "file": "src/Features/SupportCompiledWireKeys/SupportCompiledWireKeys.php",
             "line": 50,
@@ -337,7 +432,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/src/Features/SupportCompiledWireKeys/SupportCompiledWireKeys.php#L47-L53",
+            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Features/SupportCompiledWireKeys/SupportCompiledWireKeys.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,
@@ -492,7 +587,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/src/Features/SupportMorphAwareBladeCompilation/SupportMorphAwareBladeCompilation.php#L75-L81",
+            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Features/SupportMorphAwareBladeCompilation/SupportMorphAwareBladeCompilation.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,
@@ -615,6 +710,108 @@
             ]
         },
         {
+            "id": "f-57a1b525df",
+            "file": "src/Finder/Finder.php",
+            "line": 409,
+            "column": 27,
+            "pattern": "/\\<\\?php.*\\bnew\\s+(?:#(\\[(?:(?:(?>[^\\[\\]'\\\"]+)|'(?:\\\\.|[^'\\\\])*'|\"(?:\\\\.|[^\"\\\\])*\")|(?1))*\\])\\s*)*class\\b/s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Finder/Finder.php#L406-L412",
+            "snippet": [
+                {
+                    "number": 406,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Light touch check: Look for the pattern that indicates an SFC",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 407,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Pattern: <?php followed by 'new class' (with potential attributes/newlines between)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 408,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // This distinguishes SFCs from regular Blade views",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 409,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_match('/\\<\\?php.*\\bnew\\s+(?:#(\\[(?:' . $contentIgnoredWhileMatchingBracketsPattern . '|(?1))*\\])\\s*)*class\\b/s', $contents) === 1;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 410,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 411,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 412,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    protected function hasValidMultiFileComponentSource(string $dir, string $fileBaseName): bool",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-7d9b734414",
             "file": "src/Mechanisms/ExtendBlade/UnitTest.php",
             "line": 75,
@@ -647,7 +844,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/src/Mechanisms/ExtendBlade/UnitTest.php#L72-L78",
+            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Mechanisms/ExtendBlade/UnitTest.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -775,7 +972,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/src/Mechanisms/FrontendAssets/FrontendAssets.php#L304-L310",
+            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Mechanisms/FrontendAssets/FrontendAssets.php#L304-L310",
             "snippet": [
                 {
                     "number": 304,

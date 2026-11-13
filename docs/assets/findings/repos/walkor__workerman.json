@@ -1,6 +1,6 @@
 {
     "repo": "walkor/workerman",
-    "sha": "806ef2151315d09f3bd02470e51e0bfef5de9b0f",
+    "sha": "4c817dec82c9ea223879b019600db58f62199abc",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/walkor/workerman/blob/806ef2151315d09f3bd02470e51e0bfef5de9b0f/src/Protocols/Http.php#L137-L143",
+            "permalink": "https://github.com/walkor/workerman/blob/4c817dec82c9ea223879b019600db58f62199abc/src/Protocols/Http.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -318,7 +318,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/walkor/workerman/blob/806ef2151315d09f3bd02470e51e0bfef5de9b0f/src/Protocols/Http.php#L167-L173",
+            "permalink": "https://github.com/walkor/workerman/blob/4c817dec82c9ea223879b019600db58f62199abc/src/Protocols/Http.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -529,7 +529,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/walkor/workerman/blob/806ef2151315d09f3bd02470e51e0bfef5de9b0f/src/Worker.php#L1313-L1319",
+            "permalink": "https://github.com/walkor/workerman/blob/4c817dec82c9ea223879b019600db58f62199abc/src/Worker.php#L1313-L1319",
             "snippet": [
                 {
                     "number": 1313,

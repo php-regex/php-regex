@@ -1,6 +1,6 @@
 {
     "repo": "octobercms/october",
-    "sha": "2cccb7a14ec152203dad43bf1520ed1b42a9cf11",
+    "sha": "f6914ea283c3820476fde0b587f17ba2ef12840a",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/2cccb7a14ec152203dad43bf1520ed1b42a9cf11/modules/cms/classes/CodeParser.php#L100-L106",
+            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/classes/CodeParser.php#L100-L106",
             "snippet": [
                 {
                     "number": 100,
@@ -296,7 +296,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/2cccb7a14ec152203dad43bf1520ed1b42a9cf11/modules/cms/classes/PageManager.php#L197-L203",
+            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/classes/PageManager.php#L197-L203",
             "snippet": [
                 {
                     "number": 197,
@@ -507,7 +507,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/2cccb7a14ec152203dad43bf1520ed1b42a9cf11/modules/cms/classes/controller/HasAjaxRequests.php#L127-L133",
+            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/classes/controller/HasAjaxRequests.php#L127-L133",
             "snippet": [
                 {
                     "number": 127,
@@ -718,7 +718,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/2cccb7a14ec152203dad43bf1520ed1b42a9cf11/modules/cms/classes/controller/HasAjaxRequests.php#L235-L241",
+            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/classes/controller/HasAjaxRequests.php#L235-L241",
             "snippet": [
                 {
                     "number": 235,
@@ -929,7 +929,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/2cccb7a14ec152203dad43bf1520ed1b42a9cf11/modules/cms/twig/DebugExtension.php#L516-L522",
+            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/twig/DebugExtension.php#L516-L522",
             "snippet": [
                 {
                     "number": 516,
@@ -1112,7 +1112,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/2cccb7a14ec152203dad43bf1520ed1b42a9cf11/modules/cms/twig/DebugExtension.php#L520-L526",
+            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/twig/DebugExtension.php#L520-L526",
             "snippet": [
                 {
                     "number": 520,
@@ -1287,7 +1287,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/2cccb7a14ec152203dad43bf1520ed1b42a9cf11/modules/media/helpers/MediaView.php#L56-L62",
+            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/media/helpers/MediaView.php#L56-L62",
             "snippet": [
                 {
                     "number": 56,

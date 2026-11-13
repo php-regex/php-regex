@@ -1,6 +1,6 @@
 {
     "repo": "joomla/joomla-cms",
-    "sha": "3d35fc9a03c29ab50b530b089a7f92ec5f9e454e",
+    "sha": "3a506bc9da00221e5ef10d079455d0558f96ecda",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_content/src/Model/ArticleModel.php#L720-L726",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_content/src/Model/ArticleModel.php#L720-L726",
             "snippet": [
                 {
                     "number": 720,
@@ -251,7 +251,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language.php#L146-L152",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language.php#L146-L152",
             "snippet": [
                 {
                     "number": 146,
@@ -394,7 +394,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language.php#L147-L153",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language.php#L147-L153",
             "snippet": [
                 {
                     "number": 147,
@@ -588,7 +588,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language.php#L148-L154",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language.php#L148-L154",
             "snippet": [
                 {
                     "number": 148,
@@ -794,7 +794,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language.php#L149-L155",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language.php#L149-L155",
             "snippet": [
                 {
                     "number": 149,
@@ -984,7 +984,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language.php#L150-L156",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language.php#L150-L156",
             "snippet": [
                 {
                     "number": 150,
@@ -1167,7 +1167,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language.php#L151-L157",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language.php#L151-L157",
             "snippet": [
                 {
                     "number": 151,
@@ -1354,7 +1354,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language.php#L153-L159",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -1488,7 +1488,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language/El.php#L103-L109",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language/El.php#L103-L109",
             "snippet": [
                 {
                     "number": 103,
@@ -1583,7 +1583,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language/El.php#L180-L186",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language/El.php#L180-L186",
             "snippet": [
                 {
                     "number": 180,
@@ -1878,7 +1878,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language/El.php#L205-L211",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language/El.php#L205-L211",
             "snippet": [
                 {
                     "number": 205,
@@ -2165,7 +2165,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language/El.php#L281-L287",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language/El.php#L281-L287",
             "snippet": [
                 {
                     "number": 281,
@@ -2260,7 +2260,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language/El.php#L524-L530",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language/El.php#L524-L530",
             "snippet": [
                 {
                     "number": 524,
@@ -2355,7 +2355,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language/El.php#L632-L638",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language/El.php#L632-L638",
             "snippet": [
                 {
                     "number": 632,
@@ -2538,7 +2538,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Language/Zh.php#L61-L67",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Language/Zh.php#L61-L67",
             "snippet": [
                 {
                     "number": 61,
@@ -2666,7 +2666,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Parser/Rtf.php#L35-L41",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Parser/Rtf.php#L35-L41",
             "snippet": [
                 {
                     "number": 35,
@@ -2814,7 +2814,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Parser/Rtf.php#L39-L45",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Parser/Rtf.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -2970,7 +2970,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Parser/Rtf.php#L40-L46",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Parser/Rtf.php#L40-L46",
             "snippet": [
                 {
                     "number": 40,
@@ -3145,7 +3145,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Query.php#L742-L748",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Query.php#L742-L748",
             "snippet": [
                 {
                     "number": 742,
@@ -3284,7 +3284,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Query.php#L848-L854",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Query.php#L848-L854",
             "snippet": [
                 {
                     "number": 848,
@@ -3416,7 +3416,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Query.php#L861-L867",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Query.php#L861-L867",
             "snippet": [
                 {
                     "number": 861,
@@ -3579,7 +3579,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Query.php#L881-L887",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Query.php#L881-L887",
             "snippet": [
                 {
                     "number": 881,
@@ -3725,7 +3725,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Result.php#L400-L406",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Result.php#L400-L406",
             "snippet": [
                 {
                     "number": 400,
@@ -3887,7 +3887,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_finder/src/Indexer/Result.php#L435-L441",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_finder/src/Indexer/Result.php#L435-L441",
             "snippet": [
                 {
                     "number": 435,
@@ -4030,7 +4030,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_installer/tmpl/languages/default.php#L67-L73",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_installer/tmpl/languages/default.php#L67-L73",
             "snippet": [
                 {
                     "number": 67,
@@ -4197,7 +4197,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/administrator/components/com_languages/tmpl/installed/default.php#L81-L87",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/administrator/components/com_languages/tmpl/installed/default.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -4364,7 +4364,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/build/bump.php#L196-L202",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/build/bump.php#L196-L202",
             "snippet": [
                 {
                     "number": 196,
@@ -4519,7 +4519,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/build/bump.php#L197-L203",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/build/bump.php#L197-L203",
             "snippet": [
                 {
                     "number": 197,
@@ -4674,7 +4674,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/build/bump.php#L198-L204",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/build/bump.php#L198-L204",
             "snippet": [
                 {
                     "number": 198,
@@ -4829,7 +4829,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/build/bump.php#L265-L271",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/build/bump.php#L265-L271",
             "snippet": [
                 {
                     "number": 265,
@@ -5024,7 +5024,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/installation/src/Helper/DatabaseHelper.php#L207-L213",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/installation/src/Helper/DatabaseHelper.php#L207-L213",
             "snippet": [
                 {
                     "number": 207,
@@ -5224,7 +5224,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/installation/src/Helper/DatabaseHelper.php#L340-L346",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/installation/src/Helper/DatabaseHelper.php#L340-L346",
             "snippet": [
                 {
                     "number": 340,
@@ -5455,7 +5455,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/installation/tmpl/remove/default.php#L272-L278",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/installation/tmpl/remove/default.php#L272-L278",
             "snippet": [
                 {
                     "number": 272,
@@ -5622,7 +5622,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/loader.php#L613-L619",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/loader.php#L613-L619",
             "snippet": [
                 {
                     "number": 613,
@@ -5781,6 +5781,101 @@
             ]
         },
         {
+            "id": "f-e5ec47b368",
+            "file": "libraries/src/Client/FtpClient.php",
+            "line": 1473,
+            "column": 22,
+            "pattern": "#([-dl][rwxstST-]+).* ?([0-9 ]*)?([a-zA-Z0-9]+).* ([a-zA-Z0-9]+).* ([0-9]*) ([a-zA-Z]+[0-9: ]*[0-9])[ ]+(([0-9]{2}:[0-9]{2})|[0-9]{4}) (.+)#",
+            "source": "preg_match()",
+            "location": "via $v",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Client/FtpClient.php#L1470-L1476",
+            "snippet": [
+                {
+                    "number": 1470,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $regexps = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1471,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'UNIX' => '#([-dl][rwxstST-]+).* ([0-9]*) ([a-zA-Z0-9]+).* ([a-zA-Z0-9]+).* ([0-9]*)'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1472,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                . ' ([a-zA-Z]+[0-9: ]*[0-9])[ ]+(([0-9]{1,2}:[0-9]{2})|[0-9]{4}) (.+)#',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1473,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            'MAC' => '#([-dl][rwxstST-]+).* ?([0-9 ]*)?([a-zA-Z0-9]+).* ([a-zA-Z0-9]+).* ([0-9]*)'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1474,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                . ' ([a-zA-Z]+[0-9: ]*[0-9])[ ]+(([0-9]{2}:[0-9]{2})|[0-9]{4}) (.+)#',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1475,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'WIN' => '#([0-9]{2})-([0-9]{2})-([0-9]{2}) +([0-9]{2}):([0-9]{2})(AM|PM) +([0-9]+|<DIR>) +(.+)#',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1476,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-aecbc421c7",
             "file": "libraries/src/Client/FtpClient.php",
             "line": 1616,
@@ -5808,7 +5903,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/Client/FtpClient.php#L1613-L1619",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Client/FtpClient.php#L1613-L1619",
             "snippet": [
                 {
                     "number": 1613,
@@ -5910,7 +6005,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/Client/FtpClient.php#L1674-L1680",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Client/FtpClient.php#L1674-L1680",
             "snippet": [
                 {
                     "number": 1674,
@@ -6005,7 +6100,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/Console/SetConfigurationCommand.php#L283-L289",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Console/SetConfigurationCommand.php#L283-L289",
             "snippet": [
                 {
                     "number": 283,
@@ -6200,7 +6295,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/Feed/FeedFactory.php#L106-L112",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Feed/FeedFactory.php#L106-L112",
             "snippet": [
                 {
                     "number": 106,
@@ -6384,7 +6479,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/Filter/InputFilter.php#L148-L154",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Filter/InputFilter.php#L148-L154",
             "snippet": [
                 {
                     "number": 148,
@@ -6604,7 +6699,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/Filter/InputFilter.php#L444-L450",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Filter/InputFilter.php#L444-L450",
             "snippet": [
                 {
                     "number": 444,
@@ -6752,7 +6847,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/Filter/InputFilter.php#L453-L459",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Filter/InputFilter.php#L453-L459",
             "snippet": [
                 {
                     "number": 453,
@@ -6899,6 +6994,116 @@
             ]
         },
         {
+            "id": "f-855087222d",
+            "file": "libraries/src/Filter/OutputFilter.php",
+            "line": 41,
+            "column": 38,
+            "pattern": "#href=\"([^\"]*(&(amp;){0})[^\"]*)*?\"#i",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"HREF=\\\"\" . \"&&\" x n Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off). The risky part is: [^\"]* Hotspot offsets: 7-12 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "HREF=\\\"",
+                "pump": "&&",
+                "suffix": "",
+                "n": 24,
+                "length": 18,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "HREF=\"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Filter/OutputFilter.php#L38-L44",
+            "snippet": [
+                {
+                    "number": 38,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 39,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $regex = 'href=\"([^\"]*(&(amp;){0})[^\"]*)*?\"';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 40,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 41,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_replace_callback(\"#$regex#i\", ['\\\\Joomla\\\\CMS\\\\Filter\\\\OutputFilter', 'ampReplaceCallback'], $input);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 42,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 43,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 44,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-a9e682d841",
             "file": "libraries/src/HTML/Helpers/StringHelper.php",
             "line": 56,
@@ -6931,7 +7136,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/HTML/Helpers/StringHelper.php#L53-L59",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/HTML/Helpers/StringHelper.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -7070,7 +7275,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/HTML/Helpers/StringHelper.php#L60-L66",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/HTML/Helpers/StringHelper.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -7203,7 +7408,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/Installer/Adapter/FileAdapter.php#L504-L510",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Installer/Adapter/FileAdapter.php#L504-L510",
             "snippet": [
                 {
                     "number": 504,
@@ -7330,7 +7535,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/Log/Logger/FormattedtextLogger.php#L308-L314",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Log/Logger/FormattedtextLogger.php#L308-L314",
             "snippet": [
                 {
                     "number": 308,
@@ -7453,6 +7658,101 @@
             ]
         },
         {
+            "id": "f-ed772f1970",
+            "file": "libraries/src/Mail/MailHelper.php",
+            "line": 137,
+            "column": 20,
+            "pattern": "/^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-][\\.a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]{0,63}$/",
+            "source": "preg_match()",
+            "location": "via $regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '.' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Mail/MailHelper.php#L134-L140",
+            "snippet": [
+                {
+                    "number": 134,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "         * Also, period should not appear 2 or more times consecutively",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 135,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "         */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 136,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $allowed = \"a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 137,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $regex   = \"/^[$allowed][\\.$allowed]{0,63}$/\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 138,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 139,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!preg_match($regex, $local) || str_ends_with($local, '.') || $local[0] === '.' || preg_match('/\\.\\./', $local)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 140,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return false;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-9fc12939d3",
             "file": "libraries/src/Mail/MailHelper.php",
             "line": 210,
@@ -7478,7 +7778,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/Mail/MailHelper.php#L207-L213",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Mail/MailHelper.php#L207-L213",
             "snippet": [
                 {
                     "number": 207,
@@ -7637,7 +7937,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/joomla/joomla-cms/blob/3d35fc9a03c29ab50b530b089a7f92ec5f9e454e/libraries/src/Utility/Utility.php#L37-L43",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Utility/Utility.php#L37-L43",
             "snippet": [
                 {
                     "number": 37,

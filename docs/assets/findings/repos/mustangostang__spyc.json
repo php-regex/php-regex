@@ -200,6 +200,414 @@
                     ]
                 }
             ]
+        },
+        {
+            "id": "f-ba0463db9e",
+            "file": "Spyc.php",
+            "line": 1155,
+            "column": 39,
+            "pattern": "/^(&[A-z0-9_\\-]+)/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '_' (covered by range 'A'-'z')",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.suspiciousRange",
+                    "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
+                    "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
+                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/mustangostang/spyc/blob/daf9fa4ef675519386b4f556c9d5ab5f9c14055a/Spyc.php#L1152-L1158",
+            "snippet": [
+                {
+                    "number": 1152,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "  private function nodeContainsGroup ($line) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1153,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    $symbolsForReference = 'A-z0-9_\\-';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1154,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (strpos($line, '&') === false && strpos($line, '*') === false) return false; // Please die fast ;-)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1155,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    if ($line[0] == '&' && preg_match('/^(&['.$symbolsForReference.']+)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1156,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if ($line[0] == '*' && preg_match('/^(\\*['.$symbolsForReference.']+)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1157,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (preg_match('/(&['.$symbolsForReference.']+)$/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1158,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (preg_match('/(\\*['.$symbolsForReference.']+$)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-0c7dc99de4",
+            "file": "Spyc.php",
+            "line": 1156,
+            "column": 39,
+            "pattern": "/^(\\*[A-z0-9_\\-]+)/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '_' (covered by range 'A'-'z')",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.suspiciousRange",
+                    "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
+                    "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
+                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/mustangostang/spyc/blob/daf9fa4ef675519386b4f556c9d5ab5f9c14055a/Spyc.php#L1153-L1159",
+            "snippet": [
+                {
+                    "number": 1153,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    $symbolsForReference = 'A-z0-9_\\-';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1154,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (strpos($line, '&') === false && strpos($line, '*') === false) return false; // Please die fast ;-)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1155,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if ($line[0] == '&' && preg_match('/^(&['.$symbolsForReference.']+)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1156,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    if ($line[0] == '*' && preg_match('/^(\\*['.$symbolsForReference.']+)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1157,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (preg_match('/(&['.$symbolsForReference.']+)$/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1158,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (preg_match('/(\\*['.$symbolsForReference.']+$)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1159,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (preg_match ('#^\\s*<<\\s*:\\s*(\\*[^\\s]+).*$#', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-eee6cf53e8",
+            "file": "Spyc.php",
+            "line": 1157,
+            "column": 20,
+            "pattern": "/(&[A-z0-9_\\-]+)$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '_' (covered by range 'A'-'z')",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.suspiciousRange",
+                    "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
+                    "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
+                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/mustangostang/spyc/blob/daf9fa4ef675519386b4f556c9d5ab5f9c14055a/Spyc.php#L1154-L1160",
+            "snippet": [
+                {
+                    "number": 1154,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (strpos($line, '&') === false && strpos($line, '*') === false) return false; // Please die fast ;-)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1155,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if ($line[0] == '&' && preg_match('/^(&['.$symbolsForReference.']+)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1156,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if ($line[0] == '*' && preg_match('/^(\\*['.$symbolsForReference.']+)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1157,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    if (preg_match('/(&['.$symbolsForReference.']+)$/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1158,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (preg_match('/(\\*['.$symbolsForReference.']+$)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1159,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (preg_match ('#^\\s*<<\\s*:\\s*(\\*[^\\s]+).*$#', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1160,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    return false;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-8c9dd2731d",
+            "file": "Spyc.php",
+            "line": 1158,
+            "column": 20,
+            "pattern": "/(\\*[A-z0-9_\\-]+$)/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '_' (covered by range 'A'-'z')",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.suspiciousRange",
+                    "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
+                    "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
+                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/mustangostang/spyc/blob/daf9fa4ef675519386b4f556c9d5ab5f9c14055a/Spyc.php#L1155-L1161",
+            "snippet": [
+                {
+                    "number": 1155,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if ($line[0] == '&' && preg_match('/^(&['.$symbolsForReference.']+)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1156,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if ($line[0] == '*' && preg_match('/^(\\*['.$symbolsForReference.']+)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1157,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (preg_match('/(&['.$symbolsForReference.']+)$/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1158,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    if (preg_match('/(\\*['.$symbolsForReference.']+$)/', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1159,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (preg_match ('#^\\s*<<\\s*:\\s*(\\*[^\\s]+).*$#', $line, $matches)) return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1160,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    return false;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1161,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
         }
     ]
 }

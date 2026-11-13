@@ -1,6 +1,6 @@
 {
     "repo": "voku/anti-xss",
-    "sha": "7fd0ba5171ccf26ec60cca7ca9de492992dd0bcb",
+    "sha": "d94ffe1778984f56e4870cc1898f12b372cf1ae2",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -10,7 +10,7 @@
         {
             "id": "f-d285b49809",
             "file": "src/voku/helper/AntiXSS.php",
-            "line": 1060,
+            "line": 1105,
             "column": 29,
             "pattern": "/(?<html_entity>&[A-Za-z]{2,};{0})/",
             "source": "preg_match_all()",
@@ -33,10 +33,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/anti-xss/blob/7fd0ba5171ccf26ec60cca7ca9de492992dd0bcb/src/voku/helper/AntiXSS.php#L1057-L1063",
+            "permalink": "https://github.com/voku/anti-xss/blob/d94ffe1778984f56e4870cc1898f12b372cf1ae2/src/voku/helper/AntiXSS.php#L1102-L1108",
             "snippet": [
                 {
-                    "number": 1057,
+                    "number": 1102,
                     "focus": false,
                     "runs": [
                         [
@@ -46,7 +46,7 @@
                     ]
                 },
                 {
-                    "number": 1058,
+                    "number": 1103,
                     "focus": false,
                     "runs": [
                         [
@@ -56,7 +56,7 @@
                     ]
                 },
                 {
-                    "number": 1059,
+                    "number": 1104,
                     "focus": false,
                     "runs": [
                         [
@@ -66,7 +66,7 @@
                     ]
                 },
                 {
-                    "number": 1060,
+                    "number": 1105,
                     "focus": true,
                     "runs": [
                         [
@@ -156,7 +156,7 @@
                     ]
                 },
                 {
-                    "number": 1061,
+                    "number": 1106,
                     "focus": false,
                     "runs": [
                         [
@@ -166,7 +166,7 @@
                     ]
                 },
                 {
-                    "number": 1062,
+                    "number": 1107,
                     "focus": false,
                     "runs": [
                         [
@@ -176,7 +176,7 @@
                     ]
                 },
                 {
-                    "number": 1063,
+                    "number": 1108,
                     "focus": false,
                     "runs": [
                         [
@@ -190,7 +190,7 @@
         {
             "id": "f-e63a6f544c",
             "file": "src/voku/helper/AntiXSS.php",
-            "line": 1165,
+            "line": 1210,
             "column": 32,
             "pattern": "#\\s*[\\p{L}\\d_\\-\\[\\]]+\\s*=\\s*(?:([\"'])(?:[^\\1]*?)\\1|\\\\\"(?:[^\"]*?)\\\\\")#u",
             "source": "preg_match()",
@@ -208,10 +208,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/anti-xss/blob/7fd0ba5171ccf26ec60cca7ca9de492992dd0bcb/src/voku/helper/AntiXSS.php#L1162-L1168",
+            "permalink": "https://github.com/voku/anti-xss/blob/d94ffe1778984f56e4870cc1898f12b372cf1ae2/src/voku/helper/AntiXSS.php#L1207-L1213",
             "snippet": [
                 {
-                    "number": 1162,
+                    "number": 1207,
                     "focus": false,
                     "runs": [
                         [
@@ -221,7 +221,7 @@
                     ]
                 },
                 {
-                    "number": 1163,
+                    "number": 1208,
                     "focus": false,
                     "runs": [
                         [
@@ -231,7 +231,7 @@
                     ]
                 },
                 {
-                    "number": 1164,
+                    "number": 1209,
                     "focus": false,
                     "runs": [
                         [
@@ -241,7 +241,7 @@
                     ]
                 },
                 {
-                    "number": 1165,
+                    "number": 1210,
                     "focus": true,
                     "runs": [
                         [
@@ -407,7 +407,7 @@
                     ]
                 },
                 {
-                    "number": 1166,
+                    "number": 1211,
                     "focus": false,
                     "runs": [
                         [
@@ -417,7 +417,7 @@
                     ]
                 },
                 {
-                    "number": 1167,
+                    "number": 1212,
                     "focus": false,
                     "runs": [
                         [
@@ -427,7 +427,7 @@
                     ]
                 },
                 {
-                    "number": 1168,
+                    "number": 1213,
                     "focus": false,
                     "runs": [
                         [
@@ -441,7 +441,7 @@
         {
             "id": "f-03b067b8ca",
             "file": "src/voku/helper/AntiXSS.php",
-            "line": 1672,
+            "line": 1712,
             "column": 41,
             "pattern": "/([\"'])?data\\s*:\\s*(?:image\\s*\\/.*)[^\u0001]*base64[^\u0001]*,[^\u0001]*\u0001?/iUus",
             "source": "preg_match()",
@@ -466,10 +466,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/anti-xss/blob/7fd0ba5171ccf26ec60cca7ca9de492992dd0bcb/src/voku/helper/AntiXSS.php#L1669-L1675",
+            "permalink": "https://github.com/voku/anti-xss/blob/d94ffe1778984f56e4870cc1898f12b372cf1ae2/src/voku/helper/AntiXSS.php#L1709-L1715",
             "snippet": [
                 {
-                    "number": 1669,
+                    "number": 1709,
                     "focus": false,
                     "runs": [
                         [
@@ -479,7 +479,7 @@
                     ]
                 },
                 {
-                    "number": 1670,
+                    "number": 1710,
                     "focus": false,
                     "runs": [
                         [
@@ -489,7 +489,7 @@
                     ]
                 },
                 {
-                    "number": 1671,
+                    "number": 1711,
                     "focus": false,
                     "runs": [
                         [
@@ -499,7 +499,7 @@
                     ]
                 },
                 {
-                    "number": 1672,
+                    "number": 1712,
                     "focus": true,
                     "runs": [
                         [
@@ -677,7 +677,7 @@
                     ]
                 },
                 {
-                    "number": 1673,
+                    "number": 1713,
                     "focus": false,
                     "runs": [
                         [
@@ -687,7 +687,7 @@
                     ]
                 },
                 {
-                    "number": 1674,
+                    "number": 1714,
                     "focus": false,
                     "runs": [
                         [
@@ -697,7 +697,7 @@
                     ]
                 },
                 {
-                    "number": 1675,
+                    "number": 1715,
                     "focus": false,
                     "runs": [
                         [
@@ -711,7 +711,7 @@
         {
             "id": "f-03b067b8ca-2",
             "file": "src/voku/helper/AntiXSS.php",
-            "line": 1688,
+            "line": 1728,
             "column": 45,
             "pattern": "/([\"'])?data\\s*:\\s*(?:image\\s*\\/.*)[^\u0001]*base64[^\u0001]*,[^\u0001]*\u0001?/iUus",
             "source": "preg_match()",
@@ -736,10 +736,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/anti-xss/blob/7fd0ba5171ccf26ec60cca7ca9de492992dd0bcb/src/voku/helper/AntiXSS.php#L1685-L1691",
+            "permalink": "https://github.com/voku/anti-xss/blob/d94ffe1778984f56e4870cc1898f12b372cf1ae2/src/voku/helper/AntiXSS.php#L1725-L1731",
             "snippet": [
                 {
-                    "number": 1685,
+                    "number": 1725,
                     "focus": false,
                     "runs": [
                         [
@@ -749,7 +749,7 @@
                     ]
                 },
                 {
-                    "number": 1686,
+                    "number": 1726,
                     "focus": false,
                     "runs": [
                         [
@@ -759,7 +759,7 @@
                     ]
                 },
                 {
-                    "number": 1687,
+                    "number": 1727,
                     "focus": false,
                     "runs": [
                         [
@@ -769,7 +769,7 @@
                     ]
                 },
                 {
-                    "number": 1688,
+                    "number": 1728,
                     "focus": true,
                     "runs": [
                         [
@@ -947,7 +947,7 @@
                     ]
                 },
                 {
-                    "number": 1689,
+                    "number": 1729,
                     "focus": false,
                     "runs": [
                         [
@@ -957,7 +957,7 @@
                     ]
                 },
                 {
-                    "number": 1690,
+                    "number": 1730,
                     "focus": false,
                     "runs": [
                         [
@@ -967,7 +967,7 @@
                     ]
                 },
                 {
-                    "number": 1691,
+                    "number": 1731,
                     "focus": false,
                     "runs": [
                         [
@@ -981,7 +981,7 @@
         {
             "id": "f-95afe35577",
             "file": "src/voku/helper/AntiXSS.php",
-            "line": 1755,
+            "line": 1795,
             "column": 21,
             "pattern": "#(?:%3C|¼|<)[^\\p{L}@]*/*[^\\p{L}@]*(?:script[^\\p{L}@]+).*(?:%3E|¾|>)?#iUus",
             "source": "preg_replace()",
@@ -1013,10 +1013,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/anti-xss/blob/7fd0ba5171ccf26ec60cca7ca9de492992dd0bcb/src/voku/helper/AntiXSS.php#L1752-L1758",
+            "permalink": "https://github.com/voku/anti-xss/blob/d94ffe1778984f56e4870cc1898f12b372cf1ae2/src/voku/helper/AntiXSS.php#L1792-L1798",
             "snippet": [
                 {
-                    "number": 1752,
+                    "number": 1792,
                     "focus": false,
                     "runs": [
                         [
@@ -1026,7 +1026,7 @@
                     ]
                 },
                 {
-                    "number": 1753,
+                    "number": 1793,
                     "focus": false,
                     "runs": [
                         [
@@ -1036,7 +1036,7 @@
                     ]
                 },
                 {
-                    "number": 1754,
+                    "number": 1794,
                     "focus": false,
                     "runs": [
                         [
@@ -1046,7 +1046,7 @@
                     ]
                 },
                 {
-                    "number": 1755,
+                    "number": 1795,
                     "focus": true,
                     "runs": [
                         [
@@ -1228,7 +1228,7 @@
                     ]
                 },
                 {
-                    "number": 1756,
+                    "number": 1796,
                     "focus": false,
                     "runs": [
                         [
@@ -1238,7 +1238,7 @@
                     ]
                 },
                 {
-                    "number": 1757,
+                    "number": 1797,
                     "focus": false,
                     "runs": [
                         [
@@ -1248,7 +1248,7 @@
                     ]
                 },
                 {
-                    "number": 1758,
+                    "number": 1798,
                     "focus": false,
                     "runs": [
                         [
@@ -1262,7 +1262,7 @@
         {
             "id": "f-91271a90e9",
             "file": "src/voku/helper/AntiXSS.php",
-            "line": 2039,
+            "line": 2079,
             "column": 17,
             "pattern": "#<(?!!--|!\\[)((?<start>/*\\s*)((?<tagName>[\\p{L}:]+)(?=[^\\p{L}]|$|)|.+)[^\\s\"'\\p{L}>/=]*[^>]*)(?<closeTag>>)?#iusS",
             "source": "preg_replace_callback()",
@@ -1287,10 +1287,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/anti-xss/blob/7fd0ba5171ccf26ec60cca7ca9de492992dd0bcb/src/voku/helper/AntiXSS.php#L2036-L2042",
+            "permalink": "https://github.com/voku/anti-xss/blob/d94ffe1778984f56e4870cc1898f12b372cf1ae2/src/voku/helper/AntiXSS.php#L2076-L2082",
             "snippet": [
                 {
-                    "number": 2036,
+                    "number": 2076,
                     "focus": false,
                     "runs": [
                         [
@@ -1300,7 +1300,7 @@
                     ]
                 },
                 {
-                    "number": 2037,
+                    "number": 2077,
                     "focus": false,
                     "runs": [
                         [
@@ -1310,7 +1310,7 @@
                     ]
                 },
                 {
-                    "number": 2038,
+                    "number": 2078,
                     "focus": false,
                     "runs": [
                         [
@@ -1320,7 +1320,7 @@
                     ]
                 },
                 {
-                    "number": 2039,
+                    "number": 2079,
                     "focus": true,
                     "runs": [
                         [
@@ -1542,7 +1542,7 @@
                     ]
                 },
                 {
-                    "number": 2040,
+                    "number": 2080,
                     "focus": false,
                     "runs": [
                         [
@@ -1552,7 +1552,7 @@
                     ]
                 },
                 {
-                    "number": 2041,
+                    "number": 2081,
                     "focus": false,
                     "runs": [
                         [
@@ -1562,7 +1562,7 @@
                     ]
                 },
                 {
-                    "number": 2042,
+                    "number": 2082,
                     "focus": false,
                     "runs": [
                         [

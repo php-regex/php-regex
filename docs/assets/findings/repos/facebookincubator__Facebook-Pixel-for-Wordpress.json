@@ -1,0 +1,138 @@
+{
+    "repo": "facebookincubator/Facebook-Pixel-for-Wordpress",
+    "sha": "400122b0aeed5f0ae42f3a2c3ecaaebbaf0945b4",
+    "target": {
+        "php": "7.4",
+        "pcre": "10.33",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-2fdec70777",
+            "file": "FacebookAds/Object/ServerSide/Normalizer.php",
+            "line": 248,
+            "column": 30,
+            "pattern": "/[\\-\\s+]/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.literalMetachar",
+                    "message": "\"+\" is a literal character inside a character class, not a quantifier.",
+                    "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
+                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/facebookincubator/Facebook-Pixel-for-Wordpress/blob/400122b0aeed5f0ae42f3a2c3ecaaebbaf0945b4/FacebookAds/Object/ServerSide/Normalizer.php#L245-L251",
+            "snippet": [
+                {
+                    "number": 245,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    $result = trim(preg_replace('/[a-z()-]/', '', $phone));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 246,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 247,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if (Normalizer::isInternationalNumber($result)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 248,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "      $result = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $result);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 249,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 250,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 251,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    return $result;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

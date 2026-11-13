@@ -1,6 +1,6 @@
 {
     "repo": "ibexa/core",
-    "sha": "f1aeed6606ca936825dddc6aacafbbf3e167de19",
+    "sha": "767542c901cb8e1d80927d3f8c074693eb158a32",
     "target": {
         "php": "8.5",
         "pcre": "10.44",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ibexa/core/blob/f1aeed6606ca936825dddc6aacafbbf3e167de19/src/lib/Persistence/TransformationProcessor/PcreCompiler.php#L232-L238",
+            "permalink": "https://github.com/ibexa/core/blob/767542c901cb8e1d80927d3f8c074693eb158a32/src/lib/Persistence/TransformationProcessor/PcreCompiler.php#L232-L238",
             "snippet": [
                 {
                     "number": 232,
@@ -183,6 +183,101 @@
             ]
         },
         {
+            "id": "f-ffe488c72e",
+            "file": "src/lib/QueryType/BuiltIn/SortSpec/SortSpecLexer.php",
+            "line": 98,
+            "column": 19,
+            "pattern": "/^(asc)|(desc)|(\\.)|(,)|(-?[0-9]+\\.[0-9]+)|(-?[0-9]+)|([a-zA-Z_][a-zA-Z0-9_]*)|\\s+$/iu",
+            "source": "preg_split()",
+            "location": "via $regexp",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"(desc)\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:(asc)|(desc)|(\\.)|(,)|(-?[0-9]+\\.[0-9]+)|(-?[0-9]+)|([a-zA-Z_][a-zA-Z0-9_]*)|\\s+)$\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/ibexa/core/blob/767542c901cb8e1d80927d3f8c074693eb158a32/src/lib/QueryType/BuiltIn/SortSpec/SortSpecLexer.php#L95-L101",
+            "snippet": [
+                {
+                    "number": 95,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 96,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function split(string $input): array",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 97,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 98,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $regexp = sprintf(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 99,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/^(asc)|(desc)|(\\\\.)|(,)|(%s)|\\s+$/iu',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 100,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            implode(')|(', [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 101,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                self::FLOAT_PATTERN,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-01b97a28d7",
             "file": "src/lib/Repository/NameSchema/SchemaIdentifierExtractor.php",
             "line": 30,
@@ -203,7 +298,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ibexa/core/blob/f1aeed6606ca936825dddc6aacafbbf3e167de19/src/lib/Repository/NameSchema/SchemaIdentifierExtractor.php#L27-L33",
+            "permalink": "https://github.com/ibexa/core/blob/767542c901cb8e1d80927d3f8c074693eb158a32/src/lib/Repository/NameSchema/SchemaIdentifierExtractor.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,

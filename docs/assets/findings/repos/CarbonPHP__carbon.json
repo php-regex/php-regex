@@ -1,6 +1,6 @@
 {
     "repo": "CarbonPHP/carbon",
-    "sha": "0aeffe96b86f9f837bfac706f65d6cd4fce92da9",
+    "sha": "dde1e12f75b779d8a1b396d5e17e6ae6ab50396e",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/CarbonPHP/carbon/blob/0aeffe96b86f9f837bfac706f65d6cd4fce92da9/phpdoc.php#L44-L50",
+            "permalink": "https://github.com/CarbonPHP/carbon/blob/dde1e12f75b779d8a1b396d5e17e6ae6ab50396e/phpdoc.php#L44-L50",
             "snippet": [
                 {
                     "number": 44,
@@ -217,7 +217,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/CarbonPHP/carbon/blob/0aeffe96b86f9f837bfac706f65d6cd4fce92da9/phpdoc.php#L760-L766",
+            "permalink": "https://github.com/CarbonPHP/carbon/blob/dde1e12f75b779d8a1b396d5e17e6ae6ab50396e/phpdoc.php#L760-L766",
             "snippet": [
                 {
                     "number": 760,
@@ -401,7 +401,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/CarbonPHP/carbon/blob/0aeffe96b86f9f837bfac706f65d6cd4fce92da9/phpdoc.php#L879-L885",
+            "permalink": "https://github.com/CarbonPHP/carbon/blob/dde1e12f75b779d8a1b396d5e17e6ae6ab50396e/phpdoc.php#L879-L885",
             "snippet": [
                 {
                     "number": 879,
@@ -585,7 +585,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/CarbonPHP/carbon/blob/0aeffe96b86f9f837bfac706f65d6cd4fce92da9/phpdoc.php#L897-L903",
+            "permalink": "https://github.com/CarbonPHP/carbon/blob/dde1e12f75b779d8a1b396d5e17e6ae6ab50396e/phpdoc.php#L897-L903",
             "snippet": [
                 {
                     "number": 897,
@@ -764,7 +764,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/CarbonPHP/carbon/blob/0aeffe96b86f9f837bfac706f65d6cd4fce92da9/src/Carbon/CarbonInterval.php#L1008-L1014",
+            "permalink": "https://github.com/CarbonPHP/carbon/blob/dde1e12f75b779d8a1b396d5e17e6ae6ab50396e/src/Carbon/CarbonInterval.php#L1008-L1014",
             "snippet": [
                 {
                     "number": 1008,

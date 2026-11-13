@@ -1,6 +1,6 @@
 {
     "repo": "laravel/prompts",
-    "sha": "d649ea63640598001e9183fdbcf4be425274f910",
+    "sha": "e84c227ae83ffef9f8fc1059bb2b79f2b0cfc0ca",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -10,7 +10,7 @@
         {
             "id": "f-8f455449d3",
             "file": "src/Task.php",
-            "line": 243,
+            "line": 244,
             "column": 34,
             "pattern": "/\\e\\[(?:1)?G\\e\\[2K/",
             "source": "preg_replace()",
@@ -33,10 +33,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/prompts/blob/d649ea63640598001e9183fdbcf4be425274f910/src/Task.php#L240-L246",
+            "permalink": "https://github.com/laravel/prompts/blob/e84c227ae83ffef9f8fc1059bb2b79f2b0cfc0ca/src/Task.php#L241-L247",
             "snippet": [
                 {
-                    "number": 240,
+                    "number": 241,
                     "focus": false,
                     "runs": [
                         [
@@ -46,7 +46,7 @@
                     ]
                 },
                 {
-                    "number": 241,
+                    "number": 242,
                     "focus": false,
                     "runs": [
                         [
@@ -56,7 +56,7 @@
                     ]
                 },
                 {
-                    "number": 242,
+                    "number": 243,
                     "focus": false,
                     "runs": [
                         [
@@ -66,7 +66,7 @@
                     ]
                 },
                 {
-                    "number": 243,
+                    "number": 244,
                     "focus": true,
                     "runs": [
                         [
@@ -120,7 +120,7 @@
                     ]
                 },
                 {
-                    "number": 244,
+                    "number": 245,
                     "focus": false,
                     "runs": [
                         [
@@ -130,7 +130,7 @@
                     ]
                 },
                 {
-                    "number": 245,
+                    "number": 246,
                     "focus": false,
                     "runs": [
                         [
@@ -140,7 +140,7 @@
                     ]
                 },
                 {
-                    "number": 246,
+                    "number": 247,
                     "focus": false,
                     "runs": [
                         [

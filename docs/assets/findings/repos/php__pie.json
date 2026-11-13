@@ -1,0 +1,566 @@
+{
+    "repo": "php/pie",
+    "sha": "b89115dbc5ce6f1fa7ca628c8a46f133e6ff9c45",
+    "target": {
+        "php": "8.1.99",
+        "pcre": "10.39",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-fbcbdc725c",
+            "file": "src/DependencyResolver/ResolveDependencyWithComposer.php",
+            "line": 148,
+            "column": 13,
+            "pattern": "AlmaLinux",
+            "source": "preg_match()",
+            "location": "via $rpmProvider",
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.delimiter.invalid",
+                    "message": "Invalid delimiter \"A\". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #AlmaLinux#.",
+                    "hint": null,
+                    "docs": null
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/php/pie/blob/b89115dbc5ce6f1fa7ca628c8a46f133e6ff9c45/src/DependencyResolver/ResolveDependencyWithComposer.php#L145-L151",
+            "snippet": [
+                {
+                    "number": 145,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 146,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 147,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $rpmProviders = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 148,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "AlmaLinux",
+                            "pg-snippet-pattern"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 149,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'CentOS',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 150,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'Fedora Project',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 151,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'Red Hat, Inc.',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6367dad8e0",
+            "file": "src/DependencyResolver/ResolveDependencyWithComposer.php",
+            "line": 149,
+            "column": 13,
+            "pattern": "CentOS",
+            "source": "preg_match()",
+            "location": "via $rpmProvider",
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.delimiter.invalid",
+                    "message": "Invalid delimiter \"C\". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #CentOS#.",
+                    "hint": null,
+                    "docs": null
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/php/pie/blob/b89115dbc5ce6f1fa7ca628c8a46f133e6ff9c45/src/DependencyResolver/ResolveDependencyWithComposer.php#L146-L152",
+            "snippet": [
+                {
+                    "number": 146,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 147,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $rpmProviders = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 148,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'AlmaLinux',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 149,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "CentOS",
+                            "pg-snippet-pattern"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 150,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'Fedora Project',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 151,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'Red Hat, Inc.',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 152,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '|^Remi\\'s RPM repository <https://rpms.remirepo.net/>|',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-8876a7e7ec",
+            "file": "src/DependencyResolver/ResolveDependencyWithComposer.php",
+            "line": 150,
+            "column": 13,
+            "pattern": "Fedora Project",
+            "source": "preg_match()",
+            "location": "via $rpmProvider",
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.delimiter.invalid",
+                    "message": "Invalid delimiter \"F\". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #Fedora Project#.",
+                    "hint": null,
+                    "docs": null
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/php/pie/blob/b89115dbc5ce6f1fa7ca628c8a46f133e6ff9c45/src/DependencyResolver/ResolveDependencyWithComposer.php#L147-L153",
+            "snippet": [
+                {
+                    "number": 147,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $rpmProviders = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 148,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'AlmaLinux',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 149,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'CentOS',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 150,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "Fedora Project",
+                            "pg-snippet-pattern"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 151,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'Red Hat, Inc.',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 152,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '|^Remi\\'s RPM repository <https://rpms.remirepo.net/>|',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 153,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'Rocky Enterprise Software Foundation',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-cb67c9698f",
+            "file": "src/DependencyResolver/ResolveDependencyWithComposer.php",
+            "line": 151,
+            "column": 13,
+            "pattern": "Red Hat, Inc.",
+            "source": "preg_match()",
+            "location": "via $rpmProvider",
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.delimiter.invalid",
+                    "message": "Invalid delimiter \"R\". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #Red Hat, Inc.#.",
+                    "hint": null,
+                    "docs": null
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/php/pie/blob/b89115dbc5ce6f1fa7ca628c8a46f133e6ff9c45/src/DependencyResolver/ResolveDependencyWithComposer.php#L148-L154",
+            "snippet": [
+                {
+                    "number": 148,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'AlmaLinux',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 149,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'CentOS',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 150,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'Fedora Project',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 151,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "Red Hat, Inc.",
+                            "pg-snippet-pattern"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 152,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '|^Remi\\'s RPM repository <https://rpms.remirepo.net/>|',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 153,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'Rocky Enterprise Software Foundation',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 154,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-213de5f337",
+            "file": "src/DependencyResolver/ResolveDependencyWithComposer.php",
+            "line": 153,
+            "column": 13,
+            "pattern": "Rocky Enterprise Software Foundation",
+            "source": "preg_match()",
+            "location": "via $rpmProvider",
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.delimiter.invalid",
+                    "message": "Invalid delimiter \"R\". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #Rocky Enterprise Software Foundation#.",
+                    "hint": null,
+                    "docs": null
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/php/pie/blob/b89115dbc5ce6f1fa7ca628c8a46f133e6ff9c45/src/DependencyResolver/ResolveDependencyWithComposer.php#L150-L156",
+            "snippet": [
+                {
+                    "number": 150,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'Fedora Project',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 151,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            'Red Hat, Inc.',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 152,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '|^Remi\\'s RPM repository <https://rpms.remirepo.net/>|',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 153,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "Rocky Enterprise Software Foundation",
+                            "pg-snippet-pattern"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 154,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 155,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($rpmProviders as $rpmProvider) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 156,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if ($buildProvider === $rpmProvider || ($rpmProvider[0] === '|' && preg_match($rpmProvider, $buildProvider))) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

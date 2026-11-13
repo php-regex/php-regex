@@ -1,12 +1,129 @@
 {
     "repo": "PHPCSStandards/PHP_CodeSniffer",
-    "sha": "7f47350339831578dfab3eb288c12d18c1dfccfe",
+    "sha": "c17bea2b241d09596accb728e097de010a002c8a",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
         "source": "composer.json require.php"
     },
     "findings": [
+        {
+            "id": "f-b9e8d5fbec",
+            "file": "src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php",
+            "line": 475,
+            "column": 28,
+            "pattern": "/^([^<]*)\\s+<([\\da-zA-Z-_+]([\\da-zA-Z-_+.\\w]*[\\da-zA-Z-_+])*@[\\da-zA-Z][-.\\w]*[\\da-zA-Z]\\.[a-zA-Z]{2,})>$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \" <+\" . \"++\" x n . \"!>\" Replayed on PCRE2 10.49: preg_match fails from length 21 (backtrack_limit 100000, JIT off). The risky part is: [\\da-zA-Z\\-_+.\\w]* Hotspot offsets: 27-44 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": " <+",
+                "pump": "++",
+                "suffix": "!>",
+                "n": 32,
+                "length": 21,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": " <+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>",
+            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/c17bea2b241d09596accb728e097de010a002c8a/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php#L472-L478",
+            "snippet": [
+                {
+                    "number": 472,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $local   = '\\da-zA-Z-_+';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 473,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // Dot character cannot be the first or last character in the local-part.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 474,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $localMiddle = $local . '.\\w';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 475,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match('/^([^<]*)\\s+<([' . $local . ']([' . $localMiddle . ']*[' . $local . '])*@[\\da-zA-Z][-.\\w]*[\\da-zA-Z]\\.[a-zA-Z]{2,})>$/', $content) === 0) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 476,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $error = 'Content of the @author tag must be in the form \"Display Name <username@example.com>\"';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 477,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $phpcsFile->addError($error, $tag, 'InvalidAuthors');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 478,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
         {
             "id": "f-941119b54d",
             "file": "src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php",
@@ -33,7 +150,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/7f47350339831578dfab3eb288c12d18c1dfccfe/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php#L499-L505",
+            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/c17bea2b241d09596accb728e097de010a002c8a/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php#L499-L505",
             "snippet": [
                 {
                     "number": 499,
@@ -252,7 +369,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/7f47350339831578dfab3eb288c12d18c1dfccfe/src/Util/Common.php#L489-L495",
+            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/c17bea2b241d09596accb728e097de010a002c8a/src/Util/Common.php#L489-L495",
             "snippet": [
                 {
                     "number": 489,

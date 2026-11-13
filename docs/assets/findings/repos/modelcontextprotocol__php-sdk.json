@@ -1,16 +1,16 @@
 {
     "repo": "modelcontextprotocol/php-sdk",
-    "sha": "18595ae406df21fa700625a94069f36a8800a963",
+    "sha": "53efee528329f8baa879015915574ef331ddd2e1",
     "target": {
-        "php": "8.1",
-        "pcre": "10.39",
+        "php": "8.2",
+        "pcre": "10.40",
         "source": "composer.json require.php"
     },
     "findings": [
         {
-            "id": "f-5ed8add0b6",
-            "file": "src/Capability/Discovery/SchemaGenerator.php",
-            "line": 849,
+            "id": "f-ff6b13f5d3",
+            "file": "src/Server/Capability/Discovery/SchemaGenerator.php",
+            "line": 867,
             "column": 24,
             "pattern": "/^int\\s*<\\s*[^<>]+\\s*>$/",
             "source": "preg_match()",
@@ -28,10 +28,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/18595ae406df21fa700625a94069f36a8800a963/src/Capability/Discovery/SchemaGenerator.php#L846-L852",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/53efee528329f8baa879015915574ef331ddd2e1/src/Server/Capability/Discovery/SchemaGenerator.php#L864-L870",
             "snippet": [
                 {
-                    "number": 846,
+                    "number": 864,
                     "focus": false,
                     "runs": [
                         [
@@ -41,7 +41,7 @@
                     ]
                 },
                 {
-                    "number": 847,
+                    "number": 865,
                     "focus": false,
                     "runs": [
                         [
@@ -51,7 +51,7 @@
                     ]
                 },
                 {
-                    "number": 848,
+                    "number": 866,
                     "focus": false,
                     "runs": [
                         [
@@ -61,7 +61,7 @@
                     ]
                 },
                 {
-                    "number": 849,
+                    "number": 867,
                     "focus": true,
                     "runs": [
                         [
@@ -151,7 +151,7 @@
                     ]
                 },
                 {
-                    "number": 850,
+                    "number": 868,
                     "focus": false,
                     "runs": [
                         [
@@ -161,7 +161,7 @@
                     ]
                 },
                 {
-                    "number": 851,
+                    "number": 869,
                     "focus": false,
                     "runs": [
                         [
@@ -171,7 +171,7 @@
                     ]
                 },
                 {
-                    "number": 852,
+                    "number": 870,
                     "focus": false,
                     "runs": [
                         [
@@ -183,9 +183,9 @@
             ]
         },
         {
-            "id": "f-b33d28fb7b",
-            "file": "src/Capability/Discovery/SchemaGenerator.php",
-            "line": 896,
+            "id": "f-333b71c5e1",
+            "file": "src/Server/Capability/Discovery/SchemaGenerator.php",
+            "line": 914,
             "column": 24,
             "pattern": "/^(\\??)([\\w\\\\]+)\\s*\\[\\]$/i",
             "source": "preg_match()",
@@ -203,10 +203,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/18595ae406df21fa700625a94069f36a8800a963/src/Capability/Discovery/SchemaGenerator.php#L893-L899",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/53efee528329f8baa879015915574ef331ddd2e1/src/Server/Capability/Discovery/SchemaGenerator.php#L911-L917",
             "snippet": [
                 {
-                    "number": 893,
+                    "number": 911,
                     "focus": false,
                     "runs": [
                         [
@@ -216,7 +216,7 @@
                     ]
                 },
                 {
-                    "number": 894,
+                    "number": 912,
                     "focus": false,
                     "runs": [
                         [
@@ -226,7 +226,7 @@
                     ]
                 },
                 {
-                    "number": 895,
+                    "number": 913,
                     "focus": false,
                     "runs": [
                         [
@@ -236,7 +236,7 @@
                     ]
                 },
                 {
-                    "number": 896,
+                    "number": 914,
                     "focus": true,
                     "runs": [
                         [
@@ -330,7 +330,7 @@
                     ]
                 },
                 {
-                    "number": 897,
+                    "number": 915,
                     "focus": false,
                     "runs": [
                         [
@@ -340,7 +340,7 @@
                     ]
                 },
                 {
-                    "number": 898,
+                    "number": 916,
                     "focus": false,
                     "runs": [
                         [
@@ -350,7 +350,7 @@
                     ]
                 },
                 {
-                    "number": 899,
+                    "number": 917,
                     "focus": false,
                     "runs": [
                         [
@@ -362,9 +362,9 @@
             ]
         },
         {
-            "id": "f-34348bad8c",
-            "file": "src/Capability/Discovery/SchemaGenerator.php",
-            "line": 915,
+            "id": "f-0bf65817c9",
+            "file": "src/Server/Capability/Discovery/SchemaGenerator.php",
+            "line": 933,
             "column": 27,
             "pattern": "/^(\\??)([\\w\\\\]+)\\s*\\[\\]\\[\\]$/i",
             "source": "preg_match()",
@@ -382,10 +382,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/18595ae406df21fa700625a94069f36a8800a963/src/Capability/Discovery/SchemaGenerator.php#L912-L918",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/53efee528329f8baa879015915574ef331ddd2e1/src/Server/Capability/Discovery/SchemaGenerator.php#L930-L936",
             "snippet": [
                 {
-                    "number": 912,
+                    "number": 930,
                     "focus": false,
                     "runs": [
                         [
@@ -395,7 +395,7 @@
                     ]
                 },
                 {
-                    "number": 913,
+                    "number": 931,
                     "focus": false,
                     "runs": [
                         [
@@ -405,7 +405,7 @@
                     ]
                 },
                 {
-                    "number": 914,
+                    "number": 932,
                     "focus": false,
                     "runs": [
                         [
@@ -415,7 +415,7 @@
                     ]
                 },
                 {
-                    "number": 915,
+                    "number": 933,
                     "focus": true,
                     "runs": [
                         [
@@ -509,7 +509,7 @@
                     ]
                 },
                 {
-                    "number": 916,
+                    "number": 934,
                     "focus": false,
                     "runs": [
                         [
@@ -519,7 +519,7 @@
                     ]
                 },
                 {
-                    "number": 917,
+                    "number": 935,
                     "focus": false,
                     "runs": [
                         [
@@ -529,7 +529,7 @@
                     ]
                 },
                 {
-                    "number": 918,
+                    "number": 936,
                     "focus": false,
                     "runs": [
                         [
@@ -541,9 +541,9 @@
             ]
         },
         {
-            "id": "f-3533e842e7",
-            "file": "src/Capability/Discovery/SchemaGenerator.php",
-            "line": 1017,
+            "id": "f-25e677beb8",
+            "file": "src/Server/Capability/Discovery/SchemaGenerator.php",
+            "line": 1035,
             "column": 24,
             "pattern": "/^(?:non-empty-)?array\\s*<\\s*((?:'[^']*'|\"[^\"]*\"|[^<>{},'\"]|<[^<>]*>)+?)\\s*,\\s*(.+?)\\s*>$/is",
             "source": "preg_match()",
@@ -561,10 +561,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/18595ae406df21fa700625a94069f36a8800a963/src/Capability/Discovery/SchemaGenerator.php#L1014-L1020",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/53efee528329f8baa879015915574ef331ddd2e1/src/Server/Capability/Discovery/SchemaGenerator.php#L1032-L1038",
             "snippet": [
                 {
-                    "number": 1014,
+                    "number": 1032,
                     "focus": false,
                     "runs": [
                         [
@@ -574,7 +574,7 @@
                     ]
                 },
                 {
-                    "number": 1015,
+                    "number": 1033,
                     "focus": false,
                     "runs": [
                         [
@@ -584,7 +584,7 @@
                     ]
                 },
                 {
-                    "number": 1016,
+                    "number": 1034,
                     "focus": false,
                     "runs": [
                         [
@@ -594,7 +594,7 @@
                     ]
                 },
                 {
-                    "number": 1017,
+                    "number": 1035,
                     "focus": true,
                     "runs": [
                         [
@@ -828,7 +828,7 @@
                     ]
                 },
                 {
-                    "number": 1018,
+                    "number": 1036,
                     "focus": false,
                     "runs": [
                         [
@@ -838,7 +838,7 @@
                     ]
                 },
                 {
-                    "number": 1019,
+                    "number": 1037,
                     "focus": false,
                     "runs": [
                         [
@@ -848,7 +848,7 @@
                     ]
                 },
                 {
-                    "number": 1020,
+                    "number": 1038,
                     "focus": false,
                     "runs": [
                         [
@@ -860,9 +860,9 @@
             ]
         },
         {
-            "id": "f-7dea1e2e08",
-            "file": "src/Capability/Discovery/SchemaGenerator.php",
-            "line": 1031,
+            "id": "f-0e2330d181",
+            "file": "src/Server/Capability/Discovery/SchemaGenerator.php",
+            "line": 1049,
             "column": 27,
             "pattern": "/^([\\w\\\\]+)\\s*\\[\\]$/i",
             "source": "preg_match()",
@@ -880,10 +880,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/18595ae406df21fa700625a94069f36a8800a963/src/Capability/Discovery/SchemaGenerator.php#L1028-L1034",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/53efee528329f8baa879015915574ef331ddd2e1/src/Server/Capability/Discovery/SchemaGenerator.php#L1046-L1052",
             "snippet": [
                 {
-                    "number": 1028,
+                    "number": 1046,
                     "focus": false,
                     "runs": [
                         [
@@ -893,7 +893,7 @@
                     ]
                 },
                 {
-                    "number": 1029,
+                    "number": 1047,
                     "focus": false,
                     "runs": [
                         [
@@ -903,7 +903,7 @@
                     ]
                 },
                 {
-                    "number": 1030,
+                    "number": 1048,
                     "focus": false,
                     "runs": [
                         [
@@ -913,7 +913,7 @@
                     ]
                 },
                 {
-                    "number": 1031,
+                    "number": 1049,
                     "focus": true,
                     "runs": [
                         [
@@ -995,7 +995,7 @@
                     ]
                 },
                 {
-                    "number": 1032,
+                    "number": 1050,
                     "focus": false,
                     "runs": [
                         [
@@ -1005,7 +1005,7 @@
                     ]
                 },
                 {
-                    "number": 1033,
+                    "number": 1051,
                     "focus": false,
                     "runs": [
                         [
@@ -1015,7 +1015,7 @@
                     ]
                 },
                 {
-                    "number": 1034,
+                    "number": 1052,
                     "focus": false,
                     "runs": [
                         [

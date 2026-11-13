@@ -1,6 +1,6 @@
 {
     "repo": "phpbb/phpbb",
-    "sha": "daf04eb49b61a77e4741dd6788dc04636661b4db",
+    "sha": "8a4e4fd993d377a2f2d552cca11046c9042c569d",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/develop/create_variable_overview.php#L176-L182",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/develop/create_variable_overview.php#L176-L182",
             "snippet": [
                 {
                     "number": 176,
@@ -205,7 +205,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/develop/create_variable_overview.php#L177-L183",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/develop/create_variable_overview.php#L177-L183",
             "snippet": [
                 {
                     "number": 177,
@@ -377,7 +377,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/develop/create_variable_overview.php#L183-L189",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/develop/create_variable_overview.php#L183-L189",
             "snippet": [
                 {
                     "number": 183,
@@ -552,7 +552,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/develop/create_variable_overview.php#L190-L196",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/develop/create_variable_overview.php#L190-L196",
             "snippet": [
                 {
                     "number": 190,
@@ -787,7 +787,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/develop/create_variable_overview.php#L191-L197",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/develop/create_variable_overview.php#L191-L197",
             "snippet": [
                 {
                     "number": 191,
@@ -1027,7 +1027,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/develop/create_variable_overview.php#L198-L204",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/develop/create_variable_overview.php#L198-L204",
             "snippet": [
                 {
                     "number": 198,
@@ -1199,7 +1199,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/develop/create_variable_overview.php#L199-L205",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/develop/create_variable_overview.php#L199-L205",
             "snippet": [
                 {
                     "number": 199,
@@ -1366,7 +1366,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/develop/create_variable_overview.php#L463-L469",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/develop/create_variable_overview.php#L463-L469",
             "snippet": [
                 {
                     "number": 463,
@@ -1505,7 +1505,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/develop/create_variable_overview.php#L479-L485",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/develop/create_variable_overview.php#L479-L485",
             "snippet": [
                 {
                     "number": 479,
@@ -1663,7 +1663,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/acp/acp_attachments.php#L1607-L1613",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/acp/acp_attachments.php#L1607-L1613",
             "snippet": [
                 {
                     "number": 1607,
@@ -1831,7 +1831,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/acp/acp_attachments.php#L1611-L1617",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/acp/acp_attachments.php#L1611-L1617",
             "snippet": [
                 {
                     "number": 1611,
@@ -1998,7 +1998,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/bbcode.php#L485-L491",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/bbcode.php#L485-L491",
             "snippet": [
                 {
                     "number": 485,
@@ -2141,7 +2141,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/functions.php#L2870-L2876",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/functions.php#L2870-L2876",
             "snippet": [
                 {
                     "number": 2870,
@@ -2316,7 +2316,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/functions.php#L2892-L2898",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/functions.php#L2892-L2898",
             "snippet": [
                 {
                     "number": 2892,
@@ -2476,7 +2476,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/functions_user.php#L1029-L1035",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/functions_user.php#L1029-L1035",
             "snippet": [
                 {
                     "number": 1029,
@@ -2635,7 +2635,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/message_parser.php#L434-L440",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/message_parser.php#L434-L440",
             "snippet": [
                 {
                     "number": 434,
@@ -2775,7 +2775,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/message_parser.php#L779-L785",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/message_parser.php#L779-L785",
             "snippet": [
                 {
                     "number": 779,
@@ -2946,7 +2946,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/message_parser.php#L808-L814",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/message_parser.php#L808-L814",
             "snippet": [
                 {
                     "number": 808,
@@ -3094,7 +3094,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/message_parser.php#L1095-L1101",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/message_parser.php#L1095-L1101",
             "snippet": [
                 {
                     "number": 1095,
@@ -3278,7 +3278,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/message_parser.php#L1874-L1880",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/message_parser.php#L1874-L1880",
             "snippet": [
                 {
                     "number": 1874,
@@ -3470,7 +3470,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/includes/utf/utf_tools.php#L201-L207",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/includes/utf/utf_tools.php#L201-L207",
             "snippet": [
                 {
                     "number": 201,
@@ -3625,7 +3625,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/cache/driver/base.php#L96-L102",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/cache/driver/base.php#L96-L102",
             "snippet": [
                 {
                     "number": 96,
@@ -3760,7 +3760,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/cache/driver/file.php#L310-L316",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/cache/driver/file.php#L310-L316",
             "snippet": [
                 {
                     "number": 310,
@@ -3895,7 +3895,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/cache/driver/memory.php#L217-L223",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/cache/driver/memory.php#L217-L223",
             "snippet": [
                 {
                     "number": 217,
@@ -4037,7 +4037,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/composer/io/html_output_formatter.php#L50-L56",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/composer/io/html_output_formatter.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -4271,7 +4271,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/driver.php#L1190-L1196",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/driver.php#L1190-L1196",
             "snippet": [
                 {
                     "number": 1190,
@@ -4445,7 +4445,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/driver.php#L1276-L1282",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/driver.php#L1276-L1282",
             "snippet": [
                 {
                     "number": 1276,
@@ -4624,7 +4624,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/mssqlnative.php#L207-L213",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/mssqlnative.php#L207-L213",
             "snippet": [
                 {
                     "number": 207,
@@ -4783,7 +4783,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/mssqlnative.php#L212-L218",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/mssqlnative.php#L212-L218",
             "snippet": [
                 {
                     "number": 212,
@@ -4930,7 +4930,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/oracle.php#L158-L164",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/oracle.php#L158-L164",
             "snippet": [
                 {
                     "number": 158,
@@ -5419,7 +5419,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/oracle.php#L351-L357",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/oracle.php#L351-L357",
             "snippet": [
                 {
                     "number": 351,
@@ -5862,7 +5862,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/oracle.php#L357-L363",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/oracle.php#L357-L363",
             "snippet": [
                 {
                     "number": 357,
@@ -6104,7 +6104,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/oracle.php#L383-L389",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/oracle.php#L383-L389",
             "snippet": [
                 {
                     "number": 383,
@@ -6601,7 +6601,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/oracle.php#L391-L397",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/oracle.php#L391-L397",
             "snippet": [
                 {
                     "number": 391,
@@ -7067,7 +7067,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/oracle.php#L399-L405",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/oracle.php#L399-L405",
             "snippet": [
                 {
                     "number": 399,
@@ -7499,7 +7499,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/oracle.php#L580-L586",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/oracle.php#L580-L586",
             "snippet": [
                 {
                     "number": 580,
@@ -7707,7 +7707,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/db/driver/postgres.php#L345-L351",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/db/driver/postgres.php#L345-L351",
             "snippet": [
                 {
                     "number": 345,
@@ -7915,7 +7915,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/feed/helper.php#L149-L155",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/feed/helper.php#L149-L155",
             "snippet": [
                 {
                     "number": 149,
@@ -8071,7 +8071,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/feed/helper.php#L157-L163",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/feed/helper.php#L157-L163",
             "snippet": [
                 {
                     "number": 157,
@@ -8242,7 +8242,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/files/upload.php#L263-L269",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/files/upload.php#L263-L269",
             "snippet": [
                 {
                     "number": 263,
@@ -8357,7 +8357,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \".\" and \"[\\\\r\\\\n]\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \".\" and \"[\\r\\n]\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -8365,7 +8365,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/install/helper/database.php#L220-L226",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/install/helper/database.php#L220-L226",
             "snippet": [
                 {
                     "number": 220,
@@ -8517,7 +8517,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/install/helper/iohandler/ajax_iohandler.php#L193-L199",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/install/helper/iohandler/ajax_iohandler.php#L193-L199",
             "snippet": [
                 {
                     "number": 193,
@@ -8689,7 +8689,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/install/module/install_database/task/add_default_data.php#L92-L98",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/install/module/install_database/task/add_default_data.php#L92-L98",
             "snippet": [
                 {
                     "number": 92,
@@ -8861,7 +8861,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/install/module/install_database/task/add_default_data.php#L135-L141",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/install/module/install_database/task/add_default_data.php#L135-L141",
             "snippet": [
                 {
                     "number": 135,
@@ -9053,7 +9053,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/install/module/install_database/task/add_default_data.php#L139-L145",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/install/module/install_database/task/add_default_data.php#L139-L145",
             "snippet": [
                 {
                     "number": 139,
@@ -9200,7 +9200,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/search/backend/fulltext_mysql.php#L221-L227",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/search/backend/fulltext_mysql.php#L221-L227",
             "snippet": [
                 {
                     "number": 221,
@@ -9447,7 +9447,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/search/backend/fulltext_mysql.php#L1128-L1134",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/search/backend/fulltext_mysql.php#L1128-L1134",
             "snippet": [
                 {
                     "number": 1128,
@@ -9694,7 +9694,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/search/backend/fulltext_postgres.php#L184-L190",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/search/backend/fulltext_postgres.php#L184-L190",
             "snippet": [
                 {
                     "number": 184,
@@ -9941,7 +9941,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpbb/phpbb/blob/daf04eb49b61a77e4741dd6788dc04636661b4db/phpBB/phpbb/search/backend/fulltext_postgres.php#L1063-L1069",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/search/backend/fulltext_postgres.php#L1063-L1069",
             "snippet": [
                 {
                     "number": 1063,
@@ -10161,6 +10161,317 @@
                     "runs": [
                         [
                             "\t\t// remove too short or too long words",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-635a2b139a",
+            "file": "phpBB/phpbb/search/backend/fulltext_sphinx.php",
+            "line": 765,
+            "column": 75,
+            "pattern": "#((?:\\p{L}|\\p{N})+)-((?:\\p{L}|\\p{N})+)(?:-((?:\\p{L}|\\p{N})+))?(?:-((?:\\p{L}|\\p{N})+))?#i",
+            "source": "preg_replace()",
+            "location": "via $match",
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{L}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                },
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{N}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                },
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{L}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                },
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{N}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                },
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{L}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                },
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{N}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                },
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{L}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                },
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{N}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpbb/phpbb/blob/8a4e4fd993d377a2f2d552cca11046c9042c569d/phpBB/phpbb/search/backend/fulltext_sphinx.php#L762-L768",
+            "snippet": [
+                {
+                    "number": 762,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$search_string = preg_replace(['#\\/(?!\"[^\"]+\")#', '#~(?!\"[^\"]+\")#'], ['/\\\\', '~\\\\'], $search_string);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 763,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$search_string = strrev($search_string);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 764,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 765,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$match = ['#(/|\\\\\\\\/)(?![1-9](\\s|$))#', '#(~|\\\\\\\\~)(?!\\d{1,2}(\\s|$))#', ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "((?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\p{L}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\p{N}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "((?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\p{L}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\p{N}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "((?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\p{L}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\p{N}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "((?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\p{L}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\p{N}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '#<<\\s*$#', '#(\\S\\K=|=(?=\\s)|=$)#'];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 766,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$replace = ['\\/', '\\~', '(\"$1 $2 $3 $4\"|$1$2$3$4*)', '\\<\\<', '\\='];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 767,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 768,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$search_string = preg_replace($match, $replace, $search_string);",
                             ""
                         ]
                     ]

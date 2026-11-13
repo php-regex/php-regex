@@ -1,0 +1,512 @@
+{
+    "repo": "Intervention/image",
+    "sha": "3a47838f2e0f4ec6c8c9b43a5d73ac985b975830",
+    "target": {
+        "php": "8.3",
+        "pcre": "10.42",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-b3492afdc7",
+            "file": "src/Colors/Hsl/Decoders/StringColorDecoder.php",
+            "line": 19,
+            "column": 5,
+            "pattern": "/^hsla? ?\\( ?(?P<h>[0-9\\.]+)(?:deg)?((, ?)| )(?P<s>[0-9\\.]+%?)((, ?)| )(?P<l>[0-9\\.]+%?)(?:(?:(?: ?\\/ ?)|(?:[, ]) ?)(?<a>(?:0\\.[0-9]+)|1\\.0|\\.[0-9]+|[0-9]{1,3}%|1|0))? ?\\)$/i",
+            "source": "preg_match()",
+            "location": "via self::PATTERN",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[, ])\" at offset 104; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^hsla? ?\\( ?(?P<h>[0-9.]+)(?:deg)?((, ?)| )(?P<s>[0-9.]+%?)((, ?)| )(?P<l>[0-9.]+%?)(?:(?:(?: ?\\/ ?)|[, ] ?)(?<a>(?:0\\.[0-9]+)|1\\.0|\\.[0-9]+|[0-9]{1,3}%|1|0))? ?\\)$/i",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Intervention/image/blob/3a47838f2e0f4ec6c8c9b43a5d73ac985b975830/src/Colors/Hsl/Decoders/StringColorDecoder.php#L16-L22",
+            "snippet": [
+                {
+                    "number": 16,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * Regex pattern of HSL color syntax",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 17,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 18,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private const string PATTERN =",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 19,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    '/^hsla? ?\\( ?' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 20,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<h>[0-9\\.]+)(?:deg)?((, ?)| )' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 21,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<s>[0-9\\.]+%?)((, ?)| )' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 22,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<l>[0-9\\.]+%?)' .",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-7f96b47633",
+            "file": "src/Colors/Hsv/Decoders/StringColorDecoder.php",
+            "line": 19,
+            "column": 5,
+            "pattern": "/^hs(v|b) ?\\( ?(?P<h>[0-9\\.]+)(?:deg)?((, ?)| )(?P<s>[0-9\\.]+%?)((, ?)| )(?P<v>[0-9\\.]+%?)(?:(?:(?: ?\\/ ?)|(?:[, ]) ?)(?<a>(?:0\\.[0-9]+)|1\\.0|\\.[0-9]+|[0-9]{1,3}%|1|0))? ?\\)$/i",
+            "source": "preg_match()",
+            "location": "via self::PATTERN",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[, ])\" at offset 106; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^hs([vb]) ?\\( ?(?P<h>[0-9.]+)(?:deg)?((, ?)| )(?P<s>[0-9.]+%?)((, ?)| )(?P<v>[0-9.]+%?)(?:(?:(?: ?\\/ ?)|[, ] ?)(?<a>(?:0\\.[0-9]+)|1\\.0|\\.[0-9]+|[0-9]{1,3}%|1|0))? ?\\)$/i",
+                "changes": [
+                    "Wrote an alternation of single characters as a class.",
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Intervention/image/blob/3a47838f2e0f4ec6c8c9b43a5d73ac985b975830/src/Colors/Hsv/Decoders/StringColorDecoder.php#L16-L22",
+            "snippet": [
+                {
+                    "number": 16,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * Regex pattern of hsv/b color syntax.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 17,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 18,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private const string PATTERN =",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 19,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    '/^hs(v|b) ?\\( ?(' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 20,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '?P<h>[0-9\\.]+)(?:deg)?((, ?)| )' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 21,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<s>[0-9\\.]+%?)((, ?)| )' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 22,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<v>[0-9\\.]+%?)' .",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-9767c7aba5",
+            "file": "src/Colors/Oklab/Decoders/StringColorDecoder.php",
+            "line": 22,
+            "column": 9,
+            "pattern": "/^oklab ?\\( ?(?P<l>(1|0|0?\\.[0-9]+)|[0-9\\.]+%)((, ?)|( ))(?P<a>(-?0|-?0?\\.[0-9\\.]+)|(-?[0-9\\.]+%))((, ?)|( ))(?P<b>(-?0|-?0?\\.[0-9\\.]+)|(-?[0-9\\.]+%))(?:(?:(?: ?\\/ ?)|(?:[, ]) ?)(?<alpha>(?:0\\.[0-9]+)|1\\.0|\\.[0-9]+|[0-9]{1,3}%|1|0))? ?\\)$/i",
+            "source": "preg_match()",
+            "location": "via self::PATTERN",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[, ])\" at offset 166; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^oklab ?\\( ?(?P<l>(1|0|0?\\.[0-9]+)|[0-9.]+%)((, ?)|( ))(?P<a>(-?0|-?0?\\.[0-9.]+)|(-?[0-9.]+%))((, ?)|( ))(?P<b>(-?0|-?0?\\.[0-9.]+)|(-?[0-9.]+%))(?:(?:(?: ?\\/ ?)|[, ] ?)(?<alpha>(?:0\\.[0-9]+)|1\\.0|\\.[0-9]+|[0-9]{1,3}%|1|0))? ?\\)$/i",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Intervention/image/blob/3a47838f2e0f4ec6c8c9b43a5d73ac985b975830/src/Colors/Oklab/Decoders/StringColorDecoder.php#L19-L25",
+            "snippet": [
+                {
+                    "number": 19,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * Regex pattern of oklab color syntax.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 20,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 21,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private const string PATTERN =",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 22,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        '/^oklab ?\\( ?' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 23,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<l>(1|0|0?\\.[0-9]+)|[0-9\\.]+%)((, ?)|( ))' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 24,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<a>(-?0|-?0?\\.[0-9\\.]+)|(-?[0-9\\.]+%))((, ?)|( ))' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 25,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<b>(-?0|-?0?\\.[0-9\\.]+)|(-?[0-9\\.]+%))' .",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-e6acf90d48",
+            "file": "src/Colors/Oklch/Decoders/StringColorDecoder.php",
+            "line": 22,
+            "column": 9,
+            "pattern": "/^oklch ?\\( ?(?P<l>(1|0|0?\\.[0-9]+)|[0-9\\.]+%)((, ?)|( ))(?P<c>(-?0|-?0?\\.[0-9\\.]+)|(-?[0-9\\.]+%))((, ?)|( ))(?P<h>[0-9\\.]+)(?:(?:(?: ?\\/ ?)|(?:[, ]) ?)(?<a>(?:0\\.[0-9]+)|1\\.0|\\.[0-9]+|[0-9]{1,3}%|1|0))? ?\\)$/i",
+            "source": "preg_match()",
+            "location": "via self::PATTERN",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[, ])\" at offset 140; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^oklch ?\\( ?(?P<l>(1|0|0?\\.[0-9]+)|[0-9.]+%)((, ?)|( ))(?P<c>(-?0|-?0?\\.[0-9.]+)|(-?[0-9.]+%))((, ?)|( ))(?P<h>[0-9.]+)(?:(?:(?: ?\\/ ?)|[, ] ?)(?<a>(?:0\\.[0-9]+)|1\\.0|\\.[0-9]+|[0-9]{1,3}%|1|0))? ?\\)$/i",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Intervention/image/blob/3a47838f2e0f4ec6c8c9b43a5d73ac985b975830/src/Colors/Oklch/Decoders/StringColorDecoder.php#L19-L25",
+            "snippet": [
+                {
+                    "number": 19,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * Regex pattern for oklch color syntax.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 20,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 21,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    protected const string PATTERN =",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 22,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        '/^oklch ?\\( ?' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 23,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<l>(1|0|0?\\.[0-9]+)|[0-9\\.]+%)((, ?)|( ))' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 24,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<c>(-?0|-?0?\\.[0-9\\.]+)|(-?[0-9\\.]+%))((, ?)|( ))' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 25,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<h>[0-9\\.]+)' .",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4f5eef506f",
+            "file": "src/Colors/Rgb/Decoders/StringColorDecoder.php",
+            "line": 20,
+            "column": 5,
+            "pattern": "/^s?rgba? ?\\( ?(?P<r>[0-9]{1,3})([, ]) ?(?P<g>[0-9]{1,3})\\2 ?(?<b>[0-9]{1,3})(?:(?:(?: ?\\/ ?)|(?:[, ]) ?)(?<a>(?:0\\.[0-9]+)|1\\.0|\\.[0-9]+|[0-9]{1,3}%|1|0))? ?\\)$/i",
+            "source": "preg_match()",
+            "location": "via self::PATTERN",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[, ])\" at offset 93; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^s?rgba? ?\\( ?(?P<r>[0-9]{1,3})([, ]) ?(?P<g>[0-9]{1,3})\\2 ?(?<b>[0-9]{1,3})(?:(?:(?: ?\\/ ?)|[, ] ?)(?<a>(?:0\\.[0-9]+)|1\\.0|\\.[0-9]+|[0-9]{1,3}%|1|0))? ?\\)$/i",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Intervention/image/blob/3a47838f2e0f4ec6c8c9b43a5d73ac985b975830/src/Colors/Rgb/Decoders/StringColorDecoder.php#L17-L23",
+            "snippet": [
+                {
+                    "number": 17,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * Regex pattern of rgb color syntax.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 18,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 19,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private const string PATTERN =",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 20,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    '/^s?rgba? ?\\( ?' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 21,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<r>[0-9]{1,3})([, ]) ?' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 22,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?P<g>[0-9]{1,3})\\2 ?' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 23,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?<b>[0-9]{1,3})' .",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

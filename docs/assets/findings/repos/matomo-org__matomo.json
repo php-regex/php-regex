@@ -1,6 +1,6 @@
 {
     "repo": "matomo-org/matomo",
-    "sha": "beb91e69459b77f65be2c5e2ddad91ec8a76be09",
+    "sha": "58a86dee2acc2aaf73a526fe137871f835a59d86",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/core/DbHelper.php#L401-L407",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/core/DbHelper.php#L401-L407",
             "snippet": [
                 {
                     "number": 401,
@@ -128,7 +128,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/core/Period.php#L95-L101",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/core/Period.php#L95-L101",
             "snippet": [
                 {
                     "number": 95,
@@ -311,7 +311,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/core/Piwik.php#L772-L778",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/core/Piwik.php#L772-L778",
             "snippet": [
                 {
                     "number": 772,
@@ -478,7 +478,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/core/Segment/SegmentExpression.php#L371-L377",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/core/Segment/SegmentExpression.php#L371-L377",
             "snippet": [
                 {
                     "number": 371,
@@ -757,6 +757,660 @@
             ]
         },
         {
+            "id": "f-98b49fa380",
+            "file": "core/Theme.php",
+            "line": 96,
+            "column": 13,
+            "pattern": "~(url\\()['\"]([^\\)]?[plugins]+[^\\)]+[.jpg|png|gif|svg]?)['\"][\\)]~",
+            "source": "preg_replace_callback()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: 'p' (duplicate), 'g' (duplicate), '|' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/core/Theme.php#L93-L99",
+            "snippet": [
+                {
+                    "number": 93,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '~(src|href)=[\\'\"]([^\\'\"]+)[\\'\"]~',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 94,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 95,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // rewrite images in CSS files",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 96,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "url\\(",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\'\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "plugins",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".jpg|png|gif|svg",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\'\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "][",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 97,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 98,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // url(plugins/....)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 99,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '~(url\\()([^\\)]?[plugins]+[^\\)]+[.jpg|png|gif|svg]?)[\\)]~',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-358fef773a",
+            "file": "core/Theme.php",
+            "line": 99,
+            "column": 13,
+            "pattern": "~(url\\()([^\\)]?[plugins]+[^\\)]+[.jpg|png|gif|svg]?)[\\)]~",
+            "source": "preg_replace_callback()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: 'p' (duplicate), 'g' (duplicate), '|' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/core/Theme.php#L96-L102",
+            "snippet": [
+                {
+                    "number": 96,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '~(url\\()[\\'\"]([^\\)]?[plugins]+[^\\)]+[.jpg|png|gif|svg]?)[\\'\"][\\)]~',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 97,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 98,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // url(plugins/....)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 99,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "url\\(",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "plugins",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".jpg|png|gif|svg",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 100,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 101,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // rewrites images in JS files",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 102,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '~(=)[\\s]?[\\'\"]([^\\'\"]+[.jpg|.png|.gif|svg]?)[\\'\"]~',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a10b3dd0d0",
+            "file": "core/Theme.php",
+            "line": 102,
+            "column": 13,
+            "pattern": "~(=)[\\s]?['\"]([^'\"]+[.jpg|.png|.gif|svg]?)['\"]~",
+            "source": "preg_replace_callback()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '.' (duplicate), 'p' (duplicate), 'g' (duplicate), '|' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/core/Theme.php#L99-L105",
+            "snippet": [
+                {
+                    "number": 99,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '~(url\\()([^\\)]?[plugins]+[^\\)]+[.jpg|png|gif|svg]?)[\\)]~',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 100,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 101,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // rewrites images in JS files",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 102,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\'\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\'\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".jpg|.png|.gif|svg",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\'\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 103,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 104,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return preg_replace_callback($pattern, array($this, 'rewriteAssetPathIfOverridesFound'), $output);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 105,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-54705f290a",
             "file": "core/Twig.php",
             "line": 692,
@@ -777,7 +1431,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/core/Twig.php#L689-L695",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/core/Twig.php#L689-L695",
             "snippet": [
                 {
                     "number": 689,
@@ -923,7 +1577,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/libs/HTML/QuickForm2/Renderer/Smarty.php#L263-L269",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/libs/HTML/QuickForm2/Renderer/Smarty.php#L263-L269",
             "snippet": [
                 {
                     "number": 263,
@@ -1090,7 +1744,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/libs/Zend/Session/Namespace.php#L117-L123",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/libs/Zend/Session/Namespace.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -1221,6 +1875,101 @@
             ]
         },
         {
+            "id": "f-11ecedade3",
+            "file": "plugins/Actions/ArchivingHelper.php",
+            "line": 1155,
+            "column": 25,
+            "pattern": "@^([^/]+)[/]?([^#]*)[#]?(.*)$@i",
+            "source": "preg_match()",
+            "location": "via $urlRegex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/plugins/Actions/ArchivingHelper.php#L1152-L1158",
+            "snippet": [
+                {
+                    "number": 1152,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1153,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // the name is a url that does not contain protocol and www anymore",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1154,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // we know that normalization has been done on db level because $urlPrefix is set",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1155,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            $urlRegex = '@^' . $urlRegexAfterDomain . '$@i';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1156,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1157,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1158,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $matches = array();",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-cd2e9a1512",
             "file": "plugins/CoreConsole/Commands/GeneratePluginBase.php",
             "line": 251,
@@ -1248,7 +1997,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/plugins/CoreConsole/Commands/GeneratePluginBase.php#L248-L254",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/plugins/CoreConsole/Commands/GeneratePluginBase.php#L248-L254",
             "snippet": [
                 {
                     "number": 248,
@@ -1396,7 +2145,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/plugins/CoreVue/Commands/Build.php#L297-L303",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/plugins/CoreVue/Commands/Build.php#L297-L303",
             "snippet": [
                 {
                     "number": 297,
@@ -1662,7 +2411,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/plugins/Diagnostics/Commands/Run.php#L87-L93",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/plugins/Diagnostics/Commands/Run.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -1857,7 +2606,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/plugins/Goals/Recommendations/HomepageAnalyzer.php#L1495-L1501",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/plugins/Goals/Recommendations/HomepageAnalyzer.php#L1495-L1501",
             "snippet": [
                 {
                     "number": 1495,
@@ -2047,7 +2796,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/plugins/LanguagesManager/Commands/Update.php#L162-L168",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/plugins/LanguagesManager/Commands/Update.php#L162-L168",
             "snippet": [
                 {
                     "number": 162,
@@ -2217,7 +2966,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/plugins/LanguagesManager/Commands/Update.php#L167-L173",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/plugins/LanguagesManager/Commands/Update.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -2380,7 +3129,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/beb91e69459b77f65be2c5e2ddad91ec8a76be09/plugins/UsersManager/Validators/Login.php#L40-L46",
+            "permalink": "https://github.com/matomo-org/matomo/blob/58a86dee2acc2aaf73a526fe137871f835a59d86/plugins/UsersManager/Validators/Login.php#L40-L46",
             "snippet": [
                 {
                     "number": 40,

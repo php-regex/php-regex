@@ -1,9 +1,9 @@
 {
     "repo": "laminas/laminas-filter",
-    "sha": "2a68a031310cebcba7dc114c10a91e98149eff93",
+    "sha": "ff520fb3a87611da8ddccec5c2fd9ba83e94fa02",
     "target": {
-        "php": "8.2.99",
-        "pcre": "10.40",
+        "php": "8.3.99",
+        "pcre": "10.42",
         "source": "composer.json config.platform.php"
     },
     "findings": [
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laminas/laminas-filter/blob/2a68a031310cebcba7dc114c10a91e98149eff93/src/StripTags.php#L119-L125",
+            "permalink": "https://github.com/laminas/laminas-filter/blob/ff520fb3a87611da8ddccec5c2fd9ba83e94fa02/src/StripTags.php#L119-L125",
             "snippet": [
                 {
                     "number": 119,

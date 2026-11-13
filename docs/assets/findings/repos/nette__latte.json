@@ -1,6 +1,6 @@
 {
     "repo": "nette/latte",
-    "sha": "ed4e5b88dbe65907bf693be3396f534a3145f774",
+    "sha": "9fcfa2e3f1c31d47e28889a0ee7481b9f1718935",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/latte/blob/ed4e5b88dbe65907bf693be3396f534a3145f774/src/Latte/Compiler/PrintContext.php#L55-L61",
+            "permalink": "https://github.com/nette/latte/blob/9fcfa2e3f1c31d47e28889a0ee7481b9f1718935/src/Latte/Compiler/PrintContext.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -287,7 +287,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/latte/blob/ed4e5b88dbe65907bf693be3396f534a3145f774/src/Latte/Compiler/TemplateParser.php#L443-L449",
+            "permalink": "https://github.com/nette/latte/blob/9fcfa2e3f1c31d47e28889a0ee7481b9f1718935/src/Latte/Compiler/TemplateParser.php#L443-L449",
             "snippet": [
                 {
                     "number": 443,

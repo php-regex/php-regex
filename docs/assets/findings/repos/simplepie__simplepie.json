@@ -1,6 +1,6 @@
 {
     "repo": "simplepie/simplepie",
-    "sha": "9a648760e4c2472c30281d02f9c7a6ffa840bfe7",
+    "sha": "631a17f873fb915cb002f3baeaad2401532e5b59",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -40,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/simplepie/simplepie/blob/9a648760e4c2472c30281d02f9c7a6ffa840bfe7/src/Item.php#L2302-L2308",
+            "permalink": "https://github.com/simplepie/simplepie/blob/631a17f873fb915cb002f3baeaad2401532e5b59/src/Item.php#L2302-L2308",
             "snippet": [
                 {
                     "number": 2302,
@@ -331,7 +331,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/simplepie/simplepie/blob/9a648760e4c2472c30281d02f9c7a6ffa840bfe7/src/Item.php#L2327-L2333",
+            "permalink": "https://github.com/simplepie/simplepie/blob/631a17f873fb915cb002f3baeaad2401532e5b59/src/Item.php#L2327-L2333",
             "snippet": [
                 {
                     "number": 2327,
@@ -625,7 +625,7 @@
                 "limit": 100000
             },
             "subject": "</A ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! =",
-            "permalink": "https://github.com/simplepie/simplepie/blob/9a648760e4c2472c30281d02f9c7a6ffa840bfe7/src/Sanitize.php#L418-L424",
+            "permalink": "https://github.com/simplepie/simplepie/blob/631a17f873fb915cb002f3baeaad2401532e5b59/src/Sanitize.php#L418-L424",
             "snippet": [
                 {
                     "number": 418,
@@ -725,7 +725,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/simplepie/simplepie/blob/9a648760e4c2472c30281d02f9c7a6ffa840bfe7/src/Sanitize.php#L574-L580",
+            "permalink": "https://github.com/simplepie/simplepie/blob/631a17f873fb915cb002f3baeaad2401532e5b59/src/Sanitize.php#L574-L580",
             "snippet": [
                 {
                     "number": 574,
@@ -832,7 +832,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/simplepie/simplepie/blob/9a648760e4c2472c30281d02f9c7a6ffa840bfe7/src/SimplePie.php#L2996-L3002",
+            "permalink": "https://github.com/simplepie/simplepie/blob/631a17f873fb915cb002f3baeaad2401532e5b59/src/SimplePie.php#L2996-L3002",
             "snippet": [
                 {
                     "number": 2996,
@@ -1123,7 +1123,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/simplepie/simplepie/blob/9a648760e4c2472c30281d02f9c7a6ffa840bfe7/src/SimplePie.php#L3021-L3027",
+            "permalink": "https://github.com/simplepie/simplepie/blob/631a17f873fb915cb002f3baeaad2401532e5b59/src/SimplePie.php#L3021-L3027",
             "snippet": [
                 {
                     "number": 3021,
@@ -1414,7 +1414,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/simplepie/simplepie/blob/9a648760e4c2472c30281d02f9c7a6ffa840bfe7/src/Source.php#L469-L475",
+            "permalink": "https://github.com/simplepie/simplepie/blob/631a17f873fb915cb002f3baeaad2401532e5b59/src/Source.php#L469-L475",
             "snippet": [
                 {
                     "number": 469,
@@ -1705,7 +1705,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/simplepie/simplepie/blob/9a648760e4c2472c30281d02f9c7a6ffa840bfe7/src/Source.php#L485-L491",
+            "permalink": "https://github.com/simplepie/simplepie/blob/631a17f873fb915cb002f3baeaad2401532e5b59/src/Source.php#L485-L491",
             "snippet": [
                 {
                     "number": 485,

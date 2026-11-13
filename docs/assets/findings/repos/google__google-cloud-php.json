@@ -1,6 +1,6 @@
 {
     "repo": "google/google-cloud-php",
-    "sha": "10073bf3f672d23e60a5f558a1b714f83ada5a39",
+    "sha": "70c659be001dbd714a35896f5976032a1469f6ff",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/Command/ComponentUpdateReadmeSampleCommand.php#L85-L91",
+            "permalink": "https://github.com/google/google-cloud-php/blob/70c659be001dbd714a35896f5976032a1469f6ff/dev/src/Command/ComponentUpdateReadmeSampleCommand.php#L85-L91",
             "snippet": [
                 {
                     "number": 85,
@@ -197,7 +197,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/ComponentPackage.php#L27-L33",
+            "permalink": "https://github.com/google/google-cloud-php/blob/70c659be001dbd714a35896f5976032a1469f6ff/dev/src/ComponentPackage.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,
@@ -292,7 +292,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/ComponentPackage.php#L212-L218",
+            "permalink": "https://github.com/google/google-cloud-php/blob/70c659be001dbd714a35896f5976032a1469f6ff/dev/src/ComponentPackage.php#L212-L218",
             "snippet": [
                 {
                     "number": 212,
@@ -460,7 +460,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/DocFx/Node/DocblockTrait.php#L83-L89",
+            "permalink": "https://github.com/google/google-cloud-php/blob/70c659be001dbd714a35896f5976032a1469f6ff/dev/src/DocFx/Node/DocblockTrait.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -599,7 +599,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/DocFx/Node/FencedCodeBlockTrait.php#L29-L35",
+            "permalink": "https://github.com/google/google-cloud-php/blob/70c659be001dbd714a35896f5976032a1469f6ff/dev/src/DocFx/Node/FencedCodeBlockTrait.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -830,7 +830,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/NewComponent.php#L193-L199",
+            "permalink": "https://github.com/google/google-cloud-php/blob/70c659be001dbd714a35896f5976032a1469f6ff/dev/src/NewComponent.php#L193-L199",
             "snippet": [
                 {
                     "number": 193,

@@ -1,6 +1,6 @@
 {
     "repo": "symfony/maker-bundle",
-    "sha": "c4a4f73e42aefc3749f3589aa84480a11cb2634f",
+    "sha": "713997f03b6b948fceb08a3811b96cf307ce0bd8",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -50,7 +50,7 @@
                 "limit": 100000
             },
             "subject": "CREATED: \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\!.",
-            "permalink": "https://github.com/symfony/maker-bundle/blob/c4a4f73e42aefc3749f3589aa84480a11cb2634f/src/Test/MakerTestEnvironment.php#L26-L32",
+            "permalink": "https://github.com/symfony/maker-bundle/blob/713997f03b6b948fceb08a3811b96cf307ce0bd8/src/Test/MakerTestEnvironment.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,

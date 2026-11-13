@@ -474,6 +474,101 @@
                     ]
                 }
             ]
+        },
+        {
+            "id": "f-050456c54a",
+            "file": "src/Core/Parser/TemplateProcessor/NamespaceDetectionTemplateProcessor.php",
+            "line": 53,
+            "column": 31,
+            "pattern": "/<([a-z0-9]+)(?:[^>]*?)\\s+xmlns:([a-zA-Z0-9\\.]+)=(\"[^\"]+\"|'[^']+')+[^>]*>/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/TYPO3/Fluid/blob/cf322cf231a990b7e178deb86974702aa3891f59/src/Core/Parser/TemplateProcessor/NamespaceDetectionTemplateProcessor.php#L50-L56",
+            "snippet": [
+                {
+                    "number": 50,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $viewHelperResolver = $this->renderingContext->getViewHelperResolver();",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $matches = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $namespacePattern = 'xmlns:([a-zA-Z0-9\\.]+)=(\"[^\"]+\"|\\'[^\\']+\\')+';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $matched = preg_match('/<([a-z0-9]+)(?:[^>]*?)\\\\s+' . $namespacePattern . '[^>]*>/', $templateSource, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($matched) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $namespaces = [];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
         }
     ]
 }

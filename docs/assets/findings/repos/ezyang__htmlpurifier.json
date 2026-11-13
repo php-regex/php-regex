@@ -1,12 +1,112 @@
 {
     "repo": "ezyang/htmlpurifier",
-    "sha": "08bdd2b6a4b04d35a0dc0fc502c12faad740f18e",
+    "sha": "4a7c7b82544c5afe5d36b87807c15ce277190495",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
         "source": "composer.json require.php"
     },
     "findings": [
+        {
+            "id": "f-b8a063aeb3",
+            "file": "library/HTMLPurifier/AttrDef/URI/IPv6.php",
+            "line": 32,
+            "column": 28,
+            "pattern": "#(?:/(?:12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9]))$#s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#(?:/(?:12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9]))$#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/ezyang/htmlpurifier/blob/4a7c7b82544c5afe5d36b87807c15ce277190495/library/HTMLPurifier/AttrDef/URI/IPv6.php#L29-L35",
+            "snippet": [
+                {
+                    "number": 29,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 30,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        //      prefix check",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 31,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (strpos($aIP, '/') !== false) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 32,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match('#' . $pre . '$#s', $aIP, $find)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 33,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $aIP = substr($aIP, 0, 0 - strlen($find[0]));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 34,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                unset($find);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 35,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            } else {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
         {
             "id": "f-ca1d69bd8c",
             "file": "library/HTMLPurifier/AttrDef/URI/IPv6.php",
@@ -33,7 +133,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ezyang/htmlpurifier/blob/08bdd2b6a4b04d35a0dc0fc502c12faad740f18e/library/HTMLPurifier/AttrDef/URI/IPv6.php#L78-L84",
+            "permalink": "https://github.com/ezyang/htmlpurifier/blob/4a7c7b82544c5afe5d36b87807c15ce277190495/library/HTMLPurifier/AttrDef/URI/IPv6.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,

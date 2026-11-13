@@ -1,6 +1,6 @@
 {
     "repo": "10up/ElasticPress",
-    "sha": "7a0651503ced12390a269cd6795c733eb135cc5a",
+    "sha": "609c96872dcc27cf6e798b2e8b53cf690d37a62e",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/10up/ElasticPress/blob/7a0651503ced12390a269cd6795c733eb135cc5a/includes/compat.php#L136-L142",
+            "permalink": "https://github.com/10up/ElasticPress/blob/609c96872dcc27cf6e798b2e8b53cf690d37a62e/includes/compat.php#L136-L142",
             "snippet": [
                 {
                     "number": 136,

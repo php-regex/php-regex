@@ -1,6 +1,6 @@
 {
     "repo": "voku/simple_html_dom",
-    "sha": "98893672138343022734f4dbe52e2639f44bdcd7",
+    "sha": "df4996a76bd1b935f0d85b2cfc6889bf93f691b0",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -40,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/simple_html_dom/blob/98893672138343022734f4dbe52e2639f44bdcd7/src/voku/helper/Html5DomParser.php#L225-L231",
+            "permalink": "https://github.com/voku/simple_html_dom/blob/df4996a76bd1b935f0d85b2cfc6889bf93f691b0/src/voku/helper/Html5DomParser.php#L225-L231",
             "snippet": [
                 {
                     "number": 225,
@@ -307,7 +307,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/simple_html_dom/blob/98893672138343022734f4dbe52e2639f44bdcd7/src/voku/helper/HtmlDomParser.php#L1851-L1857",
+            "permalink": "https://github.com/voku/simple_html_dom/blob/df4996a76bd1b935f0d85b2cfc6889bf93f691b0/src/voku/helper/HtmlDomParser.php#L1851-L1857",
             "snippet": [
                 {
                     "number": 1851,
@@ -590,7 +590,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/simple_html_dom/blob/98893672138343022734f4dbe52e2639f44bdcd7/src/voku/helper/XmlDomParser.php#L650-L656",
+            "permalink": "https://github.com/voku/simple_html_dom/blob/df4996a76bd1b935f0d85b2cfc6889bf93f691b0/src/voku/helper/XmlDomParser.php#L650-L656",
             "snippet": [
                 {
                     "number": 650,

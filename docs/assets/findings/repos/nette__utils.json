@@ -1,6 +1,6 @@
 {
     "repo": "nette/utils",
-    "sha": "f888a19a41f53ce94f7a3202db734601a500d883",
+    "sha": "a3f9e75b5f669d6fa509343d14b450a66212c7a6",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/utils/blob/f888a19a41f53ce94f7a3202db734601a500d883/src/Utils/Finder.php#L244-L250",
+            "permalink": "https://github.com/nette/utils/blob/a3f9e75b5f669d6fa509343d14b450a66212c7a6/src/Utils/Finder.php#L244-L250",
             "snippet": [
                 {
                     "number": 244,
@@ -223,7 +223,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/utils/blob/f888a19a41f53ce94f7a3202db734601a500d883/src/Utils/Finder.php#L301-L307",
+            "permalink": "https://github.com/nette/utils/blob/a3f9e75b5f669d6fa509343d14b450a66212c7a6/src/Utils/Finder.php#L301-L307",
             "snippet": [
                 {
                     "number": 301,
@@ -486,7 +486,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/utils/blob/f888a19a41f53ce94f7a3202db734601a500d883/src/Utils/Finder.php#L322-L328",
+            "permalink": "https://github.com/nette/utils/blob/a3f9e75b5f669d6fa509343d14b450a66212c7a6/src/Utils/Finder.php#L322-L328",
             "snippet": [
                 {
                     "number": 322,
@@ -681,7 +681,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/utils/blob/f888a19a41f53ce94f7a3202db734601a500d883/src/Utils/ObjectHelpers.php#L130-L136",
+            "permalink": "https://github.com/nette/utils/blob/a3f9e75b5f669d6fa509343d14b450a66212c7a6/src/Utils/ObjectHelpers.php#L130-L136",
             "snippet": [
                 {
                     "number": 130,
@@ -921,6 +921,218 @@
                     "runs": [
                         [
                             "\t\t\tPREG_SET_ORDER,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6534973313",
+            "file": "src/Utils/Validators.php",
+            "line": 325,
+            "column": 28,
+            "pattern": "(^(?n)\n\t(\"([ !#-[\\]-~]*|\\\\[ -~])+\"|[-a-z0-9!#$%&'*+/=?^_`{|}~]+(\\.[-a-z0-9!#$%&'*+/=?^_`{|}~]+)*)  # quoted or unquoted\n\t@\n\t([0-9a-z\\x80-\\xFF]([-0-9a-z\\x80-\\xFF]{0,61}[0-9a-z\\x80-\\xFF])?\\.)+  # domain - RFC 1034\n\t[a-z\\x80-\\xFF]([-0-9a-z\\x80-\\xFF]{0,17}[a-z\\x80-\\xFF])?              # top domain\n$)Dix",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"\\\"\" . \"!\" x n . \"!.\" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). The risky part is: [ !#-\\[\\]-~]* Hotspot offsets: 10-22 Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested bounded quantifiers detected. May cause polynomial backtracking. Consider simplifying the pattern or using atomic groups (?>...). Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Flatten nested quantifiers or introduce atomic groups. Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "\\\"",
+                "pump": "!",
+                "suffix": "!.",
+                "n": 52,
+                "length": 16,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!.",
+            "permalink": "https://github.com/nette/utils/blob/a3f9e75b5f669d6fa509343d14b450a66212c7a6/src/Utils/Validators.php#L322-L328",
+            "snippet": [
+                {
+                    "number": 322,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 323,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$atom = \"[-a-z0-9!#$%&'*+/=?^_`{|}~]\"; // RFC 5322 unquoted characters in local-part",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 324,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$alpha = \"a-z\\x80-\\xFF\"; // superset of IDN",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 325,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\treturn (bool) preg_match(<<<XX",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 326,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t(^(?n)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 327,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t(\"([ !#-[\\\\]-~]*|\\\\\\\\[ -~])+\"|$atom+(\\\\.$atom+)*)  # quoted or unquoted",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 328,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t@",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a4113a0a88",
+            "file": "src/Utils/Validators.php",
+            "line": 343,
+            "column": 28,
+            "pattern": "(^(?n)\n\thttps?://(\n\t\t(([-_0-9a-z\\x80-\\xFF]+\\.)*                       # subdomain\n\t\t\t[0-9a-z\\x80-\\xFF]([-0-9a-z\\x80-\\xFF]{0,61}[0-9a-z\\x80-\\xFF])?\\.)?  # domain\n\t\t\t[a-z\\x80-\\xFF]([-0-9a-z\\x80-\\xFF]{0,17}[a-z\\x80-\\xFF])?   # top domain\n\t\t|(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}                       # IPv4\n\t\t|\\[[0-9a-f:]{3,39}]                        # IPv6\n\t)(:\\d{1,5})?                                   # port\n\t(/\\S*)?                                        # path\n\t(\\?\\S*)?                                      # query\n\t(\\#\\S*)?                                      # fragment\n$)Dix",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/nette/utils/blob/a3f9e75b5f669d6fa509343d14b450a66212c7a6/src/Utils/Validators.php#L340-L346",
+            "snippet": [
+                {
+                    "number": 340,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 341,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$alpha = \"a-z\\x80-\\xFF\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 342,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$octet = '(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])'; // 0..255",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 343,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\treturn (bool) preg_match(<<<XX",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 344,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t(^(?n)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 345,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\thttps?://(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 346,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t(([-_0-9$alpha]+\\\\.)*                       # subdomain",
                             ""
                         ]
                     ]

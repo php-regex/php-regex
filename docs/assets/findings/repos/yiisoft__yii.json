@@ -3579,6 +3579,106 @@
             ]
         },
         {
+            "id": "f-30a3ec7ef7",
+            "file": "framework/vendors/htmlpurifier/HTMLPurifier.standalone.php",
+            "line": 13559,
+            "column": 28,
+            "pattern": "#(?:/(?:12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9]))$#s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#(?:/(?:12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9]))$#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/vendors/htmlpurifier/HTMLPurifier.standalone.php#L13556-L13562",
+            "snippet": [
+                {
+                    "number": 13556,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13557,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        //      prefix check",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13558,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (strpos($aIP, '/') !== false) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13559,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match('#' . $pre . '$#s', $aIP, $find)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13560,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $aIP = substr($aIP, 0, 0 - strlen($find[0]));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13561,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                unset($find);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13562,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            } else {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-e0a94021d1",
             "file": "framework/vendors/htmlpurifier/HTMLPurifier.standalone.php",
             "line": 13608,

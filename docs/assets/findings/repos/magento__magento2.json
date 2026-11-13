@@ -1,6 +1,6 @@
 {
     "repo": "magento/magento2",
-    "sha": "7bd508f59c5cd317382d01ffe9e0852049af0554",
+    "sha": "542a11c7b680d1bece1e7d86065ac939e130438c",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Catalog/Model/Product/Attribute/Backend/Stock.php#L62-L68",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Catalog/Model/Product/Attribute/Backend/Stock.php#L62-L68",
             "snippet": [
                 {
                     "number": 62,
@@ -203,7 +203,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Catalog/Model/Product/Option/Type/Date.php#L76-L82",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Catalog/Model/Product/Option/Type/Date.php#L76-L82",
             "snippet": [
                 {
                     "number": 76,
@@ -398,7 +398,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Catalog/Model/Product/Option/Type/Date.php#L81-L87",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Catalog/Model/Product/Option/Type/Date.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -566,7 +566,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Catalog/Model/Product/Option/Type/File/Validator.php#L134-L140",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Catalog/Model/Product/Option/Type/File/Validator.php#L134-L140",
             "snippet": [
                 {
                     "number": 134,
@@ -738,7 +738,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Catalog/Model/Product/ReservedAttributeList.php#L26-L32",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Catalog/Model/Product/ReservedAttributeList.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,
@@ -901,7 +901,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Catalog/Model/ResourceModel/Product/Collection.php#L2335-L2341",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Catalog/Model/ResourceModel/Product/Collection.php#L2335-L2341",
             "snippet": [
                 {
                     "number": 2335,
@@ -1115,7 +1115,7 @@
                 "limit": 100000
             },
             "subject": "HTTP://---------------------------------------------------------------------------------!!http",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/CatalogImportExport/Model/Import/Product/Validator/Media.php#L16-L22",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/CatalogImportExport/Model/Import/Product/Validator/Media.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -1406,7 +1406,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/CatalogSearch/Model/Indexer/Fulltext/Action/DataProvider.php#L630-L636",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/CatalogSearch/Model/Indexer/Fulltext/Action/DataProvider.php#L630-L636",
             "snippet": [
                 {
                     "number": 630,
@@ -1548,7 +1548,7 @@
                 "limit": 100000
             },
             "subject": "0________________________________________________________________________________________________!::",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Cms/Model/Validator/DirectiveValidator.php#L60-L66",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Cms/Model/Validator/DirectiveValidator.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -1816,7 +1816,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Cms/Model/Wysiwyg/Images/Storage.php#L32-L38",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Cms/Model/Wysiwyg/Images/Storage.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -1982,7 +1982,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Cms/Setup/ContentConverter.php#L63-L69",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Cms/Setup/ContentConverter.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -2170,7 +2170,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L332-L338",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L332-L338",
             "snippet": [
                 {
                     "number": 332,
@@ -2325,7 +2325,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L333-L339",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L333-L339",
             "snippet": [
                 {
                     "number": 333,
@@ -2460,7 +2460,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L337-L343",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L337-L343",
             "snippet": [
                 {
                     "number": 337,
@@ -2583,7 +2583,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Config/Model/Config/Structure/ElementVisibility/ConcealInProduction.php#L87-L93",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Config/Model/Config/Structure/ElementVisibility/ConcealInProduction.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -2763,7 +2763,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Csp/Helper/InlineUtil.php#L131-L137",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Csp/Helper/InlineUtil.php#L131-L137",
             "snippet": [
                 {
                     "number": 131,
@@ -2947,7 +2947,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Customer/Model/Validator/Name.php#L15-L21",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Customer/Model/Validator/Name.php#L15-L21",
             "snippet": [
                 {
                     "number": 15,
@@ -3103,7 +3103,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Directory/Model/Country.php#L157-L163",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Directory/Model/Country.php#L157-L163",
             "snippet": [
                 {
                     "number": 157,
@@ -3271,7 +3271,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Directory/Model/Country.php#L159-L165",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Directory/Model/Country.php#L159-L165",
             "snippet": [
                 {
                     "number": 159,
@@ -3414,7 +3414,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Eav/Model/Validator/Attribute/Code.php#L24-L30",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Eav/Model/Validator/Attribute/Code.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -3628,7 +3628,7 @@
                 "limit": 100000
             },
             "subject": "0<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<00!",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Elasticsearch/Model/Config/Backend/MinimumShouldMatch.php#L36-L42",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Elasticsearch/Model/Config/Backend/MinimumShouldMatch.php#L36-L42",
             "snippet": [
                 {
                     "number": 36,
@@ -3820,7 +3820,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Email/Model/AbstractTemplate.php#L319-L325",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Email/Model/AbstractTemplate.php#L319-L325",
             "snippet": [
                 {
                     "number": 319,
@@ -3983,7 +3983,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Email/Model/Template/Config.php#L140-L146",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Email/Model/Template/Config.php#L140-L146",
             "snippet": [
                 {
                     "number": 140,
@@ -4210,7 +4210,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Email/Model/Template/Filter.php#L61-L67",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Email/Model/Template/Filter.php#L61-L67",
             "snippet": [
                 {
                     "number": 61,
@@ -4401,6 +4401,218 @@
             ]
         },
         {
+            "id": "f-18a779767c",
+            "file": "app/code/Magento/Email/Model/Template/Validator.php",
+            "line": 23,
+            "column": 9,
+            "pattern": "/\\b[a-zA-Z_:][-a-zA-Z0-9_:.]*\\s*=\\s*(?|\"([^\"]*\\{\\{[^}]*\\}\\}[^\"]*)\"|'([^']*\\{\\{[^}]*\\}\\}[^']*)'|((?:\\{\\{[^}]*\\}\\}|[^\\s\"'<>`])+))/iu",
+            "source": "preg_match_all()",
+            "location": "via $expression",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"\\{\\{[^}]*\\}\\}\" and \"[^\\s\"'<>`]\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Email/Model/Template/Validator.php#L20-L26",
+            "snippet": [
+                {
+                    "number": 20,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * @var string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 21,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 22,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private const ATTRIBUTE_VALUE_EXPRESSION =",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 23,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        '/\\b[a-zA-Z_:][-a-zA-Z0-9_:.]*\\s*=\\s*' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 24,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '(?|\"([^\"]*\\{\\{[^}]*\\}\\}[^\"]*)\"' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 25,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '|\\'([^\\']*\\{\\{[^}]*\\}\\}[^\\']*)\\'' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 26,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '|((?:\\{\\{[^}]*\\}\\}|[^\\s\"\\'<>`])+))/iu';",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-5ab6e2bb58",
+            "file": "app/code/Magento/Email/Model/Template/Validator.php",
+            "line": 34,
+            "column": 9,
+            "pattern": "/\\burl\\(\\s*(?|\"([^\"]*\\{\\{[^}]*\\}\\}[^\"]*)\"|'([^']*\\{\\{[^}]*\\}\\}[^']*)'|((?:\\{\\{[^}]*\\}\\}|[^\\s\"')])+))\\s*\\)/iu",
+            "source": "preg_match_all()",
+            "location": "via $expression",
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"URL(\" . \"{{}}{{}}\" x n . \"\\\")\" Replayed on PCRE2 10.49: preg_match fails from length 62 (backtrack_limit 100000, JIT off). The risky part is: \\{\\{[^}]*\\}\\}|[^\\s\"')] Hotspot offsets: 73-95 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"\\{\\{[^}]*\\}\\}\" and \"[^\\s\"')]\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "URL(",
+                "pump": "{{}}{{}}",
+                "suffix": "\\\")",
+                "n": 28,
+                "length": 62,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "URL({{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}\")",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Email/Model/Template/Validator.php#L31-L37",
+            "snippet": [
+                {
+                    "number": 31,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * @var string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 32,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 33,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private const CSS_URL_VALUE_EXPRESSION =",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 34,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        '/\\burl\\(\\s*(?|\"([^\"]*\\{\\{[^}]*\\}\\}[^\"]*)\"' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 35,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '|\\'([^\\']*\\{\\{[^}]*\\}\\}[^\\']*)\\'' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 36,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '|((?:\\{\\{[^}]*\\}\\}|[^\\s\"\\')])+))\\s*\\)/iu';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 37,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-e05e6a9839",
             "file": "app/code/Magento/JwtUserToken/Model/SecretBasedJwksFactory.php",
             "line": 37,
@@ -4426,7 +4638,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/JwtUserToken/Model/SecretBasedJwksFactory.php#L34-L40",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/JwtUserToken/Model/SecretBasedJwksFactory.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -4565,7 +4777,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/PageCache/Model/Config.php#L262-L268",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/PageCache/Model/Config.php#L262-L268",
             "snippet": [
                 {
                     "number": 262,
@@ -4768,7 +4980,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/PageCache/Model/Varnish/VclGenerator.php#L131-L137",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/PageCache/Model/Varnish/VclGenerator.php#L131-L137",
             "snippet": [
                 {
                     "number": 131,
@@ -4939,6 +5151,101 @@
             ]
         },
         {
+            "id": "f-cc21299c85",
+            "file": "app/code/Magento/Payment/Model/Method/Cc.php",
+            "line": 148,
+            "column": 29,
+            "pattern": "/^622(1(2[6-9][0-9]{10,13}|[3-9][0-9]{11,14})|[3-8][0-9]{12,15}|9([[0-1][0-9]{11,14}|2[0-5][0-9]{10,13}))|62[4-6][0-9]{13,16}|628[2-8][0-9]{12,15}/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"62[4-6][0-9]{13,16}\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:622(1(2[6-9][0-9]{10,13}|[3-9][0-9]{11,14})|[3-8][0-9]{12,15}|9([[0-1][0-9]{11,14}|2[0-5][0-9]{10,13}))|62[4-6][0-9]{13,16}|628[2-8][0-9]{12,15})\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Payment/Model/Method/Cc.php#L145-L151",
+            "snippet": [
+                {
+                    "number": 145,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        '5[0-9]{14,17}))/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 146,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    'DN' => '/^3(0[0-5][0-9]{13,16}|095[0-9]{12,15}|(6|[8-9])[0-9]{14,17})/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 147,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    // UnionPay",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 148,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    'UN' => '/^622(1(2[6-9][0-9]{10,13}|[3-9][0-9]{11,14})|[3-8][0-9]{12,15}|9([[0-1][0-9]{11,14}|' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 149,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        '2[0-5][0-9]{10,13}))|62[4-6][0-9]{13,16}|628[2-8][0-9]{12,15}/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 150,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    // JCB",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 151,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    'JCB' => '/^35(2[8-9][0-9]{12,15}|[3-8][0-9]{13,16})/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-5906925077",
             "file": "app/code/Magento/ReleaseNotification/Ui/Renderer/NotificationRenderer.php",
             "line": 187,
@@ -4959,7 +5266,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/ReleaseNotification/Ui/Renderer/NotificationRenderer.php#L184-L190",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/ReleaseNotification/Ui/Renderer/NotificationRenderer.php#L184-L190",
             "snippet": [
                 {
                     "number": 184,
@@ -5186,7 +5493,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/SalesRule/Model/Rule/Condition/Product.php#L245-L251",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/SalesRule/Model/Rule/Condition/Product.php#L245-L251",
             "snippet": [
                 {
                     "number": 245,
@@ -5317,7 +5624,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Store/Model/ResourceModel/Website.php#L68-L74",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Store/Model/ResourceModel/Website.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,
@@ -5505,7 +5812,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Theme/Model/Wysiwyg/Storage.php#L51-L57",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Theme/Model/Wysiwyg/Storage.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,
@@ -5664,7 +5971,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Usps/Model/Carrier.php#L1649-L1655",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Usps/Model/Carrier.php#L1649-L1655",
             "snippet": [
                 {
                     "number": 1649,
@@ -5811,7 +6118,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Usps/Model/Carrier.php#L1649-L1655",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Usps/Model/Carrier.php#L1649-L1655",
             "snippet": [
                 {
                     "number": 1649,
@@ -5961,7 +6268,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Usps/Model/Carrier.php#L2297-L2303",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Usps/Model/Carrier.php#L2297-L2303",
             "snippet": [
                 {
                     "number": 2297,
@@ -6115,7 +6422,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Usps/Model/ShipmentService.php#L980-L986",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Usps/Model/ShipmentService.php#L980-L986",
             "snippet": [
                 {
                     "number": 980,
@@ -6269,7 +6576,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/app/code/Magento/Webapi/Model/Soap/Wsdl/ComplexTypeStrategy.php#L403-L409",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Webapi/Model/Soap/Wsdl/ComplexTypeStrategy.php#L403-L409",
             "snippet": [
                 {
                     "number": 403,
@@ -6440,6 +6747,129 @@
             ]
         },
         {
+            "id": "f-5d8cf0f30e",
+            "file": "app/code/Magento/Wishlist/Model/Validator/MessageValidator.php",
+            "line": 26,
+            "column": 9,
+            "pattern": "/<\\?/i",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/app/code/Magento/Wishlist/Model/Validator/MessageValidator.php#L23-L29",
+            "snippet": [
+                {
+                    "number": 23,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '/\\{%.*?%\\}/s',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 24,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    ",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 25,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Server-side code execution",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 26,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<\\?",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 27,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 28,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Template filter/processor access (Magento-specific)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 29,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '/\\bthis\\s*\\.\\s*get\\w+/i',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-01971feaaa",
             "file": "lib/internal/Magento/Framework/Api/DataObjectHelper.php",
             "line": 305,
@@ -6465,7 +6895,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Api/DataObjectHelper.php#L302-L308",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Api/DataObjectHelper.php#L302-L308",
             "snippet": [
                 {
                     "number": 302,
@@ -6637,7 +7067,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Api/SimpleDataObjectConverter.php#L172-L178",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Api/SimpleDataObjectConverter.php#L172-L178",
             "snippet": [
                 {
                     "number": 172,
@@ -6784,7 +7214,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/App/Config/Scope/Validator.php#L84-L90",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/App/Config/Scope/Validator.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -6967,7 +7397,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/App/Scope/Validator.php#L82-L88",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/App/Scope/Validator.php#L82-L88",
             "snippet": [
                 {
                     "number": 82,
@@ -7150,7 +7580,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L201-L207",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L201-L207",
             "snippet": [
                 {
                     "number": 201,
@@ -7289,7 +7719,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L292-L298",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L292-L298",
             "snippet": [
                 {
                     "number": 292,
@@ -7428,7 +7858,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L334-L340",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L334-L340",
             "snippet": [
                 {
                     "number": 334,
@@ -7572,7 +8002,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Cache/Core.php#L38-L44",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Cache/Core.php#L38-L44",
             "snippet": [
                 {
                     "number": 38,
@@ -7740,7 +8170,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Code/Generator/EntityAbstract.php#L301-L307",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Code/Generator/EntityAbstract.php#L301-L307",
             "snippet": [
                 {
                     "number": 301,
@@ -7872,7 +8302,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Code/Generator/EntityAbstract.php#L302-L308",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Code/Generator/EntityAbstract.php#L302-L308",
             "snippet": [
                 {
                     "number": 302,
@@ -8003,7 +8433,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Communication/Config/ConfigParser.php#L26-L32",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Communication/Config/ConfigParser.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,
@@ -8258,7 +8688,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/DB/Helper.php#L195-L201",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/DB/Helper.php#L195-L201",
             "snippet": [
                 {
                     "number": 195,
@@ -8493,7 +8923,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/DB/Helper/InitStatementsCleanup.php#L43-L49",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/DB/Helper/InitStatementsCleanup.php#L43-L49",
             "snippet": [
                 {
                     "number": 43,
@@ -8749,7 +9179,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/DB/Select.php#L274-L280",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/DB/Select.php#L274-L280",
             "snippet": [
                 {
                     "number": 274,
@@ -8888,7 +9318,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Data/Form/Element/Image.php#L74-L80",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Data/Form/Element/Image.php#L74-L80",
             "snippet": [
                 {
                     "number": 74,
@@ -9024,7 +9454,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/DataObject.php#L373-L379",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/DataObject.php#L373-L379",
             "snippet": [
                 {
                     "number": 373,
@@ -9196,7 +9626,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Encryption/Encryptor.php#L145-L151",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Encryption/Encryptor.php#L145-L151",
             "snippet": [
                 {
                     "number": 145,
@@ -9352,7 +9782,7 @@
                 "limit": 100000
             },
             "subject": "0/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00!",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Filesystem/DirectoryList.php#L149-L155",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Filesystem/DirectoryList.php#L149-L155",
             "snippet": [
                 {
                     "number": 149,
@@ -9636,7 +10066,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Filesystem/DirectoryList.php#L181-L187",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Filesystem/DirectoryList.php#L181-L187",
             "snippet": [
                 {
                     "number": 181,
@@ -9747,6 +10177,699 @@
             ]
         },
         {
+            "id": "f-b87c8f4e0e",
+            "file": "lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php",
+            "line": 273,
+            "column": 13,
+            "pattern": "/(type|interface|union|enum|input|scalar)[\\s\\t\\n\\r]+([_A-Za-z][_0-9A-Za-z]+)[\\s\\t\\n\\r]+([^\\{\\}]*)(\\{[^\\}]*\\})/i",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L270-L276",
+            "snippet": [
+                {
+                    "number": 270,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $spacePattern = '[\\s\\t\\n\\r]+';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 271,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 272,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        preg_match_all(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 273,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            \"/{$typeKindsPattern}{$spacePattern}{$typeNamePattern}{$spacePattern}{$typeDefinitionPattern}/i\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 274,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $graphQlSchemaContent,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 275,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $matches",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 276,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-90a245ac2a",
+            "file": "lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php",
+            "line": 333,
+            "column": 13,
+            "pattern": "/([\\s\\t\\n\\r]+)implements([\\s\\t\\n\\r]+)([_A-Za-z][_0-9A-Za-z]+)(,[\\s\\t\\n\\r]*|([\\s\\t\\n\\r]*&[\\s\\t\\n\\r]*)?([_A-Za-z][_0-9A-Za-z]+))*/im",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/([\\s\\t\\n\\r]+)implements([\\s\\t\\n\\r]+)([_A-Za-z][_0-9A-Za-z]+)(,[\\s\\t\\n\\r]*|([\\s\\t\\n\\r]*&[\\s\\t\\n\\r]*)?([_A-Za-z][_0-9A-Za-z]+))*/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L330-L336",
+            "snippet": [
+                {
+                    "number": 330,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $spacePattern = '([\\s\\t\\n\\r]+)';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 331,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $spacePatternNotMandatory = '[\\s\\t\\n\\r]*';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 332,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        preg_match_all(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 333,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            \"/{$spacePattern}{$implementsKindsPattern}{$spacePattern}{$typeNamePattern}\"",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 334,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            . \"(,{$spacePatternNotMandatory}|({$spacePatternNotMandatory}&{$spacePatternNotMandatory})?\"",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 335,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            . \"$typeNamePattern)*/im\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 336,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $graphQlSchemaContent,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-c2c0bf5377",
+            "file": "lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php",
+            "line": 344,
+            "column": 21,
+            "pattern": "/([\\s\\t\\n\\r]+)implements([\\s\\t\\n\\r]+)/m",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/([\\s\\t\\n\\r]+)implements([\\s\\t\\n\\r]+)/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L341-L347",
+            "snippet": [
+                {
+                    "number": 341,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            foreach (array_unique($allMatchesForImplements[0]) as $implementsString) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 342,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $implementsString = $implementsString ?? '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 343,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $implementsStatementString = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 344,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    \"/{$spacePattern}{$implementsKindsPattern}{$spacePattern}/m\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 345,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 346,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $implementsString",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 347,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-b951b35393",
+            "file": "lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php",
+            "line": 349,
+            "column": 21,
+            "pattern": "/([_A-Za-z][_0-9A-Za-z]+)+/im",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/([_A-Za-z][_0-9A-Za-z]+)+/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L346-L352",
+            "snippet": [
+                {
+                    "number": 346,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $implementsString",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 347,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 348,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                preg_match_all(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 349,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    \"/{$typeNamePattern}+/im\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 350,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $implementsStatementString,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 351,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $implementationsMatches",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 352,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a096878f1b",
+            "file": "lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php",
+            "line": 388,
+            "column": 13,
+            "pattern": "/(type|interface|input|union|scalar)([\\s\\t\\n\\r]+)([_A-Za-z][_0-9A-Za-z]+)([\\s\\t\\n\\r]+)([^\\{\\}]*)(\\{[\\s\\t\\n\\r^\\}]*\\})/im",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(type|interface|input|union|scalar)([\\s\\t\\n\\r]+)([_A-Za-z][_0-9A-Za-z]+)([\\s\\t\\n\\r]+)([^\\{\\}]*)(\\{[\\s\\t\\n\\r^\\}]*\\})/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L385-L391",
+            "snippet": [
+                {
+                    "number": 385,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 386,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        //add placeholder in empty types",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 387,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $graphQlSchemaContent = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 388,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            \"/{$typesKindsPattern}{$spacePattern}{$typeNamePattern}{$spacePattern}{$typeDefinitionPattern}/im\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 389,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"\\$1\\$2\\$3\\$4\\$5{\\n{$placeholderField}: String\\n}\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 390,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $graphQlSchemaContent",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 391,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-5b49877a65",
+            "file": "lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php",
+            "line": 395,
+            "column": 13,
+            "pattern": "/(enum)([\\s\\t\\n\\r]+)([_A-Za-z][_0-9A-Za-z]+)([\\s\\t\\n\\r]+)([^\\{\\}]*)(\\{[\\s\\t\\n\\r^\\}]*\\})/im",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(enum)([\\s\\t\\n\\r]+)([_A-Za-z][_0-9A-Za-z]+)([\\s\\t\\n\\r]+)([^\\{\\}]*)(\\{[\\s\\t\\n\\r^\\}]*\\})/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L392-L398",
+            "snippet": [
+                {
+                    "number": 392,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 393,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        //add placeholder in empty enums",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 394,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $graphQlSchemaContent = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 395,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            \"/{$enumKindsPattern}{$spacePattern}{$typeNamePattern}{$spacePattern}{$typeDefinitionPattern}/im\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 396,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"\\$1\\$2\\$3\\$4\\$5{\\n{$placeholderField}\\n}\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 397,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $graphQlSchemaContent",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 398,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-fa529c7b95",
             "file": "lib/internal/Magento/Framework/Locale/Format.php",
             "line": 93,
@@ -9779,7 +10902,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Locale/Format.php#L90-L96",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Locale/Format.php#L90-L96",
             "snippet": [
                 {
                     "number": 90,
@@ -9910,7 +11033,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L148-L154",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L148-L154",
             "snippet": [
                 {
                     "number": 148,
@@ -10061,7 +11184,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L156-L162",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L156-L162",
             "snippet": [
                 {
                     "number": 156,
@@ -10212,7 +11335,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L200-L206",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L200-L206",
             "snippet": [
                 {
                     "number": 200,
@@ -10368,7 +11491,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Setup/Declaration/Schema/Db/MySQL/Definition/Columns/OnUpdate.php#L38-L44",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Setup/Declaration/Schema/Db/MySQL/Definition/Columns/OnUpdate.php#L38-L44",
             "snippet": [
                 {
                     "number": 38,
@@ -10532,7 +11655,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Stdlib/DateTime/Timezone.php#L371-L377",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Stdlib/DateTime/Timezone.php#L371-L377",
             "snippet": [
                 {
                     "number": 371,
@@ -10679,7 +11802,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Stdlib/StringUtils.php#L84-L90",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Stdlib/StringUtils.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -10818,7 +11941,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Validator/HTML/StyleAttributeValidator.php#L24-L30",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Validator/HTML/StyleAttributeValidator.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -11050,7 +12173,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/View/Asset/NotationResolver/Variable.php#L16-L22",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/View/Asset/NotationResolver/Variable.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -11209,7 +12332,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/View/Element/Html/Link/Current.php#L27-L33",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/View/Element/Html/Link/Current.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,
@@ -11381,7 +12504,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/View/Helper/PathPattern.php#L64-L70",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/View/Helper/PathPattern.php#L64-L70",
             "snippet": [
                 {
                     "number": 64,
@@ -11552,7 +12675,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/View/Template/Html/Minifier.php#L119-L125",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/View/Template/Html/Minifier.php#L119-L125",
             "snippet": [
                 {
                     "number": 119,
@@ -11735,7 +12858,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/View/Template/Html/Minifier.php#L161-L167",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/View/Template/Html/Minifier.php#L161-L167",
             "snippet": [
                 {
                     "number": 161,
@@ -11874,7 +12997,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/lib/internal/Magento/Framework/Xml/Generator.php#L77-L83",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/lib/internal/Magento/Framework/Xml/Generator.php#L77-L83",
             "snippet": [
                 {
                     "number": 77,
@@ -12001,7 +13124,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/setup/src/Magento/Setup/Console/CompilerPreparation.php#L136-L142",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/setup/src/Magento/Setup/Console/CompilerPreparation.php#L136-L142",
             "snippet": [
                 {
                     "number": 136,
@@ -12144,7 +13267,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/setup/src/Magento/Setup/Model/FixtureGenerator/SqlCollector.php#L44-L50",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/setup/src/Magento/Setup/Model/FixtureGenerator/SqlCollector.php#L44-L50",
             "snippet": [
                 {
                     "number": 44,
@@ -12383,7 +13506,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/setup/src/Magento/Setup/Model/FixtureGenerator/SqlCollector.php#L47-L53",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/setup/src/Magento/Setup/Model/FixtureGenerator/SqlCollector.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,
@@ -12519,7 +13642,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/7bd508f59c5cd317382d01ffe9e0852049af0554/setup/src/Magento/Setup/Module/Di/Code/Scanner/PhpScanner.php#L62-L68",
+            "permalink": "https://github.com/magento/magento2/blob/542a11c7b680d1bece1e7d86065ac939e130438c/setup/src/Magento/Setup/Module/Di/Code/Scanner/PhpScanner.php#L62-L68",
             "snippet": [
                 {
                     "number": 62,

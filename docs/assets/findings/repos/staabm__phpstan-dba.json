@@ -1,6 +1,6 @@
 {
     "repo": "staabm/phpstan-dba",
-    "sha": "4abcfdc972796cce45764b2690b6269fc3e8d808",
+    "sha": "685070e71e7e459bc14b335d9b393ba17febca7b",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/staabm/phpstan-dba/blob/4abcfdc972796cce45764b2690b6269fc3e8d808/src/QueryReflection/QuerySimulation.php#L169-L175",
+            "permalink": "https://github.com/staabm/phpstan-dba/blob/685070e71e7e459bc14b335d9b393ba17febca7b/src/QueryReflection/QuerySimulation.php#L169-L175",
             "snippet": [
                 {
                     "number": 169,

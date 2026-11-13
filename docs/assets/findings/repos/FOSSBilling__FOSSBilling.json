@@ -1,6 +1,6 @@
 {
     "repo": "FOSSBilling/FOSSBilling",
-    "sha": "adc02447010c974de229501a9a23063bcc71acd6",
+    "sha": "6064451f04659838450ffa969e492542b76e4321",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -47,7 +47,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/adc02447010c974de229501a9a23063bcc71acd6/src/core/Doctrine/InstallSeeder.php#L307-L313",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/6064451f04659838450ffa969e492542b76e4321/src/core/Doctrine/InstallSeeder.php#L307-L313",
             "snippet": [
                 {
                     "number": 307,
@@ -195,7 +195,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/adc02447010c974de229501a9a23063bcc71acd6/src/core/Update/Patch/Patch52.php#L76-L82",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/6064451f04659838450ffa969e492542b76e4321/src/core/Update/Patch/Patch52.php#L76-L82",
             "snippet": [
                 {
                     "number": 76,
@@ -403,7 +403,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/adc02447010c974de229501a9a23063bcc71acd6/src/core/Update/Patch/Patch57.php#L120-L126",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/6064451f04659838450ffa969e492542b76e4321/src/core/Update/Patch/Patch57.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,
@@ -611,7 +611,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/adc02447010c974de229501a9a23063bcc71acd6/src/core/Update/Patch/Patch90.php#L121-L127",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/6064451f04659838450ffa969e492542b76e4321/src/core/Update/Patch/Patch90.php#L121-L127",
             "snippet": [
                 {
                     "number": 121,
@@ -814,7 +814,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/adc02447010c974de229501a9a23063bcc71acd6/src/core/Validation/DomainValidator.php#L46-L52",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/6064451f04659838450ffa969e492542b76e4321/src/core/Validation/DomainValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -1019,7 +1019,7 @@
         {
             "id": "f-bc93c2ffd8",
             "file": "src/modules/Email/Service.php",
-            "line": 467,
+            "line": 471,
             "column": 24,
             "pattern": "#{%.?block subject.?%}((.*?)+){%.?endblock.?%}#",
             "source": "preg_match()",
@@ -1059,10 +1059,10 @@
                 "limit": 100000
             },
             "subject": "{%block subject%}!!!!!!!!!!!!!!!!!!!!!!!!!endblock",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/adc02447010c974de229501a9a23063bcc71acd6/src/modules/Email/Service.php#L464-L470",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/6064451f04659838450ffa969e492542b76e4321/src/modules/Email/Service.php#L468-L474",
             "snippet": [
                 {
-                    "number": 464,
+                    "number": 468,
                     "focus": false,
                     "runs": [
                         [
@@ -1072,7 +1072,7 @@
                     ]
                 },
                 {
-                    "number": 465,
+                    "number": 469,
                     "focus": false,
                     "runs": [
                         [
@@ -1082,7 +1082,7 @@
                     ]
                 },
                 {
-                    "number": 466,
+                    "number": 470,
                     "focus": false,
                     "runs": [
                         [
@@ -1092,7 +1092,7 @@
                     ]
                 },
                 {
-                    "number": 467,
+                    "number": 471,
                     "focus": true,
                     "runs": [
                         [
@@ -1206,7 +1206,7 @@
                     ]
                 },
                 {
-                    "number": 468,
+                    "number": 472,
                     "focus": false,
                     "runs": [
                         [
@@ -1216,7 +1216,7 @@
                     ]
                 },
                 {
-                    "number": 469,
+                    "number": 473,
                     "focus": false,
                     "runs": [
                         [
@@ -1226,7 +1226,7 @@
                     ]
                 },
                 {
-                    "number": 470,
+                    "number": 474,
                     "focus": false,
                     "runs": [
                         [
@@ -1240,7 +1240,7 @@
         {
             "id": "f-adaa269a6b",
             "file": "src/modules/Email/Service.php",
-            "line": 473,
+            "line": 477,
             "column": 24,
             "pattern": "/{%.?block content.?%}((.*?\\n)+){%.?endblock.?%}/m",
             "source": "preg_match()",
@@ -1263,10 +1263,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/adc02447010c974de229501a9a23063bcc71acd6/src/modules/Email/Service.php#L470-L476",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/6064451f04659838450ffa969e492542b76e4321/src/modules/Email/Service.php#L474-L480",
             "snippet": [
                 {
-                    "number": 470,
+                    "number": 474,
                     "focus": false,
                     "runs": [
                         [
@@ -1276,7 +1276,7 @@
                     ]
                 },
                 {
-                    "number": 471,
+                    "number": 475,
                     "focus": false,
                     "runs": [
                         [
@@ -1286,7 +1286,7 @@
                     ]
                 },
                 {
-                    "number": 472,
+                    "number": 476,
                     "focus": false,
                     "runs": [
                         [
@@ -1296,7 +1296,7 @@
                     ]
                 },
                 {
-                    "number": 473,
+                    "number": 477,
                     "focus": true,
                     "runs": [
                         [
@@ -1414,7 +1414,7 @@
                     ]
                 },
                 {
-                    "number": 474,
+                    "number": 478,
                     "focus": false,
                     "runs": [
                         [
@@ -1424,7 +1424,7 @@
                     ]
                 },
                 {
-                    "number": 475,
+                    "number": 479,
                     "focus": false,
                     "runs": [
                         [
@@ -1434,7 +1434,7 @@
                     ]
                 },
                 {
-                    "number": 476,
+                    "number": 480,
                     "focus": false,
                     "runs": [
                         [
@@ -1466,7 +1466,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/adc02447010c974de229501a9a23063bcc71acd6/src/modules/Theme/Model/Theme.php#L180-L186",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/6064451f04659838450ffa969e492542b76e4321/src/modules/Theme/Model/Theme.php#L180-L186",
             "snippet": [
                 {
                     "number": 180,

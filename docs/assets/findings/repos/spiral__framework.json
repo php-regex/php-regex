@@ -1,9 +1,9 @@
 {
     "repo": "spiral/framework",
-    "sha": "f8082a261fadc86d39761ac8f32428ff07dca306",
+    "sha": "f1fb63cbe7c3318e995a3d865cdd37640f7f63b1",
     "target": {
-        "php": "8.1",
-        "pcre": "10.39",
+        "php": "8.2",
+        "pcre": "10.40",
         "source": "composer.json require.php"
     },
     "findings": [
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/spiral/framework/blob/f8082a261fadc86d39761ac8f32428ff07dca306/src/SendIt/src/Renderer/ViewRenderer.php#L52-L58",
+            "permalink": "https://github.com/spiral/framework/blob/f1fb63cbe7c3318e995a3d865cdd37640f7f63b1/src/SendIt/src/Renderer/ViewRenderer.php#L52-L58",
             "snippet": [
                 {
                     "number": 52,

@@ -1,6 +1,6 @@
 {
     "repo": "PHPMailer/PHPMailer",
-    "sha": "a2b38e59301e298c9d55b4bb6affe325c73d4e6c",
+    "sha": "d68dd1464f08f3cfe2b9f99602cd6c59049eb4a0",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L943-L949",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/d68dd1464f08f3cfe2b9f99602cd6c59049eb4a0/src/PHPMailer.php#L943-L949",
             "snippet": [
                 {
                     "number": 943,
@@ -185,7 +185,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L1541-L1547",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/d68dd1464f08f3cfe2b9f99602cd6c59049eb4a0/src/PHPMailer.php#L1541-L1547",
             "snippet": [
                 {
                     "number": 1541,
@@ -285,7 +285,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L1559-L1565",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/d68dd1464f08f3cfe2b9f99602cd6c59049eb4a0/src/PHPMailer.php#L1559-L1565",
             "snippet": [
                 {
                     "number": 1559,
@@ -385,7 +385,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L1576-L1582",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/d68dd1464f08f3cfe2b9f99602cd6c59049eb4a0/src/PHPMailer.php#L1576-L1582",
             "snippet": [
                 {
                     "number": 1576,
@@ -462,7 +462,7 @@
         {
             "id": "f-301be2833b",
             "file": "src/PHPMailer.php",
-            "line": 2601,
+            "line": 2616,
             "column": 29,
             "pattern": "/^\\$PHPMAILER_LANG\\['([a-z\\d_]+)'\\]\\s*=\\s*([\"'])(.+)*?\\2;/",
             "source": "preg_match()",
@@ -487,10 +487,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L2598-L2604",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/d68dd1464f08f3cfe2b9f99602cd6c59049eb4a0/src/PHPMailer.php#L2613-L2619",
             "snippet": [
                 {
-                    "number": 2598,
+                    "number": 2613,
                     "focus": false,
                     "runs": [
                         [
@@ -500,7 +500,7 @@
                     ]
                 },
                 {
-                    "number": 2599,
+                    "number": 2614,
                     "focus": false,
                     "runs": [
                         [
@@ -510,7 +510,7 @@
                     ]
                 },
                 {
-                    "number": 2600,
+                    "number": 2615,
                     "focus": false,
                     "runs": [
                         [
@@ -520,7 +520,7 @@
                     ]
                 },
                 {
-                    "number": 2601,
+                    "number": 2616,
                     "focus": true,
                     "runs": [
                         [
@@ -666,7 +666,7 @@
                     ]
                 },
                 {
-                    "number": 2602,
+                    "number": 2617,
                     "focus": false,
                     "runs": [
                         [
@@ -676,7 +676,7 @@
                     ]
                 },
                 {
-                    "number": 2603,
+                    "number": 2618,
                     "focus": false,
                     "runs": [
                         [
@@ -686,7 +686,7 @@
                     ]
                 },
                 {
-                    "number": 2604,
+                    "number": 2619,
                     "focus": false,
                     "runs": [
                         [
@@ -700,7 +700,7 @@
         {
             "id": "f-2608a1eb17",
             "file": "src/PHPMailer.php",
-            "line": 5044,
+            "line": 5059,
             "column": 24,
             "pattern": "#^(.*?)[\\\\/]*(([^/\\\\]*?)(\\.([^.\\\\/]+?)|))[\\\\/.]*$#m",
             "source": "preg_match()",
@@ -718,10 +718,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L5041-L5047",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/d68dd1464f08f3cfe2b9f99602cd6c59049eb4a0/src/PHPMailer.php#L5056-L5062",
             "snippet": [
                 {
-                    "number": 5041,
+                    "number": 5056,
                     "focus": false,
                     "runs": [
                         [
@@ -731,7 +731,7 @@
                     ]
                 },
                 {
-                    "number": 5042,
+                    "number": 5057,
                     "focus": false,
                     "runs": [
                         [
@@ -741,7 +741,7 @@
                     ]
                 },
                 {
-                    "number": 5043,
+                    "number": 5058,
                     "focus": false,
                     "runs": [
                         [
@@ -751,7 +751,7 @@
                     ]
                 },
                 {
-                    "number": 5044,
+                    "number": 5059,
                     "focus": true,
                     "runs": [
                         [
@@ -901,7 +901,7 @@
                     ]
                 },
                 {
-                    "number": 5045,
+                    "number": 5060,
                     "focus": false,
                     "runs": [
                         [
@@ -911,7 +911,7 @@
                     ]
                 },
                 {
-                    "number": 5046,
+                    "number": 5061,
                     "focus": false,
                     "runs": [
                         [
@@ -921,7 +921,7 @@
                     ]
                 },
                 {
-                    "number": 5047,
+                    "number": 5062,
                     "focus": false,
                     "runs": [
                         [
@@ -935,7 +935,7 @@
         {
             "id": "f-084ec1f68a",
             "file": "src/SMTP.php",
-            "line": 330,
+            "line": 331,
             "column": 37,
             "pattern": "/\\r\\n|\\r/m",
             "source": "preg_replace()",
@@ -958,10 +958,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/SMTP.php#L327-L333",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/d68dd1464f08f3cfe2b9f99602cd6c59049eb4a0/src/SMTP.php#L328-L334",
             "snippet": [
                 {
-                    "number": 327,
+                    "number": 328,
                     "focus": false,
                     "runs": [
                         [
@@ -971,7 +971,7 @@
                     ]
                 },
                 {
-                    "number": 328,
+                    "number": 329,
                     "focus": false,
                     "runs": [
                         [
@@ -981,7 +981,7 @@
                     ]
                 },
                 {
-                    "number": 329,
+                    "number": 330,
                     "focus": false,
                     "runs": [
                         [
@@ -991,7 +991,7 @@
                     ]
                 },
                 {
-                    "number": 330,
+                    "number": 331,
                     "focus": true,
                     "runs": [
                         [
@@ -1037,7 +1037,7 @@
                     ]
                 },
                 {
-                    "number": 331,
+                    "number": 332,
                     "focus": false,
                     "runs": [
                         [
@@ -1047,7 +1047,7 @@
                     ]
                 },
                 {
-                    "number": 332,
+                    "number": 333,
                     "focus": false,
                     "runs": [
                         [
@@ -1057,7 +1057,7 @@
                     ]
                 },
                 {
-                    "number": 333,
+                    "number": 334,
                     "focus": false,
                     "runs": [
                         [
@@ -1096,7 +1096,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/test/Language/TranslationCompletenessTest.php#L68-L74",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/d68dd1464f08f3cfe2b9f99602cd6c59049eb4a0/test/Language/TranslationCompletenessTest.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,

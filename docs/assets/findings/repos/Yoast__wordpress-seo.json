@@ -1,6 +1,6 @@
 {
     "repo": "Yoast/wordpress-seo",
-    "sha": "2c1dcf5939fd1980d18a45ca199f2575c8293847",
+    "sha": "dde860ac5583805cdb5d5d93f82661753a5b0a04",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/2c1dcf5939fd1980d18a45ca199f2575c8293847/inc/options/class-wpseo-option-social.php#L271-L277",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/dde860ac5583805cdb5d5d93f82661753a5b0a04/inc/options/class-wpseo-option-social.php#L271-L277",
             "snippet": [
                 {
                     "number": 271,
@@ -284,7 +284,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/2c1dcf5939fd1980d18a45ca199f2575c8293847/lib/migrations/adapter.php#L972-L978",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/dde860ac5583805cdb5d5d93f82661753a5b0a04/lib/migrations/adapter.php#L972-L978",
             "snippet": [
                 {
                     "number": 972,
@@ -428,7 +428,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/2c1dcf5939fd1980d18a45ca199f2575c8293847/src/helpers/string-helper.php#L40-L46",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/dde860ac5583805cdb5d5d93f82661753a5b0a04/src/helpers/string-helper.php#L40-L46",
             "snippet": [
                 {
                     "number": 40,
@@ -578,7 +578,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/2c1dcf5939fd1980d18a45ca199f2575c8293847/src/integrations/front-end/crawl-cleanup-searches.php#L198-L204",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/dde860ac5583805cdb5d5d93f82661753a5b0a04/src/integrations/front-end/crawl-cleanup-searches.php#L198-L204",
             "snippet": [
                 {
                     "number": 198,
@@ -738,7 +738,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/2c1dcf5939fd1980d18a45ca199f2575c8293847/src/integrations/third-party/elementor.php#L214-L220",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/dde860ac5583805cdb5d5d93f82661753a5b0a04/src/integrations/third-party/elementor.php#L214-L220",
             "snippet": [
                 {
                     "number": 214,
@@ -929,7 +929,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/2c1dcf5939fd1980d18a45ca199f2575c8293847/src/llms-txt/application/markdown-escaper.php#L20-L26",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/dde860ac5583805cdb5d5d93f82661753a5b0a04/src/llms-txt/application/markdown-escaper.php#L20-L26",
             "snippet": [
                 {
                     "number": 20,

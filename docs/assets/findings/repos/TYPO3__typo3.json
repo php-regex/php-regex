@@ -1,6 +1,6 @@
 {
     "repo": "TYPO3/typo3",
-    "sha": "a510bd06dccb8eed42f89a7818402b0cd4b03087",
+    "sha": "f8689bdef1d7ac67c193a67de536db874b0a2cc9",
     "target": {
         "php": "8.5",
         "pcre": "10.44",
@@ -10,7 +10,7 @@
         {
             "id": "f-92b92eb84b",
             "file": "typo3/sysext/backend/Classes/Form/FormDataProvider/AbstractItemProvider.php",
-            "line": 920,
+            "line": 1014,
             "column": 29,
             "pattern": "/###SITE:([^#]+)###/m",
             "source": "preg_match_all()",
@@ -33,10 +33,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/backend/Classes/Form/FormDataProvider/AbstractItemProvider.php#L917-L923",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/backend/Classes/Form/FormDataProvider/AbstractItemProvider.php#L1011-L1017",
             "snippet": [
                 {
-                    "number": 917,
+                    "number": 1011,
                     "focus": false,
                     "runs": [
                         [
@@ -46,7 +46,7 @@
                     ]
                 },
                 {
-                    "number": 918,
+                    "number": 1012,
                     "focus": false,
                     "runs": [
                         [
@@ -56,7 +56,7 @@
                     ]
                 },
                 {
-                    "number": 919,
+                    "number": 1013,
                     "focus": false,
                     "runs": [
                         [
@@ -66,7 +66,7 @@
                     ]
                 },
                 {
-                    "number": 920,
+                    "number": 1014,
                     "focus": true,
                     "runs": [
                         [
@@ -132,7 +132,7 @@
                     ]
                 },
                 {
-                    "number": 921,
+                    "number": 1015,
                     "focus": false,
                     "runs": [
                         [
@@ -142,7 +142,7 @@
                     ]
                 },
                 {
-                    "number": 922,
+                    "number": 1016,
                     "focus": false,
                     "runs": [
                         [
@@ -152,7 +152,7 @@
                     ]
                 },
                 {
-                    "number": 923,
+                    "number": 1017,
                     "focus": false,
                     "runs": [
                         [
@@ -189,7 +189,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L84-L90",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -325,7 +325,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L85-L91",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L85-L91",
             "snippet": [
                 {
                     "number": 85,
@@ -488,6 +488,108 @@
             ]
         },
         {
+            "id": "f-5649c668a8",
+            "file": "typo3/sysext/core/Classes/Html/HtmlCropper.php",
+            "line": 158,
+            "column": 13,
+            "pattern": "%\n        (\n            (?:\n                <!--.*?-->\t\t\t\t\t# a comment\n                |\n                <canvas[^>]*>.*?</canvas>   # a canvas tag\n                |\n                <script[^>]*>.*?</script>   # a script tag\n                |\n                <noscript[^>]*>.*?</noscript> # a noscript tag\n                |\n                <template[^>]*>.*?</template> # a template tag\n            )\n            |\n            </?(?:a|abbr|address|area|article|aside|audio|b|bdi|bdo|blockquote|body|br|button|caption|cite|code|col|colgroup|data|datalist|dd|del|dfn|div|dl|dt|em|embed|fieldset|figcaption|figure|font|footer|form|h1|h2|h3|h4|h5|h6|header|hr|i|iframe|img|input|ins|kbd|keygen|label|legend|li|link|main|map|mark|meter|nav|object|ol|optgroup|option|output|p|param|pre|progress|q|rb|rp|rt|rtc|ruby|s|samp|section|select|small|source|span|strong|sub|sup|table|tbody|td|textarea|tfoot|th|thead|time|tr|track|u|ul|ut|var|video|wbr)+\t\t\t# opening tag ('<tag') or closing tag ('</tag')\n            (?:\n                (?:\n                    (?:\n                        \\s+\\w[\\w-]*\t\t# EITHER spaces, followed by attribute names\n                        (?:\n                            \\s*=?\\s*\t\t# equals\n                            (?>\n                                \".*?\"\t\t# attribute values in double-quotes\n                                |\n                                '.*?'\t\t# attribute values in single-quotes\n                                |\n                                [^'\">\\s]+\t# plain attribute values\n                            )\n                        )?\n                    )\n                    |\t\t\t\t\t\t# OR a single dash (for TYPO3 link tag)\n                    (?:\n                        \\s+-\n                    )\n                )+\\s*\n                |\t\t\t\t\t\t\t# OR only spaces\n                \\s*\n            )\n            /?>\t\t\t\t\t\t\t\t# closing the tag with '>' or '/>'\n        )%xs",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.alternation.overlap",
+                    "message": "Alternation branches \"a\" and \"abbr\" overlap.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-alternation-branches"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/HtmlCropper.php#L155-L161",
+            "snippet": [
+                {
+                    "number": 155,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 156,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 157,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $sections = preg_split(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 158,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            '%' . $splitPattern . '%xs',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 159,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $content,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 160,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            -1,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 161,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            PREG_SPLIT_DELIM_CAPTURE",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-6123f671e0",
             "file": "typo3/sysext/core/Classes/Html/HtmlParser.php",
             "line": 327,
@@ -513,7 +615,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Html/HtmlParser.php#L324-L330",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/HtmlParser.php#L324-L330",
             "snippet": [
                 {
                     "number": 324,
@@ -725,7 +827,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Html/HtmlParser.php#L449-L455",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/HtmlParser.php#L449-L455",
             "snippet": [
                 {
                     "number": 449,
@@ -857,7 +959,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Html/HtmlParser.php#L785-L791",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/HtmlParser.php#L785-L791",
             "snippet": [
                 {
                     "number": 785,
@@ -989,7 +1091,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
             "snippet": [
                 {
                     "number": 623,
@@ -1241,7 +1343,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
             "snippet": [
                 {
                     "number": 623,
@@ -1488,7 +1590,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Localization/TranslationDomainResolver.php#L94-L100",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Localization/TranslationDomainResolver.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -1679,7 +1781,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Log/LogDataTrait.php#L63-L69",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Log/LogDataTrait.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -1849,7 +1951,7 @@
                 "limit": 100000
             },
             "subject": "0.0000000000000000000000000000000000000000000000000000000000000000!",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Package/PackageInterface.php#L29-L35",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Package/PackageInterface.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -2099,7 +2201,7 @@
                 "limit": 100000
             },
             "subject": "................................................................................................!/",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Service/Archive/ZipService.php#L70-L76",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Service/Archive/ZipService.php#L70-L76",
             "snippet": [
                 {
                     "number": 70,
@@ -2222,9 +2324,199 @@
             ]
         },
         {
+            "id": "f-ac57242a7b",
+            "file": "typo3/sysext/core/Classes/Utility/ClassNamingUtility.php",
+            "line": 75,
+            "column": 13,
+            "pattern": "/^(?P<vendorName>[^\\\\]+)\\\\(?P<extensionName>[^\\\\]+)\\\\(Controller|Command|(?P<subpackageKey>.+)\\\\Controller)\\\\(?P<controllerName>[a-z\\\\]+)Controller$/ix",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.x",
+                    "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Utility/ClassNamingUtility.php#L72-L78",
+            "snippet": [
+                {
+                    "number": 72,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            ? '^(?P<vendorName>[^\\\\\\\\]+\\\\\\[^\\\\\\\\]+)\\\\\\(?P<extensionName>[^\\\\\\\\]+)'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 73,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            : '^(?P<vendorName>[^\\\\\\\\]+)\\\\\\\\(?P<extensionName>[^\\\\\\\\]+)';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 74,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 75,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            '/' . $extensionName . '\\\\\\\\(Controller|Command|(?P<subpackageKey>.+)\\\\\\\\Controller)\\\\\\\\(?P<controllerName>[a-z\\\\\\\\]+)Controller$/ix',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 76,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $controllerObjectName,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 77,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $matches",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 78,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-fe93d93a2a",
+            "file": "typo3/sysext/core/Classes/Utility/ClassNamingUtility.php",
+            "line": 75,
+            "column": 13,
+            "pattern": "/^(?P<vendorName>[^\\\\]+\\\\[^\\\\]+)\\\\(?P<extensionName>[^\\\\]+)\\\\(Controller|Command|(?P<subpackageKey>.+)\\\\Controller)\\\\(?P<controllerName>[a-z\\\\]+)Controller$/ix",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.x",
+                    "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Utility/ClassNamingUtility.php#L72-L78",
+            "snippet": [
+                {
+                    "number": 72,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            ? '^(?P<vendorName>[^\\\\\\\\]+\\\\\\[^\\\\\\\\]+)\\\\\\(?P<extensionName>[^\\\\\\\\]+)'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 73,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            : '^(?P<vendorName>[^\\\\\\\\]+)\\\\\\\\(?P<extensionName>[^\\\\\\\\]+)';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 74,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 75,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            '/' . $extensionName . '\\\\\\\\(Controller|Command|(?P<subpackageKey>.+)\\\\\\\\Controller)\\\\\\\\(?P<controllerName>[a-z\\\\\\\\]+)Controller$/ix',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 76,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $controllerObjectName,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 77,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $matches",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 78,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-a38bf27ce6",
             "file": "typo3/sysext/core/Classes/Utility/GeneralUtility.php",
-            "line": 1491,
+            "line": 1497,
             "column": 24,
             "pattern": "/^(?:http|ftp)s?|s(?:ftp|cp):/",
             "source": "preg_match()",
@@ -2242,10 +2534,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/core/Classes/Utility/GeneralUtility.php#L1488-L1494",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Utility/GeneralUtility.php#L1494-L1500",
             "snippet": [
                 {
-                    "number": 1488,
+                    "number": 1494,
                     "focus": false,
                     "runs": [
                         [
@@ -2255,7 +2547,7 @@
                     ]
                 },
                 {
-                    "number": 1489,
+                    "number": 1495,
                     "focus": false,
                     "runs": [
                         [
@@ -2265,7 +2557,7 @@
                     ]
                 },
                 {
-                    "number": 1490,
+                    "number": 1496,
                     "focus": false,
                     "runs": [
                         [
@@ -2275,7 +2567,7 @@
                     ]
                 },
                 {
-                    "number": 1491,
+                    "number": 1497,
                     "focus": true,
                     "runs": [
                         [
@@ -2369,7 +2661,7 @@
                     ]
                 },
                 {
-                    "number": 1492,
+                    "number": 1498,
                     "focus": false,
                     "runs": [
                         [
@@ -2379,7 +2671,7 @@
                     ]
                 },
                 {
-                    "number": 1493,
+                    "number": 1499,
                     "focus": false,
                     "runs": [
                         [
@@ -2389,7 +2681,7 @@
                     ]
                 },
                 {
-                    "number": 1494,
+                    "number": 1500,
                     "focus": false,
                     "runs": [
                         [
@@ -2401,9 +2693,111 @@
             ]
         },
         {
+            "id": "f-3343220ef2",
+            "file": "typo3/sysext/core/Classes/Utility/MathUtility.php",
+            "line": 128,
+            "column": 24,
+            "pattern": "/([\\*\\/\\+-^%])([\\*\\/\\+-^%]?[0-9\\.]*)/",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '/' (covered by range '+'-'^')",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '/' (covered by range '+'-'^')",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Utility/MathUtility.php#L125-L131",
+            "snippet": [
+                {
+                    "number": 125,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $regex = '([' . $qm . '])([' . $qm . ']?[0-9\\\\.]*)';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 126,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Split the expression here:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 127,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $reg = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 128,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        preg_match_all('/' . $regex . '/', $string, $reg);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 129,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        reset($reg[2]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 130,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $number = 0;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 131,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $Msign = '+';",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-b85118c8bb",
             "file": "typo3/sysext/extensionmanager/Classes/Controller/UploadExtensionFileController.php",
-            "line": 218,
+            "line": 232,
             "column": 37,
             "pattern": "/_(\\d+)(\\.|\\-)(\\d+)(\\.|\\-)(\\d+).*/i",
             "source": "preg_replace()",
@@ -2421,10 +2815,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/extensionmanager/Classes/Controller/UploadExtensionFileController.php#L215-L221",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/extensionmanager/Classes/Controller/UploadExtensionFileController.php#L229-L235",
             "snippet": [
                 {
-                    "number": 215,
+                    "number": 229,
                     "focus": false,
                     "runs": [
                         [
@@ -2434,7 +2828,7 @@
                     ]
                 },
                 {
-                    "number": 216,
+                    "number": 230,
                     "focus": false,
                     "runs": [
                         [
@@ -2444,7 +2838,7 @@
                     ]
                 },
                 {
-                    "number": 217,
+                    "number": 231,
                     "focus": false,
                     "runs": [
                         [
@@ -2454,7 +2848,7 @@
                     ]
                 },
                 {
-                    "number": 218,
+                    "number": 232,
                     "focus": true,
                     "runs": [
                         [
@@ -2572,7 +2966,7 @@
                     ]
                 },
                 {
-                    "number": 219,
+                    "number": 233,
                     "focus": false,
                     "runs": [
                         [
@@ -2582,7 +2976,7 @@
                     ]
                 },
                 {
-                    "number": 220,
+                    "number": 234,
                     "focus": false,
                     "runs": [
                         [
@@ -2592,7 +2986,7 @@
                     ]
                 },
                 {
-                    "number": 221,
+                    "number": 235,
                     "focus": false,
                     "runs": [
                         [
@@ -2629,7 +3023,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/extensionmanager/Classes/ViewHelpers/ProcessAvailableActionsViewHelper.php#L43-L49",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/extensionmanager/Classes/ViewHelpers/ProcessAvailableActionsViewHelper.php#L43-L49",
             "snippet": [
                 {
                     "number": 43,
@@ -2760,7 +3154,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/install/Classes/Controller/MaintenanceController.php#L492-L498",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/install/Classes/Controller/MaintenanceController.php#L492-L498",
             "snippet": [
                 {
                     "number": 492,
@@ -2883,7 +3277,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/install/Classes/SystemEnvironment/DatabaseCheck/Platform/MySql.php#L146-L152",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/install/Classes/SystemEnvironment/DatabaseCheck/Platform/MySql.php#L146-L152",
             "snippet": [
                 {
                     "number": 146,
@@ -3074,7 +3468,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/a510bd06dccb8eed42f89a7818402b0cd4b03087/typo3/sysext/rte_ckeditor/Classes/Configuration/CKEditor5Migrator.php#L728-L734",
+            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/rte_ckeditor/Classes/Configuration/CKEditor5Migrator.php#L728-L734",
             "snippet": [
                 {
                     "number": 728,

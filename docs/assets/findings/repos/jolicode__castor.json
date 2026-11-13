@@ -1,6 +1,6 @@
 {
     "repo": "jolicode/castor",
-    "sha": "d95732408d49d88d497fb73936d711119fea0c0e",
+    "sha": "96ebcd2d8fc255187ba25c2e54e772be9cf1e595",
     "target": {
         "php": "8.4.1",
         "pcre": "10.49",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/jolicode/castor/blob/d95732408d49d88d497fb73936d711119fea0c0e/tools/doc/castor.php#L131-L137",
+            "permalink": "https://github.com/jolicode/castor/blob/96ebcd2d8fc255187ba25c2e54e772be9cf1e595/tools/doc/castor.php#L131-L137",
             "snippet": [
                 {
                     "number": 131,

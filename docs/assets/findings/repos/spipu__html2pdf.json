@@ -1730,6 +1730,106 @@
             ]
         },
         {
+            "id": "f-b864abce62",
+            "file": "src/CssConverter.php",
+            "line": 163,
+            "column": 24,
+            "pattern": "/rgb\\([\\s]*([0-9%\\.]+)[\\s]*,[\\s]*([0-9%\\.]+)[\\s]*,[\\s]*([0-9%\\.]+)[\\s]*\\)/isU",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/rgb\\([\\s]*([0-9%\\.]+)[\\s]*,[\\s]*([0-9%\\.]+)[\\s]*,[\\s]*([0-9%\\.]+)[\\s]*\\)/iU",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/spipu/html2pdf/blob/98416dd8eadd3b966f41430b841d3e4dd6eadc6f/src/CssConverter.php#L160-L166",
+            "snippet": [
+                {
+                    "number": 160,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 161,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // like rgb(100, 100, 100)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 162,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $sub = '[\\s]*([0-9%\\.]+)[\\s]*';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 163,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match('/rgb\\('.$sub.','.$sub.','.$sub.'\\)/isU', $css, $match)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 164,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $r = $this->convertSubColor($match[1]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 165,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $g = $this->convertSubColor($match[2]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 166,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $b = $this->convertSubColor($match[3]);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-05bfe0340c",
             "file": "src/CssConverter.php",
             "line": 217,
@@ -7825,6 +7925,114 @@
             ]
         },
         {
+            "id": "f-11349a77c3",
+            "file": "src/Parsing/TagParser.php",
+            "line": 43,
+            "column": 25,
+            "pattern": "/<([\\/]{0,1})([_a-z0-9]+)([\\/>\\s]+)/isU",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.lazyEnd",
+                    "message": "Quantifier \"+\" is lazy under the U flag and ends the pattern, so it always matches its minimum.",
+                    "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
+                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<([\\/]?)([_a-z0-9]+)([\\/>\\s]+)/iU",
+                "changes": [
+                    "Wrote a quantifier in its short form.",
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/spipu/html2pdf/blob/98416dd8eadd3b966f41430b841d3e4dd6eadc6f/src/Parsing/TagParser.php#L40-L46",
+            "snippet": [
+                {
+                    "number": 40,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 41,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // name of the tag, opening, closure, autoclosure",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 42,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $tag = '<([\\/]{0,1})([_a-z0-9]+)([\\/>\\s]+)';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 43,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (!preg_match('/'.$tag.'/isU', $code, $match)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 44,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $e = new HtmlParsingException('The HTML tag ['.$code.'] provided is invalid');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 45,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $e->setInvalidTag($code);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 46,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            throw $e;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-4fcf894973",
             "file": "src/Parsing/TagParser.php",
             "line": 49,
@@ -8584,6 +8792,306 @@
                     "runs": [
                         [
                             "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-bb44f86be9",
+            "file": "src/Parsing/TagParser.php",
+            "line": 218,
+            "column": 28,
+            "pattern": "/([a-zA-Z0-9_]+)=([^\"'\\s>]+)/is",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/([a-zA-Z0-9_]+)=([^\"'\\s>]+)/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/spipu/html2pdf/blob/98416dd8eadd3b966f41430b841d3e4dd6eadc6f/src/Parsing/TagParser.php#L215-L221",
+            "snippet": [
+                {
+                    "number": 215,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 216,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 217,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($regexes as $regex) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 218,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            preg_match_all('/'.$regex.'/is', $code, $match);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 219,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $amountMatch = count($match[0]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 220,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            for ($k = 0; $k < $amountMatch; $k++) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 221,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $param[trim(strtolower($match[1][$k]))] = trim($match[2][$k]);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-f205aed92b",
+            "file": "src/Parsing/TagParser.php",
+            "line": 218,
+            "column": 28,
+            "pattern": "/([a-zA-Z0-9_]+)=\\s*[\"]([^\"]*)[\"]/is",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/([a-zA-Z0-9_]+)=\\s*[\"]([^\"]*)[\"]/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/spipu/html2pdf/blob/98416dd8eadd3b966f41430b841d3e4dd6eadc6f/src/Parsing/TagParser.php#L215-L221",
+            "snippet": [
+                {
+                    "number": 215,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 216,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 217,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($regexes as $regex) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 218,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            preg_match_all('/'.$regex.'/is', $code, $match);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 219,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $amountMatch = count($match[0]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 220,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            for ($k = 0; $k < $amountMatch; $k++) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 221,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $param[trim(strtolower($match[1][$k]))] = trim($match[2][$k]);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-8d35f4824e",
+            "file": "src/Parsing/TagParser.php",
+            "line": 218,
+            "column": 28,
+            "pattern": "/([a-zA-Z0-9_]+)=\\s*[']([^']*)[']/is",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/([a-zA-Z0-9_]+)=\\s*[']([^']*)[']/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/spipu/html2pdf/blob/98416dd8eadd3b966f41430b841d3e4dd6eadc6f/src/Parsing/TagParser.php#L215-L221",
+            "snippet": [
+                {
+                    "number": 215,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 216,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 217,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($regexes as $regex) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 218,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            preg_match_all('/'.$regex.'/is', $code, $match);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 219,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $amountMatch = count($match[0]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 220,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            for ($k = 0; $k < $amountMatch; $k++) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 221,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $param[trim(strtolower($match[1][$k]))] = trim($match[2][$k]);",
                             ""
                         ]
                     ]

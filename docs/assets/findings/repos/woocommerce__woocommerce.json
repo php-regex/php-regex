@@ -1,6 +1,6 @@
 {
     "repo": "woocommerce/woocommerce",
-    "sha": "7851b300325993c55a208aae89be088b8e3c62ad",
+    "sha": "6f87b58f35eb6fb29cb910f565f866905d32c73f",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/.github/workflows/scripts/post-request-shared.php#L116-L122",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/.github/workflows/scripts/post-request-shared.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,
@@ -163,9 +163,239 @@
             ]
         },
         {
+            "id": "f-dbfbd82731",
+            "file": "packages/php/blueprint/src/Importers/ImportRunSql.php",
+            "line": 250,
+            "column": 4,
+            "pattern": "/;\\s*--/i",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/blueprint/src/Importers/ImportRunSql.php#L247-L253",
+            "snippet": [
+                {
+                    "number": 247,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/UNION\\s+(?:ALL\\s+)?SELECT/i',  // UNION-based injections.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 248,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/OR\\s+1\\s*=\\s*1/i',             // OR 1=1 condition.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 249,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/AND\\s+0\\s*=\\s*0/i',            // AND 0=0 condition.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 250,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ";",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "--",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",                     // Inline comment terminations.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 251,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/SLEEP\\s*\\(/i',                 // Time-based injections.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 252,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/BENCHMARK\\s*\\(/i',             // Benchmark-based injections.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 253,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'/LOAD_FILE\\s*\\(/i',             // File access.",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-644fbdbadb",
+            "file": "packages/php/email-editor/src/Engine/Renderer/ContentRenderer/class-css-selector-normalizer.php",
+            "line": 102,
+            "column": 14,
+            "pattern": "~(?:\"[^\"\\\\]*+(?:\\\\.[^\"\\\\]*+)*+\"|'[^'\\\\]*+(?:\\\\.[^'\\\\]*+)*+'|/\\*.*?\\*/|\\\\.)(*SKIP)(*F)|:where\\((?<inner>(?:[^()\"'\\\\]+|\\\\.|\"[^\"\\\\]*+(?:\\\\.[^\"\\\\]*+)*+\"|'[^'\\\\]*+(?:\\\\.[^'\\\\]*+)*+'|\\((?&inner)\\))*)\\)~is",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Engine/Renderer/ContentRenderer/class-css-selector-normalizer.php#L99-L105",
+            "snippet": [
+                {
+                    "number": 99,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * @return string[]",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 100,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 101,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tprivate static function expand_where( string $selector ): array {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 102,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$pattern = '~(?:' . self::LITERAL_PATTERN . ')(*SKIP)(*F)|:where\\((?<inner>(?:[^()\"\\'\\\\\\\\]+|\\\\\\\\.|' . self::STRING_PATTERN . '|\\((?&inner)\\))*)\\)~is';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 103,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tif ( ! preg_match( $pattern, $selector, $matches, PREG_OFFSET_CAPTURE ) || '' === trim( $matches['inner'][0] ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 104,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\treturn array( trim( $selector ) );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 105,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-56cb7a9bba",
             "file": "packages/php/email-editor/src/Engine/Renderer/class-html2text.php",
-            "line": 148,
+            "line": 155,
             "column": 27,
             "pattern": "/ *\\t */im",
             "source": "preg_replace()",
@@ -195,10 +425,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L145-L151",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L152-L158",
             "snippet": [
                 {
-                    "number": 145,
+                    "number": 152,
                     "focus": false,
                     "runs": [
                         [
@@ -208,7 +438,7 @@
                     ]
                 },
                 {
-                    "number": 146,
+                    "number": 153,
                     "focus": false,
                     "runs": [
                         [
@@ -218,7 +448,7 @@
                     ]
                 },
                 {
-                    "number": 147,
+                    "number": 154,
                     "focus": false,
                     "runs": [
                         [
@@ -228,7 +458,7 @@
                     ]
                 },
                 {
-                    "number": 148,
+                    "number": 155,
                     "focus": true,
                     "runs": [
                         [
@@ -278,7 +508,7 @@
                     ]
                 },
                 {
-                    "number": 149,
+                    "number": 156,
                     "focus": false,
                     "runs": [
                         [
@@ -288,7 +518,7 @@
                     ]
                 },
                 {
-                    "number": 150,
+                    "number": 157,
                     "focus": false,
                     "runs": [
                         [
@@ -298,7 +528,7 @@
                     ]
                 },
                 {
-                    "number": 151,
+                    "number": 158,
                     "focus": false,
                     "runs": [
                         [
@@ -312,7 +542,7 @@
         {
             "id": "f-7f3496c7ea",
             "file": "packages/php/email-editor/src/Engine/Renderer/class-html2text.php",
-            "line": 155,
+            "line": 162,
             "column": 27,
             "pattern": "/\n[ \t]*/im",
             "source": "preg_replace()",
@@ -342,10 +572,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L152-L158",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L159-L165",
             "snippet": [
                 {
-                    "number": 152,
+                    "number": 159,
                     "focus": false,
                     "runs": [
                         [
@@ -355,7 +585,7 @@
                     ]
                 },
                 {
-                    "number": 153,
+                    "number": 160,
                     "focus": false,
                     "runs": [
                         [
@@ -365,7 +595,7 @@
                     ]
                 },
                 {
-                    "number": 154,
+                    "number": 161,
                     "focus": false,
                     "runs": [
                         [
@@ -375,7 +605,7 @@
                     ]
                 },
                 {
-                    "number": 155,
+                    "number": 162,
                     "focus": true,
                     "runs": [
                         [
@@ -429,7 +659,7 @@
                     ]
                 },
                 {
-                    "number": 156,
+                    "number": 163,
                     "focus": false,
                     "runs": [
                         [
@@ -439,7 +669,7 @@
                     ]
                 },
                 {
-                    "number": 157,
+                    "number": 164,
                     "focus": false,
                     "runs": [
                         [
@@ -449,7 +679,7 @@
                     ]
                 },
                 {
-                    "number": 158,
+                    "number": 165,
                     "focus": false,
                     "runs": [
                         [
@@ -463,7 +693,7 @@
         {
             "id": "f-c6a2d13cb0",
             "file": "packages/php/email-editor/src/Engine/Renderer/class-html2text.php",
-            "line": 167,
+            "line": 174,
             "column": 27,
             "pattern": "/[ \t]*\n/im",
             "source": "preg_replace()",
@@ -493,10 +723,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L164-L170",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L171-L177",
             "snippet": [
                 {
-                    "number": 164,
+                    "number": 171,
                     "focus": false,
                     "runs": [
                         [
@@ -506,7 +736,7 @@
                     ]
                 },
                 {
-                    "number": 165,
+                    "number": 172,
                     "focus": false,
                     "runs": [
                         [
@@ -516,7 +746,7 @@
                     ]
                 },
                 {
-                    "number": 166,
+                    "number": 173,
                     "focus": false,
                     "runs": [
                         [
@@ -526,7 +756,7 @@
                     ]
                 },
                 {
-                    "number": 167,
+                    "number": 174,
                     "focus": true,
                     "runs": [
                         [
@@ -576,7 +806,7 @@
                     ]
                 },
                 {
-                    "number": 168,
+                    "number": 175,
                     "focus": false,
                     "runs": [
                         [
@@ -586,7 +816,7 @@
                     ]
                 },
                 {
-                    "number": 169,
+                    "number": 176,
                     "focus": false,
                     "runs": [
                         [
@@ -596,7 +826,7 @@
                     ]
                 },
                 {
-                    "number": 170,
+                    "number": 177,
                     "focus": false,
                     "runs": [
                         [
@@ -610,7 +840,7 @@
         {
             "id": "f-89ac5cc92e",
             "file": "packages/php/email-editor/src/Engine/Renderer/class-html2text.php",
-            "line": 174,
+            "line": 181,
             "column": 27,
             "pattern": "/\n\n\n*/im",
             "source": "preg_replace()",
@@ -640,10 +870,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L171-L177",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L178-L184",
             "snippet": [
                 {
-                    "number": 171,
+                    "number": 178,
                     "focus": false,
                     "runs": [
                         [
@@ -653,7 +883,7 @@
                     ]
                 },
                 {
-                    "number": 172,
+                    "number": 179,
                     "focus": false,
                     "runs": [
                         [
@@ -663,7 +893,7 @@
                     ]
                 },
                 {
-                    "number": 173,
+                    "number": 180,
                     "focus": false,
                     "runs": [
                         [
@@ -673,7 +903,7 @@
                     ]
                 },
                 {
-                    "number": 174,
+                    "number": 181,
                     "focus": true,
                     "runs": [
                         [
@@ -715,7 +945,7 @@
                     ]
                 },
                 {
-                    "number": 175,
+                    "number": 182,
                     "focus": false,
                     "runs": [
                         [
@@ -725,7 +955,7 @@
                     ]
                 },
                 {
-                    "number": 176,
+                    "number": 183,
                     "focus": false,
                     "runs": [
                         [
@@ -735,7 +965,7 @@
                     ]
                 },
                 {
-                    "number": 177,
+                    "number": 184,
                     "focus": false,
                     "runs": [
                         [
@@ -749,7 +979,7 @@
         {
             "id": "f-c6a2d13cb0-2",
             "file": "packages/php/email-editor/src/Engine/Renderer/class-html2text.php",
-            "line": 362,
+            "line": 369,
             "column": 29,
             "pattern": "/[ \t]*\n/im",
             "source": "preg_replace()",
@@ -779,20 +1009,20 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L359-L365",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L366-L372",
             "snippet": [
                 {
-                    "number": 359,
+                    "number": 366,
                     "focus": false,
                     "runs": [
                         [
-                            "\t\t\t\t$text = \"\\n\" . trim( self::render_text( $node->wholeText ), \"\\n\\r\\t \" ) . \"\\n\";",
+                            "\t\t\t\t$text = self::render_text( $node->wholeText );",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 360,
+                    "number": 367,
                     "focus": false,
                     "runs": [
                         [
@@ -802,7 +1032,7 @@
                     ]
                 },
                 {
-                    "number": 361,
+                    "number": 368,
                     "focus": false,
                     "runs": [
                         [
@@ -812,7 +1042,7 @@
                     ]
                 },
                 {
-                    "number": 362,
+                    "number": 369,
                     "focus": true,
                     "runs": [
                         [
@@ -862,7 +1092,7 @@
                     ]
                 },
                 {
-                    "number": 363,
+                    "number": 370,
                     "focus": false,
                     "runs": [
                         [
@@ -872,7 +1102,7 @@
                     ]
                 },
                 {
-                    "number": 364,
+                    "number": 371,
                     "focus": false,
                     "runs": [
                         [
@@ -882,7 +1112,7 @@
                     ]
                 },
                 {
-                    "number": 365,
+                    "number": 372,
                     "focus": false,
                     "runs": [
                         [
@@ -896,7 +1126,7 @@
         {
             "id": "f-926fca30fe",
             "file": "packages/php/email-editor/src/Engine/Renderer/class-html2text.php",
-            "line": 370,
+            "line": 377,
             "column": 28,
             "pattern": "/[\\t\\n\\f\\r ]+/im",
             "source": "preg_replace()",
@@ -926,10 +1156,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L367-L373",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L374-L380",
             "snippet": [
                 {
-                    "number": 367,
+                    "number": 374,
                     "focus": false,
                     "runs": [
                         [
@@ -939,7 +1169,7 @@
                     ]
                 },
                 {
-                    "number": 368,
+                    "number": 375,
                     "focus": false,
                     "runs": [
                         [
@@ -949,7 +1179,7 @@
                     ]
                 },
                 {
-                    "number": 369,
+                    "number": 376,
                     "focus": false,
                     "runs": [
                         [
@@ -959,7 +1189,7 @@
                     ]
                 },
                 {
-                    "number": 370,
+                    "number": 377,
                     "focus": true,
                     "runs": [
                         [
@@ -1005,7 +1235,7 @@
                     ]
                 },
                 {
-                    "number": 371,
+                    "number": 378,
                     "focus": false,
                     "runs": [
                         [
@@ -1015,7 +1245,7 @@
                     ]
                 },
                 {
-                    "number": 372,
+                    "number": 379,
                     "focus": false,
                     "runs": [
                         [
@@ -1025,7 +1255,7 @@
                     ]
                 },
                 {
-                    "number": 373,
+                    "number": 380,
                     "focus": false,
                     "runs": [
                         [
@@ -1039,7 +1269,7 @@
         {
             "id": "f-e032625a39",
             "file": "packages/php/email-editor/src/Engine/Renderer/class-html2text.php",
-            "line": 617,
+            "line": 649,
             "column": 29,
             "pattern": "/\n/im",
             "source": "preg_replace()",
@@ -1069,10 +1299,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L614-L620",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L646-L652",
             "snippet": [
                 {
-                    "number": 614,
+                    "number": 646,
                     "focus": false,
                     "runs": [
                         [
@@ -1082,7 +1312,7 @@
                     ]
                 },
                 {
-                    "number": 615,
+                    "number": 647,
                     "focus": false,
                     "runs": [
                         [
@@ -1092,7 +1322,7 @@
                     ]
                 },
                 {
-                    "number": 616,
+                    "number": 648,
                     "focus": false,
                     "runs": [
                         [
@@ -1102,7 +1332,7 @@
                     ]
                 },
                 {
-                    "number": 617,
+                    "number": 649,
                     "focus": true,
                     "runs": [
                         [
@@ -1140,7 +1370,7 @@
                     ]
                 },
                 {
-                    "number": 618,
+                    "number": 650,
                     "focus": false,
                     "runs": [
                         [
@@ -1150,7 +1380,7 @@
                     ]
                 },
                 {
-                    "number": 619,
+                    "number": 651,
                     "focus": false,
                     "runs": [
                         [
@@ -1160,7 +1390,7 @@
                     ]
                 },
                 {
-                    "number": 620,
+                    "number": 652,
                     "focus": false,
                     "runs": [
                         [
@@ -1174,7 +1404,7 @@
         {
             "id": "f-23af6afd8c",
             "file": "packages/php/email-editor/src/Engine/Renderer/class-html2text.php",
-            "line": 621,
+            "line": 653,
             "column": 29,
             "pattern": "/\n> >/im",
             "source": "preg_replace()",
@@ -1204,10 +1434,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L618-L624",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L650-L656",
             "snippet": [
                 {
-                    "number": 618,
+                    "number": 650,
                     "focus": false,
                     "runs": [
                         [
@@ -1217,7 +1447,7 @@
                     ]
                 },
                 {
-                    "number": 619,
+                    "number": 651,
                     "focus": false,
                     "runs": [
                         [
@@ -1227,7 +1457,7 @@
                     ]
                 },
                 {
-                    "number": 620,
+                    "number": 652,
                     "focus": false,
                     "runs": [
                         [
@@ -1237,7 +1467,7 @@
                     ]
                 },
                 {
-                    "number": 621,
+                    "number": 653,
                     "focus": true,
                     "runs": [
                         [
@@ -1275,7 +1505,7 @@
                     ]
                 },
                 {
-                    "number": 622,
+                    "number": 654,
                     "focus": false,
                     "runs": [
                         [
@@ -1285,7 +1515,7 @@
                     ]
                 },
                 {
-                    "number": 623,
+                    "number": 655,
                     "focus": false,
                     "runs": [
                         [
@@ -1295,7 +1525,7 @@
                     ]
                 },
                 {
-                    "number": 624,
+                    "number": 656,
                     "focus": false,
                     "runs": [
                         [
@@ -1307,199 +1537,9 @@
             ]
         },
         {
-            "id": "f-d93eb76327",
-            "file": "packages/php/email-editor/src/Engine/class-personalizer.php",
-            "line": 250,
-            "column": 26,
-            "pattern": "/\\[[a-zA-Z0-9\\-\\/]+(?:\\s+[^\\]]+)?\\]/",
-            "source": "preg_match_all()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.concatenation",
-                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
-                    "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Engine/class-personalizer.php#L247-L253",
-            "snippet": [
-                {
-                    "number": 247,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\tprivate function personalize_href_tokens( string $href ): ?string {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 248,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t// Decode both URL encoding (%XX) and HTML entities (&#039;) to handle various encoding scenarios.",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 249,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t$decoded_href = html_entity_decode( urldecode( $href ), ENT_QUOTES, 'UTF-8' );",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 250,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "\t\tif ( ! preg_match_all( '/\\[' . self::TAG_NAME_PATTERN . '(?:\\s+[^\\]]+)?\\]/', $decoded_href, $matches ) ) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 251,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\treturn null;",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 252,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t}",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 253,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "id": "f-272341a744",
-            "file": "packages/php/email-editor/src/Engine/class-personalizer.php",
-            "line": 293,
-            "column": 20,
-            "pattern": "#^https?://(\\[[a-zA-Z0-9\\-\\/]+(?:\\s+[^\\]]+)?\\])#i",
-            "source": "preg_match()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.concatenation",
-                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
-                    "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Engine/class-personalizer.php#L290-L296",
-            "snippet": [
-                {
-                    "number": 290,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t// (\"http://[tag]\"). Strip it only when the token directly after it is being",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 291,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t// replaced, so the tag value is used as-is while any suffix (e.g. appended",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 292,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t// query parameters) is kept.",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 293,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "\t\tif ( preg_match( '#^https?://(\\[' . self::TAG_NAME_PATTERN . '(?:\\s+[^\\]]+)?\\])#i', $base, $prefix_match ) && isset( $replacements[ $prefix_match[1] ] ) ) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 294,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t$base = (string) preg_replace( '#^https?://#i', '', $base );",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 295,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t}",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 296,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
             "id": "f-7fd02bba28",
             "file": "packages/php/email-editor/src/Engine/class-theme-controller.php",
-            "line": 282,
+            "line": 281,
             "column": 14,
             "pattern": "/clamp\\([^,]+,\\s*[^,]+,\\s*([^)]+)\\)/",
             "source": "preg_replace()",
@@ -1517,10 +1557,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Engine/class-theme-controller.php#L279-L285",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Engine/class-theme-controller.php#L278-L284",
             "snippet": [
                 {
-                    "number": 279,
+                    "number": 278,
                     "focus": false,
                     "runs": [
                         [
@@ -1530,7 +1570,7 @@
                     ]
                 },
                 {
-                    "number": 280,
+                    "number": 279,
                     "focus": false,
                     "runs": [
                         [
@@ -1540,7 +1580,7 @@
                     ]
                 },
                 {
-                    "number": 281,
+                    "number": 280,
                     "focus": false,
                     "runs": [
                         [
@@ -1550,7 +1590,7 @@
                     ]
                 },
                 {
-                    "number": 282,
+                    "number": 281,
                     "focus": true,
                     "runs": [
                         [
@@ -1668,7 +1708,7 @@
                     ]
                 },
                 {
-                    "number": 283,
+                    "number": 282,
                     "focus": false,
                     "runs": [
                         [
@@ -1678,7 +1718,7 @@
                     ]
                 },
                 {
-                    "number": 284,
+                    "number": 283,
                     "focus": false,
                     "runs": [
                         [
@@ -1688,7 +1728,7 @@
                     ]
                 },
                 {
-                    "number": 285,
+                    "number": 284,
                     "focus": false,
                     "runs": [
                         [
@@ -1720,7 +1760,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L36-L42",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L36-L42",
             "snippet": [
                 {
                     "number": 36,
@@ -1935,7 +1975,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L72-L78",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -2132,7 +2172,7 @@
         {
             "id": "f-16864e97eb",
             "file": "packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php",
-            "line": 109,
+            "line": 117,
             "column": 63,
             "pattern": "/^\\[[a-zA-Z0-9\\-\\/]+(?:\\s+.*)?\\]$/s",
             "source": "preg_match()",
@@ -2150,10 +2190,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L106-L112",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L114-L120",
             "snippet": [
                 {
-                    "number": 106,
+                    "number": 114,
                     "focus": false,
                     "runs": [
                         [
@@ -2163,7 +2203,7 @@
                     ]
                 },
                 {
-                    "number": 107,
+                    "number": 115,
                     "focus": false,
                     "runs": [
                         [
@@ -2173,7 +2213,7 @@
                     ]
                 },
                 {
-                    "number": 108,
+                    "number": 116,
                     "focus": false,
                     "runs": [
                         [
@@ -2183,7 +2223,7 @@
                     ]
                 },
                 {
-                    "number": 109,
+                    "number": 117,
                     "focus": true,
                     "runs": [
                         [
@@ -2301,7 +2341,7 @@
                     ]
                 },
                 {
-                    "number": 110,
+                    "number": 118,
                     "focus": false,
                     "runs": [
                         [
@@ -2311,7 +2351,7 @@
                     ]
                 },
                 {
-                    "number": 111,
+                    "number": 119,
                     "focus": false,
                     "runs": [
                         [
@@ -2321,7 +2361,7 @@
                     ]
                 },
                 {
-                    "number": 112,
+                    "number": 120,
                     "focus": false,
                     "runs": [
                         [
@@ -2335,7 +2375,7 @@
         {
             "id": "f-6daef9d468",
             "file": "packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php",
-            "line": 149,
+            "line": 157,
             "column": 44,
             "pattern": "/(?<![a-z-])background-color\\s*:\\s*[^;]+;?/i",
             "source": "preg_replace()",
@@ -2353,10 +2393,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L146-L152",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L154-L160",
             "snippet": [
                 {
-                    "number": 146,
+                    "number": 154,
                     "focus": false,
                     "runs": [
                         [
@@ -2366,7 +2406,7 @@
                     ]
                 },
                 {
-                    "number": 147,
+                    "number": 155,
                     "focus": false,
                     "runs": [
                         [
@@ -2376,7 +2416,7 @@
                     ]
                 },
                 {
-                    "number": 148,
+                    "number": 156,
                     "focus": false,
                     "runs": [
                         [
@@ -2386,7 +2426,7 @@
                     ]
                 },
                 {
-                    "number": 149,
+                    "number": 157,
                     "focus": true,
                     "runs": [
                         [
@@ -2496,7 +2536,7 @@
                     ]
                 },
                 {
-                    "number": 150,
+                    "number": 158,
                     "focus": false,
                     "runs": [
                         [
@@ -2506,7 +2546,7 @@
                     ]
                 },
                 {
-                    "number": 151,
+                    "number": 159,
                     "focus": false,
                     "runs": [
                         [
@@ -2516,7 +2556,7 @@
                     ]
                 },
                 {
-                    "number": 152,
+                    "number": 160,
                     "focus": false,
                     "runs": [
                         [
@@ -2548,7 +2588,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/src/Integrations/Utils/class-html-processing-helper.php#L663-L669",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/src/Integrations/Utils/class-html-processing-helper.php#L663-L669",
             "snippet": [
                 {
                     "number": 663,
@@ -2879,7 +2919,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -3054,7 +3094,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
             "snippet": [
                 {
                     "number": 197,
@@ -3189,7 +3229,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
             "snippet": [
                 {
                     "number": 242,
@@ -3324,7 +3364,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -3456,7 +3496,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/packages/php/woocommerce-analytics/src/class-pixel-builder.php#L41-L47",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/packages/php/woocommerce-analytics/src/class-pixel-builder.php#L41-L47",
             "snippet": [
                 {
                     "number": 41,
@@ -3671,7 +3711,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/includes/admin/class-wc-admin-marketplace-promotions.php#L711-L717",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/includes/admin/class-wc-admin-marketplace-promotions.php#L711-L717",
             "snippet": [
                 {
                     "number": 711,
@@ -3846,7 +3886,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L32-L38",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -3997,7 +4037,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L46-L52",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -4092,7 +4132,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/includes/class-wc-download-handler.php#L656-L662",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/includes/class-wc-download-handler.php#L656-L662",
             "snippet": [
                 {
                     "number": 656,
@@ -4307,7 +4347,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/includes/class-wc-product-download.php#L352-L358",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/includes/class-wc-product-download.php#L352-L358",
             "snippet": [
                 {
                     "number": 352,
@@ -4452,7 +4492,7 @@
         {
             "id": "f-207533d099",
             "file": "plugins/woocommerce/includes/import/class-wc-product-csv-importer.php",
-            "line": 891,
+            "line": 1017,
             "column": 35,
             "pattern": "/^(?:mon|tue(?:s)?|wed(?:nes)?|thu(?:rs)?|fri|sat(?:ur)?|sun)(?:day)?\\.?,?\\s+/i",
             "source": "preg_replace()",
@@ -4475,10 +4515,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/includes/import/class-wc-product-csv-importer.php#L888-L894",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/includes/import/class-wc-product-csv-importer.php#L1014-L1020",
             "snippet": [
                 {
-                    "number": 888,
+                    "number": 1014,
                     "focus": false,
                     "runs": [
                         [
@@ -4488,7 +4528,7 @@
                     ]
                 },
                 {
-                    "number": 889,
+                    "number": 1015,
                     "focus": false,
                     "runs": [
                         [
@@ -4498,7 +4538,7 @@
                     ]
                 },
                 {
-                    "number": 890,
+                    "number": 1016,
                     "focus": false,
                     "runs": [
                         [
@@ -4508,7 +4548,7 @@
                     ]
                 },
                 {
-                    "number": 891,
+                    "number": 1017,
                     "focus": true,
                     "runs": [
                         [
@@ -4706,7 +4746,7 @@
                     ]
                 },
                 {
-                    "number": 892,
+                    "number": 1018,
                     "focus": false,
                     "runs": [
                         [
@@ -4716,7 +4756,7 @@
                     ]
                 },
                 {
-                    "number": 893,
+                    "number": 1019,
                     "focus": false,
                     "runs": [
                         [
@@ -4726,7 +4766,7 @@
                     ]
                 },
                 {
-                    "number": 894,
+                    "number": 1020,
                     "focus": false,
                     "runs": [
                         [
@@ -4758,7 +4798,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/includes/rest-api/Controllers/Version3/class-wc-rest-controller.php#L167-L173",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/includes/rest-api/Controllers/Version3/class-wc-rest-controller.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -4898,7 +4938,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/includes/tracks/class-wc-tracks-event.php#L18-L24",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/includes/tracks/class-wc-tracks-event.php#L18-L24",
             "snippet": [
                 {
                     "number": 18,
@@ -5113,7 +5153,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -5288,7 +5328,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
             "snippet": [
                 {
                     "number": 197,
@@ -5423,7 +5463,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
             "snippet": [
                 {
                     "number": 242,
@@ -5558,7 +5598,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/lib/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/lib/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -5665,6 +5705,218 @@
             ]
         },
         {
+            "id": "f-f5e1505231",
+            "file": "plugins/woocommerce/src/Admin/Features/Fulfillments/Providers/USPSShippingProvider.php",
+            "line": 110,
+            "column": 4,
+            "pattern": "/^(94|93|92|95|96|94|94|94|94)\\d{18,22}$/",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.alternation.duplicateDisjunction",
+                    "message": "Duplicate alternation branch \"94\".",
+                    "hint": "Remove the redundant alternative.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-alternation-branches"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^(94|93|92|95|96)\\d{18,22}$/",
+                "changes": [
+                    "Removed an alternative written twice."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Admin/Features/Fulfillments/Providers/USPSShippingProvider.php#L107-L113",
+            "snippet": [
+                {
+                    "number": 107,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// USPS tracking number patterns (ordered by confidence).",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 108,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$patterns = array(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 109,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t// 22-digit, 20-digit, and 26-34 digit numeric (domestic and third-party)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 110,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "94",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "93",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "92",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "95",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "96",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "94",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "94",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "94",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "94",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "{18,22}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            " => function () use ( $tracking_number ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 111,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t// Most common domestic, check digit validation.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 112,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\treturn FulfillmentUtils::validate_mod10_check_digit( $tracking_number ) ? 100 : 95;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 113,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t},",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-18c3a677f3",
             "file": "plugins/woocommerce/src/Blocks/BlockTypes/Cart.php",
             "line": 154,
@@ -5690,7 +5942,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L151-L157",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L151-L157",
             "snippet": [
                 {
                     "number": 151,
@@ -5858,7 +6110,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L175-L181",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L175-L181",
             "snippet": [
                 {
                     "number": 175,
@@ -6074,7 +6326,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L193-L199",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L193-L199",
             "snippet": [
                 {
                     "number": 193,
@@ -6242,7 +6494,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L194-L200",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L194-L200",
             "snippet": [
                 {
                     "number": 194,
@@ -6412,7 +6664,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/CartOrderSummaryBlock.php#L73-L79",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/CartOrderSummaryBlock.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -6556,7 +6808,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L245-L251",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L245-L251",
             "snippet": [
                 {
                     "number": 245,
@@ -6772,7 +7024,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L286-L292",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L286-L292",
             "snippet": [
                 {
                     "number": 286,
@@ -6940,7 +7192,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L287-L293",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L287-L293",
             "snippet": [
                 {
                     "number": 287,
@@ -7108,7 +7360,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L298-L304",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L298-L304",
             "snippet": [
                 {
                     "number": 298,
@@ -7276,7 +7528,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L302-L308",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L302-L308",
             "snippet": [
                 {
                     "number": 302,
@@ -7444,7 +7696,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L310-L316",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L310-L316",
             "snippet": [
                 {
                     "number": 310,
@@ -7612,7 +7864,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L314-L320",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L314-L320",
             "snippet": [
                 {
                     "number": 314,
@@ -7782,7 +8034,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/BlockTypes/CheckoutOrderSummaryBlock.php#L75-L81",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/BlockTypes/CheckoutOrderSummaryBlock.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,
@@ -7928,7 +8180,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Blocks/Patterns/PatternRegistry.php#L7-L13",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Blocks/Patterns/PatternRegistry.php#L7-L13",
             "snippet": [
                 {
                     "number": 7,
@@ -8083,7 +8335,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Internal/Admin/OrderMilestoneEasterEgg.php#L441-L447",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Internal/Admin/OrderMilestoneEasterEgg.php#L441-L447",
             "snippet": [
                 {
                     "number": 441,
@@ -8230,6 +8482,253 @@
             ]
         },
         {
+            "id": "f-08003bdcb3",
+            "file": "plugins/woocommerce/src/Internal/AgentReadiness/JsonLd.php",
+            "line": 25,
+            "column": 26,
+            "pattern": "#<script\\b[^>]*\\btype\\s*=\\s*[\"']?application/ld\\+json[\"']?[^>]*>(.*?)</script>#is",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Internal/AgentReadiness/JsonLd.php#L22-L28",
+            "snippet": [
+                {
+                    "number": 22,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * @return array<int, array<string, mixed>>",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 23,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 24,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tpublic static function items( string $html, string ...$types ): array {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 25,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tif ( ! preg_match_all( ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<script",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\b",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\b",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "type",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "application/ld\\+json",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "</script>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $html, $blocks ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 26,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\treturn array();",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 27,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 28,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$items = array();",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-ada5864f44",
             "file": "plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php",
             "line": 73,
@@ -8250,7 +8749,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L70-L76",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L70-L76",
             "snippet": [
                 {
                     "number": 70,
@@ -8409,7 +8908,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L78-L84",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,
@@ -8568,7 +9067,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L79-L85",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L79-L85",
             "snippet": [
                 {
                     "number": 79,
@@ -8727,7 +9226,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L80-L86",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L80-L86",
             "snippet": [
                 {
                     "number": 80,
@@ -8886,7 +9385,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L81-L87",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -9045,7 +9544,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L82-L88",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L82-L88",
             "snippet": [
                 {
                     "number": 82,
@@ -9204,7 +9703,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L83-L89",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -9363,7 +9862,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/plugins/woocommerce/src/StoreApi/Authentication.php#L375-L381",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/plugins/woocommerce/src/StoreApi/Authentication.php#L375-L381",
             "snippet": [
                 {
                     "number": 375,
@@ -9514,7 +10013,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/7851b300325993c55a208aae89be088b8e3c62ad/tools/monorepo/check-changelogger-use.php#L82-L88",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/6f87b58f35eb6fb29cb910f565f866905d32c73f/tools/monorepo/check-changelogger-use.php#L82-L88",
             "snippet": [
                 {
                     "number": 82,

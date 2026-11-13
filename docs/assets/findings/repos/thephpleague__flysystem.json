@@ -1,6 +1,6 @@
 {
     "repo": "thephpleague/flysystem",
-    "sha": "1e748897e0a8e897b5a8bc8942e05f4f57fa248c",
+    "sha": "189e3dc2b7ca6de6f4eb93f74a8cb1a4dad78a23",
     "target": {
         "php": "8.0.2",
         "pcre": "10.35",
@@ -40,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thephpleague/flysystem/blob/1e748897e0a8e897b5a8bc8942e05f4f57fa248c/bin/set-flysystem-version.php#L33-L39",
+            "permalink": "https://github.com/thephpleague/flysystem/blob/189e3dc2b7ca6de6f4eb93f74a8cb1a4dad78a23/bin/set-flysystem-version.php#L33-L39",
             "snippet": [
                 {
                     "number": 33,

@@ -1,6 +1,6 @@
 {
     "repo": "elementor/elementor",
-    "sha": "6e5c2cf525f69e34cae93e57bc6c280dc8afef1e",
+    "sha": "67b18042bdb33be3940f83d07e743ecaae76190f",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -36,7 +36,7 @@
                 "limit": 100000
             },
             "subject": "{{ ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  || |}}",
-            "permalink": "https://github.com/elementor/elementor/blob/6e5c2cf525f69e34cae93e57bc6c280dc8afef1e/core/files/css/base.php#L373-L379",
+            "permalink": "https://github.com/elementor/elementor/blob/67b18042bdb33be3940f83d07e743ecaae76190f/core/files/css/base.php#L373-L379",
             "snippet": [
                 {
                     "number": 373,
@@ -311,7 +311,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/6e5c2cf525f69e34cae93e57bc6c280dc8afef1e/core/utils/svg/svg-sanitizer.php#L230-L236",
+            "permalink": "https://github.com/elementor/elementor/blob/67b18042bdb33be3940f83d07e743ecaae76190f/core/utils/svg/svg-sanitizer.php#L230-L236",
             "snippet": [
                 {
                     "number": 230,
@@ -518,7 +518,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/6e5c2cf525f69e34cae93e57bc6c280dc8afef1e/core/utils/svg/svg-sanitizer.php#L236-L242",
+            "permalink": "https://github.com/elementor/elementor/blob/67b18042bdb33be3940f83d07e743ecaae76190f/core/utils/svg/svg-sanitizer.php#L236-L242",
             "snippet": [
                 {
                     "number": 236,
@@ -696,7 +696,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/6e5c2cf525f69e34cae93e57bc6c280dc8afef1e/includes/db.php#L606-L612",
+            "permalink": "https://github.com/elementor/elementor/blob/67b18042bdb33be3940f83d07e743ecaae76190f/includes/db.php#L606-L612",
             "snippet": [
                 {
                     "number": 606,
@@ -896,7 +896,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/6e5c2cf525f69e34cae93e57bc6c280dc8afef1e/includes/embed.php#L175-L181",
+            "permalink": "https://github.com/elementor/elementor/blob/67b18042bdb33be3940f83d07e743ecaae76190f/includes/embed.php#L175-L181",
             "snippet": [
                 {
                     "number": 175,
@@ -1095,7 +1095,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/6e5c2cf525f69e34cae93e57bc6c280dc8afef1e/modules/mcp/abilities/appliers/v3/adapters/color-adapter.php#L16-L22",
+            "permalink": "https://github.com/elementor/elementor/blob/67b18042bdb33be3940f83d07e743ecaae76190f/modules/mcp/abilities/appliers/v3/adapters/color-adapter.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -1354,7 +1354,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/6e5c2cf525f69e34cae93e57bc6c280dc8afef1e/modules/mcp/media/media-mime-validator.php#L39-L45",
+            "permalink": "https://github.com/elementor/elementor/blob/67b18042bdb33be3940f83d07e743ecaae76190f/modules/mcp/media/media-mime-validator.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -1569,7 +1569,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/6e5c2cf525f69e34cae93e57bc6c280dc8afef1e/modules/mcp/media/media-mime-validator.php#L41-L47",
+            "permalink": "https://github.com/elementor/elementor/blob/67b18042bdb33be3940f83d07e743ecaae76190f/modules/mcp/media/media-mime-validator.php#L41-L47",
             "snippet": [
                 {
                     "number": 41,
@@ -1715,7 +1715,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/6e5c2cf525f69e34cae93e57bc6c280dc8afef1e/php-scoper/twig-inc.php#L31-L37",
+            "permalink": "https://github.com/elementor/elementor/blob/67b18042bdb33be3940f83d07e743ecaae76190f/php-scoper/twig-inc.php#L31-L37",
             "snippet": [
                 {
                     "number": 31,

@@ -1,6 +1,6 @@
 {
     "repo": "phpmyadmin/sql-parser",
-    "sha": "87fa9b88835ab0e2d5a44d741863a422b57a8dba",
+    "sha": "74a781b6bcaf45cf47474516377e8b4f3d8c3b0b",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/sql-parser/blob/87fa9b88835ab0e2d5a44d741863a422b57a8dba/src/Context.php#L673-L679",
+            "permalink": "https://github.com/phpmyadmin/sql-parser/blob/74a781b6bcaf45cf47474516377e8b4f3d8c3b0b/src/Context.php#L673-L679",
             "snippet": [
                 {
                     "number": 673,

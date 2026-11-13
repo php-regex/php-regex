@@ -1,6 +1,6 @@
 {
     "repo": "PHPOffice/PHPWord",
-    "sha": "731bc2b12cccf40ca7e143f3cb60f9081fa43ba6",
+    "sha": "63339365b9b0c9e3d99b16e8107fc9779c3e0d21",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PHPWord/blob/731bc2b12cccf40ca7e143f3cb60f9081fa43ba6/src/PhpWord/TemplateProcessor.php#L478-L484",
+            "permalink": "https://github.com/PHPOffice/PHPWord/blob/63339365b9b0c9e3d99b16e8107fc9779c3e0d21/src/PhpWord/TemplateProcessor.php#L478-L484",
             "snippet": [
                 {
                     "number": 478,

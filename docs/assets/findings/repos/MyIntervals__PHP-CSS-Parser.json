@@ -1,6 +1,6 @@
 {
     "repo": "MyIntervals/PHP-CSS-Parser",
-    "sha": "447372f62d90ac7bedfc0d7a60b98757d006107e",
+    "sha": "e0a7d440012439fa91f8c7b5ef1377e05cb4e64f",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/447372f62d90ac7bedfc0d7a60b98757d006107e/src/Parsing/ParserState.php#L116-L122",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/e0a7d440012439fa91f8c7b5ef1377e05cb4e64f/src/Parsing/ParserState.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,
@@ -203,7 +203,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/447372f62d90ac7bedfc0d7a60b98757d006107e/src/Parsing/ParserState.php#L154-L160",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/e0a7d440012439fa91f8c7b5ef1377e05cb4e64f/src/Parsing/ParserState.php#L154-L160",
             "snippet": [
                 {
                     "number": 154,
@@ -338,7 +338,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/447372f62d90ac7bedfc0d7a60b98757d006107e/src/Parsing/ParserState.php#L227-L233",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/e0a7d440012439fa91f8c7b5ef1377e05cb4e64f/src/Parsing/ParserState.php#L227-L233",
             "snippet": [
                 {
                     "number": 227,
@@ -473,7 +473,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/447372f62d90ac7bedfc0d7a60b98757d006107e/src/Value/CSSString.php#L57-L63",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/e0a7d440012439fa91f8c7b5ef1377e05cb4e64f/src/Value/CSSString.php#L57-L63",
             "snippet": [
                 {
                     "number": 57,

@@ -1,6 +1,6 @@
 {
     "repo": "phpmd/phpmd",
-    "sha": "bc69f061235285e5112f644d8e709b0f5cba5dcc",
+    "sha": "9fd3a1d6b608ab92f973bc6ada9212e501bf9282",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmd/phpmd/blob/bc69f061235285e5112f644d8e709b0f5cba5dcc/public/scripts/update-rules.php#L67-L73",
+            "permalink": "https://github.com/phpmd/phpmd/blob/9fd3a1d6b608ab92f973bc6ada9212e501bf9282/public/scripts/update-rules.php#L67-L73",
             "snippet": [
                 {
                     "number": 67,

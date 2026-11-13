@@ -1,6 +1,6 @@
 {
     "repo": "captainhook-git/captainhook",
-    "sha": "372b40c1925abec17977717b862cb7d37bdfd1f5",
+    "sha": "b321c1cb28dc90f4f66eca3ed1d1cd0f9ef6e703",
     "target": {
         "php": "8.0",
         "pcre": "10.35",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/captainhook-git/captainhook/blob/372b40c1925abec17977717b862cb7d37bdfd1f5/src/Runner/Action/PHP.php#L156-L162",
+            "permalink": "https://github.com/captainhook-git/captainhook/blob/b321c1cb28dc90f4f66eca3ed1d1cd0f9ef6e703/src/Runner/Action/PHP.php#L156-L162",
             "snippet": [
                 {
                     "number": 156,

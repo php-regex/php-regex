@@ -1,6 +1,6 @@
 {
     "repo": "OskarStark/doctor-rst",
-    "sha": "10e158d1901fc86790552107a596fd3c825bcb4f",
+    "sha": "5fc16819dd513c147d94befc656c503d5ddd0da2",
     "target": {
         "php": "8.5",
         "pcre": "10.44",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/OskarStark/doctor-rst/blob/10e158d1901fc86790552107a596fd3c825bcb4f/src/Helper/PhpHelper.php#L32-L38",
+            "permalink": "https://github.com/OskarStark/doctor-rst/blob/5fc16819dd513c147d94befc656c503d5ddd0da2/src/Helper/PhpHelper.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,

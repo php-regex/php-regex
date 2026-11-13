@@ -589,6 +589,101 @@
             ]
         },
         {
+            "id": "f-eacb82280e",
+            "file": "src/Formatter/ManualFormatter.php",
+            "line": 499,
+            "column": 21,
+            "pattern": "#<(?:[a-z](?:[^\\\\<>]*+ | \\\\.)*|/(?:[a-z][^<>]*+)?)>#ix",
+            "source": "preg_match_all()",
+            "location": "via $tagRegex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.emptyRepeat",
+                    "message": "Quantifier \"*\" repeats an item that can match the empty string: an empty iteration matches nothing more.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/bobthecow/psysh/blob/64b18aa0d5f8bc14087b030f0f92cd76892f8dc3/src/Formatter/ManualFormatter.php#L496-L502",
+            "snippet": [
+                {
+                    "number": 496,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 497,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 498,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Keep this in sync with Symfony's OutputFormatter::formatAndWrap tag matching.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 499,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $tagRegex = \\sprintf('#<(?:%s|/(?:%s)?)>#ix', self::FORMATTER_OPEN_TAG_REGEX, self::FORMATTER_CLOSE_TAG_REGEX);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 500,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!\\preg_match_all($tagRegex, $line, $matches, \\PREG_OFFSET_CAPTURE | \\PREG_SET_ORDER)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 501,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return $openTags;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 502,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-1021e4f04c",
             "file": "src/Readline/Hoa/FileFinder.php",
             "line": 229,

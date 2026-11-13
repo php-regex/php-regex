@@ -1,12 +1,148 @@
 {
     "repo": "getgrav/grav",
-    "sha": "1866833093663f4805a7bea98d68cad92ade9148",
+    "sha": "ae7dae8b4186cbffe469ff231d8cb606caffcbc1",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
         "source": "composer.json config.platform.php"
     },
     "findings": [
+        {
+            "id": "f-23b0593820",
+            "file": "system/src/Grav/Common/Assets/Pipeline.php",
+            "line": 60,
+            "column": 48,
+            "pattern": "{^\\/{1}\\w}",
+            "source": "preg_match()",
+            "location": "via self::FIRST_FORWARDSLASH_REGEX",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.useless",
+                    "message": "Quantifier is redundant; it matches exactly once.",
+                    "hint": "Remove the {1} quantifier; it does not change the match.",
+                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                }
+            ],
+            "rewrite": {
+                "optimized": "{^/\\w}",
+                "changes": [
+                    "Removed a quantifier that repeats once."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Assets/Pipeline.php#L57-L63",
+            "snippet": [
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    protected const CSS_STRING_OR_COMMENT_REGEX = '~(\"(?:[^\"\\\\\\\\\\r\\n]++|\\\\\\\\(?:\\r\\n|.))*+\"|\\'(?:[^\\'\\\\\\\\\\r\\n]++|\\\\\\\\(?:\\r\\n|.))*+\\')|(/\\*![^*]*+(?:\\*(?!/)[^*]*+)*+\\*/)|/\\*[^*]*+(?:\\*(?!/)[^*]*+)*+\\*/~s';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 59,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 60,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    protected const FIRST_FORWARDSLASH_REGEX = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "{",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "{1}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "}",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 61,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 62,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    // Following variables come from the configuration:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 63,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /** @var bool */",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
         {
             "id": "f-57c4150110",
             "file": "system/src/Grav/Common/Data/Validation.php",
@@ -33,7 +169,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Data/Validation.php#L274-L280",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Data/Validation.php#L274-L280",
             "snippet": [
                 {
                     "number": 274,
@@ -169,7 +305,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Data/Validation.php#L305-L311",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Data/Validation.php#L305-L311",
             "snippet": [
                 {
                     "number": 305,
@@ -297,7 +433,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Data/Validation.php#L329-L335",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Data/Validation.php#L329-L335",
             "snippet": [
                 {
                     "number": 329,
@@ -428,7 +564,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Data/Validation.php#L433-L439",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Data/Validation.php#L433-L439",
             "snippet": [
                 {
                     "number": 433,
@@ -575,7 +711,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/File/CompiledMarkdownFile.php#L319-L325",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/File/CompiledMarkdownFile.php#L319-L325",
             "snippet": [
                 {
                     "number": 319,
@@ -751,7 +887,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Helpers/LogViewer.php#L168-L174",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Helpers/LogViewer.php#L168-L174",
             "snippet": [
                 {
                     "number": 168,
@@ -887,7 +1023,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Helpers/Truncator.php#L269-L275",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Helpers/Truncator.php#L269-L275",
             "snippet": [
                 {
                     "number": 269,
@@ -1066,7 +1202,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Inflector.php#L203-L209",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Inflector.php#L203-L209",
             "snippet": [
                 {
                     "number": 203,
@@ -1233,7 +1369,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Markdown/ParsedownExtra.php#L29-L35",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Markdown/ParsedownExtra.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -1513,7 +1649,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Page/Medium/VectorImageMedium.php#L50-L56",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Page/Medium/VectorImageMedium.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -1694,7 +1830,7 @@
         {
             "id": "f-733a7efe2a",
             "file": "system/src/Grav/Common/Page/Page.php",
-            "line": 1237,
+            "line": 1239,
             "column": 18,
             "pattern": "/({#.*?#})/mu",
             "source": "preg_replace_callback()",
@@ -1717,10 +1853,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Page/Page.php#L1234-L1240",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Page/Page.php#L1236-L1242",
             "snippet": [
                 {
-                    "number": 1234,
+                    "number": 1236,
                     "focus": false,
                     "runs": [
                         [
@@ -1730,7 +1866,7 @@
                     ]
                 },
                 {
-                    "number": 1235,
+                    "number": 1237,
                     "focus": false,
                     "runs": [
                         [
@@ -1740,7 +1876,7 @@
                     ]
                 },
                 {
-                    "number": 1236,
+                    "number": 1238,
                     "focus": false,
                     "runs": [
                         [
@@ -1750,7 +1886,7 @@
                     ]
                 },
                 {
-                    "number": 1237,
+                    "number": 1239,
                     "focus": true,
                     "runs": [
                         [
@@ -1808,7 +1944,7 @@
                     ]
                 },
                 {
-                    "number": 1238,
+                    "number": 1240,
                     "focus": false,
                     "runs": [
                         [
@@ -1818,7 +1954,7 @@
                     ]
                 },
                 {
-                    "number": 1239,
+                    "number": 1241,
                     "focus": false,
                     "runs": [
                         [
@@ -1828,7 +1964,7 @@
                     ]
                 },
                 {
-                    "number": 1240,
+                    "number": 1242,
                     "focus": false,
                     "runs": [
                         [
@@ -1842,7 +1978,7 @@
         {
             "id": "f-47ec6654f5",
             "file": "system/src/Grav/Common/Page/Page.php",
-            "line": 1237,
+            "line": 1239,
             "column": 35,
             "pattern": "/({{.*?}})/mu",
             "source": "preg_replace_callback()",
@@ -1865,10 +2001,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Page/Page.php#L1234-L1240",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Page/Page.php#L1236-L1242",
             "snippet": [
                 {
-                    "number": 1234,
+                    "number": 1236,
                     "focus": false,
                     "runs": [
                         [
@@ -1878,7 +2014,7 @@
                     ]
                 },
                 {
-                    "number": 1235,
+                    "number": 1237,
                     "focus": false,
                     "runs": [
                         [
@@ -1888,7 +2024,7 @@
                     ]
                 },
                 {
-                    "number": 1236,
+                    "number": 1238,
                     "focus": false,
                     "runs": [
                         [
@@ -1898,7 +2034,7 @@
                     ]
                 },
                 {
-                    "number": 1237,
+                    "number": 1239,
                     "focus": true,
                     "runs": [
                         [
@@ -1956,7 +2092,7 @@
                     ]
                 },
                 {
-                    "number": 1238,
+                    "number": 1240,
                     "focus": false,
                     "runs": [
                         [
@@ -1966,7 +2102,7 @@
                     ]
                 },
                 {
-                    "number": 1239,
+                    "number": 1241,
                     "focus": false,
                     "runs": [
                         [
@@ -1976,7 +2112,7 @@
                     ]
                 },
                 {
-                    "number": 1240,
+                    "number": 1242,
                     "focus": false,
                     "runs": [
                         [
@@ -1990,7 +2126,7 @@
         {
             "id": "f-2b5216c012",
             "file": "system/src/Grav/Common/Page/Page.php",
-            "line": 1237,
+            "line": 1239,
             "column": 52,
             "pattern": "/({%.*?%})/mu",
             "source": "preg_replace_callback()",
@@ -2013,10 +2149,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Page/Page.php#L1234-L1240",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Page/Page.php#L1236-L1242",
             "snippet": [
                 {
-                    "number": 1234,
+                    "number": 1236,
                     "focus": false,
                     "runs": [
                         [
@@ -2026,7 +2162,7 @@
                     ]
                 },
                 {
-                    "number": 1235,
+                    "number": 1237,
                     "focus": false,
                     "runs": [
                         [
@@ -2036,7 +2172,7 @@
                     ]
                 },
                 {
-                    "number": 1236,
+                    "number": 1238,
                     "focus": false,
                     "runs": [
                         [
@@ -2046,7 +2182,7 @@
                     ]
                 },
                 {
-                    "number": 1237,
+                    "number": 1239,
                     "focus": true,
                     "runs": [
                         [
@@ -2104,7 +2240,7 @@
                     ]
                 },
                 {
-                    "number": 1238,
+                    "number": 1240,
                     "focus": false,
                     "runs": [
                         [
@@ -2114,7 +2250,7 @@
                     ]
                 },
                 {
-                    "number": 1239,
+                    "number": 1241,
                     "focus": false,
                     "runs": [
                         [
@@ -2124,7 +2260,7 @@
                     ]
                 },
                 {
-                    "number": 1240,
+                    "number": 1242,
                     "focus": false,
                     "runs": [
                         [
@@ -2138,7 +2274,7 @@
         {
             "id": "f-7207264226",
             "file": "system/src/Grav/Common/Uri.php",
-            "line": 1035,
+            "line": 1065,
             "column": 13,
             "pattern": "%[^:/@?&=#]+%usD",
             "source": "preg_replace_callback()",
@@ -2168,10 +2304,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Uri.php#L1032-L1038",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Uri.php#L1062-L1068",
             "snippet": [
                 {
-                    "number": 1032,
+                    "number": 1062,
                     "focus": false,
                     "runs": [
                         [
@@ -2181,7 +2317,7 @@
                     ]
                 },
                 {
-                    "number": 1033,
+                    "number": 1063,
                     "focus": false,
                     "runs": [
                         [
@@ -2191,7 +2327,7 @@
                     ]
                 },
                 {
-                    "number": 1034,
+                    "number": 1064,
                     "focus": false,
                     "runs": [
                         [
@@ -2201,7 +2337,7 @@
                     ]
                 },
                 {
-                    "number": 1035,
+                    "number": 1065,
                     "focus": true,
                     "runs": [
                         [
@@ -2247,7 +2383,7 @@
                     ]
                 },
                 {
-                    "number": 1036,
+                    "number": 1066,
                     "focus": false,
                     "runs": [
                         [
@@ -2257,7 +2393,7 @@
                     ]
                 },
                 {
-                    "number": 1037,
+                    "number": 1067,
                     "focus": false,
                     "runs": [
                         [
@@ -2267,7 +2403,7 @@
                     ]
                 },
                 {
-                    "number": 1038,
+                    "number": 1068,
                     "focus": false,
                     "runs": [
                         [
@@ -2281,7 +2417,7 @@
         {
             "id": "f-8ed7b057c9",
             "file": "system/src/Grav/Common/Uri.php",
-            "line": 1225,
+            "line": 1255,
             "column": 18,
             "pattern": "/^(?:(https?|ftp|telnet):)?\\/\\/((?:[a-z0-9@:.-]|%[0-9A-F]{2}){3,})(?::(\\d+))?((?:\\/(?:[a-z0-9-._~!$&'\\(\\)\\*\\+\\,\\;\\=\\:\\@]|%[0-9A-F]{2})*)*)(?:\\?((?:[a-z0-9-._~!$&'\\(\\)\\*\\+\\,\\;\\=\\:\\/?@]|%[0-9A-F]{2})*))?(?:#((?:[a-z0-9-._~!$&'\\(\\)\\*\\+\\,\\;\\=\\:\\/?@]|%[0-9A-F]{2})*))?/",
             "source": "preg_match()",
@@ -2299,10 +2435,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Uri.php#L1222-L1228",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Uri.php#L1252-L1258",
             "snippet": [
                 {
-                    "number": 1222,
+                    "number": 1252,
                     "focus": false,
                     "runs": [
                         [
@@ -2312,7 +2448,7 @@
                     ]
                 },
                 {
-                    "number": 1223,
+                    "number": 1253,
                     "focus": false,
                     "runs": [
                         [
@@ -2322,7 +2458,7 @@
                     ]
                 },
                 {
-                    "number": 1224,
+                    "number": 1254,
                     "focus": false,
                     "runs": [
                         [
@@ -2332,7 +2468,7 @@
                     ]
                 },
                 {
-                    "number": 1225,
+                    "number": 1255,
                     "focus": true,
                     "runs": [
                         [
@@ -2794,7 +2930,7 @@
                     ]
                 },
                 {
-                    "number": 1226,
+                    "number": 1256,
                     "focus": false,
                     "runs": [
                         [
@@ -2804,7 +2940,7 @@
                     ]
                 },
                 {
-                    "number": 1227,
+                    "number": 1257,
                     "focus": false,
                     "runs": [
                         [
@@ -2814,7 +2950,7 @@
                     ]
                 },
                 {
-                    "number": 1228,
+                    "number": 1258,
                     "focus": false,
                     "runs": [
                         [
@@ -2858,7 +2994,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Common/Utils.php#L2155-L2161",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Common/Utils.php#L2155-L2161",
             "snippet": [
                 {
                     "number": 2155,
@@ -2994,7 +3130,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Console/Gpm/InstallCommand.php#L646-L652",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Console/Gpm/InstallCommand.php#L646-L652",
             "snippet": [
                 {
                     "number": 646,
@@ -3125,7 +3261,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Framework/File/Formatter/MarkdownFormatter.php#L125-L131",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Framework/File/Formatter/MarkdownFormatter.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -3278,7 +3414,7 @@
         {
             "id": "f-0e609535ec",
             "file": "system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php",
-            "line": 910,
+            "line": 956,
             "column": 18,
             "pattern": "/({#.*?#})/mu",
             "source": "preg_replace_callback()",
@@ -3301,10 +3437,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php#L907-L913",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php#L953-L959",
             "snippet": [
                 {
-                    "number": 907,
+                    "number": 953,
                     "focus": false,
                     "runs": [
                         [
@@ -3314,7 +3450,7 @@
                     ]
                 },
                 {
-                    "number": 908,
+                    "number": 954,
                     "focus": false,
                     "runs": [
                         [
@@ -3324,7 +3460,7 @@
                     ]
                 },
                 {
-                    "number": 909,
+                    "number": 955,
                     "focus": false,
                     "runs": [
                         [
@@ -3334,7 +3470,7 @@
                     ]
                 },
                 {
-                    "number": 910,
+                    "number": 956,
                     "focus": true,
                     "runs": [
                         [
@@ -3392,7 +3528,7 @@
                     ]
                 },
                 {
-                    "number": 911,
+                    "number": 957,
                     "focus": false,
                     "runs": [
                         [
@@ -3402,7 +3538,7 @@
                     ]
                 },
                 {
-                    "number": 912,
+                    "number": 958,
                     "focus": false,
                     "runs": [
                         [
@@ -3412,7 +3548,7 @@
                     ]
                 },
                 {
-                    "number": 913,
+                    "number": 959,
                     "focus": false,
                     "runs": [
                         [
@@ -3426,7 +3562,7 @@
         {
             "id": "f-dafef230e5",
             "file": "system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php",
-            "line": 910,
+            "line": 956,
             "column": 35,
             "pattern": "/({{.*?}})/mu",
             "source": "preg_replace_callback()",
@@ -3449,10 +3585,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php#L907-L913",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php#L953-L959",
             "snippet": [
                 {
-                    "number": 907,
+                    "number": 953,
                     "focus": false,
                     "runs": [
                         [
@@ -3462,7 +3598,7 @@
                     ]
                 },
                 {
-                    "number": 908,
+                    "number": 954,
                     "focus": false,
                     "runs": [
                         [
@@ -3472,7 +3608,7 @@
                     ]
                 },
                 {
-                    "number": 909,
+                    "number": 955,
                     "focus": false,
                     "runs": [
                         [
@@ -3482,7 +3618,7 @@
                     ]
                 },
                 {
-                    "number": 910,
+                    "number": 956,
                     "focus": true,
                     "runs": [
                         [
@@ -3540,7 +3676,7 @@
                     ]
                 },
                 {
-                    "number": 911,
+                    "number": 957,
                     "focus": false,
                     "runs": [
                         [
@@ -3550,7 +3686,7 @@
                     ]
                 },
                 {
-                    "number": 912,
+                    "number": 958,
                     "focus": false,
                     "runs": [
                         [
@@ -3560,7 +3696,7 @@
                     ]
                 },
                 {
-                    "number": 913,
+                    "number": 959,
                     "focus": false,
                     "runs": [
                         [
@@ -3574,7 +3710,7 @@
         {
             "id": "f-84b685ad22",
             "file": "system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php",
-            "line": 910,
+            "line": 956,
             "column": 52,
             "pattern": "/({%.*?%})/mu",
             "source": "preg_replace_callback()",
@@ -3597,10 +3733,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php#L907-L913",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php#L953-L959",
             "snippet": [
                 {
-                    "number": 907,
+                    "number": 953,
                     "focus": false,
                     "runs": [
                         [
@@ -3610,7 +3746,7 @@
                     ]
                 },
                 {
-                    "number": 908,
+                    "number": 954,
                     "focus": false,
                     "runs": [
                         [
@@ -3620,7 +3756,7 @@
                     ]
                 },
                 {
-                    "number": 909,
+                    "number": 955,
                     "focus": false,
                     "runs": [
                         [
@@ -3630,7 +3766,7 @@
                     ]
                 },
                 {
-                    "number": 910,
+                    "number": 956,
                     "focus": true,
                     "runs": [
                         [
@@ -3688,7 +3824,7 @@
                     ]
                 },
                 {
-                    "number": 911,
+                    "number": 957,
                     "focus": false,
                     "runs": [
                         [
@@ -3698,7 +3834,7 @@
                     ]
                 },
                 {
-                    "number": 912,
+                    "number": 958,
                     "focus": false,
                     "runs": [
                         [
@@ -3708,7 +3844,7 @@
                     ]
                 },
                 {
-                    "number": 913,
+                    "number": 959,
                     "focus": false,
                     "runs": [
                         [
@@ -3745,7 +3881,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Installer/Install.php#L617-L623",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Installer/Install.php#L617-L623",
             "snippet": [
                 {
                     "number": 617,
@@ -3984,7 +4120,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getgrav/grav/blob/1866833093663f4805a7bea98d68cad92ade9148/system/src/Grav/Installer/YamlUpdater.php#L365-L371",
+            "permalink": "https://github.com/getgrav/grav/blob/ae7dae8b4186cbffe469ff231d8cb606caffcbc1/system/src/Grav/Installer/YamlUpdater.php#L365-L371",
             "snippet": [
                 {
                     "number": 365,

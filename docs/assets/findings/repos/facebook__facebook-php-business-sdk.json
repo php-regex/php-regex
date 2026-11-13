@@ -1,6 +1,6 @@
 {
     "repo": "facebook/facebook-php-business-sdk",
-    "sha": "138fdf82d1d9f38ac250ac040f32b5f2df9bf2eb",
+    "sha": "55b89b1e010a2f945bb89252235f49993d852a26",
     "target": {
         "php": "8.0",
         "pcre": "10.35",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/facebook/facebook-php-business-sdk/blob/138fdf82d1d9f38ac250ac040f32b5f2df9bf2eb/src/FacebookAds/Object/ServerSide/Normalizer.php#L184-L190",
+            "permalink": "https://github.com/facebook/facebook-php-business-sdk/blob/55b89b1e010a2f945bb89252235f49993d852a26/src/FacebookAds/Object/ServerSide/Normalizer.php#L184-L190",
             "snippet": [
                 {
                     "number": 184,

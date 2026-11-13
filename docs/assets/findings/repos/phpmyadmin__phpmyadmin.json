@@ -1,6 +1,6 @@
 {
     "repo": "phpmyadmin/phpmyadmin",
-    "sha": "6f240a8f64d0a4c62a02b0ef484568fe39017480",
+    "sha": "f4aeb7801c2d8a811d13bcffdd8871ec41247a33",
     "target": {
         "php": "8.2.99",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/6f240a8f64d0a4c62a02b0ef484568fe39017480/src/Bookmarks/Bookmark.php#L133-L139",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Bookmarks/Bookmark.php#L133-L139",
             "snippet": [
                 {
                     "number": 133,
@@ -216,7 +216,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/6f240a8f64d0a4c62a02b0ef484568fe39017480/src/Html/Generator.php#L786-L792",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Html/Generator.php#L786-L792",
             "snippet": [
                 {
                     "number": 786,
@@ -386,7 +386,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/6f240a8f64d0a4c62a02b0ef484568fe39017480/src/Server/Status/Monitor.php#L329-L335",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Server/Status/Monitor.php#L329-L335",
             "snippet": [
                 {
                     "number": 329,
@@ -551,7 +551,7 @@
         {
             "id": "f-c2b4077a40",
             "file": "src/Table/Table.php",
-            "line": 518,
+            "line": 512,
             "column": 44,
             "pattern": "/^1|T|TRUE|YES$/i",
             "source": "preg_match()",
@@ -569,10 +569,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/6f240a8f64d0a4c62a02b0ef484568fe39017480/src/Table/Table.php#L515-L521",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Table/Table.php#L509-L515",
             "snippet": [
                 {
-                    "number": 515,
+                    "number": 509,
                     "focus": false,
                     "runs": [
                         [
@@ -582,7 +582,7 @@
                     ]
                 },
                 {
-                    "number": 516,
+                    "number": 510,
                     "focus": false,
                     "runs": [
                         [
@@ -592,7 +592,7 @@
                     ]
                 },
                 {
-                    "number": 517,
+                    "number": 511,
                     "focus": false,
                     "runs": [
                         [
@@ -602,7 +602,7 @@
                     ]
                 },
                 {
-                    "number": 518,
+                    "number": 512,
                     "focus": true,
                     "runs": [
                         [
@@ -672,7 +672,7 @@
                     ]
                 },
                 {
-                    "number": 519,
+                    "number": 513,
                     "focus": false,
                     "runs": [
                         [
@@ -682,7 +682,7 @@
                     ]
                 },
                 {
-                    "number": 520,
+                    "number": 514,
                     "focus": false,
                     "runs": [
                         [
@@ -692,7 +692,7 @@
                     ]
                 },
                 {
-                    "number": 521,
+                    "number": 515,
                     "focus": false,
                     "runs": [
                         [
@@ -706,7 +706,7 @@
         {
             "id": "f-e7f70c11fa",
             "file": "src/Table/Table.php",
-            "line": 520,
+            "line": 514,
             "column": 50,
             "pattern": "/^0|F|FALSE|NO$/i",
             "source": "preg_match()",
@@ -724,10 +724,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/6f240a8f64d0a4c62a02b0ef484568fe39017480/src/Table/Table.php#L517-L523",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Table/Table.php#L511-L517",
             "snippet": [
                 {
-                    "number": 517,
+                    "number": 511,
                     "focus": false,
                     "runs": [
                         [
@@ -737,7 +737,7 @@
                     ]
                 },
                 {
-                    "number": 518,
+                    "number": 512,
                     "focus": false,
                     "runs": [
                         [
@@ -747,7 +747,7 @@
                     ]
                 },
                 {
-                    "number": 519,
+                    "number": 513,
                     "focus": false,
                     "runs": [
                         [
@@ -757,7 +757,7 @@
                     ]
                 },
                 {
-                    "number": 520,
+                    "number": 514,
                     "focus": true,
                     "runs": [
                         [
@@ -827,7 +827,7 @@
                     ]
                 },
                 {
-                    "number": 521,
+                    "number": 515,
                     "focus": false,
                     "runs": [
                         [
@@ -837,7 +837,7 @@
                     ]
                 },
                 {
-                    "number": 522,
+                    "number": 516,
                     "focus": false,
                     "runs": [
                         [
@@ -847,7 +847,7 @@
                     ]
                 },
                 {
-                    "number": 523,
+                    "number": 517,
                     "focus": false,
                     "runs": [
                         [
@@ -861,7 +861,7 @@
         {
             "id": "f-bba656b10b",
             "file": "src/Table/Table.php",
-            "line": 586,
+            "line": 580,
             "column": 57,
             "pattern": "~^\\s*AUTO_INCREMENT\\s*~is",
             "source": "preg_replace()",
@@ -884,10 +884,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/6f240a8f64d0a4c62a02b0ef484568fe39017480/src/Table/Table.php#L583-L589",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Table/Table.php#L577-L583",
             "snippet": [
                 {
-                    "number": 583,
+                    "number": 577,
                     "focus": false,
                     "runs": [
                         [
@@ -897,7 +897,7 @@
                     ]
                 },
                 {
-                    "number": 584,
+                    "number": 578,
                     "focus": false,
                     "runs": [
                         [
@@ -907,7 +907,7 @@
                     ]
                 },
                 {
-                    "number": 585,
+                    "number": 579,
                     "focus": false,
                     "runs": [
                         [
@@ -917,7 +917,7 @@
                     ]
                 },
                 {
-                    "number": 586,
+                    "number": 580,
                     "focus": true,
                     "runs": [
                         [
@@ -975,7 +975,7 @@
                     ]
                 },
                 {
-                    "number": 587,
+                    "number": 581,
                     "focus": false,
                     "runs": [
                         [
@@ -985,7 +985,7 @@
                     ]
                 },
                 {
-                    "number": 588,
+                    "number": 582,
                     "focus": false,
                     "runs": [
                         [
@@ -995,7 +995,7 @@
                     ]
                 },
                 {
-                    "number": 589,
+                    "number": 583,
                     "focus": false,
                     "runs": [
                         [

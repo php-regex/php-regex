@@ -3,15 +3,19 @@
         "version": "2.0.0-DEV"
     },
     "totals": {
-        "repos": 203,
-        "findings": 2312,
-        "fail": 138,
-        "warn": 2174
+        "repos": 236,
+        "findings": 2777,
+        "fail": 183,
+        "warn": 2594
     },
     "owners": {
         "10up": {
             "avatar": "/assets/findings/avatars/10up.png",
             "profile": "https://github.com/10up"
+        },
+        "Adyen": {
+            "avatar": "/assets/findings/avatars/Adyen.png",
+            "profile": "https://github.com/Adyen"
         },
         "Alexia": {
             "avatar": "/assets/findings/avatars/Alexia.png",
@@ -33,6 +37,10 @@
             "avatar": "/assets/findings/avatars/CuyZ.png",
             "profile": "https://github.com/CuyZ"
         },
+        "DataDog": {
+            "avatar": "/assets/findings/avatars/DataDog.png",
+            "profile": "https://github.com/DataDog"
+        },
         "EdgedesignCZ": {
             "avatar": "/assets/findings/avatars/EdgedesignCZ.png",
             "profile": "https://github.com/EdgedesignCZ"
@@ -49,9 +57,17 @@
             "avatar": "/assets/findings/avatars/Heyosseus.png",
             "profile": "https://github.com/Heyosseus"
         },
+        "HubSpot": {
+            "avatar": "/assets/findings/avatars/HubSpot.png",
+            "profile": "https://github.com/HubSpot"
+        },
         "Humbug": {
             "avatar": "/assets/findings/avatars/Humbug.png",
             "profile": "https://github.com/Humbug"
+        },
+        "Intervention": {
+            "avatar": "/assets/findings/avatars/Intervention.png",
+            "profile": "https://github.com/Intervention"
         },
         "MyIntervals": {
             "avatar": "/assets/findings/avatars/MyIntervals.png",
@@ -64,6 +80,10 @@
         "OskarStark": {
             "avatar": "/assets/findings/avatars/OskarStark.png",
             "profile": "https://github.com/OskarStark"
+        },
+        "PHP-CS-Fixer": {
+            "avatar": "/assets/findings/avatars/PHP-CS-Fixer.png",
+            "profile": "https://github.com/PHP-CS-Fixer"
         },
         "PHP-FFMpeg": {
             "avatar": "/assets/findings/avatars/PHP-FFMpeg.png",
@@ -113,6 +133,10 @@
             "avatar": "/assets/findings/avatars/TYPO3.png",
             "profile": "https://github.com/TYPO3"
         },
+        "Tencent": {
+            "avatar": "/assets/findings/avatars/Tencent.png",
+            "profile": "https://github.com/Tencent"
+        },
         "WhichBrowser": {
             "avatar": "/assets/findings/avatars/WhichBrowser.png",
             "profile": "https://github.com/WhichBrowser"
@@ -133,6 +157,14 @@
             "avatar": "/assets/findings/avatars/akaunting.png",
             "profile": "https://github.com/akaunting"
         },
+        "anthropics": {
+            "avatar": "/assets/findings/avatars/anthropics.png",
+            "profile": "https://github.com/anthropics"
+        },
+        "apache": {
+            "avatar": "/assets/findings/avatars/apache.png",
+            "profile": "https://github.com/apache"
+        },
         "api-platform": {
             "avatar": "/assets/findings/avatars/api-platform.png",
             "profile": "https://github.com/api-platform"
@@ -144,6 +176,10 @@
         "awslabs": {
             "avatar": "/assets/findings/avatars/awslabs.png",
             "profile": "https://github.com/awslabs"
+        },
+        "barryvdh": {
+            "avatar": "/assets/findings/avatars/barryvdh.png",
+            "profile": "https://github.com/barryvdh"
         },
         "bcit-ci": {
             "avatar": "/assets/findings/avatars/bcit-ci.png",
@@ -233,6 +269,10 @@
             "avatar": "/assets/findings/avatars/egulias.png",
             "profile": "https://github.com/egulias"
         },
+        "elastic": {
+            "avatar": "/assets/findings/avatars/elastic.png",
+            "profile": "https://github.com/elastic"
+        },
         "elementor": {
             "avatar": "/assets/findings/avatars/elementor.png",
             "profile": "https://github.com/elementor"
@@ -265,6 +305,10 @@
             "avatar": "/assets/findings/avatars/facebook.png",
             "profile": "https://github.com/facebook"
         },
+        "facebookincubator": {
+            "avatar": "/assets/findings/avatars/facebookincubator.png",
+            "profile": "https://github.com/facebookincubator"
+        },
         "filamentphp": {
             "avatar": "/assets/findings/avatars/filamentphp.png",
             "profile": "https://github.com/filamentphp"
@@ -281,9 +325,21 @@
             "avatar": "/assets/findings/avatars/freescout-help-desk.png",
             "profile": "https://github.com/freescout-help-desk"
         },
+        "fruitcake": {
+            "avatar": "/assets/findings/avatars/fruitcake.png",
+            "profile": "https://github.com/fruitcake"
+        },
         "getgrav": {
             "avatar": "/assets/findings/avatars/getgrav.png",
             "profile": "https://github.com/getgrav"
+        },
+        "getsentry": {
+            "avatar": "/assets/findings/avatars/getsentry.png",
+            "profile": "https://github.com/getsentry"
+        },
+        "giggsey": {
+            "avatar": "/assets/findings/avatars/giggsey.png",
+            "profile": "https://github.com/giggsey"
         },
         "google": {
             "avatar": "/assets/findings/avatars/google.png",
@@ -332,6 +388,10 @@
         "joomla": {
             "avatar": "/assets/findings/avatars/joomla.png",
             "profile": "https://github.com/joomla"
+        },
+        "jsonrainbow": {
+            "avatar": "/assets/findings/avatars/jsonrainbow.png",
+            "profile": "https://github.com/jsonrainbow"
         },
         "laminas": {
             "avatar": "/assets/findings/avatars/laminas.png",
@@ -425,6 +485,14 @@
             "avatar": "/assets/findings/avatars/octobercms.png",
             "profile": "https://github.com/octobercms"
         },
+        "open-telemetry": {
+            "avatar": "/assets/findings/avatars/open-telemetry.png",
+            "profile": "https://github.com/open-telemetry"
+        },
+        "opis": {
+            "avatar": "/assets/findings/avatars/opis.png",
+            "profile": "https://github.com/opis"
+        },
         "owncloud": {
             "avatar": "/assets/findings/avatars/owncloud.png",
             "profile": "https://github.com/owncloud"
@@ -440,6 +508,10 @@
         "phan": {
             "avatar": "/assets/findings/avatars/phan.png",
             "profile": "https://github.com/phan"
+        },
+        "php": {
+            "avatar": "/assets/findings/avatars/php.png",
+            "profile": "https://github.com/php"
         },
         "php-debugbar": {
             "avatar": "/assets/findings/avatars/php-debugbar.png",
@@ -505,6 +577,10 @@
             "avatar": "/assets/findings/avatars/protonemedia.png",
             "profile": "https://github.com/protonemedia"
         },
+        "ramsey": {
+            "avatar": "/assets/findings/avatars/ramsey.png",
+            "profile": "https://github.com/ramsey"
+        },
         "reactphp": {
             "avatar": "/assets/findings/avatars/reactphp.png",
             "profile": "https://github.com/reactphp"
@@ -528,6 +604,10 @@
         "salesagility": {
             "avatar": "/assets/findings/avatars/salesagility.png",
             "profile": "https://github.com/salesagility"
+        },
+        "salesforce": {
+            "avatar": "/assets/findings/avatars/salesforce.png",
+            "profile": "https://github.com/salesforce"
         },
         "schmittjoh": {
             "avatar": "/assets/findings/avatars/schmittjoh.png",
@@ -573,10 +653,6 @@
             "avatar": "/assets/findings/avatars/spiral.png",
             "profile": "https://github.com/spiral"
         },
-        "squizlabs": {
-            "avatar": "/assets/findings/avatars/squizlabs.png",
-            "profile": "https://github.com/squizlabs"
-        },
         "staabm": {
             "avatar": "/assets/findings/avatars/staabm.png",
             "profile": "https://github.com/staabm"
@@ -613,6 +689,10 @@
             "avatar": "/assets/findings/avatars/tijsverkoyen.png",
             "profile": "https://github.com/tijsverkoyen"
         },
+        "troelskn": {
+            "avatar": "/assets/findings/avatars/troelskn.png",
+            "profile": "https://github.com/troelskn"
+        },
         "tubalmartin": {
             "avatar": "/assets/findings/avatars/tubalmartin.png",
             "profile": "https://github.com/tubalmartin"
@@ -645,6 +725,10 @@
             "avatar": "/assets/findings/avatars/wapmorgan.png",
             "profile": "https://github.com/wapmorgan"
         },
+        "webonyx": {
+            "avatar": "/assets/findings/avatars/webonyx.png",
+            "profile": "https://github.com/webonyx"
+        },
         "wikimedia": {
             "avatar": "/assets/findings/avatars/wikimedia.png",
             "profile": "https://github.com/wikimedia"
@@ -669,6 +753,10 @@
             "avatar": "/assets/findings/avatars/zbateson.png",
             "profile": "https://github.com/zbateson"
         },
+        "zendesk": {
+            "avatar": "/assets/findings/avatars/zendesk.png",
+            "profile": "https://github.com/zendesk"
+        },
         "zircote": {
             "avatar": "/assets/findings/avatars/zircote.png",
             "profile": "https://github.com/zircote"
@@ -684,11 +772,11 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "0580991669815767026aea115a2053e2040378af",
-            "committed": "2026-10-30",
-            "findings": 310,
-            "fail": 15,
-            "warn": 295,
+            "sha": "afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda",
+            "committed": "2026-11-11",
+            "findings": 329,
+            "fail": 19,
+            "warn": 310,
             "rules": [
                 "regex.delimiter.invalid",
                 "regex.delimiter.unescaped",
@@ -718,26 +806,6 @@
             ]
         },
         {
-            "repo": "flarum/framework",
-            "owner": "flarum",
-            "slug": "flarum__framework",
-            "target": {
-                "php": "8.3",
-                "pcre": "10.42",
-                "source": "composer.json require.php"
-            },
-            "sha": "a1dd57e06d4c1255358b3e715db44cd00034cf20",
-            "committed": "2026-11-03",
-            "findings": 8,
-            "fail": 7,
-            "warn": 1,
-            "rules": [
-                "regex.lint.flag.useless.i",
-                "regex.lint.redos",
-                "regex.lint.unicode.multibyteInClassWithoutU"
-            ]
-        },
-        {
             "repo": "wikimedia/mediawiki",
             "owner": "wikimedia",
             "slug": "wikimedia__mediawiki",
@@ -746,11 +814,11 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "d4dca2e8e13888b26d959517240339165af06f68",
-            "committed": "2026-11-03",
-            "findings": 31,
-            "fail": 7,
-            "warn": 24,
+            "sha": "3faa2c4b672e6f2f8babaf959ae6f6024db37c19",
+            "committed": "2026-11-13",
+            "findings": 36,
+            "fail": 9,
+            "warn": 27,
             "rules": [
                 "regex.lint.alternation.empty",
                 "regex.lint.anchor.alternationPrecedence",
@@ -765,6 +833,27 @@
                 "regex.lint.quantifier.lazyEnd",
                 "regex.lint.quantifier.nested",
                 "regex.lint.redos",
+                "regex.lint.unicode.multibyteInClassWithoutU",
+                "regex.lint.unicode.propertyWithoutU"
+            ]
+        },
+        {
+            "repo": "flarum/framework",
+            "owner": "flarum",
+            "slug": "flarum__framework",
+            "target": {
+                "php": "8.3",
+                "pcre": "10.42",
+                "source": "composer.json require.php"
+            },
+            "sha": "3e15389c66b1277ba75c6106558fb4b05fe62ddd",
+            "committed": "2026-11-13",
+            "findings": 8,
+            "fail": 7,
+            "warn": 1,
+            "rules": [
+                "regex.lint.flag.useless.i",
+                "regex.lint.redos",
                 "regex.lint.unicode.multibyteInClassWithoutU"
             ]
         },
@@ -777,11 +866,11 @@
                 "pcre": "10.33",
                 "source": "composer.json require.php"
             },
-            "sha": "2f8310cf9170dc1766316c62fcc7f01c89709004",
-            "committed": "2026-11-03",
-            "findings": 66,
+            "sha": "331d6d6f1d68621da2d50176d100a6cbbd62527d",
+            "committed": "2026-11-13",
+            "findings": 69,
             "fail": 7,
-            "warn": 59,
+            "warn": 62,
             "rules": [
                 "regex.lint.alternation.empty",
                 "regex.lint.anchor.alternationPrecedence",
@@ -804,31 +893,6 @@
             ]
         },
         {
-            "repo": "drupal/drupal",
-            "owner": "drupal",
-            "slug": "drupal__drupal",
-            "target": {
-                "php": "8.1",
-                "pcre": "10.39",
-                "source": "fallback: no require.php"
-            },
-            "sha": "bc8a8b482ee232a7ae8c209b73158a1145abbaa9",
-            "committed": "2026-11-03",
-            "findings": 18,
-            "fail": 6,
-            "warn": 12,
-            "rules": [
-                "regex.lint.alternation.empty",
-                "regex.lint.charclass.redundant",
-                "regex.lint.flag.useless.i",
-                "regex.lint.flag.useless.s",
-                "regex.lint.overlap.charset",
-                "regex.lint.quantifier.concatenation",
-                "regex.lint.quantifier.nested",
-                "regex.lint.redos"
-            ]
-        },
-        {
             "repo": "Automattic/jetpack",
             "owner": "Automattic",
             "slug": "Automattic__jetpack",
@@ -837,11 +901,11 @@
                 "pcre": "10.39",
                 "source": "fallback: no require.php"
             },
-            "sha": "7556b93233d0287357479301ed28b35c0a9e777f",
-            "committed": "2026-11-03",
-            "findings": 67,
-            "fail": 5,
-            "warn": 62,
+            "sha": "c9838f85bd08d7c0a0983fa939dda46dff3724f4",
+            "committed": "2026-11-13",
+            "findings": 71,
+            "fail": 6,
+            "warn": 65,
             "rules": [
                 "regex.lint.alternation.duplicateDisjunction",
                 "regex.lint.alternation.empty",
@@ -865,6 +929,65 @@
             ]
         },
         {
+            "repo": "drupal/drupal",
+            "owner": "drupal",
+            "slug": "drupal__drupal",
+            "target": {
+                "php": "8.5",
+                "pcre": "10.44",
+                "source": "composer.json config.platform.php"
+            },
+            "sha": "7480c58b75c058f850b45e81664ac1df7d309744",
+            "committed": "2026-11-13",
+            "findings": 21,
+            "fail": 6,
+            "warn": 15,
+            "rules": [
+                "regex.lint.alternation.empty",
+                "regex.lint.charclass.redundant",
+                "regex.lint.flag.useless.i",
+                "regex.lint.flag.useless.s",
+                "regex.lint.overlap.charset",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.quantifier.nested",
+                "regex.lint.redos"
+            ]
+        },
+        {
+            "repo": "DataDog/dd-trace-php",
+            "owner": "DataDog",
+            "slug": "DataDog__dd-trace-php",
+            "target": {
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
+            },
+            "sha": "c192d227b21ecae95c28558bd83b01c28f4e9769",
+            "committed": "2026-11-13",
+            "findings": 54,
+            "fail": 5,
+            "warn": 49,
+            "rules": [
+                "regex.lint.alternation.empty",
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.charclass.redundant",
+                "regex.lint.charclass.suspiciousRange",
+                "regex.lint.dotstar.nested",
+                "regex.lint.flag.useless.i",
+                "regex.lint.flag.useless.m",
+                "regex.lint.flag.useless.s",
+                "regex.lint.group.redundant",
+                "regex.lint.overlap.charset",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.quantifier.emptyRepeat",
+                "regex.lint.quantifier.lazyEnd",
+                "regex.lint.quantifier.nested",
+                "regex.lint.quantifier.useless",
+                "regex.lint.redos",
+                "regex.lint.unicode.multibyteInClassWithoutU"
+            ]
+        },
+        {
             "repo": "freescout-help-desk/freescout",
             "owner": "freescout-help-desk",
             "slug": "freescout-help-desk__freescout",
@@ -873,8 +996,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "90852925eb78ac2e88239e910d0d3c8ec7c8768d",
-            "committed": "2026-10-31",
+            "sha": "fee8544bde58a859cfbfddba392ed034af26f6dd",
+            "committed": "2026-11-06",
             "findings": 32,
             "fail": 5,
             "warn": 27,
@@ -897,30 +1020,6 @@
             ]
         },
         {
-            "repo": "pimcore/pimcore",
-            "owner": "pimcore",
-            "slug": "pimcore__pimcore",
-            "target": {
-                "php": "8.4",
-                "pcre": "10.49",
-                "source": "composer.json require.php"
-            },
-            "sha": "8bb83f68ad47f1051ca97ac0014be6831cfc4748",
-            "committed": "2026-11-03",
-            "findings": 13,
-            "fail": 5,
-            "warn": 8,
-            "rules": [
-                "regex.lint.alternation.empty",
-                "regex.lint.charclass.redundant",
-                "regex.lint.flag.useless.i",
-                "regex.lint.flag.useless.m",
-                "regex.lint.flag.useless.s",
-                "regex.lint.quantifier.nested",
-                "regex.lint.redos"
-            ]
-        },
-        {
             "repo": "magento/magento2",
             "owner": "magento",
             "slug": "magento__magento2",
@@ -929,11 +1028,11 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "7bd508f59c5cd317382d01ffe9e0852049af0554",
-            "committed": "2026-11-03",
-            "findings": 73,
-            "fail": 4,
-            "warn": 69,
+            "sha": "542a11c7b680d1bece1e7d86065ac939e130438c",
+            "committed": "2026-11-13",
+            "findings": 83,
+            "fail": 5,
+            "warn": 78,
             "rules": [
                 "regex.lint.alternation.empty",
                 "regex.lint.alternation.overlap",
@@ -949,11 +1048,86 @@
                 "regex.lint.flag.useless.s",
                 "regex.lint.group.alwaysEmptyCapture",
                 "regex.lint.group.redundant",
+                "regex.lint.overlap.charset",
                 "regex.lint.quantifier.concatenation",
                 "regex.lint.quantifier.lazyEnd",
                 "regex.lint.quantifier.nested",
                 "regex.lint.quantifier.useless",
                 "regex.lint.redos"
+            ]
+        },
+        {
+            "repo": "php/pie",
+            "owner": "php",
+            "slug": "php__pie",
+            "target": {
+                "php": "8.1.99",
+                "pcre": "10.39",
+                "source": "composer.json config.platform.php"
+            },
+            "sha": "b89115dbc5ce6f1fa7ca628c8a46f133e6ff9c45",
+            "committed": "2026-11-12",
+            "findings": 5,
+            "fail": 5,
+            "warn": 0,
+            "rules": [
+                "regex.delimiter.invalid"
+            ]
+        },
+        {
+            "repo": "pimcore/pimcore",
+            "owner": "pimcore",
+            "slug": "pimcore__pimcore",
+            "target": {
+                "php": "8.4",
+                "pcre": "10.49",
+                "source": "composer.json require.php"
+            },
+            "sha": "0763bbfaa3040456723dfbf1c5b6868900306442",
+            "committed": "2026-11-13",
+            "findings": 13,
+            "fail": 5,
+            "warn": 8,
+            "rules": [
+                "regex.lint.alternation.empty",
+                "regex.lint.charclass.redundant",
+                "regex.lint.flag.useless.i",
+                "regex.lint.flag.useless.m",
+                "regex.lint.flag.useless.s",
+                "regex.lint.quantifier.nested",
+                "regex.lint.redos"
+            ]
+        },
+        {
+            "repo": "PrestaShop/PrestaShop",
+            "owner": "PrestaShop",
+            "slug": "PrestaShop__PrestaShop",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "composer.json config.platform.php"
+            },
+            "sha": "debbb203238eedc8cee7125f9fd6e931359ddd82",
+            "committed": "2026-11-12",
+            "findings": 78,
+            "fail": 5,
+            "warn": 73,
+            "rules": [
+                "regex.lint.alternation.duplicateDisjunction",
+                "regex.lint.alternation.empty",
+                "regex.lint.anchor.alternationPrecedence",
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.charclass.literalMetachar",
+                "regex.lint.charclass.redundant",
+                "regex.lint.flag.useless.i",
+                "regex.lint.flag.useless.m",
+                "regex.lint.flag.useless.s",
+                "regex.lint.overlap.charset",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.quantifier.nested",
+                "regex.lint.quantifier.useless",
+                "regex.lint.redos",
+                "regex.lint.unicode.multibyteInClassWithoutU"
             ]
         },
         {
@@ -965,8 +1139,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "9b90cef0afbf904109391f85d3cf03f533f065ac",
-            "committed": "2026-11-03",
+            "sha": "5147ea1a01c124f461090a72bee6ea6de02a67a6",
+            "committed": "2026-11-13",
             "findings": 13,
             "fail": 3,
             "warn": 10,
@@ -990,8 +1164,8 @@
                 "pcre": "10.40",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "f84281b3fe29a890e9903df9260b659fc32d0aa0",
-            "committed": "2026-11-03",
+            "sha": "a4ccf72df0fea71e3116d32706d5df5c4dc50d49",
+            "committed": "2026-11-13",
             "findings": 14,
             "fail": 3,
             "warn": 11,
@@ -1009,6 +1183,26 @@
             ]
         },
         {
+            "repo": "facebook/facebook-for-woocommerce",
+            "owner": "facebook",
+            "slug": "facebook__facebook-for-woocommerce",
+            "target": {
+                "php": "7.4",
+                "pcre": "10.33",
+                "source": "composer.json config.platform.php"
+            },
+            "sha": "8bfff9fbeb5008148906ccbb16262dc649c5dac3",
+            "committed": "2026-11-13",
+            "findings": 4,
+            "fail": 3,
+            "warn": 1,
+            "rules": [
+                "regex.lint.charclass.literalMetachar",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.redos"
+            ]
+        },
+        {
             "repo": "grokability/snipe-it",
             "owner": "grokability",
             "slug": "grokability__snipe-it",
@@ -1017,8 +1211,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "e60095bdac4c7617412b351321aac146997adb42",
-            "committed": "2026-11-03",
+            "sha": "947ac808c7205367b21c9474f0a0de91ee560751",
+            "committed": "2026-11-09",
             "findings": 3,
             "fail": 3,
             "warn": 0,
@@ -1037,9 +1231,9 @@
             },
             "sha": "4946ebb7ef82983c44818b200ab03f4dd38cd064",
             "committed": "2026-03-31",
-            "findings": 3,
+            "findings": 5,
             "fail": 3,
-            "warn": 0,
+            "warn": 2,
             "rules": [
                 "regex.lint.overlap.charset",
                 "regex.lint.quantifier.lazyEnd",
@@ -1059,9 +1253,9 @@
             },
             "sha": "fb163ab99b5762769e5105e73622eba6af29f3dc",
             "committed": "2026-10-30",
-            "findings": 30,
+            "findings": 32,
             "fail": 3,
-            "warn": 27,
+            "warn": 29,
             "rules": [
                 "regex.lint.alternation.empty",
                 "regex.lint.charclass.duplicateChars",
@@ -1075,6 +1269,33 @@
             ]
         },
         {
+            "repo": "roundcube/roundcubemail",
+            "owner": "roundcube",
+            "slug": "roundcube__roundcubemail",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "composer.json require.php"
+            },
+            "sha": "058b11d0535af2007af825c42f29f745e97b8f0b",
+            "committed": "2026-11-11",
+            "findings": 47,
+            "fail": 3,
+            "warn": 44,
+            "rules": [
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.charclass.redundant",
+                "regex.lint.flag.useless.i",
+                "regex.lint.flag.useless.m",
+                "regex.lint.flag.useless.s",
+                "regex.lint.overlap.charset",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.quantifier.nested",
+                "regex.lint.quantifier.useless",
+                "regex.lint.redos"
+            ]
+        },
+        {
             "repo": "salesagility/SuiteCRM",
             "owner": "salesagility",
             "slug": "salesagility__SuiteCRM",
@@ -1083,11 +1304,11 @@
                 "pcre": "10.39",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "ccb02b1e110489a1d91fe6343087723e4912710f",
-            "committed": "2026-10-29",
-            "findings": 132,
+            "sha": "be6191927d643872942a364bc5877493a6ae25a2",
+            "committed": "2026-11-04",
+            "findings": 135,
             "fail": 3,
-            "warn": 129,
+            "warn": 132,
             "rules": [
                 "regex.delimiter.unclosed",
                 "regex.lint.alternation.empty",
@@ -1117,11 +1338,11 @@
                 "pcre": "10.49",
                 "source": "composer.json require.php"
             },
-            "sha": "b333b2838318554dd09e262f87c7be7bb600cd91",
-            "committed": "2026-11-03",
-            "findings": 40,
+            "sha": "08c6fc5956af2b31ca97f558232080da15775438",
+            "committed": "2026-11-13",
+            "findings": 41,
             "fail": 3,
-            "warn": 37,
+            "warn": 38,
             "rules": [
                 "regex.lint.alternation.empty",
                 "regex.lint.anchor.alternationPrecedence",
@@ -1143,16 +1364,45 @@
             ]
         },
         {
+            "repo": "bcit-ci/CodeIgniter",
+            "owner": "bcit-ci",
+            "slug": "bcit-ci__CodeIgniter",
+            "target": {
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
+            },
+            "sha": "3658d731eaabe6117298a105ffb5b9dd59e190ce",
+            "committed": "2024-03-19",
+            "findings": 35,
+            "fail": 2,
+            "warn": 33,
+            "rules": [
+                "regex.lint.anchor.alternationPrecedence",
+                "regex.lint.charclass.backrefAsOctal",
+                "regex.lint.charclass.redundant",
+                "regex.lint.charclass.suspiciousPipe",
+                "regex.lint.dotstar.nested",
+                "regex.lint.flag.useless.i",
+                "regex.lint.flag.useless.s",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.quantifier.lazyEnd",
+                "regex.lint.quantifier.nested",
+                "regex.lint.quantifier.useless",
+                "regex.lint.redos"
+            ]
+        },
+        {
             "repo": "concretecms/concretecms",
             "owner": "concretecms",
             "slug": "concretecms__concretecms",
             "target": {
-                "php": "8.1",
-                "pcre": "10.39",
-                "source": "fallback: no require.php"
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json config.platform.php"
             },
-            "sha": "310490605b78d5379618874622812dac5584c880",
-            "committed": "2026-10-28",
+            "sha": "a0a4fd63d0f4a64f0da5db0aef247054b761bac6",
+            "committed": "2026-11-13",
             "findings": 26,
             "fail": 2,
             "warn": 24,
@@ -1177,15 +1427,16 @@
                 "pcre": "10.49",
                 "source": "composer.json require.php"
             },
-            "sha": "1de1026345af6dc819fe4625cc97235aa07eb3cd",
-            "committed": "2026-11-03",
-            "findings": 11,
+            "sha": "c11b726ffc2e2577f239b1ac5eaa3612b15ab52c",
+            "committed": "2026-11-13",
+            "findings": 21,
             "fail": 2,
-            "warn": 9,
+            "warn": 19,
             "rules": [
                 "regex.lint.alternation.empty",
                 "regex.lint.anchor.alternationPrecedence",
                 "regex.lint.flag.useless.i",
+                "regex.lint.flag.useless.s",
                 "regex.lint.overlap.charset",
                 "regex.lint.quantifier.nested",
                 "regex.lint.redos"
@@ -1221,12 +1472,13 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "3516cd114cf71bb100c0668283d0820500f1e362",
-            "committed": "2026-10-23",
-            "findings": 8,
+            "sha": "27198f21ddefc708860984b9fd792e557b2ea0b0",
+            "committed": "2026-11-13",
+            "findings": 11,
             "fail": 2,
-            "warn": 6,
+            "warn": 9,
             "rules": [
+                "regex.lint.charclass.duplicateChars",
                 "regex.lint.flag.useless.i",
                 "regex.lint.flag.useless.s",
                 "regex.lint.flag.useless.x",
@@ -1234,6 +1486,37 @@
                 "regex.lint.quantifier.nested",
                 "regex.lint.quantifier.useless",
                 "regex.lint.redos"
+            ]
+        },
+        {
+            "repo": "joomla/joomla-cms",
+            "owner": "joomla",
+            "slug": "joomla__joomla-cms",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "composer.json config.platform.php"
+            },
+            "sha": "3a506bc9da00221e5ef10d079455d0558f96ecda",
+            "committed": "2026-11-13",
+            "findings": 50,
+            "fail": 2,
+            "warn": 48,
+            "rules": [
+                "regex.lint.alternation.duplicateDisjunction",
+                "regex.lint.alternation.empty",
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.charclass.redundant",
+                "regex.lint.dotstar.nested",
+                "regex.lint.flag.useless.i",
+                "regex.lint.flag.useless.m",
+                "regex.lint.flag.useless.x",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.quantifier.lazyEnd",
+                "regex.lint.quantifier.nested",
+                "regex.lint.quantifier.useless",
+                "regex.lint.redos",
+                "regex.lint.unicode.quantifiedMultibyteWithoutU"
             ]
         },
         {
@@ -1245,11 +1528,11 @@
                 "pcre": "10.39",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "beb91e69459b77f65be2c5e2ddad91ec8a76be09",
-            "committed": "2026-11-03",
-            "findings": 14,
+            "sha": "58a86dee2acc2aaf73a526fe137871f835a59d86",
+            "committed": "2026-11-13",
+            "findings": 18,
             "fail": 2,
-            "warn": 12,
+            "warn": 16,
             "rules": [
                 "regex.lint.alternation.empty",
                 "regex.lint.anchor.alternationPrecedence",
@@ -1282,6 +1565,50 @@
                 "regex.flag.removed_e",
                 "regex.lint.flag.useless.i",
                 "regex.lint.flag.useless.s"
+            ]
+        },
+        {
+            "repo": "open-telemetry/opentelemetry-php-contrib",
+            "owner": "open-telemetry",
+            "slug": "open-telemetry__opentelemetry-php-contrib",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "composer.json require.php"
+            },
+            "sha": "9b2432c39fd4e596909ca8763bf7e2148c8ae98e",
+            "committed": "2026-11-11",
+            "findings": 2,
+            "fail": 2,
+            "warn": 0,
+            "rules": [
+                "regex.lint.quantifier.nested",
+                "regex.lint.redos"
+            ]
+        },
+        {
+            "repo": "php/doc-base",
+            "owner": "php",
+            "slug": "php__doc-base",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "fallback: no require.php"
+            },
+            "sha": "a331e55094ca170b73357fa461101ffa28e0c617",
+            "committed": "2026-11-05",
+            "findings": 19,
+            "fail": 2,
+            "warn": 17,
+            "rules": [
+                "regex.flag.removed_e",
+                "regex.lint.anchor.alternationPrecedence",
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.flag.useless.s",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.quantifier.lazyEnd",
+                "regex.lint.quantifier.nested",
+                "regex.lint.redos"
             ]
         },
         {
@@ -1334,18 +1661,21 @@
                 "pcre": "10.44",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "a510bd06dccb8eed42f89a7818402b0cd4b03087",
-            "committed": "2026-11-03",
-            "findings": 18,
+            "sha": "f8689bdef1d7ac67c193a67de536db874b0a2cc9",
+            "committed": "2026-11-13",
+            "findings": 22,
             "fail": 2,
-            "warn": 16,
+            "warn": 20,
             "rules": [
                 "regex.lint.alternation.empty",
+                "regex.lint.alternation.overlap",
                 "regex.lint.anchor.alternationPrecedence",
+                "regex.lint.charclass.redundant",
                 "regex.lint.charclass.suspiciousRange",
                 "regex.lint.flag.useless.i",
                 "regex.lint.flag.useless.m",
                 "regex.lint.flag.useless.s",
+                "regex.lint.flag.useless.x",
                 "regex.lint.quantifier.nested",
                 "regex.lint.redos"
             ]
@@ -1359,14 +1689,35 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "75d7ca00182ca690b273dcd8d172e8efa17d1f90",
-            "committed": "2026-11-03",
+            "sha": "fca8e037ed356b9fc1afc213902e82dfad418eba",
+            "committed": "2026-11-11",
             "findings": 5,
             "fail": 2,
             "warn": 3,
             "rules": [
                 "regex.lint.charclass.duplicateChars",
                 "regex.lint.flag.useless.m",
+                "regex.lint.quantifier.nested",
+                "regex.lint.redos"
+            ]
+        },
+        {
+            "repo": "WordPress/Requests",
+            "owner": "WordPress",
+            "slug": "WordPress__Requests",
+            "target": {
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
+            },
+            "sha": "1f033d73eb2cbe6e69b8891789107be234849778",
+            "committed": "2026-10-20",
+            "findings": 4,
+            "fail": 2,
+            "warn": 2,
+            "rules": [
+                "regex.lint.flag.useless.i",
+                "regex.lint.group.redundant",
                 "regex.lint.quantifier.nested",
                 "regex.lint.redos"
             ]
@@ -1380,8 +1731,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2",
-            "committed": "2026-11-02",
+            "sha": "5ec3c05d8b46bb50a6179bc722b97ede35fbd86f",
+            "committed": "2026-11-09",
             "findings": 14,
             "fail": 2,
             "warn": 12,
@@ -1397,29 +1748,24 @@
             ]
         },
         {
-            "repo": "bcit-ci/CodeIgniter",
-            "owner": "bcit-ci",
-            "slug": "bcit-ci__CodeIgniter",
+            "repo": "barryvdh/laravel-ide-helper",
+            "owner": "barryvdh",
+            "slug": "barryvdh__laravel-ide-helper",
             "target": {
-                "php": "7.3",
-                "pcre": "10.32",
+                "php": "8.2",
+                "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "3658d731eaabe6117298a105ffb5b9dd59e190ce",
-            "committed": "2024-03-19",
-            "findings": 24,
+            "sha": "66f7ec11122bcb009aba7c2fea31faf5cee46634",
+            "committed": "2026-11-03",
+            "findings": 3,
             "fail": 1,
-            "warn": 23,
+            "warn": 2,
             "rules": [
-                "regex.lint.anchor.alternationPrecedence",
-                "regex.lint.charclass.backrefAsOctal",
+                "regex.lint.charclass.suspiciousRange",
                 "regex.lint.dotstar.nested",
-                "regex.lint.flag.useless.i",
-                "regex.lint.flag.useless.s",
-                "regex.lint.quantifier.concatenation",
-                "regex.lint.quantifier.lazyEnd",
+                "regex.lint.group.redundant",
                 "regex.lint.quantifier.nested",
-                "regex.lint.quantifier.useless",
                 "regex.lint.redos"
             ]
         },
@@ -1432,11 +1778,11 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "580b313553eeec1213c46b4af79755792004b734",
-            "committed": "2026-11-02",
-            "findings": 17,
+            "sha": "6bbaece22912f529519da97cb272c89378c976a1",
+            "committed": "2026-11-13",
+            "findings": 18,
             "fail": 1,
-            "warn": 16,
+            "warn": 17,
             "rules": [
                 "regex.lint.charclass.duplicateChars",
                 "regex.lint.charclass.literalMetachar",
@@ -1460,8 +1806,8 @@
                 "pcre": "10.49",
                 "source": "composer.json require.php"
             },
-            "sha": "d548378e4a3a57f7386c5ca68d84e5b55f11eb8d",
-            "committed": "2026-11-03",
+            "sha": "895aaf1821d6e43bdfc939f9e4424bc3906b0b50",
+            "committed": "2026-11-13",
             "findings": 5,
             "fail": 1,
             "warn": 4,
@@ -1504,15 +1850,17 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "654cd0ccdce1232506a9e5122abf578ee4aa7b3d",
-            "committed": "2026-11-04",
-            "findings": 14,
+            "sha": "6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64",
+            "committed": "2026-11-13",
+            "findings": 17,
             "fail": 1,
-            "warn": 13,
+            "warn": 16,
             "rules": [
                 "regex.lint.alternation.dotNewline",
                 "regex.lint.anchor.alternationPrecedence",
                 "regex.lint.charclass.backrefAsOctal",
+                "regex.lint.charclass.redundant",
+                "regex.lint.charclass.suspiciousPipe",
                 "regex.lint.flag.useless.i",
                 "regex.lint.flag.useless.m",
                 "regex.lint.flag.useless.s",
@@ -1543,6 +1891,31 @@
             ]
         },
         {
+            "repo": "dompdf/dompdf",
+            "owner": "dompdf",
+            "slug": "dompdf__dompdf",
+            "target": {
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
+            },
+            "sha": "c41f2f4871f130386118575564f95cd12a7c6aae",
+            "committed": "2026-10-02",
+            "findings": 16,
+            "fail": 1,
+            "warn": 15,
+            "rules": [
+                "regex.lint.anchor.alternationPrecedence",
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.flag.useless.i",
+                "regex.lint.flag.useless.s",
+                "regex.lint.flag.useless.x",
+                "regex.lint.group.quantifiedCapture",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.redos"
+            ]
+        },
+        {
             "repo": "elementor/elementor",
             "owner": "elementor",
             "slug": "elementor__elementor",
@@ -1551,8 +1924,8 @@
                 "pcre": "10.33",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "6e5c2cf525f69e34cae93e57bc6c280dc8afef1e",
-            "committed": "2026-11-03",
+            "sha": "67b18042bdb33be3940f83d07e743ecaae76190f",
+            "committed": "2026-11-13",
             "findings": 9,
             "fail": 1,
             "warn": 8,
@@ -1577,8 +1950,8 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "adc02447010c974de229501a9a23063bcc71acd6",
-            "committed": "2026-11-03",
+            "sha": "6064451f04659838450ffa969e492542b76e4321",
+            "committed": "2026-11-13",
             "findings": 8,
             "fail": 1,
             "warn": 7,
@@ -1589,6 +1962,27 @@
                 "regex.lint.flag.useless.s",
                 "regex.lint.quantifier.concatenation",
                 "regex.lint.quantifier.nested",
+                "regex.lint.redos"
+            ]
+        },
+        {
+            "repo": "greenlion/php-sql-parser",
+            "owner": "greenlion",
+            "slug": "greenlion__php-sql-parser",
+            "target": {
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
+            },
+            "sha": "06940325e48c24dd8fce0a80251210e28e436599",
+            "committed": "2026-09-21",
+            "findings": 2,
+            "fail": 1,
+            "warn": 1,
+            "rules": [
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.quantifier.nested",
+                "regex.lint.quantifier.useless",
                 "regex.lint.redos"
             ]
         },
@@ -1614,33 +2008,22 @@
             ]
         },
         {
-            "repo": "joomla/joomla-cms",
-            "owner": "joomla",
-            "slug": "joomla__joomla-cms",
+            "repo": "jsonrainbow/json-schema",
+            "owner": "jsonrainbow",
+            "slug": "jsonrainbow__json-schema",
             "target": {
-                "php": "8.1",
-                "pcre": "10.39",
-                "source": "composer.json config.platform.php"
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
             },
-            "sha": "3d35fc9a03c29ab50b530b089a7f92ec5f9e454e",
-            "committed": "2026-11-03",
-            "findings": 47,
+            "sha": "e54745a680fa2eeb2b7516c834bd40404fa6c6da",
+            "committed": "2026-11-04",
+            "findings": 1,
             "fail": 1,
-            "warn": 46,
+            "warn": 0,
             "rules": [
-                "regex.lint.alternation.duplicateDisjunction",
-                "regex.lint.alternation.empty",
-                "regex.lint.charclass.duplicateChars",
-                "regex.lint.charclass.redundant",
-                "regex.lint.dotstar.nested",
-                "regex.lint.flag.useless.i",
-                "regex.lint.flag.useless.m",
-                "regex.lint.flag.useless.x",
-                "regex.lint.quantifier.concatenation",
-                "regex.lint.quantifier.lazyEnd",
                 "regex.lint.quantifier.nested",
-                "regex.lint.quantifier.useless",
-                "regex.lint.unicode.quantifiedMultibyteWithoutU"
+                "regex.lint.redos"
             ]
         },
         {
@@ -1694,11 +2077,11 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "541d0f85ecdb7707a83d6fc30058b41600d07efe",
-            "committed": "2026-11-03",
-            "findings": 6,
+            "sha": "0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a",
+            "committed": "2026-11-13",
+            "findings": 8,
             "fail": 1,
-            "warn": 5,
+            "warn": 7,
             "rules": [
                 "regex.lint.charclass.backrefAsOctal",
                 "regex.lint.dotstar.nested",
@@ -1718,13 +2101,14 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "64dc24f5d965add4d402b4b8b64f59b561112af5",
-            "committed": "2026-11-03",
-            "findings": 15,
+            "sha": "6ba5a0ba058389f3b72338a3fe2c9cd04240c93c",
+            "committed": "2026-11-13",
+            "findings": 19,
             "fail": 1,
-            "warn": 14,
+            "warn": 18,
             "rules": [
                 "regex.delimiter.invalid",
+                "regex.lint.charclass.duplicateChars",
                 "regex.lint.charclass.redundant",
                 "regex.lint.flag.useless.i",
                 "regex.lint.flag.useless.m",
@@ -1755,6 +2139,27 @@
             ]
         },
         {
+            "repo": "nette/utils",
+            "owner": "nette",
+            "slug": "nette__utils",
+            "target": {
+                "php": "8.2",
+                "pcre": "10.40",
+                "source": "composer.json require.php"
+            },
+            "sha": "a3f9e75b5f669d6fa509343d14b450a66212c7a6",
+            "committed": "2026-11-06",
+            "findings": 6,
+            "fail": 1,
+            "warn": 5,
+            "rules": [
+                "regex.lint.alternation.empty",
+                "regex.lint.flag.useless.i",
+                "regex.lint.quantifier.nested",
+                "regex.lint.redos"
+            ]
+        },
+        {
             "repo": "pestphp/pest",
             "owner": "pestphp",
             "slug": "pestphp__pest",
@@ -1775,6 +2180,30 @@
             ]
         },
         {
+            "repo": "php/php-src",
+            "owner": "php",
+            "slug": "php__php-src",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "fallback: no require.php"
+            },
+            "sha": "5e55ae42891b4a14661451310e36c11676eee0ce",
+            "committed": "2026-11-13",
+            "findings": 22,
+            "fail": 1,
+            "warn": 21,
+            "rules": [
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.flag.useless.m",
+                "regex.lint.group.quantifiedCapture",
+                "regex.lint.quantifier.emptyRepeat",
+                "regex.lint.quantifier.lazyEnd",
+                "regex.lint.quantifier.nested",
+                "regex.lint.redos"
+            ]
+        },
+        {
             "repo": "phpactor/phpactor",
             "owner": "phpactor",
             "slug": "phpactor__phpactor",
@@ -1783,8 +2212,8 @@
                 "pcre": "10.40",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "3ed86525efc04aafaaa1e129c4cdae4ea9cea15a",
-            "committed": "2026-10-21",
+            "sha": "8ba84f6bce07047d969d0d80e55d20370b2ce2e4",
+            "committed": "2026-11-06",
             "findings": 6,
             "fail": 1,
             "warn": 5,
@@ -1797,6 +2226,58 @@
             ]
         },
         {
+            "repo": "phpbb/phpbb",
+            "owner": "phpbb",
+            "slug": "phpbb__phpbb",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "fallback: no require.php"
+            },
+            "sha": "8a4e4fd993d377a2f2d552cca11046c9042c569d",
+            "committed": "2026-11-09",
+            "findings": 50,
+            "fail": 1,
+            "warn": 49,
+            "rules": [
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.charclass.redundant",
+                "regex.lint.flag.useless.D",
+                "regex.lint.flag.useless.i",
+                "regex.lint.flag.useless.m",
+                "regex.lint.flag.useless.s",
+                "regex.lint.group.redundant",
+                "regex.lint.overlap.charset",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.quantifier.lazyEnd",
+                "regex.lint.quantifier.nested",
+                "regex.lint.quantifier.useless",
+                "regex.lint.unicode.propertyWithoutU"
+            ]
+        },
+        {
+            "repo": "PHPCSStandards/PHP_CodeSniffer",
+            "owner": "PHPCSStandards",
+            "slug": "PHPCSStandards__PHP_CodeSniffer",
+            "target": {
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
+            },
+            "sha": "c17bea2b241d09596accb728e097de010a002c8a",
+            "committed": "2026-11-06",
+            "findings": 3,
+            "fail": 1,
+            "warn": 2,
+            "rules": [
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.charclass.redundant",
+                "regex.lint.quantifier.nested",
+                "regex.lint.quantifier.useless",
+                "regex.lint.redos"
+            ]
+        },
+        {
             "repo": "PHPOffice/PhpSpreadsheet",
             "owner": "PHPOffice",
             "slug": "PHPOffice__PhpSpreadsheet",
@@ -1805,11 +2286,11 @@
                 "pcre": "10.40",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "60cc826911f1a1a125d756f22f0476a88504ab1f",
-            "committed": "2026-11-03",
-            "findings": 70,
+            "sha": "8bff5209d6641e765e179d4e968c8658dc34910c",
+            "committed": "2026-11-13",
+            "findings": 75,
             "fail": 1,
-            "warn": 69,
+            "warn": 74,
             "rules": [
                 "regex.lint.alternation.duplicateDisjunction",
                 "regex.lint.alternation.empty",
@@ -1855,43 +2336,12 @@
                 "pcre": "10.44",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "0385f462a5243bfecbafd06c746bcc832ffa7c2c",
-            "committed": "2026-11-03",
+            "sha": "9a67d9ff4e5b9c79ff565908e159be4440d449a0",
+            "committed": "2026-11-13",
             "findings": 1,
             "fail": 1,
             "warn": 0,
             "rules": [
-                "regex.lint.redos"
-            ]
-        },
-        {
-            "repo": "PrestaShop/PrestaShop",
-            "owner": "PrestaShop",
-            "slug": "PrestaShop__PrestaShop",
-            "target": {
-                "php": "8.1",
-                "pcre": "10.39",
-                "source": "composer.json config.platform.php"
-            },
-            "sha": "436ce69023f126df9f15855e26684c051370c066",
-            "committed": "2026-11-03",
-            "findings": 70,
-            "fail": 1,
-            "warn": 69,
-            "rules": [
-                "regex.lint.alternation.duplicateDisjunction",
-                "regex.lint.alternation.empty",
-                "regex.lint.anchor.alternationPrecedence",
-                "regex.lint.charclass.duplicateChars",
-                "regex.lint.charclass.literalMetachar",
-                "regex.lint.charclass.redundant",
-                "regex.lint.flag.useless.i",
-                "regex.lint.flag.useless.m",
-                "regex.lint.flag.useless.s",
-                "regex.lint.overlap.charset",
-                "regex.lint.quantifier.concatenation",
-                "regex.lint.quantifier.nested",
-                "regex.lint.quantifier.useless",
                 "regex.lint.redos"
             ]
         },
@@ -1928,9 +2378,9 @@
             },
             "sha": "c3ac3530bb59b9589ba56aed87b7c03874598db8",
             "committed": "2026-07-26",
-            "findings": 15,
+            "findings": 18,
             "fail": 1,
-            "warn": 14,
+            "warn": 17,
             "rules": [
                 "regex.lint.anchor.alternationPrecedence",
                 "regex.lint.charclass.duplicateChars",
@@ -1970,17 +2420,16 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "7824d4267e896d1230c1f2f9813ffe0de0e38f3f",
-            "committed": "2026-11-03",
+            "sha": "4a398e183a55bc6127e9f2ccca29d087bbfec924",
+            "committed": "2026-11-13",
             "findings": 11,
             "fail": 1,
             "warn": 10,
             "rules": [
-                "regex.lint.anchor.impossible.end",
-                "regex.lint.anchor.impossible.start",
                 "regex.lint.charclass.duplicateChars",
                 "regex.lint.charclass.redundant",
                 "regex.lint.dotstar.nested",
+                "regex.lint.flag.useless.D",
                 "regex.lint.flag.useless.m",
                 "regex.lint.quantifier.nested",
                 "regex.lint.redos"
@@ -1995,8 +2444,8 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "66865751b8a6d454040e4999a02dc58102c3a9cd",
-            "committed": "2026-11-02",
+            "sha": "9dee3bfc750a38a7baa67de4fc9e1f718ac0b353",
+            "committed": "2026-11-10",
             "findings": 23,
             "fail": 1,
             "warn": 22,
@@ -2022,8 +2471,8 @@
                 "pcre": "10.33",
                 "source": "composer.json require.php"
             },
-            "sha": "9a648760e4c2472c30281d02f9c7a6ffa840bfe7",
-            "committed": "2026-11-02",
+            "sha": "631a17f873fb915cb002f3baeaad2401532e5b59",
+            "committed": "2026-11-09",
             "findings": 8,
             "fail": 1,
             "warn": 7,
@@ -2068,8 +2517,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "c4a4f73e42aefc3749f3589aa84480a11cb2634f",
-            "committed": "2026-10-31",
+            "sha": "713997f03b6b948fceb08a3811b96cf307ce0bd8",
+            "committed": "2026-11-12",
             "findings": 1,
             "fail": 1,
             "warn": 0,
@@ -2095,6 +2544,29 @@
             "warn": 1,
             "rules": [
                 "regex.lint.charclass.duplicateChars",
+                "regex.lint.redos"
+            ]
+        },
+        {
+            "repo": "thephpleague/uri",
+            "owner": "thephpleague",
+            "slug": "thephpleague__uri",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "composer.json require.php"
+            },
+            "sha": "be89e2382e37acdef232259071ade5180821397b",
+            "committed": "2026-11-04",
+            "findings": 5,
+            "fail": 1,
+            "warn": 4,
+            "rules": [
+                "regex.lint.charclass.redundant",
+                "regex.lint.dotstar.nested",
+                "regex.lint.flag.useless.x",
+                "regex.lint.overlap.charset",
+                "regex.lint.quantifier.nested",
                 "regex.lint.redos"
             ]
         },
@@ -2153,9 +2625,9 @@
             },
             "sha": "aa3e3b2e092d918733555097b66f3e792079e96a",
             "committed": "2026-11-01",
-            "findings": 48,
+            "findings": 49,
             "fail": 1,
-            "warn": 47,
+            "warn": 48,
             "rules": [
                 "regex.lint.alternation.dotNewline",
                 "regex.lint.alternation.empty",
@@ -2180,8 +2652,8 @@
                 "pcre": "10.33",
                 "source": "composer.json require.php"
             },
-            "sha": "95489144a3ea3c282978e6155c3cbbf807f9dc9a",
-            "committed": "2026-10-30",
+            "sha": "d91d17eefc7e94a471da81b0523a63e1fdea1e1a",
+            "committed": "2026-11-13",
             "findings": 20,
             "fail": 1,
             "warn": 19,
@@ -2205,13 +2677,32 @@
                 "pcre": "10.33",
                 "source": "composer.json require.php"
             },
-            "sha": "7a0651503ced12390a269cd6795c733eb135cc5a",
-            "committed": "2026-10-27",
+            "sha": "609c96872dcc27cf6e798b2e8b53cf690d37a62e",
+            "committed": "2026-11-11",
             "findings": 1,
             "fail": 0,
             "warn": 1,
             "rules": [
                 "regex.lint.flag.useless.s"
+            ]
+        },
+        {
+            "repo": "Adyen/adyen-php-api-library",
+            "owner": "Adyen",
+            "slug": "Adyen__adyen-php-api-library",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "composer.json require.php"
+            },
+            "sha": "9a04b48b53572e3d3475d2af554e906b455fa27d",
+            "committed": "2026-11-13",
+            "findings": 1,
+            "fail": 0,
+            "warn": 1,
+            "rules": [
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.charclass.redundant"
             ]
         },
         {
@@ -2223,8 +2714,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "6f57c7e4c54de45f3edcadf1eefe5ade161e4d7d",
-            "committed": "2026-11-03",
+            "sha": "0d35012996a73fa3513e3f9996a159b028add1b6",
+            "committed": "2026-11-11",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -2252,6 +2743,42 @@
             ]
         },
         {
+            "repo": "anthropics/anthropic-sdk-php",
+            "owner": "anthropics",
+            "slug": "anthropics__anthropic-sdk-php",
+            "target": {
+                "php": "8.3",
+                "pcre": "10.42",
+                "source": "composer.json config.platform.php"
+            },
+            "sha": "67df24ec030b3d21a1b88edc057ba6d3e9593028",
+            "committed": "2026-11-10",
+            "findings": 1,
+            "fail": 0,
+            "warn": 1,
+            "rules": [
+                "regex.lint.anchor.alternationPrecedence"
+            ]
+        },
+        {
+            "repo": "apache/dubbo-php-framework",
+            "owner": "apache",
+            "slug": "apache__dubbo-php-framework",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "fallback: no require.php"
+            },
+            "sha": "1e3a5041f3b13983b8a65032c948e323d8d75b65",
+            "committed": "2020-08-10",
+            "findings": 1,
+            "fail": 0,
+            "warn": 1,
+            "rules": [
+                "regex.lint.alternation.empty"
+            ]
+        },
+        {
             "repo": "api-platform/core",
             "owner": "api-platform",
             "slug": "api-platform__core",
@@ -2260,8 +2787,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "01d1f0123e8de75961fa60ed06b5103bcb5db597",
-            "committed": "2026-11-03",
+            "sha": "f37d6d101fb9a8c055748e51e90ada64dac73979",
+            "committed": "2026-11-10",
             "findings": 3,
             "fail": 0,
             "warn": 3,
@@ -2280,8 +2807,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "660094324f0abfbe27ae250d065510cab1de8ca4",
-            "committed": "2026-11-03",
+            "sha": "58c9b2afa4adba4c2210e145dfe044bb73a1e0e7",
+            "committed": "2026-11-13",
             "findings": 2,
             "fail": 0,
             "warn": 2,
@@ -2317,14 +2844,34 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "f193f4613c7d7fbcee2c05e4daff4061d49c040e",
-            "committed": "2026-06-10",
-            "findings": 3,
+            "sha": "ce7c21d7e29c52b448a75f7704f61363eea89baa",
+            "committed": "2026-11-05",
+            "findings": 4,
             "fail": 0,
-            "warn": 3,
+            "warn": 4,
             "rules": [
                 "regex.lint.flag.useless.m",
-                "regex.lint.flag.useless.s"
+                "regex.lint.flag.useless.s",
+                "regex.lint.overlap.charset",
+                "regex.lint.quantifier.nested"
+            ]
+        },
+        {
+            "repo": "bobthecow/mustache.php",
+            "owner": "bobthecow",
+            "slug": "bobthecow__mustache~php",
+            "target": {
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
+            },
+            "sha": "c33d74b6dc5b83b6cecd23583b4085d1f4e25332",
+            "committed": "2026-07-28",
+            "findings": 1,
+            "fail": 0,
+            "warn": 1,
+            "rules": [
+                "regex.lint.charclass.duplicateChars"
             ]
         },
         {
@@ -2338,13 +2885,14 @@
             },
             "sha": "64b18aa0d5f8bc14087b030f0f92cd76892f8dc3",
             "committed": "2026-10-25",
-            "findings": 10,
+            "findings": 11,
             "fail": 0,
-            "warn": 10,
+            "warn": 11,
             "rules": [
                 "regex.lint.charclass.duplicateChars",
                 "regex.lint.group.redundant",
-                "regex.lint.quantifier.concatenation"
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.quantifier.emptyRepeat"
             ]
         },
         {
@@ -2356,8 +2904,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "fb466ce155996b5c33c22acc2e84c3a9c6713ed5",
-            "committed": "2026-10-26",
+            "sha": "19ed188f259079fe64d47b445c6c519779f3294a",
+            "committed": "2026-11-04",
             "findings": 4,
             "fail": 0,
             "warn": 4,
@@ -2374,8 +2922,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "248aac66210badb336cbfb84692105c29cd3c0de",
-            "committed": "2026-10-29",
+            "sha": "c29dfc80df23375585a0d3ce4af9e888da28b9df",
+            "committed": "2026-11-09",
             "findings": 3,
             "fail": 0,
             "warn": 3,
@@ -2393,8 +2941,8 @@
                 "pcre": "10.35",
                 "source": "composer.json require.php"
             },
-            "sha": "372b40c1925abec17977717b862cb7d37bdfd1f5",
-            "committed": "2026-03-25",
+            "sha": "b321c1cb28dc90f4f66eca3ed1d1cd0f9ef6e703",
+            "committed": "2026-11-12",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -2411,8 +2959,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "0aeffe96b86f9f837bfac706f65d6cd4fce92da9",
-            "committed": "2026-11-03",
+            "sha": "dde1e12f75b779d8a1b396d5e17e6ae6ab50396e",
+            "committed": "2026-11-04",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -2460,6 +3008,24 @@
             ]
         },
         {
+            "repo": "composer/satis",
+            "owner": "composer",
+            "slug": "composer__satis",
+            "target": {
+                "php": "8.4",
+                "pcre": "10.49",
+                "source": "composer.json require.php"
+            },
+            "sha": "1f64fd5ce05bc35e9a7c04d7d476c01d49871137",
+            "committed": "2026-11-12",
+            "findings": 1,
+            "fail": 0,
+            "warn": 1,
+            "rules": [
+                "regex.lint.flag.useless.i"
+            ]
+        },
+        {
             "repo": "CuyZ/Valinor",
             "owner": "CuyZ",
             "slug": "CuyZ__Valinor",
@@ -2468,8 +3034,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "b06c3145cc547e3e5f972e4462c275b14b38371d",
-            "committed": "2026-11-03",
+            "sha": "6e89ca1afaa8543619fd9512e4665722f225fb38",
+            "committed": "2026-11-12",
             "findings": 2,
             "fail": 0,
             "warn": 2,
@@ -2505,8 +3071,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "094a0195b0567167a7b49c6eadbd88e40f82d58c",
-            "committed": "2026-11-03",
+            "sha": "b2815456989aa41964ee66d7ab47b7885264acf3",
+            "committed": "2026-11-10",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -2516,25 +3082,21 @@
             ]
         },
         {
-            "repo": "dompdf/dompdf",
-            "owner": "dompdf",
-            "slug": "dompdf__dompdf",
+            "repo": "doctrine/inflector",
+            "owner": "doctrine",
+            "slug": "doctrine__inflector",
             "target": {
                 "php": "7.3",
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "c41f2f4871f130386118575564f95cd12a7c6aae",
-            "committed": "2026-10-02",
-            "findings": 7,
+            "sha": "1222eb5b557ae4eadd75b83ee62fc219d6187f03",
+            "committed": "2026-11-08",
+            "findings": 1,
             "fail": 0,
-            "warn": 7,
+            "warn": 1,
             "rules": [
-                "regex.lint.anchor.alternationPrecedence",
-                "regex.lint.charclass.duplicateChars",
-                "regex.lint.flag.useless.i",
-                "regex.lint.flag.useless.x",
-                "regex.lint.group.quantifiedCapture"
+                "regex.lint.charclass.redundant"
             ]
         },
         {
@@ -2546,13 +3108,16 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "a47966c36451e4392eb14df0a62bd5333f52ef63",
-            "committed": "2026-11-03",
-            "findings": 1,
+            "sha": "9c2981d733b3f4d464be21cd5c4d344193b9a322",
+            "committed": "2026-11-13",
+            "findings": 7,
             "fail": 0,
-            "warn": 1,
+            "warn": 7,
             "rules": [
-                "regex.lint.charclass.literalMetachar"
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.charclass.literalMetachar",
+                "regex.lint.flag.useless.m",
+                "regex.lint.quantifier.concatenation"
             ]
         },
         {
@@ -2592,6 +3157,25 @@
             ]
         },
         {
+            "repo": "elastic/apm-agent-php",
+            "owner": "elastic",
+            "slug": "elastic__apm-agent-php",
+            "target": {
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
+            },
+            "sha": "b822ba03083620d100e5849433a00678e6393e0e",
+            "committed": "2026-11-05",
+            "findings": 7,
+            "fail": 0,
+            "warn": 7,
+            "rules": [
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.flag.useless.m"
+            ]
+        },
+        {
             "repo": "erusev/parsedown",
             "owner": "erusev",
             "slug": "erusev__parsedown",
@@ -2620,8 +3204,8 @@
                 "pcre": "10.42",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "23f49d926eb84610cff724acd16862d3b764adaa",
-            "committed": "2026-11-03",
+            "sha": "a694c6f0d51902bd901f7687e4ce3c84c6c949b4",
+            "committed": "2026-11-12",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -2643,9 +3227,9 @@
             },
             "sha": "3892cfbcc2112576689539b55526c0a01af6d244",
             "committed": "2022-03-24",
-            "findings": 52,
+            "findings": 53,
             "fail": 0,
-            "warn": 52,
+            "warn": 53,
             "rules": [
                 "regex.lint.charclass.redundant",
                 "regex.lint.flag.useless.i",
@@ -2699,31 +3283,13 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "08bdd2b6a4b04d35a0dc0fc502c12faad740f18e",
-            "committed": "2026-10-26",
-            "findings": 1,
+            "sha": "4a7c7b82544c5afe5d36b87807c15ce277190495",
+            "committed": "2026-11-10",
+            "findings": 2,
             "fail": 0,
-            "warn": 1,
+            "warn": 2,
             "rules": [
                 "regex.lint.flag.useless.s"
-            ]
-        },
-        {
-            "repo": "facebook/facebook-for-woocommerce",
-            "owner": "facebook",
-            "slug": "facebook__facebook-for-woocommerce",
-            "target": {
-                "php": "7.4",
-                "pcre": "10.33",
-                "source": "composer.json config.platform.php"
-            },
-            "sha": "f3ac31b0234792276cbb8db8193f6ec7a7523fe2",
-            "committed": "2026-11-03",
-            "findings": 1,
-            "fail": 0,
-            "warn": 1,
-            "rules": [
-                "regex.lint.charclass.literalMetachar"
             ]
         },
         {
@@ -2735,8 +3301,8 @@
                 "pcre": "10.35",
                 "source": "composer.json require.php"
             },
-            "sha": "138fdf82d1d9f38ac250ac040f32b5f2df9bf2eb",
-            "committed": "2026-09-18",
+            "sha": "55b89b1e010a2f945bb89252235f49993d852a26",
+            "committed": "2026-11-03",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -2766,6 +3332,24 @@
             ]
         },
         {
+            "repo": "facebookincubator/Facebook-Pixel-for-Wordpress",
+            "owner": "facebookincubator",
+            "slug": "facebookincubator__Facebook-Pixel-for-Wordpress",
+            "target": {
+                "php": "7.4",
+                "pcre": "10.33",
+                "source": "composer.json config.platform.php"
+            },
+            "sha": "400122b0aeed5f0ae42f3a2c3ecaaebbaf0945b4",
+            "committed": "2026-11-06",
+            "findings": 1,
+            "fail": 0,
+            "warn": 1,
+            "rules": [
+                "regex.lint.charclass.literalMetachar"
+            ]
+        },
+        {
             "repo": "FakerPHP/Faker",
             "owner": "FakerPHP",
             "slug": "FakerPHP__Faker",
@@ -2776,12 +3360,14 @@
             },
             "sha": "82f77b19dbbddda50317ffc36f8ea152cb0f50a0",
             "committed": "2026-02-04",
-            "findings": 4,
+            "findings": 6,
             "fail": 0,
-            "warn": 4,
+            "warn": 6,
             "rules": [
+                "regex.lint.charclass.redundant",
                 "regex.lint.compat.meaningChanges",
-                "regex.lint.flag.useless.s"
+                "regex.lint.flag.useless.s",
+                "regex.lint.quantifier.useless"
             ]
         },
         {
@@ -2793,8 +3379,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "6fefc9281cb879d88a6a3768ba422f7f5890b13a",
-            "committed": "2026-11-03",
+            "sha": "b4ffb120d8eb8a3941d35aa8867024310aac2f34",
+            "committed": "2026-11-13",
             "findings": 2,
             "fail": 0,
             "warn": 2,
@@ -2812,8 +3398,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "84e33631273138ac103d045dc02b0fb7e5485582",
-            "committed": "2026-11-04",
+            "sha": "d5480d53f10069dc4620a39f87e38e8945d47322",
+            "committed": "2026-11-10",
             "findings": 2,
             "fail": 0,
             "warn": 2,
@@ -2821,6 +3407,24 @@
                 "regex.lint.charclass.duplicateChars",
                 "regex.lint.flag.useless.i",
                 "regex.lint.quantifier.nested"
+            ]
+        },
+        {
+            "repo": "fruitcake/laravel-debugbar",
+            "owner": "fruitcake",
+            "slug": "fruitcake__laravel-debugbar",
+            "target": {
+                "php": "8.2",
+                "pcre": "10.40",
+                "source": "composer.json require.php"
+            },
+            "sha": "033b34a6448990decb74c8689f4c9be750ea0957",
+            "committed": "2026-10-28",
+            "findings": 1,
+            "fail": 0,
+            "warn": 1,
+            "rules": [
+                "regex.lint.dotstar.nested"
             ]
         },
         {
@@ -2832,11 +3436,11 @@
                 "pcre": "10.42",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "1866833093663f4805a7bea98d68cad92ade9148",
-            "committed": "2026-11-03",
-            "findings": 23,
+            "sha": "ae7dae8b4186cbffe469ff231d8cb606caffcbc1",
+            "committed": "2026-11-10",
+            "findings": 24,
             "fail": 0,
-            "warn": 23,
+            "warn": 24,
             "rules": [
                 "regex.lint.charclass.backrefAsOctal",
                 "regex.lint.charclass.redundant",
@@ -2846,7 +3450,45 @@
                 "regex.lint.flag.useless.s",
                 "regex.lint.group.alwaysEmptyCapture",
                 "regex.lint.quantifier.concatenation",
-                "regex.lint.quantifier.nested"
+                "regex.lint.quantifier.nested",
+                "regex.lint.quantifier.useless"
+            ]
+        },
+        {
+            "repo": "getsentry/sentry-laravel",
+            "owner": "getsentry",
+            "slug": "getsentry__sentry-laravel",
+            "target": {
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
+            },
+            "sha": "cf8f5ed70872a964d599b2caf43c163a07dc007b",
+            "committed": "2026-11-13",
+            "findings": 1,
+            "fail": 0,
+            "warn": 1,
+            "rules": [
+                "regex.lint.flag.useless.s"
+            ]
+        },
+        {
+            "repo": "giggsey/libphonenumber-for-php",
+            "owner": "giggsey",
+            "slug": "giggsey__libphonenumber-for-php",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "composer.json require.php"
+            },
+            "sha": "75a801c3dbf9a675e4bc83e0da2c2142fcc5344d",
+            "committed": "2026-11-06",
+            "findings": 2,
+            "fail": 0,
+            "warn": 2,
+            "rules": [
+                "regex.lint.compat.meaningChanges",
+                "regex.lint.flag.useless.i"
             ]
         },
         {
@@ -2858,8 +3500,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "10073bf3f672d23e60a5f558a1b714f83ada5a39",
-            "committed": "2026-11-03",
+            "sha": "70c659be001dbd714a35896f5976032a1469f6ff",
+            "committed": "2026-11-10",
             "findings": 6,
             "fail": 0,
             "warn": 6,
@@ -2898,8 +3540,8 @@
                 "pcre": "10.33",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "a187dfc9cc875959c9fe656406e2dcb6466605dd",
-            "committed": "2026-11-03",
+            "sha": "707f29a0bbf0b0537dfec67b8ac2f75e4cff0be1",
+            "committed": "2026-11-13",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -2908,24 +3550,6 @@
                 "regex.lint.flag.useless.s",
                 "regex.lint.group.redundant",
                 "regex.lint.quantifier.concatenation"
-            ]
-        },
-        {
-            "repo": "greenlion/php-sql-parser",
-            "owner": "greenlion",
-            "slug": "greenlion__php-sql-parser",
-            "target": {
-                "php": "7.3",
-                "pcre": "10.32",
-                "source": "composer.json require.php"
-            },
-            "sha": "06940325e48c24dd8fce0a80251210e28e436599",
-            "committed": "2026-09-21",
-            "findings": 1,
-            "fail": 0,
-            "warn": 1,
-            "rules": [
-                "regex.lint.quantifier.useless"
             ]
         },
         {
@@ -2956,13 +3580,33 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "20b25d1a7b8650738881e22166d9b4bcdac9a2cd",
-            "committed": "2026-11-02",
-            "findings": 3,
+            "sha": "885218d43ab2f8626d6e4ea8e5b58b4d04264467",
+            "committed": "2026-11-12",
+            "findings": 6,
             "fail": 0,
-            "warn": 3,
+            "warn": 6,
             "rules": [
-                "regex.lint.charclass.literalMetachar"
+                "regex.lint.charclass.literalMetachar",
+                "regex.lint.quantifier.concatenation"
+            ]
+        },
+        {
+            "repo": "HubSpot/hubspot-api-php",
+            "owner": "HubSpot",
+            "slug": "HubSpot__hubspot-api-php",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "composer.json require.php"
+            },
+            "sha": "bf2a661f3843ae86f4972a17202d369d971061f7",
+            "committed": "2026-10-30",
+            "findings": 61,
+            "fail": 0,
+            "warn": 61,
+            "rules": [
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.charclass.redundant"
             ]
         },
         {
@@ -2974,12 +3618,13 @@
                 "pcre": "10.44",
                 "source": "composer.json require.php"
             },
-            "sha": "f1aeed6606ca936825dddc6aacafbbf3e167de19",
-            "committed": "2026-11-03",
-            "findings": 2,
+            "sha": "767542c901cb8e1d80927d3f8c074693eb158a32",
+            "committed": "2026-11-13",
+            "findings": 3,
             "fail": 0,
-            "warn": 2,
+            "warn": 3,
             "rules": [
+                "regex.lint.anchor.alternationPrecedence",
                 "regex.lint.charclass.duplicateChars",
                 "regex.lint.quantifier.nested"
             ]
@@ -2993,8 +3638,8 @@
                 "pcre": "10.42",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "3ca3e072dbb578257c636e81b947fe050bc61c69",
-            "committed": "2026-11-02",
+            "sha": "733beaf77ab38c6552196bf0146a1ca7f3cb12e0",
+            "committed": "2026-11-13",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -3002,6 +3647,24 @@
                 "regex.lint.flag.useless.m",
                 "regex.lint.quantifier.concatenation",
                 "regex.lint.quantifier.lazyEnd"
+            ]
+        },
+        {
+            "repo": "Intervention/image",
+            "owner": "Intervention",
+            "slug": "Intervention__image",
+            "target": {
+                "php": "8.3",
+                "pcre": "10.42",
+                "source": "composer.json require.php"
+            },
+            "sha": "3a47838f2e0f4ec6c8c9b43a5d73ac985b975830",
+            "committed": "2026-10-30",
+            "findings": 5,
+            "fail": 0,
+            "warn": 5,
+            "rules": [
+                "regex.lint.group.redundant"
             ]
         },
         {
@@ -3013,8 +3676,8 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "35b0c055d2aada76f60bbcd3ab49794ac359da66",
-            "committed": "2026-10-27",
+            "sha": "f70c22cf67f5f0c5442170f7c36bd41b9a064196",
+            "committed": "2026-11-10",
             "findings": 4,
             "fail": 0,
             "warn": 4,
@@ -3052,8 +3715,8 @@
                 "pcre": "10.49",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "d95732408d49d88d497fb73936d711119fea0c0e",
-            "committed": "2026-11-01",
+            "sha": "96ebcd2d8fc255187ba25c2e54e772be9cf1e595",
+            "committed": "2026-11-13",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3066,12 +3729,12 @@
             "owner": "laminas",
             "slug": "laminas__laminas-filter",
             "target": {
-                "php": "8.2.99",
-                "pcre": "10.40",
+                "php": "8.3.99",
+                "pcre": "10.42",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "2a68a031310cebcba7dc114c10a91e98149eff93",
-            "committed": "2026-11-02",
+            "sha": "ff520fb3a87611da8ddccec5c2fd9ba83e94fa02",
+            "committed": "2026-11-10",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3088,8 +3751,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "0a72cb7c1d7427cc2c9187d7d23755fc66a385dc",
-            "committed": "2026-11-03",
+            "sha": "7379a05af02db89d980246101d7325325aaf64ff",
+            "committed": "2026-11-13",
             "findings": 2,
             "fail": 0,
             "warn": 2,
@@ -3125,8 +3788,8 @@
                 "pcre": "10.42",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "855ea2557ae59e74995756cefdb207a11da820b1",
-            "committed": "2026-10-14",
+            "sha": "1cf8e0320bed4b3c6e51df92039a5636c3887728",
+            "committed": "2026-11-11",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3144,8 +3807,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "d649ea63640598001e9183fdbcf4be425274f910",
-            "committed": "2026-10-14",
+            "sha": "e84c227ae83ffef9f8fc1059bb2b79f2b0cfc0ca",
+            "committed": "2026-11-09",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3162,8 +3825,8 @@
                 "pcre": "10.35",
                 "source": "composer.json require.php"
             },
-            "sha": "01b8cef4b5ddbec44761053f50bdea9deeaa52d0",
-            "committed": "2026-10-14",
+            "sha": "54d23bcd48eea289f48d1c61f4d0a202cf7b20f2",
+            "committed": "2026-11-12",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3180,15 +3843,17 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "822a4fa9b1e1123691133a2e2eb379a3dab11191",
-            "committed": "2026-10-21",
-            "findings": 6,
+            "sha": "e03c29c8181804cdafe9d5819b7ab5cc93adbf12",
+            "committed": "2026-11-04",
+            "findings": 8,
             "fail": 0,
-            "warn": 6,
+            "warn": 8,
             "rules": [
                 "regex.lint.flag.useless.m",
                 "regex.lint.flag.useless.s",
-                "regex.lint.flag.useless.x"
+                "regex.lint.flag.useless.x",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.quantifier.nested"
             ]
         },
         {
@@ -3216,12 +3881,12 @@
             "owner": "mautic",
             "slug": "mautic__mautic",
             "target": {
-                "php": "8.1",
-                "pcre": "10.39",
-                "source": "fallback: no require.php"
+                "php": "8.2",
+                "pcre": "10.40",
+                "source": "composer.json config.platform.php"
             },
-            "sha": "081314ff023c5c923cc4edeb7eed23bcc8aa4212",
-            "committed": "2026-11-03",
+            "sha": "6711577a1df4e46cadeb739415574b49c3345771",
+            "committed": "2026-11-13",
             "findings": 57,
             "fail": 0,
             "warn": 57,
@@ -3324,12 +3989,12 @@
             "owner": "modelcontextprotocol",
             "slug": "modelcontextprotocol__php-sdk",
             "target": {
-                "php": "8.1",
-                "pcre": "10.39",
+                "php": "8.2",
+                "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "18595ae406df21fa700625a94069f36a8800a963",
-            "committed": "2026-11-04",
+            "sha": "53efee528329f8baa879015915574ef331ddd2e1",
+            "committed": "2026-11-13",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -3376,11 +4041,13 @@
             },
             "sha": "daf9fa4ef675519386b4f556c9d5ab5f9c14055a",
             "committed": "2019-12-03",
-            "findings": 1,
+            "findings": 5,
             "fail": 0,
-            "warn": 1,
+            "warn": 5,
             "rules": [
                 "regex.lint.alternation.empty",
+                "regex.lint.charclass.redundant",
+                "regex.lint.charclass.suspiciousRange",
                 "regex.lint.quantifier.concatenation"
             ]
         },
@@ -3393,8 +4060,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "447372f62d90ac7bedfc0d7a60b98757d006107e",
-            "committed": "2026-11-02",
+            "sha": "e0a7d440012439fa91f8c7b5ef1377e05cb4e64f",
+            "committed": "2026-11-13",
             "findings": 4,
             "fail": 0,
             "warn": 4,
@@ -3413,8 +4080,8 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "7b055a8129673aec0fe33883e9618d3599c4d08e",
-            "committed": "2026-10-29",
+            "sha": "17c0416fa0e1bdf1f413e66a40db61359f5eadca",
+            "committed": "2026-11-10",
             "findings": 2,
             "fail": 0,
             "warn": 2,
@@ -3431,8 +4098,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "ed4e5b88dbe65907bf693be3396f534a3145f774",
-            "committed": "2026-10-29",
+            "sha": "9fcfa2e3f1c31d47e28889a0ee7481b9f1718935",
+            "committed": "2026-11-06",
             "findings": 2,
             "fail": 0,
             "warn": 2,
@@ -3450,8 +4117,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "7618b45a2998c86d85646f563a0c8ae6859806fc",
-            "committed": "2026-10-28",
+            "sha": "a1d7d757fdc1c42ba3f9f3795ecac957a2c45a22",
+            "committed": "2026-11-06",
             "findings": 3,
             "fail": 0,
             "warn": 3,
@@ -3480,25 +4147,6 @@
             ]
         },
         {
-            "repo": "nette/utils",
-            "owner": "nette",
-            "slug": "nette__utils",
-            "target": {
-                "php": "8.2",
-                "pcre": "10.40",
-                "source": "composer.json require.php"
-            },
-            "sha": "f888a19a41f53ce94f7a3202db734601a500d883",
-            "committed": "2026-10-27",
-            "findings": 4,
-            "fail": 0,
-            "warn": 4,
-            "rules": [
-                "regex.lint.alternation.empty",
-                "regex.lint.flag.useless.i"
-            ]
-        },
-        {
             "repo": "nextcloud/server",
             "owner": "nextcloud",
             "slug": "nextcloud__server",
@@ -3507,11 +4155,11 @@
                 "pcre": "10.42",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "c7d83959814e875d964618839ccea0afa97652a2",
-            "committed": "2026-11-03",
-            "findings": 14,
+            "sha": "04556a42112151ca21d2e3a81451b4b8787107cb",
+            "committed": "2026-11-13",
+            "findings": 18,
             "fail": 0,
-            "warn": 14,
+            "warn": 18,
             "rules": [
                 "regex.lint.alternation.dotNewline",
                 "regex.lint.charclass.redundant",
@@ -3533,8 +4181,8 @@
                 "pcre": "10.33",
                 "source": "composer.json require.php"
             },
-            "sha": "1ee86c89e58a23810602e78ca445784bb7b2ad3e",
-            "committed": "2026-10-27",
+            "sha": "679d41ede0ad4236c22dbb52155aaa1b159b4d5c",
+            "committed": "2026-11-05",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3551,8 +4199,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "84ded49447e3698fd2157ccbfba92af78ce0c81b",
-            "committed": "2026-09-17",
+            "sha": "9b85ae4d802403bfc004ea633ce542bc262ee5c3",
+            "committed": "2026-11-07",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3569,8 +4217,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "2cccb7a14ec152203dad43bf1520ed1b42a9cf11",
-            "committed": "2026-11-02",
+            "sha": "f6914ea283c3820476fde0b587f17ba2ef12840a",
+            "committed": "2026-11-12",
             "findings": 7,
             "fail": 0,
             "warn": 7,
@@ -3582,6 +4230,25 @@
             ]
         },
         {
+            "repo": "opis/json-schema",
+            "owner": "opis",
+            "slug": "opis__json-schema",
+            "target": {
+                "php": "7.4",
+                "pcre": "10.33",
+                "source": "composer.json require.php"
+            },
+            "sha": "b99e6ec2ebeb3ffb009fca781876b62db47bb841",
+            "committed": "2026-11-11",
+            "findings": 2,
+            "fail": 0,
+            "warn": 2,
+            "rules": [
+                "regex.lint.flag.useless.i",
+                "regex.lint.flag.useless.m"
+            ]
+        },
+        {
             "repo": "OskarStark/doctor-rst",
             "owner": "OskarStark",
             "slug": "OskarStark__doctor-rst",
@@ -3590,8 +4257,8 @@
                 "pcre": "10.44",
                 "source": "composer.json require.php"
             },
-            "sha": "10e158d1901fc86790552107a596fd3c825bcb4f",
-            "committed": "2026-11-03",
+            "sha": "5fc16819dd513c147d94befc656c503d5ddd0da2",
+            "committed": "2026-11-13",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3608,8 +4275,8 @@
                 "pcre": "10.42",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "e046ae8748eea36c6d41a114af7cbab2f16ad907",
-            "committed": "2026-11-03",
+            "sha": "fc4d532491157349c3b0814996a107131c4ae5e2",
+            "committed": "2026-11-13",
             "findings": 7,
             "fail": 0,
             "warn": 7,
@@ -3648,8 +4315,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7",
-            "committed": "2026-11-01",
+            "sha": "22fd1c62ea1b6362e85a2d26fd95177ced2cd610",
+            "committed": "2026-11-09",
             "findings": 38,
             "fail": 0,
             "warn": 38,
@@ -3663,6 +4330,31 @@
                 "regex.lint.overlap.charset",
                 "regex.lint.quantifier.concatenation",
                 "regex.lint.quantifier.nested"
+            ]
+        },
+        {
+            "repo": "PHP-CS-Fixer/PHP-CS-Fixer",
+            "owner": "PHP-CS-Fixer",
+            "slug": "PHP-CS-Fixer__PHP-CS-Fixer",
+            "target": {
+                "php": "7.4",
+                "pcre": "10.33",
+                "source": "composer.json require.php"
+            },
+            "sha": "d73772aac5a1482f5e9042ac703b06a586dcf0ee",
+            "committed": "2026-11-13",
+            "findings": 20,
+            "fail": 0,
+            "warn": 20,
+            "rules": [
+                "regex.lint.alternation.empty",
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.flag.override",
+                "regex.lint.flag.redundant",
+                "regex.lint.lookaround.impossible",
+                "regex.lint.quantifier.concatenation",
+                "regex.lint.quantifier.nested",
+                "regex.lint.quantifier.useless"
             ]
         },
         {
@@ -3693,8 +4385,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "c854ce29804c1b6fcd744ffa59a7113404bdcba2",
-            "committed": "2026-11-01",
+            "sha": "d4633d4189dca3ea30d804e5cdf620a47fe7d4cc",
+            "committed": "2026-11-10",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3721,32 +4413,57 @@
             ]
         },
         {
-            "repo": "phpbb/phpbb",
-            "owner": "phpbb",
-            "slug": "phpbb__phpbb",
+            "repo": "php/phd",
+            "owner": "php",
+            "slug": "php__phd",
             "target": {
                 "php": "8.1",
                 "pcre": "10.39",
-                "source": "fallback: no require.php"
+                "source": "composer.json require.php"
             },
-            "sha": "daf04eb49b61a77e4741dd6788dc04636661b4db",
-            "committed": "2026-11-03",
-            "findings": 49,
+            "sha": "e92ab3fe67568650e2af3345449e36a01df7079f",
+            "committed": "2026-11-05",
+            "findings": 2,
             "fail": 0,
-            "warn": 49,
+            "warn": 2,
             "rules": [
-                "regex.lint.charclass.duplicateChars",
-                "regex.lint.charclass.redundant",
-                "regex.lint.flag.useless.D",
-                "regex.lint.flag.useless.i",
-                "regex.lint.flag.useless.m",
-                "regex.lint.flag.useless.s",
-                "regex.lint.group.redundant",
-                "regex.lint.overlap.charset",
-                "regex.lint.quantifier.concatenation",
-                "regex.lint.quantifier.lazyEnd",
-                "regex.lint.quantifier.nested",
-                "regex.lint.quantifier.useless"
+                "regex.lint.quantifier.concatenation"
+            ]
+        },
+        {
+            "repo": "php/web-bugs",
+            "owner": "php",
+            "slug": "php__web-bugs",
+            "target": {
+                "php": "8.2",
+                "pcre": "10.40",
+                "source": "composer.json require.php"
+            },
+            "sha": "7e7c600ec07c4c2b258dc5800844ba78c0e237c6",
+            "committed": "2026-06-23",
+            "findings": 3,
+            "fail": 0,
+            "warn": 3,
+            "rules": [
+                "regex.lint.flag.useless.m"
+            ]
+        },
+        {
+            "repo": "php/web-php",
+            "owner": "php",
+            "slug": "php__web-php",
+            "target": {
+                "php": "8.4",
+                "pcre": "10.49",
+                "source": "composer.json config.platform.php"
+            },
+            "sha": "fe674bb99c3a7116a903633e4cd669d44cc1ffa2",
+            "committed": "2026-11-12",
+            "findings": 2,
+            "fail": 0,
+            "warn": 2,
+            "rules": [
+                "regex.lint.flag.useless.m"
             ]
         },
         {
@@ -3779,8 +4496,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "a0fd248812fd080338dc1227cf6efb1d1b05f07c",
-            "committed": "2026-10-28",
+            "sha": "9937b9fba0505bc29d8d8ef1f52488b3105e0bdb",
+            "committed": "2026-11-05",
             "findings": 2,
             "fail": 0,
             "warn": 2,
@@ -3790,22 +4507,21 @@
             ]
         },
         {
-            "repo": "PHPCSStandards/PHP_CodeSniffer",
-            "owner": "PHPCSStandards",
-            "slug": "PHPCSStandards__PHP_CodeSniffer",
+            "repo": "phpDocumentor/phpDocumentor",
+            "owner": "phpDocumentor",
+            "slug": "phpDocumentor__phpDocumentor",
             "target": {
-                "php": "7.3",
-                "pcre": "10.32",
-                "source": "composer.json require.php"
+                "php": "8.1.2",
+                "pcre": "10.39",
+                "source": "composer.json config.platform.php"
             },
-            "sha": "7f47350339831578dfab3eb288c12d18c1dfccfe",
-            "committed": "2026-08-22",
-            "findings": 2,
+            "sha": "42abeec22745ce21c8683cee0c52e24bc9a1dd1d",
+            "committed": "2026-11-02",
+            "findings": 1,
             "fail": 0,
-            "warn": 2,
+            "warn": 1,
             "rules": [
-                "regex.lint.charclass.redundant",
-                "regex.lint.quantifier.useless"
+                "regex.lint.charclass.redundant"
             ]
         },
         {
@@ -3854,8 +4570,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "a2b38e59301e298c9d55b4bb6affe325c73d4e6c",
-            "committed": "2026-11-03",
+            "sha": "d68dd1464f08f3cfe2b9f99602cd6c59049eb4a0",
+            "committed": "2026-11-07",
             "findings": 8,
             "fail": 0,
             "warn": 8,
@@ -3876,8 +4592,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "bc69f061235285e5112f644d8e709b0f5cba5dcc",
-            "committed": "2026-10-20",
+            "sha": "9fd3a1d6b608ab92f973bc6ada9212e501bf9282",
+            "committed": "2026-11-10",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3913,8 +4629,8 @@
                 "pcre": "10.40",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "6f240a8f64d0a4c62a02b0ef484568fe39017480",
-            "committed": "2026-11-03",
+            "sha": "f4aeb7801c2d8a811d13bcffdd8871ec41247a33",
+            "committed": "2026-11-13",
             "findings": 6,
             "fail": 0,
             "warn": 6,
@@ -3936,8 +4652,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "87fa9b88835ab0e2d5a44d741863a422b57a8dba",
-            "committed": "2026-10-10",
+            "sha": "74a781b6bcaf45cf47474516377e8b4f3d8c3b0b",
+            "committed": "2026-11-06",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3954,8 +4670,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "731bc2b12cccf40ca7e143f3cb60f9081fa43ba6",
-            "committed": "2026-10-26",
+            "sha": "63339365b9b0c9e3d99b16e8107fc9779c3e0d21",
+            "committed": "2026-11-09",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -3972,8 +4688,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "694f9b2336a4923f86ce7c69ad5ab480ff97728b",
-            "committed": "2026-11-02",
+            "sha": "fee2e02a2e52be34b7e64f3fe5c1f79a5a76edc6",
+            "committed": "2026-11-13",
             "findings": 7,
             "fail": 0,
             "warn": 7,
@@ -3993,13 +4709,14 @@
                 "pcre": "10.40",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "5e92535d4ee233e6b75baff632ae84b858137de9",
-            "committed": "2026-11-03",
-            "findings": 2,
+            "sha": "94519e24fb01caf54fa49b1735205e21bff703dc",
+            "committed": "2026-11-13",
+            "findings": 5,
             "fail": 0,
-            "warn": 2,
+            "warn": 5,
             "rules": [
                 "regex.lint.flag.useless.s",
+                "regex.lint.group.redundant",
                 "regex.lint.quantifier.useless"
             ]
         },
@@ -4022,6 +4739,26 @@
             ]
         },
         {
+            "repo": "ramsey/uuid",
+            "owner": "ramsey",
+            "slug": "ramsey__uuid",
+            "target": {
+                "php": "8.0",
+                "pcre": "10.35",
+                "source": "composer.json require.php"
+            },
+            "sha": "8945a1b01c9322b9d08cc854e03edc2d8158b6d5",
+            "committed": "2026-11-12",
+            "findings": 3,
+            "fail": 0,
+            "warn": 3,
+            "rules": [
+                "regex.lint.flag.useless.D",
+                "regex.lint.flag.useless.m",
+                "regex.lint.flag.useless.s"
+            ]
+        },
+        {
             "repo": "reactphp/http",
             "owner": "reactphp",
             "slug": "reactphp__http",
@@ -4030,11 +4767,11 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "bb151a7cdf9e7b49caac9030add52c6427ebc6d2",
-            "committed": "2026-09-09",
-            "findings": 2,
+            "sha": "a58e432c146ffb84e3aab4c16eb7d9d497bfbd02",
+            "committed": "2026-11-08",
+            "findings": 4,
             "fail": 0,
-            "warn": 2,
+            "warn": 4,
             "rules": [
                 "regex.lint.charclass.literalMetachar"
             ]
@@ -4048,8 +4785,8 @@
                 "pcre": "10.49",
                 "source": "composer.json require.php"
             },
-            "sha": "fb787a3bb06fb8f7d5c9021f8e7ce6c8906a5f16",
-            "committed": "2026-11-03",
+            "sha": "cc2f6644c42ea86163391b3576b96e58319ccc3a",
+            "committed": "2026-11-13",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -4077,30 +4814,6 @@
             "warn": 1,
             "rules": [
                 "regex.lint.alternation.empty"
-            ]
-        },
-        {
-            "repo": "roundcube/roundcubemail",
-            "owner": "roundcube",
-            "slug": "roundcube__roundcubemail",
-            "target": {
-                "php": "8.1",
-                "pcre": "10.39",
-                "source": "composer.json require.php"
-            },
-            "sha": "e46005c613dd67420594c40c3ae98ee9cf872283",
-            "committed": "2026-10-25",
-            "findings": 39,
-            "fail": 0,
-            "warn": 39,
-            "rules": [
-                "regex.lint.charclass.duplicateChars",
-                "regex.lint.charclass.redundant",
-                "regex.lint.flag.useless.i",
-                "regex.lint.flag.useless.m",
-                "regex.lint.flag.useless.s",
-                "regex.lint.overlap.charset",
-                "regex.lint.quantifier.concatenation"
             ]
         },
         {
@@ -4138,6 +4851,25 @@
             "warn": 4,
             "rules": [
                 "regex.lint.group.redundant"
+            ]
+        },
+        {
+            "repo": "salesforce/handlebars-php",
+            "owner": "salesforce",
+            "slug": "salesforce__handlebars-php",
+            "target": {
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
+            },
+            "sha": "0dd1690a5c1fdb785f5d77e4010a240f9eb9d7d7",
+            "committed": "2026-06-02",
+            "findings": 1,
+            "fail": 0,
+            "warn": 1,
+            "rules": [
+                "regex.lint.charclass.duplicateChars",
+                "regex.lint.flag.useless.i"
             ]
         },
         {
@@ -4225,8 +4957,8 @@
                 "pcre": "10.33",
                 "source": "composer.json require.php"
             },
-            "sha": "50b8fb122b8d88021ca5172708519e887c3d331e",
-            "committed": "2026-10-31",
+            "sha": "b22d8b1b4d76c83e7af2b31f45961b60f8894343",
+            "committed": "2026-11-05",
             "findings": 4,
             "fail": 0,
             "warn": 4,
@@ -4244,8 +4976,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "ed16847b9f0abce290865fcd5020b32aaf339d07",
-            "committed": "2026-10-10",
+            "sha": "c9bf7943743415a377f9278c022eeffcc66fa2c0",
+            "committed": "2026-11-08",
             "findings": 7,
             "fail": 0,
             "warn": 7,
@@ -4268,9 +5000,9 @@
             },
             "sha": "98416dd8eadd3b966f41430b841d3e4dd6eadc6f",
             "committed": "2025-06-08",
-            "findings": 55,
+            "findings": 60,
             "fail": 0,
-            "warn": 55,
+            "warn": 60,
             "rules": [
                 "regex.lint.flag.useless.i",
                 "regex.lint.flag.useless.s",
@@ -4282,37 +5014,17 @@
             "owner": "spiral",
             "slug": "spiral__framework",
             "target": {
-                "php": "8.1",
-                "pcre": "10.39",
+                "php": "8.2",
+                "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "f8082a261fadc86d39761ac8f32428ff07dca306",
-            "committed": "2026-10-30",
+            "sha": "f1fb63cbe7c3318e995a3d865cdd37640f7f63b1",
+            "committed": "2026-11-09",
             "findings": 1,
             "fail": 0,
             "warn": 1,
             "rules": [
                 "regex.lint.flag.useless.s"
-            ]
-        },
-        {
-            "repo": "squizlabs/PHP_CodeSniffer",
-            "owner": "squizlabs",
-            "slug": "squizlabs__PHP_CodeSniffer",
-            "target": {
-                "php": "7.3",
-                "pcre": "10.32",
-                "source": "composer.json require.php"
-            },
-            "sha": "c6c65ca0dc8608ba87631523b97b2f8d5351a854",
-            "committed": "2023-12-06",
-            "findings": 4,
-            "fail": 0,
-            "warn": 4,
-            "rules": [
-                "regex.lint.charclass.redundant",
-                "regex.lint.charclass.suspiciousRange",
-                "regex.lint.quantifier.useless"
             ]
         },
         {
@@ -4324,8 +5036,8 @@
                 "pcre": "10.33",
                 "source": "composer.json require.php"
             },
-            "sha": "4abcfdc972796cce45764b2690b6269fc3e8d808",
-            "committed": "2026-10-31",
+            "sha": "685070e71e7e459bc14b335d9b393ba17febca7b",
+            "committed": "2026-11-13",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -4342,8 +5054,8 @@
                 "pcre": "10.39",
                 "source": "fallback: no require.php"
             },
-            "sha": "e4e58fd8282332a2edee532a7459ac94702333f2",
-            "committed": "2026-11-03",
+            "sha": "6da51d8e7850f8eba4f6f4bae012e19c610a1744",
+            "committed": "2026-11-13",
             "findings": 16,
             "fail": 0,
             "warn": 16,
@@ -4383,13 +5095,31 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "5ad0bbda2f88bc04ed509b387abfe8339a309def",
-            "committed": "2026-10-30",
+            "sha": "f48ba50d374c7d2cc8e95d318ecb077421dd086b",
+            "committed": "2026-11-12",
             "findings": 1,
             "fail": 0,
             "warn": 1,
             "rules": [
                 "regex.lint.quantifier.concatenation"
+            ]
+        },
+        {
+            "repo": "symfony/ai",
+            "owner": "symfony",
+            "slug": "symfony__ai",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "fallback: no require.php"
+            },
+            "sha": "39d82a3f5095e6ef6ff7d4ac59d6bb997303bd43",
+            "committed": "2026-11-12",
+            "findings": 1,
+            "fail": 0,
+            "warn": 1,
+            "rules": [
+                "regex.lint.alternation.overlap"
             ]
         },
         {
@@ -4411,25 +5141,6 @@
             ]
         },
         {
-            "repo": "symfony/mime",
-            "owner": "symfony",
-            "slug": "symfony__mime",
-            "target": {
-                "php": "8.4.1",
-                "pcre": "10.49",
-                "source": "composer.json require.php"
-            },
-            "sha": "d95cfe40c424e6b6ca1e72666950eea249ddfa18",
-            "committed": "2026-10-28",
-            "findings": 1,
-            "fail": 0,
-            "warn": 1,
-            "rules": [
-                "regex.lint.overlap.charset",
-                "regex.lint.quantifier.nested"
-            ]
-        },
-        {
             "repo": "symfony/polyfill",
             "owner": "symfony",
             "slug": "symfony__polyfill",
@@ -4440,29 +5151,12 @@
             },
             "sha": "c999eaf54db0e673e7624d2edd8666c75b4dc1bf",
             "committed": "2026-10-28",
-            "findings": 4,
+            "findings": 5,
             "fail": 0,
-            "warn": 4,
+            "warn": 5,
             "rules": [
-                "regex.lint.flag.useless.s"
-            ]
-        },
-        {
-            "repo": "symfony/polyfill-mbstring",
-            "owner": "symfony",
-            "slug": "symfony__polyfill-mbstring",
-            "target": {
-                "php": "7.3",
-                "pcre": "10.32",
-                "source": "composer.json require.php"
-            },
-            "sha": "122889ed24dc000165bcbfd77ec412f15cbdfc6a",
-            "committed": "2026-10-28",
-            "findings": 1,
-            "fail": 0,
-            "warn": 1,
-            "rules": [
-                "regex.lint.flag.useless.s"
+                "regex.lint.flag.useless.s",
+                "regex.lint.quantifier.useless"
             ]
         },
         {
@@ -4494,8 +5188,8 @@
                 "pcre": "10.44",
                 "source": "composer.json require.php"
             },
-            "sha": "e16e5a4844f0371d61c077008155dd1cc222baf2",
-            "committed": "2026-10-31",
+            "sha": "54b2aa8a9bf4d3cc9b555945f333da0ff4b263ee",
+            "committed": "2026-11-06",
             "findings": 4,
             "fail": 0,
             "warn": 4,
@@ -4504,6 +5198,24 @@
                 "regex.lint.charclass.duplicateChars",
                 "regex.lint.charclass.redundant",
                 "regex.lint.quantifier.nested"
+            ]
+        },
+        {
+            "repo": "Tencent/Biny",
+            "owner": "Tencent",
+            "slug": "Tencent__Biny",
+            "target": {
+                "php": "8.1",
+                "pcre": "10.39",
+                "source": "composer.json require.php"
+            },
+            "sha": "f3de12d5def7d4212cd1921c015a8e9b2d14e2c9",
+            "committed": "2026-08-24",
+            "findings": 4,
+            "fail": 0,
+            "warn": 4,
+            "rules": [
+                "regex.lint.charclass.duplicateChars"
             ]
         },
         {
@@ -4517,9 +5229,9 @@
             },
             "sha": "b713b2297432086d16bf4174ca4e2baa1559dfc0",
             "committed": "2026-10-24",
-            "findings": 8,
+            "findings": 47,
             "fail": 0,
-            "warn": 8,
+            "warn": 47,
             "rules": [
                 "regex.lint.charclass.duplicateChars",
                 "regex.lint.flag.useless.m",
@@ -4554,8 +5266,8 @@
                 "pcre": "10.35",
                 "source": "composer.json require.php"
             },
-            "sha": "1e748897e0a8e897b5a8bc8942e05f4f57fa248c",
-            "committed": "2026-10-03",
+            "sha": "189e3dc2b7ca6de6f4eb93f74a8cb1a4dad78a23",
+            "committed": "2026-11-07",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -4582,6 +5294,24 @@
                 "regex.lint.flag.useless.i",
                 "regex.lint.quantifier.concatenation",
                 "regex.lint.quantifier.useless"
+            ]
+        },
+        {
+            "repo": "thephpleague/html-to-markdown",
+            "owner": "thephpleague",
+            "slug": "thephpleague__html-to-markdown",
+            "target": {
+                "php": "7.3",
+                "pcre": "10.32",
+                "source": "composer.json require.php"
+            },
+            "sha": "4ed9b2258a481d690152c180e97a90738a216c6d",
+            "committed": "2026-10-20",
+            "findings": 1,
+            "fail": 0,
+            "warn": 1,
+            "rules": [
+                "regex.lint.anchor.alternationPrecedence"
             ]
         },
         {
@@ -4640,6 +5370,24 @@
             ]
         },
         {
+            "repo": "troelskn/phpweaver",
+            "owner": "troelskn",
+            "slug": "troelskn__phpweaver",
+            "target": {
+                "php": "7.4",
+                "pcre": "10.33",
+                "source": "composer.json require.php"
+            },
+            "sha": "cd5566b58774d5e37a30a3e33a4c89d2d6a8d7e5",
+            "committed": "2026-01-28",
+            "findings": 3,
+            "fail": 0,
+            "warn": 3,
+            "rules": [
+                "regex.lint.flag.useless.s"
+            ]
+        },
+        {
             "repo": "twigstan/twigstan",
             "owner": "twigstan",
             "slug": "twigstan__twigstan",
@@ -4648,8 +5396,8 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "ec485cf8d41f9c031469e45ba67f4c5505e794fb",
-            "committed": "2026-11-03",
+            "sha": "49be00a86130bb0db7d603324d65f4edb7fdadb7",
+            "committed": "2026-11-11",
             "findings": 1,
             "fail": 0,
             "warn": 1,
@@ -4668,11 +5416,12 @@
             },
             "sha": "cf322cf231a990b7e178deb86974702aa3891f59",
             "committed": "2026-10-08",
-            "findings": 3,
+            "findings": 4,
             "fail": 0,
-            "warn": 3,
+            "warn": 4,
             "rules": [
-                "regex.lint.flag.useless.s"
+                "regex.lint.flag.useless.s",
+                "regex.lint.quantifier.nested"
             ]
         },
         {
@@ -4702,8 +5451,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "7fd0ba5171ccf26ec60cca7ca9de492992dd0bcb",
-            "committed": "2026-10-12",
+            "sha": "d94ffe1778984f56e4870cc1898f12b372cf1ae2",
+            "committed": "2026-11-09",
             "findings": 6,
             "fail": 0,
             "warn": 6,
@@ -4742,8 +5491,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "98893672138343022734f4dbe52e2639f44bdcd7",
-            "committed": "2026-10-04",
+            "sha": "df4996a76bd1b935f0d85b2cfc6889bf93f691b0",
+            "committed": "2026-11-07",
             "findings": 3,
             "fail": 0,
             "warn": 3,
@@ -4762,8 +5511,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "a48104e2b3f436b6c084498f3f7addf0ff039aad",
-            "committed": "2026-10-12",
+            "sha": "55d9fcea4b673499c0941ea8deeef52251a8ad1c",
+            "committed": "2026-11-07",
             "findings": 20,
             "fail": 0,
             "warn": 20,
@@ -4780,8 +5529,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "806ef2151315d09f3bd02470e51e0bfef5de9b0f",
-            "committed": "2026-10-24",
+            "sha": "4c817dec82c9ea223879b019600db58f62199abc",
+            "committed": "2026-11-13",
             "findings": 3,
             "fail": 0,
             "warn": 3,
@@ -4807,6 +5556,24 @@
             "warn": 1,
             "rules": [
                 "regex.lint.quantifier.useless"
+            ]
+        },
+        {
+            "repo": "webonyx/graphql-php",
+            "owner": "webonyx",
+            "slug": "webonyx__graphql-php",
+            "target": {
+                "php": "7.4",
+                "pcre": "10.33",
+                "source": "composer.json require.php"
+            },
+            "sha": "b6f4a4cfa3c20426b05ba35155bd45e9b2a6714c",
+            "committed": "2026-11-09",
+            "findings": 2,
+            "fail": 0,
+            "warn": 2,
+            "rules": [
+                "regex.lint.flag.useless.i"
             ]
         },
         {
@@ -4861,9 +5628,9 @@
             },
             "sha": "a54df210589c814c6c4f1d2d9f2de9ab79abd5eb",
             "committed": "2025-11-28",
-            "findings": 4,
+            "findings": 8,
             "fail": 0,
-            "warn": 4,
+            "warn": 8,
             "rules": [
                 "regex.lint.charclass.redundant",
                 "regex.lint.flag.useless.i",
@@ -4879,12 +5646,13 @@
                 "pcre": "10.39",
                 "source": "fallback: no require.php"
             },
-            "sha": "7851b300325993c55a208aae89be088b8e3c62ad",
-            "committed": "2026-11-03",
-            "findings": 58,
+            "sha": "6f87b58f35eb6fb29cb910f565f866905d32c73f",
+            "committed": "2026-11-13",
+            "findings": 60,
             "fail": 0,
-            "warn": 58,
+            "warn": 60,
             "rules": [
+                "regex.lint.alternation.duplicateDisjunction",
                 "regex.lint.charclass.redundant",
                 "regex.lint.charclass.suspiciousRange",
                 "regex.lint.dotstar.nested",
@@ -4896,6 +5664,7 @@
                 "regex.lint.group.redundant",
                 "regex.lint.quantifier.concatenation",
                 "regex.lint.quantifier.lazyEnd",
+                "regex.lint.quantifier.nested",
                 "regex.lint.quantifier.useless"
             ]
         },
@@ -4908,8 +5677,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "47ebdf13b0ea49e6b657d797b9779fb62c46da5e",
-            "committed": "2026-11-03",
+            "sha": "132bab229cdabdfb8036997b29f14d154e0fa385",
+            "committed": "2026-11-04",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -4926,8 +5695,8 @@
                 "pcre": "10.33",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "2c1dcf5939fd1980d18a45ca199f2575c8293847",
-            "committed": "2026-11-02",
+            "sha": "dde860ac5583805cdb5d5d93f82661753a5b0a04",
+            "committed": "2026-11-11",
             "findings": 6,
             "fail": 0,
             "warn": 6,
@@ -4949,13 +5718,32 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "21a8a6ff886f6ab19c065655f84f5a9ac4f86266",
-            "committed": "2026-10-27",
-            "findings": 1,
+            "sha": "19fe2c11fd257856bc8042bf056eab2525fdb34e",
+            "committed": "2026-11-09",
+            "findings": 3,
             "fail": 0,
-            "warn": 1,
+            "warn": 3,
             "rules": [
+                "regex.lint.anchor.alternationPrecedence",
                 "regex.lint.quantifier.concatenation"
+            ]
+        },
+        {
+            "repo": "zendesk/zendesk_api_client_php",
+            "owner": "zendesk",
+            "slug": "zendesk__zendesk_api_client_php",
+            "target": {
+                "php": "8.2",
+                "pcre": "10.40",
+                "source": "composer.json require.php"
+            },
+            "sha": "707e238eb5e1fdf32195f5df050c022c57e563b9",
+            "committed": "2026-09-15",
+            "findings": 2,
+            "fail": 0,
+            "warn": 2,
+            "rules": [
+                "regex.lint.anchor.alternationPrecedence"
             ]
         },
         {
@@ -4967,8 +5755,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "ffa5dfe95e7c9d67dafdeb501e9abc758f3e2af3",
-            "committed": "2026-11-03",
+            "sha": "f49fe83f201ab20c262be3ea0fff59036fab1a5c",
+            "committed": "2026-11-13",
             "findings": 1,
             "fail": 0,
             "warn": 1,

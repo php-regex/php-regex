@@ -1,6 +1,6 @@
 {
     "repo": "Sylius/Sylius",
-    "sha": "5ad0bbda2f88bc04ed509b387abfe8339a309def",
+    "sha": "f48ba50d374c7d2cc8e95d318ecb077421dd086b",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Sylius/Sylius/blob/5ad0bbda2f88bc04ed509b387abfe8339a309def/src/Sylius/Behat/Service/Checker/EmailChecker.php#L44-L50",
+            "permalink": "https://github.com/Sylius/Sylius/blob/f48ba50d374c7d2cc8e95d318ecb077421dd086b/src/Sylius/Behat/Service/Checker/EmailChecker.php#L44-L50",
             "snippet": [
                 {
                     "number": 44,

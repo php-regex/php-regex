@@ -1,6 +1,6 @@
 {
     "repo": "phan/phan",
-    "sha": "ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7",
+    "sha": "22fd1c62ea1b6362e85a2d26fd95177ced2cd610",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/.phan/plugins/WhitespacePlugin.php#L46-L52",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/.phan/plugins/WhitespacePlugin.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -175,7 +175,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/internal/emit_signature_map_for_php_version.php#L27-L33",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/internal/emit_signature_map_for_php_version.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,
@@ -331,7 +331,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/internal/lib/IncompatibleRealStubsSignatureDetector.php#L372-L378",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/internal/lib/IncompatibleRealStubsSignatureDetector.php#L372-L378",
             "snippet": [
                 {
                     "number": 372,
@@ -527,7 +527,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/internal/lib/IncompatibleStubsSignatureDetector.php#L354-L360",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/internal/lib/IncompatibleStubsSignatureDetector.php#L354-L360",
             "snippet": [
                 {
                     "number": 354,
@@ -723,7 +723,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/internal/lib/IncompatibleXMLSignatureDetector.php#L778-L784",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/internal/lib/IncompatibleXMLSignatureDetector.php#L778-L784",
             "snippet": [
                 {
                     "number": 778,
@@ -855,7 +855,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/internal/lib/IncompatibleXMLSignatureDetector.php#L802-L808",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/internal/lib/IncompatibleXMLSignatureDetector.php#L802-L808",
             "snippet": [
                 {
                     "number": 802,
@@ -987,7 +987,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/internal/lib/IncompatibleXMLSignatureDetector.php#L985-L991",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/internal/lib/IncompatibleXMLSignatureDetector.php#L985-L991",
             "snippet": [
                 {
                     "number": 985,
@@ -1119,7 +1119,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/internal/lib/IncompatibleXMLSignatureDetector.php#L1039-L1045",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/internal/lib/IncompatibleXMLSignatureDetector.php#L1039-L1045",
             "snippet": [
                 {
                     "number": 1039,
@@ -1266,7 +1266,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -1286,6 +1293,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -1302,7 +1316,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/BlockAnalysisVisitor.php#L544-L550",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/BlockAnalysisVisitor.php#L544-L550",
             "snippet": [
                 {
                     "number": 544,
@@ -1417,7 +1431,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -1437,6 +1458,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -1453,7 +1481,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L137-L143",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -1568,7 +1596,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -1588,6 +1623,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -1604,7 +1646,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L141-L147",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L141-L147",
             "snippet": [
                 {
                     "number": 141,
@@ -1719,7 +1761,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -1739,6 +1788,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -1755,7 +1811,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L248-L254",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L248-L254",
             "snippet": [
                 {
                     "number": 248,
@@ -1870,7 +1926,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -1890,6 +1953,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -1906,7 +1976,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L250-L256",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L250-L256",
             "snippet": [
                 {
                     "number": 250,
@@ -2001,7 +2071,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L303-L309",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L303-L309",
             "snippet": [
                 {
                     "number": 303,
@@ -2224,7 +2294,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -2244,6 +2321,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -2260,7 +2344,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L305-L311",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L305-L311",
             "snippet": [
                 {
                     "number": 305,
@@ -2375,7 +2459,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -2395,6 +2486,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -2411,7 +2509,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L306-L312",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L306-L312",
             "snippet": [
                 {
                     "number": 306,
@@ -2506,7 +2604,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L462-L468",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L462-L468",
             "snippet": [
                 {
                     "number": 462,
@@ -2653,7 +2751,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L546-L552",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L546-L552",
             "snippet": [
                 {
                     "number": 546,
@@ -3300,7 +3398,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -3320,6 +3425,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -3336,7 +3448,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L744-L750",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L744-L750",
             "snippet": [
                 {
                     "number": 744,
@@ -3451,7 +3563,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -3471,6 +3590,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -3487,7 +3613,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L945-L951",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L945-L951",
             "snippet": [
                 {
                     "number": 945,
@@ -3602,14 +3728,21 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"\\\\\\\\?Closure\" and \"callable\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\\\?Closure\" and \"callable\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -3629,6 +3762,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -3645,7 +3785,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L1469-L1475",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L1469-L1475",
             "snippet": [
                 {
                     "number": 1469,
@@ -3761,7 +3901,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L1496-L1502",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L1496-L1502",
             "snippet": [
                 {
                     "number": 1496,
@@ -3877,7 +4017,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L1523-L1529",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L1523-L1529",
             "snippet": [
                 {
                     "number": 1523,
@@ -3993,7 +4133,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L1548-L1554",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L1548-L1554",
             "snippet": [
                 {
                     "number": 1548,
@@ -4108,7 +4248,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -4128,6 +4275,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -4144,7 +4298,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L1607-L1613",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L1607-L1613",
             "snippet": [
                 {
                     "number": 1607,
@@ -4259,7 +4413,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -4276,6 +4437,13 @@
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '_' (duplicate)",
                     "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
                 {
                     "level": "warn",
@@ -4302,7 +4470,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L1677-L1683",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L1677-L1683",
             "snippet": [
                 {
                     "number": 1677,
@@ -4417,7 +4585,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -4437,6 +4612,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -4453,7 +4635,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L1814-L1820",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L1814-L1820",
             "snippet": [
                 {
                     "number": 1814,
@@ -4569,7 +4751,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Element/Comment/Builder.php#L1878-L1884",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Element/Comment/Builder.php#L1878-L1884",
             "snippet": [
                 {
                     "number": 1878,
@@ -4664,7 +4846,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Type.php#L1119-L1125",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Type.php#L1119-L1125",
             "snippet": [
                 {
                     "number": 1119,
@@ -4759,7 +4941,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Type.php#L1527-L1533",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Type.php#L1527-L1533",
             "snippet": [
                 {
                     "number": 1527,
@@ -4874,7 +5056,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -4894,6 +5083,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -4910,7 +5106,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Type.php#L1853-L1859",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Type.php#L1853-L1859",
             "snippet": [
                 {
                     "number": 1853,
@@ -5026,7 +5222,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Type.php#L3807-L3813",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Type.php#L3807-L3813",
             "snippet": [
                 {
                     "number": 3807,
@@ -5121,7 +5317,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Language/Type/LiteralStringType.php#L119-L125",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Language/Type/LiteralStringType.php#L119-L125",
             "snippet": [
                 {
                     "number": 119,
@@ -5281,7 +5477,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Library/ConversionSpec.php#L55-L61",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Library/ConversionSpec.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -5396,7 +5592,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\\\x7f-\\\\xff][a-zA-Z0-9_\\\\…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*…\" and \"(?:\\??(?:\\\\?Closure|callable)(…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 },
@@ -5416,6 +5619,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"callable-(?:string|object|arra…\" and \"\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-…\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
@@ -5432,7 +5642,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/src/Phan/Plugin/Internal/MethodSearcherPlugin.php#L67-L73",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/src/Phan/Plugin/Internal/MethodSearcherPlugin.php#L67-L73",
             "snippet": [
                 {
                     "number": 67,
@@ -5527,7 +5737,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/tool/validate_stubs.php#L90-L96",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/tool/validate_stubs.php#L90-L96",
             "snippet": [
                 {
                     "number": 90,
@@ -5683,7 +5893,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/tool/validate_stubs.php#L92-L98",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/tool/validate_stubs.php#L92-L98",
             "snippet": [
                 {
                     "number": 92,
@@ -5839,7 +6049,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/ec0187a41cfc3884cc6a1f758dea02a17e3ab6f7/tool/validate_stubs.php#L93-L99",
+            "permalink": "https://github.com/phan/phan/blob/22fd1c62ea1b6362e85a2d26fd95177ced2cd610/tool/validate_stubs.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,

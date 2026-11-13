@@ -1,6 +1,6 @@
 {
     "repo": "nunomaduro/termwind",
-    "sha": "84ded49447e3698fd2157ccbfba92af78ce0c81b",
+    "sha": "9b85ae4d802403bfc004ea633ce542bc262ee5c3",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nunomaduro/termwind/blob/84ded49447e3698fd2157ccbfba92af78ce0c81b/src/ValueObjects/Styles.php#L26-L32",
+            "permalink": "https://github.com/nunomaduro/termwind/blob/9b85ae4d802403bfc004ea633ce542bc262ee5c3/src/ValueObjects/Styles.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,

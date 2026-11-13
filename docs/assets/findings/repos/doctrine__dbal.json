@@ -1,6 +1,6 @@
 {
     "repo": "doctrine/dbal",
-    "sha": "094a0195b0567167a7b49c6eadbd88e40f82d58c",
+    "sha": "b2815456989aa41964ee66d7ab47b7885264acf3",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/doctrine/dbal/blob/094a0195b0567167a7b49c6eadbd88e40f82d58c/src/Platforms/SQLServerPlatform.php#L1305-L1311",
+            "permalink": "https://github.com/doctrine/dbal/blob/b2815456989aa41964ee66d7ab47b7885264acf3/src/Platforms/SQLServerPlatform.php#L1305-L1311",
             "snippet": [
                 {
                     "number": 1305,
@@ -189,7 +189,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/doctrine/dbal/blob/094a0195b0567167a7b49c6eadbd88e40f82d58c/src/Platforms/SQLite/SQLiteMetadataProvider.php#L632-L638",
+            "permalink": "https://github.com/doctrine/dbal/blob/b2815456989aa41964ee66d7ab47b7885264acf3/src/Platforms/SQLite/SQLiteMetadataProvider.php#L632-L638",
             "snippet": [
                 {
                     "number": 632,
@@ -289,7 +289,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/doctrine/dbal/blob/094a0195b0567167a7b49c6eadbd88e40f82d58c/src/Platforms/SQLite/SQLiteMetadataProvider.php#L780-L786",
+            "permalink": "https://github.com/doctrine/dbal/blob/b2815456989aa41964ee66d7ab47b7885264acf3/src/Platforms/SQLite/SQLiteMetadataProvider.php#L780-L786",
             "snippet": [
                 {
                     "number": 780,
@@ -437,7 +437,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/doctrine/dbal/blob/094a0195b0567167a7b49c6eadbd88e40f82d58c/src/Schema/SQLiteSchemaManager.php#L258-L264",
+            "permalink": "https://github.com/doctrine/dbal/blob/b2815456989aa41964ee66d7ab47b7885264acf3/src/Schema/SQLiteSchemaManager.php#L258-L264",
             "snippet": [
                 {
                     "number": 258,
@@ -585,7 +585,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/doctrine/dbal/blob/094a0195b0567167a7b49c6eadbd88e40f82d58c/src/Schema/SQLiteSchemaManager.php#L334-L340",
+            "permalink": "https://github.com/doctrine/dbal/blob/b2815456989aa41964ee66d7ab47b7885264acf3/src/Schema/SQLiteSchemaManager.php#L334-L340",
             "snippet": [
                 {
                     "number": 334,

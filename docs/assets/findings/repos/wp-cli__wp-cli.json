@@ -1,6 +1,6 @@
 {
     "repo": "wp-cli/wp-cli",
-    "sha": "aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2",
+    "sha": "5ec3c05d8b46bb50a6179bc722b97ede35fbd86f",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/bundle/rmccue/requests/src/IdnaEncoder.php#L141-L147",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/bundle/rmccue/requests/src/IdnaEncoder.php#L141-L147",
             "snippet": [
                 {
                     "number": 141,
@@ -176,7 +176,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/bundle/rmccue/requests/src/Requests.php#L765-L771",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/bundle/rmccue/requests/src/Requests.php#L765-L771",
             "snippet": [
                 {
                     "number": 765,
@@ -338,7 +338,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/bundle/rmccue/requests/src/Requests.php#L853-L859",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/bundle/rmccue/requests/src/Requests.php#L853-L859",
             "snippet": [
                 {
                     "number": 853,
@@ -656,7 +656,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/bundle/rmccue/requests/src/Requests.php#L861-L867",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/bundle/rmccue/requests/src/Requests.php#L861-L867",
             "snippet": [
                 {
                     "number": 861,
@@ -947,7 +947,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Configurator.php#L155-L161",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Configurator.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -1042,7 +1042,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Configurator.php#L196-L202",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Configurator.php#L196-L202",
             "snippet": [
                 {
                     "number": 196,
@@ -1137,7 +1137,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Configurator.php#L276-L282",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Configurator.php#L276-L282",
             "snippet": [
                 {
                     "number": 276,
@@ -1232,7 +1232,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Configurator.php#L483-L489",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Configurator.php#L483-L489",
             "snippet": [
                 {
                     "number": 483,
@@ -1334,7 +1334,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Path.php#L32-L38",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Path.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -1701,7 +1701,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Runner.php#L1043-L1049",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Runner.php#L1043-L1049",
             "snippet": [
                 {
                     "number": 1043,
@@ -1796,7 +1796,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Runner.php#L1046-L1052",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Runner.php#L1046-L1052",
             "snippet": [
                 {
                     "number": 1046,
@@ -1963,7 +1963,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Runner.php#L1786-L1792",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Runner.php#L1786-L1792",
             "snippet": [
                 {
                     "number": 1786,
@@ -2058,7 +2058,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/SynopsisParser.php#L21-L27",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/SynopsisParser.php#L21-L27",
             "snippet": [
                 {
                     "number": 21,
@@ -2196,7 +2196,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/utils.php#L1537-L1543",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/utils.php#L1537-L1543",
             "snippet": [
                 {
                     "number": 1537,

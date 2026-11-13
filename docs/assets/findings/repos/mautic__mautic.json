@@ -1,10 +1,10 @@
 {
     "repo": "mautic/mautic",
-    "sha": "081314ff023c5c923cc4edeb7eed23bcc8aa4212",
+    "sha": "6711577a1df4e46cadeb739415574b49c3345771",
     "target": {
-        "php": "8.1",
-        "pcre": "10.39",
-        "source": "fallback: no require.php"
+        "php": "8.2",
+        "pcre": "10.40",
+        "source": "composer.json config.platform.php"
     },
     "findings": [
         {
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/ApiBundle/Form/Validator/Constraints/OAuthCallbackValidator.php#L10-L16",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/ApiBundle/Form/Validator/Constraints/OAuthCallbackValidator.php#L10-L16",
             "snippet": [
                 {
                     "number": 10,
@@ -287,7 +287,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/CoreBundle/Form/Type/ConfigType.php#L212-L218",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/CoreBundle/Form/Type/ConfigType.php#L212-L218",
             "snippet": [
                 {
                     "number": 212,
@@ -670,7 +670,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/CoreBundle/Helper/InputHelper.php#L393-L399",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/CoreBundle/Helper/InputHelper.php#L393-L399",
             "snippet": [
                 {
                     "number": 393,
@@ -838,7 +838,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/CoreBundle/Helper/InputHelper.php#L498-L504",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/CoreBundle/Helper/InputHelper.php#L498-L504",
             "snippet": [
                 {
                     "number": 498,
@@ -1091,7 +1091,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/CoreBundle/Helper/UrlHelper.php#L112-L118",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/CoreBundle/Helper/UrlHelper.php#L112-L118",
             "snippet": [
                 {
                     "number": 112,
@@ -2186,7 +2186,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/DynamicContentBundle/Helper/DynamicContentHelper.php#L21-L27",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/DynamicContentBundle/Helper/DynamicContentHelper.php#L21-L27",
             "snippet": [
                 {
                     "number": 21,
@@ -2453,7 +2453,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L84-L90",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -2576,7 +2576,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L85-L91",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L85-L91",
             "snippet": [
                 {
                     "number": 85,
@@ -2704,7 +2704,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L327-L333",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L327-L333",
             "snippet": [
                 {
                     "number": 327,
@@ -2872,7 +2872,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L345-L351",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L345-L351",
             "snippet": [
                 {
                     "number": 345,
@@ -3032,7 +3032,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php#L272-L278",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php#L272-L278",
             "snippet": [
                 {
                     "number": 272,
@@ -3244,7 +3244,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php#L284-L290",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php#L284-L290",
             "snippet": [
                 {
                     "number": 284,
@@ -3556,7 +3556,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L68-L74",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,
@@ -3752,7 +3752,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L129-L135",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L129-L135",
             "snippet": [
                 {
                     "number": 129,
@@ -3880,7 +3880,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L142-L148",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L142-L148",
             "snippet": [
                 {
                     "number": 142,
@@ -4008,7 +4008,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L169-L175",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L169-L175",
             "snippet": [
                 {
                     "number": 169,
@@ -4136,7 +4136,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L251-L257",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L251-L257",
             "snippet": [
                 {
                     "number": 251,
@@ -4324,7 +4324,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L282-L288",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L282-L288",
             "snippet": [
                 {
                     "number": 282,
@@ -4512,7 +4512,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L304-L310",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L304-L310",
             "snippet": [
                 {
                     "number": 304,
@@ -4700,7 +4700,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L314-L320",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L314-L320",
             "snippet": [
                 {
                     "number": 314,
@@ -4828,7 +4828,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L363-L369",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L363-L369",
             "snippet": [
                 {
                     "number": 363,
@@ -4956,7 +4956,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L372-L378",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L372-L378",
             "snippet": [
                 {
                     "number": 372,
@@ -5144,7 +5144,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L455-L461",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L455-L461",
             "snippet": [
                 {
                     "number": 455,
@@ -5272,7 +5272,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L475-L481",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L475-L481",
             "snippet": [
                 {
                     "number": 475,
@@ -5400,7 +5400,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L511-L517",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L511-L517",
             "snippet": [
                 {
                     "number": 511,
@@ -5588,7 +5588,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L520-L526",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L520-L526",
             "snippet": [
                 {
                     "number": 520,
@@ -5776,7 +5776,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L549-L555",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L549-L555",
             "snippet": [
                 {
                     "number": 549,
@@ -5920,7 +5920,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L576-L582",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L576-L582",
             "snippet": [
                 {
                     "number": 576,
@@ -6108,7 +6108,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L603-L609",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L603-L609",
             "snippet": [
                 {
                     "number": 603,
@@ -6236,7 +6236,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L612-L618",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L612-L618",
             "snippet": [
                 {
                     "number": 612,
@@ -6364,7 +6364,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L630-L636",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L630-L636",
             "snippet": [
                 {
                     "number": 630,
@@ -6492,7 +6492,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L651-L657",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L651-L657",
             "snippet": [
                 {
                     "number": 651,
@@ -6620,7 +6620,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L660-L666",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L660-L666",
             "snippet": [
                 {
                     "number": 660,
@@ -6748,7 +6748,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L678-L684",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L678-L684",
             "snippet": [
                 {
                     "number": 678,
@@ -6876,7 +6876,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L687-L693",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L687-L693",
             "snippet": [
                 {
                     "number": 687,
@@ -7004,7 +7004,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L710-L716",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L710-L716",
             "snippet": [
                 {
                     "number": 710,
@@ -7132,7 +7132,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L719-L725",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L719-L725",
             "snippet": [
                 {
                     "number": 719,
@@ -7260,7 +7260,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L728-L734",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L728-L734",
             "snippet": [
                 {
                     "number": 728,
@@ -7388,7 +7388,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L737-L743",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L737-L743",
             "snippet": [
                 {
                     "number": 737,
@@ -7516,7 +7516,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L755-L761",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L755-L761",
             "snippet": [
                 {
                     "number": 755,
@@ -7644,7 +7644,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L783-L789",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L783-L789",
             "snippet": [
                 {
                     "number": 783,
@@ -7772,7 +7772,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L792-L798",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L792-L798",
             "snippet": [
                 {
                     "number": 792,
@@ -7900,7 +7900,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L819-L825",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L819-L825",
             "snippet": [
                 {
                     "number": 819,
@@ -8028,7 +8028,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L828-L834",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L828-L834",
             "snippet": [
                 {
                     "number": 828,
@@ -8156,7 +8156,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L837-L843",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L837-L843",
             "snippet": [
                 {
                     "number": 837,
@@ -8284,7 +8284,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L855-L861",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L855-L861",
             "snippet": [
                 {
                     "number": 855,
@@ -8412,7 +8412,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L900-L906",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L900-L906",
             "snippet": [
                 {
                     "number": 900,
@@ -8540,7 +8540,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L909-L915",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L909-L915",
             "snippet": [
                 {
                     "number": 909,
@@ -8668,7 +8668,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L927-L933",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L927-L933",
             "snippet": [
                 {
                     "number": 927,
@@ -8796,7 +8796,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L944-L950",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L944-L950",
             "snippet": [
                 {
                     "number": 944,
@@ -8924,7 +8924,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L953-L959",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L953-L959",
             "snippet": [
                 {
                     "number": 953,
@@ -9052,7 +9052,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L971-L977",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L971-L977",
             "snippet": [
                 {
                     "number": 971,
@@ -9180,7 +9180,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L980-L986",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L980-L986",
             "snippet": [
                 {
                     "number": 980,
@@ -9285,7 +9285,7 @@
         {
             "id": "f-d1e55f250b",
             "file": "app/bundles/PageBundle/Model/TrackableModel.php",
-            "line": 422,
+            "line": 445,
             "column": 24,
             "pattern": "/^{.*?}$/i",
             "source": "preg_match()",
@@ -9303,10 +9303,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/PageBundle/Model/TrackableModel.php#L419-L425",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/PageBundle/Model/TrackableModel.php#L442-L448",
             "snippet": [
                 {
-                    "number": 419,
+                    "number": 442,
                     "focus": false,
                     "runs": [
                         [
@@ -9316,7 +9316,7 @@
                     ]
                 },
                 {
-                    "number": 420,
+                    "number": 443,
                     "focus": false,
                     "runs": [
                         [
@@ -9326,7 +9326,7 @@
                     ]
                 },
                 {
-                    "number": 421,
+                    "number": 444,
                     "focus": false,
                     "runs": [
                         [
@@ -9336,7 +9336,7 @@
                     ]
                 },
                 {
-                    "number": 422,
+                    "number": 445,
                     "focus": true,
                     "runs": [
                         [
@@ -9394,7 +9394,7 @@
                     ]
                 },
                 {
-                    "number": 423,
+                    "number": 446,
                     "focus": false,
                     "runs": [
                         [
@@ -9404,7 +9404,7 @@
                     ]
                 },
                 {
-                    "number": 424,
+                    "number": 447,
                     "focus": false,
                     "runs": [
                         [
@@ -9414,7 +9414,7 @@
                     ]
                 },
                 {
-                    "number": 425,
+                    "number": 448,
                     "focus": false,
                     "runs": [
                         [
@@ -9428,7 +9428,7 @@
         {
             "id": "f-2fa8a94a3f",
             "file": "app/bundles/PageBundle/Model/TrackableModel.php",
-            "line": 559,
+            "line": 582,
             "column": 52,
             "pattern": "/([https?|ftps?]?\\{.*?\\})&(.*?)$/",
             "source": "preg_match()",
@@ -9446,10 +9446,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/app/bundles/PageBundle/Model/TrackableModel.php#L556-L562",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/app/bundles/PageBundle/Model/TrackableModel.php#L579-L585",
             "snippet": [
                 {
-                    "number": 556,
+                    "number": 579,
                     "focus": false,
                     "runs": [
                         [
@@ -9459,7 +9459,7 @@
                     ]
                 },
                 {
-                    "number": 557,
+                    "number": 580,
                     "focus": false,
                     "runs": [
                         [
@@ -9469,7 +9469,7 @@
                     ]
                 },
                 {
-                    "number": 558,
+                    "number": 581,
                     "focus": false,
                     "runs": [
                         [
@@ -9479,7 +9479,7 @@
                     ]
                 },
                 {
-                    "number": 559,
+                    "number": 582,
                     "focus": true,
                     "runs": [
                         [
@@ -9573,7 +9573,7 @@
                     ]
                 },
                 {
-                    "number": 560,
+                    "number": 583,
                     "focus": false,
                     "runs": [
                         [
@@ -9583,7 +9583,7 @@
                     ]
                 },
                 {
-                    "number": 561,
+                    "number": 584,
                     "focus": false,
                     "runs": [
                         [
@@ -9593,7 +9593,7 @@
                     ]
                 },
                 {
-                    "number": 562,
+                    "number": 585,
                     "focus": false,
                     "runs": [
                         [
@@ -9630,7 +9630,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/plugins/MauticCrmBundle/Api/SalesforceApi.php#L20-L26",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/plugins/MauticCrmBundle/Api/SalesforceApi.php#L20-L26",
             "snippet": [
                 {
                     "number": 20,
@@ -9885,7 +9885,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/081314ff023c5c923cc4edeb7eed23bcc8aa4212/plugins/MauticSocialBundle/Integration/TwitterIntegration.php#L229-L235",
+            "permalink": "https://github.com/mautic/mautic/blob/6711577a1df4e46cadeb739415574b49c3345771/plugins/MauticSocialBundle/Integration/TwitterIntegration.php#L229-L235",
             "snippet": [
                 {
                     "number": 229,

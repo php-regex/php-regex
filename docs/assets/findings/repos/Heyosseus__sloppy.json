@@ -1,12 +1,175 @@
 {
     "repo": "Heyosseus/sloppy",
-    "sha": "20b25d1a7b8650738881e22166d9b4bcdac9a2cd",
+    "sha": "885218d43ab2f8626d6e4ea8e5b58b4d04264467",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
         "source": "composer.json require.php"
     },
     "findings": [
+        {
+            "id": "f-6f82d8ec06",
+            "file": "src/Rules/Php/PlaceholderImplementationRule.php",
+            "line": 61,
+            "column": 9,
+            "pattern": "/^\\.{2,}\\s*\\S.*\\.{2,}$/u",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the second quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/PlaceholderImplementationRule.php#L58-L64",
+            "snippet": [
+                {
+                    "number": 58,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * @var list<string>",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 59,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 60,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private const array ELIDED = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 61,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "{2,}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\S",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "{2,}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "u",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 62,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '/^(\\.{2,}|…)\\s*(existing|rest|remaining|other|previous|same|unchanged)\\b/iu',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 63,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '/^(\\.{2,}\\s*)?(the )?(rest|remainder) of (the |your |this )?(code|implementation|method|logic|function|body)\\b/iu',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 64,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        '/^(\\.{2,}\\s*)?(add|insert|put|write|place) (your |the )?(own )?(logic|code|implementation|business logic) here\\b/iu',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
         {
             "id": "f-e988c1da9c",
             "file": "src/Rules/Php/UnexplainedSuppressionRule.php",
@@ -28,7 +191,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/20b25d1a7b8650738881e22166d9b4bcdac9a2cd/src/Rules/Php/UnexplainedSuppressionRule.php#L168-L174",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/UnexplainedSuppressionRule.php#L168-L174",
             "snippet": [
                 {
                     "number": 168,
@@ -167,7 +330,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/20b25d1a7b8650738881e22166d9b4bcdac9a2cd/src/Rules/Php/UnexplainedSuppressionRule.php#L182-L188",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/UnexplainedSuppressionRule.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,
@@ -286,6 +449,196 @@
             ]
         },
         {
+            "id": "f-f36d576941",
+            "file": "src/Rules/Php/UnexplainedSuppressionRule.php",
+            "line": 217,
+            "column": 39,
+            "pattern": "#^[\\s*/]*\\(\\s*[\"']?[A-Za-z][A-Za-z0-9_.:\\-]*[\"']?(\\s*,\\s*[\"']?[A-Za-z][A-Za-z0-9_.:\\-]*[\"']?)*\\s*\\)#",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.literalMetachar",
+                    "message": "\"*\" is a literal character inside a character class, not a quantifier.",
+                    "hint": "Inside [...], \"*\" matches a literal \"*\". If you meant to quantify a shorthand like \\w, use \\w* outside the class.",
+                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/UnexplainedSuppressionRule.php#L214-L220",
+            "snippet": [
+                {
+                    "number": 214,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // list -- `argument.type, return.type` -- and PHPMD's parenthesised",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 215,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // form, `(PHPMD.StaticAccess)`.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 216,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $identifier = '[\"\\']?[A-Za-z][A-Za-z0-9_.:\\\\-]*[\"\\']?';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 217,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $rest = (string) preg_replace('#^[\\s*/]*\\(\\s*'.$identifier.'(\\s*,\\s*'.$identifier.')*\\s*\\)#', '', $rest);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 218,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $rest = (string) preg_replace('#^[\\s*/]*'.$identifier.'(\\s*,\\s*'.$identifier.')*#', '', $rest);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 219,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 220,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return preg_match('/[A-Za-z0-9]/', (string) preg_replace('#[\\s*/]+#', '', $rest)) === 1;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4c6ac507d7",
+            "file": "src/Rules/Php/UnexplainedSuppressionRule.php",
+            "line": 218,
+            "column": 39,
+            "pattern": "#^[\\s*/]*[\"']?[A-Za-z][A-Za-z0-9_.:\\-]*[\"']?(\\s*,\\s*[\"']?[A-Za-z][A-Za-z0-9_.:\\-]*[\"']?)*#",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.literalMetachar",
+                    "message": "\"*\" is a literal character inside a character class, not a quantifier.",
+                    "hint": "Inside [...], \"*\" matches a literal \"*\". If you meant to quantify a shorthand like \\w, use \\w* outside the class.",
+                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/UnexplainedSuppressionRule.php#L215-L221",
+            "snippet": [
+                {
+                    "number": 215,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // form, `(PHPMD.StaticAccess)`.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 216,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $identifier = '[\"\\']?[A-Za-z][A-Za-z0-9_.:\\\\-]*[\"\\']?';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 217,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $rest = (string) preg_replace('#^[\\s*/]*\\(\\s*'.$identifier.'(\\s*,\\s*'.$identifier.')*\\s*\\)#', '', $rest);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 218,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $rest = (string) preg_replace('#^[\\s*/]*'.$identifier.'(\\s*,\\s*'.$identifier.')*#', '', $rest);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 219,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 220,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return preg_match('/[A-Za-z0-9]/', (string) preg_replace('#[\\s*/]+#', '', $rest)) === 1;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 221,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-cb52ec5e32",
             "file": "src/Rules/Php/UnexplainedSuppressionRule.php",
             "line": 220,
@@ -306,7 +659,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/20b25d1a7b8650738881e22166d9b4bcdac9a2cd/src/Rules/Php/UnexplainedSuppressionRule.php#L217-L223",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/UnexplainedSuppressionRule.php#L217-L223",
             "snippet": [
                 {
                     "number": 217,

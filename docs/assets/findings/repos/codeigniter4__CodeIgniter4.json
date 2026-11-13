@@ -1,6 +1,6 @@
 {
     "repo": "codeigniter4/CodeIgniter4",
-    "sha": "654cd0ccdce1232506a9e5122abf578ee4aa7b3d",
+    "sha": "6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/preload.php#L89-L95",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/preload.php#L89-L95",
             "snippet": [
                 {
                     "number": 89,
@@ -179,7 +179,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/Commands/Encryption/GenerateKey.php#L184-L190",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Commands/Encryption/GenerateKey.php#L184-L190",
             "snippet": [
                 {
                     "number": 184,
@@ -402,7 +402,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/Database/OCI8/Connection.php#L257-L263",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Database/OCI8/Connection.php#L257-L263",
             "snippet": [
                 {
                     "number": 257,
@@ -554,7 +554,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/Debug/Toolbar.php#L524-L530",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Debug/Toolbar.php#L524-L530",
             "snippet": [
                 {
                     "number": 524,
@@ -693,7 +693,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/HTTP/RequestTrait.php#L320-L326",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/HTTP/RequestTrait.php#L320-L326",
             "snippet": [
                 {
                     "number": 320,
@@ -844,6 +844,315 @@
             ]
         },
         {
+            "id": "f-390ccc56d5",
+            "file": "system/Helpers/inflector_helper.php",
+            "line": 38,
+            "column": 13,
+            "pattern": "/([octop|vir])i$/",
+            "source": "preg_match()",
+            "location": "via $rule",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: 'o' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.suspiciousPipe",
+                    "message": "Character class contains \"|\" which is literal inside []. It looks like an alternation typo.",
+                    "hint": "Did you mean an alternation like \"(error|failure)\" instead of a character class?",
+                    "docs": "https://php-regex.com/reference/rules/#alternation-like-character-classes"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Helpers/inflector_helper.php#L35-L41",
+            "snippet": [
+                {
+                    "number": 35,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(vert|ind)ices$/'                                               => '\\1ex',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 36,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/^(ox)en/'                                                       => '\\1',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 37,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(alias)es$/'                                                    => '\\1',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 38,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "octop|vir",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "                                               => '\\1us',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 39,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(cris|ax|test)es$/'                                             => '\\1is',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 40,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(shoe)s$/'                                                      => '\\1',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 41,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(o)es$/'                                                        => '\\1',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-2d1621cc25",
+            "file": "system/Helpers/inflector_helper.php",
+            "line": 95,
+            "column": 13,
+            "pattern": "/(matr|vert|ind)ix|ex$/",
+            "source": "preg_match()",
+            "location": "via $rule",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"(matr|vert|ind)ix\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"(?:(matr|vert|ind)ix|ex)$\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Helpers/inflector_helper.php#L92-L98",
+            "snippet": [
+                {
+                    "number": 92,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(quiz)$/'               => '\\1zes',    // quizzes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 93,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/^(ox)$/'                => '\\1\\2en', // ox",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 94,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/([m|l])ouse$/'          => '\\1ice', // mouse, louse",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 95,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "matr",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "vert",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ind",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "ix",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ex",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            " => '\\1ices', // matrix, vertex, index",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 96,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(x|ch|ss|sh)$/'         => '\\1es', // search, switch, fix, box, process, address",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 97,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/([^aeiouy]|qu)y$/'      => '\\1ies', // query, ability, agency",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 98,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(hive)$/'               => '\\1s', // archive, hive",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-295921f17f",
             "file": "system/Helpers/security_helper.php",
             "line": 94,
@@ -864,7 +1173,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/Helpers/security_helper.php#L91-L97",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Helpers/security_helper.php#L91-L97",
             "snippet": [
                 {
                     "number": 91,
@@ -1095,7 +1404,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/Helpers/url_helper.php#L156-L162",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Helpers/url_helper.php#L156-L162",
             "snippet": [
                 {
                     "number": 156,
@@ -1246,7 +1555,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/Helpers/url_helper.php#L189-L195",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Helpers/url_helper.php#L189-L195",
             "snippet": [
                 {
                     "number": 189,
@@ -1397,7 +1706,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/ThirdParty/Kint/Parser/ColorPlugin.php#L57-L63",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/ThirdParty/Kint/Parser/ColorPlugin.php#L57-L63",
             "snippet": [
                 {
                     "number": 57,
@@ -1592,6 +1901,101 @@
             ]
         },
         {
+            "id": "f-07698b2510",
+            "file": "system/ThirdParty/Kint/Parser/FsPathPlugin.php",
+            "line": 55,
+            "column": 26,
+            "pattern": "/[\\/\\/]/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class. Holds when DIRECTORY_SEPARATOR is \"/\".",
+                    "hint": "Redundant elements: '/' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/ThirdParty/Kint/Parser/FsPathPlugin.php#L52-L58",
+            "snippet": [
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return $v;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (!\\preg_match('/[\\\\/\\\\'.DIRECTORY_SEPARATOR.']/', $var)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return $v;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-249cacc3a6",
             "file": "system/ThirdParty/Kint/Renderer/Rich/CallablePlugin.php",
             "line": 75,
@@ -1617,7 +2021,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/ThirdParty/Kint/Renderer/Rich/CallablePlugin.php#L72-L78",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/ThirdParty/Kint/Renderer/Rich/CallablePlugin.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -1776,7 +2180,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/Typography/Typography.php#L108-L114",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Typography/Typography.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -1911,7 +2315,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/Typography/Typography.php#L112-L118",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Typography/Typography.php#L112-L118",
             "snippet": [
                 {
                     "number": 112,
@@ -2061,7 +2465,7 @@
                 "limit": 100000
             },
             "subject": "<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!<>",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/Typography/Typography.php#L130-L136",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Typography/Typography.php#L130-L136",
             "snippet": [
                 {
                     "number": 130,
@@ -2289,7 +2693,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/654cd0ccdce1232506a9e5122abf578ee4aa7b3d/system/View/Parser.php#L463-L469",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/View/Parser.php#L463-L469",
             "snippet": [
                 {
                     "number": 463,

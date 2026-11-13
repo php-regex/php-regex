@@ -606,6 +606,101 @@
             ]
         },
         {
+            "id": "f-1abcbb15ee",
+            "file": "wire/core/FileCompiler.php",
+            "line": 618,
+            "column": 9,
+            "pattern": "/^(.*?)(include_once|include|require_once|require|wireIncludeFile|wireRenderFile|TemplateFile)([\\( ]+)([\"']?[^;\\r\\n]+)([;\\r\\n])/im",
+            "source": "preg_match_all()",
+            "location": "via $re",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/FileCompiler.php#L615-L621",
+            "snippet": [
+                {
+                    "number": 615,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 616,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 617,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// main include regex",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 618,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$re = '/^' . ",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 619,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'(.*?)' . // 1: open",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 620,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'(' . implode('|', $funcs) . ')' . // 2:function",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 621,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t'([\\( ]+)' . // 3: argOpen: open parenthesis and/or space",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-52e4fcd172",
             "file": "wire/core/Sanitizer.php",
             "line": 606,
@@ -3787,6 +3882,106 @@
                     "runs": [
                         [
                             "\t\t\t'[^)]*\\)+(.*)$/m', // , textdomain (optional) and everything else ",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-bc35a55d40",
+            "file": "wire/modules/Markup/MarkupHTMLPurifier/htmlpurifier/HTMLPurifier.standalone.php",
+            "line": 13568,
+            "column": 28,
+            "pattern": "#(?:/(?:12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9]))$#s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#(?:/(?:12[0-8]|1[0-1][0-9]|[1-9][0-9]|[0-9]))$#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/Markup/MarkupHTMLPurifier/htmlpurifier/HTMLPurifier.standalone.php#L13565-L13571",
+            "snippet": [
+                {
+                    "number": 13565,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13566,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        //      prefix check",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13567,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (strpos($aIP, '/') !== false) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13568,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match('#' . $pre . '$#s', $aIP, $find)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13569,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $aIP = substr($aIP, 0, 0 - strlen($find[0]));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13570,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                unset($find);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13571,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            } else {",
                             ""
                         ]
                     ]

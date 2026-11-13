@@ -1,12 +1,202 @@
 {
     "repo": "zbateson/mail-mime-parser",
-    "sha": "21a8a6ff886f6ab19c065655f84f5a9ac4f86266",
+    "sha": "19fe2c11fd257856bc8042bf056eab2525fdb34e",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
         "source": "composer.json require.php"
     },
     "findings": [
+        {
+            "id": "f-aa45053080",
+            "file": "src/Header/Part/MimeToken.php",
+            "line": 49,
+            "column": 59,
+            "pattern": "/^\\s*=\\?[^?=]+\\?[QBqb]\\?[^\\?]+\\?=|\\s+/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"\\s+\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:\\s*=\\?[^?=]+\\?[QBqb]\\?[^\\?]+\\?=|\\s+)\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/zbateson/mail-mime-parser/blob/19fe2c11fd257856bc8042bf056eab2525fdb34e/src/Header/Part/MimeToken.php#L46-L52",
+            "snippet": [
+                {
+                    "number": 46,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $decoded = $this->decodeMime(\\preg_replace('/\\r|\\n/', '', $this->value));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 47,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $this->value = \\preg_replace('/[\\r\\n]+/', '', $decoded) ?? '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 48,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $pattern = self::MIME_PART_PATTERN;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 49,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $this->canIgnoreSpacesBefore = (bool) \\preg_match(\"/^\\s*{$pattern}|\\s+/\", $this->rawValue);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 50,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $this->canIgnoreSpacesAfter = (bool) \\preg_match(\"/{$pattern}\\s*|\\s+\\$/\", $this->rawValue);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6130fbe9ec",
+            "file": "src/Header/Part/MimeToken.php",
+            "line": 50,
+            "column": 58,
+            "pattern": "/=\\?[^?=]+\\?[QBqb]\\?[^\\?]+\\?=\\s*|\\s+$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"=\\?[^?=]+\\?[QBqb]\\?[^\\?]+\\?=\\s*\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"(?:=\\?[^?=]+\\?[QBqb]\\?[^\\?]+\\?=\\s*|\\s+)$\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/zbateson/mail-mime-parser/blob/19fe2c11fd257856bc8042bf056eab2525fdb34e/src/Header/Part/MimeToken.php#L47-L53",
+            "snippet": [
+                {
+                    "number": 47,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $this->value = \\preg_replace('/[\\r\\n]+/', '', $decoded) ?? '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 48,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $pattern = self::MIME_PART_PATTERN;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 49,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $this->canIgnoreSpacesBefore = (bool) \\preg_match(\"/^\\s*{$pattern}|\\s+/\", $this->rawValue);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 50,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $this->canIgnoreSpacesAfter = (bool) \\preg_match(\"/{$pattern}\\s*|\\s+\\$/\", $this->rawValue);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
         {
             "id": "f-2532e4f379",
             "file": "src/Header/Part/ReceivedDomainPart.php",
@@ -28,7 +218,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/zbateson/mail-mime-parser/blob/21a8a6ff886f6ab19c065655f84f5a9ac4f86266/src/Header/Part/ReceivedDomainPart.php#L63-L69",
+            "permalink": "https://github.com/zbateson/mail-mime-parser/blob/19fe2c11fd257856bc8042bf056eab2525fdb34e/src/Header/Part/ReceivedDomainPart.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,

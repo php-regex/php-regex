@@ -1259,6 +1259,203 @@
             ]
         },
         {
+            "id": "f-0de80b6767",
+            "file": "src/Configurator/Helpers/XPathHelper.php",
+            "line": 208,
+            "column": 13,
+            "pattern": "(^(?J)\\s*(?<equality>(?<key>@[-\\w]+|\\$\\w+|\\.)(?<operator>\\s*=\\s*)(?:(?<literal>(?<string>\"[^\"]*\"|'[^']*')|0|[1-9][0-9]*)|(?<concat>concat\\(\\s*(?&string)\\s*(?:,\\s*(?&string)\\s*)+\\)))|(?:(?<literal>(?&literal))|(?<concat>(?&concat)))(?&operator)(?<key>(?&key)))\\s*(?:or\\s*(?&equality)\\s*)*$)",
+            "source": "preg_match()",
+            "location": "via $regexp",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/s9e/TextFormatter/blob/c3ac3530bb59b9589ba56aed87b7c03874598db8/src/Configurator/Helpers/XPathHelper.php#L205-L211",
+            "snippet": [
+                {
+                    "number": 205,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t    . ')';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 206,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 207,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// Match a string that is entirely composed of equality checks separated with \"or\"",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 208,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$regexp = '(^(?J)\\\\s*' . $eq . '\\\\s*(?:or\\\\s*(?&equality)\\\\s*)*$)';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 209,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tif (!preg_match($regexp, $expr))",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 210,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 211,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\treturn false;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-eac78f5789",
+            "file": "src/Configurator/Helpers/XPathHelper.php",
+            "line": 214,
+            "column": 18,
+            "pattern": "((?J)(?<equality>(?<key>@[-\\w]+|\\$\\w+|\\.)(?<operator>\\s*=\\s*)(?:(?<literal>(?<string>\"[^\"]*\"|'[^']*')|0|[1-9][0-9]*)|(?<concat>concat\\(\\s*(?&string)\\s*(?:,\\s*(?&string)\\s*)+\\)))|(?:(?<literal>(?&literal))|(?<concat>(?&concat)))(?&operator)(?<key>(?&key))))",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/s9e/TextFormatter/blob/c3ac3530bb59b9589ba56aed87b7c03874598db8/src/Configurator/Helpers/XPathHelper.php#L211-L217",
+            "snippet": [
+                {
+                    "number": 211,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\treturn false;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 212,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 213,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 214,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tpreg_match_all(\"((?J)$eq)\", $expr, $matches, PREG_SET_ORDER);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 215,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 216,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$map = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 217,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tforeach ($matches as $m)",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-2b72a645e6",
             "file": "src/Configurator/Items/AttributeFilters/AbstractMapFilter.php",
             "line": 23,
@@ -2029,6 +2226,108 @@
             ]
         },
         {
+            "id": "f-8855d016a7",
+            "file": "src/Plugins/BBCodes/Configurator/BBCodeMonkey.php",
+            "line": 587,
+            "column": 4,
+            "pattern": "#\\{(CHOICE[0-9]*=(?<choices>.+?)|(?:HASH)?MAP[0-9]*=(?<map>.+?)|PARSE=(?<regexps>(.).*?(?<!\\\\)(?>\\\\\\\\)*+\\g{-1}[DSUisu]*(?:,(.).*?(?<!\\\\)(?>\\\\\\\\)*+\\g{-1}[DSUisu]*)*)|RANGE[0-9]*=(?<min>-?[0-9]+),(?<max>-?[0-9]+)|REGEXP[0-9]*=(?<regexp>(.).*?(?<!\\\\)(?>\\\\\\\\)*+\\g{-1}[DSUisu]*)|(?<other>[A-Z_]+[0-9]*))(?<options>\\??(?:;[^;]*)*)\\}#",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.dotstar.nested",
+                    "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
+                    "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/s9e/TextFormatter/blob/c3ac3530bb59b9589ba56aed87b7c03874598db8/src/Plugins/BBCodes/Configurator/BBCodeMonkey.php#L584-L590",
+            "snippet": [
+                {
+                    "number": 584,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// only be one, as in \"foo={URL}\" but some older BBCodes use a form of composite",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 585,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// attributes such as [FLASH={NUMBER},{NUMBER}]",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 586,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tpreg_match_all(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 587,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t'#\\\\{(' . implode('|', $tokenTypes) . ')(?<options>\\\\??(?:;[^;]*)*)\\\\}#',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 588,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$definition,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 589,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$matches,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 590,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tPREG_SET_ORDER | PREG_OFFSET_CAPTURE",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-40935227d2",
             "file": "src/Plugins/Litedown/Parser/Passes/Blocks.php",
             "line": 37,
@@ -2041,7 +2340,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?!!)\" and \"!(?![^\\\\n>]*?!<)\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"(?!!)\" and \"!(?![^\\n>]*?!<)\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -3061,7 +3360,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"\\\\([^\\\\x17\\\\s()]*\\\\)\" and \"[^\\\\x17\\\\s)]\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\([^\\x17\\s()]*\\)\" and \"[^\\x17\\s)]\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }

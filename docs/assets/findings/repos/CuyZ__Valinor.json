@@ -1,6 +1,6 @@
 {
     "repo": "CuyZ/Valinor",
-    "sha": "b06c3145cc547e3e5f972e4462c275b14b38371d",
+    "sha": "6e89ca1afaa8543619fd9512e4665722f225fb38",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/CuyZ/Valinor/blob/b06c3145cc547e3e5f972e4462c275b14b38371d/src/Utility/Reflection/Annotations.php#L195-L201",
+            "permalink": "https://github.com/CuyZ/Valinor/blob/6e89ca1afaa8543619fd9512e4665722f225fb38/src/Utility/Reflection/Annotations.php#L195-L201",
             "snippet": [
                 {
                     "number": 195,
@@ -194,7 +194,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/CuyZ/Valinor/blob/b06c3145cc547e3e5f972e4462c275b14b38371d/src/Utility/String/StringFormatter.php#L53-L59",
+            "permalink": "https://github.com/CuyZ/Valinor/blob/6e89ca1afaa8543619fd9512e4665722f225fb38/src/Utility/String/StringFormatter.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,

@@ -740,6 +740,498 @@
                     ]
                 }
             ]
+        },
+        {
+            "id": "f-223297b3f0",
+            "file": "gump.class.php",
+            "line": 2147,
+            "column": 13,
+            "pattern": "/['\";]/i",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Wixel/GUMP/blob/a54df210589c814c6c4f1d2d9f2de9ab79abd5eb/gump.class.php#L2144-L2150",
+            "snippet": [
+                {
+                    "number": 2144,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $patterns = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2145,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(\\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION)\\b)/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2146,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(\\b(OR|AND)\\s+\\d+\\s*=\\s*\\d+)/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2147,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\'\";",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2148,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/--/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2149,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/\\/\\*/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2150,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/\\*\\//i',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-359c71ad70",
+            "file": "gump.class.php",
+            "line": 2148,
+            "column": 13,
+            "pattern": "/--/i",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Wixel/GUMP/blob/a54df210589c814c6c4f1d2d9f2de9ab79abd5eb/gump.class.php#L2145-L2151",
+            "snippet": [
+                {
+                    "number": 2145,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(\\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION)\\b)/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2146,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(\\b(OR|AND)\\s+\\d+\\s*=\\s*\\d+)/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2147,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/[\\'\";]/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2148,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "--",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2149,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/\\/\\*/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2150,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/\\*\\//i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2151,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ac9485d9fc",
+            "file": "gump.class.php",
+            "line": 2149,
+            "column": 13,
+            "pattern": "/\\/\\*/i",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Wixel/GUMP/blob/a54df210589c814c6c4f1d2d9f2de9ab79abd5eb/gump.class.php#L2146-L2152",
+            "snippet": [
+                {
+                    "number": 2146,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/(\\b(OR|AND)\\s+\\d+\\s*=\\s*\\d+)/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2147,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/[\\'\";]/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2148,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/--/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2149,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\/\\*",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2150,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/\\*\\//i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2151,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2152,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-34e79dc6a9",
+            "file": "gump.class.php",
+            "line": 2150,
+            "column": 13,
+            "pattern": "/\\*\\//i",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Wixel/GUMP/blob/a54df210589c814c6c4f1d2d9f2de9ab79abd5eb/gump.class.php#L2147-L2153",
+            "snippet": [
+                {
+                    "number": 2147,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/[\\'\";]/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2148,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/--/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2149,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/\\/\\*/i',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2150,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\*\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2151,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2152,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2153,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($patterns as $pattern) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
         }
     ]
 }

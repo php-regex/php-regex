@@ -1,6 +1,6 @@
 {
     "repo": "twigstan/twigstan",
-    "sha": "ec485cf8d41f9c031469e45ba67f4c5505e794fb",
+    "sha": "49be00a86130bb0db7d603324d65f4edb7fdadb7",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/twigstan/twigstan/blob/ec485cf8d41f9c031469e45ba67f4c5505e794fb/src/Processing/Compilation/PhpVisitor/AppendFilePathToLineCommentVisitor.php#L26-L32",
+            "permalink": "https://github.com/twigstan/twigstan/blob/49be00a86130bb0db7d603324d65f4edb7fdadb7/src/Processing/Compilation/PhpVisitor/AppendFilePathToLineCommentVisitor.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,
