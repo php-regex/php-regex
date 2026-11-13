@@ -5177,18 +5177,48 @@ body.search-open {
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
-/* The shortcut rides inside the button, after a hairline in the
-   button's own ink: read at a glance, never a second target. */
-.pg-run-key {
-  padding-left: .45rem;
-  font-family: var(--font-mono);
-  font-size: .7rem;
+/* The play triangle, in the button's own ink: Run reads as an IDE's
+   run button, and its shortcut waits in the tip. */
+.pg-run-icon {
+  flex: none;
+  width: .7rem;
+  height: .7rem;
+  fill: currentColor;
+}
+.pg-patternbar .pg-run {
+  position: relative;
+}
+.pg-patternbar .pg-run[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + .5rem);
+  left: 50%;
+  z-index: 6;
+  padding: .3rem .55rem;
+  font-family: var(--font-body);
+  font-size: .72rem;
   font-weight: 500;
-  color: inherit;
-  background: none;
-  border: 0;
-  border-left: 1px solid color-mix(in srgb, currentColor 35%, transparent);
-  border-radius: 0;
+  line-height: 1.3;
+  white-space: pre;
+  color: var(--paper);
+  background: var(--ink);
+  border-radius: var(--radius-s);
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  transform: translate(-50%, -2px);
+  transition: opacity .12s ease, transform .12s ease;
+  pointer-events: none;
+}
+.pg-patternbar .pg-run[data-tip]:hover::after,
+.pg-patternbar .pg-run[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: .35s;
+}
+@media (hover: none) {
+  .pg-patternbar .pg-run[data-tip]::after {
+    display: none;
+  }
 }
 .pg-patternbar .pg-run:disabled {
   cursor: progress;
@@ -5234,6 +5264,17 @@ body.search-open {
 }
 .pg-state.is-error::before {
   border: .25rem solid var(--danger);
+}
+/* The light speaks alone: its word is read by the live region and said
+   in its tip, and comes to the eye only when the engine stopped — the
+   one state worth stopping for. */
+.pg-state:not(.is-error) .pg-state-word {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 @media (prefers-reduced-motion: no-preference) {
   .pg-state.is-busy::before {
@@ -6447,9 +6488,6 @@ body.search-open {
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
-  }
-  .pg-run-key {
-    display: none;
   }
   .pg-patternbar .pg-version,
   .pg-patternbar .pg-run,

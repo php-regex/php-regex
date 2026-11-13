@@ -82,7 +82,6 @@
     matchDetails: root.querySelector('.pg-match-details'),
     version: root.querySelector('#pg-version'),
     run: root.querySelector('.pg-run'),
-    runKey: root.querySelector('.pg-run-key'),
     examples: root.querySelectorAll('.pg-example'),
     status: root.querySelector('.pg-status'),
     explain: root.querySelector('.pg-explain'),
@@ -5663,9 +5662,10 @@
       area.previousElementSibling.scrollLeft = area.scrollLeft;
     });
   });
-  // Run says its shortcut in the platform's own words.
+  // Run says its shortcut in its tip, in the platform's own words, as an
+  // IDE's play button does.
   var onApple = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
-  el.runKey.textContent = onApple ? '⌘↵' : 'Ctrl ↵';
+  el.run.setAttribute('data-tip', 'Run  ' + (onApple ? '⌘↵' : 'Ctrl+↵'));
   el.run.addEventListener('click', function () {
     track('run', { trigger: 'button' });
     pageTouched = true;

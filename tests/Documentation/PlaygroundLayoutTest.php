@@ -230,6 +230,13 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(1, preg_match('/@media \(prefers-reduced-motion: no-preference\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-state\.is-busy::before \{([^}]*)\}/', $stylesheet, $pulse), 'The pulse waits for a visitor who did not ask for less motion.');
         $this->assertStringContainsString('animation:', $pulse[1]);
 
+        // The light speaks alone: its word is read by the live region and
+        // shown in its tip, and comes to the eye only when the engine
+        // stopped — the one state worth stopping for.
+        $this->assertSame(1, preg_match('/^\.pg-state:not\(\.is-error\) \.pg-state-word \{([^}]*)\}/m', $stylesheet, $quiet));
+        $this->assertStringContainsString('clip-path: inset(50%);', $quiet[1], 'Hidden from the eye, not from the live region.');
+        $this->assertStringNotContainsString('display: none', $quiet[1]);
+
         $script = self::source(self::SCRIPT);
         $set = self::between($script, 'function setState(word, tone) {', "\n  }\n");
         $this->assertStringContainsString('el.stateWord.textContent = word;', $set);
@@ -261,9 +268,10 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
-     * Run says its shortcut where there is room for it, in the platform's
-     * own words; a screen reader hears the shortcut from the attribute,
-     * not twice from the label.
+     * Run is a play button, as an IDE's is: a triangle and its word. The
+     * shortcut is said in its tip, in the platform's own words — a key
+     * printed inside the button read as a second button glued to it — and
+     * a screen reader hears it from the attribute.
      */
     #[Test]
     public function test_run_shows_its_shortcut(): void
@@ -274,11 +282,17 @@ final class PlaygroundLayoutTest extends TestCase
         $button = $run->item(0);
         $this->assertInstanceOf(\DOMElement::class, $button);
         $this->assertSame('Control+Enter Meta+Enter', $button->getAttribute('aria-keyshortcuts'));
-        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-run').'/kbd'.self::has('pg-run-key').'[@aria-hidden="true"]'), 'The key is for the eye.');
+        $this->assertSame(0, self::nodes($xpath, self::byClass('pg-run').'//kbd'), 'No key inside the button: it is said in the tip.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-run').'/svg'.self::has('pg-run-icon').'[@aria-hidden="true"]'), 'The triangle is for the eye; the word names the button.');
+        $this->assertSame('Run', trim($button->textContent));
 
         $script = self::source(self::SCRIPT);
-        $this->assertStringContainsString("el.runKey.textContent = onApple ? '⌘↵' : 'Ctrl ↵';", $script, 'The platform\'s own modifier.');
-        $this->assertSame(1, preg_match('/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-run-key \{\s*display: none;/', self::source(self::STYLESHEET)), 'A phone has no keyboard shortcut to show.');
+        $this->assertStringContainsString("el.run.setAttribute('data-tip', 'Run  ' + (onApple ? '⌘↵' : 'Ctrl+↵'));", $script, 'The platform\'s own modifier, in the tip.');
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-patternbar \.pg-run\[data-tip\]::after \{([^}]*)\}/m', $stylesheet, $tip), 'The tip is the flags\' own.');
+        $this->assertStringContainsString('content: attr(data-tip);', $tip[1]);
+        $this->assertStringContainsString('pointer-events: none;', $tip[1]);
+        $this->assertStringNotContainsString('.pg-run-key', $stylesheet, 'The printed key is gone with its rules.');
     }
 
     /**
