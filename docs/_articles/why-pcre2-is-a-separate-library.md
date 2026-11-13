@@ -73,7 +73,7 @@ Finished does not mean gone: programs built against the old library keep running
 
 PHP 7.3.0, released on 6 December 2018, was the first PHP with PCRE2, version 10.32. The proposal for the move passed 26 votes to 0, in a vote that closed on 13 November 2017. PHP's upgrade notes for 7.3 warned in one line: "character ranges in classes are now more strictly interpreted".
 
-A character class is a list of allowed characters in square brackets, like `[abc]`. Inside it, a hyphen between two characters makes a range: `[a-z]` means any letter from `a` to `z` (the [character classes chapter](../tutorial/02-character-classes.md#character-ranges) covers the rules).
+A character class is a list of allowed characters in square brackets, like `[abc]`. Inside it, a hyphen between two characters makes a range: `[a-z]` means any letter from `a` to `z` (the [character classes chapter](../tutorial/02-character-classes.md#use-ranges) covers the rules).
 
 Before it can match, the engine compiles the pattern: it checks the syntax and turns it into an internal program. This probe compiles three patterns and prints what `preg_match()` returns. The first is an ordinary pattern, as a control that should give the same result everywhere:
 

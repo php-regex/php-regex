@@ -49,15 +49,15 @@ final class FindingsLayoutTest extends TestCase
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/*[1]'.self::has('pg-quick-label')), 'The row names its first list.');
         $label = $xpath->evaluate('string('.self::byClass('pg-quick-label').')');
         $this->assertIsString($label);
-        $this->assertSame('Quick patterns', trim($label), 'Named for what they are: patterns, ready to run.');
+        $this->assertSame('Examples', trim($label), 'Named for what they are, and never mistaken for the Samples tab: examples, ready to run.');
 
         // The chips and the door stand in one row; the door counts what it
         // holds, and opens on the row of its own the panel is.
-        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/ul'.self::has('pg-examples').'[@aria-label="Quick patterns"]'));
-        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary[contains(., "Projects")]/*'.self::has('pg-findings-count')), 'The door says how many projects it holds.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/ul'.self::has('pg-examples').'[@aria-label="Example patterns"]'));
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary[contains(., "regex issues in")]/*'.self::has('pg-findings-count')), 'The door says what it holds and how many projects: "Projects" alone said nothing.');
         $count = $xpath->evaluate('string('.self::byClass('pg-quickbar').'/details'.self::has('pg-findings-browse').'/summary/*'.self::has('pg-findings-count').')');
         $this->assertIsString($count);
-        $this->assertSame('', trim($count), 'The count waits empty for the corpus: the door never reads half a sentence.');
+        $this->assertStringContainsString('{{ findings_ranked.size }} projects', (string) $count, 'The build writes the count: the door reads a whole sentence from the first paint.');
         $stylesheet = self::source(self::STYLESHEET);
         $this->assertSame(1, preg_match('/^\.pg-findings-count \{([^}]*)\}/m', $stylesheet, $chip), 'The count\'s own rule exists.');
         $this->assertStringContainsString('text-overflow: ellipsis;', $chip[1], 'A long repository name is cut, never the row it sits in.');
@@ -249,7 +249,7 @@ final class FindingsLayoutTest extends TestCase
         $script = self::source(self::SCRIPT);
         $build = self::between($script, 'function buildTree() {', "\n  }\n");
         $this->assertStringContainsString('if (pageRepo && repo.repo !== pageRepo) {', $build, 'The tree is scoped to the page\'s repository.');
-        $this->assertStringContainsString('pageRepo ? pageRepo : String(index.repos.length)', $script, 'The fold names the project, not the corpus.');
+        $this->assertStringContainsString("pageRepo ? pageRepo : index.repos.length + ' projects'", $script, 'The fold names the project, not the corpus.');
         $this->assertStringContainsString('el.findingsFilter.hidden = true', $script, 'One project needs no filter.');
     }
 

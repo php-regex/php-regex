@@ -11,7 +11,7 @@ description: "Group patterns with (...), use alternation with |, and learn captu
 
 ## 1) What are Groups?
 
-**Groups** let you apply [quantifiers](04-quantifiers.md), [alternation](#3-alternation-the-pipe), or just structure to **more than one character at once**. Think of them like parentheses in math.
+**Groups** let you apply [quantifiers](04-quantifiers.md), [alternation](#3-alternation-the-pipe-), or just structure to **more than one character at once**. Think of them like parentheses in math.
 
 ```text
 Pattern: /ab+/

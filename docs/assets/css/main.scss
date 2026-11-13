@@ -1387,6 +1387,16 @@ main table::-webkit-scrollbar-thumb {
   border-bottom: 1px solid var(--line);
 }
 
+/* The brand and its release tag move as one: the tag is a link now — it
+   answers the question it provokes — and the group keeps the .6rem the
+   tag had inside the brand link, whatever gap the header carries. */
+.brand-group {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  min-height: 44px;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -1434,6 +1444,17 @@ main table::-webkit-scrollbar-thumb {
   line-height: 1.5;
   letter-spacing: .02em;
   white-space: nowrap;
+  text-decoration: none;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+/* A pill is already a control: it answers a hover with a fill, never
+   with an underline. */
+a.version-tag:hover,
+a.version-tag:focus-visible {
+  color: var(--paper);
+  background: var(--amber);
+  text-decoration: none;
 }
 
 .site-header button {
@@ -1597,13 +1618,13 @@ main table::-webkit-scrollbar-thumb {
   height: 1.25rem;
   flex: none;
   background-color: currentColor;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401' /%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401' /%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 [data-theme='dark'] .theme-toggle::before {
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4' /%3E%3Cpath d='M12 2v2' /%3E%3Cpath d='M12 20v2' /%3E%3Cpath d='m4.93 4.93 1.41 1.41' /%3E%3Cpath d='m17.66 17.66 1.41 1.41' /%3E%3Cpath d='M2 12h2' /%3E%3Cpath d='M20 12h2' /%3E%3Cpath d='m6.34 17.66-1.41 1.41' /%3E%3Cpath d='m19.07 4.93-1.41 1.41' /%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4' /%3E%3Cpath d='M12 2v2' /%3E%3Cpath d='M12 20v2' /%3E%3Cpath d='m4.93 4.93 1.41 1.41' /%3E%3Cpath d='m17.66 17.66 1.41 1.41' /%3E%3Cpath d='M2 12h2' /%3E%3Cpath d='M20 12h2' /%3E%3Cpath d='m6.34 17.66-1.41 1.41' /%3E%3Cpath d='m19.07 4.93-1.41 1.41' /%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 .search-toggle kbd,
@@ -1631,7 +1652,7 @@ main table::-webkit-scrollbar-thumb {
     padding-inline: .7rem;
   }
 
-  .brand .version-tag {
+  .site-header .version-tag {
     display: none;
   }
 
@@ -1664,6 +1685,19 @@ main table::-webkit-scrollbar-thumb {
 
 @media (min-width: 1024px) {
   .site-header .sidebar-toggle {
+    display: none;
+  }
+}
+
+/* After the 859px block on purpose: same specificity, so the narrower
+   query must come last to win. Even at .65rem the row does not fit 375px
+   with four 44px controls; the GitHub icon goes, the footer carries it. */
+@media (max-width: 639px) {
+  .site-header {
+    gap: .65rem;
+  }
+
+  .site-header .github-link {
     display: none;
   }
 }
@@ -2373,7 +2407,9 @@ a:focus-visible .article-nav-arrow {
   white-space: nowrap;
 }
 
-/* ---- Icons: inline SVG, brand geometry (square caps, currentColor) ---- */
+/* ---- Icons: Lucide's, vendored under /assets/icons/lucide/ with their
+   license — inline SVG in their own 24-unit box, round strokes in the
+   current color; no request leaves for an icon. ---- */
 
 .icon {
   flex-shrink: 0;
@@ -2381,9 +2417,9 @@ a:focus-visible .article-nav-arrow {
   height: 14px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.75;
-  stroke-linecap: square;
-  stroke-linejoin: miter;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* ---- Sidebar (sticky rail on wide screens, drawer below 1024px) ---- */
@@ -3106,8 +3142,8 @@ a:focus-visible .article-nav-arrow {
   transform: translateY(-50%);
   background-color: var(--ink-soft);
   pointer-events: none;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.75'%3E%3Ccircle cx='6.5' cy='6.5' r='4.75'/%3E%3Cpath d='M10.2 10.2 14 14'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.75'%3E%3Ccircle cx='6.5' cy='6.5' r='4.75'/%3E%3Cpath d='M10.2 10.2 14 14'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 21-4.34-4.34' /%3E%3Ccircle cx='11' cy='11' r='8' /%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 21-4.34-4.34' /%3E%3Ccircle cx='11' cy='11' r='8' /%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 .page-filter:focus-within::before {
@@ -3605,6 +3641,7 @@ main .page-filter-hidden {
 /* The section the page lives in (Learn, Reference…), carried before the
    title like the breadcrumb it is: quiet, soft, one size down. */
 .search-dialog li a .result-section {
+  margin-right: .35em;
   font-size: .78rem;
   font-weight: 400;
   color: var(--ink-soft);
@@ -3629,6 +3666,48 @@ main .page-filter-hidden {
   padding: 0 .05em;
   color: inherit;
   background: var(--amber-tint);
+}
+
+/* The dialog's keyboard contract, one quiet line at the foot of the
+   card: it takes the bottom corners, so the list and the panel above it
+   square theirs off. The kbd recipe is the header's own. A phone has no
+   arrow keys and no Escape: the line goes with them. */
+.search-dialog ul,
+.search-dialog .search-panel {
+  border-radius: 0;
+}
+
+.search-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem 1.1rem;
+  width: min(40rem, 100%);
+  margin: -1px 0 0;
+  padding: .55rem 1rem .6rem;
+  font-size: .75rem;
+  color: var(--ink-soft);
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 0 0 var(--radius-m) var(--radius-m);
+  box-shadow: var(--shadow-2);
+}
+
+@media (max-width: 639px), (hover: none) {
+  .search-hints {
+    display: none;
+  }
+
+  .search-dialog ul,
+  .search-dialog .search-panel {
+    border-radius: 0 0 var(--radius-m) var(--radius-m);
+  }
+}
+
+.search-hints span {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  white-space: nowrap;
 }
 
 /* The panel carries everything that is not a result: the entry points
@@ -4825,11 +4904,233 @@ body.search-open {
   background: linear-gradient(to left, var(--paper) 38%, transparent);
   border-radius: var(--radius-s);
 }
+/* On a phone the pattern wraps, and a count centered on the right edge
+   would sit on its second line: it moves to the field's foot, which
+   the field reserves on both the input and its mirror. */
+@media (max-width: 639px) {
+  .pg-editor.pg-editor-pattern .pg-input,
+  .pg-editor.pg-editor-pattern .pg-mirror {
+    padding-bottom: 1.45rem;
+  }
+
+  .pg-editor-pattern .pg-field-count {
+    top: auto;
+    bottom: .3rem;
+    padding-left: .4rem;
+    transform: none;
+  }
+}
 .pg-controls {
   display: inline-flex;
   justify-self: end;
   align-items: center;
   gap: .5rem;
+}
+/* The flags: one segmented strip at the controls' height, the letters in
+   the code's own face. Released, a letter is ink-soft on nothing; pressed,
+   it wears the accent as a tint and a border — a border, so a forced
+   palette, which drops fills, still tells pressed from released. */
+.pg-flags {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  min-height: 1.9rem;
+  padding: 2px;
+  background: var(--code-bg);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}
+.pg-flags.is-off {
+  opacity: .55;
+}
+.pg-flag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  padding: 0 .3rem;
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: color .12s ease, background-color .12s ease, border-color .12s ease;
+}
+.pg-flag:hover {
+  color: var(--ink);
+  background: var(--paper);
+}
+.pg-flag:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+.pg-flag[aria-pressed="true"] {
+  color: var(--amber);
+  font-weight: 700;
+  background: var(--amber-tint);
+  border-color: var(--amber);
+}
+.pg-flag:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+  background: transparent;
+}
+/* The tip: what a letter does, said under it after a beat — the beat
+   keeps a pointer that only crosses the strip from raining tips. Drawn
+   from the attribute, so the markup says it once; it never takes the
+   click meant for what lies under it. */
+.pg-flag[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + .5rem);
+  left: 50%;
+  z-index: 6;
+  padding: .3rem .55rem;
+  font-family: var(--font-body);
+  font-size: .72rem;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: pre;
+  color: var(--paper);
+  background: var(--ink);
+  border-radius: var(--radius-s);
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  transform: translate(-50%, -2px);
+  transition: opacity .12s ease, transform .12s ease;
+  pointer-events: none;
+}
+.pg-flag[data-tip]:hover::after,
+.pg-flag[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: .35s;
+}
+@media (hover: none) {
+  .pg-flag[data-tip]::after {
+    display: none;
+  }
+}
+/* A phone has no room for six toggles, a select and Run on one line:
+   the flags take the first row whole, each toggle a wide target, and the
+   version and Run share the next. */
+@media (max-width: 639px) {
+  .pg-patternbar .pg-controls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    justify-self: stretch;
+  }
+
+  .pg-flags {
+    flex: 1 0 100%;
+  }
+
+  .pg-flags > .pg-flag,
+  .pg-flags-more,
+  .pg-flags-more > summary {
+    flex: 1;
+    justify-content: center;
+  }
+}
+/* The door to the rarer five: an ellipsis in the strip, which counts the
+   pressed flags it hides, so a flag behind it is never a secret. */
+.pg-flags-more {
+  display: flex;
+}
+.pg-flags-more > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: .2rem;
+  min-width: 1.6rem;
+  padding: 0 .35rem;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--ink-soft);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  list-style: none;
+}
+.pg-flags-more > summary::-webkit-details-marker {
+  display: none;
+}
+.pg-flags-more > summary::before {
+  content: '⋯';
+  font-size: .9rem;
+}
+.pg-flags-more > summary:hover,
+.pg-flags-more[open] > summary {
+  color: var(--ink);
+  background: var(--paper);
+}
+.pg-flags-more > summary:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+.pg-flags-more.is-active > summary {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+.pg-flags-menu {
+  position: absolute;
+  top: calc(100% + .45rem);
+  right: 0;
+  z-index: 5;
+  display: grid;
+  gap: 1px;
+  width: max-content;
+  min-width: 15rem;
+  padding: .3rem;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-2);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pg-flags-more[open] .pg-flags-menu {
+    animation: pg-panel-rise .13s ease-out;
+  }
+}
+.pg-flags-menu .pg-flag {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .55rem;
+  width: 100%;
+  padding: .4rem .45rem;
+  text-align: left;
+}
+.pg-flags-menu .pg-flag:hover:not(:disabled) {
+  background: var(--code-bg);
+}
+.pg-flag-letter {
+  display: inline-grid;
+  place-items: center;
+  height: 1.35rem;
+  font-family: var(--font-mono);
+  color: inherit;
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+}
+.pg-flag[aria-pressed="true"] .pg-flag-letter {
+  border-color: var(--amber);
+}
+.pg-flag-name {
+  font-family: var(--font-body);
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+.pg-flag-note {
+  font-family: var(--font-body);
+  font-size: .68rem;
+  font-weight: 400;
+  color: var(--ink-soft);
 }
 /* The version reads as one of the tool's own controls: the platform's
    select, the page's ink and paper, its border at the hairline weight
@@ -4878,18 +5179,48 @@ body.search-open {
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
-/* The shortcut rides inside the button, after a hairline in the
-   button's own ink: read at a glance, never a second target. */
-.pg-run-key {
-  padding-left: .45rem;
-  font-family: var(--font-mono);
-  font-size: .7rem;
+/* The play triangle, in the button's own ink: Run reads as an IDE's
+   run button, and its shortcut waits in the tip. */
+.pg-run-icon {
+  flex: none;
+  width: .7rem;
+  height: .7rem;
+  fill: currentColor;
+}
+.pg-patternbar .pg-run {
+  position: relative;
+}
+.pg-patternbar .pg-run[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + .5rem);
+  left: 50%;
+  z-index: 6;
+  padding: .3rem .55rem;
+  font-family: var(--font-body);
+  font-size: .72rem;
   font-weight: 500;
-  color: inherit;
-  background: none;
-  border: 0;
-  border-left: 1px solid color-mix(in srgb, currentColor 35%, transparent);
-  border-radius: 0;
+  line-height: 1.3;
+  white-space: pre;
+  color: var(--paper);
+  background: var(--ink);
+  border-radius: var(--radius-s);
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  transform: translate(-50%, -2px);
+  transition: opacity .12s ease, transform .12s ease;
+  pointer-events: none;
+}
+.pg-patternbar .pg-run[data-tip]:hover::after,
+.pg-patternbar .pg-run[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: .35s;
+}
+@media (hover: none) {
+  .pg-patternbar .pg-run[data-tip]::after {
+    display: none;
+  }
 }
 .pg-patternbar .pg-run:disabled {
   cursor: progress;
@@ -4935,6 +5266,17 @@ body.search-open {
 }
 .pg-state.is-error::before {
   border: .25rem solid var(--danger);
+}
+/* The light speaks alone: its word is read by the live region and said
+   in its tip, and comes to the eye only when the engine stopped — the
+   one state worth stopping for. */
+.pg-state:not(.is-error) .pg-state-word {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 @media (prefers-reduced-motion: no-preference) {
   .pg-state.is-busy::before {
@@ -5042,6 +5384,61 @@ body.search-open {
   gap: .4rem .75rem;
   padding: .7rem 1.1rem 0;
 }
+
+/* Take it with you: the address of what is on screen. It sits at the
+   far end of the bar, beside the privacy chip, in the same pill recipe —
+   the engine's facts on the left, what the visitor keeps on the right. */
+.pg-share-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin-left: auto;
+}
+
+.pg-share-actions[hidden] {
+  display: none;
+}
+
+.pg-share-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  min-height: 1.6rem;
+  padding: .15rem .6rem;
+  font-family: var(--font-body);
+  font-size: .74rem;
+  color: var(--ink-soft);
+  background: none;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease;
+}
+
+.pg-share-actions button[hidden] {
+  display: none;
+}
+
+.pg-share-actions .icon {
+  width: .8rem;
+  height: .8rem;
+}
+
+.pg-share-actions button:hover,
+.pg-share-actions button:focus-visible {
+  color: var(--ink);
+  border-color: var(--amber);
+}
+
+.pg-share-actions button:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+/* The share chips take the far end; the privacy chip follows them. */
+.pg-share-actions + .pg-privacy {
+  margin-left: 0;
+}
 /* What stays on the visitor's machine, said once, at the far end of the
    bar the engine's facts fill after a run. */
 .pg-privacy {
@@ -5063,8 +5460,8 @@ body.search-open {
   width: .7rem;
   height: .7rem;
   background-color: currentColor;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='7' width='10' height='7.5' rx='1.5'/%3E%3Cpath d='M5.5 7V5a2.5 2.5 0 0 1 5 0v2'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='7' width='10' height='7.5' rx='1.5'/%3E%3Cpath d='M5.5 7V5a2.5 2.5 0 0 1 5 0v2'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='11' x='3' y='11' rx='2' ry='2' /%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4' /%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='11' x='3' y='11' rx='2' ry='2' /%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4' /%3E%3C/svg%3E") center / contain no-repeat;
 }
 /* Wide screens: the examples above the fields on the left, what the
    engine answers on the right, pinned under the header and of one height
@@ -5107,7 +5504,11 @@ body.search-open {
     scrollbar-width: thin;
     scrollbar-color: var(--line) transparent;
   }
-  .pg-editor-subject .pg-input {
+  /* Written with the field's own class in front: the narrow layouts'
+     cap below comes later in the sheet, and at equal weight it won,
+     leaving the mirror, which has no cap, to paint a slab under the
+     field. */
+  .pg-field-text .pg-editor-subject .pg-input {
     height: 100%;
     min-height: 0;
     max-height: none;
@@ -5353,9 +5754,12 @@ body.search-open {
   box-shadow: inset 0 -2px 0 var(--line);
   text-decoration: underline dotted var(--line);
 }
+/* The node the pointer is on, lit the way the tree's own pattern lights
+   it: a tint and a line under it. A box would be drawn round each piece
+   the token colors cut the field into, a row of tiles. */
 .pg-mirror .pg-mark-node {
   background: var(--amber-tint);
-  box-shadow: inset 0 0 0 1px var(--amber);
+  box-shadow: inset 0 -2px 0 var(--amber);
 }
 
 /* Until the pattern field is touched, a caret blinks at the end of the
@@ -5500,9 +5904,12 @@ body.search-open {
    the pill the status chips wear, and the page's own voice — a button
    left to the browser would speak its default font. */
 .pg-example {
+  display: inline-flex;
   flex: none;
+  align-items: center;
+  gap: .45rem;
   min-height: 1.75rem;
-  padding: .3rem .65rem;
+  padding: .2rem .6rem .2rem .25rem;
   font-family: var(--font-body);
   font-size: .78rem;
   white-space: nowrap;
@@ -5511,6 +5918,42 @@ body.search-open {
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-s);
   cursor: pointer;
+  transition: color .12s ease, border-color .12s ease, background-color .12s ease;
+}
+/* The construct the example is about, first, in the code's face and the
+   field's keyword ink: the row reads as a map of PCRE — a group, a
+   lookbehind, a recursion — before it reads as a list of names. */
+.pg-example-glyph {
+  display: inline-flex;
+  align-items: center;
+  min-width: 1.4rem;
+  height: 1.25rem;
+  justify-content: center;
+  padding: 0 .3rem;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--tk-key);
+  background: var(--code-bg);
+  border-radius: 3px;
+}
+/* The ReDoS example warns before it is run: its construct wears the
+   danger ink, the one the verdict will wear. */
+.pg-example.is-danger .pg-example-glyph {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.pg-example.is-danger:hover,
+.pg-example.is-danger:focus-visible {
+  border-color: var(--danger);
+}
+/* The example the fields hold is pressed — the script says so, the
+   sheet shows it: the accent's tint and a border, which a forced
+   palette keeps. */
+.pg-example[aria-pressed="true"] {
+  color: var(--ink);
+  background: var(--amber-tint);
+  border-color: var(--amber);
 }
 .pg-example:hover,
 .pg-example:focus-visible {
@@ -5574,6 +6017,7 @@ body.search-open {
    a panel taller than the column an automatic row fell back to the
    strip's padding, and the panel rose over the tabs. */
 .pg-results {
+  container: pg-answers / inline-size;
   display: grid;
   grid-template-rows: max-content 1fr;
   align-content: start;
@@ -5688,11 +6132,12 @@ body.search-open {
 }
 .pg-diag-head {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: baseline;
   gap: .35rem .5rem;
 }
 .pg-diag-badge {
+  flex: none;
   padding: .1rem .45rem;
   font-family: var(--font-mono);
   font-size: .68rem;
@@ -5707,7 +6152,32 @@ body.search-open {
   border-color: var(--danger);
 }
 .pg-diag-message {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow-wrap: anywhere;
+}
+/* A range is a way to the pattern: it reads as a link in the facts'
+   own face, and pointing at it lights its bytes in the field. */
+.pg-goto {
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed var(--line);
+  cursor: pointer;
+}
+.pg-goto:hover,
+.pg-goto:focus-visible {
+  color: var(--amber);
+  border-bottom-color: var(--amber);
+}
+.pg-goto:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+.pg-hotspot .pg-goto {
+  font-family: var(--font-mono);
 }
 .pg-diag-facts,
 .pg-diag-hint {
@@ -5883,6 +6353,30 @@ body.search-open {
 .tree-kind {
   color: var(--ink-soft);
 }
+/* The chevron: a leaf keeps its room, so the names line up; an open row
+   turns it down, the dialect every tree of this web speaks. */
+.tree-toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: .9rem;
+  margin-right: -.2rem;
+  color: var(--ink-soft);
+}
+.tree-toggle:not(.is-leaf)::before {
+  content: '›';
+  transition: transform .12s ease;
+}
+.tree-toggle:not(.is-leaf):hover {
+  color: var(--amber);
+}
+.tree-item[aria-expanded="true"] > .tree-row .tree-toggle::before {
+  transform: rotate(90deg);
+}
+.tree-item[aria-expanded="false"] > .tree-children {
+  display: none;
+}
 .tree-value {
   min-width: 0;
   /* A value breaks between its words first ("{4,4} greedy"), inside a
@@ -5897,6 +6391,9 @@ body.search-open {
   color: var(--ink-soft);
 }
 .tree-detail {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -5906,6 +6403,7 @@ body.search-open {
   padding: .55rem .75rem;
   font-size: .85rem;
   line-height: 1.5;
+  background: var(--panel);
   border-top: 1px solid var(--line-soft);
 }
 /* No tree to read: the error block above says why, and the pattern strip
@@ -5993,9 +6491,6 @@ body.search-open {
     clip-path: inset(50%);
     white-space: nowrap;
   }
-  .pg-run-key {
-    display: none;
-  }
   .pg-patternbar .pg-version,
   .pg-patternbar .pg-run,
   .pg-state {
@@ -6035,9 +6530,12 @@ body.search-open {
   gap: .1rem;
   min-height: max-content;
   margin: 0;
-  padding: .3rem .55rem 0;
+  padding: .4rem .55rem 0;
   overflow-x: auto;
-  border-bottom: 1px solid var(--line-soft);
+  /* The line under the strip is painted, not a border: the scrolling
+     strip clips what overhangs it, and the open tab covers a painted
+     line where it could never reach past a border. */
+  box-shadow: inset 0 -1px 0 var(--line-soft);
   border-radius: var(--radius-m) var(--radius-m) 0 0;
   scrollbar-width: none;
 }
@@ -6057,28 +6555,43 @@ body.search-open {
   mask-image: linear-gradient(to right, transparent, black 1.25rem, black calc(100% - 1.25rem), transparent);
 }
 .pg-tabs.is-scrolled {
-  box-shadow: 0 1px 0 var(--line-soft), 0 4px 10px -6px var(--line);
+  box-shadow: inset 0 -1px 0 var(--line-soft), 0 4px 10px -6px var(--line);
 }
+/* A tab looks like one before a hand finds it: a closed tab stands on a
+   fill of its own, rounded on top; the open one is lifted — the panel's
+   color, its edges, an accent on its top — and covers the strip's line,
+   joined to what it shows, as a folder's tab is. */
 .pg-tab {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: .35rem;
+  gap: .4rem;
   min-height: 2.1rem;
-  padding: .3rem .6rem;
+  padding: .3rem .7rem;
   font-family: var(--font-body);
   font-size: .78rem;
   font-weight: 500;
   color: var(--ink-soft);
-  background: transparent;
-  border: 0;
+  background: var(--code-bg);
+  border: 1px solid transparent;
+  border-bottom: 0;
   border-radius: var(--radius-s) var(--radius-s) 0 0;
   white-space: nowrap;
   cursor: pointer;
+  transition: color .12s ease, background-color .12s ease;
 }
 .pg-tab:hover {
   color: var(--ink);
-  box-shadow: inset 0 -2px 0 var(--line-soft);
+  background: color-mix(in srgb, var(--code-bg) 60%, var(--line-soft));
+}
+/* The tool's icon, in the tab's own ink: the strip reads as a row of
+   tools, and a tab is found by its shape as much as by its word. */
+.pg-tab-icon {
+  flex: none;
+  width: .9rem;
+  height: .9rem;
+  fill: none;
+  stroke: currentColor;
 }
 .pg-tab:focus-visible {
   color: var(--ink);
@@ -6088,7 +6601,23 @@ body.search-open {
 .pg-tab[aria-selected="true"] {
   color: var(--ink);
   font-weight: 600;
-  box-shadow: inset 0 -2px 0 var(--amber);
+  background: var(--panel);
+  border-color: var(--line-soft);
+  box-shadow: inset 0 2px 0 var(--amber);
+}
+.pg-tab[aria-selected="true"] .pg-tab-icon {
+  color: var(--amber);
+}
+/* A narrow panel keeps every tab in sight: the closed ones fold to their
+   icon — the word stays their name for a voice, and their tip says it —
+   the open one keeps its word. The panel's width decides, so the
+   splitter folds them as the window does. */
+@container pg-answers (max-width: 46rem) {
+  .pg-tab:not([aria-selected="true"]) {
+    gap: .3rem;
+    padding-inline: .55rem;
+    font-size: 0;
+  }
 }
 .pg-tab-badge {
   display: inline-flex;
@@ -6147,6 +6676,86 @@ body.search-open {
   align-items: center;
   gap: .4rem .6rem;
   margin: 0 0 .6rem;
+}
+.pg-tool-row > .pg-tool-line {
+  flex: 1 1 14rem;
+  margin: 0;
+}
+.pg-hint-fix {
+  display: block;
+  margin-top: .15rem;
+  color: var(--ink-soft);
+}
+/* A translation's rows: what it is, the code, its own copy. */
+.pg-code-row {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+  align-items: start;
+  gap: .5rem;
+  margin: 0 0 .5rem;
+}
+.pg-code-row .pg-tool-code {
+  margin: 0;
+}
+.pg-code-label {
+  padding-top: .45rem;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--ink-soft);
+}
+@media (max-width: 639px) {
+  .pg-code-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .pg-code-label {
+    grid-column: 1 / -1;
+    padding-top: 0;
+  }
+}
+/* The check in this browser's engine: a line that says what it found,
+   with a mark drawn by the sheet, so the words stay the words. */
+.pg-parity {
+  display: flex;
+  align-items: baseline;
+  gap: .45rem;
+  margin: .25rem 0 .6rem;
+  padding: .45rem .65rem;
+  font-size: .8rem;
+  color: var(--ink-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}
+.pg-parity::before {
+  flex: none;
+  font-weight: 700;
+}
+.pg-parity.is-busy::before {
+  content: '…';
+}
+.pg-parity.is-same {
+  color: var(--ink);
+  border-color: var(--ok);
+}
+.pg-parity.is-same::before {
+  content: '✓';
+  color: var(--ok);
+}
+.pg-parity.is-different,
+.pg-parity.is-stopped {
+  color: var(--ink);
+  border-color: var(--amber);
+}
+.pg-parity.is-different::before,
+.pg-parity.is-stopped::before {
+  content: '!';
+  color: var(--amber);
+}
+/* Whitespace drawn in a sample: the glyph in the soft ink, the sample's
+   own characters in full. */
+.pg-ws {
+  color: var(--ink-soft);
 }
 .pg-tool-row label {
   font-size: .78rem;
@@ -6876,8 +7485,8 @@ body.search-open {
   width: .8rem;
   height: .8rem;
   background: var(--amber-deep);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='square'%3E%3Cpath d='M6.5 3.5 3 7l3.5 3.5M3.5 7h6a3 3 0 0 1 0 6H8'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='square'%3E%3Cpath d='M6.5 3.5 3 7l3.5 3.5M3.5 7h6a3 3 0 0 1 0 6H8'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14 4 9l5-5' /%3E%3Cpath d='M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11' /%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14 4 9l5-5' /%3E%3Cpath d='M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11' /%3E%3C/svg%3E") center / contain no-repeat;
 }
 .pg-trace-step.is-backtrack::after {
   content: '';
@@ -7269,6 +7878,56 @@ body.search-open {
 .pg-findings-browse > summary:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 1px;
+}
+/* The corpus door stands apart from the examples — another kind of
+   thing, behind a hairline — and says what it holds: four faces of the
+   projects, how much the linter found, in how many. */
+.pg-findings-browse {
+  padding-left: .6rem;
+  border-left: 1px solid var(--line-soft);
+}
+.pg-findings-browse > summary {
+  gap: .45rem;
+  padding-left: .4rem;
+}
+.pg-findings-faces {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+.pg-findings-faces img {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: cover;
+  background: var(--code-bg);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--paper);
+}
+.pg-findings-faces img + img {
+  margin-left: -6px;
+}
+.pg-findings-total {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--ink);
+}
+.pg-findings-browse > summary:hover .pg-findings-total,
+.pg-findings-browse[open] > summary .pg-findings-total {
+  color: var(--amber);
+}
+/* The panel opens on one sentence that says what the tree is. */
+.pg-findings-intro {
+  margin: 0;
+  font-size: .76rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+@media (max-width: 639px) {
+  .pg-findings-total,
+  .pg-findings-what {
+    display: none;
+  }
 }
 /* A long repository name is cut, never the row it sits in. */
 .pg-findings-count {

@@ -82,13 +82,20 @@
     matchDetails: root.querySelector('.pg-match-details'),
     version: root.querySelector('#pg-version'),
     run: root.querySelector('.pg-run'),
-    runKey: root.querySelector('.pg-run-key'),
     examples: root.querySelectorAll('.pg-example'),
     status: root.querySelector('.pg-status'),
     explain: root.querySelector('.pg-explain'),
     diagnostics: root.querySelector('.pg-diagnostics'),
     lintNote: root.querySelector('.pg-lint-note'),
     facts: root.querySelector('.pg-facts'),
+    shareActions: root.querySelector('.pg-share-actions'),
+    linkCopy: root.querySelector('.pg-link-copy'),
+    linkNative: root.querySelector('.pg-link-native'),
+    phpCopy: root.querySelector('.pg-php-copy'),
+    flagsGroup: root.querySelector('.pg-flags'),
+    flags: Array.prototype.slice.call(root.querySelectorAll('.pg-flag')),
+    flagsMore: root.querySelector('.pg-flags-more'),
+    flagsMoreCount: root.querySelector('.pg-flags-more-count'),
     state: root.querySelector('.pg-state'),
     stateWord: root.querySelector('.pg-state-word'),
     caption: document.querySelector('.pg-caption'),
@@ -313,6 +320,47 @@
     return fragment;
   }
 
+  // A range a tab prints is a way to the pattern: a click selects its
+  // bytes in the field, a pointer on it lights them there first — the
+  // same light the tree's nodes cast.
+  var hoverRange = null;
+
+  function revealRange(start, end) {
+    var range = current ? unitRange(current.payload, start, end) : null;
+    if (!range) {
+      return;
+    }
+    el.pattern.focus();
+    el.pattern.setSelectionRange(range.start, range.end);
+  }
+
+  function lightRange(range) {
+    hoverRange = range;
+    if (current) {
+      renderPatternMirror(current.payload, current.regex, lintFor === current.regex ? lastLint : null);
+    }
+  }
+
+  function rangeButton(label, start, end) {
+    var button = text('button', 'pg-goto', label);
+    button.type = 'button';
+    button.title = 'Select in the pattern';
+    button.addEventListener('click', function () {
+      revealRange(start, end);
+    });
+    ['mouseenter', 'focus'].forEach(function (type) {
+      button.addEventListener(type, function () {
+        lightRange({ start: start, end: end });
+      });
+    });
+    ['mouseleave', 'blur'].forEach(function (type) {
+      button.addEventListener(type, function () {
+        lightRange(null);
+      });
+    });
+    return button;
+  }
+
   // The UTF-16 range of a body-relative byte span, through the engine's table.
   function unitRange(payload, start, end) {
     var table = payload.unitOf;
@@ -357,6 +405,80 @@
     counter(el.pattern, el.patternCount, PATTERN_CAP);
     counter(el.subject, el.subjectCount, SUBJECT_CAP);
     syncExamples();
+    syncFlags();
+  }
+
+  // --- the flags -----------------------------------------------------------
+
+  var FLAG_CLOSERS = { '(': ')', '[': ']', '{': '}', '<': '>' };
+  var FLAG_SINCE = { n: '8.2' };
+  var FLAG_KEYS = { KeyI: 'i', KeyM: 'm', KeyS: 's', KeyX: 'x', KeyU: 'u' };
+
+  // The pattern's flags, read as PHP reads them: the first non-space
+  // character opens, a bracket closes with its mirror and anything else
+  // with itself, and the letters after the last closer are the flags —
+  // the last one, because a flag is a letter and never a delimiter.
+  // Null when the field is not a delimited pattern: nothing to toggle.
+  function splitFlags(value) {
+    var start = value.search(/\S/);
+    if (start < 0) {
+      return null;
+    }
+    var open = value.charAt(start);
+    if (/[A-Za-z0-9\\]/.test(open)) {
+      return null;
+    }
+    var close = FLAG_CLOSERS[open] || open;
+    var end = value.lastIndexOf(close);
+    if (end <= start) {
+      return null;
+    }
+    var after = value.slice(end + 1);
+    if (!/^[A-Za-z]*\s*$/.test(after)) {
+      return null;
+    }
+    var flags = after.replace(/\s+$/, '');
+    return { head: value.slice(0, end + 1), flags: flags, tail: after.slice(flags.length) };
+  }
+
+  // The toggles say what the field says. A flag the chosen PHP does not
+  // read is disabled, unless it is already written: taking it out is
+  // always allowed. The door counts what it hides, so a pressed flag
+  // behind it is never a secret.
+  function syncFlags() {
+    var parts = splitFlags(el.pattern.value);
+    var hidden = 0;
+    el.flags.forEach(function (button) {
+      var letter = button.getAttribute('data-flag');
+      var since = FLAG_SINCE[letter];
+      var pressed = !!parts && parts.flags.indexOf(letter) !== -1;
+      var unread = !!since && VERSIONS.indexOf(chosen) < VERSIONS.indexOf(since);
+      button.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+      button.disabled = !parts || (unread && !pressed);
+      if (pressed && el.flagsMore.contains(button)) {
+        hidden += 1;
+      }
+    });
+    el.flagsMoreCount.textContent = hidden ? '+' + hidden : '';
+    el.flagsMore.classList.toggle('is-active', hidden > 0);
+    el.flagsGroup.classList.toggle('is-off', !parts);
+    el.flagsGroup.title = parts ? '' : 'Write the pattern between delimiters, /like this/, to toggle its flags';
+  }
+
+  // A toggle is an edit of the field and nothing else: the letter goes
+  // in after the closer, or every copy of it comes out, and the field's
+  // own input event carries the change — the address, the counts, the
+  // finding's exit follow it as they follow a keystroke. Then it runs, a
+  // gesture like a chip.
+  function toggleFlag(letter) {
+    var parts = splitFlags(el.pattern.value);
+    if (!parts) {
+      return;
+    }
+    var flags = parts.flags.indexOf(letter) === -1 ? parts.flags + letter : parts.flags.split(letter).join('');
+    el.pattern.value = parts.head + flags + parts.tail;
+    el.pattern.dispatchEvent(new Event('input', { bubbles: true }));
+    analyzeNow();
   }
 
   // The example that sits in the fields, if any: pressed, so the row
@@ -706,6 +828,12 @@
         if (lastLint) {
           renderLint(lastLint);
         }
+        // An open JavaScript translation drawn while the match was on its
+        // way skipped its check: it is drawn again, and checked, with these
+        // matches, as long as the fields still hold the input they answer.
+        if (activeTool === 'transpile' && toolSettings.transpile.target === 'js' && fieldsRead(request)) {
+          renderTool('transpile', false);
+        }
         // The match has answered; its status line has said its word. When
         // a lint follows, its own messages take the line from here.
         setStatus('', '');
@@ -931,6 +1059,12 @@
         ranges.push({ start: hot.start, end: hot.end, className: 'pg-mark-hot is-' + hotspot.severity, priority: 3, title: 'ReDoS hotspot (' + hotspot.severity + '): ' + hotspot.pattern });
       }
     });
+    if (hoverRange) {
+      var lit = unitRange(payload, hoverRange.start, hoverRange.end);
+      if (lit) {
+        ranges.unshift({ start: lit.start, end: lit.end, className: 'pg-mark-node', priority: 0 });
+      }
+    }
     if (currentNode >= 0 && nodes[currentNode]) {
       var span = unitRange(payload, nodes[currentNode].start, nodes[currentNode].end);
       if (span) {
@@ -1325,15 +1459,15 @@
       head.appendChild(text('span', 'pg-diag-badge', error.source === 'validate' ? 'invalid for this engine' : 'syntax error'));
       head.appendChild(text('span', 'pg-diag-message', error.message));
       item.appendChild(head);
-      var facts = [];
-      if (typeof error.position === 'number') {
-        facts.push('byte ' + error.position + ' of the pattern body');
-      }
-      if (error.code) {
-        facts.push(error.code);
-      }
-      if (facts.length) {
-        item.appendChild(text('p', 'pg-diag-facts', facts.join(' · ')));
+      if (typeof error.position === 'number' || error.code) {
+        var factLine = text('p', 'pg-diag-facts');
+        if (typeof error.position === 'number') {
+          factLine.appendChild(rangeButton('byte ' + error.position + ' of the pattern body', error.position, null));
+        }
+        if (error.code) {
+          factLine.appendChild(document.createTextNode((typeof error.position === 'number' ? ' · ' : '') + error.code));
+        }
+        item.appendChild(factLine);
       }
       if (error.hint) {
         item.appendChild(text('p', 'pg-diag-hint', error.hint));
@@ -1373,20 +1507,20 @@
       updateDiagnosticsEmpty();
       return;
     }
-    el.lintNote.textContent = findings.length ? findings.length + (findings.length === 1 ? ' finding' : ' findings') : 'no lint finding';
+    el.lintNote.textContent = findings.length ? findings.length + (findings.length === 1 ? ' finding' : ' findings · ' + severityCounts(findings)) : 'no lint finding';
     findings.forEach(function (finding) {
       var item = text('li', 'pg-diag is-lint is-' + finding.severity);
       var head = text('p', 'pg-diag-head');
       head.appendChild(text('span', 'pg-diag-badge', SEVERITY_LABELS[finding.severity] || finding.severity));
       head.appendChild(text('span', 'pg-diag-message', finding.message));
       item.appendChild(head);
-      var facts = [];
-      if (typeof finding.offset === 'number') {
-        facts.push('bytes ' + finding.offset + (typeof finding.end === 'number' ? '–' + finding.end : ''));
-      }
       var link = text('a', 'pg-diag-rule', finding.id);
       link.href = '/reference/rules/';
-      var factsLine = text('p', 'pg-diag-facts', facts.length ? facts.join(' · ') + ' · ' : '');
+      var factsLine = text('p', 'pg-diag-facts');
+      if (typeof finding.offset === 'number') {
+        factsLine.appendChild(rangeButton('bytes ' + finding.offset + (typeof finding.end === 'number' ? '–' + finding.end : ''), finding.offset, finding.end));
+        factsLine.appendChild(document.createTextNode(' · '));
+      }
       factsLine.appendChild(link);
       item.appendChild(factsLine);
       if (finding.hint) {
@@ -1399,6 +1533,19 @@
     }
     updateDiagnosticsEmpty();
     updateBadges();
+  }
+
+  // How many of each, in the severities' own order: "1 warning, 1 info".
+  function severityCounts(findings) {
+    var counts = {};
+    findings.forEach(function (finding) {
+      counts[finding.severity] = (counts[finding.severity] || 0) + 1;
+    });
+    return Object.keys(SEVERITY_LABELS).filter(function (key) {
+      return counts[key];
+    }).map(function (key) {
+      return counts[key] + ' ' + SEVERITY_LABELS[key];
+    }).join(', ');
   }
 
   function updateDiagnosticsEmpty() {
@@ -1440,7 +1587,7 @@
     switch (node.type) {
       case 'regex': detail = node.flags ? 'flags ' + node.flags : ''; kind = 'pattern'; break;
       case 'group': detail = node.kind + (node.name ? ' \u201c' + node.name + '\u201d' : '') + (typeof node.number === 'number' ? ' #' + node.number : ''); break;
-      case 'quantifier': detail = '{' + node.min + ',' + (node.max === null ? '' : node.max) + '} ' + node.mode; break;
+      case 'quantifier': detail = quantifierNotation(node) + ' ' + node.mode; break;
       case 'literal': detail = JSON.stringify(node.value === undefined ? node.bytes : node.value); break;
       case 'char_type': detail = '\\' + node.value; break;
       case 'anchor': detail = String(node.value); break;
@@ -1457,6 +1604,27 @@
         });
     }
     return { kind: kind, detail: detail };
+  }
+
+  // A quantifier the way a pattern writes it: \d{4} reads "{4}", a star
+  // a star — the bounds the engine counts, in the notation a reader typed.
+  function quantifierNotation(node) {
+    if (node.min === 0 && node.max === null) {
+      return '*';
+    }
+    if (node.min === 1 && node.max === null) {
+      return '+';
+    }
+    if (node.min === 0 && node.max === 1) {
+      return '?';
+    }
+    if (node.max === node.min) {
+      return '{' + node.min + '}';
+    }
+    if (node.max === null) {
+      return '{' + node.min + ',}';
+    }
+    return '{' + node.min + ',' + node.max + '}';
   }
 
   function renderTree(payload, regex) {
@@ -1479,7 +1647,8 @@
 
     // Each item is the tree item itself (the pattern the role asks for):
     // focusable, one tab stop for the whole tree, the arrow keys move
-    // between items. Every node is expanded; the attribute says so.
+    // between items. Every node opens expanded and folds by its chevron
+    // or the keys; the attribute says which.
     (function walk(node, parentList, level) {
       var index = nodes.length;
       var entry = { index: index, node: node, start: node.start, end: node.end, button: null };
@@ -1491,7 +1660,13 @@
       item.setAttribute('tabindex', index === 0 ? '0' : '-1');
       item.setAttribute('data-index', String(index));
       var row = describeRow(node);
+      var children = childNodes(node);
       var label = text('span', 'tree-row');
+      // Every row keeps the chevron's room, a leaf's empty, so the names
+      // line up whatever opens and whatever does not.
+      var toggle = text('span', 'tree-toggle' + (children.length ? '' : ' is-leaf'));
+      toggle.setAttribute('aria-hidden', 'true');
+      label.appendChild(toggle);
       label.appendChild(text('span', 'tree-kind', row.kind));
       if (row.detail) {
         label.appendChild(text('span', 'tree-value', row.detail));
@@ -1500,7 +1675,6 @@
       entry.button = item;
       item.appendChild(label);
       parentList.appendChild(item);
-      var children = childNodes(node);
       if (children.length) {
         item.setAttribute('aria-expanded', 'true');
         var list = text('ul', 'tree-children');
@@ -2174,7 +2348,7 @@
       var list = text('ul', 'pg-tool-list');
       redos.hotspots.forEach(function (hotspot) {
         var item = text('li', 'pg-hotspot is-' + hotspot.severity);
-        item.appendChild(text('code', null, hotspot.pattern));
+        item.appendChild(rangeButton(hotspot.pattern, hotspot.start, hotspot.end));
         item.appendChild(text('span', 'pg-hotspot-severity', hotspot.severity));
         item.appendChild(text('span', 'pg-hotspot-facts', 'bytes ' + hotspot.start + '–' + hotspot.end + (hotspot.trigger ? ', ' + hotspot.trigger : '')));
         list.appendChild(item);
@@ -2233,9 +2407,17 @@
       panel.appendChild(tryRow);
     }
     if (redos.recommendations && redos.recommendations.length) {
+      // What is wrong, then what to try, each said once: the engine joins
+      // them in one sentence, the panel parts them.
+      var SUGGESTED = 'Suggested (verify behavior): ';
       var hints = text('ul', 'pg-tool-list');
       redos.recommendations.slice(0, 3).forEach(function (hint) {
-        hints.appendChild(text('li', null, hint));
+        var cut = hint.indexOf(SUGGESTED);
+        var item = text('li', null, cut === -1 ? hint : hint.slice(0, cut).trim());
+        if (cut !== -1) {
+          item.appendChild(text('span', 'pg-hint-fix', 'Try, then check it still matches: ' + hint.slice(cut + SUGGESTED.length)));
+        }
+        hints.appendChild(item);
       });
       panel.appendChild(hints);
     }
@@ -2298,18 +2480,16 @@
     if (!result) {
       return;
     }
-    var code = text('pre', 'pg-tool-code is-wrapped', result.literal);
-    panel.appendChild(code);
-    var row = text('div', 'pg-tool-row');
-    row.appendChild(toolButton('Copy', function () {
-      copyText(result.literal, 'the ' + TARGET_LABELS[toolSettings.transpile.target] + ' pattern', panel);
-    }));
+    // The literal and the constructor, each on a row of its own with its
+    // own copy: which one Copy took is never a guess.
+    var language = TARGET_LABELS[toolSettings.transpile.target];
+    codeRow(panel, 'Literal', result.literal, 'the ' + language + ' pattern');
     if (result.constructor && result.constructor !== result.literal) {
-      var constructorLine = text('span', 'pg-tool-line');
-      constructorLine.appendChild(text('code', null, result.constructor));
-      row.appendChild(constructorLine);
+      codeRow(panel, 'Constructor', result.constructor, 'the ' + language + ' constructor');
     }
-    panel.appendChild(row);
+    if (toolSettings.transpile.target === 'js') {
+      checkInBrowser(panel, result);
+    }
     var notes = (result.warnings || []).map(function (warning) {
       return { tone: 'is-warn', text: warning };
     }).concat((result.notes || []).map(function (note) {
@@ -2325,7 +2505,122 @@
     if (announceResult) announce('Translated to ' + TARGET_LABELS[toolSettings.transpile.target] + ', ' + (result.warnings || []).length + ' warning' + ((result.warnings || []).length === 1 ? '' : 's') + ', ' + (result.notes || []).length + ' note' + ((result.notes || []).length === 1 ? '' : 's') + '.');
   }
 
+  function codeRow(panel, label, code, what) {
+    var row = text('div', 'pg-code-row');
+    row.appendChild(text('span', 'pg-code-label', label));
+    row.appendChild(text('pre', 'pg-tool-code is-wrapped', code));
+    row.appendChild(toolButton('Copy', function () {
+      copyText(code, what, panel);
+    }));
+    panel.appendChild(row);
+  }
+
+  // The translation, checked where it will run: this browser's JavaScript
+  // engine matches the text in a worker of its own — a pattern that
+  // backtracks there too is stopped, and said, instead of freezing the
+  // page — and the panel says whether it finds what PHP found.
+  var PARITY_TIMEOUT_MS = 1000;
+  var PARITY_WORKER = [
+    'self.onmessage = function (event) {',
+    '  var data = event.data;',
+    '  try {',
+    "    var flags = data.flags.indexOf('g') === -1 ? data.flags + 'g' : data.flags;",
+    '    var regex = new RegExp(data.source, flags);',
+    '    var values = [];',
+    '    var count = 0;',
+    '    for (var match of data.subject.matchAll(regex)) {',
+    '      if (values.length < data.cap) {',
+    '        values.push(match[0]);',
+    '      }',
+    '      count += 1;',
+    '    }',
+    '    self.postMessage({ ok: true, values: values, count: count });',
+    '  } catch (error) {',
+    '    self.postMessage({ ok: false, error: String(error && error.message ? error.message : error) });',
+    '  }',
+    '};'
+  ].join('\n');
+
+  function checkInBrowser(panel, result) {
+    var matches = current && current.payload.matches;
+    var literal = result.literal;
+    var cut = literal.lastIndexOf('/');
+    if (!matches || matches.pending || !matches.sets || (matches.error && matches.error !== 'No error') || typeof Worker !== 'function' || literal.charAt(0) !== '/' || cut <= 0) {
+      return;
+    }
+    var line = text('p', 'pg-parity is-busy', 'Checking in this browser\u2019s JavaScript engine\u2026');
+    panel.appendChild(line);
+    var url = URL.createObjectURL(new Blob([PARITY_WORKER], { type: 'text/javascript' }));
+    var worker;
+    try {
+      worker = new Worker(url);
+    } catch (error) {
+      URL.revokeObjectURL(url);
+      panel.removeChild(line);
+      return;
+    }
+    var php = matches.sets.map(function (set) {
+      return set['0'] ? set['0'][0] : '';
+    });
+    var timer = 0;
+    var finish = function (tone, words) {
+      window.clearTimeout(timer);
+      worker.terminate();
+      URL.revokeObjectURL(url);
+      line.className = 'pg-parity ' + tone;
+      line.textContent = words;
+    };
+    timer = window.setTimeout(function () {
+      finish('is-stopped', 'This browser\u2019s JavaScript did not finish within ' + PARITY_TIMEOUT_MS / 1000 + ' s on this text: the translation backtracks there too.');
+    }, PARITY_TIMEOUT_MS);
+    worker.onmessage = function (event) {
+      var answer = event.data;
+      if (!answer.ok) {
+        finish('is-different', 'This browser\u2019s JavaScript refuses the translation: ' + answer.error);
+        return;
+      }
+      var differs = -1;
+      for (var i = 0; i < Math.min(php.length, answer.values.length); i += 1) {
+        if (php[i] !== answer.values[i]) {
+          differs = i;
+          break;
+        }
+      }
+      if (differs === -1 && answer.count === matches.count) {
+        finish('is-same', matches.count === 0 ? 'Checked in this browser: JavaScript finds no match either, as PHP.' : 'Checked in this browser: JavaScript finds the same ' + (matches.count === 1 ? 'match' : matches.count + ' matches') + ' as PHP.');
+      } else if (differs !== -1) {
+        finish('is-different', 'Checked in this browser: match #' + (differs + 1) + ' differs \u2014 JavaScript finds ' + JSON.stringify(answer.values[differs]) + ', PHP ' + JSON.stringify(php[differs]) + '.');
+      } else {
+        finish('is-different', 'Checked in this browser: JavaScript finds ' + answer.count + ' match' + (answer.count === 1 ? '' : 'es') + ', PHP ' + matches.count + '.');
+      }
+    };
+    worker.postMessage({ source: literal.slice(1, cut), flags: literal.slice(cut + 1), subject: current.subject, cap: php.length });
+  }
+
   // --- samples --------------------------------------------------------------
+
+  // What the eye cannot see in a sample, drawn the way an editor shows
+  // whitespace: a space, a tab, a line break each a glyph of their own,
+  // so a sample never breaks a chip in two nor ends in an invisible space.
+  function drawWhitespace(target, value) {
+    var GLYPHS = { ' ': '\u00B7', '\t': '\u2192', '\n': '\u21B5', '\r': '\u240D' };
+    var run = '';
+    for (var i = 0; i < value.length; i += 1) {
+      var glyph = GLYPHS[value.charAt(i)];
+      if (glyph) {
+        if (run) {
+          target.appendChild(document.createTextNode(run));
+          run = '';
+        }
+        target.appendChild(text('span', 'pg-ws', glyph));
+      } else {
+        run += value.charAt(i);
+      }
+    }
+    if (run) {
+      target.appendChild(document.createTextNode(run));
+    }
+  }
 
   function renderSamples(panel, answer, announceResult) {
     var payload = answer.payload;
@@ -2350,8 +2645,12 @@
       }
       list.forEach(function (sample) {
         var li = document.createElement('li');
-        var chip = text('button', 'pg-tool-chip' + (sample === '' ? ' is-empty' : ''), sample === '' ? '(empty)' : sample);
+        var chip = text('button', 'pg-tool-chip' + (sample === '' ? ' is-empty' : ''), sample === '' ? '(empty)' : '');
         chip.type = 'button';
+        if (sample !== '') {
+          drawWhitespace(chip, sample);
+        }
+        chip.setAttribute('aria-label', sample === '' ? 'the empty string' : sample);
         chip.title = (matches ? 'Matches: ' : 'Does not match: ') + (sample === '' ? 'the empty string' : sample) + ' — put it in the subject field';
         chip.addEventListener('click', function () {
           el.subject.value = sample;
@@ -2444,6 +2743,15 @@
     row.appendChild(toolButton('Copy', function () {
       copyText(result.pattern, toolSettings.format.compact ? 'the compacted pattern' : 'the laid-out pattern', panel);
     }));
+    // The layout can take the field's place: an edit like any other, so
+    // the address and the counts follow, and the engine answers it.
+    if (result.changed) {
+      row.appendChild(toolButton('Use in the field', function () {
+        el.pattern.value = result.pattern;
+        el.pattern.dispatchEvent(new Event('input', { bubbles: true }));
+        analyzeNow();
+      }));
+    }
     var lines = result.pattern.split('\n').length;
     row.appendChild(text('span', 'pg-tool-line', result.changed ? (toolSettings.format.compact ? 'Written on one line; it matches what the pattern above matches.' : 'Laid out over ' + lines + ' line' + (lines === 1 ? '' : 's') + ' under x; it matches what the pattern above matches.') : 'The pattern fits the width: unchanged.'));
     panel.appendChild(row);
@@ -3295,16 +3603,16 @@
   // The trace is a recording, so the debugger travels it both ways: one
   // step back or on, and to the previous or the next stop — a backtrack,
   // the start of a match attempt, a capture that moved, whichever are
-  // ticked. The icons are drawn in the header's dialect, a 16-unit box and
-  // square strokes: a filled shape runs, an arrow to a dot takes one step.
+  // ticked. The icons are Lucide's, vendored under /assets/icons/lucide/,
+  // as every icon of the site: a filled shape runs, a bar stops.
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var TRACE_ICONS = {
-    rewind: 'M13 3v10M10 3 3 8l7 5z',
-    back: 'M14.5 8H6M9.5 4l-4 4 4 4M1.4 7.4h1v1.2h-1z',
-    step: 'M1.5 8H10M6.5 4l4 4-4 4M13.6 7.4h1v1.2h-1z',
-    resume: 'M3 3v10M6 3l7 5-7 5z',
-    play: 'M4.5 3l8 5-8 5z',
-    pause: 'M4 3.5h1.5v9H4zM10.5 3.5H12v9h-1.5z'
+    rewind: '<path d="M17.971 4.285A2 2 0 0 1 21 6v12a2 2 0 0 1-3.029 1.715l-9.997-5.998a2 2 0 0 1-.003-3.432z" /><path d="M3 20V4" />',
+    back: '<path d="M13.971 4.285A2 2 0 0 1 17 6v12a2 2 0 0 1-3.029 1.715l-9.997-5.998a2 2 0 0 1-.003-3.432z" /><path d="M21 20V4" />',
+    step: '<path d="M10.029 4.285A2 2 0 0 0 7 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z" /><path d="M3 4v16" />',
+    resume: '<path d="M21 4v16" /><path d="M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z" />',
+    play: '<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />',
+    pause: '<rect x="14" y="3" width="5" height="18" rx="1" /><rect x="5" y="3" width="5" height="18" rx="1" />'
   };
   var TRACE_CONTROLS = [
     { act: 'rewind', label: 'Rewind to the previous stop', hint: 'Shift+←', keys: 'Shift+ArrowLeft', icon: 'rewind', solid: true },
@@ -3336,15 +3644,20 @@
   // two of rows, laid out and skipped by the browser as one.
   var TRACE_CHUNK_ROWS = 100;
 
+  // A vendored icon's drawing, parsed as SVG into elements: the page's
+  // own constant, never a string the visitor typed, and never through the
+  // HTML parser.
+  function lucideIcon(markup) {
+    var parsed = new DOMParser().parseFromString('<svg xmlns="' + SVG_NS + '">' + markup + '</svg>', 'image/svg+xml');
+    return document.importNode(parsed.documentElement, true);
+  }
+
   function traceIcon(name, solid) {
-    var svg = document.createElementNS(SVG_NS, 'svg');
+    var svg = lucideIcon(TRACE_ICONS[name]);
     svg.setAttribute('class', solid ? 'icon is-solid' : 'icon');
-    svg.setAttribute('viewBox', '0 0 16 16');
+    svg.setAttribute('viewBox', '0 0 24 24');
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('focusable', 'false');
-    var path = document.createElementNS(SVG_NS, 'path');
-    path.setAttribute('d', TRACE_ICONS[name]);
-    svg.appendChild(path);
     return svg;
   }
 
@@ -3519,7 +3832,7 @@
     view.play.setAttribute('aria-label', label);
     view.play.title = label + ' (' + TRACE_PLAY.hint + ')';
     view.play.classList.toggle('is-playing', playing);
-    view.play.querySelector('path').setAttribute('d', TRACE_ICONS[playing ? 'pause' : 'play']);
+    view.play.querySelector('svg').replaceWith(traceIcon(playing ? 'pause' : 'play', TRACE_PLAY.solid));
   }
 
   // The match's flight, drawn once as the timeline's ground: the position
@@ -4359,9 +4672,10 @@
     if (!findingsLoading) {
       findingsLoading = fetchJson(fetch('/assets/findings/index.json')).then(function (index) {
         findingsIndex = index;
-        // The fold names the project on its page, the corpus on the home;
+        // The fold names the project on its page, the corpus on the home —
+        // the build wrote the same words, the live index keeps them true;
         // one project needs no filter.
-        el.findingsCount.textContent = pageRepo ? pageRepo : String(index.repos.length);
+        el.findingsCount.textContent = pageRepo ? pageRepo : index.repos.length + ' projects';
         if (pageRepo) {
           el.findingsFilter.hidden = true;
         }
@@ -4693,7 +5007,7 @@
       var key = item.getAttribute('data-key');
       var shown = !!activeFinding && key === activeFinding.key;
       item.setAttribute('aria-selected', shown ? 'true' : 'false');
-      item.classList.toggle('is-last', !shown && ((key && key === lastFinding) || (!key && item.getAttribute('data-slug') === lastSlug)));
+      item.classList.toggle('is-last', !shown && ((key && key === lastFinding) || (!key && lastSlug !== null && item.getAttribute('data-slug') === lastSlug)));
       if (shown) {
         revealRow(item);
       }
@@ -4796,6 +5110,7 @@
     el.pattern.value = finding.pattern;
     el.subject.value = finding.subject;
     el.textField.hidden = true;
+    el.shareActions.hidden = true;
     el.findingCard.hidden = false;
     el.findingLeft.hidden = true;
     el.findingNotice.hidden = true;
@@ -4821,6 +5136,7 @@
     activeFinding = null;
     el.findingCard.hidden = true;
     el.textField.hidden = false;
+    el.shareActions.hidden = false;
     el.findingLeft.hidden = reason === 'source';
     el.findingLeftText.textContent = reason === 'edit' ? 'Edited copy, no longer the finding.' : 'A copy of the finding, yours to edit.';
     try {
@@ -5186,6 +5502,66 @@
     navigator.share({ title: activeRepo.repo + ': ' + activeFinding.issues[0].message, url: findingUrl(activeRepo, activeFinding) }).catch(function () {/* the visitor closed the sheet */});
   });
 
+  // --- the sandbox's own take-it-with-you cluster -------------------------
+
+  // The address of exactly what is on screen: pattern, subject, version —
+  // the same three the hash writer spells, said at the moment of the click
+  // so the link never carries a stale run. The origin is spelled too: a
+  // link without it is a path that pastes nowhere. The cluster is hidden
+  // while a finding is shown: a finding's address carries no pattern.
+  function sandboxAddress() {
+    var params = new URLSearchParams();
+    params.set('pattern', el.pattern.value);
+    params.set('subject', el.subject.value);
+    params.set('php', chosen);
+    return window.location.origin + window.location.pathname + '#' + params.toString();
+  }
+
+  el.linkCopy.addEventListener('click', function () {
+    copyText(sandboxAddress(), 'the link', el.textField);
+  });
+
+  // The pattern and the text as PHP source: a single-quoted literal reads
+  // a backslash as itself unless a quote, another backslash or the end
+  // follows it, so only those are doubled — the pattern keeps the face
+  // its author gave it, and reads back into the very same bytes.
+  function phpString(value) {
+    var out = '';
+    for (var i = 0; i < value.length; i += 1) {
+      var character = value.charAt(i);
+      if (character === "'") {
+        out += "\\'";
+      } else if (character === '\\') {
+        var next = value.charAt(i + 1);
+        out += (next === '' || next === '\\' || next === "'") ? '\\\\' : '\\';
+      } else {
+        out += character;
+      }
+    }
+    return "'" + out + "'";
+  }
+
+  // A script, not a sketch: every match, as the field underlines them,
+  // and a failed match that says why instead of returning false.
+  function phpSnippet() {
+    return '<?php\n\n'
+      + '$subject = ' + phpString(el.subject.value) + ';\n\n'
+      + 'if (false === preg_match_all(' + phpString(el.pattern.value) + ', $subject, $matches, PREG_SET_ORDER)) {\n'
+      + '    throw new RuntimeException(preg_last_error_msg());\n'
+      + '}\n\n'
+      + 'print_r($matches);\n';
+  }
+
+  el.phpCopy.addEventListener('click', function () {
+    copyText(phpSnippet(), 'the PHP code', el.textField);
+  });
+  if (typeof navigator.share === 'function') {
+    el.linkNative.hidden = false;
+    el.linkNative.addEventListener('click', function () {
+      navigator.share({ title: document.title, url: sandboxAddress() }).catch(function () {/* the visitor closed the sheet */});
+    });
+  }
+
   // --- the projects panel --------------------------------------------------
 
   // The projects live behind a door of their own, closed until a hand or
@@ -5257,6 +5633,7 @@
   });
   el.version.addEventListener('change', function () {
     chosen = el.version.value;
+    syncFlags();
     track('version_changed', { php_version: chosen });
     pageTouched = true;
     try {
@@ -5296,9 +5673,10 @@
       area.previousElementSibling.scrollLeft = area.scrollLeft;
     });
   });
-  // Run says its shortcut in the platform's own words.
+  // Run says its shortcut in its tip, in the platform's own words, as an
+  // IDE's play button does.
   var onApple = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
-  el.runKey.textContent = onApple ? '⌘↵' : 'Ctrl ↵';
+  el.run.setAttribute('data-tip', 'Run  ' + (onApple ? '⌘↵' : 'Ctrl+↵'));
   el.run.addEventListener('click', function () {
     track('run', { trigger: 'button' });
     pageTouched = true;
@@ -5311,6 +5689,45 @@
       track('run', { trigger: 'keyboard' });
       pageTouched = true;
       analyzeNow();
+    }
+  });
+
+  el.flags.forEach(function (button) {
+    button.addEventListener('click', function () {
+      toggleFlag(button.getAttribute('data-flag'));
+    });
+  });
+  // Alt and the letter, from the pattern field, for the row's five: the
+  // find bar's own grammar. The key, not the character — Alt+I types a
+  // circumflex on a Mac.
+  el.pattern.addEventListener('keydown', function (event) {
+    var letter = FLAG_KEYS[event.code];
+    if (!letter || !event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+      return;
+    }
+    event.preventDefault();
+    toggleFlag(letter);
+  });
+  // The door closes the way every popover of the page closes: Escape,
+  // or a click anywhere else.
+  el.flagsMore.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && el.flagsMore.open) {
+      event.stopPropagation();
+      el.flagsMore.open = false;
+      el.flagsMore.querySelector('summary').focus();
+    }
+  });
+  document.addEventListener('click', function (event) {
+    if (el.flagsMore.open && !el.flagsMore.contains(event.target)) {
+      el.flagsMore.open = false;
+    }
+  });
+  // The row says the shortcut in the platform's words, inside the tip.
+  el.flags.forEach(function (button) {
+    var letter = button.getAttribute('data-flag');
+    if (button.hasAttribute('data-tip') && FLAG_KEYS['Key' + letter.toUpperCase()] === letter) {
+      button.setAttribute('data-tip', button.getAttribute('data-tip') + (onApple ? '  ⌥' : '  Alt+') + letter.toUpperCase());
+      button.setAttribute('aria-keyshortcuts', 'Alt+' + letter.toUpperCase());
     }
   });
 
@@ -5463,19 +5880,76 @@
     }
     var index = Number(item.getAttribute('data-index'));
     var target = -1;
+    var opens = childNodes(nodes[index].node).length > 0;
     switch (event.key) {
-      case 'ArrowDown': target = Math.min(index + 1, nodes.length - 1); break;
-      case 'ArrowUp': target = Math.max(index - 1, 0); break;
+      case 'ArrowDown': target = visibleStep(index, 1); break;
+      case 'ArrowUp': target = visibleStep(index, -1); break;
       case 'Home': target = 0; break;
-      case 'End': target = nodes.length - 1; break;
-      case 'ArrowRight': target = childNodes(nodes[index].node).length ? index + 1 : index; break;
-      case 'ArrowLeft': target = parentIndex(index); break;
+      case 'End': target = visibleStep(nodes.length, -1); break;
+      case 'ArrowRight':
+        if (opens && !isExpanded(index)) {
+          setExpanded(index, true);
+          target = index;
+        } else {
+          target = opens ? index + 1 : index;
+        }
+        break;
+      case 'ArrowLeft':
+        if (opens && isExpanded(index)) {
+          setExpanded(index, false);
+          target = index;
+        } else {
+          target = parentIndex(index);
+        }
+        break;
       default: return;
     }
     event.preventDefault();
     if (target >= 0 && target !== index) {
       nodes[target].button.focus();
     }
+  });
+
+  // The tree pattern's folds: right opens a closed row, then enters it;
+  // left closes an open one, then climbs; up and down skip what a fold
+  // hides. A click on the chevron folds too.
+  function isExpanded(index) {
+    return nodes[index].button.getAttribute('aria-expanded') === 'true';
+  }
+
+  function setExpanded(index, open) {
+    if (nodes[index] && nodes[index].button.hasAttribute('aria-expanded')) {
+      nodes[index].button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  }
+
+  function isShown(index) {
+    var parent = nodes[index].button.parentNode.closest('[role="treeitem"]');
+    while (parent) {
+      if (parent.getAttribute('aria-expanded') === 'false') {
+        return false;
+      }
+      parent = parent.parentNode.closest('[role="treeitem"]');
+    }
+    return true;
+  }
+
+  function visibleStep(index, step) {
+    for (var i = index + step; i >= 0 && i < nodes.length; i += step) {
+      if (isShown(i)) {
+        return i;
+      }
+    }
+    return Math.min(index, nodes.length - 1);
+  }
+
+  el.treeNodes.addEventListener('click', function (event) {
+    var toggle = event.target.closest('.tree-toggle');
+    if (!toggle || toggle.classList.contains('is-leaf')) {
+      return;
+    }
+    var index = Number(toggle.closest('[role="treeitem"]').getAttribute('data-index'));
+    setExpanded(index, !isExpanded(index));
   });
 
   function parentIndex(index) {

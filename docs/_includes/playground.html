@@ -57,7 +57,7 @@
   leaves the card for the sandbox. A repository's page passes its name
   as `findings_repo`.
 {% endcomment %}
-<div class="playground" id="playground" data-bundle="/assets/playground/bundle.json?v={{ site.time | date: '%s' }}"{% if include.findings_repo %} data-findings-repo="{{ include.findings_repo }}"{% endif %}>
+<div class="playground" id="playground" data-bundle="/assets/playground/bundle.json?v={{ site.time | date: '%s' | escape }}"{% if include.findings_repo %} data-findings-repo="{{ include.findings_repo | escape }}"{% endif %}>
   <script type="application/json" id="playground-data">{{ site.data.playground | jsonify | replace: '<', '\u003C' }}</script>
   <div class="pg-patternbar">
     <div class="pg-field">
@@ -70,29 +70,71 @@
       <span class="visually-hidden" id="pg-pattern-error"></span>
     </div>
     <div class="pg-controls">
+      {%- comment -%}The flags, beside the pattern they close: the five a
+        reader of PHP code meets in the row, the rest behind a door, each
+        a toggle that writes its letter after the closing delimiter. The
+        field stays the truth: a toggle is pressed because the letter is
+        there, whoever wrote it. S and X are not offered: PHP has made
+        both no-ops.{% endcomment %}
+      <div class="pg-flags" role="group" aria-label="Flags">
+        <button type="button" class="pg-flag" data-flag="i" aria-pressed="false" aria-label="i, case-insensitive" data-tip="Case-insensitive">i</button>
+        <button type="button" class="pg-flag" data-flag="m" aria-pressed="false" aria-label="m, multiline: ^ and $ at every line" data-tip="Multiline: ^ and $ at every line">m</button>
+        <button type="button" class="pg-flag" data-flag="s" aria-pressed="false" aria-label="s, dot matches newlines" data-tip="Dot matches newlines">s</button>
+        <button type="button" class="pg-flag" data-flag="x" aria-pressed="false" aria-label="x, extended: spaces and # comments ignored" data-tip="Extended: spaces and # comments ignored">x</button>
+        <button type="button" class="pg-flag" data-flag="u" aria-pressed="false" aria-label="u, UTF-8: pattern and text read as Unicode" data-tip="UTF-8: pattern and text read as Unicode">u</button>
+        <details class="pg-flags-more">
+          <summary aria-label="More flags"><span class="pg-flags-more-count"></span></summary>
+          <div class="pg-flags-menu" role="group" aria-label="More flags">
+            <button type="button" class="pg-flag" data-flag="n" aria-pressed="false" aria-label="n, no auto-capture: plain groups stop capturing"><span class="pg-flag-letter">n</span><span class="pg-flag-name">No auto-capture</span><span class="pg-flag-note">PHP 8.2+</span></button>
+            <button type="button" class="pg-flag" data-flag="U" aria-pressed="false" aria-label="U, ungreedy: quantifiers lazy unless followed by ?"><span class="pg-flag-letter">U</span><span class="pg-flag-name">Ungreedy</span></button>
+            <button type="button" class="pg-flag" data-flag="D" aria-pressed="false" aria-label="D, dollar end only: $ never before a final newline"><span class="pg-flag-letter">D</span><span class="pg-flag-name">Dollar end only</span></button>
+            <button type="button" class="pg-flag" data-flag="A" aria-pressed="false" aria-label="A, anchored: the match starts where the search starts"><span class="pg-flag-letter">A</span><span class="pg-flag-name">Anchored</span></button>
+            <button type="button" class="pg-flag" data-flag="J" aria-pressed="false" aria-label="J, duplicate group names allowed"><span class="pg-flag-letter">J</span><span class="pg-flag-name">Duplicate names</span></button>
+          </div>
+        </details>
+      </div>
       <label class="visually-hidden" for="pg-version">PHP version</label>
       <select id="pg-version" class="pg-version"></select>
-      <button type="button" class="pg-run" aria-keyshortcuts="Control+Enter Meta+Enter">Run<kbd class="pg-run-key" aria-hidden="true">Ctrl ↵</kbd></button>
+      <button type="button" class="pg-run" aria-keyshortcuts="Control+Enter Meta+Enter" data-tip="Run  Ctrl+↵"><svg class="icon pg-run-icon" data-icon="play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" /></svg>Run</button>
       <span class="pg-state" role="status" aria-live="polite" title="Sample · press Run"><span class="pg-state-word">Sample · press Run</span></span>
     </div>
   </div>
   <div class="pg-quickbar">
-    <span class="pg-quick-label" aria-hidden="true">Quick patterns</span>
-    <ul class="pg-examples" aria-label="Quick patterns">
-      <li><button type="button" class="pg-example" data-regex="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m" data-subject="2026-11-02&#10;2026-11-19&#10;not a date" title="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m"><span class="pg-example-name">named groups</span><span class="pg-example-pattern">/^(?&lt;year&gt;\d{4})-(?&lt;month&gt;\d{2})-(?&lt;day&gt;\d{2})$/m</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/[\w.+-]+@[\w-]+\.[\w.-]+/i" data-subject="Write to hello@php-regex.com or to noreply@example.org." title="/[\w.+-]+@[\w-]+\.[\w.-]+/i"><span class="pg-example-name">e-mail addresses</span><span class="pg-example-pattern">/[\w.+-]+@[\w-]+\.[\w.-]+/i</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/(?<=@)[\w.-]+(?=\.)/" data-subject="Write to hello@php-regex.com or noreply@example.org" title="/(?<=@)[\w.-]+(?=\.)/"><span class="pg-example-name">lookaround</span><span class="pg-example-pattern">/(?&lt;=@)[\w.-]+(?=\.)/</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/\b(\w+) \1\b/i" data-subject="This this is a a duplicated word test, very very nice." title="/\b(\w+) \1\b/i"><span class="pg-example-name">repeated words</span><span class="pg-example-pattern">/\b(\w+) \1\b/i</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i" data-subject="Colors: #fff, #B14E06, #12ab34 and #12345." title="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i"><span class="pg-example-name">hex colors</span><span class="pg-example-pattern">/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/&quot;\w++&quot;/" data-subject="Say &quot;hello&quot; and &quot;a b&quot;, not &quot;unclosed." title="/&quot;\w++&quot;/"><span class="pg-example-name">possessive quotes</span><span class="pg-example-pattern">/&quot;\w++&quot;/</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/\((?:[^()]++|(?R))*\)/" data-subject="(a(b)c) and ((x)) but (broken" title="/\((?:[^()]++|(?R))*\)/"><span class="pg-example-name">balanced parentheses</span><span class="pg-example-pattern">/\((?:[^()]++|(?R))*\)/</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/" data-subject="IPs: 192.168.1.10, 8.8.8.8, 256.1.1.1 and 10.0.0.255." title="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/"><span class="pg-example-name">IPv4 addresses</span><span class="pg-example-pattern">/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/^(a+)+$/" data-subject="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab" title="/^(a+)+$/"><span class="pg-example-name">catastrophic backtracking</span><span class="pg-example-pattern">/^(a+)+$/</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega" title="/\p{Lu}\p{Ll}+/u"><span class="pg-example-name">Unicode properties</span><span class="pg-example-pattern">/\p{Lu}\p{Ll}+/u</span></button></li>
+    <span class="pg-quick-label" aria-hidden="true">Examples</span>
+    <ul class="pg-examples" aria-label="Example patterns">
+      <li><button type="button" class="pg-example" data-regex="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m" data-subject="2026-11-02&#10;2026-11-19&#10;not a date" title="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m"><span class="pg-example-glyph" aria-hidden="true">(?&lt;year&gt;</span><span class="pg-example-name">named groups</span><span class="pg-example-pattern">/^(?&lt;year&gt;\d{4})-(?&lt;month&gt;\d{2})-(?&lt;day&gt;\d{2})$/m</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/[\w.+-]+@[\w-]+\.[\w.-]+/i" data-subject="Write to hello@php-regex.com or to noreply@example.org." title="/[\w.+-]+@[\w-]+\.[\w.-]+/i"><span class="pg-example-glyph" aria-hidden="true">@</span><span class="pg-example-name">e-mail addresses</span><span class="pg-example-pattern">/[\w.+-]+@[\w-]+\.[\w.-]+/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/(?<=@)[\w.-]+(?=\.)/" data-subject="Write to hello@php-regex.com or noreply@example.org" title="/(?<=@)[\w.-]+(?=\.)/"><span class="pg-example-glyph" aria-hidden="true">(?&lt;=</span><span class="pg-example-name">lookaround</span><span class="pg-example-pattern">/(?&lt;=@)[\w.-]+(?=\.)/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\b(\w+) \1\b/i" data-subject="This this is a a duplicated word test, very very nice." title="/\b(\w+) \1\b/i"><span class="pg-example-glyph" aria-hidden="true">\1</span><span class="pg-example-name">repeated words</span><span class="pg-example-pattern">/\b(\w+) \1\b/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i" data-subject="Colors: #fff, #B14E06, #12ab34 and #12345." title="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i"><span class="pg-example-glyph" aria-hidden="true">#</span><span class="pg-example-name">hex colors</span><span class="pg-example-pattern">/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/&quot;\w++&quot;/" data-subject="Say &quot;hello&quot; and &quot;a b&quot;, not &quot;unclosed." title="/&quot;\w++&quot;/"><span class="pg-example-glyph" aria-hidden="true">++</span><span class="pg-example-name">possessive quotes</span><span class="pg-example-pattern">/&quot;\w++&quot;/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\((?:[^()]++|(?R))*\)/" data-subject="(a(b)c) and ((x)) but (broken" title="/\((?:[^()]++|(?R))*\)/"><span class="pg-example-glyph" aria-hidden="true">(?R)</span><span class="pg-example-name">balanced parentheses</span><span class="pg-example-pattern">/\((?:[^()]++|(?R))*\)/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/" data-subject="IPs: 192.168.1.10, 8.8.8.8, 256.1.1.1 and 10.0.0.255." title="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/"><span class="pg-example-glyph" aria-hidden="true">{3}</span><span class="pg-example-name">IPv4 addresses</span><span class="pg-example-pattern">/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/</span></button></li>
+      <li><button type="button" class="pg-example is-danger" data-regex="/^(a+)+$/" data-subject="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab" title="/^(a+)+$/"><span class="pg-example-glyph" aria-hidden="true">(a+)+</span><span class="pg-example-name">catastrophic backtracking</span><span class="pg-example-pattern">/^(a+)+$/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega" title="/\p{Lu}\p{Ll}+/u"><span class="pg-example-glyph" aria-hidden="true">\p{Lu}</span><span class="pg-example-name">Unicode properties</span><span class="pg-example-pattern">/\p{Lu}\p{Ll}+/u</span></button></li>
     </ul>
+    {%- comment -%}The corpus door says what waits behind it before a hand
+      opens it: the faces of the projects the linter ranks first, how
+      many issues it found and in how many projects — summed by the build
+      from the findings collection, so the sentence is whole on the first
+      paint and no byte is fetched for it. A repository's page speaks of
+      its own project.{% endcomment -%}
+    {%- assign findings_ranked = site.findings | sort: "findings_rank" -%}
+    {%- if include.findings_repo -%}{%- assign findings_ranked = findings_ranked | where: "findings_repo", include.findings_repo -%}{%- endif -%}
+    {%- assign findings_total = 0 -%}
+    {%- for finding in findings_ranked -%}{%- assign findings_total = findings_total | plus: finding.findings_count -%}{%- endfor -%}
+    {%- if findings_total >= 1000 -%}
+      {%- assign findings_thousands = findings_total | divided_by: 1000 -%}
+      {%- assign findings_units = findings_total | modulo: 1000 | prepend: '00' | slice: -3, 3 -%}
+      {%- capture findings_shown -%}{{ findings_thousands }}&#8239;{{ findings_units }}{%- endcapture -%}
+    {%- else -%}
+      {%- assign findings_shown = findings_total -%}
+    {%- endif -%}
+    {%- capture findings_names -%}{%- if include.findings_repo -%}{{ include.findings_repo }}{%- else -%}{%- for finding in findings_ranked limit: 4 -%}{{ finding.findings_repo | split: '/' | first }}{% unless forloop.last %}, {% endunless %}{%- endfor -%}{%- endif -%}{%- endcapture -%}
     <details class="pg-findings-browse">
-      <summary>Projects <span class="pg-findings-count"></span></summary>
+      <summary title="What the linter found in {{ findings_names | escape }}{% unless include.findings_repo %} and more{% endunless %}: open a finding to replay it here"><span class="pg-findings-faces" aria-hidden="true">{%- for finding in findings_ranked limit: 4 -%}<img src="/assets/findings/avatars/{{ finding.findings_repo | split: '/' | first | escape }}.png" alt="" width="18" height="18" loading="lazy" decoding="async">{%- endfor -%}</span><span class="pg-findings-total">{{ findings_shown }}</span> <span class="pg-findings-what">{% if findings_total == 1 %}regex issue in{% else %}regex issues in{% endif %}</span> <span class="pg-findings-count">{% if include.findings_repo %}{{ include.findings_repo }}{% else %}{{ findings_ranked.size }} projects{% endif %}</span></summary>
       <div class="pg-findings-body">
+        <p class="pg-findings-intro">{% if include.findings_repo %}The regexes of {{ include.findings_repo }}, linted for its own PHP version.{% else %}The regexes of {{ findings_ranked.size }} open-source PHP projects, each linted for its own PHP version.{% endif %} Open a finding to replay it here.</p>
         <input type="search" class="pg-findings-filter" placeholder="owner, repo or rule" aria-label="Filter by owner, repository or rule" spellcheck="false" autocapitalize="off" autocomplete="off">
         <ul class="pg-findings-tree" role="tree" aria-label="Projects"></ul>
         <p class="pg-findings-empty" hidden>No project matches.</p>
@@ -143,13 +185,13 @@
     </div>
     <div class="pg-results">
       <div class="pg-tabs" role="tablist" aria-label="Results">
-        <button type="button" class="pg-tab" role="tab" id="pg-tab-tree" aria-controls="pg-tool-tree" aria-selected="true" data-tool="tree">Tree</button>
-        <button type="button" class="pg-tab" role="tab" id="pg-tab-diagnostics" aria-controls="pg-tool-diagnostics" aria-selected="false" tabindex="-1" data-tool="diagnostics">Diagnostics<span class="pg-tab-badge"></span></button>
-        <button type="button" class="pg-tab" role="tab" id="pg-tab-redos" aria-controls="pg-tool-redos" aria-selected="false" tabindex="-1" data-tool="redos">ReDoS<span class="pg-tab-badge"></span></button>
-        <button type="button" class="pg-tab" role="tab" id="pg-tab-transpile" aria-controls="pg-tool-transpile" aria-selected="false" tabindex="-1" data-tool="transpile">Translate</button>
-        <button type="button" class="pg-tab" role="tab" id="pg-tab-samples" aria-controls="pg-tool-samples" aria-selected="false" tabindex="-1" data-tool="samples">Samples</button>
-        <button type="button" class="pg-tab" role="tab" id="pg-tab-format" aria-controls="pg-tool-format" aria-selected="false" tabindex="-1" data-tool="format">Format</button>
-        <button type="button" class="pg-tab" role="tab" id="pg-tab-trace" aria-controls="pg-tool-trace" aria-selected="false" tabindex="-1" data-tool="trace">Step through</button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-tree" aria-controls="pg-tool-tree" title="Tree" aria-selected="true" data-tool="tree"><svg class="icon pg-tab-icon" data-icon="list-tree" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5h13" /><path d="M13 12h8" /><path d="M13 19h8" /><path d="M3 10a2 2 0 0 0 2 2h3" /><path d="M3 5v12a2 2 0 0 0 2 2h3" /></svg>Tree</button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-diagnostics" aria-controls="pg-tool-diagnostics" title="Diagnostics" aria-selected="false" tabindex="-1" data-tool="diagnostics"><svg class="icon pg-tab-icon" data-icon="triangle-alert" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>Diagnostics<span class="pg-tab-badge"></span></button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-redos" aria-controls="pg-tool-redos" title="ReDoS" aria-selected="false" tabindex="-1" data-tool="redos"><svg class="icon pg-tab-icon" data-icon="hourglass" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></svg>ReDoS<span class="pg-tab-badge"></span></button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-transpile" aria-controls="pg-tool-transpile" title="Translate" aria-selected="false" tabindex="-1" data-tool="transpile"><svg class="icon pg-tab-icon" data-icon="arrow-left-right" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3 4 7l4 4" /><path d="M4 7h16" /><path d="m16 21 4-4-4-4" /><path d="M20 17H4" /></svg>Translate</button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-samples" aria-controls="pg-tool-samples" title="Samples" aria-selected="false" tabindex="-1" data-tool="samples"><svg class="icon pg-tab-icon" data-icon="dices" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect width="12" height="12" x="2" y="10" rx="2" ry="2" /><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6" /><path d="M6 18h.01" /><path d="M10 14h.01" /><path d="M15 6h.01" /><path d="M18 9h.01" /></svg>Samples</button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-format" aria-controls="pg-tool-format" title="Format" aria-selected="false" tabindex="-1" data-tool="format"><svg class="icon pg-tab-icon" data-icon="list-indent-increase" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 5H11" /><path d="M21 12H11" /><path d="M21 19H11" /><path d="m3 8 4 4-4 4" /></svg>Format</button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-trace" aria-controls="pg-tool-trace" title="Step through" aria-selected="false" tabindex="-1" data-tool="trace"><svg class="icon pg-tab-icon" data-icon="step-forward" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10.029 4.285A2 2 0 0 0 7 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z" /><path d="M3 4v16" /></svg>Step through</button>
       </div>
       <div class="pg-tool tree" role="tabpanel" id="pg-tool-tree" aria-labelledby="pg-tab-tree" tabindex="0">
         <div class="tree-head">
@@ -187,6 +229,15 @@
   </div>
   <div class="pg-meta">
     <ul class="pg-facts" aria-label="The engine that answered"></ul>
+    {%- comment -%}Take it with you: the address of exactly what is on
+      screen, and the PHP that runs it. The finding card keeps its own
+      cluster — this one is the sandbox's, hidden while a finding is
+      shown.{% endcomment -%}
+    <div class="pg-share-actions">
+      <button type="button" class="pg-link-copy"><svg class="icon" data-icon="link" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>Copy link</button>
+      <button type="button" class="pg-php-copy"><svg class="icon" data-icon="code" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 18 6-6-6-6" /><path d="m8 6-6 6 6 6" /></svg>Copy as PHP</button>
+      <button type="button" class="pg-link-native" hidden>Share</button>
+    </div>
     <span class="pg-privacy">Nothing you type leaves your browser</span>
   </div>
   <p class="pg-live visually-hidden" aria-live="polite"></p>
