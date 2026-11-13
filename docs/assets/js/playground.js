@@ -4693,7 +4693,7 @@
       var key = item.getAttribute('data-key');
       var shown = !!activeFinding && key === activeFinding.key;
       item.setAttribute('aria-selected', shown ? 'true' : 'false');
-      item.classList.toggle('is-last', !shown && ((key && key === lastFinding) || (!key && item.getAttribute('data-slug') === lastSlug)));
+      item.classList.toggle('is-last', !shown && ((key && key === lastFinding) || (!key && lastSlug !== null && item.getAttribute('data-slug') === lastSlug)));
       if (shown) {
         revealRow(item);
       }
