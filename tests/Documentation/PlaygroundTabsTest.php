@@ -93,6 +93,22 @@ final class PlaygroundTabsTest extends TestCase
         $this->assertStringContainsString('background: var(--panel);', $detail[1], 'Opaque: the rows scroll under it, never through it.');
     }
 
+    /**
+     * The node the pointer is on lights the field the way it lights the
+     * tree's own pattern: a tint and a line under it. A box drawn round
+     * each piece the field's colors cut it into read as a row of tiles.
+     */
+    #[Test]
+    public function test_the_field_lights_a_node_as_the_tree_s_pattern_does(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+
+        $this->assertSame(1, preg_match('/^\.pg-mirror \.pg-mark-node \{([^}]*)\}/m', $stylesheet, $field));
+        $this->assertStringContainsString('background: var(--amber-tint);', $field[1]);
+        $this->assertStringContainsString('box-shadow: inset 0 -2px 0 var(--amber);', $field[1], 'A line under the node, as in the tree\'s pattern.');
+        $this->assertStringNotContainsString('inset 0 0 0', $field[1], 'No box: the pieces would each draw their own.');
+    }
+
     // --- Diagnostics ---------------------------------------------------------
 
     /**

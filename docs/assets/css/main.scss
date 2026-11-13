@@ -5756,9 +5756,12 @@ body.search-open {
   box-shadow: inset 0 -2px 0 var(--line);
   text-decoration: underline dotted var(--line);
 }
+/* The node the pointer is on, lit the way the tree's own pattern lights
+   it: a tint and a line under it. A box would be drawn round each piece
+   the token colors cut the field into, a row of tiles. */
 .pg-mirror .pg-mark-node {
   background: var(--amber-tint);
-  box-shadow: inset 0 0 0 1px var(--amber);
+  box-shadow: inset 0 -2px 0 var(--amber);
 }
 
 /* Until the pattern field is touched, a caret blinks at the end of the
