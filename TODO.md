@@ -4,6 +4,10 @@
 
 In this order.
 
+0. **The release key.** Create it, set `PHAR_GPG_PRIVATE_KEY` and
+   `PHAR_GPG_PASSPHRASE` as secrets of the repository, and publish the
+   key's fingerprint beside the Phive line of `docs/guides/cli.md`: without
+   the secret a release goes out unsigned.
 1. **Repoint `yoeunes/regex-parser` on Packagist** to a repository holding
    1.x only, before anything is tagged. It still reads
    `php-regex/php-regex` and lists `2.x-dev` beside `1.x-dev`, so a `v2.0.0`
@@ -177,116 +181,18 @@ a quoted space is not a literal either (`/^a b$/x` matches `ab`, not `a b`), and
 the probes hold no whitespace.
 
 
-## Pull requests to merge before the tag
+## Pull request checks
 
-#335 first: the time-ratio tests it settles fail the PHP 8.1
-lowest-dependencies cell of every other one. Each of the others then takes
-`2.x` again before it is merged. #343, #345, #346 and #348 each move
-`Regex::CACHE_VERSION`: after the first of them is in, the next ones take
-`2.x` and run `php tests/Tools/update_cache_version.php`.
-
-- #335: the linear-time tests read 10 to 12 where the read is linear,
-  because a run of the cycle collector walks what the process holds and the
-  larger read alone sets it off; every timed read of the suite now holds
-  the collector. The PHP 8.1 lowest-dependencies cell is green on it.
-- #334: a JSON run PHP stops at its time limit prints the envelope however
-  long the shutdown takes (`JsonFatalErrorTest`, exit 255 on Windows).
-- #336: the rewrite verification test asserts the threads the match check
-  steps, not its time.
-- #337: the two worker pool tests and the boundary rule test are judged by
-  what the code did.
-- #338: one macOS cell on a pull request, a ceiling on the matrices, `CI`
-  reported for a pull request of prose alone, Box downloaded with a retry,
-  no coverage driver in the phar builds. See "Pull request checks in
-  stages".
-- #339: `format` keeps a `#` comment that ends in an escaped space.
-- #340: capture shapes read the body of a called group once per fact
-  (twenty levels of a `(?(DEFINE)` call graph: 16 s to 2 ms).
-- #341: without `u`, a transpiled set that reaches past ASCII carries a
-  warning that names it and advises `u`; nothing is refused. In the Laravel
-  command such a pattern now reads `PARTIAL`.
-- #342: overlapping alternation branches are found without comparing every
-  pair (2,000 branches sharing a start: 36 s to 0.2 s), with the same
-  findings.
-- #343: nested alphabetic assertion bodies are no longer kept in copies
-  (900 levels: 264 MB to 11 MB). The lexer still cuts the text of a body
-  once per level, so the time stays depth times size.
-- #344: the playground bundle is rebuilt from the current sources, and the
-  page no longer rewrites the sentences of an explanation.
-- #345: the size limit is read as the PCRE2 10.40 of PHP 8.2.35 checks it
-  (php-src backported upstream's fixes there), and
-  `PHP_BUNDLED_10_40_DIVERGENCES` is gone. It adds a gate that is no point
-  of the judged range (`PhpVersionGates::ERROR_ONLY`): the one decision of
-  it to look at.
-- #346: the lookaround product is read by classes of characters and
-  counted (twelve Unicode-class lookaheads: 39 s to 0.3 s, same refusal).
-  A few patterns refused for the determinize budget are now answered.
-- #347: the suite names `posix_geteuid()` when it starts on a host without
-  it, and the contributing guide lists it; the tests are not skipped there.
-- #348: a ReDoS repair tries the blamed quantifiers first and keeps no tree
-  per candidate (1,000 quantifiers: 65 s and 407 MB to 20 s and 21 MB),
-  with the same repairs and no cut-off.
-
-Before the release candidate, create the release key, set
-`PHAR_GPG_PRIVATE_KEY` and `PHAR_GPG_PASSPHRASE` as secrets of the
-repository, and publish the key's fingerprint beside the Phive line of
-`docs/guides/cli.md`; without the secret a release goes out unsigned.
-
-
-## Pull request checks in stages
-
-- After #338 is merged, make `CI` the required check of `2.x` in the
-  branch protection: a pull request of prose alone now reports it.
-- No run of #338 reached stage 3 before its review ended: read its first
-  complete run for the single `Tests (PHP 8.4, latest PCRE2)` macOS cell
-  and for the ceilings (twenty runners for the matrices of one pull
-  request). The path of a pull request of prose alone is held by tests
-  only: open one and see `CI` reported.
-- The two stops were read on GitHub (2026-11-10): "Stopped at stage 1, the
-  quick checks: Static analysis failed. Stages 2 and 3 did not start." and
-  "Stopped at stage 2, the reference: Reference, Coverage failed. Stage 3,
-  the matrix, did not start."
-- `packages.yml` starts about 33 jobs of fifteen seconds at once in stage
-  2, with no ceiling.
+- Make `CI` the required check of `2.x` in the branch protection: a pull
+  request of prose alone reports it (seen on #369), and the protection
+  requires no check yet.
 - The Box pin (4.7.1 and its checksum, in `phar.yml` and `packages.yml`) is
   bumped by hand: Dependabot does not see it.
+- `packages.yml` starts about 33 jobs of fifteen seconds at once in stage
+  2, with no ceiling.
 - The `tests/**` instruction of `.coderabbit.yaml` names
   `#[RequiresPhpExtension]` alone as an attribute gate, where the suite
   uses `#[RequiresFunction]` too: the review raises it each time.
-
-
-## Pattern resolution without PHPStan
-
-What a pattern argument resolves to is the library's own knowledge: the
-extraction of `regex lint` and of the phar decides it, the PHPStan and Psalm
-packages only answer what an expression is worth. Measured 2026-11-10 over the
-328 repositories of the corpus, 44,405 pattern arguments of the `preg_*`
-calls (PHP 8.4): the extraction reads 83.8 % of them (78.3 % literals, 5.5 %
-through a name), the tokenizer and the PHP parser agreeing on every one of
-51,861 arguments; constant folding as PHPStan does it reads 86.8 %. The
-other 16.2 % are left out without a word: 3.1 % folding would read, 8.2 % a
-static pattern around a part that is not (2.7 % `preg_quote()`, 5.4 % anything
-else), 4.9 % nothing static at all.
-
-Decided 2026-11-10, for 2.0: every argument ends in one of five states (one
-pattern, a finite set of at most 32, a static pattern around `preg_quote()`
-texts, a static pattern around another dynamic part, nothing static); the
-states and `QuotedPattern` live in the parser package, internal; a reader
-hands over literal parts and unknown ones, never a set of strings; the run
-counts what it could not verify and lists it per site only when asked, as
-`info`; a pattern around `preg_quote()` gets one error, invalid whatever the
-text, and only where the text stands as literal characters. A part that is
-not quoted is not reported: of 60 filled by a parameter and read by hand, 28
-were data left unquoted, 23 a regex fragment meant to be one, 9 undecided,
-and a parameter is the only unknown part of 14 % of them. That finding comes
-back on a rule measured at 90 % on a hundred parts labelled by hand.
-
-The 3.1 % folding reads, by what the extraction lacks, most first: a local
-variable as an operand of a concatenation; an interpolated string; an array
-of patterns (a `foreach`, a variable holding it, one of its elements); a
-variable at file level; a variable assigned on several branches, a ternary or
-a `match`; `sprintf()` and `implode()` of constants; a variable a closure
-captures. `static::X` and `self::X` in a closure stay unread on purpose.
 
 
 ## Open questions
@@ -392,27 +298,3 @@ captures. `static::X` and `self::X` in a closure stay unread on purpose.
   then its standard error: a process that fills the second first would
   block. The `Scope` job of `ci.yml` counts a moved file twice against
   GitHub's limit of 3,000 files.
-
-## Site and docs tour, 2026-11-11
-
-A full pass over the site with a fresh eye, after the playground lost
-its window (PR #355) and gained its popover (PR #357). Done in the tour's
-pull request:
-
-- The landing header keeps Docs, Tutorial and Blog at every width — a
-  phone stood on the tool with no way to the pages but the footer.
-- The documentation and the playground point at each other: the quick
-  start's first two examples, two cookbook recipes and the trace article
-  each link to the playground with the pattern preloaded
-  (`/#pattern=…&subject=…`), pinned by a contract that runs every linked
-  pattern through the engine.
-- The four launch articles stay drafts (their content is not validated
-  yet); the blog list and the `## Articles` section of `docs/llms.txt`
-  go with them in the same commit when they are.
-
-Deliberately left as they are:
-
-- No tagline above the tool on the home: the tool speaks first; the
-  footer tagline answers whoever scrolls.
-- The `2.x-dev` install commands still wait for the 2.0.0 tag (the
-  Release section above owns them).
