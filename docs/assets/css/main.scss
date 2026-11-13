@@ -3639,6 +3639,7 @@ main .page-filter-hidden {
 /* The section the page lives in (Learn, Reference…), carried before the
    title like the breadcrumb it is: quiet, soft, one size down. */
 .search-dialog li a .result-section {
+  margin-right: .35em;
   font-size: .78rem;
   font-weight: 400;
   color: var(--ink-soft);
@@ -3663,6 +3664,48 @@ main .page-filter-hidden {
   padding: 0 .05em;
   color: inherit;
   background: var(--amber-tint);
+}
+
+/* The dialog's keyboard contract, one quiet line at the foot of the
+   card: it takes the bottom corners, so the list and the panel above it
+   square theirs off. The kbd recipe is the header's own. A phone has no
+   arrow keys and no Escape: the line goes with them. */
+.search-dialog ul,
+.search-dialog .search-panel {
+  border-radius: 0;
+}
+
+.search-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem 1.1rem;
+  width: min(40rem, 100%);
+  margin: -1px 0 0;
+  padding: .55rem 1rem .6rem;
+  font-size: .75rem;
+  color: var(--ink-soft);
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 0 0 var(--radius-m) var(--radius-m);
+  box-shadow: var(--shadow-2);
+}
+
+@media (max-width: 639px), (hover: none) {
+  .search-hints {
+    display: none;
+  }
+
+  .search-dialog ul,
+  .search-dialog .search-panel {
+    border-radius: 0 0 var(--radius-m) var(--radius-m);
+  }
+}
+
+.search-hints span {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  white-space: nowrap;
 }
 
 /* The panel carries everything that is not a result: the entry points
