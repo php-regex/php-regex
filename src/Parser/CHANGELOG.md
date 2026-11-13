@@ -14,7 +14,9 @@ CHANGELOG
  * `PatternFormatter` keeps a `#` comment that ends in an escaped space as
    written wherever it lays it out: on a line of its own, after the start
    options and past ten indent levels, `# path\ ` came out as `# path\x20`,
-   the spelling meant for a space of the pattern that ends its line.
+   the spelling meant for a space of the pattern that ends its line. So does
+   an inner line of a `(?#...)` comment, which also counts as written
+   against the width.
  * The body of an alphabetic assertion nested in others, `(*pla:(*nla:a))`, is
    read from the pattern by its offsets, and the text a level read is dropped
    before the bodies inside it are read: every level kept three copies of its

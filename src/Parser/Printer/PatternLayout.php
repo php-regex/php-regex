@@ -290,6 +290,17 @@ final class PatternLayout
         return $text.$this->commentEnd.($this->active ? '' : substr($node->comment, \strlen($text)));
     }
 
+    /**
+     * The marker to write before a line break inside a "(?#...)": the line
+     * ends in the comment, not in code, so the last pass keeps an escaped
+     * space there as written, and the width counts nothing for it. '' when
+     * the pattern is written on one line.
+     */
+    public function commentEnd(): string
+    {
+        return $this->commentEnd;
+    }
+
     public function sawLineComment(): bool
     {
         return $this->sawLineComment;
@@ -1082,7 +1093,7 @@ final class PatternLayout
 
     private function columns(string $text): int
     {
-        return self::columnsOf($text, $this->countsCodePoints);
+        return self::columnsOf('' === $this->commentEnd ? $text : str_replace($this->commentEnd, '', $text), $this->countsCodePoints);
     }
 
     /**

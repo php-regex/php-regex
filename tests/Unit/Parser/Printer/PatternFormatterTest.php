@@ -2043,6 +2043,11 @@ final class PatternFormatterTest extends TestCase
      */
     public static function provideCommentsClosedByAnEscapedSpace(): iterable
     {
+        // PCRE reads no escape inside "(?#...)" either: an inner line of it
+        // ending in an escaped space is the comment's, and counts as written.
+        yield 'an inner line of an inline comment' => ['pattern' => "/a(?#x\\ \ny)/x", 'width' => 80, 'expected' => self::lines('/', '    a(?#x\ ', '    y)', '/x'), 'subject' => 'a'];
+        yield 'an inner line of an inline comment, at the width' => ['pattern' => "/(?:a(?#xxxxx\\ \ny)b)c/x", 'width' => 19, 'expected' => self::lines('/', '    (?:', '        a(?#xxxxx\ ', '        y)b', '    )', '    c', '/x'), 'subject' => 'abc'];
+        yield 'an inner line of an inline comment, past the width' => ['pattern' => "/(?:a(?#xxxxx\\ \ny)b)c/x", 'width' => 18, 'expected' => self::lines('/', '    (?:', '        a', '        (?#xxxxx\ ', '        y)b', '    )', '    c', '/x'), 'subject' => 'abc'];
         yield 'on a line of its own' => ['pattern' => "/a\n# path\\ \nb/x", 'width' => 80, 'expected' => self::lines('/', '    a', '    # path\ ', '    b', '/x'), 'subject' => 'ab'];
         yield 'closing the pattern' => ['pattern' => "/a\n# path\\ /x", 'width' => 80, 'expected' => self::lines('/', '    a', '    # path\ ', '/x'), 'subject' => 'a'];
         yield 'alone in the pattern' => ['pattern' => '/# c\ /x', 'width' => 1, 'expected' => self::lines('/', '    # c\ ', '/x'), 'subject' => ''];
