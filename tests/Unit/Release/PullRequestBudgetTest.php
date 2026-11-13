@@ -39,6 +39,14 @@ final class PullRequestBudgetTest extends TestCase
     ];
 
     /**
+     * The workflows of the second stage, and how many cells each of their
+     * matrices runs at once: they start together, beside the reference.
+     */
+    private const SECOND_STAGE = [
+        'packages.yml' => ['standalone' => 6, 'phpunit-matrix' => 3, 'infection-e2e' => 2],
+    ];
+
+    /**
      * The matrices too small for a ceiling, and their cells.
      */
     private const SMALL = [
@@ -50,14 +58,14 @@ final class PullRequestBudgetTest extends TestCase
      */
     public static function provideMatrixWorkflows(): iterable
     {
-        foreach (array_keys(self::AT_ONCE) as $workflow) {
+        foreach (array_keys(self::AT_ONCE + self::SECOND_STAGE) as $workflow) {
             yield $workflow => ['workflow' => $workflow];
         }
     }
 
     #[Test]
     #[DataProvider('provideMatrixWorkflows')]
-    public function test_every_matrix_of_the_third_stage_names_how_many_cells_run_at_once(string $workflow): void
+    public function test_every_matrix_of_the_later_stages_names_how_many_cells_run_at_once(string $workflow): void
     {
         $matrices = [];
         foreach (self::jobs($workflow) as $job => $body) {
@@ -76,7 +84,21 @@ final class PullRequestBudgetTest extends TestCase
             $matrices[$job] = (int) $ceiling[1];
         }
 
-        $this->assertSame(self::AT_ONCE[$workflow], $matrices);
+        $this->assertSame((self::AT_ONCE + self::SECOND_STAGE)[$workflow], $matrices);
+    }
+
+    /**
+     * The jobs of the second stage that are no matrix add a runner each.
+     */
+    #[Test]
+    public function test_the_matrices_of_the_second_stage_hold_a_third_of_the_runners_at_most(): void
+    {
+        $held = 0;
+        foreach (self::SECOND_STAGE as $workflow => $ceilings) {
+            $held += array_sum($ceilings) + \count(array_diff_key(self::jobs($workflow), $ceilings));
+        }
+
+        $this->assertLessThanOrEqual(intdiv(self::RUNNERS, 3), $held);
     }
 
     /**
