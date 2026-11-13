@@ -5184,7 +5184,11 @@ body.search-open {
     scrollbar-width: thin;
     scrollbar-color: var(--line) transparent;
   }
-  .pg-editor-subject .pg-input {
+  /* Written with the field's own class in front: the narrow layouts'
+     cap below comes later in the sheet, and at equal weight it won,
+     leaving the mirror, which has no cap, to paint a slab under the
+     field. */
+  .pg-field-text .pg-editor-subject .pg-input {
     height: 100%;
     min-height: 0;
     max-height: none;
