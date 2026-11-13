@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.lint.overlap.charset` compares characters, not first bytes, past
+   ASCII: under u, `/(?:ö|è)+/u` was reported because both start with the
+   byte `\xC3`, and a byte read caselessly, `/(?:\xE9+|c)+/i` with a raw
+   `\xE9`, met every other branch. PCRE gives those sets, as the target
+   reads them; `/(?:[à-ÿ]+|é)+/u`, which it missed, is reported. The message
+   quotes each branch as the pattern writes it, `\d+` rather than `\\d+`,
+   and `é` under u rather than `\xC3\xA9`.
  * The lint reads pattern arguments it left out: a pattern built at the call
    from a local variable, an interpolated string or a heredoc
    (`"/^{$part}$/"`), an integer, a `sprintf()` whose format holds only

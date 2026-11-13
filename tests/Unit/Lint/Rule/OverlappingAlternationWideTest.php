@@ -108,12 +108,12 @@ final class OverlappingAlternationWideTest extends TestCase
         yield 'texts before a class' => [
             'suffix' => '[xy]',
             'flags' => '',
-            'expected' => ['regex.lint.overlap.charset: Alternation branches "\\\\xC3\\\\xA9_name_120[xy]" and "\\\\xC3\\\\xA9_name_120[xy]" have overlapping character sets, which may cause unnecessary backtracking.'],
+            'expected' => ['regex.lint.overlap.charset: Alternation branches "é_name_120[xy]" and "é_name_120[xy]" have overlapping character sets, which may cause unnecessary backtracking.'],
         ];
         yield 'texts before a class above ASCII under u' => [
             'suffix' => '[\x{E8}\x{E9}]',
             'flags' => 'u',
-            'expected' => ['regex.lint.overlap.charset: Alternation branches "\\\\xC3\\\\xA9_name_120[\\\\x{E8}\\\\x{E9}…" and "\\\\xC3\\\\xA9_name_120[\\\\x{E8}\\\\x{E9}…" have overlapping character sets, which may cause unnecessary backtracking.'],
+            'expected' => ['regex.lint.overlap.charset: Alternation branches "é_name_120[\\x{E8}\\x{E9}]" and "é_name_120[\\x{E8}\\x{E9}]" have overlapping character sets, which may cause unnecessary backtracking.'],
         ];
     }
 

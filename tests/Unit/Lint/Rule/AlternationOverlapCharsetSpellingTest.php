@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -55,6 +56,18 @@ final class AlternationOverlapCharsetSpellingTest extends TestCase
         $this->assertSame(array_unique($messages), $messages, 'The three findings tell their alternation apart.');
     }
 
+    #[Test]
+    public function test_a_tree_without_its_source_quotes_the_branches_as_printed(): void
+    {
+        $ast = Regex::create(['cache' => null])->parse('/(?:\d+|[0-4]a)+/');
+        $linter = new PatternLinter();
+        (new RegexNode($ast->pattern, $ast->flags, $ast->delimiter, $ast->startPosition, $ast->endPosition))->accept($linter);
+
+        $messages = array_values(array_filter(array_map(static fn ($issue): string => $issue->message, $linter->getIssues()), static fn (string $message): bool => str_contains($message, 'have overlapping character sets')));
+
+        $this->assertSame(['Alternation branches "\\d+" and "[0-4]a" have overlapping character sets, which may cause unnecessary backtracking.'], $messages);
+    }
+
     /**
      * @return iterable<string, array{pattern: string, first: string, second: string}>
      */
@@ -63,7 +76,20 @@ final class AlternationOverlapCharsetSpellingTest extends TestCase
         yield 'a negated class beside an escaped backslash' => [
             'pattern' => '/(?:"(?:[^"]|\\\\.)+")+/',
             'first' => '[^"]',
-            'second' => '\\\\\\\\.',
+            'second' => '\\\\.',
+        ];
+        // Under u a character is spelled as written, as the literal
+        // findings print it: preg_match('/^\w$/u', 'é') is 1.
+        yield 'a character past ASCII under u' => [
+            'pattern' => '/(?:é+|\w)+/u',
+            'first' => 'é+',
+            'second' => '\w',
+        ];
+        // Without u each byte past ASCII is "\xHH": preg_match("/^[\xE0-\xEF]$/", "\xE9") is 1.
+        yield 'a byte past ASCII without u' => [
+            'pattern' => "/(?:[\xE0-\xEF]+|\xE9)+/",
+            'first' => '[\xE0-\xEF]+',
+            'second' => '\xE9',
         ];
     }
 
