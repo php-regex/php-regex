@@ -77,15 +77,16 @@ final class ProcessPipesTest extends TestCase
     }
 
     /**
-     * Pipes opened past FD_SETSIZE (1024) cannot be waited on: every wait
-     * fails. Reading one stream after the other could leave both processes
-     * waiting, so the drain says it failed instead of giving back part of
-     * the output.
+     * Pipes opened past FD_SETSIZE (1024) cannot be waited on where PHP
+     * waits through select(): every wait fails. Reading one stream after the
+     * other could leave both processes waiting, so the drain says it failed
+     * instead of giving back part of the output. Where PHP waits through
+     * poll(), the drain reads them to the end.
      */
     #[Test]
     #[RequiresOperatingSystem('Linux|Darwin')]
     #[RequiresFunction('posix_setrlimit')]
-    public function test_pipes_that_cannot_be_waited_on_fail_the_drain(): void
+    public function test_pipes_past_fd_setsize_are_read_or_fail_the_drain(): void
     {
         $limits = posix_getrlimit();
         $soft = \is_array($limits) && is_numeric($limits['soft openfiles'] ?? null) ? (int) $limits['soft openfiles'] : null;
@@ -108,6 +109,16 @@ final class ProcessPipesTest extends TestCase
             $this->assertCount(1100, $handles, 'Not enough files could be opened to push the pipes past FD_SETSIZE.');
             $process = proc_open([\PHP_BINARY, '-r', 'echo "out";'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
             $this->assertIsResource($process);
+
+            // Whether this PHP waits on pipes past FD_SETSIZE: some do,
+            // through poll(); the others fail every wait there.
+            $probe = [$pipes[1], $pipes[2]];
+            $write = $except = null;
+            if (false !== @stream_select($probe, $write, $except, 0)) {
+                $this->assertSame(['out', ''], ProcessPipes::drain($pipes));
+
+                return;
+            }
 
             $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessageIsOrContains('The output of the child cannot be waited on');
