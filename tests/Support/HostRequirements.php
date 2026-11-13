@@ -34,13 +34,17 @@ final class HostRequirements
      * through the job's own filter, as `gh --jq` does: with jq, which the
      * runners of GitHub and Homebrew hosts have and a minimal Linux may not.
      *
-     * @param bool $windows    the host is Windows, where neither is used
+     * A test run under a deadline that blocks on a read is ended by ending
+     * the children of the suite with pkill: without it, it hangs.
+     *
+     * @param bool $windows    the host is Windows, where none is used
      * @param bool $ownerCheck posix_geteuid() can be called
      * @param bool $jq         jq is on the PATH
+     * @param bool $pkill      pkill is on the PATH
      *
      * @return list<string>
      */
-    public static function missing(bool $windows, bool $ownerCheck, bool $jq): array
+    public static function missing(bool $windows, bool $ownerCheck, bool $jq, bool $pkill): array
     {
         if ($windows) {
             return [];
@@ -52,6 +56,9 @@ final class HostRequirements
         }
         if (!$jq) {
             $missing[] = 'jq is not on the PATH: the tests of the scope job of ci.yml read the files GitHub lists through it, as gh --jq does, and fail on this host.';
+        }
+        if (!$pkill) {
+            $missing[] = 'pkill is not on the PATH: a test run under a deadline that blocks on a read is ended by ending the children of the suite with it, and hangs on this host.';
         }
 
         return $missing;
@@ -79,7 +86,9 @@ final class HostRequirements
      */
     public static function ofThisHost(): array
     {
-        return self::missing(Path::onWindows(), \function_exists('posix_geteuid'), self::onPath('jq', (string) getenv('PATH')));
+        $path = (string) getenv('PATH');
+
+        return self::missing(Path::onWindows(), \function_exists('posix_geteuid'), self::onPath('jq', $path), self::onPath('pkill', $path));
     }
 
     /**
