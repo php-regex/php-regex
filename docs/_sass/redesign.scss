@@ -163,6 +163,43 @@
   color: var(--mute);
 }
 
+/* The select voice, shared by every engine choice on the site (the
+   playground's PHP version, a translation's target, the PHP version over a
+   runnable example): the platform's control drawn over, so it reads as one
+   of the site's fields — a ring, the weight of a label, the up-down chevron
+   that says "a list" — while the list itself stays the platform's, with
+   its keyboard and its accessibility intact. */
+@mixin select-control {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-inline: .7rem 1.9rem;
+  border: 0;
+  border-radius: var(--radius-m);
+  background-color: var(--paper);
+  /* One grey for both themes: 4.8:1 on white, 4.2:1 on the dark page. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 15 5 5 5-5'/%3E%3Cpath d='m7 9 5-5 5 5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .5rem center;
+  background-size: .9rem .9rem;
+  box-shadow: inset 0 0 0 1px var(--line-mid), var(--shadow-1);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: box-shadow .15s ease, background-color .15s ease;
+}
+
+@mixin select-control-hover {
+  box-shadow: inset 0 0 0 1px var(--marker), var(--shadow-1);
+}
+
+@mixin select-control-focus {
+  outline: 0;
+  box-shadow: inset 0 0 0 1px var(--amber), 0 0 0 3px var(--amber-tint);
+}
+
 /* ==========================================================================
    Base
    ========================================================================== */
@@ -1026,19 +1063,23 @@ main tbody tr:hover {
 }
 
 .page-main main div.highlighter-rouge > .run-version {
-  top: .35rem;
-  left: .5rem;
-  padding: .2rem .4rem;
-  border: 0;
-  border-radius: var(--radius-s);
-  background: transparent;
-  color: var(--mute);
+  @include select-control;
+  top: .3rem;
+  left: .375rem;
+  min-height: 1.75rem;
+  padding-block: .2rem;
+  padding-inline: .55rem 1.6rem;
+  background-position: right .4rem center;
+  background-size: .8rem .8rem;
   font-size: .75rem;
 }
 
 .page-main main div.highlighter-rouge > .run-version:hover {
-  background: var(--wash-strong);
-  color: var(--ink);
+  @include select-control-hover;
+}
+
+.page-main main div.highlighter-rouge > .run-version:focus-visible {
+  @include select-control-focus;
 }
 
 /* The panel no longer reserves room for controls it does not hold. */
