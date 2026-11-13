@@ -45,12 +45,26 @@ final class ProcessPipes
             stream_set_blocking($pipe, false);
         }
 
+        $failures = 0;
         while ([] !== $open) {
             $ready = array_values($open);
             $write = $except = null;
-            if (false === stream_select($ready, $write, $except, 1)) {
+            // A signal that lands during the wait interrupts it: wait again.
+            // A wait that keeps failing reads the rest one stream after the
+            // other, as on Windows, rather than give back part of it.
+            if (false === @stream_select($ready, $write, $except, 1)) {
+                if (++$failures < 10) {
+                    continue;
+                }
+
+                foreach ($open as $index => $pipe) {
+                    stream_set_blocking($pipe, true);
+                    $read[$index] .= (string) stream_get_contents($pipe);
+                }
+
                 break;
             }
+            $failures = 0;
 
             foreach ($open as $index => $pipe) {
                 if (!\in_array($pipe, $ready, true)) {

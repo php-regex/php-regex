@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Support;
 
 use PHPRegex\Tests\Support\ProcessPipes;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -41,6 +42,35 @@ final class ProcessPipesTest extends TestCase
         $this->assertSame(0, proc_close($process));
         $this->assertSame(str_repeat('o', 262144), $stdout);
         $this->assertSame(str_repeat('e', 262144).'end', $stderr);
+    }
+
+    /**
+     * A signal that lands while the pipes are waited on interrupts the
+     * wait: the reading goes on to the end of both streams.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    #[RequiresFunction('pcntl_alarm')]
+    public function test_a_wait_a_signal_interrupts_still_reads_to_the_end(): void
+    {
+        $process = proc_open([\PHP_BINARY, '-r', 'sleep(2); echo "out"; fwrite(STDERR, "err");'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $this->assertIsResource($process);
+        $async = pcntl_async_signals(true);
+        pcntl_signal(\SIGALRM, static function (): void {}, false);
+        pcntl_alarm(1);
+
+        try {
+            $read = ProcessPipes::drain($pipes);
+        } finally {
+            pcntl_alarm(0);
+            pcntl_signal(\SIGALRM, \SIG_DFL);
+            pcntl_async_signals($async);
+        }
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $this->assertSame(0, proc_close($process));
+        $this->assertSame(['out', 'err'], $read);
     }
 
     #[Test]
