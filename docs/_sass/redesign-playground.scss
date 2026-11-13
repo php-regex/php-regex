@@ -1,10 +1,11 @@
 /* PHPRegex.com — the playground, on the white page.
  *
- * Read after the documentation's layer, in its voice: the tool is one
- * window set on a faint grid, its toolbar (pattern, flags, engine, Run)
- * on top, the examples under it, and two white cards on a grey canvas —
- * the text on the left, the answers on the right behind a strip of
- * underlined tabs. Controls are segmented and framed by rings, the one
+ * Read after the documentation's layer, in its voice: the tool stands on
+ * the page itself, over a faint grid — no window around it, so it reads as
+ * part of the site and not as an application dropped into it. The toolbar
+ * (pattern, flags, engine, Run) on top, the examples under it, then two
+ * white cards — the text on the left, the answers on the right behind a
+ * strip of underlined tabs. Controls are segmented and framed by rings, the one
  * filled button is Run, in ink. Nothing here moves a pane or changes what
  * the script measures: only surfaces, edges, type and radii.
  */
@@ -14,7 +15,6 @@
    ========================================================================== */
 
 @mixin playground-light {
-  --pg-window: #FFFFFF;
   --pg-canvas: #F9FAFB;
   --pg-surface: #FFFFFF;
   --pg-grid: rgba(3, 7, 18, 0.05);
@@ -23,7 +23,6 @@
 }
 
 @mixin playground-dark {
-  --pg-window: #0B1120;
   --pg-canvas: #030712;
   --pg-surface: #0B1120;
   --pg-grid: rgba(255, 255, 255, 0.05);
@@ -75,20 +74,26 @@
 }
 
 /* ==========================================================================
-   The window
+   The tool, on the page — no frame of its own
    ========================================================================== */
 
 .playground {
-  border-radius: var(--radius-xl);
-  background: var(--pg-window);
-  box-shadow: 0 0 0 1px var(--line-soft), var(--shadow-2);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* With no frame, the tool's edges are the page's: it lines up with the
+   header's wordmark and controls, on the gutter every page shares. */
+.hero-playground .hero-inner {
+  padding-inline: var(--gutter);
 }
 
 /* ---- Toolbar: the pattern and what runs it -------------------------------- */
 
 .pg-patternbar {
   gap: .625rem .75rem;
-  padding: .875rem .875rem .75rem;
+  padding: 0 0 .75rem;
 }
 
 .pg-editor.pg-editor-pattern .pg-input,
@@ -254,8 +259,7 @@
 
 .pg-quickbar {
   gap: .5rem .75rem;
-  padding: 0 .875rem .875rem;
-  border-bottom: 1px solid var(--line-soft);
+  padding: 0 0 1.25rem;
 }
 
 .pg-quick-label {
@@ -340,8 +344,8 @@
 
 .pg-body {
   gap: 1rem;
-  padding: 1rem;
-  background: var(--pg-canvas);
+  padding: 0;
+  background: transparent;
 }
 
 /* The text card: a label row, then the editor. */
@@ -604,8 +608,7 @@
    ========================================================================== */
 
 .pg-meta {
-  padding: .75rem 1rem;
-  border-top: 1px solid var(--line-soft);
+  padding: 1rem 0 0;
 }
 
 .pg-share-actions button,
@@ -641,25 +644,20 @@
    ========================================================================== */
 
 @media (max-width: 639px) {
-  /* A phone spends no width on the stage around the window. */
   .hero-playground .hero-inner {
-    padding-inline: .625rem;
-  }
-
-  .playground {
-    border-radius: var(--radius-l);
+    padding-inline: 1rem;
   }
 
   .pg-patternbar {
-    padding: .75rem .75rem .625rem;
+    padding: 0 0 .625rem;
   }
 
   .pg-quickbar {
-    padding: 0 .75rem .75rem;
+    padding: 0 0 1rem;
   }
 
   .pg-body {
-    padding: .75rem;
+    padding: 0;
   }
 
   .pg-tool {
