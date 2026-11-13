@@ -85,10 +85,12 @@ final class AlternationOverlapPastAsciiTest extends TestCase
     }
 
     /**
-     * Where PCRE cannot be asked, a class holding every delimiter the probe
-     * can be written with, the first bytes are compared: under u two
-     * characters sharing a lead byte meet there. Not proven, kept: a
-     * repeated alternation PCRE cannot read stays reported.
+     * Where no probe can be written for a branch, the first bytes are
+     * compared: under u two characters sharing a lead byte meet there. Not
+     * proven, kept: a repeated alternation PCRE cannot read stays reported.
+     * A class holding every delimiter the probe can be written with is one
+     * such branch; an optional first item, a branch reset group and the
+     * options of "a" are others.
      */
     #[Test]
     public function test_a_branch_pcre_cannot_be_asked_about_is_read_by_its_bytes(): void

@@ -47,8 +47,9 @@ use PHPRegex\Parser\Text\Bytes;
  * every value satisfies. An answer depends on the node, on the options in
  * force where it stands, on the groups it calls and, for an alternation, on
  * where the case being read puts it: each node is measured once per case,
- * its lengths once for all, and forgetMarks() drops the answers a case's
- * marks moved.
+ * its lengths once whatever the case. forgetMarks() drops every answer of
+ * a match when the next case is read, and keeps the lengths and the facts
+ * of a group.
  *
  * Every answer is sound: when the tree alone cannot tell, the values are
  * unknown and the facts are false.
