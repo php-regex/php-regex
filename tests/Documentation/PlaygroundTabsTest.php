@@ -185,6 +185,25 @@ final class PlaygroundTabsTest extends TestCase
         }
     }
 
+    // --- Samples -------------------------------------------------------------
+
+    #[Test]
+    public function test_a_sample_draws_the_whitespace_the_eye_cannot_see(): void
+    {
+        $script = self::source(self::SCRIPT);
+        $draw = self::between($script, 'function drawWhitespace(target, value) {', "\n  }\n");
+        foreach (["' ': '\\u00B7'", "'\\t': '\\u2192'", "'\\n': '\\u21B5'"] as $glyph) {
+            $this->assertStringContainsString($glyph, $draw);
+        }
+        $this->assertStringContainsString("'pg-ws'", $draw);
+        $samples = self::between($script, 'function renderSamples(panel, answer, announceResult) {', "\n  }\n");
+        $this->assertStringContainsString('drawWhitespace(chip, sample)', $samples);
+        $this->assertStringContainsString("chip.setAttribute('aria-label'", $samples, 'A voice reads the sample, not the dots that draw its spaces.');
+
+        $this->assertSame(1, preg_match('/^\.pg-ws \{([^}]*)\}/m', self::source(self::STYLESHEET), $ws));
+        $this->assertStringContainsString('color: var(--ink-soft);', $ws[1]);
+    }
+
     private static function between(string $haystack, string $from, string $to): string
     {
         $start = strpos($haystack, $from);

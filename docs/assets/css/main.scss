@@ -6678,6 +6678,11 @@ body.search-open {
   content: '!';
   color: var(--amber);
 }
+/* Whitespace drawn in a sample: the glyph in the soft ink, the sample's
+   own characters in full. */
+.pg-ws {
+  color: var(--ink-soft);
+}
 .pg-tool-row label {
   font-size: .78rem;
   font-weight: 600;

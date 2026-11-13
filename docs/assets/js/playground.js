@@ -2594,6 +2594,29 @@
 
   // --- samples --------------------------------------------------------------
 
+  // What the eye cannot see in a sample, drawn the way an editor shows
+  // whitespace: a space, a tab, a line break each a glyph of their own,
+  // so a sample never breaks a chip in two nor ends in an invisible space.
+  function drawWhitespace(target, value) {
+    var GLYPHS = { ' ': '\u00B7', '\t': '\u2192', '\n': '\u21B5', '\r': '\u240D' };
+    var run = '';
+    for (var i = 0; i < value.length; i += 1) {
+      var glyph = GLYPHS[value.charAt(i)];
+      if (glyph) {
+        if (run) {
+          target.appendChild(document.createTextNode(run));
+          run = '';
+        }
+        target.appendChild(text('span', 'pg-ws', glyph));
+      } else {
+        run += value.charAt(i);
+      }
+    }
+    if (run) {
+      target.appendChild(document.createTextNode(run));
+    }
+  }
+
   function renderSamples(panel, answer, announceResult) {
     var payload = answer.payload;
     if (payload.error) {
@@ -2617,8 +2640,12 @@
       }
       list.forEach(function (sample) {
         var li = document.createElement('li');
-        var chip = text('button', 'pg-tool-chip' + (sample === '' ? ' is-empty' : ''), sample === '' ? '(empty)' : sample);
+        var chip = text('button', 'pg-tool-chip' + (sample === '' ? ' is-empty' : ''), sample === '' ? '(empty)' : '');
         chip.type = 'button';
+        if (sample !== '') {
+          drawWhitespace(chip, sample);
+        }
+        chip.setAttribute('aria-label', sample === '' ? 'the empty string' : sample);
         chip.title = (matches ? 'Matches: ' : 'Does not match: ') + (sample === '' ? 'the empty string' : sample) + ' — put it in the subject field';
         chip.addEventListener('click', function () {
           el.subject.value = sample;
