@@ -2,15 +2,6 @@
 
 declare(strict_types=1);
 
-/*
- * This file is part of the PHPRegex package.
- *
- * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace PHPRegex\Build\Verify;
 
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
@@ -48,6 +39,7 @@ final class Witness
      * the tree, and each level is two or three levels of JSON.
      */
     public const JSON_DEPTH = 1024;
+
     private const MATCH_FLAGS = [0, \PREG_OFFSET_CAPTURE, \PREG_UNMATCHED_AS_NULL, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL];
 
     private const MATCH_ALL_FLAGS = [
@@ -75,9 +67,15 @@ final class Witness
         ]);
 
         $witness = [
-            'tokens' => self::read(static fn () => $parser->tokenize($pattern)),
-            'tolerant' => self::read(static fn () => $parser->parseTolerant($pattern)),
-            'validation' => self::read(static fn () => $parser->validate($pattern)),
+            'tokens' => self::read(static function () use ($parser, $pattern) {
+                return $parser->tokenize($pattern);
+            }),
+            'tolerant' => self::read(static function () use ($parser, $pattern) {
+                return $parser->parseTolerant($pattern);
+            }),
+            'validation' => self::read(static function () use ($parser, $pattern) {
+                return $parser->validate($pattern);
+            }),
         ];
 
         try {
@@ -116,64 +114,12 @@ final class Witness
         return $hashes;
     }
 
+    /**
+     * @param mixed $value
+     */
     public static function encode($value): string
     {
         return json_encode($value, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_PRESERVE_ZERO_FRACTION, self::JSON_DEPTH);
-    }
-
-    /**
-     * A value written so the two copies of the package write the same thing
-     * for the same value: an enum case as its class and name (a native case
-     * on PHP 8.1, the twin's class of cases elsewhere), an object as its
-     * class and public properties, an exception as its class, message and
-     * public properties, bytes that are not UTF-8 in base64.
-     */
-    public static function normalize($value, int $depth = 0)
-    {
-        if ($depth > 200) {
-            return ['deeper than' => 200];
-        }
-
-        if (\is_object($value) && self::isEnumCase($value)) {
-            return ['case' => $value::class.'::'.$value->name];
-        }
-
-        if ($value instanceof \Error) {
-            // an error PHP itself raises is worded by each PHP version its
-            // own way, and names the file of each copy of the package
-            return ['throws' => $value::class];
-        }
-
-        if ($value instanceof \Throwable) {
-            return ['throws' => $value::class, 'message' => self::normalize($value->getMessage()), 'code' => $value->getCode(), 'properties' => self::properties($value, $depth)];
-        }
-
-        if ($value instanceof \Closure) {
-            return ['closure' => true];
-        }
-
-        if (\is_object($value)) {
-            return ['object' => $value::class, 'properties' => self::properties($value, $depth)];
-        }
-
-        if (\is_array($value)) {
-            $normalized = [];
-            foreach ($value as $key => $item) {
-                $normalized[] = [self::normalize($key), self::normalize($item, $depth + 1)];
-            }
-
-            return ['array' => $normalized];
-        }
-
-        if (\is_string($value) && 1 !== preg_match('//u', $value)) {
-            return ['bytes' => base64_encode($value)];
-        }
-
-        if (\is_float($value)) {
-            return ['float' => var_export($value, true)];
-        }
-
-        return $value;
     }
 
     /**
@@ -196,31 +142,54 @@ final class Witness
 
             return $read;
         });
-        $readings['info'] = self::read(static fn () => (new PatternInfoAnalyzer($parser->target()))->analyze($ast));
-        $readings['literals'] = self::read(static fn () => $ast->accept(new LiteralExtractor()));
-        $readings['required'] = self::read(static fn () => (new RequiredLiteralAnalyzer())->analyze($ast));
-        $readings['lengths'] = self::read(static fn () => [$ast->accept(new LengthRangeCalculator()), $ast->accept(new LengthRangeCalculator(true))]);
-        $readings['complexity'] = self::read(static fn () => $ast->accept(new ComplexityScorer()));
+        $readings['info'] = self::read(static function () use ($ast, $parser) {
+            return (new PatternInfoAnalyzer($parser->target()))->analyze($ast);
+        });
+        $readings['literals'] = self::read(static function () use ($ast) {
+            return $ast->accept(new LiteralExtractor());
+        });
+        $readings['required'] = self::read(static function () use ($ast) {
+            return (new RequiredLiteralAnalyzer())->analyze($ast);
+        });
+        $readings['lengths'] = self::read(static function () use ($ast) {
+            return [$ast->accept(new LengthRangeCalculator()), $ast->accept(new LengthRangeCalculator(true))];
+        });
+        $readings['complexity'] = self::read(static function () use ($ast) {
+            return $ast->accept(new ComplexityScorer());
+        });
         $readings['metrics'] = self::read(static function () use ($ast) {
             $metrics = new MetricsCollector();
             $ast->accept($metrics);
 
             return $metrics;
         });
-        $readings['charset'] = self::read(static fn () => CharSetAnalyzer::forRegex($ast));
-        $readings['json'] = self::read(static fn () => $ast->accept(new JsonDumper()));
-        $readings['dump'] = self::read(static fn () => $ast->accept(new NodeDumper()));
-        $readings['printed'] = self::read(static fn () => [
-            $ast->accept(PatternPrinter::asWritten()),
-            $ast->accept(PatternPrinter::normalized()),
-            $ast->accept(PatternPrinter::pretty()),
-            $ast->accept(PatternPrinter::forCompacting()),
-        ]);
-        $readings['fingerprint'] = self::read(static fn () => StructuralFingerprint::of($ast));
+        $readings['charset'] = self::read(static function () use ($ast) {
+            return CharSetAnalyzer::forRegex($ast);
+        });
+        $readings['json'] = self::read(static function () use ($ast) {
+            return $ast->accept(new JsonDumper());
+        });
+        $readings['dump'] = self::read(static function () use ($ast) {
+            return $ast->accept(new NodeDumper());
+        });
+        $readings['printed'] = self::read(static function () use ($ast) {
+            return [
+                $ast->accept(PatternPrinter::asWritten()),
+                $ast->accept(PatternPrinter::normalized()),
+                $ast->accept(PatternPrinter::pretty()),
+                $ast->accept(PatternPrinter::forCompacting()),
+            ];
+        });
+        $readings['fingerprint'] = self::read(static function () use ($ast) {
+            return StructuralFingerprint::of($ast);
+        });
 
         return $readings;
     }
 
+    /**
+     * @return mixed
+     */
     private static function read(\Closure $reading)
     {
         try {
@@ -228,6 +197,65 @@ final class Witness
         } catch (\Throwable $exception) {
             return self::normalize($exception);
         }
+    }
+
+    /**
+     * A value written so the two copies of the package write the same thing
+     * for the same value: an enum case as its class and name (a native case
+     * on PHP 8.1, the twin's class of cases elsewhere), an object as its
+     * class and public properties, an exception as its class, message and
+     * public properties, bytes that are not UTF-8 in base64.
+     *
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    public static function normalize($value, int $depth = 0)
+    {
+        if ($depth > 200) {
+            return ['deeper than' => 200];
+        }
+
+        if (\is_object($value) && self::isEnumCase($value)) {
+            return ['case' => \get_class($value).'::'.$value->name];
+        }
+
+        if ($value instanceof \Error) {
+            // an error PHP itself raises is worded by each PHP version its
+            // own way, and names the file of each copy of the package
+            return ['throws' => \get_class($value)];
+        }
+
+        if ($value instanceof \Throwable) {
+            return ['throws' => \get_class($value), 'message' => self::normalize($value->getMessage()), 'code' => $value->getCode(), 'properties' => self::properties($value, $depth)];
+        }
+
+        if ($value instanceof \Closure) {
+            return ['closure' => true];
+        }
+
+        if (\is_object($value)) {
+            return ['object' => \get_class($value), 'properties' => self::properties($value, $depth)];
+        }
+
+        if (\is_array($value)) {
+            $normalized = [];
+            foreach ($value as $key => $item) {
+                $normalized[] = [self::normalize($key), self::normalize($item, $depth + 1)];
+            }
+
+            return ['array' => $normalized];
+        }
+
+        if (\is_string($value) && 1 !== preg_match('//u', $value)) {
+            return ['bytes' => base64_encode($value)];
+        }
+
+        if (\is_float($value)) {
+            return ['float' => var_export($value, true)];
+        }
+
+        return $value;
     }
 
     /**
