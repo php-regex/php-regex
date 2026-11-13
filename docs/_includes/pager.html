@@ -64,5 +64,7 @@
   <p class="page-meta">
     <a class="edit-link" href="https://github.com/php-regex/php-regex/edit/2.x/docs/{{ page.path }}"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 13l.8-2.8L11 3l2 2-7.2 7.2L3 13z"/></svg>Edit on GitHub</a>
     <button type="button" class="copy-source" data-source="https://raw.githubusercontent.com/php-regex/php-regex/2.x/docs/{{ page.path }}"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.5" y="5.5" width="8" height="8"/><path d="M10.5 3.5h-7v7"/></svg>Copy as Markdown</button>
+    {% assign feedback_title = page.title | default: page.path | prepend: 'Docs feedback: ' %}
+    <a class="edit-link" href="https://github.com/php-regex/php-regex/issues/new?title={{ feedback_title | url_encode }}"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/></svg>Feedback</a>
   </p>
 {% endif %}
