@@ -111,11 +111,12 @@ parameters:
 
     # bin/corpus and bin/corpus-lint have no .php extension, so paths above do
     # not parse them; scan them so their functions exist for the tests that
-    # require them. The playground's driver and the options-table generator
-    # live outside the analysed paths for the same reason.
+    # require them. The playground's driver, the options-table generator and
+    # the twin's witness live outside the analysed paths for the same reason.
     scanFiles:
         - bin/corpus
         - bin/corpus-lint
+        - build/verify/Witness.php
         - docs/assets/playground/driver.php
         - wasm/pcre2-trace/php-pcre-options/generate.php
 
