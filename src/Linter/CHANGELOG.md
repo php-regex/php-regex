@@ -14,10 +14,11 @@ CHANGELOG
    `/(?:(?>ö)|è)+x/u` is no longer reported either, nor are a branch read
    past its optional first item, `/(?:ö?è|ê)+x/u`, every branch of a branch
    reset group, `/(?:(?|ö|ê)|è)+x/u`, and a character written as itself
-   under the options of `a`, which restrict the types and the POSIX classes
-   alone, `/(?:(?a:ö)|è)+x/u`. Where no probe can be written for a branch,
-   a type or a class under `a`, the first bytes are still compared.
-   `/(?:[à-ÿ]+|é)+/u`, which it missed, is reported. The message quotes each branch as the
+   or a Unicode property under the options of `a`, which restrict the types
+   and the POSIX classes alone, `/(?:(?a:ö)|è)+x/u`. Where no probe can be
+   written for a branch, a type or a class under `a`, the first bytes are
+   still compared. `/(?:[à-ÿ]+|é)+/u` and `/(?:(?a:\p{Lu})x|\p{L}y)+z/u`,
+   which it missed, are reported. The message quotes each branch as the
    pattern writes it, `\d+` rather than `\\d+`, and `é` under u rather than
    `\xC3\xA9`, on thirty columns at most, an escape never cut.
  * The lint reads pattern arguments it left out: a pattern built at the call

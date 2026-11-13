@@ -450,8 +450,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
     private static function probeModifiers(string $flags, NodeInterface $atom): ?string
     {
         // The options of "a" restrict the types and the POSIX classes to
-        // ASCII: a character written as itself reads the same under them.
-        if (str_contains($flags, 'a') && !$atom instanceof LiteralNode && !$atom instanceof CharLiteralNode) {
+        // ASCII: a character written as itself and a Unicode property read
+        // the same under them.
+        if (str_contains($flags, 'a') && !$atom instanceof LiteralNode && !$atom instanceof CharLiteralNode && !$atom instanceof UnicodePropNode) {
             return null;
         }
 

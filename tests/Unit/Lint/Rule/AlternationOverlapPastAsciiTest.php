@@ -102,7 +102,7 @@ final class AlternationOverlapPastAsciiTest extends TestCase
     public function test_the_first_characters_are_read_through_the_first_items(string $pattern, array $oracle, int $findings): void
     {
         // PCRE2 reads the options of "a" from 10.43.
-        $this->requiresPcre2For($pattern, ['10.43' => ['/(?:(?a:ö)|è)+x/u', '/(?:(?a:öa)|öb)+x/u', '/(?:(?ai:öa)|Öb)+x/u']]);
+        $this->requiresPcre2For($pattern, ['10.43' => ['/(?:(?a:ö)|è)+x/u', '/(?:(?a:öa)|öb)+x/u', '/(?:(?ai:öa)|Öb)+x/u', '/(?:(?a:\p{Lu})x|\p{L}y)+z/u']]);
 
         foreach ($oracle as [$branch, $subject, $starts]) {
             $this->assertSame($starts, preg_match('/^(?:'.$branch.')/u', $subject), $branch.' on '.$subject);
@@ -126,6 +126,9 @@ final class AlternationOverlapPastAsciiTest extends TestCase
         yield 'a bare option group before the first character' => ['pattern' => '/(?:(?i)öa|Öb)+x/u', 'oracle' => [['(?i)öa', 'Öa', 1], ['Öb', 'Öb', 1]], 'findings' => 1];
         yield 'an alternation with an empty branch first' => ['pattern' => '/(?:(?:|ö)è|ê)+x/u', 'oracle' => [['(?:|ö)è', 'öè', 1], ['(?:|ö)è', 'è', 1], ['(?:|ö)è', 'ê', 0], ['ê', 'ö', 0], ['ê', 'è', 0]], 'findings' => 0];
         yield 'an item repeated no time first' => ['pattern' => '/(?:(?:x){0}öa|èb)+x/u', 'oracle' => [['(?:x){0}öa', 'öa', 1], ['(?:x){0}öa', 'è', 0], ['èb', 'ö', 0]], 'findings' => 0];
+        // The options of "a" leave the Unicode properties as they are:
+        // preg_match('/^(?a:\p{Lu})/u', 'É') is 1 where (?a:\w) gives 0.
+        yield 'a property under the options of a, meeting the other branch' => ['pattern' => '/(?:(?a:\p{Lu})x|\p{L}y)+z/u', 'oracle' => [['(?a:\p{Lu})x', 'Éx', 1], ['\p{L}y', 'Éy', 1]], 'findings' => 1];
         yield 'a caseless character under the options of a' => ['pattern' => '/(?:(?ai:öa)|Öb)+x/u', 'oracle' => [['(?ai:öa)', 'Öa', 1], ['Öb', 'Öb', 1]], 'findings' => 1];
     }
 
