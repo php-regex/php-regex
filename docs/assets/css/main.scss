@@ -788,7 +788,11 @@ main pre,
   position: relative; /* anchors the copy button */
   margin: 0;
   background: var(--code-bg);
-  border: 1px solid var(--line);
+  /* The panel is told apart by its fill; the edge only finishes it. At full
+     --line the frame outweighed the code inside it, and a page of commands
+     read as a stack of boxes. The quiet half of the scale is the hairline a
+     framed thing needs, and the controls on it keep the full rule. */
+  border: 1px solid var(--line-soft);
   border-radius: var(--radius-m);
   padding: 1.1rem 1.25rem;
   overflow-x: auto;
@@ -3971,7 +3975,7 @@ main > section:not([class]) p > a.button:focus-visible {
   font-family: var(--font-mono);
   font-size: .875rem;
   background: var(--code-bg);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-soft);
   border-radius: var(--radius-m);
   padding: 1rem 4rem 1rem 1.25rem;
   overflow-x: auto;
@@ -4814,6 +4818,12 @@ body.search-open {
   :root {
     --ink-soft: var(--ink);
     --line: var(--ink);
+  }
+
+  main pre,
+  .terminal pre,
+  .install {
+    border-color: var(--line);
   }
 
   main blockquote {
