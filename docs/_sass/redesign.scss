@@ -1,0 +1,1506 @@
+/* PHPRegex.com — the white-page redesign.
+ *
+ * This layer is read after every rule of main.scss and restates the page in
+ * a second voice: a white page and a near-black ink, a neutral grey scale,
+ * the brand's orange kept for the one thing it should mean — "here", "go",
+ * "this is the regex" — and hairlines instead of rules. Labels speak in the
+ * monospace face, uppercase and widely tracked, the way a pattern reads;
+ * the prose speaks in Inter at the size a browser reads best.
+ *
+ * Rules here repeat the selectors they restyle, so specificity stays what
+ * main.scss expects and every component rule with a class of its own still
+ * outranks the plain-element prose rules. Raw colors live only in the token
+ * blocks at the top, measured against the paper they sit on.
+ */
+
+/* ==========================================================================
+   Tokens
+ *
+ * Contrast (WCAG 2.2, measured). Light, on #FFFFFF: ink 20.13, prose 10.31,
+ * ink-soft 7.56, mute 4.83, amber 5.18, amber-deep 7.31, link-line 3.56
+ * (non-text), ok 5.02, danger 6.47. Dark, on #030712: ink 19.27, prose
+ * 13.66, ink-soft 7.93, amber 8.90, amber-deep 11.94, link-line 5.66, ok
+ * 11.55, danger 7.28. --line is a hairline now, in both themes: it frames
+ * and divides, and no control is told apart by it alone — every control
+ * carries its words or its glyph, and its focus ring in the accent. Code panel, on #0B1020 in
+ * both themes: text 15.29, comment 6.27, keyword 9.39, string 13.48, number
+ * 13.13, call 10.50, variable 10.76, punctuation 7.46.
+   ========================================================================== */
+
+@mixin redesign-light {
+  color-scheme: light;
+  --paper: #FFFFFF;
+  --panel: #F9FAFB;
+  --ink: #030712;
+  --prose: #374151;
+  --ink-soft: #4B5563;
+  --mute: #6B7280;
+  --marker: #9CA3AF;
+  --line: rgba(3, 7, 18, 0.15);
+  --line-soft: rgba(3, 7, 18, 0.08);
+  --line-mid: rgba(3, 7, 18, 0.14);
+  --amber: #C2410C;
+  --amber-deep: #9A3412;
+  --amber-tint: rgba(234, 88, 12, 0.06);
+  --amber-ring: rgba(234, 88, 12, 0.22);
+  --link-line: #EA580C;
+  --code-bg: rgba(3, 7, 18, 0.05);
+  --code-ink: #111827;
+  --ok: #15803D;
+  --danger: #B91C1C;
+  --mark-match: rgba(234, 88, 12, 0.22);
+  --mark-match-alt: rgba(107, 114, 128, 0.22);
+  --mark-match-current: rgba(234, 88, 12, 0.38);
+  --scrim: rgba(3, 7, 18, 0.45);
+  --veil: rgba(255, 255, 255, 0.5);
+  --wash: rgba(3, 7, 18, 0.04);
+  --wash-strong: rgba(3, 7, 18, 0.07);
+  --header-bg: rgba(255, 255, 255, 0.86);
+  --ink-hover: #1F2937;
+  --frame-bg: rgba(3, 7, 18, 0.035);
+  --frame-ring: rgba(3, 7, 18, 0.07);
+  --shadow-1: 0 1px 2px rgba(3, 7, 18, 0.05), 0 1px 3px rgba(3, 7, 18, 0.06);
+  --shadow-2: 0 0 0 1px rgba(3, 7, 18, 0.06), 0 12px 32px -8px rgba(3, 7, 18, 0.22);
+  --shadow-glow: 0 8px 24px -12px rgba(194, 65, 12, 0.35);
+}
+
+@mixin redesign-dark {
+  color-scheme: dark;
+  --paper: #030712;
+  --panel: #0B1120;
+  --ink: #F9FAFB;
+  --prose: #D1D5DB;
+  --ink-soft: #9CA3AF;
+  --mute: #9CA3AF;
+  --marker: #6B7280;
+  --line: rgba(255, 255, 255, 0.16);
+  --line-soft: rgba(255, 255, 255, 0.08);
+  --line-mid: rgba(255, 255, 255, 0.14);
+  --amber: #FB923C;
+  --amber-deep: #FDBA74;
+  --amber-tint: rgba(251, 146, 60, 0.08);
+  --amber-ring: rgba(251, 146, 60, 0.25);
+  --link-line: #EA580C;
+  --code-bg: rgba(255, 255, 255, 0.07);
+  --code-ink: #F3F4F6;
+  --ok: #4ADE80;
+  --danger: #F87171;
+  --mark-match: rgba(251, 146, 60, 0.22);
+  --mark-match-alt: rgba(156, 163, 175, 0.24);
+  --mark-match-current: rgba(251, 146, 60, 0.4);
+  --scrim: rgba(0, 0, 0, 0.6);
+  --veil: rgba(3, 7, 18, 0.5);
+  --wash: rgba(255, 255, 255, 0.04);
+  --wash-strong: rgba(255, 255, 255, 0.08);
+  --header-bg: rgba(3, 7, 18, 0.82);
+  --ink-hover: #E5E7EB;
+  --frame-bg: rgba(255, 255, 255, 0.03);
+  --frame-ring: rgba(255, 255, 255, 0.08);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 40px -8px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 8px 24px -12px rgba(251, 146, 60, 0.3);
+}
+
+/* The code panel is dark in both themes: a block of code is the one object
+   on the page the reader copies, and it reads as an object only when it is
+   the darkest thing on a white page and a lit thing on a black one. */
+@mixin code-panel {
+  --block-bg: #0B1020;
+  --block-ink: #E5E7EB;
+  --block-soft: #8B95A7;
+  --block-ring: rgba(255, 255, 255, 0.07);
+  --block-danger: #FCA5A5;
+  --block-chip: rgba(255, 255, 255, 0.08);
+  --block-chip-hover: rgba(255, 255, 255, 0.14);
+  --block-thumb: rgba(255, 255, 255, 0.2);
+}
+
+/* The syntax roles of the dark panel, set on the panels alone: a light
+   surface that also colors tokens (the playground's fields) keeps the
+   roles main.scss measured for it. */
+@mixin code-panel-roles {
+  --tk-key: #F9A35B;
+  --tk-str: #86EFAC;
+  --tk-num: #FCD34D;
+  --tk-com: #8B95A7;
+  --tk-fn: #E5E7EB;
+  --tk-punct: #9CA3AF;
+  --tk-call: #93C5FD;
+  --tk-var: #F0ABFC;
+}
+
+:root,
+[data-theme='light'] {
+  @include redesign-light;
+  @include code-panel;
+}
+
+[data-theme='dark'] {
+  @include redesign-dark;
+  @include code-panel;
+}
+
+:root {
+  --header-h: 3.5rem;
+  --radius-s: 6px;
+  --radius-m: 8px;
+  --radius-l: 12px;
+  --radius-xl: 16px;
+  --gutter: max(1.5rem, calc(50vw - 41rem));
+  --fs-h1: clamp(2rem, 1.7rem + 1.3vw, 2.5rem);
+  --fs-section: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --fs-article: clamp(2.1rem, 1.7rem + 1.8vw, 2.75rem);
+}
+
+/* The label voice: monospace capitals, tracked wide — eyebrows, rail
+   titles, the language of a code panel, the "previous" of a pager. */
+@mixin label {
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--amber-ring);
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   Header — a translucent bar over the page, controls without frames
+   ========================================================================== */
+
+.site-header {
+  background: var(--header-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.brand {
+  gap: .55rem;
+  font-weight: 650;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+}
+
+.mark {
+  width: 24px;
+  height: 24px;
+}
+
+.version-tag {
+  padding: .1rem .5rem;
+  border: 0;
+  background: var(--amber-tint);
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.site-header button,
+.icon-btn {
+  min-height: 2.25rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+  background: transparent;
+  transition: color .15s ease, background-color .15s ease;
+}
+
+.site-header button {
+  padding-inline: .625rem;
+  font-size: .875rem;
+}
+
+.icon-btn,
+.theme-toggle {
+  width: 2.25rem;
+}
+
+.site-header button:hover,
+.icon-btn:hover,
+.icon-btn:focus-visible {
+  color: var(--ink);
+  border-color: transparent;
+  background: var(--wash-strong);
+}
+
+.site-header button + button,
+.header-actions > * + * {
+  margin-inline-start: .25rem;
+}
+
+.theme-toggle::before {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.github-link svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Search is a field, not a button: a pill with the shortcut at its end. */
+.site-header .search-toggle {
+  gap: .5rem;
+  padding-inline: .75rem .5rem;
+  background: var(--wash);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  color: var(--mute);
+}
+
+.site-header .search-toggle:hover {
+  background: var(--wash-strong);
+  color: var(--ink-soft);
+}
+
+.search-toggle .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.search-toggle kbd,
+.search-dialog kbd {
+  padding: .05rem .35rem;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  font-size: .6875rem;
+  color: var(--mute);
+}
+
+.header-nav a {
+  min-height: 2.25rem;
+  padding-inline: .75rem;
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.header-nav a:hover {
+  color: var(--ink);
+}
+
+.header-nav a[aria-current] {
+  color: var(--amber);
+  text-decoration: none;
+}
+
+/* Under a touch pointer the controls keep their 44px target. */
+@media (pointer: coarse) {
+  .site-header button,
+  .icon-btn,
+  .header-nav a {
+    min-height: 44px;
+  }
+
+  .icon-btn,
+  .theme-toggle {
+    width: 44px;
+  }
+}
+
+/* On a wide screen the places sit with the controls, on the right; the
+   search pill takes the room the words of a field need. */
+@media (min-width: 1024px) {
+  .site-header .header-nav {
+    margin-inline-start: auto;
+  }
+
+  .site-header .header-actions {
+    margin-inline-start: .75rem;
+    padding-inline-start: .75rem;
+    border-inline-start: 1px solid var(--line-soft);
+  }
+
+  .site-header .search-toggle {
+    order: -1;
+    min-width: 15rem;
+    margin-inline-end: .5rem;
+  }
+
+  .search-toggle kbd:first-of-type {
+    margin-inline-start: auto;
+  }
+}
+
+/* ==========================================================================
+   Page shell — rail | content | on this page
+   ========================================================================== */
+
+.page-shell {
+  padding-block: 2.5rem 4rem;
+}
+
+.page-main > main {
+  max-width: 44rem;
+}
+
+@media (min-width: 1024px) {
+  .page-shell {
+    grid-template-columns: 16rem minmax(0, 1fr);
+    column-gap: 3.5rem;
+  }
+
+  /* The rail is a column of its own, closed by the one vertical hairline
+     on the page. */
+  .site-sidebar {
+    top: calc(var(--header-h) + 2.5rem);
+    max-height: calc(100vh - var(--header-h) - 2.5rem);
+    max-height: calc(100dvh - var(--header-h) - 2.5rem);
+    margin-block-start: 0;
+    padding-inline-end: 1.5rem;
+    padding-block-end: 2rem;
+    border-right: 1px solid var(--line-soft);
+  }
+}
+
+/* An article has no rail: its shell stays one column, restated after the
+   rail's columns above. */
+@media (min-width: 1024px) {
+  .page-shell-article {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .page-main {
+    grid-template-columns: minmax(0, 1fr) 13rem;
+    column-gap: 4rem;
+  }
+
+  .page-shell-article .page-main {
+    grid-template-columns: minmax(0, 44rem) 13rem;
+  }
+
+  .toc {
+    top: calc(var(--header-h) + 2.5rem);
+  }
+}
+
+/* ---- Sidebar ---------------------------------------------------------------
+ * A section is a title and a list hung on a hairline; the page you are on
+ * takes the hairline in the accent and the accent in its words. */
+
+.nav-section + .nav-section {
+  margin-top: 2rem;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.nav-title {
+  @include label;
+  margin: 0 0 .75rem;
+  padding-inline: 0;
+}
+
+.nav-title::before {
+  display: none;
+}
+
+.nav-list {
+  border-left: 1px solid var(--line-soft);
+}
+
+.nav-list a {
+  margin-left: -1px;
+  padding: .3rem .5rem .3rem 1rem;
+  border-left: 1px solid transparent;
+  border-radius: 0;
+  font-size: .875rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  transition: color .15s ease, border-color .15s ease;
+}
+
+.nav-list a:hover {
+  color: var(--ink);
+  border-left-color: var(--marker);
+}
+
+.nav-list a[aria-current='page'] {
+  color: var(--amber);
+  font-weight: 600;
+  border-left-color: currentColor;
+  background: none;
+}
+
+.nav-list .nav-list {
+  margin-left: 1rem;
+  padding-left: 0;
+  border-left: 1px solid var(--line-soft);
+}
+
+.nav-list .nav-list a {
+  font-size: .8125rem;
+}
+
+.nav-group-toggle {
+  color: var(--mute);
+}
+
+.nav-group-toggle:hover,
+.nav-group[open] > .nav-group-toggle {
+  color: var(--ink);
+}
+
+.nav-group-marker {
+  width: .4rem;
+  height: .4rem;
+}
+
+@media (min-width: 1024px) and (pointer: fine) {
+  .nav-list a,
+  .nav-list .nav-list a,
+  .nav-group-toggle {
+    min-height: 2rem;
+  }
+}
+
+.sidebar-close {
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--wash);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+/* ---- On this page ---------------------------------------------------------- */
+
+.toc {
+  font-size: .8125rem;
+}
+
+.toc::before {
+  @include label;
+  margin: 0 0 .75rem;
+  padding: 0;
+  border-bottom: 0;
+}
+
+.toc a {
+  padding: .3rem 0;
+  border-left: 0;
+  color: var(--ink-soft);
+  line-height: 1.45;
+  transition: color .15s ease;
+}
+
+.toc ul ul {
+  padding-inline-start: .875rem;
+}
+
+.toc a:hover {
+  color: var(--ink);
+}
+
+.toc a[aria-current='location'] {
+  color: var(--amber);
+  font-weight: 500;
+}
+
+/* ---- Eyebrow ---------------------------------------------------------------
+ * The breadcrumb's three steps said "Documentation / Learn / Quick Start"
+ * above a title that already said the last of them. The section alone is
+ * the eyebrow: where this page sits, in the accent, one line above it. */
+
+.page-main .breadcrumbs {
+  margin: 0 0 .75rem;
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.page-main .breadcrumbs ol {
+  color: var(--amber);
+}
+
+.page-main .breadcrumbs li:first-child,
+.page-main .breadcrumbs li:last-child {
+  display: none;
+}
+
+.page-main .breadcrumbs li + li::before {
+  content: none;
+}
+
+.page-main .breadcrumbs a {
+  color: var(--amber);
+  text-decoration: none;
+}
+
+.page-main .breadcrumbs a:hover {
+  color: var(--amber-deep);
+}
+
+/* ---- Pager — two cards, the way out of a page ------------------------------ */
+
+.pager {
+  gap: 1rem;
+  margin-top: 4rem;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.pager a.pager-prev,
+.pager a.pager-next {
+  flex: 1 1 0;
+  max-width: none;
+  gap: .25rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-l);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  transition: box-shadow .15s ease, background-color .15s ease;
+}
+
+.pager a.pager-prev:hover,
+.pager a.pager-next:hover {
+  background: var(--amber-tint);
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+}
+
+.pager-label {
+  @include label;
+}
+
+.pager-label .icon {
+  color: var(--mute);
+}
+
+.pager-title {
+  font-family: var(--font-body);
+  font-size: .9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pager a:hover .pager-title,
+.pager a:focus-visible .pager-title {
+  color: var(--amber);
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   Prose
+   ========================================================================== */
+
+main {
+  font-size: 1rem;
+}
+
+/* The prose color is inherited, never set on the paragraph: a component's
+   own paragraph (a kicker, a card's line) keeps the color it names. */
+.page-main > main {
+  color: var(--prose);
+}
+
+main h1,
+main h2,
+main h3,
+main h4,
+main h5,
+main h6 {
+  color: var(--ink);
+}
+
+main h1 {
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  margin: 0 0 1rem;
+}
+
+main h1 + p {
+  font-size: 1.125rem;
+  line-height: 1.75;
+  max-width: none;
+  color: var(--ink-soft);
+}
+
+main h1 + h2 {
+  margin-top: 2.5rem;
+}
+
+main h2 {
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+  margin: 3.5rem 0 1rem;
+}
+
+main h2:not(.blog-section-title):not(.article-more-title):not(.article-featured-title)::before {
+  display: none;
+}
+
+main h3 {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  margin: 2.5rem 0 .75rem;
+}
+
+main h4,
+main h5,
+main h6 {
+  font-size: .9375rem;
+  margin: 2rem 0 .5rem;
+}
+
+main p {
+  margin: 0 0 1.25em;
+  line-height: 1.75;
+}
+
+main ul,
+main ol {
+  margin: 0 0 1.25em;
+  padding-inline-start: 1.375em;
+}
+
+main li {
+  margin-block: .5em;
+  line-height: 1.75;
+  padding-inline-start: .25em;
+}
+
+main li::marker {
+  color: var(--marker);
+}
+
+main ol > li::marker {
+  color: var(--mute);
+  font-size: .9em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A link in running text is the one place the prose turns heavy: the ink
+   and the weight say "a door", the accent underline says where it opens. */
+main a {
+  color: var(--ink);
+  text-decoration-color: var(--link-line);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+main a:hover {
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--amber);
+}
+
+main p > a:not([class]),
+main li > a:not([class]),
+main td > a:not([class]) {
+  font-weight: 600;
+}
+
+main strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+main :not(pre) > code,
+main :not(pre) > samp {
+  padding: .125em .375em;
+  border-radius: var(--radius-s);
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font-size: .8125em;
+  font-weight: 500;
+}
+
+/* A code chip inside a link is still part of the link. */
+main a > code {
+  color: inherit;
+}
+
+main kbd {
+  padding: .1em .4em;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-mid), 0 1px 0 var(--line-mid);
+  font-size: .8125em;
+}
+
+main hr {
+  border-top: 1px solid var(--line-soft);
+  margin: 3.5rem 0;
+}
+
+main h2:target,
+main h3:target,
+main h4:target {
+  background: none;
+}
+
+main .anchor {
+  color: var(--marker);
+}
+
+/* ---- Callouts --------------------------------------------------------------
+ * A tinted panel with a hairline in the accent: an aside, without the bar
+ * of a quotation down its side. */
+
+main blockquote {
+  margin: 1.75rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 0;
+  border-radius: var(--radius-l);
+  background: var(--amber-tint);
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+  font-size: .9375rem;
+}
+
+main blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+main blockquote strong:first-child {
+  color: var(--amber-deep);
+}
+
+/* ---- Tables ----------------------------------------------------------------
+ * Data in the body's own words: column heads in sentence case and full ink,
+ * one hairline under them, a fainter one between rows. */
+
+main table {
+  margin: 2rem 0;
+  font-size: .875rem;
+}
+
+main th {
+  padding: 0 1rem .625rem;
+  border-top: 0;
+  border-bottom: 1px solid var(--line-mid);
+  font-size: .875rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+/* Some column heads are written in lower case for the capitals the old
+   eyebrow style set on them; sentence case asks for the first letter. */
+main th::first-letter {
+  text-transform: uppercase;
+}
+
+main td {
+  padding: .75rem 1rem;
+  border-bottom: 1px solid var(--line-soft);
+  line-height: 1.6;
+  color: var(--prose);
+}
+
+main tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+main tbody tr:hover {
+  background: none;
+}
+
+/* ==========================================================================
+   Code panels
+ *
+ * A fenced block is a frame and a panel: a faint frame carries the
+ * language (or the file) and the controls in a strip of its own, and the
+ * dark panel inside it carries nothing but the code. Nothing floats over a
+ * line of code any more, so no line ever needs to stop short for a chip.
+   ========================================================================== */
+
+/* The panels that speak the dark roles. */
+.page-main main div.highlighter-rouge,
+.page-main main pre,
+.run-out {
+  @include code-panel-roles;
+}
+
+
+.page-main main div.highlighter-rouge,
+.page-main main .install {
+  position: relative;
+  margin: 1.75rem 0;
+  padding: 2.375rem .3125rem .3125rem;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--frame-bg);
+  box-shadow: inset 0 0 0 1px var(--frame-ring);
+  overflow: visible;
+}
+
+.page-main main div.highlighter-rouge pre.highlight,
+.page-main main .install pre,
+.page-main main > pre,
+.page-main main li > pre,
+.page-main main blockquote > pre,
+.page-main main details > pre {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border: 0;
+  border-radius: calc(var(--radius-xl) - 5px);
+  background: var(--block-bg);
+  box-shadow: inset 0 0 0 1px var(--block-ring);
+  color: var(--block-ink);
+  font-size: .8125rem;
+  line-height: 1.75;
+  overflow-x: auto;
+}
+
+/* The dark ground of a fenced block is its inner wrapper, not the
+   scrolling pre: the cut-edge tell is a mask on the pre, and a mask
+   dissolves the element's own background with its text — a dark panel
+   faded into a white edge. With the ground one level up, the long line
+   dissolves into the dark and the panel keeps its edge. */
+.page-main main div.highlighter-rouge > div.highlight {
+  border-radius: calc(var(--radius-xl) - 5px);
+  background: var(--block-bg);
+  box-shadow: inset 0 0 0 1px var(--block-ring);
+  overflow: hidden;
+}
+
+.page-main main div.highlighter-rouge pre.highlight {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The install box is a terminal: one dark panel, its strip inside it. */
+.page-main main .install {
+  background: var(--block-bg);
+  box-shadow: inset 0 0 0 1px var(--block-ring), var(--shadow-1);
+}
+
+.page-main main .install pre {
+  padding-top: .25rem;
+  background: transparent;
+  box-shadow: none;
+}
+
+.page-main main div.install::before {
+  color: var(--block-soft);
+}
+
+.page-main main .install code {
+  color: var(--block-ink);
+}
+
+.page-main main div.install > .copy-btn {
+  color: var(--block-soft);
+}
+
+.page-main main div.install > .copy-btn:hover {
+  color: var(--block-ink);
+  background: var(--block-chip);
+}
+
+/* A bare panel has no ground behind it to dissolve into: its scrollbar is
+   the tell. */
+.page-main main > pre[data-scroll],
+.page-main main li > pre[data-scroll],
+.page-main main blockquote > pre[data-scroll],
+.page-main main details > pre[data-scroll] {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* A bare block (a fence no lexer knows) has no frame to carry its chip:
+   the chip sits on the panel, and the first line keeps clear of it. */
+.page-main main > pre,
+.page-main main li > pre,
+.page-main main blockquote > pre,
+.page-main main details > pre {
+  margin: 1.75rem 0;
+  border-radius: var(--radius-xl);
+}
+
+.page-main main > pre.has-copy,
+.page-main main li > pre.has-copy {
+  padding-right: 4.5rem;
+}
+
+/* An unlabelled block with no control has nothing for a strip to hold. */
+.page-main main div.highlighter-rouge.language-plaintext:not(.has-copy):not(.has-run),
+.page-main main div.highlighter-rouge.language-text:not(.has-copy):not(.has-run) {
+  padding-top: .3125rem;
+}
+
+/* The strip's words: the language, or the file when the fence names one. */
+.page-main main div.highlighter-rouge::after,
+.page-main main .install::before {
+  position: absolute;
+  top: .7rem;
+  left: 1rem;
+  right: auto;
+  bottom: auto;
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--mute);
+  pointer-events: none;
+}
+
+.page-main main .install::before {
+  content: 'terminal';
+}
+
+.page-main main div.highlighter-rouge[data-file]::before {
+  top: .65rem;
+  left: 1rem;
+  font-size: .75rem;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
+
+.page-main main div.highlighter-rouge[data-file]::after,
+.page-main main div.highlighter-rouge.has-run::after {
+  content: none;
+}
+
+.page-main main pre[data-file] {
+  margin-top: 2.75rem;
+}
+
+/* The controls live in the strip, never on the code. */
+.page-main main div.highlighter-rouge > .copy-btn,
+.page-main main .install > .copy-btn,
+.page-main main div.highlighter-rouge > .run-btn {
+  top: .375rem;
+  min-height: 1.625rem;
+  padding: .25rem .55rem;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--mute);
+  font-size: .75rem;
+  transition: color .15s ease, background-color .15s ease;
+}
+
+.page-main main div.highlighter-rouge > .copy-btn,
+.page-main main .install > .copy-btn {
+  right: .375rem;
+}
+
+.page-main main div.highlighter-rouge.has-copy > .run-btn {
+  right: 4rem;
+}
+
+.page-main main div.highlighter-rouge > .copy-btn:hover,
+.page-main main .install > .copy-btn:hover,
+.page-main main div.highlighter-rouge > .run-btn:hover,
+.page-main main div.highlighter-rouge > .run-btn:focus-visible {
+  color: var(--ink);
+  background: var(--wash-strong);
+}
+
+.page-main main div.highlighter-rouge > .copy-btn[data-copied],
+.page-main main .install > .copy-btn[data-copied] {
+  color: var(--amber);
+}
+
+/* Run is the block's one verb: it keeps the accent at rest. */
+.page-main main div.highlighter-rouge > .run-btn {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.page-main main div.highlighter-rouge > .run-version {
+  top: .35rem;
+  left: .5rem;
+  padding: .2rem .4rem;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--mute);
+  font-size: .75rem;
+}
+
+.page-main main div.highlighter-rouge > .run-version:hover {
+  background: var(--wash-strong);
+  color: var(--ink);
+}
+
+/* The panel no longer reserves room for controls it does not hold. */
+.page-main main div.highlighter-rouge.has-copy pre.highlight,
+.page-main main div.highlighter-rouge.has-run pre.highlight {
+  padding: 1rem 1.25rem;
+}
+
+/* A chip on a bare panel speaks the panel's colors. */
+.page-main main pre > .copy-btn {
+  border: 0;
+  background: var(--block-chip);
+  color: var(--block-soft);
+}
+
+.page-main main pre > .copy-btn:hover {
+  background: var(--block-chip-hover);
+  color: var(--block-ink);
+}
+
+/* The cookbook's quick reference: one pattern per row, the panel tight
+   under its title. The chip sits on the panel in a solid plate, and the
+   row keeps its scrollbar as the tell instead of a fade that took the chip
+   down with the pattern. */
+.page-main main .recipe-entry pre {
+  margin: .625rem 0 0;
+  padding: .75rem 4.5rem .75rem 1rem;
+  border-radius: var(--radius-l);
+  font-size: .8125rem;
+}
+
+.page-main main .recipe-entry pre[data-scroll] {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.page-main main .recipe-entry .copy-btn {
+  top: .4rem;
+  right: .4rem;
+  background: var(--block-bg);
+  box-shadow: inset 0 0 0 1px var(--block-chip-hover);
+}
+
+/* Inside the panel the scrollbar is the panel's. */
+.page-main main pre::-webkit-scrollbar-track {
+  background: var(--block-bg);
+}
+
+.page-main main pre::-webkit-scrollbar-thumb {
+  background: var(--block-thumb);
+  border-color: var(--block-bg);
+}
+
+.page-main main pre {
+  scrollbar-color: var(--block-thumb) transparent;
+}
+
+/* Names get roles of their own on the dark panel: a call, a variable, a
+   type. Where these tokens are not set (any light surface), the shared
+   name color stands. */
+.page-main main .highlight .nf,
+.page-main main .highlight .fm,
+.page-main main .highlight .nb,
+.page-main main .highlight .bp {
+  color: var(--tk-call);
+}
+
+.page-main main .highlight .nv,
+.page-main main .highlight .vc,
+.page-main main .highlight .vg,
+.page-main main .highlight .vi,
+.page-main main .highlight .vm {
+  color: var(--tk-var);
+}
+
+.page-main main .highlight .nc,
+.page-main main .highlight .nn,
+.page-main main .highlight .kt {
+  color: var(--tk-num);
+}
+
+.page-main main .highlight .c,
+.page-main main .highlight .c1,
+.page-main main .highlight .cm,
+.page-main main .highlight .cd {
+  font-style: normal;
+}
+
+/* The output of a run is the panel's sibling, in the panel's colors. */
+.run-out {
+  margin: -1rem 0 1.75rem;
+  padding: 1rem 1.25rem;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--block-bg);
+  box-shadow: inset 0 0 0 1px var(--block-ring);
+  color: var(--block-ink);
+  font-size: .8125rem;
+}
+
+/* The prose color the page sets on its paragraphs, and the panel the
+   page sets on its pre, both reached into the output panel. */
+.run-out .run-meta {
+  margin: 0 0 .5rem;
+  color: var(--tk-key);
+}
+
+.page-main main .run-out .run-stdout,
+.page-main main .run-out .run-stderr {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--block-ink);
+}
+
+.page-main main .run-out .run-stderr {
+  color: var(--block-danger);
+}
+
+/* The install section: the eyebrow over the frame. */
+.page-main main .install-block {
+  margin: 2.5rem 0;
+}
+
+.page-main main .install-block > h2 {
+  @include label;
+  margin: 0 0 .75rem;
+}
+
+.page-main main .install-block > h2::before {
+  display: none;
+}
+
+.page-main main .install-block > .install {
+  margin: 0;
+}
+
+/* The terminal panel (landing hero, captured output) takes the same ink. */
+.terminal {
+  --code-bg: var(--block-bg);
+  --code-ink: var(--block-ink);
+  --ink-soft: var(--block-soft);
+  --term-hairline: var(--block-chip);
+  border: 0;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 0 0 1px var(--frame-ring), var(--shadow-2);
+}
+
+.terminal-bar::before {
+  width: .55rem;
+  height: .55rem;
+  border-radius: 50%;
+}
+
+/* ==========================================================================
+   Cards, filters, buttons
+   ========================================================================== */
+
+/* Four ways in, two by two: at the column's new width an auto-fill grid
+   made a row of three and an orphan. */
+.task-grid {
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1rem;
+}
+
+.task-card,
+.component {
+  gap: .375rem;
+  padding: 1.25rem 1.375rem;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft), var(--shadow-1);
+  transition: box-shadow .15s ease, background-color .15s ease;
+}
+
+.task-card:hover,
+.component:hover {
+  border-color: transparent;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--amber-ring), var(--shadow-glow);
+}
+
+.task-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.task-card p {
+  font-size: .875rem;
+  line-height: 1.6;
+}
+
+.task-card span {
+  margin-top: .5rem;
+  font-size: .8125rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.page-filter {
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--paper);
+}
+
+.page-filter input {
+  min-height: 2.5rem;
+  font-size: .9375rem;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--wash);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.page-filter input:focus {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--amber), 0 0 0 3px var(--amber-tint);
+}
+
+.page-count {
+  @include label;
+}
+
+.button {
+  min-height: 2.5rem;
+  padding: .5rem 1.125rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--line-mid);
+  font-size: .9375rem;
+  font-weight: 600;
+}
+
+.button:hover {
+  background: var(--wash);
+}
+
+.button-primary,
+.button--primary,
+main > section:not([class]) p > a.button {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: none;
+}
+
+.button-primary:hover,
+.button--primary:hover,
+main > section:not([class]) p > a.button:hover {
+  background: var(--ink-hover);
+  color: var(--paper);
+  text-decoration: none;
+}
+
+.button-primary:focus-visible,
+.button--primary:focus-visible {
+  outline-color: var(--amber);
+}
+
+.button-secondary,
+.button--secondary {
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--line-mid);
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.site-footer {
+  margin-top: 2rem;
+  padding-block: 3.5rem 2rem;
+  border-top: 1px solid var(--line-soft);
+  background: var(--panel);
+}
+
+.footer-wordmark {
+  font-weight: 650;
+  font-size: 1rem;
+}
+
+.footer-blurb {
+  font-size: .875rem;
+  color: var(--ink-soft);
+}
+
+.footer-title {
+  @include label;
+  margin: 0 0 1rem;
+}
+
+.footer-title::before {
+  display: none;
+}
+
+.footer-list a {
+  font-size: .875rem;
+  color: var(--ink-soft);
+}
+
+.footer-install code {
+  border: 0;
+  border-radius: var(--radius-s);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  font-size: .75rem;
+}
+
+/* ==========================================================================
+   Search
+   ========================================================================== */
+
+.search-dialog {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.search-dialog input[type='search'] {
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  border-color: var(--line-soft);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.search-dialog ul,
+.search-panel,
+.search-hints {
+  border-color: var(--line-soft);
+}
+
+.search-hints,
+.search-panel {
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+.search-hints {
+  background: var(--panel);
+}
+
+.search-dialog li a {
+  padding: .625rem 1.25rem;
+}
+
+.search-dialog li a:hover,
+.search-dialog li a:focus-visible,
+.search-dialog li.active a,
+.search-dialog li[aria-selected='true'] a {
+  background: var(--amber-tint);
+}
+
+.search-dialog li a .result-url {
+  color: var(--mute);
+}
+
+.search-dialog mark {
+  background: var(--amber-ring);
+  border-radius: 3px;
+}
+
+/* ==========================================================================
+   The contrast preferences, restated after the new palette
+   ========================================================================== */
+
+@media (prefers-contrast: more) {
+  :root,
+  [data-theme='light'],
+  [data-theme='dark'] {
+    --ink-soft: var(--ink);
+    --prose: var(--ink);
+    --mute: var(--ink);
+    --line: var(--ink);
+    --line-soft: var(--line);
+    --line-mid: var(--line);
+  }
+}
+
+/* ==========================================================================
+   Articles
+   ========================================================================== */
+
+/* The index carries its own kicker; the eyebrow above it would say the
+   section twice. */
+.page-main main:has(.blog-hero) > .breadcrumbs {
+  display: none;
+}
+
+.blog-hero {
+  padding-block: 0 2.5rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.blog-kicker,
+.article-featured-kicker {
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  color: var(--amber);
+}
+
+.blog-title {
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+.blog-meta,
+.article-byline,
+.article-featured-meta,
+.article-entry-meta {
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  letter-spacing: .1em;
+  color: var(--mute);
+}
+
+.article-featured {
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft), var(--shadow-1);
+}
+
+.article-featured:hover {
+  box-shadow: inset 0 0 0 1px var(--amber-ring), var(--shadow-glow);
+}
+
+.article-featured-title {
+  letter-spacing: -0.03em;
+}
+
+.article-entry {
+  padding: 1.5rem 0;
+}
+
+.article-entry + .article-entry {
+  border-top: 1px solid var(--line-soft);
+}
+
+.article-entry:hover {
+  background: none;
+}
+
+.article-tag {
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--wash-strong);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+.draft-tag {
+  border: 0;
+  background: var(--amber-tint);
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+  color: var(--amber);
+  font-family: var(--font-mono);
+}
+
+.article-footer {
+  border-top: 1px solid var(--line-soft);
+}
