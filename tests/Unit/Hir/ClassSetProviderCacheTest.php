@@ -183,6 +183,30 @@ final class ClassSetProviderCacheTest extends TestCase
     }
 
     /**
+     * A class holding the usual delimiters is probed with another one: its
+     * members are the set PCRE gives.
+     */
+    #[Test]
+    public function test_query_answers_for_an_atom_holding_the_usual_delimiters(): void
+    {
+        $atom = "[/#~%!@;\x01]";
+        $members = ['/', '#', '~', '%', '!', '@', ';', "\x01"];
+        foreach ($members as $member) {
+            $this->assertSame(1, preg_match('{'.$atom.'}', $member), 'Oracle: '.bin2hex($member));
+        }
+        $this->assertSame(0, preg_match('{'.$atom.'}', 'a'));
+
+        $set = ClassSetProvider::query($atom, false, '');
+
+        $this->assertInstanceOf(CharSet::class, $set);
+        $expected = CharSet::empty();
+        foreach ($members as $member) {
+            $expected = $expected->union(CharSet::single(\ord($member)));
+        }
+        $this->assertSame($expected->key(), $set->key());
+    }
+
+    /**
      * Every delimiter the probe can use stands in the atom, a class PCRE
      * reads well with brace delimiters: no probe can be written, the engine
      * is never asked, and the answer is null.
@@ -190,7 +214,7 @@ final class ClassSetProviderCacheTest extends TestCase
     #[Test]
     public function test_query_answers_null_for_an_atom_holding_every_delimiter(): void
     {
-        $atom = "[/#~%!@;\x01]";
+        $atom = '['.implode('', ['/', '#', '~', '%', '!', '@', ';', '"', "'", ',', '&', '`', '=', ...array_map(\chr(...), [...range(0x01, 0x08), ...range(0x0E, 0x1F), 0x7F])]).']';
         $this->assertSame(1, preg_match('{'.$atom.'}', "\x01"), 'Oracle: PCRE reads the atom.');
         $this->assertSame(0, preg_match('{'.$atom.'}', 'a'));
 

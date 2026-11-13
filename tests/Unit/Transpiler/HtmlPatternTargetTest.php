@@ -32,6 +32,12 @@ final class HtmlPatternTargetTest extends TestCase
     use PcreGates;
 
     use PhpUnitForwardCompat;
+    /**
+     * A caseless class holding every delimiter the engine probe can be
+     * written with: the usual ones, the punctuation and the control
+     * characters PHP takes.
+     */
+    public const EVERY_PROBE_DELIMITER = "/^[\\/#~%!@;\"',&`=\x01\x02\x03\x04\x05\x06\x07\x08\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F]$/i";
 
     /**
      * @param array<int|string, bool> $verdicts subject => whether preg_match() and the attribute accept it
@@ -159,7 +165,15 @@ final class HtmlPatternTargetTest extends TestCase
         $this->expectExceptionMessageIsOrContains('PCRE cannot tell which characters');
 
         // The class holds every delimiter the probe could be written with.
-        Regex::create(['cache' => null])->transpile("/^[\\/#~%!@;\x01]$/i", 'html-pattern');
+        Regex::create(['cache' => null])->transpile(self::EVERY_PROBE_DELIMITER, 'html-pattern');
+    }
+
+    #[Test]
+    public function test_an_atom_holding_the_usual_delimiters_is_probed_with_another(): void
+    {
+        $this->assertSame(1, preg_match("/^[\\/#~%!@;\x01]$/i", ';'));
+
+        $this->assertSame('^[\\/\\#\\~\\%\\!\\@\\;\\x01]$', Regex::create(['cache' => null])->transpile("/^[\\/#~%!@;\x01]$/i", 'html-pattern')->pattern);
     }
 
     #[Test]

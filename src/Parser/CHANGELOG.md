@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `ClassSetProvider::query()` answers for a class holding the eight
+   delimiters its probe was written with, `[/#~%!@;\x01]`: the probe takes
+   another one, among the punctuation and the control characters PHP reads
+   as delimiters. The transpiler carries such a class under `/i` into the
+   HTML pattern attribute, where it refused it.
  * `CaptureShapeAnalyzer` reads each case of a pattern with the start and
    the end of that case alone: a zero-width branch read first put what
    follows it at the start, and the next case kept that, so
