@@ -2599,6 +2599,13 @@ a:focus-visible .article-nav-arrow {
   min-width: 0;
 }
 
+/* A page with no submenu has no toggle to leave room for: its link takes
+   the whole row, so the "you are here" wash reaches the rail's edge like
+   the rule under the section does, instead of stopping a toggle short. */
+.nav-item > a:only-child {
+  grid-column: 1 / -1;
+}
+
 .nav-group {
   grid-column: 2;
 }
@@ -2655,6 +2662,18 @@ a:focus-visible .article-nav-arrow {
 .nav-list .nav-list a {
   min-height: 44px;
   font-size: .8125rem;
+}
+
+/* A mouse needs no 44px row. Under a fine pointer the rail tightens to the
+   rhythm of the on-this-page list beside it, and a whole section of the
+   map fits in one screen instead of half of one. Touch screens of every
+   width keep the full target. */
+@media (min-width: 1024px) and (pointer: fine) {
+  .nav-list a,
+  .nav-list .nav-list a,
+  .nav-group-toggle {
+    min-height: 2.125rem;
+  }
 }
 
 /* ---- Breadcrumb & pager (generated from the sidebar order) ---- */
