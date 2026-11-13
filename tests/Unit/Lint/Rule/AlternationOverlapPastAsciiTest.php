@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class AlternationOverlapPastAsciiTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * @param list<string> $firsts the character each branch starts with
      */
@@ -97,6 +100,9 @@ final class AlternationOverlapPastAsciiTest extends TestCase
     #[DataProvider('provideBranchesReadThroughTheirFirstItems')]
     public function test_the_first_characters_are_read_through_the_first_items(string $pattern, array $oracle, int $findings): void
     {
+        // PCRE2 reads the options of "a" from 10.43.
+        $this->requiresPcre2For($pattern, ['10.43' => ['/(?:(?a:ö)|è)+x/u', '/(?:(?a:öa)|öb)+x/u', '/(?:(?ai:öa)|Öb)+x/u']]);
+
         foreach ($oracle as [$branch, $subject, $starts]) {
             $this->assertSame($starts, preg_match('/^(?:'.$branch.')/u', $subject), $branch.' on '.$subject);
         }
