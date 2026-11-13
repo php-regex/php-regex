@@ -333,7 +333,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
                 // The atom is read under the options in force where it
                 // stands: those a group opening the branch sets included.
-                $modifiers = self::probeModifiers($context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags()), $leaf);
+                $modifiers = self::probeModifiers($context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags()), $context->pattern->flags);
                 $read = null === $atom || null === $modifiers ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
                 if (null === $read) {
                     return null;
@@ -356,10 +356,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * The atoms a node may read its first character with, and whether it
      * may read nothing. An item the probe does not read (an anchor, a
      * lookaround, a reference) is an atom of its own, which leaves the
-     * branch unjudged. Groups start with what
-     * their body starts with, a branch reset group and an alternation with
-     * what any branch does; a sequence goes on past an item that may read
-     * nothing, and a quantifier that may run no time reads nothing.
+     * branch unjudged. Groups start with what their body starts with, a
+     * branch reset group and an alternation with what any branch does; a
+     * sequence goes on past an item that may read nothing, and a quantifier
+     * that may run no time reads nothing.
      *
      * @return array{list<NodeInterface>, bool}
      */
@@ -444,22 +444,33 @@ final class OverlappingAlternationRule extends AbstractLintRule
     }
 
     /**
-     * The options the probe reads an atom under, from the flags in effect
-     * at it, or null for the ASCII-restricting ones it is not told about.
+     * The options the probe reads an atom under, from the flags in effect at
+     * it. The options of "a" go along as written, "(?aD)" or "(?aW)" each
+     * as "aD" or "aW", "a" alone for all of them: the probe gets the very
+     * restrictions of \d, \s, \w and the POSIX classes the atom stands
+     * under. Their letters D and S read as the pattern's own /D and /S too:
+     * where the pattern sets those, which of them "a" carries is not known,
+     * and null leaves the branch unjudged.
      */
-    private static function probeModifiers(string $flags, NodeInterface $atom): ?string
+    private static function probeModifiers(string $flags, string $patternFlags): ?string
     {
-        // The options of "a" restrict the types and the POSIX classes to
-        // ASCII: a character written as itself and a Unicode property read
-        // the same under them.
-        if (str_contains($flags, 'a') && !$atom instanceof LiteralNode && !$atom instanceof CharLiteralNode && !$atom instanceof UnicodePropNode) {
-            return null;
+        $ascii = '';
+        if (str_contains($flags, 'a')) {
+            if (false !== strpbrk($patternFlags, 'DS') && false !== strpbrk($flags, 'DS')) {
+                return null;
+            }
+
+            foreach (['D', 'S', 'W', 'P', 'T'] as $option) {
+                $ascii .= str_contains($flags, $option) ? 'a'.$option : '';
+            }
+            $ascii = '' === $ascii ? 'a' : $ascii;
         }
 
         return (str_contains($flags, 'i') ? 'i' : '')
             .(str_contains($flags, 's') ? 's' : '')
             .(str_contains($flags, 'xx') ? 'xx' : (str_contains($flags, 'x') ? 'x' : ''))
-            .(str_contains($flags, 'r') ? 'r' : '');
+            .(str_contains($flags, 'r') ? 'r' : '')
+            .$ascii;
     }
 
     private function makeCharsetViolation(AlternationNode $node, int $i, int $j, LintContext $context): RuleViolation

@@ -102,7 +102,7 @@ final class AlternationOverlapPastAsciiTest extends TestCase
     public function test_the_first_characters_are_read_through_the_first_items(string $pattern, array $oracle, int $findings): void
     {
         // PCRE2 reads the options of "a" from 10.43.
-        $this->requiresPcre2For($pattern, ['10.43' => ['/(?:(?a:ö)|è)+x/u', '/(?:(?a:öa)|öb)+x/u', '/(?:(?ai:öa)|Öb)+x/u', '/(?:(?a:\p{Lu})x|\p{L}y)+z/u']]);
+        $this->requiresPcre2For($pattern, ['10.43' => ['/(?:(?a:ö)|è)+x/u', '/(?:(?a:öa)|öb)+x/u', '/(?:(?ai:öa)|Öb)+x/u', '/(?:(?a:\p{Lu})x|\p{L}y)+z/u', '/(?:(?a:[ö])x|èy)+z/u', '/(?:(?a:\w)x|éy)+z/u', '/(?:(?aW:\w)x|éy)+z/u', '/(?:(?aD:\w)x|éy)+z/u', '/(?:(?aD:\w)x|éy)+z/uD']]);
 
         foreach ($oracle as [$branch, $subject, $starts]) {
             $this->assertSame($starts, preg_match('/^(?:'.$branch.')/u', $subject), $branch.' on '.$subject);
@@ -129,6 +129,15 @@ final class AlternationOverlapPastAsciiTest extends TestCase
         // The options of "a" leave the Unicode properties as they are:
         // preg_match('/^(?a:\p{Lu})/u', 'É') is 1 where (?a:\w) gives 0.
         yield 'a property under the options of a, meeting the other branch' => ['pattern' => '/(?:(?a:\p{Lu})x|\p{L}y)+z/u', 'oracle' => [['(?a:\p{Lu})x', 'Éx', 1], ['\p{L}y', 'Éy', 1]], 'findings' => 1];
+        // A class or a type is probed under the very options of "a" that
+        // stand where it does: (?aW) restricts \w to ASCII, (?aD) leaves it.
+        yield 'a class under the options of a, apart' => ['pattern' => '/(?:(?a:[ö])x|èy)+z/u', 'oracle' => [['(?a:[ö])x', 'öx', 1], ['(?a:[ö])x', 'èx', 0], ['èy', 'öy', 0]], 'findings' => 0];
+        yield 'a type under the options of a, apart' => ['pattern' => '/(?:(?a:\w)x|éy)+z/u', 'oracle' => [['(?a:\w)x', 'éx', 0], ['éy', 'éy', 1]], 'findings' => 0];
+        yield 'a type under the word option of a, apart' => ['pattern' => '/(?:(?aW:\w)x|éy)+z/u', 'oracle' => [['(?aW:\w)x', 'éx', 0], ['éy', 'éy', 1]], 'findings' => 0];
+        yield 'a type under the digit option of a, meeting the other branch' => ['pattern' => '/(?:(?aD:\w)x|éy)+z/u', 'oracle' => [['(?aD:\w)x', 'éx', 1], ['éy', 'éy', 1]], 'findings' => 1];
+        // Under the pattern's own /D, the D of "(?aD)" cannot be told from
+        // it: the branch is left unjudged, though é starts both.
+        yield 'an option of a the pattern\'s /D hides, unjudged' => ['pattern' => '/(?:(?aD:\w)x|éy)+z/uD', 'oracle' => [['(?aD:\w)x', 'éx', 1], ['éy', 'éy', 1]], 'findings' => 0];
         yield 'a caseless character under the options of a' => ['pattern' => '/(?:(?ai:öa)|Öb)+x/u', 'oracle' => [['(?ai:öa)', 'Öa', 1], ['Öb', 'Öb', 1]], 'findings' => 1];
     }
 
@@ -137,7 +146,7 @@ final class AlternationOverlapPastAsciiTest extends TestCase
      * compared: under u two characters sharing a lead byte meet there. Not
      * proven, kept: a repeated alternation PCRE cannot read stays reported.
      * A class holding every delimiter the probe can be written with is one
-     * such branch; a type or a class under the options of "a" is another.
+     * such branch.
      */
     #[Test]
     public function test_a_branch_pcre_cannot_be_asked_about_is_read_by_its_bytes(): void
