@@ -70,6 +70,29 @@
       <span class="visually-hidden" id="pg-pattern-error"></span>
     </div>
     <div class="pg-controls">
+      {%- comment -%}The flags, beside the pattern they close: the five a
+        reader of PHP code meets in the row, the rest behind a door, each
+        a toggle that writes its letter after the closing delimiter. The
+        field stays the truth: a toggle is pressed because the letter is
+        there, whoever wrote it. S and X are not offered: PHP has made
+        both no-ops.{% endcomment %}
+      <div class="pg-flags" role="group" aria-label="Flags">
+        <button type="button" class="pg-flag" data-flag="i" aria-pressed="false" aria-label="i, case-insensitive" data-tip="Case-insensitive">i</button>
+        <button type="button" class="pg-flag" data-flag="m" aria-pressed="false" aria-label="m, multiline: ^ and $ at every line" data-tip="Multiline: ^ and $ at every line">m</button>
+        <button type="button" class="pg-flag" data-flag="s" aria-pressed="false" aria-label="s, dot matches newlines" data-tip="Dot matches newlines">s</button>
+        <button type="button" class="pg-flag" data-flag="x" aria-pressed="false" aria-label="x, extended: spaces and # comments ignored" data-tip="Extended: spaces and # comments ignored">x</button>
+        <button type="button" class="pg-flag" data-flag="u" aria-pressed="false" aria-label="u, UTF-8: pattern and text read as Unicode" data-tip="UTF-8: pattern and text read as Unicode">u</button>
+        <details class="pg-flags-more">
+          <summary aria-label="More flags"><span class="pg-flags-more-count"></span></summary>
+          <div class="pg-flags-menu" role="group" aria-label="More flags">
+            <button type="button" class="pg-flag" data-flag="n" aria-pressed="false" aria-label="n, no auto-capture: plain groups stop capturing"><span class="pg-flag-letter">n</span><span class="pg-flag-name">No auto-capture</span><span class="pg-flag-note">PHP 8.2+</span></button>
+            <button type="button" class="pg-flag" data-flag="U" aria-pressed="false" aria-label="U, ungreedy: quantifiers lazy unless followed by ?"><span class="pg-flag-letter">U</span><span class="pg-flag-name">Ungreedy</span></button>
+            <button type="button" class="pg-flag" data-flag="D" aria-pressed="false" aria-label="D, dollar end only: $ never before a final newline"><span class="pg-flag-letter">D</span><span class="pg-flag-name">Dollar end only</span></button>
+            <button type="button" class="pg-flag" data-flag="A" aria-pressed="false" aria-label="A, anchored: the match starts where the search starts"><span class="pg-flag-letter">A</span><span class="pg-flag-name">Anchored</span></button>
+            <button type="button" class="pg-flag" data-flag="J" aria-pressed="false" aria-label="J, duplicate group names allowed"><span class="pg-flag-letter">J</span><span class="pg-flag-name">Duplicate names</span></button>
+          </div>
+        </details>
+      </div>
       <label class="visually-hidden" for="pg-version">PHP version</label>
       <select id="pg-version" class="pg-version"></select>
       <button type="button" class="pg-run" aria-keyshortcuts="Control+Enter Meta+Enter">Run<kbd class="pg-run-key" aria-hidden="true">Ctrl ↵</kbd></button>

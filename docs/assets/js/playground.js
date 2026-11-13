@@ -89,6 +89,10 @@
     diagnostics: root.querySelector('.pg-diagnostics'),
     lintNote: root.querySelector('.pg-lint-note'),
     facts: root.querySelector('.pg-facts'),
+    flagsGroup: root.querySelector('.pg-flags'),
+    flags: Array.prototype.slice.call(root.querySelectorAll('.pg-flag')),
+    flagsMore: root.querySelector('.pg-flags-more'),
+    flagsMoreCount: root.querySelector('.pg-flags-more-count'),
     shareActions: root.querySelector('.pg-share-actions'),
     linkCopy: root.querySelector('.pg-link-copy'),
     linkNative: root.querySelector('.pg-link-native'),
@@ -361,6 +365,80 @@
     counter(el.pattern, el.patternCount, PATTERN_CAP);
     counter(el.subject, el.subjectCount, SUBJECT_CAP);
     syncExamples();
+    syncFlags();
+  }
+
+  // --- the flags -----------------------------------------------------------
+
+  var FLAG_CLOSERS = { '(': ')', '[': ']', '{': '}', '<': '>' };
+  var FLAG_SINCE = { n: '8.2' };
+  var FLAG_KEYS = { KeyI: 'i', KeyM: 'm', KeyS: 's', KeyX: 'x', KeyU: 'u' };
+
+  // The pattern's flags, read as PHP reads them: the first non-space
+  // character opens, a bracket closes with its mirror and anything else
+  // with itself, and the letters after the last closer are the flags —
+  // the last one, because a flag is a letter and never a delimiter.
+  // Null when the field is not a delimited pattern: nothing to toggle.
+  function splitFlags(value) {
+    var start = value.search(/\S/);
+    if (start < 0) {
+      return null;
+    }
+    var open = value.charAt(start);
+    if (/[A-Za-z0-9\\]/.test(open)) {
+      return null;
+    }
+    var close = FLAG_CLOSERS[open] || open;
+    var end = value.lastIndexOf(close);
+    if (end <= start) {
+      return null;
+    }
+    var after = value.slice(end + 1);
+    if (!/^[A-Za-z]*\s*$/.test(after)) {
+      return null;
+    }
+    var flags = after.replace(/\s+$/, '');
+    return { head: value.slice(0, end + 1), flags: flags, tail: after.slice(flags.length) };
+  }
+
+  // The toggles say what the field says. A flag the chosen PHP does not
+  // read is disabled, unless it is already written: taking it out is
+  // always allowed. The door counts what it hides, so a pressed flag
+  // behind it is never a secret.
+  function syncFlags() {
+    var parts = splitFlags(el.pattern.value);
+    var hidden = 0;
+    el.flags.forEach(function (button) {
+      var letter = button.getAttribute('data-flag');
+      var since = FLAG_SINCE[letter];
+      var pressed = !!parts && parts.flags.indexOf(letter) !== -1;
+      var unread = !!since && VERSIONS.indexOf(chosen) < VERSIONS.indexOf(since);
+      button.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+      button.disabled = !parts || (unread && !pressed);
+      if (pressed && el.flagsMore.contains(button)) {
+        hidden += 1;
+      }
+    });
+    el.flagsMoreCount.textContent = hidden ? '+' + hidden : '';
+    el.flagsMore.classList.toggle('is-active', hidden > 0);
+    el.flagsGroup.classList.toggle('is-off', !parts);
+    el.flagsGroup.title = parts ? '' : 'Write the pattern between delimiters, /like this/, to toggle its flags';
+  }
+
+  // A toggle is an edit of the field and nothing else: the letter goes
+  // in after the closer, or every copy of it comes out, and the field's
+  // own input event carries the change — the address, the counts, the
+  // finding's exit follow it as they follow a keystroke. Then it runs, a
+  // gesture like a chip.
+  function toggleFlag(letter) {
+    var parts = splitFlags(el.pattern.value);
+    if (!parts) {
+      return;
+    }
+    var flags = parts.flags.indexOf(letter) === -1 ? parts.flags + letter : parts.flags.split(letter).join('');
+    el.pattern.value = parts.head + flags + parts.tail;
+    el.pattern.dispatchEvent(new Event('input', { bubbles: true }));
+    analyzeNow();
   }
 
   // The example that sits in the fields, if any: pressed, so the row
@@ -5323,6 +5401,7 @@
   });
   el.version.addEventListener('change', function () {
     chosen = el.version.value;
+    syncFlags();
     track('version_changed', { php_version: chosen });
     pageTouched = true;
     try {
@@ -5377,6 +5456,45 @@
       track('run', { trigger: 'keyboard' });
       pageTouched = true;
       analyzeNow();
+    }
+  });
+
+  el.flags.forEach(function (button) {
+    button.addEventListener('click', function () {
+      toggleFlag(button.getAttribute('data-flag'));
+    });
+  });
+  // Alt and the letter, from the pattern field, for the row's five: the
+  // find bar's own grammar. The key, not the character — Alt+I types a
+  // circumflex on a Mac.
+  el.pattern.addEventListener('keydown', function (event) {
+    var letter = FLAG_KEYS[event.code];
+    if (!letter || !event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+      return;
+    }
+    event.preventDefault();
+    toggleFlag(letter);
+  });
+  // The door closes the way every popover of the page closes: Escape,
+  // or a click anywhere else.
+  el.flagsMore.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && el.flagsMore.open) {
+      event.stopPropagation();
+      el.flagsMore.open = false;
+      el.flagsMore.querySelector('summary').focus();
+    }
+  });
+  document.addEventListener('click', function (event) {
+    if (el.flagsMore.open && !el.flagsMore.contains(event.target)) {
+      el.flagsMore.open = false;
+    }
+  });
+  // The row says the shortcut in the platform's words, inside the tip.
+  el.flags.forEach(function (button) {
+    var letter = button.getAttribute('data-flag');
+    if (button.hasAttribute('data-tip') && FLAG_KEYS['Key' + letter.toUpperCase()] === letter) {
+      button.setAttribute('data-tip', button.getAttribute('data-tip') + (onApple ? '  ⌥' : '  Alt+') + letter.toUpperCase());
+      button.setAttribute('aria-keyshortcuts', 'Alt+' + letter.toUpperCase());
     }
   });
 

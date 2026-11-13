@@ -4908,6 +4908,212 @@ body.search-open {
   align-items: center;
   gap: .5rem;
 }
+/* The flags: one segmented strip at the controls' height, the letters in
+   the code's own face. Released, a letter is ink-soft on nothing; pressed,
+   it wears the accent as a tint and a border — a border, so a forced
+   palette, which drops fills, still tells pressed from released. */
+.pg-flags {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  min-height: 1.9rem;
+  padding: 2px;
+  background: var(--code-bg);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}
+.pg-flags.is-off {
+  opacity: .55;
+}
+.pg-flag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  padding: 0 .3rem;
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: color .12s ease, background-color .12s ease, border-color .12s ease;
+}
+.pg-flag:hover {
+  color: var(--ink);
+  background: var(--paper);
+}
+.pg-flag:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+.pg-flag[aria-pressed="true"] {
+  color: var(--amber);
+  font-weight: 700;
+  background: var(--amber-tint);
+  border-color: var(--amber);
+}
+.pg-flag:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+  background: transparent;
+}
+/* The tip: what a letter does, said under it after a beat — the beat
+   keeps a pointer that only crosses the strip from raining tips. Drawn
+   from the attribute, so the markup says it once; it never takes the
+   click meant for what lies under it. */
+.pg-flag[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + .5rem);
+  left: 50%;
+  z-index: 6;
+  padding: .3rem .55rem;
+  font-family: var(--font-body);
+  font-size: .72rem;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: pre;
+  color: var(--paper);
+  background: var(--ink);
+  border-radius: var(--radius-s);
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  transform: translate(-50%, -2px);
+  transition: opacity .12s ease, transform .12s ease;
+  pointer-events: none;
+}
+.pg-flag[data-tip]:hover::after,
+.pg-flag[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: .35s;
+}
+@media (hover: none) {
+  .pg-flag[data-tip]::after {
+    display: none;
+  }
+}
+/* A phone has no room for six toggles, a select and Run on one line:
+   the flags take the first row whole, each toggle a wide target, and the
+   version and Run share the next. */
+@media (max-width: 639px) {
+  .pg-patternbar .pg-controls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    justify-self: stretch;
+  }
+
+  .pg-flags {
+    flex: 1 0 100%;
+  }
+
+  .pg-flags > .pg-flag,
+  .pg-flags-more,
+  .pg-flags-more > summary {
+    flex: 1;
+    justify-content: center;
+  }
+}
+/* The door to the rarer five: an ellipsis in the strip, which counts the
+   pressed flags it hides, so a flag behind it is never a secret. */
+.pg-flags-more {
+  display: flex;
+}
+.pg-flags-more > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: .2rem;
+  min-width: 1.6rem;
+  padding: 0 .35rem;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--ink-soft);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  list-style: none;
+}
+.pg-flags-more > summary::-webkit-details-marker {
+  display: none;
+}
+.pg-flags-more > summary::before {
+  content: '⋯';
+  font-size: .9rem;
+}
+.pg-flags-more > summary:hover,
+.pg-flags-more[open] > summary {
+  color: var(--ink);
+  background: var(--paper);
+}
+.pg-flags-more > summary:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+.pg-flags-more.is-active > summary {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+.pg-flags-menu {
+  position: absolute;
+  top: calc(100% + .45rem);
+  right: 0;
+  z-index: 5;
+  display: grid;
+  gap: 1px;
+  width: max-content;
+  min-width: 15rem;
+  padding: .3rem;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-2);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pg-flags-more[open] .pg-flags-menu {
+    animation: pg-panel-rise .13s ease-out;
+  }
+}
+.pg-flags-menu .pg-flag {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .55rem;
+  width: 100%;
+  padding: .4rem .45rem;
+  text-align: left;
+}
+.pg-flags-menu .pg-flag:hover:not(:disabled) {
+  background: var(--code-bg);
+}
+.pg-flag-letter {
+  display: inline-grid;
+  place-items: center;
+  height: 1.35rem;
+  font-family: var(--font-mono);
+  color: inherit;
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+}
+.pg-flag[aria-pressed="true"] .pg-flag-letter {
+  border-color: var(--amber);
+}
+.pg-flag-name {
+  font-family: var(--font-body);
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+.pg-flag-note {
+  font-family: var(--font-body);
+  font-size: .68rem;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
 /* The version reads as one of the tool's own controls: the platform's
    select, the page's ink and paper, its border at the hairline weight
    until a hand or the keyboard claims it. */
