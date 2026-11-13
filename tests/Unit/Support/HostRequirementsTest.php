@@ -56,7 +56,7 @@ final class HostRequirementsTest extends TestCase
     public function test_a_host_without_jq_is_named_with_the_tests_that_fail_there(): void
     {
         $this->assertSame(
-            ['jq is not on the PATH: the tests of the scope job of ci.yml read the files GitHub lists through it, as gh --jq does, and fail on this host.'],
+            ['jq is not on the PATH: the tests of the CI workflows and of bin/ci-answer answer for gh with a stand-in that filters through it, as gh --jq does, and fail on this host.'],
             HostRequirements::missing(windows: false, ownerCheck: true, jq: false),
         );
         $this->assertCount(2, HostRequirements::missing(windows: false, ownerCheck: false, jq: false));
