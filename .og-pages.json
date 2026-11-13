@@ -1,0 +1,2699 @@
+[
+ {
+  "url": "/",
+  "title": "See a PHP regex as a tree",
+  "desc": "PHPRegex lexes and parses PCRE patterns into an immutable AST, then explains, validates, and transforms the tree. Try it on the real PHP and PCRE2, in your browser.",
+  "h1": "See a PHP regex as a tree",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/404.html",
+  "title": "No match",
+  "desc": "This PHPRegex address matched no page — the closest pages, the documentation search and the landmarks are one click away.",
+  "h1": "No match.",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/adding-a-lint-rule/",
+  "title": "Adding a Lint Rule",
+  "desc": "For contributors: add a lint rule to PHPRegex, from the rule class and its registration to its configuration key, its PHPStan identifier, its documentation and its engine-first tests.",
+  "h1": "Adding a Lint Rule",
+  "crumbs": [
+   "Documentation",
+   "Internals",
+   "Adding a Lint Rule"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/architecture/",
+  "title": "PHPRegex Architecture",
+  "desc": "How the PHPRegex pipeline is built: lexer, immutable AST, visitors, and the packages the monorepo splits into.",
+  "h1": "PHPRegex Architecture",
+  "crumbs": [
+   "Documentation",
+   "Internals",
+   "PHPRegex Architecture"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/blog/",
+  "title": "Articles",
+  "desc": "In-depth articles on PHP regular expressions: every example run against the engine it names, every release claim checked against that release's own sources.",
+  "h1": "Measured writing on PHP regular expressions.",
+  "crumbs": [
+   "Documentation",
+   "Learn",
+   "Articles"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/blog/catastrophic-backtracking-in-php/",
+  "title": "Catastrophic backtracking in PHP: why one regex takes seconds",
+  "desc": "Why /^(\\w+)+$/ doubles its time with each letter, why preg_match() then returns false, and the one-character fix. Measured on PHP 8.4, JIT on and off.",
+  "h1": "Catastrophic backtracking in PHP: why one regex takes seconds",
+  "crumbs": [],
+  "byline": "Younes ENNAJI · 19 August 2026 · 12 min read · updated 16 October 2026 Draft — not yet published",
+  "fmeta": ""
+ },
+ {
+  "url": "/blog/re2-vs-pcre2/",
+  "title": "RE2 vs PCRE2: why some regex engines never hang",
+  "desc": "Why one regex makes PHP give up and Node.js stall while RE2-style engines answer at once, what linear time costs, and how to write PHP patterns that cannot backtrack.",
+  "h1": "RE2 vs PCRE2: why some regex engines never hang",
+  "crumbs": [],
+  "byline": "Younes ENNAJI · 22 September 2026 · 12 min read · updated 16 October 2026 Draft — not yet published",
+  "fmeta": ""
+ },
+ {
+  "url": "/blog/which-pcre2-ships-with-which-php/",
+  "title": "Which PCRE2 ships with which PHP, and how to check yours",
+  "desc": "The PCRE2 version each PHP release bundles, 7.3 to 8.6, how to check yours with PCRE_VERSION, and the lookbehind and \\K patterns that change between them.",
+  "h1": "Which PCRE2 ships with which PHP, and how to check yours",
+  "crumbs": [],
+  "byline": "Younes ENNAJI · 14 July 2026 · 10 min read · updated 16 October 2026 Draft — not yet published",
+  "fmeta": ""
+ },
+ {
+  "url": "/blog/why-pcre2-is-a-separate-library/",
+  "title": "PCRE vs PCRE2: why PCRE2 is a separate library",
+  "desc": "PCRE2 is a separate library with a new API, not PCRE 9. How to tell which one your PHP runs, and the patterns PHP 7.3 broke or let through when it switched.",
+  "h1": "PCRE vs PCRE2: why PCRE2 is a separate library",
+  "crumbs": [],
+  "byline": "Younes ENNAJI · 16 October 2026 · 11 min read Draft — not yet published",
+  "fmeta": ""
+ },
+ {
+  "url": "/concepts/",
+  "title": "Key Concepts",
+  "desc": "The concepts section at a glance: AST and visitor foundations for newcomers, plus PCRE2 targeting and ReDoS internals for tool authors.",
+  "h1": "Key Concepts",
+  "crumbs": [
+   "Documentation",
+   "Concepts",
+   "Key Concepts"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/concepts/ast/",
+  "title": "What is an AST?",
+  "desc": "What an AST is and why PHPRegex parses a pattern into one node per character: structure, precise error reporting, and the tooling it enables.",
+  "h1": "What is an AST?",
+  "crumbs": [
+   "Documentation",
+   "Concepts",
+   "What is an AST?"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/concepts/how-pcre2-matches/",
+  "title": "How PCRE2 Matches",
+  "desc": "How PCRE2 matches a pattern, read from its own traces: items, match attempts, backtracking, leftmost-first alternation, atomic groups, lookbehind, captures mid-match and the two limits PHP exposes.",
+  "h1": "How PCRE2 Matches",
+  "crumbs": [
+   "Documentation",
+   "Concepts",
+   "How PCRE2 Matches"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/concepts/pcre/",
+  "title": "PCRE vs Other Engines",
+  "desc": "How PCRE2 relates to PHP and other engines: syntax by PCRE2 release, target versioning, a known JIT crash, and the engine comparison matrix.",
+  "h1": "PCRE vs Other Engines",
+  "crumbs": [
+   "Documentation",
+   "Concepts",
+   "PCRE vs Other Engines"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/concepts/redos/",
+  "title": "ReDoS Deep Dive",
+  "desc": "Why backtracking blows up: ambiguity, witnesses and the proof model behind PHPRegex's ReDoS verdicts, with the fix cookbook in the ReDoS guide.",
+  "h1": "ReDoS Deep Dive",
+  "crumbs": [
+   "Documentation",
+   "Concepts",
+   "ReDoS Deep Dive"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/concepts/visitors/",
+  "title": "Understanding Visitors",
+  "desc": "The visitor pattern in PHPRegex: how accept() dispatches work, which base class to extend, and working collectors you can copy and run.",
+  "h1": "Understanding Visitors",
+  "crumbs": [
+   "Documentation",
+   "Concepts",
+   "Understanding Visitors"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/cookbook/",
+  "title": "Regex Cookbook: Practical Patterns for PHP",
+  "desc": "Copy-ready PHP regex patterns for emails, URLs, dates, phones and more — each one proven safe against ReDoS by the analyzer, with matched and rejected examples.",
+  "h1": "Regex Cookbook: Practical Patterns for PHP",
+  "crumbs": [
+   "Documentation",
+   "Learn",
+   "Regex Cookbook: Practical Patterns for PHP"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/design/ast-traversal/",
+  "title": "AST Traversal Design",
+  "desc": "How PHPRegex walks the AST: double dispatch, choosing a visitor base class, transformations that preserve positions, and guards against deep recursion.",
+  "h1": "AST Traversal Design",
+  "crumbs": [
+   "Documentation",
+   "Internals",
+   "AST Traversal Design"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/docs/",
+  "title": "Documentation",
+  "desc": "Choose your path into PHPRegex: first run, regex tutorial, integration, API reference, or the correctness contracts behind each verdict.",
+  "h1": "PHPRegex Documentation",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/extending/",
+  "title": "Extending PHPRegex",
+  "desc": "Add a new PCRE construct to the parser — node, lexer token, parser rule, visitor method, tests — with the callout syntax (?C) as the worked example.",
+  "h1": "Extending PHPRegex",
+  "crumbs": [
+   "Documentation",
+   "Internals",
+   "Extending PHPRegex"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/findings/",
+  "title": "Projects",
+  "desc": "What PHPRegex's linter reports on the regular expressions of real open-source PHP projects, each judged for the PHP and PCRE2 its own composer.json requires.",
+  "h1": "Projects",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/findings/10up/ElasticPress/",
+  "title": "10up/ElasticPress: 1 regex finding",
+  "desc": "PHPRegex on 10up/ElasticPress: 0 failures and 1 warning in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "10up/ElasticPress",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-10-27"
+ },
+ {
+  "url": "/findings/Alexia/php7mar/",
+  "title": "Alexia/php7mar: 2 regex findings",
+  "desc": "PHPRegex on Alexia/php7mar: 0 failures and 2 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "Alexia/php7mar",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2017-04-16"
+ },
+ {
+  "url": "/findings/Automattic/jetpack/",
+  "title": "Automattic/jetpack: 67 regex findings",
+  "desc": "PHPRegex on Automattic/jetpack: 5 failures and 62 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "Automattic/jetpack",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "67 regex findings: 5 FAIL, 62 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/CarbonPHP/carbon/",
+  "title": "CarbonPHP/carbon: 5 regex findings",
+  "desc": "PHPRegex on CarbonPHP/carbon: 0 failures and 5 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "CarbonPHP/carbon",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 0 FAIL, 5 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/Codeception/Codeception/",
+  "title": "Codeception/Codeception: 4 regex findings",
+  "desc": "PHPRegex on Codeception/Codeception: 0 failures and 4 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "Codeception/Codeception",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-03"
+ },
+ {
+  "url": "/findings/CuyZ/Valinor/",
+  "title": "CuyZ/Valinor: 2 regex findings",
+  "desc": "PHPRegex on CuyZ/Valinor: 0 failures and 2 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "CuyZ/Valinor",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/EdgedesignCZ/phpqa/",
+  "title": "EdgedesignCZ/phpqa: 1 regex finding",
+  "desc": "PHPRegex on EdgedesignCZ/phpqa: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "EdgedesignCZ/phpqa",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2025-11-22"
+ },
+ {
+  "url": "/findings/FOSSBilling/FOSSBilling/",
+  "title": "FOSSBilling/FOSSBilling: 8 regex findings",
+  "desc": "PHPRegex on FOSSBilling/FOSSBilling: 1 failure and 7 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "FOSSBilling/FOSSBilling",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "8 regex findings: 1 FAIL, 7 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/FakerPHP/Faker/",
+  "title": "FakerPHP/Faker: 4 regex findings",
+  "desc": "PHPRegex on FakerPHP/Faker: 0 failures and 4 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "FakerPHP/Faker",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-02-04"
+ },
+ {
+  "url": "/findings/Heyosseus/sloppy/",
+  "title": "Heyosseus/sloppy: 3 regex findings",
+  "desc": "PHPRegex on Heyosseus/sloppy: 0 failures and 3 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "Heyosseus/sloppy",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-02"
+ },
+ {
+  "url": "/findings/Humbug/php-scoper/",
+  "title": "Humbug/php-scoper: 4 regex findings",
+  "desc": "PHPRegex on Humbug/php-scoper: 2 failures and 2 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "Humbug/php-scoper",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 2 FAIL, 2 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-26"
+ },
+ {
+  "url": "/findings/MyIntervals/PHP-CSS-Parser/",
+  "title": "MyIntervals/PHP-CSS-Parser: 4 regex findings",
+  "desc": "PHPRegex on MyIntervals/PHP-CSS-Parser: 0 failures and 4 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "MyIntervals/PHP-CSS-Parser",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-11-02"
+ },
+ {
+  "url": "/findings/NativePHP/desktop/",
+  "title": "NativePHP/desktop: 2 regex findings",
+  "desc": "PHPRegex on NativePHP/desktop: 0 failures and 2 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "NativePHP/desktop",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-10-29"
+ },
+ {
+  "url": "/findings/OskarStark/doctor-rst/",
+  "title": "OskarStark/doctor-rst: 1 regex finding",
+  "desc": "PHPRegex on OskarStark/doctor-rst: 0 failures and 1 warning in its regular expressions, judged for PHP 8.5 and PCRE2 10.44.",
+  "h1": "OskarStark/doctor-rst",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.5 · PCRE2 10.44 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/PHP-FFMpeg/PHP-FFMpeg/",
+  "title": "PHP-FFMpeg/PHP-FFMpeg: 1 regex finding",
+  "desc": "PHPRegex on PHP-FFMpeg/PHP-FFMpeg: 0 failures and 1 warning in its regular expressions, judged for PHP 8.0 and PCRE2 10.35.",
+  "h1": "PHP-FFMpeg/PHP-FFMpeg",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.0 · PCRE2 10.35 · code as of 2026-01-19"
+ },
+ {
+  "url": "/findings/PHPCSStandards/PHP_CodeSniffer/",
+  "title": "PHPCSStandards/PHP_CodeSniffer: 2 regex findings",
+  "desc": "PHPRegex on PHPCSStandards/PHP_CodeSniffer: 0 failures and 2 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "PHPCSStandards/PHP_CodeSniffer",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-08-22"
+ },
+ {
+  "url": "/findings/PHPCompatibility/PHPCompatibility/",
+  "title": "PHPCompatibility/PHPCompatibility: 2 regex findings",
+  "desc": "PHPRegex on PHPCompatibility/PHPCompatibility: 0 failures and 2 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "PHPCompatibility/PHPCompatibility",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-28"
+ },
+ {
+  "url": "/findings/PHPMailer/PHPMailer/",
+  "title": "PHPMailer/PHPMailer: 8 regex findings",
+  "desc": "PHPRegex on PHPMailer/PHPMailer: 0 failures and 8 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "PHPMailer/PHPMailer",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "8 regex findings: 0 FAIL, 8 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/PHPOffice/PHPWord/",
+  "title": "PHPOffice/PHPWord: 1 regex finding",
+  "desc": "PHPRegex on PHPOffice/PHPWord: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "PHPOffice/PHPWord",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-26"
+ },
+ {
+  "url": "/findings/PHPOffice/PhpSpreadsheet/",
+  "title": "PHPOffice/PhpSpreadsheet: 70 regex findings",
+  "desc": "PHPRegex on PHPOffice/PhpSpreadsheet: 1 failure and 69 warnings in its regular expressions, judged for PHP 8.2.99 and PCRE2 10.40.",
+  "h1": "PHPOffice/PhpSpreadsheet",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "70 regex findings: 1 FAIL, 69 WARN · judged for PHP 8.2.99 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/PhpCodeArcheology/PhpCodeArcheology/",
+  "title": "PhpCodeArcheology/PhpCodeArcheology: 5 regex findings",
+  "desc": "PHPRegex on PhpCodeArcheology/PhpCodeArcheology: 0 failures and 5 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "PhpCodeArcheology/PhpCodeArcheology",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 0 FAIL, 5 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-07-28"
+ },
+ {
+  "url": "/findings/PrestaShop/PrestaShop/",
+  "title": "PrestaShop/PrestaShop: 70 regex findings",
+  "desc": "PHPRegex on PrestaShop/PrestaShop: 1 failure and 69 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "PrestaShop/PrestaShop",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "70 regex findings: 1 FAIL, 69 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/Respect/Validation/",
+  "title": "Respect/Validation: 3 regex findings",
+  "desc": "PHPRegex on Respect/Validation: 1 failure and 2 warnings in its regular expressions, judged for PHP 8.5 and PCRE2 10.44.",
+  "h1": "Respect/Validation",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 1 FAIL, 2 WARN · judged for PHP 8.5 · PCRE2 10.44 · code as of 2026-10-02"
+ },
+ {
+  "url": "/findings/Roave/DocbookTool/",
+  "title": "Roave/DocbookTool: 1 regex finding",
+  "desc": "PHPRegex on Roave/DocbookTool: 0 failures and 1 warning in its regular expressions, judged for PHP 8.3.3 and PCRE2 10.42.",
+  "h1": "Roave/DocbookTool",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.3.3 · PCRE2 10.42 · code as of 2026-05-20"
+ },
+ {
+  "url": "/findings/Shopify/shopify-api-php/",
+  "title": "Shopify/shopify-api-php: 2 regex findings",
+  "desc": "PHPRegex on Shopify/shopify-api-php: 0 failures and 2 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "Shopify/shopify-api-php",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-08-25"
+ },
+ {
+  "url": "/findings/Sylius/Sylius/",
+  "title": "Sylius/Sylius: 1 regex finding",
+  "desc": "PHPRegex on Sylius/Sylius: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "Sylius/Sylius",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-30"
+ },
+ {
+  "url": "/findings/TYPO3/Fluid/",
+  "title": "TYPO3/Fluid: 3 regex findings",
+  "desc": "PHPRegex on TYPO3/Fluid: 0 failures and 3 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "TYPO3/Fluid",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-08"
+ },
+ {
+  "url": "/findings/TYPO3/typo3/",
+  "title": "TYPO3/typo3: 18 regex findings",
+  "desc": "PHPRegex on TYPO3/typo3: 2 failures and 16 warnings in its regular expressions, judged for PHP 8.5 and PCRE2 10.44.",
+  "h1": "TYPO3/typo3",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "18 regex findings: 2 FAIL, 16 WARN · judged for PHP 8.5 · PCRE2 10.44 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/WhichBrowser/Parser/",
+  "title": "WhichBrowser/Parser: 11 regex findings",
+  "desc": "PHPRegex on WhichBrowser/Parser: 0 failures and 11 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "WhichBrowser/Parser",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "11 regex findings: 0 FAIL, 11 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2024-04-17"
+ },
+ {
+  "url": "/findings/Wixel/GUMP/",
+  "title": "Wixel/GUMP: 4 regex findings",
+  "desc": "PHPRegex on Wixel/GUMP: 0 failures and 4 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "Wixel/GUMP",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2025-11-28"
+ },
+ {
+  "url": "/findings/WordPress/WordPress-Coding-Standards/",
+  "title": "WordPress/WordPress-Coding-Standards: 5 regex findings",
+  "desc": "PHPRegex on WordPress/WordPress-Coding-Standards: 0 failures and 5 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "WordPress/WordPress-Coding-Standards",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 0 FAIL, 5 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/WordPress/wordpress-develop/",
+  "title": "WordPress/wordpress-develop: 66 regex findings",
+  "desc": "PHPRegex on WordPress/wordpress-develop: 7 failures and 59 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "WordPress/wordpress-develop",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "66 regex findings: 7 FAIL, 59 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/Yoast/wordpress-seo/",
+  "title": "Yoast/wordpress-seo: 6 regex findings",
+  "desc": "PHPRegex on Yoast/wordpress-seo: 0 failures and 6 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "Yoast/wordpress-seo",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "6 regex findings: 0 FAIL, 6 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-11-02"
+ },
+ {
+  "url": "/findings/akaunting/akaunting/",
+  "title": "akaunting/akaunting: 1 regex finding",
+  "desc": "PHPRegex on akaunting/akaunting: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "akaunting/akaunting",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/api-platform/core/",
+  "title": "api-platform/core: 3 regex findings",
+  "desc": "PHPRegex on api-platform/core: 0 failures and 3 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "api-platform/core",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/aws/aws-sdk-php/",
+  "title": "aws/aws-sdk-php: 2 regex findings",
+  "desc": "PHPRegex on aws/aws-sdk-php: 0 failures and 2 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "aws/aws-sdk-php",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/awslabs/aws-crt-php/",
+  "title": "awslabs/aws-crt-php: 1 regex finding",
+  "desc": "PHPRegex on awslabs/aws-crt-php: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "awslabs/aws-crt-php",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-07-30"
+ },
+ {
+  "url": "/findings/bcit-ci/CodeIgniter/",
+  "title": "bcit-ci/CodeIgniter: 24 regex findings",
+  "desc": "PHPRegex on bcit-ci/CodeIgniter: 1 failure and 23 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "bcit-ci/CodeIgniter",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "24 regex findings: 1 FAIL, 23 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2024-03-19"
+ },
+ {
+  "url": "/findings/beberlei/assert/",
+  "title": "beberlei/assert: 3 regex findings",
+  "desc": "PHPRegex on beberlei/assert: 0 failures and 3 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "beberlei/assert",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-06-10"
+ },
+ {
+  "url": "/findings/bobthecow/psysh/",
+  "title": "bobthecow/psysh: 10 regex findings",
+  "desc": "PHPRegex on bobthecow/psysh: 0 failures and 10 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "bobthecow/psysh",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "10 regex findings: 0 FAIL, 10 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-10-25"
+ },
+ {
+  "url": "/findings/bolt/core/",
+  "title": "bolt/core: 4 regex findings",
+  "desc": "PHPRegex on bolt/core: 0 failures and 4 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "bolt/core",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-26"
+ },
+ {
+  "url": "/findings/browscap/browscap-php/",
+  "title": "browscap/browscap-php: 3 regex findings",
+  "desc": "PHPRegex on browscap/browscap-php: 0 failures and 3 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "browscap/browscap-php",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-29"
+ },
+ {
+  "url": "/findings/cakephp/cakephp/",
+  "title": "cakephp/cakephp: 17 regex findings",
+  "desc": "PHPRegex on cakephp/cakephp: 1 failure and 16 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "cakephp/cakephp",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "17 regex findings: 1 FAIL, 16 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-02"
+ },
+ {
+  "url": "/findings/canyongbs/aidingapp/",
+  "title": "canyongbs/aidingapp: 5 regex findings",
+  "desc": "PHPRegex on canyongbs/aidingapp: 1 failure and 4 warnings in its regular expressions, judged for PHP 8.4 and PCRE2 10.49.",
+  "h1": "canyongbs/aidingapp",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 1 FAIL, 4 WARN · judged for PHP 8.4 · PCRE2 10.49 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/captainhook-git/captainhook/",
+  "title": "captainhook-git/captainhook: 1 regex finding",
+  "desc": "PHPRegex on captainhook-git/captainhook: 0 failures and 1 warning in its regular expressions, judged for PHP 8.0 and PCRE2 10.35.",
+  "h1": "captainhook-git/captainhook",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.0 · PCRE2 10.35 · code as of 2026-03-25"
+ },
+ {
+  "url": "/findings/cartalyst/stripe/",
+  "title": "cartalyst/stripe: 2 regex findings",
+  "desc": "PHPRegex on cartalyst/stripe: 0 failures and 2 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "cartalyst/stripe",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2022-07-07"
+ },
+ {
+  "url": "/findings/cebe/markdown/",
+  "title": "cebe/markdown: 10 regex findings",
+  "desc": "PHPRegex on cebe/markdown: 1 failure and 9 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "cebe/markdown",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "10 regex findings: 1 FAIL, 9 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2020-02-26"
+ },
+ {
+  "url": "/findings/codeigniter4/CodeIgniter4/",
+  "title": "codeigniter4/CodeIgniter4: 14 regex findings",
+  "desc": "PHPRegex on codeigniter4/CodeIgniter4: 1 failure and 13 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "codeigniter4/CodeIgniter4",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "14 regex findings: 1 FAIL, 13 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-04"
+ },
+ {
+  "url": "/findings/composer/composer/",
+  "title": "composer/composer: 13 regex findings",
+  "desc": "PHPRegex on composer/composer: 3 failures and 10 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "composer/composer",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "13 regex findings: 3 FAIL, 10 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/concretecms/concretecms/",
+  "title": "concretecms/concretecms: 26 regex findings",
+  "desc": "PHPRegex on concretecms/concretecms: 2 failures and 24 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "concretecms/concretecms",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "26 regex findings: 2 FAIL, 24 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-28"
+ },
+ {
+  "url": "/findings/contao/contao/",
+  "title": "contao/contao: 11 regex findings",
+  "desc": "PHPRegex on contao/contao: 2 failures and 9 warnings in its regular expressions, judged for PHP 8.4 and PCRE2 10.49.",
+  "h1": "contao/contao",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "11 regex findings: 2 FAIL, 9 WARN · judged for PHP 8.4 · PCRE2 10.49 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/craftcms/cms/",
+  "title": "craftcms/cms: 14 regex findings",
+  "desc": "PHPRegex on craftcms/cms: 3 failures and 11 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "craftcms/cms",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "14 regex findings: 3 FAIL, 11 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/cycle/database/",
+  "title": "cycle/database: 1 regex finding",
+  "desc": "PHPRegex on cycle/database: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "cycle/database",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-22"
+ },
+ {
+  "url": "/findings/deployphp/deployer/",
+  "title": "deployphp/deployer: 3 regex findings",
+  "desc": "PHPRegex on deployphp/deployer: 1 failure and 2 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "deployphp/deployer",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 1 FAIL, 2 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-08-26"
+ },
+ {
+  "url": "/findings/doctrine/dbal/",
+  "title": "doctrine/dbal: 5 regex findings",
+  "desc": "PHPRegex on doctrine/dbal: 0 failures and 5 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "doctrine/dbal",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 0 FAIL, 5 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/dompdf/dompdf/",
+  "title": "dompdf/dompdf: 7 regex findings",
+  "desc": "PHPRegex on dompdf/dompdf: 0 failures and 7 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "dompdf/dompdf",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "7 regex findings: 0 FAIL, 7 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-02"
+ },
+ {
+  "url": "/findings/drupal/drupal/",
+  "title": "drupal/drupal: 18 regex findings",
+  "desc": "PHPRegex on drupal/drupal: 6 failures and 12 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "drupal/drupal",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "18 regex findings: 6 FAIL, 12 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/ecsphp/ecs/",
+  "title": "ecsphp/ecs: 1 regex finding",
+  "desc": "PHPRegex on ecsphp/ecs: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "ecsphp/ecs",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/egulias/EmailValidator/",
+  "title": "egulias/EmailValidator: 1 regex finding",
+  "desc": "PHPRegex on egulias/EmailValidator: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "egulias/EmailValidator",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2025-03-06"
+ },
+ {
+  "url": "/findings/elementor/elementor/",
+  "title": "elementor/elementor: 9 regex findings",
+  "desc": "PHPRegex on elementor/elementor: 1 failure and 8 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "elementor/elementor",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "9 regex findings: 1 FAIL, 8 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/erusev/parsedown/",
+  "title": "erusev/parsedown: 4 regex findings",
+  "desc": "PHPRegex on erusev/parsedown: 0 failures and 4 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "erusev/parsedown",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-02-18"
+ },
+ {
+  "url": "/findings/espocrm/espocrm/",
+  "title": "espocrm/espocrm: 5 regex findings",
+  "desc": "PHPRegex on espocrm/espocrm: 0 failures and 5 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "espocrm/espocrm",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 0 FAIL, 5 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/exakat/exakat/",
+  "title": "exakat/exakat: 52 regex findings",
+  "desc": "PHPRegex on exakat/exakat: 0 failures and 52 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "exakat/exakat",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "52 regex findings: 0 FAIL, 52 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2022-03-24"
+ },
+ {
+  "url": "/findings/exposedev/expose/",
+  "title": "exposedev/expose: 1 regex finding",
+  "desc": "PHPRegex on exposedev/expose: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "exposedev/expose",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-09-17"
+ },
+ {
+  "url": "/findings/exussum12/coverageChecker/",
+  "title": "exussum12/coverageChecker: 1 regex finding",
+  "desc": "PHPRegex on exussum12/coverageChecker: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "exussum12/coverageChecker",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2024-06-25"
+ },
+ {
+  "url": "/findings/ezyang/htmlpurifier/",
+  "title": "ezyang/htmlpurifier: 1 regex finding",
+  "desc": "PHPRegex on ezyang/htmlpurifier: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "ezyang/htmlpurifier",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-26"
+ },
+ {
+  "url": "/findings/facebook/facebook-for-woocommerce/",
+  "title": "facebook/facebook-for-woocommerce: 1 regex finding",
+  "desc": "PHPRegex on facebook/facebook-for-woocommerce: 0 failures and 1 warning in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "facebook/facebook-for-woocommerce",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/facebook/facebook-php-business-sdk/",
+  "title": "facebook/facebook-php-business-sdk: 1 regex finding",
+  "desc": "PHPRegex on facebook/facebook-php-business-sdk: 0 failures and 1 warning in its regular expressions, judged for PHP 8.0 and PCRE2 10.35.",
+  "h1": "facebook/facebook-php-business-sdk",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.0 · PCRE2 10.35 · code as of 2026-09-18"
+ },
+ {
+  "url": "/findings/facebook/open-graph-protocol/",
+  "title": "facebook/open-graph-protocol: 4 regex findings",
+  "desc": "PHPRegex on facebook/open-graph-protocol: 0 failures and 4 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "facebook/open-graph-protocol",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2025-06-25"
+ },
+ {
+  "url": "/findings/filamentphp/filament/",
+  "title": "filamentphp/filament: 2 regex findings",
+  "desc": "PHPRegex on filamentphp/filament: 0 failures and 2 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "filamentphp/filament",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/filp/whoops/",
+  "title": "filp/whoops: 2 regex findings",
+  "desc": "PHPRegex on filp/whoops: 0 failures and 2 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "filp/whoops",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-11-04"
+ },
+ {
+  "url": "/findings/flarum/framework/",
+  "title": "flarum/framework: 8 regex findings",
+  "desc": "PHPRegex on flarum/framework: 7 failures and 1 warning in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "flarum/framework",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "8 regex findings: 7 FAIL, 1 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/freescout-help-desk/freescout/",
+  "title": "freescout-help-desk/freescout: 32 regex findings",
+  "desc": "PHPRegex on freescout-help-desk/freescout: 5 failures and 27 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "freescout-help-desk/freescout",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "32 regex findings: 5 FAIL, 27 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-31"
+ },
+ {
+  "url": "/findings/getgrav/grav/",
+  "title": "getgrav/grav: 23 regex findings",
+  "desc": "PHPRegex on getgrav/grav: 0 failures and 23 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "getgrav/grav",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "23 regex findings: 0 FAIL, 23 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/google/google-cloud-php/",
+  "title": "google/google-cloud-php: 6 regex findings",
+  "desc": "PHPRegex on google/google-cloud-php: 0 failures and 6 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "google/google-cloud-php",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "6 regex findings: 0 FAIL, 6 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/google/recaptcha/",
+  "title": "google/recaptcha: 1 regex finding",
+  "desc": "PHPRegex on google/recaptcha: 0 failures and 1 warning in its regular expressions, judged for PHP 8.4 and PCRE2 10.49.",
+  "h1": "google/recaptcha",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.4 · PCRE2 10.49 · code as of 2026-10-23"
+ },
+ {
+  "url": "/findings/google/site-kit-wp/",
+  "title": "google/site-kit-wp: 5 regex findings",
+  "desc": "PHPRegex on google/site-kit-wp: 0 failures and 5 warnings in its regular expressions, judged for PHP 7.4.33 and PCRE2 10.33.",
+  "h1": "google/site-kit-wp",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 0 FAIL, 5 WARN · judged for PHP 7.4.33 · PCRE2 10.33 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/greenlion/php-sql-parser/",
+  "title": "greenlion/php-sql-parser: 1 regex finding",
+  "desc": "PHPRegex on greenlion/php-sql-parser: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "greenlion/php-sql-parser",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-09-21"
+ },
+ {
+  "url": "/findings/grokability/snipe-it/",
+  "title": "grokability/snipe-it: 3 regex findings",
+  "desc": "PHPRegex on grokability/snipe-it: 3 failures and 0 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "grokability/snipe-it",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 3 FAIL, 0 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/guzzle/psr7/",
+  "title": "guzzle/psr7: 3 regex findings",
+  "desc": "PHPRegex on guzzle/psr7: 0 failures and 3 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "guzzle/psr7",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-10-18"
+ },
+ {
+  "url": "/findings/hyperf/hyperf/",
+  "title": "hyperf/hyperf: 8 regex findings",
+  "desc": "PHPRegex on hyperf/hyperf: 2 failures and 6 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "hyperf/hyperf",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "8 regex findings: 2 FAIL, 6 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-23"
+ },
+ {
+  "url": "/findings/ibexa/core/",
+  "title": "ibexa/core: 2 regex findings",
+  "desc": "PHPRegex on ibexa/core: 0 failures and 2 warnings in its regular expressions, judged for PHP 8.5 and PCRE2 10.44.",
+  "h1": "ibexa/core",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 8.5 · PCRE2 10.44 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/infection/infection/",
+  "title": "infection/infection: 5 regex findings",
+  "desc": "PHPRegex on infection/infection: 0 failures and 5 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "infection/infection",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 0 FAIL, 5 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-02"
+ },
+ {
+  "url": "/findings/invoiceninja/invoiceninja/",
+  "title": "invoiceninja/invoiceninja: 3 regex findings",
+  "desc": "PHPRegex on invoiceninja/invoiceninja: 1 failure and 2 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "invoiceninja/invoiceninja",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 1 FAIL, 2 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-18"
+ },
+ {
+  "url": "/findings/janephp/janephp/",
+  "title": "janephp/janephp: 4 regex findings",
+  "desc": "PHPRegex on janephp/janephp: 0 failures and 4 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "janephp/janephp",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-10-27"
+ },
+ {
+  "url": "/findings/jbowens/jBBCode/",
+  "title": "jbowens/jBBCode: 1 regex finding",
+  "desc": "PHPRegex on jbowens/jBBCode: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "jbowens/jBBCode",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2020-06-19"
+ },
+ {
+  "url": "/findings/jolicode/castor/",
+  "title": "jolicode/castor: 1 regex finding",
+  "desc": "PHPRegex on jolicode/castor: 0 failures and 1 warning in its regular expressions, judged for PHP 8.4.1 and PCRE2 10.49.",
+  "h1": "jolicode/castor",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.4.1 · PCRE2 10.49 · code as of 2026-11-01"
+ },
+ {
+  "url": "/findings/joomla/joomla-cms/",
+  "title": "joomla/joomla-cms: 47 regex findings",
+  "desc": "PHPRegex on joomla/joomla-cms: 1 failure and 46 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "joomla/joomla-cms",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "47 regex findings: 1 FAIL, 46 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/laminas/laminas-code/",
+  "title": "laminas/laminas-code: 10 regex findings",
+  "desc": "PHPRegex on laminas/laminas-code: 1 failure and 9 warnings in its regular expressions, judged for PHP 8.2.99 and PCRE2 10.40.",
+  "h1": "laminas/laminas-code",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "10 regex findings: 1 FAIL, 9 WARN · judged for PHP 8.2.99 · PCRE2 10.40 · code as of 2026-10-26"
+ },
+ {
+  "url": "/findings/laminas/laminas-filter/",
+  "title": "laminas/laminas-filter: 1 regex finding",
+  "desc": "PHPRegex on laminas/laminas-filter: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2.99 and PCRE2 10.40.",
+  "h1": "laminas/laminas-filter",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2.99 · PCRE2 10.40 · code as of 2026-11-02"
+ },
+ {
+  "url": "/findings/laminas/laminas-validator/",
+  "title": "laminas/laminas-validator: 5 regex findings",
+  "desc": "PHPRegex on laminas/laminas-validator: 1 failure and 4 warnings in its regular expressions, judged for PHP 8.2.99 and PCRE2 10.40.",
+  "h1": "laminas/laminas-validator",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 1 FAIL, 4 WARN · judged for PHP 8.2.99 · PCRE2 10.40 · code as of 2026-10-28"
+ },
+ {
+  "url": "/findings/larastan/larastan/",
+  "title": "larastan/larastan: 2 regex findings",
+  "desc": "PHPRegex on larastan/larastan: 0 failures and 2 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "larastan/larastan",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/laravel/boost/",
+  "title": "laravel/boost: 6 regex findings",
+  "desc": "PHPRegex on laravel/boost: 1 failure and 5 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "laravel/boost",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "6 regex findings: 1 FAIL, 5 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/laravel/framework/",
+  "title": "laravel/framework: 15 regex findings",
+  "desc": "PHPRegex on laravel/framework: 1 failure and 14 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "laravel/framework",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "15 regex findings: 1 FAIL, 14 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/laravel/pao/",
+  "title": "laravel/pao: 1 regex finding",
+  "desc": "PHPRegex on laravel/pao: 0 failures and 1 warning in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "laravel/pao",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-10-18"
+ },
+ {
+  "url": "/findings/laravel/pint/",
+  "title": "laravel/pint: 1 regex finding",
+  "desc": "PHPRegex on laravel/pint: 0 failures and 1 warning in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "laravel/pint",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-10-14"
+ },
+ {
+  "url": "/findings/laravel/prompts/",
+  "title": "laravel/prompts: 1 regex finding",
+  "desc": "PHPRegex on laravel/prompts: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "laravel/prompts",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-14"
+ },
+ {
+  "url": "/findings/laravel/valet/",
+  "title": "laravel/valet: 1 regex finding",
+  "desc": "PHPRegex on laravel/valet: 0 failures and 1 warning in its regular expressions, judged for PHP 8.0 and PCRE2 10.35.",
+  "h1": "laravel/valet",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.0 · PCRE2 10.35 · code as of 2026-10-14"
+ },
+ {
+  "url": "/findings/livewire/blaze/",
+  "title": "livewire/blaze: 1 regex finding",
+  "desc": "PHPRegex on livewire/blaze: 1 failure and 0 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "livewire/blaze",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 1 FAIL, 0 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/livewire/livewire/",
+  "title": "livewire/livewire: 6 regex findings",
+  "desc": "PHPRegex on livewire/livewire: 0 failures and 6 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "livewire/livewire",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "6 regex findings: 0 FAIL, 6 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-21"
+ },
+ {
+  "url": "/findings/magento/magento2/",
+  "title": "magento/magento2: 73 regex findings",
+  "desc": "PHPRegex on magento/magento2: 4 failures and 69 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "magento/magento2",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "73 regex findings: 4 FAIL, 69 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/matomo-org/matomo/",
+  "title": "matomo-org/matomo: 14 regex findings",
+  "desc": "PHPRegex on matomo-org/matomo: 2 failures and 12 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "matomo-org/matomo",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "14 regex findings: 2 FAIL, 12 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/matthiasmullie/minify/",
+  "title": "matthiasmullie/minify: 8 regex findings",
+  "desc": "PHPRegex on matthiasmullie/minify: 0 failures and 8 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "matthiasmullie/minify",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "8 regex findings: 0 FAIL, 8 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/mautic/mautic/",
+  "title": "mautic/mautic: 57 regex findings",
+  "desc": "PHPRegex on mautic/mautic: 0 failures and 57 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "mautic/mautic",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "57 regex findings: 0 FAIL, 57 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/michelf/php-markdown/",
+  "title": "michelf/php-markdown: 6 regex findings",
+  "desc": "PHPRegex on michelf/php-markdown: 0 failures and 6 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "michelf/php-markdown",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "6 regex findings: 0 FAIL, 6 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2025-06-17"
+ },
+ {
+  "url": "/findings/minkphp/Mink/",
+  "title": "minkphp/Mink: 1 regex finding",
+  "desc": "PHPRegex on minkphp/Mink: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "minkphp/Mink",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-09-01"
+ },
+ {
+  "url": "/findings/mmoreram/php-formatter/",
+  "title": "mmoreram/php-formatter: 3 regex findings",
+  "desc": "PHPRegex on mmoreram/php-formatter: 0 failures and 3 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "mmoreram/php-formatter",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2017-12-31"
+ },
+ {
+  "url": "/findings/mockery/mockery/",
+  "title": "mockery/mockery: 4 regex findings",
+  "desc": "PHPRegex on mockery/mockery: 0 failures and 4 warnings in its regular expressions, judged for PHP 7.12.99 and PCRE2 10.33.",
+  "h1": "mockery/mockery",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 7.12.99 · PCRE2 10.33 · code as of 2026-10-17"
+ },
+ {
+  "url": "/findings/modelcontextprotocol/php-sdk/",
+  "title": "modelcontextprotocol/php-sdk: 5 regex findings",
+  "desc": "PHPRegex on modelcontextprotocol/php-sdk: 0 failures and 5 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "modelcontextprotocol/php-sdk",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 0 FAIL, 5 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-04"
+ },
+ {
+  "url": "/findings/moodle/moodle/",
+  "title": "moodle/moodle: 310 regex findings",
+  "desc": "PHPRegex on moodle/moodle: 15 failures and 295 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "moodle/moodle",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "310 regex findings: 15 FAIL, 295 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-10-30"
+ },
+ {
+  "url": "/findings/mpdf/mpdf/",
+  "title": "mpdf/mpdf: 57 regex findings",
+  "desc": "PHPRegex on mpdf/mpdf: 0 failures and 57 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "mpdf/mpdf",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "57 regex findings: 0 FAIL, 57 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-26"
+ },
+ {
+  "url": "/findings/mustangostang/spyc/",
+  "title": "mustangostang/spyc: 1 regex finding",
+  "desc": "PHPRegex on mustangostang/spyc: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "mustangostang/spyc",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2019-12-03"
+ },
+ {
+  "url": "/findings/nbs-system/php-malware-finder/",
+  "title": "nbs-system/php-malware-finder: 4 regex findings",
+  "desc": "PHPRegex on nbs-system/php-malware-finder: 2 failures and 2 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "nbs-system/php-malware-finder",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 2 FAIL, 2 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2022-02-22"
+ },
+ {
+  "url": "/findings/nelmio/alice/",
+  "title": "nelmio/alice: 3 regex findings",
+  "desc": "PHPRegex on nelmio/alice: 3 failures and 0 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "nelmio/alice",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 3 FAIL, 0 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-03-31"
+ },
+ {
+  "url": "/findings/nette/latte/",
+  "title": "nette/latte: 2 regex findings",
+  "desc": "PHPRegex on nette/latte: 0 failures and 2 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "nette/latte",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-29"
+ },
+ {
+  "url": "/findings/nette/tester/",
+  "title": "nette/tester: 3 regex findings",
+  "desc": "PHPRegex on nette/tester: 0 failures and 3 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "nette/tester",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-28"
+ },
+ {
+  "url": "/findings/nette/tracy/",
+  "title": "nette/tracy: 3 regex findings",
+  "desc": "PHPRegex on nette/tracy: 0 failures and 3 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "nette/tracy",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-28"
+ },
+ {
+  "url": "/findings/nette/utils/",
+  "title": "nette/utils: 4 regex findings",
+  "desc": "PHPRegex on nette/utils: 0 failures and 4 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "nette/utils",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-27"
+ },
+ {
+  "url": "/findings/nextcloud/server/",
+  "title": "nextcloud/server: 14 regex findings",
+  "desc": "PHPRegex on nextcloud/server: 0 failures and 14 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "nextcloud/server",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "14 regex findings: 0 FAIL, 14 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/nikic/PHP-Parser/",
+  "title": "nikic/PHP-Parser: 1 regex finding",
+  "desc": "PHPRegex on nikic/PHP-Parser: 0 failures and 1 warning in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "nikic/PHP-Parser",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-10-27"
+ },
+ {
+  "url": "/findings/nunomaduro/termwind/",
+  "title": "nunomaduro/termwind: 1 regex finding",
+  "desc": "PHPRegex on nunomaduro/termwind: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "nunomaduro/termwind",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-09-17"
+ },
+ {
+  "url": "/findings/octobercms/october/",
+  "title": "octobercms/october: 7 regex findings",
+  "desc": "PHPRegex on octobercms/october: 0 failures and 7 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "octobercms/october",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "7 regex findings: 0 FAIL, 7 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-02"
+ },
+ {
+  "url": "/findings/owncloud/core/",
+  "title": "owncloud/core: 7 regex findings",
+  "desc": "PHPRegex on owncloud/core: 0 failures and 7 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "owncloud/core",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "7 regex findings: 0 FAIL, 7 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/parsecsv/parsecsv-for-php/",
+  "title": "parsecsv/parsecsv-for-php: 1 regex finding",
+  "desc": "PHPRegex on parsecsv/parsecsv-for-php: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "parsecsv/parsecsv-for-php",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-02-02"
+ },
+ {
+  "url": "/findings/pestphp/pest/",
+  "title": "pestphp/pest: 2 regex findings",
+  "desc": "PHPRegex on pestphp/pest: 1 failure and 1 warning in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "pestphp/pest",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 1 FAIL, 1 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-08-03"
+ },
+ {
+  "url": "/findings/phan/phan/",
+  "title": "phan/phan: 38 regex findings",
+  "desc": "PHPRegex on phan/phan: 0 failures and 38 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "phan/phan",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "38 regex findings: 0 FAIL, 38 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-01"
+ },
+ {
+  "url": "/findings/php-debugbar/php-debugbar/",
+  "title": "php-debugbar/php-debugbar: 1 regex finding",
+  "desc": "PHPRegex on php-debugbar/php-debugbar: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "php-debugbar/php-debugbar",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-25"
+ },
+ {
+  "url": "/findings/php-debugger/php-debugger/",
+  "title": "php-debugger/php-debugger: 1 regex finding",
+  "desc": "PHPRegex on php-debugger/php-debugger: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "php-debugger/php-debugger",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-01"
+ },
+ {
+  "url": "/findings/phpDocumentor/ReflectionDocBlock/",
+  "title": "phpDocumentor/ReflectionDocBlock: 4 regex findings",
+  "desc": "PHPRegex on phpDocumentor/ReflectionDocBlock: 0 failures and 4 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "phpDocumentor/ReflectionDocBlock",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-10-02"
+ },
+ {
+  "url": "/findings/phpactor/phpactor/",
+  "title": "phpactor/phpactor: 6 regex findings",
+  "desc": "PHPRegex on phpactor/phpactor: 1 failure and 5 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "phpactor/phpactor",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "6 regex findings: 1 FAIL, 5 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-21"
+ },
+ {
+  "url": "/findings/phpbb/phpbb/",
+  "title": "phpbb/phpbb: 49 regex findings",
+  "desc": "PHPRegex on phpbb/phpbb: 0 failures and 49 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "phpbb/phpbb",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "49 regex findings: 0 FAIL, 49 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/phplrt/phplrt/",
+  "title": "phplrt/phplrt: 1 regex finding",
+  "desc": "PHPRegex on phplrt/phplrt: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "phplrt/phplrt",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-18"
+ },
+ {
+  "url": "/findings/phpmd/phpmd/",
+  "title": "phpmd/phpmd: 1 regex finding",
+  "desc": "PHPRegex on phpmd/phpmd: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "phpmd/phpmd",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-20"
+ },
+ {
+  "url": "/findings/phpmetrics/PhpMetrics/",
+  "title": "phpmetrics/PhpMetrics: 2 regex findings",
+  "desc": "PHPRegex on phpmetrics/PhpMetrics: 0 failures and 2 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "phpmetrics/PhpMetrics",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-08-09"
+ },
+ {
+  "url": "/findings/phpmyadmin/phpmyadmin/",
+  "title": "phpmyadmin/phpmyadmin: 6 regex findings",
+  "desc": "PHPRegex on phpmyadmin/phpmyadmin: 0 failures and 6 warnings in its regular expressions, judged for PHP 8.2.99 and PCRE2 10.40.",
+  "h1": "phpmyadmin/phpmyadmin",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "6 regex findings: 0 FAIL, 6 WARN · judged for PHP 8.2.99 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/phpmyadmin/sql-parser/",
+  "title": "phpmyadmin/sql-parser: 1 regex finding",
+  "desc": "PHPRegex on phpmyadmin/sql-parser: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "phpmyadmin/sql-parser",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-10"
+ },
+ {
+  "url": "/findings/phpseclib/phpseclib/",
+  "title": "phpseclib/phpseclib: 7 regex findings",
+  "desc": "PHPRegex on phpseclib/phpseclib: 0 failures and 7 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "phpseclib/phpseclib",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "7 regex findings: 0 FAIL, 7 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-02"
+ },
+ {
+  "url": "/findings/phpspec/phpspec/",
+  "title": "phpspec/phpspec: 4 regex findings",
+  "desc": "PHPRegex on phpspec/phpspec: 1 failure and 3 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "phpspec/phpspec",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 1 FAIL, 3 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-17"
+ },
+ {
+  "url": "/findings/phpstan/phpstan-src/",
+  "title": "phpstan/phpstan-src: 2 regex findings",
+  "desc": "PHPRegex on phpstan/phpstan-src: 0 failures and 2 warnings in its regular expressions, judged for PHP 8.2.99 and PCRE2 10.40.",
+  "h1": "phpstan/phpstan-src",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 8.2.99 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/phpunit/phpunit/",
+  "title": "phpunit/phpunit: 1 regex finding",
+  "desc": "PHPRegex on phpunit/phpunit: 1 failure and 0 warnings in its regular expressions, judged for PHP 8.5.12 and PCRE2 10.44.",
+  "h1": "phpunit/phpunit",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 1 FAIL, 0 WARN · judged for PHP 8.5.12 · PCRE2 10.44 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/pimcore/pimcore/",
+  "title": "pimcore/pimcore: 13 regex findings",
+  "desc": "PHPRegex on pimcore/pimcore: 5 failures and 8 warnings in its regular expressions, judged for PHP 8.4 and PCRE2 10.49.",
+  "h1": "pimcore/pimcore",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "13 regex findings: 5 FAIL, 8 WARN · judged for PHP 8.4 · PCRE2 10.49 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/processwire/processwire/",
+  "title": "processwire/processwire: 30 regex findings",
+  "desc": "PHPRegex on processwire/processwire: 3 failures and 27 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "processwire/processwire",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "30 regex findings: 3 FAIL, 27 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-30"
+ },
+ {
+  "url": "/findings/protonemedia/laravel-splade/",
+  "title": "protonemedia/laravel-splade: 1 regex finding",
+  "desc": "PHPRegex on protonemedia/laravel-splade: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "protonemedia/laravel-splade",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2025-08-05"
+ },
+ {
+  "url": "/findings/reactphp/http/",
+  "title": "reactphp/http: 2 regex findings",
+  "desc": "PHPRegex on reactphp/http: 0 failures and 2 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "reactphp/http",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-09-09"
+ },
+ {
+  "url": "/findings/rectorphp/rector-src/",
+  "title": "rectorphp/rector-src: 5 regex findings",
+  "desc": "PHPRegex on rectorphp/rector-src: 0 failures and 5 warnings in its regular expressions, judged for PHP 8.4 and PCRE2 10.49.",
+  "h1": "rectorphp/rector-src",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 0 FAIL, 5 WARN · judged for PHP 8.4 · PCRE2 10.49 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/roundcube/roundcubemail/",
+  "title": "roundcube/roundcubemail: 39 regex findings",
+  "desc": "PHPRegex on roundcube/roundcubemail: 0 failures and 39 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "roundcube/roundcubemail",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "39 regex findings: 0 FAIL, 39 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-25"
+ },
+ {
+  "url": "/findings/s9e/TextFormatter/",
+  "title": "s9e/TextFormatter: 15 regex findings",
+  "desc": "PHPRegex on s9e/TextFormatter: 1 failure and 14 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "s9e/TextFormatter",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "15 regex findings: 1 FAIL, 14 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-07-26"
+ },
+ {
+  "url": "/findings/sabre-io/dav/",
+  "title": "sabre-io/dav: 4 regex findings",
+  "desc": "PHPRegex on sabre-io/dav: 0 failures and 4 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "sabre-io/dav",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-11-01"
+ },
+ {
+  "url": "/findings/sabre-io/vobject/",
+  "title": "sabre-io/vobject: 4 regex findings",
+  "desc": "PHPRegex on sabre-io/vobject: 0 failures and 4 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "sabre-io/vobject",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-05"
+ },
+ {
+  "url": "/findings/salesagility/SuiteCRM/",
+  "title": "salesagility/SuiteCRM: 132 regex findings",
+  "desc": "PHPRegex on salesagility/SuiteCRM: 3 failures and 129 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "salesagility/SuiteCRM",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "132 regex findings: 3 FAIL, 129 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-29"
+ },
+ {
+  "url": "/findings/schmittjoh/serializer/",
+  "title": "schmittjoh/serializer: 2 regex findings",
+  "desc": "PHPRegex on schmittjoh/serializer: 0 failures and 2 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "schmittjoh/serializer",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-10-29"
+ },
+ {
+  "url": "/findings/scrivo/highlight.php/",
+  "title": "scrivo/highlight.php: 3 regex findings",
+  "desc": "PHPRegex on scrivo/highlight.php: 0 failures and 3 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "scrivo/highlight.php",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2023-05-15"
+ },
+ {
+  "url": "/findings/shipmonk-rnd/composer-dependency-analyser/",
+  "title": "shipmonk-rnd/composer-dependency-analyser: 1 regex finding",
+  "desc": "PHPRegex on shipmonk-rnd/composer-dependency-analyser: 1 failure and 0 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "shipmonk-rnd/composer-dependency-analyser",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 1 FAIL, 0 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-08-11"
+ },
+ {
+  "url": "/findings/shipmonk-rnd/dead-code-detector/",
+  "title": "shipmonk-rnd/dead-code-detector: 1 regex finding",
+  "desc": "PHPRegex on shipmonk-rnd/dead-code-detector: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "shipmonk-rnd/dead-code-detector",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/shopware/shopware/",
+  "title": "shopware/shopware: 11 regex findings",
+  "desc": "PHPRegex on shopware/shopware: 1 failure and 10 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "shopware/shopware",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "11 regex findings: 1 FAIL, 10 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/silverstripe/silverstripe-framework/",
+  "title": "silverstripe/silverstripe-framework: 23 regex findings",
+  "desc": "PHPRegex on silverstripe/silverstripe-framework: 1 failure and 22 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "silverstripe/silverstripe-framework",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "23 regex findings: 1 FAIL, 22 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-02"
+ },
+ {
+  "url": "/findings/simplepie/simplepie/",
+  "title": "simplepie/simplepie: 8 regex findings",
+  "desc": "PHPRegex on simplepie/simplepie: 1 failure and 7 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "simplepie/simplepie",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "8 regex findings: 1 FAIL, 7 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-11-02"
+ },
+ {
+  "url": "/findings/slevomat/coding-standard/",
+  "title": "slevomat/coding-standard: 4 regex findings",
+  "desc": "PHPRegex on slevomat/coding-standard: 0 failures and 4 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "slevomat/coding-standard",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-10-31"
+ },
+ {
+  "url": "/findings/smalot/pdfparser/",
+  "title": "smalot/pdfparser: 30 regex findings",
+  "desc": "PHPRegex on smalot/pdfparser: 1 failure and 29 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "smalot/pdfparser",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "30 regex findings: 1 FAIL, 29 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-13"
+ },
+ {
+  "url": "/findings/smarty-php/smarty/",
+  "title": "smarty-php/smarty: 7 regex findings",
+  "desc": "PHPRegex on smarty-php/smarty: 0 failures and 7 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "smarty-php/smarty",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "7 regex findings: 0 FAIL, 7 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-10"
+ },
+ {
+  "url": "/findings/spipu/html2pdf/",
+  "title": "spipu/html2pdf: 55 regex findings",
+  "desc": "PHPRegex on spipu/html2pdf: 0 failures and 55 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "spipu/html2pdf",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "55 regex findings: 0 FAIL, 55 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2025-06-08"
+ },
+ {
+  "url": "/findings/spiral/framework/",
+  "title": "spiral/framework: 1 regex finding",
+  "desc": "PHPRegex on spiral/framework: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "spiral/framework",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-30"
+ },
+ {
+  "url": "/findings/squizlabs/PHP_CodeSniffer/",
+  "title": "squizlabs/PHP_CodeSniffer: 4 regex findings",
+  "desc": "PHPRegex on squizlabs/PHP_CodeSniffer: 0 failures and 4 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "squizlabs/PHP_CodeSniffer",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2023-12-06"
+ },
+ {
+  "url": "/findings/staabm/phpstan-dba/",
+  "title": "staabm/phpstan-dba: 1 regex finding",
+  "desc": "PHPRegex on staabm/phpstan-dba: 0 failures and 1 warning in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "staabm/phpstan-dba",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-10-31"
+ },
+ {
+  "url": "/findings/statamic/cms/",
+  "title": "statamic/cms: 16 regex findings",
+  "desc": "PHPRegex on statamic/cms: 0 failures and 16 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "statamic/cms",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "16 regex findings: 0 FAIL, 16 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/stecman/symfony-console-completion/",
+  "title": "stecman/symfony-console-completion: 1 regex finding",
+  "desc": "PHPRegex on stecman/symfony-console-completion: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "stecman/symfony-console-completion",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-09-14"
+ },
+ {
+  "url": "/findings/symfony/flex/",
+  "title": "symfony/flex: 1 regex finding",
+  "desc": "PHPRegex on symfony/flex: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "symfony/flex",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-29"
+ },
+ {
+  "url": "/findings/symfony/maker-bundle/",
+  "title": "symfony/maker-bundle: 1 regex finding",
+  "desc": "PHPRegex on symfony/maker-bundle: 1 failure and 0 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "symfony/maker-bundle",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 1 FAIL, 0 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-10-31"
+ },
+ {
+  "url": "/findings/symfony/mime/",
+  "title": "symfony/mime: 1 regex finding",
+  "desc": "PHPRegex on symfony/mime: 0 failures and 1 warning in its regular expressions, judged for PHP 8.4.1 and PCRE2 10.49.",
+  "h1": "symfony/mime",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.4.1 · PCRE2 10.49 · code as of 2026-10-28"
+ },
+ {
+  "url": "/findings/symfony/polyfill-mbstring/",
+  "title": "symfony/polyfill-mbstring: 1 regex finding",
+  "desc": "PHPRegex on symfony/polyfill-mbstring: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "symfony/polyfill-mbstring",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-28"
+ },
+ {
+  "url": "/findings/symfony/polyfill/",
+  "title": "symfony/polyfill: 4 regex findings",
+  "desc": "PHPRegex on symfony/polyfill: 0 failures and 4 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "symfony/polyfill",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-28"
+ },
+ {
+  "url": "/findings/symfony/symfony/",
+  "title": "symfony/symfony: 40 regex findings",
+  "desc": "PHPRegex on symfony/symfony: 3 failures and 37 warnings in its regular expressions, judged for PHP 8.4.1 and PCRE2 10.49.",
+  "h1": "symfony/symfony",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "40 regex findings: 3 FAIL, 37 WARN · judged for PHP 8.4.1 · PCRE2 10.49 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/symfony/ux/",
+  "title": "symfony/ux: 2 regex findings",
+  "desc": "PHPRegex on symfony/ux: 1 failure and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "symfony/ux",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 1 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-26"
+ },
+ {
+  "url": "/findings/tempestphp/highlight/",
+  "title": "tempestphp/highlight: 8 regex findings",
+  "desc": "PHPRegex on tempestphp/highlight: 0 failures and 8 warnings in its regular expressions, judged for PHP 8.4 and PCRE2 10.49.",
+  "h1": "tempestphp/highlight",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "8 regex findings: 0 FAIL, 8 WARN · judged for PHP 8.4 · PCRE2 10.49 · code as of 2026-10-27"
+ },
+ {
+  "url": "/findings/tempestphp/tempest-framework/",
+  "title": "tempestphp/tempest-framework: 4 regex findings",
+  "desc": "PHPRegex on tempestphp/tempest-framework: 0 failures and 4 warnings in its regular expressions, judged for PHP 8.5 and PCRE2 10.44.",
+  "h1": "tempestphp/tempest-framework",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "4 regex findings: 0 FAIL, 4 WARN · judged for PHP 8.5 · PCRE2 10.44 · code as of 2026-10-31"
+ },
+ {
+  "url": "/findings/thecodingmachine/safe/",
+  "title": "thecodingmachine/safe: 8 regex findings",
+  "desc": "PHPRegex on thecodingmachine/safe: 0 failures and 8 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "thecodingmachine/safe",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "8 regex findings: 0 FAIL, 8 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-24"
+ },
+ {
+  "url": "/findings/thephpleague/commonmark/",
+  "title": "thephpleague/commonmark: 2 regex findings",
+  "desc": "PHPRegex on thephpleague/commonmark: 0 failures and 2 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "thephpleague/commonmark",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-08-03"
+ },
+ {
+  "url": "/findings/thephpleague/flysystem/",
+  "title": "thephpleague/flysystem: 1 regex finding",
+  "desc": "PHPRegex on thephpleague/flysystem: 0 failures and 1 warning in its regular expressions, judged for PHP 8.0.2 and PCRE2 10.35.",
+  "h1": "thephpleague/flysystem",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.0.2 · PCRE2 10.35 · code as of 2026-10-03"
+ },
+ {
+  "url": "/findings/thephpleague/geotools/",
+  "title": "thephpleague/geotools: 5 regex findings",
+  "desc": "PHPRegex on thephpleague/geotools: 0 failures and 5 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "thephpleague/geotools",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 0 FAIL, 5 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-03-18"
+ },
+ {
+  "url": "/findings/thephpleague/glide/",
+  "title": "thephpleague/glide: 3 regex findings",
+  "desc": "PHPRegex on thephpleague/glide: 2 failures and 1 warning in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "thephpleague/glide",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 2 FAIL, 1 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-10-10"
+ },
+ {
+  "url": "/findings/theseer/phpdox/",
+  "title": "theseer/phpdox: 2 regex findings",
+  "desc": "PHPRegex on theseer/phpdox: 0 failures and 2 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "theseer/phpdox",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 0 FAIL, 2 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2023-04-20"
+ },
+ {
+  "url": "/findings/theseer/tokenizer/",
+  "title": "theseer/tokenizer: 1 regex finding",
+  "desc": "PHPRegex on theseer/tokenizer: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "theseer/tokenizer",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-02-03"
+ },
+ {
+  "url": "/findings/tijsverkoyen/CssToInlineStyles/",
+  "title": "tijsverkoyen/CssToInlineStyles: 1 regex finding",
+  "desc": "PHPRegex on tijsverkoyen/CssToInlineStyles: 0 failures and 1 warning in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "tijsverkoyen/CssToInlineStyles",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-01-06"
+ },
+ {
+  "url": "/findings/tubalmartin/YUI-CSS-compressor-PHP-port/",
+  "title": "tubalmartin/YUI-CSS-compressor-PHP-port: 3 regex findings",
+  "desc": "PHPRegex on tubalmartin/YUI-CSS-compressor-PHP-port: 1 failure and 2 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "tubalmartin/YUI-CSS-compressor-PHP-port",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 1 FAIL, 2 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2018-01-15"
+ },
+ {
+  "url": "/findings/twigphp/Twig/",
+  "title": "twigphp/Twig: 2 regex findings",
+  "desc": "PHPRegex on twigphp/Twig: 2 failures and 0 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "twigphp/Twig",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "2 regex findings: 2 FAIL, 0 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-29"
+ },
+ {
+  "url": "/findings/twigstan/twigstan/",
+  "title": "twigstan/twigstan: 1 regex finding",
+  "desc": "PHPRegex on twigstan/twigstan: 0 failures and 1 warning in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "twigstan/twigstan",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/vimeo/psalm/",
+  "title": "vimeo/psalm: 5 regex findings",
+  "desc": "PHPRegex on vimeo/psalm: 2 failures and 3 warnings in its regular expressions, judged for PHP 8.1.31 and PCRE2 10.39.",
+  "h1": "vimeo/psalm",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "5 regex findings: 2 FAIL, 3 WARN · judged for PHP 8.1.31 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/vinkius-labs/laravel-page-speed/",
+  "title": "vinkius-labs/laravel-page-speed: 1 regex finding",
+  "desc": "PHPRegex on vinkius-labs/laravel-page-speed: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "vinkius-labs/laravel-page-speed",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-06-04"
+ },
+ {
+  "url": "/findings/voku/anti-xss/",
+  "title": "voku/anti-xss: 6 regex findings",
+  "desc": "PHPRegex on voku/anti-xss: 0 failures and 6 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "voku/anti-xss",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "6 regex findings: 0 FAIL, 6 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-12"
+ },
+ {
+  "url": "/findings/voku/email-check/",
+  "title": "voku/email-check: 1 regex finding",
+  "desc": "PHPRegex on voku/email-check: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "voku/email-check",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-09"
+ },
+ {
+  "url": "/findings/voku/portable-utf8/",
+  "title": "voku/portable-utf8: 6 regex findings",
+  "desc": "PHPRegex on voku/portable-utf8: 1 failure and 5 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "voku/portable-utf8",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "6 regex findings: 1 FAIL, 5 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-04"
+ },
+ {
+  "url": "/findings/voku/simple_html_dom/",
+  "title": "voku/simple_html_dom: 3 regex findings",
+  "desc": "PHPRegex on voku/simple_html_dom: 0 failures and 3 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "voku/simple_html_dom",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-04"
+ },
+ {
+  "url": "/findings/voku/urlify/",
+  "title": "voku/urlify: 20 regex findings",
+  "desc": "PHPRegex on voku/urlify: 0 failures and 20 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "voku/urlify",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "20 regex findings: 0 FAIL, 20 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-10-12"
+ },
+ {
+  "url": "/findings/walkor/workerman/",
+  "title": "walkor/workerman: 3 regex findings",
+  "desc": "PHPRegex on walkor/workerman: 0 failures and 3 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "walkor/workerman",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "3 regex findings: 0 FAIL, 3 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-24"
+ },
+ {
+  "url": "/findings/wapmorgan/PhpCodeAnalyzer/",
+  "title": "wapmorgan/PhpCodeAnalyzer: 1 regex finding",
+  "desc": "PHPRegex on wapmorgan/PhpCodeAnalyzer: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "wapmorgan/PhpCodeAnalyzer",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2023-01-17"
+ },
+ {
+  "url": "/findings/wikimedia/mediawiki/",
+  "title": "wikimedia/mediawiki: 31 regex findings",
+  "desc": "PHPRegex on wikimedia/mediawiki: 7 failures and 24 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42.",
+  "h1": "wikimedia/mediawiki",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "31 regex findings: 7 FAIL, 24 WARN · judged for PHP 8.3 · PCRE2 10.42 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/willdurand/Negotiation/",
+  "title": "willdurand/Negotiation: 1 regex finding",
+  "desc": "PHPRegex on willdurand/Negotiation: 0 failures and 1 warning in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "willdurand/Negotiation",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2022-01-30"
+ },
+ {
+  "url": "/findings/woocommerce/woocommerce/",
+  "title": "woocommerce/woocommerce: 58 regex findings",
+  "desc": "PHPRegex on woocommerce/woocommerce: 0 failures and 58 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "woocommerce/woocommerce",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "58 regex findings: 0 FAIL, 58 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-11-03"
+ },
+ {
+  "url": "/findings/wp-cli/wp-cli/",
+  "title": "wp-cli/wp-cli: 14 regex findings",
+  "desc": "PHPRegex on wp-cli/wp-cli: 2 failures and 12 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "wp-cli/wp-cli",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "14 regex findings: 2 FAIL, 12 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-11-02"
+ },
+ {
+  "url": "/findings/yiisoft/yii/",
+  "title": "yiisoft/yii: 48 regex findings",
+  "desc": "PHPRegex on yiisoft/yii: 1 failure and 47 warnings in its regular expressions, judged for PHP 7.3 and PCRE2 10.32.",
+  "h1": "yiisoft/yii",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "48 regex findings: 1 FAIL, 47 WARN · judged for PHP 7.3 · PCRE2 10.32 · code as of 2026-11-01"
+ },
+ {
+  "url": "/findings/yiisoft/yii2/",
+  "title": "yiisoft/yii2: 20 regex findings",
+  "desc": "PHPRegex on yiisoft/yii2: 1 failure and 19 warnings in its regular expressions, judged for PHP 7.4 and PCRE2 10.33.",
+  "h1": "yiisoft/yii2",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "20 regex findings: 1 FAIL, 19 WARN · judged for PHP 7.4 · PCRE2 10.33 · code as of 2026-10-30"
+ },
+ {
+  "url": "/findings/zbateson/mail-mime-parser/",
+  "title": "zbateson/mail-mime-parser: 1 regex finding",
+  "desc": "PHPRegex on zbateson/mail-mime-parser: 0 failures and 1 warning in its regular expressions, judged for PHP 8.1 and PCRE2 10.39.",
+  "h1": "zbateson/mail-mime-parser",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.1 · PCRE2 10.39 · code as of 2026-10-27"
+ },
+ {
+  "url": "/findings/zircote/swagger-php/",
+  "title": "zircote/swagger-php: 1 regex finding",
+  "desc": "PHPRegex on zircote/swagger-php: 0 failures and 1 warning in its regular expressions, judged for PHP 8.2 and PCRE2 10.40.",
+  "h1": "zircote/swagger-php",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": "1 regex finding: 0 FAIL, 1 WARN · judged for PHP 8.2 · PCRE2 10.40 · code as of 2026-11-03"
+ },
+ {
+  "url": "/guides/",
+  "title": "Guides",
+  "desc": "Choose the PHPRegex integration that fits your workflow: PHPStan, Psalm, Rector, PHPUnit, Infection, Laravel, Symfony, the language server, or the CLI.",
+  "h1": "Guides",
+  "crumbs": [
+   "Documentation",
+   "Integrations",
+   "Guides"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/cli/",
+  "title": "CLI Guide",
+  "desc": "Install the PHPRegex CLI and drive it end to end: parse, explain, analyze and lint patterns, with every option, exit code, output format and CI recipe.",
+  "h1": "CLI Guide",
+  "crumbs": [
+   "Documentation",
+   "Integrations",
+   "CLI Guide"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/formatting/",
+  "title": "Formatting Patterns",
+  "desc": "Lay a long regex out over lines under x, or compact a laid-out one to a single line, with the guarantee that the result matches exactly what the input matched.",
+  "h1": "Formatting Patterns",
+  "crumbs": [
+   "Documentation",
+   "Learn",
+   "Formatting Patterns"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/infection/",
+  "title": "Infection",
+  "desc": "Infection mutators for the regex literals of preg_*() calls: no mutant the automata prove equivalent to the original, and each mutant with the subject that kills it, ready to paste into a test.",
+  "h1": "Infection",
+  "crumbs": [
+   "Documentation",
+   "Integrations",
+   "Infection"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/laravel/",
+  "title": "Laravel Guide",
+  "desc": "Wire PHPRegex into a Laravel 10.37 to 13 app: the Regex service and facade, the regex:* artisan commands, lint targets, ReDoS findings and the 1.x upgrade.",
+  "h1": "Laravel Guide",
+  "crumbs": [
+   "Documentation",
+   "Integrations",
+   "Laravel Guide"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/lsp/",
+  "title": "LSP Integration Guide",
+  "desc": "Point any LSP editor at the PHPRegex language server: install it, configure VS Code, PhpStorm, Neovim or Zed, pick its target PHP and PCRE2, and debug it.",
+  "h1": "LSP Integration Guide",
+  "crumbs": [
+   "Documentation",
+   "Integrations",
+   "LSP Integration Guide"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/mcp/",
+  "title": "MCP Server Guide",
+  "desc": "Give a coding agent the regex judgement of PHPRegex over the Model Context Protocol: install the server, wire it into Claude Code, Claude Desktop, Cursor, Zed or VS Code, read what each tool answers, and debug it.",
+  "h1": "MCP Server Guide",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/phpstan/",
+  "title": "PHPStan",
+  "desc": "Install the PHPRegex PHPStan extension: the invalid-for-target check that runs by default, plus lint, ReDoS and optimization checks on demand.",
+  "h1": "PHPStan",
+  "crumbs": [
+   "Documentation",
+   "Integrations",
+   "PHPStan"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/phpunit/",
+  "title": "PHPUnit",
+  "desc": "The PHPRegex PHPUnit assertions: assert what a pattern captures with exact capture semantics, that the running engine compiles it, and that it is proven linear — with group names validated against the pattern itself.",
+  "h1": "PHPUnit",
+  "crumbs": [
+   "Documentation",
+   "Integrations",
+   "PHPUnit"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/psalm/",
+  "title": "Psalm",
+  "desc": "The PHPRegex Psalm plugin: how $matches gets the shape of the pattern, what the plugin leaves to Psalm, and the PHP version patterns are judged for.",
+  "h1": "Psalm",
+  "crumbs": [
+   "Documentation",
+   "Integrations",
+   "Psalm"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/rector/",
+  "title": "Rector",
+  "desc": "PHPRegex Rector rules that turn a preg_* call into the string function the automata prove equivalent: sets, single rules, and what each rewrite proves.",
+  "h1": "Rector",
+  "crumbs": [
+   "Documentation",
+   "Integrations",
+   "Rector"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/redos/",
+  "title": "ReDoS Guide",
+  "desc": "How PHPRegex proves a regex safe from ReDoS or hands you the attack that kills it: verdicts, witnesses, confirmed mode, and the fixes that keep patterns linear.",
+  "h1": "ReDoS Guide",
+  "crumbs": [
+   "Documentation",
+   "Learn",
+   "ReDoS Guide"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/regex-in-php/",
+  "title": "Regex in PHP",
+  "desc": "A PHP regex primer: how PCRE2 powers preg_match(), delimiters, flags, limits and common mistakes, plus the PHPRegex calls that analyze each pattern.",
+  "h1": "Regex in PHP",
+  "crumbs": [
+   "Documentation",
+   "Learn",
+   "Regex in PHP"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/guides/symfony/",
+  "title": "Symfony Bundle Guide",
+  "desc": "Register the PHPRegex bundle in Symfony 6.4, 7.4 or 8.x: the php_regex.regex service, regex:* console commands, route and firewall analysis, the 1.x upgrade.",
+  "h1": "Symfony Bundle Guide",
+  "crumbs": [
+   "Documentation",
+   "Integrations",
+   "Symfony Bundle Guide"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/maintainers/",
+  "title": "Maintainers Guide",
+  "desc": "Embed PHPRegex in your own tool: configuration options, the exception surface, machine-readable lint JSON for CI gates, and the wrapper and visitor integration patterns.",
+  "h1": "Maintainers Guide",
+  "crumbs": [
+   "Documentation",
+   "Internals",
+   "Maintainers Guide"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/nodes/",
+  "title": "AST Node Reference",
+  "desc": "Every AST node type in PHPRegex with its fields and runnable examples — groups, quantifiers, classes, verbs — and the position rules all nodes share.",
+  "h1": "AST Node Reference",
+  "crumbs": [
+   "Documentation",
+   "Internals",
+   "AST Node Reference"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/packages/",
+  "title": "Choose a package",
+  "desc": "Choose the PHPRegex package that matches your task: parsing, application API, CLI, static analysis, editor integration, or a framework bridge.",
+  "h1": "Choose a package",
+  "crumbs": [
+   "Documentation",
+   "Learn",
+   "Choose a package"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/privacy/",
+  "title": "Privacy",
+  "desc": "What php-regex.com measures, and what it never sees: Google Analytics counts visits with its cookies, and nothing you type in the playground leaves your browser.",
+  "h1": "Privacy",
+  "crumbs": [],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/quick-start/",
+  "title": "Quick Start",
+  "desc": "Install PHPRegex and run your first regex analysis in five minutes with the CLI or the PHP API.",
+  "h1": "Quick Start",
+  "crumbs": [
+   "Documentation",
+   "Learn",
+   "Quick Start"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/",
+  "title": "Reference Index",
+  "desc": "Find the PHPRegex reference page you need by task: diagnostics, compatibility, programmatic data, or background material.",
+  "h1": "Reference Index",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "Reference Index"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/api/",
+  "title": "API Reference",
+  "desc": "The PHPRegex facade — Regex::create() and every method, validate to transpile — with executed examples, result objects and the exception map.",
+  "h1": "API Reference",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "API Reference"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/backward-compatibility/",
+  "title": "Backward Compatibility Promise",
+  "desc": "What a PHPRegex minor or patch release may change, what stays for all of 2.x, and what only the next major release may touch.",
+  "h1": "Backward Compatibility Promise",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "Backward Compatibility Promise"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/capture-shapes/",
+  "title": "Capture Shapes",
+  "desc": "What CaptureShapeAnalyzer reads from a pattern alone: which groups every match sets, their values, lengths and facts, and the $matches type it writes.",
+  "h1": "Capture Shapes",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "Capture Shapes"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/correctness-contracts/",
+  "title": "Safety and Correctness Contracts",
+  "desc": "The formal guarantee of each PHPRegex analysis — parser, lint, optimizer, the ReDoS model, the automata solver — sound, complete or best-effort.",
+  "h1": "Safety and Correctness Contracts",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "Safety and Correctness Contracts"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/diagnostics-cheatsheet/",
+  "title": "Diagnostics Cheat Sheet",
+  "desc": "One fix per common PHPRegex diagnostic: unbounded lookbehinds, bad backreferences, nested quantifiers, useless flags and delimiter traps.",
+  "h1": "Diagnostics Cheat Sheet",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "Diagnostics Cheat Sheet"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/diagnostics/",
+  "title": "Diagnostics and Error Messages",
+  "desc": "How PHPRegex reports errors: validation layers, ValidationResult fields, CLI and JSON output, error-code categories and the fixes for each diagnostic.",
+  "h1": "Diagnostics and Error Messages",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "Diagnostics and Error Messages"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/extraction-coverage/",
+  "title": "Extraction Coverage",
+  "desc": "Which calls each PHPRegex tool reads a regex pattern from: regex lint with and without nikic/php-parser, the language server, the PHPStan and Psalm extensions, and the Laravel and Symfony regex:lint commands.",
+  "h1": "Extraction Coverage",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "Extraction Coverage"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/faq-glossary/",
+  "title": "FAQ and Glossary",
+  "desc": "Short answers to common PHPRegex questions — CI integration, caching, exceptions — plus a glossary of the terms used across the documentation.",
+  "h1": "FAQ and Glossary",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "FAQ and Glossary"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/feature-support-matrix/",
+  "title": "Feature Support Matrix",
+  "desc": "Which PCRE constructs each PHPRegex layer reads: the parser, the lint and optimizer rules, the ReDoS model, and the automata solver's regular subset.",
+  "h1": "Feature Support Matrix",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "Feature Support Matrix"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/json-output/",
+  "title": "JSON Output",
+  "desc": "Every key of every JSON document the regex command prints — lint report, analyze, debug, redos, transpile, format, validate, explain — and of the Symfony and Laravel reports, frozen for all of 2.x.",
+  "h1": "JSON Output",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "JSON Output"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/logic-solver/",
+  "title": "Regex Logic & Automata Solver",
+  "desc": "Compare two patterns as languages — intersection, subset, equivalence, prefix — answered on a DFA built from the pattern, with the engine's own character sets.",
+  "h1": "Regex Logic & Automata Solver",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "Regex Logic & Automata Solver"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/pattern-info/",
+  "title": "Pattern Info and Compatibility",
+  "desc": "The facts PatternInfo reads from a pattern — capture counts, names, limits, anchors, match lengths, a sure match — and the PHP and PCRE2 versions it is valid on.",
+  "h1": "Pattern Info and Compatibility",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "Pattern Info and Compatibility"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/pcre2-conformance/",
+  "title": "PCRE2 Conformance",
+  "desc": "How often Regex::validate() reaches the same compile verdict as PHP's own PCRE2 engine, measured on PCRE2's official test suite, pinned to 10.49.",
+  "h1": "PCRE2 Conformance",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "PCRE2 Conformance"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/prefilters/",
+  "title": "Prefilters",
+  "desc": "When a string function can answer before preg_match() runs: the literals every match holds, and the patterns the automata prove equal to str_contains() and friends.",
+  "h1": "Prefilters",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "Prefilters"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/resources/",
+  "title": "External References",
+  "desc": "The external sources PHPRegex trusts: PCRE2 and PHP manuals, ReDoS references, engine theory, testers and Unicode standards.",
+  "h1": "External References",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "External References"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/rules/",
+  "title": "PHPRegex Rule Reference",
+  "desc": "Every PHPRegex lint rule — when each fires, its message, its severity and its fix — from flags and anchors to ReDoS and Unicode byte traps.",
+  "h1": "PHPRegex Rule Reference",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "PHPRegex Rule Reference"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/reference/sonar/",
+  "title": "SonarPHP Regex Rules",
+  "desc": "The PHPRegex identifier behind each of SonarPHP's 25 regex rules — covered, covered in part, or out of scope — for teams moving from Sonar or running both.",
+  "h1": "SonarPHP Regex Rules",
+  "crumbs": [
+   "Documentation",
+   "Reference",
+   "SonarPHP Regex Rules"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/troubleshooting/",
+  "title": "Troubleshooting Guide",
+  "desc": "Fixes for the errors PHPRegex actually prints: lexer messages, ReDoS verdicts, cache and memory issues, CLI and Symfony bridge problems.",
+  "h1": "Troubleshooting Guide",
+  "crumbs": [
+   "Documentation",
+   "Learn",
+   "Troubleshooting Guide"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/tutorial/",
+  "title": "Regex Tutorial",
+  "desc": "Learn regular expressions from scratch, step by step — with clear examples, exercises, and PHP `preg_match()` along the way.",
+  "h1": "Regex Tutorial",
+  "crumbs": [
+   "Documentation",
+   "Tutorial",
+   "Regex Tutorial"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/tutorial/01-basics/",
+  "title": "Chapter 1: Regex Basics",
+  "desc": "Learn what a regex pattern is, match literal text, understand delimiters and escaping — with no prior regex knowledge required.",
+  "h1": "Chapter 1: Regex Basics",
+  "crumbs": [
+   "Documentation",
+   "Tutorial",
+   "Chapter 1: Regex Basics"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/tutorial/02-character-classes/",
+  "title": "Chapter 2: Character Classes & Escapes",
+  "desc": "Match sets of characters with [abc], ranges, negation, shorthand classes like \\d and \\w, and when to use them.",
+  "h1": "Chapter 2: Character Classes & Escapes",
+  "crumbs": [
+   "Documentation",
+   "Tutorial",
+   "Chapter 2: Character Classes & Escapes"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/tutorial/03-anchors-boundaries/",
+  "title": "Chapter 3: Anchors & Boundaries",
+  "desc": "Control where a match can happen with anchors (^, $, \\A, \\z) and word boundaries (\\b).",
+  "h1": "Chapter 3: Anchors & Boundaries",
+  "crumbs": [
+   "Documentation",
+   "Tutorial",
+   "Chapter 3: Anchors & Boundaries"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/tutorial/04-quantifiers/",
+  "title": "Chapter 4: Quantifiers & Greediness",
+  "desc": "Control repetition with *, +, ?, and {n,m} — and understand greedy vs lazy matching.",
+  "h1": "Chapter 4: Quantifiers & Greediness",
+  "crumbs": [
+   "Documentation",
+   "Tutorial",
+   "Chapter 4: Quantifiers & Greediness"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/tutorial/05-groups-alternation/",
+  "title": "Chapter 5: Groups & Alternation",
+  "desc": "Group patterns with (...), use alternation with |, and learn capturing, non-capturing, and named groups.",
+  "h1": "Chapter 5: Groups & Alternation",
+  "crumbs": [
+   "Documentation",
+   "Tutorial",
+   "Chapter 5: Groups & Alternation"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/tutorial/06-lookarounds/",
+  "title": "Chapter 6: Lookarounds & Assertions",
+  "desc": "Match context without consuming it with lookaheads and lookbehinds — positive and negative.",
+  "h1": "Chapter 6: Lookarounds & Assertions",
+  "crumbs": [
+   "Documentation",
+   "Tutorial",
+   "Chapter 6: Lookarounds & Assertions"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/tutorial/07-backreferences-recursion/",
+  "title": "Chapter 7: Backreferences, Subroutines & Recursion",
+  "desc": "Reuse captured text with backreferences, and see how subroutines and recursion work for more advanced patterns.",
+  "h1": "Chapter 7: Backreferences, Subroutines & Recursion",
+  "crumbs": [
+   "Documentation",
+   "Tutorial",
+   "Chapter 7: Backreferences, Subroutines & Recursion"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/tutorial/08-performance-redos/",
+  "title": "Chapter 8: Performance & ReDoS",
+  "desc": "Understand catastrophic backtracking, spot risky patterns, and write safer ones.",
+  "h1": "Chapter 8: Performance & ReDoS",
+  "crumbs": [
+   "Documentation",
+   "Tutorial",
+   "Chapter 8: Performance & ReDoS"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/tutorial/09-testing-debugging/",
+  "title": "Chapter 9: Testing & Debugging",
+  "desc": "Learn a simple way to test and debug regex patterns using plain PHP first.",
+  "h1": "Chapter 9: Testing & Debugging",
+  "crumbs": [
+   "Documentation",
+   "Tutorial",
+   "Chapter 9: Testing & Debugging"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/tutorial/10-real-world-php/",
+  "title": "Chapter 10: Real-World Patterns in PHP",
+  "desc": "Practical regex patterns for everyday tasks in PHP.",
+  "h1": "Chapter 10: Real-World Patterns in PHP",
+  "crumbs": [
+   "Documentation",
+   "Tutorial",
+   "Chapter 10: Real-World Patterns in PHP"
+  ],
+  "byline": "",
+  "fmeta": ""
+ },
+ {
+  "url": "/visitors/",
+  "title": "AST Visitor Reference",
+  "desc": "The built-in PHPRegex visitors — print, rewrite, modernize, validate, explain, render — each with its real output, and the base classes to extend for your own.",
+  "h1": "AST Visitor Reference",
+  "crumbs": [
+   "Documentation",
+   "Internals",
+   "AST Visitor Reference"
+  ],
+  "byline": "",
+  "fmeta": ""
+ }
+]
