@@ -1689,6 +1689,19 @@ a.version-tag:focus-visible {
   }
 }
 
+/* After the 859px block on purpose: same specificity, so the narrower
+   query must come last to win. Even at .65rem the row does not fit 375px
+   with four 44px controls; the GitHub icon goes, the footer carries it. */
+@media (max-width: 639px) {
+  .site-header {
+    gap: .65rem;
+  }
+
+  .site-header .github-link {
+    display: none;
+  }
+}
+
 /* ==========================================================================
    Page shell — sidebar | content | toc
    ========================================================================== */
