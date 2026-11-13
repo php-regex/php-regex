@@ -13,12 +13,13 @@ CHANGELOG
    reads them, through the atomic or options group a branch opens with:
    `/(?:(?>ö)|è)+x/u` is no longer reported either, nor are a branch read
    past its optional first item, `/(?:ö?è|ê)+x/u`, every branch of a branch
-   reset group, `/(?:(?|ö|ê)|è)+x/u`, and a character written as itself
-   or a Unicode property under the options of `a`, which restrict the types
-   and the POSIX classes alone, `/(?:(?a:ö)|è)+x/u`. Where no probe can be
-   written for a branch, a type or a class under `a`, the first bytes are
-   still compared. `/(?:[à-ÿ]+|é)+/u` and `/(?:(?a:\p{Lu})x|\p{L}y)+z/u`,
-   which it missed, are reported. The message quotes each branch as the
+   reset group, `/(?:(?|ö|ê)|è)+x/u`, and an atom under the very options of
+   `a` that stand where it does, which restrict `\d`, `\s`, `\w`, their
+   negations and the POSIX classes alone, `/(?:(?a:[ö])x|èy)+z/u`. Under a
+   pattern's own `/D` or `/S`, which those options spell the same, the
+   branch is left unjudged. `/(?:[à-ÿ]+|é)+/u`,
+   `/(?:(?a:\p{Lu})x|\p{L}y)+z/u` and `/(?:(?aD:\w)x|éy)+z/u`, which it
+   missed, are reported. The message quotes each branch as the
    pattern writes it, `\d+` rather than `\\d+`, and `é` under u rather than
    `\xC3\xA9`, on thirty columns at most, an escape never cut.
  * The lint reads pattern arguments it left out: a pattern built at the call
