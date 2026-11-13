@@ -787,7 +787,8 @@ final class PlaygroundLayoutTest extends TestCase
         $script = self::source(self::SCRIPT);
 
         $this->assertSame(1, preg_match("/if \\(fromHash\\) \\{[^}]*setState\\('Loading…', 'busy'\\);[^}]*analyzeNow\\(\\);\\n  \\}/", $script), 'A link with a pattern runs it at once, and the pill says the engine is coming.');
-        $this->assertSame(2, substr_count($script, 'new Worker('), 'Two places create a worker: the engine and the step trace.');
+        $this->assertSame(3, substr_count($script, 'new Worker('), 'Three places create a worker: the engine, the step trace, and the check of a translation in this browser.');
+        $this->assertSame(1, preg_match('/var url = URL\.createObjectURL\(new Blob\(\[PARITY_WORKER\][^;]*;\s*var worker;\s*try \{\s*worker = new Worker\(url\);/', $script), 'The third is built from the page\'s own text: it downloads nothing.');
         $this->assertSame(1, preg_match('/function traceWorkerCreate\(\) \{\s*try \{\s*var created = new Worker\(/', $script));
         $this->assertSame(1, preg_match_all('/(?<!function )traceWorkerCreate\(\)/', $script), 'The trace worker is asked for by the first trace job only.');
         $this->assertSame(1, preg_match('/function traceSend\(job\) \{(?:(?!\n  function ).)*traceWorkerCreate\(\)/s', $script));

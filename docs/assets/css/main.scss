@@ -6612,6 +6612,72 @@ body.search-open {
   margin-top: .15rem;
   color: var(--ink-soft);
 }
+/* A translation's rows: what it is, the code, its own copy. */
+.pg-code-row {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+  align-items: start;
+  gap: .5rem;
+  margin: 0 0 .5rem;
+}
+.pg-code-row .pg-tool-code {
+  margin: 0;
+}
+.pg-code-label {
+  padding-top: .45rem;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--ink-soft);
+}
+@media (max-width: 639px) {
+  .pg-code-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .pg-code-label {
+    grid-column: 1 / -1;
+    padding-top: 0;
+  }
+}
+/* The check in this browser's engine: a line that says what it found,
+   with a mark drawn by the sheet, so the words stay the words. */
+.pg-parity {
+  display: flex;
+  align-items: baseline;
+  gap: .45rem;
+  margin: .25rem 0 .6rem;
+  padding: .45rem .65rem;
+  font-size: .8rem;
+  color: var(--ink-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}
+.pg-parity::before {
+  flex: none;
+  font-weight: 700;
+}
+.pg-parity.is-busy::before {
+  content: '…';
+}
+.pg-parity.is-same {
+  color: var(--ink);
+  border-color: var(--ok);
+}
+.pg-parity.is-same::before {
+  content: '✓';
+  color: var(--ok);
+}
+.pg-parity.is-different,
+.pg-parity.is-stopped {
+  color: var(--ink);
+  border-color: var(--amber);
+}
+.pg-parity.is-different::before,
+.pg-parity.is-stopped::before {
+  content: '!';
+  color: var(--amber);
+}
 .pg-tool-row label {
   font-size: .78rem;
   font-weight: 600;

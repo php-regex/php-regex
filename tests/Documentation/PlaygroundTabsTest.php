@@ -152,6 +152,39 @@ final class PlaygroundTabsTest extends TestCase
         $this->assertStringContainsString("'pg-hint-fix'", $redos);
     }
 
+    // --- Translate -----------------------------------------------------------
+
+    /**
+     * The translation is checked where it will run: the browser's own
+     * JavaScript engine matches the text, in a worker that a pattern that
+     * backtracks cannot freeze the page from, and the panel says whether
+     * it finds what PHP found.
+     */
+    #[Test]
+    public function test_a_javascript_translation_is_checked_in_this_browser(): void
+    {
+        $script = self::source(self::SCRIPT);
+
+        $check = self::between($script, 'function checkInBrowser(panel, result) {', "\n  }\n");
+        $this->assertStringContainsString("new Blob([PARITY_WORKER], { type: 'text/javascript' })", $check, 'A worker of its own: the page never runs the pattern on its main thread.');
+        $this->assertStringContainsString('worker.terminate();', $check);
+        $this->assertStringContainsString('PARITY_TIMEOUT_MS', $check, 'A pattern that backtracks in JavaScript too is stopped, and said.');
+        $this->assertStringContainsString('current.payload.matches', $check, 'Compared with what PHP found on the same text.');
+        $this->assertStringContainsString('URL.revokeObjectURL(', $check);
+        $this->assertStringContainsString("subject.matchAll(", $script, 'Every match, as preg_match_all walks them.');
+
+        $render = self::between($script, 'function renderTranspile(panel, payload, announceResult) {', "\n  }\n");
+        $this->assertStringContainsString("toolSettings.transpile.target === 'js'", $render, 'Only JavaScript runs here; Python and the HTML attribute are not checked.');
+        $this->assertStringContainsString('checkInBrowser(panel, result)', $render);
+        $this->assertStringContainsString("codeRow(panel, 'Literal', result.literal", $render, 'The literal and the constructor each have a row and a copy of their own.');
+        $this->assertStringContainsString("codeRow(panel, 'Constructor', result.constructor", $render);
+
+        $stylesheet = self::source(self::STYLESHEET);
+        foreach (['.pg-parity.is-same', '.pg-parity.is-different', '.pg-parity.is-stopped'] as $state) {
+            $this->assertStringContainsString($state, $stylesheet);
+        }
+    }
+
     private static function between(string $haystack, string $from, string $to): string
     {
         $start = strpos($haystack, $from);

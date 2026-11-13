@@ -2475,18 +2475,16 @@
     if (!result) {
       return;
     }
-    var code = text('pre', 'pg-tool-code is-wrapped', result.literal);
-    panel.appendChild(code);
-    var row = text('div', 'pg-tool-row');
-    row.appendChild(toolButton('Copy', function () {
-      copyText(result.literal, 'the ' + TARGET_LABELS[toolSettings.transpile.target] + ' pattern', panel);
-    }));
+    // The literal and the constructor, each on a row of its own with its
+    // own copy: which one Copy took is never a guess.
+    var language = TARGET_LABELS[toolSettings.transpile.target];
+    codeRow(panel, 'Literal', result.literal, 'the ' + language + ' pattern');
     if (result.constructor && result.constructor !== result.literal) {
-      var constructorLine = text('span', 'pg-tool-line');
-      constructorLine.appendChild(text('code', null, result.constructor));
-      row.appendChild(constructorLine);
+      codeRow(panel, 'Constructor', result.constructor, 'the ' + language + ' constructor');
     }
-    panel.appendChild(row);
+    if (toolSettings.transpile.target === 'js') {
+      checkInBrowser(panel, result);
+    }
     var notes = (result.warnings || []).map(function (warning) {
       return { tone: 'is-warn', text: warning };
     }).concat((result.notes || []).map(function (note) {
@@ -2500,6 +2498,98 @@
       panel.appendChild(list);
     }
     if (announceResult) announce('Translated to ' + TARGET_LABELS[toolSettings.transpile.target] + ', ' + (result.warnings || []).length + ' warning' + ((result.warnings || []).length === 1 ? '' : 's') + ', ' + (result.notes || []).length + ' note' + ((result.notes || []).length === 1 ? '' : 's') + '.');
+  }
+
+  function codeRow(panel, label, code, what) {
+    var row = text('div', 'pg-code-row');
+    row.appendChild(text('span', 'pg-code-label', label));
+    row.appendChild(text('pre', 'pg-tool-code is-wrapped', code));
+    row.appendChild(toolButton('Copy', function () {
+      copyText(code, what, panel);
+    }));
+    panel.appendChild(row);
+  }
+
+  // The translation, checked where it will run: this browser's JavaScript
+  // engine matches the text in a worker of its own — a pattern that
+  // backtracks there too is stopped, and said, instead of freezing the
+  // page — and the panel says whether it finds what PHP found.
+  var PARITY_TIMEOUT_MS = 1000;
+  var PARITY_WORKER = [
+    'self.onmessage = function (event) {',
+    '  var data = event.data;',
+    '  try {',
+    "    var flags = data.flags.indexOf('g') === -1 ? data.flags + 'g' : data.flags;",
+    '    var regex = new RegExp(data.source, flags);',
+    '    var values = [];',
+    '    var count = 0;',
+    '    for (var match of data.subject.matchAll(regex)) {',
+    '      if (values.length < data.cap) {',
+    '        values.push(match[0]);',
+    '      }',
+    '      count += 1;',
+    '    }',
+    '    self.postMessage({ ok: true, values: values, count: count });',
+    '  } catch (error) {',
+    '    self.postMessage({ ok: false, error: String(error && error.message ? error.message : error) });',
+    '  }',
+    '};'
+  ].join('\n');
+
+  function checkInBrowser(panel, result) {
+    var matches = current && current.payload.matches;
+    var literal = result.literal;
+    var cut = literal.lastIndexOf('/');
+    if (!matches || matches.pending || !matches.sets || (matches.error && matches.error !== 'No error') || typeof Worker !== 'function' || literal.charAt(0) !== '/' || cut <= 0) {
+      return;
+    }
+    var line = text('p', 'pg-parity is-busy', 'Checking in this browser\u2019s JavaScript engine\u2026');
+    panel.appendChild(line);
+    var url = URL.createObjectURL(new Blob([PARITY_WORKER], { type: 'text/javascript' }));
+    var worker;
+    try {
+      worker = new Worker(url);
+    } catch (error) {
+      URL.revokeObjectURL(url);
+      panel.removeChild(line);
+      return;
+    }
+    var php = matches.sets.map(function (set) {
+      return set['0'] ? set['0'][0] : '';
+    });
+    var timer = 0;
+    var finish = function (tone, words) {
+      window.clearTimeout(timer);
+      worker.terminate();
+      URL.revokeObjectURL(url);
+      line.className = 'pg-parity ' + tone;
+      line.textContent = words;
+    };
+    timer = window.setTimeout(function () {
+      finish('is-stopped', 'This browser\u2019s JavaScript did not finish within ' + PARITY_TIMEOUT_MS / 1000 + ' s on this text: the translation backtracks there too.');
+    }, PARITY_TIMEOUT_MS);
+    worker.onmessage = function (event) {
+      var answer = event.data;
+      if (!answer.ok) {
+        finish('is-different', 'This browser\u2019s JavaScript refuses the translation: ' + answer.error);
+        return;
+      }
+      var differs = -1;
+      for (var i = 0; i < Math.min(php.length, answer.values.length); i += 1) {
+        if (php[i] !== answer.values[i]) {
+          differs = i;
+          break;
+        }
+      }
+      if (differs === -1 && answer.count === matches.count) {
+        finish('is-same', matches.count === 0 ? 'Checked in this browser: JavaScript finds no match either, as PHP.' : 'Checked in this browser: JavaScript finds the same ' + (matches.count === 1 ? 'match' : matches.count + ' matches') + ' as PHP.');
+      } else if (differs !== -1) {
+        finish('is-different', 'Checked in this browser: match #' + (differs + 1) + ' differs \u2014 JavaScript finds ' + JSON.stringify(answer.values[differs]) + ', PHP ' + JSON.stringify(php[differs]) + '.');
+      } else {
+        finish('is-different', 'Checked in this browser: JavaScript finds ' + answer.count + ' match' + (answer.count === 1 ? '' : 'es') + ', PHP ' + matches.count + '.');
+      }
+    };
+    worker.postMessage({ source: literal.slice(1, cut), flags: literal.slice(cut + 1), subject: current.subject, cap: php.length });
   }
 
   // --- samples --------------------------------------------------------------
