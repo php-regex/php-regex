@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Transpiler;
 
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\ProbeDelimiters;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\JavaScript\JavaScriptPrinter;
@@ -85,7 +86,7 @@ final class TargetRefusalTest extends TestCase
         yield 'Python: a match start reset' => ['target' => 'python', 'pattern' => '~ab\Kc~', 'body' => 'ab\Kc', 'position' => 2];
         yield 'Python: a reference to an open group' => ['target' => 'python', 'pattern' => '/(a\1)/', 'body' => '(a\1)', 'position' => 2];
         yield 'HTML: an inline flag the attribute cannot take' => ['target' => 'html-pattern', 'pattern' => '/a(?n)(b)+/', 'body' => 'a(?n)(b)+', 'position' => 1];
-        yield 'HTML: an atom the engine cannot probe' => ['target' => 'html-pattern', 'pattern' => HtmlPatternTargetTest::EVERY_PROBE_DELIMITER, 'body' => substr(HtmlPatternTargetTest::EVERY_PROBE_DELIMITER, 1, -2), 'position' => 1];
+        yield 'HTML: an atom the engine cannot probe' => ['target' => 'html-pattern', 'pattern' => ProbeDelimiters::CASELESS_CLASS_OF_EVERY_ONE, 'body' => substr(ProbeDelimiters::CASELESS_CLASS_OF_EVERY_ONE, 1, -2), 'position' => 1];
     }
 
     /**
