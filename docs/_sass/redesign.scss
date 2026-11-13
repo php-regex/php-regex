@@ -949,6 +949,131 @@ main tbody tr:hover {
   }
 }
 
+/* ---- Support matrix --------------------------------------------------------
+ * The matrix is a table like every other: hairlines, sentence-case heads,
+ * flush with the measure. What changes is the answer in each cell. The page
+ * script turns "Yes", "Partial" and "No" into a glyph and its word, set in
+ * the mono the site keeps for labels, and only the answer the reader comes
+ * looking for - the exception - takes the accent: a yes is ink, a partial
+ * is the accent with a half-filled dot, a no is the quiet grey of an empty
+ * ring. The glyph tells the three apart without the colour. */
+
+main table.support-matrix {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+main table.support-matrix th,
+main table.support-matrix td {
+  overflow-wrap: normal;
+}
+
+main table.support-matrix th:first-child,
+main table.support-matrix td:first-child {
+  width: 34%;
+}
+
+main table.support-matrix th {
+  vertical-align: bottom;
+}
+
+main table.support-matrix td:first-child {
+  color: var(--ink);
+}
+
+.support {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-family: var(--font-mono);
+  font-size: .8125rem;
+  white-space: nowrap;
+}
+
+.support::before {
+  content: '';
+  flex: none;
+  width: .5rem;
+  height: .5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.support-yes {
+  color: var(--ink);
+}
+
+.support-partial {
+  color: var(--amber);
+}
+
+.support-partial::before {
+  background: linear-gradient(90deg, currentColor 50%, transparent 50%);
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+
+.support-no {
+  color: var(--mute);
+}
+
+.support-no::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+
+/* The qualifier after an answer, on a line of its own, set under the word
+   (past the glyph) so the two read as one answer. */
+.support-note {
+  display: block;
+  margin-top: .125rem;
+  padding-left: 1rem;
+  font-size: .8125rem;
+  line-height: 1.45;
+  color: var(--mute);
+}
+
+/* The legend: one line per answer, the mark in a column of its own. */
+main ul.support-legend {
+  display: grid;
+  gap: .375rem;
+  padding: 0;
+  list-style: none;
+}
+
+main ul.support-legend li {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  align-items: baseline;
+  margin: 0;
+  padding: 0;
+}
+
+main ul.support-legend li::before {
+  content: none;
+}
+
+/* On a phone the table scrolls, as every wide table does: each answer
+   column keeps the width of "Partial", the construct column a readable
+   line, and the cut-edge tell marks the side that continues. */
+@media (max-width: 639px) {
+  main table.support-matrix {
+    display: block;
+    table-layout: auto;
+  }
+
+  main table.support-matrix th:not(:first-child),
+  main table.support-matrix td:not(:first-child) {
+    min-width: 7rem;
+  }
+
+  main table.support-matrix th:first-child,
+  main table.support-matrix td:first-child {
+    width: auto;
+    min-width: 10rem;
+  }
+}
+
 /* ==========================================================================
    Code panels
  *

@@ -6,6 +6,69 @@
 // only marked once it really does overflow.
 
 (function () {
+  // ---- Support marks -----------------------------------------------------
+  // A support matrix answers one question per cell - Yes, Partial or No -
+  // and a column of the same three words in body text reads as prose. Each
+  // answer becomes a mark whose glyph carries the answer as much as its
+  // colour does (a full dot, a half dot, an empty ring), and the
+  // qualifier after it - "(possessive only)" - moves to a quiet line of its
+  // own. The words stay the words: without the script the table reads as
+  // written. This runs before the wide-box tell below measures the tables.
+  var STATES = { Yes: 'yes', Partial: 'partial', No: 'no' };
+
+  function mark(word) {
+    var badge = document.createElement('span');
+    badge.className = 'support support-' + STATES[word];
+    badge.textContent = word;
+    return badge;
+  }
+
+  function trimText(node, pattern) {
+    if (node && node.nodeType === 3) {
+      node.nodeValue = node.nodeValue.replace(pattern, '');
+    }
+  }
+
+  var cells = document.querySelectorAll('table.support-matrix td:not(:first-child)');
+  Array.prototype.forEach.call(cells, function (cell) {
+    var first = cell.firstChild;
+    if (!first || first.nodeType !== 3) {
+      return;
+    }
+    var answer = /^\s*(Yes|Partial|No)\b\s*/.exec(first.nodeValue);
+    if (!answer) {
+      return;
+    }
+    first.nodeValue = first.nodeValue.slice(answer[0].length);
+    trimText(cell.firstChild, /^\(/);
+    trimText(cell.lastChild, /\)\s*$/);
+
+    var note = document.createElement('span');
+    note.className = 'support-note';
+    while (cell.firstChild) {
+      note.appendChild(cell.firstChild);
+    }
+    cell.appendChild(mark(answer[1]));
+    if (note.textContent.trim() !== '') {
+      cell.appendChild(note);
+    }
+    cell.setAttribute('data-support', STATES[answer[1]]);
+  });
+
+  // The legend speaks with the same marks: "Yes: fully supported" shows
+  // the mark the reader will meet in the table.
+  var keys = document.querySelectorAll('.support-legend li strong:first-child');
+  Array.prototype.forEach.call(keys, function (key) {
+    var word = key.textContent.trim();
+    if (!STATES.hasOwnProperty(word)) {
+      return;
+    }
+    trimText(key.nextSibling, /^:\s*/);
+    key.parentNode.replaceChild(mark(word), key);
+  });
+})();
+
+(function () {
   // ---- Back to top -------------------------------------------------------
   // The sidebar and the on-this-page rail serve the long pages above
   // 1280px; below that neither exists, so a ten-screen chapter needs its

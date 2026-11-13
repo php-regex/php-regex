@@ -12,6 +12,7 @@ Legend:
 - **Yes**: Fully supported for the listed layer.
 - **Partial**: Supported with limitations or approximations (see Notes).
 - **No**: Not supported; will be ignored or rejected.
+{: .support-legend}
 
 | Construct / Feature                          | Parser | Lint / Optimizer | ReDoS | Automata Solver |
 |----------------------------------------------|--------|------------------|-------|-----------------|
@@ -38,6 +39,7 @@ Legend:
 | Script runs / extended classes                | Yes    | Partial          | Partial | Partial (extended classes only) |
 | PCRE verbs (`(*FAIL)`, `(*SKIP)`, ...)         | Yes    | Partial          | Partial | No             |
 | `\K` keep reset                               | Yes    | Partial          | Partial | No             |
+{: .support-matrix}
 
 Notes:
 - **Automata solver**: lookarounds, anchors, `\b` and `\B` are read wherever they stand. The `Partial` cells of its
