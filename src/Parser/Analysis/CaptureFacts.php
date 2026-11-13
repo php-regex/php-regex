@@ -45,8 +45,10 @@ use PHPRegex\Parser\Text\Bytes;
  * What a node reads, from the tree alone, for CaptureShapeAnalyzer: its
  * length range, its values when they are a small finite set, and the facts
  * every value satisfies. An answer depends on the node, on the options in
- * force where it stands and on the groups it calls, so each node is
- * measured once, and its answer kept as long as the node lives.
+ * force where it stands, on the groups it calls and, for an alternation, on
+ * where the case being read puts it: each node is measured once per case,
+ * its lengths once for all, and forgetMarks() drops the answers a case's
+ * marks moved.
  *
  * Every answer is sound: when the tree alone cannot tell, the values are
  * unknown and the facts are false.

@@ -9,7 +9,7 @@ CHANGELOG
  * `ClassSetProvider::query()` answers for a class holding the eight
    delimiters its probe was written with, `[/#~%!@;\x01]`: the probe takes
    another one, among the punctuation and the control characters PHP reads
-   as delimiters. The transpiler carries such a class under `/i` into the
+   as delimiters, when the class leaves one of them out. The transpiler carries such a class under `/i` into the
    HTML pattern attribute, where it refused it.
  * `CaptureShapeAnalyzer` reads each case of a pattern with the start and
    the end of that case alone: a zero-width branch read first put what
