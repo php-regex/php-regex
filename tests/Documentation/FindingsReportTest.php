@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Tests\Support\PlaygroundDriver;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
@@ -668,8 +669,7 @@ final class FindingsReportTest extends TestCase
             $pipes,
         );
         $this->assertIsResource($process);
-        stream_get_contents($pipes[1]);
-        stream_get_contents($pipes[2]);
+        ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
         proc_close($process);
@@ -708,7 +708,7 @@ final class FindingsReportTest extends TestCase
             $pipes,
         );
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
         fclose($pipes[2]);
 

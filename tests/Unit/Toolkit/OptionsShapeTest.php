@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Toolkit;
 
 use PHPRegex\Tests\Support\Paths;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -72,8 +73,7 @@ final class OptionsShapeTest extends TestCase
                 $root,
             );
             self::assertIsResource($process);
-            $stdout = (string) stream_get_contents($pipes[1]);
-            $stderr = (string) stream_get_contents($pipes[2]);
+            [$stdout, $stderr] = ProcessPipes::drain($pipes);
             fclose($pipes[1]);
             fclose($pipes[2]);
             proc_close($process);

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -127,8 +128,7 @@ final class CommandsWithoutIniGetTest extends TestCase
             $this->directory,
         );
         $this->assertIsResource($process);
-        $stdout = (string) stream_get_contents($pipes[1]);
-        $stderr = (string) stream_get_contents($pipes[2]);
+        [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
 

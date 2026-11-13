@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -35,8 +36,7 @@ final class DocumentStreamTest extends TestCase
         );
         $this->assertIsResource($process);
         fclose($pipes[0]);
-        $stdout = (string) stream_get_contents($pipes[1]);
-        $stderr = (string) stream_get_contents($pipes[2]);
+        [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
 

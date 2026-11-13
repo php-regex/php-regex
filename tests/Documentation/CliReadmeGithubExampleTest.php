@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Tests\Support\PcreRule;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -44,8 +45,7 @@ final class CliReadmeGithubExampleTest extends TestCase
         $command = [\PHP_BINARY, \dirname(__DIR__, 2).'/src/Cli/bin/regex', 'lint', 'src/', '--format=github', '--no-visuals'];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $project);
         $this->assertIsResource($process);
-        $stdout = (string) stream_get_contents($pipes[1]);
-        $stderr = (string) stream_get_contents($pipes[2]);
+        [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
         proc_close($process);

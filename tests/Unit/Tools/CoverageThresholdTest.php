@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Tools;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\TestUtils\CoverageThreshold;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -188,8 +189,7 @@ final class CoverageThresholdTest extends TestCase
             $pipes,
         );
         self::assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]);
-        $errors = (string) stream_get_contents($pipes[2]);
+        [$output, $errors] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
 

@@ -34,6 +34,7 @@ use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -151,8 +152,7 @@ final class EdgeCaseTest extends TestCase
         try {
             $process = proc_open([\PHP_BINARY, '-d', 'memory_limit=128M', '-d', 'auto_prepend_file=', $file, \dirname(__DIR__, 4), $branches], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
             $this->assertIsResource($process);
-            $output = (string) stream_get_contents($pipes[1]);
-            $errors = (string) stream_get_contents($pipes[2]);
+            [$output, $errors] = ProcessPipes::drain($pipes);
             fclose($pipes[1]);
             fclose($pipes[2]);
             $status = proc_close($process);

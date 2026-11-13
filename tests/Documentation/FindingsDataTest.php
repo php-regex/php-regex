@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PlaygroundDriver;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -168,8 +169,7 @@ final class FindingsDataTest extends TestCase
             $pipes,
         );
         $this->assertIsResource($process);
-        $output = trim((string) stream_get_contents($pipes[1]));
-        stream_get_contents($pipes[2]);
+        $output = trim(ProcessPipes::drain($pipes)[0]);
         fclose($pipes[1]);
         fclose($pipes[2]);
         proc_close($process);

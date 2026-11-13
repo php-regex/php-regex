@@ -20,6 +20,7 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Hir\ClassSetStore;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\Test;
@@ -128,8 +129,7 @@ final class CacheDirectoryOptionTest extends TestCase
         $command = [\PHP_BINARY, '-d', 'xdebug.mode=off', \dirname(__DIR__, 3).'/src/Cli/bin/regex', ...$options, 'lint', 'src/', '--redos', '--redos-threshold=low', '--format=json', '--no-visuals'];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $project);
         self::assertIsResource($process);
-        $stdout = (string) stream_get_contents($pipes[1]);
-        $stderr = (string) stream_get_contents($pipes[2]);
+        [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
         proc_close($process);

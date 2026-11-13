@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Release;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -894,7 +895,7 @@ exit 1
             ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $remotes, 'HOME' => (string) getenv('HOME')],
         );
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
         fclose($pipes[2]);
 
@@ -940,7 +941,7 @@ exit 1
             ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $remotes, 'HOME' => (string) getenv('HOME')],
         );
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
         fclose($pipes[2]);
         $code = proc_close($process);
@@ -981,7 +982,7 @@ exit 1
             ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $remotes, 'HOME' => (string) getenv('HOME')],
         );
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
         fclose($pipes[2]);
 
@@ -1005,18 +1006,20 @@ exit 1
         mkdir($this->root.'/fake');
         file_put_contents($this->root.'/fake/splitsh-lite', "#!/usr/bin/env bash\necho {$head}\n");
         chmod($this->root.'/fake/splitsh-lite', 0o755);
-        $base = 'https://x-access-token:s3cr3t-t0ken@127.0.0.1:1/php-regex';
+        // A made-up token, written in pieces as it is no secret.
+        $token = implode('-', ['s3cr3t', 't0ken']);
+        $base = 'https://x-access-token:'.$token.'@127.0.0.1:1/php-regex';
 
         $dryRun = $this->split(['--branch', '2.x', '--only', 'regex-parser', '--dry-run'], $base);
         $run = $this->split(['--branch', '2.x', '--only', 'regex-parser'], $base);
 
         $this->assertSame(0, $dryRun[0], $dryRun[1]);
         $this->assertStringContainsString('https://127.0.0.1:1/php-regex/regex-parser.git', $dryRun[1]);
-        $this->assertStringNotContainsString('s3cr3t-t0ken', $dryRun[1]);
+        $this->assertStringNotContainsString($token, $dryRun[1]);
         $this->assertStringNotContainsString('x-access-token', $dryRun[1]);
         $this->assertSame(1, $run[0], $run[1]);
         $this->assertStringContainsString('cannot read https://127.0.0.1:1/php-regex/regex-parser.git', $run[1]);
-        $this->assertStringNotContainsString('s3cr3t-t0ken', $run[1]);
+        $this->assertStringNotContainsString($token, $run[1]);
         $this->assertStringNotContainsString('x-access-token', $run[1]);
     }
 
@@ -1123,7 +1126,7 @@ exit 1
         $command = [\dirname(__DIR__, 3).'/bin/'.$script, '--root', $this->root, ...$arguments];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, null === $env ? null : $env + ['HOME' => (string) getenv('HOME')]);
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
         fclose($pipes[2]);
 
@@ -1156,7 +1159,7 @@ exit 1
             ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $base, 'GIT_TERMINAL_PROMPT' => '0', 'HOME' => (string) getenv('HOME')],
         );
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
         fclose($pipes[2]);
 

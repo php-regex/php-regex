@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -97,8 +98,7 @@ final class ServerExitCodeTest extends TestCase
 
             fwrite($pipes[0], self::frames($messages));
             fclose($pipes[0]);
-            stream_get_contents($pipes[1]);
-            stream_get_contents($pipes[2]);
+            ProcessPipes::drain($pipes);
             fclose($pipes[1]);
             fclose($pipes[2]);
 
@@ -125,8 +125,7 @@ final class ServerExitCodeTest extends TestCase
             ."Content-Length: 9\r\n\r\n{not json"
             .self::frames([['id' => 2, 'method' => 'shutdown'], ['method' => 'exit']]));
         fclose($pipes[0]);
-        $written = (string) stream_get_contents($pipes[1]);
-        stream_get_contents($pipes[2]);
+        $written = ProcessPipes::drain($pipes)[0];
         fclose($pipes[1]);
         fclose($pipes[2]);
 

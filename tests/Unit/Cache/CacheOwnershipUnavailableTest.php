@@ -19,6 +19,7 @@ use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetStore;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Tests\Support\CacheOwnerFunctionOverrides;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
@@ -121,8 +122,7 @@ final class CacheOwnershipUnavailableTest extends TestCase
                 $pipes,
             );
             $this->assertIsResource($process);
-            $stdout = stream_get_contents($pipes[1]);
-            $stderr = stream_get_contents($pipes[2]);
+            [$stdout, $stderr] = ProcessPipes::drain($pipes);
             fclose($pipes[1]);
             fclose($pipes[2]);
             $this->assertSame(0, proc_close($process), (string) $stderr);

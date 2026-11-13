@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Support;
 use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -119,8 +120,7 @@ final class LinearTimeAssertionsTest extends TestCase
         );
         $this->assertIsResource($process);
         fclose($pipes[0]);
-        $output = (string) stream_get_contents($pipes[1]);
-        $errors = (string) stream_get_contents($pipes[2]);
+        [$output, $errors] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
         $this->assertSame(0, proc_close($process), $output.$errors);
