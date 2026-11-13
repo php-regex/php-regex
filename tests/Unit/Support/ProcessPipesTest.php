@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Support;
 
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
@@ -26,6 +27,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ProcessPipesTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_a_child_filling_its_error_stream_first_is_read_to_the_end(): void
@@ -71,6 +74,59 @@ final class ProcessPipesTest extends TestCase
 
         $this->assertSame(0, proc_close($process));
         $this->assertSame(['out', 'err'], $read);
+    }
+
+    /**
+     * Pipes opened past FD_SETSIZE (1024) cannot be waited on: every wait
+     * fails. Reading one stream after the other could leave both processes
+     * waiting, so the drain says it failed instead of giving back part of
+     * the output.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    #[RequiresFunction('posix_setrlimit')]
+    public function test_pipes_that_cannot_be_waited_on_fail_the_drain(): void
+    {
+        $limits = posix_getrlimit();
+        $soft = \is_array($limits) && is_numeric($limits['soft openfiles'] ?? null) ? (int) $limits['soft openfiles'] : null;
+        $hard = \is_array($limits) && is_numeric($limits['hard openfiles'] ?? null) ? (int) $limits['hard openfiles'] : \POSIX_RLIMIT_INFINITY;
+        if (null !== $soft && $soft < 2048) {
+            posix_setrlimit(\POSIX_RLIMIT_NOFILE, min(2048, $hard), $hard);
+        }
+        $handles = [];
+        $process = null;
+        $pipes = [];
+
+        try {
+            for ($i = 0; $i < 1100; $i++) {
+                $handle = @fopen(__FILE__, 'r');
+                if (false === $handle) {
+                    break;
+                }
+                $handles[] = $handle;
+            }
+            $this->assertCount(1100, $handles, 'Not enough files could be opened to push the pipes past FD_SETSIZE.');
+            $process = proc_open([\PHP_BINARY, '-r', 'echo "out";'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+            $this->assertIsResource($process);
+
+            $this->expectException(\RuntimeException::class);
+            $this->expectExceptionMessageIsOrContains('The output of the child cannot be waited on');
+
+            ProcessPipes::drain($pipes);
+        } finally {
+            foreach ($pipes as $pipe) {
+                fclose($pipe);
+            }
+            if (\is_resource($process)) {
+                proc_close($process);
+            }
+            foreach ($handles as $handle) {
+                fclose($handle);
+            }
+            if (null !== $soft && $soft < 2048) {
+                posix_setrlimit(\POSIX_RLIMIT_NOFILE, $soft, $hard);
+            }
+        }
     }
 
     #[Test]

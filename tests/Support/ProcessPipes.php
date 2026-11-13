@@ -50,19 +50,15 @@ final class ProcessPipes
             $ready = array_values($open);
             $write = $except = null;
             // A signal that lands during the wait interrupts it: wait again.
-            // A wait that keeps failing reads the rest one stream after the
-            // other, as on Windows, rather than give back part of it.
+            // A wait that keeps failing, pipes past FD_SETSIZE, fails the
+            // drain: reading one stream after the other could leave both
+            // processes waiting, and part of the output is no output.
             if (false === @stream_select($ready, $write, $except, 1)) {
                 if (++$failures < 10) {
                     continue;
                 }
 
-                foreach ($open as $index => $pipe) {
-                    stream_set_blocking($pipe, true);
-                    $read[$index] .= (string) stream_get_contents($pipe);
-                }
-
-                break;
+                throw new \RuntimeException('The output of the child cannot be waited on: stream_select() failed ten times in a row.');
             }
             $failures = 0;
 
