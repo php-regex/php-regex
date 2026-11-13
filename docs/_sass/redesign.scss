@@ -22,9 +22,11 @@
  * 13.66, ink-soft 7.93, amber 8.90, amber-deep 11.94, link-line 5.66, ok
  * 11.55, danger 7.28. --line is a hairline now, in both themes: it frames
  * and divides, and no control is told apart by it alone — every control
- * carries its words or its glyph, and its focus ring in the accent. Code panel, on #0B1020 in
- * both themes: text 15.29, comment 6.27, keyword 9.39, string 13.48, number
- * 13.13, call 10.50, variable 10.76, punctuation 7.46.
+ * carries its words or its glyph, and its focus ring in the accent.
+ * Code panel, on #0B1020 in both themes: text 15.29, comment 5.23,
+ * keyword 7.15, string 13.48, number 11.23, call 11.36, variable 10.26,
+ * type 15.20, punctuation 7.38; the pattern roles run from 5.23
+ * (delimiters) to 15.20 (group names).
    ========================================================================== */
 
 @mixin redesign-light {
@@ -119,14 +121,33 @@
    surface that also colors tokens (the playground's fields) keeps the
    roles main.scss measured for it. */
 @mixin code-panel-roles {
-  --tk-key: #F9A35B;
+  --tk-key: #F472B6;
   --tk-str: #86EFAC;
-  --tk-num: #FCD34D;
-  --tk-com: #8B95A7;
+  --tk-num: #FDBA74;
+  --tk-com: #7D8799;
   --tk-fn: #E5E7EB;
-  --tk-punct: #9CA3AF;
-  --tk-call: #93C5FD;
-  --tk-var: #F0ABFC;
+  --tk-punct: #94A3B8;
+  --tk-call: #7DD3FC;
+  --tk-var: #C4B5FD;
+  --tk-type: #FDE68A;
+  --rx-delim: #7D8799;
+  --rx-group: #C4B5FD;
+  --rx-look: #F9A8D4;
+  --rx-set: #38BDF8;
+  --rx-member: #BAE6FD;
+  --rx-type: #FDBA74;
+  --rx-esc: #A5B4FC;
+  --rx-quant: #5EEAD4;
+  --rx-anchor: #F472B6;
+  --rx-name: #FDE68A;
+  --out-ok: #86EFAC;
+  --out-bad: #FCA5A5;
+  --out-warn: #FDBA74;
+  --out-info: #7DD3FC;
+  --out-path: #5EEAD4;
+  --out-dim: #7D8799;
+  --diff-add: rgba(134, 239, 172, 0.12);
+  --diff-del: rgba(252, 165, 165, 0.12);
 }
 
 :root,
@@ -1158,7 +1179,7 @@ main tbody tr:hover {
 .page-main main .highlight .nc,
 .page-main main .highlight .nn,
 .page-main main .highlight .kt {
-  color: var(--tk-num);
+  color: var(--tk-type);
 }
 
 .page-main main .highlight .c,
@@ -1166,6 +1187,227 @@ main tbody tr:hover {
 .page-main main .highlight .cm,
 .page-main main .highlight .cd {
   font-style: normal;
+}
+
+/* ---- Syntax roles on the dark panel ----------------------------------------
+ * Rouge's classes the shared rules leave unnamed, and the roles the page's
+ * own highlighter adds where Rouge has no lexer: a pattern as PCRE reads
+ * it, captured output, NEON and JSON5, the command at the head of a shell
+ * line. Every role is a token above, measured on the panel. */
+
+/* A block Rouge never saw (the install box, a NEON or JSON5 fence, a bare
+   pattern) carries no .highlight class: the shared roles, restated for any
+   panel. */
+.page-main main pre .c,
+.page-main main pre .c1 {
+  color: var(--tk-com);
+}
+
+.page-main main pre .s,
+.page-main main pre .s1,
+.page-main main pre .s2 {
+  color: var(--tk-str);
+}
+
+.page-main main pre .mi {
+  color: var(--tk-num);
+}
+
+.page-main main pre .p,
+.page-main main pre .o {
+  color: var(--tk-punct);
+}
+
+.page-main main pre .nf {
+  color: var(--tk-call);
+}
+
+.page-main main pre .nv {
+  color: var(--tk-var);
+}
+
+/* Constants, keys and markup. */
+.page-main main pre .kc,
+.page-main main pre .no,
+.page-main main pre .ss {
+  color: var(--tk-num);
+}
+
+.page-main main pre .nl,
+.page-main main pre .na,
+.page-main main pre .py {
+  color: var(--tk-call);
+}
+
+.page-main main pre .nt,
+.page-main main pre .ni {
+  color: var(--tk-key);
+}
+
+.page-main main .highlight.language-bash .nt,
+.page-main main div.language-bash .nt,
+.page-main main div.language-console .nt,
+.page-main main .install .nt {
+  color: var(--tk-num);
+}
+
+.page-main main pre .cp,
+.page-main main pre .pi {
+  color: var(--tk-com);
+}
+
+.page-main main pre .se,
+.page-main main pre .sr {
+  color: var(--tk-num);
+}
+
+.page-main main pre .si {
+  color: var(--tk-key);
+}
+
+/* A console: the prompt in the accent, what came back a step quieter. */
+.page-main main pre .gp {
+  color: var(--tk-key);
+  user-select: none;
+}
+
+.page-main main pre .go {
+  color: var(--tk-punct);
+}
+
+/* A diff: the line's whole width, tinted. */
+.page-main main pre .gi,
+.page-main main pre .gd {
+  display: inline-block;
+  min-width: 100%;
+}
+
+.page-main main pre .gi {
+  color: var(--out-ok);
+  background: var(--diff-add);
+}
+
+.page-main main pre .gd {
+  color: var(--out-bad);
+  background: var(--diff-del);
+}
+
+.page-main main pre .gh,
+.page-main main pre .gu {
+  color: var(--tk-call);
+}
+
+/* A pattern. */
+.page-main main pre .rx-delim,
+.page-main main pre .rx-quote,
+.page-main main pre .rx-comment {
+  color: var(--rx-delim);
+}
+
+.page-main main pre .rx-flags,
+.page-main main pre .rx-flag,
+.page-main main pre .rx-verb {
+  color: var(--tk-key);
+}
+
+.page-main main pre .rx-lit {
+  color: var(--tk-fn);
+}
+
+.page-main main pre .rx-group,
+.page-main main pre .rx-ref {
+  color: var(--rx-group);
+}
+
+.page-main main pre .rx-look {
+  color: var(--rx-look);
+}
+
+.page-main main pre .rx-name {
+  color: var(--rx-name);
+}
+
+.page-main main pre .rx-set {
+  color: var(--rx-set);
+}
+
+.page-main main pre .rx-member {
+  color: var(--rx-member);
+}
+
+.page-main main pre .rx-type {
+  color: var(--rx-type);
+}
+
+.page-main main pre .rx-esc {
+  color: var(--rx-esc);
+}
+
+.page-main main pre .rx-quant {
+  color: var(--rx-quant);
+}
+
+.page-main main pre .rx-anchor,
+.page-main main pre .rx-alt {
+  color: var(--rx-anchor);
+}
+
+/* Captured output. */
+.page-main main pre .out-ok {
+  color: var(--out-ok);
+  font-weight: 600;
+}
+
+.page-main main pre .out-bad {
+  color: var(--out-bad);
+  font-weight: 600;
+}
+
+.page-main main pre .out-warn {
+  color: var(--out-warn);
+  font-weight: 600;
+}
+
+.page-main main pre .out-info {
+  color: var(--out-info);
+  font-weight: 600;
+}
+
+.page-main main pre .out-step {
+  color: var(--block-ink);
+  font-weight: 600;
+}
+
+.page-main main pre .out-step-n,
+.page-main main pre .out-key,
+.page-main main pre .out-dim,
+.page-main main pre .out-tree,
+.page-main main pre .out-mark {
+  color: var(--out-dim);
+}
+
+.page-main main pre .out-path {
+  color: var(--out-path);
+}
+
+.page-main main pre .out-type {
+  color: var(--tk-call);
+}
+
+.page-main main pre .out-str {
+  color: var(--tk-str);
+}
+
+.page-main main pre .out-var {
+  color: var(--tk-var);
+}
+
+.page-main main pre .out-kw {
+  color: var(--tk-key);
+}
+
+.page-main main pre .out-num {
+  color: var(--tk-num);
 }
 
 /* The output of a run is the panel's sibling, in the panel's colors. */

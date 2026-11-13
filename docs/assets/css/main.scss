@@ -987,6 +987,9 @@ main pre[data-file] {
 @include code-language(python, python);
 @include code-language(ruby, ruby);
 @include code-language(neon, neon);
+@include code-language(regex, regex);
+@include code-language(pcre, regex);
+@include code-language(json5, json5);
 @include code-language(toml, toml);
 @include code-language(lua, lua);
 @include code-language(vim, vim);
