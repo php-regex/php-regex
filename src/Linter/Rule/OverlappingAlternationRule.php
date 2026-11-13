@@ -320,17 +320,28 @@ final class OverlappingAlternationRule extends AbstractLintRule
         $flagsAt = $context->flagsAtEachChild($node);
         $sets = [];
         foreach ($node->alternatives as $index => $alternative) {
-            $leaf = self::firstAtom($alternative);
-            $atom = self::spelledAtom($leaf, $context->pattern->unicodeMode, $context->pattern->source);
-            $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
-            // The atom is read under the options in force where it stands:
-            // those a group opening the branch sets for its body included.
-            $modifiers = self::probeModifiers($context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags()));
-            if (null === $atom || null === $modifiers) {
+            // A branch that may read nothing starts with what follows the
+            // alternation: not judged.
+            [$leaves, $empty] = self::firstAtoms($alternative);
+            if ($empty) {
                 return null;
             }
 
-            $set = ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
+            $set = null;
+            foreach ($leaves as $leaf) {
+                $atom = self::spelledAtom($leaf, $context->pattern->unicodeMode, $context->pattern->source);
+                $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
+                // The atom is read under the options in force where it
+                // stands: those a group opening the branch sets included.
+                $modifiers = self::probeModifiers($context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags()), $leaf);
+                $read = null === $atom || null === $modifiers ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
+                if (null === $read) {
+                    return null;
+                }
+
+                $set = $set?->union($read) ?? $read;
+            }
+
             if (null === $set) {
                 return null;
             }
@@ -342,26 +353,64 @@ final class OverlappingAlternationRule extends AbstractLintRule
     }
 
     /**
-     * The item a branch reads its first character with: through
-     * groups that capture, that do not, atomic ones and those setting
-     * options for their body, which all start with what their body starts
-     * with; the first item of a sequence and a quantifier taken at least
-     * once.
+     * The atoms a node may read its first character with, and whether it
+     * may read nothing. An item the probe does not read (an anchor, a
+     * lookaround, a reference) is an atom of its own, which leaves the
+     * branch unjudged. Groups start with what
+     * their body starts with, a branch reset group and an alternation with
+     * what any branch does; a sequence goes on past an item that may read
+     * nothing, and a quantifier that may run no time reads nothing.
+     *
+     * @return array{list<NodeInterface>, bool}
      */
-    private static function firstAtom(NodeInterface $node): NodeInterface
+    private static function firstAtoms(NodeInterface $node): array
     {
-        while (true) {
-            if ($node instanceof GroupNode && (\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic], true)
-                || (GroupType::InlineFlags === $node->type && !NodePredicates::isStandaloneInlineFlags($node)))) {
-                $node = $node->child;
-            } elseif ($node instanceof SequenceNode && [] !== $node->children) {
-                $node = $node->children[0];
-            } elseif ($node instanceof QuantifierNode && QuantifierMath::parseRange($node)[0] >= 1) {
-                $node = $node->node;
-            } else {
-                return $node;
+        if ($node instanceof GroupNode) {
+            // A bare "(?i)" reads nothing: it sets the options of what
+            // follows it, which flagsAt() reads.
+            if (NodePredicates::isStandaloneInlineFlags($node)) {
+                return [[], true];
+            }
+
+            if (\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags], true)) {
+                return self::firstAtoms($node->child);
             }
         }
+
+        if ($node instanceof SequenceNode || $node instanceof AlternationNode) {
+            $sequence = $node instanceof SequenceNode;
+            $atoms = [];
+            $empty = false;
+            foreach ($sequence ? $node->children : $node->alternatives as $child) {
+                [$childAtoms, $childEmpty] = self::firstAtoms($child);
+                $atoms = [...$atoms, ...$childAtoms];
+                if ($sequence && !$childEmpty) {
+                    return [$atoms, false];
+                }
+                $empty = $empty || $childEmpty;
+            }
+
+            // A sequence read to its end may read nothing; an alternation
+            // may when one of its branches may.
+            return [$atoms, $sequence || $empty];
+        }
+
+        if ($node instanceof QuantifierNode) {
+            [$min, $max] = QuantifierMath::parseRange($node);
+            if (0 === $max) {
+                return [[], true];
+            }
+
+            [$atoms, $empty] = self::firstAtoms($node->node);
+
+            return [$atoms, $empty || 0 === $min];
+        }
+
+        if ($node instanceof LiteralNode && '' === $node->value) {
+            return [[], true];
+        }
+
+        return [[$node], false];
     }
 
     /**
@@ -398,9 +447,11 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * The options the probe reads an atom under, from the flags in effect
      * at it, or null for the ASCII-restricting ones it is not told about.
      */
-    private static function probeModifiers(string $flags): ?string
+    private static function probeModifiers(string $flags, NodeInterface $atom): ?string
     {
-        if (str_contains($flags, 'a')) {
+        // The options of "a" restrict the types and the POSIX classes to
+        // ASCII: a character written as itself reads the same under them.
+        if (str_contains($flags, 'a') && !$atom instanceof LiteralNode && !$atom instanceof CharLiteralNode) {
             return null;
         }
 

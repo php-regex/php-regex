@@ -133,8 +133,14 @@ final class OverlappingAlternationPairwiseTest extends TestCase
             'pattern' => '/(?:\p{Lu}|éa|\p{L})+/u',
             'expected' => [$charset('\\p{Lu}', '\\p{L}')],
         ];
-        yield 'a branch PCRE is not asked about, which leaves the others unjudged' => [
+        // Past an optional first item, "é?a" starts with "é" or "a": PCRE is
+        // asked about both, and the properties are judged.
+        yield 'a branch read past its optional first item' => [
             'pattern' => '/(?:\p{Lu}|é?a|\p{L})+/u',
+            'expected' => [$charset('\\p{Lu}', '\\p{L}')],
+        ];
+        yield 'a branch PCRE is not asked about, which leaves the others unjudged' => [
+            'pattern' => '/(?:\p{Lu}|(?=é)éa|\p{L})+/u',
             'expected' => [],
         ];
         yield 'no quantifier around the alternation' => ['pattern' => '/(?:a|ab|[ab]c)/', 'expected' => []];
