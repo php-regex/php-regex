@@ -57,6 +57,10 @@ final class AlternationOverlapPastAsciiTest extends TestCase
         // in the C locale: the byte folds into no ASCII letter.
         yield 'a byte past ASCII read caselessly beside letters' => ['pattern' => "/(?:\xE9+|c|b+)+/i", 'branches' => "\xE9+|c|b+", 'flags' => 'i', 'firsts' => ["\xE9", 'c', 'b']];
         yield 'a letter beside a byte past ASCII read caselessly' => ['pattern' => "/(?:c|\xE9)+/i", 'branches' => "c|\xE9", 'flags' => 'i', 'firsts' => ['c', "\xE9"]];
+        // PCRE reads the first character through the group a branch opens
+        // with: an atomic group, or a group setting options for its body.
+        yield 'an atomic group sharing a lead byte under u' => ['pattern' => '/(?:(?>ö)|è)+x/u', 'branches' => '(?>ö)|è', 'flags' => 'u', 'firsts' => ['ö', 'è']];
+        yield 'a caseless group sharing a lead byte under u' => ['pattern' => '/(?:(?i:ö)|è)+x/u', 'branches' => '(?i:ö)|è', 'flags' => 'u', 'firsts' => ['ö', 'è']];
     }
 
     #[Test]
@@ -65,6 +69,35 @@ final class AlternationOverlapPastAsciiTest extends TestCase
         $this->assertSame(1, preg_match("/^(?:\xE9|\xE9x)+$/i", "\xE9x"));
 
         $this->assertCount(1, $this->charsetOverlapMessages("/(?:\xE9+|\xE9x)+/i"));
+    }
+
+    /**
+     * Read through the group a branch opens with, the options it sets
+     * included: under "(?i:", "Ö" starts the branch "ö" does.
+     */
+    #[Test]
+    public function test_a_caseless_group_meets_the_other_case_under_u(): void
+    {
+        $this->assertSame(1, preg_match('/^(?i:öa)/u', 'Öa'));
+        $this->assertSame(1, preg_match('/^Öb/u', 'Öb'));
+
+        $this->assertCount(1, $this->charsetOverlapMessages('/(?:(?i:öa)|Öb)+x/u'));
+    }
+
+    /**
+     * Where PCRE cannot be asked, a class holding every delimiter the probe
+     * can be written with, the first bytes are compared: under u two
+     * characters sharing a lead byte meet there. Not proven, kept: a
+     * repeated alternation PCRE cannot read stays reported.
+     */
+    #[Test]
+    public function test_a_branch_pcre_cannot_be_asked_about_is_read_by_its_bytes(): void
+    {
+        $class = '[/#~%!@;"\',&`='.implode('', array_map(\chr(...), [...range(0x01, 0x08), ...range(0x0E, 0x1F), 0x7F])).'è]';
+        $this->assertSame(1, preg_match('{^'.$class.'$}u', 'è'));
+        $this->assertSame(0, preg_match('{^'.$class.'$}u', 'ö'));
+
+        $this->assertCount(1, $this->charsetOverlapMessages('{(?:ö|'.$class.')+x}u'));
     }
 
     #[Test]

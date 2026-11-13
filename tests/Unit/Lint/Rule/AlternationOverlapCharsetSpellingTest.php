@@ -67,6 +67,32 @@ final class AlternationOverlapCharsetSpellingTest extends TestCase
         $this->assertSame(array_unique($messages), $messages, 'The three findings tell their alternation apart.');
     }
 
+    /**
+     * A long branch is quoted on thirty columns at most, as the reader sees
+     * it, its escapes counted, and never cut inside one.
+     */
+    #[Test]
+    #[DataProvider('provideLongBranches')]
+    public function test_a_long_branch_is_quoted_on_thirty_columns_at_most(string $pattern, string $subject, string $quoted): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject), 'Oracle: '.$pattern);
+
+        $message = $this->charsetOverlapMessages($pattern)[0] ?? '';
+
+        $this->assertStringStartsWith('Alternation branches "'.$quoted.'" and ', $message);
+        $this->assertLessThanOrEqual(31, mb_strlen($quoted));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, quoted: string}>
+     */
+    public static function provideLongBranches(): iterable
+    {
+        yield 'text' => ['pattern' => '/(?:abcdefghijklmnopqrstuvwxyz0123456789|a+)+!/', 'subject' => 'aa!', 'quoted' => 'abcdefghijklmnopqrstuvwxyz0123…'];
+        yield 'bytes past ASCII without u' => ['pattern' => '/(?:'.str_repeat("\xE9", 30)."|\xE9+)+\x01/", 'subject' => "\xE9\x01", 'quoted' => str_repeat('\xE9', 7).'…'];
+        yield 'hidden characters under u' => ['pattern' => '/(?:'.str_repeat("\u{202E}", 30)."|\u{202E}+)+\u{202E}/u", 'subject' => "\u{202E}\u{202E}", 'quoted' => str_repeat('\x{202E}', 3).'…'];
+    }
+
     #[Test]
     public function test_a_tree_without_its_source_quotes_the_branches_as_printed(): void
     {
