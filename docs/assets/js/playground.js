@@ -3826,7 +3826,7 @@
     view.play.setAttribute('aria-label', label);
     view.play.title = label + ' (' + TRACE_PLAY.hint + ')';
     view.play.classList.toggle('is-playing', playing);
-    view.play.querySelector('path').setAttribute('d', TRACE_ICONS[playing ? 'pause' : 'play']);
+    view.play.querySelector('svg').replaceWith(traceIcon(playing ? 'pause' : 'play', TRACE_PLAY.solid));
   }
 
   // The match's flight, drawn once as the timeline's ground: the position

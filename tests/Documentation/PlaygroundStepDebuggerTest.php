@@ -85,6 +85,21 @@ final class PlaygroundStepDebuggerTest extends TestCase
     }
 
     /**
+     * Play and Pause are two drawings, not two paths of one: the button
+     * swaps its whole icon each way, so neither turn leaves it blank.
+     */
+    #[Test]
+    public function test_play_and_pause_swap_their_whole_icon(): void
+    {
+        $section = self::debugger();
+
+        $sync = self::between($section, 'function syncTracePlay(view, playing) {', "\n  }\n");
+        $this->assertStringContainsString("traceIcon(playing ? 'pause' : 'play', TRACE_PLAY.solid)", $sync, 'Both turns draw the icon of the state the button now stands for.');
+        $this->assertStringContainsString('.replaceWith(', $sync, 'The old drawing goes, the new one takes its place.');
+        $this->assertStringNotContainsString("setAttribute('d'", $sync, 'An icon is more than one path: no path data is written over another.');
+    }
+
+    /**
      * The timeline is the browser's own slider, laid unseen over the chart
      * of the match: the keys, the drag and the screen reader are the
      * platform's. The playhead and the chart share the travel of the
