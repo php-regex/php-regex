@@ -1,13 +1,14 @@
 /* PHPRegex.com — the playground, on the white page.
  *
  * Read after the documentation's layer, in its voice: the tool stands on
- * the page itself, over a faint grid — no window around it, so it reads as
- * part of the site and not as an application dropped into it. The toolbar
- * (pattern, flags, engine, Run) on top, the examples under it, then two
- * white cards — the text on the left, the answers on the right behind a
- * strip of underlined tabs. Controls are segmented and framed by rings, the one
- * filled button is Run, in ink. Nothing here moves a pane or changes what
- * the script measures: only surfaces, edges, type and radii.
+ * the page itself, under a soft halo of the accent — no window around it,
+ * so it reads as part of the site and not as an application dropped into
+ * it. The toolbar (pattern, flags, engine, Run) on top, the examples under
+ * it, then the text the visitor writes, in a grey well, and the answers in
+ * a white card behind a strip of underlined tabs. Controls are segmented
+ * and framed by rings; the one filled button is Run, in ink. Nothing here
+ * moves a pane or changes what the script measures: only surfaces, edges,
+ * type and radii.
  */
 
 /* ==========================================================================
@@ -17,7 +18,9 @@
 @mixin playground-light {
   --pg-canvas: #F9FAFB;
   --pg-surface: #FFFFFF;
-  --pg-grid: rgba(3, 7, 18, 0.05);
+  --pg-field: #F6F7F9;
+  --pg-halo: rgba(234, 88, 12, 0.13);
+  --pg-halo-cool: rgba(59, 130, 246, 0.06);
   --pg-lift: 0 1px 2px rgba(3, 7, 18, 0.12);
   --pg-strip-shadow: 0 6px 12px -10px rgba(3, 7, 18, 0.25);
 }
@@ -25,7 +28,9 @@
 @mixin playground-dark {
   --pg-canvas: #030712;
   --pg-surface: #0B1120;
-  --pg-grid: rgba(255, 255, 255, 0.05);
+  --pg-field: #0D1424;
+  --pg-halo: rgba(251, 146, 60, 0.12);
+  --pg-halo-cool: rgba(96, 165, 250, 0.06);
   --pg-lift: 0 1px 2px rgba(0, 0, 0, 0.5);
   --pg-strip-shadow: 0 6px 12px -10px rgba(0, 0, 0, 0.7);
 }
@@ -49,7 +54,7 @@
 }
 
 /* ==========================================================================
-   The stage — a grid that fades out under the window
+   The stage — a halo of the accent behind the toolbar, fading to white
    ========================================================================== */
 
 .hero-playground {
@@ -62,14 +67,10 @@
   position: absolute;
   inset: 0 0 auto;
   z-index: -1;
-  height: 34rem;
+  height: 40rem;
   background-image:
-    linear-gradient(to right, var(--pg-grid) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--pg-grid) 1px, transparent 1px);
-  background-size: 2.5rem 2.5rem;
-  background-position: center top;
-  -webkit-mask-image: radial-gradient(ellipse 70% 100% at 50% 0, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 100%);
-  mask-image: radial-gradient(ellipse 70% 100% at 50% 0, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 100%);
+    radial-gradient(ellipse 55% 60% at 50% 0, var(--pg-halo), transparent 70%),
+    radial-gradient(ellipse 35% 45% at 20% 0, var(--pg-halo-cool), transparent 70%);
   pointer-events: none;
 }
 
@@ -103,14 +104,24 @@
   line-height: 1.5;
 }
 
-.pg-editor.pg-editor-pattern .pg-mirror {
+/* The two fields the visitor writes in are wells, a step off the page: on
+   a white page a white field reads as nothing. Focus lifts the well to the
+   page's white, framed by the accent. The mirror paints the field (the
+   textarea over it is transparent), so the mirror carries the fill. */
+.pg-editor.pg-editor-pattern .pg-mirror,
+.pg-editor-subject .pg-mirror {
+  background: var(--pg-field);
+  transition: background-color .15s ease;
+}
+
+.pg-editor:focus-within .pg-mirror {
   background: var(--pg-surface);
 }
 
 .pg-editor.pg-editor-pattern .pg-input {
   border: 0;
   border-radius: var(--radius-l);
-  box-shadow: inset 0 0 0 1px var(--line-mid), var(--shadow-1);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
   transition: box-shadow .15s ease;
 }
 
@@ -126,7 +137,7 @@
 
 .pg-editor-pattern .pg-field-count {
   right: .8rem;
-  background: linear-gradient(to left, var(--pg-surface) 38%, transparent);
+  background: linear-gradient(to left, var(--pg-field) 38%, transparent);
   color: var(--mute);
 }
 
@@ -366,16 +377,19 @@
   line-height: 1.65;
 }
 
+.pg-editor:focus-within .pg-field-count {
+  background: linear-gradient(to left, var(--pg-surface) 38%, transparent);
+}
+
 .pg-editor-subject .pg-mirror {
   border: 0;
   border-radius: var(--radius-xl);
-  background: var(--pg-surface);
 }
 
 .pg-editor-subject .pg-input {
   border: 0;
   border-radius: var(--radius-xl);
-  box-shadow: inset 0 0 0 1px var(--line-soft), var(--shadow-1);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
   transition: box-shadow .15s ease;
 }
 
