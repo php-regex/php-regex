@@ -4902,6 +4902,22 @@ body.search-open {
   background: linear-gradient(to left, var(--paper) 38%, transparent);
   border-radius: var(--radius-s);
 }
+/* On a phone the pattern wraps, and a count centered on the right edge
+   would sit on its second line: it moves to the field's foot, which
+   the field reserves on both the input and its mirror. */
+@media (max-width: 639px) {
+  .pg-editor.pg-editor-pattern .pg-input,
+  .pg-editor.pg-editor-pattern .pg-mirror {
+    padding-bottom: 1.45rem;
+  }
+
+  .pg-editor-pattern .pg-field-count {
+    top: auto;
+    bottom: .3rem;
+    padding-left: .4rem;
+    transform: none;
+  }
+}
 .pg-controls {
   display: inline-flex;
   justify-self: end;
