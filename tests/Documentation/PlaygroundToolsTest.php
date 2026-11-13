@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Parser\Printer\FormatRefusal;
 use PHPRegex\Tests\Support\PlaygroundDriver;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RequiresPhp;
@@ -878,8 +879,7 @@ final class PlaygroundToolsTest extends TestCase
             ];
             $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $dir);
             self::assertIsResource($process);
-            $stdout = (string) stream_get_contents($pipes[1]);
-            $stderr = (string) stream_get_contents($pipes[2]);
+            [$stdout, $stderr] = ProcessPipes::drain($pipes);
             fclose($pipes[1]);
             fclose($pipes[2]);
             $exit = proc_close($process);

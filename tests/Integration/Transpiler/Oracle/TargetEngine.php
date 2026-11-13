@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Transpiler\Oracle;
 
+use PHPRegex\Tests\Support\ProcessPipes;
+
 /**
  * A target regex engine run as a child process: Node for JavaScript and the
  * HTML pattern attribute, Python for its re module.
@@ -77,8 +79,7 @@ final class TargetEngine
             return false;
         }
 
-        stream_get_contents($pipes[1]);
-        stream_get_contents($pipes[2]);
+        ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
 

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,10 +28,21 @@ use PHPUnit\Framework\TestCase;
  */
 final class AlternationOverlapCharsetSpellingTest extends TestCase
 {
+    /**
+     * @param array{string, string} $subjects a subject each branch starts, both with one character
+     */
     #[Test]
     #[DataProvider('provideOverlaps')]
-    public function test_the_message_names_the_two_branches_that_overlap(string $pattern, string $first, string $second): void
+    public function test_the_message_names_the_two_branches_that_overlap(string $pattern, string $first, string $second, string $flags, array $subjects): void
     {
+        // The oracle: each branch, as the message quotes it, takes its
+        // subject, and the two subjects start with the same character.
+        $this->assertSame(1, preg_match('/^(?:'.$first.')/'.$flags, $subjects[0]), $first);
+        $this->assertSame(1, preg_match('/^(?:'.$second.')/'.$flags, $subjects[1]), $second);
+        $this->assertSame(1, preg_match('/^(.)/s'.$flags, $subjects[0], $lead));
+        $this->assertSame(1, preg_match('/^(.)/s'.$flags, $subjects[1], $other));
+        $this->assertSame($lead[1], $other[1]);
+
         $message = $this->charsetOverlapMessages($pattern)[0] ?? null;
 
         $this->assertNotNull($message, $pattern);
@@ -56,14 +68,74 @@ final class AlternationOverlapCharsetSpellingTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, first: string, second: string}>
+     * A long branch is quoted on thirty columns at most, as the reader sees
+     * it, its escapes counted, and never cut inside one.
+     */
+    #[Test]
+    #[DataProvider('provideLongBranches')]
+    public function test_a_long_branch_is_quoted_on_thirty_columns_at_most(string $pattern, string $subject, string $quoted): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject), 'Oracle: '.$pattern);
+
+        $message = $this->charsetOverlapMessages($pattern)[0] ?? '';
+
+        $this->assertStringStartsWith('Alternation branches "'.$quoted.'" and ', $message);
+        $this->assertLessThanOrEqual(31, mb_strlen($quoted));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, quoted: string}>
+     */
+    public static function provideLongBranches(): iterable
+    {
+        yield 'text' => ['pattern' => '/(?:abcdefghijklmnopqrstuvwxyz0123456789|a+)+!/', 'subject' => 'aa!', 'quoted' => 'abcdefghijklmnopqrstuvwxyz0123…'];
+        yield 'bytes past ASCII without u' => ['pattern' => '/(?:'.str_repeat("\xE9", 30)."|\xE9+)+\x01/", 'subject' => "\xE9\x01", 'quoted' => str_repeat('\xE9', 7).'…'];
+        yield 'hidden characters under u' => ['pattern' => '/(?:'.str_repeat("\u{202E}", 30)."|\u{202E}+)+\u{202E}/u", 'subject' => "\u{202E}\u{202E}", 'quoted' => str_repeat('\x{202E}', 3).'…'];
+    }
+
+    #[Test]
+    public function test_a_tree_without_its_source_quotes_the_branches_as_printed(): void
+    {
+        $this->assertSame(1, preg_match('/^\d+/', '3'));
+        $this->assertSame(1, preg_match('/^[0-4]a/', '3a'));
+
+        $ast = Regex::create(['cache' => null])->parse('/(?:\d+|[0-4]a)+/');
+        $linter = new PatternLinter();
+        (new RegexNode($ast->pattern, $ast->flags, $ast->delimiter, $ast->startPosition, $ast->endPosition))->accept($linter);
+
+        $messages = array_values(array_filter(array_map(static fn ($issue): string => $issue->message, $linter->getIssues()), static fn (string $message): bool => str_contains($message, 'have overlapping character sets')));
+
+        $this->assertSame(['Alternation branches "\\d+" and "[0-4]a" have overlapping character sets, which may cause unnecessary backtracking.'], $messages);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, first: string, second: string, flags: string, subjects: array{string, string}}>
      */
     public static function provideOverlaps(): iterable
     {
         yield 'a negated class beside an escaped backslash' => [
             'pattern' => '/(?:"(?:[^"]|\\\\.)+")+/',
             'first' => '[^"]',
-            'second' => '\\\\\\\\.',
+            'second' => '\\\\.',
+            'flags' => '',
+            'subjects' => ['\\', '\\a'],
+        ];
+        // Under u a character is spelled as written, as the literal
+        // findings print it.
+        yield 'a character past ASCII under u' => [
+            'pattern' => '/(?:é+|\w)+/u',
+            'first' => 'é+',
+            'second' => '\w',
+            'flags' => 'u',
+            'subjects' => ['é', 'é'],
+        ];
+        // Without u each byte past ASCII is "\xHH".
+        yield 'a byte past ASCII without u' => [
+            'pattern' => "/(?:[\xE0-\xEF]+|\xE9)+/",
+            'first' => '[\xE0-\xEF]+',
+            'second' => '\xE9',
+            'flags' => '',
+            'subjects' => ["\xE9", "\xE9"],
         ];
     }
 

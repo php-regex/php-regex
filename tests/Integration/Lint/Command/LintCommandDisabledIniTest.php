@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Lint\Command;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -257,8 +258,7 @@ final class LintCommandDisabledIniTest extends TestCase
             $this->directory,
         );
         $this->assertIsResource($process);
-        $stdout = (string) stream_get_contents($pipes[1]);
-        $stderr = (string) stream_get_contents($pipes[2]);
+        [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
 
@@ -321,8 +321,7 @@ final class LintCommandDisabledIniTest extends TestCase
             $pipes,
         );
         self::assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]);
-        $errors = (string) stream_get_contents($pipes[2]);
+        [$output, $errors] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
         $exitCode = proc_close($process);

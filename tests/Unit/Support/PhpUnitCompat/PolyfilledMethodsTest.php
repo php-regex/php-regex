@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Support\PhpUnitCompat;
 
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\PhpUnitCompat\PolyfilledMethods;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -248,7 +249,7 @@ final class PolyfilledMethodsTest extends TestCase
             ];
             $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
             $this->assertIsResource($process);
-            $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+            $output = implode('', ProcessPipes::drain($pipes));
             fclose($pipes[1]);
             fclose($pipes[2]);
             proc_close($process);

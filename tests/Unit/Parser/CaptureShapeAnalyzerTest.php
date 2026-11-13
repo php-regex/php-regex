@@ -1818,6 +1818,11 @@ final class CaptureShapeAnalyzerTest extends TestCase
     public static function provideShapes(): iterable
     {
         yield 'trailing optional group is left out' => ['pattern' => '/(a)(z)?/', 'flags' => 0, 'expected' => "array{0: 'a'|'az', 1: 'a', 2?: 'z'}"];
+        // A zero-width first branch puts what follows at the start in its own
+        // case only: preg_match('/(?:(?=y)|(x))(^|a)/', 'xa') writes
+        // ["xa","x","a"] (PHP 8.4.27, PCRE2 10.49), where the caret of the
+        // first case would have won the whole match.
+        yield 'a case read after a zero-width branch keeps its own start' => ['pattern' => '/(?:(?=y)|(x))(^|a)/', 'flags' => 0, 'expected' => "array{0: '', 1: '', 2: ''|'a'}|array{0: 'x'|'xa', 1: 'x', 2: ''|'a'}"];
         yield 'middle optional group is empty' => ['pattern' => '/(z)?(a)/', 'flags' => 0, 'expected' => "array{0: 'a'|'za', 1: ''|'z', 2: 'a'}"];
         yield 'unmatched as null' => ['pattern' => '/(a)(x)?(b)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'ab'|'axb', 1: 'a', 2: 'x'|null, 3: 'b'}"];
         yield 'named group' => ['pattern' => '/(?<n>a+)(b)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string, n: lowercase-string&non-falsy-string, 1: lowercase-string&non-falsy-string, 2: \'b\'}'];
@@ -1860,6 +1865,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
     public static function provideEngineRows(): iterable
     {
         yield '/(a)(z)?/' => ['pattern' => '/(a)(z)?/', 'subjects' => ['a', 'az']];
+        yield '/(?:(?=y)|(x))(^|a)/' => ['pattern' => '/(?:(?=y)|(x))(^|a)/', 'subjects' => ['xa', 'ya']];
         yield '/(z)?(a)/' => ['pattern' => '/(z)?(a)/', 'subjects' => ['a', 'za']];
         yield '/(a)(x)?(b)/' => ['pattern' => '/(a)(x)?(b)/', 'subjects' => ['ab', 'axb']];
         yield '/(a)|b/' => ['pattern' => '/(a)|b/', 'subjects' => ['a', 'b']];

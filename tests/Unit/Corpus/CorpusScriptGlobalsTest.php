@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Corpus;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Rector\Config\RectorConfig;
@@ -38,8 +39,7 @@ final class CorpusScriptGlobalsTest extends TestCase
         );
         $process = proc_open([\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'display_errors=stderr', '-r', $script], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         $this->assertIsResource($process);
-        $stdout = (string) stream_get_contents($pipes[1]);
-        $stderr = (string) stream_get_contents($pipes[2]);
+        [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
         proc_close($process);

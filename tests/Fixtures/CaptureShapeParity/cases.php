@@ -27,6 +27,7 @@ declare(strict_types=1);
 return [
     // Engine rows of the capture-shape analyzer test.
     ['source' => 'analyzer', 'pattern' => '/(a)(z)?/', 'subjects' => ['a', 'az']],
+    ['source' => 'analyzer', 'pattern' => '/(?:(?=y)|(x))(^|a)/', 'subjects' => ['xa', 'ya']],
     ['source' => 'analyzer', 'pattern' => '/(z)?(a)/', 'subjects' => ['a', 'za']],
     ['source' => 'analyzer', 'pattern' => '/(a)(x)?(b)/', 'subjects' => ['ab', 'axb']],
     ['source' => 'analyzer', 'pattern' => '/(a)|b/', 'subjects' => ['a', 'b']],

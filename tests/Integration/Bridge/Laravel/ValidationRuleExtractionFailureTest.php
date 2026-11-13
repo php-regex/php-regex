@@ -20,6 +20,7 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Tests\Support\CpuClock;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
@@ -165,8 +166,7 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
             $pipes,
         );
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]);
-        $errors = (string) stream_get_contents($pipes[2]);
+        [$output, $errors] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
         $this->assertSame(0, proc_close($process), $errors.$output);

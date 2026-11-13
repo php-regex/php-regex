@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Release;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -693,8 +694,8 @@ final class CiAnswerTest extends TestCase
         $command = [\dirname(__DIR__, 3).'/bin/ci-answer', '--root', $this->root.'/repository', ...$arguments];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, $env);
         $this->assertIsResource($process);
-        $stdout = (string) stream_get_contents($pipes[1]);
-        $output = $stdout.(string) stream_get_contents($pipes[2]);
+        [$stdout, $stderr] = ProcessPipes::drain($pipes);
+        $output = $stdout.$stderr;
         fclose($pipes[1]);
         fclose($pipes[2]);
 

@@ -18,9 +18,10 @@ declare(strict_types=1);
  * @return array{version: string, digests: array<string, string>}
  */
 return [
-    'version' => '20',
+    'version' => '21',
     'digests' => [
         '/(a)(z)?/' => 'fceffee5528c62d919aa50fe9f9a0e4f57b34252',
+        '/(?:(?=y)|(x))(^|a)/' => '453f67da55628c7a1a58e8208b3bcf6cc60e3898',
         '/(z)?(a)/' => 'dad1b8133f483a94938631586006071bd8a02a22',
         '/(a)(x)?(b)/' => '42286fc71583e598aa68333d4df2b0b7050a4a98',
         '/(a)|b/' => '72ec808872dba8c3fbd9ecfad9d0712566db2121',

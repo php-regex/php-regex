@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Support;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\Support\SourceDeprecationListener;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -209,7 +210,7 @@ final class SourceDeprecationListenerTest extends TestCase
         $command = [\PHP_BINARY, $phpunit, '--configuration', $config, '--filter', $filter, '--no-progress'];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
         fclose($pipes[2]);
 

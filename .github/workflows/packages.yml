@@ -68,6 +68,10 @@ jobs:
     timeout-minutes: 10
     strategy:
       fail-fast: false
+      # Six of the nineteen packages at once: the jobs of fifteen seconds
+      # each start beside the reference and the coverage, and the second
+      # stage of one pull request holds a third of the runners at most.
+      max-parallel: 6
       matrix:
         package: [ Parser, Explain, Optimizer, Generator, Automata, Redos, Transpiler, Linter, Toolkit, Cli, LanguageServer, Mcp, PHPStan, PHPUnit, Infection, Psalm, Rector, Symfony, Laravel ]
 
@@ -133,6 +137,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       fail-fast: false
+      max-parallel: 3
       matrix:
         include:
           - { phpunit: '^9.6', php: '8.1' }
@@ -185,6 +190,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         mode: [ composer, phar ]
         php: [ '8.3', '8.4' ]

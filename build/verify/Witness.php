@@ -34,6 +34,12 @@ use PHPRegex\Parser\RegexParser;
  */
 final class Witness
 {
+    /**
+     * How deep a witness goes in JSON: the readings stop at 200 levels of
+     * the tree, and each level is two or three levels of JSON.
+     */
+    public const JSON_DEPTH = 1024;
+
     private const MATCH_FLAGS = [0, \PREG_OFFSET_CAPTURE, \PREG_UNMATCHED_AS_NULL, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL];
 
     private const MATCH_ALL_FLAGS = [
@@ -113,7 +119,7 @@ final class Witness
      */
     public static function encode($value): string
     {
-        return json_encode($value, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_PRESERVE_ZERO_FRACTION);
+        return json_encode($value, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_PRESERVE_ZERO_FRACTION, self::JSON_DEPTH);
     }
 
     /**

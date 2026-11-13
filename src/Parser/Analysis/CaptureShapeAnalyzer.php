@@ -60,7 +60,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '20';
+    public const ANALYSIS_VERSION = '21';
 
     private const MAX_CASES = 16;
 
@@ -280,6 +280,7 @@ final class CaptureShapeAnalyzer
     private function shape(NodeInterface $pattern): CaptureShape
     {
         $this->reset();
+        $this->facts->forgetMarks();
         $this->collectAtStart($pattern);
         $this->collectAtEnd($pattern);
 

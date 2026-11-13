@@ -18,6 +18,7 @@ use PHPRegex\Parser\AbstractTraversingVisitor;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Tests\Support\Paths;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -280,8 +281,7 @@ final class VisitorGenericDefaultTest extends TestCase
             );
             self::assertIsResource($process, 'The repository PHPStan binary must run: tools/phpstan is installed with the dev tools.');
 
-            $stdout = (string) stream_get_contents($pipes[1]);
-            $stderr = (string) stream_get_contents($pipes[2]);
+            [$stdout, $stderr] = ProcessPipes::drain($pipes);
             fclose($pipes[1]);
             fclose($pipes[2]);
             proc_close($process);

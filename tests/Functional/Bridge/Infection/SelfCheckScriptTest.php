@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Bridge\Infection;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -100,8 +101,7 @@ final class SelfCheckScriptTest extends TestCase
     {
         $process = proc_open([\PHP_BINARY, '-d', 'auto_prepend_file=', \dirname(__DIR__, 4).'/tests/Tools/infection_bridge_selfcheck.php', $project, $project.'/infection'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         self::assertIsResource($process);
-        stream_get_contents($pipes[1]);
-        $errors = (string) stream_get_contents($pipes[2]);
+        $errors = ProcessPipes::drain($pipes)[1];
         fclose($pipes[1]);
         fclose($pipes[2]);
 

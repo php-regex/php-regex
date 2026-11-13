@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\TestUtils;
 
+use PHPRegex\Tests\Support\ProcessPipes;
+
 /**
  * What each PCRE2 release does with the compilation cases of every release's
  * own test suite, where the releases do not all agree.
@@ -556,8 +558,7 @@ final class Pcre2ReleaseOutcomes
                 throw new \RuntimeException(\sprintf('Unable to run %s.', $binary));
             }
 
-            $stdout = (string) stream_get_contents($pipes[1]);
-            stream_get_contents($pipes[2]);
+            $stdout = ProcessPipes::drain($pipes)[0];
             fclose($pipes[1]);
             fclose($pipes[2]);
             proc_close($process);

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Release;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
@@ -305,7 +306,7 @@ final class PullRequestStagesTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{files: list<string>|null, pullRequest: string, twin: string}>
+     * @return iterable<string, array{files: list<string|array{string, string}>|null, pullRequest: string, twin: string}>
      */
     public static function providePullRequests(): iterable
     {
@@ -317,14 +318,18 @@ final class PullRequestStagesTest extends TestCase
         yield 'the twin workflow' => ['files' => ['.github/workflows/php74-twin.yml'], 'pullRequest' => '7', 'twin' => 'true'];
         yield 'the workflow that stages it' => ['files' => ['.github/workflows/ci.yml'], 'pullRequest' => '7', 'twin' => 'true'];
         yield 'another workflow' => ['files' => ['.github/workflows/tests.yml'], 'pullRequest' => '7', 'twin' => 'false'];
-        yield 'a file moved out of the parser' => ['files' => ['src/Linter/Moved.php', 'src/Parser/Moved.php'], 'pullRequest' => '7', 'twin' => 'true'];
+        yield 'a file moved out of the parser' => ['files' => [['src/Linter/Moved.php', 'src/Parser/Moved.php']], 'pullRequest' => '7', 'twin' => 'true'];
         yield 'as many files as GitHub lists' => ['files' => array_fill(0, 3000, 'src/Linter/Linter.php'), 'pullRequest' => '7', 'twin' => 'true'];
+        // Many names under the twin's paths, read to the end under pipefail.
+        yield 'many tests' => ['files' => array_fill(0, 2999, 'tests/Unit/LinterTest.php'), 'pullRequest' => '7', 'twin' => 'true'];
+        // A move is one file of the list under two names.
+        yield 'one file fewer than GitHub lists, one of them moved' => ['files' => [...array_fill(0, 2998, 'src/Linter/Linter.php'), ['src/Linter/New.php', 'src/Linter/Old.php']], 'pullRequest' => '7', 'twin' => 'false'];
         yield 'a list GitHub does not give' => ['files' => null, 'pullRequest' => '7', 'twin' => 'true'];
         yield 'a run by hand' => ['files' => ['src/Linter/Linter.php'], 'pullRequest' => '', 'twin' => 'true'];
     }
 
     /**
-     * @param list<string>|null $files the files of the pull request as GitHub lists them, a moved one under both its names; null when GitHub does not answer
+     * @param list<string|array{string, string}>|null $files the files of the pull request as GitHub lists them, a moved one as its name and the one it had; null when GitHub does not answer
      */
     #[Test]
     #[DataProvider('providePullRequests')]
@@ -338,12 +343,14 @@ final class PullRequestStagesTest extends TestCase
 
         $this->root = TemporaryDirectory::create('php-regex-stages');
         mkdir($this->root.'/fake');
-        // A gh that lists the files from a file, or fails as GitHub does
+        // A gh that answers with the files of a page as GitHub gives them,
+        // read through the step's own --jq filter, or fails as GitHub does
         // when it does not answer.
-        file_put_contents($this->root.'/fake/gh', "#!/usr/bin/env bash\necho \"\$*\" >> \"\$GH_LOG\"\n[ -f \"\$GH_FILES\" ] || { echo 'HTTP 502' >&2; exit 1; }\ncat \"\$GH_FILES\"\n");
+        file_put_contents($this->root.'/fake/gh', "#!/usr/bin/env bash\necho \"\$*\" >> \"\$GH_LOG\"\n[ -f \"\$GH_FILES\" ] || { echo 'HTTP 502' >&2; exit 1; }\nwhile [ \$# -gt 0 ]; do [ \"\$1\" = --jq ] && filter=\$2; shift; done\njq -r \"\$filter\" \"\$GH_FILES\"\n");
         chmod($this->root.'/fake/gh', 0o755);
         if (null !== $files) {
-            file_put_contents($this->root.'/files', implode("\n", $files)."\n");
+            $page = array_map(static fn (string|array $file): array => \is_array($file) ? ['filename' => $file[0], 'previous_filename' => $file[1], 'status' => 'renamed'] : ['filename' => $file, 'status' => 'modified'], $files);
+            file_put_contents($this->root.'/files', json_encode($page, \JSON_THROW_ON_ERROR));
         }
 
         [$code, $output] = $this->runStep($scope, 'Read what the pull request changes', [
@@ -391,7 +398,7 @@ final class PullRequestStagesTest extends TestCase
         ];
         $process = proc_open(['bash', '--noprofile', '--norc', '-e', '-o', 'pipefail', $this->root.'/step.sh'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $this->root, $env);
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
         fclose($pipes[2]);
 

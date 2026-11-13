@@ -1021,7 +1021,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             $comment = $lines[0];
             for ($i = 1, $count = \count($lines); $i + 1 < $count; $i += 2) {
                 $line = ltrim($lines[$i + 1], " \t");
-                $comment .= $lines[$i].('' === $line ? '' : $indent.$line);
+                $comment .= $this->layout->commentEnd().$lines[$i].('' === $line ? '' : $indent.$line);
             }
         }
 

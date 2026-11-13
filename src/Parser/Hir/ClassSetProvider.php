@@ -73,7 +73,18 @@ final class ClassSetProvider
 
     private const FOUR_BYTES_AT = self::AFTER_SURROGATES_AT + (0x10000 - 0xE000) * 3;
 
-    private const DELIMITERS = ['/', '#', '~', '%', '!', '@', ';', "\x01"];
+    /**
+     * The delimiters a probe may be written with, none of them a character
+     * the probe writes around the atom ("(*NO_JIT)", "(?i:", ")++") nor a
+     * bracket: the usual ones first, then the punctuation and the control
+     * characters PHP takes as delimiters.
+     */
+    private const DELIMITERS = [
+        '/', '#', '~', '%', '!', '@', ';', '"', "'", ',', '&', '`', '=',
+        "\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08",
+        "\x0E", "\x0F", "\x10", "\x11", "\x12", "\x13", "\x14", "\x15", "\x16", "\x17",
+        "\x18", "\x19", "\x1A", "\x1B", "\x1C", "\x1D", "\x1E", "\x1F", "\x7F",
+    ];
 
     /**
      * How many characters one engine call scans.

@@ -45,8 +45,11 @@ use PHPRegex\Parser\Text\Bytes;
  * What a node reads, from the tree alone, for CaptureShapeAnalyzer: its
  * length range, its values when they are a small finite set, and the facts
  * every value satisfies. An answer depends on the node, on the options in
- * force where it stands and on the groups it calls, so each node is
- * measured once, and its answer kept as long as the node lives.
+ * force where it stands, on the groups it calls and, for an alternation, on
+ * where the case being read puts it: each node is measured once per case,
+ * its lengths once whatever the case. forgetMarks() drops every answer of
+ * a match when the next case is read, and keeps the lengths and the facts
+ * of a group.
  *
  * Every answer is sound: when the tree alone cannot tell, the values are
  * unknown and the facts are false.
@@ -124,7 +127,7 @@ final class CaptureFacts
     /**
      * @var \WeakMap<NodeInterface, Facts>
      */
-    private readonly \WeakMap $facts;
+    private \WeakMap $facts;
 
     /**
      * @var \WeakMap<NodeInterface, Facts>
@@ -279,6 +282,19 @@ final class CaptureFacts
     public function bodiesRead(): int
     {
         return $this->bodiesRead;
+    }
+
+    /**
+     * Forgets the marks of the case read before, and the facts of a match
+     * they moved: a node two cases share may stand at the start in one and
+     * after a character in the other. Lengths and the facts of a group,
+     * which no mark moves, are kept.
+     */
+    public function forgetMarks(): void
+    {
+        $this->atStart = $this->atEnd = [];
+        $this->facts = new \WeakMap();
+        $this->marked = true;
     }
 
     /**

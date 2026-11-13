@@ -42,5 +42,5 @@ foreach ($list['patterns'] as $index => $entry) {
         $witnesses[] = $hash ? Witness::hashes($witness) : $witness;
     }
 
-    echo json_encode(['index' => $index, 'witnesses' => $witnesses], \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_PRESERVE_ZERO_FRACTION), "\n";
+    echo json_encode(['index' => $index, 'witnesses' => $witnesses], \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_PRESERVE_ZERO_FRACTION, Witness::JSON_DEPTH + 3), "\n";
 }

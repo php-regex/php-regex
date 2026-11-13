@@ -107,11 +107,14 @@ jobs:
           PULL_REQUEST: ${{ github.event.pull_request.number }}
         run: |
           twin=true
-          # One name a line: each file, and the name it had before a move.
-          if [ -n "$PULL_REQUEST" ] && gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PULL_REQUEST/files?per_page=100" --jq '.[] | .filename, (.previous_filename // empty)' > "$RUNNER_TEMP/changed"; then
+          # One file a line: its name, and after a tab the name it had
+          # before a move.
+          if [ -n "$PULL_REQUEST" ] && gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PULL_REQUEST/files?per_page=100" --jq '.[] | .filename + (if .previous_filename then "\t" + .previous_filename else "" end)' > "$RUNNER_TEMP/changed"; then
             # GitHub lists three thousand files and no more: a list that
-            # long may leave out the one the twin reads.
-            if [ "$(wc -l < "$RUNNER_TEMP/changed")" -lt 3000 ] && ! grep -Eq '^(src/Parser/|build/|tests/|\.github/workflows/(ci|php74-twin)\.yml$)' "$RUNNER_TEMP/changed"; then
+            # long may leave out the one the twin reads. Each name is read,
+            # to the end: under pipefail, a grep that stops at the first
+            # match would end tr on a broken pipe.
+            if [ "$(wc -l < "$RUNNER_TEMP/changed")" -lt 3000 ] && ! tr '\t' '\n' < "$RUNNER_TEMP/changed" | grep -E '^(src/Parser/|build/|tests/|\.github/workflows/(ci|php74-twin)\.yml$)' > /dev/null; then
               twin=false
             fi
           fi

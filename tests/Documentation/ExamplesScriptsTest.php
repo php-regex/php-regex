@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -102,7 +103,7 @@ final class ExamplesScriptsTest extends TestCase
         // shell is not the same on every host.
         $process = proc_open([\PHP_BINARY, \dirname(__DIR__, 2).'/'.$script], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
         fclose($pipes[2]);
 

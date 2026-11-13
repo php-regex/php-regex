@@ -17,6 +17,7 @@ use PHPRegex\Linter\Rule\Support\BranchOverlaps;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -160,23 +161,36 @@ final class OverlappingAlternationRule extends AbstractLintRule
         $charSets = [];
         $caselessAt = [];
         $anyUnknown = false;
+        $pastAscii = false;
         foreach ($context->flagsAtEachChild($node) as $index => $flags) {
             $alternative = $node->alternatives[$index];
             $charSet = $context->firstChars($alternative, $flags);
-            if ($charSet->isUnknown()) {
-                $anyUnknown = true;
-            }
             // The case the branch starts in: the flags at its first atom, a
             // "(?i:" around it or a bare "(?i)" before it included, not one
             // later in the branch, which leaves the start case-sensitive.
             $caseless = str_contains($context->flagsAt(self::firstLeaf($alternative), $alternative, $flags), 'i');
             $caselessAt[] = $caseless;
-            $charSets[] = $caseless ? self::foldCharSet($charSet) : $charSet;
+            $charSet = $caseless ? self::foldCharSet($charSet) : $charSet;
+            // Under u a byte past ASCII is the lead or a continuation byte
+            // of a character: two characters sharing a lead byte meet there.
+            if ($charSet->isUnknown()) {
+                $anyUnknown = true;
+            } elseif ($context->pattern->unicodeMode && $charSet->intersects(ByteCharSet::fromRange(0x80, 0xFF))) {
+                $pastAscii = true;
+            }
+            $charSets[] = $charSet;
         }
 
-        // At least one charset is unknown (e.g. above-ASCII byte ranges that
-        // ByteCharSet cannot model): the sets are asked of PCRE.
-        $sets = $anyUnknown ? $this->setsFromPcre($node, $context) : array_map(self::alphabetSet(...), $charSets);
+        // At least one charset is unknown, a byte past ASCII read caselessly
+        // included, which folds as the target's tables say: the sets are
+        // asked of PCRE. Under u, bytes past ASCII are asked of PCRE too,
+        // which reads characters; where it judges no branch, the bytes
+        // stand, two characters sharing a lead byte meeting there.
+        $sets = match (true) {
+            $anyUnknown => $this->setsFromPcre($node, $context),
+            $pastAscii => $this->setsFromPcre($node, $context) ?? array_map(self::alphabetSet(...), $charSets),
+            default => array_map(self::alphabetSet(...), $charSets),
+        };
         if (null === $sets) {
             return null;
         }
@@ -306,9 +320,12 @@ final class OverlappingAlternationRule extends AbstractLintRule
         $flagsAt = $context->flagsAtEachChild($node);
         $sets = [];
         foreach ($node->alternatives as $index => $alternative) {
-            $atom = self::firstAtom($alternative, $context->pattern->unicodeMode);
+            $leaf = self::firstAtom($alternative);
+            $atom = self::spelledAtom($leaf, $context->pattern->unicodeMode, $context->pattern->source);
             $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
-            $modifiers = self::probeModifiers($flagsAt[$index] ?? $context->activeFlags());
+            // The atom is read under the options in force where it stands:
+            // those a group opening the branch sets for its body included.
+            $modifiers = self::probeModifiers($context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags()));
             if (null === $atom || null === $modifiers) {
                 return null;
             }
@@ -325,24 +342,36 @@ final class OverlappingAlternationRule extends AbstractLintRule
     }
 
     /**
-     * The atom a branch reads its first character with, as the probe takes
-     * it, or null: through groups that only capture, the first item of a
-     * sequence and a quantifier taken at least once.
+     * The item a branch reads its first character with: through
+     * groups that capture, that do not, atomic ones and those setting
+     * options for their body, which all start with what their body starts
+     * with; the first item of a sequence and a quantifier taken at least
+     * once.
      */
-    private static function firstAtom(NodeInterface $node, bool $unicode): ?string
+    private static function firstAtom(NodeInterface $node): NodeInterface
     {
         while (true) {
-            if ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named], true)) {
+            if ($node instanceof GroupNode && (\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic], true)
+                || (GroupType::InlineFlags === $node->type && !NodePredicates::isStandaloneInlineFlags($node)))) {
                 $node = $node->child;
             } elseif ($node instanceof SequenceNode && [] !== $node->children) {
                 $node = $node->children[0];
             } elseif ($node instanceof QuantifierNode && QuantifierMath::parseRange($node)[0] >= 1) {
                 $node = $node->node;
             } else {
-                break;
+                return $node;
             }
         }
+    }
 
+    /**
+     * The atom as the probe takes it, or null for an item that is no atom.
+     * A class or an escape is taken from the body as written: printed
+     * alone, its characters past ASCII would come out as bytes, which u
+     * reads as code points.
+     */
+    private static function spelledAtom(NodeInterface $node, bool $unicode, string $source): ?string
+    {
         if ($node instanceof LiteralNode) {
             if ('' === $node->value) {
                 return null;
@@ -356,7 +385,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
         if ($node instanceof CharClassNode || $node instanceof CharTypeNode || $node instanceof DotNode
             || $node instanceof UnicodePropNode || $node instanceof CharLiteralNode
         ) {
-            return $node->accept(PatternPrinter::asWritten());
+            $start = $node->getStartPosition();
+            $written = substr($source, $start, $node->getEndPosition() - $start);
+
+            return '' !== $written ? $written : $node->accept(PatternPrinter::asWritten());
         }
 
         return null;
@@ -384,8 +416,8 @@ final class OverlappingAlternationRule extends AbstractLintRule
             self::ID_CHARSET,
             \sprintf(
                 'Alternation branches "%s" and "%s" have overlapping character sets, which may cause unnecessary backtracking.',
-                self::spell(self::asWritten($node->alternatives[$i]), $context),
-                self::spell(self::asWritten($node->alternatives[$j]), $context),
+                self::asWritten($node->alternatives[$i], $context),
+                self::asWritten($node->alternatives[$j], $context),
             ),
             $node->startPosition,
             'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
@@ -510,21 +542,45 @@ final class OverlappingAlternationRule extends AbstractLintRule
     }
 
     /**
+     * A branch as the pattern writes it, kept short enough to read: the
+     * reader tells the findings of two alternations apart by it. The piece
+     * of the body is spelled in the pattern's mode, a hidden character
+     * "\x{HEX}" under u and each byte past ASCII "\xHH" otherwise; the
+     * printed form when the body does not hold the branch.
+     */
+    private static function asWritten(NodeInterface $node, LintContext $context): string
+    {
+        $start = $node->getStartPosition();
+        $text = substr($context->pattern->source, $start, $node->getEndPosition() - $start);
+        if ('' === $text) {
+            $text = $node->accept(PatternPrinter::asWritten());
+        }
+
+        $shown = DisplayEscaper::escapeFragment($text, $context->pattern->unicodeMode);
+        if (mb_strlen($shown, 'UTF-8') <= 30) {
+            return $shown;
+        }
+
+        // Cut as the reader sees it, on thirty columns at most, and never
+        // inside an escape: "\x{202E}", "\xE9" and "\d" stay whole.
+        $kept = '';
+        LibraryPcre::matchAll('/\\\\x\{[0-9A-Fa-f]+\}|\\\\x[0-9A-Fa-f]{2}|\\\\.|./su', $shown, $tokens);
+        foreach ($tokens[0] ?? [] as $token) {
+            if (mb_strlen($kept.$token, 'UTF-8') > 30) {
+                break;
+            }
+
+            $kept .= $token;
+        }
+
+        return $kept.'…';
+    }
+
+    /**
      * A branch's text as the pattern could hold it: a backslash doubled, a
      * hidden character "\x{HEX}" in UTF mode and its bytes "\xHH"
      * otherwise.
      */
-    /**
-     * A branch as the pattern writes it, kept short enough to read: the
-     * reader tells the findings of two alternations apart by it.
-     */
-    private static function asWritten(NodeInterface $node): string
-    {
-        $text = $node->accept(PatternPrinter::asWritten());
-
-        return \mb_strlen($text) > 30 ? \mb_strcut($text, 0, 30, 'UTF-8').'…' : $text;
-    }
-
     private static function spell(string $text, LintContext $context): string
     {
         return DisplayEscaper::escapeFragment(str_replace('\\', '\\\\', $text), $context->pattern->unicodeMode);

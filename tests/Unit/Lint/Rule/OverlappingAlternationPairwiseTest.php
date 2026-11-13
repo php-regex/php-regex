@@ -81,7 +81,7 @@ final class OverlappingAlternationPairwiseTest extends TestCase
         yield 'classes apart' => ['branches' => ['[ab]x', '[cd]y', '[ef]z'], 'flags' => '', 'expected' => null];
         yield 'a class and a text' => ['branches' => ['ab', '[ab]x'], 'flags' => '', 'expected' => $charset('ab', '[ab]x')];
         yield 'a literal pair after a pair of classes' => ['branches' => ['[ab]x', '[bc]y', 'a', 'ab'], 'flags' => '', 'expected' => $literal('a', 'ab')];
-        yield 'a type and a class' => ['branches' => ['\d+', 'x', '[0-4]a'], 'flags' => '', 'expected' => $charset('\\\\d+', '[0-4]a')];
+        yield 'a type and a class' => ['branches' => ['\d+', 'x', '[0-4]a'], 'flags' => '', 'expected' => $charset('\\d+', '[0-4]a')];
         yield 'a quantified letter and a text' => ['branches' => ['a+', 'b', 'ab'], 'flags' => '', 'expected' => $charset('a+', 'ab')];
         yield 'a quantified group and a text' => ['branches' => ['(?:ab)+', 'abc'], 'flags' => '', 'expected' => $charset('(?:ab)+', 'abc')];
         yield 'an optional letter before a text' => ['branches' => ['a?bc', 'bd', 'ad'], 'flags' => '', 'expected' => $charset('a?bc', 'bd')];
@@ -94,8 +94,8 @@ final class OverlappingAlternationPairwiseTest extends TestCase
         yield 'texts above ASCII under u' => ['branches' => ['été', 'école', 'étés'], 'flags' => 'u', 'expected' => $literal('été', 'étés')];
         yield 'texts above ASCII told apart under u' => ['branches' => ['été', 'école', 'étable'], 'flags' => 'u', 'expected' => null];
         yield 'two cases above ASCII under iu' => ['branches' => ['èa', 'Éa', 'éab'], 'flags' => 'iu', 'expected' => $literal('Éa', 'éab')];
-        yield 'a class and a text above ASCII under u' => ['branches' => ['éa\d', 'èb', '[éè]c'], 'flags' => 'u', 'expected' => $charset('\\\\xC3\\\\xA9a\\\\d', '[\\\\xC3\\\\xA9\\\\xC3\\\\xA8]c')];
-        yield 'texts above ASCII before a digit under u' => ['branches' => ['éa\d', 'éb\d', 'éab\d'], 'flags' => 'u', 'expected' => $charset('\\\\xC3\\\\xA9a\\\\d', '\\\\xC3\\\\xA9ab\\\\d')];
+        yield 'a class and a text above ASCII under u' => ['branches' => ['éa\d', 'èb', '[éè]c'], 'flags' => 'u', 'expected' => $charset('éa\\d', '[éè]c')];
+        yield 'texts above ASCII before a digit under u' => ['branches' => ['éa\d', 'éb\d', 'éab\d'], 'flags' => 'u', 'expected' => $charset('éa\\d', 'éab\\d')];
     }
 
     /**
@@ -119,17 +119,19 @@ final class OverlappingAlternationPairwiseTest extends TestCase
             'pattern' => '/(?:(?i)ab|x|AB)+/',
             'expected' => [OverlappingAlternationRule::ID_OVERLAP.': Alternation branches "ab" and "AB" overlap.'],
         ];
-        yield 'a byte above ASCII read caselessly, whose set is not known' => [
+        // The byte folds as the target's tables say, asked of PCRE:
+        // preg_match("/\xE9/i", "c") is 0 in the C locale.
+        yield 'a byte above ASCII read caselessly, folded by PCRE' => [
             'pattern' => "/(?:\xE9+|c|b+)+/i",
-            'expected' => [$charset('\\\\xE9+', 'c')],
+            'expected' => [],
         ];
         yield 'a class above ASCII that makes PCRE give every set' => [
             'pattern' => '/(?:[éè]a|x|é)+/u',
-            'expected' => [$charset('[\\\\xC3\\\\xA9\\\\xC3\\\\xA8]a', '\\\\xC3\\\\xA9')],
+            'expected' => [$charset('[éè]a', 'é')],
         ];
         yield 'properties, one holding the other' => [
             'pattern' => '/(?:\p{Lu}|éa|\p{L})+/u',
-            'expected' => [$charset('\\\\p{Lu}', '\\\\p{L}')],
+            'expected' => [$charset('\\p{Lu}', '\\p{L}')],
         ];
         yield 'a branch PCRE is not asked about, which leaves the others unjudged' => [
             'pattern' => '/(?:\p{Lu}|é?a|\p{L})+/u',

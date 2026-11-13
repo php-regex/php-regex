@@ -168,7 +168,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         throw new TranspileException(
             $message,
             $node->getStartPosition(),
-            $this->context->sourcePattern,
+            $this->context->snippetSource(),
         );
     }
 
@@ -460,9 +460,10 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * Add u, where the engine compiles the pattern with it. A body that is
-     * not valid UTF-8 needs each raw byte written as its character first,
-     * and either may hold something else u refuses, such as "\C".
+     * Add u, where the engine compiles the pattern with it and the target
+     * carries it there. A body that is not valid UTF-8 needs each raw byte
+     * written as its character first, and either may hold something else u
+     * refuses, such as "\C".
      */
     private function utf8Advice(): string
     {
@@ -475,8 +476,14 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
                 : 'The u flag refuses a pattern that is not valid UTF-8, and more of this one: write the character as UTF-8 and rewrite what PCRE refuses under u, then add u.';
         }
 
-        return null === $engine->compile($this->context->sourcePattern.'u')
-            ? 'Add u.'
-            : 'Add u, after rewriting what PCRE refuses under it: the pattern as written does not compile with u.';
+        if (null !== $engine->compile($this->context->sourcePattern.'u')) {
+            return 'Add u, after rewriting what PCRE refuses under it: the pattern as written does not compile with u.';
+        }
+
+        // PCRE takes u: the target may still refuse what u changes, as
+        // Python does a word character, which UCP widens.
+        $refusal = $this->context->refusalUnderU();
+
+        return null === $refusal ? 'Add u.' : 'Adding u does not carry the pattern either: '.$refusal;
     }
 }

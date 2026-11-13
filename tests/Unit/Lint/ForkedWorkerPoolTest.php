@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
+use PHPRegex\Tests\Support\Deadline;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
@@ -1393,19 +1394,7 @@ final class ForkedWorkerPoolTest extends TestCase
      */
     private function withDeadline(int $seconds, \Closure $run): mixed
     {
-        $async = pcntl_async_signals(true);
-        pcntl_signal(\SIGALRM, static function () use ($seconds): never {
-            throw new \RuntimeException(\sprintf('The run did not return within %d s.', $seconds));
-        });
-        pcntl_alarm($seconds);
-
-        try {
-            return $run();
-        } finally {
-            pcntl_alarm(0);
-            pcntl_signal(\SIGALRM, \SIG_DFL);
-            pcntl_async_signals($async);
-        }
+        return Deadline::within($seconds, $run);
     }
 
     /**

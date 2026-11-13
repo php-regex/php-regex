@@ -6,10 +6,23 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `ClassSetProvider::query()` answers for a class holding the eight
+   delimiters its probe was written with, `[/#~%!@;\x01]`: the probe takes
+   another one, among the punctuation and the control characters PHP reads
+   as delimiters, when the class leaves one of them out. The transpiler
+   carries such a class under `/i` into the HTML pattern attribute, where it
+   refused it.
+ * `CaptureShapeAnalyzer` reads each case of a pattern with the start and
+   the end of that case alone: a zero-width branch read first put what
+   follows it at the start, and the next case kept that, so
+   `/(?:(?=y)|(x))(^|a)/` read `0: 'x'` where `preg_match()` writes `'xa'`
+   on `xa`. `CaptureShapeAnalyzer::ANALYSIS_VERSION` is `'21'`.
  * `PatternFormatter` keeps a `#` comment that ends in an escaped space as
    written wherever it lays it out: on a line of its own, after the start
    options and past ten indent levels, `# path\ ` came out as `# path\x20`,
-   the spelling meant for a space of the pattern that ends its line.
+   the spelling meant for a space of the pattern that ends its line. So does
+   an inner line of a `(?#...)` comment, which also counts as written
+   against the width.
  * The body of an alphabetic assertion nested in others, `(*pla:(*nla:a))`, is
    read from the pattern by its offsets, and the text a level read is dropped
    before the bodies inside it are read: every level kept three copies of its

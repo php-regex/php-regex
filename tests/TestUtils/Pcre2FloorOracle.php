@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\TestUtils;
 
+use PHPRegex\Tests\Support\ProcessPipes;
+
 /**
  * Compiles suite cases with a real pcre2test of the PCRE2 floor release
  * (the oldest PCRE2 a supported PHP ships), at extraction time only.
@@ -343,8 +345,7 @@ final class Pcre2FloorOracle
                 throw new \RuntimeException(\sprintf('Unable to run %s.', $binary));
             }
 
-            $stdout = stream_get_contents($pipes[1]);
-            stream_get_contents($pipes[2]);
+            $stdout = ProcessPipes::drain($pipes)[0];
             fclose($pipes[1]);
             fclose($pipes[2]);
             proc_close($process);

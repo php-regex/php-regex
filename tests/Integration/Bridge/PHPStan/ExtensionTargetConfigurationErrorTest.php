@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -105,7 +106,7 @@ final class ExtensionTargetConfigurationErrorTest extends TestCase
                 $project,
             );
             self::assertIsResource($process);
-            $output = stream_get_contents($pipes[1]).stream_get_contents($pipes[2]);
+            $output = implode('', ProcessPipes::drain($pipes));
             fclose($pipes[1]);
             fclose($pipes[2]);
 

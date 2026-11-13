@@ -19,6 +19,7 @@ use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Hir\ClassSetStore;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\CacheOwnerFunctionOverrides;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
@@ -313,8 +314,7 @@ final class ClassSetStoreTest extends TestCase
             $pipes,
         );
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]);
-        $errors = (string) stream_get_contents($pipes[2]);
+        [$output, $errors] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
 

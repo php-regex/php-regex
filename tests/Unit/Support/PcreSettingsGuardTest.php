@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Support;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Tests\Support\PcreSettingsGuard;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -228,7 +229,7 @@ final class PcreSettingsGuardTest extends TestCase
         $command = [\PHP_BINARY, $phpunit, '--configuration', $config, '--filter', $filter, '--no-progress'];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
         fclose($pipes[2]);
 

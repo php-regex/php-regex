@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Parser\Engine;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -192,8 +193,7 @@ final class LibraryPcreWindowTest extends TestCase
             $pipes,
         );
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]);
-        $errors = (string) stream_get_contents($pipes[2]);
+        [$output, $errors] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
         fclose($pipes[2]);
         $exitCode = proc_close($process);

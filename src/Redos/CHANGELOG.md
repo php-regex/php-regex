@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The heuristics read a body repeated `{0}` as PCRE runs it: never where it
+   stands. One holding no group gives no hotspot, as `x+x+` in
+   `/(?:x+x+){0}^(?:a+)+$/` gave two, which a repair then tried first; the
+   groups one holds run only through a call, and are read on their own, as
+   those of a `DEFINE` block are.
  * The search-cost witness builds only the sixteen pairs of alphabet classes it
    keeps, and charges their choice to the analysis budget: a run whose class
    six hundred later letters split no longer builds every ordered pair of the
