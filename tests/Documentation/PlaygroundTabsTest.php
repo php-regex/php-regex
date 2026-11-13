@@ -28,8 +28,79 @@ use PHPUnit\Framework\TestCase;
 #[Group('documentation')]
 final class PlaygroundTabsTest extends TestCase
 {
+    private const INCLUDE = PlaygroundDriver::ROOT.'/docs/_includes/playground.html';
     private const SCRIPT = PlaygroundDriver::ROOT.'/docs/assets/js/playground.js';
     private const STYLESHEET = PlaygroundDriver::ROOT.'/docs/assets/css/main.scss';
+
+    // --- The strip -----------------------------------------------------------
+
+    /**
+     * A first visit sees tabs, not a line of words: every tab carries the
+     * icon of its tool, the closed ones stand on a fill of their own, and
+     * the open one is lifted — the panel's color, its edges, an accent on
+     * its top — joined to the content under it, as a folder's tab is.
+     */
+    #[Test]
+    public function test_the_strip_reads_as_tabs_at_first_sight(): void
+    {
+        $document = new \DOMDocument();
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML('<?xml encoding="UTF-8"?><body>'.self::source(self::INCLUDE).'</body>', \LIBXML_NOERROR | \LIBXML_NOWARNING);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        $xpath = new \DOMXPath($document);
+        $tabs = $xpath->query('//*[@role="tab"]');
+        $this->assertNotFalse($tabs);
+        $this->assertSame(7, $tabs->length);
+        foreach ($tabs as $tab) {
+            \assert($tab instanceof \DOMElement);
+            $icon = $xpath->query('./*[1][self::svg][contains(@class, "pg-tab-icon")][@aria-hidden="true"]', $tab);
+            $this->assertNotFalse($icon);
+            $this->assertSame(1, $icon->length, $tab->getAttribute('data-tool').' leads with its icon, hidden from a voice that reads its name.');
+        }
+
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-tab \{([^}]*)\}/m', $stylesheet, $closed));
+        $this->assertStringContainsString('background: var(--code-bg);', $closed[1], 'A closed tab stands on a fill: it reads as a tab before a hand finds it.');
+        $this->assertSame(1, preg_match('/^\.pg-tab\[aria-selected="true"\] \{([^}]*)\}/m', $stylesheet, $open));
+        $this->assertStringContainsString('background: var(--panel);', $open[1], 'The open tab wears the panel\'s color, joined to what it shows.');
+        $this->assertStringContainsString('border-color: var(--line-soft);', $open[1]);
+        $this->assertStringContainsString('inset 0 2px 0 var(--amber)', $open[1], 'An accent on its top edge.');
+        $this->assertSame(1, preg_match('/^\.pg-tabs \{([^}]*)\}/m', $stylesheet, $strip));
+        $this->assertStringContainsString('box-shadow: inset 0 -1px 0 var(--line-soft);', $strip[1], 'The strip\'s line is painted under the tabs, so the open one covers it: a border would be clipped by the scrolling strip.');
+        $this->assertSame(1, preg_match('/^\.pg-tab-icon \{([^}]*)\}/m', $stylesheet, $icon));
+        $this->assertStringContainsString('stroke: currentColor;', $icon[1], 'The icon takes the tab\'s own ink, open or closed.');
+    }
+
+    /**
+     * A narrow panel — a laptop, or a column the visitor squeezed — keeps
+     * every tab in sight: the closed ones say themselves by their icon,
+     * their name in the tip and to a voice, and the open one keeps its
+     * word. The panel's own width decides, not the window's: the splitter
+     * moves it too.
+     */
+    #[Test]
+    public function test_a_narrow_panel_keeps_every_tab_in_sight(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+
+        $this->assertSame(1, preg_match('/^\.pg-results \{([^}]*)\}/m', $stylesheet, $panel));
+        $this->assertStringContainsString('container: pg-answers / inline-size;', $panel[1]);
+        $this->assertSame(1, preg_match('/@container pg-answers \(max-width: 46rem\) \{\s*\.pg-tab:not\(\[aria-selected="true"\]\) \{([^}]*)\}/', $stylesheet, $compact));
+        $this->assertStringContainsString('font-size: 0;', $compact[1], 'The word is folded for the eye, still the tab\'s name for a voice.');
+
+        $document = new \DOMDocument();
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML('<?xml encoding="UTF-8"?><body>'.self::source(self::INCLUDE).'</body>', \LIBXML_NOERROR | \LIBXML_NOWARNING);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        $tabs = (new \DOMXPath($document))->query('//*[@role="tab"]');
+        $this->assertNotFalse($tabs);
+        foreach ($tabs as $tab) {
+            \assert($tab instanceof \DOMElement);
+            $this->assertSame(trim((string) $tab->firstElementChild?->nextSibling?->textContent), $tab->getAttribute('title'), 'A tab folded to its icon names itself in its tip.');
+        }
+    }
 
     // --- Tree ----------------------------------------------------------------
 
