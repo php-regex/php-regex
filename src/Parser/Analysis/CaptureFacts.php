@@ -124,7 +124,7 @@ final class CaptureFacts
     /**
      * @var \WeakMap<NodeInterface, Facts>
      */
-    private readonly \WeakMap $facts;
+    private \WeakMap $facts;
 
     /**
      * @var \WeakMap<NodeInterface, Facts>
@@ -279,6 +279,19 @@ final class CaptureFacts
     public function bodiesRead(): int
     {
         return $this->bodiesRead;
+    }
+
+    /**
+     * Forgets the marks of the case read before, and the facts of a match
+     * they moved: a node two cases share may stand at the start in one and
+     * after a character in the other. Lengths and the facts of a group,
+     * which no mark moves, are kept.
+     */
+    public function forgetMarks(): void
+    {
+        $this->atStart = $this->atEnd = [];
+        $this->facts = new \WeakMap();
+        $this->marked = true;
     }
 
     /**

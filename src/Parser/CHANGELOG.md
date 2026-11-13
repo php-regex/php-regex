@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `CaptureShapeAnalyzer` reads each case of a pattern with the start and
+   the end of that case alone: a zero-width branch read first put what
+   follows it at the start, and the next case kept that, so
+   `/(?:(?=y)|(x))(^|a)/` read `0: 'x'` where `preg_match()` writes `'xa'`
+   on `xa`. `CaptureShapeAnalyzer::ANALYSIS_VERSION` is `'21'`.
  * `PatternFormatter` keeps a `#` comment that ends in an escaped space as
    written wherever it lays it out: on a line of its own, after the start
    options and past ten indent levels, `# path\ ` came out as `# path\x20`,
