@@ -28,10 +28,20 @@ use PHPUnit\Framework\TestCase;
  */
 final class AlternationOverlapCharsetSpellingTest extends TestCase
 {
+    /**
+     * @param array{string, string} $subjects a subject each branch starts, both with one character
+     */
     #[Test]
     #[DataProvider('provideOverlaps')]
-    public function test_the_message_names_the_two_branches_that_overlap(string $pattern, string $first, string $second): void
+    public function test_the_message_names_the_two_branches_that_overlap(string $pattern, string $first, string $second, string $flags, array $subjects): void
     {
+        // The oracle: each branch, as the message quotes it, takes its
+        // subject, and the two subjects start with the same character.
+        $this->assertSame(1, preg_match('/^(?:'.$first.')/'.$flags, $subjects[0]), $first);
+        $this->assertSame(1, preg_match('/^(?:'.$second.')/'.$flags, $subjects[1]), $second);
+        $this->assertSame(1, preg_match('/^(.)/s'.$flags, $subjects[0], $lead));
+        $this->assertStringStartsWith($lead[1], $subjects[1]);
+
         $message = $this->charsetOverlapMessages($pattern)[0] ?? null;
 
         $this->assertNotNull($message, $pattern);
@@ -59,6 +69,9 @@ final class AlternationOverlapCharsetSpellingTest extends TestCase
     #[Test]
     public function test_a_tree_without_its_source_quotes_the_branches_as_printed(): void
     {
+        $this->assertSame(1, preg_match('/^\d+/', '3'));
+        $this->assertSame(1, preg_match('/^[0-4]a/', '3a'));
+
         $ast = Regex::create(['cache' => null])->parse('/(?:\d+|[0-4]a)+/');
         $linter = new PatternLinter();
         (new RegexNode($ast->pattern, $ast->flags, $ast->delimiter, $ast->startPosition, $ast->endPosition))->accept($linter);
@@ -69,7 +82,7 @@ final class AlternationOverlapCharsetSpellingTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, first: string, second: string}>
+     * @return iterable<string, array{pattern: string, first: string, second: string, flags: string, subjects: array{string, string}}>
      */
     public static function provideOverlaps(): iterable
     {
@@ -77,19 +90,25 @@ final class AlternationOverlapCharsetSpellingTest extends TestCase
             'pattern' => '/(?:"(?:[^"]|\\\\.)+")+/',
             'first' => '[^"]',
             'second' => '\\\\.',
+            'flags' => '',
+            'subjects' => ['\\', '\\a'],
         ];
         // Under u a character is spelled as written, as the literal
-        // findings print it: preg_match('/^\w$/u', 'é') is 1.
+        // findings print it.
         yield 'a character past ASCII under u' => [
             'pattern' => '/(?:é+|\w)+/u',
             'first' => 'é+',
             'second' => '\w',
+            'flags' => 'u',
+            'subjects' => ['é', 'é'],
         ];
-        // Without u each byte past ASCII is "\xHH": preg_match("/^[\xE0-\xEF]$/", "\xE9") is 1.
+        // Without u each byte past ASCII is "\xHH".
         yield 'a byte past ASCII without u' => [
             'pattern' => "/(?:[\xE0-\xEF]+|\xE9)+/",
             'first' => '[\xE0-\xEF]+',
             'second' => '\xE9',
+            'flags' => '',
+            'subjects' => ["\xE9", "\xE9"],
         ];
     }
 
