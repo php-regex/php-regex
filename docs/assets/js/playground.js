@@ -828,6 +828,12 @@
         if (lastLint) {
           renderLint(lastLint);
         }
+        // An open JavaScript translation drawn while the match was on its
+        // way skipped its check: it is drawn again, and checked, with these
+        // matches, as long as the fields still hold the input they answer.
+        if (activeTool === 'transpile' && toolSettings.transpile.target === 'js' && fieldsRead(request)) {
+          renderTool('transpile', false);
+        }
         // The match has answered; its status line has said its word. When
         // a lint follows, its own messages take the line from here.
         setStatus('', '');

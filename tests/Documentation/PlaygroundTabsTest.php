@@ -272,6 +272,23 @@ final class PlaygroundTabsTest extends TestCase
         }
     }
 
+    /**
+     * A new text sends the match again, and the open translation is drawn
+     * from its cache meanwhile: the check waits for PHP's matches, and runs
+     * once they arrive — on the same pattern, the same text, the same PHP.
+     */
+    #[Test]
+    public function test_the_browser_check_runs_once_the_new_match_arrives(): void
+    {
+        $script = self::source(self::SCRIPT);
+
+        $check = self::between($script, 'function checkInBrowser(panel, result) {', "\n  }\n");
+        $this->assertStringContainsString('matches.pending', $check, 'No check against a match still on its way.');
+        $match = self::between($script, "} else if (request.type === 'match') {", "} else if (request.type === 'lint') {");
+        $this->assertStringContainsString('current.regex === request.regex && current.subject === request.subject', $match, 'Only the answer to the input on the screen.');
+        $this->assertSame(1, preg_match("/if \\(activeTool === 'transpile' && toolSettings\\.transpile\\.target === 'js' && fieldsRead\\(request\\)\\) \\{\\s*renderTool\\('transpile', false\\);/", $match), 'The open JavaScript translation is drawn again, and checked, with the matches that just came, while the fields still hold their input.');
+    }
+
     // --- Samples -------------------------------------------------------------
 
     #[Test]
