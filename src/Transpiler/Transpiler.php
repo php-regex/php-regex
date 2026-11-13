@@ -68,6 +68,11 @@ final class Transpiler
         // The pattern means what the PCRE2 it is read for makes of it: a
         // bare script name is the script alone before 10.40.
         $context = new TranspileContext($regex, $ast->flags, $options, !$this->parser->target()->supports(PcreFeature::LoosePropertyNames), $ast->source, function () use ($regex, $target, $options): ?string {
+            // Asked only once the engine compiles the pattern with u, and the
+            // pattern parsed without it: the run with u refuses as a target
+            // does. A parse that failed there would be the parser parting
+            // from PCRE, which surfaces rather than turn into advice; and a
+            // run with u never asks again, as no byte is refused under u.
             try {
                 $this->transpile($regex.'u', $target, $options);
 
