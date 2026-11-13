@@ -6603,6 +6603,15 @@ body.search-open {
   gap: .4rem .6rem;
   margin: 0 0 .6rem;
 }
+.pg-tool-row > .pg-tool-line {
+  flex: 1 1 14rem;
+  margin: 0;
+}
+.pg-hint-fix {
+  display: block;
+  margin-top: .15rem;
+  color: var(--ink-soft);
+}
 .pg-tool-row label {
   font-size: .78rem;
   font-weight: 600;

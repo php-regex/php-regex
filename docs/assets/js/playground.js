@@ -2343,7 +2343,7 @@
       var list = text('ul', 'pg-tool-list');
       redos.hotspots.forEach(function (hotspot) {
         var item = text('li', 'pg-hotspot is-' + hotspot.severity);
-        item.appendChild(text('code', null, hotspot.pattern));
+        item.appendChild(rangeButton(hotspot.pattern, hotspot.start, hotspot.end));
         item.appendChild(text('span', 'pg-hotspot-severity', hotspot.severity));
         item.appendChild(text('span', 'pg-hotspot-facts', 'bytes ' + hotspot.start + '–' + hotspot.end + (hotspot.trigger ? ', ' + hotspot.trigger : '')));
         list.appendChild(item);
@@ -2402,9 +2402,17 @@
       panel.appendChild(tryRow);
     }
     if (redos.recommendations && redos.recommendations.length) {
+      // What is wrong, then what to try, each said once: the engine joins
+      // them in one sentence, the panel parts them.
+      var SUGGESTED = 'Suggested (verify behavior): ';
       var hints = text('ul', 'pg-tool-list');
       redos.recommendations.slice(0, 3).forEach(function (hint) {
-        hints.appendChild(text('li', null, hint));
+        var cut = hint.indexOf(SUGGESTED);
+        var item = text('li', null, cut === -1 ? hint : hint.slice(0, cut).trim());
+        if (cut !== -1) {
+          item.appendChild(text('span', 'pg-hint-fix', 'Try, then check it still matches: ' + hint.slice(cut + SUGGESTED.length)));
+        }
+        hints.appendChild(item);
       });
       panel.appendChild(hints);
     }

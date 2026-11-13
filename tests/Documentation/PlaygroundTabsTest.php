@@ -136,6 +136,22 @@ final class PlaygroundTabsTest extends TestCase
         $this->assertStringContainsString('cursor: pointer;', $goto[1]);
     }
 
+    // --- ReDoS ---------------------------------------------------------------
+
+    #[Test]
+    public function test_the_verdict_s_actions_say_what_they_do_beside_them(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-tool-row > \.pg-tool-line \{([^}]*)\}/m', $stylesheet, $line), 'A button and the words that say what it does share a line.');
+        $this->assertStringContainsString('flex: 1 1 14rem;', $line[1]);
+        $this->assertStringContainsString('margin: 0;', $line[1]);
+
+        $redos = self::between(self::source(self::SCRIPT), 'function renderRedos(panel, payload) {', "\n  }\n");
+        $this->assertStringContainsString('rangeButton(hotspot.pattern, hotspot.start, hotspot.end)', $redos, 'A hotspot leads to its bytes, as a diagnostic does.');
+        $this->assertStringContainsString("'Suggested (verify behavior): '", $redos, 'A recommendation is split into what is wrong and what to try.');
+        $this->assertStringContainsString("'pg-hint-fix'", $redos);
+    }
+
     private static function between(string $haystack, string $from, string $to): string
     {
         $start = strpos($haystack, $from);
