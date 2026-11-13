@@ -162,7 +162,7 @@ reviews:
         - Test classes are `final`; each test is `#[Test]` and named `test_{feature}_{scenario}` in snake case; data providers are static, return iterable and yield keyed rows (`yield 'a reversed range' => ['pattern' => '/a{2,1}/', 'valid' => false];`).
         - Strict assertions (`assertSame`) in new or changed code, never `assertEquals`; leave older lines a change does not touch alone.
         - What a pattern means is checked against the real engine in the test itself, not assumed.
-        - A test may be skipped only through the engine gates of tests/Support/PcreGates.php (message "is verified against PCRE2 …") or a `#[RequiresPhpExtension]`; flag any other markTestSkipped/markTestIncomplete, and any change that removes assertions.
+        - A test may be skipped only through the engine gates of tests/Support/PcreGates.php (message "is verified against PCRE2 …") or a `#[RequiresPhpExtension]` or `#[RequiresFunction]`; flag any other markTestSkipped/markTestIncomplete, and any change that removes assertions.
         - The suite runs in random order, on Linux, macOS and Windows: flag shared static state, cache bleed between tests, shell strings that assume a POSIX shell, and hard-coded path separators.
 
     - path: "docs/**/*.md"
