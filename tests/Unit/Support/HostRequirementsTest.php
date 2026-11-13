@@ -32,14 +32,14 @@ final class HostRequirementsTest extends TestCase
     #[Test]
     public function test_a_host_that_can_check_the_owner_lacks_nothing(): void
     {
-        $this->assertSame([], HostRequirements::missing(windows: false, ownerCheck: true, jq: true, pkill: true));
+        $this->assertSame([], HostRequirements::missing(windows: false, ownerCheck: true, jq: true));
     }
 
     #[Test]
     public function test_windows_checks_no_owner_and_lacks_nothing(): void
     {
-        $this->assertSame([], HostRequirements::missing(windows: true, ownerCheck: false, jq: false, pkill: true));
-        $this->assertSame([], HostRequirements::missing(windows: true, ownerCheck: true, jq: true, pkill: true));
+        $this->assertSame([], HostRequirements::missing(windows: true, ownerCheck: false, jq: false));
+        $this->assertSame([], HostRequirements::missing(windows: true, ownerCheck: true, jq: true));
     }
 
     #[Test]
@@ -47,7 +47,7 @@ final class HostRequirementsTest extends TestCase
     {
         $this->assertSame(
             ['posix_geteuid() is missing or disabled: the AST file cache and the class-set store keep nothing where they cannot check who owns their directory, and the tests of what they keep fail on this host.'],
-            HostRequirements::missing(windows: false, ownerCheck: false, jq: true, pkill: true),
+            HostRequirements::missing(windows: false, ownerCheck: false, jq: true),
         );
     }
 
@@ -56,19 +56,9 @@ final class HostRequirementsTest extends TestCase
     {
         $this->assertSame(
             ['jq is not on the PATH: the tests of the scope job of ci.yml read the files GitHub lists through it, as gh --jq does, and fail on this host.'],
-            HostRequirements::missing(windows: false, ownerCheck: true, jq: false, pkill: true),
+            HostRequirements::missing(windows: false, ownerCheck: true, jq: false),
         );
-        $this->assertCount(2, HostRequirements::missing(windows: false, ownerCheck: false, jq: false, pkill: true));
-    }
-
-    #[Test]
-    public function test_a_host_without_pkill_is_named_with_the_tests_that_fail_there(): void
-    {
-        $this->assertSame(
-            ['pkill is not on the PATH: a test run under a deadline that blocks on a read is ended by ending the children of the suite with it, and hangs on this host.'],
-            HostRequirements::missing(windows: false, ownerCheck: true, jq: true, pkill: false),
-        );
-        $this->assertSame([], HostRequirements::missing(windows: true, ownerCheck: true, jq: true, pkill: false));
+        $this->assertCount(2, HostRequirements::missing(windows: false, ownerCheck: false, jq: false));
     }
 
     #[Test]
@@ -96,7 +86,7 @@ final class HostRequirementsTest extends TestCase
     public function test_this_host_is_judged_by_its_system_and_its_functions(): void
     {
         $this->assertSame(
-            HostRequirements::missing(Path::onWindows(), \function_exists('posix_geteuid'), HostRequirements::onPath('jq', (string) getenv('PATH')), HostRequirements::onPath('pkill', (string) getenv('PATH'))),
+            HostRequirements::missing(Path::onWindows(), \function_exists('posix_geteuid'), HostRequirements::onPath('jq', (string) getenv('PATH'))),
             HostRequirements::ofThisHost(),
         );
     }
@@ -141,7 +131,7 @@ final class HostRequirementsTest extends TestCase
      */
     private function expectedNotice(array $settings): string
     {
-        return HostRequirements::notice(HostRequirements::missing(Path::onWindows(), $this->canCheckOwner($settings), HostRequirements::onPath('jq', (string) getenv('PATH')), HostRequirements::onPath('pkill', (string) getenv('PATH'))));
+        return HostRequirements::notice(HostRequirements::missing(Path::onWindows(), $this->canCheckOwner($settings), HostRequirements::onPath('jq', (string) getenv('PATH'))));
     }
 
     /**

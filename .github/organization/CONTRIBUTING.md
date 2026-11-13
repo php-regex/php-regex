@@ -179,11 +179,9 @@ is reset in `tearDown()`.
 On Linux and macOS the suite needs `posix_geteuid()`, from `ext-posix` and
 not disabled: the AST file cache and the class-set store keep nothing where
 they cannot check who owns their directory, and the tests of what they keep
-fail on a host without it. It also needs `jq` and `pkill` on the `PATH`:
-the tests of the CI workflow that reads the files of a pull request filter
-them through `jq`, as `gh --jq` does, and a test that blocks on a read is
-ended at its deadline with `pkill`. The suite says what is missing when it
-starts.
+fail on a host without it. It also needs `jq` on the `PATH`: the tests of
+the CI workflow that reads the files of a pull request filter them through
+it, as `gh --jq` does. The suite says what is missing when it starts.
 
 ## Coding Standards
 
