@@ -45,6 +45,23 @@ final class ProcessPipes
             stream_set_blocking($pipe, false);
         }
 
+        try {
+            self::readTogether($open, $read);
+        } finally {
+            // Given back as they came: blocking.
+            stream_set_blocking($pipes[1], true);
+            stream_set_blocking($pipes[2], true);
+        }
+
+        return [$read[1], $read[2]];
+    }
+
+    /**
+     * @param array<int, resource> $open the pipes still open, by index
+     * @param array<int, string>   $read what each pipe gave, by index
+     */
+    private static function readTogether(array $open, array &$read): void
+    {
         $failures = 0;
         while ([] !== $open) {
             $ready = array_values($open);
@@ -75,7 +92,5 @@ final class ProcessPipes
                 }
             }
         }
-
-        return [$read[1], $read[2]];
     }
 }
