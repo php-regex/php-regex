@@ -895,7 +895,7 @@ main pre code,
 main div.highlighter-rouge::after {
   position: absolute;
   right: 0;
-  bottom: -1.4rem;
+  bottom: -1.55rem;
   font-family: var(--font-mono);
   font-size: .78rem;
   letter-spacing: .08em;
@@ -950,9 +950,17 @@ main pre[data-file] {
   display: none;
 }
 
+/* A labelled block reserves the strip its caption is drawn in: under the
+   shared 1.75em the caption ended a few pixels above the next paragraph and
+   read as that paragraph's first word. Unlabelled blocks keep the shared
+   rhythm. */
 @mixin code-language($name, $label) {
   main div.highlighter-rouge.language-#{$name}::after {
     content: '#{$label}';
+  }
+
+  main div.highlighter-rouge.language-#{$name} {
+    margin-bottom: 2.6em;
   }
 }
 
@@ -1326,7 +1334,10 @@ main table::-webkit-scrollbar-thumb {
   color: inherit;
 }
 
-.terminal .highlighter-rouge {
+/* The second selector outranks the caption strip a labelled block reserves
+   on paper: a terminal draws no caption, so it keeps no strip either. */
+.terminal .highlighter-rouge,
+main .terminal div.highlighter-rouge {
   margin: 0;
 }
 
