@@ -13,9 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
+use PHPRegex\Transpiler\Transpiler;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -274,6 +276,25 @@ final class SetsWithoutUtfTest extends TestCase
             ['Without the u flag "\S" at offset 1 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.'],
             Regex::create()->transpile('/^\S$/', 'javascript')->warnings,
         );
+    }
+
+    /**
+     * The advice asks how the pattern reads with u added, which the parser
+     * may refuse where it took the pattern as written: one byte more than a
+     * max_pattern_length allows. The warning is still written, with the
+     * advice PCRE gives, and the transpile does not fail on a pattern its
+     * caller never wrote.
+     */
+    #[Test]
+    public function test_an_advice_the_parser_cannot_read_under_u_still_advises_u(): void
+    {
+        $this->assertSame(1, preg_match('/\S/', 'a'));
+        $this->assertSame(1, preg_match('/\S/u', 'é'));
+        $parser = RegexParser::create(['max_pattern_length' => \strlen('/\S/')]);
+
+        $result = (new Transpiler($parser))->transpile('/\S/', 'javascript');
+
+        $this->assertSame([self::warning('\S', 0)], $result->warnings);
     }
 
     /**
