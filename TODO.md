@@ -188,23 +188,9 @@ the probes hold no whitespace.
   requires no check yet.
 - The Box pin (4.7.1 and its checksum, in `phar.yml` and `packages.yml`) is
   bumped by hand: Dependabot does not see it.
-- `packages.yml` starts about 33 jobs of fifteen seconds at once in stage
-  2, with no ceiling.
-- The `tests/**` instruction of `.coderabbit.yaml` names
-  `#[RequiresPhpExtension]` alone as an attribute gate, where the suite
-  uses `#[RequiresFunction]` too: the review raises it each time.
 
 
 ## Open questions
-
-- The capture shape of `/(?:(?=y)|(x))(^|a)/` is wrong: on `xa` PHP writes
-  `["xa","x","a"]`, and the shape reads `array{0: '', 1: '', 2: ''|'a'}|
-  array{0: 'x', 1: 'x', 2: ''|'a'}` (2026-11-10, PHP 8.4, PCRE2 10.49).
-  The at-start and at-end marks of `CaptureFacts` only grow, so the mark
-  made for the zero-width branch still stands in the next case and `^`
-  wins there; with the branches the other way round the shape is right
-  (`'x'|'xa'`). A fix changes answers: its own pull request after #340,
-  with `ANALYSIS_VERSION` moved. PHPStan and Psalm read this shape.
 
 - The interpreter of the PCRE2 10.42 that Ubuntu 24.04 packages
   (`10.42-4ubuntu2.2`) keeps what a subroutine call captured in the groups
@@ -219,20 +205,6 @@ the probes hold no whitespace.
   other packaged releases do, and whether the shape should say so for a
   system 10.42 are open; the engine tests that write `ini_set('pcre.jit',
   '0')` after a pattern was compiled do not ask the interpreter either.
-
-- `format` writes an inner line of a `(?#...)` comment that ends in an
-  escaped space with `\x20` (`/a(?#x\ ` newline `y)/x` gives `(?#x\x20`):
-  the case #339 leaves. Those lines are measured for width, so the marker
-  of #339 would have to count for nothing in `columns()`.
-
-- Two findings of the overlap rule are false, kept by #342 as they were.
-  `/(?:ö|è)+/u` is reported as overlapping sets: two code points are
-  compared by their UTF-8 lead byte. `/(?:\xE9+|c|b+)+/i` reports `\xE9+`
-  and `c`: a byte above ASCII read caselessly makes its set unknown, and
-  an unknown set meets every other. PHP matches neither overlap. The
-  set findings also double the backslashes of the branch they quote and
-  spell non-ASCII as byte escapes under `u`, where the literal findings
-  print `é` (`AlternationOverlapCharsetSpellingTest` pins the doubling).
 
 - A password rule of Unicode classes is still slow or refused after #346,
   in the determinization: it writes one transition per range of the
@@ -249,18 +221,14 @@ the probes hold no whitespace.
   work between rewrites, is the next gain. `/^(?:a+)++$/` is not proven
   linear ("atomic group at offset 1 over-approximated") although PHP
   rejects forty `a` and a `!` at once, so no repair offers a possessive on
-  the outer loop. The heuristics blame quantifiers no subject reaches (the
-  `x+` under `{0}` in `/(?:x+x+){0}^(?:a+)+$/`), so on that shape the
-  blame orders nothing.
+  the outer loop: proving it needs the atomic body modelled by the end it
+  commits to, not by every way through it.
 
 - After #343 the lexer still cuts the text of a nested assertion body once
   per level and checks its UTF-8 again: time stays depth times size. A
   script run node holds its body text, so `(*asr:` nested 3,200 deep peaks
   at 77 MB: changing that field is a contract decision. Plain `(` nested
-  about 6,400 deep ends PHP on its C stack (800 under a 1 MB stack). The
-  witness runner of the PHP 7.4 twin dies on a pattern literal nested past
-  512 anywhere under `tests/` (`build/verify/Witness.php`, `json_encode()`
-  depth), and every twin cell then fails with "no witness". On PHP 8.6
+  about 6,400 deep ends PHP on its C stack (800 under a 1 MB stack). On PHP 8.6
   `memory_get_usage()` stops counting call frames below some 900 levels:
   a memory ratio measured across that depth bends there.
 
@@ -276,25 +244,15 @@ the probes hold no whitespace.
   backport also touches the matcher and the JIT of PHP 8.2.35: what the
   library claims of matching on 10.40 was not re-read.
 
-- With #341, `Add u.` can lead to a refusal on the Python target when the
-  pattern holds `\w` or `\b`, which Python cannot write under `u`: the
-  advice does not look at the target. `\p` without `u` is warned of, not
-  refused, although PCRE reads the byte as Latin-1 there; `\h` and `\v`
-  are written with the full Unicode set where PCRE takes 0xA0 and 0x85.
-  The caret of a `TranspileException` snippet stands one column left of
-  the construct. `ClassSetProvider::query()` answers nothing for a class
-  holding all eight probe delimiters.
-
-- `ForkedWorkerPoolTest`: the deadline of `withDeadline()` does not
-  interrupt a blocking read of a channel, so a pool that blocked for ever
-  in `shutdown()` would hang the suite; and
-  `test_run_reads_a_slow_payload_name_past_the_socket_timeout` rests on a
-  head start of 300 ms, not seen failing.
+- Without `u`, the transpiler warns of `\p`, not refuses it, although PCRE
+  reads the byte as Latin-1 there; `\h` and `\v` are written with the
+  full Unicode set where PCRE takes 0xA0 and 0x85. Warning or refusal is
+  the decision.
 
 - `CaptureFacts::reaches()` walks the call graph again for each group:
   quadratic in the groups, nothing measurable at eighty levels.
 
-- Some fifteen test helpers read a process's standard output to its end,
-  then its standard error: a process that fills the second first would
-  block. The `Scope` job of `ci.yml` counts a moved file twice against
-  GitHub's limit of 3,000 files.
+- On Windows the tests read a child's standard output to its end, then its
+  standard error (`ProcessPipes::drain()`): a pipe of `proc_open()` cannot
+  be waited on there, so a child that fills its error stream first would
+  block.
