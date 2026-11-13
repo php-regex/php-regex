@@ -1,10 +1,10 @@
 'use strict';
 
-// Run buttons for the tutorial's php fences. They are opt-in, exactly like
-// the copy buttons: a fence earns one when it is marked with a data-run
-// attribute (kramdown IAL `{: data-run="" }`, the same convention as
-// data-copy), and every marked fence is held to its promise by the test
-// suite — it parses, runs to a zero exit code, and prints something.
+// Run buttons for the tutorial's php fences. They are opt-in: a fence
+// earns one when it is marked with a data-run attribute (kramdown IAL
+// `{: data-run="" }`, the same convention as data-copy and data-file), and
+// every marked fence is held to its promise by the test suite — it
+// parses, runs to a zero exit code, and prints something.
 //
 // The snippet runs in the visitor's browser, in a Web Worker, on a PHP
 // compiled to WebAssembly (loaded from jsDelivr on the first click, so a
