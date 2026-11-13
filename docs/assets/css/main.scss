@@ -8502,3 +8502,6 @@ body.search-open {
   color: var(--ink-soft);
 }
 /* --- end of Findings */
+
+/* The redesign layer: read last, so it restyles everything above. */
+@import "redesign";
