@@ -100,22 +100,41 @@
     </div>
   </div>
   <div class="pg-quickbar">
-    <span class="pg-quick-label" aria-hidden="true">Quick patterns</span>
-    <ul class="pg-examples" aria-label="Quick patterns">
-      <li><button type="button" class="pg-example" data-regex="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m" data-subject="2026-11-02&#10;2026-11-19&#10;not a date" title="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m"><span class="pg-example-name">named groups</span><span class="pg-example-pattern">/^(?&lt;year&gt;\d{4})-(?&lt;month&gt;\d{2})-(?&lt;day&gt;\d{2})$/m</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/[\w.+-]+@[\w-]+\.[\w.-]+/i" data-subject="Write to hello@php-regex.com or to noreply@example.org." title="/[\w.+-]+@[\w-]+\.[\w.-]+/i"><span class="pg-example-name">e-mail addresses</span><span class="pg-example-pattern">/[\w.+-]+@[\w-]+\.[\w.-]+/i</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/(?<=@)[\w.-]+(?=\.)/" data-subject="Write to hello@php-regex.com or noreply@example.org" title="/(?<=@)[\w.-]+(?=\.)/"><span class="pg-example-name">lookaround</span><span class="pg-example-pattern">/(?&lt;=@)[\w.-]+(?=\.)/</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/\b(\w+) \1\b/i" data-subject="This this is a a duplicated word test, very very nice." title="/\b(\w+) \1\b/i"><span class="pg-example-name">repeated words</span><span class="pg-example-pattern">/\b(\w+) \1\b/i</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i" data-subject="Colors: #fff, #B14E06, #12ab34 and #12345." title="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i"><span class="pg-example-name">hex colors</span><span class="pg-example-pattern">/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/&quot;\w++&quot;/" data-subject="Say &quot;hello&quot; and &quot;a b&quot;, not &quot;unclosed." title="/&quot;\w++&quot;/"><span class="pg-example-name">possessive quotes</span><span class="pg-example-pattern">/&quot;\w++&quot;/</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/\((?:[^()]++|(?R))*\)/" data-subject="(a(b)c) and ((x)) but (broken" title="/\((?:[^()]++|(?R))*\)/"><span class="pg-example-name">balanced parentheses</span><span class="pg-example-pattern">/\((?:[^()]++|(?R))*\)/</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/" data-subject="IPs: 192.168.1.10, 8.8.8.8, 256.1.1.1 and 10.0.0.255." title="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/"><span class="pg-example-name">IPv4 addresses</span><span class="pg-example-pattern">/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/^(a+)+$/" data-subject="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab" title="/^(a+)+$/"><span class="pg-example-name">catastrophic backtracking</span><span class="pg-example-pattern">/^(a+)+$/</span></button></li>
-      <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega" title="/\p{Lu}\p{Ll}+/u"><span class="pg-example-name">Unicode properties</span><span class="pg-example-pattern">/\p{Lu}\p{Ll}+/u</span></button></li>
+    <span class="pg-quick-label" aria-hidden="true">Examples</span>
+    <ul class="pg-examples" aria-label="Example patterns">
+      <li><button type="button" class="pg-example" data-regex="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m" data-subject="2026-11-02&#10;2026-11-19&#10;not a date" title="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m"><span class="pg-example-glyph" aria-hidden="true">(?&lt;year&gt;</span><span class="pg-example-name">named groups</span><span class="pg-example-pattern">/^(?&lt;year&gt;\d{4})-(?&lt;month&gt;\d{2})-(?&lt;day&gt;\d{2})$/m</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/[\w.+-]+@[\w-]+\.[\w.-]+/i" data-subject="Write to hello@php-regex.com or to noreply@example.org." title="/[\w.+-]+@[\w-]+\.[\w.-]+/i"><span class="pg-example-glyph" aria-hidden="true">@</span><span class="pg-example-name">e-mail addresses</span><span class="pg-example-pattern">/[\w.+-]+@[\w-]+\.[\w.-]+/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/(?<=@)[\w.-]+(?=\.)/" data-subject="Write to hello@php-regex.com or noreply@example.org" title="/(?<=@)[\w.-]+(?=\.)/"><span class="pg-example-glyph" aria-hidden="true">(?&lt;=</span><span class="pg-example-name">lookaround</span><span class="pg-example-pattern">/(?&lt;=@)[\w.-]+(?=\.)/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\b(\w+) \1\b/i" data-subject="This this is a a duplicated word test, very very nice." title="/\b(\w+) \1\b/i"><span class="pg-example-glyph" aria-hidden="true">\1</span><span class="pg-example-name">repeated words</span><span class="pg-example-pattern">/\b(\w+) \1\b/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i" data-subject="Colors: #fff, #B14E06, #12ab34 and #12345." title="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i"><span class="pg-example-glyph" aria-hidden="true">#</span><span class="pg-example-name">hex colors</span><span class="pg-example-pattern">/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/&quot;\w++&quot;/" data-subject="Say &quot;hello&quot; and &quot;a b&quot;, not &quot;unclosed." title="/&quot;\w++&quot;/"><span class="pg-example-glyph" aria-hidden="true">++</span><span class="pg-example-name">possessive quotes</span><span class="pg-example-pattern">/&quot;\w++&quot;/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\((?:[^()]++|(?R))*\)/" data-subject="(a(b)c) and ((x)) but (broken" title="/\((?:[^()]++|(?R))*\)/"><span class="pg-example-glyph" aria-hidden="true">(?R)</span><span class="pg-example-name">balanced parentheses</span><span class="pg-example-pattern">/\((?:[^()]++|(?R))*\)/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/" data-subject="IPs: 192.168.1.10, 8.8.8.8, 256.1.1.1 and 10.0.0.255." title="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/"><span class="pg-example-glyph" aria-hidden="true">{3}</span><span class="pg-example-name">IPv4 addresses</span><span class="pg-example-pattern">/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/</span></button></li>
+      <li><button type="button" class="pg-example is-danger" data-regex="/^(a+)+$/" data-subject="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab" title="/^(a+)+$/"><span class="pg-example-glyph" aria-hidden="true">(a+)+</span><span class="pg-example-name">catastrophic backtracking</span><span class="pg-example-pattern">/^(a+)+$/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega" title="/\p{Lu}\p{Ll}+/u"><span class="pg-example-glyph" aria-hidden="true">\p{Lu}</span><span class="pg-example-name">Unicode properties</span><span class="pg-example-pattern">/\p{Lu}\p{Ll}+/u</span></button></li>
     </ul>
+    {%- comment -%}The corpus door says what waits behind it before a hand
+      opens it: the faces of the projects the linter ranks first, how
+      many issues it found and in how many projects — summed by the build
+      from the findings collection, so the sentence is whole on the first
+      paint and no byte is fetched for it. A repository's page speaks of
+      its own project.{% endcomment -%}
+    {%- assign findings_ranked = site.findings | sort: "findings_rank" -%}
+    {%- if include.findings_repo -%}{%- assign findings_ranked = findings_ranked | where: "findings_repo", include.findings_repo -%}{%- endif -%}
+    {%- assign findings_total = 0 -%}
+    {%- for finding in findings_ranked -%}{%- assign findings_total = findings_total | plus: finding.findings_count -%}{%- endfor -%}
+    {%- if findings_total >= 1000 -%}
+      {%- assign findings_thousands = findings_total | divided_by: 1000 -%}
+      {%- assign findings_units = findings_total | modulo: 1000 | prepend: '00' | slice: -3, 3 -%}
+      {%- capture findings_shown -%}{{ findings_thousands }}&#8239;{{ findings_units }}{%- endcapture -%}
+    {%- else -%}
+      {%- assign findings_shown = findings_total -%}
+    {%- endif -%}
+    {%- capture findings_names -%}{%- if include.findings_repo -%}{{ include.findings_repo }}{%- else -%}{%- for finding in findings_ranked limit: 4 -%}{{ finding.findings_repo | split: '/' | first }}{% unless forloop.last %}, {% endunless %}{%- endfor -%}{%- endif -%}{%- endcapture -%}
     <details class="pg-findings-browse">
-      <summary>Projects <span class="pg-findings-count"></span></summary>
+      <summary title="What the linter found in {{ findings_names }}{% unless include.findings_repo %} and more{% endunless %}: open a finding to replay it here"><span class="pg-findings-faces" aria-hidden="true">{%- for finding in findings_ranked limit: 4 -%}<img src="/assets/findings/avatars/{{ finding.findings_repo | split: '/' | first }}.png" alt="" width="18" height="18" loading="lazy" decoding="async">{%- endfor -%}</span><span class="pg-findings-total">{{ findings_shown }}</span> <span class="pg-findings-what">{% if findings_total == 1 %}regex issue in{% else %}regex issues in{% endif %}</span> <span class="pg-findings-count">{% if include.findings_repo %}{{ include.findings_repo }}{% else %}{{ findings_ranked.size }} projects{% endif %}</span></summary>
       <div class="pg-findings-body">
+        <p class="pg-findings-intro">{% if include.findings_repo %}The regexes of {{ include.findings_repo }}, linted for its own PHP version.{% else %}The regexes of {{ findings_ranked.size }} open-source PHP projects, each linted for its own PHP version.{% endif %} Open a finding to replay it here.</p>
         <input type="search" class="pg-findings-filter" placeholder="owner, repo or rule" aria-label="Filter by owner, repository or rule" spellcheck="false" autocapitalize="off" autocomplete="off">
         <ul class="pg-findings-tree" role="tree" aria-label="Projects"></ul>
         <p class="pg-findings-empty" hidden>No project matches.</p>

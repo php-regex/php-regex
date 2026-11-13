@@ -5862,9 +5862,12 @@ body.search-open {
    the pill the status chips wear, and the page's own voice — a button
    left to the browser would speak its default font. */
 .pg-example {
+  display: inline-flex;
   flex: none;
+  align-items: center;
+  gap: .45rem;
   min-height: 1.75rem;
-  padding: .3rem .65rem;
+  padding: .2rem .6rem .2rem .25rem;
   font-family: var(--font-body);
   font-size: .78rem;
   white-space: nowrap;
@@ -5873,6 +5876,42 @@ body.search-open {
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-s);
   cursor: pointer;
+  transition: color .12s ease, border-color .12s ease, background-color .12s ease;
+}
+/* The construct the example is about, first, in the code's face and the
+   field's keyword ink: the row reads as a map of PCRE — a group, a
+   lookbehind, a recursion — before it reads as a list of names. */
+.pg-example-glyph {
+  display: inline-flex;
+  align-items: center;
+  min-width: 1.4rem;
+  height: 1.25rem;
+  justify-content: center;
+  padding: 0 .3rem;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--tk-key);
+  background: var(--code-bg);
+  border-radius: 3px;
+}
+/* The ReDoS example warns before it is run: its construct wears the
+   danger ink, the one the verdict will wear. */
+.pg-example.is-danger .pg-example-glyph {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.pg-example.is-danger:hover,
+.pg-example.is-danger:focus-visible {
+  border-color: var(--danger);
+}
+/* The example the fields hold is pressed — the script says so, the
+   sheet shows it: the accent's tint and a border, which a forced
+   palette keeps. */
+.pg-example[aria-pressed="true"] {
+  color: var(--ink);
+  background: var(--amber-tint);
+  border-color: var(--amber);
 }
 .pg-example:hover,
 .pg-example:focus-visible {
@@ -7631,6 +7670,56 @@ body.search-open {
 .pg-findings-browse > summary:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 1px;
+}
+/* The corpus door stands apart from the examples — another kind of
+   thing, behind a hairline — and says what it holds: four faces of the
+   projects, how much the linter found, in how many. */
+.pg-findings-browse {
+  padding-left: .6rem;
+  border-left: 1px solid var(--line-soft);
+}
+.pg-findings-browse > summary {
+  gap: .45rem;
+  padding-left: .4rem;
+}
+.pg-findings-faces {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+.pg-findings-faces img {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: cover;
+  background: var(--code-bg);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--paper);
+}
+.pg-findings-faces img + img {
+  margin-left: -6px;
+}
+.pg-findings-total {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--ink);
+}
+.pg-findings-browse > summary:hover .pg-findings-total,
+.pg-findings-browse[open] > summary .pg-findings-total {
+  color: var(--amber);
+}
+/* The panel opens on one sentence that says what the tree is. */
+.pg-findings-intro {
+  margin: 0;
+  font-size: .76rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+@media (max-width: 639px) {
+  .pg-findings-total,
+  .pg-findings-what {
+    display: none;
+  }
 }
 /* A long repository name is cut, never the row it sits in. */
 .pg-findings-count {

@@ -89,14 +89,14 @@
     diagnostics: root.querySelector('.pg-diagnostics'),
     lintNote: root.querySelector('.pg-lint-note'),
     facts: root.querySelector('.pg-facts'),
-    flagsGroup: root.querySelector('.pg-flags'),
-    flags: Array.prototype.slice.call(root.querySelectorAll('.pg-flag')),
-    flagsMore: root.querySelector('.pg-flags-more'),
-    flagsMoreCount: root.querySelector('.pg-flags-more-count'),
     shareActions: root.querySelector('.pg-share-actions'),
     linkCopy: root.querySelector('.pg-link-copy'),
     linkNative: root.querySelector('.pg-link-native'),
     phpCopy: root.querySelector('.pg-php-copy'),
+    flagsGroup: root.querySelector('.pg-flags'),
+    flags: Array.prototype.slice.call(root.querySelectorAll('.pg-flag')),
+    flagsMore: root.querySelector('.pg-flags-more'),
+    flagsMoreCount: root.querySelector('.pg-flags-more-count'),
     state: root.querySelector('.pg-state'),
     stateWord: root.querySelector('.pg-state-word'),
     caption: document.querySelector('.pg-caption'),
@@ -4441,9 +4441,10 @@
     if (!findingsLoading) {
       findingsLoading = fetchJson(fetch('/assets/findings/index.json')).then(function (index) {
         findingsIndex = index;
-        // The fold names the project on its page, the corpus on the home;
+        // The fold names the project on its page, the corpus on the home —
+        // the build wrote the same words, the live index keeps them true;
         // one project needs no filter.
-        el.findingsCount.textContent = pageRepo ? pageRepo : String(index.repos.length);
+        el.findingsCount.textContent = pageRepo ? pageRepo : index.repos.length + ' projects';
         if (pageRepo) {
           el.findingsFilter.hidden = true;
         }
