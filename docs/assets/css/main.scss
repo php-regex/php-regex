@@ -4036,6 +4036,13 @@ main > section:not([class]) p > a.button:focus-visible {
   padding-right: 0;
 }
 
+/* Written inline in the prose (no eyebrow, no section of its own), the
+   panel takes the vertical rhythm every other code block has: without it
+   the next paragraph sat flush against the panel's bottom edge. */
+main > .install {
+  margin-block: 1.875rem;
+}
+
 /* ---- Installation block -------------------------------------------------
  * The one block every how-to page opens with, and the command the reader
  * came for. It is a label and a panel, not two sections: the title is the
@@ -4789,10 +4796,11 @@ body.search-open {
     text-align: left;
   }
 
-  /* The copy chip is 2rem wide; four of headroom beside it spends a third
-     of a phone's install panel on nothing the reader can read. */
+  /* The copy chip measures a little over 3rem with its label: the
+     headroom beside it is the chip and its gap, no less, or the first
+     line runs under the control. */
   .install {
-    padding-right: 3rem;
+    padding-right: 3.75rem;
   }
 }
 
