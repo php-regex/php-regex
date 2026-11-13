@@ -62,6 +62,9 @@ final class TargetRefusalTest extends TestCase
     #[DataProvider('provideRefusalsAtAnOffset')]
     public function test_the_snippet_of_a_refusal_points_at_the_construct(string $target, string $pattern, string $body, int $position): void
     {
+        // Oracle: the engine compiles the pattern, so the refusal is the target's alone.
+        $this->assertSame(0, preg_match($pattern, ''), 'Oracle: '.$pattern);
+
         try {
             Regex::create(['cache' => null])->transpile($pattern, $target);
             $this->fail('Transpiled '.$pattern.' to '.$target.'.');
