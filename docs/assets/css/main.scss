@@ -5119,6 +5119,65 @@ body.search-open {
   gap: .4rem .75rem;
   padding: .7rem 1.1rem 0;
 }
+
+/* Take it with you: the address of what is on screen. It sits at the
+   far end of the bar, beside the privacy chip, in the same pill recipe —
+   the engine's facts on the left, what the visitor keeps on the right. */
+.pg-share-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin-left: auto;
+}
+
+.pg-share-actions[hidden] {
+  display: none;
+}
+
+.pg-share-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  min-height: 1.6rem;
+  padding: .15rem .6rem;
+  font-family: var(--font-body);
+  font-size: .74rem;
+  color: var(--ink-soft);
+  background: none;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease;
+}
+
+.pg-share-actions button[hidden] {
+  display: none;
+}
+
+.pg-share-actions .icon {
+  width: .8rem;
+  height: .8rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.pg-share-actions button:hover,
+.pg-share-actions button:focus-visible {
+  color: var(--ink);
+  border-color: var(--amber);
+}
+
+.pg-share-actions button:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+/* The share chips take the far end; the privacy chip follows them. */
+.pg-share-actions + .pg-privacy {
+  margin-left: 0;
+}
 /* What stays on the visitor's machine, said once, at the far end of the
    bar the engine's facts fill after a run. */
 .pg-privacy {

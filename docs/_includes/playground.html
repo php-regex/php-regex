@@ -187,6 +187,15 @@
   </div>
   <div class="pg-meta">
     <ul class="pg-facts" aria-label="The engine that answered"></ul>
+    {%- comment -%}Take it with you: the address of exactly what is on
+      screen, and the PHP that runs it. The finding card keeps its own
+      cluster — this one is the sandbox's, hidden while a finding is
+      shown.{% endcomment -%}
+    <div class="pg-share-actions">
+      <button type="button" class="pg-link-copy"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.6 9.4a2.6 2.6 0 0 0 3.7 0l2.4-2.4a2.6 2.6 0 0 0-3.7-3.7l-.9.9M9.4 6.6a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l.9-.9"/></svg>Copy link</button>
+      <button type="button" class="pg-php-copy"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.5 4.5L2 8l3.5 3.5M10.5 4.5L14 8l-3.5 3.5"/></svg>Copy as PHP</button>
+      <button type="button" class="pg-link-native" hidden>Share</button>
+    </div>
     <span class="pg-privacy">Nothing you type leaves your browser</span>
   </div>
   <p class="pg-live visually-hidden" aria-live="polite"></p>

@@ -89,6 +89,10 @@
     diagnostics: root.querySelector('.pg-diagnostics'),
     lintNote: root.querySelector('.pg-lint-note'),
     facts: root.querySelector('.pg-facts'),
+    shareActions: root.querySelector('.pg-share-actions'),
+    linkCopy: root.querySelector('.pg-link-copy'),
+    linkNative: root.querySelector('.pg-link-native'),
+    phpCopy: root.querySelector('.pg-php-copy'),
     state: root.querySelector('.pg-state'),
     stateWord: root.querySelector('.pg-state-word'),
     caption: document.querySelector('.pg-caption'),
@@ -4796,6 +4800,7 @@
     el.pattern.value = finding.pattern;
     el.subject.value = finding.subject;
     el.textField.hidden = true;
+    el.shareActions.hidden = true;
     el.findingCard.hidden = false;
     el.findingLeft.hidden = true;
     el.findingNotice.hidden = true;
@@ -4821,6 +4826,7 @@
     activeFinding = null;
     el.findingCard.hidden = true;
     el.textField.hidden = false;
+    el.shareActions.hidden = false;
     el.findingLeft.hidden = reason === 'source';
     el.findingLeftText.textContent = reason === 'edit' ? 'Edited copy, no longer the finding.' : 'A copy of the finding, yours to edit.';
     try {
@@ -5185,6 +5191,66 @@
     track('share_clicked', { finding_id: activeFinding.id, method: 'native' });
     navigator.share({ title: activeRepo.repo + ': ' + activeFinding.issues[0].message, url: findingUrl(activeRepo, activeFinding) }).catch(function () {/* the visitor closed the sheet */});
   });
+
+  // --- the sandbox's own take-it-with-you cluster -------------------------
+
+  // The address of exactly what is on screen: pattern, subject, version —
+  // the same three the hash writer spells, said at the moment of the click
+  // so the link never carries a stale run. The origin is spelled too: a
+  // link without it is a path that pastes nowhere. The cluster is hidden
+  // while a finding is shown: a finding's address carries no pattern.
+  function sandboxAddress() {
+    var params = new URLSearchParams();
+    params.set('pattern', el.pattern.value);
+    params.set('subject', el.subject.value);
+    params.set('php', chosen);
+    return window.location.origin + window.location.pathname + '#' + params.toString();
+  }
+
+  el.linkCopy.addEventListener('click', function () {
+    copyText(sandboxAddress(), 'the link', el.textField);
+  });
+
+  // The pattern and the text as PHP source: a single-quoted literal reads
+  // a backslash as itself unless a quote, another backslash or the end
+  // follows it, so only those are doubled — the pattern keeps the face
+  // its author gave it, and reads back into the very same bytes.
+  function phpString(value) {
+    var out = '';
+    for (var i = 0; i < value.length; i += 1) {
+      var character = value.charAt(i);
+      if (character === "'") {
+        out += "\\'";
+      } else if (character === '\\') {
+        var next = value.charAt(i + 1);
+        out += (next === '' || next === '\\' || next === "'") ? '\\\\' : '\\';
+      } else {
+        out += character;
+      }
+    }
+    return "'" + out + "'";
+  }
+
+  // A script, not a sketch: every match, as the field underlines them,
+  // and a failed match that says why instead of returning false.
+  function phpSnippet() {
+    return '<?php\n\n'
+      + '$subject = ' + phpString(el.subject.value) + ';\n\n'
+      + 'if (false === preg_match_all(' + phpString(el.pattern.value) + ', $subject, $matches, PREG_SET_ORDER)) {\n'
+      + '    throw new RuntimeException(preg_last_error_msg());\n'
+      + '}\n\n'
+      + 'print_r($matches);\n';
+  }
+
+  el.phpCopy.addEventListener('click', function () {
+    copyText(phpSnippet(), 'the PHP code', el.textField);
+  });
+  if (typeof navigator.share === 'function') {
+    el.linkNative.hidden = false;
+    el.linkNative.addEventListener('click', function () {
+      navigator.share({ title: document.title, url: sandboxAddress() }).catch(function () {/* the visitor closed the sheet */});
+    });
+  }
 
   // --- the projects panel --------------------------------------------------
 
