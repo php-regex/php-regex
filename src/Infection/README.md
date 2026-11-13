@@ -1,4 +1,12 @@
 <p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="art/banner-dark.png?v=1">
+        <source media="(prefers-color-scheme: light)" srcset="art/banner.png?v=1">
+        <img src="art/banner.png?v=1" alt="PHPRegex Infection" width="100%">
+    </picture>
+</p>
+
+<p align="center">
     <a href="https://php-regex.com"><img src="https://img.shields.io/badge/documentation-php--regex.com-blue" alt="Documentation Badge"></a>
     <a href="https://www.linkedin.com/in/younes--ennaji"><img src="https://img.shields.io/badge/author-@yoeunes-blue.svg" alt="Author Badge"></a>
     <a href="https://github.com/php-regex/php-regex/releases"><img src="https://img.shields.io/github/tag/php-regex/php-regex.svg" alt="GitHub Release Badge"></a>
