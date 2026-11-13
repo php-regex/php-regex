@@ -40,7 +40,8 @@ final class AlternationOverlapCharsetSpellingTest extends TestCase
         $this->assertSame(1, preg_match('/^(?:'.$first.')/'.$flags, $subjects[0]), $first);
         $this->assertSame(1, preg_match('/^(?:'.$second.')/'.$flags, $subjects[1]), $second);
         $this->assertSame(1, preg_match('/^(.)/s'.$flags, $subjects[0], $lead));
-        $this->assertStringStartsWith($lead[1], $subjects[1]);
+        $this->assertSame(1, preg_match('/^(.)/s'.$flags, $subjects[1], $other));
+        $this->assertSame($lead[1], $other[1]);
 
         $message = $this->charsetOverlapMessages($pattern)[0] ?? null;
 
