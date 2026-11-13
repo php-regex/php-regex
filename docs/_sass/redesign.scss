@@ -316,6 +316,20 @@ body {
   letter-spacing: 0;
 }
 
+/* On a phone the pill keeps the release line alone ("2.x"), beside the
+   wordmark and the three buttons of a doc page. The landing page's row
+   already holds the three links at every width, and has no room left for
+   it: there the header still hides it. */
+@media (max-width: 639px) {
+  .version-tag-more {
+    display: none;
+  }
+
+  .site-header:not(.site-header--landing) .version-tag {
+    display: inline-block;
+  }
+}
+
 .site-header button,
 .icon-btn {
   min-height: 2.25rem;
@@ -921,6 +935,18 @@ main tbody tr:last-child td {
 
 main tbody tr:hover {
   background: none;
+}
+
+/* On a phone, a cell that may break anywhere lets a five-column table
+   squeeze itself into the screen: every column shrinks to a sliver and
+   "Partial" breaks mid-word. Below the tablet width a cell breaks only
+   between words, so each column keeps the width of its longest word and a
+   table that does not fit scrolls, with the cut-edge tell marking it. */
+@media (max-width: 639px) {
+  main th,
+  main td {
+    overflow-wrap: break-word;
+  }
 }
 
 /* ==========================================================================

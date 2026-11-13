@@ -5,8 +5,12 @@
       <span class="brand-name"><span class="brand-php">PHP</span>Regex</span>
     </a>
     {%- comment -%}The release tag answers the question it provokes — what
-      changed, what breaks — on the page that answers it.{% endcomment -%}
-    <a class="version-tag" href="/reference/backward-compatibility/">{{ site.data.product.version_label }}</a>
+      changed, what breaks — on the page that answers it. A phone keeps
+      the release line alone ("2.x"); the qualifier after it is the part
+      that folds away.{% endcomment -%}
+    {%- assign version_label = site.data.product.version_label -%}
+    {%- assign version_short = version_label | split: ' ' | first %}
+    <a class="version-tag" href="/reference/backward-compatibility/" aria-label="{{ version_label }}">{{ version_short }}<span class="version-tag-more">{{ version_label | remove_first: version_short }}</span></a>
   </div>
   {%- comment -%}
     The sidebar maps the documentation; the header names the three
