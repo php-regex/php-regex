@@ -168,7 +168,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         throw new TranspileException(
             $message,
             $node->getStartPosition(),
-            $this->context->sourcePattern,
+            $this->context->snippetSource(),
         );
     }
 

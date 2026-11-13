@@ -561,7 +561,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
                 return false;
             }
 
-            throw new TranspileException('The HTML pattern attribute cannot carry the inline flags (?'.$flags.').', $node->getStartPosition(), $this->context->sourcePattern);
+            throw new TranspileException('The HTML pattern attribute cannot carry the inline flags (?'.$flags.').', $node->getStartPosition(), $this->context->snippetSource());
         }
 
         return $this->unicodeSets || $caseless === $this->caseless;
@@ -743,7 +743,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             throw new TranspileException(
                 'Relative backreferences are not supported in JavaScript: '.$matches[0].'.',
                 $position,
-                $this->context->sourcePattern,
+                $this->context->snippetSource(),
             );
         }
 
@@ -770,7 +770,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         throw new TranspileException(
             'Unsupported backreference syntax for JavaScript: '.$ref.'.',
             $position,
-            $this->context->sourcePattern,
+            $this->context->snippetSource(),
         );
     }
 
@@ -940,7 +940,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         $sensitive = ClassSetProvider::query($atom, $this->unicodeText, '', '', $this->unicode);
         $caseless = ClassSetProvider::query($atom, $this->unicodeText, 'i', '', $this->unicode);
         if (null === $sensitive || null === $caseless) {
-            throw new TranspileException('PCRE cannot tell which characters '.$atom.' matches under /i.', $node->getStartPosition(), $this->context->sourcePattern);
+            throw new TranspileException('PCRE cannot tell which characters '.$atom.' matches under /i.', $node->getStartPosition(), $this->context->snippetSource());
         }
 
         return [$sensitive, $caseless];

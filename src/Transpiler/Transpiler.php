@@ -67,7 +67,7 @@ final class Transpiler
 
         // The pattern means what the PCRE2 it is read for makes of it: a
         // bare script name is the script alone before 10.40.
-        $context = new TranspileContext($regex, $ast->flags, $options, !$this->parser->target()->supports(PcreFeature::LoosePropertyNames));
+        $context = new TranspileContext($regex, $ast->flags, $options, !$this->parser->target()->supports(PcreFeature::LoosePropertyNames), $ast->source);
         $compiled = $dialect->compile($ast, $context);
         $flags = $dialect->mapFlags($ast->flags, $context);
 

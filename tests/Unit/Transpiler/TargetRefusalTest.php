@@ -13,10 +13,13 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
+use PHPRegex\Transpiler\Target\JavaScript\JavaScriptPrinter;
 use PHPRegex\Transpiler\Target\TargetRegistry;
+use PHPRegex\Transpiler\TranspileContext;
 use PHPRegex\Transpiler\TranspileOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -47,6 +50,56 @@ final class TargetRefusalTest extends TestCase
         } catch (TranspileException $e) {
             $this->assertSame($message, $e->getMessage());
             $this->assertSame($position, $e->position);
+        }
+    }
+
+    /**
+     * The snippet of a refusal points at the construct refused, as the
+     * snippet of a parse error does: the position counts from the start of
+     * the body, which the snippet shows without its delimiters.
+     */
+    #[Test]
+    #[DataProvider('provideRefusalsAtAnOffset')]
+    public function test_the_snippet_of_a_refusal_points_at_the_construct(string $target, string $pattern, string $body, int $position): void
+    {
+        try {
+            Regex::create(['cache' => null])->transpile($pattern, $target);
+            $this->fail('Transpiled '.$pattern.' to '.$target.'.');
+        } catch (TranspileException $e) {
+            $this->assertSame($position, $e->position);
+            $this->assertSame($body, $e->getPattern());
+            $this->assertSame('Line 1: '.$body."\n".str_repeat(' ', 8 + $position).'^', $e->snippet);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{target: string, pattern: string, body: string, position: int}>
+     */
+    public static function provideRefusalsAtAnOffset(): iterable
+    {
+        yield 'JavaScript: a verb' => ['target' => 'javascript', 'pattern' => '/ab(*COMMIT)c/', 'body' => 'ab(*COMMIT)c', 'position' => 2];
+        yield 'JavaScript: a relative backreference' => ['target' => 'javascript', 'pattern' => '#(a)\g{-1}#', 'body' => '(a)\g{-1}', 'position' => 3];
+        yield 'Python: a match start reset' => ['target' => 'python', 'pattern' => '~ab\Kc~', 'body' => 'ab\Kc', 'position' => 2];
+        yield 'Python: a reference to an open group' => ['target' => 'python', 'pattern' => '/(a\1)/', 'body' => '(a\1)', 'position' => 2];
+        yield 'HTML: an inline flag the attribute cannot take' => ['target' => 'html-pattern', 'pattern' => '/a(?n)(b)+/', 'body' => 'a(?n)(b)+', 'position' => 1];
+        yield 'HTML: an atom the engine cannot probe' => ['target' => 'html-pattern', 'pattern' => "/^[\\/#~%!@;\x01]$/i", 'body' => "^[\\/#~%!@;\x01]$", 'position' => 1];
+    }
+
+    /**
+     * A reference the parser never writes, which no pattern reaches: the
+     * refusal still names it and points at it.
+     */
+    #[Test]
+    public function test_a_reference_spelled_otherwise_is_refused_where_it_stands(): void
+    {
+        $printer = new JavaScriptPrinter(new TranspileContext('/(a)\q/', '', new TranspileOptions(), false, '(a)\q'), false, '/');
+
+        try {
+            (new BackrefNode('\q', 3, 5))->accept($printer);
+            $this->fail('Printed the reference \q.');
+        } catch (TranspileException $e) {
+            $this->assertSame('Unsupported backreference syntax for JavaScript: \q.', $e->getMessage());
+            $this->assertSame("Line 1: (a)\\q\n".str_repeat(' ', 11).'^', $e->snippet);
         }
     }
 

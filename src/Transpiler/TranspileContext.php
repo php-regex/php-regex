@@ -41,16 +41,28 @@ final class TranspileContext
     private array $notes = [];
 
     /**
-     * @param bool $scriptsAlone whether a bare script name, "\p{Han}", is the
-     *                           script alone, as before PCRE2 10.40, rather
-     *                           than its script extensions
+     * @param bool        $scriptsAlone whether a bare script name, "\p{Han}", is the
+     *                                  script alone, as before PCRE2 10.40, rather
+     *                                  than its script extensions
+     * @param string|null $sourceBody   the body of the pattern, without its delimiters
+     *                                  and flags, which the positions of a refusal count in
      */
     public function __construct(
         public string $sourcePattern,
         public string $sourceFlags,
         public TranspileOptions $options,
         public bool $scriptsAlone = false,
+        public ?string $sourceBody = null,
     ) {}
+
+    /**
+     * The text a refusal's snippet shows: the body of the pattern, where
+     * its position counts, as a parse error's snippet shows it.
+     */
+    public function snippetSource(): string
+    {
+        return $this->sourceBody ?? $this->sourcePattern;
+    }
 
     public function requireFlag(string $flag, string $reason): void
     {

@@ -706,11 +706,11 @@ final class PythonPrinter extends AbstractTargetPrinter
             $number = $this->names[$matches[1]] ?? 0;
             $reference = '(?P='.$matches[1].')';
         } else {
-            throw new TranspileException('Unsupported backreference syntax for Python: '.$ref.'.', $position, $this->context->sourcePattern);
+            throw new TranspileException('Unsupported backreference syntax for Python: '.$ref.'.', $position, $this->context->snippetSource());
         }
 
         if (!isset($this->closed[$number])) {
-            throw new TranspileException('A backreference to a group that has not closed before it cannot be carried into Python re.', $position, $this->context->sourcePattern);
+            throw new TranspileException('A backreference to a group that has not closed before it cannot be carried into Python re.', $position, $this->context->snippetSource());
         }
 
         return $reference;
