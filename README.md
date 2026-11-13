@@ -1,8 +1,8 @@
 <p align="center">
     <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="art/banner-dark.svg?v=6">
-        <source media="(prefers-color-scheme: light)" srcset="art/banner.svg?v=6">
-        <img src="art/banner.svg?v=6" alt="PHPRegex" width="100%">
+        <source media="(prefers-color-scheme: dark)" srcset="art/banner-dark.svg?v=7">
+        <source media="(prefers-color-scheme: light)" srcset="art/banner.svg?v=7">
+        <img src="art/banner.svg?v=7" alt="PHPRegex" width="100%">
     </picture>
 </p>
 

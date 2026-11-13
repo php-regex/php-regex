@@ -46,6 +46,8 @@
   --amber-tint: rgba(234, 88, 12, 0.06);
   --amber-ring: rgba(234, 88, 12, 0.22);
   --link-line: #EA580C;
+  --mark-from: #EA580C;
+  --mark-to: #C2410C;
   --code-bg: rgba(3, 7, 18, 0.05);
   --code-ink: #111827;
   --ok: #15803D;
@@ -83,6 +85,8 @@
   --amber-tint: rgba(251, 146, 60, 0.08);
   --amber-ring: rgba(251, 146, 60, 0.25);
   --link-line: #EA580C;
+  --mark-from: #FDBA74;
+  --mark-to: #F97316;
   --code-bg: rgba(255, 255, 255, 0.07);
   --code-ink: #F3F4F6;
   --ok: #4ADE80;
@@ -253,9 +257,51 @@ body {
   letter-spacing: -0.015em;
 }
 
+/* The mark: the tree between the slashes of a pattern, /…/. The slashes
+   and the edges are the ink (currentColor), the nodes the accent's
+   gradient, defined once in the header and shared by every mark on the
+   page; the flat accent stands in wherever the gradient cannot be found.
+   The box is the mark's own 4:3. */
 .mark {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 21px;
+}
+
+.brand:hover .mark,
+.footer-wordmark:hover .mark {
+  color: inherit;
+}
+
+.mark-nodes {
+  fill: url(#mark-gradient) var(--amber);
+}
+
+.mark-stop-from {
+  stop-color: var(--mark-from);
+}
+
+.mark-stop-to {
+  stop-color: var(--mark-to);
+}
+
+/* "PHP" in the soft ink, "Regex" in the ink: the name's subject is the
+   regex, as in every rendition of the logo. */
+.brand-php {
+  color: var(--mute);
+}
+
+.footer-wordmark {
+  gap: .55rem;
+}
+
+.footer-wordmark .mark {
+  width: 28px;
+  height: 21px;
+}
+
+.mark-large {
+  width: 128px;
+  height: 96px;
 }
 
 .version-tag {
