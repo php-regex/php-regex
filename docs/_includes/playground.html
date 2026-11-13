@@ -57,7 +57,7 @@
   leaves the card for the sandbox. A repository's page passes its name
   as `findings_repo`.
 {% endcomment %}
-<div class="playground" id="playground" data-bundle="/assets/playground/bundle.json?v={{ site.time | date: '%s' }}"{% if include.findings_repo %} data-findings-repo="{{ include.findings_repo }}"{% endif %}>
+<div class="playground" id="playground" data-bundle="/assets/playground/bundle.json?v={{ site.time | date: '%s' | escape }}"{% if include.findings_repo %} data-findings-repo="{{ include.findings_repo | escape }}"{% endif %}>
   <script type="application/json" id="playground-data">{{ site.data.playground | jsonify | replace: '<', '\u003C' }}</script>
   <div class="pg-patternbar">
     <div class="pg-field">
@@ -132,7 +132,7 @@
     {%- endif -%}
     {%- capture findings_names -%}{%- if include.findings_repo -%}{{ include.findings_repo }}{%- else -%}{%- for finding in findings_ranked limit: 4 -%}{{ finding.findings_repo | split: '/' | first }}{% unless forloop.last %}, {% endunless %}{%- endfor -%}{%- endif -%}{%- endcapture -%}
     <details class="pg-findings-browse">
-      <summary title="What the linter found in {{ findings_names }}{% unless include.findings_repo %} and more{% endunless %}: open a finding to replay it here"><span class="pg-findings-faces" aria-hidden="true">{%- for finding in findings_ranked limit: 4 -%}<img src="/assets/findings/avatars/{{ finding.findings_repo | split: '/' | first }}.png" alt="" width="18" height="18" loading="lazy" decoding="async">{%- endfor -%}</span><span class="pg-findings-total">{{ findings_shown }}</span> <span class="pg-findings-what">{% if findings_total == 1 %}regex issue in{% else %}regex issues in{% endif %}</span> <span class="pg-findings-count">{% if include.findings_repo %}{{ include.findings_repo }}{% else %}{{ findings_ranked.size }} projects{% endif %}</span></summary>
+      <summary title="What the linter found in {{ findings_names | escape }}{% unless include.findings_repo %} and more{% endunless %}: open a finding to replay it here"><span class="pg-findings-faces" aria-hidden="true">{%- for finding in findings_ranked limit: 4 -%}<img src="/assets/findings/avatars/{{ finding.findings_repo | split: '/' | first | escape }}.png" alt="" width="18" height="18" loading="lazy" decoding="async">{%- endfor -%}</span><span class="pg-findings-total">{{ findings_shown }}</span> <span class="pg-findings-what">{% if findings_total == 1 %}regex issue in{% else %}regex issues in{% endif %}</span> <span class="pg-findings-count">{% if include.findings_repo %}{{ include.findings_repo }}{% else %}{{ findings_ranked.size }} projects{% endif %}</span></summary>
       <div class="pg-findings-body">
         <p class="pg-findings-intro">{% if include.findings_repo %}The regexes of {{ include.findings_repo }}, linted for its own PHP version.{% else %}The regexes of {{ findings_ranked.size }} open-source PHP projects, each linted for its own PHP version.{% endif %} Open a finding to replay it here.</p>
         <input type="search" class="pg-findings-filter" placeholder="owner, repo or rule" aria-label="Filter by owner, repository or rule" spellcheck="false" autocapitalize="off" autocomplete="off">

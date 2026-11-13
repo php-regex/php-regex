@@ -112,7 +112,7 @@ final class PlaygroundQuickRowTest extends TestCase
         $this->assertSame(1, self::nodes($xpath, $summary.'/*'.self::has('pg-findings-faces').'[@aria-hidden="true"]'), 'The faces are for the eye: the words carry the meaning.');
         $this->assertStringContainsString('{%- assign findings_ranked = site.findings | sort: "findings_rank" -%}', $include, 'The faces are the projects the linter ranks first.');
         $this->assertStringContainsString('for finding in findings_ranked limit: 4', $include, 'Four faces: enough to recognise the corpus, few enough to stay a glance.');
-        $this->assertStringContainsString('src="/assets/findings/avatars/{{ finding.findings_repo | split: \'/\' | first }}.png" alt=""', $include);
+        $this->assertStringContainsString('src="/assets/findings/avatars/{{ finding.findings_repo | split: \'/\' | first | escape }}.png" alt=""', $include);
         $this->assertSame(1, self::nodes($xpath, $summary.'/*'.self::has('pg-findings-total')), 'How much was found.');
         $this->assertSame(1, self::nodes($xpath, $summary.'/*'.self::has('pg-findings-what')), 'What was found.');
         $this->assertSame(1, self::nodes($xpath, $summary.'/*'.self::has('pg-findings-count')), 'Where it was found.');
@@ -148,6 +148,27 @@ final class PlaygroundQuickRowTest extends TestCase
         $phone = '/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*';
         $this->assertSame(1, preg_match($phone.'\.pg-findings-total,\s*\.pg-findings-what \{([^}]*)\}/', $stylesheet, $short), 'A phone keeps the faces and the projects, not the sentence.');
         $this->assertStringContainsString('display: none;', $short[1]);
+    }
+
+    /**
+     * A name the build writes into an attribute is escaped there: a quote
+     * or an angle bracket in a repository's name stays text and never ends
+     * the attribute.
+     */
+    #[Test]
+    public function test_every_value_the_build_writes_into_an_attribute_is_escaped(): void
+    {
+        $this->assertGreaterThan(0, preg_match_all('/[a-z-]+="[^"]*"/', self::source(self::INCLUDE), $attributes));
+        $outputs = 0;
+        foreach ($attributes[0] as $attribute) {
+            $this->assertSame(1, preg_match('/^([a-z-]+)=/', $attribute, $name));
+            $this->assertNotFalse(preg_match_all('/\{\{(.*?)\}\}/', $attribute, $values));
+            foreach ($values[1] as $value) {
+                $this->assertMatchesRegularExpression('/\|\s*escape\s*$/', $value, $name[1].' writes {{'.$value.'}} unescaped.');
+                $outputs++;
+            }
+        }
+        $this->assertGreaterThanOrEqual(4, $outputs, 'The door\'s tooltip and faces, the bundle\'s version and the page\'s project.');
     }
 
     private static function include(): \DOMXPath

@@ -51,7 +51,7 @@ final class FindingsPagesTest extends TestCase
         $this->assertStringContainsString('{{ page.findings_php }}', $page, 'The PHP the project was judged for.');
         $this->assertStringContainsString('{{ page.findings_pcre }}', $page, 'And the PCRE2 that PHP bundles.');
         $this->assertStringContainsString('{{ page.findings_committed }}', $page, 'The code as of its commit.');
-        $this->assertStringContainsString('{% if include.findings_repo %} data-findings-repo="{{ include.findings_repo }}"{% endif %}', self::source(self::DOCS.'/_includes/playground.html'));
+        $this->assertStringContainsString('{% if include.findings_repo %} data-findings-repo="{{ include.findings_repo | escape }}"{% endif %}', self::source(self::DOCS.'/_includes/playground.html'));
 
         foreach (glob(self::DOCS.'/_findings/*.md') ?: [] as $file) {
             $front = self::between(self::source($file), "---\n", "\n---\n");
