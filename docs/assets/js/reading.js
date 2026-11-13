@@ -16,7 +16,16 @@
   button.className = 'to-top';
   button.setAttribute('aria-label', 'Back to top');
   button.hidden = true;
-  button.innerHTML = '<svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>';
+  // Lucide's arrow, vendored under /assets/icons/lucide/ as every icon of
+  // the site is.
+  var ICONS = { top: '<path d="m5 12 7-7 7 7" /><path d="M12 19V5" />' };
+  var parsed = new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg">' + ICONS.top + '</svg>', 'image/svg+xml');
+  var icon = document.importNode(parsed.documentElement, true);
+  icon.setAttribute('class', 'icon');
+  icon.setAttribute('viewBox', '0 0 24 24');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.setAttribute('focusable', 'false');
+  button.appendChild(icon);
   document.body.appendChild(button);
 
   var shown = false;

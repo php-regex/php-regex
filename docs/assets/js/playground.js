@@ -3597,16 +3597,16 @@
   // The trace is a recording, so the debugger travels it both ways: one
   // step back or on, and to the previous or the next stop — a backtrack,
   // the start of a match attempt, a capture that moved, whichever are
-  // ticked. The icons are drawn in the header's dialect, a 16-unit box and
-  // square strokes: a filled shape runs, an arrow to a dot takes one step.
+  // ticked. The icons are Lucide's, vendored under /assets/icons/lucide/,
+  // as every icon of the site: a filled shape runs, a bar stops.
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var TRACE_ICONS = {
-    rewind: 'M13 3v10M10 3 3 8l7 5z',
-    back: 'M14.5 8H6M9.5 4l-4 4 4 4M1.4 7.4h1v1.2h-1z',
-    step: 'M1.5 8H10M6.5 4l4 4-4 4M13.6 7.4h1v1.2h-1z',
-    resume: 'M3 3v10M6 3l7 5-7 5z',
-    play: 'M4.5 3l8 5-8 5z',
-    pause: 'M4 3.5h1.5v9H4zM10.5 3.5H12v9h-1.5z'
+    rewind: '<path d="M17.971 4.285A2 2 0 0 1 21 6v12a2 2 0 0 1-3.029 1.715l-9.997-5.998a2 2 0 0 1-.003-3.432z" /><path d="M3 20V4" />',
+    back: '<path d="M13.971 4.285A2 2 0 0 1 17 6v12a2 2 0 0 1-3.029 1.715l-9.997-5.998a2 2 0 0 1-.003-3.432z" /><path d="M21 20V4" />',
+    step: '<path d="M10.029 4.285A2 2 0 0 0 7 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z" /><path d="M3 4v16" />',
+    resume: '<path d="M21 4v16" /><path d="M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z" />',
+    play: '<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />',
+    pause: '<rect x="14" y="3" width="5" height="18" rx="1" /><rect x="5" y="3" width="5" height="18" rx="1" />'
   };
   var TRACE_CONTROLS = [
     { act: 'rewind', label: 'Rewind to the previous stop', hint: 'Shift+←', keys: 'Shift+ArrowLeft', icon: 'rewind', solid: true },
@@ -3638,15 +3638,20 @@
   // two of rows, laid out and skipped by the browser as one.
   var TRACE_CHUNK_ROWS = 100;
 
+  // A vendored icon's drawing, parsed as SVG into elements: the page's
+  // own constant, never a string the visitor typed, and never through the
+  // HTML parser.
+  function lucideIcon(markup) {
+    var parsed = new DOMParser().parseFromString('<svg xmlns="' + SVG_NS + '">' + markup + '</svg>', 'image/svg+xml');
+    return document.importNode(parsed.documentElement, true);
+  }
+
   function traceIcon(name, solid) {
-    var svg = document.createElementNS(SVG_NS, 'svg');
+    var svg = lucideIcon(TRACE_ICONS[name]);
     svg.setAttribute('class', solid ? 'icon is-solid' : 'icon');
-    svg.setAttribute('viewBox', '0 0 16 16');
+    svg.setAttribute('viewBox', '0 0 24 24');
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('focusable', 'false');
-    var path = document.createElementNS(SVG_NS, 'path');
-    path.setAttribute('d', TRACE_ICONS[name]);
-    svg.appendChild(path);
     return svg;
   }
 

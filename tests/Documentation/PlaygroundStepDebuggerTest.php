@@ -67,8 +67,8 @@ final class PlaygroundStepDebuggerTest extends TestCase
     }
 
     /**
-     * The icons are drawn in the header's dialect — a 16-unit box, hidden
-     * from a voice — and no pictograph stands in for one: a glyph's shape
+     * The icons are drawn in the site's dialect — Lucide's, hidden from a
+     * voice — and no pictograph stands in for one: a glyph's shape
      * is the font's, and the fonts differ.
      */
     #[Test]
@@ -78,7 +78,7 @@ final class PlaygroundStepDebuggerTest extends TestCase
 
         $icon = self::between($section, 'function traceIcon(name, solid) {', "\n  }\n");
         $this->assertStringContainsString("'http://www.w3.org/2000/svg'", $section);
-        $this->assertStringContainsString("setAttribute('viewBox', '0 0 16 16')", $icon);
+        $this->assertStringContainsString("setAttribute('viewBox', '0 0 24 24')", $icon, 'Lucide\'s own box: the icons are the vendored ones, as every icon of the site.');
         $this->assertStringContainsString("setAttribute('aria-hidden', 'true')", $icon);
         $this->assertStringContainsString("setAttribute('focusable', 'false')", $icon);
         $this->assertSame(0, preg_match('/[\x{23E9}-\x{23FA}\x{25B6}\x{25C0}\x{2B05}\x{27A1}\x{1F300}-\x{1FAFF}]/u', $section), 'No media pictograph, no emoji.');

@@ -36,7 +36,7 @@
     <a href="/blog/"{% if nav_place == 'blog' %} aria-current="true"{% endif %}>Blog</a>
   </nav>
   <div class="header-actions">
-    <button type="button" class="search-toggle" id="search-toggle" aria-haspopup="dialog" aria-expanded="false" aria-label="Search"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="4.75"/><path d="M10.2 10.2 14 14"/></svg><span class="search-label">Search</span> <kbd>Ctrl/⌘K</kbd> <kbd>/</kbd></button>
+    <button type="button" class="search-toggle" id="search-toggle" aria-haspopup="dialog" aria-expanded="false" aria-label="Search"><svg class="icon" data-icon="search" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></svg><span class="search-label">Search</span> <kbd>Ctrl/⌘K</kbd> <kbd>/</kbd></button>
     <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Dark theme" aria-pressed="false"></button>
     <a class="icon-btn github-link" href="https://github.com/php-regex/php-regex" aria-label="GitHub repository">
       <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -44,7 +44,7 @@
       </svg>
     </a>
     {% unless page.layout == 'landing' or page.layout == 'error' %}
-    <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-expanded="false" aria-controls="site-sidebar" aria-label="Menu"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 4.5h12M2 8h12M2 11.5h12"/></svg><span class="sidebar-label">Menu</span></button>
+    <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-expanded="false" aria-controls="site-sidebar" aria-label="Menu"><svg class="icon" data-icon="menu" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></svg><span class="sidebar-label">Menu</span></button>
     {% endunless %}
   </div>
 </header>
