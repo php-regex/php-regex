@@ -93,6 +93,49 @@ final class PlaygroundTabsTest extends TestCase
         $this->assertStringContainsString('background: var(--panel);', $detail[1], 'Opaque: the rows scroll under it, never through it.');
     }
 
+    // --- Diagnostics ---------------------------------------------------------
+
+    /**
+     * A diagnostic's range is a way to it: a click selects its bytes in the
+     * field, a pointer on the item lights them there first.
+     */
+    #[Test]
+    public function test_a_diagnostic_range_leads_to_its_bytes_in_the_field(): void
+    {
+        $script = self::source(self::SCRIPT);
+
+        $reveal = self::between($script, 'function revealRange(start, end) {', "\n  }\n");
+        $this->assertStringContainsString('unitRange(current.payload, start, end)', $reveal, 'The bytes the engine counts, in the units the field counts.');
+        $this->assertStringContainsString('el.pattern.setSelectionRange(', $reveal);
+        $this->assertStringContainsString('el.pattern.focus();', $reveal);
+        $goto = self::between($script, 'function rangeButton(label, start, end) {', "\n  }\n");
+        $this->assertStringContainsString("'pg-goto'", $goto);
+        $this->assertStringContainsString('revealRange(start, end)', $goto);
+        $this->assertStringContainsString("'mouseenter'", $goto, 'Pointing lights the bytes before a click selects them.');
+
+        $lint = self::between($script, 'function renderLint(findings) {', "\n  }\n");
+        $this->assertStringContainsString('rangeButton(', $lint);
+        $errors = self::between($script, 'function renderErrors(payload) {', "\n  }\n");
+        $this->assertStringContainsString('rangeButton(', $errors);
+        $mirror = self::between($script, 'function renderPatternMirror(payload, regex, lint) {', "\n  }\n");
+        $this->assertStringContainsString('if (hoverRange) {', $mirror, 'The field lights the range the pointer is on.');
+    }
+
+    #[Test]
+    public function test_the_diagnostics_count_by_severity_and_keep_the_badge_beside_the_message(): void
+    {
+        $lint = self::between(self::source(self::SCRIPT), 'function renderLint(findings) {', "\n  }\n");
+        $this->assertStringContainsString('severityCounts(findings)', $lint, 'Two findings say which: "1 warning, 1 info".');
+
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-diag-head \{([^}]*)\}/m', $stylesheet, $head));
+        $this->assertStringContainsString('flex-wrap: nowrap;', $head[1], 'A long message wraps in its own column, never under its badge.');
+        $this->assertSame(1, preg_match('/^\.pg-diag-badge \{([^}]*)\}/m', $stylesheet, $badge));
+        $this->assertStringContainsString('flex: none;', $badge[1]);
+        $this->assertSame(1, preg_match('/^\.pg-goto \{([^}]*)\}/m', $stylesheet, $goto));
+        $this->assertStringContainsString('cursor: pointer;', $goto[1]);
+    }
+
     private static function between(string $haystack, string $from, string $to): string
     {
         $start = strpos($haystack, $from);

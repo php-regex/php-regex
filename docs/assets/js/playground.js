@@ -321,6 +321,47 @@
     return fragment;
   }
 
+  // A range a tab prints is a way to the pattern: a click selects its
+  // bytes in the field, a pointer on it lights them there first — the
+  // same light the tree's nodes cast.
+  var hoverRange = null;
+
+  function revealRange(start, end) {
+    var range = current ? unitRange(current.payload, start, end) : null;
+    if (!range) {
+      return;
+    }
+    el.pattern.focus();
+    el.pattern.setSelectionRange(range.start, range.end);
+  }
+
+  function lightRange(range) {
+    hoverRange = range;
+    if (current) {
+      renderPatternMirror(current.payload, current.regex, lintFor === current.regex ? lastLint : null);
+    }
+  }
+
+  function rangeButton(label, start, end) {
+    var button = text('button', 'pg-goto', label);
+    button.type = 'button';
+    button.title = 'Select in the pattern';
+    button.addEventListener('click', function () {
+      revealRange(start, end);
+    });
+    ['mouseenter', 'focus'].forEach(function (type) {
+      button.addEventListener(type, function () {
+        lightRange({ start: start, end: end });
+      });
+    });
+    ['mouseleave', 'blur'].forEach(function (type) {
+      button.addEventListener(type, function () {
+        lightRange(null);
+      });
+    });
+    return button;
+  }
+
   // The UTF-16 range of a body-relative byte span, through the engine's table.
   function unitRange(payload, start, end) {
     var table = payload.unitOf;
@@ -1013,6 +1054,12 @@
         ranges.push({ start: hot.start, end: hot.end, className: 'pg-mark-hot is-' + hotspot.severity, priority: 3, title: 'ReDoS hotspot (' + hotspot.severity + '): ' + hotspot.pattern });
       }
     });
+    if (hoverRange) {
+      var lit = unitRange(payload, hoverRange.start, hoverRange.end);
+      if (lit) {
+        ranges.unshift({ start: lit.start, end: lit.end, className: 'pg-mark-node', priority: 0 });
+      }
+    }
     if (currentNode >= 0 && nodes[currentNode]) {
       var span = unitRange(payload, nodes[currentNode].start, nodes[currentNode].end);
       if (span) {
@@ -1407,15 +1454,15 @@
       head.appendChild(text('span', 'pg-diag-badge', error.source === 'validate' ? 'invalid for this engine' : 'syntax error'));
       head.appendChild(text('span', 'pg-diag-message', error.message));
       item.appendChild(head);
-      var facts = [];
-      if (typeof error.position === 'number') {
-        facts.push('byte ' + error.position + ' of the pattern body');
-      }
-      if (error.code) {
-        facts.push(error.code);
-      }
-      if (facts.length) {
-        item.appendChild(text('p', 'pg-diag-facts', facts.join(' · ')));
+      if (typeof error.position === 'number' || error.code) {
+        var factLine = text('p', 'pg-diag-facts');
+        if (typeof error.position === 'number') {
+          factLine.appendChild(rangeButton('byte ' + error.position + ' of the pattern body', error.position, null));
+        }
+        if (error.code) {
+          factLine.appendChild(document.createTextNode((typeof error.position === 'number' ? ' · ' : '') + error.code));
+        }
+        item.appendChild(factLine);
       }
       if (error.hint) {
         item.appendChild(text('p', 'pg-diag-hint', error.hint));
@@ -1455,20 +1502,20 @@
       updateDiagnosticsEmpty();
       return;
     }
-    el.lintNote.textContent = findings.length ? findings.length + (findings.length === 1 ? ' finding' : ' findings') : 'no lint finding';
+    el.lintNote.textContent = findings.length ? findings.length + (findings.length === 1 ? ' finding' : ' findings · ' + severityCounts(findings)) : 'no lint finding';
     findings.forEach(function (finding) {
       var item = text('li', 'pg-diag is-lint is-' + finding.severity);
       var head = text('p', 'pg-diag-head');
       head.appendChild(text('span', 'pg-diag-badge', SEVERITY_LABELS[finding.severity] || finding.severity));
       head.appendChild(text('span', 'pg-diag-message', finding.message));
       item.appendChild(head);
-      var facts = [];
-      if (typeof finding.offset === 'number') {
-        facts.push('bytes ' + finding.offset + (typeof finding.end === 'number' ? '–' + finding.end : ''));
-      }
       var link = text('a', 'pg-diag-rule', finding.id);
       link.href = '/reference/rules/';
-      var factsLine = text('p', 'pg-diag-facts', facts.length ? facts.join(' · ') + ' · ' : '');
+      var factsLine = text('p', 'pg-diag-facts');
+      if (typeof finding.offset === 'number') {
+        factsLine.appendChild(rangeButton('bytes ' + finding.offset + (typeof finding.end === 'number' ? '–' + finding.end : ''), finding.offset, finding.end));
+        factsLine.appendChild(document.createTextNode(' · '));
+      }
       factsLine.appendChild(link);
       item.appendChild(factsLine);
       if (finding.hint) {
@@ -1481,6 +1528,19 @@
     }
     updateDiagnosticsEmpty();
     updateBadges();
+  }
+
+  // How many of each, in the severities' own order: "1 warning, 1 info".
+  function severityCounts(findings) {
+    var counts = {};
+    findings.forEach(function (finding) {
+      counts[finding.severity] = (counts[finding.severity] || 0) + 1;
+    });
+    return Object.keys(SEVERITY_LABELS).filter(function (key) {
+      return counts[key];
+    }).map(function (key) {
+      return counts[key] + ' ' + SEVERITY_LABELS[key];
+    }).join(', ');
   }
 
   function updateDiagnosticsEmpty() {

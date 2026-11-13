@@ -6089,11 +6089,12 @@ body.search-open {
 }
 .pg-diag-head {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: baseline;
   gap: .35rem .5rem;
 }
 .pg-diag-badge {
+  flex: none;
   padding: .1rem .45rem;
   font-family: var(--font-mono);
   font-size: .68rem;
@@ -6108,7 +6109,32 @@ body.search-open {
   border-color: var(--danger);
 }
 .pg-diag-message {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow-wrap: anywhere;
+}
+/* A range is a way to the pattern: it reads as a link in the facts'
+   own face, and pointing at it lights its bytes in the field. */
+.pg-goto {
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed var(--line);
+  cursor: pointer;
+}
+.pg-goto:hover,
+.pg-goto:focus-visible {
+  color: var(--amber);
+  border-bottom-color: var(--amber);
+}
+.pg-goto:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+.pg-hotspot .pg-goto {
+  font-family: var(--font-mono);
 }
 .pg-diag-facts,
 .pg-diag-hint {
