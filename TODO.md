@@ -181,6 +181,30 @@ a quoted space is not a literal either (`/^a b$/x` matches `ab`, not `a b`), and
 the probes hold no whitespace.
 
 
+## Lint messages
+
+- Under `x`, `regex.lint.overlap.charset` quotes a branch from the body as
+  written, the whitespace and comments `x` ignores included: a branch laid
+  out over lines spends its thirty columns on the newline and the
+  indentation. The three findings of `ComponentTagCompiler.php` in
+  `laravel/framework` quote both branches as `"(?:\n                         …"`,
+  which no longer tells them apart; the printed form before 2026-11-13 read
+  `"(?:@(?:class)(\\((?:(?>[^()]+)|…"`. Drop what `x` ignores, outside
+  classes, before cutting the quote, and hold a multi-line `x` case in a
+  test.
+
+
+## Corpus
+
+- `bin/corpus-lint` merges every part its manifest lists, and nothing drops
+  a repository that left `corpus.json`: the 32 removed on 2026-11-12
+  (`symfony/mime`, `phpstan/phpstan`, …) still have a section in
+  `var/log/corpus.log`, judged by the library of that day, and
+  `bin/findings-report` still publishes their JSON parts. Prune the parts
+  and the manifest entries of a repository missing from `corpus/` before the
+  merge, then regenerate the log and the findings.
+
+
 ## Pull request checks
 
 - Make `CI` the required check of `2.x` in the branch protection: a pull
