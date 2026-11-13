@@ -16,6 +16,8 @@ namespace PHPRegex\Tests\Unit\Support;
 use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\HostRequirements;
 use PHPRegex\Tests\Support\ProcessPipes;
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -31,14 +33,14 @@ final class HostRequirementsTest extends TestCase
     #[Test]
     public function test_a_host_that_can_check_the_owner_lacks_nothing(): void
     {
-        $this->assertSame([], HostRequirements::missing(windows: false, ownerCheck: true));
+        $this->assertSame([], HostRequirements::missing(windows: false, ownerCheck: true, jq: true));
     }
 
     #[Test]
     public function test_windows_checks_no_owner_and_lacks_nothing(): void
     {
-        $this->assertSame([], HostRequirements::missing(windows: true, ownerCheck: false));
-        $this->assertSame([], HostRequirements::missing(windows: true, ownerCheck: true));
+        $this->assertSame([], HostRequirements::missing(windows: true, ownerCheck: false, jq: false));
+        $this->assertSame([], HostRequirements::missing(windows: true, ownerCheck: true, jq: true));
     }
 
     #[Test]
@@ -46,15 +48,51 @@ final class HostRequirementsTest extends TestCase
     {
         $this->assertSame(
             ['posix_geteuid() is missing or disabled: the AST file cache and the class-set store keep nothing where they cannot check who owns their directory, and the tests of what they keep fail on this host.'],
-            HostRequirements::missing(windows: false, ownerCheck: false),
+            HostRequirements::missing(windows: false, ownerCheck: false, jq: true),
         );
+    }
+
+    #[Test]
+    public function test_a_host_without_jq_is_named_with_the_tests_that_fail_there(): void
+    {
+        $this->assertSame(
+            ['jq is not on the PATH: the tests of the CI workflows and of bin/ci-answer answer for gh with a stand-in that filters through it, as gh --jq does, and fail on this host.'],
+            HostRequirements::missing(windows: false, ownerCheck: true, jq: false),
+        );
+        $this->assertCount(2, HostRequirements::missing(windows: false, ownerCheck: false, jq: false));
+    }
+
+    /**
+     * Outside Windows, where a program is a file with its execute bit set:
+     * Windows reads it by its extension, and needs none of these.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_a_program_is_found_on_the_path_where_it_can_be_run(): void
+    {
+        $directory = TemporaryDirectory::create('php-regex-host');
+        mkdir($directory.'/bin');
+        file_put_contents($directory.'/bin/jq', "#!/bin/sh\n");
+        file_put_contents($directory.'/bin/notrun', "#!/bin/sh\n");
+        chmod($directory.'/bin/jq', 0o755);
+        chmod($directory.'/bin/notrun', 0o644);
+
+        try {
+            $path = $directory.'/missing'.\PATH_SEPARATOR.$directory.'/bin';
+            $this->assertTrue(HostRequirements::onPath('jq', $path));
+            $this->assertFalse(HostRequirements::onPath('notrun', $path));
+            $this->assertFalse(HostRequirements::onPath('absent', $path));
+            $this->assertFalse(HostRequirements::onPath('jq', ''));
+        } finally {
+            TemporaryDirectory::remove($directory);
+        }
     }
 
     #[Test]
     public function test_this_host_is_judged_by_its_system_and_its_functions(): void
     {
         $this->assertSame(
-            HostRequirements::missing(Path::onWindows(), \function_exists('posix_geteuid')),
+            HostRequirements::missing(Path::onWindows(), \function_exists('posix_geteuid'), HostRequirements::onPath('jq', (string) getenv('PATH'))),
             HostRequirements::ofThisHost(),
         );
     }
@@ -99,7 +137,7 @@ final class HostRequirementsTest extends TestCase
      */
     private function expectedNotice(array $settings): string
     {
-        return HostRequirements::notice(HostRequirements::missing(Path::onWindows(), $this->canCheckOwner($settings)));
+        return HostRequirements::notice(HostRequirements::missing(Path::onWindows(), $this->canCheckOwner($settings), HostRequirements::onPath('jq', (string) getenv('PATH'))));
     }
 
     /**

@@ -140,6 +140,26 @@ final class ProcessPipesTest extends TestCase
         }
     }
 
+    /**
+     * The streams are given back as they came, blocking: a caller reading
+     * them again, after the end, is not handed a non-blocking stream.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_the_streams_are_given_back_blocking(): void
+    {
+        $process = proc_open([\PHP_BINARY, '-r', 'echo "out";'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $this->assertIsResource($process);
+
+        ProcessPipes::drain($pipes);
+
+        $this->assertTrue(stream_get_meta_data($pipes[1])['blocked']);
+        $this->assertTrue(stream_get_meta_data($pipes[2])['blocked']);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $this->assertSame(0, proc_close($process));
+    }
+
     #[Test]
     public function test_a_child_writing_nothing_gives_two_empty_streams(): void
     {

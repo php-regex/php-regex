@@ -15,6 +15,7 @@ namespace PHPRegex\Transpiler;
 
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Transpiler\Exception\TranspileException;
@@ -68,12 +69,20 @@ final class Transpiler
         // The pattern means what the PCRE2 it is read for makes of it: a
         // bare script name is the script alone before 10.40.
         $context = new TranspileContext($regex, $ast->flags, $options, !$this->parser->target()->supports(PcreFeature::LoosePropertyNames), $ast->source, function () use ($regex, $target, $options): ?string {
+            // Asked only once the engine compiles the pattern with u: the run
+            // with u refuses as the target does, and that refusal is the
+            // advice. A run the parser cannot make, the pattern one byte past
+            // a max_pattern_length, tells nothing of the target: the advice
+            // is then PCRE's, and the caller's pattern still transpiles. A
+            // run with u never asks again, as no byte is refused under u.
             try {
                 $this->transpile($regex.'u', $target, $options);
 
                 return null;
             } catch (TranspileException $e) {
                 return $e->getMessage();
+            } catch (RegexException) {
+                return null;
             }
         });
         $compiled = $dialect->compile($ast, $context);

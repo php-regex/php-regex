@@ -30,18 +30,46 @@ final class HostRequirements
      * cannot. That behaviour has tests of its own, run in a process that
      * disables the function; the tests of what the two keep fail without it.
      *
-     * @param bool $windows    the host is Windows, where no owner is checked
+     * The tests of the CI workflows and of bin/ci-answer answer for gh with
+     * a stand-in that filters through jq, as `gh --jq` does: the runners of
+     * GitHub and Homebrew hosts have it, a minimal Linux may not.
+     *
+     * @param bool $windows    the host is Windows, where neither is used
      * @param bool $ownerCheck posix_geteuid() can be called
+     * @param bool $jq         jq is on the PATH
      *
      * @return list<string>
      */
-    public static function missing(bool $windows, bool $ownerCheck): array
+    public static function missing(bool $windows, bool $ownerCheck, bool $jq): array
     {
-        if ($windows || $ownerCheck) {
+        if ($windows) {
             return [];
         }
 
-        return ['posix_geteuid() is missing or disabled: the AST file cache and the class-set store keep nothing where they cannot check who owns their directory, and the tests of what they keep fail on this host.'];
+        $missing = [];
+        if (!$ownerCheck) {
+            $missing[] = 'posix_geteuid() is missing or disabled: the AST file cache and the class-set store keep nothing where they cannot check who owns their directory, and the tests of what they keep fail on this host.';
+        }
+        if (!$jq) {
+            $missing[] = 'jq is not on the PATH: the tests of the CI workflows and of bin/ci-answer answer for gh with a stand-in that filters through it, as gh --jq does, and fail on this host.';
+        }
+
+        return $missing;
+    }
+
+    /**
+     * Whether a program of that name can be run from one of the directories
+     * of the path.
+     */
+    public static function onPath(string $program, string $path): bool
+    {
+        foreach (explode(\PATH_SEPARATOR, $path) as $directory) {
+            if ('' !== $directory && is_file($directory.'/'.$program) && is_executable($directory.'/'.$program)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -51,7 +79,7 @@ final class HostRequirements
      */
     public static function ofThisHost(): array
     {
-        return self::missing(Path::onWindows(), \function_exists('posix_geteuid'));
+        return self::missing(Path::onWindows(), \function_exists('posix_geteuid'), self::onPath('jq', (string) getenv('PATH')));
     }
 
     /**
