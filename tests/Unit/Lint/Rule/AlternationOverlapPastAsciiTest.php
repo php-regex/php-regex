@@ -85,12 +85,49 @@ final class AlternationOverlapPastAsciiTest extends TestCase
     }
 
     /**
+     * The first characters of a branch are those of each item PCRE may
+     * start it with: past an optional item to what follows it, through
+     * every branch of a branch reset group, and a character written as
+     * itself under the options of "a", which restrict the types and the
+     * POSIX classes alone.
+     *
+     * @param list<array{string, string, int}> $oracle a branch read alone, a subject, whether it starts there
+     */
+    #[Test]
+    #[DataProvider('provideBranchesReadThroughTheirFirstItems')]
+    public function test_the_first_characters_are_read_through_the_first_items(string $pattern, array $oracle, int $findings): void
+    {
+        foreach ($oracle as [$branch, $subject, $starts]) {
+            $this->assertSame($starts, preg_match('/^(?:'.$branch.')/u', $subject), $branch.' on '.$subject);
+        }
+
+        $this->assertCount($findings, $this->charsetOverlapMessages($pattern), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, oracle: list<array{string, string, int}>, findings: int}>
+     */
+    public static function provideBranchesReadThroughTheirFirstItems(): iterable
+    {
+        yield 'an optional first item, apart' => ['pattern' => '/(?:ö?è|ê)+x/u', 'oracle' => [['ö?è', 'öè', 1], ['ö?è', 'è', 1], ['ö?è', 'ê', 0], ['ê', 'ö', 0], ['ê', 'è', 0]], 'findings' => 0];
+        yield 'an optional first item, meeting the other branch' => ['pattern' => '/(?:ö?è|öb)+x/u', 'oracle' => [['ö?è', 'öè', 1], ['öb', 'öb', 1]], 'findings' => 1];
+        yield 'an optional first item, meeting through what follows it' => ['pattern' => '/(?:ö?è|èb)+x/u', 'oracle' => [['ö?è', 'è', 1], ['èb', 'èb', 1]], 'findings' => 1];
+        yield 'a branch reset group, apart' => ['pattern' => '/(?:(?|ö|ê)|è)+x/u', 'oracle' => [['(?|ö|ê)', 'ö', 1], ['(?|ö|ê)', 'ê', 1], ['(?|ö|ê)', 'è', 0]], 'findings' => 0];
+        yield 'a branch reset group, meeting the other branch' => ['pattern' => '/(?:(?|ö|ê)a|êb)+x/u', 'oracle' => [['(?|ö|ê)a', 'êa', 1], ['êb', 'êb', 1]], 'findings' => 1];
+        yield 'a character under the options of a, apart' => ['pattern' => '/(?:(?a:ö)|è)+x/u', 'oracle' => [['(?a:ö)', 'ö', 1], ['(?a:ö)', 'è', 0], ['è', 'ö', 0]], 'findings' => 0];
+        yield 'a character under the options of a, meeting the other branch' => ['pattern' => '/(?:(?a:öa)|öb)+x/u', 'oracle' => [['(?a:öa)', 'öa', 1], ['öb', 'öb', 1]], 'findings' => 1];
+        yield 'a bare option group before the first character' => ['pattern' => '/(?:(?i)öa|Öb)+x/u', 'oracle' => [['(?i)öa', 'Öa', 1], ['Öb', 'Öb', 1]], 'findings' => 1];
+        yield 'an alternation with an empty branch first' => ['pattern' => '/(?:(?:|ö)è|ê)+x/u', 'oracle' => [['(?:|ö)è', 'öè', 1], ['(?:|ö)è', 'è', 1], ['(?:|ö)è', 'ê', 0], ['ê', 'ö', 0], ['ê', 'è', 0]], 'findings' => 0];
+        yield 'an item repeated no time first' => ['pattern' => '/(?:(?:x){0}öa|èb)+x/u', 'oracle' => [['(?:x){0}öa', 'öa', 1], ['(?:x){0}öa', 'è', 0], ['èb', 'ö', 0]], 'findings' => 0];
+        yield 'a caseless character under the options of a' => ['pattern' => '/(?:(?ai:öa)|Öb)+x/u', 'oracle' => [['(?ai:öa)', 'Öa', 1], ['Öb', 'Öb', 1]], 'findings' => 1];
+    }
+
+    /**
      * Where no probe can be written for a branch, the first bytes are
      * compared: under u two characters sharing a lead byte meet there. Not
      * proven, kept: a repeated alternation PCRE cannot read stays reported.
      * A class holding every delimiter the probe can be written with is one
-     * such branch; an optional first item, a branch reset group and the
-     * options of "a" are others.
+     * such branch; a type or a class under the options of "a" is another.
      */
     #[Test]
     public function test_a_branch_pcre_cannot_be_asked_about_is_read_by_its_bytes(): void
