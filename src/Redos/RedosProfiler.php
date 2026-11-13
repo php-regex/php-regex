@@ -196,6 +196,13 @@ final class RedosProfiler extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): RedosSeverity
     {
+        // A body repeated "{0}" never runs where it stands: one holding no
+        // group runs nowhere, and the groups it holds run only through a
+        // call, so it is read on its own, as a DEFINE block is.
+        if (0 === $this->quantifierBounds($node)[1]) {
+            return $this->holdsCapturingGroup($node->node) ? $this->readOnItsOwn($node->node) : RedosSeverity::Safe;
+        }
+
         // Save the current atomic state to restore it later
         $wasAtomic = $this->inAtomicGroup;
         $boundarySeparatedPrev = $this->hasMutuallyExclusiveBoundary($this->previousNode, $node->node);
@@ -621,15 +628,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         // The groups of a DEFINE block run only when a subroutine calls them,
         // never where the block stands: its content is analysed on its own,
         // outside the loops around it.
-        $unboundedDepth = $this->unboundedQuantifierDepth;
-        $totalDepth = $this->totalQuantifierDepth;
-        $this->unboundedQuantifierDepth = 0;
-        $this->totalQuantifierDepth = 0;
-        $severity = $node->content->accept($this);
-        $this->unboundedQuantifierDepth = $unboundedDepth;
-        $this->totalQuantifierDepth = $totalDepth;
-
-        return $severity;
+        return $this->readOnItsOwn($node->content);
     }
 
     #[\Override]
@@ -645,6 +644,38 @@ final class RedosProfiler extends AbstractNodeVisitor
     public function visitCallout(CalloutNode $node): RedosSeverity
     {
         return RedosSeverity::Safe;
+    }
+
+    /**
+     * A part that runs only through a call: read outside the loops around
+     * where it stands.
+     */
+    private function readOnItsOwn(NodeInterface $node): RedosSeverity
+    {
+        $unboundedDepth = $this->unboundedQuantifierDepth;
+        $totalDepth = $this->totalQuantifierDepth;
+        $this->unboundedQuantifierDepth = 0;
+        $this->totalQuantifierDepth = 0;
+        $severity = $node->accept($this);
+        $this->unboundedQuantifierDepth = $unboundedDepth;
+        $this->totalQuantifierDepth = $totalDepth;
+
+        return $severity;
+    }
+
+    private function holdsCapturingGroup(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && $this->isCapturingGroup($node)) {
+            return true;
+        }
+
+        foreach ($this->getChildren($node) as $child) {
+            if ($this->holdsCapturingGroup($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

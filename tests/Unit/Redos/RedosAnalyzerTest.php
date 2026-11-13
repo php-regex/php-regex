@@ -144,6 +144,50 @@ final class RedosAnalyzerTest extends TestCase
         $this->assertTrue($matched, 'Expected a hotspot covering the inner quantifier span.');
     }
 
+    /**
+     * A body repeated "{0}" never runs where it stands: with no group a
+     * call could run, no subject reaches it, and no hotspot lies in it.
+     */
+    #[Test]
+    public function test_no_hotspot_lies_in_a_body_no_subject_reaches(): void
+    {
+        // The oracle: the dead part changes no verdict, /^(?:a+)+$/ is the pattern.
+        $this->assertSame(preg_match('/^(?:a+)+$/', 'aaa'), preg_match('/(?:x+x+){0}^(?:a+)+$/', 'aaa'));
+        $this->assertSame(0, preg_match('/(?:x+x+){0}^(?:a+)+$/', 'xx'));
+
+        $analysis = $this->analyzer->analyze('/(?:x+x+){0}^(?:a+)+$/');
+
+        $this->assertNotEmpty($analysis->hotspots);
+        foreach ($analysis->hotspots as $hotspot) {
+            $this->assertGreaterThanOrEqual(12, $hotspot->start, \sprintf('A hotspot at %d-%d lies in the dead part.', $hotspot->start, $hotspot->end));
+        }
+    }
+
+    /**
+     * A group under "{0}" still runs through a call: its body is read on
+     * its own, as a DEFINE group's is.
+     */
+    #[Test]
+    #[DataProvider('provideGroupsOnlyACallRuns')]
+    public function test_a_group_only_a_call_runs_keeps_its_hotspots(string $pattern, string $subject, int $end): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject), 'Oracle: the call runs the group.');
+
+        $analysis = $this->analyzer->analyze($pattern);
+
+        $this->assertNotSame([], array_filter($analysis->hotspots, static fn ($hotspot): bool => $hotspot->start < $end));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, end: int}>
+     */
+    public static function provideGroupsOnlyACallRuns(): iterable
+    {
+        yield 'a group repeated {0}' => ['pattern' => '/((?:x+)+){0}a(?1)/', 'subject' => 'axx', 'end' => 13];
+        yield 'a group inside a body repeated {0}' => ['pattern' => '/(?:b|((?:x+)+)){0}a(?1)/', 'subject' => 'axx', 'end' => 17];
+        yield 'a group of a DEFINE block' => ['pattern' => '/(?(DEFINE)(?<n>(?:x+)+))a(?&n)/', 'subject' => 'axx', 'end' => 25];
+    }
+
     #[Test]
     public function test_analyze_returns_safe_for_ignored_pattern(): void
     {
