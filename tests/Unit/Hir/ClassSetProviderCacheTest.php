@@ -19,6 +19,7 @@ use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\ProbeDelimiters;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -214,7 +215,7 @@ final class ClassSetProviderCacheTest extends TestCase
     #[Test]
     public function test_query_answers_null_for_an_atom_holding_every_delimiter(): void
     {
-        $atom = '['.implode('', ['/', '#', '~', '%', '!', '@', ';', '"', "'", ',', '&', '`', '=', ...array_map(\chr(...), [...range(0x01, 0x08), ...range(0x0E, 0x1F), 0x7F])]).']';
+        $atom = ProbeDelimiters::classOfEveryOne();
         $this->assertSame(1, preg_match('{'.$atom.'}', "\x01"), 'Oracle: PCRE reads the atom.');
         $this->assertSame(0, preg_match('{'.$atom.'}', 'a'));
 

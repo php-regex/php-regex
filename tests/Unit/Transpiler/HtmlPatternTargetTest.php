@@ -160,7 +160,7 @@ final class HtmlPatternTargetTest extends TestCase
         $this->expectExceptionMessageIsOrContains('PCRE cannot tell which characters');
 
         // The class holds every delimiter the probe could be written with.
-        Regex::create(['cache' => null])->transpile(ProbeDelimiters::CASELESS_CLASS_OF_EVERY_ONE, 'html-pattern');
+        Regex::create(['cache' => null])->transpile(ProbeDelimiters::caselessPatternOfEveryOne(), 'html-pattern');
     }
 
     #[Test]

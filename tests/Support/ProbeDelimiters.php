@@ -13,19 +13,44 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Support;
 
+use PHPRegex\Parser\Hir\ClassSetProvider;
+
 /**
- * The delimiters ClassSetProvider may write its engine probe with, and a
- * pattern whose class holds every one of them: no probe can be written for
- * it, which the tests of what reads a set through the probe ask about.
+ * The delimiters ClassSetProvider may write its engine probe with, read
+ * from the provider itself, and the classes holding every one of them: no
+ * probe can be written for those, which the tests of what reads a set
+ * through the probe ask about. A delimiter the provider gains is one these
+ * classes gain too.
  */
 final class ProbeDelimiters
 {
-    /**
-     * A caseless class holding every delimiter the engine probe can be
-     * written with: the usual ones, the punctuation and the control
-     * characters PHP takes.
-     */
-    public const CASELESS_CLASS_OF_EVERY_ONE = "/^[\\/#~%!@;\"',&`=\x01\x02\x03\x04\x05\x06\x07\x08\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F]$/i";
-
     private function __construct() {}
+
+    /**
+     * @return non-empty-list<string>
+     */
+    public static function all(): array
+    {
+        $delimiters = (new \ReflectionClassConstant(ClassSetProvider::class, 'DELIMITERS'))->getValue();
+        \assert(\is_array($delimiters) && array_is_list($delimiters) && [] !== $delimiters && array_filter($delimiters, \is_string(...)) === $delimiters);
+
+        return $delimiters;
+    }
+
+    /**
+     * A class holding every delimiter, and the characters given after them.
+     */
+    public static function classOfEveryOne(string $more = ''): string
+    {
+        return '['.implode('', self::all()).$more.']';
+    }
+
+    /**
+     * A caseless pattern matching one character of that class, between
+     * "/" delimiters.
+     */
+    public static function caselessPatternOfEveryOne(): string
+    {
+        return '/^'.str_replace('/', '\\/', self::classOfEveryOne()).'$/i';
+    }
 }

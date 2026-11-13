@@ -86,7 +86,7 @@ final class TargetRefusalTest extends TestCase
         yield 'Python: a match start reset' => ['target' => 'python', 'pattern' => '~ab\Kc~', 'body' => 'ab\Kc', 'position' => 2];
         yield 'Python: a reference to an open group' => ['target' => 'python', 'pattern' => '/(a\1)/', 'body' => '(a\1)', 'position' => 2];
         yield 'HTML: an inline flag the attribute cannot take' => ['target' => 'html-pattern', 'pattern' => '/a(?n)(b)+/', 'body' => 'a(?n)(b)+', 'position' => 1];
-        yield 'HTML: an atom the engine cannot probe' => ['target' => 'html-pattern', 'pattern' => ProbeDelimiters::CASELESS_CLASS_OF_EVERY_ONE, 'body' => substr(ProbeDelimiters::CASELESS_CLASS_OF_EVERY_ONE, 1, -2), 'position' => 1];
+        yield 'HTML: an atom the engine cannot probe' => ['target' => 'html-pattern', 'pattern' => ProbeDelimiters::caselessPatternOfEveryOne(), 'body' => substr(ProbeDelimiters::caselessPatternOfEveryOne(), 1, -2), 'position' => 1];
     }
 
     /**

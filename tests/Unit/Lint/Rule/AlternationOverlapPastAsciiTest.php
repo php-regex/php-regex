@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Tests\Support\ProbeDelimiters;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -95,7 +96,7 @@ final class AlternationOverlapPastAsciiTest extends TestCase
     #[Test]
     public function test_a_branch_pcre_cannot_be_asked_about_is_read_by_its_bytes(): void
     {
-        $class = '[/#~%!@;"\',&`='.implode('', array_map(\chr(...), [...range(0x01, 0x08), ...range(0x0E, 0x1F), 0x7F])).'è]';
+        $class = ProbeDelimiters::classOfEveryOne('è');
         $this->assertSame(1, preg_match('{^'.$class.'$}u', 'è'));
         $this->assertSame(0, preg_match('{^'.$class.'$}u', 'ö'));
 
