@@ -1522,7 +1522,7 @@
     switch (node.type) {
       case 'regex': detail = node.flags ? 'flags ' + node.flags : ''; kind = 'pattern'; break;
       case 'group': detail = node.kind + (node.name ? ' \u201c' + node.name + '\u201d' : '') + (typeof node.number === 'number' ? ' #' + node.number : ''); break;
-      case 'quantifier': detail = '{' + node.min + ',' + (node.max === null ? '' : node.max) + '} ' + node.mode; break;
+      case 'quantifier': detail = quantifierNotation(node) + ' ' + node.mode; break;
       case 'literal': detail = JSON.stringify(node.value === undefined ? node.bytes : node.value); break;
       case 'char_type': detail = '\\' + node.value; break;
       case 'anchor': detail = String(node.value); break;
@@ -1539,6 +1539,27 @@
         });
     }
     return { kind: kind, detail: detail };
+  }
+
+  // A quantifier the way a pattern writes it: \d{4} reads "{4}", a star
+  // a star — the bounds the engine counts, in the notation a reader typed.
+  function quantifierNotation(node) {
+    if (node.min === 0 && node.max === null) {
+      return '*';
+    }
+    if (node.min === 1 && node.max === null) {
+      return '+';
+    }
+    if (node.min === 0 && node.max === 1) {
+      return '?';
+    }
+    if (node.max === node.min) {
+      return '{' + node.min + '}';
+    }
+    if (node.max === null) {
+      return '{' + node.min + ',}';
+    }
+    return '{' + node.min + ',' + node.max + '}';
   }
 
   function renderTree(payload, regex) {
@@ -1561,7 +1582,8 @@
 
     // Each item is the tree item itself (the pattern the role asks for):
     // focusable, one tab stop for the whole tree, the arrow keys move
-    // between items. Every node is expanded; the attribute says so.
+    // between items. Every node opens expanded and folds by its chevron
+    // or the keys; the attribute says which.
     (function walk(node, parentList, level) {
       var index = nodes.length;
       var entry = { index: index, node: node, start: node.start, end: node.end, button: null };
@@ -1573,7 +1595,13 @@
       item.setAttribute('tabindex', index === 0 ? '0' : '-1');
       item.setAttribute('data-index', String(index));
       var row = describeRow(node);
+      var children = childNodes(node);
       var label = text('span', 'tree-row');
+      // Every row keeps the chevron's room, a leaf's empty, so the names
+      // line up whatever opens and whatever does not.
+      var toggle = text('span', 'tree-toggle' + (children.length ? '' : ' is-leaf'));
+      toggle.setAttribute('aria-hidden', 'true');
+      label.appendChild(toggle);
       label.appendChild(text('span', 'tree-kind', row.kind));
       if (row.detail) {
         label.appendChild(text('span', 'tree-value', row.detail));
@@ -1582,7 +1610,6 @@
       entry.button = item;
       item.appendChild(label);
       parentList.appendChild(item);
-      var children = childNodes(node);
       if (children.length) {
         item.setAttribute('aria-expanded', 'true');
         var list = text('ul', 'tree-children');
@@ -5648,19 +5675,76 @@
     }
     var index = Number(item.getAttribute('data-index'));
     var target = -1;
+    var opens = childNodes(nodes[index].node).length > 0;
     switch (event.key) {
-      case 'ArrowDown': target = Math.min(index + 1, nodes.length - 1); break;
-      case 'ArrowUp': target = Math.max(index - 1, 0); break;
+      case 'ArrowDown': target = visibleStep(index, 1); break;
+      case 'ArrowUp': target = visibleStep(index, -1); break;
       case 'Home': target = 0; break;
-      case 'End': target = nodes.length - 1; break;
-      case 'ArrowRight': target = childNodes(nodes[index].node).length ? index + 1 : index; break;
-      case 'ArrowLeft': target = parentIndex(index); break;
+      case 'End': target = visibleStep(nodes.length, -1); break;
+      case 'ArrowRight':
+        if (opens && !isExpanded(index)) {
+          setExpanded(index, true);
+          target = index;
+        } else {
+          target = opens ? index + 1 : index;
+        }
+        break;
+      case 'ArrowLeft':
+        if (opens && isExpanded(index)) {
+          setExpanded(index, false);
+          target = index;
+        } else {
+          target = parentIndex(index);
+        }
+        break;
       default: return;
     }
     event.preventDefault();
     if (target >= 0 && target !== index) {
       nodes[target].button.focus();
     }
+  });
+
+  // The tree pattern's folds: right opens a closed row, then enters it;
+  // left closes an open one, then climbs; up and down skip what a fold
+  // hides. A click on the chevron folds too.
+  function isExpanded(index) {
+    return nodes[index].button.getAttribute('aria-expanded') === 'true';
+  }
+
+  function setExpanded(index, open) {
+    if (nodes[index] && nodes[index].button.hasAttribute('aria-expanded')) {
+      nodes[index].button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  }
+
+  function isShown(index) {
+    var parent = nodes[index].button.parentNode.closest('[role="treeitem"]');
+    while (parent) {
+      if (parent.getAttribute('aria-expanded') === 'false') {
+        return false;
+      }
+      parent = parent.parentNode.closest('[role="treeitem"]');
+    }
+    return true;
+  }
+
+  function visibleStep(index, step) {
+    for (var i = index + step; i >= 0 && i < nodes.length; i += step) {
+      if (isShown(i)) {
+        return i;
+      }
+    }
+    return Math.min(index, nodes.length - 1);
+  }
+
+  el.treeNodes.addEventListener('click', function (event) {
+    var toggle = event.target.closest('.tree-toggle');
+    if (!toggle || toggle.classList.contains('is-leaf')) {
+      return;
+    }
+    var index = Number(toggle.closest('[role="treeitem"]').getAttribute('data-index'));
+    setExpanded(index, !isExpanded(index));
   });
 
   function parentIndex(index) {

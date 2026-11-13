@@ -6284,6 +6284,30 @@ body.search-open {
 .tree-kind {
   color: var(--ink-soft);
 }
+/* The chevron: a leaf keeps its room, so the names line up; an open row
+   turns it down, the dialect every tree of this web speaks. */
+.tree-toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: .9rem;
+  margin-right: -.2rem;
+  color: var(--ink-soft);
+}
+.tree-toggle:not(.is-leaf)::before {
+  content: '›';
+  transition: transform .12s ease;
+}
+.tree-toggle:not(.is-leaf):hover {
+  color: var(--amber);
+}
+.tree-item[aria-expanded="true"] > .tree-row .tree-toggle::before {
+  transform: rotate(90deg);
+}
+.tree-item[aria-expanded="false"] > .tree-children {
+  display: none;
+}
 .tree-value {
   min-width: 0;
   /* A value breaks between its words first ("{4,4} greedy"), inside a
@@ -6298,6 +6322,9 @@ body.search-open {
   color: var(--ink-soft);
 }
 .tree-detail {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -6307,6 +6334,7 @@ body.search-open {
   padding: .55rem .75rem;
   font-size: .85rem;
   line-height: 1.5;
+  background: var(--panel);
   border-top: 1px solid var(--line-soft);
 }
 /* No tree to read: the error block above says why, and the pattern strip
