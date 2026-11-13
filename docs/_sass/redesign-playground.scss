@@ -1,0 +1,706 @@
+/* PHPRegex.com — the playground, on the white page.
+ *
+ * Read after the documentation's layer, in its voice: the tool is one
+ * window set on a faint grid, its toolbar (pattern, flags, engine, Run)
+ * on top, the examples under it, and two white cards on a grey canvas —
+ * the text on the left, the answers on the right behind a strip of
+ * underlined tabs. Controls are segmented and framed by rings, the one
+ * filled button is Run, in ink. Nothing here moves a pane or changes what
+ * the script measures: only surfaces, edges, type and radii.
+ */
+
+/* ==========================================================================
+   Tokens — the window's three surfaces, measured with the page's
+   ========================================================================== */
+
+@mixin playground-light {
+  --pg-window: #FFFFFF;
+  --pg-canvas: #F9FAFB;
+  --pg-surface: #FFFFFF;
+  --pg-grid: rgba(3, 7, 18, 0.05);
+  --pg-lift: 0 1px 2px rgba(3, 7, 18, 0.12);
+  --pg-strip-shadow: 0 6px 12px -10px rgba(3, 7, 18, 0.25);
+}
+
+@mixin playground-dark {
+  --pg-window: #0B1120;
+  --pg-canvas: #030712;
+  --pg-surface: #0B1120;
+  --pg-grid: rgba(255, 255, 255, 0.05);
+  --pg-lift: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --pg-strip-shadow: 0 6px 12px -10px rgba(0, 0, 0, 0.7);
+}
+
+:root,
+[data-theme='light'] {
+  @include playground-light;
+}
+
+[data-theme='dark'] {
+  @include playground-dark;
+}
+
+@mixin pg-label {
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* ==========================================================================
+   The stage — a grid that fades out under the window
+   ========================================================================== */
+
+.hero-playground {
+  position: relative;
+  isolation: isolate;
+}
+
+.hero-playground::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: 34rem;
+  background-image:
+    linear-gradient(to right, var(--pg-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--pg-grid) 1px, transparent 1px);
+  background-size: 2.5rem 2.5rem;
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 70% 100% at 50% 0, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 100%);
+  mask-image: radial-gradient(ellipse 70% 100% at 50% 0, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   The window
+   ========================================================================== */
+
+.playground {
+  border-radius: var(--radius-xl);
+  background: var(--pg-window);
+  box-shadow: 0 0 0 1px var(--line-soft), var(--shadow-2);
+}
+
+/* ---- Toolbar: the pattern and what runs it -------------------------------- */
+
+.pg-patternbar {
+  gap: .625rem .75rem;
+  padding: .875rem .875rem .75rem;
+}
+
+.pg-editor.pg-editor-pattern .pg-input,
+.pg-editor.pg-editor-pattern .pg-mirror {
+  padding: .7rem .9rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.pg-editor.pg-editor-pattern .pg-mirror {
+  background: var(--pg-surface);
+}
+
+.pg-editor.pg-editor-pattern .pg-input {
+  border: 0;
+  border-radius: var(--radius-l);
+  box-shadow: inset 0 0 0 1px var(--line-mid), var(--shadow-1);
+  transition: box-shadow .15s ease;
+}
+
+.pg-editor.pg-editor-pattern .pg-mirror {
+  border: 0;
+  border-radius: var(--radius-l);
+}
+
+.pg-editor.pg-editor-pattern .pg-input:focus-visible {
+  outline: 0;
+  box-shadow: inset 0 0 0 1px var(--amber), 0 0 0 4px var(--amber-tint);
+}
+
+.pg-editor-pattern .pg-field-count {
+  right: .8rem;
+  background: linear-gradient(to left, var(--pg-surface) 38%, transparent);
+  color: var(--mute);
+}
+
+.pg-controls {
+  gap: .5rem;
+}
+
+/* Flags: a segmented control. The pressed letters stand up from the track
+   in white, the accent in their ink. */
+.pg-flags {
+  gap: 2px;
+  min-height: 2.25rem;
+  padding: 3px;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--wash-strong);
+}
+
+.pg-flag,
+.pg-flags-more > summary {
+  min-width: 1.75rem;
+  border: 0;
+  border-radius: 5px;
+  color: var(--ink-soft);
+  font-size: .8125rem;
+}
+
+.pg-flag:hover,
+.pg-flags-more > summary:hover,
+.pg-flags-more[open] > summary {
+  color: var(--ink);
+  background: var(--wash-strong);
+}
+
+.pg-flag[aria-pressed="true"] {
+  color: var(--amber);
+  font-weight: 650;
+  background: var(--pg-surface);
+  box-shadow: var(--pg-lift), 0 0 0 1px var(--line-soft);
+}
+
+.pg-flags-more.is-active > summary {
+  color: var(--amber);
+  background: var(--pg-surface);
+}
+
+.pg-flags-menu {
+  padding: .375rem;
+  border: 0;
+  border-radius: var(--radius-l);
+  background: var(--pg-surface);
+  box-shadow: var(--shadow-2);
+}
+
+.pg-flags-menu .pg-flag {
+  border-radius: var(--radius-m);
+  box-shadow: none;
+  background: transparent;
+}
+
+.pg-flags-menu .pg-flag:hover:not(:disabled) {
+  background: var(--wash);
+}
+
+.pg-flag-letter {
+  border: 0;
+  border-radius: var(--radius-s);
+  background: var(--wash-strong);
+}
+
+.pg-flag[aria-pressed="true"] .pg-flag-letter {
+  background: var(--amber-tint);
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+}
+
+.pg-flag[data-tip]::after,
+.pg-patternbar .pg-run[data-tip]::after {
+  border-radius: var(--radius-m);
+  font-size: .75rem;
+}
+
+.pg-patternbar .pg-version {
+  min-height: 2.25rem;
+  padding: .3rem .6rem;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--pg-surface);
+  box-shadow: inset 0 0 0 1px var(--line-mid);
+  font-size: .8125rem;
+}
+
+.pg-patternbar .pg-version:hover,
+.pg-patternbar .pg-version:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--amber);
+}
+
+/* Run is the window's one filled control: the ink, as every primary
+   action on the site. */
+.pg-patternbar .pg-run {
+  min-height: 2.25rem;
+  padding: .3rem .95rem .3rem .8rem;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: .8125rem;
+  box-shadow: var(--shadow-1);
+}
+
+.pg-patternbar .pg-run:hover,
+.pg-patternbar .pg-run:focus-visible {
+  background: var(--ink-hover);
+}
+
+.pg-run-icon {
+  width: .65rem;
+  height: .65rem;
+  color: var(--amber);
+}
+
+[data-theme='dark'] .pg-run-icon {
+  color: var(--amber-deep);
+}
+
+.pg-state {
+  min-height: 2.25rem;
+}
+
+/* ---- Examples: pills under the toolbar ------------------------------------ */
+
+.pg-quickbar {
+  gap: .5rem .75rem;
+  padding: 0 .875rem .875rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.pg-quick-label {
+  @include pg-label;
+}
+
+.pg-examples {
+  gap: .375rem;
+  padding-bottom: .125rem;
+}
+
+.pg-example {
+  min-height: 1.875rem;
+  padding: .2rem .7rem .2rem .25rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--pg-surface);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  color: var(--ink-soft);
+  font-size: .8125rem;
+}
+
+.pg-example:hover,
+.pg-example:focus-visible {
+  color: var(--ink);
+  background: var(--amber-tint);
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+}
+
+.pg-example-glyph {
+  height: 1.375rem;
+  padding: 0 .45rem;
+  border-radius: var(--radius-pill);
+  background: var(--amber-tint);
+  color: var(--amber);
+  font-weight: 500;
+}
+
+.pg-example.is-danger .pg-example-glyph {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.pg-example.is-danger:hover,
+.pg-example.is-danger:focus-visible {
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 35%, transparent);
+}
+
+/* The door to the projects: a pill like its neighbours, the faces first. */
+.pg-findings-browse > summary {
+  min-height: 1.875rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--pg-surface);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  font-size: .8125rem;
+}
+
+.pg-findings-browse > summary:hover,
+.pg-findings-browse[open] > summary {
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+  background: var(--amber-tint);
+}
+
+.pg-findings-body {
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--pg-surface);
+  box-shadow: var(--shadow-2);
+}
+
+.pg-findings-filter {
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--wash);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+/* ==========================================================================
+   The canvas and its two cards
+   ========================================================================== */
+
+.pg-body {
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--pg-canvas);
+}
+
+/* The text card: a label row, then the editor. */
+.pg-label {
+  @include pg-label;
+}
+
+.pg-count,
+.pg-match-summary {
+  font-size: .75rem;
+  color: var(--mute);
+}
+
+.pg-editor-subject .pg-input,
+.pg-editor-subject .pg-mirror {
+  padding: .875rem 1rem;
+  font-size: .875rem;
+  line-height: 1.65;
+}
+
+.pg-editor-subject .pg-mirror {
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--pg-surface);
+}
+
+.pg-editor-subject .pg-input {
+  border: 0;
+  border-radius: var(--radius-xl);
+  box-shadow: inset 0 0 0 1px var(--line-soft), var(--shadow-1);
+  transition: box-shadow .15s ease;
+}
+
+.pg-editor-subject .pg-input:focus-visible {
+  outline: 0;
+  box-shadow: inset 0 0 0 1px var(--amber), 0 0 0 4px var(--amber-tint);
+}
+
+.pg-match-details > summary {
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+/* The answers card. */
+.pg-results {
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--pg-surface);
+  box-shadow: inset 0 0 0 1px var(--line-soft), var(--shadow-1);
+}
+
+@media (min-width: 1024px) {
+  .pg-results > .pg-tabs {
+    background: var(--pg-surface);
+  }
+}
+
+/* Tabs: words on a hairline, the open one underlined in the accent. */
+.pg-tabs {
+  gap: .25rem;
+  padding: 0 .75rem;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: inset 0 -1px 0 var(--line-soft);
+}
+
+.pg-tabs.is-scrolled {
+  box-shadow: inset 0 -1px 0 var(--line-soft), var(--pg-strip-shadow);
+}
+
+.pg-tab {
+  min-height: 2.75rem;
+  padding: .3rem .6rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--mute);
+  font-size: .8125rem;
+  font-weight: 500;
+}
+
+.pg-tab:hover {
+  color: var(--ink);
+  background: transparent;
+  box-shadow: inset 0 -2px 0 var(--line-mid);
+}
+
+.pg-tab[aria-selected="true"] {
+  color: var(--ink);
+  font-weight: 600;
+  background: transparent;
+  box-shadow: inset 0 -2px 0 var(--amber);
+}
+
+.pg-tab:focus-visible {
+  outline-offset: -4px;
+  border-radius: var(--radius-m);
+}
+
+.pg-tool {
+  padding: 1rem 1.125rem 1.125rem;
+  font-size: .875rem;
+}
+
+/* ---- Inside the answers ---------------------------------------------------- */
+
+.pg-voice {
+  padding: 3px;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--wash-strong);
+}
+
+.pg-voice-option {
+  min-height: 1.75rem;
+  border-radius: 5px;
+  font-size: .8125rem;
+  color: var(--ink-soft);
+}
+
+.pg-voice-option[aria-checked="true"] {
+  color: var(--ink);
+  font-weight: 600;
+  background: var(--pg-surface);
+  box-shadow: var(--pg-lift), 0 0 0 1px var(--line-soft);
+}
+
+.tree-pattern {
+  padding: .75rem 1rem;
+  border-radius: var(--radius-l);
+  background: var(--wash);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.tree-row {
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+}
+
+.tree-detail {
+  border-top: 1px solid var(--line-soft);
+  background: var(--pg-canvas);
+}
+
+.pg-tool-button,
+.pg-tool-chip {
+  min-height: 1.875rem;
+  padding: .3rem .75rem;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--pg-surface);
+  box-shadow: inset 0 0 0 1px var(--line-mid);
+  font-size: .8125rem;
+  font-weight: 500;
+}
+
+.pg-tool-button:hover,
+.pg-tool-chip:hover {
+  box-shadow: inset 0 0 0 1px var(--amber);
+}
+
+/* A dangerous verdict's one action is filled like Run, in the ink. */
+.pg-tool-button.is-primary {
+  color: var(--paper);
+  background: var(--ink);
+  box-shadow: var(--shadow-1);
+}
+
+.pg-tool-button.is-primary:hover,
+.pg-tool-button.is-primary:focus-visible {
+  background: var(--ink-hover);
+  box-shadow: var(--shadow-1);
+}
+
+.pg-tool-button[aria-pressed="true"] {
+  background: var(--amber-tint);
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+}
+
+/* What a tool hands back to copy (a translation, a formatted pattern):
+   a quiet well in the card, the accent kept for what is selected. */
+.pg-tool-code {
+  padding: .625rem .8rem;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--wash);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  font-size: .8125rem;
+  line-height: 1.6;
+}
+
+.pg-tool-row label {
+  @include pg-label;
+}
+
+.pg-tool-row select,
+.pg-tool-row input[type="number"] {
+  min-height: 2rem;
+  padding: .25rem .5rem;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--pg-surface);
+  box-shadow: inset 0 0 0 1px var(--line-mid);
+  font-size: .8125rem;
+}
+
+/* ---- A finding, in the text's place ----------------------------------------
+ * The card the linter's verdict opens is a card like its neighbour: the
+ * surface, the ring, the code in a well, and its one action in the ink. */
+
+.pg-finding-card {
+  padding: 1rem 1.125rem;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--pg-surface);
+  box-shadow: inset 0 0 0 1px var(--line-soft), var(--shadow-1);
+}
+
+.pg-finding-notice {
+  border-left: 0;
+  border-radius: var(--radius-m);
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+}
+
+.pg-snippet {
+  border-radius: var(--radius-m);
+  background: var(--wash);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.pg-finding-actions button {
+  min-height: 2rem;
+  padding-inline: .8rem;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--pg-surface);
+  box-shadow: inset 0 0 0 1px var(--line-mid);
+  font-weight: 500;
+}
+
+.pg-finding-actions button:hover,
+.pg-finding-actions button:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--amber);
+}
+
+.pg-finding-actions .pg-finding-copy {
+  color: var(--paper);
+  background: var(--ink);
+  box-shadow: var(--shadow-1);
+  font-weight: 600;
+}
+
+.pg-finding-actions .pg-finding-copy:hover,
+.pg-finding-actions .pg-finding-copy:focus-visible {
+  background: var(--ink-hover);
+  box-shadow: var(--shadow-1);
+}
+
+/* ==========================================================================
+   Under the canvas
+   ========================================================================== */
+
+.pg-meta {
+  padding: .75rem 1rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.pg-share-actions button,
+.pg-privacy {
+  min-height: 1.75rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  font-size: .75rem;
+}
+
+.pg-share-actions button:hover,
+.pg-share-actions button:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+  background: var(--amber-tint);
+}
+
+.pg-loader {
+  background: var(--veil);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.pg-loader-card {
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--pg-surface);
+  box-shadow: var(--shadow-2);
+}
+
+/* ==========================================================================
+   Phones — the window keeps its edges, its insides tighten
+   ========================================================================== */
+
+@media (max-width: 639px) {
+  /* A phone spends no width on the stage around the window. */
+  .hero-playground .hero-inner {
+    padding-inline: .625rem;
+  }
+
+  .playground {
+    border-radius: var(--radius-l);
+  }
+
+  .pg-patternbar {
+    padding: .75rem .75rem .625rem;
+  }
+
+  .pg-quickbar {
+    padding: 0 .75rem .75rem;
+  }
+
+  .pg-body {
+    padding: .75rem;
+  }
+
+  .pg-tool {
+    padding: .875rem .875rem 1rem;
+  }
+
+  .pg-patternbar .pg-version,
+  .pg-patternbar .pg-run,
+  .pg-state {
+    min-height: 2.5rem;
+  }
+
+  .pg-flags {
+    min-height: 2.5rem;
+  }
+}
+
+/* ==========================================================================
+   A project's findings page — the page's own head over the window
+   ========================================================================== */
+
+.finding-kicker {
+  @include pg-label;
+}
+
+.finding-kicker a {
+  color: var(--amber);
+  text-decoration: none;
+}
+
+.finding-kicker a:hover {
+  color: var(--amber-deep);
+}
+
+.finding-title {
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+.finding-meta {
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  color: var(--mute);
+}
