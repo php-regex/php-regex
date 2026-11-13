@@ -3152,13 +3152,16 @@ a:focus-visible .article-nav-arrow {
 
 .page-filter {
   position: sticky;
-  top: calc(var(--header-h) + .75rem);
+  /* The band meets the header: a gap above it left a strip where the
+     scrolled prose showed through between the two bars. The air the gap
+     gave the field moves inside the band, where the paper covers it. */
+  top: var(--header-h);
   z-index: 5;
   display: flex;
   align-items: center;
   gap: .75rem;
   margin: 0 0 2rem;
-  padding-block: .5rem;
+  padding-block: .75rem .5rem;
   background: var(--paper);
   border-bottom: 1px solid var(--line-soft);
 }
