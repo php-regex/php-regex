@@ -186,6 +186,7 @@ final class RedosAnalyzerTest extends TestCase
         yield 'a group repeated {0}' => ['pattern' => '/((?:x+)+){0}a(?1)/', 'subject' => 'axx', 'end' => 13];
         yield 'a group inside a body repeated {0}' => ['pattern' => '/(?:b|((?:x+)+)){0}a(?1)/', 'subject' => 'axx', 'end' => 17];
         yield 'a group of a DEFINE block' => ['pattern' => '/(?(DEFINE)(?<n>(?:x+)+))a(?&n)/', 'subject' => 'axx', 'end' => 25];
+        yield 'a DEFINE block inside a body repeated {0}' => ['pattern' => '/(?:(?(DEFINE)(?<n>(?:x+)+))){0}^(?&n)$/', 'subject' => 'xxx', 'end' => 30];
     }
 
     #[Test]

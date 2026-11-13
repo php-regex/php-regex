@@ -669,7 +669,9 @@ final class RedosProfiler extends AbstractNodeVisitor
             return true;
         }
 
-        foreach ($this->getChildren($node) as $child) {
+        // Every child, a DEFINE block's content included: the groups it
+        // declares run through a call.
+        foreach ($node->getChildren() as $child) {
             if ($this->holdsCapturingGroup($child)) {
                 return true;
             }
