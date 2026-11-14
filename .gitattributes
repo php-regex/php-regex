@@ -55,6 +55,7 @@
 /art                    export-ignore
 /wasm                   export-ignore
 /build                  export-ignore
+/build/php74/**         linguist-generated=true
 /corpus                 export-ignore
 /corpus.json            export-ignore
 /var                    export-ignore

@@ -71,6 +71,7 @@ reviews:
   # reviewed, not their output.
   path_filters:
     - "!docs/assets/findings/**"
+    - "!build/php74/**"
     - "!docs/_findings/**"
     - "!docs/assets/playground/bundle.json"
     - "!docs/_data/playground.json"

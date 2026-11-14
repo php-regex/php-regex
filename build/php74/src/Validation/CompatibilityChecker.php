@@ -1,0 +1,93 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Parser\Validation;
+
+use PHPRegex\Parser\Cache\ArrayCache;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\PhpVersionGates;
+use PHPRegex\Parser\RegexParser;
+
+/**
+ * Judges a pattern on every PHP version a rule of the library changes at,
+ * with every PCRE2 release from 10.32, the oldest PHP bundles, to the
+ * newest the library knows: the
+ * validator itself runs at each point, so the answer can never drift from
+ * validate(). One answer comes from the running engine: a Unicode property
+ * name ("\p{...}", "\P{...}") is looked up there, at every point, unless the
+ * library knows the PCRE2 release that added it, which then decides at each
+ * point. An undated name is accepted at every point when the running engine
+ * knows it, and refused at every point when it does not.
+ *
+ *     $compatibility = (new CompatibilityChecker())->check('/(?<=a\Kb)c/');
+ *     $compatibility->isValidEverywhere(); // false: PHP 8.5 refuses \K there
+ *
+ * A pattern is never a reason to throw: one no target can read, a missing
+ * delimiter included, gets a verdict refusing it at every point.
+ *
+ * Each point is judged by the base parser for that target
+ * (RegexParser::withTarget()): the locale, recursion depth, limits and
+ * cache of the base hold at every point, while its own PHP and PCRE2 are
+ * only judged where a point names them.
+ */
+final class CompatibilityChecker
+{
+    /**
+     */
+    private ?RegexParser $base = null;
+    private const OLDEST_RELEASE = 32;
+
+    /**
+     * @param RegexParser|null $base the parser whose options every point keeps; null reads the defaults
+     *                               under the runtime's locale, with a cache of its own for each check
+     */
+    public function __construct(?RegexParser $base = null)
+    {
+        $this->base = $base;
+    }
+
+    public function check(string $regex): PatternCompatibility
+    {
+        // Targets that read a pattern the same way share one cached tree:
+        // a patch point runs the validator only.
+        $base = $this->base ?? RegexParser::create(['cache' => new ArrayCache()]);
+        $locale = $base->target()->locale;
+
+        $verdicts = [];
+        foreach (PhpVersionGates::POINTS as $php) {
+            foreach (self::releases() as $release) {
+                $parser = $base->withTarget(new PcreTarget($php, $release, $locale));
+                $verdicts[] = new TargetVerdict($parser->target(), $parser->validate($regex));
+            }
+        }
+
+        return new PatternCompatibility($verdicts);
+    }
+
+    /**
+     * 10.32, the oldest release PHP bundles, up to the newest release a
+     * PCRE2 behaviour the library knows arrived in.
+     *
+     * @return list<string>
+     */
+    private static function releases(): array
+    {
+        $newest = self::OLDEST_RELEASE;
+        foreach (PcreFeature::cases() as $feature) {
+            $newest = max($newest, (int) explode('.', $feature->release())[1]);
+        }
+
+        return array_map(static fn (int $minor): string => '10.'.$minor, range(self::OLDEST_RELEASE, $newest));
+    }
+}

@@ -1,0 +1,1537 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Parser\Analysis;
+
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\CalloutNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ControlCharNode;
+use PHPRegex\Parser\Node\DefineNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\KeepNode;
+use PHPRegex\Parser\Node\LimitMatchNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Bytes;
+
+/**
+ * @internal
+ *
+ * What a node reads, from the tree alone, for CaptureShapeAnalyzer: its
+ * length range, its values when they are a small finite set, and the facts
+ * every value satisfies. An answer depends on the node, on the options in
+ * force where it stands, on the groups it calls and, for an alternation, on
+ * where the case being read puts it: each node is measured once per case,
+ * its lengths once whatever the case. forgetMarks() drops every answer of
+ * a match when the next case is read, and keeps the lengths and the facts
+ * of a group.
+ *
+ * Every answer is sound: when the tree alone cannot tell, the values are
+ * unknown and the facts are false.
+ *
+ * @phpstan-import-type LengthRange from LengthRangeCalculator
+ *
+ * @phpstan-type Facts array{min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool, decimalInt: bool, lowercase: bool, uppercase: bool}
+ */
+final class CaptureFacts
+{
+    /**
+     */
+    private LengthRangeCalculator $calculator;
+    /**
+     * @var \SplObjectStorage<NodeInterface, LengthRange>
+     */
+    private \SplObjectStorage $lengths;
+    /**
+     * @var \SplObjectStorage<NodeInterface, Facts>
+     */
+    private \SplObjectStorage $facts;
+    /**
+     * Past this many strings, the values are unknown.
+     */
+    public const MAX_VALUES = 32;
+
+    /**
+     * Bound literal expansion independently of pattern size and nesting.
+     */
+    private const MAX_VALUE_BYTES = 4096;
+
+    private const MAX_TOTAL_VALUE_BYTES = 65536;
+
+    /**
+     * \D, \W, \s, \h, \v and \R never match "0".
+     */
+    private const ZERO_FREE_TYPES = ['D', 'W', 's', 'h', 'v', 'R'];
+
+    /**
+     * POSIX classes that never hold "0", whatever the case.
+     */
+    private const ZERO_FREE_POSIX = ['alpha', 'upper', 'lower', 'space', 'blank', 'cntrl', 'punct'];
+
+    /**
+     * \d, \s, \h, \v, \R and \W never match an ASCII letter, caseless or
+     * not, under UCP too: preg_match('/^\W$/i', 'A') is 0.
+     */
+    private const LETTER_FREE_TYPES = ['d', 's', 'h', 'v', 'R', 'W'];
+
+    /**
+     * POSIX classes that never hold an ASCII letter, caseless or not, under
+     * UCP too.
+     */
+    private const LETTER_FREE_POSIX = ['digit', 'space', 'blank', 'cntrl', 'punct'];
+
+    /**
+     * Unicode properties that hold no ASCII letter when read with case:
+     * titlecase letters and numbers. Caseless, \p{Lt} matches "A".
+     */
+    private const LETTER_FREE_PROPERTIES = ['Lt', 'N', 'Nd'];
+
+    /**
+     * The most digits a decimal integer may run to and still be below
+     * PHP_INT_MAX, which (int) caps: 18 on a 64-bit build, 9 on a 32-bit one.
+     */
+    private const MAX_INT_DIGITS = \PHP_INT_SIZE >= 8 ? 18 : 9;
+
+    /**
+     * Groups that read what their content reads.
+     *
+     * @var list<GroupType>|null
+     */
+    private static ?array $READ_THROUGH = null;
+
+    /**
+     * @return list<GroupType>
+     */
+    private static function READ_THROUGH(): array
+    {
+        return self::$READ_THROUGH ??= [GroupType::Capturing(), GroupType::Named(), GroupType::NonCapturing(), GroupType::Atomic(), GroupType::BranchReset(), GroupType::InlineFlags()];
+    }
+
+    /**
+     * Groups that read no character of the subject: the lookarounds, and a
+     * substring scan, which matches inside a capture already read.
+     *
+     * @var list<GroupType>|null
+     */
+    private static ?array $LOOKAROUNDS = null;
+
+    /**
+     * @return list<GroupType>
+     */
+    private static function LOOKAROUNDS(): array
+    {
+        return self::$LOOKAROUNDS ??= [GroupType::LookaheadPositive(), GroupType::LookaheadNegative(), GroupType::LookbehindPositive(), GroupType::LookbehindNegative(), GroupType::ScanSubstring()];
+    }
+
+    /**
+     * @var \SplObjectStorage<NodeInterface, Facts>
+     *
+     */
+    private \SplObjectStorage $groupFacts;
+
+    /**
+     * Characters and classes the engine reads caselessly, by object id: a
+     * value that may fold is not read there.
+     *
+     * @var array<int, true>
+     */
+    private array $caseless = [];
+
+    /**
+     * Whether a group runs itself again through the calls it holds, by
+     * object id.
+     *
+     * @var array<int, bool>
+     */
+    private array $recursive = [];
+
+    /**
+     * Whether the body of a called group holds a fact, by fact then by
+     * object id.
+     *
+     * @var array<string, array<int, bool>>
+     */
+    private array $calledFacts = [];
+
+    /**
+     * The values of the body of a called group, for a match (0) and for a
+     * scan (1), by object id.
+     *
+     * @var array<int, array<int, list<string>|null>>
+     */
+    private array $calledValues = [];
+
+    /**
+     * A node was marked since the called bodies were last read.
+     */
+    private bool $marked = false;
+
+    /**
+     * How many times the body of a called group was read.
+     */
+    private int $bodiesRead = 0;
+
+    /**
+     * Nodes the scan reaches before any part of the pattern may have read
+     * a character, by object id: an alternation there is read at the start.
+     *
+     * @var array<int, true>
+     */
+    private array $atStart = [];
+
+    /**
+     * Nodes nothing in the pattern follows, by object id: an alternation
+     * there is not left by backtracking from a later part that fails.
+     *
+     * @var array<int, true>
+     */
+    private array $atEnd = [];
+    /**
+     */
+    private bool $unicode = false;
+    /**
+     */
+    private bool $ucp = false;
+    /**
+     */
+    private ?GroupIndex $groups = null;
+
+    /**
+     * @param bool            $unicode lengths count code points, and literals read as UTF-8
+     * @param bool            $ucp     \d and [[:digit:]] match non-ASCII digits: /u, or (*UCP)
+     * @param GroupIndex|null $groups  the groups of the pattern, which its calls read
+     */
+    public function __construct(
+        bool $unicode = false,
+        bool $ucp = false,
+        ?GroupIndex $groups = null
+    ) {
+        $this->unicode = $unicode;
+        $this->ucp = $ucp;
+        $this->groups = $groups;
+        $this->calculator = new LengthRangeCalculator($unicode, \Closure::fromCallable([$this, 'calledBody']));
+        $this->lengths = new \SplObjectStorage();
+        $this->facts = new \SplObjectStorage();
+        $this->groupFacts = new \SplObjectStorage();
+    }
+
+    /**
+     * The length range of what the node reads.
+     *
+     * @return LengthRange
+     */
+    public function lengths(NodeInterface $node): array
+    {
+        return $this->lengths[$node] ??= $node->accept($this->calculator);
+    }
+
+    /**
+     * What the node reads, as a capture holds it once set: its length range,
+     * its values, whether every value is truthy (nonFalsy), whether every
+     * value is a non-empty run of ASCII digits (digitsOnly), whether every
+     * value is a decimal integer as (string) (int) $v === $v reads it
+     * (decimalInt), and whether no value holds an ASCII letter A-Z
+     * (lowercase) or a-z (uppercase).
+     *
+     * A group's facts hold for every match of a scan, so they never take
+     * the dominance of a zero-width first branch: a scan resumes after an
+     * empty match, where "^" no longer matches.
+     *
+     * @return Facts
+     */
+    public function of(NodeInterface $node, bool $group = false): array
+    {
+        $cache = $group ? $this->groupFacts : $this->facts;
+        if (isset($cache[$node])) {
+            return $cache[$node];
+        }
+
+        [$min, $max] = $this->lengths($node);
+        $values = $this->values($node, $group);
+
+        return $cache[$node] = [
+            'min' => $min,
+            'max' => $max,
+            'values' => $values,
+            'nonFalsy' => $this->nonFalsy($node, $min, $values),
+            // a digit run of any length is digits or the empty string; the
+            // readers compose the empty arm with the length themselves
+            'digitsOnly' => $this->digitsOnly($node),
+            'decimalInt' => $this->decimalInt($node, $values, $group),
+            // strtolower() and strtoupper() fold ASCII alone since PHP 8.2
+            'lowercase' => null !== $values ? self::allValues($values, static fn (string $value): bool => Ascii::lower($value) === $value) : $this->holdsNoLetter($node, true),
+            'uppercase' => null !== $values ? self::allValues($values, static fn (string $value): bool => Ascii::upper($value) === $value) : $this->holdsNoLetter($node, false),
+        ];
+    }
+
+    /**
+     * What each branch reads, when the node is an alternation, seen through
+     * the groups that read what their content reads: (a|\d) reads 'a' or a
+     * digit. Empty for any other node.
+     *
+     * @return list<Facts>
+     */
+    public function arms(NodeInterface $node, bool $group = false): array
+    {
+        $node = self::readThrough($node);
+        if (!$node instanceof AlternationNode) {
+            return [];
+        }
+
+        return array_map(fn (NodeInterface $branch): array => $this->of($branch, $group), $node->alternatives);
+    }
+
+    /**
+     * How many times the body of a called group was read: once for each
+     * fact asked of it, however many calls run it, and once more after the
+     * analysis marked a node.
+     */
+    public function bodiesRead(): int
+    {
+        return $this->bodiesRead;
+    }
+
+    /**
+     * Forgets the marks of the case read before, and the facts of a match
+     * they moved: a node two cases share may stand at the start in one and
+     * after a character in the other. Lengths and the facts of a group,
+     * which no mark moves, are kept.
+     */
+    public function forgetMarks(): void
+    {
+        $this->atStart = $this->atEnd = [];
+        $this->facts = new \SplObjectStorage();
+        $this->marked = true;
+    }
+
+    /**
+     * Marks a node the scan reaches before any part of the pattern may have
+     * read a character. The analysis collects them before it asks for facts.
+     */
+    public function markAtStart(NodeInterface $node): void
+    {
+        $this->atStart[spl_object_id($node)] = true;
+        $this->marked = true;
+    }
+
+    /**
+     * Marks a character or a class the engine reads caselessly. The
+     * analysis collects them before it asks for facts.
+     */
+    public function markCaseless(NodeInterface $node): void
+    {
+        $this->caseless[spl_object_id($node)] = true;
+    }
+
+    /**
+     * Marks a node nothing in the pattern follows. The analysis collects
+     * them before it asks for facts.
+     */
+    public function markAtEnd(NodeInterface $node): void
+    {
+        $this->atEnd[spl_object_id($node)] = true;
+        $this->marked = true;
+    }
+
+    /**
+     * The values when they stay within the bounds of a value set: at most
+     * MAX_VALUES strings of at most 4,096 bytes each, 65,536 bytes together.
+     * Null past any of them. The analysis checks the values it builds from
+     * other ones, a newline added after each or the branches of a reset
+     * joined, against the same bounds as those it reads.
+     *
+     * @param list<string> $values
+     *
+     * @return list<string>|null
+     */
+    public static function bounded(array $values): ?array
+    {
+        if (\count($values) > self::MAX_VALUES) {
+            return null;
+        }
+
+        $bytes = 0;
+        foreach ($values as $value) {
+            $length = \strlen($value);
+            if ($length > self::MAX_VALUE_BYTES || $length > self::MAX_TOTAL_VALUE_BYTES - $bytes) {
+                return null;
+            }
+
+            $bytes += $length;
+        }
+
+        return $values;
+    }
+
+    /**
+     * The strings a node can match, when they are a small finite set read
+     * from literals alone.
+     *
+     * @return list<string>|null
+     */
+    private function values(NodeInterface $node, bool $scan = false): ?array
+    {
+        switch (true) {
+            case true === $node instanceof LiteralNode:
+                return \strlen($node->value) > self::MAX_VALUE_BYTES || $this->folds($node->value, $this->readsCaselessly($node)) ? null : [$node->value];
+            case true === $node instanceof CharLiteralNode:
+                return $this->character($node->codePoint, $this->readsCaselessly($node));
+            case true === $node instanceof SequenceNode:
+                return $this->product($this->valuesOf($node->children, $scan));
+            case true === $node instanceof AlternationNode:
+                return $this->alternationValues($node, $scan);
+            case true === $node instanceof GroupNode:
+                return self::isLookaround($node) ? [''] : $this->values($node->child, $scan);
+            case true === $node instanceof QuantifierNode:
+                return $this->repeat($node, $scan);
+            case true === $node instanceof CharClassNode:
+                return $this->classMembers($node);
+            case true === $node instanceof AnchorNode:
+            case true === $node instanceof AssertionNode:
+            case true === $node instanceof CommentNode:
+            case true === $node instanceof KeepNode:
+            case true === $node instanceof DefineNode:
+            case true === $node instanceof CalloutNode:
+                return [''];
+            case true === $node instanceof PcreVerbNode:
+                return 'ACCEPT' === $node->name ? null : [''];
+            case true === $node instanceof SubroutineNode:
+                return null === ($body = $this->calledBody($node)) ? null : $this->calledValues($body, $scan);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * The body a call runs, read with the options of its group; null for a
+     * call of the whole pattern or of no group, and for a group that runs
+     * itself again: what a recursion reads is unknown.
+     */
+    private function calledBody(SubroutineNode $call): ?NodeInterface
+    {
+        $group = (($nullsafeVariable1 = $this->groups) ? $nullsafeVariable1->groupsCalledBy($call) : null)[0] ?? null;
+        if (null === $group) {
+            return null;
+        }
+
+        if (!isset($this->recursive[$id = spl_object_id($group)])) {
+            $this->markRecursion($group);
+        }
+
+        return $this->recursive[$id] ? null : $group->child;
+    }
+
+    /**
+     * Records, for the group and every group its calls reach, whether it
+     * runs itself again: whether it calls itself, or shares a ring of calls
+     * with another group. The rings are the strongly connected parts of the
+     * call graph, found in one walk of it (Tarjan's): following the calls
+     * of each group to their end instead read the graph once per group. A
+     * group an earlier walk recorded is not walked again.
+     */
+    private function markRecursion(GroupNode $start): void
+    {
+        $order = [];
+        $low = [];
+        $selfCalls = [];
+        $stack = [];
+        $onStack = [];
+        $frames = [];
+        $enter = function (GroupNode $group) use (&$order, &$low, &$stack, &$onStack, &$frames): void {
+            $id = spl_object_id($group);
+            $order[$id] = $low[$id] = \count($order);
+            $stack[] = $id;
+            $onStack[$id] = true;
+            $frames[] = [$group, $this->calledGroups($group), 0];
+        };
+        $enter($start);
+
+        while ([] !== $frames) {
+            $top = \count($frames) - 1;
+            [$group, $called, $next] = $frames[$top];
+            $id = spl_object_id($group);
+            if ($next < \count($called)) {
+                ++$frames[$top][2];
+                $calledId = spl_object_id($called[$next]);
+                if ($calledId === $id) {
+                    $selfCalls[$id] = true;
+                }
+
+                if (isset($this->recursive[$calledId])) {
+                    continue;
+                }
+
+                if (!isset($order[$calledId])) {
+                    $enter($called[$next]);
+                } elseif (isset($onStack[$calledId])) {
+                    $low[$id] = min($low[$id], $order[$calledId]);
+                }
+
+                continue;
+            }
+
+            array_pop($frames);
+            if ([] !== $frames) {
+                $callerId = spl_object_id($frames[\count($frames) - 1][0]);
+                $low[$callerId] = min($low[$callerId], $low[$id]);
+            }
+
+            if ($low[$id] !== $order[$id]) {
+                continue;
+            }
+
+            // The group heads a ring: the groups above it on the stack are
+            // the ring's.
+            $ring = [];
+            while ([] !== $stack) {
+                $member = array_pop($stack);
+                unset($onStack[$member]);
+                $ring[] = $member;
+                if ($member === $id) {
+                    break;
+                }
+            }
+
+            foreach ($ring as $member) {
+                $this->recursive[$member] = \count($ring) > 1 || isset($selfCalls[$member]);
+            }
+        }
+    }
+
+    /**
+     * The groups the calls a group holds run, in the order they are
+     * written; a call of the whole pattern or of no group runs none.
+     *
+     * @return list<GroupNode>
+     */
+    private function calledGroups(GroupNode $group): array
+    {
+        $calls = [];
+        self::collectCalls($group->child, $calls);
+
+        $called = [];
+        foreach ($calls as $call) {
+            $target = (($nullsafeVariable2 = $this->groups) ? $nullsafeVariable2->groupsCalledBy($call) : null)[0] ?? null;
+            if (null !== $target) {
+                $called[] = $target;
+            }
+        }
+
+        return $called;
+    }
+
+    /**
+     * @param list<SubroutineNode> $calls
+     */
+    private static function collectCalls(NodeInterface $node, array &$calls): void
+    {
+        if ($node instanceof SubroutineNode) {
+            $calls[] = $node;
+
+            return;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            self::collectCalls($child, $calls);
+        }
+    }
+
+    /**
+     * The values of the body a call runs, read once and kept: entered at
+     * every call, a body that calls another twice reads it twice, and so
+     * on down the groups it calls. No body is asked while it is read:
+     * calledBody() gives none for a group that runs itself again.
+     *
+     * @return list<string>|null
+     */
+    private function calledValues(NodeInterface $body, bool $scan): ?array
+    {
+        $this->forgetOnceMarked();
+        $mode = (int) $scan;
+        $id = spl_object_id($body);
+        if (!\array_key_exists($id, $this->calledValues[$mode] ?? [])) {
+            ++$this->bodiesRead;
+            $this->calledValues[$mode][$id] = $this->values($body, $scan);
+        }
+
+        return $this->calledValues[$mode][$id];
+    }
+
+    /**
+     * Whether the body a call runs holds a fact, read once and kept as its
+     * values are.
+     *
+     * @param \Closure(NodeInterface): bool $read
+     */
+    private function calledFact(string $fact, NodeInterface $body, \Closure $read): bool
+    {
+        $this->forgetOnceMarked();
+        $id = spl_object_id($body);
+        if (!isset($this->calledFacts[$fact][$id])) {
+            ++$this->bodiesRead;
+            $this->calledFacts[$fact][$id] = $read($body);
+        }
+
+        return $this->calledFacts[$fact][$id];
+    }
+
+    /**
+     * Forgets what the called bodies read once a node was marked. A mark
+     * moves what an alternation reads where it stands, and the analysis
+     * marks the nodes of each case it reads: a body kept from one case
+     * would read in the next what it no longer reads there. A pattern
+     * that calls no group pays one flag per mark.
+     */
+    private function forgetOnceMarked(): void
+    {
+        if ($this->marked) {
+            $this->calledFacts = $this->calledValues = [];
+            $this->marked = false;
+        }
+    }
+
+    private function readsCaselessly(NodeInterface $node): bool
+    {
+        return isset($this->caseless[spl_object_id($node)]);
+    }
+
+    /**
+     * The branches' values — or the empty string alone, when the alternation
+     * sits at the start of the pattern, nothing follows it, and its first
+     * branch is a zero-width anchor that wins the match before any later
+     * branch is ever reached: the engine reads the branches left to right at
+     * each position and takes the leftmost, and "^" and "\b" read empty at
+     * the scan start. Anything after the alternation could fail and send
+     * the engine back into the later branches: /(^|a)b/ matches "ab".
+     *
+     * @return list<string>|null
+     */
+    private function alternationValues(AlternationNode $node, bool $scan = false): ?array
+    {
+        $id = spl_object_id($node);
+        if (!$scan && ($this->atStart[$id] ?? false) && ($this->atEnd[$id] ?? false) && $this->dominatesFromStart($node->alternatives)) {
+            return [''];
+        }
+
+        return $this->union($this->valuesOf($node->alternatives, $scan));
+    }
+
+    /**
+     * The values of each node, read one at a time: product() and union()
+     * stop at the first part past a bound, and the parts after it are never
+     * read.
+     *
+     * @param array<NodeInterface> $nodes
+     *
+     * @return \Generator<int, list<string>|null>
+     */
+    private function valuesOf(array $nodes, bool $scan): \Generator
+    {
+        foreach ($nodes as $node) {
+            yield $this->values($node, $scan);
+        }
+    }
+
+    /**
+     * Whether a first branch of "^" or "\A" — which matches at the scan
+     * start whatever the subject holds — or of "\b", which matches at or
+     * before wherever a later branch starting with a word character can
+     * begin, keeps the later branches from ever filling the match.
+     *
+     * @param list<NodeInterface> $alternatives
+     */
+    private function dominatesFromStart(array $alternatives): bool
+    {
+        $first = $alternatives[0] ?? null;
+
+        if ($first instanceof AnchorNode && ('^' === $first->value || '\\A' === $first->value)) {
+            return true;
+        }
+
+        if (!$first instanceof AssertionNode || 'b' !== $first->value) {
+            return false;
+        }
+
+        foreach (\array_slice($alternatives, 1) as $alternative) {
+            $char = $this->firstConsumedChar($alternative);
+            if (null === $char || !self::isWordChar($char)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The first character a node may read, when it starts with a literal
+     * one; null for anything else.
+     */
+    private function firstConsumedChar(NodeInterface $node): ?string
+    {
+        if ($node instanceof LiteralNode) {
+            return '' === $node->value ? null : $node->value[0];
+        }
+
+        if ($node instanceof CharLiteralNode) {
+            $chars = $this->character($node->codePoint, $this->readsCaselessly($node));
+
+            return null === $chars ? null : $chars[0];
+        }
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                if (0 !== ($this->lengths($child)[1] ?? 1)) {
+                    return $this->firstConsumedChar($child);
+                }
+            }
+
+            return null;
+        }
+
+        if ($node instanceof GroupNode && !\in_array($node->type, self::LOOKAROUNDS(), true)) {
+            return $this->firstConsumedChar($node->child);
+        }
+
+        return null;
+    }
+
+    private static function isWordChar(string $char): bool
+    {
+        return ($char >= '0' && $char <= '9')
+            || ($char >= 'A' && $char <= 'Z')
+            || ($char >= 'a' && $char <= 'z')
+            || '_' === $char;
+    }
+
+    /**
+     * The members a class holds, when each of them is a small finite set of
+     * characters the pattern spells: literals and short ranges. A member too
+     * big to spell — a type, a property, a long range, a negated class —
+     * leaves the whole class unread, as it always did, and so does one that
+     * may fold under caseless matching.
+     *
+     * @return list<string>|null
+     */
+    private function classMembers(CharClassNode $node): ?array
+    {
+        if ($node->isNegated) {
+            return null;
+        }
+
+        $caseless = $this->readsCaselessly($node);
+        $members = $node->expression instanceof AlternationNode
+            ? $node->expression->alternatives
+            : [$node->expression];
+
+        $values = [];
+        foreach ($members as $member) {
+            if ($member instanceof RangeNode) {
+                $from = $this->codePointOf($member->start);
+                $to = $this->codePointOf($member->end);
+                // the parser refuses a reversed range; a member the code
+                // point of which it does not spell — a type, a property —
+                // leaves the class unread
+                if (null === $from || null === $to || $to < $from || $to - $from + 1 > self::MAX_VALUES) {
+                    return null;
+                }
+
+                for ($codePoint = $from; $codePoint <= $to; ++$codePoint) {
+                    $character = $this->character($codePoint, $caseless);
+                    if (null === $character) {
+                        return null;
+                    }
+
+                    $values[] = $character[0];
+                }
+
+                continue;
+            }
+
+            if ($member instanceof LiteralNode) {
+                // the pattern never writes an empty literal into a class;
+                // a reader that hands one in enumerates no member, and an
+                // empty enumeration reads as no constant downstream. Without
+                // /u a class matches one byte: [é] matches "\xc3" and "\xa9"
+                $characters = $this->unicode ? mb_str_split($member->value, 1, 'UTF-8') : Bytes::split($member->value);
+                foreach ($characters as $character) {
+                    if ($this->folds($character, $caseless)) {
+                        return null;
+                    }
+
+                    $values[] = $character;
+                }
+
+                continue;
+            }
+
+            // anything else a class holds — a type, a POSIX class, a
+            // property — spells a set too large to enumerate
+            $memberCodePoint = $this->codePointOf($member);
+            // a code point no character of the encoding spells — a
+            // surrogate under /u, past 255 without it — leaves the class unread
+            $character = null === $memberCodePoint ? null : $this->character($memberCodePoint, $caseless);
+            if (null === $character) {
+                return null;
+            }
+
+            $values[] = $character[0];
+        }
+
+        if (\count($values) > self::MAX_VALUES) {
+            return null;
+        }
+
+        return $this->union([$values]);
+    }
+
+    /**
+     * The code point of a member a class spells by a single character,
+     * whatever the spelling; null for every other member.
+     */
+    private function codePointOf(NodeInterface $node): ?int
+    {
+        if ($node instanceof CharLiteralNode) {
+            return $node->codePoint;
+        }
+
+        if ($node instanceof ControlCharNode) {
+            return $node->codePoint;
+        }
+
+        if ($node instanceof LiteralNode && 1 === mb_strlen($node->value, 'UTF-8')) {
+            $codePoint = mb_ord($node->value, 'UTF-8');
+
+            return false === $codePoint ? null : $codePoint;
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<string>|null
+     */
+    private function repeat(QuantifierNode $node, bool $scan = false): ?array
+    {
+        $bounds = $node->bounds;
+        $body = $this->values($node->node, $scan);
+        if (null === $bounds || null === $body || null === $bounds->max) {
+            return null;
+        }
+
+        // A body that reads nothing reads nothing at any count.
+        if ([''] === $body) {
+            return [''];
+        }
+
+        // Each count adds a string longer than any before: past MAX_VALUES counts, the values are unknown.
+        if ($bounds->max > self::MAX_VALUES) {
+            return null;
+        }
+
+        // The body read once per count, from the least to the most; lazy or
+        // possessive, the quantifier still stops at one of these counts.
+        $values = 0 === $bounds->min ? [''] : [];
+        $power = [''];
+        for ($count = 1; $count <= $bounds->max; ++$count) {
+            $power = $this->product([$power, $body]);
+            $values = $count < $bounds->min || null === $power ? $values : $this->union([$values, $power]);
+            if (null === $power || null === $values) {
+                return null;
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * @return list<string>|null
+     */
+    private function character(int $codePoint, bool $caseless): ?array
+    {
+        // No code point (-1): a "\N{name}" whose name reads as no character.
+        if ($codePoint < 0 || ($caseless && $this->foldsCodePoint($codePoint))) {
+            return null;
+        }
+
+        if ($this->unicode) {
+            $character = mb_chr($codePoint, 'UTF-8');
+
+            return false === $character ? null : [$character];
+        }
+
+        return $codePoint <= 0xFF ? [\chr($codePoint)] : null;
+    }
+
+    /**
+     * Whether caseless matching may fold a code point into another: an
+     * ASCII letter always folds — preg_match('/(ab£)/i', 'AB£') matches —
+     * and without /u nothing else does — preg_match('/(é)/i', 'É') is 0 —
+     * while under /u the engine folds by Unicode — preg_match('/é/iu',
+     * 'É') is 1 — where past 7 bits nothing is provable.
+     */
+    private function foldsCodePoint(int $codePoint): bool
+    {
+        if (self::isAsciiLetter($codePoint)) {
+            return true;
+        }
+
+        return $this->unicode && $codePoint >= 0x80;
+    }
+
+    /**
+     * Whether any byte of a string read caselessly may fold, by the code
+     * point of each of them: past 7 bits, a byte is a code point in its own
+     * right without /u, and a piece of one under it.
+     */
+    private function folds(string $value, bool $caseless): bool
+    {
+        if (!$caseless) {
+            return false;
+        }
+
+        for ($i = 0, $n = \strlen($value); $i < $n; ++$i) {
+            if ($this->foldsCodePoint(\ord($value[$i]))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function isAsciiLetter(int $codePoint): bool
+    {
+        return ($codePoint >= 0x41 && $codePoint <= 0x5A) || ($codePoint >= 0x61 && $codePoint <= 0x7A);
+    }
+
+    /**
+     * @param iterable<list<string>|null> $parts
+     *
+     * @return list<string>|null
+     */
+    private function product(iterable $parts): ?array
+    {
+        $strings = [''];
+        foreach ($parts as $part) {
+            if (null === $part) {
+                return null;
+            }
+
+            $next = [];
+            $bytes = 0;
+            foreach ($strings as $prefix) {
+                foreach ($part as $suffix) {
+                    // Check before allocating, including intermediate products
+                    // of nested repeats. Count duplicate candidates too so the
+                    // temporary array is bounded before deduplication.
+                    $length = \strlen($prefix) + \strlen($suffix);
+                    if ($length > self::MAX_VALUE_BYTES || $length > self::MAX_TOTAL_VALUE_BYTES - $bytes) {
+                        return null;
+                    }
+
+                    $bytes += $length;
+                    $next[] = $prefix.$suffix;
+                }
+            }
+
+            $strings = array_values(array_unique($next));
+            if (\count($strings) > self::MAX_VALUES) {
+                return null;
+            }
+        }
+
+        return $strings;
+    }
+
+    /**
+     * @param iterable<list<string>|null> $parts
+     *
+     * @return list<string>|null
+     */
+    private function union(iterable $parts): ?array
+    {
+        $strings = [];
+        $bytes = 0;
+        foreach ($parts as $part) {
+            if (null === $part) {
+                return null;
+            }
+
+            foreach ($part as $value) {
+                if (\in_array($value, $strings, true)) {
+                    continue;
+                }
+
+                $length = \strlen($value);
+                if (\count($strings) >= self::MAX_VALUES || $length > self::MAX_VALUE_BYTES || $length > self::MAX_TOTAL_VALUE_BYTES - $bytes) {
+                    return null;
+                }
+
+                $bytes += $length;
+                $strings[] = $value;
+            }
+        }
+
+        return $strings;
+    }
+
+    /**
+     * Whether every value is truthy: neither '' nor '0'.
+     *
+     * @param list<string>|null $values
+     */
+    private function nonFalsy(NodeInterface $node, int $min, ?array $values): bool
+    {
+        if (null !== $values) {
+            return !\in_array('', $values, true) && !\in_array('0', $values, true);
+        }
+
+        return $min >= 2 || (1 === $min && !$this->mayBeZero($node));
+    }
+
+    /**
+     * Whether the node may match the string "0" alone. True when unsure.
+     */
+    private function mayBeZero(NodeInterface $node): bool
+    {
+        switch (true) {
+            case true === $node instanceof SubroutineNode:
+                return null === ($body = $this->calledBody($node)) || $this->calledFact('mayBeZero', $body, \Closure::fromCallable([$this, 'mayBeZero']));
+            case true === $node instanceof CharClassNode:
+                return $node->isNegated ? !$this->holdsZero($node->expression) : $this->classMayHoldZero($node->expression);
+            case true === $node instanceof SequenceNode:
+                return $this->sequenceMayBeZero($node->children);
+            case true === $node instanceof AlternationNode:
+                return self::any($node->alternatives, \Closure::fromCallable([$this, 'mayBeZero']));
+            case true === $node instanceof GroupNode:
+                return !self::isLookaround($node) && $this->mayBeZero($node->child);
+            case true === $node instanceof QuantifierNode:
+                return 0 !== (($nullsafeVariable3 = $node->bounds) ? $nullsafeVariable3->max : null) && $this->mayBeZero($node->node);
+            case true === self::consumesNothing($node):
+                return false;
+            default:
+                return $this->readsZero($node, false) ?? true;
+        }
+    }
+
+    /**
+     * Whether a concatenation may read "0" alone: some child reads it while
+     * every other child reads nothing — a mandatory character anywhere else
+     * pins the value off zero, unless an (*ACCEPT) before it may cut the
+     * sequence short.
+     *
+     * @param list<NodeInterface> $children
+     */
+    private function sequenceMayBeZero(array $children): bool
+    {
+        foreach ($children as $candidate) {
+            if (!$this->mayBeZero($candidate)) {
+                continue;
+            }
+
+            // a child past an (*ACCEPT) that may end the sequence may not
+            // run: preg_match('/(?=(0(*ACCEPT)1))/', '0') sets group 1 to "0"
+            $pinned = false;
+            foreach ($children as $child) {
+                if ($child !== $candidate && $this->lengths($child)[0] >= 1) {
+                    $pinned = true;
+
+                    break;
+                }
+
+                if (AcceptVerb::mayEndMatch($child)) {
+                    break;
+                }
+            }
+
+            if (!$pinned) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether a class member may hold "0". True when unsure.
+     */
+    private function classMayHoldZero(NodeInterface $member): bool
+    {
+        switch (true) {
+            case true === $member instanceof AlternationNode:
+                return self::any($member->alternatives, \Closure::fromCallable([$this, 'classMayHoldZero']));
+            case true === $member instanceof RangeNode:
+                return null === ($range = $this->range($member)) || ($range[0] <= 0x30 && 0x30 <= $range[1]);
+            case true === $member instanceof PosixClassNode:
+                return !\in_array($member->class, self::ZERO_FREE_POSIX, true);
+            default:
+                return $this->readsZero($member, false) ?? true;
+        }
+    }
+
+    /**
+     * Whether a class member surely holds "0". False when unsure.
+     */
+    private function holdsZero(NodeInterface $member): bool
+    {
+        if ($member instanceof AlternationNode) {
+            return self::any($member->alternatives, \Closure::fromCallable([$this, 'holdsZero']));
+        }
+
+        return $this->readsZero($member, true) ?? false;
+    }
+
+    /**
+     * Whether a character or a shorthand reads "0": surely, or possibly.
+     * Null for any other node.
+     */
+    private function readsZero(NodeInterface $atom, bool $surely): ?bool
+    {
+        switch (true) {
+            case true === $atom instanceof LiteralNode:
+            case true === $atom instanceof CharLiteralNode:
+                return 0x30 === $this->codePoint($atom);
+            case true === $atom instanceof CharTypeNode:
+                return $surely ? 'd' === $atom->value : !\in_array($atom->value, self::ZERO_FREE_TYPES, true);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Whether every character the node reads is an ASCII digit. No case
+     * folds into 0-9; under UCP \d and [[:digit:]] read other digits too.
+     * False when unsure.
+     */
+    private function digitsOnly(NodeInterface $node): bool
+    {
+        switch (true) {
+            case true === $node instanceof LiteralNode:
+                return '' === $node->value || Ascii::isDigit($node->value);
+            case true === $node instanceof CharLiteralNode:
+            case true === $node instanceof CharTypeNode:
+                return $this->isDigitMember($node);
+            case true === $node instanceof CharClassNode:
+                return !$node->isNegated && $this->isDigitMember($node->expression);
+            case true === $node instanceof SequenceNode:
+                return self::all($node->children, \Closure::fromCallable([$this, 'digitsOnly']));
+            case true === $node instanceof AlternationNode:
+                return self::all($node->alternatives, \Closure::fromCallable([$this, 'digitsOnly']));
+            case true === $node instanceof GroupNode:
+                return self::isLookaround($node) || $this->digitsOnly($node->child);
+            case true === $node instanceof QuantifierNode:
+                return $this->digitsOnly($node->node);
+            case true === $node instanceof SubroutineNode:
+                return null !== ($body = $this->calledBody($node)) && $this->calledFact('digitsOnly', $body, \Closure::fromCallable([$this, 'digitsOnly']));
+            default:
+                return self::consumesNothing($node);
+        }
+    }
+
+    /**
+     * Whether a class member, or a single character, holds ASCII digits only.
+     */
+    private function isDigitMember(NodeInterface $member): bool
+    {
+        switch (true) {
+            case true === $member instanceof AlternationNode:
+                return self::all($member->alternatives, \Closure::fromCallable([$this, 'isDigitMember']));
+            case true === $member instanceof LiteralNode:
+            case true === $member instanceof CharLiteralNode:
+                return self::isDigit($this->codePoint($member));
+            case true === $member instanceof RangeNode:
+                return null !== ($range = $this->range($member)) && self::isDigit($range[0]) && self::isDigit($range[1]);
+            case true === $member instanceof CharTypeNode:
+                return 'd' === $member->value && !$this->ucp;
+            case true === $member instanceof PosixClassNode:
+                return 'digit' === $member->class && !$this->ucp;
+            default:
+                return false;
+        }
+    }
+
+    private static function isDigit(?int $codePoint): bool
+    {
+        return null !== $codePoint && $codePoint >= 0x30 && $codePoint <= 0x39;
+    }
+
+    /**
+     * Whether every value the node reads is a decimal integer as
+     * (string) (int) $v === $v reads it, PHPStan's decimal-int-string: "0",
+     * or ASCII digits after an optional "-", the first of them not "0", no
+     * more of them than PHP_INT_MAX always holds. A cut by (*ACCEPT) may
+     * leave the sign alone. False when unsure.
+     *
+     * @param list<string>|null $values what the node reads
+     */
+    private function decimalInt(NodeInterface $node, ?array $values, bool $scan): bool
+    {
+        if (null !== $values) {
+            return [] !== $values && self::allValues($values, static fn (string $value): bool => (string) (int) $value === $value);
+        }
+
+        if (self::accepts($node)) {
+            return false;
+        }
+
+        $node = self::readThrough($node);
+        if ($node instanceof AlternationNode) {
+            return self::all($node->alternatives, fn (NodeInterface $branch): bool => $this->of($branch, $scan)['decimalInt']);
+        }
+
+        // what reads nothing, an anchor or an assertion, leaves the value as it is
+        $parts = array_values(array_filter($node instanceof SequenceNode ? $node->children : [$node], fn (NodeInterface $part): bool => 0 !== $this->lengths($part)[1]));
+        if (1 === \count($parts) && $parts[0] !== $node) {
+            return $this->of($parts[0], $scan)['decimalInt'];
+        }
+
+        // the node itself, read through its groups, holds no value set
+        $signs = [] === $parts || $parts[0] === $node ? null : $this->of($parts[0], $scan)['values'];
+        if (null !== $signs && \in_array('-', $signs, true) && [] === array_diff($signs, ['', '-'])) {
+            array_shift($parts);
+        }
+
+        if ([] === $parts || !self::all($parts, \Closure::fromCallable([$this, 'digitsOnly']))) {
+            return false;
+        }
+
+        $digits = 0;
+        foreach ($parts as $part) {
+            $max = $this->lengths($part)[1];
+            if (null === $max) {
+                return false;
+            }
+            $digits += $max;
+        }
+
+        return $digits <= self::MAX_INT_DIGITS && $this->startsWithNonZero($parts[0], $scan);
+    }
+
+    /**
+     * Whether every value the node reads is non-empty and starts with
+     * another character than "0". False when unsure.
+     */
+    private function startsWithNonZero(NodeInterface $node, bool $scan): bool
+    {
+        $values = $this->values($node, $scan);
+        if (null !== $values) {
+            return [] !== $values && self::allValues($values, static fn (string $value): bool => '' !== $value && '0' !== $value[0]);
+        }
+
+        $node = self::readThrough($node);
+
+        switch (true) {
+            case true === $node instanceof AlternationNode:
+                return self::all($node->alternatives, fn (NodeInterface $branch): bool => $this->startsWithNonZero($branch, $scan));
+            case true === $node instanceof SequenceNode:
+                return $this->sequenceStartsWithNonZero($node->children, $scan);
+            case true === $node instanceof QuantifierNode:
+                return ($node->bounds->min ?? 0) >= 1 && $this->startsWithNonZero($node->node, $scan);
+            case true === $node instanceof SubroutineNode:
+                return null !== ($body = $this->calledBody($node)) && $this->calledFact($scan ? 'scanStartsWithNonZero' : 'startsWithNonZero', $body, fn (NodeInterface $body): bool => $this->startsWithNonZero($body, $scan));
+            case true === $node instanceof CharClassNode:
+            case true === $node instanceof CharTypeNode:
+                return $this->lengths($node)[0] >= 1 && !$this->mayBeZero($node);
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Whether the first child that may read a character reads one at least,
+     * and never starts with "0".
+     *
+     * @param list<NodeInterface> $children
+     */
+    private function sequenceStartsWithNonZero(array $children, bool $scan): bool
+    {
+        $reading = array_values(array_filter($children, fn (NodeInterface $child): bool => 0 !== $this->lengths($child)[1]));
+
+        return [] !== $reading && $this->lengths($reading[0])[0] >= 1 && $this->startsWithNonZero($reading[0], $scan);
+    }
+
+    /**
+     * Whether no value the node reads holds an ASCII letter of the case:
+     * A-Z when $upper, a-z otherwise, the only letters strtolower() and
+     * strtoupper() fold. Where the engine reads caselessly a letter may read
+     * in either case, and under /u a code point past ASCII may fold into
+     * one: preg_match('/\x{212A}/iu', 'K') is 1. False when unsure.
+     */
+    private function holdsNoLetter(NodeInterface $node, bool $upper): bool
+    {
+        $caseless = $this->readsCaselessly($node);
+
+        switch (true) {
+            case true === $node instanceof LiteralNode:
+                return $this->stringHoldsNoLetter($node->value, $caseless, $upper);
+            case true === $node instanceof CharLiteralNode:
+            case true === $node instanceof ControlCharNode:
+                return $this->rangeHoldsNoLetter($node->codePoint, $node->codePoint, $caseless, $upper);
+            case true === $node instanceof CharTypeNode:
+                return \in_array($node->value, self::LETTER_FREE_TYPES, true);
+            case true === $node instanceof CharClassNode:
+                return !$node->isNegated && $this->memberHoldsNoLetter($node->expression, $caseless, $upper);
+            case true === $node instanceof UnicodePropNode:
+                return self::propertyHoldsNoLetter($node, $caseless, $upper);
+            case true === $node instanceof SequenceNode:
+                return self::all($node->children, fn (NodeInterface $child): bool => $this->holdsNoLetter($child, $upper));
+            case true === $node instanceof AlternationNode:
+                return self::all($node->alternatives, fn (NodeInterface $branch): bool => $this->holdsNoLetter($branch, $upper));
+            case true === $node instanceof GroupNode:
+                return self::isLookaround($node) || $this->holdsNoLetter($node->child, $upper);
+            case true === $node instanceof QuantifierNode:
+                return $this->holdsNoLetter($node->node, $upper);
+            case true === $node instanceof SubroutineNode:
+                return null !== ($body = $this->calledBody($node)) && $this->calledFact($upper ? 'holdsNoUppercase' : 'holdsNoLowercase', $body, fn (NodeInterface $body): bool => $this->holdsNoLetter($body, $upper));
+            default:
+                return self::consumesNothing($node);
+        }
+    }
+
+    /**
+     * Whether a class member holds no ASCII letter of the case, read with
+     * the caselessness of its class.
+     */
+    private function memberHoldsNoLetter(NodeInterface $member, bool $caseless, bool $upper): bool
+    {
+        switch (true) {
+            case true === $member instanceof AlternationNode:
+                return self::all($member->alternatives, fn (NodeInterface $alternative): bool => $this->memberHoldsNoLetter($alternative, $caseless, $upper));
+            case true === $member instanceof LiteralNode:
+                return $this->stringHoldsNoLetter($member->value, $caseless, $upper);
+            case true === $member instanceof CharLiteralNode:
+            case true === $member instanceof ControlCharNode:
+                return $this->rangeHoldsNoLetter($member->codePoint, $member->codePoint, $caseless, $upper);
+            case true === $member instanceof RangeNode:
+                return null !== ($range = $this->range($member)) && $this->rangeHoldsNoLetter($range[0], $range[1], $caseless, $upper);
+            case true === $member instanceof CharTypeNode:
+                return \in_array($member->value, self::LETTER_FREE_TYPES, true);
+            case true === $member instanceof PosixClassNode:
+                return \in_array($member->class, self::LETTER_FREE_POSIX, true)
+                    || (!$caseless && ($upper ? 'lower' : 'upper') === $member->class);
+            case true === $member instanceof UnicodePropNode:
+                return self::propertyHoldsNoLetter($member, $caseless, $upper);
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Whether no byte of a literal is an ASCII letter of the case, or, read
+     * caselessly, may fold into one.
+     */
+    private function stringHoldsNoLetter(string $value, bool $caseless, bool $upper): bool
+    {
+        for ($i = 0, $n = \strlen($value); $i < $n; ++$i) {
+            if (!$this->rangeHoldsNoLetter(\ord($value[$i]), \ord($value[$i]), $caseless, $upper)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether no code point from $from to $to is an ASCII letter of the
+     * case, or, read caselessly, may fold into one: an ASCII letter folds
+     * into the other case, and under /u a code point past ASCII may fold
+     * into an ASCII letter. Without /u nothing past ASCII folds.
+     */
+    private function rangeHoldsNoLetter(int $from, int $to, bool $caseless, bool $upper): bool
+    {
+        if ($caseless) {
+            return !($this->unicode && $to >= 0x80) && !self::overlaps($from, $to, 0x41, 0x5A) && !self::overlaps($from, $to, 0x61, 0x7A);
+        }
+
+        return $upper ? !self::overlaps($from, $to, 0x41, 0x5A) : !self::overlaps($from, $to, 0x61, 0x7A);
+    }
+
+    private static function overlaps(int $from, int $to, int $low, int $high): bool
+    {
+        return $from <= $high && $to >= $low;
+    }
+
+    /**
+     * Whether a Unicode property holds no ASCII letter of the case: \p{Ll}
+     * holds no A-Z, \p{Lu} no a-z, and the titlecase letters and the numbers
+     * neither. Caseless, \p{Ll}, \p{Lu} and \p{Lt} match any cased letter,
+     * and no property is read; nor is a negated one.
+     */
+    private static function propertyHoldsNoLetter(UnicodePropNode $node, bool $caseless, bool $upper): bool
+    {
+        if ($caseless) {
+            return false;
+        }
+
+        $property = trim($node->prop, '{}');
+
+        return \in_array($property, self::LETTER_FREE_PROPERTIES, true) || ($upper ? 'Ll' : 'Lu') === $property;
+    }
+
+    /**
+     * Whether the node holds an (*ACCEPT), which may end the match anywhere
+     * after it.
+     */
+    private static function accepts(NodeInterface $node): bool
+    {
+        if ($node instanceof PcreVerbNode) {
+            return 'ACCEPT' === $node->name;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::accepts($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The node under the groups that read what their content reads.
+     */
+    private static function readThrough(NodeInterface $node): NodeInterface
+    {
+        while ($node instanceof GroupNode && \in_array($node->type, self::READ_THROUGH(), true) && !self::isBareOption($node)) {
+            $node = $node->child;
+        }
+
+        return $node;
+    }
+
+    /**
+     * @param list<string>           $values
+     * @param callable(string): bool $test
+     */
+    private static function allValues(array $values, callable $test): bool
+    {
+        foreach ($values as $value) {
+            if (!$test($value)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The code points a range spans, when both ends are single characters.
+     *
+     * @return array{0: int, 1: int}|null
+     */
+    private function range(RangeNode $range): ?array
+    {
+        $start = $this->codePoint($range->start);
+        $end = $this->codePoint($range->end);
+
+        return null === $start || null === $end ? null : [$start, $end];
+    }
+
+    /**
+     * The code point of a node that reads one character, or null.
+     */
+    private function codePoint(NodeInterface $node): ?int
+    {
+        if ($node instanceof CharLiteralNode) {
+            return $node->codePoint;
+        }
+
+        if (!$node instanceof LiteralNode || '' === $node->value) {
+            return null;
+        }
+
+        if (!$this->unicode) {
+            return 1 === \strlen($node->value) ? \ord($node->value) : null;
+        }
+
+        if (1 !== mb_strlen($node->value, 'UTF-8')) {
+            return null;
+        }
+
+        $codePoint = mb_ord($node->value, 'UTF-8');
+
+        return false === $codePoint ? null : $codePoint;
+    }
+
+    /**
+     * Whether the group is a bare "(?i)", which spans its flags and three
+     * bytes and reads nothing, rather than a scoped "(?i:...)".
+     */
+    private static function isBareOption(GroupNode $node): bool
+    {
+        return GroupType::InlineFlags() === $node->type && $node->getEndPosition() - $node->getStartPosition() === \strlen($node->flags ?? '') + 3;
+    }
+
+    private static function isLookaround(GroupNode $node): bool
+    {
+        return \in_array($node->type, self::LOOKAROUNDS(), true);
+    }
+
+    /**
+     * Whether the node reads no character: an anchor, an assertion, a verb.
+     */
+    private static function consumesNothing(NodeInterface $node): bool
+    {
+        return $node instanceof AnchorNode || $node instanceof AssertionNode || $node instanceof CommentNode
+            || $node instanceof KeepNode || $node instanceof DefineNode || $node instanceof CalloutNode
+            || $node instanceof PcreVerbNode || $node instanceof LimitMatchNode;
+    }
+
+    /**
+     * array_any() of PHP 8.4.
+     *
+     * @param array<NodeInterface>          $nodes
+     * @param callable(NodeInterface): bool $test
+     */
+    private static function any(array $nodes, callable $test): bool
+    {
+        foreach ($nodes as $node) {
+            if ($test($node)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * array_all() of PHP 8.4.
+     *
+     * @param array<NodeInterface>          $nodes
+     * @param callable(NodeInterface): bool $test
+     */
+    private static function all(array $nodes, callable $test): bool
+    {
+        foreach ($nodes as $node) {
+            if (!$test($node)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}

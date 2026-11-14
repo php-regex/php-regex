@@ -1,0 +1,392 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Parser\Syntax;
+
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\SyntaxErrorException;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ControlCharNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Token\Token;
+use PHPRegex\Parser\Token\TokenStream;
+use PHPRegex\Parser\Token\TokenType;
+
+/**
+ * Where the parser stands in the pattern, and what every part that reads
+ * the pattern shares.
+ *
+ * TokenParser reads the pattern; ClassParser reads a character class,
+ * ConditionParser the condition of a conditional, and a reader of each
+ * other family of constructs, quantifiers, references, groups, calls and
+ * verbs, its own for it. They walk the same tokens over the same text, for
+ * the same target, in the same UTF and bad-escape modes. What they change as
+ * they read is kept here, where each part reads and sets it: whether the
+ * tokens are quoted, since a "\Q...\E" opened inside a class can close after
+ * it; the options of "x", "xx" and "n" a group sets; the groups numbered so
+ * far. The reading steps they all take, an atom, a comment, the quotes and
+ * the whitespace PCRE skips, are here too, so each part holds only the
+ * grammar it reads.
+ *
+ * @internal
+ */
+final class ParseState
+{
+    /**
+     * Whether the tokens read now stand between "\Q" and "\E".
+     */
+    public bool $inQuoteMode = false;
+
+    /**
+     * Whether "x" is in force: whitespace and "#" comments between items
+     * are skipped.
+     */
+    public bool $extendedMode = false;
+
+    /**
+     * Whether "(?xx)" is in force, under which the lexer skips the spaces and
+     * tabs that open a class: the body of an alphabetic assertion is read
+     * apart in the mode around it.
+     */
+    public bool $extendedMoreMode = false;
+
+    /**
+     * Whether "n" (NO_AUTO_CAPTURE) is in force: a plain "(...)" group then
+     * captures nothing and takes no number; named groups still capture.
+     */
+    public bool $noAutoCapture = false;
+
+    /**
+     * The number the last capturing group was given, counted the way PCRE
+     * counts them, branch resets included: a name is tied to a number.
+     */
+    public int $captureCount = 0;
+    /**
+     * Token types that describe a character the same way wherever they
+     * appear: "\d" is the same inside a class and outside it.
+     *
+     * @var list<TokenType>|null
+     */
+    private static ?array $ATOM_TYPES = null;
+
+    /**
+     * @return list<TokenType>
+     */
+    private static function ATOM_TYPES(): array
+    {
+        return self::$ATOM_TYPES ??= [
+            TokenType::Literal(),
+            TokenType::LiteralEscaped(),
+            TokenType::CharType(),
+            TokenType::UnicodeProp(),
+            TokenType::ControlChar(),
+            TokenType::Unicode(),
+            TokenType::UnicodeNamed(),
+            TokenType::Octal(),
+            TokenType::OctalLegacy(),
+        ];
+    }
+
+    /**
+     * An octal escape and the digits left as text after it, as the atom just
+     * read: a quantifier after it repeats only the last digit.
+     */
+    public ?SequenceNode $splitEscape = null;
+    /**
+     */
+    public TokenStream $stream;
+    /**
+     */
+    public string $pattern;
+    /**
+     */
+    public PcreTarget $target;
+    /**
+     */
+    public bool $unicodeMode;
+    /**
+     */
+    public bool $badEscapeIsLiteral;
+
+    /**
+     * @param bool $unicodeMode        whether the pattern is read as UTF-8:
+     *                                 "u", or "(*UTF)" at the start
+     * @param bool $badEscapeIsLiteral whether the pattern is compiled with
+     *                                 PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, as
+     *                                 PHP 7.3 and 7.4 compile it without "X"
+     */
+    public function __construct(TokenStream $stream, string $pattern, PcreTarget $target, bool $unicodeMode, bool $badEscapeIsLiteral)
+    {
+        $this->stream = $stream;
+        $this->pattern = $pattern;
+        $this->target = $target;
+        $this->unicodeMode = $unicodeMode;
+        $this->badEscapeIsLiteral = $badEscapeIsLiteral;
+    }
+
+    /**
+     * Reads the next token if it describes a character the same way
+     * wherever it is written, and turns it into a node. What differs between
+     * a class and the rest of the pattern, a dot, an anchor, a reference, a
+     * range, is left to the part that reads there.
+     */
+    public function matchAtom(int $startPosition): ?NodeInterface
+    {
+        $type = $this->stream->currentType();
+        if (!\in_array($type, self::ATOM_TYPES(), true)) {
+            return null;
+        }
+
+        $this->stream->advance();
+
+        return $this->atom($this->stream->previous(), $type, $startPosition);
+    }
+
+    /**
+     * The node of a token matchAtom() reads.
+     */
+    public function atom(Token $token, TokenType $type, int $startPosition): NodeInterface
+    {
+        switch (true) {
+            case $type === TokenType::Literal():
+                return new LiteralNode($token->value, $startPosition, $token->end());
+            case $type === TokenType::LiteralEscaped():
+                return '\\x' === (string) substr($this->pattern, $token->position, 2) && 2 === $token->end() - $token->position
+                    && '{' !== ($this->pattern[$token->end()] ?? '')
+                    ? new CharLiteralNode('\\x', 0, CharLiteralType::Unicode(), $startPosition, $token->end())
+                    : new LiteralNode($token->value, $startPosition, $token->end());
+            case $type === TokenType::CharType():
+                return new CharTypeNode($token->value, $startPosition, $token->end());
+            case $type === TokenType::ControlChar():
+                return new ControlCharNode(
+                    $token->value,
+                    CodePointReader::fromControlChar($token->value),
+                    $startPosition,
+                    $token->end(),
+                );
+            case $type === TokenType::UnicodeProp():
+                return new UnicodePropNode(
+                    $token->value,
+                    0 === strncmp($token->value, '{', strlen('{')),
+                    $startPosition,
+                    $token->end(),
+                    $this->isNegatedPropertySyntax($startPosition),
+                );
+            default:
+                return $this->charLiteral($token, $type, $startPosition);
+        }
+    }
+
+    /**
+     * Reads "(?#...)", its opener read: the text up to the ")" that closes
+     * it, as the pattern spells it.
+     */
+    public function comment(): CommentNode
+    {
+        $startPosition = $this->stream->previous()->position;
+
+        $comment = '';
+        while (!$this->stream->isAtEnd() && !$this->stream->check(TokenType::GroupClose())) {
+            $comment .= $this->sourceTextOf($this->stream->current());
+            $this->stream->advance();
+        }
+
+        $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected ) to close comment', ErrorCode::CommentUnclosed());
+
+        return new CommentNode($comment, $startPosition, $endToken->position + 1);
+    }
+
+    /**
+     * Skips the "\E" and empty "\Q\E" that PCRE reads as nothing.
+     */
+    public function skipEmptyQuotes(): void
+    {
+        while (true) {
+            if ($this->stream->match(TokenType::QuoteModeEnd())) {
+                $this->inQuoteMode = false;
+
+                continue;
+            }
+
+            if ($this->stream->check(TokenType::QuoteModeStart())
+                && TokenType::QuoteModeEnd() === $this->stream->peek()->type) {
+                $this->stream->advance();
+                $this->stream->advance();
+
+                continue;
+            }
+
+            return;
+        }
+    }
+
+    /**
+     * Skip extended-mode (/x) whitespace only. A line comment is left to the
+     * sequence, which keeps it as a node: "a # c\n +" is "a+" to PCRE, and
+     * the quantifier after the comment goes on the item before it.
+     */
+    public function skipExtendedWhitespace(): int
+    {
+        if (!$this->extendedMode || $this->inQuoteMode) {
+            return 0;
+        }
+
+        $skipped = 0;
+        while (!$this->stream->isAtEnd() && TokenType::Literal() === $this->stream->current()->type && $this->isExtendedWhitespace($this->stream->current()->value)) {
+            $this->stream->advance();
+            ++$skipped;
+        }
+
+        return $skipped;
+    }
+
+    /**
+     * Whether "x" skips the character: PCRE skips Pattern_White_Space, which
+     * in UTF mode also holds U+0085, U+200E, U+200F, U+2028 and U+2029, and
+     * without it the byte 0x85.
+     */
+    public function isExtendedWhitespace(string $character): bool
+    {
+        if (Ascii::isSpace($character)) {
+            return true;
+        }
+
+        return $this->unicodeMode
+            ? \in_array($character, ["\u{85}", "\u{200e}", "\u{200f}", "\u{2028}", "\u{2029}"], true)
+            : "\x85" === $character;
+    }
+
+    /**
+     * Consumes literal tokens while the predicate takes their value, and
+     * gives their values joined.
+     *
+     * @param callable(string): bool $predicate
+     */
+    public function consumeWhile(callable $predicate): string
+    {
+        $value = '';
+
+        while (
+            !$this->stream->isAtEnd()
+            && $this->stream->check(TokenType::Literal())
+            && $predicate($this->stream->current()->value)
+        ) {
+            $value .= $this->stream->current()->value;
+            $this->stream->advance();
+        }
+
+        return $value;
+    }
+
+    /**
+     * Whether the current token is a literal digit.
+     */
+    public function isLiteralDigitToken(): bool
+    {
+        return $this->stream->check(TokenType::Literal()) && Ascii::isDigit($this->stream->current()->value);
+    }
+
+    /**
+     * Whether the current token is a literal ASCII letter.
+     */
+    public function isLiteralAlphaToken(): bool
+    {
+        return $this->stream->check(TokenType::Literal()) && Ascii::isAlpha($this->stream->current()->value);
+    }
+
+    /**
+     * The text a token was cut from, exactly as the pattern spelled it.
+     *
+     * The lexer rewrites what it reads — "\d" comes back as "d",
+     * "\P{Greek}" as "{^Greek}" — so the value cannot be turned back into
+     * source. The token knows its span instead.
+     */
+    public function sourceTextOf(Token $token): string
+    {
+        return (string) substr($this->pattern, $token->position, $token->sourceLength);
+    }
+
+    /**
+     * A syntax error at $position, with the pattern around it.
+     */
+    public function error(string $message, ErrorCode $code, int $position): ParserException
+    {
+        return SyntaxErrorException::withContext($message, $code, $position, $this->pattern);
+    }
+
+    /**
+     * An error in text read apart, which counts positions from its own start,
+     * reported where it stands in the whole pattern.
+     *
+     * @param LexerException|ParserException $error
+     *
+     * @return LexerException|ParserException
+     */
+    public function movedError($error, int $offset)
+    {
+        return $error::withContext($error->getMessage(), $error->errorCode, (int) $error->position + $offset, $this->pattern, $error);
+    }
+
+    /**
+     * Whether a unicode property was written "\P{...}" rather than "\p{...}".
+     *
+     * The lexer folds the negation into the value — "\P{Greek}" and
+     * "\p{^Greek}" arrive as the same token — so which of the two was written
+     * can only be read from the pattern.
+     */
+    private function isNegatedPropertySyntax(int $startPosition): bool
+    {
+        return 'P' === ($this->pattern[$startPosition + 1] ?? 'p');
+    }
+
+    /**
+     * @throws \LogicException for a token that is no character literal, a bug of the caller
+     */
+    private function charLiteral(Token $token, TokenType $type, int $startPosition): CharLiteralNode
+    {
+        switch (true) {
+            case $type === TokenType::Unicode():
+                [$representation, $charType] = [$token->value, CharLiteralType::Unicode()];
+                break;
+            case $type === TokenType::UnicodeNamed():
+                [$representation, $charType] = ['\\N{'.$token->value.'}', CharLiteralType::UnicodeNamed()];
+                break;
+            case $type === TokenType::Octal():
+                [$representation, $charType] = [$token->value, CharLiteralType::Octal()];
+                break;
+            case $type === TokenType::OctalLegacy():
+                [$representation, $charType] = ['\\'.$token->value, CharLiteralType::OctalLegacy()];
+                break;
+            default:
+                throw new \LogicException('Unsupported character literal token type.');
+        }
+
+        return new CharLiteralNode(
+            $representation,
+            CodePointReader::fromLiteral($representation, $charType),
+            $charType,
+            $startPosition,
+            $token->end(),
+        );
+    }
+}
