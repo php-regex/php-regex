@@ -24,15 +24,20 @@ final class SocialPreviewTest extends TestCase
 
     private const PNG = __DIR__.'/../../docs/assets/img/social.png';
 
+    /**
+     * The card names itself for a reader of the image, and draws its words
+     * as outlines: no font of the platform that shows it changes it.
+     */
     #[Test]
-    public function test_the_social_preview_matches_the_ast_positioning(): void
+    public function test_the_social_preview_names_itself_and_draws_its_words(): void
     {
-        $svg = (string) file_get_contents(self::SVG);
+        $svg = simplexml_load_file(self::SVG);
+        $this->assertNotFalse($svg);
 
-        $this->assertStringContainsString('See a PHP regex as a tree', $svg);
-        $this->assertStringContainsString('Group (named) name=&quot;date&quot;', $svg);
-        $this->assertStringContainsString('Quantifier ({4}, greedy)', $svg);
-        $this->assertStringContainsString('CharType (\d)', $svg);
+        $this->assertSame('img', (string) $svg['role']);
+        $this->assertSame('PHPRegex — regex, treated as code', (string) $svg['aria-label']);
+        $this->assertSame('PHPRegex — regex, treated as code', (string) $svg->title);
+        $this->assertStringNotContainsString('<text', (string) file_get_contents(self::SVG));
     }
 
     #[Test]
