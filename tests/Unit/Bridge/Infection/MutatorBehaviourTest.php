@@ -30,6 +30,7 @@ use PHPRegex\Infection\Mutator\RegexEscape;
 use PHPRegex\Infection\Mutator\RegexFlag;
 use PHPRegex\Infection\Mutator\RegexQuantifier;
 use PHPRegex\Infection\Site\PatternCall;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -533,7 +534,9 @@ final class MutatorBehaviourTest extends TestCase
 
     /**
      * What preg_match() answers for each pattern under the backtrack limit
-     * the kill strings are checked with, the JIT off as the engine runs it.
+     * the kill strings are checked with, the JIT off as the engine runs it:
+     * through "(*NO_JIT)", as a pattern an earlier call compiled with the
+     * JIT would run it again whatever pcre.jit says now.
      *
      * @return list<false|int>
      */
@@ -545,7 +548,7 @@ final class MutatorBehaviourTest extends TestCase
         ini_set('pcre.jit', '0');
 
         try {
-            return [@preg_match($original, $subject), @preg_match($mutant, $subject)];
+            return [@preg_match(PcreInterpreter::pattern($original), $subject), @preg_match(PcreInterpreter::pattern($mutant), $subject)];
         } finally {
             ini_set('pcre.backtrack_limit', $limit);
             ini_set('pcre.jit', $jit);
