@@ -199,15 +199,3 @@ the probes hold no whitespace.
   requires no check yet.
 - The Box pin (4.7.1 and its checksum, in `phar.yml` and `packages.yml`) is
   bumped by hand: Dependabot does not see it.
-
-
-## Open questions
-
-- A ReDoS repair still proves one rewrite per quantifier after #348 (1,000
-  quantifiers: about 20 s). The PHPStan rule reads `repair()[0]` alone: a
-  call that stops at the first certified repair, or a prover that keeps
-  work between rewrites, is the next gain. `/^(?:a+)++$/` is not proven
-  linear ("atomic group at offset 1 over-approximated") although PHP
-  rejects forty `a` and a `!` at once, so no repair offers a possessive on
-  the outer loop: proving it needs the atomic body modelled by the end it
-  commits to, not by every way through it.
