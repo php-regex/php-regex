@@ -226,14 +226,6 @@ the probes hold no whitespace.
   the outer loop: proving it needs the atomic body modelled by the end it
   commits to, not by every way through it.
 
-- After #343 the lexer still cuts the text of a nested assertion body once
-  per level and checks its UTF-8 again: time stays depth times size. A
-  script run node holds its body text, so `(*asr:` nested 3,200 deep peaks
-  at 77 MB: changing that field is a contract decision. Plain `(` nested
-  about 6,400 deep ends PHP on its C stack (800 under a 1 MB stack). On PHP 8.6
-  `memory_get_usage()` stops counting call frames below some 900 levels:
-  a memory ratio measured across that depth bends there.
-
 - Upstream recommends the fixes PHP 8.2.35 backported
   (`pcre2-10.48-Fix-compiler-integer-overflows.patch`) to every
   distributor of PCRE2 10.39 to 10.47. When a PHP 8.3, 8.4 or 8.5 patch
