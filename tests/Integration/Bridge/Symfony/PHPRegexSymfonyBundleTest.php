@@ -45,7 +45,7 @@ final class PHPRegexSymfonyBundleTest extends TestCase
         $regex->parse('/abc/');
 
         $cache = new FilesystemCache($cacheDir);
-        $cacheFile = $cache->generateKey(RegexParser::cacheSeed('/abc/', PcreTarget::runtime(), 1024));
+        $cacheFile = $cache->generateKey(RegexParser::cacheSeed('/abc/', PcreTarget::runtime(), RegexParser::DEFAULT_MAX_RECURSION_DEPTH));
 
         $this->assertFileExists($cacheFile);
 
