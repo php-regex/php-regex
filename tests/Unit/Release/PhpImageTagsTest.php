@@ -13,7 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Release;
 
+use PHPRegex\Tests\Support\ProcessPipes;
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -29,6 +32,32 @@ use PHPUnit\Framework\TestCase;
 final class PhpImageTagsTest extends TestCase
 {
     private const IMAGE = 'php:${{ matrix.php == \'8.6\' && needs.images.outputs.php86 || matrix.php }}-cli';
+
+    /**
+     * A docker that gives, call after call, the answers listed in
+     * $LOGS/answers: the manifest, Docker Hub saying there is none, its rate
+     * limit, or a timeout.
+     */
+    private const FAKE_DOCKER = <<<'BASH'
+        #!/usr/bin/env bash
+        calls=$(( $(cat "$LOGS/calls" 2>/dev/null || echo 0) + 1 ))
+        echo "$calls" > "$LOGS/calls"
+        case "$(sed -n "${calls}p" "$LOGS/answers")" in
+          release) echo '{"manifests": []}' ;;
+          missing) echo 'no such manifest: docker.io/library/php:8.6-cli' >&2; exit 1 ;;
+          limited) echo 'toomanyrequests: You have reached your unauthenticated pull rate limit.' >&2; exit 1 ;;
+          *) echo 'Get "https://registry-1.docker.io/v2/": net/http: request canceled (Client.Timeout exceeded while awaiting headers)' >&2; exit 1 ;;
+        esac
+        BASH;
+
+    private string $scratch = '';
+
+    protected function tearDown(): void
+    {
+        if ('' !== $this->scratch) {
+            TemporaryDirectory::remove($this->scratch);
+        }
+    }
 
     /**
      * @return iterable<string, array{workflow: string, job: string}>
@@ -87,6 +116,67 @@ final class PhpImageTagsTest extends TestCase
         $this->assertStringContainsString("echo 'php86=8.6' >> \"\$GITHUB_OUTPUT\"", $engines);
         $this->assertStringContainsString("echo 'php86=8.6-rc' >> \"\$GITHUB_OUTPUT\"", $engines);
         $this->assertMatchesRegularExpression('~^    timeout-minutes: \d+$~m', $engines);
+    }
+
+    /**
+     * @return iterable<string, array{answers: list<string>, tag: string|null}>
+     */
+    public static function provideDockerHubAnswers(): iterable
+    {
+        yield 'the release is served' => ['answers' => ['release'], 'tag' => '8.6'];
+        yield 'no release yet' => ['answers' => ['missing'], 'tag' => '8.6-rc'];
+        yield 'a timeout, then no release' => ['answers' => ['timeout', 'missing'], 'tag' => '8.6-rc'];
+        yield 'the rate limit, then the release' => ['answers' => ['limited', 'release'], 'tag' => '8.6'];
+        yield 'no answer three times' => ['answers' => ['timeout', 'limited', 'timeout'], 'tag' => null];
+    }
+
+    /**
+     * The candidates run only when Docker Hub says the release is not
+     * there: a timeout or its rate limit asks again, then fails the run,
+     * rather than run a candidate once the release exists.
+     *
+     * @param list<string> $answers
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    #[DataProvider('provideDockerHubAnswers')]
+    public function test_the_candidates_run_only_when_docker_hub_says_there_is_no_release(array $answers, ?string $tag): void
+    {
+        $this->scratch = TemporaryDirectory::create('php-regex-image-tags');
+        mkdir($this->scratch.'/fake');
+        file_put_contents($this->scratch.'/fake/docker', self::FAKE_DOCKER);
+        file_put_contents($this->scratch.'/fake/sleep', "#!/usr/bin/env bash\n");
+        chmod($this->scratch.'/fake/docker', 0o755);
+        chmod($this->scratch.'/fake/sleep', 0o755);
+        file_put_contents($this->scratch.'/answers', implode("\n", $answers)."\n");
+        file_put_contents($this->scratch.'/output', '');
+        $this->assertSame(1, preg_match('~^      - name: Find the tag of PHP 8\.6\n(?:        (?!run:).*\n)*        run: \|\n((?:(?:          .*)?\n)+)~m', self::job('engines.yml', 'images'), $step));
+        file_put_contents($this->scratch.'/step.sh', (string) preg_replace('~^ {10}~m', '', $step[1]));
+
+        $process = proc_open(
+            ['bash', '--noprofile', '--norc', '-eo', 'pipefail', $this->scratch.'/step.sh'],
+            ProcessPipes::descriptors(),
+            $pipes,
+            $this->scratch,
+            ['PATH' => $this->scratch.'/fake:'.getenv('PATH'), 'LOGS' => $this->scratch, 'GITHUB_OUTPUT' => $this->scratch.'/output'],
+        );
+        $this->assertIsResource($process);
+        [, $error] = ProcessPipes::drain($pipes);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $code = proc_close($process);
+
+        $this->assertSame(\count($answers), (int) file_get_contents($this->scratch.'/calls'), 'Docker Hub is asked until it answers, three times at most.');
+        if (null === $tag) {
+            $this->assertNotSame(0, $code, 'No answer fails the run.');
+            $this->assertSame('', file_get_contents($this->scratch.'/output'));
+            $this->assertStringContainsString('Client.Timeout exceeded', $error);
+
+            return;
+        }
+
+        $this->assertSame(0, $code, $error);
+        $this->assertSame('php86='.$tag."\n", file_get_contents($this->scratch.'/output'));
     }
 
     /**

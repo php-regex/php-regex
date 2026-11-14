@@ -33,7 +33,9 @@ jobs:
     # The tag of the official image PHP 8.6 runs: its release candidates
     # until its GA (2026-11-19), the release once Docker Hub serves it. The
     # "-rc" tag lives on after a GA, on the candidates of the next patch
-    # release, so the stable one is taken as soon as there is one.
+    # release, so the stable one is taken as soon as there is one, and the
+    # candidates only when Docker Hub says it is not there: a timeout or its
+    # rate limit is asked again, then fails the run.
     name: Image tags
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -43,11 +45,21 @@ jobs:
       - name: Find the tag of PHP 8.6
         id: tags
         run: |
-          if docker manifest inspect php:8.6-cli > /dev/null 2>&1; then
-            echo 'php86=8.6' >> "$GITHUB_OUTPUT"
-          else
-            echo 'php86=8.6-rc' >> "$GITHUB_OUTPUT"
-          fi
+          for attempt in 1 2 3; do
+            if answer=$(docker manifest inspect php:8.6-cli 2>&1 > /dev/null); then
+              echo 'php86=8.6' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            case "$answer" in
+              *'no such manifest'*)
+                echo 'php86=8.6-rc' >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+            esac
+            echo "Docker Hub did not say whether php:8.6-cli exists ($attempt/3): $answer" >&2
+            sleep 10
+          done
+          exit 1
 
   engines-bundled:
     # Part of the suite asks the running engine. The official images build
