@@ -88,24 +88,6 @@ to match).
    first.
 
 
-## Blog articles
-
-- The four launch articles wait for a read and a go: the tour's pull
-  request publishes the blog list and the `## Articles` section of
-  `docs/llms.txt` in the same stroke as the flip — one commit once they
-  are validated.
-- On the day of the 8.6 GA, re-check the 8.6 row of the version matrix in
-  `which-pcre2-ships-with-which-php` against the PHP-8.6 branch: the article
-  promises it. On 2026-11-10 the branch and master still bundle PCRE2
-  10.44, as the row says.
-- Next articles, in priority order: variable-length lookbehind across
-  PHP 8.2–8.4, the capture shapes of `$matches`, why `pcre.backtrack_limit`
-  does not protect under the PCRE2 JIT, regex equivalence with proofs,
-  named groups with branch reset, measured data from the corpus,
-  transpiling to JavaScript with a proof, `preg_match()` versus
-  `str_contains()` measured, Symfony route requirements audited.
-
-
 ## PHPStan pull request
 
 When the pull request is opened, state the parse cost in its description.
