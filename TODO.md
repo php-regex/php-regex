@@ -117,6 +117,19 @@ string to its literal; both sit on top of the PR commit, not pushed. Squash
 them into the PR commit or keep them apart, then push.
 
 
+## Runtime validation at another patch release
+
+`runtime_pcre_validation`, `EscapeChecks` and `RegexParser::withTarget()`
+ask the running PHP whenever the target has its PHP minor version and its
+PCRE2 release (`PcreTarget::isRunningEngine()`). So `php_version: '8.4'` or
+`'8.4.26'` with the `pcre_version` that runs is checked by PHP 8.4.27, while
+`php_version: '8.4'` alone is refused already, as it names the 10.44 that
+8.4 bundles. The library knows rules that move at a patch release (8.2.35,
+8.4.25, 8.5.10), and the two facts of the build that runs are now asked for
+that exact build only. Decide whether such a target is refused, or still
+checked by the build that runs.
+
+
 ## Pull request checks
 
 - Make `CI` the required check of `2.x` in the branch protection: a pull
