@@ -38,6 +38,28 @@ final class LibraryDocCommentTest extends TestCase
         $this->assertSame([], $stray);
     }
 
+    /**
+     * The suite is held to it too, but for its fixtures, whose layout is
+     * what a test reads: two "@psalm-trace" comments stacked ask Psalm for
+     * two traces.
+     */
+    #[Test]
+    public function test_no_doc_comment_of_the_suite_is_left_behind_another(): void
+    {
+        $stray = [];
+        foreach (LibrarySource::files('tests') as $path => $tokens) {
+            if (1 === preg_match('~/Fixture[^/]*/~', $path)) {
+                continue;
+            }
+
+            foreach (LibrarySource::strayDocComments($tokens) as $line) {
+                $stray[] = $path.':'.$line;
+            }
+        }
+
+        $this->assertSame([], $stray);
+    }
+
     #[Test]
     public function test_the_scan_sees_a_doc_comment_another_follows(): void
     {

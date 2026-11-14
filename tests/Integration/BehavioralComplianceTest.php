@@ -35,9 +35,6 @@ final class BehavioralComplianceTest extends TestCase
     /**
      * Test that round-trip compiled patterns match the same strings as the original.
      *
-     * @return \Iterator<string, array{pattern: string, testCases: array<string, bool>}>
-     */
-    /**
      * @return \Iterator<array{pattern: string, testCases: array<int|string, bool>}>
      */
     public static function providePatternsWithBehavior(): \Iterator
