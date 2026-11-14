@@ -68,17 +68,40 @@ final class RunningEngineFactsTest extends TestCase
     }
 
     /**
+     * The facts belong to a build, and a patch release is another one: PHP
+     * 8.2.35 bundles the size-limit fix 8.2.34 does not, with the same
+     * PCRE2 10.40. A target of the PHP minor version and the PCRE2 release
+     * that run, at another patch release, is judged by its release, however
+     * the running engine answers.
+     */
+    #[Test]
+    public function test_a_target_at_another_patch_release_is_judged_by_its_release(): void
+    {
+        $other = new PcreTarget(0 === \PHP_VERSION_ID % 100 ? \PHP_VERSION_ID + 1 : \PHP_VERSION_ID - 1, \PCRE_VERSION);
+        $this->assertTrue($other->isRunningEngine(), 'The same minor version, release and locale: the engine that validates.');
+
+        $answers = [];
+        foreach ([true, false] as $answer) {
+            PcreTarget::useRunningEngineAnswers(['measuresBranchesApart' => $answer, 'keepsCallCaptures' => $answer]);
+            $answers[] = [$other->measuresBranchesApart(), $other->keepsCallCaptures()];
+        }
+
+        $this->assertSame($answers[0], $answers[1]);
+    }
+
+    /**
      * A release PCRE2 tagged before 10.43 keeps them, unless it is the one
-     * the PHP of the target bundles. A target that names the running
-     * engine is answered by it.
+     * the PHP of the target bundles. A target that names the build that
+     * runs, its patch release included, is answered by it.
      */
     #[Test]
     #[DataProvider('provideNamedTargets')]
     public function test_a_named_target_keeps_call_captures_on_a_release_before_10_43_its_php_does_not_bundle(int $php, string $pcre, bool $keeps): void
     {
         $target = new PcreTarget($php, $pcre);
+        $runs = \PHP_VERSION_ID === $php && $target->isRunningEngine();
 
-        $this->assertSame($target->isRunningEngine() ? PcreTarget::runtime()->keepsCallCaptures() : $keeps, $target->keepsCallCaptures());
+        $this->assertSame($runs ? PcreTarget::runtime()->keepsCallCaptures() : $keeps, $target->keepsCallCaptures());
     }
 
     /**

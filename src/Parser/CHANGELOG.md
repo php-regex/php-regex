@@ -9,8 +9,8 @@ CHANGELOG
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.
- * The running engine is asked, once per process, two facts its release does
-   not name: whether it carries the size-limit fix PCRE2 gives the
+ * The build that runs, its PHP patch release included, is asked, once per
+   process, two facts its release does not name: whether it carries the size-limit fix PCRE2 gives the
    distributors of 10.39 to 10.47, which moves the error a pattern too large
    is refused with, and whether its interpreter keeps what a subroutine call
    captured in the groups inside the called one, as the releases PCRE2

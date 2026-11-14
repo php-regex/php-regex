@@ -221,15 +221,15 @@ final class PcreTarget
      * 10.47 an item is checked with the branches before it in its group.
      *
      * PCRE2 gives that fix to every distributor of 10.39 to 10.47, and a
-     * release names neither who built it nor what was applied: the running
-     * engine is asked, and any other build is judged as the release PCRE2
-     * tagged.
+     * release names neither who built it nor what was applied: the build
+     * that runs is asked, and any other build is judged as the release
+     * PCRE2 tagged, another patch release of the running PHP included.
      *
      * @internal
      */
     public function measuresBranchesApart(): bool
     {
-        if ($this->isRunningEngine()) {
+        if ($this->isRunningBuild()) {
             return self::runningEngine()['measuresBranchesApart'];
         }
 
@@ -242,14 +242,14 @@ final class PcreTarget
      * call, what the groups inside the called one captured, where PCRE2
      * gives them their earlier values back: the releases PCRE2 tagged before
      * 10.43 keep them, the copies PHP bundles do not, nor does the JIT. The
-     * running engine is asked; a named target keeps them on a release before
-     * 10.43 that is not the one its PHP bundles.
+     * build that runs is asked; any other target keeps them on a release
+     * before 10.43 that is not the one its PHP bundles.
      *
      * @internal the capture shape reads it
      */
     public function keepsCallCaptures(): bool
     {
-        if ($this->isRunningEngine()) {
+        if ($this->isRunningBuild()) {
             return self::runningEngine()['keepsCallCaptures'];
         }
 
@@ -322,6 +322,17 @@ final class PcreTarget
     public function key(): string
     {
         return $this->phpVersionId.'/'.$this->pcreVersion.'/'.$this->locale;
+    }
+
+    /**
+     * Whether the target is the build that runs: the same PHP release, its
+     * patch release included, linking the same PCRE2 release. What no
+     * release names belongs to a build: PHP 8.2.35 bundles a fix of PCRE2
+     * 10.40 that 8.2.34 does not.
+     */
+    private function isRunningBuild(): bool
+    {
+        return \PHP_VERSION_ID === $this->phpVersionId && self::runtime()->release === $this->release;
     }
 
     /**

@@ -666,8 +666,9 @@ cannot tell, the answer widens rather than guesses:
   `/(?(DEFINE)(?<pair>(\d)(\d)))((?&pair)(?&pair))/` leaves groups 2 and 3 at `'3'` and
   `'4'` there, unset elsewhere. For such a target, a PHP linking a system PCRE2 10.42 for
   instance, every call returns those groups: they are `MayBeUnset`, `''|numeric-string`
-  here, as the JIT may run the pattern or not. The running engine is asked; a named
-  target keeps them on a release before 10.43 that its PHP does not bundle.
+  here, as the JIT may run the pattern or not. The build that runs is asked; any other
+  target, another patch release of the running PHP included, keeps them on a release
+  before 10.43 that its PHP does not bundle.
 - A substring scan, `(*scan_substring:...)` or `(*scs:...)` in PCRE2 10.45, reads no
   character of the subject, as a lookahead does.
 - A key that every match writes, but only through different groups in different
