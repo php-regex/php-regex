@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,6 +36,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RunningEngineFactsTest extends TestCase
 {
+    use InstalledLocales;
+
     protected function tearDown(): void
     {
         PcreTarget::useRunningEngineAnswers(null);
@@ -98,6 +101,7 @@ final class RunningEngineFactsTest extends TestCase
     #[Test]
     public function test_the_build_that_runs_answers_under_another_locale(): void
     {
+        $this->requiresLocale('tr_TR.ISO8859-9', 'The build that runs under another locale');
         $running = PcreTarget::runtime();
         $other = $running->withLocale('C' === $running->locale ? 'tr_TR.ISO8859-9' : 'C');
 
