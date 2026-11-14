@@ -16,8 +16,9 @@ In this order.
    on that branch too, after `wasm/pcre2-trace/build.sh` (it stops without the
    trace module), so that the home runs the library of the release: the
    bundle in `docs/assets/playground/` still dates from 2026-11-10.
-2. **Before the tag**, check with `bin/status` that each of the nineteen
-   split repositories carries a fresh 2.x head and a crawled dev version.
+2. **Before the tag**, check with `bin/status` that each of the twenty
+   split repositories (the nineteen packages and the PHP 7.4 twin) carries
+   a fresh 2.x head and a crawled dev version.
    The split pushes are not atomic: between the first and the last webhook
    after the tag, a `^2.0` resolution fails on missing siblings.
 3. **Release candidate first.** The release path has never run on a real
@@ -26,14 +27,15 @@ In this order.
    drafts the release and pushes the tag; the phar workflow builds the
    phar, checks that its version is the tag's and that `regex.phar lsp`
    answers `initialize`, attests it, attaches it and its checksum, then
-   publishes the draft; the split workflow tags the nineteen packages.
+   publishes the draft; the split workflow tags the nineteen packages and
+   the twin.
    Check both assets, `gh attestation verify regex.phar --repo
    php-regex/php-regex`, and the phar on PHP 8.1.
 4. **Tag 2.0.0** the same way. Then `bin/status` and Packagist show
    `v2.0.0` for all nineteen packages (they require each other at
-   `self.version`: one missing tag leaves the others uninstallable), and the
-   "Latest" release carries the 2.0 `regex.phar`, which `self-update` and
-   `releases/latest` serve.
+   `self.version`: one missing tag leaves the others uninstallable) and for
+   the twin, and the "Latest" release carries the 2.0 `regex.phar`, which
+   `self-update` and `releases/latest` serve.
    Run `uses: php-regex/php-regex@v2.0.0` once on a test repository: the
    action downloads that phar and checks its checksum.
 5. `bin/bump --next 2.0.1`.
@@ -44,22 +46,22 @@ In this order.
 
 ## PHP 7.4 twin
 
-The twin lives at https://github.com/php-regex/regex-parser-php74.
+`build/php74` is committed, and `bin/split` publishes it as
+`php-regex/regex-parser-php74` with the packages (#387): its `2.x` follows
+every push, each release tags it, and `bin/status` checks it with the
+others. It carries the sure-match facts of #198. Nothing is left to do for
+it at the release.
 
-After the 2.0.0 tag, publish `php-regex/regex-parser-php74` once more from
-the tagged commit, from the `twin` artifact of a green "php74 twin"
-workflow run. The published `6eb39fa` is the build of 2.x at caea95400d.
-
-Before that, the sure-match facts of #198 need a published twin. The
-build once committed as `11e3725` was never pushed and its clone is gone;
-#198 is in 2.x since 649d5ccd74, so a twin from a green run on 2.x carries
-it (the head of the twin on GitHub is still the build of caea95400d). The
-PHPStan fork (`read-regex-shapes-through-phpregex`, one commit on upstream
-2.3.x) names `11e3725` in `composer.json`: once the twin is published, pin
-the new hash there, amend, force-push to the fork, and refresh the
-description of the fork's pull request (php-regex/phpstan-src#1) with the
-#14490 line (the return type of `preg_match()` on a pattern sure to
-match).
+- After the first split (`c0fb336`), Packagist still served the hand-made
+  `b82aa5e`: check that it reads the split's `2.x`, and that the
+  repository's webhook reaches it.
+- The PHPStan fork (`read-regex-shapes-through-phpregex`, one commit on
+  upstream 2.3.x) names `11e3725`, never published, in `composer.json`:
+  pin the twin's `2.x` head there, `composer update
+  php-regex/regex-parser-php74`, amend, force-push to the fork, and refresh
+  the description of the fork's pull request (php-regex/phpstan-src#1) with
+  the #14490 line (the return type of `preg_match()` on a pattern sure to
+  match).
 
 
 ## PHPStan proof of concept
