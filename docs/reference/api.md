@@ -37,7 +37,7 @@ $regex = Regex::create([
     'max_lookbehind_length' => 255,
     'runtime_pcre_validation' => false,
     'redos_ignored_patterns' => [],
-    'max_recursion_depth' => 1024,
+    'max_recursion_depth' => 512,
     'php_version' => '8.2',
     'pcre_version' => '10.40',
 ]);
@@ -186,7 +186,7 @@ All options are validated. Unknown keys throw `InvalidRegexOptionException`.
 | `max_lookbehind_length`   | `int`                                  | `255`             | Maximum length of a variable-length lookbehind; a fixed-length one is only limited by PCRE's 65535 | Low - PCRE compliance           |
 | `runtime_pcre_validation` | `bool`                                 | `false`           | Compile-check via preg_match() | Medium - extra compile step     |
 | `redos_ignored_patterns`  | `array<string>`                        | `[]`              | Patterns to skip ReDoS         | Low - reduces false positives   |
-| `max_recursion_depth`     | `int`                                  | `1024`            | Parser recursion guard         | Low - prevents stack overflow   |
+| `max_recursion_depth`     | `int`                                  | `512`             | Parser recursion guard         | Low - prevents stack overflow   |
 | `php_version`             | `string` \| `int`                      | the running PHP   | PHP version judged, with the PCRE2 it bundles | Low - feature validation        |
 | `pcre_version`            | `string`                               | the linked PCRE2  | PCRE2 release judged, `"10.42"` | Low - feature validation        |
 | `locale`                  | `string`                               | the runtime's     | `LC_CTYPE` locale judged, `"tr_TR.UTF-8"` | Low - read once per process |

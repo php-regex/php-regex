@@ -89,7 +89,7 @@ $regex = Regex::create([
         '/^([0-9]{4}-[0-9]{2}-[0-9]{2})$/',  // Trusted date pattern
         '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',  // Safe email
     ],
-    'max_recursion_depth' => 1024,
+    'max_recursion_depth' => 512,
 ]);
 
 // 'runtime_pcre_validation' compiles with the running PHP, so it cannot be

@@ -877,13 +877,13 @@ parameters:
 			path: tests/Unit/RegexParserTest.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 1024 and 1024 will always evaluate to true.'
+			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 255 and 255 will always evaluate to true.'
 			identifier: method.alreadyNarrowedType
 			count: 1
 			path: tests/Unit/RegexParserTest.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 255 and 255 will always evaluate to true.'
+			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 512 and 512 will always evaluate to true.'
 			identifier: method.alreadyNarrowedType
 			count: 1
 			path: tests/Unit/RegexParserTest.php

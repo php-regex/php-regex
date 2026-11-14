@@ -247,13 +247,13 @@ final class MatchesPatternTest extends TestCase
     #[Test]
     public function test_matches_pattern_fails_with_the_recursion_limit_message(): void
     {
-        $tooDeep = '/'.str_repeat('(', 1_025).'a'.str_repeat(')', 1_025).'/';
+        $tooDeep = '/'.str_repeat('(', 513).'a'.str_repeat(')', 513).'/';
 
         $failure = $this->failingMessage(function () use ($tooDeep): void {
             $this->assertThat('a', new MatchesPattern($tooDeep));
         });
 
-        $this->assertStringContainsString('Recursion limit of 1024 exceeded', $failure);
+        $this->assertStringContainsString('Recursion limit of 512 exceeded', $failure);
     }
 
     /**

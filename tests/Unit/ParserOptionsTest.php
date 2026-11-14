@@ -64,7 +64,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame(Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH, $options->maxLookbehindLength);
         $this->assertInstanceOf(ArrayCache::class, $options->cache);
         $this->assertFalse($options->runtimePcreValidation);
-        $this->assertSame(1024, $options->maxRecursionDepth);
+        $this->assertSame(512, $options->maxRecursionDepth);
         $this->assertSame(\PHP_VERSION_ID, $options->target->phpVersionId);
     }
 

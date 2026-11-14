@@ -1752,6 +1752,11 @@ to also handle the limits.
 nothing was checked, and `hint` names the option to raise. The lint reports
 it as a warning, `Not analyzed: …`, and no longer as an invalid pattern.
 
+`max_recursion_depth` is 512 by default, where 1.x read 1024 levels: PCRE
+refuses parentheses nested past 250, and some 800 levels end PHP on a C
+stack of 1 MB. Set it back to 1024 to read a deeper pattern, such as a
+Perl extended class holding a run of more than 510 `!`, which PCRE takes.
+
 `LintException` and `CliException` extend `\RuntimeException`, so a `catch`
 of that class keeps holding them. `InvalidRegexOptionException` extends
 `\InvalidArgumentException`. A `catch (\RuntimeException)` around the

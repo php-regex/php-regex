@@ -55,7 +55,7 @@ Configuration
 | `locale` | `"tr_TR.UTF-8"` | the runtime's, `C` by default | `LC_CTYPE` locale the patterns run under: its character tables decide the size of a few classes; one the machine cannot set is refused |
 | `max_pattern_length` | positive int | `100000` | pattern length beyond which parsing is refused |
 | `max_lookbehind_length` | non-negative int | `255` | maximum length of a variable-length lookbehind, PCRE2's own `max_varlookbehind` |
-| `max_recursion_depth` | positive int | `1024` | how deep groups may nest before the parser stops |
+| `max_recursion_depth` | positive int | `512` | how deep groups may nest before the parser stops; PCRE refuses parentheses nested past 250 |
 | `runtime_pcre_validation` | bool | `false` | also compile with the running PHP; only when the judged engine is the running one |
 | `cache` | `null`, directory or `CacheInterface` | in memory | `null` disables caching, a string names a directory, an instance is used as is |
 | `redos_ignored_patterns` | list of strings | `[]` | patterns handed to the ReDoS layer to skip |

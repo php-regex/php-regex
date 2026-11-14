@@ -58,9 +58,11 @@ final class ParserOptions
     public const DEFAULT_MAX_LOOKBEHIND_LENGTH = 255;
 
     /**
-     * How deep the parser may nest groups before it stops.
+     * How deep the parser may nest groups before it stops: twice the 250
+     * levels of parentheses PCRE takes, and short of the some 800 levels
+     * where PHP runs out of a C stack of 1 MB.
      */
-    public const DEFAULT_MAX_RECURSION_DEPTH = 1024;
+    public const DEFAULT_MAX_RECURSION_DEPTH = 512;
 
     /**
      * What "php_version" takes, said when it holds something else.
