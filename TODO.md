@@ -122,5 +122,3 @@ them into the PR commit or keep them apart, then push.
 - Make `CI` the required check of `2.x` in the branch protection: a pull
   request of prose alone reports it (seen on #369), and the protection
   requires no check yet.
-- The Box pin (4.7.1 and its checksum, in `phar.yml` and `packages.yml`) is
-  bumped by hand: Dependabot does not see it.
