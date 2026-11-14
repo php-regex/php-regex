@@ -4,24 +4,30 @@
 
 In this order.
 
-1. **The bump commit.** `bin/bump 2.0.0` sets `Regex::VERSION` and
-   `Regex::VERSION_ID`, dates the CHANGELOG section, and moves the install
-   story from `2.x-dev` to the stable release: `docs/_data/product.yml`
-   says `stable: true`, which the install include every page and article
-   reads; `README.md` and `docs/llms.txt` lose the two `composer config`
-   lines, the `:2.x-dev` suffix and the "2.0 is coming" section; and the
-   `2.0.0-DEV` sample outputs of the docs report `2.0.0`. Read the diff,
-   then commit it on its own branch. `bin/release` refuses a final version
-   whose docs still install from the dev channel. Run `bin/playground-bundle`
-   on that branch too, after `wasm/pcre2-trace/build.sh` (it stops without the
-   trace module), so that the home runs the library of the release: the
-   bundle in `docs/assets/playground/` still dates from 2026-11-10.
-2. **Before the tag**, check with `bin/status` that each of the twenty
+1. **Take `yoeunes/regex-parser` off the monorepo on Packagist.** Its
+   repository is still `github.com/php-regex/php-regex`, and Packagist
+   files every crawled ref under the submitted name: a `v2.0.0-RC1` tag
+   would publish `yoeunes/regex-parser` 2.0.0-RC1, the whole monorepo.
+   `github.com/yoeunes/regex-parser` now redirects to the monorepo, so it
+   cannot be the new source: push the `1.x` branch and the `v0.*`/`v1.*`
+   tags to a repository of their own (a new name, which keeps the
+   redirect), point the package at it, and check that Packagist still
+   crawls it (a package whose stored GitHub id differs from its
+   repository's is skipped) and that `v1.3.0` keeps its reference.
+   `bin/status` marks it until then.
+2. **The RC bump.** `bin/bump 2.0.0-RC1` on its own branch and pull
+   request: it sets `Regex::VERSION` and the `version` the sample outputs
+   of the docs print, and leaves the CHANGELOG and the install story on
+   `2.x-dev`. `bin/release 2.0.0-RC1` refuses any other `Regex::VERSION`,
+   and `bin/bump 2.0.0` would already move the docs to the stable channel.
+3. **Before the tag**, check with `bin/status` that each of the twenty
    split repositories (the nineteen packages and the PHP 7.4 twin) carries
-   a fresh 2.x head and a crawled dev version.
+   a fresh 2.x head and a crawled dev version, and that every workflow
+   `bin/release` reads answers for HEAD: a `TODO.md` commit pushed on
+   `2.x` alone needs `gh workflow run spelling.yml --ref 2.x`.
    The split pushes are not atomic: between the first and the last webhook
    after the tag, a `^2.0` resolution fails on missing siblings.
-3. **Release candidate first.** The release path has never run on a real
+4. **Release candidate first.** The release path has never run on a real
    release (`v1.3.0` carries no checksum). `bin/release --dry-run
    2.0.0-RC1`, then `bin/release 2.0.0-RC1` (a GitHub pre-release): it
    drafts the release and pushes the tag; the phar workflow builds the
@@ -31,15 +37,27 @@ In this order.
    the twin.
    Check both assets, `gh attestation verify regex.phar --repo
    php-regex/php-regex`, and the phar on PHP 8.1.
-4. **Tag 2.0.0** the same way. Then `bin/status` and Packagist show
+5. **The final bump.** `bin/bump 2.0.0` sets `Regex::VERSION` and
+   `Regex::VERSION_ID`, dates the CHANGELOG section, and moves the install
+   story from `2.x-dev` to the stable release: `docs/_data/product.yml`
+   says `stable: true`, which the install include every page and article
+   reads; `README.md` and `docs/llms.txt` lose the two `composer config`
+   lines, the `:2.x-dev` suffix and the "2.0 is coming" section; and the
+   sample outputs of the docs report `2.0.0`. Read the diff, then commit
+   it on its own branch. `bin/release` refuses a final version whose docs
+   still install from the dev channel. Run `bin/playground-bundle` on that
+   branch too, after `wasm/pcre2-trace/build.sh` (it stops without the
+   trace module), so that the home runs the library of the release: the
+   bundle in `docs/assets/playground/` still dates from 2026-11-10.
+6. **Tag 2.0.0** the same way. Then `bin/status` and Packagist show
    `v2.0.0` for all nineteen packages (they require each other at
    `self.version`: one missing tag leaves the others uninstallable) and for
    the twin, and the "Latest" release carries the 2.0 `regex.phar`, which
    `self-update` and `releases/latest` serve.
    Run `uses: php-regex/php-regex@v2.0.0` once on a test repository: the
    action downloads that phar and checks its checksum.
-5. `bin/bump --next 2.0.1`.
-6. Submit `src/Linter/regex.schema.json` to schemastore.org (`fileMatch`:
+7. `bin/bump --next 2.0.1`.
+8. Submit `src/Linter/regex.schema.json` to schemastore.org (`fileMatch`:
    `regex.json`, `regex.dist.json`) for editor support without setup: it
    needs the stable public URL the tag gives it.
 
@@ -52,9 +70,6 @@ every push, each release tags it, and `bin/status` checks it with the
 others. It carries the sure-match facts of #198. Nothing is left to do for
 it at the release.
 
-- After the first split (`c0fb336`), Packagist still served the hand-made
-  `b82aa5e`: check that it reads the split's `2.x`, and that the
-  repository's webhook reaches it.
 - The PHPStan fork (`read-regex-shapes-through-phpregex`, one commit on
   upstream 2.3.x) names `11e3725`, never published, in `composer.json`:
   pin the twin's `2.x` head there, `composer update
