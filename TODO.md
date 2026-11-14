@@ -125,60 +125,12 @@ measured under 3 %.
 
 ## PHPStan fork: preg_quote() placeholders
 
-Everything below happens in the phpstan-src checkout
-`~/projects/php-regex/phpstan-src`, branch `read-regex-shapes-through-phpregex`;
-nothing changes in this repository. `RegexExpressionHelper::resolvePatternConcat()`
-(`src/Type/Regex/RegexExpressionHelper.php`, the single choke point — its callers
-are `RegexArrayShapeMatcher.php:726`, `PregMatchDynamicReturnTypeExtension.php:83`
-and `RegularExpressionPatternRule.php:92`) replaces every `preg_quote()` with
-`(?:.*)`, sound only where the pattern reads the quoted text as literal
-characters. Six positions are not that: in a class, where
-`'/[' . preg_quote($x, '/') . ']/'` folds to a class over the characters of the
-placeholder; after `\`, where the escaped `(` eats the placeholder's and the
-group never opens; after `(?`, where `'/(?<' . preg_quote($x, '/') . '>a)/'`
-folds to a group name PCRE refuses, so a valid call is reported invalid; inside
-`\Q…\E`; in braces; and before a quantifier or a comment an empty text leaves to
-what precedes it.
-
-`src/Psalm/QuotedPattern.php` in this repository is the contract to port:
-`(?:[\s\S]*)` for any text, as `.*` misses `"\n"` without `s`; each quoted part
-re-read in place with the probes `''`, `'\\\\E'`, `'0'`, `'n'`, `','`, `"'"`,
-`'\.'`, `'\000'` (the forms `preg_quote()` emits) and the other parts empty;
-each probe must parse, keep the exact group list (`CaptureShapeAnalyzer`), and
-show its characters as literal nodes outside every class between the exact
-offsets; `[*+?{#]` or `(?#` right after an empty text withholds; the first and
-the last parts must carry the delimiters, as `preg_quote()` escapes the
-delimiter only when it is given; any failure withholds, never guesses. A
-withheld check returns a type with no constant strings, so the three callers
-degrade; the probe logic sits in a class beside `RegexGroupParser`, which shows
-how the pinned `php-regex/regex-parser-php74` build is consumed — anything new
-must exist in that pinned build. The prose contract is "Patterns built with
-`preg_quote()`" in `docs/guides/psalm.md`.
-
-Red first, under `~/projects/php-regex/phpstan-src`: the six positions assert
-the plain fallback type in `tests/PHPStan/Analyser/nsrt/preg_match_shapes.php`,
-beside the existing `preg_quote` rows (386-422), which keep their types — a
-quoted part in literal position loses nothing; and the `(?<` case leaves
-`RegularExpressionPatternRuleTest` silent on a valid call. Green through
-`make tests`, `make phpstan`, and the 329-pattern engine parity test. A separate
-follow-up folds `preg_quote()` of a constant string to the literal it returns,
-as `CallTypes::quote` does.
-
-Two verdicts leak through the placeholder even where the quoted text is read
-as literal characters, so the port above does not cover them (seen 2026-11-10,
-PHP 8.4, PCRE2 10.49). `PregMatchDynamicReturnTypeExtension` reads the
-placeholder as the pattern: `preg_match('/' . preg_quote($x, '/') . '/', $s)`
-is typed `1|false` and `=== 0` on it is reported as always false, where `/abc/`
-returns 0 on `zzz`. `RegularExpressionPatternRule` compiles the placeholder:
-`'/(?<=' . preg_quote($x, '/') . ')\d+/'` is reported as
-`length of lookbehind assertion is not limited`, where `/(?<=id\=)\d+/`
-compiles; PHPStan 2.3.5 reports it too. As `PregCallAnalyzer::typeAroundQuotes()`
-does here, the placeholder stands for the groups only: the return type and the
-validity rule read a pattern with a quoted part as a pattern that is not
-constant. Red first: a new row keeps `0|1|false` for that `preg_match()`, and
-the lookbehind call leaves `RegularExpressionPatternRuleTest` silent. Under `x`
-a quoted space is not a literal either (`/^a b$/x` matches `ab`, not `a b`), and
-the probes hold no whitespace.
+In `~/projects/php-regex/phpstan-src`, branch `read-regex-shapes-through-phpregex`:
+`2fddb71bf` reads a quoted text in place (the shape, the return type and the
+validity rule), committed on top of the PR commit, not pushed. Squash it into
+the PR commit or keep it apart, then push. Still to do there: fold
+`preg_quote()` of a constant string to the literal it returns, as
+`CallTypes::quote` does here.
 
 
 ## Corpus
