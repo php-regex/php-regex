@@ -15,6 +15,7 @@ namespace PHPRegex\Parser;
 
 use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Text\Ascii;
 
@@ -62,6 +63,13 @@ final class PcreTarget
      * @var array<int, array<string, bool>>
      */
     private static array $supported = [];
+
+    /**
+     * What the running engine answered for the facts no release names.
+     *
+     * @var array{measuresBranchesApart: bool, keepsCallCaptures: bool}|null
+     */
+    private static ?array $runningEngine = null;
 
     private readonly int $release;
 
@@ -213,15 +221,51 @@ final class PcreTarget
      * 10.47 an item is checked with the branches before it in its group.
      *
      * PCRE2 gives that fix to every distributor of 10.39 to 10.47, and a
-     * release names neither who built it nor what was applied: any other
-     * build is judged as the release PCRE2 tagged.
+     * release names neither who built it nor what was applied: the running
+     * engine is asked, and any other build is judged as the release PCRE2
+     * tagged.
      *
      * @internal
      */
     public function measuresBranchesApart(): bool
     {
+        if ($this->isRunningEngine()) {
+            return self::runningEngine()['measuresBranchesApart'];
+        }
+
         return $this->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd)
             || (self::BUNDLED_WITH_PHP_8_2 === $this->release && PhpVersionGates::bundlesPcre2WithItsFixes($this->phpVersionId));
+    }
+
+    /**
+     * Whether the interpreter of the PCRE2 judged keeps, after a subroutine
+     * call, what the groups inside the called one captured, where PCRE2
+     * gives them their earlier values back: the releases PCRE2 tagged before
+     * 10.43 keep them, the copies PHP bundles do not, nor does the JIT. The
+     * running engine is asked; a named target keeps them on a release before
+     * 10.43 that is not the one its PHP bundles.
+     *
+     * @internal the capture shape reads it
+     */
+    public function keepsCallCaptures(): bool
+    {
+        if ($this->isRunningEngine()) {
+            return self::runningEngine()['keepsCallCaptures'];
+        }
+
+        return !$this->supports(PcreFeature::CallCapturesGivenBack) && self::bundledWith($this->phpVersionId)->release !== $this->release;
+    }
+
+    /**
+     * Answers in place of the running engine's, or null to ask it again.
+     *
+     * @internal a test asks for a build this machine does not run
+     *
+     * @param array{measuresBranchesApart: bool, keepsCallCaptures: bool}|null $answers
+     */
+    public static function useRunningEngineAnswers(?array $answers): void
+    {
+        self::$runningEngine = $answers;
     }
 
     /**
@@ -278,6 +322,29 @@ final class PcreTarget
     public function key(): string
     {
         return $this->phpVersionId.'/'.$this->pcreVersion.'/'.$this->locale;
+    }
+
+    /**
+     * What the running engine answers, asked once: two branches too large
+     * only together, then a reference to no group, which a build measuring
+     * branches apart meets first; and the groups inside a group called
+     * twice, which the interpreter leaves set or gives back.
+     *
+     * @return array{measuresBranchesApart: bool, keepsCallCaptures: bool}
+     */
+    private static function runningEngine(): array
+    {
+        if (null === self::$runningEngine) {
+            $engine = new PcreEngine();
+            $tooLarge = $engine->compile('/(?:[^a]){5000}|(?:[^a]){4000}\k<n>(?:[^a]){1000}/');
+            $called = $engine->match('/(?(DEFINE)(?<pair>(\d)(\d)))((?&pair)(?&pair))/', '1234')->groups;
+            self::$runningEngine = [
+                'measuresBranchesApart' => !str_contains((string) $tooLarge?->message, 'too large'),
+                'keepsCallCaptures' => '' !== ($called[2] ?? ''),
+            ];
+        }
+
+        return self::$runningEngine;
     }
 
     private static function releaseNumber(string $version): ?int

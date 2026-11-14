@@ -660,6 +660,14 @@ cannot tell, the answer widens rather than guesses:
   backreference, have unknown values, and a length unbounded from zero.
 - A call that returns groups, `(?1(2))` in PCRE2 10.47, sets them as the group it runs
   does: in `/(?(DEFINE)((Sat)urday))(?1(2)),\2/` group 2 holds `'Sat'`, and is `MayBeUnset`.
+- The interpreter of a PCRE2 release before 10.43, as PCRE2 tagged it, keeps what a call
+  captured in the groups inside the called one, where the JIT, the later releases and the
+  copies PHP bundles give them back: on `1234`,
+  `/(?(DEFINE)(?<pair>(\d)(\d)))((?&pair)(?&pair))/` leaves groups 2 and 3 at `'3'` and
+  `'4'` there, unset elsewhere. For such a target, a PHP linking a system PCRE2 10.42 for
+  instance, every call returns those groups: they are `MayBeUnset`, `''|numeric-string`
+  here, as the JIT may run the pattern or not. The running engine is asked; a named
+  target keeps them on a release before 10.43 that its PHP does not bundle.
 - A substring scan, `(*scan_substring:...)` or `(*scs:...)` in PCRE2 10.45, reads no
   character of the subject, as a lookahead does.
 - A key that every match writes, but only through different groups in different

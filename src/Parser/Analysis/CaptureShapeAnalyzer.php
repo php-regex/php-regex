@@ -1308,17 +1308,49 @@ final class CaptureShapeAnalyzer
      * group it runs does: in /(?(DEFINE)((Sat)urday))(?1(2)),\2/ group 2
      * holds 'Sat'. No match is sure to set them.
      *
+     * Where the interpreter of the target keeps what a call captured in the
+     * groups inside the called one, every call returns those groups: the
+     * JIT gives them back, so they may hold what their body reads, or keep
+     * what they held. The called group itself is set by no call.
+     *
      * @return array<int, true>
      */
     private function walkReturned(SubroutineNode $node, bool $never): array
     {
-        foreach ($this->groups->groupsReturnedBy($node) as ['number' => $number, 'group' => $group]) {
+        $returned = $this->groups->groupsReturnedBy($node);
+        if (true === $this->target?->keepsCallCaptures()) {
+            foreach ($this->groups->groupsCalledBy($node) as $called) {
+                foreach (self::capturingGroupsIn($called->child) as $group) {
+                    $number = $this->groups->numberOf($group);
+                    if (null !== $number && $number > 0) {
+                        $returned[] = ['number' => $number, 'group' => $group];
+                    }
+                }
+            }
+        }
+
+        foreach ($returned as ['number' => $number, 'group' => $group]) {
             $read = $this->facts->of($group->child, true);
             $read += ['arms' => $this->facts->arms($group->child, true) ?: [$read]];
             $this->occurrences[$number][] = ['name' => $group->name, 'never' => $never, 'after_accept' => $this->cut, 'open_at_accept' => false] + $read;
         }
 
         return [];
+    }
+
+    /**
+     * The capturing groups a node holds, at any depth.
+     *
+     * @return list<GroupNode>
+     */
+    private static function capturingGroupsIn(NodeInterface $node): array
+    {
+        $groups = $node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type) ? [$node] : [];
+        foreach ($node->getChildren() as $child) {
+            $groups = [...$groups, ...self::capturingGroupsIn($child)];
+        }
+
+        return $groups;
     }
 
     /**
