@@ -217,15 +217,6 @@ the probes hold no whitespace.
   system 10.42 are open; the engine tests that write `ini_set('pcre.jit',
   '0')` after a pattern was compiled do not ask the interpreter either.
 
-- A password rule of Unicode classes is still slow or refused after #346,
-  in the determinization: it writes one transition per range of the
-  alphabet per state, about 2,100 ranges. Four `\p{..}` lookaheads take
-  1.5 s with `.{8,}` and pass the default budget with `.{12,}`. The
-  classes of the alphabet #346 reads the product by would cut that table.
-  The forty `(?=.*a{2})` of the earlier note are answered in under a
-  second: identical lookaheads merge; forty distinct characters reach the
-  state limit.
-
 - A ReDoS repair still proves one rewrite per quantifier after #348 (1,000
   quantifiers: about 20 s). The PHPStan rule reads `repair()[0]` alone: a
   call that stops at the first certified repair, or a prover that keeps
@@ -254,8 +245,3 @@ the probes hold no whitespace.
   without them is judged as patched: `PCRE_VERSION` cannot tell. The
   backport also touches the matcher and the JIT of PHP 8.2.35: what the
   library claims of matching on 10.40 was not re-read.
-
-- On Windows the tests read a child's standard output to its end, then its
-  standard error (`ProcessPipes::drain()`): a pipe of `proc_open()` cannot
-  be waited on there, so a child that fills its error stream first would
-  block.
