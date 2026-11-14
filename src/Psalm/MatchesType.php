@@ -131,9 +131,6 @@ final class MatchesType
     }
 
     /**
-     * @return non-empty-array<int|string, Union>
-     */
-    /**
      * One row of a set-order scan: a scan resumes after an empty match, so
      * the whole a row reads joins the later branches' values.
      */
