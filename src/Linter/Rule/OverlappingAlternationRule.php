@@ -477,7 +477,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
             return '';
         }
 
-        $inline = FlagScope::flagsAt($atom, $root, '') ?? $flags;
+        // The atom stands under $root, where the traversal found it; were it
+        // not found, the pattern's /D and /S would still not be read here.
+        $inline = FlagScope::flagsAt($atom, $root, '') ?? '';
         $ascii = '';
         foreach (['D', 'S', 'W', 'P', 'T'] as $option) {
             $ascii .= str_contains($inline, $option) ? 'a'.$option : '';
