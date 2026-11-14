@@ -395,7 +395,9 @@
     tokens = apply(tokens, /\\?\b[A-Z]\w*(?:\\[A-Z]\w*)+\b|\b[A-Z][A-Za-z]*(?:Node|Exception)\b/g, as('out-type'));
     tokens = apply(tokens, /\$[A-Za-z_]\w*/g, as('out-var'));
     tokens = apply(tokens, /\b(?:non-(?:empty|falsy)-(?:string|list)|list|array|string|int|bool|float|false|true|null|max|min)(?=[<{|,>}\s]|$)/g, as('out-type'));
-    tokens = apply(tokens, /[→↳⏎]|-->|->|=>|\^{2,}|\.\.\./g, as('out-mark'));
+    // An arrow, "->" or "-->", starts where a run of dashes does: the
+    // tail of a longer one, like the trace's "--->", is not an arrow.
+    tokens = apply(tokens, /[→↳⏎]|(?<!-)--?>|=>|\^{2,}|\.\.\./g, as('out-mark'));
     tokens = apply(tokens, /"(?:\\.|[^"\\\n])*"/g, as('out-str'));
     tokens = apply(tokens, /\b(?:int|string|bool|float|array|NULL)(?=\()/g, as('out-kw'));
     tokens = apply(tokens, /\b\d+(?:\.\d+)*\b/g, as('out-num'));
