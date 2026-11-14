@@ -93,7 +93,9 @@ jobs:
 
       # The release's phar, checked against the checksum pinned here before
       # it builds anything. Asked for Box, setup-php downloads the latest
-      # release, and once: a 504 from GitHub then fails the build.
+      # release, and once: a 504 from GitHub then fails the build. Dependabot
+      # reads no such pin: a new Box is taken by hand, its VERSION and SHA256
+      # together, here and in the other phar build alike.
       - name: Install Box
         env:
           VERSION: '4.7.1'

@@ -19,6 +19,7 @@ use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
@@ -231,6 +232,34 @@ final class ParserOptionsTest extends TestCase
                 $this->assertStringContainsString('does not judge the target ('.$named.')', $e->getMessage());
             }
         }
+    }
+
+    /**
+     * Another patch release of the running PHP, with the PCRE2 it links, is
+     * the engine that runs: PHP compiles only a pattern the library accepted
+     * for the target, and what moves at a patch release is the library's to
+     * judge first. "\C" under "u", which PHP 8.4.25 and 8.5.10 refuse, is
+     * refused for every PHP, and the size-limit fix of 8.2.35 moves the
+     * error a pattern too large is refused with, not whether it compiles.
+     */
+    #[Test]
+    public function test_runtime_validation_takes_another_patch_release_of_the_running_php(): void
+    {
+        $other = 0 === \PHP_RELEASE_VERSION ? \PHP_VERSION_ID + 1 : \PHP_VERSION_ID - 1;
+        $options = ParserOptions::fromArray(['runtime_pcre_validation' => true, 'php_version' => $other, 'pcre_version' => PcreTarget::runtime()->pcreVersion]);
+
+        $this->assertTrue($options->runtimePcreValidation);
+        $this->assertSame($other, $options->target->phpVersionId);
+
+        // What PHP itself does: the reference matches "abb", and "\C" under
+        // "u" compiles before PHP 8.4.25 and from 8.5.0 to 8.5.9 (GH-21134).
+        $this->assertSame(1, preg_match('/a(?<n>b)\k<n>/', 'abb'));
+        $compiles = EngineProbe::compiles('/a\Cb/u');
+        $this->assertSame(\PHP_VERSION_ID < 80425 || (\PHP_VERSION_ID >= 80500 && \PHP_VERSION_ID < 80510), $compiles);
+
+        $regex = Regex::create(['runtime_pcre_validation' => true, 'php_version' => $other, 'pcre_version' => PcreTarget::runtime()->pcreVersion]);
+        $this->assertTrue($regex->validate('/a(?<n>b)\k<n>/')->isValid);
+        $this->assertFalse($regex->validate('/a\Cb/u')->isValid, $compiles ? 'Refused where this PHP compiles it.' : 'Refused, as this PHP refuses it.');
     }
 
     #[Test]

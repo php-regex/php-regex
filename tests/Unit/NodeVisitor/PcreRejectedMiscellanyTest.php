@@ -107,6 +107,8 @@ final class PcreRejectedMiscellanyTest extends TestCase
     {
         yield '\\C under u (PHP: using \\C is incompatible with the \'u\' modifier): /\\C/u' => ['pattern' => '/\\C/u'];
         yield '\\C inside a sequence under u: /a\\Cb/u' => ['pattern' => '/a\\Cb/u'];
+        yield '\\C under a leading (*UTF), no u flag (refused from PHP 8.4.29, 8.5.14 and 8.6.1, GH-25452): /(*UTF)\\C/' => ['pattern' => '/(*UTF)\\C/'];
+        yield '\\C after (*CR)(*UTF), no u flag: /(*CR)(*UTF)a\\C/' => ['pattern' => '/(*CR)(*UTF)a\\C/'];
         yield 'code point above 0xff without u (error 134): /\\x{100}/' => ['pattern' => '/\\x{100}/'];
         yield 'code point above 0xff in a class without u (error 134): /[\\x{100}]/' => ['pattern' => '/[\\x{100}]/'];
         yield 'quantified numbered callout (error 109): /(?C1)+/' => ['pattern' => '/(?C1)+/'];
@@ -128,8 +130,6 @@ final class PcreRejectedMiscellanyTest extends TestCase
         yield 'code point above 0xff under a leading (*UTF): /(*UTF)\\x{100}/' => ['pattern' => '/(*UTF)\\x{100}/'];
         yield 'callout before a quantified atom: /(?C1)a+/' => ['pattern' => '/(?C1)a+/'];
         yield 'callout between atoms, the next one quantified: /a(?C1)b*/' => ['pattern' => '/a(?C1)b*/'];
-        yield '\\C with a leading (*UTF) but no u flag (only a JIT warning at match time): /(*UTF)\\C/' => ['pattern' => '/(*UTF)\\C/'];
-        yield '\\C after (*CR)(*UTF), no u flag: /(*CR)(*UTF)a\\C/' => ['pattern' => '/(*CR)(*UTF)a\\C/'];
         yield 'empty braces after a callout are text: /(?C1){,}/' => ['pattern' => '/(?C1){,}/'];
         yield 'empty braces after a literal and a callout are text: /a(?C1){}/' => ['pattern' => '/a(?C1){}/'];
         yield 'possessive-looking empty braces after a string callout: /(?C"x"){,}+/' => ['pattern' => '/(?C"x"){,}+/'];

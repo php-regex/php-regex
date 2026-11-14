@@ -128,10 +128,6 @@ final class ToolRangeTest extends TestCase
     }
 
     /**
-     * validate's text was "Valid." for a pattern the floor accepts: a later
-     * refusal is no longer silent there.
-     */
-    /**
      * A change of meaning that keeps the tree is said in the text as lint
      * says it: a group that holds a reference to itself is backtracked into
      * from PCRE2 10.35, PHP 8.0.
@@ -147,6 +143,10 @@ final class ToolRangeTest extends TestCase
         $this->assertStringContainsString("\nWarning: From PHP 8.0 (PCRE2 ".self::judgedPcre(80000).') a group that holds a reference to itself may be backtracked into', $result->text);
     }
 
+    /**
+     * validate's text was "Valid." for a pattern the floor accepts: a later
+     * refusal is no longer silent there.
+     */
     #[Test]
     public function test_validate_no_longer_answers_valid_alone_over_a_later_refusal(): void
     {

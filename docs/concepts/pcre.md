@@ -343,12 +343,16 @@ target's PCRE2 reports. When a pattern holds several errors, it is the offset of
 one PCRE meets first, reading left to right: `[z-a](?#` is refused on its
 range, not on the comment left open.
 
-One judgement is stricter than some PHP releases on purpose: `\C` with the `u`
-flag. PHP 8.4.25 and 8.5.10 refuse it ("using \C is incompatible with the 'u'
-modifier"); earlier releases compile it, but matching it can crash PHP
+One judgement is stricter than some PHP releases on purpose: `\C` in UTF-8
+mode. With the `u` flag, PHP 8.4.25 and 8.5.10 refuse it ("using \C is
+incompatible with the 'u' modifier"); under a leading `(*UTF)` or `(*UTF8)`,
+PHP 8.4.29, 8.5.14 and 8.6.1 do ("using \C is incompatible with UTF-8 mode",
+[GH-25452](https://github.com/php/php-src/issues/25452)). Earlier releases
+compile it, but matching it can crash PHP
 ([GH-21134](https://github.com/php/php-src/issues/21134)). It is reported for
-every target: at the `\C` for a PHP that refuses it, at the enclosing
-lookbehind for one that compiles it, as that PHP refuses it only there.
+every target, at the `\C`. In a lookbehind, which every release refuses in
+UTF-8 mode, it is reported at the lookbehind, where PCRE measures it, unless
+the `u` flag makes the target's PHP refuse it anywhere.
 
 The library reads patterns with PCRE itself, under limits of its own: a low
 `pcre.backtrack_limit` in your configuration changes neither how a pattern is

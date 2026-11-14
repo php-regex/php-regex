@@ -705,12 +705,6 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
-     * Under /J a name holds a set group's value whenever one of the groups
-     * bearing it is always set: its offset is never -1.
-     * preg_match('/(?J)(?<n>z)?(?<n>a)/', 'a', $m, PREG_OFFSET_CAPTURE)
-     * gives n = ['a', 0].
-     */
-    /**
      * An inline "(?-n)" holds inside an alphabetic assertion's body, as in
      * "(?>...)": preg_match('/(?-n)(*atomic:(a))/n', 'a', $m) captures 1.
      */
@@ -723,6 +717,12 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $this->assertSame("array{0: 'a', 1: 'a'}", $this->analyze('/(?-n)(*pla:(a))a/n')->matchShape(0));
     }
 
+    /**
+     * Under /J a name holds a set group's value whenever one of the groups
+     * bearing it is always set: its offset is never -1.
+     * preg_match('/(?J)(?<n>z)?(?<n>a)/', 'a', $m, PREG_OFFSET_CAPTURE)
+     * gives n = ['a', 0].
+     */
     #[Test]
     public function test_a_shared_name_with_an_always_set_group_has_a_set_offset(): void
     {
@@ -1662,9 +1662,6 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, group: int, min: int, max: int|null}>
-     */
-    /**
      * Oracle (PHP 8.1 to 8.4 and PCRE2 10.39 to 10.49 alike); no row matches
      * the arm the analysis drops:
      *   /(a)(?(1)b|(c))/ on 'ab' -> ["ab","a"], on 'ac' -> 0
@@ -1777,6 +1774,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'a reset past a recursion test' => ['pattern' => '/(?(R)a|b)\Kc/', 'subjects' => ['bc'], 'expected' => "array{0: 'c'}"];
     }
 
+    /**
+     * @return iterable<string, array{pattern: string, group: int, min: int, max: int|null}>
+     */
     public static function provideLengths(): iterable
     {
         yield 'fixed' => ['pattern' => '/(\d{4})/', 'group' => 1, 'min' => 4, 'max' => 4];

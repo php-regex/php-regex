@@ -103,10 +103,6 @@ final class ConsoleLintRunnerTest extends TestCase
     }
 
     /**
-     * Under --quiet the console writes nothing, the steps and the report
-     * included; the exit code still says what was found.
-     */
-    /**
      * On a terminal each part of the banner, the error line and the line
      * that times the run take their colors; the time and the memory are
      * read as the run measured them.
@@ -155,6 +151,10 @@ final class ConsoleLintRunnerTest extends TestCase
         $this->assertSame("\e[37;41mError: The --jobs value must be a positive integer.\e[39;49m\n", $this->error());
     }
 
+    /**
+     * Under --quiet the console writes nothing, the steps and the report
+     * included; the exit code still says what was found.
+     */
     #[Test]
     public function test_quiet_console_writes_nothing(): void
     {

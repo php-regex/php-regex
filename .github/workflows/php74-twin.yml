@@ -15,6 +15,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  images:
+    # The tag of the official image PHP 8.6 runs: its release candidates
+    # until its GA (2026-11-19), the release once Docker Hub serves it. The
+    # "-rc" tag lives on after a GA, on the candidates of the next patch
+    # release, so the stable one is taken as soon as there is one, and the
+    # candidates only when Docker Hub says it is not there: a timeout or its
+    # rate limit is asked again, then fails the run.
+    name: Image tags
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      php86: ${{ steps.tags.outputs.php86 }}
+    steps:
+      - name: Find the tag of PHP 8.6
+        id: tags
+        run: |
+          for attempt in 1 2 3; do
+            if answer=$(docker manifest inspect php:8.6-cli 2>&1 > /dev/null); then
+              echo 'php86=8.6' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            case "$answer" in
+              *'no such manifest'*)
+                echo 'php86=8.6-rc' >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+            esac
+            echo "Docker Hub did not say whether php:8.6-cli exists ($attempt/3): $answer" >&2
+            sleep 10
+          done
+          exit 1
+
   generate:
     name: generate and analyse the twin
     runs-on: ubuntu-latest
@@ -106,22 +138,23 @@ jobs:
   # pattern on the same engine, and every reading must be the same
   twin:
     name: twin on PHP ${{ matrix.php }}
-    needs: generate
+    needs: [ generate, images ]
     runs-on: ubuntu-latest
-    container: php:${{ matrix.php }}-cli
+    container: php:${{ matrix.php == '8.6' && needs.images.outputs.php86 || matrix.php }}-cli
     strategy:
       fail-fast: false
       # Three of the six cells at once: the matrices of one pull request
       # hold a third of the organization's sixty runners at most.
       max-parallel: 3
       matrix:
-        php: ['8.1', '8.2', '8.3', '8.4', '8.5', '8.6-rc']
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5', '8.6']
     steps:
       - name: Install multibyte support
-        # the 8.6-rc image ships without mbstring, which the original and
-        # PHPUnit read; compiling it needs oniguruma
-        if: startsWith(matrix.php, '8.6')
+        # an image without mbstring, as the candidates of 8.6 ship, compiles
+        # it, which the original and PHPUnit read, with oniguruma; an image
+        # that has it skips the rest
         run: |
+          if php -r 'exit(extension_loaded("mbstring") ? 0 : 1);'; then exit 0; fi
           apt-get update && apt-get install -y --no-install-recommends libonig-dev
           docker-php-ext-install mbstring
 

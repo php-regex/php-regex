@@ -165,10 +165,6 @@ final class LintArgumentParserTest extends TestCase
     }
 
     /**
-     * An explicit list means exactly that list, a preset added later
-     * included.
-     */
-    /**
      * A --pattern-function spec the lint cannot read is left out with a
      * warning, as an unknown preset is: an index that is no number, a "$"
      * naming nothing or no parameter PHP could declare.
@@ -187,6 +183,10 @@ final class LintArgumentParserTest extends TestCase
         ], $result->warnings);
     }
 
+    /**
+     * An explicit list means exactly that list, a preset added later
+     * included.
+     */
     #[Test]
     public function test_parse_reads_exactly_the_presets_listed(): void
     {

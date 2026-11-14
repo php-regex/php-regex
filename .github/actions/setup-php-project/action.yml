@@ -79,9 +79,9 @@ runs:
         PHP_VERSION_INPUT: ${{ inputs.php-version }}
         TOOLS: ${{ inputs.tools }}
       # On a PHP not released yet, some dependencies of the tools have
-      # not raised their PHP ceiling (nette/schema, the nette packages Laravel
-      # pulls): the platform PHP requirement is ignored there, and only there.
-      # Take 8.6 off the list once the tools' dependencies admit it.
+      # not raised their PHP ceiling: the platform PHP requirement is ignored
+      # there, and only there. Take 8.7 off the list once the tools'
+      # dependencies admit it, as their locks admit 8.6.
       #
       # No --prefer-dist: tools/phpunit/composer.json installs orchestra/canvas
       # and canvas-core from git, as GitHub serves no archive of some of the
@@ -89,7 +89,7 @@ runs:
       run: |
         flags=()
         case "$PHP_VERSION_INPUT" in
-          8.6*|8.7*) flags+=(--ignore-platform-req=php+) ;;
+          8.7*) flags+=(--ignore-platform-req=php+) ;;
         esac
         for tool in $TOOLS; do
           composer install -d "tools/$tool" --no-interaction --no-progress "${flags[@]}"

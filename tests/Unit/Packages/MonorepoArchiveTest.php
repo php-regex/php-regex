@@ -135,9 +135,6 @@ final class MonorepoArchiveTest extends TestCase
     /**
      * @param list<string> $arguments
      */
-    /**
-     * @param list<string> $arguments
-     */
     private static function git(array $arguments, string $input): string
     {
         // The input goes through a file: git answers while it reads, and a

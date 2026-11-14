@@ -97,8 +97,7 @@ final class SampleGeneratorFlagsTest extends TestCase
     /**
      * Under "m", "$" ends a line: text may follow it, and the branch that
      * holds it is drawn. Outside the group that sets it, "$" ends the subject.
-     */
-    /**
+     *
      * @param list<string> $samples
      */
     #[Test]

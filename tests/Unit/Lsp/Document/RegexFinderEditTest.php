@@ -91,12 +91,6 @@ final class RegexFinderEditTest extends TestCase
     }
 
     /**
-     * Edits drawn at random over the fixture files: a byte added, removed
-     * or replaced inside a pattern's literal, a quote or a line break
-     * among them, or anywhere in the file. Each finds what a fresh read
-     * finds.
-     */
-    /**
      * The finder lives as long as the server: an edit read in place keeps
      * nothing of the text, whose tokens may take sixty times its size.
      */
@@ -117,6 +111,12 @@ final class RegexFinderEditTest extends TestCase
         }
     }
 
+    /**
+     * Edits drawn at random over the fixture files: a byte added, removed
+     * or replaced inside a pattern's literal, a quote or a line break
+     * among them, or anywhere in the file. Each finds what a fresh read
+     * finds.
+     */
     #[Test]
     public function test_random_edits_find_what_a_fresh_read_finds(): void
     {
