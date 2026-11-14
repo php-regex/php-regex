@@ -181,19 +181,6 @@ a quoted space is not a literal either (`/^a b$/x` matches `ab`, not `a b`), and
 the probes hold no whitespace.
 
 
-## Lint messages
-
-- Under `x`, `regex.lint.overlap.charset` quotes a branch from the body as
-  written, the whitespace and comments `x` ignores included: a branch laid
-  out over lines spends its thirty columns on the newline and the
-  indentation. The three findings of `ComponentTagCompiler.php` in
-  `laravel/framework` quote both branches as `"(?:\n                         …"`,
-  which no longer tells them apart; the printed form before 2026-11-13 read
-  `"(?:@(?:class)(\\((?:(?>[^()]+)|…"`. Drop what `x` ignores, outside
-  classes, before cutting the quote, and hold a multi-line `x` case in a
-  test.
-
-
 ## Corpus
 
 - `bin/corpus-lint` merges every part its manifest lists, and nothing drops
