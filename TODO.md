@@ -211,8 +211,3 @@ the probes hold no whitespace.
   rejects forty `a` and a `!` at once, so no repair offers a possessive on
   the outer loop: proving it needs the atomic body modelled by the end it
   commits to, not by every way through it.
-
-- The fixes PHP 8.2.35 backported to its PCRE2 10.40
-  (`pcre2-10.48-Fix-compiler-integer-overflows.patch`) also touch the
-  matcher and the JIT: re-read against that patch what the library claims
-  of matching on 10.40.
