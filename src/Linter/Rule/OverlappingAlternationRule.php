@@ -24,6 +24,7 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -609,12 +610,13 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * reader tells the findings of two alternations apart by it. The piece
      * of the body is spelled in the pattern's mode, a hidden character
      * "\x{HEX}" under u and each byte past ASCII "\xHH" otherwise; the
-     * printed form when the body does not hold the branch.
+     * printed form when the body does not hold the branch. The layout x
+     * skips is left out, as it would fill the columns before the first
+     * atom of a branch laid out over lines.
      */
     private static function asWritten(NodeInterface $node, LintContext $context): string
     {
-        $start = $node->getStartPosition();
-        $text = substr($context->pattern->source, $start, $node->getEndPosition() - $start);
+        $text = self::withoutLayout($node, $context->pattern->source);
         if ('' === $text) {
             $text = $node->accept(PatternPrinter::asWritten());
         }
@@ -637,6 +639,44 @@ final class OverlappingAlternationRule extends AbstractLintRule
         }
 
         return $kept.'…';
+    }
+
+    /**
+     * The piece of the body a node covers, without the layout x skips. A
+     * leaf and a class are taken as written, an escaped space and a space
+     * in a class included; a comment x reads ("# ..." up to the line end)
+     * goes. Between its children a node holds its own syntax, "(?:", ")",
+     * "|" or a quantifier, which no whitespace belongs to, and the
+     * whitespace x skipped: that whitespace goes. The parser places every
+     * child inside its parent, in order, the body of a verb included.
+     */
+    private static function withoutLayout(NodeInterface $node, string $source): string
+    {
+        $start = $node->getStartPosition();
+        $end = $node->getEndPosition();
+        if ($node instanceof CommentNode && '#' === ($source[$start] ?? '')) {
+            return '';
+        }
+
+        $written = substr($source, $start, $end - $start);
+        $children = $node instanceof CharClassNode ? [] : $node->getChildren();
+        if ([] === $children) {
+            return $written;
+        }
+
+        $text = '';
+        $at = $start;
+        foreach ($children as $child) {
+            $text .= self::withoutWhitespace(substr($source, $at, $child->getStartPosition() - $at)).self::withoutLayout($child, $source);
+            $at = $child->getEndPosition();
+        }
+
+        return $text.self::withoutWhitespace(substr($source, $at, $end - $at));
+    }
+
+    private static function withoutWhitespace(string $syntax): string
+    {
+        return str_replace([' ', "\t", "\n", "\r", "\f", "\v"], '', $syntax);
     }
 
     /**

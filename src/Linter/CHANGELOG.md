@@ -21,7 +21,9 @@ CHANGELOG
    `/(?:(?a:\p{Lu})x|\p{L}y)+z/u` and `/(?:(?aD:\w)x|éy)+z/u`, which it
    missed, are reported. The message quotes each branch as the
    pattern writes it, `\d+` rather than `\\d+`, and `é` under u rather than
-   `\xC3\xA9`, on thirty columns at most, an escape never cut.
+   `\xC3\xA9`, on thirty columns at most, an escape never cut, and without
+   the layout and the comments `x` skips: a branch laid out over lines is
+   quoted from its first atom.
  * The lint reads pattern arguments it left out: a pattern built at the call
    from a local variable, an interpolated string or a heredoc
    (`"/^{$part}$/"`), an integer, a `sprintf()` whose format holds only
