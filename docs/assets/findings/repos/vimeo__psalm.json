@@ -1,6 +1,6 @@
 {
     "repo": "vimeo/psalm",
-    "sha": "fca8e037ed356b9fc1afc213902e82dfad418eba",
+    "sha": "56e5217b13db8789c2b8cfcc73d0f902df2cda11",
     "target": {
         "php": "8.1.31",
         "pcre": "10.39",
@@ -43,7 +43,7 @@
                 "limit": 100000
             },
             "subject": "A\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00!",
-            "permalink": "https://github.com/vimeo/psalm/blob/fca8e037ed356b9fc1afc213902e82dfad418eba/src/Psalm/Config/FileFilter.php#L343-L349",
+            "permalink": "https://github.com/vimeo/psalm/blob/56e5217b13db8789c2b8cfcc73d0f902df2cda11/src/Psalm/Config/FileFilter.php#L343-L349",
             "snippet": [
                 {
                     "number": 343,
@@ -291,7 +291,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/vimeo/psalm/blob/fca8e037ed356b9fc1afc213902e82dfad418eba/src/Psalm/Internal/Analyzer/CommentAnalyzer.php#L153-L159",
+            "permalink": "https://github.com/vimeo/psalm/blob/56e5217b13db8789c2b8cfcc73d0f902df2cda11/src/Psalm/Internal/Analyzer/CommentAnalyzer.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -422,7 +422,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/vimeo/psalm/blob/fca8e037ed356b9fc1afc213902e82dfad418eba/src/Psalm/Internal/Analyzer/CommentAnalyzer.php#L261-L267",
+            "permalink": "https://github.com/vimeo/psalm/blob/56e5217b13db8789c2b8cfcc73d0f902df2cda11/src/Psalm/Internal/Analyzer/CommentAnalyzer.php#L261-L267",
             "snippet": [
                 {
                     "number": 261,
@@ -573,7 +573,7 @@
                 "limit": 100000
             },
             "subject": "/**\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n!*/",
-            "permalink": "https://github.com/vimeo/psalm/blob/fca8e037ed356b9fc1afc213902e82dfad418eba/src/Psalm/Internal/FileManipulation/FileManipulationBuffer.php#L148-L154",
+            "permalink": "https://github.com/vimeo/psalm/blob/56e5217b13db8789c2b8cfcc73d0f902df2cda11/src/Psalm/Internal/FileManipulation/FileManipulationBuffer.php#L148-L154",
             "snippet": [
                 {
                     "number": 148,
@@ -761,7 +761,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/vimeo/psalm/blob/fca8e037ed356b9fc1afc213902e82dfad418eba/src/Psalm/Internal/PhpVisitor/Reflector/FunctionLikeDocblockParser.php#L122-L128",
+            "permalink": "https://github.com/vimeo/psalm/blob/56e5217b13db8789c2b8cfcc73d0f902df2cda11/src/Psalm/Internal/PhpVisitor/Reflector/FunctionLikeDocblockParser.php#L122-L128",
             "snippet": [
                 {
                     "number": 122,

@@ -1,6 +1,6 @@
 {
     "repo": "flarum/framework",
-    "sha": "3e15389c66b1277ba75c6106558fb4b05fe62ddd",
+    "sha": "c9b07573c8960413f9ed4524ee2932ff7932cc88",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/flarum/framework/blob/3e15389c66b1277ba75c6106558fb4b05fe62ddd/extensions/mentions/src/ConfigureMentions.php#L25-L31",
+            "permalink": "https://github.com/flarum/framework/blob/c9b07573c8960413f9ed4524ee2932ff7932cc88/extensions/mentions/src/ConfigureMentions.php#L25-L31",
             "snippet": [
                 {
                     "number": 25,
@@ -321,7 +321,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/flarum/framework/blob/3e15389c66b1277ba75c6106558fb4b05fe62ddd/extensions/mentions/src/ConfigureMentions.php#L27-L33",
+            "permalink": "https://github.com/flarum/framework/blob/c9b07573c8960413f9ed4524ee2932ff7932cc88/extensions/mentions/src/ConfigureMentions.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,
@@ -607,7 +607,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/flarum/framework/blob/3e15389c66b1277ba75c6106558fb4b05fe62ddd/extensions/mentions/src/ConfigureMentions.php#L28-L34",
+            "permalink": "https://github.com/flarum/framework/blob/c9b07573c8960413f9ed4524ee2932ff7932cc88/extensions/mentions/src/ConfigureMentions.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -886,7 +886,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/flarum/framework/blob/3e15389c66b1277ba75c6106558fb4b05fe62ddd/extensions/mentions/src/ConfigureMentions.php#L29-L35",
+            "permalink": "https://github.com/flarum/framework/blob/c9b07573c8960413f9ed4524ee2932ff7932cc88/extensions/mentions/src/ConfigureMentions.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -1085,7 +1085,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/flarum/framework/blob/3e15389c66b1277ba75c6106558fb4b05fe62ddd/extensions/package-manager/src/Api/Controller/CompatController.php#L53-L59",
+            "permalink": "https://github.com/flarum/framework/blob/c9b07573c8960413f9ed4524ee2932ff7932cc88/extensions/package-manager/src/Api/Controller/CompatController.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -1408,7 +1408,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/flarum/framework/blob/3e15389c66b1277ba75c6106558fb4b05fe62ddd/extensions/package-manager/src/Api/Controller/StartController.php#L149-L155",
+            "permalink": "https://github.com/flarum/framework/blob/c9b07573c8960413f9ed4524ee2932ff7932cc88/extensions/package-manager/src/Api/Controller/StartController.php#L149-L155",
             "snippet": [
                 {
                     "number": 149,
@@ -1731,7 +1731,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/flarum/framework/blob/3e15389c66b1277ba75c6106558fb4b05fe62ddd/extensions/package-manager/src/Console/UpdateCommand.php#L148-L154",
+            "permalink": "https://github.com/flarum/framework/blob/c9b07573c8960413f9ed4524ee2932ff7932cc88/extensions/package-manager/src/Console/UpdateCommand.php#L148-L154",
             "snippet": [
                 {
                     "number": 148,
@@ -2054,7 +2054,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/flarum/framework/blob/3e15389c66b1277ba75c6106558fb4b05fe62ddd/extensions/package-manager/src/Discover/Packagist.php#L301-L307",
+            "permalink": "https://github.com/flarum/framework/blob/c9b07573c8960413f9ed4524ee2932ff7932cc88/extensions/package-manager/src/Discover/Packagist.php#L301-L307",
             "snippet": [
                 {
                     "number": 301,

@@ -1,6 +1,6 @@
 {
     "repo": "rectorphp/rector-src",
-    "sha": "cc2f6644c42ea86163391b3576b96e58319ccc3a",
+    "sha": "a1fbcf3b97457ef3b2fcad3d50ccb26379991079",
     "target": {
         "php": "8.4",
         "pcre": "10.49",
@@ -40,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/rectorphp/rector-src/blob/cc2f6644c42ea86163391b3576b96e58319ccc3a/rules/CodingStyle/Rector/Catch_/CatchExceptionNameMatchingTypeRector.php#L34-L40",
+            "permalink": "https://github.com/rectorphp/rector-src/blob/a1fbcf3b97457ef3b2fcad3d50ccb26379991079/rules/CodingStyle/Rector/Catch_/CatchExceptionNameMatchingTypeRector.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -287,7 +287,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/rectorphp/rector-src/blob/cc2f6644c42ea86163391b3576b96e58319ccc3a/scoper.php#L120-L126",
+            "permalink": "https://github.com/rectorphp/rector-src/blob/a1fbcf3b97457ef3b2fcad3d50ccb26379991079/scoper.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,
@@ -502,7 +502,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/rectorphp/rector-src/blob/cc2f6644c42ea86163391b3576b96e58319ccc3a/src/BetterPhpDocParser/PhpDocParser/BetterPhpDocParser.php#L29-L35",
+            "permalink": "https://github.com/rectorphp/rector-src/blob/a1fbcf3b97457ef3b2fcad3d50ccb26379991079/src/BetterPhpDocParser/PhpDocParser/BetterPhpDocParser.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -654,7 +654,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/rectorphp/rector-src/blob/cc2f6644c42ea86163391b3576b96e58319ccc3a/src/Util/NodePrinter.php#L14-L20",
+            "permalink": "https://github.com/rectorphp/rector-src/blob/a1fbcf3b97457ef3b2fcad3d50ccb26379991079/src/Util/NodePrinter.php#L14-L20",
             "snippet": [
                 {
                     "number": 14,
@@ -809,7 +809,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/rectorphp/rector-src/blob/cc2f6644c42ea86163391b3576b96e58319ccc3a/src/Util/NodePrinter.php#L19-L25",
+            "permalink": "https://github.com/rectorphp/rector-src/blob/a1fbcf3b97457ef3b2fcad3d50ccb26379991079/src/Util/NodePrinter.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,

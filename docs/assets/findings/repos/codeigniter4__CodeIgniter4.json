@@ -1,6 +1,6 @@
 {
     "repo": "codeigniter4/CodeIgniter4",
-    "sha": "6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64",
+    "sha": "49e5001c01ff4f8a5dcf2e5ea78cd881680820b5",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/preload.php#L89-L95",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/preload.php#L89-L95",
             "snippet": [
                 {
                     "number": 89,
@@ -179,7 +179,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Commands/Encryption/GenerateKey.php#L184-L190",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/Commands/Encryption/GenerateKey.php#L184-L190",
             "snippet": [
                 {
                     "number": 184,
@@ -402,7 +402,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Database/OCI8/Connection.php#L257-L263",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/Database/OCI8/Connection.php#L257-L263",
             "snippet": [
                 {
                     "number": 257,
@@ -554,7 +554,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Debug/Toolbar.php#L524-L530",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/Debug/Toolbar.php#L524-L530",
             "snippet": [
                 {
                     "number": 524,
@@ -693,7 +693,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/HTTP/RequestTrait.php#L320-L326",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/HTTP/RequestTrait.php#L320-L326",
             "snippet": [
                 {
                     "number": 320,
@@ -871,7 +871,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Helpers/inflector_helper.php#L35-L41",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/Helpers/inflector_helper.php#L35-L41",
             "snippet": [
                 {
                     "number": 35,
@@ -1014,7 +1014,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Helpers/inflector_helper.php#L92-L98",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/Helpers/inflector_helper.php#L92-L98",
             "snippet": [
                 {
                     "number": 92,
@@ -1173,7 +1173,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Helpers/security_helper.php#L91-L97",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/Helpers/security_helper.php#L91-L97",
             "snippet": [
                 {
                     "number": 91,
@@ -1404,7 +1404,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Helpers/url_helper.php#L156-L162",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/Helpers/url_helper.php#L156-L162",
             "snippet": [
                 {
                     "number": 156,
@@ -1555,7 +1555,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Helpers/url_helper.php#L189-L195",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/Helpers/url_helper.php#L189-L195",
             "snippet": [
                 {
                     "number": 189,
@@ -1706,7 +1706,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/ThirdParty/Kint/Parser/ColorPlugin.php#L57-L63",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/ThirdParty/Kint/Parser/ColorPlugin.php#L57-L63",
             "snippet": [
                 {
                     "number": 57,
@@ -1921,7 +1921,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/ThirdParty/Kint/Parser/FsPathPlugin.php#L52-L58",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/ThirdParty/Kint/Parser/FsPathPlugin.php#L52-L58",
             "snippet": [
                 {
                     "number": 52,
@@ -2021,7 +2021,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/ThirdParty/Kint/Renderer/Rich/CallablePlugin.php#L72-L78",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/ThirdParty/Kint/Renderer/Rich/CallablePlugin.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -2180,7 +2180,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Typography/Typography.php#L108-L114",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/Typography/Typography.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -2315,7 +2315,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Typography/Typography.php#L112-L118",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/Typography/Typography.php#L112-L118",
             "snippet": [
                 {
                     "number": 112,
@@ -2465,7 +2465,7 @@
                 "limit": 100000
             },
             "subject": "<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!<>",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/Typography/Typography.php#L130-L136",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/Typography/Typography.php#L130-L136",
             "snippet": [
                 {
                     "number": 130,
@@ -2693,7 +2693,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64/system/View/Parser.php#L463-L469",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/49e5001c01ff4f8a5dcf2e5ea78cd881680820b5/system/View/Parser.php#L463-L469",
             "snippet": [
                 {
                     "number": 463,

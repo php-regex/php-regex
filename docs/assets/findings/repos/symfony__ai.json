@@ -1,12 +1,183 @@
 {
     "repo": "symfony/ai",
-    "sha": "39d82a3f5095e6ef6ff7d4ac59d6bb997303bd43",
+    "sha": "1220483ebd248956a8e65585d044489fc3edd9bb",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
         "source": "fallback: no require.php"
     },
     "findings": [
+        {
+            "id": "f-0adb0c02e9",
+            "file": ".github/affected-packages.php",
+            "line": 141,
+            "column": 20,
+            "pattern": "/Symfony\\\\{1,2}(?:AI|McpBundle)\\\\{1,2}[\\w\\\\]+/",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/symfony/ai/blob/1220483ebd248956a8e65585d044489fc3edd9bb/.github/affected-packages.php#L138-L144",
+            "snippet": [
+                {
+                    "number": 138,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $content = $code;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 139,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 140,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 141,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    preg_match_all(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Symfony\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "{1,2}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "AI",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "McpBundle",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "{1,2}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 142,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 143,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    return array_values(array_unique(array_map(static fn ($class) => str_replace('\\\\\\\\', '\\\\', $class).'\\\\', $matches[0])));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 144,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
         {
             "id": "f-8559c9e3be",
             "file": "src/platform/src/Bridge/OpenAi/Gpt/ResultConverter.php",
@@ -28,7 +199,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/ai/blob/39d82a3f5095e6ef6ff7d4ac59d6bb997303bd43/src/platform/src/Bridge/OpenAi/Gpt/ResultConverter.php#L75-L81",
+            "permalink": "https://github.com/symfony/ai/blob/1220483ebd248956a8e65585d044489fc3edd9bb/src/platform/src/Bridge/OpenAi/Gpt/ResultConverter.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,

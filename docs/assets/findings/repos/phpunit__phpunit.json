@@ -1,6 +1,6 @@
 {
     "repo": "phpunit/phpunit",
-    "sha": "9a67d9ff4e5b9c79ff565908e159be4440d449a0",
+    "sha": "b5712d808c925c87d65261ef77d8bda426d61c49",
     "target": {
         "php": "8.5.12",
         "pcre": "10.44",
@@ -36,7 +36,7 @@
                 "limit": 100000
             },
             "subject": "EXT-0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!",
-            "permalink": "https://github.com/phpunit/phpunit/blob/9a67d9ff4e5b9c79ff565908e159be4440d449a0/build/scripts/phar-manifest.php#L663-L669",
+            "permalink": "https://github.com/phpunit/phpunit/blob/b5712d808c925c87d65261ef77d8bda426d61c49/build/scripts/phar-manifest.php#L663-L669",
             "snippet": [
                 {
                     "number": 663,

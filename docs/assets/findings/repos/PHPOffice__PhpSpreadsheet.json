@@ -1,6 +1,6 @@
 {
     "repo": "PHPOffice/PhpSpreadsheet",
-    "sha": "8bff5209d6641e765e179d4e968c8658dc34910c",
+    "sha": "852ad2a7e5233962b60b440f92de3068cbe27de1",
     "target": {
         "php": "8.2.99",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/samples/Pdf/21b_Pdf.php#L10-L16",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/samples/Pdf/21b_Pdf.php#L10-L16",
             "snippet": [
                 {
                     "number": 10,
@@ -197,7 +197,7 @@
                 "limit": 100000
             },
             "subject": "(A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A!)",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Calculation.php#L1172-L1178",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Calculation.php#L1172-L1178",
             "snippet": [
                 {
                     "number": 1172,
@@ -297,7 +297,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Calculation.php#L1200-L1206",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Calculation.php#L1200-L1206",
             "snippet": [
                 {
                     "number": 1200,
@@ -404,7 +404,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Calculation.php#L1471-L1477",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Calculation.php#L1471-L1477",
             "snippet": [
                 {
                     "number": 1471,
@@ -499,7 +499,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Calculation.php#L1498-L1504",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Calculation.php#L1498-L1504",
             "snippet": [
                 {
                     "number": 1498,
@@ -594,7 +594,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Calculation.php#L1575-L1581",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Calculation.php#L1575-L1581",
             "snippet": [
                 {
                     "number": 1575,
@@ -689,7 +689,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Calculation.php#L1602-L1608",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Calculation.php#L1602-L1608",
             "snippet": [
                 {
                     "number": 1602,
@@ -784,7 +784,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Calculation.php#L1666-L1672",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Calculation.php#L1666-L1672",
             "snippet": [
                 {
                     "number": 1666,
@@ -891,7 +891,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Calculation.php#L1668-L1674",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Calculation.php#L1668-L1674",
             "snippet": [
                 {
                     "number": 1668,
@@ -993,7 +993,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Calculation.php#L1901-L1907",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Calculation.php#L1901-L1907",
             "snippet": [
                 {
                     "number": 1901,
@@ -1088,7 +1088,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Calculation.php#L2390-L2396",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Calculation.php#L2390-L2396",
             "snippet": [
                 {
                     "number": 2390,
@@ -1183,7 +1183,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Database/DatabaseAbstract.php#L155-L161",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Database/DatabaseAbstract.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -1390,7 +1390,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L30-L36",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L30-L36",
             "snippet": [
                 {
                     "number": 30,
@@ -1610,7 +1610,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
             "snippet": [
                 {
                     "number": 313,
@@ -1710,7 +1710,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
             "snippet": [
                 {
                     "number": 313,
@@ -1810,7 +1810,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
             "snippet": [
                 {
                     "number": 313,
@@ -1910,7 +1910,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
             "snippet": [
                 {
                     "number": 313,
@@ -2017,7 +2017,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/FormulaParser.php#L216-L222",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/FormulaParser.php#L216-L222",
             "snippet": [
                 {
                     "number": 216,
@@ -2196,7 +2196,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/Functions.php#L170-L176",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/Functions.php#L170-L176",
             "snippet": [
                 {
                     "number": 170,
@@ -2319,7 +2319,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/LookupRef/Indirect.php#L78-L84",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/LookupRef/Indirect.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,
@@ -2414,7 +2414,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Calculation/LookupRef/Offset.php#L125-L131",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Calculation/LookupRef/Offset.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -2521,7 +2521,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/DefinedName.php#L114-L120",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/DefinedName.php#L114-L120",
             "snippet": [
                 {
                     "number": 114,
@@ -2621,7 +2621,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Helper/Html.php#L663-L669",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Helper/Html.php#L663-L669",
             "snippet": [
                 {
                     "number": 663,
@@ -2748,7 +2748,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Helper/Sample.php#L87-L93",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Helper/Sample.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -2891,7 +2891,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L30-L36",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L30-L36",
             "snippet": [
                 {
                     "number": 30,
@@ -3142,7 +3142,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L31-L37",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L31-L37",
             "snippet": [
                 {
                     "number": 31,
@@ -3361,7 +3361,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L32-L38",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -3552,7 +3552,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L33-L39",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L33-L39",
             "snippet": [
                 {
                     "number": 33,
@@ -3739,7 +3739,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L34-L40",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -3898,7 +3898,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L35-L41",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L35-L41",
             "snippet": [
                 {
                     "number": 35,
@@ -4033,7 +4033,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L65-L71",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L65-L71",
             "snippet": [
                 {
                     "number": 65,
@@ -4256,7 +4256,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L66-L72",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L66-L72",
             "snippet": [
                 {
                     "number": 66,
@@ -4451,7 +4451,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L67-L73",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L67-L73",
             "snippet": [
                 {
                     "number": 67,
@@ -4642,7 +4642,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L68-L74",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,
@@ -4805,7 +4805,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L69-L75",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -4933,7 +4933,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Security/XmlScanner.php#L7-L13",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Security/XmlScanner.php#L7-L13",
             "snippet": [
                 {
                     "number": 7,
@@ -5104,7 +5104,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Reader/Xlsx.php#L1978-L1984",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Reader/Xlsx.php#L1978-L1984",
             "snippet": [
                 {
                     "number": 1978,
@@ -5319,7 +5319,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/ReferenceHelper.php#L813-L819",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/ReferenceHelper.php#L813-L819",
             "snippet": [
                 {
                     "number": 813,
@@ -5419,7 +5419,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/ReferenceHelper.php#L837-L843",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/ReferenceHelper.php#L837-L843",
             "snippet": [
                 {
                     "number": 837,
@@ -5519,7 +5519,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/ReferenceHelper.php#L861-L867",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/ReferenceHelper.php#L861-L867",
             "snippet": [
                 {
                     "number": 861,
@@ -5619,7 +5619,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/ReferenceHelper.php#L887-L893",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/ReferenceHelper.php#L887-L893",
             "snippet": [
                 {
                     "number": 887,
@@ -5719,7 +5719,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/ReferenceHelper.php#L951-L957",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/ReferenceHelper.php#L951-L957",
             "snippet": [
                 {
                     "number": 951,
@@ -5819,7 +5819,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/ReferenceHelper.php#L992-L998",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/ReferenceHelper.php#L992-L998",
             "snippet": [
                 {
                     "number": 992,
@@ -5926,7 +5926,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/ReferenceHelper.php#L1031-L1037",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/ReferenceHelper.php#L1031-L1037",
             "snippet": [
                 {
                     "number": 1031,
@@ -6033,7 +6033,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L14-L20",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L14-L20",
             "snippet": [
                 {
                     "number": 14,
@@ -6244,7 +6244,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L20-L26",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L20-L26",
             "snippet": [
                 {
                     "number": 20,
@@ -6448,7 +6448,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L61-L67",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L61-L67",
             "snippet": [
                 {
                     "number": 61,
@@ -6543,7 +6543,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L190-L196",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L190-L196",
             "snippet": [
                 {
                     "number": 190,
@@ -6714,7 +6714,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L206-L212",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L206-L212",
             "snippet": [
                 {
                     "number": 206,
@@ -6850,7 +6850,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L213-L219",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L213-L219",
             "snippet": [
                 {
                     "number": 213,
@@ -7013,7 +7013,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L215-L221",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L215-L221",
             "snippet": [
                 {
                     "number": 215,
@@ -7172,7 +7172,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/FractionFormatter.php#L22-L28",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/FractionFormatter.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,
@@ -7347,7 +7347,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L207-L213",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L207-L213",
             "snippet": [
                 {
                     "number": 207,
@@ -7546,7 +7546,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L273-L279",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L273-L279",
             "snippet": [
                 {
                     "number": 273,
@@ -7745,7 +7745,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/PercentageFormatter.php#L38-L44",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/PercentageFormatter.php#L38-L44",
             "snippet": [
                 {
                     "number": 38,
@@ -7912,7 +7912,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Accounting.php#L26-L32",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Accounting.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,
@@ -8051,7 +8051,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Style/NumberFormat/Wizard/CurrencyBase.php#L107-L113",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Style/NumberFormat/Wizard/CurrencyBase.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -8178,7 +8178,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Worksheet/Table.php#L117-L123",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Worksheet/Table.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -8313,7 +8313,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Worksheet/Table.php#L120-L126",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Worksheet/Table.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,
@@ -8480,7 +8480,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Worksheet/Worksheet.php#L57-L63",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Worksheet/Worksheet.php#L57-L63",
             "snippet": [
                 {
                     "number": 57,
@@ -8639,7 +8639,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Worksheet/Worksheet.php#L1304-L1310",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Worksheet/Worksheet.php#L1304-L1310",
             "snippet": [
                 {
                     "number": 1304,
@@ -8734,7 +8734,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Ods/Formula.php#L59-L65",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Ods/Formula.php#L59-L65",
             "snippet": [
                 {
                     "number": 59,
@@ -8841,7 +8841,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Ods/Formula.php#L69-L75",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Ods/Formula.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -8941,7 +8941,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Ods/Formula.php#L95-L101",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Ods/Formula.php#L95-L101",
             "snippet": [
                 {
                     "number": 95,
@@ -9041,7 +9041,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Ods/NamedExpressions.php#L83-L89",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Ods/NamedExpressions.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -9141,7 +9141,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Xls/Parser.php#L529-L535",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Xls/Parser.php#L529-L535",
             "snippet": [
                 {
                     "number": 529,
@@ -9308,7 +9308,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Xls/Parser.php#L532-L538",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Xls/Parser.php#L532-L538",
             "snippet": [
                 {
                     "number": 532,
@@ -9408,7 +9408,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1142-L1148",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1142-L1148",
             "snippet": [
                 {
                     "number": 1142,
@@ -9575,7 +9575,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1156-L1162",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1156-L1162",
             "snippet": [
                 {
                     "number": 1156,
@@ -9675,7 +9675,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1268-L1274",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1268-L1274",
             "snippet": [
                 {
                     "number": 1268,
@@ -9842,7 +9842,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1473-L1479",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1473-L1479",
             "snippet": [
                 {
                     "number": 1473,
@@ -9942,7 +9942,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Xls/Workbook.php#L505-L511",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Xls/Workbook.php#L505-L511",
             "snippet": [
                 {
                     "number": 505,
@@ -10042,7 +10042,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Xlsx/DefinedNames.php#L209-L215",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Xlsx/DefinedNames.php#L209-L215",
             "snippet": [
                 {
                     "number": 209,
@@ -10150,7 +10150,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L7-L13",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L7-L13",
             "snippet": [
                 {
                     "number": 7,
@@ -10250,7 +10250,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/8bff5209d6641e765e179d4e968c8658dc34910c/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L176-L182",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/852ad2a7e5233962b60b440f92de3068cbe27de1/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L176-L182",
             "snippet": [
                 {
                     "number": 176,
