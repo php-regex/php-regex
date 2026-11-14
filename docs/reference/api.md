@@ -201,7 +201,10 @@ and the PCRE2 it links; without `locale`, under the locale of the running PHP,
 `C` unless it called `setlocale()`. A locale the machine cannot set is refused
 with `InvalidRegexOptionException`. `runtime_pcre_validation` compiles with the
 running PHP, under its locale, so it is refused with a target that is not that
-engine. See
+engine. Another patch release of the running PHP, with the PCRE2 it links, is
+that engine: PHP compiles only a pattern the library accepted for the target,
+and the library judges what moves at a patch release first (`\C` under `u`,
+which PHP 8.4.25 and 8.5.10 refuse, is refused for every PHP). See
 [Which PHP and which PCRE2 judge a pattern](../concepts/pcre.md#which-php-and-which-pcre2-judge-a-pattern)
 and [Which locale judges a pattern](../concepts/pcre.md#which-locale-judges-a-pattern).
 

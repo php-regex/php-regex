@@ -233,6 +233,28 @@ final class ParserOptionsTest extends TestCase
         }
     }
 
+    /**
+     * Another patch release of the running PHP, with the PCRE2 it links, is
+     * the engine that runs: PHP compiles only a pattern the library accepted
+     * for the target, and what moves at a patch release is the library's to
+     * judge first. "\C" under "u", which PHP 8.4.25 and 8.5.10 refuse, is
+     * refused for every PHP, and the size-limit fix of 8.2.35 moves the
+     * error a pattern too large is refused with, not whether it compiles.
+     */
+    #[Test]
+    public function test_runtime_validation_takes_another_patch_release_of_the_running_php(): void
+    {
+        $other = 0 === \PHP_RELEASE_VERSION ? \PHP_VERSION_ID + 1 : \PHP_VERSION_ID - 1;
+        $options = ParserOptions::fromArray(['runtime_pcre_validation' => true, 'php_version' => $other, 'pcre_version' => PcreTarget::runtime()->pcreVersion]);
+
+        $this->assertTrue($options->runtimePcreValidation);
+        $this->assertSame($other, $options->target->phpVersionId);
+
+        $regex = Regex::create(['runtime_pcre_validation' => true, 'php_version' => $other, 'pcre_version' => PcreTarget::runtime()->pcreVersion]);
+        $this->assertTrue($regex->validate('/a(?<n>b)\k<n>/')->isValid);
+        $this->assertFalse($regex->validate('/a\Cb/u')->isValid);
+    }
+
     #[Test]
     public function test_from_array_invalid_max_pattern_length(): void
     {
