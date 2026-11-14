@@ -439,8 +439,8 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/gfm.php:218
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
-   WARN  Alternation branches "\n\t\t\t\t[^$]+ # Not a dollar…" and "\n\t\t\t\t(?<=(?<!\\)\\)\$ # D…" have overlapping
-       character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^$]+" and "(?<=(?<!\\)\\)\$" have overlapping character sets, which may cause
+       unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
          changes match semantics.
 
@@ -531,8 +531,8 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/modules/latex.php:42:11
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
-   WARN  Alternation branches "\n\t\t\t[^$]+ # Not a dollar\n" and "\n\t\t\t(?<=(?<!\\)\\)\$ # Dol…" have overlapping
-       character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^$]+" and "(?<=(?<!\\)\\)\$" have overlapping character sets, which may cause
+       unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
          changes match semantics.
 
@@ -819,8 +819,6 @@ corpus/Behat/Behat/src/Behat/Testwork/Call/Handler/Exception/ClassNotFoundHandle
 
 
 ### corpus/Behat/Gherkin — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-
-### corpus/BitbucketPHP/Client — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
 ### corpus/CarbonPHP/carbon — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/CarbonPHP/carbon/phpdoc.php:47:44
@@ -1535,8 +1533,6 @@ corpus/DaveLiddament/sarb/src/Domain/HistoryAnalyser/UnifiedDiffParser/internal/
        + /^@@ -(\d+)(,\d+)? \+(\d+)(,\d+)? @@/
 
 
-
-### corpus/DeGraciaMathieu/php-class-dependencies-analyzer — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 
 ### corpus/DigitalOceanPHP/Client — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
@@ -2302,9 +2298,6 @@ corpus/Humbug/php-scoper/src/Scoper/Symfony/YamlScoper.php:37:35
 
 
 
-### corpus/Incenteev/ParameterHandler — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
-Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-
 ### corpus/Intervention/image — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/Intervention/image/src/Colors/Hsl/Decoders/StringColorDecoder.php:19:5
     → /^hsla? ?\( ?(?P<h>[0-9\.]+)(?:deg)?((, ?)| )(?P<s>[0-9\.]+%?)((, ?)| )(?P<l>[0-9\.]+%?)(?:(?:(?: ?\/ ?)|(?:[, ]) ?)(?<a>(?:0\.[0-9]+)|1\.0|\.[0-9]+|[0-9]{1,3}%|1|0))? ?\)$/i
@@ -2437,12 +2430,6 @@ corpus/NativePHP/desktop/src/Drivers/Electron/Commands/RunCommand.php:82:20
        + /(<key>CFBundleDisplayName<\/key>\s+<string>)(.*?)(<\/string>)/
 
 
-
-### corpus/NativePHP/laravel — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
-
-### corpus/NativePHP/php-bin — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
-
-### corpus/NielsdeBlaauw/php-doc-check — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 
 ### corpus/Ocramius/ProxyManager — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 0
 Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
@@ -4814,8 +4801,6 @@ corpus/Respect/Validation/src/Validators/MacAddress.php:42:27
 
 
 
-### corpus/Roave/BackwardCompatibilityCheck — Target: PHP 8.4.99, PCRE2 10.49 (composer.json config.platform.php) — exit 0
-
 ### corpus/Roave/BetterReflection — Target: PHP 8.4.99, PCRE2 10.49 (composer.json config.platform.php) — exit 0
 corpus/Roave/BetterReflection/src/Identifier/Identifier.php:19:46
     → /([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*/
@@ -4883,10 +4868,6 @@ corpus/Shopify/shopify-api-php/src/Rest/Base.php:142:35
 
 
 ### corpus/SpartnerNL/Laravel-Excel — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
-
-### corpus/Spomky-Labs/base64url — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
-Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/Spomky-Labs/otphp — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
@@ -6890,8 +6871,6 @@ corpus/bcit-ci/CodeIgniter/system/libraries/Upload.php:383:32
 
 
 
-### corpus/bcosca/fatfree — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
-
 ### corpus/beberlei/assert — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
@@ -7759,8 +7738,8 @@ corpus/composer/composer/src/Composer/Json/JsonManipulator.php:269:32
     → {(?(DEFINE) (?<number>    -? (?= [1-9]|0(?!\d) ) \d++ (?:\.\d++)? (?:[eE] [+-]?+ \d++)? ) (?<boolean>   true | false | null ) (?<string>    " (?:[^"\\]*+ | \\ ["\\bfnrt\/] | \\ u [0-9A-Fa-f]{4} )* " ) (?<array>     \[  (?:  (?&json) \s*+ (?: , (?&json) \s*+ )*+  )?+  \s*+ \] ) (?<pair>      \s*+ (?&string) \s*+ : (?&json) \s*+ ) (?<object>    \{  (?:  (?&pair)  (?: , (?&pair)  )*+  )?+  \s*+ \} ) (?<json>      \s*+ (?: (?&number) | (?&boolean) | (?&string) | (?&array) | (?&object) ) ) )^(?P<start>\s*\{\s*(?:(?&string)\s*:\s*(?&json)\s*,\s*)*?"url"\s*:\s*)(?P<url>(?&string))(?P<end>.*)}sx
    ↳ via $repositoryRegex
    WARN  Quantifier "*" repeats an item that can match the empty string: an empty iteration matches nothing more.
-   WARN  Alternation branches " \\ ["\\bfnrt\/]" and " \\ u [0-9A-Fa-f]{4}" have overlapping character sets, which may
-       cause unnecessary backtracking.
+   WARN  Alternation branches "\\["\\bfnrt\/]" and "\\u[0-9A-Fa-f]{4}" have overlapping character sets, which may cause
+       unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
          changes match semantics.
 
@@ -7896,10 +7875,6 @@ corpus/composer/semver/src/VersionParser.php:345:24
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
 
-
-### corpus/composer/spdx-licenses — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
-Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/concretecms/concretecms — Target: PHP 7.3, PCRE2 10.32 (composer.json config.platform.php) — exit 1
 Note: PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
@@ -9162,14 +9137,6 @@ corpus/ecsphp/ecs/packages/coding-standard/src/Fixer/Commenting/TypeToVarTagFixe
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
 
-
-### corpus/editorconfig-checker/editorconfig-checker.php — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
-Note: composer.json config.platform.php pins PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version require.php allows on PCRE2.
-Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-
-### corpus/edsonmedina/php_testability — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
-Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/egulias/EmailValidator — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/egulias/EmailValidator/src/EmailLexer.php:112:40
@@ -11088,9 +11055,6 @@ corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:442:31
 Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/guzzle/promises — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
-Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-
 ### corpus/guzzle/psr7 — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/guzzle/psr7/src/Rfc9112.php:101:27
@@ -11448,10 +11412,6 @@ corpus/janephp/janephp/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php
        changes the capture to "".
 
 
-
-### corpus/jaybizzle/crawler-detect — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
-Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/jaytaph/Transphpile — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
@@ -12174,8 +12134,6 @@ corpus/larastan/larastan/src/Collectors/UsedViewInAnotherViewCollector.php:22:37
 
 
 
-### corpus/laravel-zero/laravel-zero — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
-
 ### corpus/laravel/boost — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/laravel/boost/src/Concerns/RendersBladeGuidelines.php:82:13
     → /@verbatim.*?@endverbatim(*SKIP)(*FAIL)|(?<!@)@\{!!(?:(?!\n[ \t]*\n|\n[ \t]*`{3,}|\n[ \t]*~{3,}).)*?!!\}/s
@@ -12393,7 +12351,7 @@ corpus/laravel/framework/src/Illuminate/View/Compilers/ComponentTagCompiler.php:
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
-   WARN  Alternation branches "(?:\n                         …" and "(?:\n                         …" have overlapping
+   WARN  Alternation branches "(?:@(?:class)(\((?:(?>[^()]+)|…" and "(?:[\w\-:.@%]+(=(?:\"[^\"]*\"|…" have overlapping
        character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
          changes match semantics.
@@ -12404,7 +12362,7 @@ corpus/laravel/framework/src/Illuminate/View/Compilers/ComponentTagCompiler.php:
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
-   WARN  Alternation branches "(?:\n                         …" and "(?:\n                         …" have overlapping
+   WARN  Alternation branches "(?:@(?:class)(\((?:(?>[^()]+)|…" and "(?:[\w\-:.@%]+(=(?:\"[^\"]*\"|…" have overlapping
        character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
          changes match semantics.
@@ -12415,7 +12373,7 @@ corpus/laravel/framework/src/Illuminate/View/Compilers/ComponentTagCompiler.php:
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
-   WARN  Alternation branches "(?:\n                         …" and "(?:\n                         …" have overlapping
+   WARN  Alternation branches "(?:@(?:class)(\((?:(?>[^()]+)|…" and "(?:[\w\-:.@]+(=(?:\"[^\"]*\"|…" have overlapping
        character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
          changes match semantics.
@@ -12478,8 +12436,6 @@ corpus/laravel/prompts/src/Task.php:244:34
        + /\e\[1?G\e\[2K/
 
 
-
-### corpus/laravel/reverb — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 
 ### corpus/laravel/roster — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/laravel/roster/src/Detectors/Approaches/EnumCasing.php:70:24
@@ -12622,8 +12578,6 @@ corpus/livewire/livewire/src/Mechanisms/FrontendAssets/FrontendAssets.php:307:29
 
 
 ### corpus/livewire/volt — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-
-### corpus/llaville/php-compatinfo — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
 ### corpus/magento/magento2 — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 1
 corpus/magento/magento2/app/code/Magento/Catalog/Model/Product/Attribute/Backend/Stock.php:65:50
@@ -18375,10 +18329,6 @@ corpus/nikic/PHP-Parser/lib/PhpParser/PrettyPrinter/Standard.php:1112:18
 Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/nilportugues/php-backslasher — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
-Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-
 ### corpus/nunomaduro/phpinsights — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 
 ### corpus/nunomaduro/termwind — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
@@ -20020,8 +19970,6 @@ corpus/php/web-php/public/credits.php:13:25
 
 
 
-### corpus/phpDocumentor/Reflection — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
-
 ### corpus/phpDocumentor/ReflectionDocBlock — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 0
 Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/StandardTagFactory.php:230:25
@@ -20834,12 +20782,6 @@ corpus/phpstan/phpdoc-parser/src/Ast/ConstExpr/ConstExprStringNode.php:56:12
 
 
 
-### corpus/phpstan/phpstan — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
-Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-
-### corpus/phpstan/phpstan-deprecation-rules — Target: PHP 7.4.6, PCRE2 10.33 (composer.json config.platform.php) — exit 0
-Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-
 ### corpus/phpstan/phpstan-src — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/phpstan/phpstan-src/build/PHPStan/Build/TurboDeclarationGenerator.php:370:18
     → ~^\t+use ([\w\\,\s]+?)\s*(?:;|\{)~m
@@ -20917,9 +20859,6 @@ corpus/phpstan/phpstan-src/src/Type/Php/SscanfFunctionDynamicReturnTypeExtension
        + /%(\d*)(\[[^\]]+]|[cdeEfosux])/
 
 
-
-### corpus/phpstan/phpstan-strict-rules — Target: PHP 7.4.6, PCRE2 10.33 (composer.json config.platform.php) — exit 0
-Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/phpstan/phpstan-symfony — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
@@ -21107,9 +21046,6 @@ corpus/pimcore/pimcore/models/Element/Service.php:560:28
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
 
-
-### corpus/povils/phpmnd — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
-Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/predis/predis — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
@@ -21441,9 +21377,6 @@ corpus/reactphp/socket/src/UnixServer.php:69:29
        + /\(([^)]+)\)|\[(\d+)\]: (.*)/
 
 
-
-### corpus/rectorphp/rector — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
-Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/rectorphp/rector-src — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 corpus/rectorphp/rector-src/rules/CodingStyle/Rector/Catch_/CatchExceptionNameMatchingTypeRector.php:37:59
@@ -24644,87 +24577,6 @@ corpus/spiral/framework/src/SendIt/src/Renderer/ViewRenderer.php:55:13
 
 ### corpus/square/square-php-sdk — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/squizlabs/PHP_CodeSniffer — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
-Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
-Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-corpus/squizlabs/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php:472:28
-    → /^([^<]*)\s+<([\da-zA-Z-_+]([\da-zA-Z-_+.\w]*[\da-zA-Z-_+])*@[\da-zA-Z][-.\w]*[\da-zA-Z]\.[a-zA-Z]{2,})>$/
-   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
-       ↳ Attack: " <+" . "++" x n . "!>"
-       ↳ Replayed on PCRE2 10.49: preg_match fails from length 21 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\da-zA-Z\-_+.\w]*
-       ↳ Hotspot offsets: 27-44
-       ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
-         a*a*).
-       ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
-         (*+) or using atomic groups (?>...).
-       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
-         (?>...) or possessive quantifiers (*+, ++).
-       ↳ Suggested (verify behavior):
-           - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
-           - Consider using possessive quantifiers or atomic groups to limit backtracking.
-           - Replace inner quantifiers with possessive variants or wrap them in (?>...).
-           - replace * with *+ in groups to prevent backtracking or wrap in (?>...).
-       ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
-   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
-       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Character class contains duplicate elements that do not add new matches.
-       ↳ Remove the redundant character class element.
-
-corpus/squizlabs/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php:500:28
-    → /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
-   WARN  Quantifier is redundant; it matches exactly once.
-       ↳ Remove the {1} quantifier; it does not change the match.
-   TIP 
-       - /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
-       + /^([0-9]{4})((.)([0-9]{4}))? (.+)$/
-
-corpus/squizlabs/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FunctionCommentSniff.php:287:28
-    → /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
-   TIP 
-       - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
-       + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
-
-corpus/squizlabs/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:314:28
-    → /([^$&.]+)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
-   TIP 
-       - /([^$&.]+)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
-       + /([^$&.]+)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
-
-corpus/squizlabs/PHP_CodeSniffer/src/Tokenizers/JS.php:471:32
-    → |[a-zA-z0-9_]|
-   WARN  Redundant elements detected in character class.
-       ↳ Redundant elements: range 'a'-'z' (covered by range 'A'-'z'), '_' (covered by range 'A'-'z')
-   WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
-       ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
-
-corpus/squizlabs/PHP_CodeSniffer/src/Tokenizers/JS.php:473:31
-    → |[a-zA-z0-9_]|
-   WARN  Redundant elements detected in character class.
-       ↳ Redundant elements: range 'a'-'z' (covered by range 'A'-'z'), '_' (covered by range 'A'-'z')
-   WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
-       ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
-
-corpus/squizlabs/PHP_CodeSniffer/src/Tokenizers/PHP.php:1603:39
-    → `^((?<!\.)_[0-9A-F][0-9A-F\.]*)+$`iD
-   INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
-       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-
-corpus/squizlabs/PHP_CodeSniffer/src/Util/Common.php:476:28
-    → /^array\(\s*([^\s^=^>]*)(\s*=>\s*(.*))?\s*\)/i
-   ↳ via $pattern
-   WARN  Redundant elements detected in character class.
-       ↳ Redundant elements: '^' (duplicate)
-
-
-
-### corpus/staabm/annotate-pull-request-from-checkstyle — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
-Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-
 ### corpus/staabm/phpstan-baseline-analysis — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
@@ -24744,9 +24596,6 @@ corpus/staabm/phpstan-dba/src/QueryReflection/QuerySimulation.php:172:13
 
 
 ### corpus/staabm/phpstan-todo-by — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
-Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-
-### corpus/staabm/side-effects-detector — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/statamic/cms — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
@@ -24960,88 +24809,6 @@ corpus/symfony/maker-bundle/src/Util/ClassSourceManipulator.php:927:33
 
 
 
-### corpus/symfony/mime — Target: PHP 8.4.1, PCRE2 10.49 (composer.json require.php) — exit 0
-corpus/symfony/mime/Email.php:478:32
-    → /<\w+\s+[^>]*background\s*=\s*(?:(['"])cid:(.+?)\1|cid:([^>\s]+))/i
-   WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-       ↳ Consider tightening the first quantifier to its minimum.
-
-corpus/symfony/mime/Email.php:478:32
-    → /<img\s+[^>]*src\s*=\s*(?:(['"])cid:(.+?)\1|cid:([^>\s]+))/i
-   WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-       ↳ Consider tightening the first quantifier to its minimum.
-
-corpus/symfony/mime/Header/AbstractHeader.php:99:25
-    → /^(?:(?:(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?[a-zA-Z0-9!#\$%&'\*\+\-\/=\?\^_`\{\}\|~]+(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?)|(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?"((?:(?:[ \t]*(?:\r\n))?[ \t])?(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21\x23-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])))*(?:(?:[ \t]*(?:\r\n))?[ \t])?"(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?))+?)$/D
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Alternation branches "(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…" and "(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…" have
-       overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
-         changes match semantics.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have
-       overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
-         changes match semantics.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have
-       overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
-         changes match semantics.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have
-       overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
-         changes match semantics.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
-       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have
-       overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
-         changes match semantics.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-
-corpus/symfony/mime/Resources/bin/update_mime_types.php:56:21
-    → {^        '([^']+/[^']+)' => \['(.+)'\],$}
-   TIP 
-       - {^        '([^']+/[^']+)' => \['(.+)'\],$}
-       + {^ {8}'([^']+/[^']+)' => \['(.+)'\],$}
-
-corpus/symfony/mime/Resources/bin/update_mime_types.php:158:21
-    → {^        '([^'/]+)' => \['(.+)'\],$}
-   TIP 
-       - {^        '([^'/]+)' => \['(.+)'\],$}
-       + {^ {8}'([^'/]+)' => \['(.+)'\],$}
-
-
-
-### corpus/symfony/panther — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-
 ### corpus/symfony/polyfill — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
@@ -25151,20 +24918,6 @@ corpus/symfony/polyfill/src/Php85/Php85.php:136:24
        + /(?:\r\n|[\x{1F1E6}-\x{1F1FF}][\x{1F1E6}-\x{1F1FF}]?|(?:[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니다대댜댸더데뎌뎨도돠돼되됴두둬뒈뒤듀드듸디따때땨떄떠떼뗘뗴또똬뙈뙤뚀뚜뚸뛔뛰뜌뜨띄띠라래랴럐러레려례로롸뢔뢰료루뤄뤠뤼류르릐리마매먀먜머메며몌모뫄뫠뫼묘무뭐뭬뮈뮤므믜미바배뱌뱨버베벼볘보봐봬뵈뵤부붜붸뷔뷰브븨비빠빼뺘뺴뻐뻬뼈뼤뽀뽜뽸뾔뾰뿌뿨쀄쀠쀼쁘쁴삐사새샤섀서세셔셰소솨쇄쇠쇼수숴쉐쉬슈스싀시싸쌔쌰썌써쎄쎠쎼쏘쏴쐐쐬쑈쑤쒀쒜쒸쓔쓰씌씨아애야얘어에여예오와왜외요우워웨위유으의이자재쟈쟤저제져졔조좌좨죄죠주줘줴쥐쥬즈즤지짜째쨔쨰쩌쩨쪄쪠쪼쫘쫴쬐쬬쭈쭤쮀쮜쮸쯔쯰찌차채챠챼처체쳐쳬초촤쵀최쵸추춰췌취츄츠츼치카캐캬컈커케켜켸코콰쾌쾨쿄쿠쿼퀘퀴큐크킈키타태탸턔터테텨톄토톼퇘퇴툐투퉈퉤튀튜트틔티파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피하해햐햬허헤혀혜호화홰회효후훠훼휘휴흐희히]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*(?:\x{200D}(?:[\x{1F1E6}-\x{1F1FF} -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가-힣]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*)*|[\p{Cc}\p{Cf}\p{Zl}\p{Zp}])/u
 
 
-
-### corpus/symfony/polyfill-mbstring — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
-Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-corpus/symfony/polyfill-mbstring/Mbstring.php:634:31
-    → /[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]?|[\xE0-\xEF][\x80-\xBF]{0,2}|[\xF0-\xF7][\x80-\xBF]{0,3}|[\xF8-\xFB][\x80-\xBF]{0,4}|[\xFC-\xFD][\x80-\xBF]{0,5}|[\x80-\xBF\xFE\xFF]/s
-   WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
-   TIP 
-       - /[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]?|[\xE0-\xEF][\x80-\xBF]{0,2}|[\xF0-\xF7][\x80-\xBF]{0,3}|[\xF8-\xFB][\x80-\xBF]{0,4}|[\xFC-\xFD][\x80-\xBF]{0,5}|[\x80-\xBF\xFE\xFF]/s
-       + /[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]?|[\xE0-\xEF][\x80-\xBF]{0,2}|[\xF0-\xF7][\x80-\xBF]{0,3}|[\xF8-\xFB][\x80-\xBF]{0,4}|[\xFC-\xFD][\x80-\xBF]{0,5}|[\x80-\xBF\xFE\xFF]/
-
-
-
-### corpus/symfony/recipes — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 
 ### corpus/symfony/symfony — Target: PHP 8.4.1, PCRE2 10.49 (composer.json require.php) — exit 1
 corpus/symfony/symfony/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php:156:29
@@ -26984,10 +26737,6 @@ corpus/wapmorgan/PhpCodeAnalyzer/src/PhpCodeAnalyzer.php:60:25
        + ~^[[:digit:]]\.[[:digit:]](\.[[:digit:]])?$~
 
 
-
-### corpus/wapmorgan/PhpDeprecationDetector — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
-Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/wata727/pahout — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.

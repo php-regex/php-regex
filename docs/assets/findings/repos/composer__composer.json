@@ -1565,7 +1565,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \" \\\\ [\"\\\\bfnrt\\/]\" and \" \\\\ u [0-9A-Fa-f]{4}\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"\\\\[\"\\\\bfnrt\\/]\" and \"\\\\u[0-9A-Fa-f]{4}\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
