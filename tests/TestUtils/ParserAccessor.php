@@ -143,9 +143,6 @@ final class ParserAccessor
     }
 
     /**
-     * Sets the current position of the parser in the token stream.
-     */
-    /**
      * Sets the pattern text the parser reports offsets against.
      */
     public function setPattern(string $pattern): void
@@ -154,6 +151,9 @@ final class ParserAccessor
         $this->installState();
     }
 
+    /**
+     * Sets the current position of the parser in the token stream.
+     */
     public function setPosition(int $position): void
     {
         $property = $this->reflection->getProperty('stream');

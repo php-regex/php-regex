@@ -292,9 +292,6 @@ final class UnsoundSuggestionRegressionTest extends TestCase
     }
 
     /**
-     * @param array<int, string> $alphabet
-     */
-    /**
      * The comparison covers the match offset and extent, not just whether
      * a match exists: a rewrite that keeps matching but moves the match
      * changes behavior all the same.

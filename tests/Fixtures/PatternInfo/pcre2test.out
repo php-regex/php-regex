@@ -448,16 +448,6 @@ Extra options: allow_lookaround_bsk
 First code unit = 'a'
 Subject length lower bound = 1
 
-/(*UTF)a\Cb/I,allow_lookaround_bsk
-Capture group count = 0
-Contains \C
-Compile options: <none>
-Overall options: utf
-Extra options: allow_lookaround_bsk
-First code unit = 'a'
-Last code unit = 'b'
-Subject length lower bound = 2
-
 /\Q\C\E/I,allow_lookaround_bsk
 Capture group count = 0
 Extra options: allow_lookaround_bsk

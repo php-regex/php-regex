@@ -24,13 +24,16 @@ final class LibrarySource
     private const ROOT = __DIR__.'/../..';
 
     /**
+     * @param string $directory the directory read, from the root: the
+     *                          library's sources by default
+     *
      * @return array<string, list<array{0: int, 1: string, 2: int}|string>> tokens by relative path
      */
-    public static function files(): array
+    public static function files(string $directory = 'src'): array
     {
         $files = [];
         $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator(self::ROOT.'/src', \FilesystemIterator::SKIP_DOTS),
+            new \RecursiveDirectoryIterator(self::ROOT.'/'.$directory, \FilesystemIterator::SKIP_DOTS),
         );
 
         foreach ($iterator as $file) {

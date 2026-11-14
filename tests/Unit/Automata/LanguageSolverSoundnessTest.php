@@ -75,9 +75,6 @@ final class LanguageSolverSoundnessTest extends TestCase
     }
 
     /**
-     * @return array<int, string>
-     */
-    /**
      * Oracle: PCRE's full-match language of "/a++(?:ab)?/" is plain "a+" —
      * "aaab" is rejected while "/a+(?:ab)?/" accepts it. The greedy spelling
      * would answer a language PCRE does not match, so the pattern is refused.
