@@ -43,8 +43,10 @@ ok() { printf '  %s✓%s %s\n' "$green" "$reset" "$1"; }
 ko() { printf '  %s✗%s %s\n' "$red" "$reset" "$1"; }
 na() { printf '  %s·%s %s\n' "$dim" "$reset" "$1"; }
 
-# The packages, as bin/split pushes them.
-repositories=$(sed -nE 's/^[[:space:]]+"src\/[A-Za-z]+:([a-z-]+)"$/\1/p' "$here/split")
+# The packages, as bin/split pushes them: each "<prefix>:<repository>" line,
+# the PHP 7.4 twin included; the organization's repository, which names a
+# branch of its own, is no package.
+repositories=$(sed -nE 's/^[[:space:]]+"[A-Za-z0-9\/]+:(regex-[a-z0-9-]+)"$/\1/p' "$here/split")
 
 version=$(sed -nE "s/.*public const VERSION = '([^']+)';.*/\1/p" "$root/src/Toolkit/Regex.php")
 echo "PHPRegex $version"

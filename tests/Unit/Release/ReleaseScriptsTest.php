@@ -993,6 +993,44 @@ exit 1
     }
 
     /**
+     * The PHP 7.4 twin is committed under build/php74: it is split from
+     * there, and tagged with the packages.
+     */
+    #[Test]
+    public function test_split_pushes_the_twin_with_the_tag(): void
+    {
+        mkdir($this->root.'/build/php74/src', 0o777, true);
+        file_put_contents($this->root.'/build/php74/composer.json', '{"name": "php-regex/regex-parser-php74"}');
+        $this->commit();
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'tag', '-a', 'v2.0.0', '-m', 'v2.0.0');
+        $remotes = $this->root.'/remotes';
+        mkdir($remotes);
+        exec('git init -q --bare '.escapeshellarg($remotes.'/regex-parser-php74.git'));
+        $head = trim($this->git('rev-parse', 'HEAD'));
+        mkdir($this->root.'/fake');
+        file_put_contents($this->root.'/fake/splitsh-lite', "#!/usr/bin/env bash\necho {$head}\n");
+        chmod($this->root.'/fake/splitsh-lite', 0o755);
+
+        [$code, $output] = $this->split(['--branch', '2.x', '--tag', 'v2.0.0', '--only', 'regex-parser-php74'], $remotes);
+
+        $this->assertSame(0, $code, $output);
+        $twin = escapeshellarg($remotes.'/regex-parser-php74.git');
+        $this->assertSame($head, trim((string) shell_exec('git -C '.$twin.' rev-parse 2.x')));
+        $this->assertSame($head, trim((string) shell_exec('git -C '.$twin.' rev-parse v2.0.0')));
+    }
+
+    #[Test]
+    public function test_split_splits_the_twin_from_build_php74(): void
+    {
+        $this->commit();
+
+        [$code, $output] = $this->split(['--dry-run', '--branch', '2.x', '--only', 'regex-parser-php74'], $this->root.'/remotes');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('build/php74 -> '.$this->root.'/remotes/regex-parser-php74.git (2.x)', $output);
+    }
+
+    /**
      * In CI the remote base carries the token: no message shows it, whether
      * the run only says what it would push or fails to reach a repository.
      */
@@ -1062,9 +1100,18 @@ exit 1
 
         $this->assertSame(0, $code, $output);
         $this->assertStringContainsString('2.0.0-DEV', $output);
-        foreach (['parser', 'explain', 'optimizer', 'generator', 'automata', 'redos', 'transpiler', 'linter', 'toolkit', 'cli', 'language-server', 'phpstan', 'symfony', 'laravel'] as $name) {
+        foreach (['parser', 'explain', 'optimizer', 'generator', 'automata', 'redos', 'transpiler', 'linter', 'toolkit', 'cli', 'language-server', 'phpstan', 'symfony', 'laravel', 'parser-php74'] as $name) {
             $this->assertStringContainsString('php-regex/regex-'.$name, $output);
         }
+    }
+
+    #[Test]
+    public function test_status_offline_does_not_list_the_organization_repository(): void
+    {
+        [$code, $output] = $this->script('status', '--offline');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringNotContainsString('php-regex/.github', $output);
     }
 
     #[Test]

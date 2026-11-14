@@ -39,6 +39,18 @@ jobs:
       - name: Generate the twin
         run: bash build/generate.sh
 
+      # build/php74 is committed, and bin/split publishes it as
+      # php-regex/regex-parser-php74: what the change carries must be what
+      # the generation writes from the src/Parser beside it.
+      - name: Hold the committed twin to the generation
+        run: |
+          changed=$(git status --porcelain -- build/php74)
+          if [ -n "$changed" ]; then
+            echo "::error::build/php74 is not what build/generate.sh writes from src/Parser: run task twin and commit build/php74"
+            printf '%s\n' "$changed" | head -50
+            exit 1
+          fi
+
       - name: Install the twin's environment
         run: composer install --no-interaction --no-progress --working-dir build/smoke
 
@@ -176,6 +188,6 @@ jobs:
           TWIN_REFERENCE: reference
         run: php -d memory_limit=2G build/smoke/vendor/bin/phpunit -c build/phpunit.xml.dist
 
-  # Release: publish the verified tree to the mirror repository
-  # php-regex/regex-parser-php74 under the triggering tag. A manual gesture
-  # until then: the tree to publish is the "twin" artifact of a green run.
+  # Release: bin/split publishes the committed build/php74 to
+  # php-regex/regex-parser-php74 on every push to 2.x, and tags it with
+  # every release, as it does the packages.
