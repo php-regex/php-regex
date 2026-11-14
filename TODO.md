@@ -203,20 +203,6 @@ the probes hold no whitespace.
 
 ## Open questions
 
-- The interpreter of the PCRE2 10.42 that Ubuntu 24.04 packages
-  (`10.42-4ubuntu2.2`) keeps what a subroutine call captured in the groups
-  inside the called one: `/(?(DEFINE)(?<pair>(\d)(\d)))((?&pair)(?&pair))/`
-  on `1234` writes `2: 3` and `3: 4` in `pcre2test`, where its own JIT, the
-  10.42 PHP bundles and Debian's 10.46 leave both unset (2026-11-10). PHP
-  on that system answers one way or the other as the JIT runs the pattern
-  or not, and the capture shape, which says `''` for both, is wrong there
-  without the JIT. The call graph rows of #340 ask the interpreter and are
-  held to the engines that give the captures back
-  (`requiresCallCapturesGivenBack()`). Which Ubuntu patch does it, whether
-  other packaged releases do, and whether the shape should say so for a
-  system 10.42 are open; the engine tests that write `ini_set('pcre.jit',
-  '0')` after a pattern was compiled do not ask the interpreter either.
-
 - A ReDoS repair still proves one rewrite per quantifier after #348 (1,000
   quantifiers: about 20 s). The PHPStan rule reads `repair()[0]` alone: a
   call that stops at the first certified repair, or a prover that keeps
@@ -226,14 +212,7 @@ the probes hold no whitespace.
   the outer loop: proving it needs the atomic body modelled by the end it
   commits to, not by every way through it.
 
-- Upstream recommends the fixes PHP 8.2.35 backported
-  (`pcre2-10.48-Fix-compiler-integer-overflows.patch`) to every
-  distributor of PCRE2 10.39 to 10.47. When a PHP 8.3, 8.4 or 8.5 patch
-  release or a distribution's libpcre2 applies them,
-  `PatternTooLargeErrorOrderTest` and `PatternTooLargeOffsetTest` fail on
-  that cell as they did on PHP 8.2: one more gate beside
-  `BUNDLES_PCRE2_10_40_WITH_ITS_FIXES`, or a way for a target to name "a
-  release with upstream's fixes". PHP 8.2.35 linked to a system 10.40
-  without them is judged as patched: `PCRE_VERSION` cannot tell. The
-  backport also touches the matcher and the JIT of PHP 8.2.35: what the
-  library claims of matching on 10.40 was not re-read.
+- The fixes PHP 8.2.35 backported to its PCRE2 10.40
+  (`pcre2-10.48-Fix-compiler-integer-overflows.patch`) also touch the
+  matcher and the JIT: re-read against that patch what the library claims
+  of matching on 10.40.
