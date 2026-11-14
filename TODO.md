@@ -109,10 +109,9 @@ measured under 3 %.
 
 In `~/projects/php-regex/phpstan-src`, branch `read-regex-shapes-through-phpregex`:
 `2fddb71bf` reads a quoted text in place (the shape, the return type and the
-validity rule), committed on top of the PR commit, not pushed. Squash it into
-the PR commit or keep it apart, then push. Still to do there: fold
-`preg_quote()` of a constant string to the literal it returns, as
-`CallTypes::quote` does here.
+validity rule) and the commit after it folds `preg_quote()` of a constant
+string to its literal; both sit on top of the PR commit, not pushed. Squash
+them into the PR commit or keep them apart, then push.
 
 
 ## Corpus
