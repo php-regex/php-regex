@@ -312,8 +312,8 @@ final class EscapeChecks
     }
 
     /**
-     * A type: "\C" under the "u" flag, and in a lookbehind in UTF mode, and
-     * in a class one that matches no single character.
+     * A type: "\C" in UTF mode, and in a class one that matches no single
+     * character.
      *
      * @param bool     $inClass      whether the type stands in a class
      * @param int|null $lookbehindAt where PCRE reports the innermost
@@ -324,7 +324,7 @@ final class EscapeChecks
         // "\C" matches one code unit, which would split a UTF-8 character:
         // PHP 8.4.25 and 8.5.10 refuse it with the "u" flag (GH-21134), and
         // earlier releases, which compile it, can crash matching it, so it is
-        // refused for every PHP. "(*UTF)\C" compiles.
+        // refused for every PHP.
         if ('C' === $node->value && $this->utfFlag) {
             // A PHP that compiles it refuses it in a lookbehind, which PCRE
             // reports where it measures that lookbehind; PHP 8.4.25 and
@@ -337,13 +337,25 @@ final class EscapeChecks
             );
         }
 
-        // "(*UTF)" without the "u" flag: "\C" compiles, but not in a
-        // lookbehind, which PCRE refuses where it measures it.
-        if ('C' === $node->value && $this->utf && null !== $lookbehindAt) {
+        // "(*UTF)" or "(*UTF8)" without the "u" flag: PCRE refuses "\C" in a
+        // lookbehind, where it measures it. Elsewhere PHP 8.4.29, 8.5.14 and
+        // 8.6.1 refuse it once compiled (GH-25452), and earlier releases,
+        // which run it, can crash matching it: refused for every PHP, at the
+        // "\C", as under the "u" flag.
+        if ('C' === $node->value && $this->utf) {
+            if (null !== $lookbehindAt) {
+                $this->raise(
+                    '\C is not allowed in a lookbehind in UTF-8 mode: the length of the lookbehind would not be known.',
+                    $lookbehindAt,
+                    ErrorCode::EscapeSingleByteInUtf,
+                );
+            }
+
             $this->raise(
-                '\C is not allowed in a lookbehind in UTF-8 mode: the length of the lookbehind would not be known.',
-                $lookbehindAt,
+                '\C is not allowed in Unicode mode: it matches a single byte.',
+                $node->getEndPosition(),
                 ErrorCode::EscapeSingleByteInUtf,
+                'Use "." or drop the "(*UTF)" that turns UTF-8 mode on.',
             );
         }
 

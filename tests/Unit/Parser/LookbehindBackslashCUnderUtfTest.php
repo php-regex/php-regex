@@ -13,15 +13,18 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * "(*UTF)" turns UTF-8 mode on without the "u" flag: "\C" compiles, except
- * in a lookbehind, which PHP refuses where the lookbehind is measured
- * ("\C is not allowed in a lookbehind assertion in UTF-8 mode at offset 6").
+ * "(*UTF)" turns UTF-8 mode on without the "u" flag. PCRE refuses "\C" in a
+ * lookbehind there, where the lookbehind is measured ("\C is not allowed in
+ * a lookbehind assertion in UTF-8 mode at offset 6"); elsewhere PHP refuses
+ * it from 8.4.29, 8.5.14 and 8.6.1, and the library for every PHP.
  */
 final class LookbehindBackslashCUnderUtfTest extends TestCase
 {
@@ -73,11 +76,36 @@ final class LookbehindBackslashCUnderUtfTest extends TestCase
         yield 'branch reset after the lookbehind' => ['pattern' => '/(a)(?<=\1)(?|b|c)/', 'offset' => 3];
     }
 
+    /**
+     * Outside a lookbehind, PHP 8.4.29, 8.5.14 and 8.6.1 refuse it after
+     * compiling ("using \C is incompatible with UTF-8 mode", GH-25452), as
+     * they refuse it under "u"; earlier releases compile it, and matching it
+     * can crash them. Like "\C" under "u", it is refused for every PHP, at
+     * the "\C".
+     */
     #[Test]
-    public function test_backslash_c_outside_a_lookbehind_under_utf_compiles(): void
+    #[DataProvider('provideUtfVerbs')]
+    public function test_backslash_c_outside_a_lookbehind_under_utf_is_refused_for_every_php(string $pattern, int $offset): void
     {
-        // The JIT does not take \C under UTF and warns; the match runs.
-        $this->assertNotFalse(@preg_match('/(*UTF)b\C/', 'bx'));
-        $this->assertTrue(Regex::create(['cache' => null])->validate('/(*UTF)b\C/')->isValid);
+        $refuses = \PHP_VERSION_ID >= 80601 || (\PHP_VERSION_ID >= 80514 && \PHP_VERSION_ID < 80600) || (\PHP_VERSION_ID >= 80429 && \PHP_VERSION_ID < 80500);
+        $this->assertSame(!$refuses, EngineProbe::compiles($pattern), 'What this PHP does with it.');
+
+        foreach ([['php_version' => '8.2'], ['php_version' => '8.4', 'pcre_version' => '10.42'], ['php_version' => '8.5'], ['php_version' => '8.6'], []] as $target) {
+            $result = Regex::create(['cache' => null] + $target)->validate($pattern);
+
+            $this->assertFalse($result->isValid, (string) json_encode($target));
+            $this->assertSame(ErrorCode::EscapeSingleByteInUtf, $result->errorCode);
+            $this->assertSame($offset, $result->offset);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideUtfVerbs(): iterable
+    {
+        yield 'utf verb' => ['pattern' => '/(*UTF)b\C/', 'offset' => 9];
+        yield 'utf8 verb' => ['pattern' => '/(*UTF8)a\Cb/', 'offset' => 10];
+        yield 'after another start option' => ['pattern' => '/(*CR)(*UTF)a\C/', 'offset' => 14];
     }
 }

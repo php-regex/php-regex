@@ -9,6 +9,10 @@ CHANGELOG
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.
+ * `\C` under a leading `(*UTF)` or `(*UTF8)` is refused for every PHP, as
+   under the `u` flag (`regex.escape.single_byte_in_utf`, at the `\C`): PHP
+   8.4.29, 8.5.14 and 8.6.1 refuse it once compiled (GH-25452), and earlier
+   releases, which run it, can crash matching it.
  * The build that runs, its PHP patch release included, is asked, once per
    process, two facts its release does not name: whether it carries the
    size-limit fix PCRE2 gives the distributors of 10.39 to 10.47, which
