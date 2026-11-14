@@ -114,17 +114,6 @@ string to its literal; both sit on top of the PR commit, not pushed. Squash
 them into the PR commit or keep them apart, then push.
 
 
-## Corpus
-
-- `bin/corpus-lint` merges every part its manifest lists, and nothing drops
-  a repository that left `corpus.json`: the 32 removed on 2026-11-12
-  (`symfony/mime`, `phpstan/phpstan`, …) still have a section in
-  `var/log/corpus.log`, judged by the library of that day, and
-  `bin/findings-report` still publishes their JSON parts. Prune the parts
-  and the manifest entries of a repository missing from `corpus/` before the
-  merge, then regenerate the log and the findings.
-
-
 ## Pull request checks
 
 - Make `CI` the required check of `2.x` in the branch protection: a pull
