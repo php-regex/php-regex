@@ -19,7 +19,7 @@ permalink: /blog/
 <p class="article-soon">The first articles are on their way — each one measured, run against the engines it names, and checked line by line before it lands here.</p>
 {% else %}
 {% assign featured = articles | first %}
-<article class="article-featured">
+<article class="article-featured" data-toc-skip>
   <div class="article-featured-head">
     <p class="article-featured-kicker">
       {% if featured.published == false %}<span class="draft-tag">Draft</span> {% endif %}Latest
@@ -45,26 +45,31 @@ permalink: /blog/
 </article>
 
 {% if articles.size > 1 %}
-<h2 class="blog-section-title">All articles</h2>
-<ul class="article-list">
+<h2 class="blog-section-title" data-toc-skip>All articles</h2>
+{% comment %}
+  One entry per article: the date in a column of its own on a wide
+  screen, so the titles start on one vertical line and the eye runs
+  down the dates like a table of contents; on a phone the date sits
+  above the title. The whole entry is the target — the title's link
+  stretches over it — and the entry answers a hover with one wash.
+{% endcomment %}
+<ol class="post-list" data-toc-skip>
   {% for article in articles offset:1 %}
-  <li class="article-entry">
-    <div class="article-entry-head">
-      <a class="article-entry-title" href="{{ article.url }}">{{ article.title }}</a>{% if article.published == false %} <span class="draft-tag">Draft</span>{% endif %}
-      <span class="article-entry-meta">
-        <time class="article-entry-date" datetime="{{ article.date | date_to_xmlschema }}">{{ article.date | date: '%-d %B %Y' }}</time>
-        {% capture entry_minutes %}{% include reading-minutes.html html=article.content %}{% endcapture %}
-        <span class="article-meta-sep" aria-hidden="true">·</span>
-        <span class="article-entry-reading">{{ entry_minutes }} min</span>
-        {% if article.tags %}
-        <span class="article-meta-sep" aria-hidden="true">·</span>
-        <span>{% for tag in article.tags %}<span class="article-tag">{{ tag }}</span>{% endfor %}</span>
-        {% endif %}
-      </span>
+  {% capture entry_minutes %}{% include reading-minutes.html html=article.content %}{% endcapture %}
+  <li class="post">
+    <time class="post-date" datetime="{{ article.date | date_to_xmlschema }}">{{ article.date | date: '%-d %B %Y' }}</time>
+    <div class="post-body">
+      <h3 class="post-title"><a class="post-link" href="{{ article.url }}">{{ article.title }}</a></h3>
+      <p class="post-desc">{{ article.description }}</p>
+      <p class="post-meta">
+        {% if article.published == false %}<span class="draft-tag">Draft</span>{% endif %}
+        <span>{{ entry_minutes }} min read</span>
+        {% for tag in article.tags %}<span class="article-tag">{{ tag }}</span>{% endfor %}
+        <span class="post-cta" aria-hidden="true">Read <span class="post-cta-arrow">→</span></span>
+      </p>
     </div>
-    <p class="article-entry-desc">{{ article.description }}</p>
   </li>
   {% endfor %}
-</ul>
+</ol>
 {% endif %}
 {% endif %}
