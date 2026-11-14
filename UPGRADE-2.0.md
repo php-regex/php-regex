@@ -7,7 +7,7 @@ upgrade notes; this guide covers moving from 1.3 to 2.0. For every change, see
 
 ### Packages
 
-`yoeunes/regex-parser` stays on 1.x. 2.0 ships as `php-regex/regex-*`
+`yoeunes/regex-parser` is abandoned. 2.0 ships as `php-regex/regex-*`
 packages; replace it with the one you use:
 
 | what you use | require |
