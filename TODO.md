@@ -260,13 +260,6 @@ the probes hold no whitespace.
   full Unicode set where PCRE takes 0xA0 and 0x85. Warning or refusal is
   the decision.
 
-- `regex.lint.overlap.charset` probes an atom under the options of `a` that
-  stand where it does, but the flags it reads them from keep letters only:
-  the D and S of `(?aD)` and `(?aS)` read as the pattern's own `/D` and
-  `/S`. Under a pattern that sets either, such a branch is left unjudged
-  (`/(?:(?aD:\w)x|éy)+z/uD` reports nothing, though `é` starts both).
-  Keeping the options of `a` apart from the letters would judge it.
-
 - `CaptureFacts::reaches()` walks the call graph again for each group:
   quadratic in the groups, nothing measurable at eighty levels.
 
