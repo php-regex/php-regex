@@ -87,13 +87,20 @@ final class LookbehindBackslashCUnderUtfTest extends TestCase
     #[DataProvider('provideUtfVerbs')]
     public function test_backslash_c_outside_a_lookbehind_under_utf_is_refused_for_every_php(string $pattern, int $offset): void
     {
-        $refuses = \PHP_VERSION_ID >= 80601 || (\PHP_VERSION_ID >= 80514 && \PHP_VERSION_ID < 80600) || (\PHP_VERSION_ID >= 80429 && \PHP_VERSION_ID < 80500);
-        $this->assertSame(!$refuses, EngineProbe::compiles($pattern), 'What this PHP does with it.');
+        // What this PHP does with it. A development build carries the change
+        // from the day it was merged (2026-11-14), which its version does not
+        // tell: the 8.7.0-dev of 2026-11-10 compiles it. A release or a
+        // candidate does as its version says.
+        $compiles = EngineProbe::compiles($pattern);
+        if (!str_ends_with(\PHP_VERSION, '-dev')) {
+            $refuses = \PHP_VERSION_ID >= 80601 || (\PHP_VERSION_ID >= 80514 && \PHP_VERSION_ID < 80600) || (\PHP_VERSION_ID >= 80429 && \PHP_VERSION_ID < 80500);
+            $this->assertSame(!$refuses, $compiles, 'What this PHP does with it.');
+        }
 
         foreach ([['php_version' => '8.2'], ['php_version' => '8.4', 'pcre_version' => '10.42'], ['php_version' => '8.5'], ['php_version' => '8.6'], []] as $target) {
             $result = Regex::create(['cache' => null] + $target)->validate($pattern);
 
-            $this->assertFalse($result->isValid, (string) json_encode($target));
+            $this->assertFalse($result->isValid, json_encode($target).($compiles ? ', where this PHP compiles it' : ', as this PHP refuses it'));
             $this->assertSame(ErrorCode::EscapeSingleByteInUtf, $result->errorCode);
             $this->assertSame($offset, $result->offset);
         }
