@@ -469,7 +469,8 @@ The BFS step guarantees the **shortest possible counter-example** when one exist
 PHPRegex determinizes NFAs using a selectable strategy:
 
 - **subset**: classic powerset construction.
-- **subset-indexed** (default): pre-indexes transition ranges to reduce move checks on large alphabets.
+- **subset-indexed** (default): pre-indexes the moves by classes of the alphabet, the ranges that every set of
+  the automaton holds alike, and reads each class once for each state rather than each range.
 
 The indexed strategy typically runs faster at the cost of a slightly higher memory footprint.
 
@@ -566,7 +567,10 @@ threads the match solver steps.
 The determinization counts each transition it writes, one per range of the
 alphabet for every state: a Unicode class such as `\pL` splits the alphabet
 into hundreds of ranges, so a pattern with a few hundred states reaches the
-budget, and the memory its table would take stays bounded. Before it steps a
+budget, and the memory its table would take stays bounded. The moves are read
+once for each class of those ranges, and the minimization splits its groups on
+one range of each: four lookaheads of Unicode classes before `.{16,}`, some two
+hundred states over two thousand ranges, fit the default budget. Before it steps a
 thread, the match solver also counts the ranges of the classes it splits its
 alphabet with, and each class it tests every range against: a literal of a
 thousand distinct characters under `u` reaches the default budget there, in

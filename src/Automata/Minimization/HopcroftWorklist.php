@@ -72,6 +72,19 @@ final class HopcroftWorklist implements MinimizationAlgorithmInterface, WorkBudg
         $stateToGroup = PartitionQuotient::groupOf($partitions);
         $inverse = $this->buildInverseTransitions($dfa, $alphabet);
 
+        // Two symbols that move every state alike split the groups alike:
+        // once the first has split them, the second splits none. One of
+        // them is read: a Unicode class cuts the alphabet into some two
+        // thousand ranges and a handful of such columns.
+        $symbols = [];
+        $columns = [];
+        foreach ($alphabet as $symbol) {
+            if (isset($inverse[$symbol]) && !isset($columns[$column = serialize($inverse[$symbol])])) {
+                $columns[$column] = true;
+                $symbols[] = $symbol;
+            }
+        }
+
         $worklist = [];
         $inWorklist = [];
 
@@ -91,11 +104,7 @@ final class HopcroftWorklist implements MinimizationAlgorithmInterface, WorkBudg
                 continue;
             }
 
-            foreach ($alphabet as $symbol) {
-                if (!isset($inverse[$symbol])) {
-                    continue;
-                }
-
+            foreach ($symbols as $symbol) {
                 $predecessors = [];
 
                 foreach ($currentStates as $targetState) {

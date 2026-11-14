@@ -21,7 +21,10 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Support\WorkBudget;
 
 /**
- * Subset construction with indexed transition ranges for faster moves.
+ * Subset construction with indexed transition ranges for faster moves. The
+ * ranges whose characters every set of the NFA holds alike form a class,
+ * and the moves are read once for each class: a Unicode class cuts the
+ * alphabet into some two thousand ranges and a handful of classes.
  *
  * @phpstan-import-type AlphabetRange from Dfa
  *
@@ -48,7 +51,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
         $alphabetSize = \count($alphabetRanges);
 
         $rangeStarts = $this->rangeStarts($alphabetRanges);
-        $indexedTransitions = $this->indexTransitions($nfa, $rangeStarts);
+        [$classOf, $indexedTransitions] = $this->indexTransitions($nfa, $rangeStarts);
 
         /** @var array<string, int> $stateMap */
         $stateMap = [];
@@ -82,19 +85,21 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
             /** @var list<int> $stateRanges */
             $stateRanges = [];
 
-            /** @var array<int, array<int, true>> $targetsByRange */
-            $targetsByRange = [];
+            /** @var array<int, array<int, true>> $targetsByClass */
+            $targetsByClass = [];
             foreach ($currentSet as $stateId) {
-                foreach ($indexedTransitions[$stateId] ?? [] as $rangeIndex => $targets) {
+                foreach ($indexedTransitions[$stateId] ?? [] as $class => $targets) {
                     foreach ($targets as $target => $_) {
                         if (null !== $this->budget) {
                             $this->budget->consume();
                         }
-                        $targetsByRange[$rangeIndex][$target] = true;
+                        $targetsByClass[$class][$target] = true;
                     }
                 }
             }
 
+            /** @var array<int, int> $targetOfClass */
+            $targetOfClass = [];
             foreach ($alphabetRanges as $rangeIndex => [$start, $end]) {
                 // Each range writes a transition of the table: with the
                 // hundreds of ranges a Unicode class splits the alphabet
@@ -103,36 +108,44 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
                     $this->budget->consume();
                 }
 
-                $targets = $targetsByRange[$rangeIndex] ?? [];
-                /** @var array<int> $moveSet */
-                $moveSet = [] === $targets ? [] : \array_keys($targets);
-                if ([] !== $moveSet) {
-                    \sort($moveSet, \SORT_NUMERIC);
-                }
-
-                $targetSet = $this->epsilonClosure($moveSet, $nfa);
-                $targetKey = $this->setKey($targetSet);
-
-                if (!isset($stateMap[$targetKey])) {
-                    $newId = \count($stateMap);
-                    if ($newId >= $options->maxDfaStates) {
-                        throw new ComplexityException(
-                            \sprintf('DFA state limit exceeded (%d).', $options->maxDfaStates),
-                            diagnostic: ['phase' => 'determinization', 'limit' => $options->maxDfaStates],
-                        );
+                // The characters of a class move the NFA alike: its target
+                // is read at its first range, where a new state is numbered
+                // as a range by range reading numbers it.
+                $class = $classOf[$rangeIndex];
+                if (!isset($targetOfClass[$class])) {
+                    $targets = $targetsByClass[$class] ?? [];
+                    /** @var array<int> $moveSet */
+                    $moveSet = [] === $targets ? [] : \array_keys($targets);
+                    if ([] !== $moveSet) {
+                        \sort($moveSet, \SORT_NUMERIC);
                     }
-                    $stateMap[$targetKey] = $newId;
-                    $stateSets[$newId] = $targetSet;
-                    $queue->enqueue($newId);
-                    if (null !== $this->budget) {
-                        $this->budget->updateStats(\count($stateMap), $nfaTransitions, $alphabetSize);
+
+                    $targetSet = $this->epsilonClosure($moveSet, $nfa);
+                    $targetKey = $this->setKey($targetSet);
+
+                    if (!isset($stateMap[$targetKey])) {
+                        $newId = \count($stateMap);
+                        if ($newId >= $options->maxDfaStates) {
+                            throw new ComplexityException(
+                                \sprintf('DFA state limit exceeded (%d).', $options->maxDfaStates),
+                                diagnostic: ['phase' => 'determinization', 'limit' => $options->maxDfaStates],
+                            );
+                        }
+                        $stateMap[$targetKey] = $newId;
+                        $stateSets[$newId] = $targetSet;
+                        $queue->enqueue($newId);
+                        if (null !== $this->budget) {
+                            $this->budget->updateStats(\count($stateMap), $nfaTransitions, $alphabetSize);
+                        }
                     }
+
+                    $targetOfClass[$class] = $stateMap[$targetKey];
                 }
 
                 // Over bytes, a table entry per byte makes any byte one
                 // lookup; over code points the ranges alone say it, three
                 // ints each.
-                $targetId = $stateMap[$targetKey];
+                $targetId = $targetOfClass[$class];
                 if ($nfa->maxCodePoint <= 255) {
                     for ($char = $start; $char <= $end; $char++) {
                         $stateTransitions[$char] = $targetId;
@@ -221,7 +234,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
     /**
      * @param array<int, AlphabetRange> $alphabetRanges
      *
-     * @return array<int>
+     * @return list<int>
      */
     private function rangeStarts(array $alphabetRanges): array
     {
@@ -234,31 +247,73 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
     }
 
     /**
-     * @param array<int> $rangeStarts
+     * The class of each range, and the targets of each state's moves by
+     * class. A set is read once, however many states move on it: the dot
+     * each lookahead repeats covers the alphabet once. The ranges held by
+     * the same sets form a class, numbered in the order of its first range;
+     * the ranges no set holds form one too, which moves nowhere.
      *
-     * @return array<int, array<int, array<int, true>>>
+     * @param list<int> $rangeStarts
+     *
+     * @return array{array<int, int>, array<int, array<int, array<int, true>>>}
      */
     private function indexTransitions(Nfa $nfa, array $rangeStarts): array
     {
-        $indexed = [];
-
+        /** @var array<string, int> $numbers */
+        $numbers = [];
+        /** @var array<int, list<int>> $holders the sets holding each range, by range */
+        $holders = [];
+        /** @var array<int, list<array{int, int}>> $moves */
+        $moves = [];
         foreach ($nfa->states as $stateId => $state) {
             foreach ($state->transitions as $transition) {
-                foreach ($transition->charSet->ranges as [$start, $end]) {
-                    $startIndex = $this->rangeIndexForCodePoint($start, $rangeStarts);
-                    $endIndex = $this->rangeIndexForCodePoint($end, $rangeStarts);
-
-                    for ($index = $startIndex; $index <= $endIndex; $index++) {
-                        if (null !== $this->budget) {
-                            $this->budget->consume();
+                $key = $transition->charSet->key();
+                if (!isset($numbers[$key])) {
+                    $number = $numbers[$key] = \count($numbers);
+                    foreach ($transition->charSet->ranges as [$start, $end]) {
+                        $endIndex = $this->rangeIndexForCodePoint($end, $rangeStarts);
+                        for ($index = $this->rangeIndexForCodePoint($start, $rangeStarts); $index <= $endIndex; $index++) {
+                            if (null !== $this->budget) {
+                                $this->budget->consume();
+                            }
+                            $holders[$index][] = $number;
                         }
-                        $indexed[$stateId][$index][$transition->target] = true;
                     }
+                }
+
+                $moves[$stateId][] = [$transition->target, $numbers[$key]];
+            }
+        }
+
+        /** @var array<string, int> $classes */
+        $classes = [];
+        /** @var array<int, list<int>> $held the classes each set holds, by set */
+        $held = [];
+        $classOf = [];
+        foreach ($rangeStarts as $index => $_) {
+            $signature = \implode(',', $holders[$index] ?? []);
+            if (!isset($classes[$signature])) {
+                $classes[$signature] = \count($classes);
+                foreach ($holders[$index] ?? [] as $number) {
+                    $held[$number][] = $classes[$signature];
+                }
+            }
+            $classOf[$index] = $classes[$signature];
+        }
+
+        $indexed = [];
+        foreach ($moves as $stateId => $stateMoves) {
+            foreach ($stateMoves as [$target, $number]) {
+                foreach ($held[$number] ?? [] as $class) {
+                    if (null !== $this->budget) {
+                        $this->budget->consume();
+                    }
+                    $indexed[$stateId][$class][$target] = true;
                 }
             }
         }
 
-        return $indexed;
+        return [$classOf, $indexed];
     }
 
     /**
