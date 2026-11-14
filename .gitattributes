@@ -25,6 +25,7 @@
 /.phplint.yml           export-ignore
 /.php-version           export-ignore
 /.gitmessage            export-ignore
+/.analysisignore        export-ignore
 /_typos.toml            export-ignore
 /.roave-backward-compatibility-check.xml export-ignore
 
