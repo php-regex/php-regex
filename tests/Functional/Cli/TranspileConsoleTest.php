@@ -39,7 +39,7 @@ final class TranspileConsoleTest extends TestCase
         [$code, $stdout] = $this->runRegex(['transpile', '/\77\h/m']);
 
         $this->assertSame(0, $code);
-        $this->assertStringContainsString("  Literal:\n    /\\x3F[\\x09\\x20\\xA0\\u1680\\u180E\\u2000-\\u200A\\u202F\\u205F\\u3000]/\n", $stdout);
+        $this->assertStringContainsString("  Literal:\n    /\\x3F[\\x09\\x20\\xA0]/\n", $stdout);
         $this->assertStringEndsWith(
             "\n  Warnings:\n"
             ."   - Converted octal escape to hex/Unicode escape for JavaScript.\n"

@@ -87,7 +87,7 @@ final class PythonEngineParityTest extends TestCase
         yield 'an inline ungreedy switch' => ['pattern' => '/a(?U)b+/', 'python' => 'ab+?', 'flags' => 'a', 'subject' => 'abbb', 'spans' => [[0, 2]]];
         yield 'a lookahead that may be left out' => ['pattern' => '/(?=a)*b/', 'python' => 'b', 'flags' => 'a', 'subject' => 'b', 'spans' => [[0, 1]]];
         yield 'a control escape that is no letter' => ['pattern' => '/\c?/', 'python' => '\x7F', 'flags' => 'a', 'subject' => "\x7F", 'spans' => [[0, 1]]];
-        yield 'horizontal space in a class' => ['pattern' => '/[\hx]/', 'python' => '[\x09\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000x]', 'flags' => 'a', 'subject' => ' ', 'spans' => [[0, 1]]];
+        yield 'horizontal space in a class' => ['pattern' => '/[\hx]/', 'python' => '[\x09\x20\xA0x]', 'flags' => 'a', 'subject' => ' ', 'spans' => [[0, 1]]];
         // Before 3.14 Python's "\B" fails on the empty subject.
         yield 'no word boundary in the empty subject' => ['pattern' => '/\B/', 'python' => '(?:\B|\A\Z)', 'flags' => 'a', 'subject' => '', 'spans' => [[0, 0]]];
         // Python's IGNORECASE matches "I", "i", "İ" and "ı" with one another; PCRE pairs "I" with "i" alone.
@@ -113,7 +113,7 @@ final class PythonEngineParityTest extends TestCase
         yield 'a space in a class under u' => ['pattern' => '/[\sx]/u', 'python' => '[\t-\r \x85\xA0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000x]', 'flags' => '', 'subject' => "\u{85}", 'spans' => [[0, 2]]];
         yield 'a backreference under i without u' => ['pattern' => '/(a)\1/i', 'python' => '(a)\1', 'flags' => 'ai', 'subject' => 'aA', 'spans' => [[0, 2], [0, 1]]];
         yield 'an inline comment' => ['pattern' => '/a(?#c)b/', 'python' => 'ab', 'flags' => 'a', 'subject' => 'ab', 'spans' => [[0, 2]]];
-        yield 'horizontal space' => ['pattern' => '/\h/', 'python' => '[\x09\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000]', 'flags' => 'a', 'subject' => "\t", 'spans' => [[0, 1]]];
+        yield 'horizontal space' => ['pattern' => '/\h/', 'python' => '[\x09\x20\xA0]', 'flags' => 'a', 'subject' => "\t", 'spans' => [[0, 1]]];
         yield 'a group that may be unset' => ['pattern' => '/(a)|b\1/', 'python' => '(a)|b\1', 'flags' => 'a', 'subject' => 'b', 'spans' => null];
         yield 'the start of the subject' => ['pattern' => '/\Afoo/', 'python' => '\Afoo', 'flags' => 'a', 'subject' => 'foo', 'spans' => [[0, 3]]];
         yield 'control characters in a literal' => ['pattern' => "/a\t\r\fb/", 'python' => 'a\t\r\fb', 'flags' => 'a', 'subject' => "a\t\r\fb", 'spans' => [[0, 5]]];

@@ -33,7 +33,10 @@ CHANGELOG
    raw byte of invalid UTF-8 as its character.
  * Without `u`, `\s` is `[\t-\r ]` and `\S` is `[^\t-\r ]` for JavaScript and
    `html-pattern`: JavaScript's `\s` also takes the Unicode spaces, so
-   `/^\s+$/` matched `U+00A0` there and not in PCRE.
+   `/^\s+$/` matched `U+00A0` there and not in PCRE. `\h` and `\v` are
+   written with the bytes PCRE takes, `[\x09\x20\xA0]` and
+   `[\x0A-\x0D\x85]`, in every target, no longer with the Unicode spaces
+   PCRE reads under `u` alone.
  * Without `u`, a set that reaches past ASCII takes one byte in PCRE and one
    character in the targets: the dot, a negated class, `\D`, `\W`, `\S`,
    `\h`, `\v` and a property. The pattern is written as before, and

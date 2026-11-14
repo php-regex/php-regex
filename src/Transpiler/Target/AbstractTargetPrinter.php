@@ -56,14 +56,25 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     protected const UNICODE_SPACES = '\t-\r \x85\xA0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000';
 
     /**
-     * What "\h" matches, written for a class.
+     * What "\h" matches under u, written for a class.
      */
     protected const HORIZONTAL_SPACES = '\x09\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000';
 
     /**
-     * What "\v" matches, written for a class.
+     * What "\v" matches under u, written for a class.
      */
     protected const VERTICAL_SPACES = '\x0A-\x0D\x85\u2028\u2029';
+
+    /**
+     * The bytes "\h" takes without u, written for a class: a target reading
+     * the subject as Latin-1, one character per byte, takes the same.
+     */
+    private const BYTE_HORIZONTAL_SPACES = '\x09\x20\xA0';
+
+    /**
+     * The bytes "\v" takes without u, written for a class.
+     */
+    private const BYTE_VERTICAL_SPACES = '\x0A-\x0D\x85';
 
     private const LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative];
 
@@ -390,6 +401,19 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
      * set is not refused, most patterns holding one and most subjects
      * being ASCII: the first one written is named, once per pattern.
      */
+    /**
+     * What "\h" or "\v" matches, written for a class: the characters PCRE
+     * reads under u, the bytes it takes without u, as "\s" is written.
+     */
+    protected function spaceSet(string $type): string
+    {
+        if ('h' === $type) {
+            return $this->unicode ? self::HORIZONTAL_SPACES : self::BYTE_HORIZONTAL_SPACES;
+        }
+
+        return $this->unicode ? self::VERTICAL_SPACES : self::BYTE_VERTICAL_SPACES;
+    }
+
     protected function warnOfASetPastAscii(NodeInterface $node): void
     {
         if ($this->unicode || $this->warnedOfASet) {
