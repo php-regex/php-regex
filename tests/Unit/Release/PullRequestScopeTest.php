@@ -223,7 +223,9 @@ final class PullRequestScopeTest extends TestCase
             $this->assertContains($path, $prose);
         }
         foreach (array_diff($prose, self::PROSE_CODE) as $path) {
-            $this->assertStringNotContainsString('.php', $path, $path.' is code, not prose.');
+            // A PHP file ends with .php, not a file whose name holds it (the
+            // card drawn for the findings of scrivo/highlight.php).
+            $this->assertDoesNotMatchRegularExpression('~\.php$~', $path, $path.' is code, not prose.');
             // A manifest is a file named composer.json, not a file whose name
             // ends so (the findings of composer/composer).
             $this->assertDoesNotMatchRegularExpression('~^(tests|bin|tools|phar|build|demo)/|(?:^|/)composer\.json(?:/|$)|\.neon$|\.dist$~', $path, $path.' is code, not prose.');
