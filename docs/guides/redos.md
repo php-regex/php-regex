@@ -496,6 +496,14 @@ subjects is dropped. One the automata cannot judge stays listed with `sameSubjec
 `/^(\w+\s?)+$/`, linear for sure, the same subjects for you to check. With ReDoS checks on,
 the PHPStan rule prints a certified repair in the tip of the error.
 
+`firstRepair()` returns the repair `repair()` offers first, or `null`. It stops at the first
+rewrite certified that writes the same `$matches`, as none after it can come before it, so
+the rewrites after it are not proven: the PHPStan rule asks for that one alone.
+
+```php
+(new RedosRepairer())->firstRepair('/^(?:a+)+$/')?->pattern; // '/^a+$/'
+```
+
 ## Fixing Vulnerable Patterns (Verify Behavior)
 
 These rewrites remove the ambiguity, but can change what the pattern matches or captures. Run the analysis again on the rewrite, and validate it with tests.

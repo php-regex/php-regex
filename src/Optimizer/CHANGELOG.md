@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `RedosRepairer::firstRepair()` returns the repair `repair()` offers first,
+   or null, and stops at the first rewrite certified that writes the same
+   `$matches`: the rewrites after it are not proven, nor is the optimizer
+   asked for its own. The PHPStan rule asks for that repair alone.
  * `Modernizer` keeps a literal's value as decoded and leaves its escaping to
    the printer: a backslash written as a character to match stays one,
    `[^/\\]` no longer loses its `\\`.

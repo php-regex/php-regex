@@ -159,6 +159,42 @@ final class RedosRepairerTest extends TestCase
     }
 
     /**
+     * firstRepair() answers what repair() offers first: the same rewrite,
+     * with the same proofs, or none.
+     *
+     * @param list<array{string, bool|null, bool|null}> $repairs
+     */
+    #[Test]
+    #[DataProvider('provideRepairs')]
+    public function test_the_first_repair_is_the_one_repair_offers_first(string $pattern, array $repairs): void
+    {
+        $first = (new RedosRepairer())->firstRepair($pattern);
+
+        $this->assertSame($repairs[0] ?? null, null === $first ? null : [$first->pattern, $first->sameSubjects, $first->sameMatches]);
+    }
+
+    /**
+     * Once a rewrite is certified and writes the same $matches, none after
+     * it can come before it: firstRepair() proves no rewrite after it, and
+     * asks the optimizer for none, where repair() proves them all.
+     */
+    #[Test]
+    public function test_the_first_repair_stops_at_a_certified_rewrite_that_keeps_the_matches(): void
+    {
+        $asked = static function (\Closure $repair): int {
+            $cache = new ArrayCache();
+            $repair(new RedosRepairer(RegexParser::create(['cache' => $cache])));
+
+            return array_sum($cache->getStats());
+        };
+
+        $first = $asked(static fn (RedosRepairer $repairer): ?RedosRepair => $repairer->firstRepair('/^(?:a+)+$/'));
+        $all = $asked(static fn (RedosRepairer $repairer): array => $repairer->repair('/^(?:a+)+$/'));
+
+        $this->assertLessThan($all, $first);
+    }
+
+    /**
      * The rewrites of the quantifiers the analysis blames come first: those
      * a hotspot covers or lies in, the culprit being one of the hotspots.
      * Then the others in the order they had: the flattenings, the
@@ -178,7 +214,9 @@ final class RedosRepairerTest extends TestCase
 
         $tried = new \ReflectionMethod(RedosRepairer::class, 'candidates');
 
-        $this->assertSame($candidates, $tried->invoke(new RedosRepairer($parser), $parser->parse($pattern), $pattern, $parser, $analysis));
+        $generated = $tried->invoke(new RedosRepairer($parser), $parser->parse($pattern), $pattern, $parser, $analysis);
+        $this->assertInstanceOf(\Generator::class, $generated);
+        $this->assertSame($candidates, iterator_to_array($generated, false));
     }
 
     /**
