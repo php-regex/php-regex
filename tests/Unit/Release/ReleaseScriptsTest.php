@@ -889,7 +889,7 @@ exit 1
 
         $process = proc_open(
             [\dirname(__DIR__, 3).'/bin/split', '--root', $this->root, '--branch', '2.x', '--tag', 'v2.0.0', '--only', 'regex-parser'],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
             null,
             ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $remotes, 'HOME' => (string) getenv('HOME')],
@@ -935,7 +935,7 @@ exit 1
 
         $process = proc_open(
             [\dirname(__DIR__, 3).'/bin/split', '--root', $this->root, '--branch', '2.x', '--only', 'regex-automata', '--only', 'regex-parser', '--only', 'regex-explain'],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
             null,
             ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $remotes, 'HOME' => (string) getenv('HOME')],
@@ -976,7 +976,7 @@ exit 1
 
         $process = proc_open(
             [\dirname(__DIR__, 3).'/bin/split', '--root', $this->root, '--branch', '2.x', '--tag', 'v2.0.0', '--only', '.github'],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
             null,
             ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $remotes, 'HOME' => (string) getenv('HOME')],
@@ -1124,7 +1124,7 @@ exit 1
     private function runScript(string $script, array $arguments, ?array $env = null): array
     {
         $command = [\dirname(__DIR__, 3).'/bin/'.$script, '--root', $this->root, ...$arguments];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, null === $env ? null : $env + ['HOME' => (string) getenv('HOME')]);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes, null, null === $env ? null : $env + ['HOME' => (string) getenv('HOME')]);
         $this->assertIsResource($process);
         $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
@@ -1153,7 +1153,7 @@ exit 1
     {
         $process = proc_open(
             [\dirname(__DIR__, 3).'/bin/split', '--root', $this->root, ...$arguments],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
             null,
             ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $base, 'GIT_TERMINAL_PROMPT' => '0', 'HOME' => (string) getenv('HOME')],

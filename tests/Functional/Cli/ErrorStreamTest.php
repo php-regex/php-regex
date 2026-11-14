@@ -33,7 +33,7 @@ final class ErrorStreamTest extends TestCase
     public function test_an_error_is_written_to_stderr_only(array $arguments, string $message): void
     {
         $command = [\PHP_BINARY, \dirname(__DIR__, 3).'/src/Cli/bin/regex', '--no-ansi', ...$arguments];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
         [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
@@ -69,7 +69,7 @@ final class ErrorStreamTest extends TestCase
     public function test_an_invalid_version_names_its_command_line_option(array $arguments, string $message): void
     {
         $command = [\PHP_BINARY, \dirname(__DIR__, 3).'/src/Cli/bin/regex', '--no-ansi', ...$arguments];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
         $printed = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
@@ -109,7 +109,7 @@ final class ErrorStreamTest extends TestCase
     public function test_an_unreadable_php_version_range_says_what_to_write(string $range, array $expected): void
     {
         $command = [\PHP_BINARY, \dirname(__DIR__, 3).'/src/Cli/bin/regex', '--no-ansi', '--php-version='.$range, 'lint', __FILE__, '--jobs=1'];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
         [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
@@ -149,7 +149,7 @@ final class ErrorStreamTest extends TestCase
     public function test_a_single_pattern_command_refuses_a_php_version_it_cannot_read_in_the_words_of_lint(array $arguments): void
     {
         $command = [\PHP_BINARY, \dirname(__DIR__, 3).'/src/Cli/bin/regex', '--no-ansi', ...$arguments];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
         [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);

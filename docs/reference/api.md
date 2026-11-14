@@ -37,7 +37,7 @@ $regex = Regex::create([
     'max_lookbehind_length' => 255,
     'runtime_pcre_validation' => false,
     'redos_ignored_patterns' => [],
-    'max_recursion_depth' => 1024,
+    'max_recursion_depth' => 512,
     'php_version' => '8.2',
     'pcre_version' => '10.40',
 ]);
@@ -186,7 +186,7 @@ All options are validated. Unknown keys throw `InvalidRegexOptionException`.
 | `max_lookbehind_length`   | `int`                                  | `255`             | Maximum length of a variable-length lookbehind; a fixed-length one is only limited by PCRE's 65535 | Low - PCRE compliance           |
 | `runtime_pcre_validation` | `bool`                                 | `false`           | Compile-check via preg_match() | Medium - extra compile step     |
 | `redos_ignored_patterns`  | `array<string>`                        | `[]`              | Patterns to skip ReDoS         | Low - reduces false positives   |
-| `max_recursion_depth`     | `int`                                  | `1024`            | Parser recursion guard         | Low - prevents stack overflow   |
+| `max_recursion_depth`     | `int`                                  | `512`             | Parser recursion guard         | Low - prevents stack overflow   |
 | `php_version`             | `string` \| `int`                      | the running PHP   | PHP version judged, with the PCRE2 it bundles | Low - feature validation        |
 | `pcre_version`            | `string`                               | the linked PCRE2  | PCRE2 release judged, `"10.42"` | Low - feature validation        |
 | `locale`                  | `string`                               | the runtime's     | `LC_CTYPE` locale judged, `"tr_TR.UTF-8"` | Low - read once per process |
@@ -672,7 +672,9 @@ Notes:
   every subject. Once it reaches past ASCII they differ on a subject holding a character outside it: the dot, a negated
   class, `\D`, `\W` and `\S` take every byte above `0x7F` (`/^\S$/` fails `U+00A0`, two bytes, where `/^[^\t-\r ]$/`
   matches it in JavaScript; that JavaScript pattern fails `U+1F600`, two UTF-16 code units, and matches it under `v`),
-  `\h` takes `0xA0` and `\v` `0x85`, and a property reads a byte as a Latin-1 character where the target reads the
+  `\h` takes `0xA0` and `\v` `0x85` (they are written with the bytes PCRE takes, `[\x09\x20\xA0]` and
+  `[\x0A-\x0D\x85]`, which a target reading the subject as Latin-1 takes too; under `u`, with the Unicode spaces), and
+  a property reads a byte as a Latin-1 character where the target reads the
   character (`/^\p{L}$/` matches `0xC3`, the first byte of `é`, and not `é`). Such a pattern is not refused: most
   patterns hold a dot or a negated class, and on ASCII subjects the two agree. It is written, and
   `$result->warnings` names the first such set with its offset in the pattern, once per pattern:

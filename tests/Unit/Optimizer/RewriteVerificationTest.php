@@ -194,16 +194,16 @@ final class RewriteVerificationTest extends TestCase
      * Under m the match check does not read the pattern (a "$" there looks
      * right only, so offset 0 says it all; the rewrite spells the repeat
      * otherwise, so the two do not read alike), and the check of the part
-     * it changed, [\pL0-9]{80}, writes a transition per range of an
-     * alphabet split into hundreds of them, for each of some eighty states:
-     * past the work the check of a rewrite may spend, it proves nothing,
-     * though the solver's default budget would settle it.
+     * it changed, [\pL0-9]{200}, writes a transition per range of an
+     * alphabet split into hundreds of them, for each of some two hundred
+     * states: past the work the check of a rewrite may spend, it proves
+     * nothing, though the solver's default budget would settle it.
      */
     #[Test]
     public function test_a_rewrite_whose_language_check_outgrows_its_work_is_not_offered(): void
     {
-        $original = '/[\pL0-9]*0[\pL0-9]{80}$/um';
-        $rewrite = '/[\pL0-9]*0[\pL0-9]{79}[\pL0-9]$/um';
+        $original = '/[\pL0-9]*0[\pL0-9]{200}$/um';
+        $rewrite = '/[\pL0-9]*0[\pL0-9]{199}[\pL0-9]$/um';
         $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null])))->rewritesAlikeInPlace($original, $rewrite), 'The default budget settles it.');
 
         $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');

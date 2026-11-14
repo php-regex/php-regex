@@ -536,7 +536,7 @@ final class PnfaBuilder
                 }
 
                 $child = $this->unwrap($node->child);
-                if ($child instanceof QuantifierNode && null !== ($this->runSet($child->node, $flags) ?? $this->unionOf($child->node, $flags))) {
+                if ($child instanceof QuantifierNode && null !== ($this->runSet($child->node, $flags) ?? $this->unionOf($child->node, $flags) ?? $this->nestedRun($child, $flags))) {
                     if (!$this->isLazy($child, $flags)) {
                         return $this->quantifier($child, $next, $flags, $pnfa, $search, true);
                     }
@@ -609,13 +609,20 @@ final class PnfaBuilder
         // A possessive run of one character set leaves only before a
         // character outside the set: the one way PCRE reads it.
         $run = $possessive ? $this->runSet($node->node, $flags) ?? $this->unionOf($node->node, $flags) : null;
+        $body = $node->node;
+        // So does a possessive repeat of a greedy run, "(?:a+)++": its first
+        // way out reads the longest run, the one it commits to.
+        $nested = $possessive && null === $run ? $this->nestedRun($node, $flags) : null;
+        if (null !== $nested) {
+            [$run, $body, $min] = $nested;
+        }
+
         $leave = $next;
         if (null !== $run) {
             $greedy = true;
             $leave = $pnfa->peek(CharSet::universe($this->unicode)->subtract($run), true, $next);
         }
 
-        $body = $node->node;
         if ($possessive && null === $run) {
             // A possessive repeat is an atomic group around the repeat: a
             // body other than one run is kept with every way through it.
@@ -995,6 +1002,37 @@ final class PnfaBuilder
         }
 
         return null;
+    }
+
+    /**
+     * The run a repeat of greedy runs reads where it gives nothing back, as
+     * "(?:a+)+" or "((a*)+)+" inside an atomic group or a possessive repeat:
+     * the set, the atom that reads one character of it, and the least
+     * number of characters, 0 or 1. Each repeat is unbounded and taken at
+     * most once at least, so the first way out of the body reads the
+     * longest run, and the body fails only on a character outside the set,
+     * at once: a repeat that must split the run into copies, "(?:a+){30,}",
+     * tries every way to split it before it fails, and is no run. Null for
+     * any other node.
+     *
+     * @return array{CharSet, NodeInterface, int}|null
+     */
+    private function nestedRun(QuantifierNode $node, int $flags): ?array
+    {
+        $bounds = $node->bounds;
+        if (null === $bounds || null !== $bounds->max || $bounds->min > 1 || $this->isLazy($node, $flags)) {
+            return null;
+        }
+
+        $inner = $this->unwrap($node->node);
+        $set = $this->runSet($inner, $flags) ?? $this->unionOf($inner, $flags);
+        if (null !== $set) {
+            return [$set, $inner, $bounds->min];
+        }
+
+        $nested = $inner instanceof QuantifierNode ? $this->nestedRun($inner, $flags) : null;
+
+        return null === $nested ? null : [$nested[0], $nested[1], $bounds->min * $nested[2]];
     }
 
     /**

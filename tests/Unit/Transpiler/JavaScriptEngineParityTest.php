@@ -104,8 +104,8 @@ final class JavaScriptEngineParityTest extends TestCase
         yield 'an open lower bound' => ['pattern' => '/a{,3}b/', 'literal' => '/a{0,3}b/', 'subject' => 'aab', 'spans' => [[0, 3]]];
         // "\c?" is DEL; JavaScript only takes a letter after "\c".
         yield 'a control escape that is no letter' => ['pattern' => '/\c?/', 'literal' => '/\x7F/', 'subject' => "\x7F", 'spans' => [[0, 1]]];
-        yield 'horizontal space in a class' => ['pattern' => '/[\hx]/', 'literal' => '/[\x09\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000x]/', 'subject' => ' ', 'spans' => [[0, 1]]];
-        yield 'vertical space in a class' => ['pattern' => '/[\vx]/', 'literal' => '/[\x0A-\x0D\x85\u2028\u2029x]/', 'subject' => "\r", 'spans' => [[0, 1]]];
+        yield 'horizontal space in a class' => ['pattern' => '/[\hx]/', 'literal' => '/[\x09\x20\xA0x]/', 'subject' => ' ', 'spans' => [[0, 1]]];
+        yield 'vertical space in a class' => ['pattern' => '/[\vx]/', 'literal' => '/[\x0A-\x0D\x85x]/', 'subject' => "\r", 'spans' => [[0, 1]]];
         yield 'a Cased_Letter property' => ['pattern' => '/\p{L&}/u', 'literal' => '/\p{LC}/u', 'subject' => 'a', 'spans' => [[0, 1]]];
         yield 'a property spelled loosely' => ['pattern' => '/\p{ lu }/u', 'literal' => '/\p{Lu}/u', 'subject' => 'A', 'spans' => [[0, 1]]];
         yield 'a binary property spelled loosely' => ['pattern' => '/\p{white space}/u', 'literal' => '/\p{White_Space}/u', 'subject' => ' ', 'spans' => [[0, 1]]];
@@ -113,7 +113,7 @@ final class JavaScriptEngineParityTest extends TestCase
         yield 'a class of one non-word character under u' => ['pattern' => '/[\W]/u', 'literal' => '/(?:[^\p{L}\p{N}_\p{Mn}\p{Pc}])/u', 'subject' => 'é-', 'spans' => [[2, 3]]];
         yield 'a negated class of two complements under u' => ['pattern' => '/[^\S\W]/u', 'literal' => '/(?:(?=[\t-\r \x85\xA0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])[\p{L}\p{N}_\p{Mn}\p{Pc}])/u', 'subject' => 'a ', 'spans' => null];
         yield 'a bracket before a dot in a composed class' => ['pattern' => '/[\S[.]/u', 'literal' => '/(?:[\[.]|[^\t-\r \x85\xA0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])/u', 'subject' => '[', 'spans' => [[0, 1]]];
-        yield 'horizontal space' => ['pattern' => '/\h/', 'literal' => '/[\x09\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000]/', 'subject' => "\t", 'spans' => [[0, 1]]];
+        yield 'horizontal space' => ['pattern' => '/\h/', 'literal' => '/[\x09\x20\xA0]/', 'subject' => "\t", 'spans' => [[0, 1]]];
         yield 'word boundaries without u' => ['pattern' => '/a\bb\B/', 'literal' => '/a\bb\B/', 'subject' => 'a bb', 'spans' => null];
         yield 'a control letter' => ['pattern' => '/\cA/', 'literal' => '/\cA/', 'subject' => "\x01", 'spans' => [[0, 1]]];
         yield 'a character without case above ASCII under i' => ['pattern' => '/a中/i', 'literal' => '/a中/i', 'subject' => 'A中', 'spans' => [[0, 4]]];

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
+use PHPRegex\Optimizer\RedosRepairer;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosWitness;
@@ -64,6 +65,8 @@ final class RegexPatternRuleProvenRedosTest extends RuleTestCase
         $tip = $this->tipOnLine(20);
 
         $this->assertStringContainsString("\nProven repair: /(a+)$/ (same subjects, same matches, linear).\n", $tip);
+        // The repair the repairer offers first, asked for alone.
+        $this->assertSame('/(a+)$/', (new RedosRepairer())->repair('/(a+)+$/')[0]->pattern);
     }
 
     #[Test]

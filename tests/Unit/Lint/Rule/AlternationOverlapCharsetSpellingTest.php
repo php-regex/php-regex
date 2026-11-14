@@ -137,6 +137,32 @@ final class AlternationOverlapCharsetSpellingTest extends TestCase
             'flags' => '',
             'subjects' => ["\xE9", "\xE9"],
         ];
+        // Under x the layout is no part of the branch: a branch laid out
+        // over lines is quoted without its line breaks and indentation,
+        // which would fill the thirty columns before its first atom.
+        yield 'branches laid out over lines under x' => [
+            'pattern' => "/(?:\n    (?:\n        @class\\( [^()]* \\)\n    )\n    |\n    (?:\n        [\\w@]+ = \"[^\"]*\"\n    )\n)+!/x",
+            'first' => '(?:@class\([^()]*\))',
+            'second' => '(?:[\w@]+="[^"]*")',
+            'flags' => 'x',
+            'subjects' => ['@class()', '@a=""'],
+        ];
+        yield 'a comment under x' => [
+            'pattern' => "/(?: \\d+ # the digits\n | [0-4] a # a digit, then a\n )+!/x",
+            'first' => '\d+',
+            'second' => '[0-4]a',
+            'flags' => 'x',
+            'subjects' => ['3', '3a'],
+        ];
+        // What x does not ignore stays: an escaped space, and a space in a
+        // class, which only xx drops.
+        yield 'an escaped space and a class holding a space under x' => [
+            'pattern' => '/(?: [ x] y | \  z )+!/x',
+            'first' => '[ x]y',
+            'second' => '\ z',
+            'flags' => 'x',
+            'subjects' => [' y', ' z'],
+        ];
     }
 
     /**

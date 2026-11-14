@@ -275,7 +275,7 @@ final class VisitorGenericDefaultTest extends TestCase
                     '--error-format=json',
                     '--no-progress',
                 ],
-                [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+                ProcessPipes::descriptors(),
                 $pipes,
                 $root,
             );

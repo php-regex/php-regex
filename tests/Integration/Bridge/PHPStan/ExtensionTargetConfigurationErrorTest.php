@@ -101,7 +101,7 @@ final class ExtensionTargetConfigurationErrorTest extends TestCase
                     '--no-progress', '--error-format=raw', '--autoload-file='.$root.'/vendor/autoload.php',
                     ...($inProcess ? ['--debug'] : []),
                 ],
-                [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+                ProcessPipes::descriptors(),
                 $pipes,
                 $project,
             );

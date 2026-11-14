@@ -877,7 +877,7 @@ final class PlaygroundToolsTest extends TestCase
                 '--bootstrap', PlaygroundDriver::ROOT.'/vendor/autoload.php',
                 $file,
             ];
-            $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $dir);
+            $process = proc_open($command, ProcessPipes::descriptors(), $pipes, $dir);
             self::assertIsResource($process);
             [$stdout, $stderr] = ProcessPipes::drain($pipes);
             fclose($pipes[1]);

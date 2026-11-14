@@ -227,7 +227,7 @@ final class PcreSettingsGuardTest extends TestCase
         $phpunit = \dirname((string) (new \ReflectionClass(TestCase::class))->getFileName(), 5).'/bin/phpunit';
 
         $command = [\PHP_BINARY, $phpunit, '--configuration', $config, '--filter', $filter, '--no-progress'];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
         $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);

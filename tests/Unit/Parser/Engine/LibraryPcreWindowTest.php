@@ -189,7 +189,7 @@ final class LibraryPcreWindowTest extends TestCase
 
         $process = proc_open(
             [\PHP_BINARY, '-d', 'xdebug.mode=off', '-r', $code],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
         );
         $this->assertIsResource($process);

@@ -74,7 +74,7 @@ final class TargetEngine
      */
     public function isAvailable(): bool
     {
-        $process = @proc_open($this->probe, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = @proc_open($this->probe, ProcessPipes::descriptors(), $pipes);
         if (!\is_resource($process)) {
             return false;
         }
@@ -130,7 +130,7 @@ final class TargetEngine
     private function runBatch(array $cases): ?array
     {
         $input = json_encode(['cases' => $cases], \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE);
-        $process = proc_open($this->command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open($this->command, ProcessPipes::descriptors(true), $pipes);
         if (!\is_resource($process)) {
             throw new \RuntimeException(\sprintf('%s did not start.', $this->name));
         }

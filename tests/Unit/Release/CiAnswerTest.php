@@ -692,7 +692,7 @@ final class CiAnswerTest extends TestCase
             'GH_PUSHES' => $this->root.'/pushes',
         ];
         $command = [\dirname(__DIR__, 3).'/bin/ci-answer', '--root', $this->root.'/repository', ...$arguments];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, $env);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes, null, $env);
         $this->assertIsResource($process);
         [$stdout, $stderr] = ProcessPipes::drain($pipes);
         $output = $stdout.$stderr;

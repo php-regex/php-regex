@@ -20,7 +20,8 @@ declare(strict_types=1);
  * that stores its section header and notes. After every run the merged log
  * is rebuilt from ALL existing parts and the manifest, so a partial re-lint
  * (--only, --limit, or an interrupted full sweep) updates only the targeted
- * repositories while keeping every earlier section intact.
+ * repositories while keeping every earlier section intact. A repository no
+ * longer under corpus/ is dropped from the manifest and the parts first.
  *
  * One lint run resolves one target from the composer.json of the directory
  * it runs in; a single run over corpus/ would judge every repository under
@@ -552,6 +553,46 @@ function parseCorpusLintArgs(array $argv): array
 }
 
 /**
+ * Drop the repositories that left corpus/: their manifest entries and their
+ * parts, which the library of an earlier day judged, and which the merged
+ * log and the site's findings would keep. A partial sweep drops them too:
+ * the merged log is rebuilt from the whole manifest.
+ *
+ * @param array<string, array{header: string, notes: list<string>}> $manifest
+ *
+ * @return array{0: array<string, array{header: string, notes: list<string>}>, 1: list<string>} the manifest kept, and the repositories dropped
+ */
+function dropRemovedRepositories(string $corpusDir, string $partsDir, array $manifest): array
+{
+    $present = [];
+    foreach (discoverRepositories($corpusDir, null, null) as $repo) {
+        $present[str_replace('/', '__', $repo)] = true;
+    }
+
+    $dropped = [];
+    foreach (array_keys($manifest) as $repo) {
+        if (!isset($present[str_replace('/', '__', $repo)])) {
+            unset($manifest[$repo]);
+            $dropped[$repo] = true;
+        }
+    }
+
+    // A part with no manifest entry goes too: the site reads every JSON part.
+    foreach ([...glob($partsDir.'/*.log') ?: [], ...glob($partsDir.'/*.json') ?: []] as $part) {
+        $slug = pathinfo($part, \PATHINFO_FILENAME);
+        if ('manifest' !== $slug && !isset($present[$slug]) && is_file($part)) {
+            unlink($part);
+            $dropped[implode('/', explode('__', $slug, 2))] = true;
+        }
+    }
+
+    $dropped = array_keys($dropped);
+    sort($dropped);
+
+    return [$manifest, $dropped];
+}
+
+/**
  * Read the manifest that stores per-repository metadata (section header,
  * notes) so a partial re-lint can rebuild the full merged log.
  *
@@ -713,6 +754,11 @@ function corpusLintMain(array $argv): int
     $manifest = readManifest($partsDir);
     if ([] === $manifest) {
         $manifest = seedManifestFromLog($outputFile);
+    }
+
+    [$manifest, $dropped] = dropRemovedRepositories($corpusDir, $partsDir, $manifest);
+    if ([] !== $dropped) {
+        $io->info(sprintf('Dropped %d %s no longer under corpus/: %s', \count($dropped), 1 === \count($dropped) ? 'repository' : 'repositories', implode(', ', $dropped)));
     }
 
     $total = \count($repos);

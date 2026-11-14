@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
@@ -68,7 +69,29 @@ final class RegexParserTest extends TestCase
         $this->assertFalse($parser->validate('/'.str_repeat('a', 20).'/')->isValid);
         $this->assertSame(100_000, RegexParser::DEFAULT_MAX_PATTERN_LENGTH);
         $this->assertSame(255, RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH);
-        $this->assertSame(1024, RegexParser::DEFAULT_MAX_RECURSION_DEPTH);
+        $this->assertSame(512, RegexParser::DEFAULT_MAX_RECURSION_DEPTH);
+    }
+
+    /**
+     * PCRE refuses parentheses nested past 250 levels: the parser reads all
+     * of them under its default limit, twice as deep, and stops short of
+     * the depth where PHP runs out of a C stack of 1 MB, some 800 levels.
+     */
+    #[Test]
+    public function test_the_default_depth_reads_every_nesting_pcre_accepts_and_stops_well_before_the_stack_runs_out(): void
+    {
+        $nested = static fn (int $depth): string => '/'.str_repeat('(', $depth).'a'.str_repeat(')', $depth).'/';
+        $this->assertSame(1, @preg_match($nested(250), 'a'), 'Oracle: PCRE takes 250 levels.');
+        $this->assertFalse(@preg_match($nested(251), 'a'), 'Oracle: PCRE refuses 251 levels.');
+
+        $this->assertTrue(RegexParser::create(['cache' => null])->validate($nested(250))->isValid);
+
+        try {
+            RegexParser::create(['cache' => null])->parse($nested(600));
+            $this->fail('Six hundred levels were read.');
+        } catch (RecursionLimitException $e) {
+            $this->assertSame('Recursion limit of 512 exceeded.', $e->getMessage());
+        }
     }
 
     #[Test]

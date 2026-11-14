@@ -74,11 +74,15 @@ final class FindingsPagesTest extends TestCase
     {
         $head = self::source(self::DOCS.'/_includes/head.html');
 
-        $this->assertSame(2, substr_count($head, "{{ page.image | default: '/assets/img/social.png' | absolute_url }}"), 'A page may name its own card; the site\'s stays the default.');
+        // A page may name its own card, where no card was drawn for it; the
+        // site's stays the default.
+        $this->assertSame(1, substr_count($head, "{% assign head_image = page.image | default: '/assets/img/social.png' %}"), 'A page may name its own card; the site\'s stays the default.');
+        $this->assertSame(2, substr_count($head, '{{ head_image | absolute_url }}'), 'The Open Graph card and the Twitter card are the same.');
         $this->assertFileExists(self::DOCS.'/assets/img/findings-social.png', 'One card for every repository: nothing on it goes stale.');
         $this->assertFileExists(PlaygroundDriver::ROOT.'/art/findings-social.svg');
         $this->assertStringNotContainsString('confirmed', self::source(PlaygroundDriver::ROOT.'/art/findings-social.svg'), 'Most findings are the linter\'s advice: the card claims nothing an engine did not confirm.');
-        $this->assertStringContainsString("{{ page.image_alt | default: 'PHPRegex — static analysis, linter and logic solver for PHP regular expressions.' | escape }}", $head, 'The card\'s text alternative follows the card, escaped as the title is.');
+        $this->assertStringContainsString("{% assign head_image_alt = page.image_alt | default: 'PHPRegex — static analysis, linter and logic solver for PHP regular expressions.' %}", $head, 'The card\'s text alternative follows the card.');
+        $this->assertSame(2, substr_count($head, '{{ head_image_alt | escape_once }}'), 'Both cards carry it, escaped.');
     }
 
     #[Test]

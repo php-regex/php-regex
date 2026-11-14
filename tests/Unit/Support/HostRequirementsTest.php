@@ -179,7 +179,7 @@ final class HostRequirementsTest extends TestCase
     {
         $process = proc_open(
             [\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'xdebug.mode=off', ...$arguments],
-            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(true),
             $pipes,
         );
         $this->assertIsResource($process);

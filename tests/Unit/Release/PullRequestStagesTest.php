@@ -396,7 +396,7 @@ final class PullRequestStagesTest extends TestCase
             'GITHUB_OUTPUT' => $this->root.'/output',
             'RUNNER_TEMP' => $this->root,
         ];
-        $process = proc_open(['bash', '--noprofile', '--norc', '-e', '-o', 'pipefail', $this->root.'/step.sh'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $this->root, $env);
+        $process = proc_open(['bash', '--noprofile', '--norc', '-e', '-o', 'pipefail', $this->root.'/step.sh'], ProcessPipes::descriptors(), $pipes, $this->root, $env);
         $this->assertIsResource($process);
         $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);

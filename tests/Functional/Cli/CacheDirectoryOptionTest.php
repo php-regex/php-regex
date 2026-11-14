@@ -127,7 +127,7 @@ final class CacheDirectoryOptionTest extends TestCase
     private static function lint(string $project, array $options): string
     {
         $command = [\PHP_BINARY, '-d', 'xdebug.mode=off', \dirname(__DIR__, 3).'/src/Cli/bin/regex', ...$options, 'lint', 'src/', '--redos', '--redos-threshold=low', '--format=json', '--no-visuals'];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $project);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes, $project);
         self::assertIsResource($process);
         [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);

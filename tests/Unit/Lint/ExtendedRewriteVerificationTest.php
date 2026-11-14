@@ -84,19 +84,19 @@ final class ExtendedRewriteVerificationTest extends TestCase
 
     /**
      * Under m the match check does not read the pattern, and the part the
-     * rewrite changed, eighty \pL spelled as a repeat, has a state for each
-     * of them over an alphabet of hundreds of ranges: past the work the
-     * check of a rewrite may spend, it proves nothing, though the solver's
-     * default budget would settle it.
+     * rewrite changed, two hundred \pL spelled as a repeat, has a state for
+     * each of them over an alphabet of hundreds of ranges: past the work
+     * the check of a rewrite may spend, it proves nothing, though the
+     * solver's default budget would settle it.
      */
     #[Test]
     public function test_a_rewrite_whose_check_outgrows_its_work_is_not_suggested(): void
     {
-        $pattern = '/[\pL0-9]*0'.str_repeat('\pL', 80).'$/umx';
-        $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null])))->rewritesAlikeInPlace($pattern, '/[0-9\pL]*0\pL{80}$/umx'), 'The default budget settles it.');
+        $pattern = '/[\pL0-9]*0'.str_repeat('\pL', 200).'$/umx';
+        $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null])))->rewritesAlikeInPlace($pattern, '/[0-9\pL]*0\pL{200}$/umx'), 'The default budget settles it.');
 
         $this->assertSame([], $this->suggestions($pattern, true));
-        $this->assertSame(['/[0-9\pL]*0\pL{80}$/umx'], $this->suggestions($pattern, false), 'Unchecked, the rewrite is suggested.');
+        $this->assertSame(['/[0-9\pL]*0\pL{200}$/umx'], $this->suggestions($pattern, false), 'Unchecked, the rewrite is suggested.');
     }
 
     /**

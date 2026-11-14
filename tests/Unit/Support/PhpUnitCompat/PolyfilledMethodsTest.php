@@ -247,7 +247,7 @@ final class PolyfilledMethodsTest extends TestCase
                 $log,
                 $probe,
             ];
-            $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+            $process = proc_open($command, ProcessPipes::descriptors(), $pipes);
             $this->assertIsResource($process);
             $output = implode('', ProcessPipes::drain($pipes));
             fclose($pipes[1]);

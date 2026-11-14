@@ -101,7 +101,7 @@ final class ExamplesScriptsTest extends TestCase
     {
         // Started without a shell, both streams read: the quoting of a
         // shell is not the same on every host.
-        $process = proc_open([\PHP_BINARY, \dirname(__DIR__, 2).'/'.$script], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open([\PHP_BINARY, \dirname(__DIR__, 2).'/'.$script], ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
         $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);

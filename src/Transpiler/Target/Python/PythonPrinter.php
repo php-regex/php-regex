@@ -313,7 +313,7 @@ final class PythonPrinter extends AbstractTargetPrinter
 
         if ('h' === $node->value || 'v' === $node->value) {
             $this->context->addNote('Converted \\'.$node->value.' to character class.');
-            $set = 'h' === $node->value ? self::HORIZONTAL_SPACES : self::VERTICAL_SPACES;
+            $set = $this->spaceSet($node->value);
 
             return $this->inCharClass ? $set : '['.$set.']';
         }

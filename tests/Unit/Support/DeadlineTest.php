@@ -44,7 +44,7 @@ final class DeadlineTest extends TestCase
             }
             proc_terminate(\$silent);
             PHP;
-        $process = proc_open([\PHP_BINARY, '-r', $code], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open([\PHP_BINARY, '-r', $code], ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
 
         $start = hrtime(true);

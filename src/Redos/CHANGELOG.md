@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * An atomic group or a possessive repeat over greedy unbounded repeats of
+   one run, each taken at most once at least, is read as the longest run it
+   commits to: `/^(?:a+)++$/` is proven linear where its body was kept with
+   every way through it, and a ReDoS repair now offers the possessive on the
+   outer loop, `/^(?:a+)++$/` for `/^(?:a+)+$/`. A body that splits a run
+   into many copies, `(?:a+){30,}+`, is kept as written: PCRE tries every
+   way to split it before it fails.
  * The heuristics read a body repeated `{0}` as PCRE runs it: never where it
    stands. One holding no group gives no hotspot, as `x+x+` in
    `/(?:x+x+){0}^(?:a+)+$/` gave two, which a repair then tried first; the

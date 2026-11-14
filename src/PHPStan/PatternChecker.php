@@ -242,7 +242,7 @@ final class PatternChecker
                 continue;
             }
 
-            $repair = (new RedosRepairer($this->scope->parser()))->repair($pattern)[0] ?? null;
+            $repair = (new RedosRepairer($this->scope->parser()))->firstRepair($pattern);
             $errors[] = ErrorFactory::redos($pattern, $analysis, $repair, $lineNumber);
         }
 

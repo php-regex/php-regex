@@ -339,7 +339,7 @@ final class Pcre2FloorOracle
                 $command[] = $outputPath;
             }
 
-            $process = proc_open($command, [0 => ['file', '/dev/null', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+            $process = proc_open($command, [0 => ['file', '/dev/null', 'r']] + ProcessPipes::descriptors(), $pipes);
 
             if (!\is_resource($process)) {
                 throw new \RuntimeException(\sprintf('Unable to run %s.', $binary));

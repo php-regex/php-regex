@@ -49,8 +49,8 @@ final class SetsWithoutUtfTest extends TestCase
         '\D' => ['javascript' => '/^\D(?=\n?$)/', 'html-pattern' => '^\D$', 'python' => "r'(?a)^\\D$'", 'character' => 'é'],
         '\W' => ['javascript' => '/^\W(?=\n?$)/', 'html-pattern' => '^\W$', 'python' => "r'(?a)^\\W$'", 'character' => "\u{A0}"],
         '\S' => ['javascript' => '/^[^\t-\r ](?=\n?$)/', 'html-pattern' => '^[^\t-\r ]$', 'python' => "r'(?a)^\\S$'", 'character' => 'é'],
-        '\h' => ['javascript' => '/^[\x09\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000](?=\n?$)/', 'html-pattern' => '^[\x09\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000]$', 'python' => "r'(?a)^[\\x09\\x20\\xA0\\u1680\\u180E\\u2000-\\u200A\\u202F\\u205F\\u3000]$'", 'character' => "\u{A0}"],
-        '\v' => ['javascript' => '/^[\x0A-\x0D\x85\u2028\u2029](?=\n?$)/', 'html-pattern' => '^[\x0A-\x0D\x85\u2028\u2029]$', 'python' => "r'(?a)^[\\x0A-\\x0D\\x85\\u2028\\u2029]$'", 'character' => "\u{85}"],
+        '\h' => ['javascript' => '/^[\x09\x20\xA0](?=\n?$)/', 'html-pattern' => '^[\x09\x20\xA0]$', 'python' => "r'(?a)^[\\x09\\x20\\xA0]$'", 'character' => "\u{A0}"],
+        '\v' => ['javascript' => '/^[\x0A-\x0D\x85](?=\n?$)/', 'html-pattern' => '^[\x0A-\x0D\x85]$', 'python' => "r'(?a)^[\\x0A-\\x0D\\x85]$'", 'character' => "\u{85}"],
         '[\Da]' => ['javascript' => '/^[\Da](?=\n?$)/', 'html-pattern' => '^[\Da]$', 'python' => "r'(?a)^[\\Da]$'", 'character' => 'é'],
         '[\s\S]' => ['javascript' => '/^(?:[\t-\r ]|[^\t-\r ])(?=\n?$)/', 'html-pattern' => '^[\t-\r [^\t-\r ]]$', 'python' => "r'(?a)^[\\s\\S]$'", 'character' => 'é'],
         '[^\x00-\x7F]' => ['javascript' => '/^[^\x00-\x7F](?=\n?$)/', 'html-pattern' => '^[^\x00-\x7F]$', 'python' => "r'(?a)^[^\\x00-\\x7F]$'", 'character' => 'é'],
@@ -90,6 +90,36 @@ final class SetsWithoutUtfTest extends TestCase
 
         $this->assertSame($literal, $result->literal);
         $this->assertSame([self::warningFor('/^'.$set.'$/', $target, $set, 1)], $result->warnings);
+    }
+
+    /**
+     * Without u "\h" and "\v" are written with the bytes PCRE takes for
+     * them, as "\s" is: on a subject read as Latin-1, one character per
+     * byte, the target takes what PCRE takes. Under u they keep the
+     * characters PCRE reads.
+     */
+    #[Test]
+    #[DataProvider('provideHorizontalAndVerticalSpaces')]
+    public function test_horizontal_and_vertical_spaces_are_written_with_the_bytes_pcre_takes(string $set, string $bytes, string $target, string $literal, string $literalUnderU): void
+    {
+        for ($byte = 0x00; $byte <= 0xFF; $byte++) {
+            $this->assertSame(preg_match('/^'.$set.'$/', \chr($byte)), preg_match('/^'.$bytes.'$/', \chr($byte)), \sprintf('%s and %s on 0x%02X', $set, $bytes, $byte));
+        }
+
+        $this->assertSame($literal, Regex::create()->transpile('/'.$set.'/', $target)->literal);
+        $this->assertSame($literalUnderU, Regex::create()->transpile('/'.$set.'/u', $target)->literal);
+    }
+
+    /**
+     * @return iterable<string, array{set: string, bytes: string, target: string, literal: string, literalUnderU: string}>
+     */
+    public static function provideHorizontalAndVerticalSpaces(): iterable
+    {
+        yield '\h in JavaScript' => ['set' => '\h', 'bytes' => '[\x09\x20\xA0]', 'target' => 'javascript', 'literal' => '/[\x09\x20\xA0]/', 'literalUnderU' => '/[\x09\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000]/u'];
+        yield '\v in JavaScript' => ['set' => '\v', 'bytes' => '[\x0A-\x0D\x85]', 'target' => 'javascript', 'literal' => '/[\x0A-\x0D\x85]/', 'literalUnderU' => '/[\x0A-\x0D\x85\u2028\u2029]/u'];
+        yield '\h in a class in JavaScript' => ['set' => '[\hx]', 'bytes' => '[\x09\x20\xA0x]', 'target' => 'javascript', 'literal' => '/[\x09\x20\xA0x]/', 'literalUnderU' => '/[\x09\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000x]/u'];
+        yield '\h in Python' => ['set' => '\h', 'bytes' => '[\x09\x20\xA0]', 'target' => 'python', 'literal' => "r'(?a)[\\x09\\x20\\xA0]'", 'literalUnderU' => "r'[\\x09\\x20\\xA0\\u1680\\u180E\\u2000-\\u200A\\u202F\\u205F\\u3000]'"];
+        yield '\v in Python' => ['set' => '\v', 'bytes' => '[\x0A-\x0D\x85]', 'target' => 'python', 'literal' => "r'(?a)[\\x0A-\\x0D\\x85]'", 'literalUnderU' => "r'[\\x0A-\\x0D\\x85\\u2028\\u2029]'"];
     }
 
     #[Test]

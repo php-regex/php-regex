@@ -135,6 +135,27 @@ final class RedosAtomicAbstractionTest extends TestCase
         yield 'atomic alternation of one-character branches repeated' => ['/(?>a|a)+$/'];
         yield 'possessive alternation of one-character branches' => ['/(a|a)++$/'];
         yield 'same after a literal, possessive' => ['/x(a|a)++$/'];
+        // Greedy repeats of one run, each taken at most once at least: the
+        // first way out of the body reads the longest run, and the body
+        // fails only before a character outside the set, at once.
+        yield 'possessive repeat of a run' => ['/^(?:a+)++$/'];
+        yield 'atomic repeat of a captured run' => ['/(?>(a+)+)$/'];
+        yield 'possessive repeat of a repeated optional run' => ['/((a*)+)++$/'];
+        yield 'atomic repeat of a run over a class, repeated' => ['/(?>(?:[ab]+)+)+$/'];
+    }
+
+    /**
+     * A body that must split a run into many copies is not one run: PCRE
+     * tries every way to split it before it fails, though the group is
+     * atomic. a…a! fails at n=29 for (?:a+){30,}+ on the engine.
+     */
+    #[Test]
+    public function test_a_run_split_into_many_copies_stays_over_approximated(): void
+    {
+        $analysis = (new RedosAnalyzer())->analyze('/^(?:a+){30,}+$/');
+
+        $this->assertFalse($analysis->isProvenSafe());
+        $this->assertAtomicAbstractionAt(1, $analysis, '/^(?:a+){30,}+$/');
     }
 
     /**
@@ -175,6 +196,11 @@ final class RedosAtomicAbstractionTest extends TestCase
         yield 'atomic run' => ['/(?>a+)+$/', '', 'a', '!', false];
         yield 'possessive run' => ['/(a++)+$/', '', 'a', '!', false];
         yield 'atomic run over a class' => ['/(?>[ab]+)+$/', '', 'a', '!', false];
+        yield 'possessive repeat of a run' => ['/^(?:a+)++$/', '', 'a', '!', false];
+        yield 'atomic repeat of a captured run' => ['/(?>(a+)+)$/', '', 'a', '!', false];
+        yield 'possessive repeat of a repeated optional run' => ['/((a*)+)++$/', '', 'a', '!', false];
+        yield 'atomic repeat of a run over a class, repeated' => ['/(?>(?:[ab]+)+)+$/', '', 'a', '!', false];
+        yield 'a run split into thirty copies, a…a! fails at n=29' => ['/^(?:a+){30,}+$/', '', 'a', '!', true];
     }
 
     /**

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\BranchOverlaps;
+use PHPRegex\Linter\Rule\Support\FlagScope;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
@@ -24,6 +25,7 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -318,6 +320,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
         $unicodeFlag = str_contains($context->pattern->flags, 'u');
 
         $flagsAt = $context->flagsAtEachChild($node);
+        // The outermost node the traversal stands in: no option group above
+        // it sets anything for the alternation.
+        $root = $context->parents()[0] ?? $node;
         $sets = [];
         foreach ($node->alternatives as $index => $alternative) {
             // A branch that may read nothing starts with what follows the
@@ -333,8 +338,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
                 // The atom is read under the options in force where it
                 // stands: those a group opening the branch sets included.
-                $modifiers = self::probeModifiers($context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags()), $context->pattern->flags);
-                $read = null === $atom || null === $modifiers ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
+                $flags = $context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags());
+                $modifiers = self::probeModifiers($flags, self::asciiOptions($flags, $leaf, $root));
+                $read = null === $atom ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
                 if (null === $read) {
                     return null;
                 }
@@ -445,32 +451,41 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
     /**
      * The options the probe reads an atom under, from the flags in effect at
-     * it. The options of "a" go along as written, "(?aD)" or "(?aW)" each
-     * as "aD" or "aW", "a" alone for all of them: the probe gets the very
-     * restrictions of \d, \s, \w and the POSIX classes the atom stands
-     * under. Their letters D and S read as the pattern's own /D and /S too:
-     * where the pattern sets those, which of them "a" carries is not known,
-     * and null leaves the branch unjudged.
+     * it and the options of "a" that stand there.
      */
-    private static function probeModifiers(string $flags, string $patternFlags): ?string
+    private static function probeModifiers(string $flags, string $ascii): string
     {
-        $ascii = '';
-        if (str_contains($flags, 'a')) {
-            if (false !== strpbrk($patternFlags, 'DS') && false !== strpbrk($flags, 'DS')) {
-                return null;
-            }
-
-            foreach (['D', 'S', 'W', 'P', 'T'] as $option) {
-                $ascii .= str_contains($flags, $option) ? 'a'.$option : '';
-            }
-            $ascii = '' === $ascii ? 'a' : $ascii;
-        }
-
         return (str_contains($flags, 'i') ? 'i' : '')
             .(str_contains($flags, 's') ? 's' : '')
             .(str_contains($flags, 'xx') ? 'xx' : (str_contains($flags, 'x') ? 'x' : ''))
             .(str_contains($flags, 'r') ? 'r' : '')
             .$ascii;
+    }
+
+    /**
+     * The options of "a" in force at an atom, as written: "aD" or "aW" for
+     * each one set, "a" alone for all of them, '' outside them. The probe
+     * gets the very restrictions of \d, \s, \w and the POSIX classes the
+     * atom stands under. PHP has no modifier for them, so they are read
+     * from the option groups alone, from $root with no modifier: the D and
+     * S found there are those of "(?aD)" and "(?aS)", never the pattern's
+     * own /D and /S.
+     */
+    private static function asciiOptions(string $flags, NodeInterface $atom, NodeInterface $root): string
+    {
+        if (!str_contains($flags, 'a')) {
+            return '';
+        }
+
+        // The atom stands under $root, where the traversal found it; were it
+        // not found, the pattern's /D and /S would still not be read here.
+        $inline = FlagScope::flagsAt($atom, $root, '') ?? '';
+        $ascii = '';
+        foreach (['D', 'S', 'W', 'P', 'T'] as $option) {
+            $ascii .= str_contains($inline, $option) ? 'a'.$option : '';
+        }
+
+        return '' === $ascii ? 'a' : $ascii;
     }
 
     private function makeCharsetViolation(AlternationNode $node, int $i, int $j, LintContext $context): RuleViolation
@@ -609,12 +624,13 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * reader tells the findings of two alternations apart by it. The piece
      * of the body is spelled in the pattern's mode, a hidden character
      * "\x{HEX}" under u and each byte past ASCII "\xHH" otherwise; the
-     * printed form when the body does not hold the branch.
+     * printed form when the body does not hold the branch. The layout x
+     * skips is left out, as it would fill the columns before the first
+     * atom of a branch laid out over lines.
      */
     private static function asWritten(NodeInterface $node, LintContext $context): string
     {
-        $start = $node->getStartPosition();
-        $text = substr($context->pattern->source, $start, $node->getEndPosition() - $start);
+        $text = self::withoutLayout($node, $context->pattern->source);
         if ('' === $text) {
             $text = $node->accept(PatternPrinter::asWritten());
         }
@@ -637,6 +653,44 @@ final class OverlappingAlternationRule extends AbstractLintRule
         }
 
         return $kept.'…';
+    }
+
+    /**
+     * The piece of the body a node covers, without the layout x skips. A
+     * leaf and a class are taken as written, an escaped space and a space
+     * in a class included; a comment x reads ("# ..." up to the line end)
+     * goes. Between its children a node holds its own syntax, "(?:", ")",
+     * "|" or a quantifier, which no whitespace belongs to, and the
+     * whitespace x skipped: that whitespace goes. The parser places every
+     * child inside its parent, in order, the body of a verb included.
+     */
+    private static function withoutLayout(NodeInterface $node, string $source): string
+    {
+        $start = $node->getStartPosition();
+        $end = $node->getEndPosition();
+        if ($node instanceof CommentNode && '#' === ($source[$start] ?? '')) {
+            return '';
+        }
+
+        $written = substr($source, $start, $end - $start);
+        $children = $node instanceof CharClassNode ? [] : $node->getChildren();
+        if ([] === $children) {
+            return $written;
+        }
+
+        $text = '';
+        $at = $start;
+        foreach ($children as $child) {
+            $text .= self::withoutWhitespace(substr($source, $at, $child->getStartPosition() - $at)).self::withoutLayout($child, $source);
+            $at = $child->getEndPosition();
+        }
+
+        return $text.self::withoutWhitespace(substr($source, $at, $end - $at));
+    }
+
+    private static function withoutWhitespace(string $syntax): string
+    {
+        return str_replace([' ', "\t", "\n", "\r", "\f", "\v"], '', $syntax);
     }
 
     /**

@@ -145,10 +145,6 @@ final class DiagnosticConverter
     }
 
     /**
-     * The fix on the line under the error, unless the message already
-     * suggests it.
-     */
-    /**
      * A warning on an inline marker that silences nothing.
      *
      * @param Range $range
@@ -203,6 +199,10 @@ final class DiagnosticConverter
         return $diagnostic;
     }
 
+    /**
+     * The fix on the line under the error, unless the message already
+     * suggests it.
+     */
     private static function withHint(string $message, ?string $hint): string
     {
         return null === $hint || '' === $hint || str_contains($message, $hint) ? $message : $message."\n".$hint;

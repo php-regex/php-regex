@@ -525,7 +525,7 @@ final class PharWorkflowTest extends TestCase
 
         $process = proc_open(
             ['bash', '--noprofile', '--norc', '-eo', 'pipefail', $this->scratch.'/step.sh'],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
             $this->scratch.'/work',
             $env + ['PATH' => $this->scratch.'/fake:'.getenv('PATH'), 'LOGS' => $this->scratch, 'REAL_PHP' => \PHP_BINARY, 'RUNNER_TEMP' => $this->scratch.'/temp', 'GITHUB_OUTPUT' => $this->scratch.'/output', 'HOME' => (string) getenv('HOME')],

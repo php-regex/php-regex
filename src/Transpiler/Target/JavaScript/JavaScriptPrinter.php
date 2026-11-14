@@ -295,7 +295,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
         if ('h' === $node->value || 'v' === $node->value) {
             $this->context->addNote('Converted \\'.$node->value.' ('.('h' === $node->value ? 'horizontal' : 'vertical').' whitespace) to character class.');
-            $set = 'h' === $node->value ? self::HORIZONTAL_SPACES : self::VERTICAL_SPACES;
+            $set = $this->spaceSet($node->value);
 
             return $this->inCharClass ? $set : '['.$set.']';
         }

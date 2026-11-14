@@ -369,7 +369,11 @@ keeps for that release. One of them changes which error a pattern too large
 to compile is refused with when it is wrong elsewhere too, and where the size
 is reported: `validate()` gives that error for a target of PHP 8.2.35 or
 later with PCRE2 10.40. No pattern changes verdict there, so 8.2.35 is not a
-point of the matrix.
+point of the matrix. PCRE2 gives that fix to every distributor of 10.39 to
+10.47, and a build names no fix it carries: for the build that runs, its
+PHP patch release included, the library compiles a pattern that tells the
+two apart, once per process, and judges any other target by its release, a
+target of PHP 8.2.34 on PHP 8.2.35 included.
 
 A pattern is never a reason for `compatibility()` to throw. A pattern no
 target can read, a missing delimiter included, gets a verdict refusing it at

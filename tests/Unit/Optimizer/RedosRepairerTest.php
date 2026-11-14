@@ -159,6 +159,42 @@ final class RedosRepairerTest extends TestCase
     }
 
     /**
+     * firstRepair() answers what repair() offers first: the same rewrite,
+     * with the same proofs, or none.
+     *
+     * @param list<array{string, bool|null, bool|null}> $repairs
+     */
+    #[Test]
+    #[DataProvider('provideRepairs')]
+    public function test_the_first_repair_is_the_one_repair_offers_first(string $pattern, array $repairs): void
+    {
+        $first = (new RedosRepairer())->firstRepair($pattern);
+
+        $this->assertSame($repairs[0] ?? null, null === $first ? null : [$first->pattern, $first->sameSubjects, $first->sameMatches]);
+    }
+
+    /**
+     * Once a rewrite is certified and writes the same $matches, none after
+     * it can come before it: firstRepair() proves no rewrite after it, and
+     * asks the optimizer for none, where repair() proves them all.
+     */
+    #[Test]
+    public function test_the_first_repair_stops_at_a_certified_rewrite_that_keeps_the_matches(): void
+    {
+        $asked = static function (\Closure $repair): int {
+            $cache = new ArrayCache();
+            $repair(new RedosRepairer(RegexParser::create(['cache' => $cache])));
+
+            return array_sum($cache->getStats());
+        };
+
+        $first = $asked(static fn (RedosRepairer $repairer): ?RedosRepair => $repairer->firstRepair('/^(?:a+)+$/'));
+        $all = $asked(static fn (RedosRepairer $repairer): array => $repairer->repair('/^(?:a+)+$/'));
+
+        $this->assertLessThan($all, $first);
+    }
+
+    /**
      * The rewrites of the quantifiers the analysis blames come first: those
      * a hotspot covers or lies in, the culprit being one of the hotspots.
      * Then the others in the order they had: the flattenings, the
@@ -178,7 +214,9 @@ final class RedosRepairerTest extends TestCase
 
         $tried = new \ReflectionMethod(RedosRepairer::class, 'candidates');
 
-        $this->assertSame($candidates, $tried->invoke(new RedosRepairer($parser), $parser->parse($pattern), $pattern, $parser, $analysis));
+        $generated = $tried->invoke(new RedosRepairer($parser), $parser->parse($pattern), $pattern, $parser, $analysis);
+        $this->assertInstanceOf(\Generator::class, $generated);
+        $this->assertSame($candidates, iterator_to_array($generated, false));
     }
 
     /**
@@ -237,7 +275,7 @@ final class RedosRepairerTest extends TestCase
         $asked = function (int $quantifiers): int {
             $cache = new ArrayCache();
             $repairs = (new RedosRepairer(RegexParser::create(['cache' => $cache])))->repair('/(?:'.str_repeat('x+', $quantifiers).'){0}^(?:a+)+$/');
-            $this->assertCount(3, $repairs);
+            $this->assertCount(4, $repairs);
 
             return array_sum($cache->getStats());
         };
@@ -306,21 +344,25 @@ final class RedosRepairerTest extends TestCase
     {
         yield 'nested plus' => ['pattern' => '/^(?:a+)+$/', 'repairs' => [
             ['/^a+$/', true, true],
+            ['/^(?:a+)++$/', null, null],
             ['/^(?:a++)+$/', null, null],
             ['/^(?:a++)++$/', null, null],
         ]];
         yield 'nested plus in a group' => ['pattern' => '/^(a+)+$/', 'repairs' => [
             ['/^(a+)$/', true, true],
+            ['/^(a+)++$/', null, null],
             ['/^(a++)+$/', null, null],
             ['/^(a++)++$/', null, null],
         ]];
         yield 'star around plus, group' => ['pattern' => '/^(\\d+)*$/', 'repairs' => [
             ['/^(\\d*)$/', true, false],
+            ['/^(\\d+)*+$/', null, null],
             ['/^(\\d++)*$/', null, null],
             ['/^(\\d++)*+$/', null, null],
         ]];
         yield 'star around star' => ['pattern' => '/(?:x*)*y/', 'repairs' => [
             ['/x*y/', true, null],
+            ['/(?:x*)*+y/', null, null],
             ['/(?:x*+)*y/', null, null],
             ['/(?:x*+)*+y/', null, null],
         ]];
@@ -344,16 +386,19 @@ final class RedosRepairerTest extends TestCase
         ]];
         yield 'a class repeated inside a repeat' => ['pattern' => '/href="([^"]+)*"/', 'repairs' => [
             ['/href="([^"]*)"/', true, false],
+            ['/href="([^"]+)*+"/', null, null],
             ['/href="([^"]++)*"/', null, null],
             ['/href="([^"]++)*+"/', null, null],
         ]];
         yield 'quantifiers before the nested repeat' => ['pattern' => '/^\\d+\\s+\\d+\\s+\\d+\\s+(?:\\w+)+$/', 'repairs' => [
             ['/^\\d+\\s+\\d+\\s+\\d+\\s+\\w+$/', true, true],
+            ['/^\\d+\\s+\\d+\\s+\\d+\\s+(?:\\w+)++$/', null, null],
             ['/^\\d+\\s+\\d+\\s+\\d+\\s+(?:\\w++)+$/', null, null],
             ['/^\\d++\\s++\\d++\\s++\\d++\\s++(?:\\w++)++$/', null, null],
         ]];
         yield 'quantifiers no subject reaches' => ['pattern' => '/(?:x+x+x+){0}^(?:a+)+$/', 'repairs' => [
             ['/(?:x+x+x+){0}^a+$/', true, true],
+            ['/(?:x+x+x+){0}^(?:a+)++$/', null, null],
             ['/(?:x+x+x+){0}^(?:a++)+$/', null, null],
             ['/(?:x++x++x++){0}^(?:a++)++$/', null, null],
         ]];
@@ -361,11 +406,13 @@ final class RedosRepairerTest extends TestCase
         // the engine, and each rewrite proven linear is listed uncertified.
         yield 'a possessive the automata do not read' => ['pattern' => '/^x++(?:a+)+$/', 'repairs' => [
             ['/^x++a+$/', null, true],
+            ['/^x++(?:a+)++$/', null, null],
             ['/^x++(?:a++)+$/', null, null],
             ['/^x++(?:a++)++$/', null, null],
         ]];
         yield 'an atomic group the automata do not read' => ['pattern' => '/^(?>x+)(?:a+)+$/', 'repairs' => [
             ['/^(?>x+)a+$/', null, null],
+            ['/^(?>x+)(?:a+)++$/', null, null],
             ['/^(?>x+)(?:a++)+$/', null, null],
             ['/^(?>x++)(?:a++)++$/', null, null],
         ]];

@@ -665,7 +665,7 @@ final class FindingsReportTest extends TestCase
         $part = $this->dir.'/parts/'.str_replace('/', '__', $name).'.json';
         $process = proc_open(
             [\PHP_BINARY, '-d', 'auto_prepend_file=', self::LINTER, 'lint', $this->dir.'/corpus/'.$name, '--php-version', '8.1', '--redos', '--redos-mode=confirmed', '--output', $part, '--format=json'],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
         );
         $this->assertIsResource($process);
@@ -704,7 +704,7 @@ final class FindingsReportTest extends TestCase
         }
         $process = proc_open(
             [\PHP_BINARY, '-d', 'auto_prepend_file=', ...$settings, self::REPORT, '--offline', '--parts='.$this->dir.'/parts', '--corpus='.($corpus ?? $this->dir.'/corpus'), '--out='.$this->dir.'/out'],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
         );
         $this->assertIsResource($process);

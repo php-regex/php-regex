@@ -362,13 +362,18 @@ final class ExtendedCharClassTest extends TestCase
         $this->assertSame(['matching' => [], 'non_matching' => []], $unreadable->accept(new TestCaseGenerator()));
     }
 
+    /**
+     * Each complement nests the class one level deeper: PCRE takes a run of
+     * any length, the parser stops at its recursion limit, 512 levels by
+     * default, with a limit reached rather than a grammar error.
+     */
     #[Test]
     public function test_a_long_run_of_complements_stops_at_the_recursion_limit(): void
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
 
-        $this->assertTrue($regex->validate('/(?['.str_repeat('!', 1000).'\\d])/')->isValid);
-        $result = $regex->validate('/(?['.str_repeat('!', 20000).'\\d])/');
+        $this->assertTrue($regex->validate('/(?['.str_repeat('!', 400).'\\d])/')->isValid);
+        $result = $regex->validate('/(?['.str_repeat('!', 600).'\\d])/');
         $this->assertFalse($result->isValid);
         $this->assertStringContainsString('Recursion limit', (string) $result->error);
     }

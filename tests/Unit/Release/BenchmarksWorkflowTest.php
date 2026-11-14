@@ -235,7 +235,7 @@ final class BenchmarksWorkflowTest extends TestCase
         file_put_contents($this->scratch.'/step.sh', self::step($name));
         $process = proc_open(
             ['bash', '--noprofile', '--norc', '-eo', 'pipefail', $this->scratch.'/step.sh'],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
             $this->scratch.'/work',
             $env + ['PATH' => (string) getenv('PATH'), 'RUNNER_TEMP' => $this->scratch.'/temp', 'GITHUB_OUTPUT' => $this->scratch.'/output', 'GITHUB_STEP_SUMMARY' => $this->scratch.'/summary', 'HOME' => (string) getenv('HOME')],

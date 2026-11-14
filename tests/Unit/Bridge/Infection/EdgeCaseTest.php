@@ -150,7 +150,7 @@ final class EdgeCaseTest extends TestCase
         file_put_contents($file, $script);
 
         try {
-            $process = proc_open([\PHP_BINARY, '-d', 'memory_limit=128M', '-d', 'auto_prepend_file=', $file, \dirname(__DIR__, 4), $branches], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+            $process = proc_open([\PHP_BINARY, '-d', 'memory_limit=128M', '-d', 'auto_prepend_file=', $file, \dirname(__DIR__, 4), $branches], ProcessPipes::descriptors(), $pipes);
             $this->assertIsResource($process);
             [$output, $errors] = ProcessPipes::drain($pipes);
             fclose($pipes[1]);

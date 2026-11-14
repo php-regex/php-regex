@@ -20,11 +20,26 @@ use PHPRegex\Parser\Text\Path;
  * child that fills one pipe waits for its reader, so reading the other one
  * to its end first would leave both processes waiting. On Windows a pipe
  * of proc_open() cannot be waited on, and a read blocks until bytes come:
- * the two streams are read one after the other there.
+ * the child gets a socket pair for each stream there, which can be.
  */
 final class ProcessPipes
 {
     private function __construct() {}
+
+    /**
+     * The descriptors to give proc_open(): the standard output and the
+     * standard error, and the standard input when $input, each a pipe, or a
+     * socket pair on Windows.
+     *
+     * @return array<int, list<string>>
+     */
+    public static function descriptors(bool $input = false): array
+    {
+        $socket = Path::onWindows();
+        $descriptors = [1 => $socket ? ['socket'] : ['pipe', 'w'], 2 => $socket ? ['socket'] : ['pipe', 'w']];
+
+        return $input ? [0 => $socket ? ['socket'] : ['pipe', 'r']] + $descriptors : $descriptors;
+    }
 
     /**
      * Reads pipes 1 and 2 to their end; the caller closes them.
@@ -35,7 +50,8 @@ final class ProcessPipes
      */
     public static function drain(array $pipes): array
     {
-        if (Path::onWindows()) {
+        // Pipes on Windows cannot be waited on: read one after the other.
+        if (Path::onWindows() && !self::isSocket($pipes[1])) {
             return [(string) stream_get_contents($pipes[1]), (string) stream_get_contents($pipes[2])];
         }
 
@@ -54,6 +70,14 @@ final class ProcessPipes
         }
 
         return [$read[1], $read[2]];
+    }
+
+    /**
+     * @param resource $stream
+     */
+    private static function isSocket($stream): bool
+    {
+        return str_contains(stream_get_meta_data($stream)['stream_type'], 'socket');
     }
 
     /**

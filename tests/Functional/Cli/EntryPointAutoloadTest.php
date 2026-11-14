@@ -94,7 +94,7 @@ final class EntryPointAutoloadTest extends TestCase
         copy(\dirname(__DIR__, 3).'/'.$source, $script);
 
         // Started without a shell: the standard error alone is read.
-        $process = proc_open([\PHP_BINARY, $script, '--version'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open([\PHP_BINARY, $script, '--version'], ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
         $stderr = ProcessPipes::drain($pipes)[1];
         fclose($pipes[1]);

@@ -158,6 +158,11 @@ enum PcreFeature
     case UcpWordTakesMarksAndConnectors;
 
     /**
+     * After a subroutine call the interpreter gives the groups inside the called one their earlier values back, as the JIT does: "(?(DEFINE)(?<p>(\d)))(?&p)" leaves group 2 unset.
+     */
+    case CallCapturesGivenBack;
+
+    /**
      * A group name may be 128 code units long, not 32.
      */
     case LongGroupNames;
@@ -370,7 +375,8 @@ enum PcreFeature
             self::VariableLengthLookbehind,
             self::CaselessRestrictModifier,
             self::AsciiOptions,
-            self::UcpWordTakesMarksAndConnectors => '10.43',
+            self::UcpWordTakesMarksAndConnectors,
+            self::CallCapturesGivenBack => '10.43',
             self::LongGroupNames => '10.44',
             self::ScanSubstring,
             self::ExtendedCharClass,

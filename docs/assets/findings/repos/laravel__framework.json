@@ -2345,7 +2345,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?:\\n                         …\" and \"(?:\\n                         …\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"(?:@(?:class)(\\((?:(?>[^()]+)|…\" and \"(?:[\\w\\-:.@%]+(=(?:\\\"[^\\\"]*\\\"|…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -2447,7 +2447,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?:\\n                         …\" and \"(?:\\n                         …\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"(?:@(?:class)(\\((?:(?>[^()]+)|…\" and \"(?:[\\w\\-:.@%]+(=(?:\\\"[^\\\"]*\\\"|…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
@@ -2549,7 +2549,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"(?:\\n                         …\" and \"(?:\\n                         …\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "message": "Alternation branches \"(?:@(?:class)(\\((?:(?>[^()]+)|…\" and \"(?:[\\w\\-:.@]+(=(?:\\\"[^\\\"]*\\\"|…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
                     "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }

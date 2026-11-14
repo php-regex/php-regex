@@ -21,6 +21,13 @@ CHANGELOG
    password rule of six lookaheads is answered in 20 ms where it took 470 ms.
    A pattern whose determinization ran out of budget on the ranges the
    product had cut its transitions into can now be answered.
+ * The determinization reads the moves of a state once for each class of the
+   alphabet, the ranges every set of the automaton holds alike, where it read
+   them once for each range, and the minimization splits its groups on one
+   range of each such class. The automata are the same; the password rule
+   `/^(?=.*\p{Lu})(?=.*\p{Ll})(?=.*\p{N})(?=.*\p{P}).{8,}$/u` compiles in
+   0.3 s where it took 1.4 s, and with `.{12,}` or `.{16,}`, which ran out of
+   the default budget, it is answered.
  * `Language::countOfLength()` and `size()` multiply once for each state a
    move leads to, however many ranges spell its characters, and leave out the
    states no string is accepted from: `size()` of `/[ab]{0,100}/` answers its

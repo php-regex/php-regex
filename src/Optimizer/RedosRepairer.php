@@ -78,18 +78,65 @@ final class RedosRepairer
      */
     public function repair(string $regex): array
     {
+        $repairs = iterator_to_array($this->repairs($regex), false);
+
+        // Certified first, then those that also keep $matches.
+        usort($repairs, static fn (RedosRepair $a, RedosRepair $b): int => self::rank($b) <=> self::rank($a));
+
+        return $repairs;
+    }
+
+    /**
+     * The repair repair() offers first, or null when it offers none. The
+     * search stops at the first rewrite certified that writes the same
+     * $matches, as none after it can come before it: the rewrites after it
+     * are not proven, the optimizer's own among them.
+     */
+    public function firstRepair(string $regex): ?RedosRepair
+    {
+        $first = null;
+        foreach ($this->repairs($regex) as $repair) {
+            if (null === $first || self::rank($repair) > self::rank($first)) {
+                $first = $repair;
+            }
+
+            if ([true, true] === self::rank($first)) {
+                break;
+            }
+        }
+
+        return $first;
+    }
+
+    /**
+     * Where a repair stands: certified, then writing the same $matches.
+     *
+     * @return array{bool, bool}
+     */
+    private static function rank(RedosRepair $repair): array
+    {
+        return [$repair->isCertified(), true === $repair->sameMatches];
+    }
+
+    /**
+     * The repairs proven linear, in the order the rewrites are tried.
+     *
+     * @return \Generator<int, RedosRepair>
+     */
+    private function repairs(string $regex): \Generator
+    {
         $parser = $this->parser;
 
         try {
             $ast = $parser->parse($regex);
         } catch (ExceptionInterface) {
-            return [];
+            return;
         }
 
         $analyzer = $this->analyzer;
         $analysis = $analyzer->analyze($regex);
         if (RedosComplexity::Exponential !== $analysis->complexity && RedosComplexity::Polynomial !== $analysis->complexity) {
-            return [];
+            return;
         }
 
         $engine = new PcreEngine();
@@ -97,7 +144,6 @@ final class RedosRepairer
         // for it is asked once, as far as a rewrite needs it.
         $answers = $this->answers($regex);
         $asked = [];
-        $repairs = [];
         foreach ($this->candidates($ast, $regex, $parser, $analysis) as $candidate) {
             if (null !== $engine->compile($candidate)) {
                 continue; // the edits are textual: a guard, as none of them breaks a pattern today
@@ -118,13 +164,8 @@ final class RedosRepairer
                 continue;
             }
 
-            $repairs[] = new RedosRepair($candidate, $sameSubjects, $this->sameMatches($regex, $candidate));
+            yield new RedosRepair($candidate, $sameSubjects, $this->sameMatches($regex, $candidate));
         }
-
-        // Certified first, then those that also keep $matches.
-        usort($repairs, static fn (RedosRepair $a, RedosRepair $b): int => [$b->isCertified(), true === $b->sameMatches] <=> [$a->isCertified(), true === $a->sameMatches]);
-
-        return $repairs;
     }
 
     /**
@@ -134,11 +175,13 @@ final class RedosRepairer
      * every possessive at once. A quantifier is blamed when a hotspot
      * covers it or lies in it, the culprit being one of the hotspots: the
      * loop around a blamed repeat is the one to flatten. None is left out:
-     * a pattern is repaired where the analysis names nothing.
+     * a pattern is repaired where the analysis names nothing. Each is made
+     * as it is reached: the optimizer is asked for its own only once the
+     * rewrites before it were tried.
      *
-     * @return list<string>
+     * @return \Generator<int, string>
      */
-    private function candidates(RegexNode $ast, string $pattern, RegexParser $parser, RedosAnalysis $analysis): array
+    private function candidates(RegexNode $ast, string $pattern, RegexParser $parser, RedosAnalysis $analysis): \Generator
     {
         $source = $ast->source ?? '';
         // Each edit with its rank: 0 for a blamed quantifier, 1 for another.
@@ -159,24 +202,32 @@ final class RedosRepairer
         $closing = Delimiters::closing($ast->delimiter);
         $wrap = static fn (string $body): string => $ast->delimiter.$body.$closing.$ast->flags;
 
-        $tries = [];
-        foreach ($flat as [$rank, $edit]) {
-            $tries[] = [$rank, $wrap(self::apply($source, [$edit]))];
-        }
-        // The optimizer's rewrite, proven to write the same $matches, as the
-        // lint's suggestions are: one it cannot prove is no candidate.
-        $tries[] = [1, (new Optimizer($parser))->optimize($pattern, new OptimizerOptions(verifyWithAutomata: true))->optimized];
-        foreach ($possessive as [$rank, $edit]) {
-            $tries[] = [$rank, $wrap(self::apply($source, [$edit]))];
-        }
-        // The sort is stable: each rank keeps the order it had.
-        usort($tries, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
-        $candidates = array_column($tries, 1);
-        if (\count($possessive) > 1) {
-            $candidates[] = $wrap(self::apply($source, array_column($possessive, 1)));
-        }
+        // Each rewrite once, the pattern itself never.
+        $seen = [$pattern => true];
+        foreach ([0, 1] as $rank) {
+            $tries = [];
+            foreach ($flat as [$editRank, $edit]) {
+                $tries[] = $rank === $editRank ? $wrap(self::apply($source, [$edit])) : null;
+            }
+            // The optimizer's rewrite, proven to write the same $matches, as
+            // the lint's suggestions are: one it cannot prove is no candidate.
+            $tries[] = 1 === $rank ? static fn (): string => (new Optimizer($parser))->optimize($pattern, new OptimizerOptions(verifyWithAutomata: true))->optimized : null;
+            foreach ($possessive as [$editRank, $edit]) {
+                $tries[] = $rank === $editRank ? $wrap(self::apply($source, [$edit])) : null;
+            }
+            if (1 === $rank && \count($possessive) > 1) {
+                $tries[] = $wrap(self::apply($source, array_column($possessive, 1)));
+            }
 
-        return array_values(array_unique(array_filter($candidates, static fn (string $candidate): bool => $candidate !== $pattern)));
+            foreach ($tries as $try) {
+                $candidate = $try instanceof \Closure ? $try() : $try;
+                if (null !== $candidate && !isset($seen[$candidate])) {
+                    $seen[$candidate] = true;
+
+                    yield $candidate;
+                }
+            }
+        }
     }
 
     private static function blamed(QuantifierNode $quantifier, RedosAnalysis $analysis): bool
