@@ -22,7 +22,10 @@ In this order.
    lines, the `:2.x-dev` suffix and the "2.0 is coming" section; and the
    `2.0.0-DEV` sample outputs of the docs report `2.0.0`. Read the diff,
    then commit it on its own branch. `bin/release` refuses a final version
-   whose docs still install from the dev channel.
+   whose docs still install from the dev channel. Run `bin/playground-bundle`
+   on that branch too, after `wasm/pcre2-trace/build.sh` (it stops without the
+   trace module), so that the home runs the library of the release: the
+   bundle in `docs/assets/playground/` still dates from 2026-11-10.
 3. **Before the tag**, check with `bin/status` that each of the nineteen
    split repositories carries a fresh 2.x head and a crawled dev version.
    The split pushes are not atomic: between the first and the last webhook
