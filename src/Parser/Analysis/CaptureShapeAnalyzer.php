@@ -70,10 +70,6 @@ final class CaptureShapeAnalyzer
     private const MAX_ARMS = 8;
 
     /**
-     * Groups that neither capture nor assert: the split node may sit
-     * inside them.
-     */
-    /**
      * Groups a split reaches through: they run whenever their parent does,
      * and a capturing one is set in every case.
      */
