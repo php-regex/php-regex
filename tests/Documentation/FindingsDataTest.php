@@ -165,7 +165,7 @@ final class FindingsDataTest extends TestCase
         // does not recompile it.
         $process = proc_open(
             [\PHP_BINARY, '-n', '-d', 'pcre.jit=0', '-d', 'pcre.backtrack_limit=1000000', '-r', 'var_export(@preg_match(base64_decode($argv[1]), base64_decode($argv[2]))); echo " ", preg_last_error();', base64_encode($pattern), base64_encode($subject)],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
         );
         $this->assertIsResource($process);

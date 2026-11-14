@@ -37,7 +37,7 @@ final class CorpusScriptGlobalsTest extends TestCase
             var_export($scoperAutoload, true),
             var_export(\dirname(__DIR__, 3).'/bin/corpus', true),
         );
-        $process = proc_open([\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'display_errors=stderr', '-r', $script], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open([\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'display_errors=stderr', '-r', $script], ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
         [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);

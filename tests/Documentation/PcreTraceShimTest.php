@@ -540,7 +540,7 @@ final class PcreTraceShimTest extends TestCase
      */
     private static function command(array $command, ?string $stdin = null): array
     {
-        $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open($command, ProcessPipes::descriptors(true), $pipes);
         self::assertIsResource($process);
         if (null !== $stdin) {
             fwrite($pipes[0], $stdin);

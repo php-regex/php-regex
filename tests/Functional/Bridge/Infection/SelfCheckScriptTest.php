@@ -99,7 +99,7 @@ final class SelfCheckScriptTest extends TestCase
      */
     private static function check(string $project): array
     {
-        $process = proc_open([\PHP_BINARY, '-d', 'auto_prepend_file=', \dirname(__DIR__, 4).'/tests/Tools/infection_bridge_selfcheck.php', $project, $project.'/infection'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open([\PHP_BINARY, '-d', 'auto_prepend_file=', \dirname(__DIR__, 4).'/tests/Tools/infection_bridge_selfcheck.php', $project, $project.'/infection'], ProcessPipes::descriptors(), $pipes);
         self::assertIsResource($process);
         $errors = ProcessPipes::drain($pipes)[1];
         fclose($pipes[1]);

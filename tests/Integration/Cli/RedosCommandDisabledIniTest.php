@@ -69,7 +69,7 @@ final class RedosCommandDisabledIniTest extends TestCase
     private static function regex(array $args, string $disabled): array
     {
         $command = [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'disable_functions='.$disabled];
-        $process = proc_open([...$command, \dirname(__DIR__, 3).'/bin/regex', ...$args], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open([...$command, \dirname(__DIR__, 3).'/bin/regex', ...$args], ProcessPipes::descriptors(), $pipes);
         if (!\is_resource($process)) {
             return [-1, '', 'proc_open failed'];
         }

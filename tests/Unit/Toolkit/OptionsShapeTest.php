@@ -68,7 +68,7 @@ final class OptionsShapeTest extends TestCase
         try {
             $process = proc_open(
                 [\PHP_BINARY, $root.'/tools/phpstan/vendor/bin/phpstan', 'analyse', $fixture, '--error-format=json', '--no-progress'],
-                [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+                ProcessPipes::descriptors(),
                 $pipes,
                 $root,
             );

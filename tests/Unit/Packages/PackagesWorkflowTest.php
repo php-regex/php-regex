@@ -202,7 +202,7 @@ final class PackagesWorkflowTest extends TestCase
     {
         $process = proc_open(
             [\PHP_BINARY, '-d', 'auto_prepend_file=', $script, $package, $project],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
         );
         self::assertIsResource($process);

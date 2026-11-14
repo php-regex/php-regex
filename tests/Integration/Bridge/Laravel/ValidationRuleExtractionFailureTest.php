@@ -162,7 +162,7 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
 
         $process = proc_open(
             [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'pcre.jit=0', '-r', $script],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
         );
         $this->assertIsResource($process);

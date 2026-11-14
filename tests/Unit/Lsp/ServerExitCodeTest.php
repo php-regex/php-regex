@@ -91,7 +91,7 @@ final class ServerExitCodeTest extends TestCase
         ] as $expected => $messages) {
             $process = proc_open(
                 [\PHP_BINARY, __DIR__.'/../../../bin/regex-lsp'],
-                [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+                ProcessPipes::descriptors(true),
                 $pipes,
             );
             $this->assertIsResource($process);
@@ -116,7 +116,7 @@ final class ServerExitCodeTest extends TestCase
     {
         $process = proc_open(
             [\PHP_BINARY, __DIR__.'/../../../bin/regex-lsp'],
-            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(true),
             $pipes,
         );
         $this->assertIsResource($process);

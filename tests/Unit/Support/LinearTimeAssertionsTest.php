@@ -115,7 +115,7 @@ final class LinearTimeAssertionsTest extends TestCase
 
         $process = proc_open(
             [\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'xdebug.mode=off', '-r', $code, \dirname(__DIR__, 3).'/vendor/autoload.php'],
-            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(true),
             $pipes,
         );
         $this->assertIsResource($process);

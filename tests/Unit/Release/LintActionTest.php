@@ -193,7 +193,7 @@ final class LintActionTest extends TestCase
 
         $process = proc_open(
             ['bash', '--noprofile', '--norc', '-eo', 'pipefail', $this->scratch.'/step.sh'],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
             $this->scratch,
             $env + [

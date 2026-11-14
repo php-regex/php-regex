@@ -96,7 +96,7 @@ final class AnalyzeCommandDisabledIniTest extends TestCase
 
         $process = proc_open(
             [...$command, \dirname(__DIR__, 3).'/bin/regex', '--no-ansi', 'analyze', ...$args],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
         );
         self::assertIsResource($process);

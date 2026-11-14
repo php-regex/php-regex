@@ -637,7 +637,7 @@ final class CorpusLintScriptTest extends TestCase
             '--parts', $this->root.'/parts',
             ...$arguments,
         ];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
         $output = Newlines::lf(implode('', ProcessPipes::drain($pipes)));
         fclose($pipes[1]);

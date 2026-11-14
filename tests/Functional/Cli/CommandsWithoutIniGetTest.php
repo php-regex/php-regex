@@ -123,7 +123,7 @@ final class CommandsWithoutIniGetTest extends TestCase
 
         $process = proc_open(
             [...$command, \dirname(__DIR__, 3).'/bin/regex', '--no-ansi', ...$args],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ProcessPipes::descriptors(),
             $pipes,
             $this->directory,
         );

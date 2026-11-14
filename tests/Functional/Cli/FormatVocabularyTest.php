@@ -105,7 +105,7 @@ final class FormatVocabularyTest extends TestCase
     private static function regex(array $arguments): array
     {
         $command = [\PHP_BINARY, \dirname(__DIR__, 3).'/src/Cli/bin/regex', '--no-ansi', ...$arguments];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes);
         self::assertIsResource($process);
         $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);

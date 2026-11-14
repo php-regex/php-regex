@@ -118,7 +118,7 @@ final class CacheOwnershipUnavailableTest extends TestCase
         try {
             $process = proc_open(
                 [\PHP_BINARY, '-d', 'disable_functions=posix_geteuid', '-r', $code, \dirname(__DIR__, 3).'/vendor/autoload.php', $root, $file],
-                [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+                ProcessPipes::descriptors(),
                 $pipes,
             );
             $this->assertIsResource($process);

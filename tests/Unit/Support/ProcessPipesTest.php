@@ -23,19 +23,21 @@ use PHPUnit\Framework\TestCase;
 /**
  * A child that fills its standard error before it writes its standard
  * output waits for a reader of the error stream: read one stream to its
- * end before the other, and the two processes wait on each other.
+ * end before the other, and the two processes wait on each other. The
+ * descriptors ProcessPipes gives can be waited on everywhere, Windows
+ * included, where a pipe cannot and a socket pair can.
  */
 final class ProcessPipesTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
     #[Test]
-    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_a_child_filling_its_error_stream_first_is_read_to_the_end(): void
     {
-        // Four times what a pipe buffers on Linux and macOS (64 KiB).
+        // Four times what a pipe buffers on Linux and macOS (64 KiB), and
+        // far more than a pipe or a socket buffers on Windows.
         $code = 'fwrite(STDERR, str_repeat("e", 262144)); fwrite(STDOUT, str_repeat("o", 262144)); fwrite(STDERR, "end");';
-        $process = proc_open([\PHP_BINARY, '-r', $code], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open([\PHP_BINARY, '-r', $code], ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
 
         [$stdout, $stderr] = ProcessPipes::drain($pipes);
@@ -158,6 +160,28 @@ final class ProcessPipesTest extends TestCase
         fclose($pipes[1]);
         fclose($pipes[2]);
         $this->assertSame(0, proc_close($process));
+    }
+
+    /**
+     * With its standard input, a child reads what it is written, and its
+     * two output streams are still read together.
+     */
+    #[Test]
+    public function test_a_child_given_its_standard_input_is_read_to_the_end(): void
+    {
+        $code = '$in = stream_get_contents(STDIN); fwrite(STDERR, str_repeat("e", 262144)); echo strrev($in);';
+        $process = proc_open([\PHP_BINARY, '-r', $code], ProcessPipes::descriptors(true), $pipes);
+        $this->assertIsResource($process);
+
+        fwrite($pipes[0], 'abc');
+        fclose($pipes[0]);
+        [$stdout, $stderr] = ProcessPipes::drain($pipes);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $this->assertSame(0, proc_close($process));
+        $this->assertSame('cba', $stdout);
+        $this->assertSame(str_repeat('e', 262144), $stderr);
     }
 
     #[Test]

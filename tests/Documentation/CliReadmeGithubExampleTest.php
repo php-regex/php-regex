@@ -43,7 +43,7 @@ final class CliReadmeGithubExampleTest extends TestCase
         ]);
 
         $command = [\PHP_BINARY, \dirname(__DIR__, 2).'/src/Cli/bin/regex', 'lint', 'src/', '--format=github', '--no-visuals'];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $project);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes, $project);
         $this->assertIsResource($process);
         [$stdout, $stderr] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);

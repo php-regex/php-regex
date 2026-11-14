@@ -639,7 +639,7 @@ preg_match('/(b+)+\$/', \$input);
             '--jobs', '1',
             ...array_values($arguments),
         ];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $process = proc_open($command, ProcessPipes::descriptors(), $pipes);
         $this->assertIsResource($process);
         $output = implode('', ProcessPipes::drain($pipes));
         fclose($pipes[1]);
