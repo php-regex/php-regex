@@ -1,6 +1,6 @@
 {
     "repo": "TYPO3/typo3",
-    "sha": "f8689bdef1d7ac67c193a67de536db874b0a2cc9",
+    "sha": "3f01f7a3d648d9a4d4a8046a6086a3e577e16738",
     "target": {
         "php": "8.5",
         "pcre": "10.44",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/backend/Classes/Form/FormDataProvider/AbstractItemProvider.php#L1011-L1017",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/backend/Classes/Form/FormDataProvider/AbstractItemProvider.php#L1011-L1017",
             "snippet": [
                 {
                     "number": 1011,
@@ -189,7 +189,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L84-L90",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -325,7 +325,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L85-L91",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L85-L91",
             "snippet": [
                 {
                     "number": 85,
@@ -515,7 +515,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/HtmlCropper.php#L155-L161",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Html/HtmlCropper.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -615,7 +615,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/HtmlParser.php#L324-L330",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Html/HtmlParser.php#L324-L330",
             "snippet": [
                 {
                     "number": 324,
@@ -827,7 +827,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/HtmlParser.php#L449-L455",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Html/HtmlParser.php#L449-L455",
             "snippet": [
                 {
                     "number": 449,
@@ -959,7 +959,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/HtmlParser.php#L785-L791",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Html/HtmlParser.php#L785-L791",
             "snippet": [
                 {
                     "number": 785,
@@ -1091,7 +1091,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
             "snippet": [
                 {
                     "number": 623,
@@ -1343,7 +1343,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
             "snippet": [
                 {
                     "number": 623,
@@ -1590,7 +1590,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Localization/TranslationDomainResolver.php#L94-L100",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Localization/TranslationDomainResolver.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -1781,7 +1781,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Log/LogDataTrait.php#L63-L69",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Log/LogDataTrait.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -1951,7 +1951,7 @@
                 "limit": 100000
             },
             "subject": "0.0000000000000000000000000000000000000000000000000000000000000000!",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Package/PackageInterface.php#L29-L35",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Package/PackageInterface.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -2201,7 +2201,7 @@
                 "limit": 100000
             },
             "subject": "................................................................................................!/",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Service/Archive/ZipService.php#L70-L76",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Service/Archive/ZipService.php#L70-L76",
             "snippet": [
                 {
                     "number": 70,
@@ -2344,7 +2344,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Utility/ClassNamingUtility.php#L72-L78",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Utility/ClassNamingUtility.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -2439,7 +2439,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Utility/ClassNamingUtility.php#L72-L78",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Utility/ClassNamingUtility.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -2534,7 +2534,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Utility/GeneralUtility.php#L1494-L1500",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Utility/GeneralUtility.php#L1494-L1500",
             "snippet": [
                 {
                     "number": 1494,
@@ -2720,7 +2720,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/core/Classes/Utility/MathUtility.php#L125-L131",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/core/Classes/Utility/MathUtility.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -2815,7 +2815,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/extensionmanager/Classes/Controller/UploadExtensionFileController.php#L229-L235",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/extensionmanager/Classes/Controller/UploadExtensionFileController.php#L229-L235",
             "snippet": [
                 {
                     "number": 229,
@@ -3023,7 +3023,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/extensionmanager/Classes/ViewHelpers/ProcessAvailableActionsViewHelper.php#L43-L49",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/extensionmanager/Classes/ViewHelpers/ProcessAvailableActionsViewHelper.php#L43-L49",
             "snippet": [
                 {
                     "number": 43,
@@ -3154,7 +3154,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/install/Classes/Controller/MaintenanceController.php#L492-L498",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/install/Classes/Controller/MaintenanceController.php#L492-L498",
             "snippet": [
                 {
                     "number": 492,
@@ -3277,7 +3277,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/install/Classes/SystemEnvironment/DatabaseCheck/Platform/MySql.php#L146-L152",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/install/Classes/SystemEnvironment/DatabaseCheck/Platform/MySql.php#L146-L152",
             "snippet": [
                 {
                     "number": 146,
@@ -3468,7 +3468,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/f8689bdef1d7ac67c193a67de536db874b0a2cc9/typo3/sysext/rte_ckeditor/Classes/Configuration/CKEditor5Migrator.php#L728-L734",
+            "permalink": "https://github.com/TYPO3/typo3/blob/3f01f7a3d648d9a4d4a8046a6086a3e577e16738/typo3/sysext/rte_ckeditor/Classes/Configuration/CKEditor5Migrator.php#L728-L734",
             "snippet": [
                 {
                     "number": 728,

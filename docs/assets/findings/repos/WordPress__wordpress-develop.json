@@ -1,6 +1,6 @@
 {
     "repo": "WordPress/wordpress-develop",
-    "sha": "331d6d6f1d68621da2d50176d100a6cbbd62527d",
+    "sha": "f939960c4c6a59f9889e640925a5079fbe18f42c",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/ajax-actions.php#L4285-L4291",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/ajax-actions.php#L4285-L4291",
             "snippet": [
                 {
                     "number": 4285,
@@ -177,7 +177,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/ajax-actions.php#L4380-L4386",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/ajax-actions.php#L4380-L4386",
             "snippet": [
                 {
                     "number": 4380,
@@ -312,7 +312,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/class-ftp-pure.php#L106-L112",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/class-ftp-pure.php#L106-L112",
             "snippet": [
                 {
                     "number": 106,
@@ -643,7 +643,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/class-ftp-sockets.php#L127-L133",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/class-ftp-sockets.php#L127-L133",
             "snippet": [
                 {
                     "number": 127,
@@ -979,7 +979,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/class-wp-debug-data.php#L625-L631",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/class-wp-debug-data.php#L625-L631",
             "snippet": [
                 {
                     "number": 625,
@@ -1127,7 +1127,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/class-wp-filesystem-base.php#L243-L249",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/class-wp-filesystem-base.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -1291,7 +1291,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-admin/includes/upgrade.php#L3083-L3089",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/upgrade.php#L3083-L3089",
             "snippet": [
                 {
                     "number": 3083,
@@ -1439,7 +1439,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/ID3/getid3.php#L1593-L1599",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/ID3/getid3.php#L1593-L1599",
             "snippet": [
                 {
                     "number": 1593,
@@ -1586,7 +1586,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/ID3/module.audio-video.quicktime.php#L1698-L1704",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/ID3/module.audio-video.quicktime.php#L1698-L1704",
             "snippet": [
                 {
                     "number": 1698,
@@ -1834,7 +1834,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/ID3/module.audio-video.riff.php#L1645-L1651",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/ID3/module.audio-video.riff.php#L1645-L1651",
             "snippet": [
                 {
                     "number": 1645,
@@ -2014,7 +2014,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/ID3/module.audio-video.riff.php#L1726-L1732",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/ID3/module.audio-video.riff.php#L1726-L1732",
             "snippet": [
                 {
                     "number": 1726,
@@ -2211,7 +2211,7 @@
                 "limit": 100000
             },
             "subject": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\u0000",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/ID3/module.tag.id3v2.php#L2080-L2086",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/ID3/module.tag.id3v2.php#L2080-L2086",
             "snippet": [
                 {
                     "number": 2080,
@@ -2435,7 +2435,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L943-L949",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L943-L949",
             "snippet": [
                 {
                     "number": 943,
@@ -2587,7 +2587,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L1541-L1547",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L1541-L1547",
             "snippet": [
                 {
                     "number": 1541,
@@ -2687,7 +2687,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L1559-L1565",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L1559-L1565",
             "snippet": [
                 {
                     "number": 1559,
@@ -2787,7 +2787,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L1576-L1582",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L1576-L1582",
             "snippet": [
                 {
                     "number": 1576,
@@ -2889,7 +2889,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L2613-L2619",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L2613-L2619",
             "snippet": [
                 {
                     "number": 2613,
@@ -3120,7 +3120,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/PHPMailer.php#L5056-L5062",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L5056-L5062",
             "snippet": [
                 {
                     "number": 5056,
@@ -3360,7 +3360,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/PHPMailer/SMTP.php#L328-L334",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/SMTP.php#L328-L334",
             "snippet": [
                 {
                     "number": 328,
@@ -3496,7 +3496,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/Requests/src/IdnaEncoder.php#L141-L147",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/Requests/src/IdnaEncoder.php#L141-L147",
             "snippet": [
                 {
                     "number": 141,
@@ -3639,7 +3639,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/Requests/src/Requests.php#L765-L771",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/Requests/src/Requests.php#L765-L771",
             "snippet": [
                 {
                     "number": 765,
@@ -3801,7 +3801,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/Requests/src/Requests.php#L853-L859",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/Requests/src/Requests.php#L853-L859",
             "snippet": [
                 {
                     "number": 853,
@@ -4119,7 +4119,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/Requests/src/Requests.php#L861-L867",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/Requests/src/Requests.php#L861-L867",
             "snippet": [
                 {
                     "number": 861,
@@ -4422,7 +4422,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Item.php#L2301-L2307",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Item.php#L2301-L2307",
             "snippet": [
                 {
                     "number": 2301,
@@ -4713,7 +4713,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Item.php#L2326-L2332",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Item.php#L2326-L2332",
             "snippet": [
                 {
                     "number": 2326,
@@ -5007,7 +5007,7 @@
                 "limit": 100000
             },
             "subject": "</A ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! =",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Sanitize.php#L418-L424",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Sanitize.php#L418-L424",
             "snippet": [
                 {
                     "number": 418,
@@ -5107,7 +5107,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Sanitize.php#L574-L580",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Sanitize.php#L574-L580",
             "snippet": [
                 {
                     "number": 574,
@@ -5214,7 +5214,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/SimplePie.php#L2984-L2990",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/SimplePie.php#L2984-L2990",
             "snippet": [
                 {
                     "number": 2984,
@@ -5505,7 +5505,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/SimplePie.php#L3009-L3015",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/SimplePie.php#L3009-L3015",
             "snippet": [
                 {
                     "number": 3009,
@@ -5796,7 +5796,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Source.php#L469-L475",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Source.php#L469-L475",
             "snippet": [
                 {
                     "number": 469,
@@ -6087,7 +6087,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/SimplePie/src/Source.php#L485-L491",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Source.php#L485-L491",
             "snippet": [
                 {
                     "number": 485,
@@ -6366,7 +6366,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/blocks/cover.php#L150-L156",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/blocks/cover.php#L150-L156",
             "snippet": [
                 {
                     "number": 150,
@@ -6539,7 +6539,7 @@
         {
             "id": "f-76c571100e",
             "file": "src/wp-includes/canonical.php",
-            "line": 572,
+            "line": 585,
             "column": 37,
             "pattern": "#^\\??&*?#",
             "source": "preg_replace()",
@@ -6557,10 +6557,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/canonical.php#L569-L575",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/canonical.php#L582-L588",
             "snippet": [
                 {
-                    "number": 569,
+                    "number": 582,
                     "focus": false,
                     "runs": [
                         [
@@ -6570,7 +6570,7 @@
                     ]
                 },
                 {
-                    "number": 570,
+                    "number": 583,
                     "focus": false,
                     "runs": [
                         [
@@ -6580,7 +6580,7 @@
                     ]
                 },
                 {
-                    "number": 571,
+                    "number": 584,
                     "focus": false,
                     "runs": [
                         [
@@ -6590,7 +6590,7 @@
                     ]
                 },
                 {
-                    "number": 572,
+                    "number": 585,
                     "focus": true,
                     "runs": [
                         [
@@ -6640,7 +6640,7 @@
                     ]
                 },
                 {
-                    "number": 573,
+                    "number": 586,
                     "focus": false,
                     "runs": [
                         [
@@ -6650,7 +6650,7 @@
                     ]
                 },
                 {
-                    "number": 574,
+                    "number": 587,
                     "focus": false,
                     "runs": [
                         [
@@ -6660,7 +6660,7 @@
                     ]
                 },
                 {
-                    "number": 575,
+                    "number": 588,
                     "focus": false,
                     "runs": [
                         [
@@ -6674,7 +6674,7 @@
         {
             "id": "f-76c571100e-2",
             "file": "src/wp-includes/canonical.php",
-            "line": 675,
+            "line": 688,
             "column": 38,
             "pattern": "#^\\??&*?#",
             "source": "preg_replace()",
@@ -6692,10 +6692,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/canonical.php#L672-L678",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/canonical.php#L685-L691",
             "snippet": [
                 {
-                    "number": 672,
+                    "number": 685,
                     "focus": false,
                     "runs": [
                         [
@@ -6705,7 +6705,7 @@
                     ]
                 },
                 {
-                    "number": 673,
+                    "number": 686,
                     "focus": false,
                     "runs": [
                         [
@@ -6715,7 +6715,7 @@
                     ]
                 },
                 {
-                    "number": 674,
+                    "number": 687,
                     "focus": false,
                     "runs": [
                         [
@@ -6725,7 +6725,7 @@
                     ]
                 },
                 {
-                    "number": 675,
+                    "number": 688,
                     "focus": true,
                     "runs": [
                         [
@@ -6775,7 +6775,7 @@
                     ]
                 },
                 {
-                    "number": 676,
+                    "number": 689,
                     "focus": false,
                     "runs": [
                         [
@@ -6785,7 +6785,7 @@
                     ]
                 },
                 {
-                    "number": 677,
+                    "number": 690,
                     "focus": false,
                     "runs": [
                         [
@@ -6795,7 +6795,7 @@
                     ]
                 },
                 {
-                    "number": 678,
+                    "number": 691,
                     "focus": false,
                     "runs": [
                         [
@@ -6827,7 +6827,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-json.php#L823-L829",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-json.php#L823-L829",
             "snippet": [
                 {
                     "number": 823,
@@ -7026,7 +7026,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-json.php#L832-L838",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-json.php#L832-L838",
             "snippet": [
                 {
                     "number": 832,
@@ -7204,7 +7204,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-snoopy.php#L678-L684",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-snoopy.php#L678-L684",
             "snippet": [
                 {
                     "number": 678,
@@ -7363,7 +7363,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-snoopy.php#L751-L757",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-snoopy.php#L751-L757",
             "snippet": [
                 {
                     "number": 751,
@@ -7513,7 +7513,7 @@
                 "limit": 100000
             },
             "subject": "</A ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! =",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wp-simplepie-sanitize-kses.php#L39-L45",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wp-simplepie-sanitize-kses.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -7615,7 +7615,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wp-theme.php#L1968-L1974",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wp-theme.php#L1968-L1974",
             "snippet": [
                 {
                     "number": 1968,
@@ -7775,7 +7775,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wp-xmlrpc-server.php#L7212-L7218",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wp-xmlrpc-server.php#L7212-L7218",
             "snippet": [
                 {
                     "number": 7212,
@@ -7931,7 +7931,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wpdb.php#L2118-L2124",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wpdb.php#L2118-L2124",
             "snippet": [
                 {
                     "number": 2118,
@@ -8167,7 +8167,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wpdb.php#L3898-L3904",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wpdb.php#L3898-L3904",
             "snippet": [
                 {
                     "number": 3898,
@@ -8337,7 +8337,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wpdb.php#L3905-L3911",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wpdb.php#L3905-L3911",
             "snippet": [
                 {
                     "number": 3905,
@@ -8432,7 +8432,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wpdb.php#L3930-L3936",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wpdb.php#L3930-L3936",
             "snippet": [
                 {
                     "number": 3930,
@@ -8825,7 +8825,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/class-wpdb.php#L3936-L3942",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wpdb.php#L3936-L3942",
             "snippet": [
                 {
                     "number": 3936,
@@ -8925,7 +8925,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/comment.php#L3341-L3347",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/comment.php#L3341-L3347",
             "snippet": [
                 {
                     "number": 3341,
@@ -9110,7 +9110,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/deprecated.php#L5155-L5161",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/deprecated.php#L5155-L5161",
             "snippet": [
                 {
                     "number": 5155,
@@ -9440,7 +9440,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/deprecated.php#L5172-L5178",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/deprecated.php#L5172-L5178",
             "snippet": [
                 {
                     "number": 5172,
@@ -9712,7 +9712,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/embed.php#L963-L969",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/embed.php#L963-L969",
             "snippet": [
                 {
                     "number": 963,
@@ -9903,7 +9903,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/formatting.php#L2058-L2064",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/formatting.php#L2058-L2064",
             "snippet": [
                 {
                     "number": 2058,
@@ -10031,7 +10031,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/formatting.php#L2648-L2654",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/formatting.php#L2648-L2654",
             "snippet": [
                 {
                     "number": 2648,
@@ -10197,7 +10197,7 @@
                 "limit": 100000
             },
             "subject": "<a-------------------------------------------------------------!>",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/formatting.php#L2665-L2671",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/formatting.php#L2665-L2671",
             "snippet": [
                 {
                     "number": 2665,
@@ -10297,7 +10297,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/formatting.php#L3266-L3272",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/formatting.php#L3266-L3272",
             "snippet": [
                 {
                     "number": 3266,
@@ -10492,7 +10492,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/formatting.php#L4955-L4961",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/formatting.php#L4955-L4961",
             "snippet": [
                 {
                     "number": 4955,
@@ -10665,7 +10665,7 @@
         {
             "id": "f-0d6b941db1",
             "file": "src/wp-includes/functions.php",
-            "line": 858,
+            "line": 863,
             "column": 3,
             "pattern": "#([\"']?)((?:([\\w-]+:)?//?)[^\\s()<>]+[.](?:\\([\\w\\d]+\\)|(?:[^`!()\\[\\]{}:'\".,<>«»“”‘’\\s]|(?:[:]\\d+)?/?)+))\\1#",
             "source": "preg_match_all()",
@@ -10704,10 +10704,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/functions.php#L855-L861",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/functions.php#L860-L866",
             "snippet": [
                 {
-                    "number": 855,
+                    "number": 860,
                     "focus": false,
                     "runs": [
                         [
@@ -10717,7 +10717,7 @@
                     ]
                 },
                 {
-                    "number": 856,
+                    "number": 861,
                     "focus": false,
                     "runs": [
                         [
@@ -10727,7 +10727,7 @@
                     ]
                 },
                 {
-                    "number": 857,
+                    "number": 862,
                     "focus": false,
                     "runs": [
                         [
@@ -10737,7 +10737,7 @@
                     ]
                 },
                 {
-                    "number": 858,
+                    "number": 863,
                     "focus": true,
                     "runs": [
                         [
@@ -10747,7 +10747,7 @@
                     ]
                 },
                 {
-                    "number": 859,
+                    "number": 864,
                     "focus": false,
                     "runs": [
                         [
@@ -10757,7 +10757,7 @@
                     ]
                 },
                 {
-                    "number": 860,
+                    "number": 865,
                     "focus": false,
                     "runs": [
                         [
@@ -10767,7 +10767,7 @@
                     ]
                 },
                 {
-                    "number": 861,
+                    "number": 866,
                     "focus": false,
                     "runs": [
                         [
@@ -10781,7 +10781,7 @@
         {
             "id": "f-227d09e90b",
             "file": "src/wp-includes/functions.php",
-            "line": 5438,
+            "line": 5443,
             "column": 12,
             "pattern": "/[A-Z\\xc0-\\xd6\\xd8-\\xde]?[a-z\\xdf-\\xf6\\xf8-\\xff]+(?=[\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf\\x{2000}-\\x{206f} \\t\\x0b\\f\\xa0\\x{feff}\\n\\r\\x{2028}\\x{2029}\\x{1680}\\x{180e}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200a}\\x{202f}\\x{205f}\\x{3000}]|[A-Z\\xc0-\\xd6\\xd8-\\xde]|$)|(?:[A-Z\\xc0-\\xd6\\xd8-\\xde]|[^\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf\\x{2000}-\\x{206f} \\t\\x0b\\f\\xa0\\x{feff}\\n\\r\\x{2028}\\x{2029}\\x{1680}\\x{180e}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200a}\\x{202f}\\x{205f}\\x{3000}\\d+a-z\\xdf-\\xf6\\xf8-\\xffA-Z\\xc0-\\xd6\\xd8-\\xde])+(?=[\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf\\x{2000}-\\x{206f} \\t\\x0b\\f\\xa0\\x{feff}\\n\\r\\x{2028}\\x{2029}\\x{1680}\\x{180e}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200a}\\x{202f}\\x{205f}\\x{3000}]|[A-Z\\xc0-\\xd6\\xd8-\\xde](?:[a-z\\xdf-\\xf6\\xf8-\\xff]|[^\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf\\x{2000}-\\x{206f} \\t\\x0b\\f\\xa0\\x{feff}\\n\\r\\x{2028}\\x{2029}\\x{1680}\\x{180e}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200a}\\x{202f}\\x{205f}\\x{3000}\\d+a-z\\xdf-\\xf6\\xf8-\\xffA-Z\\xc0-\\xd6\\xd8-\\xde])|$)|[A-Z\\xc0-\\xd6\\xd8-\\xde]?(?:[a-z\\xdf-\\xf6\\xf8-\\xff]|[^\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf\\x{2000}-\\x{206f} \\t\\x0b\\f\\xa0\\x{feff}\\n\\r\\x{2028}\\x{2029}\\x{1680}\\x{180e}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200a}\\x{202f}\\x{205f}\\x{3000}\\d+a-z\\xdf-\\xf6\\xf8-\\xffA-Z\\xc0-\\xd6\\xd8-\\xde])+|[A-Z\\xc0-\\xd6\\xd8-\\xde]+|\\d*(?:1ST|2ND|3RD|(?![123])\\dTH)(?=\\b|[a-z_])|\\d*(?:1st|2nd|3rd|(?![123])\\dth)(?=\\b|[A-Z_])|\\d+/u",
             "source": "preg_match_all()",
@@ -10862,10 +10862,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/functions.php#L5435-L5441",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/functions.php#L5440-L5446",
             "snippet": [
                 {
-                    "number": 5435,
+                    "number": 5440,
                     "focus": false,
                     "runs": [
                         [
@@ -10875,7 +10875,7 @@
                     ]
                 },
                 {
-                    "number": 5436,
+                    "number": 5441,
                     "focus": false,
                     "runs": [
                         [
@@ -10885,7 +10885,7 @@
                     ]
                 },
                 {
-                    "number": 5437,
+                    "number": 5442,
                     "focus": false,
                     "runs": [
                         [
@@ -10895,7 +10895,7 @@
                     ]
                 },
                 {
-                    "number": 5438,
+                    "number": 5443,
                     "focus": true,
                     "runs": [
                         [
@@ -10905,7 +10905,7 @@
                     ]
                 },
                 {
-                    "number": 5439,
+                    "number": 5444,
                     "focus": false,
                     "runs": [
                         [
@@ -10915,7 +10915,7 @@
                     ]
                 },
                 {
-                    "number": 5440,
+                    "number": 5445,
                     "focus": false,
                     "runs": [
                         [
@@ -10925,7 +10925,7 @@
                     ]
                 },
                 {
-                    "number": 5441,
+                    "number": 5446,
                     "focus": false,
                     "runs": [
                         [
@@ -10939,7 +10939,7 @@
         {
             "id": "f-a084fe8356",
             "file": "src/wp-includes/functions.php",
-            "line": 6583,
+            "line": 6588,
             "column": 26,
             "pattern": "#/(wp-admin/?.*|wp-login\\.php.*)#i",
             "source": "preg_replace()",
@@ -10957,10 +10957,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/functions.php#L6580-L6586",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/functions.php#L6585-L6591",
             "snippet": [
                 {
-                    "number": 6580,
+                    "number": 6585,
                     "focus": false,
                     "runs": [
                         [
@@ -10970,7 +10970,7 @@
                     ]
                 },
                 {
-                    "number": 6581,
+                    "number": 6586,
                     "focus": false,
                     "runs": [
                         [
@@ -10980,7 +10980,7 @@
                     ]
                 },
                 {
-                    "number": 6582,
+                    "number": 6587,
                     "focus": false,
                     "runs": [
                         [
@@ -10990,7 +10990,7 @@
                     ]
                 },
                 {
-                    "number": 6583,
+                    "number": 6588,
                     "focus": true,
                     "runs": [
                         [
@@ -11068,7 +11068,7 @@
                     ]
                 },
                 {
-                    "number": 6584,
+                    "number": 6589,
                     "focus": false,
                     "runs": [
                         [
@@ -11078,7 +11078,7 @@
                     ]
                 },
                 {
-                    "number": 6585,
+                    "number": 6590,
                     "focus": false,
                     "runs": [
                         [
@@ -11088,7 +11088,7 @@
                     ]
                 },
                 {
-                    "number": 6586,
+                    "number": 6591,
                     "focus": false,
                     "runs": [
                         [
@@ -11102,7 +11102,7 @@
         {
             "id": "f-ce3a9b582a",
             "file": "src/wp-includes/functions.php",
-            "line": 6588,
+            "line": 6593,
             "column": 26,
             "pattern": "#/[^/]*$#i",
             "source": "preg_replace()",
@@ -11120,10 +11120,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/functions.php#L6585-L6591",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/functions.php#L6590-L6596",
             "snippet": [
                 {
-                    "number": 6585,
+                    "number": 6590,
                     "focus": false,
                     "runs": [
                         [
@@ -11133,7 +11133,7 @@
                     ]
                 },
                 {
-                    "number": 6586,
+                    "number": 6591,
                     "focus": false,
                     "runs": [
                         [
@@ -11143,7 +11143,7 @@
                     ]
                 },
                 {
-                    "number": 6587,
+                    "number": 6592,
                     "focus": false,
                     "runs": [
                         [
@@ -11153,7 +11153,7 @@
                     ]
                 },
                 {
-                    "number": 6588,
+                    "number": 6593,
                     "focus": true,
                     "runs": [
                         [
@@ -11211,7 +11211,7 @@
                     ]
                 },
                 {
-                    "number": 6589,
+                    "number": 6594,
                     "focus": false,
                     "runs": [
                         [
@@ -11221,7 +11221,7 @@
                     ]
                 },
                 {
-                    "number": 6590,
+                    "number": 6595,
                     "focus": false,
                     "runs": [
                         [
@@ -11231,7 +11231,7 @@
                     ]
                 },
                 {
-                    "number": 6591,
+                    "number": 6596,
                     "focus": false,
                     "runs": [
                         [
@@ -11245,7 +11245,7 @@
         {
             "id": "f-ce3a9b582a-2",
             "file": "src/wp-includes/functions.php",
-            "line": 6600,
+            "line": 6605,
             "column": 27,
             "pattern": "#/[^/]*$#i",
             "source": "preg_replace()",
@@ -11263,10 +11263,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/functions.php#L6597-L6603",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/functions.php#L6602-L6608",
             "snippet": [
                 {
-                    "number": 6597,
+                    "number": 6602,
                     "focus": false,
                     "runs": [
                         [
@@ -11276,7 +11276,7 @@
                     ]
                 },
                 {
-                    "number": 6598,
+                    "number": 6603,
                     "focus": false,
                     "runs": [
                         [
@@ -11286,7 +11286,7 @@
                     ]
                 },
                 {
-                    "number": 6599,
+                    "number": 6604,
                     "focus": false,
                     "runs": [
                         [
@@ -11296,7 +11296,7 @@
                     ]
                 },
                 {
-                    "number": 6600,
+                    "number": 6605,
                     "focus": true,
                     "runs": [
                         [
@@ -11354,7 +11354,7 @@
                     ]
                 },
                 {
-                    "number": 6601,
+                    "number": 6606,
                     "focus": false,
                     "runs": [
                         [
@@ -11364,7 +11364,7 @@
                     ]
                 },
                 {
-                    "number": 6602,
+                    "number": 6607,
                     "focus": false,
                     "runs": [
                         [
@@ -11374,7 +11374,7 @@
                     ]
                 },
                 {
-                    "number": 6603,
+                    "number": 6608,
                     "focus": false,
                     "runs": [
                         [
@@ -11406,7 +11406,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/html-api/class-wp-html-tag-processor.php#L4003-L4009",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/html-api/class-wp-html-tag-processor.php#L4003-L4009",
             "snippet": [
                 {
                     "number": 4003,
@@ -11553,7 +11553,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1006-L1012",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1006-L1012",
             "snippet": [
                 {
                     "number": 1006,
@@ -11704,7 +11704,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1159-L1165",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1159-L1165",
             "snippet": [
                 {
                     "number": 1159,
@@ -11851,7 +11851,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/link-template.php#L4620-L4626",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/link-template.php#L4620-L4626",
             "snippet": [
                 {
                     "number": 4620,
@@ -11998,7 +11998,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/load.php#L2087-L2093",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/load.php#L2087-L2093",
             "snippet": [
                 {
                     "number": 2087,
@@ -12261,7 +12261,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L307-L313",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L307-L313",
             "snippet": [
                 {
                     "number": 307,
@@ -12540,7 +12540,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L315-L321",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L315-L321",
             "snippet": [
                 {
                     "number": 315,
@@ -12727,7 +12727,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L554-L560",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L554-L560",
             "snippet": [
                 {
                     "number": 554,
@@ -12827,7 +12827,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/331d6d6f1d68621da2d50176d100a6cbbd62527d/src/wp-includes/script-loader.php#L4345-L4351",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/script-loader.php#L4345-L4351",
             "snippet": [
                 {
                     "number": 4345,

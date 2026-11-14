@@ -1,6 +1,6 @@
 {
     "repo": "laravel/boost",
-    "sha": "0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a",
+    "sha": "6004f09e71fe199880a671df6dc34a6e731ba1ea",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Concerns/RendersBladeGuidelines.php#L79-L85",
+            "permalink": "https://github.com/laravel/boost/blob/6004f09e71fe199880a671df6dc34a6e731ba1ea/src/Concerns/RendersBladeGuidelines.php#L79-L85",
             "snippet": [
                 {
                     "number": 79,
@@ -123,7 +123,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Concerns/RendersBladeGuidelines.php#L80-L86",
+            "permalink": "https://github.com/laravel/boost/blob/6004f09e71fe199880a671df6dc34a6e731ba1ea/src/Concerns/RendersBladeGuidelines.php#L80-L86",
             "snippet": [
                 {
                     "number": 80,
@@ -225,7 +225,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Concerns/RendersBladeGuidelines.php#L100-L106",
+            "permalink": "https://github.com/laravel/boost/blob/6004f09e71fe199880a671df6dc34a6e731ba1ea/src/Concerns/RendersBladeGuidelines.php#L100-L106",
             "snippet": [
                 {
                     "number": 100,
@@ -565,7 +565,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Concerns/RendersBladeGuidelines.php#L128-L134",
+            "permalink": "https://github.com/laravel/boost/blob/6004f09e71fe199880a671df6dc34a6e731ba1ea/src/Concerns/RendersBladeGuidelines.php#L128-L134",
             "snippet": [
                 {
                     "number": 128,
@@ -829,7 +829,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Install/MarkdownFormatter.php#L19-L25",
+            "permalink": "https://github.com/laravel/boost/blob/6004f09e71fe199880a671df6dc34a6e731ba1ea/src/Install/MarkdownFormatter.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,
@@ -984,7 +984,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Install/SkillComposer.php#L275-L281",
+            "permalink": "https://github.com/laravel/boost/blob/6004f09e71fe199880a671df6dc34a6e731ba1ea/src/Install/SkillComposer.php#L275-L281",
             "snippet": [
                 {
                     "number": 275,
@@ -1166,7 +1166,7 @@
                 "limit": 100000
             },
             "subject": "EXPLAIN ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 ()FORMAT 0 !DELETE",
-            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Mcp/Tools/DatabaseQuery.php#L164-L170",
+            "permalink": "https://github.com/laravel/boost/blob/6004f09e71fe199880a671df6dc34a6e731ba1ea/src/Mcp/Tools/DatabaseQuery.php#L164-L170",
             "snippet": [
                 {
                     "number": 164,
@@ -1261,7 +1261,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/boost/blob/0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a/src/Rules/RuleFrontmatter.php#L16-L22",
+            "permalink": "https://github.com/laravel/boost/blob/6004f09e71fe199880a671df6dc34a6e731ba1ea/src/Rules/RuleFrontmatter.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,

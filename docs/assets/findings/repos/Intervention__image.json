@@ -1,6 +1,6 @@
 {
     "repo": "Intervention/image",
-    "sha": "3a47838f2e0f4ec6c8c9b43a5d73ac985b975830",
+    "sha": "7f7da6117ed0866df4489dc92a564f2ab9e559ce",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Intervention/image/blob/3a47838f2e0f4ec6c8c9b43a5d73ac985b975830/src/Colors/Hsl/Decoders/StringColorDecoder.php#L16-L22",
+            "permalink": "https://github.com/Intervention/image/blob/7f7da6117ed0866df4489dc92a564f2ab9e559ce/src/Colors/Hsl/Decoders/StringColorDecoder.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -134,7 +134,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Intervention/image/blob/3a47838f2e0f4ec6c8c9b43a5d73ac985b975830/src/Colors/Hsv/Decoders/StringColorDecoder.php#L16-L22",
+            "permalink": "https://github.com/Intervention/image/blob/7f7da6117ed0866df4489dc92a564f2ab9e559ce/src/Colors/Hsv/Decoders/StringColorDecoder.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -234,7 +234,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Intervention/image/blob/3a47838f2e0f4ec6c8c9b43a5d73ac985b975830/src/Colors/Oklab/Decoders/StringColorDecoder.php#L19-L25",
+            "permalink": "https://github.com/Intervention/image/blob/7f7da6117ed0866df4489dc92a564f2ab9e559ce/src/Colors/Oklab/Decoders/StringColorDecoder.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,
@@ -334,7 +334,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Intervention/image/blob/3a47838f2e0f4ec6c8c9b43a5d73ac985b975830/src/Colors/Oklch/Decoders/StringColorDecoder.php#L19-L25",
+            "permalink": "https://github.com/Intervention/image/blob/7f7da6117ed0866df4489dc92a564f2ab9e559ce/src/Colors/Oklch/Decoders/StringColorDecoder.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,
@@ -434,7 +434,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Intervention/image/blob/3a47838f2e0f4ec6c8c9b43a5d73ac985b975830/src/Colors/Rgb/Decoders/StringColorDecoder.php#L17-L23",
+            "permalink": "https://github.com/Intervention/image/blob/7f7da6117ed0866df4489dc92a564f2ab9e559ce/src/Colors/Rgb/Decoders/StringColorDecoder.php#L17-L23",
             "snippet": [
                 {
                     "number": 17,

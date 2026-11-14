@@ -1,6 +1,6 @@
 {
     "repo": "Automattic/jetpack",
-    "sha": "c9838f85bd08d7c0a0983fa939dda46dff3724f4",
+    "sha": "93705114f0d1150fd53a00ea2892ba43f9bb0b90",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/agents-manager/src/class-agents-manager.php#L435-L441",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/agents-manager/src/class-agents-manager.php#L435-L441",
             "snippet": [
                 {
                     "number": 435,
@@ -204,7 +204,7 @@
                 "limit": 100000
             },
             "subject": "[\n]:! (\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!\n\\!",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/changelogger/lib/KeepAChangelogParser.php#L73-L79",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/changelogger/lib/KeepAChangelogParser.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -543,7 +543,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/changelogger/lib/KeepAChangelogParser.php#L169-L175",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/changelogger/lib/KeepAChangelogParser.php#L169-L175",
             "snippet": [
                 {
                     "number": 169,
@@ -742,7 +742,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/codesniffer/Jetpack/Sniffs/PHPUnit/AttributesSniff/CoverageHandler.php#L132-L138",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/codesniffer/Jetpack/Sniffs/PHPUnit/AttributesSniff/CoverageHandler.php#L132-L138",
             "snippet": [
                 {
                     "number": 132,
@@ -893,7 +893,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/codesniffer/Jetpack/Sniffs/PHPUnit/AttributesSniff/RequiresHandler.php#L128-L134",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/codesniffer/Jetpack/Sniffs/PHPUnit/AttributesSniff/RequiresHandler.php#L128-L134",
             "snippet": [
                 {
                     "number": 128,
@@ -1184,7 +1184,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/connection/src/class-manager.php#L2332-L2338",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/connection/src/class-manager.php#L2332-L2338",
             "snippet": [
                 {
                     "number": 2332,
@@ -1363,7 +1363,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/forms/src/contact-form/class-contact-form-field.php#L336-L342",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/forms/src/contact-form/class-contact-form-field.php#L336-L342",
             "snippet": [
                 {
                     "number": 336,
@@ -1543,7 +1543,7 @@
                 "limit": 100000
             },
             "subject": "0000000000000000000000000000000000000000000000000000000000000000",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/forms/src/contact-form/class-contact-form-field.php#L466-L472",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/forms/src/contact-form/class-contact-form-field.php#L466-L472",
             "snippet": [
                 {
                     "number": 466,
@@ -2099,7 +2099,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/forms/src/contact-form/class-contact-form-plugin.php#L3773-L3779",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/forms/src/contact-form/class-contact-form-plugin.php#L3773-L3779",
             "snippet": [
                 {
                     "number": 3773,
@@ -2263,7 +2263,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/forms/src/contact-form/class-feedback.php#L2125-L2131",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/forms/src/contact-form/class-feedback.php#L2125-L2131",
             "snippet": [
                 {
                     "number": 2125,
@@ -2422,7 +2422,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/help-center/src/class-help-center.php#L186-L192",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/help-center/src/class-help-center.php#L186-L192",
             "snippet": [
                 {
                     "number": 186,
@@ -2588,7 +2588,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/image-cdn/src/class-image-cdn.php#L287-L293",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/image-cdn/src/class-image-cdn.php#L287-L293",
             "snippet": [
                 {
                     "number": 287,
@@ -3004,7 +3004,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/image-cdn/src/class-image-cdn.php#L691-L697",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/image-cdn/src/class-image-cdn.php#L691-L697",
             "snippet": [
                 {
                     "number": 691,
@@ -3184,7 +3184,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/image-cdn/src/class-image-cdn.php#L1218-L1224",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/image-cdn/src/class-image-cdn.php#L1218-L1224",
             "snippet": [
                 {
                     "number": 1218,
@@ -3347,7 +3347,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/jetpack-mu-wpcom/src/common/index.php#L28-L34",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/jetpack-mu-wpcom/src/common/index.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -3494,7 +3494,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/jetpack-mu-wpcom/src/features/custom-css/csstidy/class.csstidy-ctype.php#L34-L40",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/jetpack-mu-wpcom/src/features/custom-css/csstidy/class.csstidy-ctype.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -3617,7 +3617,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/jetpack-mu-wpcom/src/features/newspack-blocks/synced-newspack-blocks/class-newspack-blocks.php#L1834-L1840",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/jetpack-mu-wpcom/src/features/newspack-blocks/synced-newspack-blocks/class-newspack-blocks.php#L1834-L1840",
             "snippet": [
                 {
                     "number": 1834,
@@ -3748,7 +3748,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/my-jetpack/src/class-google-analytics-settings.php#L30-L36",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/my-jetpack/src/class-google-analytics-settings.php#L30-L36",
             "snippet": [
                 {
                     "number": 30,
@@ -3951,7 +3951,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/password-checker/src/class-password-checker.php#L503-L509",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/password-checker/src/class-password-checker.php#L503-L509",
             "snippet": [
                 {
                     "number": 503,
@@ -4077,7 +4077,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/password-checker/src/class-password-checker.php#L508-L514",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/password-checker/src/class-password-checker.php#L508-L514",
             "snippet": [
                 {
                     "number": 508,
@@ -4204,7 +4204,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/search/src/instant-search/class-instant-search.php#L634-L640",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/search/src/instant-search/class-instant-search.php#L634-L640",
             "snippet": [
                 {
                     "number": 634,
@@ -4415,7 +4415,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/sync/src/replicastore/class-table-checksum.php#L479-L485",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/sync/src/replicastore/class-table-checksum.php#L479-L485",
             "snippet": [
                 {
                     "number": 479,
@@ -4587,7 +4587,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/videopress/src/videopress-divi-5/class-videopress-module.php#L39-L45",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/videopress/src/videopress-divi-5/class-videopress-module.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -4883,7 +4883,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/videopress/src/videopress-divi/class-videopress-divi-module.php#L28-L34",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/videopress/src/videopress-divi/class-videopress-divi-module.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -5174,7 +5174,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/waf/src/class-waf-transforms.php#L243-L249",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/waf/src/class-waf-transforms.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -5329,7 +5329,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/packages/waf/src/class-waf-transforms.php#L254-L260",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/packages/waf/src/class-waf-transforms.php#L254-L260",
             "snippet": [
                 {
                     "number": 254,
@@ -5453,7 +5453,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/beta/src/class-parsedownext.php#L79-L85",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/beta/src/class-parsedownext.php#L79-L85",
             "snippet": [
                 {
                     "number": 79,
@@ -5632,7 +5632,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/beta/src/class-utils.php#L19-L25",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/beta/src/class-utils.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,
@@ -5776,7 +5776,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/boost/app/lib/minify/class-concatenate-js.php#L172-L178",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/boost/app/lib/minify/class-concatenate-js.php#L172-L178",
             "snippet": [
                 {
                     "number": 172,
@@ -5931,7 +5931,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/boost/app/lib/minify/functions-service-fallback.php#L443-L449",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/boost/app/lib/minify/functions-service-fallback.php#L443-L449",
             "snippet": [
                 {
                     "number": 443,
@@ -6242,7 +6242,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/boost/app/lib/minify/functions-service.php#L301-L307",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/boost/app/lib/minify/functions-service.php#L301-L307",
             "snippet": [
                 {
                     "number": 301,
@@ -6553,7 +6553,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/boost/app/modules/optimizations/render-blocking-js/class-render-blocking-js.php#L357-L363",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/boost/app/modules/optimizations/render-blocking-js/class-render-blocking-js.php#L357-L363",
             "snippet": [
                 {
                     "number": 357,
@@ -6688,7 +6688,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/boost/app/modules/optimizations/render-blocking-js/class-render-blocking-js.php#L361-L367",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/boost/app/modules/optimizations/render-blocking-js/class-render-blocking-js.php#L361-L367",
             "snippet": [
                 {
                     "number": 361,
@@ -6935,7 +6935,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php#L3157-L3163",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php#L3157-L3163",
             "snippet": [
                 {
                     "number": 3157,
@@ -7078,7 +7078,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/class.jetpack-password-checker.php#L479-L485",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/class.jetpack-password-checker.php#L479-L485",
             "snippet": [
                 {
                     "number": 479,
@@ -7204,7 +7204,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/class.jetpack-password-checker.php#L484-L490",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/class.jetpack-password-checker.php#L484-L490",
             "snippet": [
                 {
                     "number": 484,
@@ -7331,7 +7331,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/class.media-extractor.php#L260-L266",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/class.media-extractor.php#L260-L266",
             "snippet": [
                 {
                     "number": 260,
@@ -7574,7 +7574,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L184-L190",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L184-L190",
             "snippet": [
                 {
                     "number": 184,
@@ -7710,7 +7710,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L609-L615",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L609-L615",
             "snippet": [
                 {
                     "number": 609,
@@ -7805,7 +7805,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L1208-L1214",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L1208-L1214",
             "snippet": [
                 {
                     "number": 1208,
@@ -7956,7 +7956,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L1327-L1333",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L1327-L1333",
             "snippet": [
                 {
                     "number": 1327,
@@ -8051,7 +8051,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L2179-L2185",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L2179-L2185",
             "snippet": [
                 {
                     "number": 2179,
@@ -8199,7 +8199,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L2307-L2313",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/markdown/extra.php#L2307-L2313",
             "snippet": [
                 {
                     "number": 2307,
@@ -8301,7 +8301,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/markdown/gfm.php#L215-L221",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/markdown/gfm.php#L215-L221",
             "snippet": [
                 {
                     "number": 215,
@@ -8396,7 +8396,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/_inc/lib/markdown/gfm.php#L247-L253",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/_inc/lib/markdown/gfm.php#L247-L253",
             "snippet": [
                 {
                     "number": 247,
@@ -8643,7 +8643,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/extensions/shared/cdn-locale.php#L32-L38",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/extensions/shared/cdn-locale.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -8805,7 +8805,7 @@
                 "limit": 100000
             },
             "subject": "HTTP://---------------------------------------------------------------------------------!!http",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/json-endpoints/class.wpcom-json-api-render-embed-reversal-endpoint.php#L81-L87",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/json-endpoints/class.wpcom-json-api-render-embed-reversal-endpoint.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -8905,7 +8905,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/carousel/jetpack-carousel.php#L1109-L1115",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/carousel/jetpack-carousel.php#L1109-L1115",
             "snippet": [
                 {
                     "number": 1109,
@@ -9128,7 +9128,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/carousel/jetpack-carousel.php#L1120-L1126",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/carousel/jetpack-carousel.php#L1120-L1126",
             "snippet": [
                 {
                     "number": 1120,
@@ -9486,7 +9486,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/latex.php#L39-L45",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/latex.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -9588,7 +9588,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/shortcodes/googlemaps.php#L32-L38",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/shortcodes/googlemaps.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -10038,7 +10038,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/shortcodes/googlemaps.php#L38-L44",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/shortcodes/googlemaps.php#L38-L44",
             "snippet": [
                 {
                     "number": 38,
@@ -10482,7 +10482,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/shortcodes/medium.php#L101-L107",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/shortcodes/medium.php#L101-L107",
             "snippet": [
                 {
                     "number": 101,
@@ -10670,7 +10670,7 @@
                 "limit": 100000
             },
             "subject": "------------------------------------------------------------",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/shortcodes/recipe.php#L505-L511",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/shortcodes/recipe.php#L505-L511",
             "snippet": [
                 {
                     "number": 505,
@@ -10919,7 +10919,7 @@
                 "limit": 100000
             },
             "subject": "0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##0.##",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/shortcodes/recipe.php#L506-L512",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/shortcodes/recipe.php#L506-L512",
             "snippet": [
                 {
                     "number": 506,
@@ -11135,7 +11135,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/shortcodes/recipe.php#L525-L531",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/shortcodes/recipe.php#L525-L531",
             "snippet": [
                 {
                     "number": 525,
@@ -11282,7 +11282,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/shortcodes/tweet.php#L74-L80",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/shortcodes/tweet.php#L74-L80",
             "snippet": [
                 {
                     "number": 74,
@@ -11533,7 +11533,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/sitemaps/sitemap-builder.php#L1714-L1720",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/sitemaps/sitemap-builder.php#L1714-L1720",
             "snippet": [
                 {
                     "number": 1714,
@@ -11681,7 +11681,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/verification-tools/verification-tools-utils.php#L16-L22",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/verification-tools/verification-tools-utils.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -11857,7 +11857,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/widgets/twitter-timeline.php#L288-L294",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/widgets/twitter-timeline.php#L288-L294",
             "snippet": [
                 {
                     "number": 288,
@@ -12009,7 +12009,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/jetpack/modules/widgets/wordpress-post-widget/class.jetpack-display-posts-widget-base.php#L350-L356",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/jetpack/modules/widgets/wordpress-post-widget/class.jetpack-display-posts-widget-base.php#L350-L356",
             "snippet": [
                 {
                     "number": 350,
@@ -12192,7 +12192,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/projects/plugins/vaultpress/vaultpress.php#L1384-L1390",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/projects/plugins/vaultpress/vaultpress.php#L1384-L1390",
             "snippet": [
                 {
                     "number": 1384,
@@ -12287,7 +12287,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/tools/stubs/akismet-stub-defs.php#L13-L19",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/tools/stubs/akismet-stub-defs.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,
@@ -12450,7 +12450,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/tools/stubs/amp-stub-defs.php#L13-L19",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/tools/stubs/amp-stub-defs.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,
@@ -12613,7 +12613,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/tools/stubs/amp-stub-defs.php#L19-L25",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/tools/stubs/amp-stub-defs.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,
@@ -12776,7 +12776,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/tools/stubs/full-site-editing-stub-defs.php#L13-L19",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/tools/stubs/full-site-editing-stub-defs.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,
@@ -12939,7 +12939,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/tools/stubs/gutenberg-stub-defs.php#L13-L19",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/tools/stubs/gutenberg-stub-defs.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,
@@ -13107,7 +13107,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/tools/stubs/munge-phpunit-stubs.php#L27-L33",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/tools/stubs/munge-phpunit-stubs.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,
@@ -13258,7 +13258,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/tools/stubs/woocommerce-internal-stub-defs.php#L13-L19",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/tools/stubs/woocommerce-internal-stub-defs.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,
@@ -13421,7 +13421,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/tools/stubs/woocommerce-payments-stub-defs.php#L13-L19",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/tools/stubs/woocommerce-payments-stub-defs.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,
@@ -13584,7 +13584,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Automattic/jetpack/blob/c9838f85bd08d7c0a0983fa939dda46dff3724f4/tools/stubs/zero-bs-crm-stub-defs.php#L13-L19",
+            "permalink": "https://github.com/Automattic/jetpack/blob/93705114f0d1150fd53a00ea2892ba43f9bb0b90/tools/stubs/zero-bs-crm-stub-defs.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,

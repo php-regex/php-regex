@@ -72,26 +72,13 @@ with the #14490 line (the return type of `preg_match()` on a pattern sure
 to match).
 
 
-## PHP 8.6 GA, 2026-11-19
-
-1. That day, rename the `8.6-rc` rows of `engines-bundled` and
-   `engine-claims` (`.github/workflows/engines.yml`), and the `8.6-rc` key of
-   `EngineClaims::IMAGES` (`tests/TestUtils/EngineClaims.php`), to `'8.6'`:
-   the `-rc` docker aliases vanish that day and an unrenamed row breaks CI.
-   The `startsWith(matrix.php, '8.6')` conditions already match either
-   spelling, and `engines-latest` needs no change. Check that the renamed
-   image still bundles PCRE2 10.44, and if it ships mbstring again, remove
-   the "Install multibyte support" step.
-2. Once the tools' dependencies admit 8.6, drop it from the
-   `--ignore-platform-req=php+` cases of `.github/actions/setup-php-project`
-   and of `engines-bundled`.
-3. Until then, watch `ext/pcre/pcre2lib` on the PHP-8.6 branch and on
-   master: a late PCRE2 bump, or a downgrade like 8.5's at its release cut,
-   reopens the engine maps. If it moves, re-run the engine-scoped corpus rows
-   first.
-
-
 ## PHPStan pull request
+
+In `~/projects/php-regex/phpstan-src`, branch `read-regex-shapes-through-phpregex`:
+`2fddb71bf` reads a quoted text in place (the shape, the return type and the
+validity rule) and the commit after it folds `preg_quote()` of a constant
+string to its literal; both sit on top of the PR commit, not pushed. Squash
+them into the PR commit or keep them apart, then push.
 
 When the pull request is opened, state the parse cost in its description.
 Measured over the 395 distinct literal patterns of the `preg_*` calls in
@@ -108,32 +95,8 @@ calculator or the ACCEPT check, or walking the letter check once, each
 measured under 3 %.
 
 
-## PHPStan fork: preg_quote() placeholders
-
-In `~/projects/php-regex/phpstan-src`, branch `read-regex-shapes-through-phpregex`:
-`2fddb71bf` reads a quoted text in place (the shape, the return type and the
-validity rule) and the commit after it folds `preg_quote()` of a constant
-string to its literal; both sit on top of the PR commit, not pushed. Squash
-them into the PR commit or keep them apart, then push.
-
-
-## Runtime validation at another patch release
-
-`runtime_pcre_validation`, `EscapeChecks` and `RegexParser::withTarget()`
-ask the running PHP whenever the target has its PHP minor version and its
-PCRE2 release (`PcreTarget::isRunningEngine()`). So `php_version: '8.4'` or
-`'8.4.26'` with the `pcre_version` that runs is checked by PHP 8.4.27, while
-`php_version: '8.4'` alone is refused already, as it names the 10.44 that
-8.4 bundles. The library knows rules that move at a patch release (8.2.35,
-8.4.25, 8.5.10), and the two facts of the build that runs are now asked for
-that exact build only. Decide whether such a target is refused, or still
-checked by the build that runs.
-
-
 ## Pull request checks
 
 - Make `CI` the required check of `2.x` in the branch protection: a pull
   request of prose alone reports it (seen on #369), and the protection
   requires no check yet.
-- The Box pin (4.7.1 and its checksum, in `phar.yml` and `packages.yml`) is
-  bumped by hand: Dependabot does not see it.

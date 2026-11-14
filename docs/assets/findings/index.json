@@ -4,9 +4,9 @@
     },
     "totals": {
         "repos": 236,
-        "findings": 2777,
+        "findings": 2778,
         "fail": 183,
-        "warn": 2594
+        "warn": 2595
     },
     "owners": {
         "10up": {
@@ -814,8 +814,8 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "3faa2c4b672e6f2f8babaf959ae6f6024db37c19",
-            "committed": "2026-11-13",
+            "sha": "377002822b34077904f4e83c21faaf69d1bfea9a",
+            "committed": "2026-11-14",
             "findings": 36,
             "fail": 9,
             "warn": 27,
@@ -846,8 +846,8 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "3e15389c66b1277ba75c6106558fb4b05fe62ddd",
-            "committed": "2026-11-13",
+            "sha": "c9b07573c8960413f9ed4524ee2932ff7932cc88",
+            "committed": "2026-11-14",
             "findings": 8,
             "fail": 7,
             "warn": 1,
@@ -866,8 +866,8 @@
                 "pcre": "10.33",
                 "source": "composer.json require.php"
             },
-            "sha": "331d6d6f1d68621da2d50176d100a6cbbd62527d",
-            "committed": "2026-11-13",
+            "sha": "f939960c4c6a59f9889e640925a5079fbe18f42c",
+            "committed": "2026-11-14",
             "findings": 69,
             "fail": 7,
             "warn": 62,
@@ -901,8 +901,8 @@
                 "pcre": "10.39",
                 "source": "fallback: no require.php"
             },
-            "sha": "c9838f85bd08d7c0a0983fa939dda46dff3724f4",
-            "committed": "2026-11-13",
+            "sha": "93705114f0d1150fd53a00ea2892ba43f9bb0b90",
+            "committed": "2026-11-14",
             "findings": 71,
             "fail": 6,
             "warn": 65,
@@ -996,8 +996,8 @@
                 "pcre": "10.32",
                 "source": "composer.json require.php"
             },
-            "sha": "fee8544bde58a859cfbfddba392ed034af26f6dd",
-            "committed": "2026-11-06",
+            "sha": "7769d477ef1e45275d3c0ee173648fce35719945",
+            "committed": "2026-11-13",
             "findings": 32,
             "fail": 5,
             "warn": 27,
@@ -1164,8 +1164,8 @@
                 "pcre": "10.40",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "a4ccf72df0fea71e3116d32706d5df5c4dc50d49",
-            "committed": "2026-11-13",
+            "sha": "084e675eadd57cc39e8d15ba0cc113c7d338b182",
+            "committed": "2026-11-14",
             "findings": 14,
             "fail": 3,
             "warn": 11,
@@ -1338,8 +1338,8 @@
                 "pcre": "10.49",
                 "source": "composer.json require.php"
             },
-            "sha": "08c6fc5956af2b31ca97f558232080da15775438",
-            "committed": "2026-11-13",
+            "sha": "979969dc83ebb43a7b6cd6447c0945b764af82b2",
+            "committed": "2026-11-14",
             "findings": 41,
             "fail": 3,
             "warn": 38,
@@ -1401,7 +1401,7 @@
                 "pcre": "10.32",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "a0a4fd63d0f4a64f0da5db0aef247054b761bac6",
+            "sha": "32ca7d1d0eafeecb0298b54bee051f0f0c63aac1",
             "committed": "2026-11-13",
             "findings": 26,
             "fail": 2,
@@ -1472,8 +1472,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "27198f21ddefc708860984b9fd792e557b2ea0b0",
-            "committed": "2026-11-13",
+            "sha": "5deedec2dea708d791d20f27f13c0e64519bc2a4",
+            "committed": "2026-11-14",
             "findings": 11,
             "fail": 2,
             "warn": 9,
@@ -1576,8 +1576,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "9b2432c39fd4e596909ca8763bf7e2148c8ae98e",
-            "committed": "2026-11-11",
+            "sha": "09bba2c40b77b8bf7e1c4c56f492a76598c74e1e",
+            "committed": "2026-11-14",
             "findings": 2,
             "fail": 2,
             "warn": 0,
@@ -1661,8 +1661,8 @@
                 "pcre": "10.44",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "f8689bdef1d7ac67c193a67de536db874b0a2cc9",
-            "committed": "2026-11-13",
+            "sha": "3f01f7a3d648d9a4d4a8046a6086a3e577e16738",
+            "committed": "2026-11-14",
             "findings": 22,
             "fail": 2,
             "warn": 20,
@@ -1689,8 +1689,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "fca8e037ed356b9fc1afc213902e82dfad418eba",
-            "committed": "2026-11-11",
+            "sha": "56e5217b13db8789c2b8cfcc73d0f902df2cda11",
+            "committed": "2026-11-14",
             "findings": 5,
             "fail": 2,
             "warn": 3,
@@ -1778,7 +1778,7 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "6bbaece22912f529519da97cb272c89378c976a1",
+            "sha": "389a0d5ba3a830dfc2b7408f3bdd9f09876f5437",
             "committed": "2026-11-13",
             "findings": 18,
             "fail": 1,
@@ -1850,8 +1850,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "6f92d1fbbb2c79a1aaf06fc4be8e97dc76471b64",
-            "committed": "2026-11-13",
+            "sha": "49e5001c01ff4f8a5dcf2e5ea78cd881680820b5",
+            "committed": "2026-11-14",
             "findings": 17,
             "fail": 1,
             "warn": 16,
@@ -1950,8 +1950,8 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "6064451f04659838450ffa969e492542b76e4321",
-            "committed": "2026-11-13",
+            "sha": "1d9f3e321d30128478a653cebdba956653ebd295",
+            "committed": "2026-11-14",
             "findings": 8,
             "fail": 1,
             "warn": 7,
@@ -2077,8 +2077,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "0b3e36fa5922e7ab184f3fb41d78d7bedba34d9a",
-            "committed": "2026-11-13",
+            "sha": "6004f09e71fe199880a671df6dc34a6e731ba1ea",
+            "committed": "2026-11-14",
             "findings": 8,
             "fail": 1,
             "warn": 7,
@@ -2188,8 +2188,8 @@
                 "pcre": "10.39",
                 "source": "fallback: no require.php"
             },
-            "sha": "5e55ae42891b4a14661451310e36c11676eee0ce",
-            "committed": "2026-11-13",
+            "sha": "5509e3c4ce7b904c6a8d7d322e86ffcaa8957536",
+            "committed": "2026-11-14",
             "findings": 22,
             "fail": 1,
             "warn": 21,
@@ -2286,8 +2286,8 @@
                 "pcre": "10.40",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "8bff5209d6641e765e179d4e968c8658dc34910c",
-            "committed": "2026-11-13",
+            "sha": "852ad2a7e5233962b60b440f92de3068cbe27de1",
+            "committed": "2026-11-14",
             "findings": 75,
             "fail": 1,
             "warn": 74,
@@ -2336,8 +2336,8 @@
                 "pcre": "10.44",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "9a67d9ff4e5b9c79ff565908e159be4440d449a0",
-            "committed": "2026-11-13",
+            "sha": "b5712d808c925c87d65261ef77d8bda426d61c49",
+            "committed": "2026-11-14",
             "findings": 1,
             "fail": 1,
             "warn": 0,
@@ -2807,8 +2807,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "58c9b2afa4adba4c2210e145dfe044bb73a1e0e7",
-            "committed": "2026-11-13",
+            "sha": "18a6bfe984336688190cabd22b338c55cb422eac",
+            "committed": "2026-11-14",
             "findings": 2,
             "fail": 0,
             "warn": 2,
@@ -3379,8 +3379,8 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "b4ffb120d8eb8a3941d35aa8867024310aac2f34",
-            "committed": "2026-11-13",
+            "sha": "b656307bb4bf2fffd2e261bb90bde5cf9d3b1113",
+            "committed": "2026-11-14",
             "findings": 2,
             "fail": 0,
             "warn": 2,
@@ -3540,8 +3540,8 @@
                 "pcre": "10.33",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "707f29a0bbf0b0537dfec67b8ac2f75e4cff0be1",
-            "committed": "2026-11-13",
+            "sha": "140d05ceb282e5dcd31993071935cc77bb6589b3",
+            "committed": "2026-11-14",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -3658,8 +3658,8 @@
                 "pcre": "10.42",
                 "source": "composer.json require.php"
             },
-            "sha": "3a47838f2e0f4ec6c8c9b43a5d73ac985b975830",
-            "committed": "2026-10-30",
+            "sha": "7f7da6117ed0866df4489dc92a564f2ab9e559ce",
+            "committed": "2026-11-14",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -4155,8 +4155,8 @@
                 "pcre": "10.42",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "04556a42112151ca21d2e3a81451b4b8787107cb",
-            "committed": "2026-11-13",
+            "sha": "61424d946776ada4554117ebfd33174fb3718377",
+            "committed": "2026-11-14",
             "findings": 18,
             "fail": 0,
             "warn": 18,
@@ -4275,8 +4275,8 @@
                 "pcre": "10.42",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "fc4d532491157349c3b0814996a107131c4ae5e2",
-            "committed": "2026-11-13",
+            "sha": "aa2ec597794e4cf60ee83bb53451602179167810",
+            "committed": "2026-11-14",
             "findings": 7,
             "fail": 0,
             "warn": 7,
@@ -4709,8 +4709,8 @@
                 "pcre": "10.40",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "94519e24fb01caf54fa49b1735205e21bff703dc",
-            "committed": "2026-11-13",
+            "sha": "04856c1a8f46db53d10462aa1875b76cbcdc1c06",
+            "committed": "2026-11-14",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -4785,8 +4785,8 @@
                 "pcre": "10.49",
                 "source": "composer.json require.php"
             },
-            "sha": "cc2f6644c42ea86163391b3576b96e58319ccc3a",
-            "committed": "2026-11-13",
+            "sha": "a1fbcf3b97457ef3b2fcad3d50ccb26379991079",
+            "committed": "2026-11-14",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -5113,13 +5113,14 @@
                 "pcre": "10.39",
                 "source": "fallback: no require.php"
             },
-            "sha": "39d82a3f5095e6ef6ff7d4ac59d6bb997303bd43",
-            "committed": "2026-11-12",
-            "findings": 1,
+            "sha": "1220483ebd248956a8e65585d044489fc3edd9bb",
+            "committed": "2026-11-14",
+            "findings": 2,
             "fail": 0,
-            "warn": 1,
+            "warn": 2,
             "rules": [
-                "regex.lint.alternation.overlap"
+                "regex.lint.alternation.overlap",
+                "regex.lint.quantifier.concatenation"
             ]
         },
         {
@@ -5646,8 +5647,8 @@
                 "pcre": "10.39",
                 "source": "fallback: no require.php"
             },
-            "sha": "6f87b58f35eb6fb29cb910f565f866905d32c73f",
-            "committed": "2026-11-13",
+            "sha": "bba9f050469a57abf7d20a0fc9b4792e5bc7cc57",
+            "committed": "2026-11-14",
             "findings": 60,
             "fail": 0,
             "warn": 60,

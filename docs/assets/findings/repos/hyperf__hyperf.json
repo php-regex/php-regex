@@ -1,6 +1,6 @@
 {
     "repo": "hyperf/hyperf",
-    "sha": "27198f21ddefc708860984b9fd792e557b2ea0b0",
+    "sha": "5deedec2dea708d791d20f27f13c0e64519bc2a4",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/crontab/src/Parser.php#L68-L74",
+            "permalink": "https://github.com/hyperf/hyperf/blob/5deedec2dea708d791d20f27f13c0e64519bc2a4/src/crontab/src/Parser.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,
@@ -675,7 +675,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/crontab/src/Parser.php#L69-L75",
+            "permalink": "https://github.com/hyperf/hyperf/blob/5deedec2dea708d791d20f27f13c0e64519bc2a4/src/crontab/src/Parser.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -1234,7 +1234,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/crontab/src/Parser.php#L149-L155",
+            "permalink": "https://github.com/hyperf/hyperf/blob/5deedec2dea708d791d20f27f13c0e64519bc2a4/src/crontab/src/Parser.php#L149-L155",
             "snippet": [
                 {
                     "number": 149,
@@ -1366,7 +1366,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/database/src/Commands/Ast/ModelRewriteInheritanceVisitor.php#L28-L34",
+            "permalink": "https://github.com/hyperf/hyperf/blob/5deedec2dea708d791d20f27f13c0e64519bc2a4/src/database/src/Commands/Ast/ModelRewriteInheritanceVisitor.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -1618,7 +1618,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/rpn/src/Calculator.php#L90-L96",
+            "permalink": "https://github.com/hyperf/hyperf/blob/5deedec2dea708d791d20f27f13c0e64519bc2a4/src/rpn/src/Calculator.php#L90-L96",
             "snippet": [
                 {
                     "number": 90,
@@ -1800,7 +1800,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/stringable/src/Str.php#L1255-L1261",
+            "permalink": "https://github.com/hyperf/hyperf/blob/5deedec2dea708d791d20f27f13c0e64519bc2a4/src/stringable/src/Str.php#L1255-L1261",
             "snippet": [
                 {
                     "number": 1255,
@@ -1895,7 +1895,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/stringable/src/Str.php#L1273-L1279",
+            "permalink": "https://github.com/hyperf/hyperf/blob/5deedec2dea708d791d20f27f13c0e64519bc2a4/src/stringable/src/Str.php#L1273-L1279",
             "snippet": [
                 {
                     "number": 1273,
@@ -1990,7 +1990,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/stringable/src/Str.php#L1291-L1297",
+            "permalink": "https://github.com/hyperf/hyperf/blob/5deedec2dea708d791d20f27f13c0e64519bc2a4/src/stringable/src/Str.php#L1291-L1297",
             "snippet": [
                 {
                     "number": 1291,
@@ -2085,7 +2085,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/view-engine/src/Compiler/BladeCompiler.php#L376-L382",
+            "permalink": "https://github.com/hyperf/hyperf/blob/5deedec2dea708d791d20f27f13c0e64519bc2a4/src/view-engine/src/Compiler/BladeCompiler.php#L376-L382",
             "snippet": [
                 {
                     "number": 376,
@@ -2259,7 +2259,7 @@
                 "limit": 100000
             },
             "subject": "<x- -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=! \">",
-            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/view-engine/src/Compiler/ComponentTagCompiler.php#L252-L258",
+            "permalink": "https://github.com/hyperf/hyperf/blob/5deedec2dea708d791d20f27f13c0e64519bc2a4/src/view-engine/src/Compiler/ComponentTagCompiler.php#L252-L258",
             "snippet": [
                 {
                     "number": 252,
@@ -2369,7 +2369,7 @@
                 "limit": 100000
             },
             "subject": "<x- -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=!  -=! \"/>",
-            "permalink": "https://github.com/hyperf/hyperf/blob/27198f21ddefc708860984b9fd792e557b2ea0b0/src/view-engine/src/Compiler/ComponentTagCompiler.php#L301-L307",
+            "permalink": "https://github.com/hyperf/hyperf/blob/5deedec2dea708d791d20f27f13c0e64519bc2a4/src/view-engine/src/Compiler/ComponentTagCompiler.php#L301-L307",
             "snippet": [
                 {
                     "number": 301,

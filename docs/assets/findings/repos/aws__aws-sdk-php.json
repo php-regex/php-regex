@@ -1,6 +1,6 @@
 {
     "repo": "aws/aws-sdk-php",
-    "sha": "58c9b2afa4adba4c2210e145dfe044bb73a1e0e7",
+    "sha": "18a6bfe984336688190cabd22b338c55cb422eac",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/aws/aws-sdk-php/blob/58c9b2afa4adba4c2210e145dfe044bb73a1e0e7/src/CloudFront/Signer.php#L171-L177",
+            "permalink": "https://github.com/aws/aws-sdk-php/blob/18a6bfe984336688190cabd22b338c55cb422eac/src/CloudFront/Signer.php#L171-L177",
             "snippet": [
                 {
                     "number": 171,
@@ -211,7 +211,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/aws/aws-sdk-php/blob/58c9b2afa4adba4c2210e145dfe044bb73a1e0e7/src/EndpointV2/Ruleset/RulesetStandardLibrary.php#L13-L19",
+            "permalink": "https://github.com/aws/aws-sdk-php/blob/18a6bfe984336688190cabd22b338c55cb422eac/src/EndpointV2/Ruleset/RulesetStandardLibrary.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,
