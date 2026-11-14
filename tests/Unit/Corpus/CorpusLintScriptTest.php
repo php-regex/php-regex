@@ -184,6 +184,37 @@ final class CorpusLintScriptTest extends TestCase
     }
 
     /**
+     * A repository that left corpus/ leaves the log, its parts and the
+     * manifest at the next sweep, a partial one included: its section was
+     * judged by the library of an earlier day, and its JSON part would
+     * stay on the site. The repositories still there keep their sections.
+     */
+    #[Test]
+    public function test_a_repository_that_left_the_corpus_leaves_the_log_and_its_parts(): void
+    {
+        [, $output] = $this->script([]);
+        $this->assertFileExists($this->root.'/parts/ownerB__repoOld.log', $output);
+        $this->assertFileExists($this->root.'/parts/ownerB__repoOld.json', $output);
+        TemporaryDirectory::remove($this->root.'/corpus/ownerB');
+
+        [, $output] = $this->script(['--only', 'ownerA']);
+
+        $log = (string) file_get_contents($this->root.'/corpus.log');
+        $manifest = json_decode((string) file_get_contents($this->root.'/parts/manifest.json'), true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($manifest);
+        $this->assertStringNotContainsString('ownerB/repoOld', $log, $output);
+        $this->assertFileDoesNotExist($this->root.'/parts/ownerB__repoOld.log');
+        $this->assertFileDoesNotExist($this->root.'/parts/ownerB__repoOld.json');
+        $this->assertArrayNotHasKey('ownerB/repoOld', $manifest);
+        $this->assertStringContainsString('ownerB/repoOld', $output, 'The sweep names the repository it dropped.');
+        foreach (['ownerA/repoNew', 'ownerC/repoBare', 'ownerD/repoClean'] as $repo) {
+            $this->assertStringContainsString('### corpus/'.$repo.' ', $log);
+            $this->assertArrayHasKey($repo, $manifest);
+        }
+        $this->assertFileExists($this->root.'/parts/ownerC__repoBare.json', 'A repository the partial sweep left alone keeps its parts.');
+    }
+
+    /**
      * A repository whose require.php allows no PHP on PCRE2 is refused, not
      * judged: its section says so, with no target and the refusal's exit
      * code, and the sweep does not count it as clean.

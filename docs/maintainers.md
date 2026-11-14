@@ -822,12 +822,11 @@ of the corpus, and the merged log renders the same whether the command runs
 in a terminal or through a pipe, and whatever `COLUMNS` the shell exports:
 every run folds its lines at 120 columns.
 
-The merged log is rebuilt from every part the sweep has ever recorded, not
-only from the repositories under `corpus/` today: a repository removed from
-the corpus keeps its section, even after a full sweep. To drop it, delete
-`var/log/corpus-parts/` and `var/log/corpus.log` together (the sweep reseeds
-its list from the old log when the parts are gone), then run
-`php bin/corpus-lint` over the whole corpus.
+The merged log is rebuilt from every part the sweep has recorded, so a slice
+keeps the sections of the repositories it leaves alone. A repository removed
+from `corpus/` leaves at the next sweep, a slice included: its section, its
+two parts and its manifest entry go, and the sweep names it, so neither the
+log nor the site's findings keep a judgement of an earlier day.
 
 To judge the whole tree for one target instead, the PHP running the command
 and the PCRE2 it links, without touching the tracked log:
