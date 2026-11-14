@@ -102,7 +102,7 @@ final class AlternationOverlapPastAsciiTest extends TestCase
     public function test_the_first_characters_are_read_through_the_first_items(string $pattern, array $oracle, int $findings): void
     {
         // PCRE2 reads the options of "a" from 10.43.
-        $this->requiresPcre2For($pattern, ['10.43' => ['/(?:(?a:ö)|è)+x/u', '/(?:(?a:öa)|öb)+x/u', '/(?:(?ai:öa)|Öb)+x/u', '/(?:(?a:\p{Lu})x|\p{L}y)+z/u', '/(?:(?a:[ö])x|èy)+z/u', '/(?:(?a:\w)x|éy)+z/u', '/(?:(?aW:\w)x|éy)+z/u', '/(?:(?aD:\w)x|éy)+z/u', '/(?:(?aD:\w)x|éy)+z/uD']]);
+        $this->requiresPcre2For($pattern, ['10.43' => ['/(?:(?a:ö)|è)+x/u', '/(?:(?a:öa)|öb)+x/u', '/(?:(?ai:öa)|Öb)+x/u', '/(?:(?a:\p{Lu})x|\p{L}y)+z/u', '/(?:(?a:[ö])x|èy)+z/u', '/(?:(?a:\w)x|éy)+z/u', '/(?:(?aW:\w)x|éy)+z/u', '/(?:(?aD:\w)x|éy)+z/u', '/(?:(?aD:\w)x|éy)+z/uD', '/(?:(?aS:\w)x|éy)+z/uS', '/(?:(?a:\w)x|éy)+z/uD', '/(?aD)(?:\wx|éy)+z/uD']]);
 
         foreach ($oracle as [$branch, $subject, $starts]) {
             $this->assertSame($starts, preg_match('/^(?:'.$branch.')/u', $subject), $branch.' on '.$subject);
@@ -135,9 +135,12 @@ final class AlternationOverlapPastAsciiTest extends TestCase
         yield 'a type under the options of a, apart' => ['pattern' => '/(?:(?a:\w)x|éy)+z/u', 'oracle' => [['(?a:\w)x', 'éx', 0], ['éy', 'éy', 1]], 'findings' => 0];
         yield 'a type under the word option of a, apart' => ['pattern' => '/(?:(?aW:\w)x|éy)+z/u', 'oracle' => [['(?aW:\w)x', 'éx', 0], ['éy', 'éy', 1]], 'findings' => 0];
         yield 'a type under the digit option of a, meeting the other branch' => ['pattern' => '/(?:(?aD:\w)x|éy)+z/u', 'oracle' => [['(?aD:\w)x', 'éx', 1], ['éy', 'éy', 1]], 'findings' => 1];
-        // Under the pattern's own /D, the D of "(?aD)" cannot be told from
-        // it: the branch is left unjudged, though é starts both.
-        yield 'an option of a the pattern\'s /D hides, unjudged' => ['pattern' => '/(?:(?aD:\w)x|éy)+z/uD', 'oracle' => [['(?aD:\w)x', 'éx', 1], ['éy', 'éy', 1]], 'findings' => 0];
+        // The options of "a" are read from the option groups alone: the
+        // pattern's own /D and /S are no "(?aD)" or "(?aS)".
+        yield 'the digit option of a beside the pattern\'s /D, meeting the other branch' => ['pattern' => '/(?:(?aD:\w)x|éy)+z/uD', 'oracle' => [['(?aD:\w)x', 'éx', 1], ['éy', 'éy', 1]], 'findings' => 1];
+        yield 'the space option of a beside the pattern\'s /S, meeting the other branch' => ['pattern' => '/(?:(?aS:\w)x|éy)+z/uS', 'oracle' => [['(?aS:\w)x', 'éx', 1], ['éy', 'éy', 1]], 'findings' => 1];
+        yield 'every option of a beside the pattern\'s /D, apart' => ['pattern' => '/(?:(?a:\w)x|éy)+z/uD', 'oracle' => [['(?a:\w)x', 'éx', 0], ['éy', 'éy', 1]], 'findings' => 0];
+        yield 'the digit option of a set before the alternation, beside the pattern\'s /D' => ['pattern' => '/(?aD)(?:\wx|éy)+z/uD', 'oracle' => [['(?aD)\wx', 'éx', 1], ['éy', 'éy', 1]], 'findings' => 1];
         yield 'a caseless character under the options of a' => ['pattern' => '/(?:(?ai:öa)|Öb)+x/u', 'oracle' => [['(?ai:öa)', 'Öa', 1], ['Öb', 'Öb', 1]], 'findings' => 1];
     }
 

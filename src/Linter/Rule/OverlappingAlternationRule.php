@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\BranchOverlaps;
+use PHPRegex\Linter\Rule\Support\FlagScope;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
@@ -319,6 +320,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
         $unicodeFlag = str_contains($context->pattern->flags, 'u');
 
         $flagsAt = $context->flagsAtEachChild($node);
+        // The outermost node the traversal stands in: no option group above
+        // it sets anything for the alternation.
+        $root = $context->parents()[0] ?? $node;
         $sets = [];
         foreach ($node->alternatives as $index => $alternative) {
             // A branch that may read nothing starts with what follows the
@@ -334,8 +338,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
                 // The atom is read under the options in force where it
                 // stands: those a group opening the branch sets included.
-                $modifiers = self::probeModifiers($context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags()), $context->pattern->flags);
-                $read = null === $atom || null === $modifiers ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
+                $flags = $context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags());
+                $modifiers = self::probeModifiers($flags, self::asciiOptions($flags, $leaf, $root));
+                $read = null === $atom ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
                 if (null === $read) {
                     return null;
                 }
@@ -446,32 +451,39 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
     /**
      * The options the probe reads an atom under, from the flags in effect at
-     * it. The options of "a" go along as written, "(?aD)" or "(?aW)" each
-     * as "aD" or "aW", "a" alone for all of them: the probe gets the very
-     * restrictions of \d, \s, \w and the POSIX classes the atom stands
-     * under. Their letters D and S read as the pattern's own /D and /S too:
-     * where the pattern sets those, which of them "a" carries is not known,
-     * and null leaves the branch unjudged.
+     * it and the options of "a" that stand there.
      */
-    private static function probeModifiers(string $flags, string $patternFlags): ?string
+    private static function probeModifiers(string $flags, string $ascii): string
     {
-        $ascii = '';
-        if (str_contains($flags, 'a')) {
-            if (false !== strpbrk($patternFlags, 'DS') && false !== strpbrk($flags, 'DS')) {
-                return null;
-            }
-
-            foreach (['D', 'S', 'W', 'P', 'T'] as $option) {
-                $ascii .= str_contains($flags, $option) ? 'a'.$option : '';
-            }
-            $ascii = '' === $ascii ? 'a' : $ascii;
-        }
-
         return (str_contains($flags, 'i') ? 'i' : '')
             .(str_contains($flags, 's') ? 's' : '')
             .(str_contains($flags, 'xx') ? 'xx' : (str_contains($flags, 'x') ? 'x' : ''))
             .(str_contains($flags, 'r') ? 'r' : '')
             .$ascii;
+    }
+
+    /**
+     * The options of "a" in force at an atom, as written: "aD" or "aW" for
+     * each one set, "a" alone for all of them, '' outside them. The probe
+     * gets the very restrictions of \d, \s, \w and the POSIX classes the
+     * atom stands under. PHP has no modifier for them, so they are read
+     * from the option groups alone, from $root with no modifier: the D and
+     * S found there are those of "(?aD)" and "(?aS)", never the pattern's
+     * own /D and /S.
+     */
+    private static function asciiOptions(string $flags, NodeInterface $atom, NodeInterface $root): string
+    {
+        if (!str_contains($flags, 'a')) {
+            return '';
+        }
+
+        $inline = FlagScope::flagsAt($atom, $root, '') ?? $flags;
+        $ascii = '';
+        foreach (['D', 'S', 'W', 'P', 'T'] as $option) {
+            $ascii .= str_contains($inline, $option) ? 'a'.$option : '';
+        }
+
+        return '' === $ascii ? 'a' : $ascii;
     }
 
     private function makeCharsetViolation(AlternationNode $node, int $i, int $j, LintContext $context): RuleViolation

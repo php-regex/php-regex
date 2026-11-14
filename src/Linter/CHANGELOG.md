@@ -15,11 +15,10 @@ CHANGELOG
    past its optional first item, `/(?:ö?è|ê)+x/u`, every branch of a branch
    reset group, `/(?:(?|ö|ê)|è)+x/u`, and an atom under the very options of
    `a` that stand where it does, which restrict `\d`, `\s`, `\w`, their
-   negations and the POSIX classes alone, `/(?:(?a:[ö])x|èy)+z/u`. Under a
-   pattern's own `/D` or `/S`, which those options spell the same, the
-   branch is left unjudged. `/(?:[à-ÿ]+|é)+/u`,
-   `/(?:(?a:\p{Lu})x|\p{L}y)+z/u` and `/(?:(?aD:\w)x|éy)+z/u`, which it
-   missed, are reported. The message quotes each branch as the
+   negations and the POSIX classes alone, `/(?:(?a:[ö])x|èy)+z/u`; the
+   pattern's own `/D` and `/S` are no `(?aD)` or `(?aS)`.
+   `/(?:[à-ÿ]+|é)+/u`, `/(?:(?a:\p{Lu})x|\p{L}y)+z/u` and
+   `/(?:(?aD:\w)x|éy)+z/uD`, which it missed, are reported. The message quotes each branch as the
    pattern writes it, `\d+` rather than `\\d+`, and `é` under u rather than
    `\xC3\xA9`, on thirty columns at most, an escape never cut, and without
    the layout and the comments `x` skips: a branch laid out over lines is
