@@ -248,8 +248,6 @@ n=19        2.25 ms  ret=false  Backtrack limit exhausted
 ```
 {: data-copy="" }
 
-Some engines cannot backtrack at all, so they never meet this cliff. [RE2 and PCRE2 compared](re2-vs-pcre2.md) explains what they give up in exchange.
-
 > **Note:** set the JIT on the command line (`php -d pcre.jit=1`), one process per run. PHP keeps each compiled pattern in a cache. An `ini_set('pcre.jit', '1')` after the pattern already ran does not recompile it, so you would time the interpreter twice.
 
 ## Does a `{1,100}` bound help? No, it makes it slower

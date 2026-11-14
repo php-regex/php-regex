@@ -40,7 +40,6 @@ final class DocumentationExperienceTest extends TestCase
 
     private const ARTICLES = [
         'catastrophic-backtracking-in-php',
-        're2-vs-pcre2',
         'which-pcre2-ships-with-which-php',
         'why-pcre2-is-a-separate-library',
     ];
@@ -245,14 +244,14 @@ final class DocumentationExperienceTest extends TestCase
     }
 
     /**
-     * The four launch articles stay drafts until a hand validates them:
+     * The three launch articles stay drafts until a hand validates them:
      * the blog shows nothing of them and llms.txt indexes nothing of
      * them — an agent reading the site does not read what a reader
      * cannot. Publishing them is a flip of one flag each, plus the
      * index the runbook describes.
      */
     #[Test]
-    public function test_the_four_blog_articles_wait_for_validation(): void
+    public function test_the_three_blog_articles_wait_for_validation(): void
     {
         foreach (self::ARTICLES as $slug) {
             $article = (string) file_get_contents(__DIR__.'/../../docs/_articles/'.$slug.'.md');
