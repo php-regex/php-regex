@@ -72,25 +72,6 @@ with the #14490 line (the return type of `preg_match()` on a pattern sure
 to match).
 
 
-## PHP 8.6 GA, 2026-11-19
-
-1. That day, rename the `8.6-rc` rows of `engines-bundled` and
-   `engine-claims` (`.github/workflows/engines.yml`), and the `8.6-rc` key of
-   `EngineClaims::IMAGES` (`tests/TestUtils/EngineClaims.php`), to `'8.6'`:
-   the `-rc` docker aliases vanish that day and an unrenamed row breaks CI.
-   The `startsWith(matrix.php, '8.6')` conditions already match either
-   spelling, and `engines-latest` needs no change. Check that the renamed
-   image still bundles PCRE2 10.44, and if it ships mbstring again, remove
-   the "Install multibyte support" step.
-2. Once the tools' dependencies admit 8.6, drop it from the
-   `--ignore-platform-req=php+` cases of `.github/actions/setup-php-project`
-   and of `engines-bundled`.
-3. Until then, watch `ext/pcre/pcre2lib` on the PHP-8.6 branch and on
-   master: a late PCRE2 bump, or a downgrade like 8.5's at its release cut,
-   reopens the engine maps. If it moves, re-run the engine-scoped corpus rows
-   first.
-
-
 ## PHPStan pull request
 
 When the pull request is opened, state the parse cost in its description.
