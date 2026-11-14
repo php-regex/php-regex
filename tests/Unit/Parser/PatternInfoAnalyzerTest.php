@@ -438,7 +438,8 @@ final class PatternInfoAnalyzerTest extends TestCase
         yield 'none' => ['pattern' => '/abc/', 'expected' => false];
         yield 'in a sequence' => ['pattern' => '/a\Cb/', 'expected' => true];
         yield 'in a lookbehind, without u' => ['pattern' => '/(?<=\C)a/', 'expected' => true];
-        yield 'under (*UTF), which PHP compiles' => ['pattern' => '/(*UTF)a\Cb/', 'expected' => true];
+        // The tree of a pattern validate() refuses: \C in UTF-8 mode.
+        yield 'under (*UTF)' => ['pattern' => '/(*UTF)a\Cb/', 'expected' => true];
         yield 'quoted' => ['pattern' => '/\Q\C\E/', 'expected' => false];
         yield 'escaped backslash then C' => ['pattern' => '/a\\\\Cb/', 'expected' => false];
         yield 'in a comment' => ['pattern' => '/a(?#\C)b/', 'expected' => false];

@@ -1023,7 +1023,8 @@ pass nothing) and compiles every pattern with `allow_lookaround_bsk`, as PHP
 8.2 to 8.4 do. It exits with 1 when a pattern has a modifier it cannot
 convert or when `pcre2test` fails; a pattern PCRE2 refuses shows as a
 `Failed:` line, which the test rejects. Every pattern of the file must compile
-on PHP 8.4. Commit `patterns.txt` and `pcre2test.out` together: the test
+on PHP 8.4 and be one the library accepts, as the test reads its facts through
+`Regex::info()`. Commit `patterns.txt` and `pcre2test.out` together: the test
 fails when their counts or their order differ.
 
 ---
