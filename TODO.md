@@ -255,9 +255,6 @@ the probes hold no whitespace.
   backport also touches the matcher and the JIT of PHP 8.2.35: what the
   library claims of matching on 10.40 was not re-read.
 
-- `CaptureFacts::reaches()` walks the call graph again for each group:
-  quadratic in the groups, nothing measurable at eighty levels.
-
 - On Windows the tests read a child's standard output to its end, then its
   standard error (`ProcessPipes::drain()`): a pipe of `proc_open()` cannot
   be waited on there, so a child that fills its error stream first would
