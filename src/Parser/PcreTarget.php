@@ -326,9 +326,10 @@ final class PcreTarget
 
     /**
      * Whether the target is the build that runs: the same PHP release, its
-     * patch release included, linking the same PCRE2 release. What no
-     * release names belongs to a build: PHP 8.2.35 bundles a fix of PCRE2
-     * 10.40 that 8.2.34 does not.
+     * patch release included, linking the same PCRE2 release, under any
+     * locale. What no release names belongs to a build: PHP 8.2.35 bundles
+     * a fix of PCRE2 10.40 that 8.2.34 does not. A locale changes the
+     * character tables, not the library compiled.
      */
     private function isRunningBuild(): bool
     {

@@ -10,13 +10,14 @@ CHANGELOG
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.
  * The build that runs, its PHP patch release included, is asked, once per
-   process, two facts its release does not name: whether it carries the size-limit fix PCRE2 gives the
-   distributors of 10.39 to 10.47, which moves the error a pattern too large
-   is refused with, and whether its interpreter keeps what a subroutine call
-   captured in the groups inside the called one, as the releases PCRE2
-   tagged before 10.43 do and the copies PHP bundles do not. The capture
-   shape of such a target, a PHP linking a system PCRE2 10.42, lets those
-   groups hold a value: `''|numeric-string` for group 2 of
+   process, two facts its release does not name: whether it carries the
+   size-limit fix PCRE2 gives the distributors of 10.39 to 10.47, which
+   moves the error a pattern too large is refused with, and whether its
+   interpreter keeps what a subroutine call captured in the groups inside
+   the called one, as the releases PCRE2 tagged before 10.43 do and the
+   copies PHP bundles do not. The capture shape of such a target, a PHP
+   linking a system PCRE2 10.42, lets those groups hold a value:
+   `''|numeric-string` for group 2 of
    `/(?(DEFINE)(?<pair>(\d)(\d)))((?&pair)(?&pair))/`, where it said `''`.
  * `ClassSetProvider::query()` answers for a class holding the eight
    delimiters its probe was written with, `[/#~%!@;\x01]`: the probe takes

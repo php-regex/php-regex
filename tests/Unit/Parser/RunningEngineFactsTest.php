@@ -90,6 +90,25 @@ final class RunningEngineFactsTest extends TestCase
     }
 
     /**
+     * A locale changes the character tables, not the library compiled: the
+     * two probes give the same answers under C, tr_TR.ISO8859-9 and
+     * fr_FR.ISO8859-1, and the build that runs answers under any locale. A
+     * build carrying the fix is not judged as its release for a locale.
+     */
+    #[Test]
+    public function test_the_build_that_runs_answers_under_another_locale(): void
+    {
+        $running = PcreTarget::runtime();
+        $other = $running->withLocale('C' === $running->locale ? 'tr_TR.ISO8859-9' : 'C');
+
+        foreach ([true, false] as $answer) {
+            PcreTarget::useRunningEngineAnswers(['measuresBranchesApart' => $answer, 'keepsCallCaptures' => !$answer]);
+
+            $this->assertSame([$answer, !$answer], [$other->measuresBranchesApart(), $other->keepsCallCaptures()]);
+        }
+    }
+
+    /**
      * A release PCRE2 tagged before 10.43 keeps them, unless it is the one
      * the PHP of the target bundles. A target that names the build that
      * runs, its patch release included, is answered by it.
