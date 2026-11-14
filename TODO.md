@@ -74,6 +74,12 @@ to match).
 
 ## PHPStan pull request
 
+In `~/projects/php-regex/phpstan-src`, branch `read-regex-shapes-through-phpregex`:
+`2fddb71bf` reads a quoted text in place (the shape, the return type and the
+validity rule) and the commit after it folds `preg_quote()` of a constant
+string to its literal; both sit on top of the PR commit, not pushed. Squash
+them into the PR commit or keep them apart, then push.
+
 When the pull request is opened, state the parse cost in its description.
 Measured over the 395 distinct literal patterns of the `preg_*` calls in
 PHPStan and its vendor (PHP 8.4, median of five runs), with the twin
@@ -87,15 +93,6 @@ no `preg_*` function. The capture shape computes eight facts per group
 and per arm, and nothing cheaper was found: memoising the length
 calculator or the ACCEPT check, or walking the letter check once, each
 measured under 3 %.
-
-
-## PHPStan fork: preg_quote() placeholders
-
-In `~/projects/php-regex/phpstan-src`, branch `read-regex-shapes-through-phpregex`:
-`2fddb71bf` reads a quoted text in place (the shape, the return type and the
-validity rule) and the commit after it folds `preg_quote()` of a constant
-string to its literal; both sit on top of the PR commit, not pushed. Squash
-them into the PR commit or keep them apart, then push.
 
 
 ## Pull request checks
