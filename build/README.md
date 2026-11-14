@@ -3,7 +3,7 @@
 The parser package, rewritten mechanically to run on PHP 7.4 to 8.6, and
 published as `php-regex/regex-parser-php74` for hosts that cannot require
 PHP 8.1, as a tool's PHAR downgraded to PHP 7.4 does. The generated tree
-lives in `php74/` (git-ignored); everything here produces it and proves it
+lives in `php74/`, committed; everything here produces it and proves it
 reads every pattern as the original does.
 
 ## Generate
@@ -45,6 +45,24 @@ bash build/generate.sh
    gives each its shared instance back (`EnumCases::shared()`).
 8. php-cs-fixer styles the tree with `php-cs-fixer-twin.php`, layout rules
    only: the repository's rules migrate to PHP 8.2.
+
+## Publish
+
+`php74/` is committed, and `bin/split` publishes it as
+`php-regex/regex-parser-php74`, as it does every package: its `2.x` on every
+push to `2.x`, and a tag on every release, made on the split of the tagged
+commit.
+
+A change to `src/Parser` or to the build carries the regenerated tree:
+
+```sh
+task twin            # bash build/generate.sh
+git add build/php74
+```
+
+The pull request's CI generates the twin again and fails when the committed
+`php74/` differs from what it writes. A local generation that does not match
+CI's leaves the `twin` artifact of the run to commit instead.
 
 ## Verify
 

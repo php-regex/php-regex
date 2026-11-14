@@ -198,7 +198,9 @@ phive install php-regex/php-regex
 ```
 {: data-copy="" }
 
-Phive asks you to trust the key the first time. It installs a signed
+Phive asks you to trust the key the first time: accept it only if its
+fingerprint is the release key's,
+`35F6 CC1E 3F10 AF99 4FE5  F522 D7A2 6CD2 AB19 F97E`. It installs a signed
 release only: for a release that carries no `regex.phar.asc`, download the
 PHAR as above.
 

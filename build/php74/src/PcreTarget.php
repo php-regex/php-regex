@@ -1,0 +1,420 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Parser;
+
+use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Text\Ascii;
+
+/**
+ * The PHP version, the PCRE2 release and the LC_CTYPE locale a pattern is
+ * judged for.
+ *
+ * What PCRE2 accepts, and where it reports an error, moved across its
+ * releases; a few rules belong to PHP itself. The locale names the tables
+ * PHP hands PCRE2, which decide the other case of each byte and the bytes
+ * of each type without UCP: PCRE2's own under "C", PHP's default, those the
+ * C library gives under any other locale setlocale() names. The engine that runs the
+ * analysis need not be the one that will run the pattern, so the target
+ * is named once and read everywhere a rule depends on it. Releases older
+ * than 10.39 are judged with the 10.39 rules, but for the few older changes
+ * the library names (judgedWith()); newer ones than the library knows with
+ * the newest rules it has.
+ */
+final class PcreTarget
+{
+    /**
+     */
+    public string $pcreVersion;
+    /**
+     * The oldest release whose rules the library knows in full, 10.39.
+     */
+    private const KNOWN_IN_FULL = 10_039;
+
+    /**
+     * The release PHP 8.2 bundles, 10.40.
+     */
+    private const BUNDLED_WITH_PHP_8_2 = 10_040;
+
+    /**
+     * The LC_CTYPE locale the patterns run under, as the C library names
+     * it: "C" for PCRE2's own tables.
+     *
+     */
+    public string $locale;
+
+    /**
+     * What supports() answered, by release number and feature name: the
+     * lexer and the parser ask it many times per pattern, and the answer
+     * depends on nothing else. As many entries as releases asked about times
+     * features.
+     *
+     * @var array<int, array<string, bool>>
+     */
+    private static array $supported = [];
+
+    /**
+     * What the running engine answered for the facts no release names.
+     *
+     * @var array{measuresBranchesApart: bool, keepsCallCaptures: bool}|null
+     */
+    private static ?array $runningEngine = null;
+
+    /**
+     */
+    private int $release;
+    /**
+     */
+    public int $phpVersionId;
+
+    /**
+     * @param int         $phpVersionId a PHP_VERSION_ID, 80400 for PHP 8.4
+     * @param string      $pcreVersion  a PCRE2 release, "10.44", as PCRE_VERSION
+     *                                  spells it or without its date
+     * @param string|null $locale       an LC_CTYPE locale, "tr_TR.UTF-8"; the
+     *                                  runtime's when null
+     *
+     * @throws InvalidRegexOptionException when $pcreVersion names no release, or
+     *                                     $locale one this machine cannot set
+     */
+    public function __construct(
+        int $phpVersionId,
+        string $pcreVersion,
+        ?string $locale = null
+    ) {
+        $this->phpVersionId = $phpVersionId;
+        if (null === self::releaseParts($pcreVersion)) {
+            throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not "%s".', $pcreVersion));
+        }
+        [$major, $minor] = self::releaseParts($pcreVersion);
+        if ((int) $major < 10) {
+            throw new InvalidRegexOptionException(\sprintf('"pcre_version" %s names no PCRE2 release: the first is 10.00.', trim($pcreVersion)));
+        }
+        $this->release = (int) $major * 1000 + (int) $minor;
+        $this->pcreVersion = (int) $major.'.'.$minor;
+        $this->locale = null === $locale ? CharacterTables::current() : CharacterTables::forLocale($locale)->locale;
+    }
+
+    /**
+     * The running PHP and the PCRE2 it links, which may not be the one its
+     * version bundles: the PHP 8.4 packages of a distribution may link an
+     * older one.
+     */
+    public static function runtime(): self
+    {
+        return new self(\PHP_VERSION_ID, \PCRE_VERSION);
+    }
+
+    /**
+     * The PHP versions, as PHP_VERSION_IDs in ascending order, at which a
+     * verdict of the library may change: the lowest PHP it supports, then
+     * each version that bundles a newer PCRE2 or where a rule changes (8.5
+     * refuses "\K" in a lookaround, and stops refusing "\C" under "u" until
+     * 8.5.10). Judging a range of PHP versions at these points judges all of
+     * it. The list may grow in a minor release, when the library learns a
+     * PHP release or a rule.
+     *
+     * @return list<int>
+     */
+    public static function phpVersionBoundaries(): array
+    {
+        return PhpVersionGates::POINTS;
+    }
+
+    /**
+     * A PHP version with the PCRE2 its sources bundle: 10.32 for 7.3, 10.33
+     * for 7.4, 10.35 for 8.0, 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3,
+     * 10.44 for 8.4 through 8.6. A series is given the release of its x.y.0,
+     * but for 8.1: 8.1.0 bundled 10.37, and 8.1.1 onwards 10.39. PHP 7.4.6
+     * moved to 10.34 and 7.4.12 to 10.35, judged as 10.33. PHP 7.2 and
+     * earlier link PCRE1, which no PCRE2 release stands for: they get 10.32.
+     *
+     * An approximation, not a promise. A PHP version never determines the
+     * PCRE2 a build links: distributions compile against their own
+     * libpcre2, and patch releases carry whatever was current when they
+     * were cut - 8.4.0 bundles 10.44 while 8.4.27 links 10.49. Three
+     * answers exist and none collapses into another: the engine the
+     * running PHP links (PCRE_VERSION), the one bundledWith() estimates
+     * for an analysed PHP, and an explicit pin the consumer holds.
+     * ParserOptions::resolveTarget() decides between them, for every entry
+     * point: the pin wins; the running engine speaks for the running PHP,
+     * and, in the lint, the language server and the bridges, for every PHP
+     * of its minor version; the estimate answers for the rest.
+     */
+    public static function bundledWith(int $phpVersionId): self
+    {
+        switch (true) {
+            case true === $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_44:
+                $release = '10.44';
+                break;
+            case true === $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_42:
+                $release = '10.42';
+                break;
+            case true === $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_40:
+                $release = '10.40';
+                break;
+            case true === $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_39:
+                $release = '10.39';
+                break;
+            case true === $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_35:
+                $release = '10.35';
+                break;
+            case true === $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_33:
+                $release = '10.33';
+                break;
+            default:
+                $release = '10.32';
+                break;
+        }
+
+        return new self($phpVersionId, $release);
+    }
+
+    /**
+     * The same PHP and PCRE2 under another locale, the runtime's for null.
+     *
+     * @throws InvalidRegexOptionException when $locale names one this machine
+     *                                     cannot set
+     */
+    public function withLocale(?string $locale): self
+    {
+        return new self($this->phpVersionId, $this->pcreVersion, $locale);
+    }
+
+    /**
+     * The PCRE2 release whose rules judge this one: its own, or 10.39 for
+     * an older release. The library knows the rules of 10.39 and later in
+     * full; of an older release, only the few changes it names.
+     */
+    public function judgedWith(): string
+    {
+        return $this->release < self::KNOWN_IN_FULL ? '10.39' : $this->pcreVersion;
+    }
+
+    /**
+     * Whether the PCRE2 judged is at least $release, as "10.47".
+     */
+    public function pcreAtLeast(string $release): bool
+    {
+        // "10.4" would read as 10.04 and hold for every release: a minor is
+        // written with two digits at least, as PCRE2 writes it.
+        [, $minor] = explode('.', $release, 2) + [1 => ''];
+        $number = \strlen($minor) >= 2 ? self::releaseNumber($release) : null;
+        if (null === $number) {
+            throw new InvalidRegexOptionException(\sprintf('"%s" is not a PCRE2 release like "10.45".', $release));
+        }
+
+        return $this->release >= $number;
+    }
+
+    /**
+     * Whether the PCRE2 judged has a behaviour: it arrived in that release
+     * or an earlier one.
+     */
+    public function supports(PcreFeature $feature): bool
+    {
+        if (isset(self::$supported[$this->release][$feature->name])) {
+            return self::$supported[$this->release][$feature->name];
+        }
+
+        StaticCaches::register(self::class, static function (): void {
+            self::$supported = [];
+        });
+
+        return self::$supported[$this->release][$feature->name] = $this->pcreAtLeast($feature->release());
+    }
+
+    /**
+     * Whether the first pass of the PCRE2 judged checks each item of a
+     * pattern against the size limit with its own branch, and each branch
+     * with those before it where the next one starts: from 10.48, and in
+     * the 10.40 PHP 8.2 bundles from 8.2.35, which carries that fix. Up to
+     * 10.47 an item is checked with the branches before it in its group.
+     *
+     * PCRE2 gives that fix to every distributor of 10.39 to 10.47, and a
+     * release names neither who built it nor what was applied: the build
+     * that runs is asked, and any other build is judged as the release
+     * PCRE2 tagged, another patch release of the running PHP included.
+     *
+     * @internal
+     */
+    public function measuresBranchesApart(): bool
+    {
+        if ($this->isRunningBuild()) {
+            return self::runningEngine()['measuresBranchesApart'];
+        }
+
+        return $this->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd())
+            || (self::BUNDLED_WITH_PHP_8_2 === $this->release && PhpVersionGates::bundlesPcre2WithItsFixes($this->phpVersionId));
+    }
+
+    /**
+     * Whether the interpreter of the PCRE2 judged keeps, after a subroutine
+     * call, what the groups inside the called one captured, where PCRE2
+     * gives them their earlier values back: the releases PCRE2 tagged before
+     * 10.43 keep them, the copies PHP bundles do not, nor does the JIT. The
+     * build that runs is asked; any other target keeps them on a release
+     * before 10.43 that is not the one its PHP bundles.
+     *
+     * @internal the capture shape reads it
+     */
+    public function keepsCallCaptures(): bool
+    {
+        if ($this->isRunningBuild()) {
+            return self::runningEngine()['keepsCallCaptures'];
+        }
+
+        return !$this->supports(PcreFeature::CallCapturesGivenBack()) && self::bundledWith($this->phpVersionId)->release !== $this->release;
+    }
+
+    /**
+     * Answers in place of the running engine's, or null to ask it again.
+     *
+     * @internal a test asks for a build this machine does not run
+     *
+     * @param array{measuresBranchesApart: bool, keepsCallCaptures: bool}|null $answers
+     */
+    public static function useRunningEngineAnswers(?array $answers): void
+    {
+        self::$runningEngine = $answers;
+    }
+
+    /**
+     * Where PCRE2 reports an error it reports past the character at fault
+     * from 10.47, given that later offset: $shift bytes earlier, on the
+     * character itself, before 10.47, which every PHP release bundles. A
+     * character of several bytes in UTF mode moves back whole.
+     *
+     * @internal
+     */
+    public function faultOffset(int $offset, int $shift = 1): int
+    {
+        return $this->supports(PcreFeature::ErrorOffsetPastTheFault()) ? $offset : $offset - $shift;
+    }
+
+    /**
+     * Whether the running engine is the one judged: the same PHP minor
+     * version, linking the same PCRE2 release, under the same locale. Only
+     * then can PHP itself be asked about a pattern.
+     */
+    public function isRunningEngine(): bool
+    {
+        $running = self::runtime();
+
+        return intdiv($this->phpVersionId, 100) === intdiv($running->phpVersionId, 100)
+            && $this->release === $running->release
+            && $this->locale === $running->locale;
+    }
+
+    /**
+     * What a cached tree was read for: the PHP major and minor version, as
+     * no parse rule depends on a patch release, the PCRE2 release, and the
+     * locale but "C", whose tables may judge a pattern otherwise. The rules
+     * that depend on a patch release, such as "\C" under "u" from PHP
+     * 8.4.25, belong to the validator, which runs on every call, cached
+     * tree or not.
+     */
+    public function cacheKey(): string
+    {
+        return \sprintf(
+            'php%d.%d/pcre%d.%d%s',
+            intdiv($this->phpVersionId, 10000),
+            intdiv($this->phpVersionId, 100) % 100,
+            intdiv($this->release, 1000),
+            $this->release % 1000,
+            CharacterTables::BUILT_IN === $this->locale ? '' : '/'.$this->locale,
+        );
+    }
+
+    /**
+     * What tells this target from another: the PHP_VERSION_ID, the PCRE2
+     * release and the locale, as "80426/10.44/C".
+     */
+    public function key(): string
+    {
+        return $this->phpVersionId.'/'.$this->pcreVersion.'/'.$this->locale;
+    }
+
+    /**
+     * Whether the target is the build that runs: the same PHP release, its
+     * patch release included, linking the same PCRE2 release, under any
+     * locale. What no release names belongs to a build: PHP 8.2.35 bundles
+     * a fix of PCRE2 10.40 that 8.2.34 does not. A locale changes the
+     * character tables, not the library compiled.
+     */
+    private function isRunningBuild(): bool
+    {
+        return \PHP_VERSION_ID === $this->phpVersionId && self::runtime()->release === $this->release;
+    }
+
+    /**
+     * What the running engine answers, asked once: two branches too large
+     * only together, then a reference to no group, which a build measuring
+     * branches apart meets first; and the groups inside a group called
+     * twice, which the interpreter leaves set or gives back.
+     *
+     * @return array{measuresBranchesApart: bool, keepsCallCaptures: bool}
+     */
+    private static function runningEngine(): array
+    {
+        if (null === self::$runningEngine) {
+            $engine = new PcreEngine();
+            $tooLarge = $engine->compile('/(?:[^a]){5000}|(?:[^a]){4000}\k<n>(?:[^a]){1000}/');
+            $called = $engine->match('/(?(DEFINE)(?<pair>(\d)(\d)))((?&pair)(?&pair))/', '1234')->groups;
+            self::$runningEngine = [
+                'measuresBranchesApart' => false === strpos((string) (($nullsafeVariable1 = $tooLarge) ? $nullsafeVariable1->message : null), 'too large'),
+                'keepsCallCaptures' => '' !== ($called[2] ?? ''),
+            ];
+        }
+
+        return self::$runningEngine;
+    }
+
+    private static function releaseNumber(string $version): ?int
+    {
+        $parts = self::releaseParts($version);
+
+        return null === $parts ? null : (int) $parts[0] * 1000 + (int) $parts[1];
+    }
+
+    /**
+     * The major and minor digits of a release, read without the engine: a
+     * backtrack limit set low on the host must not make it unreadable.
+     *
+     * @return array{string, string}|null
+     */
+    private static function releaseParts(string $version): ?array
+    {
+        $whitespace = " \t\n\v\f\r";
+        $release = ltrim($version, $whitespace);
+        $release = (string) substr($release, 0, strcspn($release, $whitespace));
+
+        // A pre-release build is spelled "10.45-RC1 2024-12-01".
+        $hyphen = strpos($release, '-');
+        $build = false === $hyphen ? null : (string) substr($release, $hyphen + 1);
+        $parts = explode('.', false === $hyphen ? $release : (string) substr($release, 0, $hyphen));
+        // PCRE2 10 writes its minor with two digits: "10.4" names no
+        // release, and would read as 10.04.
+        if (2 !== \count($parts) || !Ascii::isDigit($parts[0]) || !Ascii::isDigit($parts[1]) || ('10' === ltrim($parts[0], '0') && \strlen($parts[1]) < 2)) {
+            return null;
+        }
+        if (null !== $build && !Ascii::isAlnum($build)) {
+            return null;
+        }
+
+        return [$parts[0], $parts[1]];
+    }
+}

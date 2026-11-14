@@ -9,6 +9,8 @@
 #
 # Splits the monorepo into the read-only repositories of its packages, with
 # splitsh-lite: each src/<Package> becomes the root of php-regex/<repository>.
+# build/php74, the PHP 7.4 twin of src/Parser that build/generate.sh writes
+# and the pull requests hold to it, becomes php-regex/regex-parser-php74.
 # .github/organization becomes php-regex/.github, the organization's profile and default
 # community files, pushed to its main branch, never tagged.
 #
@@ -47,6 +49,7 @@ SPLITS=(
     "src/Rector:regex-rector"
     "src/Symfony:regex-symfony"
     "src/Laravel:regex-laravel"
+    "build/php74:regex-parser-php74"
     # GitHub reads an organization's profile from the default branch of its
     # .github repository: a third field names the branch pushed to.
     ".github/organization:.github:main"
