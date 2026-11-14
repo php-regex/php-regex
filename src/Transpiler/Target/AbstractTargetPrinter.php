@@ -390,18 +390,6 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * Warn of a set the printer writes, a dot, a type, a property or a
-     * class with its members, that reaches past ASCII without u, where
-     * PCRE takes one byte for a set and the target one character. The two
-     * agree while the set stays in ASCII, and differ on a subject holding a
-     * character outside it once the set reaches there: in PCRE, which
-     * takes a byte above 0x7F for the dot, a negated class, "\D", "\W" and
-     * "\S", and for "\h" and "\v", or in the target, which reads the
-     * character where PCRE reads a byte as Latin-1 for a property. Such a
-     * set is not refused, most patterns holding one and most subjects
-     * being ASCII: the first one written is named, once per pattern.
-     */
-    /**
      * What "\h" or "\v" matches, written for a class: the characters PCRE
      * reads under u, the bytes it takes without u, as "\s" is written.
      */
@@ -414,6 +402,18 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         return $this->unicode ? self::VERTICAL_SPACES : self::BYTE_VERTICAL_SPACES;
     }
 
+    /**
+     * Warn of a set the printer writes, a dot, a type, a property or a
+     * class with its members, that reaches past ASCII without u, where
+     * PCRE takes one byte for a set and the target one character. The two
+     * agree while the set stays in ASCII, and differ on a subject holding a
+     * character outside it once the set reaches there: in PCRE, which
+     * takes a byte above 0x7F for the dot, a negated class, "\D", "\W" and
+     * "\S", and for "\h" and "\v", or in the target, which reads the
+     * character where PCRE reads a byte as Latin-1 for a property. Such a
+     * set is not refused, most patterns holding one and most subjects
+     * being ASCII: the first one written is named, once per pattern.
+     */
     protected function warnOfASetPastAscii(NodeInterface $node): void
     {
         if ($this->unicode || $this->warnedOfASet) {
