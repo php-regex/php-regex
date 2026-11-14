@@ -255,11 +255,6 @@ the probes hold no whitespace.
   backport also touches the matcher and the JIT of PHP 8.2.35: what the
   library claims of matching on 10.40 was not re-read.
 
-- Without `u`, the transpiler warns of `\p`, not refuses it, although PCRE
-  reads the byte as Latin-1 there; `\h` and `\v` are written with the
-  full Unicode set where PCRE takes 0xA0 and 0x85. Warning or refusal is
-  the decision.
-
 - `CaptureFacts::reaches()` walks the call graph again for each group:
   quadratic in the groups, nothing measurable at eighty levels.
 
