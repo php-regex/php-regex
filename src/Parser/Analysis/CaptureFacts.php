@@ -392,53 +392,126 @@ final class CaptureFacts
             return null;
         }
 
-        $seen = [];
+        if (!isset($this->recursive[$id = spl_object_id($group)])) {
+            $this->markRecursion($group);
+        }
 
-        return ($this->recursive[spl_object_id($group)] ??= $this->reaches($group, $group, $seen)) ? null : $group->child;
+        return $this->recursive[$id] ? null : $group->child;
     }
 
     /**
-     * Whether a call the group holds runs the target, directly or through
-     * the groups it calls in turn.
-     *
-     * @param array<int, true> $seen the groups already followed
+     * Records, for the group and every group its calls reach, whether it
+     * runs itself again: whether it calls itself, or shares a ring of calls
+     * with another group. The rings are the strongly connected parts of the
+     * call graph, found in one walk of it (Tarjan's): following the calls
+     * of each group to their end instead read the graph once per group. A
+     * group an earlier walk recorded is not walked again.
      */
-    private function reaches(GroupNode $group, GroupNode $target, array &$seen): bool
+    private function markRecursion(GroupNode $start): void
     {
-        foreach (self::callsIn($group->child) as $call) {
-            $called = $this->groups?->groupsCalledBy($call)[0] ?? null;
-            if ($called === $target) {
-                return true;
-            }
+        $order = [];
+        $low = [];
+        $selfCalls = [];
+        $stack = [];
+        $onStack = [];
+        $frames = [];
+        $enter = function (GroupNode $group) use (&$order, &$low, &$stack, &$onStack, &$frames): void {
+            $id = spl_object_id($group);
+            $order[$id] = $low[$id] = \count($order);
+            $stack[] = $id;
+            $onStack[$id] = true;
+            $frames[] = [$group, $this->calledGroups($group), 0];
+        };
+        $enter($start);
 
-            if (null === $called || isset($seen[$id = spl_object_id($called)])) {
+        while ([] !== $frames) {
+            $top = \count($frames) - 1;
+            [$group, $called, $next] = $frames[$top];
+            $id = spl_object_id($group);
+            if ($next < \count($called)) {
+                $frames[$top][2]++;
+                $calledId = spl_object_id($called[$next]);
+                if ($calledId === $id) {
+                    $selfCalls[$id] = true;
+                }
+
+                if (isset($this->recursive[$calledId])) {
+                    continue;
+                }
+
+                if (!isset($order[$calledId])) {
+                    $enter($called[$next]);
+                } elseif (isset($onStack[$calledId])) {
+                    $low[$id] = min($low[$id], $order[$calledId]);
+                }
+
                 continue;
             }
 
-            $seen[$id] = true;
-            if ($this->reaches($called, $target, $seen)) {
-                return true;
+            array_pop($frames);
+            if ([] !== $frames) {
+                $callerId = spl_object_id($frames[\count($frames) - 1][0]);
+                $low[$callerId] = min($low[$callerId], $low[$id]);
+            }
+
+            if ($low[$id] !== $order[$id]) {
+                continue;
+            }
+
+            // The group heads a ring: the groups above it on the stack are
+            // the ring's.
+            $ring = [];
+            while ([] !== $stack) {
+                $member = array_pop($stack);
+                unset($onStack[$member]);
+                $ring[] = $member;
+                if ($member === $id) {
+                    break;
+                }
+            }
+
+            foreach ($ring as $member) {
+                $this->recursive[$member] = \count($ring) > 1 || isset($selfCalls[$member]);
             }
         }
-
-        return false;
     }
 
     /**
-     * @return list<SubroutineNode>
+     * The groups the calls a group holds run, in the order they are
+     * written; a call of the whole pattern or of no group runs none.
+     *
+     * @return list<GroupNode>
      */
-    private static function callsIn(NodeInterface $node): array
+    private function calledGroups(GroupNode $group): array
+    {
+        $calls = [];
+        self::collectCalls($group->child, $calls);
+
+        $called = [];
+        foreach ($calls as $call) {
+            $target = $this->groups?->groupsCalledBy($call)[0] ?? null;
+            if (null !== $target) {
+                $called[] = $target;
+            }
+        }
+
+        return $called;
+    }
+
+    /**
+     * @param list<SubroutineNode> $calls
+     */
+    private static function collectCalls(NodeInterface $node, array &$calls): void
     {
         if ($node instanceof SubroutineNode) {
-            return [$node];
+            $calls[] = $node;
+
+            return;
         }
 
-        $calls = [];
         foreach ($node->getChildren() as $child) {
-            $calls = [...$calls, ...self::callsIn($child)];
+            self::collectCalls($child, $calls);
         }
-
-        return $calls;
     }
 
     /**

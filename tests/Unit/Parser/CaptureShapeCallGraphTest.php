@@ -23,6 +23,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -36,6 +37,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class CaptureShapeCallGraphTest extends TestCase
 {
+    use LinearTimeAssertions;
     use PcreGates;
 
     /**
@@ -151,6 +153,42 @@ final class CaptureShapeCallGraphTest extends TestCase
             'lowercase' => $group->lowercase,
             'uppercase' => $group->uppercase,
         ]);
+    }
+
+    /**
+     * Whether a called group runs itself again is read once for the whole
+     * call graph: a chain of levels, each calling the one below, is read in
+     * a time that grows with the levels, where following the calls of each
+     * level to the end of the chain took a time that grows with their
+     * square.
+     */
+    #[Test]
+    public function test_a_chain_of_calls_is_read_in_linear_time(): void
+    {
+        $this->assertSame(1, preg_match('/^(?(DEFINE)'.self::levels(3, 'a', '%s').')(?&g3)$/', 'a'));
+
+        $this->assertSame('array{0: \'a\'}', self::analyze('/(?(DEFINE)'.self::levels(400, 'a', '%s').')(?&g400)/')->matchShape());
+        $this->assertLinearTime(static function (int $levels): void {
+            self::analyze('/(?(DEFINE)'.self::levels($levels, 'a', '%s').')(?&g'.$levels.')/');
+        }, 250, 'A chain of calls');
+    }
+
+    /**
+     * A group that runs itself again, through one call or through a ring of
+     * calls, reads no value; one that calls a ring without being in it does.
+     */
+    #[Test]
+    public function test_a_group_in_a_ring_of_calls_reads_no_value(): void
+    {
+        $this->assertSame(1, preg_match('/^(?(DEFINE)(?<a>x(?&b)?)(?<b>y(?&a)?)(?<c>z(?&a)))(?&c)$/', 'zxyx'));
+        $this->assertSame(1, preg_match('/^(?(DEFINE)(?<a>x(?&b)?)(?<b>y(?&a)?)(?<c>z(?&a)))(?&c)$/', 'zx'));
+        $this->assertSame(1, preg_match('/^(?(DEFINE)(?<a>x(?&b)?)(?<b>y)(?<c>z(?&a)))(?&c)$/', 'zxy'));
+        $this->assertSame(1, preg_match('/^(?(DEFINE)(?<a>x(?&a)?))(?&a)$/', 'xxx'));
+
+        $this->assertSame('array{0: non-falsy-string}', self::analyze('/(?(DEFINE)(?<a>x(?&b)?)(?<b>y(?&a)?)(?<c>z(?&a)))(?&c)/')->matchShape());
+        $this->assertSame('array{0: \'zx\'|\'zy\'}', self::analyze('/(?(DEFINE)(?<a>x)(?<b>y)(?<c>z(?:(?&a)|(?&b))))(?&c)/')->matchShape());
+        $this->assertSame('array{0: \'zx\'|\'zxy\'}', self::analyze('/(?(DEFINE)(?<a>x(?&b)?)(?<b>y)(?<c>z(?&a)))(?&c)/')->matchShape());
+        $this->assertSame('array{0: string}', self::analyze('/(?(DEFINE)(?<a>x(?&a)?))(?&a)/')->matchShape());
     }
 
     /**
