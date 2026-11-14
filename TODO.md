@@ -88,24 +88,6 @@ to match).
    first.
 
 
-## Blog articles
-
-- The four launch articles wait for a read and a go: the tour's pull
-  request publishes the blog list and the `## Articles` section of
-  `docs/llms.txt` in the same stroke as the flip — one commit once they
-  are validated.
-- On the day of the 8.6 GA, re-check the 8.6 row of the version matrix in
-  `which-pcre2-ships-with-which-php` against the PHP-8.6 branch: the article
-  promises it. On 2026-11-10 the branch and master still bundle PCRE2
-  10.44, as the row says.
-- Next articles, in priority order: variable-length lookbehind across
-  PHP 8.2–8.4, the capture shapes of `$matches`, why `pcre.backtrack_limit`
-  does not protect under the PCRE2 JIT, regex equivalence with proofs,
-  named groups with branch reset, measured data from the corpus,
-  transpiling to JavaScript with a proof, `preg_match()` versus
-  `str_contains()` measured, Symfony route requirements audited.
-
-
 ## PHPStan pull request
 
 When the pull request is opened, state the parse cost in its description.
@@ -125,60 +107,22 @@ measured under 3 %.
 
 ## PHPStan fork: preg_quote() placeholders
 
-Everything below happens in the phpstan-src checkout
-`~/projects/php-regex/phpstan-src`, branch `read-regex-shapes-through-phpregex`;
-nothing changes in this repository. `RegexExpressionHelper::resolvePatternConcat()`
-(`src/Type/Regex/RegexExpressionHelper.php`, the single choke point — its callers
-are `RegexArrayShapeMatcher.php:726`, `PregMatchDynamicReturnTypeExtension.php:83`
-and `RegularExpressionPatternRule.php:92`) replaces every `preg_quote()` with
-`(?:.*)`, sound only where the pattern reads the quoted text as literal
-characters. Six positions are not that: in a class, where
-`'/[' . preg_quote($x, '/') . ']/'` folds to a class over the characters of the
-placeholder; after `\`, where the escaped `(` eats the placeholder's and the
-group never opens; after `(?`, where `'/(?<' . preg_quote($x, '/') . '>a)/'`
-folds to a group name PCRE refuses, so a valid call is reported invalid; inside
-`\Q…\E`; in braces; and before a quantifier or a comment an empty text leaves to
-what precedes it.
+In `~/projects/php-regex/phpstan-src`, branch `read-regex-shapes-through-phpregex`:
+`2fddb71bf` reads a quoted text in place (the shape, the return type and the
+validity rule) and the commit after it folds `preg_quote()` of a constant
+string to its literal; both sit on top of the PR commit, not pushed. Squash
+them into the PR commit or keep them apart, then push.
 
-`src/Psalm/QuotedPattern.php` in this repository is the contract to port:
-`(?:[\s\S]*)` for any text, as `.*` misses `"\n"` without `s`; each quoted part
-re-read in place with the probes `''`, `'\\\\E'`, `'0'`, `'n'`, `','`, `"'"`,
-`'\.'`, `'\000'` (the forms `preg_quote()` emits) and the other parts empty;
-each probe must parse, keep the exact group list (`CaptureShapeAnalyzer`), and
-show its characters as literal nodes outside every class between the exact
-offsets; `[*+?{#]` or `(?#` right after an empty text withholds; the first and
-the last parts must carry the delimiters, as `preg_quote()` escapes the
-delimiter only when it is given; any failure withholds, never guesses. A
-withheld check returns a type with no constant strings, so the three callers
-degrade; the probe logic sits in a class beside `RegexGroupParser`, which shows
-how the pinned `php-regex/regex-parser-php74` build is consumed — anything new
-must exist in that pinned build. The prose contract is "Patterns built with
-`preg_quote()`" in `docs/guides/psalm.md`.
 
-Red first, under `~/projects/php-regex/phpstan-src`: the six positions assert
-the plain fallback type in `tests/PHPStan/Analyser/nsrt/preg_match_shapes.php`,
-beside the existing `preg_quote` rows (386-422), which keep their types — a
-quoted part in literal position loses nothing; and the `(?<` case leaves
-`RegularExpressionPatternRuleTest` silent on a valid call. Green through
-`make tests`, `make phpstan`, and the 329-pattern engine parity test. A separate
-follow-up folds `preg_quote()` of a constant string to the literal it returns,
-as `CallTypes::quote` does.
+## Corpus
 
-Two verdicts leak through the placeholder even where the quoted text is read
-as literal characters, so the port above does not cover them (seen 2026-11-10,
-PHP 8.4, PCRE2 10.49). `PregMatchDynamicReturnTypeExtension` reads the
-placeholder as the pattern: `preg_match('/' . preg_quote($x, '/') . '/', $s)`
-is typed `1|false` and `=== 0` on it is reported as always false, where `/abc/`
-returns 0 on `zzz`. `RegularExpressionPatternRule` compiles the placeholder:
-`'/(?<=' . preg_quote($x, '/') . ')\d+/'` is reported as
-`length of lookbehind assertion is not limited`, where `/(?<=id\=)\d+/`
-compiles; PHPStan 2.3.5 reports it too. As `PregCallAnalyzer::typeAroundQuotes()`
-does here, the placeholder stands for the groups only: the return type and the
-validity rule read a pattern with a quoted part as a pattern that is not
-constant. Red first: a new row keeps `0|1|false` for that `preg_match()`, and
-the lookbehind call leaves `RegularExpressionPatternRuleTest` silent. Under `x`
-a quoted space is not a literal either (`/^a b$/x` matches `ab`, not `a b`), and
-the probes hold no whitespace.
+- `bin/corpus-lint` merges every part its manifest lists, and nothing drops
+  a repository that left `corpus.json`: the 32 removed on 2026-11-12
+  (`symfony/mime`, `phpstan/phpstan`, …) still have a section in
+  `var/log/corpus.log`, judged by the library of that day, and
+  `bin/findings-report` still publishes their JSON parts. Prune the parts
+  and the manifest entries of a repository missing from `corpus/` before the
+  merge, then regenerate the log and the findings.
 
 
 ## Pull request checks
@@ -188,78 +132,3 @@ the probes hold no whitespace.
   requires no check yet.
 - The Box pin (4.7.1 and its checksum, in `phar.yml` and `packages.yml`) is
   bumped by hand: Dependabot does not see it.
-
-
-## Open questions
-
-- The interpreter of the PCRE2 10.42 that Ubuntu 24.04 packages
-  (`10.42-4ubuntu2.2`) keeps what a subroutine call captured in the groups
-  inside the called one: `/(?(DEFINE)(?<pair>(\d)(\d)))((?&pair)(?&pair))/`
-  on `1234` writes `2: 3` and `3: 4` in `pcre2test`, where its own JIT, the
-  10.42 PHP bundles and Debian's 10.46 leave both unset (2026-11-10). PHP
-  on that system answers one way or the other as the JIT runs the pattern
-  or not, and the capture shape, which says `''` for both, is wrong there
-  without the JIT. The call graph rows of #340 ask the interpreter and are
-  held to the engines that give the captures back
-  (`requiresCallCapturesGivenBack()`). Which Ubuntu patch does it, whether
-  other packaged releases do, and whether the shape should say so for a
-  system 10.42 are open; the engine tests that write `ini_set('pcre.jit',
-  '0')` after a pattern was compiled do not ask the interpreter either.
-
-- A password rule of Unicode classes is still slow or refused after #346,
-  in the determinization: it writes one transition per range of the
-  alphabet per state, about 2,100 ranges. Four `\p{..}` lookaheads take
-  1.5 s with `.{8,}` and pass the default budget with `.{12,}`. The
-  classes of the alphabet #346 reads the product by would cut that table.
-  The forty `(?=.*a{2})` of the earlier note are answered in under a
-  second: identical lookaheads merge; forty distinct characters reach the
-  state limit.
-
-- A ReDoS repair still proves one rewrite per quantifier after #348 (1,000
-  quantifiers: about 20 s). The PHPStan rule reads `repair()[0]` alone: a
-  call that stops at the first certified repair, or a prover that keeps
-  work between rewrites, is the next gain. `/^(?:a+)++$/` is not proven
-  linear ("atomic group at offset 1 over-approximated") although PHP
-  rejects forty `a` and a `!` at once, so no repair offers a possessive on
-  the outer loop: proving it needs the atomic body modelled by the end it
-  commits to, not by every way through it.
-
-- After #343 the lexer still cuts the text of a nested assertion body once
-  per level and checks its UTF-8 again: time stays depth times size. A
-  script run node holds its body text, so `(*asr:` nested 3,200 deep peaks
-  at 77 MB: changing that field is a contract decision. Plain `(` nested
-  about 6,400 deep ends PHP on its C stack (800 under a 1 MB stack). On PHP 8.6
-  `memory_get_usage()` stops counting call frames below some 900 levels:
-  a memory ratio measured across that depth bends there.
-
-- Upstream recommends the fixes PHP 8.2.35 backported
-  (`pcre2-10.48-Fix-compiler-integer-overflows.patch`) to every
-  distributor of PCRE2 10.39 to 10.47. When a PHP 8.3, 8.4 or 8.5 patch
-  release or a distribution's libpcre2 applies them,
-  `PatternTooLargeErrorOrderTest` and `PatternTooLargeOffsetTest` fail on
-  that cell as they did on PHP 8.2: one more gate beside
-  `BUNDLES_PCRE2_10_40_WITH_ITS_FIXES`, or a way for a target to name "a
-  release with upstream's fixes". PHP 8.2.35 linked to a system 10.40
-  without them is judged as patched: `PCRE_VERSION` cannot tell. The
-  backport also touches the matcher and the JIT of PHP 8.2.35: what the
-  library claims of matching on 10.40 was not re-read.
-
-- Without `u`, the transpiler warns of `\p`, not refuses it, although PCRE
-  reads the byte as Latin-1 there; `\h` and `\v` are written with the
-  full Unicode set where PCRE takes 0xA0 and 0x85. Warning or refusal is
-  the decision.
-
-- `regex.lint.overlap.charset` probes an atom under the options of `a` that
-  stand where it does, but the flags it reads them from keep letters only:
-  the D and S of `(?aD)` and `(?aS)` read as the pattern's own `/D` and
-  `/S`. Under a pattern that sets either, such a branch is left unjudged
-  (`/(?:(?aD:\w)x|éy)+z/uD` reports nothing, though `é` starts both).
-  Keeping the options of `a` apart from the letters would judge it.
-
-- `CaptureFacts::reaches()` walks the call graph again for each group:
-  quadratic in the groups, nothing measurable at eighty levels.
-
-- On Windows the tests read a child's standard output to its end, then its
-  standard error (`ProcessPipes::drain()`): a pipe of `proc_open()` cannot
-  be waited on there, so a child that fills its error stream first would
-  block.

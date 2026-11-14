@@ -1,4 +1,5 @@
 deptrac:
+  cache_file: .cache/deptrac/deptrac.cache
   paths:
     - ./src
   exclude_files:

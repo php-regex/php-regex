@@ -1984,3 +1984,179 @@ main > section:not([class]) p > a.button:hover {
 .article-footer {
   border-top: 1px solid var(--line-soft);
 }
+
+/* ---- The index list --------------------------------------------------------
+ * One entry per article, read like a table of contents: on a wide screen
+ * the date takes a column of its own, so every title starts on the same
+ * vertical line and the dates run down the left edge; on a phone the date
+ * sits above the title. The title's link stretches over the whole entry,
+ * and the entry answers a hover or a keyboard focus with one soft wash
+ * that reaches past the words, never a frame around them. */
+
+.post-list {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.post {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: .5rem;
+  margin: 0;
+  padding-block: 1.75rem;
+}
+
+.post + .post {
+  border-top: 1px solid var(--line-soft);
+}
+
+.post::before {
+  content: '';
+  position: absolute;
+  inset: .5rem -1rem;
+  z-index: -1;
+  border-radius: var(--radius-l);
+  background: var(--wash);
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+
+.post:hover::before,
+.post:focus-within::before {
+  opacity: 1;
+}
+
+.post-date {
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  line-height: 1.5;
+  letter-spacing: .02em;
+  color: var(--mute);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.post-body {
+  min-width: 0;
+}
+
+main h3.post-title {
+  margin: 0 0 .5rem;
+  font-size: 1.25rem;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.post-link,
+.post-link:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.post-link::after {
+  content: '';
+  position: absolute;
+  inset: .5rem -1rem;
+  border-radius: var(--radius-l);
+}
+
+.post-link:focus-visible {
+  outline: none;
+}
+
+.post-link:focus-visible::after {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+main p.post-desc {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: .9375rem;
+  line-height: 1.6;
+}
+
+main p.post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .375rem .5rem;
+  margin: .875rem 0 0;
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  line-height: 1.5;
+  color: var(--mute);
+}
+
+.post-meta .draft-tag {
+  margin: 0;
+  vertical-align: baseline;
+}
+
+.post-meta .article-tag {
+  margin: 0;
+  padding: .05rem .5rem;
+  font-size: .6875rem;
+}
+
+.post-cta {
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.post-cta-arrow {
+  display: inline-block;
+  transition: transform .15s ease;
+}
+
+.post:hover .post-cta-arrow,
+.post:focus-within .post-cta-arrow {
+  transform: translateX(3px);
+}
+
+@media (min-width: 768px) {
+  .post {
+    grid-template-columns: 9rem minmax(0, 1fr);
+    column-gap: 2rem;
+  }
+
+  /* The date hangs on the title's first line, not on the entry's top. */
+  .post-date {
+    padding-top: .3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post::before,
+  .post-cta-arrow {
+    transition: none;
+  }
+}
+
+/* ---- The article column ----------------------------------------------------
+ * Between 1024px and 1280px, with neither rail, the column sits in the
+ * middle of the page instead of hugging its left edge. With the rail, the
+ * code panels and the charts step out of the text measure by the width of
+ * their own padding: a terminal line keeps its full length, and the words
+ * around it keep theirs. */
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .page-shell-article .page-main {
+    justify-items: center;
+  }
+}
+
+@media (min-width: 1280px) {
+  .page-main main .article-content > div.highlighter-rouge,
+  .page-main main .article-content > .pipeline-figure {
+    margin-inline: -1.5rem;
+  }
+}
