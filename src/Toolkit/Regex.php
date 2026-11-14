@@ -74,7 +74,7 @@ use PHPRegex\Transpiler\TranspileResult;
  */
 final class Regex
 {
-    public const VERSION = '2.0.0-DEV';
+    public const VERSION = '2.0.0-RC1';
     public const VERSION_ID = 20000;
 
     /**

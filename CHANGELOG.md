@@ -34,7 +34,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 ### Backward-incompatible changes
 
 - Everything under **Removed** below, and every change [UPGRADE-2.0.md](UPGRADE-2.0.md) lists.
-- The library ships as nineteen `php-regex/regex-*` packages from the `php-regex/php-regex` repository; `yoeunes/regex-parser` stays on 1.x. See [Packages](UPGRADE-2.0.md#packages).
+- The library ships as nineteen `php-regex/regex-*` packages from the `php-regex/php-regex` repository; `yoeunes/regex-parser` is abandoned. See [Packages](UPGRADE-2.0.md#packages).
 - Every class moved from `RegexParser\` to `PHPRegex\<Package>\`, many under a new name (`RegexParser\Regex` is `PHPRegex\Toolkit\Regex`, `CompilerNodeVisitor` is `Parser\Printer\PatternPrinter`); the entries below use the 2.0 names. See [Names](UPGRADE-2.0.md#names).
 - The aliases that kept the 1.x class names resolving are gone, with the file Composer loaded on every request for them. See [Names](UPGRADE-2.0.md#names).
 - The public API is declared: everything else is `@internal` (the CLI and language server classes, the bridges' commands, the lint rules and diagnostics, the transpiler targets, the lexer, the grammar, the validator), as [the backward compatibility promise](docs/reference/backward-compatibility.md) states. See [Names](UPGRADE-2.0.md#names).
