@@ -29,14 +29,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  images:
+    # The tag of the official image PHP 8.6 runs: its release candidates
+    # until its GA (2026-11-19), the release once Docker Hub serves it. The
+    # "-rc" tag lives on after a GA, on the candidates of the next patch
+    # release, so the stable one is taken as soon as there is one.
+    name: Image tags
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      php86: ${{ steps.tags.outputs.php86 }}
+    steps:
+      - name: Find the tag of PHP 8.6
+        id: tags
+        run: |
+          if docker manifest inspect php:8.6-cli > /dev/null 2>&1; then
+            echo 'php86=8.6' >> "$GITHUB_OUTPUT"
+          else
+            echo 'php86=8.6-rc' >> "$GITHUB_OUTPUT"
+          fi
+
   engines-bundled:
     # Part of the suite asks the running engine. The official images build
     # PHP with the PCRE2 php-src bundles, so each supported PHP runs here on
     # its own engine; the "tests" job runs them all on Ubuntu's system PCRE2.
     name: Tests (PHP ${{ matrix.php }}, bundled PCRE2 ${{ matrix.pcre }})
+    needs: images
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    container: php:${{ matrix.php }}-cli
+    container: php:${{ matrix.php == '8.6' && needs.images.outputs.php86 || matrix.php }}-cli
     strategy:
       fail-fast: false
       # Three of the six cells at once: the matrices of one pull request
@@ -49,10 +70,8 @@ jobs:
           - { php: '8.3', pcre: '10.42' }
           - { php: '8.4', pcre: '10.44' }
           - { php: '8.5', pcre: '10.44' }
-          # 8.6-rc is the rolling alias of the official image; it becomes plain
-          # '8.6' on the 8.6 GA day (2026-11-19), when the alias disappears —
-          # rename the row that day or this job breaks.
-          - { php: '8.6-rc', pcre: '10.44' }
+          # Its image's tag is the images job's: the candidates until the GA.
+          - { php: '8.6', pcre: '10.44' }
 
     steps:
       - name: Install Git
@@ -63,11 +82,10 @@ jobs:
         run: apt-get update && apt-get install -y --no-install-recommends git unzip jq
 
       - name: Install multibyte support
-        # The 8.6-rc image ships without mbstring, and compiling it needs
-        # oniguruma; the GA image may restore the extension — try removing
-        # this step then.
-        if: startsWith(matrix.php, '8.6')
+        # An image without mbstring, as the candidates of 8.6 ship, compiles
+        # it, with oniguruma; an image that has it skips the rest.
         run: |
+          if php -r 'exit(extension_loaded("mbstring") ? 0 : 1);'; then exit 0; fi
           apt-get update && apt-get install -y --no-install-recommends libonig-dev
           docker-php-ext-install mbstring
 
@@ -93,10 +111,9 @@ jobs:
           # Without --prefer-dist: tools/phpunit/composer.json installs
           # orchestra/canvas and canvas-core from git, as GitHub serves no
           # archive of some of the commits their tags name.
-          # 8.6 ships no locked nette/schema release that admits it yet.
-          composer install -d tools/phpunit --no-interaction --no-progress ${{ startsWith(matrix.php, '8.6') && '--ignore-platform-req=php+' || '' }}
-          composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress ${{ startsWith(matrix.php, '8.6') && '--ignore-platform-req=php+' || '' }}
-          composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress ${{ startsWith(matrix.php, '8.6') && '--ignore-platform-req=php+' || '' }}
+          composer install -d tools/phpunit --no-interaction --no-progress
+          composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress
+          composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress
 
       - name: Configure PHPUnit 10.5
         # PHP 8.1 runs PHPUnit 10.5, which refuses the two details settings
@@ -137,8 +154,11 @@ jobs:
     # the claim and what the engine does. The 7.4 image runs PCRE2 10.35, not
     # the 10.33 of 7.4.0: claims are keyed by release, never by PHP version.
     name: Engine claims (PHP ${{ matrix.php }}, PCRE2 ${{ matrix.pcre }})
+    needs: images
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      IMAGE: php:${{ matrix.php == '8.6' && needs.images.outputs.php86 || matrix.php }}-cli
     strategy:
       fail-fast: false
       # Two at once: a cell takes a quarter of a minute.
@@ -153,8 +173,8 @@ jobs:
           - { php: '8.3', pcre: '10.42' }
           - { php: '8.4', pcre: '10.44' }
           - { php: '8.5', pcre: '10.44' }
-          # Renamed '8.6' on the 8.6 GA day (2026-11-19), as engines-bundled's.
-          - { php: '8.6-rc', pcre: '10.44' }
+          # Its image's tag is the images job's, as engines-bundled's.
+          - { php: '8.6', pcre: '10.44' }
 
     steps:
       - name: Checkout Code
@@ -163,26 +183,19 @@ jobs:
           persist-credentials: false
 
       - name: Pull the image
-        env:
-          IMAGE: php:${{ matrix.php }}-cli
         run: docker pull --quiet "$IMAGE"
 
       - name: Check the engine
         # An image that moves to another PCRE2 fails here, not in the claims.
         env:
-          IMAGE: php:${{ matrix.php }}-cli
           PCRE: ${{ matrix.pcre }}
         run: |
           docker run --rm --env PCRE "$IMAGE" php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, PHP_EOL; exit(0 === strpos(PCRE_VERSION, getenv("PCRE")." ") ? 0 : 1);'
 
       - name: Lint the verifier on this PHP
-        env:
-          IMAGE: php:${{ matrix.php }}-cli
         run: docker run --rm --volume "$PWD/tests:/app/tests:ro" --workdir /app "$IMAGE" php -l tests/Tools/verify_engine_claims.php
 
       - name: Verify the claims on this engine
-        env:
-          IMAGE: php:${{ matrix.php }}-cli
         run: docker run --rm --volume "$PWD/tests:/app/tests:ro" --workdir /app "$IMAGE" php tests/Tools/verify_engine_claims.php
 
   engines-latest:

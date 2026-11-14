@@ -15,6 +15,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  images:
+    # The tag of the official image PHP 8.6 runs: its release candidates
+    # until its GA (2026-11-19), the release once Docker Hub serves it. The
+    # "-rc" tag lives on after a GA, on the candidates of the next patch
+    # release, so the stable one is taken as soon as there is one.
+    name: Image tags
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      php86: ${{ steps.tags.outputs.php86 }}
+    steps:
+      - name: Find the tag of PHP 8.6
+        id: tags
+        run: |
+          if docker manifest inspect php:8.6-cli > /dev/null 2>&1; then
+            echo 'php86=8.6' >> "$GITHUB_OUTPUT"
+          else
+            echo 'php86=8.6-rc' >> "$GITHUB_OUTPUT"
+          fi
+
   generate:
     name: generate and analyse the twin
     runs-on: ubuntu-latest
@@ -106,22 +126,23 @@ jobs:
   # pattern on the same engine, and every reading must be the same
   twin:
     name: twin on PHP ${{ matrix.php }}
-    needs: generate
+    needs: [ generate, images ]
     runs-on: ubuntu-latest
-    container: php:${{ matrix.php }}-cli
+    container: php:${{ matrix.php == '8.6' && needs.images.outputs.php86 || matrix.php }}-cli
     strategy:
       fail-fast: false
       # Three of the six cells at once: the matrices of one pull request
       # hold a third of the organization's sixty runners at most.
       max-parallel: 3
       matrix:
-        php: ['8.1', '8.2', '8.3', '8.4', '8.5', '8.6-rc']
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5', '8.6']
     steps:
       - name: Install multibyte support
-        # the 8.6-rc image ships without mbstring, which the original and
-        # PHPUnit read; compiling it needs oniguruma
-        if: startsWith(matrix.php, '8.6')
+        # an image without mbstring, as the candidates of 8.6 ship, compiles
+        # it, which the original and PHPUnit read, with oniguruma; an image
+        # that has it skips the rest
         run: |
+          if php -r 'exit(extension_loaded("mbstring") ? 0 : 1);'; then exit 0; fi
           apt-get update && apt-get install -y --no-install-recommends libonig-dev
           docker-php-ext-install mbstring
 
