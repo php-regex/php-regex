@@ -3586,25 +3586,25 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Helper/Sample.php:90:65
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1175:51
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1179:51
     → /\d\d\d\d/
    TIP 
        - /\d\d\d\d/
        + /\d{4}/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1177:43
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1181:43
     → /^\d\d\d\d-\d\d-\d\d$/
    TIP 
        - /^\d\d\d\d-\d\d-\d\d$/
        + /^\d{4}-\d\d-\d\d$/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1179:49
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1183:49
     → /^\d\d\d\d-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
    TIP 
        - /^\d\d\d\d-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
        + /^\d{4}-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1181:49
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1185:49
     → /^\d\d?-[a-zA-Z]+-\d\d\d\d$/
    TIP 
        - /^\d\d?-[a-zA-Z]+-\d\d\d\d$/
@@ -5929,17 +5929,17 @@ corpus/WordPress/wordpress-develop/src/wp-includes/blocks/cover.php:153:24
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/canonical.php:98:36
+corpus/WordPress/wordpress-develop/src/wp-includes/canonical.php:111:36
     → |(%C2%A0)+$|i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/canonical.php:572:37
+corpus/WordPress/wordpress-develop/src/wp-includes/canonical.php:585:37
     → #^\??&*?#
    WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
        ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/canonical.php:675:38
+corpus/WordPress/wordpress-develop/src/wp-includes/canonical.php:688:38
     → #^\??&*?#
    WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
        ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
@@ -6210,7 +6210,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:6414:19
    INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:858:3
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:863:3
     → #(["']?)((?:([\w-]+:)?//?)[^\s()<>]+[.](?:\([\w\d]+\)|(?:[^`!()\[\]{}:'".,<>«»“”‘’\s]|(?:[:]\d+)?/?)+))\1#
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
@@ -6224,7 +6224,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:858:3
    FAIL  Character class holds "«", which without /u is the bytes \xC2 \xAB: the class matches each byte on its own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:5438:12
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:5443:12
     → /[A-Z\xc0-\xd6\xd8-\xde]?[a-z\xdf-\xf6\xf8-\xff]+(?=[\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\xbf\x{2000}-\x{206f} \t\x0b\f\xa0\x{feff}\n\r\x{2028}\x{2029}\x{1680}\x{180e}\x{2000}\x{2001}\x{2002}\x{2003}\x{2004}\x{2005}\x{2006}\x{2007}\x{2008}\x{2009}\x{200a}\x{202f}\x{205f}\x{3000}]|[A-Z\xc0-\xd6\xd8-\xde]|$)|(?:[A-Z\xc0-\xd6\xd8-\xde]|[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\xbf\x{2000}-\x{206f} \t\x0b\f\xa0\x{feff}\n\r\x{2028}\x{2029}\x{1680}\x{180e}\x{2000}\x{2001}\x{2002}\x{2003}\x{2004}\x{2005}\x{2006}\x{2007}\x{2008}\x{2009}\x{200a}\x{202f}\x{205f}\x{3000}\d+a-z\xdf-\xf6\xf8-\xffA-Z\xc0-\xd6\xd8-\xde])+(?=[\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\xbf\x{2000}-\x{206f} \t\x0b\f\xa0\x{feff}\n\r\x{2028}\x{2029}\x{1680}\x{180e}\x{2000}\x{2001}\x{2002}\x{2003}\x{2004}\x{2005}\x{2006}\x{2007}\x{2008}\x{2009}\x{200a}\x{202f}\x{205f}\x{3000}]|[A-Z\xc0-\xd6\xd8-\xde](?:[a-z\xdf-\xf6\xf8-\xff]|[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\xbf\x{2000}-\x{206f} \t\x0b\f\xa0\x{feff}\n\r\x{2028}\x{2029}\x{1680}\x{180e}\x{2000}\x{2001}\x{2002}\x{2003}\x{2004}\x{2005}\x{2006}\x{2007}\x{2008}\x{2009}\x{200a}\x{202f}\x{205f}\x{3000}\d+a-z\xdf-\xf6\xf8-\xffA-Z\xc0-\xd6\xd8-\xde])|$)|[A-Z\xc0-\xd6\xd8-\xde]?(?:[a-z\xdf-\xf6\xf8-\xff]|[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\xbf\x{2000}-\x{206f} \t\x0b\f\xa0\x{feff}\n\r\x{2028}\x{2029}\x{1680}\x{180e}\x{2000}\x{2001}\x{2002}\x{2003}\x{2004}\x{2005}\x{2006}\x{2007}\x{2008}\x{2009}\x{200a}\x{202f}\x{205f}\x{3000}\d+a-z\xdf-\xf6\xf8-\xffA-Z\xc0-\xd6\xd8-\xde])+|[A-Z\xc0-\xd6\xd8-\xde]+|\d*(?:1ST|2ND|3RD|(?![123])\dTH)(?=\b|[a-z_])|\d*(?:1st|2nd|3rd|(?![123])\dth)(?=\b|[A-Z_])|\d+/u
    ↳ via $regexp
    WARN  Redundant elements detected in character class.
@@ -6253,16 +6253,16 @@ corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:5438:12
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6583:26
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6588:26
     → #/(wp-admin/?.*|wp-login\.php.*)#i
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6588:26
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6593:26
     → #/[^/]*$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6600:27
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6605:27
     → #/[^/]*$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -10102,29 +10102,29 @@ corpus/flarum/framework/extensions/package-manager/src/Discover/Packagist.php:30
 ### corpus/freescout-help-desk/freescout — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
 Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1020:40
+corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1047:40
     → /^[[:alpha:]]{1,3}\s*:(.*)/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1084:31
+corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1111:31
     → /^[[:alpha:]]{1,3}\s*:(.*)/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1091:31
+corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1118:31
     → /^[\s]*@fwd/su
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /^[\s]*@fwd/su
        + /^[\s]*@fwd/u
 
-corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1114:51
+corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1141:51
     → /@fwd([\s<]+)/su
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /@fwd([\s<]+)/su
        + /@fwd([\s<]+)/u
 
-corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1311:30
+corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1338:30
     → /@fwd([\s<]+)/isu
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -10158,7 +10158,7 @@ corpus/freescout-help-desk/freescout/app/Misc/Helper.php:631:30
        - /\s+/mu
        + /\s+/u
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2023:41
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2032:41
     → /<!--(.|\s)*?-->/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -10166,17 +10166,17 @@ corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2023:41
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
          changes match semantics.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2913:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2964:33
     → /([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2914:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2965:33
     → /([A-Z]{2,3}\,\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2917:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2968:33
     → /([A-Z]{2,3}[\,|\ \,]\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}.*)+$/i
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "AA, 0 AA 0000 0:0:00" x n . "\n!"
@@ -10207,12 +10207,12 @@ corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2917:33
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2920:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2971:33
     → /([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{2,4}\ [0-9]{2}\:[0-9]{2}\:[0-9]{2}\ [A-Z]{2}\ \-[0-9]{2}\:[0-9]{2}\ \([A-Z]{2,3}\ \-[0-9]{2}:[0-9]{2}\))+$/i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:3000:41
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:3051:41
     → /enable/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
@@ -10228,13 +10228,13 @@ corpus/freescout-help-desk/freescout/app/Misc/Mail.php:1528:44
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/freescout-help-desk/freescout/app/Thread.php:338:30
+corpus/freescout-help-desk/freescout/app/Thread.php:340:30
     → /<!\-\-\[if [^>]+\]><!\-\->(.*?)<![ ]+\-\-<!\[endif\]\-\->/s
    TIP 
        - /<!\-\-\[if [^>]+\]><!\-\->(.*?)<![ ]+\-\-<!\[endif\]\-\->/s
        + /<!--\[if [^>]+\]><!-->(.*?)<![ ]+--<!\[endif\]-->/s
 
-corpus/freescout-help-desk/freescout/app/Thread.php:390:28
+corpus/freescout-help-desk/freescout/app/Thread.php:392:28
     → /target=['"]?(.*?)['"]?/i
    WARN  Capturing group "(.*?)" never captures any text: it is empty or unset wherever the pattern matches.
        ↳ Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.
@@ -20843,7 +20843,7 @@ corpus/phpstan/phpstan-src/src/Reflection/ClassNameHelper.php:19:63
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/phpstan/phpstan-src/src/Type/Constant/ConstantArrayType.php:3804:36
+corpus/phpstan/phpstan-src/src/Type/Constant/ConstantArrayType.php:3813:36
     → ~^(?:[\\]?+[a-z_\x80-\xFF][0-9a-z_\x80-\xFF-]*+)++$~si
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -24753,6 +24753,11 @@ corpus/sulu/sulu/src/Sulu/Component/Rest/ListBuilder/ListRestHelper.php:77:26
 
 
 ### corpus/symfony/ai — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+corpus/symfony/ai/.github/affected-packages.php:141:20
+    → /Symfony\\{1,2}(?:AI|McpBundle)\\{1,2}[\w\\]+/
+   WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+       ↳ Consider tightening the first quantifier to its minimum.
+
 corpus/symfony/ai/src/platform/src/Bridge/OpenAi/Gpt/ResultConverter.php:78:25
     → /^(?:\d+(?:\.\d+)?(?:ms|h|m|s))+$/
    WARN  Alternation branches "ms" and "m" overlap.
