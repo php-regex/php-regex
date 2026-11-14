@@ -103,6 +103,39 @@ final class LibrarySource
     }
 
     /**
+     * The lines of every doc comment another one follows: the second
+     * documents what comes next, the first nothing.
+     *
+     * @param list<array{0: int, 1: string, 2: int}|string> $tokens
+     *
+     * @return list<int>
+     */
+    public static function strayDocComments(array $tokens): array
+    {
+        $lines = [];
+        // The line of the doc comment just read, with only spaces since.
+        $docLine = null;
+        foreach ($tokens as $token) {
+            if (\is_array($token) && \T_WHITESPACE === $token[0]) {
+                continue;
+            }
+
+            if (!\is_array($token) || \T_DOC_COMMENT !== $token[0]) {
+                $docLine = null;
+
+                continue;
+            }
+
+            if (null !== $docLine) {
+                $lines[] = $docLine;
+            }
+            $docLine = $token[2];
+        }
+
+        return $lines;
+    }
+
+    /**
      * The class of every "throw new X", resolved against the namespace and
      * the imports of the file; "self", "static" and "parent" are left out.
      *
