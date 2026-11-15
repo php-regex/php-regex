@@ -313,8 +313,9 @@ final class LintContext
         $child = $node;
         foreach ($parents as $parent) {
             if ($parent instanceof SequenceNode) {
-                $children = $parent->children;
-                if ($child !== end($children)) {
+                // The last item read by its key: end() takes the list by
+                // reference and copies it, once per quantifier of a sequence.
+                if ($child !== ($parent->children[array_key_last($parent->children)] ?? null)) {
                     return false;
                 }
             } elseif ($parent instanceof GroupNode) {

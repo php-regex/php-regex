@@ -27,7 +27,6 @@ use PHPRegex\Tests\Benchmark\Support\ColdStart;
 use PHPRegex\Tests\Benchmark\Tally\Support\Ladders;
 use Tally\Attribute\DataProvider;
 use Tally\Attribute\Linear;
-use Tally\Attribute\Quadratic;
 use Tally\Attribute\Warmup;
 use Tally\Meter;
 use Tally\ScratchDirectory;
@@ -41,11 +40,6 @@ use Tally\ScratchDirectory;
 final class LinterGrowthBench
 {
     use Ladders;
-
-    /**
-     * The rules that still read a sequence again for each quantifier.
-     */
-    private const NESTING_RULES = ['quantifier.nested', 'dotstar.nested'];
 
     public function __construct(private readonly Meter $meter, private readonly ScratchDirectory $scratch) {}
 
@@ -142,57 +136,28 @@ final class LinterGrowthBench
     }
 
     /**
-     * Every lint rule but the two below on optional groups: each group
-     * asked whether its pattern may match nothing, and what follows it.
-     * 4 000 took about 17 s when each read the pattern again.
+     * Every lint rule on optional groups: each group asked whether its
+     * pattern may match nothing, and what follows it. 4 000 took about 17 s
+     * when each read the pattern again.
      */
     #[DataProvider('from500')]
     #[Linear('size')]
     public function benchRulesOnOptionalGroups(int $size): void
     {
         $tree = $this->meter->exclude(static fn (): RegexNode => ColdStart::regex()->parse('/'.str_repeat('(a)?', $size).'/'));
-        $tree->accept(new PatternLinter(self::rules(false)));
+        $tree->accept(new PatternLinter(array_fill_keys(RuleCatalog::lintRuleIds(), true)));
     }
 
     /**
-     * Every lint rule but the two below on lazy quantifiers, each one once
-     * reading the rest of its sequence again: about 6 s for 2 000.
+     * Every lint rule on lazy quantifiers: each one read the rest of its
+     * sequence again, about 6 s for 2 000, and the rules on nesting copied
+     * the whole sequence for each one, about 2 s for 16 000.
      */
     #[DataProvider('from500')]
     #[Linear('size')]
     public function benchRulesOnLazyQuantifiers(int $size): void
     {
         $tree = $this->meter->exclude(static fn (): RegexNode => ColdStart::regex()->parse('/'.str_repeat('a*?', $size).'/'));
-        $tree->accept(new PatternLinter(self::rules(false)));
-    }
-
-    /**
-     * The rules on nested quantifiers and nested dot-stars still read the
-     * sequence again for each quantifier: the run grows as the square of
-     * the quantifiers, and the class keeps it from growing any faster. Once
-     * they read it once, the class becomes #[Linear] and the rules join the
-     * two benchmarks above.
-     */
-    #[DataProvider('from500')]
-    #[Quadratic('size')]
-    public function benchNestingRulesOnLazyQuantifiers(int $size): void
-    {
-        $tree = $this->meter->exclude(static fn (): RegexNode => ColdStart::regex()->parse('/'.str_repeat('a*?', $size).'/'));
-        $tree->accept(new PatternLinter(self::rules(true)));
-    }
-
-    /**
-     * Every lint rule on, or off, as the rules on nesting are on.
-     *
-     * @return array<string, bool>
-     */
-    private static function rules(bool $nesting): array
-    {
-        $rules = [];
-        foreach (RuleCatalog::lintRuleIds() as $id) {
-            $rules[$id] = $nesting === \in_array($id, self::NESTING_RULES, true);
-        }
-
-        return $rules;
+        $tree->accept(new PatternLinter(array_fill_keys(RuleCatalog::lintRuleIds(), true)));
     }
 }

@@ -15,7 +15,9 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleCatalog;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Tests\Support\CpuClock;
+use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LongSequenceLintTimeTest extends TestCase
 {
+    use LinearTimeAssertions;
+
     #[Test]
     #[DataProvider('provideLongSequences')]
     public function test_a_long_sequence_is_linted_in_linear_time(string $item, int $issues, int $count = 2000): void
@@ -43,6 +47,36 @@ final class LongSequenceLintTimeTest extends TestCase
         // item read the rest of its sequence again.
         $this->assertLessThan(1.0, $seconds, \sprintf('%.2f s', $seconds));
         $this->assertCount($issues, $linter->getIssues());
+    }
+
+    /**
+     * The rules on nested quantifiers and nested dot-stars ask of every
+     * quantifier whether it ends an atomic group, which reads the last item
+     * of each sequence around it: four times the quantifiers took some
+     * fourteen times as long when that read copied the whole sequence.
+     */
+    #[Test]
+    #[DataProvider('provideSequencesOfQuantifiers')]
+    public function test_the_nesting_rules_read_a_long_sequence_in_linear_time(string $item): void
+    {
+        /** @var array<int, RegexNode> $trees */
+        $trees = [];
+        foreach ([4000, 16000] as $count) {
+            $trees[$count] = Regex::create(['cache' => null])->parse('/'.str_repeat($item, $count).'/');
+        }
+
+        $this->assertLinearTime(static function (int $count) use ($trees): void {
+            $trees[$count]->accept(new PatternLinter(['quantifier.nested' => true, 'dotstar.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
+        }, 4000, $item.' read by the rules on nesting');
+    }
+
+    /**
+     * @return iterable<string, array{item: string}>
+     */
+    public static function provideSequencesOfQuantifiers(): iterable
+    {
+        yield 'lazy quantifiers' => ['item' => 'a*?'];
+        yield 'optional capturing groups' => ['item' => '(a)?'];
     }
 
     /**
