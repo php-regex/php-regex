@@ -54,23 +54,6 @@ final class AcceptVerb
      */
     public static function mayEndMatch(NodeInterface $node, ?\WeakMap $memo = null): bool
     {
-        if (null !== $memo && isset($memo[$node])) {
-            return $memo[$node];
-        }
-
-        $mayEnd = self::reads($node, $memo);
-        if (null !== $memo) {
-            $memo[$node] = $mayEnd;
-        }
-
-        return $mayEnd;
-    }
-
-    /**
-     * @param \WeakMap<NodeInterface, bool>|null $memo
-     */
-    private static function reads(NodeInterface $node, ?\WeakMap $memo): bool
-    {
         if ($node instanceof PcreVerbNode) {
             return 'ACCEPT' === $node->name;
         }
@@ -85,12 +68,29 @@ final class AcceptVerb
             default => [],
         };
 
+        // A node that holds none answers at once: only the nodes that hold
+        // others are kept, which spares the memo most of a tree.
+        if ([] === $children) {
+            return false;
+        }
+
+        if (null !== $memo && isset($memo[$node])) {
+            return $memo[$node];
+        }
+
+        $mayEnd = false;
         foreach ($children as $child) {
             if (self::mayEndMatch($child, $memo)) {
-                return true;
+                $mayEnd = true;
+
+                break;
             }
         }
 
-        return false;
+        if (null !== $memo) {
+            $memo[$node] = $mayEnd;
+        }
+
+        return $mayEnd;
     }
 }
