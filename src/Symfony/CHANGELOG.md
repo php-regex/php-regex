@@ -155,6 +155,10 @@ CHANGELOG
    an overlap whichever is declared first, the earlier one winning them, and
    a route is shadowed when an earlier one takes all its paths. A narrower
    route declared before a wider one is not reported.
+ * `regex:routes` and `regex:analyze` read a route for `GET` as taking the
+   `HEAD` requests too, as Symfony's matchers send them: a route for `HEAD`
+   only declared after a route for `GET` on its paths is shadowed, where the
+   pair was set apart on its methods.
  * `regex:security` and `regex:analyze` read the security configuration the
    application runs with, as `debug:config security` shows it: every file
    format the kernel loads, every YAML shape, the parameters resolved, where

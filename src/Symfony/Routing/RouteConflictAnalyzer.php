@@ -511,7 +511,27 @@ final class RouteConflictAnalyzer
             return array_values($left);
         }
 
-        return array_values(array_intersect($left, $right));
+        return $this->sharedMethods($left, $right);
+    }
+
+    /**
+     * The methods two routes that list some both take. Symfony's matchers
+     * send a HEAD request to a route for GET: a route for HEAD shares its
+     * requests with a route for GET.
+     *
+     * @param array<int, string> $left
+     * @param array<int, string> $right
+     *
+     * @return list<string>
+     */
+    private function sharedMethods(array $left, array $right): array
+    {
+        $methods = array_values(array_intersect($left, $right));
+        if (!\in_array('HEAD', $methods, true) && ((\in_array('HEAD', $left, true) && \in_array('GET', $right, true)) || (\in_array('GET', $left, true) && \in_array('HEAD', $right, true)))) {
+            $methods[] = 'HEAD';
+        }
+
+        return $methods;
     }
 
     /**
@@ -551,7 +571,7 @@ final class RouteConflictAnalyzer
             return true;
         }
 
-        return [] !== array_intersect($left, $right);
+        return [] !== $this->sharedMethods($left, $right);
     }
 
     /**

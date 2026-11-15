@@ -507,7 +507,9 @@ host requirement, say), leave the paths to decide, and the finding notes
 `Host requirements were not evaluated.` A route that names no method or no
 scheme takes any; one given only empty ones, `setMethods([''])` or
 `setSchemes([''])`, takes no request, as Symfony's matchers read it, and
-conflicts with no other route.
+conflicts with no other route. A route for `GET` takes the `HEAD` requests
+too, as the router sends them: a later route for `HEAD` only on the same
+path is shadowed.
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods and addresses take a request applies to it. A later
