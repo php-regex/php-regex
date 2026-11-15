@@ -118,3 +118,29 @@ measured under 3 %.
 - Make `CI` the required check of `2.x` in the branch protection: a pull
   request of prose alone reports it (seen on #369), and the protection
   requires no check yet.
+
+
+## Counted benchmarks
+
+Tally (`tools/tally`, branch `tally-benchmarks`) counts instructions under
+Valgrind instead of timing, so a benchmark can assert in CI. It runs on
+Linux only: locally through `php:8.4-cli` in Docker.
+
+- Choose what it guards first: growth classes in place of the CPU-time
+  ratios of `LinearTimeAssertions` (15 test classes), expected counts on
+  the hot paths (validate cold and warm, lint), or the engine's own cost
+  on the ReDoS fixtures as an oracle for the per-attempt and search-cost
+  degrees.
+- Measured: with `array_unshift` put back in `QuantifierParser`
+  (dde2cfa714), `#[Linear]` fails from 2,048 comments on (+28 %), while
+  the instruction ratios for four times the comments (7.4 and 9.3) stay
+  under the lines `assertLinearTime()` draws. `QuantifierAfterCommentTest`
+  checks the order of the nodes only.
+- `GrowthSeries` says `counted-under-plus` grows about as n² past 80; it
+  is linear now (0.55 ms at 40, 9.2 ms at 1,280, and 0.66 to 0.89 in
+  instructions). The automata `counted` ladder does grow faster than n
+  (slope 1.07, 1.15, 1.30 up to 640).
+- Benchmarks cannot live in `tests/Benchmark`: PHPBench reads every
+  `*Bench.php` there. PHPStan needs Tally's classes the way it reads
+  PHPBench's. The CI job needs a fixed runner image and PHP, and the
+  expected numbers come from CI, never from a local run.
