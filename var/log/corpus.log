@@ -1512,12 +1512,12 @@ corpus/DataDog/dd-trace-php/dockerfiles/testing-environment/Wordpress5/app/wp-in
        - /^\s*(?:(?:EXPLAIN\s+(?:EXTENDED\s+)?)?SELECT.*?\s+FROM|DESCRIBE|DESC|EXPLAIN|HANDLER|(?:LOCK|UNLOCK)\s+TABLE(?:S)?|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|REPAIR).*\s+TABLE|TRUNCATE(?:\s+TABLE)?|CREATE(?:\s+TEMPORARY)?\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?|ALTER(?:\s+IGNORE)?\s+TABLE|DROP\s+TABLE(?:\s+IF\s+EXISTS)?|CREATE(?:\s+\w+)?\s+INDEX.*\s+ON|DROP\s+INDEX.*\s+ON|LOAD\s+DATA.*INFILE.*INTO\s+TABLE|(?:GRANT|REVOKE).*ON\s+TABLE|SHOW\s+(?:.*FROM|.*TABLE))\s+\(*\s*((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)\s*\)*/is
        + /^\s*(?:(?:EXPLAIN\s+(?:EXTENDED\s+)?)?SELECT.*?\s+FROM|DESCRIBE|DESC|EXPLAIN|HANDLER|(?:LOCK|UNLOCK)\s+TABLES?|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|REPAIR).*\s+TABLE|TRUNCATE(?:\s+TABLE)?|CREATE(?:\s+TEMPORARY)?\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?|ALTER(?:\s+IGNORE)?\s+TABLE|DROP\s+TABLE(?:\s+IF\s+EXISTS)?|CREATE(?:\s+\w+)?\s+INDEX.*\s+ON|DROP\s+INDEX.*\s+ON|LOAD\s+DATA.*INFILE.*INTO\s+TABLE|(?:GRANT|REVOKE).*ON\s+TABLE|SHOW\s+(?:.*FROM|.*TABLE))\s+\(*\s*((?:[0-9a-zA-Z$_.`\-]|[\xC2-\xDF][\x80-\xBF])+)\s*\)*/is
 
-corpus/DataDog/dd-trace-php/src/DDTrace/Integrations/PDO/PDOIntegration.php:215:23
+corpus/DataDog/dd-trace-php/src/DDTrace/Integrations/PDO/PDOIntegration.php:213:23
     → (\A (?<engine>[^:]++): (?: (?: (?:server|unix_socket|host(?:name)?)=(?<host>(?:[^;]*+(?:;;)?)++) |port=(?<port>(?&host)) |charset=(?<charset>(?&host)) |(?:database|dbname)=(?<db>(?&host)) |driver=(?<driver>(?&host)) |(?&host) ) (?:;|\Z) )++)xi
    ↳ via self::DSN_REGEX
    WARN  Quantifier "+" repeats an item that can match the empty string: an empty iteration matches nothing more.
 
-corpus/DataDog/dd-trace-php/src/DDTrace/Integrations/PDO/PDOIntegration.php:372:30
+corpus/DataDog/dd-trace-php/src/DDTrace/Integrations/PDO/PDOIntegration.php:370:30
     → ((?:[^/:'"-]++|/\*(*COMMIT)([^*]++|\*++[^/])*+\*/|--.*+(*SKIP)(*F)|"(*COMMIT)(?:""|[^"]++)*+"|'(*COMMIT)(?:''|[^']++)*+'|.|\Z(*COMMIT))+?\K:[a-zA-Z0-9_]+)s
    WARN  Quantifier "+" repeats an item that can match the empty string: an empty iteration matches nothing more.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -1590,7 +1590,7 @@ corpus/FOSSBilling/FOSSBilling/src/core/Validation/DomainValidator.php:49:27
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
-corpus/FOSSBilling/FOSSBilling/src/modules/Email/Service.php:471:24
+corpus/FOSSBilling/FOSSBilling/src/modules/Email/Service.php:514:24
     → #{%.?block subject.?%}((.*?)+){%.?endblock.?%}#
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "{%block subject%}" . "!" x n . "!endblock"
@@ -1620,7 +1620,7 @@ corpus/FOSSBilling/FOSSBilling/src/modules/Email/Service.php:471:24
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/FOSSBilling/FOSSBilling/src/modules/Email/Service.php:477:24
+corpus/FOSSBilling/FOSSBilling/src/modules/Email/Service.php:520:24
     → /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -7537,12 +7537,6 @@ corpus/codeigniter4/CodeIgniter4/system/Helpers/inflector_helper.php:95:13
    WARN  An anchor holds for its own alternative only: "(matr|vert|ind)ix" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "(?:(matr|vert|ind)ix|ex)$".
 
-corpus/codeigniter4/CodeIgniter4/system/Helpers/security_helper.php:94:17
-    → #<img[\s/]+.*?src\s*=\s*(["'])([^\1]+?)\1.*?\>#i
-   WARN  Suspicious \1 inside character class: this is octal (\x01), not a backreference to group 1.
-       ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 1, move
-         the check outside the class.
-
 corpus/codeigniter4/CodeIgniter4/system/Helpers/url_helper.php:159:81
     → #^(\w+:)?//#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -11014,8 +11008,8 @@ corpus/greenlion/php-sql-parser/libs/codesniffer/PhOSCo/Sniffs/Commenting/FileCo
 
 
 
-### corpus/grokability/snipe-it — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
-corpus/grokability/snipe-it/app/Helpers/Helper.php:521:20
+### corpus/grokability/snipe-it — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 1
+corpus/grokability/snipe-it/app/Helpers/Helper.php:519:20
     → /[\x{0590}-\x{083F}]|[\x{08A0}-\x{08FF}]|[\x{FB1D}-\x{FDFF}]|[\x{FE70}-\x{FEFF}]/u
    ↳ via $rtlChar
    TIP 
@@ -11028,17 +11022,17 @@ corpus/grokability/snipe-it/app/Models/Labels/Label.php:707:36
        - /\/*(.+?)(?:\/|\.)/
        + /\/*(.+?)[\/.]/
 
-corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:430:31
+corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:442:31
     → /\pL/
    FAIL  Without the /u flag, Unicode property "\pL" only covers the first 256 code points.
        ↳ Add the /u flag to match beyond the first 256 code points.
 
-corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:434:31
+corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:446:31
     → /\pN/
    FAIL  Without the /u flag, Unicode property "\pN" only covers the first 256 code points.
        ↳ Add the /u flag to match beyond the first 256 code points.
 
-corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:442:31
+corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:454:31
     → /\p{Z}|\p{S}|\p{P}/
    FAIL  Without the /u flag, Unicode property "\p{Z}" only covers the first 256 code points.
        ↳ Add the /u flag to match beyond the first 256 code points.
@@ -11907,7 +11901,7 @@ corpus/jsonrainbow/json-schema/src/JsonSchema/Tool/Validator/UriValidator.php:29
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/jsonrainbow/json-schema/src/JsonSchema/Uri/UriResolver.php:177:30
+corpus/jsonrainbow/json-schema/src/JsonSchema/Uri/UriResolver.php:196:30
     → |((?<!\.)\./)*|
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -18575,19 +18569,19 @@ corpus/owncloud/core/lib/private/legacy/helper.php:611:14
 
 
 ### corpus/paratestphp/paratest — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
-corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:264:32
+corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:266:32
     → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-\w+)?\n\n/
    TIP 
        - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-\w+)?\n\n/
        + /^Processes: {5}\d+\nRuntime: {7}PHP \d+\.\d+\.\w+(-\w+)?\n\n/
 
-corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:287:32
+corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:289:32
     → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
    TIP 
        - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
        + /^Processes: {5}\d+\nRuntime: {7}PHP \d+\.\d+\.\w+(-.+)?\n\n/
 
-corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:312:32
+corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:314:32
     → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
    TIP 
        - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
@@ -18785,7 +18779,7 @@ corpus/phan/phan/src/Phan/Config/Initializer.php:111:29
        - /^        (['"])([a-z0-9A-Z_]+)\1\s*=>/
        + /^ {8}(['"])([a-z0-9A-Z_]+)\1\s*=>/
 
-corpus/phan/phan/src/Phan/Config/Initializer.php:545:61
+corpus/phan/phan/src/Phan/Config/Initializer.php:549:61
     → @(/+\.)+$@D
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -20835,7 +20829,7 @@ corpus/phpstan/phpstan-src/src/Reflection/ClassNameHelper.php:19:63
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/phpstan/phpstan-src/src/Type/Constant/ConstantArrayType.php:3813:36
+corpus/phpstan/phpstan-src/src/Type/Constant/ConstantArrayType.php:3816:36
     → ~^(?:[\\]?+[a-z_\x80-\xFF][0-9a-z_\x80-\xFF-]*+)++$~si
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -21289,9 +21283,14 @@ Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the ol
 
 ### corpus/ramsey/uuid — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 0
 Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-corpus/ramsey/uuid/src/Lazy/LazyUuidFromString.php:53:32
+corpus/ramsey/uuid/src/Codec/StringCodec.php:42:37
+    → /\A(?:urn:)?(?:uuid:)?(\{)?([0-9a-f]{8})(-?)([0-9a-f]{4})\3([0-9a-f]{4})\3([0-9a-f]{4})\3([0-9a-f]{12})(?(1)\})\z/Di
+   ↳ via self::ENCODED_PATTERN
+   WARN  Flag 'D' is useless: the pattern contains no $ anchor.
+
+corpus/ramsey/uuid/src/Lazy/LazyUuidFromString.php:57:32
     → /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/ms
-   ↳ via LazyUuidFromString::VALID_REGEX
+   ↳ via self::VALID_REGEX
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -21310,7 +21309,12 @@ corpus/ramsey/uuid/src/Provider/Node/SystemNodeProvider.php:54:35
    INFO  Quantified capturing group "(...)" with "{5}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/ramsey/uuid/src/Rfc4122/Validator.php:47:73
+corpus/ramsey/uuid/src/Rfc4122/Validator.php:38:37
+    → /\A(?:urn:)?(?:uuid:)?(?:\{(.*)\}|(.*))\z/Dis
+   ↳ via self::WRAPPER_PATTERN
+   WARN  Flag 'D' is useless: the pattern contains no $ anchor.
+
+corpus/ramsey/uuid/src/Rfc4122/Validator.php:67:73
     → /\A[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[1-8][0-9A-Fa-f]{3}-[ABab89][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}\z/Dms
    WARN  Flag 'D' is useless: the pattern contains no $ anchor.
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -21319,7 +21323,12 @@ corpus/ramsey/uuid/src/Rfc4122/Validator.php:47:73
        - /\A[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[1-8][0-9A-Fa-f]{3}-[ABab89][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}\z/Dms
        + /\A[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[1-8][0-9A-Fa-f]{3}-[ABab89][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}\z/D
 
-corpus/ramsey/uuid/src/Validator/GenericValidator.php:48:50
+corpus/ramsey/uuid/src/Validator/GenericValidator.php:38:37
+    → /\A(?:urn:)?(?:uuid:)?(?:\{(.*)\}|(.*))\z/Dis
+   ↳ via self::WRAPPER_PATTERN
+   WARN  Flag 'D' is useless: the pattern contains no $ anchor.
+
+corpus/ramsey/uuid/src/Validator/GenericValidator.php:65:50
     → /\A[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\z/Dms
    WARN  Flag 'D' is useless: the pattern contains no $ anchor.
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -24902,13 +24911,13 @@ corpus/symfony/polyfill/src/Php84/Php84.php:518:24
        - /([\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|[\xEE-\xEF][\x80-\xBF]{2}|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})|(\xF0[\x90-\xBF][\x80-\xBF]?|[\xF1-\xF3][\x80-\xBF]{1,2}|\xF4[\x80-\x8F][\x80-\xBF]?|\xE0[\xA0-\xBF]|[\xE1-\xEC][\x80-\xBF]|\xED[\x80-\x9F]|[\xEE-\xEF][\x80-\xBF]|[\x80-\xFF])/s
        + /([\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|[\xEE-\xEF][\x80-\xBF]{2}|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})|(\xF0[\x90-\xBF][\x80-\xBF]?|[\xF1-\xF3][\x80-\xBF]{1,2}|\xF4[\x80-\x8F][\x80-\xBF]?|\xE0[\xA0-\xBF]|[\xE1-\xEC][\x80-\xBF]|\xED[\x80-\x9F]|[\xEE-\xEF][\x80-\xBF]|[\x80-\xFF])/
 
-corpus/symfony/polyfill/src/Php85/Php85.php:135:24
+corpus/symfony/polyfill/src/Php85/Php85.php:139:24
     → /(?:\r\n|[\x{1F1E6}-\x{1F1FF}][\x{1F1E6}-\x{1F1FF}]?|(?:[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니다대댜댸더데뎌뎨도돠돼되됴두둬뒈뒤듀드듸디따때땨떄떠떼뗘뗴또똬뙈뙤뚀뚜뚸뛔뛰뜌뜨띄띠라래랴럐러레려례로롸뢔뢰료루뤄뤠뤼류르릐리마매먀먜머메며몌모뫄뫠뫼묘무뭐뭬뮈뮤므믜미바배뱌뱨버베벼볘보봐봬뵈뵤부붜붸뷔뷰브븨비빠빼뺘뺴뻐뻬뼈뼤뽀뽜뽸뾔뾰뿌뿨쀄쀠쀼쁘쁴삐사새샤섀서세셔셰소솨쇄쇠쇼수숴쉐쉬슈스싀시싸쌔쌰썌써쎄쎠쎼쏘쏴쐐쐬쑈쑤쒀쒜쒸쓔쓰씌씨아애야얘어에여예오와왜외요우워웨위유으의이자재쟈쟤저제져졔조좌좨죄죠주줘줴쥐쥬즈즤지짜째쨔쨰쩌쩨쪄쪠쪼쫘쫴쬐쬬쭈쭤쮀쮜쮸쯔쯰찌차채챠챼처체쳐쳬초촤쵀최쵸추춰췌취츄츠츼치카캐캬컈커케켜켸코콰쾌쾨쿄쿠쿼퀘퀴큐크킈키타태탸턔터테텨톄토톼퇘퇴툐투퉈퉤튀튜트틔티파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피하해햐햬허헤혀혜호화홰회효후훠훼휘휴흐희히]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*(?:\x{200D}(?:[\x{1F1E6}-\x{1F1FF}]|[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가-힣]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*)*|[\p{Cc}\p{Cf}\p{Zl}\p{Zp}])/u
    TIP 
        - /(?:\r\n|[\x{1F1E6}-\x{1F1FF}][\x{1F1E6}-\x{1F1FF}]?|(?:[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니다대댜댸더데뎌뎨도돠돼되됴두둬뒈뒤듀드듸디따때땨떄떠떼뗘뗴또똬뙈뙤뚀뚜뚸뛔뛰뜌뜨띄띠라래랴럐러레려례로롸뢔뢰료루뤄뤠뤼류르릐리마매먀먜머메며몌모뫄뫠뫼묘무뭐뭬뮈뮤므믜미바배뱌뱨버베벼볘보봐봬뵈뵤부붜붸뷔뷰브븨비빠빼뺘뺴뻐뻬뼈뼤뽀뽜뽸뾔뾰뿌뿨쀄쀠쀼쁘쁴삐사새샤섀서세셔셰소솨쇄쇠쇼수숴쉐쉬슈스싀시싸쌔쌰썌써쎄쎠쎼쏘쏴쐐쐬쑈쑤쒀쒜쒸쓔쓰씌씨아애야얘어에여예오와왜외요우워웨위유으의이자재쟈쟤저제져졔조좌좨죄죠주줘줴쥐쥬즈즤지짜째쨔쨰쩌쩨쪄쪠쪼쫘쫴쬐쬬쭈쭤쮀쮜쮸쯔쯰찌차채챠챼처체쳐쳬초촤쵀최쵸추춰췌취츄츠츼치카캐캬컈커케켜켸코콰쾌쾨쿄쿠쿼퀘퀴큐크킈키타태탸턔터테텨톄토톼퇘퇴툐투퉈퉤튀튜트틔티파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피하해햐햬허헤혀혜호화홰회효후훠훼휘휴흐희히]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*(?:\x{200D}(?:[\x{1F1E6}-\x{1F1FF}]|[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가-힣]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*)*|[\p{Cc}\p{Cf}\p{Zl}\p{Zp}])/u
        + /(?:\r\n|[\x{1F1E6}-\x{1F1FF}][\x{1F1E6}-\x{1F1FF}]?|(?:[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니다대댜댸더데뎌뎨도돠돼되됴두둬뒈뒤듀드듸디따때땨떄떠떼뗘뗴또똬뙈뙤뚀뚜뚸뛔뛰뜌뜨띄띠라래랴럐러레려례로롸뢔뢰료루뤄뤠뤼류르릐리마매먀먜머메며몌모뫄뫠뫼묘무뭐뭬뮈뮤므믜미바배뱌뱨버베벼볘보봐봬뵈뵤부붜붸뷔뷰브븨비빠빼뺘뺴뻐뻬뼈뼤뽀뽜뽸뾔뾰뿌뿨쀄쀠쀼쁘쁴삐사새샤섀서세셔셰소솨쇄쇠쇼수숴쉐쉬슈스싀시싸쌔쌰썌써쎄쎠쎼쏘쏴쐐쐬쑈쑤쒀쒜쒸쓔쓰씌씨아애야얘어에여예오와왜외요우워웨위유으의이자재쟈쟤저제져졔조좌좨죄죠주줘줴쥐쥬즈즤지짜째쨔쨰쩌쩨쪄쪠쪼쫘쫴쬐쬬쭈쭤쮀쮜쮸쯔쯰찌차채챠챼처체쳐쳬초촤쵀최쵸추춰췌취츄츠츼치카캐캬컈커케켜켸코콰쾌쾨쿄쿠쿼퀘퀴큐크킈키타태탸턔터테텨톄토톼퇘퇴툐투퉈퉤튀튜트틔티파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피하해햐햬허헤혀혜호화홰회효후훠훼휘휴흐희히]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*(?:\x{200D}(?:[\x{1F1E6}-\x{1F1FF} -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가-힣]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*)*|[\p{Cc}\p{Cf}\p{Zl}\p{Zp}])/u
 
-corpus/symfony/polyfill/src/Php85/Php85.php:136:24
+corpus/symfony/polyfill/src/Php85/Php85.php:140:24
     → /(?:\r\n|[\x{1F1E6}-\x{1F1FF}][\x{1F1E6}-\x{1F1FF}]?|(?:[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니다대댜댸더데뎌뎨도돠돼되됴두둬뒈뒤듀드듸디따때땨떄떠떼뗘뗴또똬뙈뙤뚀뚜뚸뛔뛰뜌뜨띄띠라래랴럐러레려례로롸뢔뢰료루뤄뤠뤼류르릐리마매먀먜머메며몌모뫄뫠뫼묘무뭐뭬뮈뮤므믜미바배뱌뱨버베벼볘보봐봬뵈뵤부붜붸뷔뷰브븨비빠빼뺘뺴뻐뻬뼈뼤뽀뽜뽸뾔뾰뿌뿨쀄쀠쀼쁘쁴삐사새샤섀서세셔셰소솨쇄쇠쇼수숴쉐쉬슈스싀시싸쌔쌰썌써쎄쎠쎼쏘쏴쐐쐬쑈쑤쒀쒜쒸쓔쓰씌씨아애야얘어에여예오와왜외요우워웨위유으의이자재쟈쟤저제져졔조좌좨죄죠주줘줴쥐쥬즈즤지짜째쨔쨰쩌쩨쪄쪠쪼쫘쫴쬐쬬쭈쭤쮀쮜쮸쯔쯰찌차채챠챼처체쳐쳬초촤쵀최쵸추춰췌취츄츠츼치카캐캬컈커케켜켸코콰쾌쾨쿄쿠쿼퀘퀴큐크킈키타태탸턔터테텨톄토톼퇘퇴툐투퉈퉤튀튜트틔티파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피하해햐햬허헤혀혜호화홰회효후훠훼휘휴흐희히]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*(?:\x{200D}(?:[\x{1F1E6}-\x{1F1FF}]|[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가-힣]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*)*|[\p{Cc}\p{Cf}\p{Zl}\p{Zp}])/u
    TIP 
        - /(?:\r\n|[\x{1F1E6}-\x{1F1FF}][\x{1F1E6}-\x{1F1FF}]?|(?:[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니다대댜댸더데뎌뎨도돠돼되됴두둬뒈뒤듀드듸디따때땨떄떠떼뗘뗴또똬뙈뙤뚀뚜뚸뛔뛰뜌뜨띄띠라래랴럐러레려례로롸뢔뢰료루뤄뤠뤼류르릐리마매먀먜머메며몌모뫄뫠뫼묘무뭐뭬뮈뮤므믜미바배뱌뱨버베벼볘보봐봬뵈뵤부붜붸뷔뷰브븨비빠빼뺘뺴뻐뻬뼈뼤뽀뽜뽸뾔뾰뿌뿨쀄쀠쀼쁘쁴삐사새샤섀서세셔셰소솨쇄쇠쇼수숴쉐쉬슈스싀시싸쌔쌰썌써쎄쎠쎼쏘쏴쐐쐬쑈쑤쒀쒜쒸쓔쓰씌씨아애야얘어에여예오와왜외요우워웨위유으의이자재쟈쟤저제져졔조좌좨죄죠주줘줴쥐쥬즈즤지짜째쨔쨰쩌쩨쪄쪠쪼쫘쫴쬐쬬쭈쭤쮀쮜쮸쯔쯰찌차채챠챼처체쳐쳬초촤쵀최쵸추춰췌취츄츠츼치카캐캬컈커케켜켸코콰쾌쾨쿄쿠쿼퀘퀴큐크킈키타태탸턔터테텨톄토톼퇘퇴툐투퉈퉤튀튜트틔티파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피하해햐햬허헤혀혜호화홰회효후훠훼휘휴흐희히]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*(?:\x{200D}(?:[\x{1F1E6}-\x{1F1FF}]|[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가-힣]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*)*|[\p{Cc}\p{Cf}\p{Zl}\p{Zp}])/u
