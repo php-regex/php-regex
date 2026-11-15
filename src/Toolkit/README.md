@@ -131,8 +131,8 @@ foreach ($report->lintIssues as $issue) {
 }
 ```
 ```
-regex.lint.quantifier.nested: Nested quantifiers can cause catastrophic backtracking.
-regex.lint.group.quantifiedCapture: Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+regex.lint.quantifier.nested: Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.
+regex.lint.group.quantifiedCapture: Quantified capturing group 1 "(a+)" with "+": only the last iteration's capture is retained.
 ```
 
 Documentation

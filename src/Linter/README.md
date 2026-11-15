@@ -91,8 +91,8 @@ foreach ($linter->getIssues() as $violation) {
 }
 ```
 ```
-regex.lint.quantifier.nested: Nested quantifiers can cause catastrophic backtracking.
-regex.lint.group.quantifiedCapture: Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+regex.lint.quantifier.nested: Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.
+regex.lint.group.quantifiedCapture: Quantified capturing group 1 "(a+)" with "+": only the last iteration's capture is retained.
 ```
 
 The constructor takes the target second, `new PatternLinter([], $parser->target())`: a rule that asks what a
@@ -129,7 +129,7 @@ vendor/bin/regex lint src/
 ```
   demo.php:4:30
       → /(a+)+b/
-    WARN Nested quantifiers can cause catastrophic backtracking.
+    WARN Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 ```
 

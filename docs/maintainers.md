@@ -274,7 +274,7 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
           "position": 1,
           "issue_id": "regex.lint.quantifier.nested",
           "docs_url": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk",
-          "message": "Nested quantifiers can cause catastrophic backtracking.",
+          "message": "Nested quantifiers in \"(?:[0-9]+\\s?)\" at offset 1 can cause catastrophic backtracking.",
           "hint": "Consider atomic groups (?>...) or possessive quantifiers ...",
           "tip": null,
           "source": "preg_match()",

@@ -303,6 +303,8 @@ preg_match('/^\d+$/D', "123\n");  // 0
 
 **When it triggers:** A variable quantifier wraps another variable quantifier, creating catastrophic backtracking potential.
 
+The message names the outer loop and quotes it as written, on one line without the layout and the comments, thirty columns at most, so two findings on one pattern read apart: `in capturing group 1 "(a+)"` for `/(a+)+b/`, `in named group "(?<run>a+)"` for `/(?<run>a+)+b/`, and for a loop that captures nothing its offset in bytes into the pattern, `in "(?:a+)" at offset 1` for `/x(?:a+)+b/`.
+
 It is not reported when the nesting cannot blow up:
 
 - **Nothing at all follows the outer loop**: `/(a+)+/` and `/x(\d+\.?)+/` end the pattern, so the first way the engine finds is the match. This holds when the outer minimum is 0 or 1, and when no subroutine call runs the loop again. Anything after the loop, an anchor or an assertion included, keeps the issue: `/(a+)+$/` and `/(?:a+)+(?=b)/` are reported.
@@ -724,11 +726,11 @@ preg_match('/^([a-z]+)(\d*)$/', 'abc123', $m);  // ["abc123", "abc", "123"]
 
 **Identifier:** `regex.lint.group.quantifiedCapture`
 
-**When it triggers:** A repeatable quantifier (`*`, `+`, `{n,}`…) sits on a capturing group: each iteration overwrites the capture, and only the last one survives. An unnamed group is reported at info severity, a named one at warning.
+**When it triggers:** A repeatable quantifier (`*`, `+`, `{n,}`…) sits on a capturing group: each iteration overwrites the capture, and only the last one survives. An unnamed group is reported at info severity, a named one at warning. The message names the group by its number, as PCRE counts it, or its name, and quotes it as written, on one line without the layout and the comments, thirty columns at most, so two findings on one pattern read apart: `capturing group 2 "(b)"` for `/(a)(b)+/`.
 
 **Example:**
 ```php
-// INFO: Quantified capturing group "(...)" with "+":
+// INFO: Quantified capturing group 1 "(a)" with "+":
 //      only the last iteration's capture is retained.
 preg_match('/(a)+/', 'aaa', $m);  // $m is ["aaa", "a"]
 

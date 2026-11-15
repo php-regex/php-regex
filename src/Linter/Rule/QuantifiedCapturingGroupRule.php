@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Linter\Rule\Support\GroupLabel;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -66,9 +67,8 @@ final class QuantifiedCapturingGroupRule extends AbstractLintRule
         }
 
         $isNamed = null !== $inner->name;
-        $label = $isNamed
-            ? \sprintf('named group "(?<%s>...)"', $inner->name)
-            : 'capturing group "(...)"';
+        $label = GroupLabel::of($inner, $context)
+            ?? 'capturing group '.GroupLabel::at($inner, $context);
 
         return [new RuleViolation(
             self::ID,

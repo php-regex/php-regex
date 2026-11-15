@@ -23,6 +23,16 @@ CHANGELOG
    `\xC3\xA9`, on thirty columns at most, an escape never cut, and without
    the layout and the comments `x` skips: a branch laid out over lines is
    quoted from its first atom.
+ * `regex.lint.group.quantifiedCapture` and `regex.lint.quantifier.nested`
+   name the group they report and quote it, so two findings on one
+   pattern read apart: `Quantified capturing group 2 "(b)" with "+"` for
+   `/(a)(b)+/`, `Nested quantifiers in named group "(?<run>a+)"` for
+   `/(?<run>a+)+b/`, and a loop that captures nothing by its offset in
+   bytes, `Nested quantifiers in "(?:a+)" at offset 1` for `/x(?:a+)+b/`.
+   A quote is the group as the pattern writes it, on one line without the
+   layout and the comments `x` skips, on thirty columns at most, as the
+   branches of `regex.lint.overlap.charset` are quoted; neither keeps a
+   comment group, `(?#...)`, any longer.
  * The lint reads pattern arguments it left out: a pattern built at the call
    from a local variable, an interpolated string or a heredoc
    (`"/^{$part}$/"`), an integer, a `sprintf()` whose format holds only

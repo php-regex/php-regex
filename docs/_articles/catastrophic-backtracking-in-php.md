@@ -401,7 +401,7 @@ $ vendor/bin/regex lint app --redos
       → /^(\w+)+$/
     WARN Exponential backtracking (proven). Severity: CRITICAL, confidence: MEDIUM.
 …
-    WARN Nested quantifiers can cause catastrophic backtracking.
+    WARN Nested quantifiers in capturing group 1 "(\w+)" can cause catastrophic backtracking.
 …
 ```
 {: data-copy="" }
