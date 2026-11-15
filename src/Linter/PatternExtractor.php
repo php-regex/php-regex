@@ -446,7 +446,9 @@ final class PatternExtractor
 
         // A file the paths name twice, by its own path and inside its
         // directory, or under two spellings, is one file: it is read once,
-        // under the first spelling that names it.
+        // under the first spelling that names it. A file named as a path is
+        // read whatever its suffix, as PHP runs a script it is given; a
+        // directory is walked for its .php files.
         $files = [];
         $read = [];
         foreach ($paths as $path) {
@@ -454,7 +456,7 @@ final class PatternExtractor
                 continue;
             }
 
-            if (is_file($path) && str_ends_with($path, '.php') && !$this->isTemplateFile($path)) {
+            if (is_file($path)) {
                 if (self::isNew($path, $read)) {
                     $files[] = $path;
                     self::reportFound($progress, \count($files));

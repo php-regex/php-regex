@@ -618,7 +618,14 @@ vendor/bin/regex lint src/ --format=github
 
 # Exclude directories
 vendor/bin/regex lint src/ --exclude=vendor --exclude=tests
+
+# Lint a script without the .php suffix
+vendor/bin/regex lint bin/console
 ```
+
+A directory is walked for its `.php` files, templates such as `.blade.php`
+left out. A file named as a path is read as PHP whatever its suffix, as PHP
+runs a script it is given.
 
 #### Patterns Behind a Wrapper
 

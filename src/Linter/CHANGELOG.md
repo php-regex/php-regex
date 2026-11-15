@@ -13,6 +13,9 @@ CHANGELOG
    directory below a linted path only. A directory name is still matched
    anywhere under the linted paths, and any exclude still replaces the
    default `vendor`.
+ * A file named as a path to lint is read whatever its suffix: `regex lint
+   bin/console` and `regex lint Legacy.PHP` found no pattern and passed. A
+   directory is still walked for its `.php` files.
  * `regex.lint.overlap.charset` compares characters, not first bytes, past
    ASCII: under u, `/(?:ö|è)+/u` was reported because both start with the
    byte `\xC3`, and a byte read caselessly, `/(?:\xE9+|c)+/i` with a raw

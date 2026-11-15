@@ -558,6 +558,42 @@ final class PatternExtractorTest extends TestCase
     }
 
     /**
+     * A file named as a path is read whatever its suffix, as PHP reads a
+     * script it is given: an executable without one, an upper-case .PHP, a
+     * template. A directory walk keeps reading the .php files only, and
+     * passes the templates over.
+     *
+     * @param list<string> $expected the files read, from the project
+     */
+    #[Test]
+    #[DataProvider('provideNamedFiles')]
+    public function test_a_file_named_as_a_path_is_read_whatever_its_suffix(string $path, array $expected): void
+    {
+        $this->enterProject([
+            'bin/console' => "#!/usr/bin/env php\n<?php\n",
+            'app/Keep.php' => "<?php\n",
+            'app/Legacy.PHP' => "<?php\n",
+            'app/view.blade.php' => "<?php\n",
+        ]);
+        $this->extractor->method('extract')->willReturnCallback(self::onePerFile(...));
+
+        $files = array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->file, $this->patternExtractor->extract([$path], []));
+
+        $this->assertSame($expected, $files);
+    }
+
+    /**
+     * @return iterable<string, array{path: string, expected: list<string>}>
+     */
+    public static function provideNamedFiles(): iterable
+    {
+        yield 'no suffix' => ['path' => 'bin/console', 'expected' => ['bin/console']];
+        yield 'an upper-case suffix' => ['path' => 'app/Legacy.PHP', 'expected' => ['app/Legacy.PHP']];
+        yield 'a template' => ['path' => 'app/view.blade.php', 'expected' => ['app/view.blade.php']];
+        yield 'a directory' => ['path' => 'app', 'expected' => ['app/Keep.php']];
+    }
+
+    /**
      * One occurrence per file, named after it.
      *
      * @param array<string> $files
