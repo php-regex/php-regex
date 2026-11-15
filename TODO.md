@@ -92,22 +92,25 @@ measured under 3 %.
 
 ## Linter precision
 
-- A pattern argument read as one of several values is reported for each
-  of them, whatever condition guards the call. php/pie
-  (`src/DependencyResolver/ResolveDependencyWithComposer.php:156`) loops
-  over five distribution names and one `|...|` pattern, and calls
-  `preg_match()` only when `$rpmProvider[0] === '|'`: the lint reports five
-  "Invalid delimiter" errors for names that never reach the call. Drop the
-  values a condition on the way to the call rules out (the right operand
-  of `&&` and `||`, the branches of `if`, of a ternary and of
-  `match (true)`, the rest of a block after an early `continue`) when PHP
-  can evaluate that condition on the value alone (`$v[n]`, `substr()`,
-  `str_starts_with()`, `str_ends_with()`, `str_contains()`, `strpos()`,
-  `===` and `!==` against a literal, `!`, `&&`, `||`) and nothing writes
-  the variable in between. Never drop a value because its siblings are
-  patterns: `foreach (['/a/', 'b'] as $p)` is a real missing delimiter.
-  To settle first: what a condition outside that list does to the values,
-  and whether the tokenizer reads the same positions.
+- Merge #389, which reads the conditions on the way to a pattern call
+  (the php/pie false positive), then remove its worktree.
+- The tokenizer reads two early exits on the PHP version that are none,
+  and judges what follows for the versions the guard keeps: an `if` that
+  is the body of a loop without braces
+  (`while ($more) if (PHP_VERSION_ID < 80000) break;`, the code after the
+  loop runs on PHP 7 too), and an early `continue` in a `foreach` of the
+  alternative syntax, whose rest runs past its `endforeach`. The PHP
+  parser reads neither. `TokenGuards::readIf()` and `restOfBlock()` should
+  ask what #389 asks of an early exit: an `if` standing among the
+  statements of a list, and a rest that stops at the end of an
+  alternative block. The two walks of an `if` on tokens could then be one.
+- PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
+  does not narrow a union of constant strings by `$v[0] === '|'`. A small
+  pull request to its type specifier, with an nsrt test, would fix it.
+- `PhpParserGuards::leaves()` reads a `throw` statement as
+  `Expression(Throw_)` only; nikic/php-parser 4.x, which `composer.json`
+  still allows, gives `Stmt\Throw_`, and neither the version guards nor
+  the guards of #389 read an early `throw` there.
 
 
 ## Pull request checks
