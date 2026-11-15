@@ -16,6 +16,11 @@ CHANGELOG
    that also leaves out UTF mode is refused for that first, as PCRE2 does:
    `/(*TURKISH_CASING)(*CASELESS_RESTRICT)a/` is
    `regex.verb.turkish_casing_without_utf`.
+ * `PatternPrinter`, and with it `PatternFormatter` and the optimizer, keeps
+   the `|` of a conditional whose "no" branch is written empty, `(?(c)X|)`:
+   it wrote `(?(c)X)`, which PCRE gives, in a lookbehind, the length of `X`
+   alone, so `/(?<!(?(?=a)bb|))c/` compacted matched `c`. The formatter's
+   check of its own output reads the two apart.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.
