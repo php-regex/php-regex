@@ -12,11 +12,16 @@ declare(strict_types=1);
  */
 
 // Tally installs under tools/tally on PHP 8.2 and later only. Where it is
-// installed, the counted benchmarks read their attributes from it; a job
-// that runs PHPStan on PHP 8.1, or without the tool, scans nothing more,
-// where a missing directory would stop the analysis. PHPStan keeps the
-// container it compiled from this answer in .cache/phpstan: after
+// installed, the counted benchmarks read their attributes from it. Where it
+// is not (a job on PHP 8.1, a checkout that skipped the tool), a missing
+// directory would stop the analysis and the benchmarks would name classes
+// that do not exist: the analysis leaves them out instead. PHPStan keeps
+// the container it compiled from this answer in .cache/phpstan: after
 // installing or removing the tool, empty .cache/phpstan/cache once.
-$tally = \dirname(__DIR__, 3).'/tools/tally/vendor/phpstan/tally/src';
+$root = \dirname(__DIR__, 3);
+$tally = $root.'/tools/tally/vendor/phpstan/tally/src';
 
-return ['parameters' => ['scanDirectories' => is_dir($tally) ? [$tally] : []]];
+return ['parameters' => is_dir($tally)
+    ? ['scanDirectories' => [$tally]]
+    : ['excludePaths' => ['analyseAndScan' => [$root.'/tests/Benchmark/Tally']]],
+];
