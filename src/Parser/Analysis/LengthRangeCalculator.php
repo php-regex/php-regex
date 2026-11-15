@@ -80,6 +80,14 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
      */
     private \WeakMap $lengths;
 
+    /**
+     * Whether an "(*ACCEPT)" in each node read so far may end the match,
+     * made when a sequence first asks: most calculators never do.
+     *
+     * @var \WeakMap<NodeInterface, bool>|null
+     */
+    private ?\WeakMap $accepts = null;
+
     private int $work = 0;
 
     private int $callDepth = 0;
@@ -103,6 +111,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     {
         $this->unicode = $node->isUnicode();
         $this->lengths = new \WeakMap();
+        $this->accepts = null;
         $this->work = 0;
 
         return $this->length($node->pattern);
@@ -144,7 +153,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
             if (!$accepted) {
                 $totalMin = self::sum($totalMin, $childMin) ?? \PHP_INT_MAX;
             }
-            $accepted = $accepted || AcceptVerb::mayEndMatch($child);
+            $accepted = $accepted || AcceptVerb::mayEndMatch($child, $this->accepts ??= new \WeakMap());
 
             $sum = null === $childMax ? null : self::sum($totalMax, $childMax);
             if (null === $sum) {
