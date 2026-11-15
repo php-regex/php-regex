@@ -131,9 +131,16 @@ final class InFileValueResolver
 
     /**
      * The functions of PHP known to take every argument by value: a
-     * variable passed to one of them keeps the value the file proves.
+     * variable passed to one of them keeps the value the file proves. The
+     * functions a guard evaluates are among them.
      */
-    public const BY_VALUE = ['preg_quote' => true, 'sprintf' => true, 'implode' => true, 'join' => true];
+    public const BY_VALUE = ['preg_quote' => true, 'sprintf' => true, 'implode' => true, 'join' => true] + ValueCondition::FUNCTIONS;
+
+    /**
+     * The functions of PHP that, given a single argument, write the
+     * variables of the scope they are called in, on PHP 7.
+     */
+    public const PARSING = ['parse_str', 'mb_parse_str'];
 
     /**
      * The function of PHP that declares a constant.
@@ -168,6 +175,12 @@ final class InFileValueResolver
      * code the file runs may write.
      */
     public const FILE = -1;
+
+    /**
+     * How many of the guards around a read are asked about its values,
+     * the nearest first: past them, a value is kept.
+     */
+    private const GUARDS_PER_READ = 64;
 
     /**
      * The name PHP gives the callback of a function of CALLING that takes
@@ -408,6 +421,26 @@ final class InFileValueResolver
      * @var array<int, true> the function bodies a goto may run again
      */
     private array $jumpingScopes = [];
+
+    /**
+     * @var array<int, array<string, list<array{ValueCondition, bool, int, int, int}>>> scope => variable => the
+     *                                                                                  stretches a condition on it
+     *                                                                                  rules: the condition,
+     *                                                                                  whether the stretch runs
+     *                                                                                  where it holds, where the
+     *                                                                                  condition starts, and the
+     *                                                                                  first and last byte of the
+     *                                                                                  stretch
+     */
+    private array $guards = [];
+
+    /**
+     * @var array<int, array<string, array{list<int>, list<int>}>> scope => variable => where the stretch of each
+     *                                                             guard starts, once they are in the order they
+     *                                                             start, the longest first, and the rank of the
+     *                                                             guard whose stretch holds it, -1 for none
+     */
+    private array $guardTrees = [];
 
     /**
      * @var array<int, array<string, int>> scope => variable => where it is last read as a pattern; -1 for
@@ -772,6 +805,25 @@ final class InFileValueResolver
     public function loop(int $scope, int $start, int $end): void
     {
         $this->loops[$scope][] = [$start, $end];
+    }
+
+    /**
+     * A stretch of the body PHP runs only where a condition holds, or
+     * only where it fails: the right operand of "&&" or "||", a branch, an
+     * arm, the rest of a block after an "if" that leaves it. A read of a
+     * variable the condition names keeps there the values that pass it.
+     *
+     * @param bool $holds where the stretch runs: where the condition holds, or where it fails
+     * @param int  $since where the condition starts
+     * @param int  $from  the first byte of the stretch
+     * @param int  $to    its last byte
+     */
+    public function guard(int $scope, ValueCondition $condition, bool $holds, int $since, int $from, int $to): void
+    {
+        foreach ($condition->variables() as $name) {
+            $this->guards[$scope][$name][] = [$condition, $holds, $since, $from, $to];
+            unset($this->guardTrees[$scope][$name]);
+        }
     }
 
     /**
@@ -1399,12 +1451,14 @@ final class InFileValueResolver
 
     /**
      * Whether what a variable holds depends on where it is read: a
-     * variable of the file level, which a call may write, and the target
-     * of a foreach, which holds another array in each loop.
+     * variable of the file level, which a call may write, the target of a
+     * foreach, which holds another array in each loop, and a variable a
+     * condition guards somewhere, which keeps there the values that pass.
      */
     private function readsByPlace(ValueExpr $variable): bool
     {
-        return self::FILE === $variable->scope || (null !== $variable->scope && isset($this->targets[$variable->scope][$variable->value]));
+        return self::FILE === $variable->scope
+            || (null !== $variable->scope && (isset($this->targets[$variable->scope][$variable->value]) || isset($this->guards[$variable->scope][$variable->value])));
     }
 
     /**
@@ -1418,6 +1472,21 @@ final class InFileValueResolver
      * @return list<ValueExpr>|null
      */
     private function variable(ValueExpr $variable, int $mode): ?array
+    {
+        $values = $this->held($variable, $mode);
+
+        return null === $values ? null : $this->narrowed($variable, $values);
+    }
+
+    /**
+     * The values a variable holds where it is read, whatever condition
+     * guards the read: those of variable().
+     *
+     * @param int $mode how the variable is read, ALONE, SELECTED or COMPOSED
+     *
+     * @return list<ValueExpr>|null
+     */
+    private function held(ValueExpr $variable, int $mode): ?array
     {
         $scope = $variable->scope;
         $name = $variable->value;
@@ -1438,6 +1507,124 @@ final class InFileValueResolver
         }
 
         return self::FILE === $scope ? $this->fileValues($name, $variable->offset) : $this->variableValues($scope, $name, self::SELECTED === $mode);
+    }
+
+    /**
+     * The values a read keeps of those the variable holds there: a value
+     * a condition guarding the read rejects never reaches it, as PHP
+     * evaluates the condition on that value. A literal is judged; a value
+     * the file does not prove whole is kept. A condition guards the read
+     * when the read stands in the stretch it rules, and nothing writes the
+     * variable between the condition and the read; nothing is narrowed in
+     * a body a goto runs again.
+     *
+     * @param list<ValueExpr> $values
+     *
+     * @return list<ValueExpr>
+     */
+    private function narrowed(ValueExpr $variable, array $values): array
+    {
+        $scope = $variable->scope;
+        $read = $variable->offset;
+        $guards = null === $scope ? null : $this->guards[$scope][$variable->value] ?? null;
+        if (null === $scope || null === $guards || $read < 0 || isset($this->jumpingScopes[$scope])) {
+            return $values;
+        }
+
+        // The stretches nest in each other, as the code they cover does:
+        // those holding the read are the last one starting before it and
+        // the ones around that one.
+        [$starts, $parents] = $this->guardTree($scope, $variable->value);
+        $guards = $this->guards[$scope][$variable->value];
+        $holding = [];
+        for ($rank = self::before($starts, $read + 1) - 1, $asked = 0; $rank >= 0 && $asked < self::GUARDS_PER_READ; $rank = $parents[$rank], $asked++) {
+            [$condition, $holds, $since, , $to] = $guards[$rank];
+            if ($read <= $to && $this->unwrittenSince($scope, $variable->value, $since, $to, $read)) {
+                $holding[] = [$condition, $holds];
+            }
+        }
+
+        if ([] === $holding) {
+            return $values;
+        }
+
+        return array_values(array_filter($values, fn (ValueExpr $value): bool => $this->passes($value, $variable->value, $holding)));
+    }
+
+    /**
+     * The guards of a variable in the order their stretches start, the
+     * longest first: where each starts, and the rank of the guard around
+     * it, whose stretch holds its start.
+     *
+     * @return array{list<int>, list<int>}
+     */
+    private function guardTree(int $scope, string $name): array
+    {
+        if (isset($this->guardTrees[$scope][$name])) {
+            return $this->guardTrees[$scope][$name];
+        }
+
+        usort($this->guards[$scope][$name], static fn (array $a, array $b): int => [$a[3], $b[4]] <=> [$b[3], $a[4]]);
+        $starts = [];
+        $parents = [];
+        $open = [];
+        foreach ($this->guards[$scope][$name] as $rank => [, , , $from]) {
+            while ([] !== $open && $this->guards[$scope][$name][$open[\count($open) - 1]][4] < $from) {
+                array_pop($open);
+            }
+
+            $parents[] = [] === $open ? -1 : $open[\count($open) - 1];
+            $starts[] = $from;
+            $open[] = $rank;
+        }
+
+        return $this->guardTrees[$scope][$name] = [$starts, $parents];
+    }
+
+    /**
+     * Whether the value passes the conditions: a literal one of them
+     * rejects does not; any other value, which the file does not prove
+     * whole, does. A variable reads its values unfolded, a set of them
+     * already spread.
+     *
+     * @param list<array{ValueCondition, bool}> $holding the conditions, each with whether the read runs where it holds
+     */
+    private function passes(ValueExpr $value, string $name, array $holding): bool
+    {
+        if (ValueExpr::LITERAL !== $value->kind) {
+            return true;
+        }
+
+        foreach ($holding as [$condition, $holds]) {
+            if (!$holds === $condition->holds($name, $value->value, $this->isNative(...))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether the variable keeps, at the read, the value the condition
+     * starting at $since saw: the target of a foreach, when the condition
+     * stands after the head of the loop that gives the read its values,
+     * which nothing writes between that head and the read; any other
+     * variable, when no assignment of it starts between the condition and
+     * the end of the stretch it rules. A variable written otherwise, or
+     * passed to a call, holds no value to narrow.
+     */
+    private function unwrittenSince(int $scope, string $name, int $since, int $to, int $read): bool
+    {
+        if (isset($this->targets[$scope][$name])) {
+            $rank = $this->loopRank($scope, $name, $read);
+
+            return $rank >= 0 && $this->targets[$scope][$name][$rank][1] < $since;
+        }
+
+        $assignments = $this->assignments[$scope][$name] ?? [];
+        $starts = [] === $assignments ? [] : ($this->assignmentPlaces[$scope][$name] ??= self::inOrder($assignments))[0];
+
+        return self::before($starts, $to + 1) === self::before($starts, $since);
     }
 
     /**
@@ -1783,25 +1970,8 @@ final class InFileValueResolver
      */
     private function targetValues(int $scope, string $name, int $read): array
     {
-        if (!isset($this->targetsInOrder[$scope][$name])) {
-            usort($this->targets[$scope][$name], static fn (array $a, array $b): int => $a[2] <=> $b[2]);
-            $this->targetsInOrder[$scope][$name] = true;
-        }
-
-        // The last loop whose head stands before the read.
+        $rank = $this->loopRank($scope, $name, $read);
         $heads = $this->targets[$scope][$name];
-        $low = 0;
-        $high = \count($heads);
-        while ($low < $high) {
-            $middle = intdiv($low + $high, 2);
-            if ($heads[$middle][1] < $read) {
-                $low = $middle + 1;
-            } else {
-                $high = $middle;
-            }
-        }
-
-        $rank = $low - 1;
         if ($rank < 0 || $heads[$rank][3] < $read || isset($this->jumpingScopes[$scope])) {
             return [self::rawHole()];
         }
@@ -1823,6 +1993,32 @@ final class InFileValueResolver
         }
 
         return $this->headValues[$scope][$name][$rank] ??= $this->values($each);
+    }
+
+    /**
+     * The rank of the last foreach loop whose head assigns the variable
+     * before the read, in the order the loops start; -1 for none.
+     */
+    private function loopRank(int $scope, string $name, int $read): int
+    {
+        if (!isset($this->targetsInOrder[$scope][$name])) {
+            usort($this->targets[$scope][$name], static fn (array $a, array $b): int => $a[2] <=> $b[2]);
+            $this->targetsInOrder[$scope][$name] = true;
+        }
+
+        $heads = $this->targets[$scope][$name];
+        $low = 0;
+        $high = \count($heads);
+        while ($low < $high) {
+            $middle = intdiv($low + $high, 2);
+            if ($heads[$middle][1] < $read) {
+                $low = $middle + 1;
+            } else {
+                $high = $middle;
+            }
+        }
+
+        return $low - 1;
     }
 
     /**

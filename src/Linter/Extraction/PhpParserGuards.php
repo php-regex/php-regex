@@ -97,6 +97,25 @@ final class PhpParserGuards
     }
 
     /**
+     * Whether a body is one statement that leaves the block.
+     *
+     * @param array<Stmt> $stmts
+     */
+    public static function leaves(array $stmts): bool
+    {
+        if (1 !== \count($stmts)) {
+            return false;
+        }
+
+        $statement = array_values($stmts)[0];
+
+        return $statement instanceof Return_
+            || $statement instanceof Continue_
+            || $statement instanceof Break_
+            || ($statement instanceof Expression && ($statement->expr instanceof Throw_ || $statement->expr instanceof Exit_));
+    }
+
+    /**
      * The nodes of a list, a block of statements reading its early exits.
      *
      * @param list<Node> $nodes
@@ -222,25 +241,6 @@ final class PhpParserGuards
                 }
             }
         }
-    }
-
-    /**
-     * Whether a body is one statement that leaves the block.
-     *
-     * @param array<Stmt> $stmts
-     */
-    private static function leaves(array $stmts): bool
-    {
-        if (1 !== \count($stmts)) {
-            return false;
-        }
-
-        $statement = array_values($stmts)[0];
-
-        return $statement instanceof Return_
-            || $statement instanceof Continue_
-            || $statement instanceof Break_
-            || ($statement instanceof Expression && ($statement->expr instanceof Throw_ || $statement->expr instanceof Exit_));
     }
 
     /**
