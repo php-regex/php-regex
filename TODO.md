@@ -92,9 +92,6 @@ measured under 3 %.
 
 ## Linter precision
 
-- Merge #392: an early exit on the PHP version is read by the tokenizer
-  only where it stands among statements, up to the end of its block of
-  the alternative syntax, and the throw statement of PHP-Parser 4 is one.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. A small
   pull request to its type specifier, with an nsrt test, would fix it.
@@ -105,10 +102,6 @@ measured under 3 %.
 `tests/Benchmark/Tally/` is counted by Tally in CI, in the gating job
 `Benchmarks (counted)`, from #390 on.
 
-- Merge #391 and #393, which make the rules on nested quantifiers and
-  nested dot-stars linear in the length of a sequence, and the lengths of
-  nested sequences linear in their depth; both hold their counted
-  benchmarks to `#[Linear]`.
 - Once the counted job has run on a few pull requests: drop the ratio of
   `assertLinearTime()` (the counted growth benchmarks are the measure)
   and keep its budget as a tripwire on every host, which shortens the
