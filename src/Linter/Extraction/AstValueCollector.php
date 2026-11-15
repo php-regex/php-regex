@@ -23,8 +23,12 @@ use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\AssignOp;
 use PhpParser\Node\Expr\AssignRef;
+use PhpParser\Node\Expr\BinaryOp\BooleanAnd;
+use PhpParser\Node\Expr\BinaryOp\BooleanOr;
 use PhpParser\Node\Expr\BinaryOp\Coalesce;
 use PhpParser\Node\Expr\BinaryOp\Concat;
+use PhpParser\Node\Expr\BinaryOp\LogicalAnd;
+use PhpParser\Node\Expr\BinaryOp\LogicalOr;
 use PhpParser\Node\Expr\CallLike;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;
@@ -53,6 +57,7 @@ use PhpParser\Node\Scalar\Encapsed;
 use PhpParser\Node\Scalar\EncapsedStringPart;
 use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt;
 use PhpParser\Node\Stmt\Block;
 use PhpParser\Node\Stmt\Catch_;
 use PhpParser\Node\Stmt\Class_;
@@ -62,6 +67,7 @@ use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Const_;
 use PhpParser\Node\Stmt\Declare_;
 use PhpParser\Node\Stmt\Do_;
+use PhpParser\Node\Stmt\ElseIf_;
 use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\EnumCase;
 use PhpParser\Node\Stmt\Expression;
@@ -116,6 +122,11 @@ final class AstValueCollector extends NodeVisitorAbstract
     private const RUNS_AT = 'phpRegexRunsAt';
 
     private const CERTAIN = 'phpRegexCertain';
+
+    /**
+     * An "&&", "and", "||" or "or" of a chain the outermost one read.
+     */
+    private const CHAINED = 'phpRegexChained';
 
     private readonly InFileValueResolver $values;
 
@@ -187,6 +198,7 @@ final class AstValueCollector extends NodeVisitorAbstract
     public function beforeTraverse(array $nodes)
     {
         self::markStatements($nodes);
+        $this->earlyExits(InFileValueResolver::FILE, $nodes);
 
         return null;
     }
@@ -253,6 +265,8 @@ final class AstValueCollector extends NodeVisitorAbstract
                 $this->values->jumps($scope);
             }
         }
+
+        $this->guardsOf($node);
 
         return null;
     }
@@ -460,6 +474,192 @@ final class AstValueCollector extends NodeVisitorAbstract
     }
 
     /**
+     * The lowercase functions a call by the name may reach, in the order
+     * PHP tries them: the namespace's own, then the global one.
+     *
+     * @return non-empty-list<string>
+     */
+    public static function functionNames(Name $name): array
+    {
+        $namespaced = $name->getAttribute('namespacedName');
+
+        return $namespaced instanceof Name ? [$namespaced->toLowerString(), $name->toLowerString()] : [$name->toLowerString()];
+    }
+
+    /**
+     * The stretches the node runs only where a condition holds, or fails:
+     * the right operand of "&&", "and", "||" and "or", the branches of an
+     * "if", of a ternary and of "?:", the arms of a match, and, in each list
+     * of statements it holds, the rest of the list after an "if" that only
+     * leaves it.
+     */
+    private function guardsOf(Node $node): void
+    {
+        $scope = $this->scope();
+        if (null === $scope) {
+            return;
+        }
+
+        if ($node instanceof BooleanAnd || $node instanceof LogicalAnd || $node instanceof BooleanOr || $node instanceof LogicalOr) {
+            $this->chain($scope, $node);
+        } elseif ($node instanceof If_) {
+            $this->branches($scope, $node);
+        } elseif ($node instanceof Ternary) {
+            if (null !== $node->if) {
+                $this->guarded($scope, $node->cond, true, $node->if);
+            }
+            $this->guarded($scope, $node->cond, false, $node->else);
+        } elseif ($node instanceof Match_) {
+            $this->arms($scope, $node);
+        }
+
+        foreach ($node->getSubNodeNames() as $name) {
+            $items = $node->{$name};
+            $statements = [];
+            foreach (\is_array($items) ? $items : [] as $item) {
+                if (!$item instanceof Stmt) {
+                    continue 2;
+                }
+
+                $statements[] = $item;
+            }
+
+            $this->earlyExits($scope, $statements);
+        }
+    }
+
+    /**
+     * The chain an "&&", "and", "||" or "or" ends, from the outermost of
+     * its operators: in "A && B && C", what follows an operand runs only
+     * where it holds ("||": where it fails). Each operand is read once,
+     * the operators inside the chain are passed over when entered.
+     */
+    private function chain(int $scope, BooleanAnd|LogicalAnd|BooleanOr|LogicalOr $node): void
+    {
+        if (true === $node->getAttribute(self::CHAINED)) {
+            return;
+        }
+
+        $operands = [$node->right];
+        $link = $node->left;
+        while ($link instanceof $node) {
+            $link->setAttribute(self::CHAINED, true);
+            $operands[] = $link->right;
+            $link = $link->left;
+        }
+        $operands[] = $link;
+        $operands = array_reverse($operands);
+
+        $holds = $node instanceof BooleanAnd || $node instanceof LogicalAnd;
+        $end = $node->getEndFilePos();
+        for ($rank = 0, $last = \count($operands) - 1; $rank < $last; $rank++) {
+            $this->guard($scope, [[PhpParserConditions::of($operands[$rank]), $holds]], $operands[$rank]->getStartFilePos(), $operands[$rank + 1]->getStartFilePos(), $end);
+        }
+    }
+
+    /**
+     * The branches of an "if": each runs where its condition holds, and
+     * what follows a condition in the chain, the next condition, its
+     * branch and the "else", where it fails. Each condition guards two
+     * stretches, nested in those of the conditions before it.
+     */
+    private function branches(int $scope, If_ $if): void
+    {
+        $parts = array_values([[$if->cond, $if->stmts], ...array_map(static fn (ElseIf_ $elseIf): array => [$elseIf->cond, $elseIf->stmts], $if->elseifs)]);
+        $end = $if->getEndFilePos();
+        foreach ($parts as $rank => [$cond, $stmts]) {
+            $condition = [[PhpParserConditions::of($cond), true]];
+            if ([] !== $stmts) {
+                $this->guard($scope, $condition, $cond->getStartFilePos(), $stmts[0]->getStartFilePos(), $stmts[\count($stmts) - 1]->getEndFilePos());
+            }
+
+            $next = $parts[$rank + 1][0] ?? $if->else;
+            if (null !== $next) {
+                $this->guard($scope, [[$condition[0][0], false]], $cond->getStartFilePos(), $next->getStartFilePos(), $end);
+            }
+        }
+    }
+
+    /**
+     * The arms of a match: each runs where the subject is identical to
+     * one of its conditions and to none of the arms tried before it; the
+     * default one, wherever it is written, where it is identical to none.
+     * An arm's condition failing guards the arms written after it, and the
+     * default arm written before it.
+     */
+    private function arms(int $scope, Match_ $match): void
+    {
+        $subject = PhpParserConditions::of($match->cond);
+        $since = $match->cond->getStartFilePos();
+        $arms = array_values($match->arms);
+        // "match ($x) {}" throws whatever its subject: nothing to guard.
+        if ([] === $arms) {
+            return;
+        }
+
+        $end = $arms[\count($arms) - 1]->getEndFilePos();
+        $default = null;
+        foreach ($arms as $rank => $arm) {
+            if (null === $arm->conds) {
+                $default = $arm->body;
+
+                continue;
+            }
+
+            // false || X is X.
+            $matched = ValueCondition::literal(false);
+            foreach ($arm->conds as $cond) {
+                $matched = ValueCondition::or($matched, ValueCondition::compare('===', $subject, PhpParserConditions::of($cond)));
+            }
+
+            $this->guard($scope, [[$matched, true]], $since, $arm->body->getStartFilePos(), $arm->body->getEndFilePos());
+            if (isset($arms[$rank + 1])) {
+                $this->guard($scope, [[$matched, false]], $since, $arms[$rank + 1]->getStartFilePos(), $end);
+            }
+
+            if (null !== $default) {
+                $this->guard($scope, [[$matched, false]], $since, $default->getStartFilePos(), $default->getEndFilePos());
+            }
+        }
+    }
+
+    /**
+     * In a list of statements, after "if (<condition>) { return; }" (or
+     * "throw", "continue", "break", "exit" alone in the body) with no
+     * other branch, the rest of the list runs where the condition fails.
+     *
+     * @param array<Node> $statements
+     */
+    private function earlyExits(int $scope, array $statements): void
+    {
+        $statements = array_values($statements);
+        $last = $statements[\count($statements) - 1] ?? null;
+        foreach ($statements as $index => $statement) {
+            if (null !== $last && $statement instanceof If_ && [] === $statement->elseifs && null === $statement->else && PhpParserGuards::leaves($statement->stmts) && isset($statements[$index + 1])) {
+                $this->guard($scope, [[PhpParserConditions::of($statement->cond), false]], $statement->cond->getStartFilePos(), $statements[$index + 1]->getStartFilePos(), $last->getEndFilePos());
+            }
+        }
+    }
+
+    /**
+     * The node runs only where the condition holds, or fails.
+     */
+    private function guarded(int $scope, Expr $cond, bool $holds, Node $node): void
+    {
+        $this->guard($scope, [[PhpParserConditions::of($cond), $holds]], $cond->getStartFilePos(), $node->getStartFilePos(), $node->getEndFilePos());
+    }
+
+    /**
+     * @param list<array{ValueCondition, bool}> $conditions
+     */
+    private function guard(int $scope, array $conditions, int $since, int $from, int $to): void
+    {
+        foreach ($conditions as [$condition, $holds]) {
+            $this->values->guard($scope, $condition, $holds, $since, $from, $to);
+        }
+    }
+
+    /**
      * An expression that names an item of an array, between the brackets
      * of a read or before the "=>" of a literal. PHP casts a key that is
      * no string and no integer: true and false are 1 and 0, null the empty
@@ -564,19 +764,6 @@ final class AstValueCollector extends NodeVisitorAbstract
         $delimiter = ($positional ?? $named)?->value;
 
         return ValueExpr::hole(true, $delimiter instanceof String_ ? $delimiter->value : null, '', $names);
-    }
-
-    /**
-     * The lowercase functions a call by the name may reach, in the order
-     * PHP tries them: the namespace's own, then the global one.
-     *
-     * @return non-empty-list<string>
-     */
-    private static function functionNames(Name $name): array
-    {
-        $namespaced = $name->getAttribute('namespacedName');
-
-        return $namespaced instanceof Name ? [$namespaced->toLowerString(), $name->toLowerString()] : [$name->toLowerString()];
     }
 
     private function enterClass(ClassLike $class): void
@@ -738,8 +925,10 @@ final class AstValueCollector extends NodeVisitorAbstract
         if ($call instanceof FuncCall && $call->name instanceof Name) {
             // Resolved, a name of one segment is the global function, or the
             // namespace's one PHP falls back from: Foo\extract() is neither.
+            // A callable taken from one of them, extract(...), runs nothing:
+            // PHP refuses to call those dynamically.
             $name = $call->name->toLowerString();
-            if ('extract' === $name || 'compact' === $name) {
+            if (!$call->isFirstClassCallable() && ('extract' === $name || 'compact' === $name || (\in_array($name, InFileValueResolver::PARSING, true) && !self::passesTwo($call)))) {
                 $this->bailScope();
             }
 
@@ -781,6 +970,22 @@ final class AstValueCollector extends NodeVisitorAbstract
                 $this->values->byValue($byValue, fn () => $this->write($value, $call->getEndFilePos()));
             }
         }
+    }
+
+    /**
+     * Whether the call passes two arguments at least, by position or by
+     * name, none of them spread.
+     */
+    private static function passesTwo(FuncCall $call): bool
+    {
+        $args = $call->getRawArgs();
+        foreach ($args as $arg) {
+            if (!$arg instanceof Arg || $arg->unpack) {
+                return false;
+            }
+        }
+
+        return \count($args) >= 2;
     }
 
     /**

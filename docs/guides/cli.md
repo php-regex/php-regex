@@ -764,10 +764,14 @@ final class Slug
   `unset()`, `++` or `--`, a `yield` in a
   generator that returns by reference (`function &gen()`), or the variable
   passed to any other call, as `preg_match()`'s `$matches`; `preg_quote()`,
-  `sprintf()`, `implode()` and `join()` take their arguments by value, and
-  leave it read. A function body
-  that writes `$$name`, or calls `extract()`, `compact()`, `eval()` or
-  `include`, has none of its variables read. A variable does not cross into a closure.
+  `sprintf()`, `implode()`, `join()`, `str_starts_with()`, `str_ends_with()`,
+  `str_contains()`, `strpos()`, `substr()` and `strlen()` take their
+  arguments by value, and leave it read. A function body
+  that writes `$$name`, or calls `extract()`, `compact()`, `eval()`,
+  `include`, or `parse_str()` or `mb_parse_str()` with a single argument
+  (which writes the variables of the scope on PHP 7), has none of its
+  variables read; a callable taken from one of them, `extract(...)`, writes
+  nothing, as PHP refuses to call them dynamically. A variable does not cross into a closure.
   One at file level, outside any function, is a global: whatever runs
   between its assignment and the call that reads it may give it another
   value, and PHP runs code where the file writes no call (a magic method,
@@ -971,6 +975,74 @@ Each of the four literals is linted, where it is written:
   array under any other key, nothing under a key the array does not hold.
   An item may be missing, so its fallback is kept beside the values:
   `self::MAP[$type] ?? '/^\w+$/'` is each value of `MAP` and `/^\w+$/`.
+
+##### Values a condition rules out
+
+A value the code tests before the call, and which fails the test, never
+reaches the call, and is not linted. This list holds names beside one
+pattern, and only the pattern reaches `preg_match()`:
+
+```php
+final class Providers
+{
+    private const KNOWN = ['Debian', 'Fedora Project', '|^Remi\'s RPM repository|'];
+
+    public function isKnown(string $provider): bool
+    {
+        foreach (self::KNOWN as $known) {
+            if ($provider === $known || ($known[0] === '|' && preg_match($known, $provider))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+```
+
+`|^Remi's RPM repository|` is linted; `Debian` and `Fedora Project`, which
+`preg_match()` never receives, are not reported as patterns without
+delimiters.
+
+The lint reads a condition PHP evaluates on the value alone. Its operands
+are the variable, one byte of it (`$known[0]`, `$known[-1]`), strings,
+integers, `true`, `false` and `null`, and `str_starts_with()`,
+`str_ends_with()`, `str_contains()`, `strpos()`, `substr()` and `strlen()`
+called by their name with such operands. It compares them with `===` and
+`!==`, with `==` and `!=` between two strings, two integers or two booleans,
+and with `<`, `<=`, `>` and `>=` between two integers, and joins the
+comparisons with `!`, `&&`, `||`, `and` and `or`. The condition holds over
+the right operand of `&&` and `and` (where the left one holds) and of `||`
+and `or` (where it fails), over the branches of an `if`, an `elseif` and an
+`else`, the conditions of the `elseif` after it included, and over the rest
+of a block after an `if` whose body only returns, throws, continues, breaks
+or exits. With `nikic/php-parser` installed, the lint also reads it on the
+branches of a ternary and of `?:`, on the arms of a `match` and in the
+alternative syntax (`if (...): ... endif;`); the tokenizer, which reads the
+files otherwise, does not, and keeps every value there. A variable of the
+file level is read by the same rules, where the lint reads it at all (see
+**Local variables** above).
+
+Any other condition keeps every value: a comparison with a parameter or
+with a constant, a cast, a concatenation, an ordering of texts (`$p < 'q'`),
+`<=>`. So does one PHP 7 and PHP 8 do not evaluate alike: `substr()` past
+the end of the value, `strpos()` of an empty needle, `==` between texts
+holding a digit (`"1 " == "1"` holds on PHP 8 only). So do `substr()`,
+`strpos()` and `strlen()` of a value past ASCII, which
+`mbstring.func_overload` reads by character on PHP 7, and an empty needle
+given to `str_starts_with()`, `str_ends_with()` or `str_contains()`, which
+some functions of those names written for PHP 7 never find. A condition that
+passes the variable to any other function (`self::isRegex($p)`,
+`ctype_alpha($p)`) leaves the variable unread, as every call it is passed
+to does: the function may take it by reference. The variable must keep, up
+to the call, the value the condition saw: an assignment of it anywhere in
+the stretch the condition rules, even after the call (a loop there may run
+it first), the head of a `foreach` that assigns it, a `goto` in the
+function body, or a loop whose body is a control structure without braces
+keeps every value. A value the condition lets through is linted as before,
+a valid pattern or not, and no value is left out because the others are
+patterns: `foreach (['/a/', 'b'] as $p) { preg_match($p, $s); }` still
+reports `b`.
 
 ##### Constants of another file
 

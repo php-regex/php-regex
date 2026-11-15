@@ -7917,6 +7917,306 @@
             ]
         },
         {
+            "id": "f-3dfe00c54f",
+            "file": "libraries/src/Mail/MailHelper.php",
+            "line": 237,
+            "column": 30,
+            "pattern": "#\\shref=\"(?!/|[a-zA-Z0-9\\-]+:|\\#|')([^\"]*)\"#m",
+            "source": "preg_replace()",
+            "location": "via $regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#\\shref=\"(?!/|[a-zA-Z0-9\\-]+:|\\#|')([^\"]*)\"#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Mail/MailHelper.php#L234-L240",
+            "snippet": [
+                {
+                    "number": 234,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $content = preg_replace('/\\s' . $attribute . '\"([^\"]*)\"/i', '', $content);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 235,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 236,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    // Define a regular expression pattern for matching relative URLs in the specified attribute",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 237,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    $regex = '#\\s' . $attribute . '\"(?!/|' . $protocols . '|\\#|\\')([^\"]*)\"#m';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 238,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 239,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    // Replace relative URLs with absolute URLs using the siteUrl variable",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 240,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $content = preg_replace($regex, ' ' . $attribute . '\"' . $siteUrl . '$1\"', $content);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a8b56a3504",
+            "file": "libraries/src/Mail/MailHelper.php",
+            "line": 237,
+            "column": 30,
+            "pattern": "#\\sposter=\"(?!/|[a-zA-Z0-9\\-]+:|\\#|')([^\"]*)\"#m",
+            "source": "preg_replace()",
+            "location": "via $regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#\\sposter=\"(?!/|[a-zA-Z0-9\\-]+:|\\#|')([^\"]*)\"#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Mail/MailHelper.php#L234-L240",
+            "snippet": [
+                {
+                    "number": 234,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $content = preg_replace('/\\s' . $attribute . '\"([^\"]*)\"/i', '', $content);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 235,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 236,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    // Define a regular expression pattern for matching relative URLs in the specified attribute",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 237,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    $regex = '#\\s' . $attribute . '\"(?!/|' . $protocols . '|\\#|\\')([^\"]*)\"#m';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 238,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 239,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    // Replace relative URLs with absolute URLs using the siteUrl variable",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 240,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $content = preg_replace($regex, ' ' . $attribute . '\"' . $siteUrl . '$1\"', $content);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-31f7ff0af0",
+            "file": "libraries/src/Mail/MailHelper.php",
+            "line": 237,
+            "column": 30,
+            "pattern": "#\\ssrc=\"(?!/|[a-zA-Z0-9\\-]+:|\\#|')([^\"]*)\"#m",
+            "source": "preg_replace()",
+            "location": "via $regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#\\ssrc=\"(?!/|[a-zA-Z0-9\\-]+:|\\#|')([^\"]*)\"#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/joomla/joomla-cms/blob/3a506bc9da00221e5ef10d079455d0558f96ecda/libraries/src/Mail/MailHelper.php#L234-L240",
+            "snippet": [
+                {
+                    "number": 234,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $content = preg_replace('/\\s' . $attribute . '\"([^\"]*)\"/i', '', $content);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 235,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 236,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    // Define a regular expression pattern for matching relative URLs in the specified attribute",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 237,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    $regex = '#\\s' . $attribute . '\"(?!/|' . $protocols . '|\\#|\\')([^\"]*)\"#m';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 238,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 239,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    // Replace relative URLs with absolute URLs using the siteUrl variable",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 240,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $content = preg_replace($regex, ' ' . $attribute . '\"' . $siteUrl . '$1\"', $content);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-f907e2af0e",
             "file": "libraries/src/Utility/Utility.php",
             "line": 40,

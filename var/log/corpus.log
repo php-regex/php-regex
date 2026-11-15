@@ -11812,6 +11812,30 @@ corpus/joomla/joomla-cms/libraries/src/Mail/MailHelper.php:210:28
        - #href="index.php\?([^"]+)"#m
        + #href="index.php\?([^"]+)"#
 
+corpus/joomla/joomla-cms/libraries/src/Mail/MailHelper.php:237:30
+    → #\shref="(?!/|[a-zA-Z0-9\-]+:|\#|')([^"]*)"#m
+   ↳ via $regex
+   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - #\shref="(?!/|[a-zA-Z0-9\-]+:|\#|')([^"]*)"#m
+       + #\shref="(?!/|[a-zA-Z0-9\-]+:|\#|')([^"]*)"#
+
+corpus/joomla/joomla-cms/libraries/src/Mail/MailHelper.php:237:30
+    → #\sposter="(?!/|[a-zA-Z0-9\-]+:|\#|')([^"]*)"#m
+   ↳ via $regex
+   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - #\sposter="(?!/|[a-zA-Z0-9\-]+:|\#|')([^"]*)"#m
+       + #\sposter="(?!/|[a-zA-Z0-9\-]+:|\#|')([^"]*)"#
+
+corpus/joomla/joomla-cms/libraries/src/Mail/MailHelper.php:237:30
+    → #\ssrc="(?!/|[a-zA-Z0-9\-]+:|\#|')([^"]*)"#m
+   ↳ via $regex
+   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - #\ssrc="(?!/|[a-zA-Z0-9\-]+:|\#|')([^"]*)"#m
+       + #\ssrc="(?!/|[a-zA-Z0-9\-]+:|\#|')([^"]*)"#
+
 corpus/joomla/joomla-cms/libraries/src/Utility/Utility.php:40:24
     → /([\w:-]+)[\s]?=[\s]?"([^"]*)"/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -19895,39 +19919,7 @@ corpus/php/php-src/scripts/dev/check_parameters.php:100:20
 
 
 
-### corpus/php/pie — Target: PHP 8.1.99, PCRE2 10.39 (composer.json config.platform.php) — exit 1
-corpus/php/pie/src/DependencyResolver/ResolveDependencyWithComposer.php:148:13
-    → AlmaLinux
-   ↳ via $rpmProvider
-   FAIL  Invalid delimiter "A". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #AlmaLinux#.
-       ↳ Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".
-
-corpus/php/pie/src/DependencyResolver/ResolveDependencyWithComposer.php:149:13
-    → CentOS
-   ↳ via $rpmProvider
-   FAIL  Invalid delimiter "C". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #CentOS#.
-       ↳ Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".
-
-corpus/php/pie/src/DependencyResolver/ResolveDependencyWithComposer.php:150:13
-    → Fedora Project
-   ↳ via $rpmProvider
-   FAIL  Invalid delimiter "F". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #Fedora Project#.
-       ↳ Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".
-
-corpus/php/pie/src/DependencyResolver/ResolveDependencyWithComposer.php:151:13
-    → Red Hat, Inc.
-   ↳ via $rpmProvider
-   FAIL  Invalid delimiter "R". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #Red Hat, Inc.#.
-       ↳ Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".
-
-corpus/php/pie/src/DependencyResolver/ResolveDependencyWithComposer.php:153:13
-    → Rocky Enterprise Software Foundation
-   ↳ via $rpmProvider
-   FAIL  Invalid delimiter "R". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #Rocky Enterprise
-       Software Foundation#.
-       ↳ Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".
-
-
+### corpus/php/pie — Target: PHP 8.1.99, PCRE2 10.39 (composer.json config.platform.php) — exit 0
 
 ### corpus/php/web-bugs — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/php/web-bugs/src/Repository/PhpInfoRepository.php:38:20

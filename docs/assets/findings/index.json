@@ -1,12 +1,12 @@
 {
     "library": {
-        "version": "2.0.0-DEV"
+        "version": "2.0.0-RC1"
     },
     "totals": {
-        "repos": 236,
-        "findings": 2778,
-        "fail": 183,
-        "warn": 2595
+        "repos": 235,
+        "findings": 2776,
+        "fail": 178,
+        "warn": 2598
     },
     "owners": {
         "10up": {
@@ -1057,24 +1057,6 @@
             ]
         },
         {
-            "repo": "php/pie",
-            "owner": "php",
-            "slug": "php__pie",
-            "target": {
-                "php": "8.1.99",
-                "pcre": "10.39",
-                "source": "composer.json config.platform.php"
-            },
-            "sha": "b89115dbc5ce6f1fa7ca628c8a46f133e6ff9c45",
-            "committed": "2026-11-12",
-            "findings": 5,
-            "fail": 5,
-            "warn": 0,
-            "rules": [
-                "regex.delimiter.invalid"
-            ]
-        },
-        {
             "repo": "pimcore/pimcore",
             "owner": "pimcore",
             "slug": "pimcore__pimcore",
@@ -1499,9 +1481,9 @@
             },
             "sha": "3a506bc9da00221e5ef10d079455d0558f96ecda",
             "committed": "2026-11-13",
-            "findings": 50,
+            "findings": 53,
             "fail": 2,
-            "warn": 48,
+            "warn": 51,
             "rules": [
                 "regex.lint.alternation.duplicateDisjunction",
                 "regex.lint.alternation.empty",
