@@ -139,6 +139,8 @@ final class GuardedValuesTest extends TestCase
     #[Test]
     public function test_the_lint_reports_nothing_on_the_loop_of_pie(): void
     {
+        $this->assertTrue(EngineProbe::compiles("|^Remi's RPM repository <https://rpms.remirepo.net/>|"), 'PCRE compiles the one pattern the loop passes: there is nothing to report.');
+
         foreach ([PhpParserExtractionStrategy::class, TokenBasedExtractionStrategy::class] as $strategy) {
             $this->assertSame([], self::issues($this->lint($strategy, self::PIE)), $strategy);
         }
