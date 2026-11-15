@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A mark written short accepts an `=` in its name, `/(*:foo=bar)/`, and
+   four characters after it, `/(*:x)a=b/`: the check that only the limits
+   take a value read it as `(*MARK:`, four characters longer, and refused
+   that `=` as `regex.verb.invalid`.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.

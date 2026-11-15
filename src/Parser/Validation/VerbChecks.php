@@ -170,10 +170,12 @@ final class VerbChecks
         }
 
         // Only the limits take a value after "=": after any other name PCRE
-        // refuses the "=" where it stands. "(*=name)", a mark written short,
-        // is refused further down.
+        // refuses the "=" where it stands. A mark written short, "(*:name)"
+        // or "(*=name)", writes no name: the first is read whole, an "="
+        // in its name included, and the second is refused further down.
         $equals = $node->startPosition + 2 + \strlen($verbName);
-        if (!isset(self::LIMIT_VERBS[$verbName]) && '=' === ($this->source[$equals] ?? '') && '=' !== ($this->source[$node->startPosition + 2] ?? '')) {
+        $short = \in_array($this->source[$node->startPosition + 2] ?? '', [':', '='], true);
+        if (!isset(self::LIMIT_VERBS[$verbName]) && !$short && '=' === ($this->source[$equals] ?? '')) {
             $this->raise(
                 \sprintf('(*%s) takes no value: only the limits take one, as (*LIMIT_MATCH=10).', $verbName),
                 1 === LibraryPcre::match('/^[a-z]/', $verbName) ? $this->target->faultOffset($equals + 1) : $equals,

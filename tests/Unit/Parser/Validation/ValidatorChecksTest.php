@@ -132,6 +132,8 @@ final class ValidatorChecksTest extends TestCase
         yield 'verb with no name' => ['pattern' => '/(*)/', 'error' => [ErrorCode::QuantifierNothingToRepeat, 2, 'Quantifier "*" does not follow a repeatable item: "(*)" names no verb.']];
         yield 'unknown verb' => ['pattern' => '/(*FOO)/', 'error' => [ErrorCode::VerbInvalid, 5, 'Invalid or unsupported PCRE verb: "FOO".']];
         yield 'verb that takes no value' => ['pattern' => '/(*COMMIT=x)/', 'error' => [ErrorCode::VerbInvalid, 8, '(*COMMIT) takes no value: only the limits take one, as (*LIMIT_MATCH=10).']];
+        yield 'short mark whose name holds "="' => ['pattern' => '/(*:foo=bar)/', 'error' => null];
+        yield 'short mark before an "=" four characters on' => ['pattern' => '/(*:x)a=b/', 'error' => null];
         yield 'limit with no number' => ['pattern' => '/(*LIMIT_MATCH=)a/', 'error' => [ErrorCode::VerbInvalid, 14, '(*LIMIT_MATCH) needs a number: (*LIMIT_MATCH=10).']];
         yield 'limit with a letter after its digits' => ['pattern' => '/(*LIMIT_MATCH=5x)a/', 'error' => [ErrorCode::VerbInvalid, 15, '(*LIMIT_MATCH) needs a number: (*LIMIT_MATCH=10).']];
         yield 'second limit with no number' => ['pattern' => '/(*LIMIT_MATCH=1)(*LIMIT_MATCH=x)a/', 'error' => [ErrorCode::VerbInvalid, 30, '(*LIMIT_MATCH) needs a number: (*LIMIT_MATCH=10).']];
