@@ -44,6 +44,14 @@ final class TokenGuards
 
     private const DECLARATIONS = [\T_FUNCTION, \T_CLASS, \T_INTERFACE, \T_TRAIT, \T_ENUM];
 
+    /**
+     * The statements that open a block of the alternative syntax when ":"
+     * follows their parentheses, and the keywords that end one.
+     */
+    private const ALTERNATIVE_OPENERS = [\T_IF => true, \T_FOREACH => true, \T_FOR => true, \T_WHILE => true, \T_SWITCH => true, \T_DECLARE => true];
+
+    private const ALTERNATIVE_ENDS = [\T_ENDIF => true, \T_ENDFOREACH => true, \T_ENDFOR => true, \T_ENDWHILE => true, \T_ENDSWITCH => true, \T_ENDDECLARE => true];
+
     private readonly GuardRegions $regions;
 
     /**
@@ -193,23 +201,41 @@ final class TokenGuards
 
         // "if (<guard>) { return; }" alone: the rest of the block runs
         // where the guard fails.
-        if ($leaves && 1 === $branches && null !== $failed && !$this->jumps) {
+        if ($leaves && 1 === $branches && null !== $failed && !$this->jumps && $this->standsAmongStatements($index)) {
             $this->restOfBlock($index, $end, $failed);
         }
     }
 
     /**
+     * Whether the "if" at $index stands among the statements of a list:
+     * after the open tag, a ";", a "{", a "}", or the ":" of a case, a label
+     * or a block of the alternative syntax. An "if" that is the body of a
+     * loop or of another "if" without braces is that statement alone, and
+     * what follows runs whatever its guard says: in
+     * "while ($more) if (PHP_VERSION_ID < 80000) break;", the code after the
+     * loop runs on PHP 7 too.
+     */
+    private function standsAmongStatements(int $index): bool
+    {
+        $token = $this->tokens[$this->previous($index)] ?? null;
+
+        return \in_array($token, [';', '{', '}', ':'], true) || (\is_array($token) && \T_OPEN_TAG === $token[0]);
+    }
+
+    /**
      * The rest of the block holding the "if" at $if, after the token at
-     * $after, as far as the next "case" or
-     * "default" of a switch, but for the functions and the classes declared
-     * there: PHP declares those of a file before running it, whatever it
-     * returns.
+     * $after, as far as the next "case" or "default" of a switch, or the end
+     * of a block of the alternative syntax ("endforeach", "else:"), but for
+     * the functions and the classes declared there: PHP declares those of a
+     * file before running it, whatever it returns. A block of the
+     * alternative syntax that opens in the rest is read through to its end.
      */
     private function restOfBlock(int $if, int $after, TargetConstraint $constraint): void
     {
         $blockEnd = $this->enclosing[$if] ?? \count($this->tokens);
         $from = $this->offsets[$after] + 1;
         $boundary = $from;
+        $depth = 0;
         for ($i = $after + 1; $i < $blockEnd; $i++) {
             $token = $this->tokens[$i];
             if (isset($this->closers[$i])) {
@@ -229,7 +255,19 @@ final class TokenGuards
                 continue;
             }
 
-            if (\T_CASE === $token[0] || \T_DEFAULT === $token[0]) {
+            if (isset(self::ALTERNATIVE_ENDS[$token[0]]) && $depth > 0) {
+                $depth--;
+
+                continue;
+            }
+
+            if (isset(self::ALTERNATIVE_OPENERS[$token[0]]) && $this->opensAlternativeBlock($i)) {
+                $depth++;
+
+                continue;
+            }
+
+            if (0 === $depth && (\T_CASE === $token[0] || \T_DEFAULT === $token[0] || isset(self::ALTERNATIVE_ENDS[$token[0]]) || $this->continuesAlternativeIf($i, $token[0]))) {
                 $this->regions->add($from, $this->offsets[$i] - 1, $constraint);
 
                 return;
@@ -245,6 +283,32 @@ final class TokenGuards
         }
 
         $this->regions->add($from, $blockEnd < \count($this->tokens) ? $this->offsets[$blockEnd] : \PHP_INT_MAX, $constraint);
+    }
+
+    /**
+     * Whether the statement at $index has parentheses and then ":", which
+     * opens a block of the alternative syntax.
+     */
+    private function opensAlternativeBlock(int $index): bool
+    {
+        $open = $this->next($index);
+        $close = '(' === ($this->tokens[$open] ?? null) ? ($this->closers[$open] ?? null) : null;
+
+        return null !== $close && ':' === ($this->tokens[$this->next($close)] ?? null);
+    }
+
+    /**
+     * Whether the "else:" or the "elseif (...):" at $index, a token of type
+     * $type, goes on with the "if" of the alternative syntax the rest is
+     * read in, which ends there.
+     */
+    private function continuesAlternativeIf(int $index, int $type): bool
+    {
+        if (\T_ELSE === $type) {
+            return ':' === ($this->tokens[$this->next($index)] ?? null);
+        }
+
+        return \T_ELSEIF === $type && $this->opensAlternativeBlock($index);
     }
 
     /**

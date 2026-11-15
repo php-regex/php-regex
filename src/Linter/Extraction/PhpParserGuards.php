@@ -109,9 +109,12 @@ final class PhpParserGuards
 
         $statement = array_values($stmts)[0];
 
+        // PHP-Parser 4 reads "throw $e;" as a statement of its own, which 5
+        // no longer declares: it is named, not imported.
         return $statement instanceof Return_
             || $statement instanceof Continue_
             || $statement instanceof Break_
+            || 'PhpParser\\Node\\Stmt\\Throw_' === $statement::class
             || ($statement instanceof Expression && ($statement->expr instanceof Throw_ || $statement->expr instanceof Exit_));
     }
 
