@@ -122,25 +122,22 @@ measured under 3 %.
 
 ## Counted benchmarks
 
-Tally (`tools/tally`, branch `tally-benchmarks`) counts instructions under
-Valgrind instead of timing, so a benchmark can assert in CI. It runs on
-Linux only: locally through `php:8.4-cli` in Docker.
+`tests/Counted/` is counted by Tally in CI (`Benchmarks (counted)`,
+gating), from #390 on.
 
-- Choose what it guards first: growth classes in place of the CPU-time
-  ratios of `LinearTimeAssertions` (15 test classes), expected counts on
-  the hot paths (validate cold and warm, lint), or the engine's own cost
-  on the ReDoS fixtures as an oracle for the per-attempt and search-cost
-  degrees.
-- Measured: with `array_unshift` put back in `QuantifierParser`
-  (dde2cfa714), `#[Linear]` fails from 2,048 comments on (+28 %), while
-  the instruction ratios for four times the comments (7.4 and 9.3) stay
-  under the lines `assertLinearTime()` draws. `QuantifierAfterCommentTest`
-  checks the order of the nodes only.
-- `GrowthSeries` says `counted-under-plus` grows about as n² past 80; it
-  is linear now (0.55 ms at 40, 9.2 ms at 1,280, and 0.66 to 0.89 in
-  instructions). The automata `counted` ladder does grow faster than n
-  (slope 1.07, 1.15, 1.30 up to 640).
-- Benchmarks cannot live in `tests/Benchmark`: PHPBench reads every
-  `*Bench.php` there. PHPStan needs Tally's classes the way it reads
-  PHPBench's. The CI job needs a fixed runner image and PHP, and the
-  expected numbers come from CI, never from a local run.
+- The lint rules `quantifier.nested` and `dotstar.nested` read a sequence
+  again for each quantifier: every rule on `a*?` repeated takes about 2 s
+  at 16,000 quantifiers, and `(a)?` repeated about 1 s, four times as long
+  for twice as many (every other rule doubles). `LongSequenceLintTimeTest`
+  passes, under its one-second ceiling at 2,000 and 4,000 items. Read the
+  sequence once, then tighten
+  `LinterGrowthBench::benchNestingRulesOnLazyQuantifiers` to `#[Linear]`
+  (`tally accept` does it from a run that lists it as faster).
+- `PatternInfoAnalyzer` grows as the square of the nesting of anchored
+  sequences (`/((((^a$)a$)a$)a$)/`): about 9 ms at 200 levels. PCRE caps
+  the nesting at 250, so it stays small; `benchNestedAnchoredSequences`
+  holds it to `#[Quadratic]`.
+- Once the counted job has run on a few pull requests: drop the ratio of
+  `assertLinearTime()` (the counted growth benchmarks are the measure)
+  and keep its budget as a tripwire on every host, which shortens the
+  suite. The same for the advisory table job of PHPBench.
