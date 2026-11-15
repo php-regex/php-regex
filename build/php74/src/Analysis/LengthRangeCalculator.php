@@ -63,7 +63,13 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
      * @var \SplObjectStorage<NodeInterface, LengthRange>
      */
     private \SplObjectStorage $lengths;
-    private int $work = 0;
+    /**
+     * Whether an "(*ACCEPT)" in each node read so far may end the match,
+     * made when a sequence first asks: most calculators never do.
+     *
+     * @var \SplObjectStorage<NodeInterface, bool>|null
+     */
+    private ?\SplObjectStorage $accepts = null;
     private const MAX_WORK = 100_000;
 
     /**
@@ -90,6 +96,8 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
             GroupType::ScanSubstring(),
         ];
     }
+
+    private int $work = 0;
 
     private int $callDepth = 0;
     private bool $unicode = false;
@@ -120,6 +128,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     {
         $this->unicode = $node->isUnicode();
         $this->lengths = new \SplObjectStorage();
+        $this->accepts = null;
         $this->work = 0;
 
         return $this->length($node->pattern);
@@ -161,7 +170,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
             if (!$accepted) {
                 $totalMin = self::sum($totalMin, $childMin) ?? \PHP_INT_MAX;
             }
-            $accepted = $accepted || AcceptVerb::mayEndMatch($child);
+            $accepted = $accepted || AcceptVerb::mayEndMatch($child, $this->accepts ??= new \SplObjectStorage());
 
             $sum = null === $childMax ? null : self::sum($totalMax, $childMax);
             if (null === $sum) {
