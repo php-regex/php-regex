@@ -54,6 +54,12 @@ CHANGELOG
    reported as an overlap; a later rule is shadowed only when the earlier
    one takes every request it takes, methods, host and addresses included,
    where `^/admin` for `GET` shadowed `^/admin/users` for every method.
+ * `regex:security` and `regex:analyze` search for every branch of an
+   `access_control` path or host written as a top-level alternation, as
+   Symfony's matchers do: `^/assets|^/login` with `PUBLIC_ACCESS` before
+   `^/assets/private` with `ROLE_ADMIN` is a critical shadow, where the first
+   branch was read as the whole path and the pair went unreported. An anchor
+   binds only the branch it is written in.
  * The `ValidRegex` messages ship in an English catalogue,
    `Resources/translations/validators.en.xlf`, of the `validators` domain:
    an application translates them as it translates the messages of

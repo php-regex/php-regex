@@ -456,48 +456,15 @@ final class SecurityAccessControlAnalyzer
         return (string) new DelimitedPattern($this->normalizeSearchPattern($regexPattern->pattern), $regexPattern->flags, $regexPattern->delimiter);
     }
 
+    /**
+     * A search for the pattern, as a whole-subject match: any text before,
+     * the pattern grouped, any text after. Grouped, every branch of a
+     * top-level alternation is searched for, and an anchor binds only the
+     * branch it is written in, as in preg_match().
+     */
     private function normalizeSearchPattern(string $pattern): string
     {
-        $hasStartAnchor = $this->startsWithAnchor($pattern);
-        $hasEndAnchor = $this->endsWithAnchor($pattern);
-
-        if ($hasStartAnchor && $hasEndAnchor) {
-            return $pattern;
-        }
-
-        if ($hasStartAnchor) {
-            return $pattern.'.*';
-        }
-
-        if ($hasEndAnchor) {
-            return '.*'.$pattern;
-        }
-
-        return '.*'.$pattern.'.*';
-    }
-
-    private function startsWithAnchor(string $pattern): bool
-    {
-        return '' !== $pattern && '^' === $pattern[0];
-    }
-
-    private function endsWithAnchor(string $pattern): bool
-    {
-        $length = \strlen($pattern);
-        if (0 === $length) {
-            return false;
-        }
-
-        if ('$' !== $pattern[$length - 1]) {
-            return false;
-        }
-
-        $backslashes = 0;
-        for ($i = $length - 2; $i >= 0 && '\\' === $pattern[$i]; $i--) {
-            $backslashes++;
-        }
-
-        return 0 === $backslashes % 2;
+        return '.*(?:'.$pattern.').*';
     }
 
     /**

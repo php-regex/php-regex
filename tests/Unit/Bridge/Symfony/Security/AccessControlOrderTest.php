@@ -230,6 +230,61 @@ final class AccessControlOrderTest extends TestCase
             ],
         ];
 
+        yield 'an alternation whose first branch takes the later path shadows it' => [
+            'rules' => [['path' => '^/assets|^/login'], ['path' => '^/assets/private']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/assets/private/report', 0, 1],
+                ['GET', 'http://localhost/login', 0, 0],
+            ],
+        ];
+
+        yield 'an alternation whose last branch takes the later path shadows it' => [
+            'rules' => [['path' => '^/login|^/assets'], ['path' => '^/assets/private']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/assets/private/report', 0, 1],
+                ['GET', 'http://localhost/login', 0, 0],
+            ],
+        ];
+
+        yield 'an unanchored alternation whose first branch takes the later path shadows it' => [
+            'rules' => [['path' => '/admin|/api'], ['path' => '^/admin/users']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/shop/api', 0, 0],
+            ],
+        ];
+
+        yield 'an unanchored alternation whose last branch takes the later path shadows it' => [
+            'rules' => [['path' => '/api|/admin'], ['path' => '^/admin/users']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/shop/api', 0, 0],
+            ],
+        ];
+
+        yield 'an end anchor binds the last branch of an alternation only' => [
+            'rules' => [['path' => '^/login|^/assets$'], ['path' => '^/login/form']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/login/form', 0, 1],
+                ['GET', 'http://localhost/assets', 0, 0],
+                ['GET', 'http://localhost/assets/logo', null, null],
+            ],
+        ];
+
+        yield 'an end anchor on the last branch keeps a longer path out of it' => [
+            'rules' => [['path' => '^/login|^/assets$'], ['path' => '^/assets/private']],
+            'expected' => null,
+            'requests' => [
+                ['GET', 'http://localhost/assets/private', 1, 1],
+                ['GET', 'http://localhost/login', 0, 0],
+            ],
+        ];
+
         yield 'paths that share no request are no conflict' => [
             'rules' => [['path' => '^/admin'], ['path' => '^/api']],
             'expected' => null,
