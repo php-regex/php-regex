@@ -45,8 +45,31 @@ final class AcceptVerb
      * Whether a "(*ACCEPT)" inside the node may end the match there: not one
      * in a lookaround, which only ends the assertion, nor in a (DEFINE) or a
      * group a subroutine call runs, which ends only the call.
+     *
+     * A caller that asks it of a node and then of the nodes around it
+     * passes $memo: each node is then read once, where a tree nested d
+     * levels deep was read d times over.
+     *
+     * @param \WeakMap<NodeInterface, bool>|null $memo the answers given so far, by node
      */
-    public static function mayEndMatch(NodeInterface $node): bool
+    public static function mayEndMatch(NodeInterface $node, ?\WeakMap $memo = null): bool
+    {
+        if (null !== $memo && isset($memo[$node])) {
+            return $memo[$node];
+        }
+
+        $mayEnd = self::reads($node, $memo);
+        if (null !== $memo) {
+            $memo[$node] = $mayEnd;
+        }
+
+        return $mayEnd;
+    }
+
+    /**
+     * @param \WeakMap<NodeInterface, bool>|null $memo
+     */
+    private static function reads(NodeInterface $node, ?\WeakMap $memo): bool
     {
         if ($node instanceof PcreVerbNode) {
             return 'ACCEPT' === $node->name;
@@ -63,7 +86,7 @@ final class AcceptVerb
         };
 
         foreach ($children as $child) {
-            if (self::mayEndMatch($child)) {
+            if (self::mayEndMatch($child, $memo)) {
                 return true;
             }
         }
