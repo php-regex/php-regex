@@ -74,7 +74,7 @@ final class NestedQuantifierRule extends AbstractLintRule
         }
 
         $nested = $this->findNestedQuantifier($node->node);
-        if (null === $nested || !QuantifierMath::isVariable($nested)) {
+        if (null === $nested) {
             return [];
         }
 
@@ -99,6 +99,13 @@ final class NestedQuantifierRule extends AbstractLintRule
         )];
     }
 
+    /**
+     * The first loop inside the node that may repeat a variable number of
+     * times. A count fixed above zero repeats its body that many times, so
+     * a loop inside it is looked for there, and past it otherwise: neither
+     * "\d{4}" in "(?:\d{4}|[a-z]+)+" nor the "{2}" of "(?:(?:a+){2})+"
+     * hides one.
+     */
     private function findNestedQuantifier(NodeInterface $node): ?QuantifierNode
     {
         if ($node instanceof QuantifierNode) {
@@ -106,7 +113,13 @@ final class NestedQuantifierRule extends AbstractLintRule
                 return null;
             }
 
-            return $node;
+            if (QuantifierMath::isVariable($node)) {
+                return $node;
+            }
+
+            [$count] = QuantifierMath::parseRange($node);
+
+            return $count > 0 ? $this->findNestedQuantifier($node->node) : null;
         }
 
         if ($node instanceof GroupNode) {
@@ -160,6 +173,11 @@ final class NestedQuantifierRule extends AbstractLintRule
      *
      * Each item is read under the flags in effect there: in "(?:(?s).+\n)+"
      * the dot takes the "\n".
+     *
+     * Inside the body of a fixed count, only an item after the inner loop
+     * keeps it apart: past the body come the next copy and the rest of the
+     * iteration, which the item before it does not see, as in
+     * "(?:(?:,a*){2}a*)*".
      */
     private function isSafelySeparatedNestedQuantifier(QuantifierNode $outer, QuantifierNode $nested, LintContext $context): bool
     {
@@ -183,6 +201,7 @@ final class NestedQuantifierRule extends AbstractLintRule
         $index = $sequenceInfo['index'];
 
         if ($index > 0
+            && !$sequenceInfo['inFixedCount']
             && $this->separates($children[$index - 1], $flags[$index - 1], $innerBoundary, $innerCaseless, $innerTakesAboveAscii, $context)
             && !$this->tailCanTake(\array_slice($children, $index + 1, null, true), $flags, $innerBoundary, $innerCaseless, $innerTakesAboveAscii, $context)
         ) {
@@ -258,12 +277,19 @@ final class NestedQuantifierRule extends AbstractLintRule
     }
 
     /**
-     * @return array{sequence: SequenceNode, index: int}|null
+     * The sequence holding the inner loop, looking through groups and
+     * through the body of a fixed count written in it.
+     *
+     * @return array{sequence: SequenceNode, index: int, inFixedCount: bool}|null
      */
-    private function findSequenceForNestedQuantifier(NodeInterface $node, QuantifierNode $nested): ?array
+    private function findSequenceForNestedQuantifier(NodeInterface $node, QuantifierNode $nested, bool $inFixedCount = false): ?array
     {
         if ($node instanceof GroupNode) {
-            return $this->findSequenceForNestedQuantifier($node->child, $nested);
+            return $this->findSequenceForNestedQuantifier($node->child, $nested, $inFixedCount);
+        }
+
+        if ($node instanceof QuantifierNode && !QuantifierMath::isVariable($node)) {
+            return $this->findSequenceForNestedQuantifier($node->node, $nested, true);
         }
 
         if (!($node instanceof SequenceNode)) {
@@ -273,7 +299,14 @@ final class NestedQuantifierRule extends AbstractLintRule
         foreach ($node->children as $index => $child) {
             $unwrapped = NodePredicates::unwrapTransparentNode($child);
             if ($unwrapped === $nested) {
-                return ['sequence' => $node, 'index' => $index];
+                return ['sequence' => $node, 'index' => $index, 'inFixedCount' => $inFixedCount];
+            }
+
+            if ($unwrapped instanceof QuantifierNode) {
+                $found = $this->findSequenceForNestedQuantifier($unwrapped, $nested, $inFixedCount);
+                if (null !== $found) {
+                    return $found;
+                }
             }
         }
 

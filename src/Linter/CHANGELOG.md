@@ -23,6 +23,11 @@ CHANGELOG
    `\xC3\xA9`, on thirty columns at most, an escape never cut, and without
    the layout and the comments `x` skips: a branch laid out over lines is
    quoted from its first atom.
+ * `regex.lint.quantifier.nested` looks for the inner loop past a count
+   fixed above zero and inside it: `/^(?:\d{4}|[a-z]+)+$/`,
+   `/^(?:[0-9]{2}\w+)+$/` and `/^(?:(?:a+){2})+$/`, which it missed, are
+   reported. A separator inside the count still keeps the iterations apart,
+   `/^(?:(?:\d+\.){3}\d+,?)+$/` stays silent.
  * The lint reads pattern arguments it left out: a pattern built at the call
    from a local variable, an interpolated string or a heredoc
    (`"/^{$part}$/"`), an integer, a `sprintf()` whose format holds only
