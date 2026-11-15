@@ -21,6 +21,10 @@ CHANGELOG
    it wrote `(?(c)X)`, which PCRE gives, in a lookbehind, the length of `X`
    alone, so `/(?<!(?(?=a)bb|))c/` compacted matched `c`. The formatter's
    check of its own output reads the two apart.
+ * A substring scan, `(*scs:(1)...)`, adds no length to the lookbehind that
+   holds it, and repeated directly it is measured as a lookahead is, as PCRE2
+   does: `/(q)(?<=(*scs:(1)a+))/` was refused as unbounded, and
+   `/(q)(?<=b{1,200}(*scs:(1)a{100}))/` as longer than 255.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.
