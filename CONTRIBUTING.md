@@ -349,7 +349,9 @@ after `composer install -d tools/dep-analyser`), coverage,
 the benchmarks, the workflow checks, the spelling, the public API since the
 latest tag, and the demo applications, which install the checkout into a
 Symfony and a Laravel application. The benchmark table a pull request gets
-in its job summary is advisory and never blocks. `bin/status` shows how
+in its job summary is advisory and never blocks; the counted benchmarks do,
+as they repeat from run to run (see
+[Counted benchmarks](https://php-regex.com/maintainers/#counted-benchmarks)). `bin/status` shows how
 far HEAD stands from origin's branch, and reads only.
 
 `bin/release` creates the GitHub release as a draft before it pushes the

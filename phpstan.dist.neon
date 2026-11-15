@@ -120,9 +120,11 @@ parameters:
         - docs/assets/playground/driver.php
         - wasm/pcre2-trace/php-pcre-options/generate.php
 
-    # The benchmarks' attributes live in the phpbench tool's own vendor.
+    # The benchmarks' attributes live in the phpbench and Tally tools' own
+    # vendors.
     scanDirectories:
         - tools/phpbench/vendor/phpbench/phpbench/lib/Attributes
+        - tools/tally/vendor/phpstan/tally/src
 
     # Each PHPUnit compatibility trait is the implementation the installed
     # PHPUnit calls for, aliased at run time: the analysis reads that one.

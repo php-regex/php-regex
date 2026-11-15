@@ -22,9 +22,10 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The benchmark workflow keeps two jobs apart: the smoke job runs every
+ * The benchmark workflow keeps three jobs apart: the smoke job runs every
  * subject once and gates; the table job measures the corpus subjects, on a
- * pull request against its base on the same runner, and never gates. The
+ * pull request against its base on the same runner, and never gates; the
+ * counted job counts the Tally benchmarks in a pinned image and gates. The
  * scripts of its steps run here as GitHub runs them.
  */
 #[RequiresOperatingSystem('Linux|Darwin')]
@@ -185,6 +186,53 @@ final class BenchmarksWorkflowTest extends TestCase
         $this->assertStringContainsString('name: benchmarks-${{ github.sha }}', $keep);
     }
 
+    #[Test]
+    public function test_the_counted_job_gates_in_the_image_the_task_counts_in(): void
+    {
+        $job = self::job('counted');
+        $this->assertStringContainsString('name: Benchmarks (counted)', $job);
+        $this->assertStringNotContainsString('continue-on-error', $job, 'The counts repeat from run to run: the job gates.');
+        // The architecture of the Apple silicon hosts `task tally` runs on.
+        $this->assertMatchesRegularExpression('~^    runs-on: ubuntu-24\.04-arm$~m', $job);
+
+        $this->assertSame(1, preg_match('~^      TALLY_IMAGE: (\S+)$~m', $job, $image), 'The job names its image once.');
+        // A digest: a tag the official images move would change every count.
+        $this->assertMatchesRegularExpression('~^php:\d+\.\d+\.\d+-cli-[a-z]+@sha256:[0-9a-f]{64}$~', $image[1]);
+        $this->assertStringContainsString('      TALLY_IMAGE: '.$image[1]."\n", self::taskfile(), 'A local run counts in the image the job counts in.');
+    }
+
+    #[Test]
+    public function test_the_counted_job_and_the_task_run_tally_alike(): void
+    {
+        $count = self::stepBody(self::job('counted'), 'Count the benchmarks');
+        $this->assertStringContainsString('--volume "$GITHUB_WORKSPACE:/app" --workdir /app', $count);
+        $this->assertStringContainsString('"$TALLY_IMAGE" php tools/tally/vendor/bin/tally run --output=tmp/tally', $count);
+        $this->assertStringContainsString('--volume "{{.ROOT_DIR}}:/app" --workdir /app {{.TALLY_IMAGE}} php tools/tally/vendor/bin/tally run --output=tmp/tally', self::taskfile());
+
+        // The summary, the annotations and the accept command of the report
+        // come from these variables: the annotations name the files from the
+        // workspace the container sees.
+        $this->assertStringContainsString('--volume "$GITHUB_STEP_SUMMARY:$GITHUB_STEP_SUMMARY"', $count);
+        foreach (['GITHUB_ACTIONS', 'GITHUB_STEP_SUMMARY', 'GITHUB_RUN_ID', 'GITHUB_REPOSITORY'] as $name) {
+            $this->assertMatchesRegularExpression('~--env '.$name.'(?:\s|$)~', $count, $name);
+        }
+        $this->assertStringContainsString('--env GITHUB_WORKSPACE=/app', $count);
+    }
+
+    #[Test]
+    public function test_the_counts_are_kept_where_the_accept_command_downloads_them(): void
+    {
+        $keep = self::stepBody(self::job('counted'), 'Keep the counts');
+        $this->assertStringContainsString('if: always()', $keep, 'A failed count is the one whose numbers are accepted.');
+        $this->assertStringContainsString('uses: '.self::uploadAction(), $keep);
+        // The command the report prints downloads the artifacts named
+        // tally-* into tmp/tally, which git leaves alone.
+        $this->assertStringContainsString('name: tally-results', $keep);
+        $this->assertStringContainsString('path: tmp/tally', $keep);
+        $this->assertStringContainsString("\n/tmp/tally/\n", (string) file_get_contents(\dirname(__DIR__, 3).'/.gitignore'));
+        $this->assertStringContainsString('tools/tally/vendor/bin/tally accept tmp/tally', self::taskfile());
+    }
+
     /**
      * A git repository whose head commit changes one file of the base: the
      * environment the deciding step reads.
@@ -279,6 +327,23 @@ final class BenchmarksWorkflowTest extends TestCase
             return $match[1];
         }
         self::fail('No job "'.$key.'".');
+    }
+
+    /**
+     * The upload action the packages workflow pins for the phar.
+     */
+    private static function uploadAction(): string
+    {
+        $uses = [];
+        preg_match_all('~uses: (actions/upload-artifact@\S+)~', (string) file_get_contents(\dirname(__DIR__, 3).'/.github/workflows/packages.yml'), $uses);
+        self::assertNotSame([], $uses[1], 'The packages workflow uploads the phar with a pinned action.');
+
+        return $uses[1][0];
+    }
+
+    private static function taskfile(): string
+    {
+        return (string) file_get_contents(\dirname(__DIR__, 3).'/taskfile.dist.yaml');
     }
 
     private static function workflow(): string

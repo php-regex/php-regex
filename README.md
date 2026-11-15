@@ -289,6 +289,8 @@ PHPRegex measures its own time and memory with [PHPBench](https://github.com/php
 
 See the [maintainers guide](https://php-regex.com/maintainers/#benchmarks) for the inputs and how to add a case.
 
+CI also counts the instructions, cycles and memory of the hot paths and of the inputs once read in quadratic time with [Tally](https://github.com/phpstan/tally), which repeat from run to run, and fails a pull request past its expected numbers or its complexity class: `task tally` counts them locally, with Docker (see [counted benchmarks](https://php-regex.com/maintainers/#counted-benchmarks)).
+
 ## Documentation
 
 Read the docs online at <https://php-regex.com>.

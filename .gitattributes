@@ -34,6 +34,7 @@
 # install links are the packages' own, under src/
 /bin                    export-ignore
 /phpbench.json          export-ignore
+/tally.php              export-ignore
 /phpstan.dist.neon      export-ignore
 /deptrac.yaml           export-ignore
 /rector.php             export-ignore

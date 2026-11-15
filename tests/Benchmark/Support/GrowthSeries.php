@@ -42,9 +42,9 @@ final class GrowthSeries
         'redos' => [
             // (?:w1|...|wn)* anchored: linear, the prover's product grows with n.
             'alternation-star' => [[5, 10, 20, 40], 'alternationStar'],
-            // (?:a{n}b)+ anchored: proven linear to match, but the prover's
-            // work grows about as n² past 80; the ladder runs to 320 so that
-            // its slope shows it, every point still proven under the budget.
+            // (?:a{n}b)+ anchored: proven linear to match. The prover's work,
+            // once about n² past 80, now grows with n; every point of the
+            // ladder is still proven under the budget.
             'counted-under-plus' => [[40, 80, 160, 320], 'countedUnderPlus'],
             // (?:a|aa|...|a^n)* anchored: exponential, proven at every point.
             'overlap-star' => [[4, 6, 8, 10], 'overlapStar'],

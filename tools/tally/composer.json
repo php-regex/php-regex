@@ -1,0 +1,5 @@
+{
+    "require-dev": {
+        "phpstan/tally": "1.0.1"
+    }
+}

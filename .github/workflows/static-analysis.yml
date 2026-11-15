@@ -51,7 +51,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           ini-values: phar.readonly=0
-          tools: phpunit phpstan phpbench
+          tools: phpunit phpstan phpbench tally
 
       - name: Run PHPStan
         run: tools/phpstan/vendor/bin/phpstan analyse
