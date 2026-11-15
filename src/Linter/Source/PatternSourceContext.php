@@ -24,6 +24,11 @@ use PHPRegex\Parser\Text\Path;
 final class PatternSourceContext
 {
     /**
+     * @var list<string>|null resolved on the first file asked about
+     */
+    private ?array $excludedRealPaths = null;
+
+    /**
      * @param array<string> $paths
      * @param array<string> $excludePaths
      * @param array<string> $disabledSources
@@ -55,7 +60,11 @@ final class PatternSourceContext
      * excludes, as the PHP files are left out: an exclude names a
      * directory under the one the excludes are read from, when one is
      * given, or anywhere in the file's path; the paths are matched with
-     * "/" whichever separator spelled them.
+     * "/" whichever separator spelled them. An exclude that is the path of
+     * a file or a directory, read from the directory the excludes are read
+     * from or the working directory, behind "./" or absolute, excludes
+     * that file or every file under that directory, whatever path the file
+     * is reached by.
      *
      * @param string $file the file's path, written with "/" separators
      */
@@ -71,6 +80,45 @@ final class PatternSourceContext
             }
         }
 
+        $this->excludedRealPaths ??= $this->excludedRealPaths();
+        $real = [] === $this->excludedRealPaths ? false : realpath($file);
+        if (false === $real) {
+            return false;
+        }
+
+        $real = Path::fromHost($real);
+        foreach ($this->excludedRealPaths as $excluded) {
+            if ($real === $excluded || str_starts_with($real, $excluded.'/')) {
+                return true;
+            }
+        }
+
         return false;
+    }
+
+    /**
+     * The real path of each file or directory the excludes name, written
+     * with "/" separators: a relative exclude is read from the directory
+     * the excludes are read from, or from the working directory.
+     *
+     * @return list<string>
+     */
+    private function excludedRealPaths(): array
+    {
+        $paths = [];
+        foreach ($this->excludePaths as $exclude) {
+            $spelled = Path::normalize($exclude);
+            if ('' === trim($spelled, '/')) {
+                continue;
+            }
+
+            $absolute = str_starts_with($spelled, '/') || (\strlen($spelled) > 2 && ':' === $spelled[1] && '/' === $spelled[2]);
+            $real = realpath($absolute || null === $this->excludeBase ? $exclude : $this->excludeBase.'/'.$exclude);
+            if (false !== $real) {
+                $paths[] = rtrim(Path::fromHost($real), '/');
+            }
+        }
+
+        return $paths;
     }
 }

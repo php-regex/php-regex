@@ -2299,6 +2299,14 @@ In `regex.json`:
 }
 ```
 
+An exclude, in `regex.json` or as `--exclude`, is a directory name, left out
+wherever it stands below a linted path (`tests` leaves out `src/Bundle/tests/`
+too), or the path of a file or a directory, from the working directory, behind
+`./` or absolute: `src/Kernel.php`, `./var/cache`, `/srv/app/build`. A file
+named on the command line is linted whatever the excludes say. An `exclude`
+key, even an empty list, or an `--exclude` replaces the default `vendor`: list
+`vendor` again to keep it out.
+
 ---
 
 ## Output Formats
