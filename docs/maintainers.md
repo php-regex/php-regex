@@ -1002,7 +1002,9 @@ Two kinds of benchmark live there:
 Tally runs on Linux alone, and the counts depend on the PHP build, the
 system libraries and the CPU architecture. `task tally` runs the cases in
 the official PHP image the CI job runs, at the same digest, with Docker:
-on an arm64 host (Apple silicon) it counts what the job counts.
+on an arm64 host (Apple silicon) it counts as the job does, the
+instructions within a few tenths of a percent and the memory to the byte,
+so numbers accepted from a local run pass the job.
 
 ```bash
 task tally                                    # every case
