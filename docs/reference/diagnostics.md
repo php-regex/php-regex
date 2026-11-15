@@ -215,7 +215,7 @@ vendor/bin/regex lint app/ --no-ansi
   [3/3] Suggesting optimizations
   app/Service/Validator.php:9:33
       → /^(?:[0-9]+\s?)+$/
-    WARN Nested quantifiers can cause catastrophic backtracking.
+    WARN Nested quantifiers in "(?:[0-9]+\s?)" at offset 1 can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
     TIP
          - /^(?:[0-9]+\s?)+$/
@@ -283,7 +283,7 @@ vendor/bin/regex lint app/ --format=json
                     "position": 1,
                     "issue_id": "regex.lint.quantifier.nested",
                     "docs_url": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[0-9]+\\s?)\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers ...",
                     "tip": null,
                     "source": "preg_match()",

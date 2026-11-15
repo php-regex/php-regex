@@ -69,12 +69,12 @@ final class RegexPatternRuleRulesNeonTest extends RuleTestCase
                 ),
             ],
             [
-                'Nested quantifiers can cause catastrophic backtracking.',
+                'Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.',
                 22,
                 "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: ".self::DOCS.'#nested-quantifiers-redos-risk',
             ],
             [
-                'Quantified capturing group "(...)" with "+": only the last iteration\'s capture is retained.',
+                'Quantified capturing group 1 "(a+)" with "+": only the last iteration\'s capture is retained.',
                 22,
                 "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.\nRead more: https://php-regex.com/reference/rules/#quantified-capturing-group",
             ],

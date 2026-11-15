@@ -154,6 +154,15 @@ final class AlternationOverlapCharsetSpellingTest extends TestCase
             'flags' => 'x',
             'subjects' => ['3', '3a'],
         ];
+        // A comment group is no part of the branch either, with or
+        // without x.
+        yield 'a comment group' => [
+            'pattern' => '/(?:\d+(?#the digits)|[0-4](?#a digit, then)a)+!/',
+            'first' => '\d+',
+            'second' => '[0-4]a',
+            'flags' => '',
+            'subjects' => ['3', '3a'],
+        ];
         // What x does not ignore stays: an escaped space, and a space in a
         // class, which only xx drops.
         yield 'an escaped space and a class holding a space under x' => [
