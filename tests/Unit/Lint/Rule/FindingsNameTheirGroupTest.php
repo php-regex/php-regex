@@ -22,6 +22,7 @@ use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -36,6 +37,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class FindingsNameTheirGroupTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * A list of names, each with "-" suffixes, as phan reads its suppression
      * comments: three repeated captures, two of them with the same source.
@@ -57,8 +60,17 @@ final class FindingsNameTheirGroupTest extends TestCase
         // A branch reset gives both alternatives the same number.
         preg_match('/(a)(?|(b)+|(c)+)(d)+/', 'acdd', $matches);
         $this->assertSame(['acdd', 'a', 'c', 'd'], $matches);
+    }
 
-        // Under the n modifier an unnamed group does not capture.
+    /**
+     * Oracle, PHP 8.4.27 / PCRE2 10.49: under the n modifier, which PHP
+     * reads from 8.2, an unnamed group does not capture.
+     */
+    #[Test]
+    public function test_the_engine_numbers_no_unnamed_group_under_the_n_modifier(): void
+    {
+        $this->requiresPhpReading('/(a+)+b/n');
+
         preg_match('/(a+)+b/n', 'aab', $matches);
         $this->assertSame(['aab'], $matches);
     }
@@ -70,6 +82,7 @@ final class FindingsNameTheirGroupTest extends TestCase
     #[DataProvider('provideQuantifiedCaptures')]
     public function test_a_quantified_capture_names_its_group(string $pattern, array $messages): void
     {
+        $this->requiresPhpReading($pattern);
         $this->assertNotFalse(@preg_match($pattern, ''), $pattern);
         $this->assertSame($messages, self::messages($pattern, QuantifiedCapturingGroupRule::ID));
     }
@@ -135,6 +148,7 @@ final class FindingsNameTheirGroupTest extends TestCase
     #[DataProvider('provideNestedQuantifiers')]
     public function test_a_nested_quantifier_names_its_group(string $pattern, array $messages): void
     {
+        $this->requiresPhpReading($pattern);
         $this->assertNotFalse(@preg_match($pattern, ''), $pattern);
         $this->assertSame($messages, self::messages($pattern, NestedQuantifierRule::ID));
     }
