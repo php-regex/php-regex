@@ -54,12 +54,13 @@ final class LinterBench
 
     /**
      * The first 250 patterns of the realistic corpus, in the order of their
-     * keys, which a new corpus entry does not reorder.
+     * keys: a new entry whose key sorts among them changes the set, and the
+     * numbers with it. Reading the corpus is not counted.
      */
-    #[Expected(instructions: '370.3M', cycles: '504.9M', memory: '3.394MiB')]
+    #[Expected(instructions: '353.6M', cycles: '484.8M', memory: '3.369MiB')]
     public function benchValidateRealistic(): void
     {
-        $patterns = \array_slice(array_values(BenchCases::realistic()), 0, 250);
+        $patterns = $this->meter->exclude(static fn (): array => \array_slice(array_values(BenchCases::realistic()), 0, 250));
         $regex = $this->cold(static function (Regex $regex) use ($patterns): void {
             foreach ($patterns as $pattern) {
                 $regex->validate($pattern);
@@ -71,10 +72,10 @@ final class LinterBench
         }
     }
 
-    #[Expected(instructions: '481.7M', cycles: '598.5M', memory: '1.721MiB')]
+    #[Expected(instructions: '465.0M', cycles: '578.7M', memory: '1.712MiB')]
     public function benchLintRealistic(): void
     {
-        $patterns = \array_slice(array_values(BenchCases::realistic()), 0, 100);
+        $patterns = $this->meter->exclude(static fn (): array => \array_slice(array_values(BenchCases::realistic()), 0, 100));
         $regex = $this->cold(static function (Regex $regex) use ($patterns): void {
             foreach ($patterns as $pattern) {
                 $regex->lint($pattern);
