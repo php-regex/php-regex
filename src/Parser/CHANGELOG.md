@@ -25,6 +25,11 @@ CHANGELOG
    holds it, and repeated directly it is measured as a lookahead is, as PCRE2
    does: `/(q)(?<=(*scs:(1)a+))/` was refused as unbounded, and
    `/(q)(?<=b{1,200}(*scs:(1)a{100}))/` as longer than 255.
+ * `validate()` reports `/(*UTF)(*TURKISH_CASING)a{2}{3}[a-[:alpha:]]/` at
+   the repeat, offset 30, without the warning "Undefined array key 0": the
+   class after the error, read up to it to look for an earlier one, holds
+   no item yet, which the measure of the compiled length read as a pair of
+   letters. A framework that turns warnings into exceptions threw there.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.

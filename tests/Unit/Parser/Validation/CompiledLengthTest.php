@@ -649,6 +649,30 @@ final class CompiledLengthTest extends TestCase
     }
 
     /**
+     * A class after an error is read up to that error and judged alone, to
+     * find an error PCRE meets in it first: read before its first item, it
+     * holds nothing, and is measured as no single character, without a
+     * warning (preg_match() on 10.49: the repeat at offset 30).
+     */
+    #[Test]
+    public function test_a_class_read_up_to_an_earlier_error_holding_no_item_is_measured_without_a_warning(): void
+    {
+        $pattern = '/(*UTF)(*TURKISH_CASING)a{2}{3}[a-[:alpha:]]/';
+        set_error_handler(static function (int $severity, string $message, string $file, int $line): never {
+            throw new \ErrorException($message, 0, $severity, $file, $line);
+        });
+
+        try {
+            $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertSame(ErrorCode::QuantifierNothingToRepeat, $result->errorCode, $pattern);
+        $this->assertSame(30, $result->offset, $pattern);
+    }
+
+    /**
      * A pattern PCRE2 refuses before it measures what is refused has no
      * length: the tree is measured as parsed, the validator not run.
      */
