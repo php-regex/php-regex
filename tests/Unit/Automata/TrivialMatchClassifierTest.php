@@ -280,6 +280,10 @@ final class TrivialMatchClassifierTest extends TestCase
         yield 'ambiguous alternation nested' => ['pattern' => '/(?:(?:a|a)|(?:a|a)){10}b/'];
         yield 'one string through two optionals' => ['pattern' => '/^a?a?\z/'];
         yield 'class and branch sharing a member' => ['pattern' => '/^(?:[ab]|a)\z/'];
+        // "X{1}+" is an atomic group: "abc" does not match, as "a" is never
+        // given back.
+        yield 'possessive count of one' => ['pattern' => '/^(?:a|ab){1}+c\z/'];
+        yield 'possessive count of one to one' => ['pattern' => '/^(?:a|ab){1,1}+c\z/'];
         // In extended mode PCRE skips the pattern bytes the locale's tables
         // call white space: under nl_NL.UTF-8 (macOS) a raw 0xA0 is one.
         yield 'extended mode with a raw high byte' => ['pattern' => "/prix\xa0eur/x"];

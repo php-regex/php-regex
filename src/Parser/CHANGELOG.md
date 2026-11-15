@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A possessive count of one, `X{1}+` or `X{1,1}+`, stays possessive where
+   the automata read the pattern: it never gives back what `X` matched, as
+   PCRE2 runs it. `TrivialMatchClassifier` named `/^(?:a|ab){1}+c\z/` one of
+   `ac` and `abc`, where `preg_match()` refuses `abc`; it names none now,
+   and the solver refuses it as it refuses `{2}+`.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.

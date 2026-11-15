@@ -67,6 +67,10 @@ final class SolverOnHirRefusalsTest extends TestCase
         yield 'anchor inside a negative lookbehind' => ['pattern' => '/(?<!^a)b/', 'expected' => $anchored];
 
         yield 'atomic group' => ['pattern' => '/(?>a+)b/', 'expected' => $atomic];
+        // Oracle: preg_match('/^(?:a|ab){1}+c$/', 'abc') is 0, where the
+        // greedy "{1}" takes it: once is still possessive.
+        yield 'possessive count of one' => ['pattern' => '/(?:a|ab){1}+c/', 'expected' => 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.'];
+        yield 'possessive count of one to one' => ['pattern' => '/(?:a|ab){1,1}+c/', 'expected' => 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.'];
 
         yield 'match start after a character' => ['pattern' => '/a\G/', 'expected' => $assertion];
         yield 'word boundary inside a lookahead' => ['pattern' => '/(?=\b)a/', 'expected' => 'An anchor inside a lookaround is beyond what the automata solver reads.'];
