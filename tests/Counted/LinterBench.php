@@ -18,6 +18,8 @@ use PHPRegex\Tests\Benchmark\Support\ColdStart;
 use PHPRegex\Tests\Counted\Support\Cases;
 use PHPRegex\Toolkit\Regex;
 use Tally\Attribute\DataProvider;
+use Tally\Attribute\Expected;
+use Tally\Attribute\ExpectedFor;
 use Tally\Meter;
 
 /**
@@ -54,6 +56,7 @@ final class LinterBench
      * The first 250 patterns of the realistic corpus, in the order of their
      * keys, which a new corpus entry does not reorder.
      */
+    #[Expected(instructions: '370.3M', cycles: '504.9M', memory: '3.394MiB')]
     public function benchValidateRealistic(): void
     {
         $patterns = \array_slice(array_values(BenchCases::realistic()), 0, 250);
@@ -68,6 +71,7 @@ final class LinterBench
         }
     }
 
+    #[Expected(instructions: '481.7M', cycles: '598.5M', memory: '1.721MiB')]
     public function benchLintRealistic(): void
     {
         $patterns = \array_slice(array_values(BenchCases::realistic()), 0, 100);
@@ -83,12 +87,18 @@ final class LinterBench
     }
 
     #[DataProvider('lintCases')]
+    #[ExpectedFor('always-empty-capture-many-groups', instructions: '7.959M', cycles: '10.23M', memory: '38.28KiB')]
     public function benchLint(string $pattern): void
     {
         $this->cold(static fn (Regex $regex): array => $regex->lint($pattern))->lint($pattern);
     }
 
     #[DataProvider('optimizerCases')]
+    #[ExpectedFor('common-prefix-words', instructions: '585.7M', cycles: '668.4M', memory: '2.223MiB')]
+    #[ExpectedFor('email-like', instructions: '20.62M', cycles: '27.67M', memory: '169.1KiB')]
+    #[ExpectedFor('quantified-groups', instructions: '17.16M', cycles: '22.81M', memory: '181.3KiB')]
+    #[ExpectedFor('redundant-classes', instructions: '1.697B', cycles: '2.285B', memory: '8.853MiB')]
+    #[ExpectedFor('single-char-alternation', instructions: '46.67M', cycles: '54.25M', memory: '183.4KiB')]
     public function benchOptimize(string $pattern): void
     {
         $this->cold(static fn (Regex $regex): object => $regex->optimize($pattern))->optimize($pattern);

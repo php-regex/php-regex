@@ -19,6 +19,7 @@ use PHPRegex\Tests\Counted\Support\Cases;
 use PHPRegex\Toolkit\Regex;
 use Tally\Attribute\Before;
 use Tally\Attribute\DataProvider;
+use Tally\Attribute\ExpectedFor;
 
 /**
  * The path every consumer takes first: a pattern tokenized, parsed and
@@ -74,18 +75,35 @@ final class ValidationBench
     }
 
     #[DataProvider('lexerCases')]
+    #[ExpectedFor('escape-dense', instructions: '121.6M', cycles: '179.5M', memory: '626.7KiB')]
+    #[ExpectedFor('extended-comments', instructions: '268.6M', cycles: '376.7M', memory: '1.812MiB')]
+    #[ExpectedFor('long-literal', instructions: '98.41M', cycles: '105.1M', memory: '3.166MiB')]
+    #[ExpectedFor('quoted-run', instructions: '11.38M', cycles: '12.04M', memory: '118.1KiB')]
+    #[ExpectedFor('raw-high-bytes', instructions: '354.4K', cycles: '881.7K', memory: '11.59KiB')]
     public function benchTokenize(string $pattern): void
     {
         $this->regex->tokenize($pattern);
     }
 
     #[DataProvider('parserCases')]
+    #[ExpectedFor('big-class-unicode', instructions: '61.82M', cycles: '88.12M', memory: '435.8KiB')]
+    #[ExpectedFor('deep-nesting', instructions: '18.73M', cycles: '28.03M', memory: '1.079MiB')]
+    #[ExpectedFor('huge-alternation', instructions: '564.8M', cycles: '682.9M', memory: '7.205MiB')]
+    #[ExpectedFor('many-named-groups', instructions: '369.1M', cycles: '475.6M', memory: '3.938MiB')]
+    #[ExpectedFor('nested-bounded-repeats', instructions: '596.3K', cycles: '1.412M', memory: '11.04KiB')]
+    #[ExpectedFor('route-hash-delimiter', instructions: '1.974M', cycles: '3.405M', memory: '21.70KiB')]
     public function benchParse(string $pattern): void
     {
         $this->regex->parse($pattern);
     }
 
     #[DataProvider('validateCases')]
+    #[ExpectedFor('counted-4500', instructions: '338.3K', cycles: '1.150M', memory: '9.609KiB')]
+    #[ExpectedFor('lookbehind-alternatives', instructions: '57.68M', cycles: '65.03M', memory: '507.8KiB')]
+    #[ExpectedFor('many-backreferences', instructions: '20.94M', cycles: '28.65M', memory: '113.2KiB')]
+    #[ExpectedFor('recursion-balanced', instructions: '899.3K', cycles: '2.153M', memory: '11.76KiB')]
+    #[ExpectedFor('reversed-quantifier', instructions: '377.9K', cycles: '1.244M', memory: '21.23KiB')]
+    #[ExpectedFor('unclosed-group', instructions: '737.8K', cycles: '1.580M', memory: '27.13KiB')]
     public function benchValidate(string $pattern): void
     {
         $this->regex->validate($pattern);
@@ -95,6 +113,12 @@ final class ValidationBench
      * What a pipeline judging the same pattern twice pays the second time.
      */
     #[DataProvider('validateCases')]
+    #[ExpectedFor('counted-4500', instructions: '2.458K', cycles: '21.65K', memory: '40B')]
+    #[ExpectedFor('lookbehind-alternatives', instructions: '106.2K', cycles: '141.3K', memory: '192B')]
+    #[ExpectedFor('many-backreferences', instructions: '51.77K', cycles: '84.51K', memory: '192B')]
+    #[ExpectedFor('recursion-balanced', instructions: '2.500K', cycles: '21.63K', memory: '56B')]
+    #[ExpectedFor('reversed-quantifier', instructions: '2.453K', cycles: '21.75K', memory: '40B')]
+    #[ExpectedFor('unclosed-group', instructions: '2.461K', cycles: '21.76K', memory: '40B')]
     public function benchValidateKept(string $pattern): void
     {
         $this->cached->validate($pattern);

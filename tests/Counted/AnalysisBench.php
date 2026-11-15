@@ -20,6 +20,7 @@ use PHPRegex\Tests\Benchmark\Support\Workloads;
 use PHPRegex\Tests\Counted\Support\Cases;
 use Tally\Attribute\Before;
 use Tally\Attribute\DataProvider;
+use Tally\Attribute\ExpectedFor;
 
 /**
  * The analyses a consumer asks for by name: the ReDoS verdict the linter
@@ -60,12 +61,24 @@ final class AnalysisBench
     }
 
     #[DataProvider('redosCases')]
+    #[ExpectedFor('bounded-alternation-200', instructions: '153.6M', cycles: '206.8M', memory: '748.8KiB')]
+    #[ExpectedFor('email-exponential', instructions: '13.30M', cycles: '19.85M', memory: '116.9KiB')]
+    #[ExpectedFor('nested-bounded-repeats', instructions: '38.39M', cycles: '49.12M', memory: '527.5KiB')]
+    #[ExpectedFor('nested-bounded-repeats-then-loop', instructions: '39.29M', cycles: '50.71M', memory: '532.0KiB')]
+    #[ExpectedFor('nested-plus', instructions: '1.974M', cycles: '4.242M', memory: '43.77KiB')]
+    #[ExpectedFor('same-alternation-star', instructions: '2.307M', cycles: '4.615M', memory: '46.16KiB')]
+    #[ExpectedFor('unicode-scripts', instructions: '723.1M', cycles: '778.6M', memory: '6.422MiB')]
     public function benchRedos(string $group, string $pattern, string $expected): void
     {
         Workloads::redos($pattern, $this->parser);
     }
 
     #[DataProvider('automataCases')]
+    #[ExpectedFor('arabic-block', instructions: '1.021M', cycles: '2.376M', memory: '20.51KiB')]
+    #[ExpectedFor('counted-past-budget', instructions: '25.03M', cycles: '31.80M', memory: '2.657MiB')]
+    #[ExpectedFor('mixed-blocks', instructions: '1.236M', cycles: '2.664M', memory: '23.55KiB')]
+    #[ExpectedFor('nested-same-alternation', instructions: '5.239M', cycles: '7.445M', memory: '349.0KiB')]
+    #[ExpectedFor('same-alternation-counted', instructions: '6.286M', cycles: '8.586M', memory: '499.0KiB')]
     public function benchAutomata(string $group, string $pattern, string $expected): void
     {
         try {
