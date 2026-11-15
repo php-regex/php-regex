@@ -221,6 +221,59 @@ final class ModernizerTest extends TestCase
     }
 
     /**
+     * A quantifier binds to the last item before it: "(?:a+)?" is no
+     * "a+?", which is lazy, "(?:ab)+" no "ab+", "(?:){3}" no "{3}", and
+     * "a**", "a{2}{2}" or "\b+" do not compile.
+     */
+    #[Test]
+    #[DataProvider('provideQuantifiedGroups')]
+    public function test_quantified_group_keeps_its_parentheses_unless_it_holds_one_item(string $pattern, string $expected): void
+    {
+        $modernized = $this->modernize($pattern);
+
+        $this->assertSame($expected, $modernized);
+        $this->assertNotFalse(@preg_match($modernized, ''), $modernized.' does not compile');
+        foreach (['', 'a', 'b', 'ab', 'aab', 'aaab', 'aaaab', 'abab', 'abbb', 'ba', ' ', '  x', 'ab{3}', 'xaab', "\u{E9}", "\u{E9}\u{E9}", "\xC3\xA9\xA9"] as $subject) {
+            $this->assertSame(
+                preg_match_all($pattern, $subject, $original, \PREG_OFFSET_CAPTURE),
+                preg_match_all($modernized, $subject, $rewritten, \PREG_OFFSET_CAPTURE),
+                $pattern.' and '.$modernized.' on '.bin2hex($subject),
+            );
+            $this->assertSame($original, $rewritten, $pattern.' and '.$modernized.' on '.bin2hex($subject));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string}>
+     */
+    public static function provideQuantifiedGroups(): iterable
+    {
+        yield 'optional greedy quantifier' => ['pattern' => '/(?:\s+)?/', 'expected' => '/(?:\s+)?/'];
+        yield 'optional before a literal' => ['pattern' => '/(?:a+)?b/', 'expected' => '/(?:a+)?b/'];
+        yield 'possessive reading' => ['pattern' => '/(?:a?)+/', 'expected' => '/(?:a?)+/'];
+        yield 'star of a star' => ['pattern' => '/(?:a*)*b/', 'expected' => '/(?:a*)*b/'];
+        yield 'count of a count' => ['pattern' => '/(?:a{2}){2}/', 'expected' => '/(?:a{2}){2}/'];
+        yield 'lazy inside' => ['pattern' => '/(?:a+?)+b/', 'expected' => '/(?:a+?)+b/'];
+        yield 'possessive inside' => ['pattern' => '/(?:a++)?b/', 'expected' => '/(?:a++)?b/'];
+        yield 'nested plain groups' => ['pattern' => '/(?:(?:a+))+b/', 'expected' => '/(?:a+)+b/'];
+        yield 'empty group' => ['pattern' => '/ab(?:){3}/', 'expected' => '/ab(?:){3}/'];
+        yield 'empty quote' => ['pattern' => '/(?:\Q\E)+a/', 'expected' => '/(?:)+a/'];
+        yield 'quoted run' => ['pattern' => '/(?:\Qab\E)+/', 'expected' => '/(?:ab)+/'];
+        yield 'two bytes without u' => ['pattern' => "/(?:\u{E9})+/", 'expected' => '/(?:\xC3\xA9)+/'];
+        yield 'start anchor' => ['pattern' => '/(?:^)*a/', 'expected' => '/(?:^)*a/'];
+        yield 'word boundary' => ['pattern' => '/(?:\b)+a/', 'expected' => '/(?:\b)+a/'];
+        yield 'match start reset' => ['pattern' => '/(?:\K)?a/', 'expected' => '/(?:\K)?a/'];
+        yield 'comment' => ['pattern' => '/(?:(?#c))+a/', 'expected' => '/(?:(?#c))+a/'];
+        yield 'option setting' => ['pattern' => '/(?:(?i))+a/', 'expected' => '/(?:(?i))+a/'];
+        yield 'option scope' => ['pattern' => '/(?:(?i:a))+b/', 'expected' => '/(?i:a)+b/'];
+        yield 'one literal' => ['pattern' => '/(?:a)+/', 'expected' => '/a+/'];
+        yield 'one character under u' => ['pattern' => "/(?:\u{E9})+/u", 'expected' => "/\u{E9}+/u"];
+        yield 'one class' => ['pattern' => '/(?:[0-9])+/', 'expected' => '/\d+/'];
+        yield 'one capturing group' => ['pattern' => '/(?:(a))+b/', 'expected' => '/(a)+b/'];
+        yield 'grouped alternation' => ['pattern' => '/(?:(?:a|b))+/', 'expected' => '/(?:a|b)+/'];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, accepted: string, rejected: string}>
      */
     public static function provideGroupedAlternations(): iterable
