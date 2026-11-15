@@ -2016,7 +2016,11 @@ The guards the lint reads:
 on the branches of an `if`, an `elseif` and an `else` (each where its
 condition holds and the ones before it fail), and on the rest of a block
 after `if (<guard>) { return; }`, `throw`, `continue`, `break` or `exit` alone
-in the body, up to the next `case` of a `switch`. A function or a class
+in the body, up to the next `case` of a `switch` or the end of a block of the
+alternative syntax (`endforeach`, `else:`). An `if` that is itself the body
+of a loop or of another `if` without braces
+(`while ($more) if (PHP_VERSION_ID < 80000) break;`) is no early exit: what
+follows the loop runs on every version. A function or a class
 declared after such an exit is judged for the whole range: PHP declares those
 of a file before running it, whatever the file returns. A file holding a
 `goto` reads no early exit. With `nikic/php-parser` installed, the lint also reads them on
