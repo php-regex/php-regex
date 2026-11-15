@@ -90,6 +90,26 @@ calculator or the ACCEPT check, or walking the letter check once, each
 measured under 3 %.
 
 
+## Linter precision
+
+- A pattern argument read as one of several values is reported for each
+  of them, whatever condition guards the call. php/pie
+  (`src/DependencyResolver/ResolveDependencyWithComposer.php:156`) loops
+  over five distribution names and one `|...|` pattern, and calls
+  `preg_match()` only when `$rpmProvider[0] === '|'`: the lint reports five
+  "Invalid delimiter" errors for names that never reach the call. Drop the
+  values a condition on the way to the call rules out (the right operand
+  of `&&` and `||`, the branches of `if`, of a ternary and of
+  `match (true)`, the rest of a block after an early `continue`) when PHP
+  can evaluate that condition on the value alone (`$v[n]`, `substr()`,
+  `str_starts_with()`, `str_ends_with()`, `str_contains()`, `strpos()`,
+  `===` and `!==` against a literal, `!`, `&&`, `||`) and nothing writes
+  the variable in between. Never drop a value because its siblings are
+  patterns: `foreach (['/a/', 'b'] as $p)` is a real missing delimiter.
+  To settle first: what a condition outside that list does to the values,
+  and whether the tokenizer reads the same positions.
+
+
 ## Pull request checks
 
 - Make `CI` the required check of `2.x` in the branch protection: a pull
