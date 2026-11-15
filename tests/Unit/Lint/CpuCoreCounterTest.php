@@ -556,7 +556,7 @@ final class CpuCoreCounterTest extends TestCase
         return new CpuCoreCounter(
             // "/sys/fs/cgroup" + "/" + "/cpu.max" and "/sys/fs/cgroup/cpu.max"
             // name the same file.
-            static fn (string $path): ?string => $files[preg_replace('~/{2,}~', '/', $path)] ?? null,
+            static fn (string $path): ?string => $files[preg_replace('~/{2,}~', '/', $path) ?? $path] ?? null,
             static fn (string $command): ?string => $commands[$command] ?? null,
             static fn (string $name): string|false => $env[$name] ?? false,
         );

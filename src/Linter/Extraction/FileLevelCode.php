@@ -746,7 +746,7 @@ final class FileLevelCode
         }
 
         // The first operand of a comparison.
-        if ($opens) {
+        if ($opens && null !== $after) {
             if (isset(self::IDENTITIES[$after])) {
                 return true;
             }

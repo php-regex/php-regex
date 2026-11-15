@@ -315,7 +315,8 @@ final class LintContext
             if ($parent instanceof SequenceNode) {
                 // The last item read by its key: end() takes the list by
                 // reference and copies it, once per quantifier of a sequence.
-                if ($child !== ($parent->children[array_key_last($parent->children)] ?? null)) {
+                $last = array_key_last($parent->children);
+                if (null === $last || $child !== $parent->children[$last]) {
                     return false;
                 }
             } elseif ($parent instanceof GroupNode) {

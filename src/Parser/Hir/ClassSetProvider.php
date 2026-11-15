@@ -633,7 +633,12 @@ final class ClassSetProvider
             return null;
         }
 
-        $class = $tree instanceof SequenceNode ? $tree->children[array_key_last($tree->children)] ?? null : $tree;
+        $class = $tree;
+        if ($tree instanceof SequenceNode) {
+            $last = array_key_last($tree->children);
+            $class = null === $last ? null : $tree->children[$last];
+        }
+
         if (!$class instanceof CharClassNode || ($tree instanceof SequenceNode && !self::onlyOptionsBefore($tree, $class))) {
             return null;
         }
