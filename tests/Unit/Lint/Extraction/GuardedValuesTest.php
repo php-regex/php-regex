@@ -102,11 +102,6 @@ final class GuardedValuesTest extends TestCase
 
     private static int $runs = 0;
 
-    /**
-     * How many statements the run of the code under test may still take.
-     */
-    private static int $budget = 0;
-
     protected function tearDown(): void
     {
         $this->removeTemporaryProjects();
@@ -450,7 +445,7 @@ final class GuardedValuesTest extends TestCase
             'kept' => ['/a/'],
         ];
         yield 'an assignment before the guard in the loop that runs both' => [
-            'code' => self::running("while (\$found < 3) {\n        \$p = \$given === '' ? '/a/' : 'b';\n        if (\$p[0] === '/') {\n            \$found += preg_match(\$p, \$s);\n        }\n    }"),
+            'code' => self::running("for (\$round = 0; \$round < 3; \$round++) {\n        \$p = \$given === '' ? '/a/' : 'b';\n        if (\$p[0] === '/') {\n            \$found += preg_match(\$p, \$s);\n        }\n    }"),
             'kept' => ['/a/'],
         ];
         yield 'an assignment after the guarded stretch' => [
@@ -860,8 +855,9 @@ final class GuardedValuesTest extends TestCase
      * for each subject and each $given of the samples ('', 'x' and a
      * function name): the code runs in a namespace of its own, whose
      * preg_match() records its pattern and matches. A throw ends a run,
-     * and so do exit and die, written as one, and a loop past 100,000
-     * statements; warnings and output are left out.
+     * and so do exit and die, written as one; warnings and output are
+     * left out. The code ends on every path: each of its loops counts
+     * what bounds it.
      *
      * @param (\Closure(string, string, string): mixed)|null $run     how a run calls the code, given its namespace, the subject and $given:
      *                                                                the method run() of Matcher, or the function run()
@@ -874,7 +870,7 @@ final class GuardedValuesTest extends TestCase
         $namespace = 'PHPRegex\\Tests\\Oracle\\Guarded'.++self::$runs;
         $body = str_replace(['exit(1);', 'die;'], ['throw new \\RuntimeException();', 'throw new \\RuntimeException();'], (string) preg_replace('/^<\?php\s*(?:namespace [^;]+;)?/', '', $code));
         $recorder = "function preg_match(string \$pattern, string \$subject = '', mixed ...\$rest): int\n{\n    \\".self::class."::\$reached[] = \$pattern;\n\n    return 1;\n}\n\n";
-        require $this->makeProject(['oracle.php' => "<?php\n\nnamespace ".$namespace.";\n\ndeclare(ticks=1);\n\n".$recorder.$body]).'/oracle.php';
+        require $this->makeProject(['oracle.php' => "<?php\n\nnamespace ".$namespace.";\n\n".$recorder.$body]).'/oracle.php';
 
         $run ??= static function (string $namespace, string $s, string $given): mixed {
             $matcher = $namespace.'\\Matcher';
@@ -883,20 +879,12 @@ final class GuardedValuesTest extends TestCase
             return \is_callable($callable) ? $callable($s, $given) : null;
         };
         self::$reached = [];
-        $tick = static function (): void {
-            if (0 === --self::$budget) {
-                throw new \RuntimeException('A loop of the code never ends.');
-            }
-        };
-        register_tick_function($tick);
         set_error_handler(static fn (): bool => true);
         ob_start();
 
         try {
             foreach ($samples as $s) {
                 foreach (['', 'x', 'strlen'] as $given) {
-                    self::$budget = 100_000;
-
                     try {
                         $run($namespace, $s, $given);
                     } catch (\Throwable) {
@@ -907,7 +895,6 @@ final class GuardedValuesTest extends TestCase
         } finally {
             ob_end_clean();
             restore_error_handler();
-            unregister_tick_function($tick);
         }
 
         return array_values(array_unique(self::$reached));
