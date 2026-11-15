@@ -1,5 +1,109 @@
 # TODO
 
+## Bugs found before 2.0.0
+
+Fixed together in one pull request before the final bump; each line
+leaves this list once its fix is in.
+
+Parser
+
+- `(*:x)` followed by `=` four bytes later is refused (`/(*:x)a=b/`,
+  `/(*:foo=bar)/`): `VerbChecks` measures the short mark as `MARK:x`.
+- `(*TURKISH_CASING)` with the `r` modifier is accepted
+  (`/(*UTF)(*TURKISH_CASING)a/r`); PCRE refuses it, as it refuses it with
+  `(*CASELESS_RESTRICT)`.
+- The printer drops an empty no-branch: `(?(c)X|)` prints as `(?(c)X)`,
+  which inside a lookbehind changes its length and the match
+  (`compact('/(?<!(?(?=a)bb|))c/')` matches `c`). `StructuralFingerprint`
+  does not see the difference.
+- A scan substring `(*scs:…)` inside a lookbehind is measured as if it
+  consumed (`/(q)(?<=(*scs:(1)a+))/` is refused); the engine reads it as
+  zero-width.
+- `validate()` raises "Undefined array key 0" in
+  `CompiledLength::characterOf()` on
+  `/(*UTF)(*TURKISH_CASING)a{2}{3}[a-[:alpha:]]/`.
+- "More than two branches" is reported where the group opens for a named,
+  `R`, assertion or `VERSION` condition; PCRE2 10.49 reports offset 0.
+- Two error offsets fall inside a UTF-8 character: `/(?Cé)/u` (4, PCRE
+  says 5) and `/a(?+😀)/u` (5, PCRE says 8).
+- A missing reference under a lookbehind is reported before an earlier
+  error (`/\g{1}(?<=(?=\k{n}))/`: 15, PCRE says 5), and so is a type range
+  after a reversed range in `(?[…])` (`/(?[[^]--[a-\d]])/`: 13, PCRE says
+  8).
+- Past 512 levels of nesting, the recursion limit hides PCRE's own "too
+  deeply nested", which it reports at offset 251.
+- The caret of the JSON, checkstyle and junit reports stands under the
+  wrong byte after invalid bytes spelled `\xHH` (`JsonDocument`).
+
+Optimizer and automata
+
+- `Modernizer` unwraps `(?:X)` around a quantified or empty `X`:
+  `(?:a+)?b` becomes `a+?b`, and `(?:a*)*b` becomes `a**b`, which does not
+  compile.
+- The automata read `X{1}+` as `X` where PCRE runs `(?>X)`:
+  `TrivialMatchClassifier` gives `["ac", "abc"]` for `/^(?:a|ab){1}+c\z/`,
+  which feeds the `in_array` rewrite and the PHPStan rule.
+- An end anchor in a loop of minimum 0 escapes the check of the match
+  solver for an anchor followed by more: `RewriteCheck` accepts
+  `/(?:a$)*\n/` to `/\n/`.
+- The match solver does not count a group repeated `{0}`: `/(?<x>a){0}b/`
+  is match-equivalent to `/b/`, though `$matches` differs.
+- A seeded `SampleGenerator` reseeds on each retry and draws the same
+  sample 32 times (`/(?>a|ab)c/` fails for 27 seeds out of 40).
+- The explanations ignore `/U` and `(?U)`, and describe greed backwards.
+
+ReDoS and lint rules
+
+- A nested loop inside an atomic group or a possessive quantifier is
+  `safe` (`/(?>(a+)+b)/`, `/^(?>(\w+\s?)+:)/`): atomicity does not stop
+  the backtracking before the group has matched.
+- Nested bounded repeats are `low` or `safe` whatever the outer bound
+  (`/^(?:a|a){1,40}$/` is safe, `/^(?:\d{1,3}\.?){1,30}$/` low).
+- A subroutine call in a loop is rated by the call alone, whatever group
+  it calls (`/^(?:(?1))+(a|a)$/` is medium).
+- `quantifier.nested` stops at the first inner quantifier, and a fixed
+  one hides the rest: `/^(?:\d{4}|[a-z]+)+$/` is silent, the swapped
+  order is reported.
+- The atomic-tail skip of `quantifier.nested` ignores a subroutine call
+  that runs the group again outside it (`/^(?:(?>x((?:a+)+))|y(?1)$)/`).
+- `backref.useless` reports a backreference that an earlier iteration
+  fills (`/^(a|b\1)+$/`, `/^(?:x(a)|\1)+$/`).
+- The `{1}` hint of `quantifier.useless` joins a following digit
+  (`/(a)\1{1}0/` to `\10`, `/\x4{1}1/` to `\x41`) or a lazy `?`
+  (`/a{1}?b/` to `a?b`).
+- `/^(a|b\1)+$/` is critical by the backreference heuristic, though its
+  two branches are disjoint and it runs in linear time.
+
+Integrations
+
+- The `access_control` analysis misses a shadow when the earlier path
+  holds a top-level alternation (`^/assets|^/login` before
+  `^/assets/private`): the `.*` it adds binds to one branch only.
+- The route analysis does not read HEAD as GET, as both Symfony matchers
+  do: a GET route that shadows a later HEAD-only route is not reported.
+- `--exclude`, and `exclude` in `regex.json`, ignore a file path, a `./`
+  path and an absolute path.
+- A PHP file named on the command line without the `.php` suffix
+  (`bin/console`) is skipped, and the run passes.
+- The language server leaves a hover without a position unanswered, and
+  answers a completion or a code action sent as a notification with id 0.
+- `didChange` keeps the first full content change instead of the last.
+- The Laravel extractor reads `regex:` and `not_regex:` case-sensitively,
+  and misses `notregex:`, which Laravel runs.
+- `--min-savings` reads any text as 0 and takes a negative number, where
+  `--jobs` refuses both.
+
+To confirm, then decide
+
+- `self-update` installs `releases/latest` without comparing versions:
+  from a newer pre-release it would go back.
+
+Upstream
+
+- PCRE2 10.49's JIT returns 0 for `/é.{2,}é|(?<=x)A/u` on `xA`, and 1
+  without the JIT: report it to PCRE2.
+
+
 ## Release 2.0.0
 
 `v2.0.0-RC1` is out (2026-11-14, a pre-release from `a680f3979a`): the
