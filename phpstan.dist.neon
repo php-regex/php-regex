@@ -153,9 +153,9 @@ parameters:
     editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
 
     ignoreErrors:
-        # Two entries live here because no single machine can see them
-        # whole, and the last one because it is no finding; everything else
-        # the analysis still tolerates is named, one finding per line, in
+        # The entries here are the ones no single machine or PHPStan release
+        # sees whole, and one that is no finding; everything else the
+        # analysis still tolerates is named, one finding per line, in
         # phpstan-baseline.neon: fix a finding, regenerate the baseline, the
         # line goes.
         #
@@ -166,6 +166,20 @@ parameters:
         - message: '#^Call to deprecated method (initialize|validate)\(\)#'
           identifier: method.deprecated
           path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
+          reportUnmatched: false
+        # The tests hand preg_match() the flags it refuses or ignores, and
+        # preg_replace() fewer replacements than patterns, to pin what PHP
+        # does then. PHPStan 2.3.6 words the first finding without
+        # "TFlags of" and adds the second.
+        - message: '#^Parameter \#4 \$flags of function preg_match expects (TFlags of )?0\|256\|512\|768, int given\.$#'
+          identifier: argument.type
+          count: 2
+          path: tests/Unit/Parser/CaptureShapeAnalyzerTest.php
+        - message: '#^Call to preg_replace is using fewer replacements than search values\.$#'
+          identifier: argument.replaceCount
+          paths:
+              - tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupEdgeTest.php
+              - tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
           reportUnmatched: false
         # The test pins the order of two budget constants, so that a change
         # to either fails it: the analysis reads both and knows the answer.

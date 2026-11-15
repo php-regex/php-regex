@@ -56,8 +56,8 @@ final class ArrayCache implements RemovableCacheInterface
         unset($this->trees[$key]);
         $this->trees[$key] = $ast;
 
-        while (\count($this->trees) > $this->maxEntries) {
-            unset($this->trees[array_key_first($this->trees)]);
+        while (\count($this->trees) > $this->maxEntries && null !== ($oldest = array_key_first($this->trees))) {
+            unset($this->trees[$oldest]);
         }
     }
 

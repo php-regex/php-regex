@@ -179,7 +179,7 @@ final class StringExpressionReader
 
         // ('/a/') . 'i' starts at its parenthesis, as php-parser places it.
         $lead = PhpTokens::nextSignificant($tokens, 0, \count($tokens));
-        $leadOffset = '(' === $tokens[$lead ?? 0] ? ($tokenOffsets[$tokenIndexes[$lead] ?? -1] ?? null) : null;
+        $leadOffset = null !== $lead && '(' === $tokens[$lead] ? ($tokenOffsets[$tokenIndexes[$lead] ?? -1] ?? null) : null;
         if (null !== $leadOffset && null !== $firstTokenOffset) {
             $firstLine -= substr_count($content, "\n", $leadOffset, $firstTokenOffset - $leadOffset);
             $firstTokenOffset = $leadOffset;

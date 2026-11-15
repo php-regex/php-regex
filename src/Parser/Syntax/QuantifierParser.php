@@ -96,7 +96,11 @@ final class QuantifierParser
         $target = $nodes[$index];
         array_splice($nodes, $index);
 
-        $last = $target instanceof SequenceNode ? $target->children[array_key_last($target->children)] ?? null : null;
+        $last = null;
+        if ($target instanceof SequenceNode && null !== ($key = array_key_last($target->children))) {
+            $last = $target->children[$key];
+        }
+
         if ($target instanceof QuantifierNode) {
             $nodes[] = $this->modifyRepeatedQuantifier($target, $token);
         } elseif ($target instanceof SequenceNode && $last instanceof QuantifierNode) {
