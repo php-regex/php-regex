@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Benchmark;
+namespace PHPRegex\Tests\Benchmark\PHPBench;
 
 use PhpBench\Attributes\Assert;
 use PhpBench\Attributes\BeforeMethods;
@@ -58,7 +58,7 @@ use PHPRegex\Tests\Benchmark\Support\Table;
 #[OutputTimeUnit('milliseconds')]
 final class LintBench
 {
-    private const FIXTURE = __DIR__.'/Fixtures/lint';
+    private const FIXTURE = __DIR__.'/../Fixtures/lint';
 
     private ?LintService $service = null;
 

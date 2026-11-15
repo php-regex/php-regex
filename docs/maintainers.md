@@ -568,7 +568,7 @@ The time to read a shape from the pattern string, over that corpus and over the 
 corpus:
 
 ```bash
-tools/phpbench/vendor/bin/phpbench run tests/Benchmark/CaptureShapeBench.php --report=default
+tools/phpbench/vendor/bin/phpbench run tests/Benchmark/PHPBench/CaptureShapeBench.php --report=default
 ```
 
 ## The Playground Bundle
@@ -891,8 +891,10 @@ up on it too; the suite runs each one through `preg_match()` to hold that.
 
 ## Benchmarks
 
-`tests/Benchmark/` measures time and memory with PHPBench, one group per
-subsystem:
+`tests/Benchmark/` holds two suites over the same workloads (`Support/`,
+`data/`, `Fixtures/`): `PHPBench/` times them, `Tally/` counts them (see
+[Counted benchmarks](#counted-benchmarks)). `PHPBench/` measures time and
+memory, one group per subsystem:
 
 | group | measures |
 |---|---|
@@ -976,7 +978,7 @@ under the limits.
 
 ### Counted benchmarks
 
-`tests/Counted/` holds the benchmarks [Tally](https://github.com/phpstan/tally)
+`tests/Benchmark/Tally/` holds the benchmarks [Tally](https://github.com/phpstan/tally)
 counts instead of timing: it runs each case once under a simulation of the
 CPU and counts its instructions, its cycles and the memory it allocates.
 The counts repeat from run to run, so they are checked like the expected

@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Benchmark;
+namespace PHPRegex\Tests\Benchmark\PHPBench;
 
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Groups;

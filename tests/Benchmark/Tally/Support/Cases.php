@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Counted\Support;
+namespace PHPRegex\Tests\Benchmark\Tally\Support;
 
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
 

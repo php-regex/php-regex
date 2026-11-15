@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Counted;
+namespace PHPRegex\Tests\Benchmark\Tally;
 
 use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
 use PHPRegex\Linter\Config\ComposerConstraint;
@@ -24,7 +24,7 @@ use PHPRegex\Linter\Source\TwigTemplatePatternSource;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
-use PHPRegex\Tests\Counted\Support\Ladders;
+use PHPRegex\Tests\Benchmark\Tally\Support\Ladders;
 use Tally\Attribute\DataProvider;
 use Tally\Attribute\Linear;
 use Tally\Attribute\Quadratic;

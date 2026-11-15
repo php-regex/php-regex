@@ -78,7 +78,7 @@ final class BenchmarksWorkflowTest extends TestCase
     public static function provideChangedPaths(): iterable
     {
         yield 'the library' => ['path' => 'src/Parser/Lexer.php', 'measured' => true];
-        yield 'a benchmark' => ['path' => 'tests/Benchmark/ParserBench.php', 'measured' => true];
+        yield 'a benchmark' => ['path' => 'tests/Benchmark/PHPBench/ParserBench.php', 'measured' => true];
         yield 'benchmark data' => ['path' => 'tests/Benchmark/data/parser/deep-nesting.php', 'measured' => true];
         yield 'the documentation alone' => ['path' => 'docs/maintainers.md', 'measured' => false];
         yield 'a unit test alone' => ['path' => 'tests/Unit/Lexer/LexerTest.php', 'measured' => false];

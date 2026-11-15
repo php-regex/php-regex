@@ -129,7 +129,7 @@ tasks:
 
   phpbench:
     cmds:
-      - cmd: tools/phpbench/vendor/bin/phpbench run tests/Benchmark --report=default {{.CLI_ARGS}}
+      - cmd: tools/phpbench/vendor/bin/phpbench run tests/Benchmark/PHPBench --report=default {{.CLI_ARGS}}
       - cmd: touch .task/phpbench.success
     sources:
       - phpbench.json

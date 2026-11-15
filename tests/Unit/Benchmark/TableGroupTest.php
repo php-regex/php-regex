@@ -15,13 +15,13 @@ namespace PHPRegex\Tests\Unit\Benchmark;
 
 use PhpBench\Attributes\Assert;
 use PhpBench\Attributes\Groups;
-use PHPRegex\Tests\Benchmark\CaptureShapeBench;
-use PHPRegex\Tests\Benchmark\LexerBench;
-use PHPRegex\Tests\Benchmark\LintBench;
-use PHPRegex\Tests\Benchmark\OptimizerBench;
-use PHPRegex\Tests\Benchmark\ParserBench;
-use PHPRegex\Tests\Benchmark\RedosCorpusBench;
-use PHPRegex\Tests\Benchmark\ValidateBench;
+use PHPRegex\Tests\Benchmark\PHPBench\CaptureShapeBench;
+use PHPRegex\Tests\Benchmark\PHPBench\LexerBench;
+use PHPRegex\Tests\Benchmark\PHPBench\LintBench;
+use PHPRegex\Tests\Benchmark\PHPBench\OptimizerBench;
+use PHPRegex\Tests\Benchmark\PHPBench\ParserBench;
+use PHPRegex\Tests\Benchmark\PHPBench\RedosCorpusBench;
+use PHPRegex\Tests\Benchmark\PHPBench\ValidateBench;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -82,9 +82,9 @@ final class TableGroupTest extends TestCase
     private static function subjectsInGroup(string $group): array
     {
         $found = [];
-        foreach (glob(\dirname(__DIR__, 2).'/Benchmark/*Bench.php') ?: [] as $file) {
+        foreach (glob(\dirname(__DIR__, 2).'/Benchmark/PHPBench/*Bench.php') ?: [] as $file) {
             /** @var class-string $class */
-            $class = 'PHPRegex\\Tests\\Benchmark\\'.basename($file, '.php');
+            $class = 'PHPRegex\\Tests\\Benchmark\\PHPBench\\'.basename($file, '.php');
             foreach ((new \ReflectionClass($class))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
                 foreach ($method->getAttributes(Groups::class) as $attribute) {
                     if (\in_array($group, (array) ($attribute->getArguments()[0] ?? []), true)) {

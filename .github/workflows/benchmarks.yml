@@ -146,7 +146,7 @@ jobs:
           retention-days: 90
 
   counted:
-    # The benchmarks of tests/Counted, counted by Tally: the instructions,
+    # The benchmarks of tests/Benchmark/Tally, counted by Tally: the instructions,
     # cycles and memory of each case under a simulated CPU, which repeat
     # from run to run where a shared runner's time does not. So this job
     # gates: a case past its expected numbers, or a run growing faster than

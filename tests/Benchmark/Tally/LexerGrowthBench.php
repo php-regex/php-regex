@@ -11,12 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Counted;
+namespace PHPRegex\Tests\Benchmark\Tally;
 
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\PcreTarget;
-use PHPRegex\Tests\Counted\Support\Ladders;
+use PHPRegex\Tests\Benchmark\Tally\Support\Ladders;
 use Tally\Attribute\DataProvider;
 use Tally\Attribute\Linear;
 use Tally\Attribute\Warmup;

@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Counted;
+namespace PHPRegex\Tests\Benchmark\Tally;
 
 use PHPRegex\Explain\RailroadLayoutVisitor;
 use PHPRegex\Optimizer\LayoutSplicer;
@@ -22,7 +22,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
-use PHPRegex\Tests\Counted\Support\Ladders;
+use PHPRegex\Tests\Benchmark\Tally\Support\Ladders;
 use Tally\Attribute\DataProvider;
 use Tally\Attribute\Linear;
 use Tally\Attribute\Warmup;

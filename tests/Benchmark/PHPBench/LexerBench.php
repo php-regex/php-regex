@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Benchmark;
+namespace PHPRegex\Tests\Benchmark\PHPBench;
 
 use PhpBench\Attributes\Assert;
 use PhpBench\Attributes\BeforeMethods;
@@ -21,7 +21,6 @@ use PhpBench\Attributes\OutputTimeUnit;
 use PhpBench\Attributes\ParamProviders;
 use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Warmup;
-use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
 use PHPRegex\Tests\Benchmark\Support\PeakMemory;
@@ -29,11 +28,9 @@ use PHPRegex\Tests\Benchmark\Support\Table;
 use PHPRegex\Toolkit\Regex;
 
 /**
- * The optimizer under its default options: the realistic corpus and the
- * pathological optimizer cases; and the same cases with every rewrite
- * verified by automata, the options the PHPStan extension ships with (five
- * iterations: one of its cases takes seconds). It keeps no cache of its own
- * beyond the AST cache, so there is no warm twin.
+ * The lexer alone: the token stream of the realistic corpus and of the
+ * pathological lexer cases. The lexer keeps no cache of its own, so there is
+ * no warm twin.
  *
  * Cold subjects run once per iteration. Their before-method runs the same
  * work once, so the code is loaded, then empties the caches: the measured run
@@ -43,23 +40,23 @@ use PHPRegex\Toolkit\Regex;
  * the measured run only; benchNoop's before-method loads the same code and
  * inputs first, so its peak is the floor the subjects are read against.
  *
- * Run with: composer bench -- --group=optimizer
+ * Run with: composer bench -- --group=lexer
  */
-#[Groups(['optimizer'])]
+#[Groups(['lexer'])]
 #[Revs(1)]
 #[Iterations(10)]
 #[Warmup(0)]
 #[OutputTimeUnit('milliseconds')]
-final class OptimizerBench
+final class LexerBench
 {
-    private Regex $regex;
-
     /**
      * @var list<string>
      */
     private array $patterns = [];
 
     private string $pattern = '';
+
+    private readonly Regex $regex;
 
     public function __construct()
     {
@@ -76,10 +73,10 @@ final class OptimizerBench
     #[BeforeMethods('coldRealistic')]
     #[Groups(['table'])]
     #[Assert(Table::ADVISORY)]
-    public function benchOptimizeRealistic(): void
+    public function benchTokenizeRealistic(): void
     {
         foreach ($this->patterns as $pattern) {
-            $this->regex->optimize($pattern);
+            $this->regex->tokenize($pattern);
         }
     }
 
@@ -88,36 +85,25 @@ final class OptimizerBench
      */
     #[BeforeMethods('coldCase')]
     #[ParamProviders('provideCases')]
-    public function benchOptimizeCase(array $params): void
+    public function benchTokenizeCase(array $params): void
     {
-        $this->regex->optimize($this->pattern);
-    }
-
-    /**
-     * @param array{key: string} $params
-     */
-    #[BeforeMethods('coldVerifiedCase')]
-    #[ParamProviders('provideCases')]
-    #[Iterations(5)]
-    public function benchOptimizeVerifiedCase(array $params): void
-    {
-        $this->regex->optimize($this->pattern, OptimizerOptions::fromCamelCaseArray(['verifyWithAutomata' => true]));
+        $this->regex->tokenize($this->pattern);
     }
 
     public function setUpNoop(): void
     {
         $this->setUpRealistic();
         BenchCases::all();
-        $this->regex->optimize('/a/');
-        $this->regex = ColdStart::regex();
+        $this->regex->tokenize('/a/');
+        ColdStart::regex();
         PeakMemory::reset();
     }
 
     public function coldRealistic(): void
     {
         $this->setUpRealistic();
-        $this->benchOptimizeRealistic();
-        $this->regex = ColdStart::regex();
+        $this->benchTokenizeRealistic();
+        ColdStart::regex();
         PeakMemory::reset();
     }
 
@@ -127,21 +113,8 @@ final class OptimizerBench
     public function coldCase(array $params): void
     {
         $this->pattern = BenchCases::get($params['key'])->pattern;
-        $this->regex = ColdStart::regex();
-        $this->benchOptimizeCase($params);
-        $this->regex = ColdStart::regex();
-        PeakMemory::reset();
-    }
-
-    /**
-     * @param array{key: string} $params
-     */
-    public function coldVerifiedCase(array $params): void
-    {
-        $this->pattern = BenchCases::get($params['key'])->pattern;
-        $this->regex = ColdStart::regex();
-        $this->benchOptimizeVerifiedCase($params);
-        $this->regex = ColdStart::regex();
+        $this->benchTokenizeCase($params);
+        ColdStart::regex();
         PeakMemory::reset();
     }
 
@@ -150,12 +123,12 @@ final class OptimizerBench
      */
     public function provideCases(): array
     {
-        return BenchCases::params('optimizer');
+        return BenchCases::params('lexer');
     }
 
     private function setUpRealistic(): void
     {
         $this->patterns = array_values(BenchCases::realistic());
-        $this->regex = ColdStart::regex();
+        ColdStart::regex();
     }
 }

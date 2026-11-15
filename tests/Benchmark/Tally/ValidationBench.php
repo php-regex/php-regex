@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Counted;
+namespace PHPRegex\Tests\Benchmark\Tally;
 
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
-use PHPRegex\Tests\Counted\Support\Cases;
+use PHPRegex\Tests\Benchmark\Tally\Support\Cases;
 use PHPRegex\Toolkit\Regex;
 use Tally\Attribute\Before;
 use Tally\Attribute\DataProvider;

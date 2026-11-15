@@ -18,7 +18,7 @@ use Tally\Configuration;
 require_once __DIR__.'/vendor/autoload.php';
 
 return Configuration::create()
-    ->withPaths([__DIR__.'/tests/Counted'])
+    ->withPaths([__DIR__.'/tests/Benchmark/Tally'])
     // As production runs the library: assertions compiled out. The cycle
     // collector is held, as the timed benchmarks hold it: when it runs
     // depends on what the process allocated before, not on the case.
