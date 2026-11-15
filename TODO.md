@@ -100,15 +100,6 @@ measured under 3 %.
   pull request to its type specifier, with an nsrt test, would fix it.
 
 
-## Pull request checks
-
-- Make `CI` the required check of `2.x`: a pull request of prose alone
-  reports it too (seen on #369), and neither the branch protection nor a
-  ruleset requires a check yet. A ruleset on the default branch alone,
-  requiring the `CI` check of GitHub Actions (app 15368), leaves 1.x and
-  the existing rules as they are.
-
-
 ## Counted benchmarks
 
 `tests/Benchmark/Tally/` is counted by Tally in CI, in the gating job
