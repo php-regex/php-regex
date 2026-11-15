@@ -23,7 +23,6 @@ use PHPRegex\Tests\Benchmark\Tally\Support\Ladders;
 use PHPRegex\Toolkit\Regex;
 use Tally\Attribute\DataProvider;
 use Tally\Attribute\Linear;
-use Tally\Attribute\Quadratic;
 use Tally\Attribute\Warmup;
 use Tally\Meter;
 
@@ -170,13 +169,12 @@ final class ParserGrowthBench
 
     /**
      * Each level a sequence whose first part is the level below: a second
-     * reading of the parts at every level doubled the cost per level. The
-     * analysis still grows as the square of the depth, which PCRE caps at
-     * 250 levels: the class keeps it from growing any faster. The parse is
-     * not counted.
+     * reading of the parts at every level doubled the cost per level, and
+     * asking of every level whether an "(*ACCEPT)" in it may end the match
+     * read the whole tree below it again. The parse is not counted.
      */
     #[DataProvider('from25')]
-    #[Quadratic('size')]
+    #[Linear('size')]
     public function benchNestedAnchoredSequences(int $size): void
     {
         $tree = $this->meter->exclude(static fn (): RegexNode => ColdStart::regex()->parser()->parse('/'.str_repeat('(', $size).'^'.str_repeat('a$)', $size).'/'));

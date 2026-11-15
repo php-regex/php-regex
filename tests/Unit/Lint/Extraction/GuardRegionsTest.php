@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
+use PhpParser\Node\Stmt;
 use PhpParser\ParserFactory;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\GuardRegions;
@@ -83,6 +84,26 @@ final class GuardRegionsTest extends TestCase
         yield 'an early exit that is no guard' => ['code' => "function g() {\n    if (\$x) {\n        return;\n    }\n    f('@');\n}", 'expected' => null];
         yield 'a closure, a class name and an anonymous class after an early exit' => ['code' => "function g() {\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    \$a = A::class;\n    \$b = new class {};\n    \$c = function () {\n        f('@');\n    };\n}", 'expected' => '>=8.4'];
         yield 'an interface after an early exit' => ['code' => "if (PHP_VERSION_ID < 80400) {\n    return;\n}\ninterface I\n{\n    const RE = '@';\n}", 'expected' => null];
+        // An "if" that is the body of a loop, or of another "if", leaves
+        // that body alone: what follows runs whatever the guard says.
+        yield 'an early exit as the body of a loop' => ['code' => "while (\$more) if (PHP_VERSION_ID < 80400) break;\nf('@');", 'expected' => null];
+        yield 'an early exit as the body of a for' => ['code' => "for (;;) if (PHP_VERSION_ID < 80400) break;\nf('@');", 'expected' => null];
+        yield 'an early exit as the body of a foreach' => ['code' => "foreach (\$a as \$b) if (PHP_VERSION_ID < 80400) continue;\nf('@');", 'expected' => null];
+        yield 'an early exit as the body of an if' => ['code' => "function g() {\n    if (\$x) if (PHP_VERSION_ID < 80400) return;\n    f('@');\n}", 'expected' => null];
+        yield 'an early exit as the body of an else' => ['code' => "function g() {\n    if (\$x) {\n    } else if (PHP_VERSION_ID < 80400) return;\n    f('@');\n}", 'expected' => null];
+        // In the alternative syntax, the rest of a block stops where the
+        // block does: past "endforeach", every version runs.
+        yield 'past the foreach of an early continue in the alternative syntax' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) {\n        continue;\n    }\nendforeach;\nf('@');", 'expected' => null];
+        yield 'the rest of a foreach of the alternative syntax' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) {\n        continue;\n    }\n    f('@');\nendforeach;", 'expected' => '>=8.4'];
+        yield 'past a nested block of the alternative syntax' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) continue;\n    while (\$c):\n    endwhile;\n    f('@');\nendforeach;\nf(1);", 'expected' => '>=8.4'];
+        yield 'the else of an alternative if after an early exit' => ['code' => "function g() {\n    if (\$x):\n        if (PHP_VERSION_ID < 80400) return;\n        f(1);\n    else:\n        f('@');\n    endif;\n}", 'expected' => null];
+        yield 'the elseif of an alternative if after an early exit' => ['code' => "function g() {\n    if (\$x):\n        if (PHP_VERSION_ID < 80400) return;\n        f(1);\n    elseif (\$y):\n        f('@');\n    endif;\n}", 'expected' => null];
+        yield 'an early exit as the body of a do' => ['code' => "do if (PHP_VERSION_ID < 80400) break; while (\$more);\nf('@');", 'expected' => null];
+        yield 'past a foreach holding a nested block of the alternative syntax' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) continue;\n    while (\$c):\n    endwhile;\nendforeach;\nf('@');", 'expected' => null];
+        yield 'past a foreach holding a braced block' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) continue;\n    if (\$c) {\n    }\nendforeach;\nf('@');", 'expected' => null];
+        yield 'a call before the colon of a ternary in the rest' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) continue;\n    \$y = \$x ? f() : 1;\n    f('@');\nendforeach;", 'expected' => '>=8.4'];
+        yield 'a braced elseif in the rest' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) continue;\n    if (\$c) {\n    } elseif (\$d) {\n    }\n    f('@');\nendforeach;", 'expected' => '>=8.4'];
+        yield 'an early throw' => ['code' => "if (PHP_VERSION_ID < 80400) {\n    throw new \\RuntimeException();\n}\nf('@');", 'expected' => '>=8.4'];
         yield 'a label a goto may jump to' => ['code' => "function g() {\n    goto later;\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    later:\n    f('@');\n}", 'expected' => null];
     }
 
@@ -95,6 +116,22 @@ final class GuardRegionsTest extends TestCase
 
         $this->assertSame($expected, self::tokens($content)->at($offset)?->phpConstraint(), 'tokenizer');
         $this->assertSame($expected, self::parser($content)->at($offset)?->phpConstraint(), 'php-parser');
+    }
+
+    /**
+     * PHP-Parser 4, which the linter still accepts, reads "throw $e;" as a
+     * statement of its own; 5 reads it as an expression. Either is an early
+     * exit, for the version guards and the guards on the values a pattern
+     * call reads.
+     */
+    #[Test]
+    public function test_a_throw_statement_of_php_parser_4_leaves_the_block(): void
+    {
+        $throw = require __DIR__.'/../../../Fixtures/PhpParser4/Throw_.php';
+
+        $this->assertInstanceOf(Stmt::class, $throw);
+        $this->assertSame('PhpParser\\Node\\Stmt\\Throw_', $throw::class);
+        $this->assertTrue(PhpParserGuards::leaves([$throw]));
     }
 
     /**

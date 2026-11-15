@@ -34,6 +34,7 @@ use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Tests\Support\CpuClock;
+use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -47,6 +48,27 @@ use PHPUnit\Framework\TestCase;
  */
 final class VisitorDepthScalingTest extends TestCase
 {
+    use LinearTimeAssertions;
+
+    /**
+     * Each level a sequence whose first part is the level below: the length
+     * of a sequence asks of each part whether an "(*ACCEPT)" in it may end
+     * the match, and asking it of every level again read the whole tree
+     * below, four times the levels some sixteen times the work.
+     */
+    #[Test]
+    public function test_the_lengths_of_nested_sequences_read_each_level_once(): void
+    {
+        $trees = [];
+        foreach ([120, 480] as $depth) {
+            $trees[$depth] = Regex::create(['cache' => null])->parse('/'.str_repeat('(', $depth).'^'.str_repeat('a$)', $depth).'/');
+        }
+
+        $this->assertLinearTime(static function (int $depth) use ($trees): void {
+            $trees[$depth]->accept(new LengthRangeCalculator());
+        }, 120, 'nested anchored sequences');
+    }
+
     /**
      * @param NodeVisitorInterface<mixed> $visitor
      */

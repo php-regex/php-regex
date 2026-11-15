@@ -72,6 +72,12 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__.'/tests/Support/.phpstorm.meta.php',
         // The CLI package runs without the language server and without the
         // MCP server: it names their classes, never imports them
-        StringClassNameToClassConstantRector::class => [__DIR__.'/src/Cli/Command/LspCommand.php', __DIR__.'/src/Cli/Command/McpCommand.php'],
+        StringClassNameToClassConstantRector::class => [
+            __DIR__.'/src/Cli/Command/LspCommand.php',
+            __DIR__.'/src/Cli/Command/McpCommand.php',
+            // PHP-Parser 4's throw statement, which 5 does not declare
+            __DIR__.'/src/Linter/Extraction/PhpParserGuards.php',
+            __DIR__.'/tests/Unit/Lint/Extraction/GuardRegionsTest.php',
+        ],
     ]);
 };
