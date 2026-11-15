@@ -1,6 +1,7 @@
 includes:
     - src/PHPStan/extension.neon
     - tests/Tools/PHPStan/mixed-types.neon
+    - tests/Tools/PHPStan/tally.php
     - tools/phpstan/vendor/phpstan/phpstan/conf/bleedingEdge.neon
     - tools/phpstan/vendor/phpstan/phpstan-phpunit/extension.neon
     - tools/phpstan/vendor/phpstan/phpstan-phpunit/rules.neon
@@ -120,7 +121,8 @@ parameters:
         - docs/assets/playground/driver.php
         - wasm/pcre2-trace/php-pcre-options/generate.php
 
-    # The benchmarks' attributes live in the phpbench tool's own vendor.
+    # The benchmarks' attributes live in the phpbench tool's own vendor;
+    # tests/Tools/PHPStan/tally.php adds Tally's where it is installed.
     scanDirectories:
         - tools/phpbench/vendor/phpbench/phpbench/lib/Attributes
 

@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Benchmark;
+namespace PHPRegex\Tests\Benchmark\PHPBench;
 
 use PhpBench\Attributes\Assert;
 use PhpBench\Attributes\BeforeMethods;
@@ -28,35 +28,37 @@ use PHPRegex\Tests\Benchmark\Support\Table;
 use PHPRegex\Toolkit\Regex;
 
 /**
- * The lexer alone: the token stream of the realistic corpus and of the
- * pathological lexer cases. The lexer keeps no cache of its own, so there is
- * no warm twin.
+ * Validation: the realistic corpus and the pathological validation cases,
+ * those PCRE refuses included (the error path).
  *
  * Cold subjects run once per iteration. Their before-method runs the same
  * work once, so the code is loaded, then empties the caches: the measured run
- * pays for cold caches, not for compiling the library.
+ * pays for cold caches, not for compiling the library. The *Warm subject
+ * keeps the default AST cache and the validator's caches; its before-method
+ * runs it once to fill them (phpbench's own warmup would run after the
+ * memory reset).
  *
  * Every before-method ends by resetting the peak memory, so mem_peak covers
  * the measured run only; benchNoop's before-method loads the same code and
  * inputs first, so its peak is the floor the subjects are read against.
  *
- * Run with: composer bench -- --group=lexer
+ * Run with: composer bench -- --group=validate
  */
-#[Groups(['lexer'])]
+#[Groups(['validate'])]
 #[Revs(1)]
 #[Iterations(10)]
 #[Warmup(0)]
 #[OutputTimeUnit('milliseconds')]
-final class LexerBench
+final class ValidateBench
 {
+    private Regex $regex;
+
     /**
      * @var list<string>
      */
     private array $patterns = [];
 
     private string $pattern = '';
-
-    private readonly Regex $regex;
 
     public function __construct()
     {
@@ -73,10 +75,26 @@ final class LexerBench
     #[BeforeMethods('coldRealistic')]
     #[Groups(['table'])]
     #[Assert(Table::ADVISORY)]
-    public function benchTokenizeRealistic(): void
+    public function benchValidateRealistic(): void
     {
         foreach ($this->patterns as $pattern) {
-            $this->regex->tokenize($pattern);
+            $this->regex->validate($pattern);
+        }
+    }
+
+    /**
+     * A thousand patterns of the realistic corpus validated again by the
+     * parser that validated them once: what a pipeline judging a pattern
+     * twice pays the second time. A parser keeps 1024 results, fewer than
+     * the corpus holds, so the subject reads a working set it can keep.
+     */
+    #[BeforeMethods('warmRealistic')]
+    #[Revs(10)]
+    #[Iterations(5)]
+    public function benchValidateRealisticWarm(): void
+    {
+        foreach ($this->patterns as $pattern) {
+            $this->regex->validate($pattern);
         }
     }
 
@@ -85,25 +103,46 @@ final class LexerBench
      */
     #[BeforeMethods('coldCase')]
     #[ParamProviders('provideCases')]
-    public function benchTokenizeCase(array $params): void
+    public function benchValidateCase(array $params): void
     {
-        $this->regex->tokenize($this->pattern);
+        $this->regex->validate($this->pattern);
+    }
+
+    /**
+     * @param array{key: string} $params
+     */
+    #[BeforeMethods('warmCase')]
+    #[ParamProviders('provideCases')]
+    #[Revs(100)]
+    #[Iterations(5)]
+    #[OutputTimeUnit('microseconds')]
+    public function benchValidateCaseWarm(array $params): void
+    {
+        $this->regex->validate($this->pattern);
     }
 
     public function setUpNoop(): void
     {
         $this->setUpRealistic();
         BenchCases::all();
-        $this->regex->tokenize('/a/');
-        ColdStart::regex();
+        $this->regex->validate('/a/');
+        $this->regex = ColdStart::regex();
         PeakMemory::reset();
     }
 
     public function coldRealistic(): void
     {
         $this->setUpRealistic();
-        $this->benchTokenizeRealistic();
-        ColdStart::regex();
+        $this->benchValidateRealistic();
+        $this->regex = ColdStart::regex();
+        PeakMemory::reset();
+    }
+
+    public function warmRealistic(): void
+    {
+        $this->patterns = \array_slice(array_values(BenchCases::realistic()), 0, 1000);
+        $this->regex = Regex::create();
+        $this->benchValidateRealisticWarm();
         PeakMemory::reset();
     }
 
@@ -113,8 +152,20 @@ final class LexerBench
     public function coldCase(array $params): void
     {
         $this->pattern = BenchCases::get($params['key'])->pattern;
-        $this->benchTokenizeCase($params);
-        ColdStart::regex();
+        $this->regex = ColdStart::regex();
+        $this->benchValidateCase($params);
+        $this->regex = ColdStart::regex();
+        PeakMemory::reset();
+    }
+
+    /**
+     * @param array{key: string} $params
+     */
+    public function warmCase(array $params): void
+    {
+        $this->pattern = BenchCases::get($params['key'])->pattern;
+        $this->regex = Regex::create();
+        $this->benchValidateCaseWarm($params);
         PeakMemory::reset();
     }
 
@@ -123,12 +174,12 @@ final class LexerBench
      */
     public function provideCases(): array
     {
-        return BenchCases::params('lexer');
+        return BenchCases::params('validate');
     }
 
     private function setUpRealistic(): void
     {
         $this->patterns = array_values(BenchCases::realistic());
-        ColdStart::regex();
+        $this->regex = ColdStart::regex();
     }
 }

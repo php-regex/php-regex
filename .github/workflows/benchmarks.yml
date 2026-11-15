@@ -144,3 +144,57 @@ jobs:
           name: benchmarks-${{ github.sha }}
           path: ${{ runner.temp }}/table-*.xml
           retention-days: 90
+
+  counted:
+    # The benchmarks of tests/Benchmark/Tally, counted by Tally: the instructions,
+    # cycles and memory of each case under a simulated CPU, which repeat
+    # from run to run where a shared runner's time does not. So this job
+    # gates: a case past its expected numbers, or a run growing faster than
+    # its complexity class, fails it, and the report ends with the commands
+    # that reproduce the case and accept the new numbers.
+    #
+    # The counts depend on the PHP build, the system libraries and the CPU
+    # architecture. The cases run in the official PHP image at its digest,
+    # on arm64, as `task tally` runs them on an Apple silicon host: a local
+    # run counts as this job does, well inside the tolerance, so numbers
+    # accepted from it pass here. A new image is new numbers, accepted
+    # in the pull request that moves the digest.
+    name: Benchmarks (counted)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    env:
+      TALLY_IMAGE: php:8.4.27-cli-trixie@sha256:d63e8b80cd4c6cfd01cfa7c910522e299cdc7ca1a2b6d6563db48df3c17e6c55
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          tools: tally
+
+      # Tally writes the job summary, annotates the benchmark files and names
+      # the run whose results its accept command downloads: the container
+      # reads the workspace at /app, and GITHUB_WORKSPACE says so.
+      - name: Count the benchmarks
+        run: >-
+          docker run --rm --user "$(id -u):$(id -g)"
+          --volume "$GITHUB_WORKSPACE:/app" --workdir /app
+          --volume "$GITHUB_STEP_SUMMARY:$GITHUB_STEP_SUMMARY"
+          --env GITHUB_ACTIONS --env GITHUB_STEP_SUMMARY --env GITHUB_RUN_ID --env GITHUB_REPOSITORY
+          --env GITHUB_WORKSPACE=/app
+          "$TALLY_IMAGE" php tools/tally/vendor/bin/tally run --output=tmp/tally
+
+      # The accept command of the report downloads the artifacts named
+      # tally-* of the run.
+      - name: Keep the counts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tally-results
+          path: tmp/tally
+          retention-days: 30

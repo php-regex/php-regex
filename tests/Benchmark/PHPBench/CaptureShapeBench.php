@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Benchmark;
+namespace PHPRegex\Tests\Benchmark\PHPBench;
 
 use PhpBench\Attributes\Assert;
 use PhpBench\Attributes\BeforeMethods;
@@ -53,9 +53,9 @@ use PHPRegex\Tests\Benchmark\Support\Table;
 #[OutputTimeUnit('milliseconds')]
 final class CaptureShapeBench
 {
-    private const PARITY_CORPUS = __DIR__.'/../Fixtures/CaptureShapeParity/cases.php';
+    private const PARITY_CORPUS = __DIR__.'/../../Fixtures/CaptureShapeParity/cases.php';
 
-    private const LINT_CORPUS = __DIR__.'/../Fixtures/Corpus/lint-expectations.json';
+    private const LINT_CORPUS = __DIR__.'/../../Fixtures/Corpus/lint-expectations.json';
 
     private const FLAG_SETS = [0, \PREG_UNMATCHED_AS_NULL, \PREG_OFFSET_CAPTURE, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL];
 

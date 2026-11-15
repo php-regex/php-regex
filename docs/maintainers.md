@@ -568,7 +568,7 @@ The time to read a shape from the pattern string, over that corpus and over the 
 corpus:
 
 ```bash
-tools/phpbench/vendor/bin/phpbench run tests/Benchmark/CaptureShapeBench.php --report=default
+tools/phpbench/vendor/bin/phpbench run tests/Benchmark/PHPBench/CaptureShapeBench.php --report=default
 ```
 
 ## The Playground Bundle
@@ -891,8 +891,10 @@ up on it too; the suite runs each one through `preg_match()` to hold that.
 
 ## Benchmarks
 
-`tests/Benchmark/` measures time and memory with PHPBench, one group per
-subsystem:
+`tests/Benchmark/` holds two suites over the same workloads (`Support/`,
+`data/`, `Fixtures/`): `PHPBench/` times them, `Tally/` counts them (see
+[Counted benchmarks](#counted-benchmarks)). `PHPBench/` measures time and
+memory, one group per subsystem:
 
 | group | measures |
 |---|---|
@@ -973,6 +975,54 @@ tools/phpbench/vendor/bin/phpbench run --group=table --ref=base --report=table
 PCRE engine compiles each pattern (or refuses it, for a case marked
 `'invalid' => true`), the library parses it, and every growth series stays
 under the limits.
+
+### Counted benchmarks
+
+`tests/Benchmark/Tally/` holds the benchmarks [Tally](https://github.com/phpstan/tally)
+counts instead of timing: it runs each case once under a simulation of the
+CPU and counts its instructions, its cycles and the memory it allocates.
+The counts repeat from run to run, so they are checked like the expected
+output of a test, and the `Benchmarks (counted)` job of CI gates on them.
+Two kinds of benchmark live there:
+
+- **Growth** (`*GrowthBench.php`): one method per input the library once
+  read in quadratic time, read at a base size, twice and four times as
+  much, under a complexity class such as `#[Linear('size')]`. Four times
+  the input may cost at most 4.4 times the instructions of the base. The
+  tests that time the same inputs read them at far larger sizes and allow
+  eight times the time for four times the input: a counted run catches a
+  smaller quadratic part, at a fraction of the size. A fix that removes a
+  quadratic reading adds a method here in the same commit.
+- **Expected numbers** (`ValidationBench`, `AnalysisBench`, `LinterBench`):
+  the data cases of `tests/Benchmark/data/` and the first patterns of the
+  lint corpus, each with the numbers Tally counted written next to it as
+  `#[ExpectedFor]`. A case more than 2 % of its instructions, 5 % of its
+  cycles (2,000 at least) or 5 % of its memory past its numbers fails the
+  job; a case as far below them passes and asks for its new numbers, so
+  that a later slowdown back to the old ones does not go unnoticed.
+
+Tally runs on Linux alone, and the counts depend on the PHP build, the
+system libraries and the CPU architecture. `task tally` runs the cases in
+the official PHP image the CI job runs, at the same digest, with Docker:
+on an arm64 host (Apple silicon) it counts as the job does, the
+instructions within a few tenths of a percent and the memory to the byte,
+so numbers accepted from a local run pass the job.
+
+```bash
+task tally                                    # every case
+task tally -- --filter=LexerGrowthBench       # the cases whose name holds this
+task tally:accept                             # write the counted numbers in
+```
+
+When the job fails, its report lists the cases, the command that counts one
+of them again, and the commands that download the job's counts and accept
+them; `tally accept` reads the counts and rewrites the attributes, on any
+host. On an x86_64 host, take the numbers from the job, not from a local
+run. Accept new numbers for work the change meant to do, and say why in the
+commit. A new image digest (in `benchmarks.yml` and `taskfile.dist.yaml`
+alike), a new release of Tally or another PHP setting in `tally.php` moves
+every count: make that move in a pull request of its own, with the numbers
+its job counted.
 
 ### Comparing two revisions on more patterns
 

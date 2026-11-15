@@ -17,6 +17,8 @@
 /.phpunit.result.cache
 /.php-cs-fixer.cache
 /.deptrac.cache
+# The counts Tally keeps for its accept command, at the place it names
+/tmp/tally/
 /tests/**/.fixture.lock
 
 # Build & Distribution

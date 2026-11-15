@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Benchmark;
+namespace PHPRegex\Tests\Benchmark\PHPBench;
 
 use PhpBench\Attributes\Assert;
 use PhpBench\Attributes\BeforeMethods;
@@ -21,6 +21,7 @@ use PhpBench\Attributes\OutputTimeUnit;
 use PhpBench\Attributes\ParamProviders;
 use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Warmup;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
 use PHPRegex\Tests\Benchmark\Support\PeakMemory;
@@ -28,28 +29,28 @@ use PHPRegex\Tests\Benchmark\Support\Table;
 use PHPRegex\Toolkit\Regex;
 
 /**
- * Validation: the realistic corpus and the pathological validation cases,
- * those PCRE refuses included (the error path).
+ * The optimizer under its default options: the realistic corpus and the
+ * pathological optimizer cases; and the same cases with every rewrite
+ * verified by automata, the options the PHPStan extension ships with (five
+ * iterations: one of its cases takes seconds). It keeps no cache of its own
+ * beyond the AST cache, so there is no warm twin.
  *
  * Cold subjects run once per iteration. Their before-method runs the same
  * work once, so the code is loaded, then empties the caches: the measured run
- * pays for cold caches, not for compiling the library. The *Warm subject
- * keeps the default AST cache and the validator's caches; its before-method
- * runs it once to fill them (phpbench's own warmup would run after the
- * memory reset).
+ * pays for cold caches, not for compiling the library.
  *
  * Every before-method ends by resetting the peak memory, so mem_peak covers
  * the measured run only; benchNoop's before-method loads the same code and
  * inputs first, so its peak is the floor the subjects are read against.
  *
- * Run with: composer bench -- --group=validate
+ * Run with: composer bench -- --group=optimizer
  */
-#[Groups(['validate'])]
+#[Groups(['optimizer'])]
 #[Revs(1)]
 #[Iterations(10)]
 #[Warmup(0)]
 #[OutputTimeUnit('milliseconds')]
-final class ValidateBench
+final class OptimizerBench
 {
     private Regex $regex;
 
@@ -75,26 +76,10 @@ final class ValidateBench
     #[BeforeMethods('coldRealistic')]
     #[Groups(['table'])]
     #[Assert(Table::ADVISORY)]
-    public function benchValidateRealistic(): void
+    public function benchOptimizeRealistic(): void
     {
         foreach ($this->patterns as $pattern) {
-            $this->regex->validate($pattern);
-        }
-    }
-
-    /**
-     * A thousand patterns of the realistic corpus validated again by the
-     * parser that validated them once: what a pipeline judging a pattern
-     * twice pays the second time. A parser keeps 1024 results, fewer than
-     * the corpus holds, so the subject reads a working set it can keep.
-     */
-    #[BeforeMethods('warmRealistic')]
-    #[Revs(10)]
-    #[Iterations(5)]
-    public function benchValidateRealisticWarm(): void
-    {
-        foreach ($this->patterns as $pattern) {
-            $this->regex->validate($pattern);
+            $this->regex->optimize($pattern);
         }
     }
 
@@ -103,29 +88,27 @@ final class ValidateBench
      */
     #[BeforeMethods('coldCase')]
     #[ParamProviders('provideCases')]
-    public function benchValidateCase(array $params): void
+    public function benchOptimizeCase(array $params): void
     {
-        $this->regex->validate($this->pattern);
+        $this->regex->optimize($this->pattern);
     }
 
     /**
      * @param array{key: string} $params
      */
-    #[BeforeMethods('warmCase')]
+    #[BeforeMethods('coldVerifiedCase')]
     #[ParamProviders('provideCases')]
-    #[Revs(100)]
     #[Iterations(5)]
-    #[OutputTimeUnit('microseconds')]
-    public function benchValidateCaseWarm(array $params): void
+    public function benchOptimizeVerifiedCase(array $params): void
     {
-        $this->regex->validate($this->pattern);
+        $this->regex->optimize($this->pattern, OptimizerOptions::fromCamelCaseArray(['verifyWithAutomata' => true]));
     }
 
     public function setUpNoop(): void
     {
         $this->setUpRealistic();
         BenchCases::all();
-        $this->regex->validate('/a/');
+        $this->regex->optimize('/a/');
         $this->regex = ColdStart::regex();
         PeakMemory::reset();
     }
@@ -133,16 +116,8 @@ final class ValidateBench
     public function coldRealistic(): void
     {
         $this->setUpRealistic();
-        $this->benchValidateRealistic();
+        $this->benchOptimizeRealistic();
         $this->regex = ColdStart::regex();
-        PeakMemory::reset();
-    }
-
-    public function warmRealistic(): void
-    {
-        $this->patterns = \array_slice(array_values(BenchCases::realistic()), 0, 1000);
-        $this->regex = Regex::create();
-        $this->benchValidateRealisticWarm();
         PeakMemory::reset();
     }
 
@@ -153,7 +128,7 @@ final class ValidateBench
     {
         $this->pattern = BenchCases::get($params['key'])->pattern;
         $this->regex = ColdStart::regex();
-        $this->benchValidateCase($params);
+        $this->benchOptimizeCase($params);
         $this->regex = ColdStart::regex();
         PeakMemory::reset();
     }
@@ -161,11 +136,12 @@ final class ValidateBench
     /**
      * @param array{key: string} $params
      */
-    public function warmCase(array $params): void
+    public function coldVerifiedCase(array $params): void
     {
         $this->pattern = BenchCases::get($params['key'])->pattern;
-        $this->regex = Regex::create();
-        $this->benchValidateCaseWarm($params);
+        $this->regex = ColdStart::regex();
+        $this->benchOptimizeVerifiedCase($params);
+        $this->regex = ColdStart::regex();
         PeakMemory::reset();
     }
 
@@ -174,7 +150,7 @@ final class ValidateBench
      */
     public function provideCases(): array
     {
-        return BenchCases::params('validate');
+        return BenchCases::params('optimizer');
     }
 
     private function setUpRealistic(): void

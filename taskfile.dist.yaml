@@ -129,7 +129,7 @@ tasks:
 
   phpbench:
     cmds:
-      - cmd: tools/phpbench/vendor/bin/phpbench run tests/Benchmark --report=default {{.CLI_ARGS}}
+      - cmd: tools/phpbench/vendor/bin/phpbench run tests/Benchmark/PHPBench --report=default {{.CLI_ARGS}}
       - cmd: touch .task/phpbench.success
     sources:
       - phpbench.json
@@ -138,6 +138,21 @@ tasks:
     generates:
       - .task/phpbench.success
     method: checksum
+
+  # Tally counts on Linux alone: the cases run in the PHP image the CI job
+  # runs, at its digest, so an arm64 host counts as the job does, well
+  # inside the tolerance. The accept command reads the results and needs no
+  # simulation.
+  tally:
+    vars:
+      TALLY_IMAGE: php:8.4.27-cli-trixie@sha256:d63e8b80cd4c6cfd01cfa7c910522e299cdc7ca1a2b6d6563db48df3c17e6c55
+    cmds:
+      - cmd: rm -rf tmp/tally
+      - cmd: docker run --rm --user "$(id -u):$(id -g)" --volume "{{.ROOT_DIR}}:/app" --workdir /app {{.TALLY_IMAGE}} php tools/tally/vendor/bin/tally run --output=tmp/tally {{.CLI_ARGS}}
+
+  tally:accept:
+    cmds:
+      - cmd: tools/tally/vendor/bin/tally accept tmp/tally
 
   infection:
     env:
@@ -232,6 +247,7 @@ tasks:
       - composer install -d tools/deptrac --ignore-platform-req=php+
       - composer install -d tools/bc-check --ignore-platform-req=php+
       - composer install -d tools/dep-analyser --ignore-platform-req=php+
+      - composer install -d tools/tally --ignore-platform-req=php+
 
       - task: link
     sources:

@@ -8,7 +8,7 @@ This test suite follows the **Testing Pyramid** structure, ensuring fast, reliab
 - **`tests/Integration/`**: Tests combining multiple components or verifying interactions with external libraries (e.g., Symfony bridges, PCRE compliance).
 - **`tests/Functional/`**: End-to-end tests touching the filesystem, real file I/O, or broader application behavior (e.g., linting fixtures, pattern extraction).
 - **`tests/Documentation/`**: Tests that hold the documentation to the code: the examples call methods that exist, import only public classes, and the tables list what the code holds.
-- **`tests/Benchmark/`**: PHPBench benchmarks, run with `composer bench`; they are not PHPUnit tests.
+- **`tests/Benchmark/`**: benchmarks, not PHPUnit tests: `PHPBench/` times them (`composer bench`), `Tally/` counts their instructions (`task tally`), and `Support/`, `data/` and `Fixtures/` hold the workloads both read.
 - **`tests/Tools/`**: Scripts that write or check generated files, such as `update_cache_version.php` and `write_config_schema.php`.
 - **`tests/Fixtures/`**: Shared test data files (e.g., sample regex patterns, fixture files for functional tests).
 - **`tests/Support/`**: Traits and helpers the tests share, such as `PcreGates`, which skips a row the running PCRE2 or PHP does not read, with a message that says why.
