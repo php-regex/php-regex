@@ -40,6 +40,21 @@ CHANGELOG
    project. A part that may take several values gives one pattern per
    value, 32 at most. More patterns read means more findings on unchanged
    code.
+ * Of the values a variable may hold, a call is linted with those that pass
+   the conditions on the way to it: in
+   `if ($known[0] === '|' && preg_match($known, $s))` over a list of names
+   and one `|...|` pattern, the names are no longer reported as patterns
+   without delimiters. The lint reads a condition PHP evaluates on the value
+   alone (a byte of it, `str_starts_with()`, `str_ends_with()`,
+   `str_contains()`, `strpos()`, `substr()`, `strlen()`, `===` and `!==`,
+   `==` and `!=` between values of one type, `<`, `<=`, `>` and `>=`
+   between integers, and the boolean operators) over the right operand of
+   `&&` and `||`, the branches of an `if` and the rest of a block after an
+   early exit; any other condition keeps every value. Passing the variable
+   to one of those six functions no longer leaves it unread; passing it to
+   any other function still does. A function body calling `parse_str()` or
+   `mb_parse_str()` with a single argument, which writes its variables on
+   PHP 7, has none of its variables read, as one calling `extract()`.
  * `DIRECTORY_SEPARATOR`, `PHP_EOL` and `PATH_SEPARATOR` in a pattern give
    one pattern per value the constant takes, on Windows and elsewhere. An
    issue that holds for one value only is at most a warning, and its

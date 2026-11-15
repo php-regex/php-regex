@@ -46,7 +46,29 @@ final class TokenValueCollector
         \T_CONCAT_EQUAL => true, \T_MOD_EQUAL => true, \T_AND_EQUAL => true, \T_OR_EQUAL => true,
         \T_XOR_EQUAL => true, \T_SL_EQUAL => true, \T_SR_EQUAL => true, \T_POW_EQUAL => true, \T_COALESCE_EQUAL => true,
         '{' => true, \T_IF => true, \T_SWITCH => true, \T_DECLARE => true,
+        \T_BOOLEAN_AND => true, \T_BOOLEAN_OR => true, \T_LOGICAL_AND => true, \T_LOGICAL_OR => true,
     ] + self::ENDS_ALTERNATIVE_BLOCK;
+
+    /**
+     * The statements that only leave the block they stand in.
+     */
+    private const LEAVES = [\T_RETURN, \T_THROW, \T_CONTINUE, \T_BREAK, \T_EXIT];
+
+    /**
+     * What ends the list of statements an "if" stands in, beside the "}"
+     * of its block: the next label of a switch, the closing keyword of the
+     * structure of the alternative syntax around it, the next namespace.
+     * Its "else:" and "elseif (...):" end it too.
+     */
+    private const ENDS_A_LIST = [
+        \T_CASE, \T_DEFAULT, \T_ENDIF, \T_ENDWHILE, \T_ENDFOR, \T_ENDFOREACH, \T_ENDSWITCH, \T_ENDDECLARE, \T_NAMESPACE,
+    ];
+
+    /**
+     * The structures the alternative syntax writes with a ":" after their
+     * head.
+     */
+    private const ALTERNATIVE_STRUCTURES = [\T_IF, \T_WHILE, \T_FOR, \T_FOREACH, \T_SWITCH, \T_DECLARE];
 
     /**
      * The keywords that close a block of the alternative syntax, "if
@@ -109,6 +131,18 @@ final class TokenValueCollector
     ];
 
     private readonly InFileValueResolver $values;
+
+    private readonly TokenConditions $conditions;
+
+    /**
+     * @var array<int, int> token => the rank, among the ends of the lists, of the list a rest was read through it
+     */
+    private array $inList = [];
+
+    /**
+     * @var list<int|null> the last byte of each list a rest was read from; null for one the file leaves open
+     */
+    private array $listEnds = [];
 
     /**
      * The bodies the current token may be in: a class (its lowercase name,
@@ -211,6 +245,7 @@ final class TokenValueCollector
     ) {
         $this->values = new InFileValueResolver();
         $this->openers = array_flip($closers);
+        $this->conditions = new TokenConditions($tokens, $closers, $this->openers);
         $this->watchesWrites = $watchesProperties || [] !== $watchedVariables;
     }
 
@@ -255,8 +290,19 @@ final class TokenValueCollector
         }
 
         switch ($id) {
-            case '{':
             case \T_IF:
+                $this->nest($index, $id);
+                $this->ifGuards($index, $context);
+
+                break;
+            case \T_BOOLEAN_AND:
+            case \T_BOOLEAN_OR:
+            case \T_LOGICAL_AND:
+            case \T_LOGICAL_OR:
+                $this->operandGuards($index, $context);
+
+                break;
+            case '{':
             case \T_SWITCH:
             case \T_DECLARE:
             case \T_ENDIF:
@@ -2336,7 +2382,7 @@ final class TokenValueCollector
                 $byValue = $this->functionNames($function, $context);
             }
 
-            if ('extract' === $resolved || 'compact' === $resolved) {
+            if ('extract' === $resolved || 'compact' === $resolved || (\in_array($resolved, InFileValueResolver::PARSING, true) && !$this->passesTwo($index, $close))) {
                 $this->bailScope($index);
             } elseif (InFileValueResolver::DEFINING === $resolved) {
                 $this->define($index, $close, $this->functionNames($function, $context), $context);
@@ -2894,6 +2940,215 @@ final class TokenValueCollector
         }
 
         return null;
+    }
+
+    /**
+     * In the chain of "&&", "and", "||" or "or" the operator at $index
+     * starts, what follows an operand runs only where it holds, or fails.
+     */
+    private function operandGuards(int $index, NameResolutionContext $context): void
+    {
+        $scope = $this->scopeAt($index);
+        $operands = null === $scope ? null : $this->conditions->chain($index);
+        if (null === $scope || null === $operands) {
+            return;
+        }
+
+        $holds = $this->is($index, \T_BOOLEAN_AND, \T_LOGICAL_AND);
+        $end = $this->lastByte($operands[\count($operands) - 1][1]);
+        foreach ($operands as $rank => [$first, $last]) {
+            if (isset($operands[$rank + 1])) {
+                $this->values->guard($scope, $this->conditions->of($first, $last, $this->functionsOf($context)), $holds, $this->offsets[$first], $this->offsets[$operands[$rank + 1][0]], $end);
+            }
+        }
+    }
+
+    /**
+     * An "if" and its "elseif" and "else" branches, braced or of one
+     * statement, from its keyword: each branch runs where its condition
+     * holds, and what follows a condition in the chain where it fails.
+     * "if (<condition>) return;" (or "throw", "continue", "break",
+     * "exit"), alone and standing among the statements of a list, leaves
+     * the rest of the list to where the condition fails. The alternative
+     * syntax is not read.
+     */
+    private function ifGuards(int $index, NameResolutionContext $context): void
+    {
+        $scope = $this->scopeAt($index);
+        $before = $this->previous($index - 1);
+        if (null === $scope || (null !== $before && $this->is($before, \T_ELSE))) {
+            return;
+        }
+
+        // Each branch: its condition, where the condition starts, and the
+        // first and last token of its body.
+        $branches = [];
+        $else = null;
+        $keyword = $index;
+        while (true) {
+            $open = $this->next($keyword + 1);
+            $close = null !== $open && '(' === $this->tokens[$open] ? $this->closers[$open] ?? null : null;
+            $body = null === $close ? null : $this->next($close + 1);
+            $bodyEnd = null === $body || ':' === $this->tokens[$body] ? null : $this->wholeStatementEnd($body);
+            if (null === $open || null === $close || null === $body || null === $bodyEnd) {
+                break;
+            }
+
+            $branches[] = [$this->conditions->of($open + 1, $close - 1, $this->functionsOf($context)), $this->offsets[$open], $body, $bodyEnd];
+            $after = $this->next($bodyEnd + 1);
+            $next = null !== $after && $this->is($after, \T_ELSE) ? $this->next($after + 1) : null;
+            if (null !== $after && $this->is($after, \T_ELSEIF)) {
+                $keyword = $after;
+            } elseif (null !== $next && $this->is($next, \T_IF)) {
+                $keyword = $next;
+            } else {
+                $elseEnd = null === $next || ':' === $this->tokens[$next] ? null : $this->wholeStatementEnd($next);
+                $else = null === $next || null === $elseEnd ? null : [$next, $elseEnd];
+
+                break;
+            }
+        }
+
+        if ([] === $branches) {
+            return;
+        }
+
+        $end = $this->lastByte(null === $else ? $branches[\count($branches) - 1][3] : $else[1]);
+        foreach ($branches as $rank => [$condition, $since, $body, $bodyEnd]) {
+            $this->values->guard($scope, $condition, true, $since, $this->offsets[$body], $this->lastByte($bodyEnd));
+            $next = $branches[$rank + 1][1] ?? (null === $else ? null : $this->offsets[$else[0]]);
+            if (null !== $next) {
+                $this->values->guard($scope, $condition, false, $since, $next, $end);
+            }
+        }
+
+        [$condition, $since, $body, $bodyEnd] = $branches[0];
+        $rest = 1 === \count($branches) && null === $else && $this->leaves($body, $bodyEnd)
+            && (null === $before || \in_array($this->tokens[$before], [';', '{', '}', ':'], true) || $this->is($before, \T_OPEN_TAG))
+            ? $this->restOfList($bodyEnd) : null;
+        if (null !== $rest) {
+            $this->values->guard($scope, $condition, false, $since, $rest[0], $rest[1]);
+        }
+    }
+
+    /**
+     * Whether the body from $body to $end is one statement that leaves
+     * the block: "return", "throw", "continue", "break" or "exit", braced
+     * or not.
+     */
+    private function leaves(int $body, int $end): bool
+    {
+        if ('{' !== $this->tokens[$body]) {
+            return $this->is($body, ...self::LEAVES);
+        }
+
+        $first = $this->next($body + 1, $end);
+
+        return null !== $first && $this->is($first, ...self::LEAVES) && $this->next($this->statementEnd($first, $end) + 1) === $end;
+    }
+
+    /**
+     * The first and last byte of the statements that follow the one
+     * ending at $end in its list, up to the end of the list; null when
+     * none follows, or when the file leaves a bracket open there. A
+     * structure of the alternative syntax is stepped over to its closing
+     * keyword. The end of a list is read once, for all the early exits it
+     * holds.
+     *
+     * @return array{int, int}|null
+     */
+    private function restOfList(int $end): ?array
+    {
+        $first = $this->next($end + 1);
+        if (null === $first) {
+            return null;
+        }
+
+        if (isset($this->inList[$first])) {
+            $last = $this->listEnds[$this->inList[$first]];
+
+            return null === $last ? null : [$this->offsets[$first], $last];
+        }
+
+        $rank = \count($this->listEnds);
+        $last = null;
+        for ($i = $first; null !== $i; $i = $this->next($i + 1)) {
+            $token = $this->tokens[$i];
+            if (')' === $token || ']' === $token || '}' === $token || $this->is($i, ...self::ENDS_A_LIST) || $this->endsAlternativeBranch($i)) {
+                break;
+            }
+
+            $this->inList[$i] = $rank;
+            $structure = $this->is($i, ...self::ALTERNATIVE_STRUCTURES) ? $this->afterCondition($i) : null;
+            $alternative = null !== $structure && ':' === $this->tokens[$structure];
+            if ($alternative || PhpTokens::opensNesting($token)) {
+                $closer = $alternative ? $this->wholeStatementEnd($i) : $this->closers[$i] ?? null;
+                if (null === $closer) {
+                    $last = null;
+
+                    break;
+                }
+
+                $last = $i = $closer;
+
+                continue;
+            }
+
+            $last = $i;
+        }
+
+        $this->listEnds[] = null === $last ? null : $this->lastByte($last);
+
+        return null === $last ? null : [$this->offsets[$first], $this->lastByte($last)];
+    }
+
+    /**
+     * Whether the token is the "else:" or the "elseif (...):" of a
+     * structure of the alternative syntax.
+     */
+    private function endsAlternativeBranch(int $index): bool
+    {
+        $after = $this->is($index, \T_ELSE) ? $this->next($index + 1) : ($this->is($index, \T_ELSEIF) ? $this->afterCondition($index) : null);
+
+        return null !== $after && ':' === $this->tokens[$after];
+    }
+
+    /**
+     * Whether the arguments between the parentheses at $open and $close are
+     * two at least, none of them spread.
+     */
+    private function passesTwo(int $open, int $close): bool
+    {
+        $commas = 0;
+        for ($i = $open + 1; $i < $close; $i++) {
+            if (PhpTokens::opensNesting($this->tokens[$i])) {
+                $i = $this->closers[$i] ?? $close;
+            } elseif ($this->is($i, \T_ELLIPSIS)) {
+                return false;
+            } elseif (',' === $this->tokens[$i] && null !== $this->next($i + 1, $close)) {
+                $commas++;
+            }
+        }
+
+        return $commas > 0;
+    }
+
+    /**
+     * The last byte of the token.
+     */
+    private function lastByte(int $index): int
+    {
+        $token = $this->tokens[$index];
+
+        return $this->offsets[$index] + \strlen(\is_array($token) ? $token[1] : $token) - 1;
+    }
+
+    /**
+     * @return \Closure(string): non-empty-list<string>
+     */
+    private function functionsOf(NameResolutionContext $context): \Closure
+    {
+        return fn (string $function): array => $this->functionNames($function, $context);
     }
 
     /**
