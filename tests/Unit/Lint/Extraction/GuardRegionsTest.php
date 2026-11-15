@@ -98,6 +98,11 @@ final class GuardRegionsTest extends TestCase
         yield 'past a nested block of the alternative syntax' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) continue;\n    while (\$c):\n    endwhile;\n    f('@');\nendforeach;\nf(1);", 'expected' => '>=8.4'];
         yield 'the else of an alternative if after an early exit' => ['code' => "function g() {\n    if (\$x):\n        if (PHP_VERSION_ID < 80400) return;\n        f(1);\n    else:\n        f('@');\n    endif;\n}", 'expected' => null];
         yield 'the elseif of an alternative if after an early exit' => ['code' => "function g() {\n    if (\$x):\n        if (PHP_VERSION_ID < 80400) return;\n        f(1);\n    elseif (\$y):\n        f('@');\n    endif;\n}", 'expected' => null];
+        yield 'an early exit as the body of a do' => ['code' => "do if (PHP_VERSION_ID < 80400) break; while (\$more);\nf('@');", 'expected' => null];
+        yield 'past a foreach holding a nested block of the alternative syntax' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) continue;\n    while (\$c):\n    endwhile;\nendforeach;\nf('@');", 'expected' => null];
+        yield 'past a foreach holding a braced block' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) continue;\n    if (\$c) {\n    }\nendforeach;\nf('@');", 'expected' => null];
+        yield 'a call before the colon of a ternary in the rest' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) continue;\n    \$y = \$x ? f() : 1;\n    f('@');\nendforeach;", 'expected' => '>=8.4'];
+        yield 'a braced elseif in the rest' => ['code' => "foreach (\$a as \$b):\n    if (PHP_VERSION_ID < 80400) continue;\n    if (\$c) {\n    } elseif (\$d) {\n    }\n    f('@');\nendforeach;", 'expected' => '>=8.4'];
         yield 'an early throw' => ['code' => "if (PHP_VERSION_ID < 80400) {\n    throw new \\RuntimeException();\n}\nf('@');", 'expected' => '>=8.4'];
         yield 'a label a goto may jump to' => ['code' => "function g() {\n    goto later;\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    later:\n    f('@');\n}", 'expected' => null];
     }
