@@ -10,6 +10,12 @@ CHANGELOG
    four characters after it, `/(*:x)a=b/`: the check that only the limits
    take a value read it as `(*MARK:`, four characters longer, and refused
    that `=` as `regex.verb.invalid`.
+ * `(*TURKISH_CASING)` under the `r` modifier is refused where the opening
+   run of settings ends, `regex.verb.conflicting_casings`, as with
+   `(*CASELESS_RESTRICT)`: `/(*UTF)(*TURKISH_CASING)a/r` was valid. A pattern
+   that also leaves out UTF mode is refused for that first, as PCRE2 does:
+   `/(*TURKISH_CASING)(*CASELESS_RESTRICT)a/` is
+   `regex.verb.turkish_casing_without_utf`.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.

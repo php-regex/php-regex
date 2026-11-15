@@ -238,9 +238,10 @@ final class VerbChecks
     }
 
     /**
-     * "(*TURKISH_CASING)" needs UTF mode, and does not go with
-     * "(*CASELESS_RESTRICT)": PCRE2 refuses both where the opening run of
-     * settings ends, before it reads the rest.
+     * "(*TURKISH_CASING)" needs UTF mode, and then does not go with
+     * "(*CASELESS_RESTRICT)" nor with the "r" modifier, which sets the
+     * same option: PCRE2 refuses each where the opening run of settings
+     * ends, before it reads the rest.
      *
      * @param string $flags the flags of the pattern
      */
@@ -255,14 +256,6 @@ final class VerbChecks
             return;
         }
 
-        if (str_contains($settings, '(*CASELESS_RESTRICT)')) {
-            $this->raise(
-                '(*TURKISH_CASING) and (*CASELESS_RESTRICT) cannot be used together.',
-                $this->startOfPatternEnd,
-                ErrorCode::VerbConflictingCasings,
-            );
-        }
-
         if (!str_contains($flags, 'u') && 1 !== LibraryPcre::match('/\(\*UTF8?\)/', $settings)) {
             $this->raise(
                 str_contains($settings, '(*UCP)')
@@ -271,6 +264,22 @@ final class VerbChecks
                 $this->startOfPatternEnd,
                 ErrorCode::VerbTurkishCasingWithoutUtf,
                 'Add the "u" modifier.',
+            );
+        }
+
+        if (str_contains($settings, '(*CASELESS_RESTRICT)')) {
+            $this->raise(
+                '(*TURKISH_CASING) and (*CASELESS_RESTRICT) cannot be used together.',
+                $this->startOfPatternEnd,
+                ErrorCode::VerbConflictingCasings,
+            );
+        }
+
+        if (str_contains($flags, 'r')) {
+            $this->raise(
+                '(*TURKISH_CASING) and the "r" modifier cannot be used together.',
+                $this->startOfPatternEnd,
+                ErrorCode::VerbConflictingCasings,
             );
         }
     }
