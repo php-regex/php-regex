@@ -2382,7 +2382,11 @@ final class TokenValueCollector
                 $byValue = $this->functionNames($function, $context);
             }
 
-            if ('extract' === $resolved || 'compact' === $resolved || (\in_array($resolved, InFileValueResolver::PARSING, true) && !$this->passesTwo($index, $close))) {
+            // A callable taken from one of them, extract(...), runs nothing:
+            // PHP refuses to call those dynamically.
+            $inner = $this->next($index + 1, $close);
+            $callable = null !== $inner && $this->is($inner, \T_ELLIPSIS) && null === $this->next($inner + 1, $close);
+            if (!$callable && ('extract' === $resolved || 'compact' === $resolved || (\in_array($resolved, InFileValueResolver::PARSING, true) && !$this->passesTwo($index, $close)))) {
                 $this->bailScope($index);
             } elseif (InFileValueResolver::DEFINING === $resolved) {
                 $this->define($index, $close, $this->functionNames($function, $context), $context);

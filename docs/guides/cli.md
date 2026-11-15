@@ -770,7 +770,8 @@ final class Slug
   that writes `$$name`, or calls `extract()`, `compact()`, `eval()`,
   `include`, or `parse_str()` or `mb_parse_str()` with a single argument
   (which writes the variables of the scope on PHP 7), has none of its
-  variables read. A variable does not cross into a closure.
+  variables read; a callable taken from one of them, `extract(...)`, writes
+  nothing, as PHP refuses to call them dynamically. A variable does not cross into a closure.
   One at file level, outside any function, is a global: whatever runs
   between its assignment and the call that reads it may give it another
   value, and PHP runs code where the file writes no call (a magic method,

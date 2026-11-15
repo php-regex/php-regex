@@ -29,6 +29,7 @@ use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\CpuClock;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -54,6 +55,10 @@ use PHPUnit\Framework\TestCase;
  *
  * php/pie, ResolveDependencyWithComposer: the loop below calls preg_match()
  * with its fifth value alone, without a warning.
+ *
+ * PHP itself is the oracle of what reaches the call: the code of a case
+ * runs, in a namespace of its own whose preg_match() records its pattern,
+ * and every value it records is one the lint keeps.
  */
 final class GuardedValuesTest extends TestCase
 {
@@ -90,6 +95,18 @@ final class GuardedValuesTest extends TestCase
 
         PHP_WRAP;
 
+    /**
+     * @var list<string> the patterns the code under test passed to preg_match() while it ran
+     */
+    public static array $reached = [];
+
+    private static int $runs = 0;
+
+    /**
+     * How many statements the run of the code under test may still take.
+     */
+    private static int $budget = 0;
+
     protected function tearDown(): void
     {
         $this->removeTemporaryProjects();
@@ -98,6 +115,19 @@ final class GuardedValuesTest extends TestCase
     #[Test]
     public function test_the_values_a_guard_rejects_never_reach_the_call(): void
     {
+        $remi = "|^Remi's RPM repository <https://rpms.remirepo.net/>|";
+        $advise = static function (string $namespace, string $provider): mixed {
+            $advisor = $namespace.'\\Advisor';
+            $callable = [new $advisor(), 'advise'];
+
+            return \is_callable($callable) ? $callable($provider) : null;
+        };
+        $this->assertSame([$remi], $this->reached(self::PIE, $advise, ['AlmaLinux', 'CentOS', "Remi's RPM repository <https://rpms.remirepo.net/>", 'Debian']));
+        $this->assertTrue(EngineProbe::compiles($remi), 'PCRE compiles the pattern the loop passes.');
+        foreach (['AlmaLinux', 'CentOS', 'Fedora Project', 'Red Hat, Inc.', 'Rocky Enterprise Software Foundation'] as $name) {
+            $this->assertStringContainsString('Delimiter must not be alphanumeric', EngineProbe::warning($name) ?? '', 'PCRE refuses "'.$name.'" as a pattern: it would be an error, did it reach the call.');
+        }
+
         $this->assertExtractedByBoth([
             ['pattern' => "|^Remi's RPM repository <https://rpms.remirepo.net/>|", 'at' => "'|^Remi", 'source' => 'preg_match()', 'location' => 'via $rpmProvider'],
         ], self::PIE);
@@ -118,6 +148,8 @@ final class GuardedValuesTest extends TestCase
     public function test_the_lint_still_reports_a_value_the_guard_lets_through(): void
     {
         $code = self::looping("['plain', '|abc']", "if (\$p[0] === '|') {\n            \$found += preg_match(\$p, \$s);\n        }");
+        $this->assertSame(['|abc'], $this->reached($code));
+        $this->assertStringContainsString("No ending delimiter '|' found", EngineProbe::warning('|abc') ?? '');
 
         foreach ([PhpParserExtractionStrategy::class, TokenBasedExtractionStrategy::class] as $strategy) {
             $this->assertSame([[1, 'regex.delimiter.unclosed']], self::identifiers($this->lint($strategy, $code)), $strategy);
@@ -194,6 +226,7 @@ final class GuardedValuesTest extends TestCase
     {
         $code = self::looping(self::VALUES, 'if ('.$condition.") {\n            \$found += preg_match(\$p, \$s);\n        }");
 
+        $this->assertKeepsWhatPhpPasses($code, $kept);
         $this->assertSame($kept, $this->patternsReadByBoth($code));
         $this->assertSame([self::state($kept)], $this->statesReadByBoth($code));
     }
@@ -313,6 +346,7 @@ final class GuardedValuesTest extends TestCase
     {
         $code = self::looping(self::VALUES, $loop);
 
+        $this->assertKeepsWhatPhpPasses($code, $kept);
         $this->assertSame($kept, $this->patternsReadByBoth($code));
         $this->assertSame([self::state($kept)], $this->statesReadByBoth($code));
     }
@@ -375,6 +409,7 @@ final class GuardedValuesTest extends TestCase
     public function test_the_php_parser_reads_the_branches_of_an_expression(string $loop, array $kept): void
     {
         $code = self::looping(self::VALUES, $loop);
+        $this->assertKeepsWhatPhpPasses($code, $kept);
 
         if (class_exists(ParserFactory::class)) {
             $this->assertSame($kept, $this->patternsReadBy(new PhpParserExtractionStrategy([], PatternFunctionRegistry::native()), $code));
@@ -429,6 +464,7 @@ final class GuardedValuesTest extends TestCase
     #[DataProvider('provideWritesBetween')]
     public function test_a_write_between_the_guard_and_the_read_keeps_every_value(string $code, array $kept): void
     {
+        $this->assertKeepsWhatPhpPasses($code, $kept);
         $this->assertSame($kept, $this->patternsReadByBoth($code));
     }
 
@@ -653,6 +689,7 @@ final class GuardedValuesTest extends TestCase
     {
         $code = self::looping("['/é(/', '/ok/']", 'if ('.$condition.") {\n            \$found += preg_match(\$p, \$s);\n        }");
 
+        $this->assertKeepsWhatPhpPasses($code, $kept);
         $this->assertSame($kept, $this->patternsReadByBoth($code));
     }
 
@@ -676,6 +713,8 @@ final class GuardedValuesTest extends TestCase
     {
         $code = self::looping("['|a(|', '#b#']", $loop);
 
+        $this->assertContains('|a(|', $this->reached($code));
+        $this->assertKeepsWhatPhpPasses($code, ['|a(|', '#b#']);
         $this->assertSame(['|a(|', '#b#'], $this->patternsReadByBoth($code));
     }
 
@@ -709,6 +748,38 @@ final class GuardedValuesTest extends TestCase
         $code = "<?php\n\n\$v = '/a/';\npreg_match(\$v, 'x');\nif (\$v !== 'b') {\n    return;\n}";
 
         $this->assertSame(['/a/'], $this->patternsReadByBoth($code));
+    }
+
+    #[Test]
+    public function test_a_match_with_no_arm_is_read(): void
+    {
+        $code = self::running("\$p = \$given === '' ? '/a/' : 'b';\n    \$found += \$given === 'x' ? match (\$s) {} : 0;\n    if (\$p[0] === '/') {\n        \$found += preg_match(\$p, \$s);\n    }");
+
+        $this->assertSame(['/a/'], $this->patternsReadByBoth($code));
+    }
+
+    /**
+     * A callable taken from extract() or parse_str() runs nothing: PHP
+     * refuses to call extract() or compact() dynamically, and parse_str()
+     * so called with one argument, which only PHP 8.1 and later write.
+     *
+     * @return iterable<string, array{callable: string}>
+     */
+    public static function provideCallablesOfScopeWriters(): iterable
+    {
+        yield 'parse_str(...)' => ['callable' => 'parse_str(...)'];
+        yield 'mb_parse_str(...)' => ['callable' => 'mb_parse_str(...)'];
+        yield 'extract(...)' => ['callable' => 'extract(...)'];
+        yield 'compact(...)' => ['callable' => 'compact(...)'];
+    }
+
+    #[Test]
+    #[DataProvider('provideCallablesOfScopeWriters')]
+    public function test_a_callable_taken_from_a_scope_writer_leaves_the_variables_read(string $callable): void
+    {
+        $code = self::running("\$p = '/b/';\n    \$parser = ".$callable.";\n    \$found += preg_match(\$p, \$s);");
+
+        $this->assertSame(['/b/'], $this->patternsReadByBoth($code));
     }
 
     #[Test]
@@ -769,6 +840,75 @@ final class GuardedValuesTest extends TestCase
         $code = self::running("\$p = \$given === '' ? '/a/' : 'b';\n    if (\$p[0] === '/') {\n        \$found += preg_match(\$p, \$s);\n    }\n    goto end;\n    end:");
 
         $this->assertSame(['/a/', 'b'], $this->patternsReadByBoth($code));
+    }
+
+    /**
+     * Every pattern PHP passes to preg_match() when the code runs is one
+     * of those the lint keeps.
+     *
+     * @param list<string> $kept
+     */
+    private function assertKeepsWhatPhpPasses(string $code, array $kept): void
+    {
+        $this->assertSame([], array_values(array_diff($this->reached($code), $kept)), 'PHP passes to preg_match() a value the lint leaves out.');
+    }
+
+    /**
+     * The patterns PHP passes to preg_match() when the code runs, once
+     * for each subject and each $given of the samples ('', 'x' and a
+     * function name): the code runs in a namespace of its own, whose
+     * preg_match() records its pattern and matches. A throw ends a run,
+     * and so do exit and die, written as one, and a loop past 100,000
+     * statements; warnings and output are left out.
+     *
+     * @param (\Closure(string, string, string): mixed)|null $run     how a run calls the code, given its namespace, the subject and $given:
+     *                                                                the method run() of Matcher, or the function run()
+     * @param list<string>                                   $samples the subjects
+     *
+     * @return list<string>
+     */
+    private function reached(string $code, ?\Closure $run = null, array $samples = ['', 'x']): array
+    {
+        $namespace = 'PHPRegex\\Tests\\Oracle\\Guarded'.++self::$runs;
+        $body = str_replace(['exit(1);', 'die;'], ['throw new \\RuntimeException();', 'throw new \\RuntimeException();'], (string) preg_replace('/^<\?php\s*(?:namespace [^;]+;)?/', '', $code));
+        $recorder = "function preg_match(string \$pattern, string \$subject = '', mixed ...\$rest): int\n{\n    \\".self::class."::\$reached[] = \$pattern;\n\n    return 1;\n}\n\n";
+        require $this->makeProject(['oracle.php' => "<?php\n\nnamespace ".$namespace.";\n\ndeclare(ticks=1);\n\n".$recorder.$body]).'/oracle.php';
+
+        $run ??= static function (string $namespace, string $s, string $given): mixed {
+            $matcher = $namespace.'\\Matcher';
+            $callable = class_exists($matcher, false) ? [new $matcher(), 'run'] : $namespace.'\\run';
+
+            return \is_callable($callable) ? $callable($s, $given) : null;
+        };
+        self::$reached = [];
+        $tick = static function (): void {
+            if (0 === --self::$budget) {
+                throw new \RuntimeException('A loop of the code never ends.');
+            }
+        };
+        register_tick_function($tick);
+        set_error_handler(static fn (): bool => true);
+        ob_start();
+
+        try {
+            foreach ($samples as $s) {
+                foreach (['', 'x', 'strlen'] as $given) {
+                    self::$budget = 100_000;
+
+                    try {
+                        $run($namespace, $s, $given);
+                    } catch (\Throwable) {
+                        // The run ends here, as it would in PHP.
+                    }
+                }
+            }
+        } finally {
+            ob_end_clean();
+            restore_error_handler();
+            unregister_tick_function($tick);
+        }
+
+        return array_values(array_unique(self::$reached));
     }
 
     /**

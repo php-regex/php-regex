@@ -592,6 +592,11 @@ final class AstValueCollector extends NodeVisitorAbstract
         $subject = PhpParserConditions::of($match->cond);
         $since = $match->cond->getStartFilePos();
         $arms = array_values($match->arms);
+        // "match ($x) {}" throws whatever its subject: nothing to guard.
+        if ([] === $arms) {
+            return;
+        }
+
         $end = $arms[\count($arms) - 1]->getEndFilePos();
         $default = null;
         foreach ($arms as $rank => $arm) {
@@ -920,8 +925,10 @@ final class AstValueCollector extends NodeVisitorAbstract
         if ($call instanceof FuncCall && $call->name instanceof Name) {
             // Resolved, a name of one segment is the global function, or the
             // namespace's one PHP falls back from: Foo\extract() is neither.
+            // A callable taken from one of them, extract(...), runs nothing:
+            // PHP refuses to call those dynamically.
             $name = $call->name->toLowerString();
-            if ('extract' === $name || 'compact' === $name || (\in_array($name, InFileValueResolver::PARSING, true) && !self::passesTwo($call))) {
+            if (!$call->isFirstClassCallable() && ('extract' === $name || 'compact' === $name || (\in_array($name, InFileValueResolver::PARSING, true) && !self::passesTwo($call)))) {
                 $this->bailScope();
             }
 
