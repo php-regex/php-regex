@@ -60,12 +60,23 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class RedosProfiler extends AbstractNodeVisitor
 {
+    /**
+     * The unbounded loops around the node that may come back into it: an
+     * atomic group or a possessive loop between them counts them from none.
+     */
     private int $unboundedQuantifierDepth = 0;
 
     /**
      * Tracks total nesting of quantifiers (bounded or not) to detect LOW risks.
      */
     private int $totalQuantifierDepth = 0;
+
+    /**
+     * The unbounded loops that run the node again at each iteration, an
+     * atomic group between them or not: a lookaround in one reads the
+     * subject again each time.
+     */
+    private int $repeatingLoopDepth = 0;
 
     /**
      * Stores all detected ReDoS vulnerabilities during the AST traversal.
@@ -79,7 +90,16 @@ final class RedosProfiler extends AbstractNodeVisitor
      */
     private array $hotspots = [];
 
-    private bool $inAtomicGroup = false;
+    /**
+     * Whether the node being read ends the body of an atomic group or of a
+     * possessive loop: once it has matched, nothing after it in that body
+     * can fail and send the engine back into it. Atomicity only holds once
+     * the body has matched; until then the engine backtracks inside it as
+     * anywhere, so only a loop that ends the body keeps its first way
+     * through: "(?>(a+)+)" never retries its loop, "(?>(a+)+b)" does when
+     * "b" fails.
+     */
+    private bool $endsAtomicBody = false;
 
     private ?NodeInterface $previousNode = null;
 
@@ -164,9 +184,10 @@ final class RedosProfiler extends AbstractNodeVisitor
     {
         $this->unboundedQuantifierDepth = 0;
         $this->totalQuantifierDepth = 0;
+        $this->repeatingLoopDepth = 0;
         $this->vulnerabilities = [];
         $this->hotspots = [];
-        $this->inAtomicGroup = false;
+        $this->endsAtomicBody = false;
         $this->previousNode = null;
         $this->nextNode = null;
         $this->backrefLoopDetected = false;
@@ -203,35 +224,46 @@ final class RedosProfiler extends AbstractNodeVisitor
             return $this->holdsCapturingGroup($node->node) ? $this->readOnItsOwn($node->node) : RedosSeverity::Safe;
         }
 
-        // Save the current atomic state to restore it later
-        $wasAtomic = $this->inAtomicGroup;
+        $wasAtomic = $this->endsAtomicBody;
+        $depths = [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth];
         $boundarySeparatedPrev = $this->hasMutuallyExclusiveBoundary($this->previousNode, $node->node);
         $boundarySeparatedNext = $this->hasForwardMutuallyExclusiveBoundary($node->node, $this->nextNode);
         $boundarySeparated = $boundarySeparatedPrev || $boundarySeparatedNext;
+        $iterationsSeparated = ($boundarySeparatedPrev && $this->separatesIterations($this->previousNode))
+            || ($boundarySeparatedNext && $this->separatesIterations($this->nextNode));
 
         $controlVerbShield = $this->hasTrailingBacktrackingControl($node->node);
         $isPossessive = QuantifierType::Possessive === $node->type;
+        [$qMin, $qMax] = $this->quantifierBounds($node);
 
-        // If the quantifier is possessive (*+, ++), its content is implicitly atomic.
-        // This means it does not backtrack, preventing ReDoS in nested structures.
+        // A possessive loop is an atomic group around the loop, and nothing
+        // goes back past the (*COMMIT), (*PRUNE) or (*SKIP) that ends a body:
+        // the loops around never retry what it holds, its own loops nest
+        // from none.
         if ($isPossessive || $controlVerbShield) {
-            $this->inAtomicGroup = true;
+            $this->unboundedQuantifierDepth = 0;
+            $this->totalQuantifierDepth = 0;
         }
 
-        // If we are inside an atomic group (explicit or via possessive quantifier),
-        // we visit the child without ReDoS checks (as backtracking is disabled),
-        // then restore the state and return immediately.
-        if ($this->inAtomicGroup) {
+        // A loop that ends an atomic body and needs at most one iteration
+        // keeps its first way through: an iteration that fails ends it, and
+        // nothing after it in the body can fail. Its body ends the atomic
+        // body in turn, as does the part of a body before such a verb, read
+        // without the checks of a loop. A count it may not reach yet sends
+        // the engine back into its iterations.
+        if ($controlVerbShield || (($isPossessive || $this->endsAtomicBody) && $qMin <= 1)) {
+            $this->endsAtomicBody = true;
             $result = $node->node->accept($this);
-            $this->inAtomicGroup = $wasAtomic; // Restore state is crucial here!
+            $this->endsAtomicBody = $wasAtomic;
+            [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth] = $depths;
 
             return $this->reduceSeverity($result, RedosSeverity::Low);
         }
 
-        // --- Standard ReDoS logic for non-atomic quantifiers ---
+        // --- Standard ReDoS logic for the loops the engine may retry ---
 
+        $this->endsAtomicBody = false;
         $this->totalQuantifierDepth++;
-        [, $qMax] = $this->quantifierBounds($node);
         $isUnbounded = $this->isUnbounded($node);
 
         // Check if the immediate target is an atomic group (e.g., (? >...)+)
@@ -243,6 +275,7 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         if ($entersUnbounded) {
             $this->unboundedQuantifierDepth++;
+            $this->repeatingLoopDepth++;
 
             if ($this->hasBackrefLoop($node->node)) {
                 $this->backrefLoopDetected = true;
@@ -258,8 +291,8 @@ final class RedosProfiler extends AbstractNodeVisitor
 
             if ($isNestedUnbounded) {
                 $hasRecursion = $this->hasRecursion($node->node);
-                $severity = $boundarySeparated ? RedosSeverity::Low : ($hasRecursion ? RedosSeverity::Medium : RedosSeverity::Critical);
-                if (!$boundarySeparated) {
+                $severity = $iterationsSeparated ? RedosSeverity::Low : ($hasRecursion ? RedosSeverity::Medium : RedosSeverity::Critical);
+                if (!$iterationsSeparated) {
                     $vulnSeverity = $hasRecursion ? RedosSeverity::Medium : RedosSeverity::Critical;
                     $this->addVulnerability(
                         $vulnSeverity,
@@ -361,13 +394,11 @@ final class RedosProfiler extends AbstractNodeVisitor
             );
         }
 
+        $this->endsAtomicBody = $wasAtomic;
+        [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth] = $depths;
         if ($entersUnbounded) {
-            $this->unboundedQuantifierDepth--;
+            $this->repeatingLoopDepth--;
         }
-        $this->totalQuantifierDepth--;
-
-        // Restore state (just in case, though the early return handles the true case)
-        $this->inAtomicGroup = $wasAtomic;
 
         return $this->maxSeverity($severity, $childSeverity);
     }
@@ -406,13 +437,22 @@ final class RedosProfiler extends AbstractNodeVisitor
     #[\Override]
     public function visitGroup(GroupNode $node): RedosSeverity
     {
-        $wasAtomic = $this->inAtomicGroup;
+        $wasAtomic = $this->endsAtomicBody;
         $previous = $this->previousNode;
         $next = $this->nextNode;
-        $depths = [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth];
+        $depths = [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth, $this->repeatingLoopDepth];
         $isAtomicGroup = GroupType::Atomic === $node->type;
+
+        // The loops around an atomic group never come back into it: its own
+        // loops nest from none, and its body ends there. A group that only
+        // wraps what it holds passes on whether it ends an atomic body; any
+        // other checks something once its body has matched.
         if ($isAtomicGroup) {
-            $this->inAtomicGroup = true;
+            $this->unboundedQuantifierDepth = 0;
+            $this->totalQuantifierDepth = 0;
+            $this->endsAtomicBody = true;
+        } elseif (!\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::BranchReset], true)) {
+            $this->endsAtomicBody = false;
         }
 
         // A lookaround runs on its own, from where it stands, and holds
@@ -423,7 +463,7 @@ final class RedosProfiler extends AbstractNodeVisitor
             $this->reportReread($node);
             $this->unboundedQuantifierDepth = 0;
             $this->totalQuantifierDepth = 0;
-            $this->inAtomicGroup = false;
+            $this->repeatingLoopDepth = 0;
         }
 
         $this->previousNode = null;
@@ -432,8 +472,8 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->previousNode = $previous;
         $this->nextNode = $next;
 
-        [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth] = $depths;
-        $this->inAtomicGroup = $wasAtomic;
+        [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth, $this->repeatingLoopDepth] = $depths;
+        $this->endsAtomicBody = $wasAtomic;
 
         return $isAtomicGroup ? $this->reduceSeverity($severity, RedosSeverity::Low) : $severity;
     }
@@ -444,23 +484,28 @@ final class RedosProfiler extends AbstractNodeVisitor
         $max = RedosSeverity::Safe;
         $previous = $this->previousNode;
         $next = $this->nextNode;
+        $endsAtomicBody = $this->endsAtomicBody;
         $last = null;
         $children = $node->children;
         $total = \count($children);
 
-        if (!$this->inAtomicGroup) {
-            $max = $this->maxSeverity($max, $this->analyzeAdjacentQuantifiers($node));
-        }
+        // In a sequence that ends an atomic body, its last item ends it in
+        // turn, past the verbs that cut backtracking: they never fail.
+        $tail = $endsAtomicBody ? $this->tailIndex($children) : null;
+
+        $max = $this->maxSeverity($max, $this->analyzeAdjacentQuantifiers($node, $tail));
 
         foreach ($children as $index => $child) {
             $this->previousNode = $last;
             $this->nextNode = $index + 1 < $total ? $children[$index + 1] : null;
+            $this->endsAtomicBody = $index === $tail;
             $max = $this->maxSeverity($max, $child->accept($this));
             $last = $child;
         }
 
         $this->previousNode = $previous;
         $this->nextNode = $next;
+        $this->endsAtomicBody = $endsAtomicBody;
 
         return $max;
     }
@@ -544,17 +589,21 @@ final class RedosProfiler extends AbstractNodeVisitor
             return RedosSeverity::Safe;
         }
 
-        if (!$node->isAtomic) {
-            return $node->content->accept($this);
+        // The body of "(*asr:...)" is atomic, as in an atomic group; that of
+        // "(*sr:...)" is checked once it has matched.
+        $wasAtomic = $this->endsAtomicBody;
+        $depths = [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth];
+        $this->endsAtomicBody = $node->isAtomic;
+        if ($node->isAtomic) {
+            $this->unboundedQuantifierDepth = 0;
+            $this->totalQuantifierDepth = 0;
         }
 
-        // The body of "(*asr:...)" is atomic, as in an atomic group.
-        $wasAtomic = $this->inAtomicGroup;
-        $this->inAtomicGroup = true;
         $severity = $node->content->accept($this);
-        $this->inAtomicGroup = $wasAtomic;
+        $this->endsAtomicBody = $wasAtomic;
+        [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth] = $depths;
 
-        return $this->reduceSeverity($severity, RedosSeverity::Low);
+        return $node->isAtomic ? $this->reduceSeverity($severity, RedosSeverity::Low) : $severity;
     }
 
     #[\Override]
@@ -652,13 +701,15 @@ final class RedosProfiler extends AbstractNodeVisitor
      */
     private function readOnItsOwn(NodeInterface $node): RedosSeverity
     {
-        $unboundedDepth = $this->unboundedQuantifierDepth;
-        $totalDepth = $this->totalQuantifierDepth;
+        $depths = [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth, $this->repeatingLoopDepth];
+        $endsAtomicBody = $this->endsAtomicBody;
         $this->unboundedQuantifierDepth = 0;
         $this->totalQuantifierDepth = 0;
+        $this->repeatingLoopDepth = 0;
+        $this->endsAtomicBody = false;
         $severity = $node->accept($this);
-        $this->unboundedQuantifierDepth = $unboundedDepth;
-        $this->totalQuantifierDepth = $totalDepth;
+        [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth, $this->repeatingLoopDepth] = $depths;
+        $this->endsAtomicBody = $endsAtomicBody;
 
         return $severity;
     }
@@ -687,7 +738,7 @@ final class RedosProfiler extends AbstractNodeVisitor
      */
     private function reportReread(GroupNode $node): void
     {
-        if ($this->unboundedQuantifierDepth > 0 && $this->holdsUnboundedRepeat($node->child)) {
+        if ($this->repeatingLoopDepth > 0 && $this->holdsUnboundedRepeat($node->child)) {
             $this->addVulnerability(
                 RedosSeverity::Medium,
                 'A lookaround in a repeated group runs again at each repetition, and the unbounded repeat inside it reads the subject again from there: the cost grows with the square of the length. Move the lookaround out of the loop, or bound what it reads.',
@@ -798,16 +849,33 @@ final class RedosProfiler extends AbstractNodeVisitor
         return 'DOT' === $this->getPrefixSignature($node);
     }
 
+    /**
+     * The index of the last item of a sequence, past the verbs that cut
+     * backtracking.
+     *
+     * @param list<NodeInterface> $children
+     */
+    private function tailIndex(array $children): int
+    {
+        $index = \count($children) - 1;
+        while ($index > 0 && $this->isBacktrackingControl($children[$index])) {
+            $index--;
+        }
+
+        return $index;
+    }
+
+    private function isBacktrackingControl(NodeInterface $node): bool
+    {
+        return $node instanceof PcreVerbNode
+            && \in_array(Ascii::upper(explode(':', $node->verb, 2)[0]), ['COMMIT', 'PRUNE', 'SKIP'], true);
+    }
+
     private function hasTrailingBacktrackingControl(NodeInterface $node): bool
     {
         $verbNode = $this->extractTrailingVerb($node);
-        if (null === $verbNode) {
-            return false;
-        }
 
-        $verbName = Ascii::upper(explode(':', $verbNode->verb, 2)[0]);
-
-        return \in_array($verbName, ['COMMIT', 'PRUNE', 'SKIP'], true);
+        return null !== $verbNode && $this->isBacktrackingControl($verbNode);
     }
 
     private function extractTrailingVerb(NodeInterface $node): ?PcreVerbNode
@@ -859,6 +927,16 @@ final class RedosProfiler extends AbstractNodeVisitor
         }
 
         return !$currentTail->intersects($nextHead);
+    }
+
+    /**
+     * Whether the item keeps two iterations of a loop around apart: one
+     * that may match nothing does not, "\s?" in "(\w+\s?)+" lets two runs
+     * of "\w" meet.
+     */
+    private function separatesIterations(?NodeInterface $item): bool
+    {
+        return null !== $item && false === $item->accept($this->nullability);
     }
 
     private function reduceSeverity(RedosSeverity $severity, RedosSeverity $cap): RedosSeverity
@@ -1068,13 +1146,22 @@ final class RedosProfiler extends AbstractNodeVisitor
         return RedosSeverity::Medium;
     }
 
-    private function analyzeAdjacentQuantifiers(SequenceNode $node): RedosSeverity
+    /**
+     * @param int|null $tail the index of the item that ends an atomic body, if
+     *                       any: a pair it closes is matched the first way
+     *                       through
+     */
+    private function analyzeAdjacentQuantifiers(SequenceNode $node, ?int $tail): RedosSeverity
     {
         $max = RedosSeverity::Safe;
         $children = $node->children;
         $count = \count($children);
 
         for ($i = 0; $i < $count - 1; $i++) {
+            if ($i + 1 === $tail) {
+                continue;
+            }
+
             $left = $children[$i];
             $right = $children[$i + 1];
 

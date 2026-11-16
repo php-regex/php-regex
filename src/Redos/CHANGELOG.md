@@ -13,6 +13,14 @@ CHANGELOG
    outer loop, `/^(?:a+)++$/` for `/^(?:a+)+$/`. A body that splits a run
    into many copies, `(?:a+){30,}+`, is kept as written: PCRE tries every
    way to split it before it fails.
+ * The heuristics read the body of an atomic group, of a possessive repeat
+   and of a repeat ending with `(*COMMIT)`, `(*PRUNE)` or `(*SKIP)` as PCRE
+   runs it: the engine backtracks inside it until it has matched, so only
+   the loops that end the body are left alone. `/(?>(a+)+b)/`,
+   `/^(?:(?:a+)+b)++/`, `/^(*atomic:(?:a+)+b)/` and
+   `/^(?:(?:a+)+b(*COMMIT))+/`, which were safe, are critical, and so is
+   `/^(?>(\w+\s?)+:)/`: an item that may match nothing keeps no two
+   iterations of a loop apart.
  * The heuristics read a body repeated `{0}` as PCRE runs it: never where it
    stands. One holding no group gives no hotspot, as `x+x+` in
    `/(?:x+x+){0}^(?:a+)+$/` gave two, which a repair then tried first; the
