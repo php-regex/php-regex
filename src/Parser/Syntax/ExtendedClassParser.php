@@ -216,12 +216,71 @@ final class ExtendedClassParser
     }
 
     /**
-     * A member of a class PCRE refuses before $position, where reading the
-     * class failed: PCRE judges each member as it reads it.
+     * A member or a range of a class PCRE refuses before $position, where
+     * reading the class failed: PCRE judges each as it reads it, whichever
+     * comes first.
      *
      * @param list<Token> $tokens
      */
     private function firstMemberErrorBefore(array $tokens, int $position): ?ParserException
+    {
+        $member = $this->firstLoneMemberErrorBefore($tokens, $position);
+        // An escape read alone, or what the lexer read before it failed on
+        // one, holds no range.
+        $range = TokenType::CharClassOpen === ($tokens[0] ?? null)?->type ? $this->firstRangeErrorBefore($tokens, $position) : null;
+
+        return null === $range || (null !== $member && ($member->position ?? $position) <= ($range->position ?? $position)) ? $member : $range;
+    }
+
+    /**
+     * The class read up to $position, closed there, judged whole: a range
+     * PCRE refuses once it has read it, "]--" reversed before a range no
+     * class takes. Should the parser refuse a range there too, the class is
+     * read up to that range's hyphen.
+     *
+     * @param list<Token> $tokens the class, from its "["
+     */
+    private function firstRangeErrorBefore(array $tokens, int $position): ?ParserException
+    {
+        $read = [$tokens[0]];
+        $lastHyphen = null;
+        foreach (\array_slice($tokens, 1) as $token) {
+            if ($token->end() > $position || \in_array($token->type, [TokenType::CharClassClose, TokenType::Eof], true)) {
+                break;
+            }
+
+            if (TokenType::Range === $token->type) {
+                $lastHyphen = \count($read);
+            }
+
+            $read[] = $token;
+        }
+
+        $class = null;
+        foreach (null === $lastHyphen ? [$read] : [$read, \array_slice($read, 0, $lastHyphen)] as $prefix) {
+            $end = $prefix[array_key_last($prefix)]->end();
+
+            try {
+                $class = ($this->readPart)([...$prefix, new Token(TokenType::CharClassClose, ']', $end, 0), new Token(TokenType::Eof, '', $end)], false);
+
+                break;
+            } catch (LimitException|ParserException) {
+                // The range refused there: read up to its hyphen.
+            }
+        }
+
+        $error = null === $class ? null : $this->firstOperandError([$class], $read[0]->position);
+
+        return null !== $error && ($error->position ?? $position) < $position ? $error : null;
+    }
+
+    /**
+     * A member of a class PCRE refuses before $position, read alone: PCRE
+     * judges each member as it reads it.
+     *
+     * @param list<Token> $tokens
+     */
+    private function firstLoneMemberErrorBefore(array $tokens, int $position): ?ParserException
     {
         foreach ($tokens as $token) {
             if ($token->end() > $position || \in_array($token->type, [TokenType::CharClassOpen, TokenType::CharClassClose, TokenType::Range, TokenType::Eof], true)) {

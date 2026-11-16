@@ -15,6 +15,7 @@ namespace PHPRegex\Parser\Printer;
 
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -78,6 +79,13 @@ final class StructuralFingerprint
                 $value instanceof \UnitEnum => $value->name,
                 default => $value,
             };
+        }
+
+        // A "no" branch written empty, "(?(c)X|)", is not the one a
+        // conditional without "|" is given: in a lookbehind PCRE reads the
+        // two apart.
+        if ($node instanceof ConditionalNode) {
+            $canonical['writesNo'] = PatternPrinter::writesNoBranch($node);
         }
 
         // A "(?:...)" whose body matches nothing but the empty string, "(?:)"

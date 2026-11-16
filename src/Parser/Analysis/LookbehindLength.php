@@ -73,16 +73,20 @@ final class LookbehindLength
     // the validator separately enforces PCRE's exact 2,001-branch limit.
     private const MAX_BRANCH_VISITS = 10000;
 
+    // A substring scan, "(*scs:(1)...)", matches nothing where it stands:
+    // PCRE2 measures it as a lookahead.
     private const LOOKAROUNDS = [
         GroupType::LookaheadPositive,
         GroupType::LookaheadNegative,
         GroupType::LookbehindPositive,
         GroupType::LookbehindNegative,
+        GroupType::ScanSubstring,
     ];
 
     private const LOOKAHEADS = [
         GroupType::LookaheadPositive,
         GroupType::LookaheadNegative,
+        GroupType::ScanSubstring,
     ];
 
     private int $branchVisits = 0;
@@ -445,14 +449,12 @@ final class LookbehindLength
                 }
             }
 
-            // A repeated lookahead, "(?=.)*" or "(*pla:.)+", adds nothing.
-            // Only a lookahead read directly under the quantifier does: a
-            // repeated lookbehind, a lookahead inside another group, or a
-            // repeated "(*ACCEPT)" has no bound, as PCRE measures them.
-            if ($node->node instanceof GroupNode && \in_array($node->node->type, [
-                GroupType::LookaheadPositive,
-                GroupType::LookaheadNegative,
-            ], true)) {
+            // A repeated lookahead, "(?=.)*" or "(*pla:.)+", adds nothing,
+            // nor does a repeated substring scan. Only a lookahead read
+            // directly under the quantifier does: a repeated lookbehind, a
+            // lookahead inside another group, or a repeated "(*ACCEPT)" has
+            // no bound, as PCRE measures them.
+            if ($node->node instanceof GroupNode && \in_array($node->node->type, self::LOOKAHEADS, true)) {
                 return [0, 0];
             }
 

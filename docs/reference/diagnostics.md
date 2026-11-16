@@ -514,7 +514,8 @@ For the same fixes on one table, see the [Diagnostics Cheat Sheet](diagnostics-c
 
 A `limit` result is not a judgement on the pattern: PCRE may compile it. The
 result is still not valid, since nothing was checked; `hint` names the option
-to raise. The lint reports it as a warning, `Not analyzed: …`, never as an
+to raise. An error PCRE meets before the level where the parser stopped is
+reported instead, parentheses nested past 250 levels among them. The lint reports it as a warning, `Not analyzed: …`, never as an
 invalid pattern.
 
 ---
@@ -649,7 +650,7 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.unicode.property_malformed` | `UnicodePropertyMalformed` | A "\p" or "\P" escape is not written in a form PCRE reads. |
 | `regex.unicode.surrogate` | `UnicodeSurrogate` | A code point is a surrogate, which UTF mode does not allow. |
 | `regex.unicode_named.requires_utf` | `UnicodeNamedRequiresUtf` | "\N{U+hhhh}" needs the "u" modifier. |
-| `regex.verb.conflicting_casings` | `VerbConflictingCasings` | "(*TURKISH_CASING)" and "(*CASELESS_RESTRICT)" are used together. |
+| `regex.verb.conflicting_casings` | `VerbConflictingCasings` | "(*TURKISH_CASING)" and "(*CASELESS_RESTRICT)", or the "r" modifier, are used together. |
 | `regex.verb.invalid` | `VerbInvalid` | A verb, or an alphabetic assertion, is unknown or malformed. |
 | `regex.verb.limit_too_large` | `VerbLimitTooLarge` | A "(*LIMIT_...)" value is larger than PCRE takes. |
 | `regex.verb.mark_name_missing` | `VerbMarkNameMissing` | "(*MARK)" has no name. |

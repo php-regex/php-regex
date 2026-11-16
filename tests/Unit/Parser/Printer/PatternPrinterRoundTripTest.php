@@ -258,6 +258,33 @@ final class PatternPrinterRoundTripTest extends TestCase
         yield 'a quoted brace before a count' => ['pattern' => '{\Q{a\E\nb(*MARK:})}', 'subjects' => ["{a\nb", 'a']];
     }
 
+    /**
+     * In a lookbehind, a conditional whose "no" branch is written empty,
+     * "(?(c)X|)", is not the one written with no "|": PCRE gives the
+     * second the length of its "yes" branch alone.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideEmptyNoBranches')]
+    public function test_a_conditional_with_an_empty_no_branch_prints_back_the_same_pattern(string $pattern, array $subjects): void
+    {
+        $this->assertEveryPrinterKeepsThePattern($pattern, $subjects);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: list<string>}>
+     */
+    public static function provideEmptyNoBranches(): iterable
+    {
+        yield 'an empty "no" branch in a negative lookbehind' => ['pattern' => '/(?<!(?(?=a)bb|))c/', 'subjects' => ['c', 'bbc']];
+        yield 'an empty "no" branch in a lookbehind' => ['pattern' => '/(?<=(?(?=a)bb|))c/', 'subjects' => ['c', 'bbc']];
+        yield 'a "no" branch holding only a comment' => ['pattern' => '/(?<!(?(?=a)bb|(?#x)))c/', 'subjects' => ['c', 'bbc']];
+        yield 'an empty "no" branch laid out over lines' => ['pattern' => '/(?<!(?(?=a)bbbbbbbbbbbbbbbbbbbbbbbbbb|))c/', 'subjects' => ['c', 'bbc']];
+        yield 'no "no" branch in a lookbehind' => ['pattern' => '/(?<!(?(?=a)bb))c/', 'subjects' => ['c', 'bbc']];
+        yield 'no "no" branch laid out over lines' => ['pattern' => '/(?<!(?(?=a)bbbbbbbbbbbbbbbbbbbbbbbbbb))c/', 'subjects' => ['c', 'bbc']];
+    }
+
     #[Test]
     #[DataProvider('provideSpellings')]
     public function test_a_printer_writes_the_spelling_it_names(string $printer, string $pattern, string $expected): void
