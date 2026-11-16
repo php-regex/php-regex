@@ -97,13 +97,13 @@ final class NestedQuantifierRule extends AbstractLintRule
                     return [];
                 }
 
-                return $this->violation($node);
+                return $this->violation($node, $context);
             }
 
             return [];
         }
 
-        return $this->violation($node);
+        return $this->violation($node, $context);
     }
 
     /**
@@ -143,7 +143,7 @@ final class NestedQuantifierRule extends AbstractLintRule
     /**
      * @return list<RuleViolation>
      */
-    private function violation(QuantifierNode $node): array
+    private function violation(QuantifierNode $node, LintContext $context): array
     {
         return [new RuleViolation(
             self::ID,

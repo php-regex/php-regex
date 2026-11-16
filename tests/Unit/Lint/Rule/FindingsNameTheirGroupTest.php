@@ -205,6 +205,16 @@ final class FindingsNameTheirGroupTest extends TestCase
             'pattern' => '/(a+)+b/n',
             'messages' => ['Nested quantifiers in "(a+)" at offset 0 can cause catastrophic backtracking.'],
         ];
+
+        yield 'a loop found past a fixed count' => [
+            'pattern' => '/^(?:\d{4}|[a-z]+)+$/',
+            'messages' => ['Nested quantifiers in "(?:\d{4}|[a-z]+)" at offset 1 can cause catastrophic backtracking.'],
+        ];
+
+        yield 'a loop found behind one that may match nothing' => [
+            'pattern' => '/^(?:b?c+)+$/',
+            'messages' => ['Nested quantifiers in "(?:b?c+)" at offset 1 can cause catastrophic backtracking.'],
+        ];
     }
 
     #[Test]
