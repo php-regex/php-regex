@@ -205,6 +205,15 @@ final class ErrorPrecedenceTest extends TestCase
         yield 'reversed repeat count after a missing group' => ['pattern' => '/\\3a{3,2}/', 'offsets' => [7]];
         yield 'unbounded lookbehind after a missing group' => ['pattern' => '/\\2x(?<=a+)/', 'offsets' => [3]];
         yield 'missing group in a lookbehind after a missing group' => ['pattern' => '/\\2(?<=\\1)/', 'offsets' => [8, 7]];
+        // A lookbehind is measured before the pattern is compiled, and the
+        // missing groups the measure meets come first: not one in a
+        // lookahead, in a DEFINE group or after an (*ACCEPT), which the
+        // measure skips.
+        yield 'missing group in a lookahead in a lookbehind after a missing group' => ['pattern' => '/\\g{1}(?<=(?=\\k{n}))/', 'offsets' => [5, 4]];
+        yield 'missing group in an alphabetic lookahead in a lookbehind after a missing group' => ['pattern' => '/\\g{1}(?<=(*pla:\\k{n}))/', 'offsets' => [5, 4]];
+        yield 'missing group in a DEFINE group in a lookbehind after a missing group' => ['pattern' => '/\\g{1}(?<=(?(DEFINE)\\k{n}))/', 'offsets' => [5, 4]];
+        yield 'missing group after an accept in a lookbehind after a missing group' => ['pattern' => '/\\g{1}(?<=a(*ACCEPT)\\k{n})/', 'offsets' => [5, 4]];
+        yield 'missing group in a lookbehind in a lookahead in a lookbehind after a missing group' => ['pattern' => '/\\g{1}(?<=(?=(?<=\\k{n})))/', 'offsets' => [19]];
         yield 'first of two missing groups, numbered first' => ['pattern' => '/\\2\\k<zz>/', 'offsets' => [2, 1]];
         yield 'first of two missing groups, named first' => ['pattern' => '/\\k<zz>\\2/', 'offsets' => [3]];
         yield 'first of two missing groups, braced \\g' => ['pattern' => '/\\3a\\g{2}/', 'offsets' => [2, 1]];

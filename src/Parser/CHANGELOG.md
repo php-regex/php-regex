@@ -34,6 +34,11 @@ CHANGELOG
    by one, `(?+😀)`, are refused past that whole character in UTF mode from
    PCRE2 10.47, as PCRE2 reports them: `/(?Cé)/u` at offset 5 and
    `/a(?+😀)/u` at 8, where the offset fell inside the character, at 4 and 5.
+ * A reference to a missing group in a lookbehind comes before the errors of
+   the whole pattern only where the measure of that lookbehind meets it:
+   one in a lookahead, in a DEFINE group or after an `(*ACCEPT)` there waits
+   its turn, as PCRE2 orders them. `/\g{1}(?<=(?=\k{n}))/` is refused on
+   `\g{1}`, offset 5, where it was refused on `\k{n}`.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.
