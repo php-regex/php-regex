@@ -26,8 +26,10 @@ use Psalm\Type\Union;
  * instead of string[]. Psalm types an untyped closure parameter from it,
  * and narrows an array one.
  *
- * Psalm reads these parameters for every call, in place of the stub's: a
- * call the plugin cannot read gets the stub's own.
+ * Psalm reads these parameters for every call, in place of the stub's, and
+ * asks the plugin before its own provider (Psalm 7.7 and later): a call the
+ * plugin cannot read gets the stub's own, or what Psalm's provider gives
+ * when there is one.
  *
  * @internal
  */
@@ -49,7 +51,7 @@ final class CallbackParameters implements FunctionParamsProviderInterface
 
         $type = null === $context ? null : PregCallAnalyzer::callbackMatchesType($event->getCallArgs(), $source, $context);
         if (null === $type) {
-            return $parameters;
+            return PsalmInternals::typesPregReplaceCallback() ? null : $parameters;
         }
 
         $callback = new Union([new TCallable(params: [new FunctionLikeParameter('matches', false, $type, $type, null, null, false)], return_type: Type::getString())]);

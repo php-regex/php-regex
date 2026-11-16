@@ -128,7 +128,10 @@ holding one literal, or a pattern built with `preg_quote()`. Psalm reads the
 parameters before the arguments, so the plugin reads only arguments that
 write nothing (a call to anything but `preg_quote()`, an assignment, are left
 to Psalm's `callable(string[]): string`). An array of patterns, and
-`preg_replace_callback_array()`, keep Psalm's type.
+`preg_replace_callback_array()`, keep Psalm's type. From Psalm 7.7 on, Psalm
+types the callback from the flags itself: the plugin is asked first, and a
+call it leaves to Psalm gets Psalm's type, `string|null` under
+`PREG_UNMATCHED_AS_NULL` for instance.
 
 ### `preg_split()`
 
