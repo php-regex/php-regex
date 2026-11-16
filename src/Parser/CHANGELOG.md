@@ -39,6 +39,10 @@ CHANGELOG
    one in a lookahead, in a DEFINE group or after an `(*ACCEPT)` there waits
    its turn, as PCRE2 orders them. `/\g{1}(?<=(?=\k{n}))/` is refused on
    `\g{1}`, offset 5, where it was refused on `\k{n}`.
+ * A reversed range in a class nested in an extended class comes before a
+   range further on that no class takes, as PCRE2 reads them:
+   `/(?[[^]--[a-\d]])/` is `regex.range.reversed` at offset 8, where it was
+   refused for `a-\d` at 13.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.
