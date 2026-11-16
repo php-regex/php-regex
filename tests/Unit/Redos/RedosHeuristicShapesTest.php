@@ -87,7 +87,13 @@ final class RedosHeuristicShapesTest extends TestCase
      * included: the engine gives the iterations back one at a time.
      * Doubling the unit repeated before "!" doubles the steps (1 000 ->
      * 2 000 -> 4 000 units): 3 004 -> 6 004 -> 12 004 for the PCRE2
-     * manual's "(a|b\1)+", 4 005 -> 8 005 -> 16 005 for "((a|b)\2)+".
+     * manual's "(a|b\1)+", 4 005 -> 8 005 -> 16 005 for "((a|b)\2)+",
+     * and 3 004 -> 6 004 -> 12 004 again with a class, a dot, a property,
+     * a POSIX class, a control character, an anchor, an assertion, a
+     * comment, a fixed count or a possessive repeat in a branch. A script
+     * run reads its body one way when it is atomic or when its body does:
+     * 5 004 -> 10 004 -> 20 004 for "(*asr:x+)", 4 004 -> 8 004 -> 16 004
+     * for "(*sr:x)".
      *
      * @return iterable<string, array{pattern: string, unit: string}>
      */
@@ -95,6 +101,18 @@ final class RedosHeuristicShapesTest extends TestCase
     {
         yield 'reference in a branch of its own group' => ['pattern' => '/^(a|b\1)+$/', 'unit' => 'a'];
         yield 'reference after a group of disjoint branches' => ['pattern' => '/^((a|b)\2)+$/', 'unit' => 'aa'];
+        yield 'class in a branch' => ['pattern' => '/^([ac]|b\1)+$/', 'unit' => 'a'];
+        yield 'dot in a branch' => ['pattern' => '/^(a.|b\1)+$/', 'unit' => 'ax'];
+        yield 'property in a branch' => ['pattern' => '/^(a\pL|b\1)+$/', 'unit' => 'ax'];
+        yield 'POSIX class in a branch' => ['pattern' => '/^(a[[:digit:]]|b\1)+$/', 'unit' => 'a1'];
+        yield 'control character in a branch' => ['pattern' => '/^(a\cA|b\1)+$/', 'unit' => "a\x01"];
+        yield 'anchor in a branch' => ['pattern' => '/^(a$\n|b\1)+$/m', 'unit' => "a\n"];
+        yield 'assertion in a branch' => ['pattern' => '/^(a\b-|b\1)+$/', 'unit' => 'a-'];
+        yield 'comment in a branch' => ['pattern' => '/^(a(?#x)|b\1)+$/', 'unit' => 'a'];
+        yield 'fixed count in a branch' => ['pattern' => '/^(a{2}|b\1)+$/', 'unit' => 'aa'];
+        yield 'possessive repeat in a branch' => ['pattern' => '/^(ax++|b\1)+$/', 'unit' => 'ax'];
+        yield 'atomic script run of a run in a branch' => ['pattern' => '/^(a(*asr:x+)|b\1)+$/', 'unit' => 'ax'];
+        yield 'script run of one letter in a branch' => ['pattern' => '/^(a(*sr:x)|b\1)+$/', 'unit' => 'ax'];
     }
 
     #[Test]
@@ -119,27 +137,36 @@ final class RedosHeuristicShapesTest extends TestCase
      * engine goes exponential on 8 -> 12 -> 16 letters then "!": a run
      * in a branch (896 -> 14 336 -> 229 376), a branch starting with the
      * reference, whose first character is not known (139 -> 799 -> 4 612),
-     * two branches starting with the same letter (139 -> 799 -> 4 612).
+     * two branches starting with the same letter (139 -> 799 -> 4 612), a
+     * script run of a run (1 024 -> 16 384 -> 262 144), and a call, an item
+     * the reading does not take apart, of an ambiguous alternation (2 044
+     * -> 32 764 -> 524 284 on "ax" units). The finding on the reference
+     * stays, beside any other the pattern holds.
      *
-     * @return iterable<string, array{pattern: string}>
+     * @return iterable<string, array{pattern: string, unit: string}>
      */
     public static function provideReferencesInALoopReadMoreThanOneWay(): iterable
     {
-        yield 'run in a branch' => ['pattern' => '/^(a+|b\1)+$/'];
-        yield 'branch starting with the reference' => ['pattern' => '/^(a|\1a)+$/'];
-        yield 'branches starting with the same letter' => ['pattern' => '/^(a|a\1)+$/'];
+        yield 'run in a branch' => ['pattern' => '/^(a+|b\1)+$/', 'unit' => 'a'];
+        yield 'branch starting with the reference' => ['pattern' => '/^(a|\1a)+$/', 'unit' => 'a'];
+        yield 'branches starting with the same letter' => ['pattern' => '/^(a|a\1)+$/', 'unit' => 'a'];
+        yield 'script run of a run in a branch' => ['pattern' => '/^(a(*sr:a*)|b\1)+$/', 'unit' => 'a'];
+        yield 'call in a branch' => ['pattern' => '/^(a(?2)|b\1)+$(?(DEFINE)(x|x))/', 'unit' => 'ax'];
     }
 
     #[Test]
     #[DataProvider('provideReferencesInALoopReadMoreThanOneWay')]
-    public function test_a_reference_in_a_loop_read_more_than_one_way_stays_critical(string $pattern): void
+    public function test_a_reference_in_a_loop_read_more_than_one_way_stays_critical(string $pattern, string $unit): void
     {
         $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
-        $short = self::steps($unoptimized, str_repeat('a', 8).'!');
-        $long = self::steps($unoptimized, str_repeat('a', 12).'!');
+        $short = self::steps($unoptimized, str_repeat($unit, 8).'!');
+        $long = self::steps($unoptimized, str_repeat($unit, 12).'!');
         $this->assertGreaterThan(4 * $short, $long, 'Oracle: the engine goes exponential.');
 
-        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity);
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+
+        $this->assertSame(RedosSeverity::Critical, $analysis->severity);
+        $this->assertNotSame([], array_filter($analysis->findings, static fn ($finding): bool => RedosSeverity::Critical === $finding->severity && str_contains($finding->message, 'backreferences')));
     }
 
     /**
@@ -265,7 +292,13 @@ final class RedosHeuristicShapesTest extends TestCase
      * alternatives called, whether the group calls itself (31 -> 43 -> 55)
      * or not (27 -> 39 -> 51). Past a branch reset, whose branches share
      * their numbers, "(?2)" runs "(a|a)" (3 068 -> 49 148 -> 786 428 after an
-     * "x") and "(?1)" the "(x)" (47 -> 67 -> 87).
+     * "x") and "(?1)" the "(x)" (47 -> 67 -> 87). "(?+1)" runs the group
+     * after it (3 065 -> 49 145 -> 786 425), "(?10)" the tenth (4 099 ->
+     * 65 539 -> 1 048 579), and a name two groups share under (?J) the
+     * first of them: 67 -> 99 -> 131 steps when it is "(a|b)", 4 081 ->
+     * 65 521 -> 1 048 561 when it is "(a|a)". A call in a loop inside an
+     * atomic script run still backtracks until the body has matched (2 047
+     * -> 32 767 -> 524 287).
      *
      * @return iterable<string, array{pattern: string, prefix: string, unit: string, critical: bool}>
      */
@@ -282,6 +315,11 @@ final class RedosHeuristicShapesTest extends TestCase
         yield 'call numbered past a branch reset' => ['pattern' => '/^(?|(x)|(y))(?:(?2))+(a|a)$/', 'prefix' => 'x', 'unit' => 'a', 'critical' => true];
         yield 'call of a branch of a branch reset' => ['pattern' => '/^(?|(x)|(y))(?:(?1))+(a|a)$/', 'prefix' => 'x', 'unit' => 'x', 'critical' => false];
         yield 'relative call back' => ['pattern' => '/^(a|a)(?:(?-1))+$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'relative call forward' => ['pattern' => '/^(?:(?+1))+(a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'call of the tenth group' => ['pattern' => '/^(x)(x)(x)(x)(x)(x)(x)(x)(x)(a|a)(?:(?10))+$/', 'prefix' => 'xxxxxxxxxa', 'unit' => 'a', 'critical' => true];
+        yield 'call of a name two groups share, the first disjoint' => ['pattern' => '/(?J)^(?:(?&n))+(?<n>a|b)(?<n>a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => false];
+        yield 'call of a name two groups share, the first ambiguous' => ['pattern' => '/(?J)^(?:(?&n))+(?<n>a|a)(?<n>a|b)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'call in a loop of an atomic script run' => ['pattern' => '/^(*asr:(?:(?1))+c)(a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
     }
 
     #[Test]

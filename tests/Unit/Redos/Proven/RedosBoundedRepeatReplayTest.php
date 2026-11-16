@@ -56,7 +56,8 @@ final class RedosBoundedRepeatReplayTest extends TestCase
     /**
      * Both exhaust the limit on 24 characters and a "!": two ways for each
      * "a" in up to forty copies, and up to thirty runs of one to three
-     * digits.
+     * digits. The witness runs from the text before the repeat: the forty
+     * copies after an "x" exhaust it on "x", 24 letters and a "!".
      *
      * @return iterable<string, array{pattern: string, subject: string}>
      */
@@ -64,6 +65,7 @@ final class RedosBoundedRepeatReplayTest extends TestCase
     {
         yield 'forty copies of two ways to read a letter' => ['pattern' => '/^(?:a|a){1,40}$/', 'subject' => str_repeat('a', 24).'!'];
         yield 'thirty runs of up to three digits' => ['pattern' => '/^(?:\d{1,3}\.?){1,30}$/', 'subject' => str_repeat('1', 24).'!'];
+        yield 'forty copies of two ways to read a letter after an x' => ['pattern' => '/^x(?:a|a){1,40}$/', 'subject' => 'x'.str_repeat('a', 24).'!'];
     }
 
     #[Test]
