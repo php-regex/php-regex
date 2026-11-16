@@ -27,6 +27,11 @@ CHANGELOG
    The JSON report keeps each value as found.
  * `regex:lint` reads the `matches` patterns of the Twig templates under the
    linted paths; `--no-twig` leaves them out.
+ * `regex:lint` leaves a validator mapping file out as it leaves out a PHP
+   file: an `exclude` is a directory name anywhere below the project, or the
+   path of a file or a directory, from the project, behind `./` or absolute,
+   where only a directory at the root of the project left a mapping file
+   out.
  * `regex:lint` reads the `Regex` constraints of the validator mapping files
    FrameworkBundle hands the validator (`config/validator/`,
    `framework.validation.mapping.paths`, the bundles' validation files), where

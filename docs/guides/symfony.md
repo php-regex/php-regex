@@ -112,7 +112,10 @@ the links open the editor FrameworkBundle links its own pages to:
 in a debug kernel.
 
 `paths` and `exclude` are read from `%kernel.project_dir%`: `regex:lint`
-lints the same files whatever directory it runs from. The paths given to
+lints the same files whatever directory it runs from. An `exclude` is a
+directory name, left out wherever it lies under the project, never above
+it, or the path of a file or a directory, from the project, behind `./` or
+absolute, as `regex lint --exclude` reads it. The paths given to
 `regex:lint` on the command line are read from the working directory, as
 `lint:yaml` reads them. A path that does not exist stops `regex:lint` with
 exit code 2, as it stops `regex lint`: `Path not found: src/Legacy`, stage
@@ -214,8 +217,8 @@ and a marker that silences nothing is reported the same way.
 `regex:lint` reads the `Regex` constraints of the validator mapping files
 FrameworkBundle hands the validator: `config/validator/*.yaml` and `*.xml`,
 the files and directories of `framework.validation.mapping.paths`, and the
-`validation.yaml` or `validation.xml` of each bundle, those under an
-`exclude` directory (`vendor/`) left out. Each file is read with the
+`validation.yaml` or `validation.xml` of each bundle, but those the
+excludes leave out as they leave out a PHP file (`vendor/`). Each file is read with the
 validator's own loader, nested constraints (`All`, `Collection`,
 `Sequentially`) included, and each pattern is reported at the file and the
 line that write it, its source naming the class and the member,
