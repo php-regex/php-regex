@@ -541,8 +541,7 @@ enum ErrorCode: string
     case UnicodeNamedRequiresUtf = 'regex.unicode_named.requires_utf';
 
     /**
-     * "(*TURKISH_CASING)" and "(*CASELESS_RESTRICT)", or the "r" modifier,
-     * are used together.
+     * "(*TURKISH_CASING)" with "(*CASELESS_RESTRICT)" or the "r" modifier.
      */
     case VerbConflictingCasings = 'regex.verb.conflicting_casings';
 
