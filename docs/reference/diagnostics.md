@@ -650,7 +650,7 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.unicode.property_malformed` | `UnicodePropertyMalformed` | A "\p" or "\P" escape is not written in a form PCRE reads. |
 | `regex.unicode.surrogate` | `UnicodeSurrogate` | A code point is a surrogate, which UTF mode does not allow. |
 | `regex.unicode_named.requires_utf` | `UnicodeNamedRequiresUtf` | "\N{U+hhhh}" needs the "u" modifier. |
-| `regex.verb.conflicting_casings` | `VerbConflictingCasings` | "(*TURKISH_CASING)" and "(*CASELESS_RESTRICT)", or the "r" modifier, are used together. |
+| `regex.verb.conflicting_casings` | `VerbConflictingCasings` | "(*TURKISH_CASING)" goes with "(*CASELESS_RESTRICT)" or the "r" modifier. |
 | `regex.verb.invalid` | `VerbInvalid` | A verb, or an alphabetic assertion, is unknown or malformed. |
 | `regex.verb.limit_too_large` | `VerbLimitTooLarge` | A "(*LIMIT_...)" value is larger than PCRE takes. |
 | `regex.verb.mark_name_missing` | `VerbMarkNameMissing` | "(*MARK)" has no name. |
