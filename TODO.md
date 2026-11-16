@@ -5,12 +5,6 @@
 Fixed together in one pull request before the final bump; each line
 leaves this list once its fix is in.
 
-Parser
-
-- At the 251st level of nesting, a `(?` header that is itself wrong is
-  reported as the nesting: 250 `(` then `(?%` gives 252, where PCRE
-  reports the header at 253.
-
 ReDoS and lint rules
 
 - A nested loop inside an atomic group or a possessive quantifier is
