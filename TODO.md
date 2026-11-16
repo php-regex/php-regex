@@ -7,25 +7,13 @@ leaves this list once its fix is in.
 
 ReDoS and lint rules
 
-- A nested loop inside an atomic group or a possessive quantifier is
-  `safe` (`/(?>(a+)+b)/`, `/^(?>(\w+\s?)+:)/`): atomicity does not stop
-  the backtracking before the group has matched.
 - Nested bounded repeats are `low` or `safe` whatever the outer bound
-  (`/^(?:a|a){1,40}$/` is safe, `/^(?:\d{1,3}\.?){1,30}$/` low).
-- A subroutine call in a loop is rated by the call alone, whatever group
-  it calls (`/^(?:(?1))+(a|a)$/` is medium).
-- `quantifier.nested` stops at the first inner quantifier, and a fixed
-  one hides the rest: `/^(?:\d{4}|[a-z]+)+$/` is silent, the swapped
-  order is reported.
-- The atomic-tail skip of `quantifier.nested` ignores a subroutine call
-  that runs the group again outside it (`/^(?:(?>x((?:a+)+))|y(?1)$)/`).
-- `backref.useless` reports a backreference that an earlier iteration
-  fills (`/^(a|b\1)+$/`, `/^(?:x(a)|\1)+$/`).
-- The `{1}` hint of `quantifier.useless` joins a following digit
-  (`/(a)\1{1}0/` to `\10`, `/\x4{1}1/` to `\x41`) or a lazy `?`
-  (`/a{1}?b/` to `a?b`).
-- `/^(a|b\1)+$/` is critical by the backreference heuristic, though its
-  two branches are disjoint and it runs in linear time.
+  (`/^(?:a|a){1,40}$/` is safe, `/^(?:\d{1,3}\.?){1,30}$/` low); the
+  prover, which proves `/^(?:a+){1,30}$/` exponential, hands these two to
+  the heuristic.
+- `quantifier.nested` does not see a later inner loop behind a first one
+  that may match nothing: `/^(?:b?c+)+$/` is silent, and exhausts the
+  engine.
 
 Decide
 
