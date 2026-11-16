@@ -116,7 +116,8 @@ lookarounds; atomic groups, and a possessive quantifier that could have to give 
 it matched (one whose body may match more than one way, or that something after it may
 start like it does: `/a++a/`, `/(?:ab?)++b/`, `\s++$`); a loop over a body that can match
 empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
-and `\K`; an end anchor followed by more of the pattern; and two patterns of which one
+and `\K`; an end anchor followed by more of the pattern, another turn of the loop it stands
+in included (`/(?:a$)*\n/`, `/(?:a$)*/`); and two patterns of which one
 reads UTF-8 and the other bytes. Groups count by number and by name: `/(?<n>a)/` and `/(a)/`
 write different `$matches`.
 

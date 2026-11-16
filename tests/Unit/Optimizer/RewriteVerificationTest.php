@@ -238,6 +238,8 @@ final class RewriteVerificationTest extends TestCase
         yield 'a class for an alternation inside a lookbehind' => ['original' => '/(?<=(?:_|%))a/', 'rewrite' => '/(?<=[_%])a/', 'verdict' => true];
         yield 'a repeated branch dropped beside a word boundary' => ['original' => '/\b(?:ab|cd|ab|abc)/', 'rewrite' => '/\b(?:ab|cd|abc)/', 'verdict' => true];
         yield 'a branch moved where its first copy was' => ['original' => '/\b(?:a|ab|a)/', 'rewrite' => '/\b(?:ab|a)/', 'verdict' => false];
+        // On "a\n" the pattern matches "a\n" at 0, the rewrite "\n" at 1.
+        yield 'a loop ending in an end anchor dropped' => ['original' => '/(?:a$)*\n/', 'rewrite' => '/\n/', 'verdict' => false];
         // Each would run alike, but the proof of a rewritten part does not
         // read a pattern a subroutine call may enter elsewhere, a part of
         // more than one length inside a lookbehind, whose length rules vary

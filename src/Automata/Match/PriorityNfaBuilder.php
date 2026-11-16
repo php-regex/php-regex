@@ -64,6 +64,16 @@ final class PriorityNfaBuilder
      */
     private array $possessives = [];
 
+    /**
+     * The end anchors, each with the state that follows it, checked again
+     * once the whole automaton is built: inside a loop, what follows the
+     * body, another iteration or what comes after the loop, is written only
+     * once the body is.
+     *
+     * @var list<array{next: int, position: int}>
+     */
+    private array $endAnchors = [];
+
     public function __construct(private readonly int $maxStates, private readonly string $pattern) {}
 
     /**
@@ -73,11 +83,18 @@ final class PriorityNfaBuilder
     {
         $this->nfa = new PriorityNfa($unicode);
         $this->possessives = [];
+        $this->endAnchors = [];
         $match = $this->add(PriorityNfa::MATCH);
         $this->nfa->start = $this->state($hir, $match);
         ksort($this->nfa->names);
 
         $this->assertPossessivesNeverGiveBack();
+
+        foreach ($this->endAnchors as $anchor) {
+            if ($this->readsMore($anchor['next'])) {
+                throw new ComplexityException(self::TRAILING_ANCHOR_MESSAGE, $anchor['position'], $this->pattern);
+            }
+        }
 
         return $this->nfa;
     }
@@ -229,8 +246,12 @@ final class PriorityNfaBuilder
 
         // What follows an end anchor must read nothing: it is checked when
         // the subject ends, or a final newline is all that is left.
-        if (PriorityNfa::START !== $kind && $this->readsMore($next)) {
-            throw new ComplexityException(self::TRAILING_ANCHOR_MESSAGE, $hir->startPosition, $this->pattern);
+        if (PriorityNfa::START !== $kind) {
+            if ($this->readsMore($next)) {
+                throw new ComplexityException(self::TRAILING_ANCHOR_MESSAGE, $hir->startPosition, $this->pattern);
+            }
+
+            $this->endAnchors[] = ['next' => $next, 'position' => $hir->startPosition];
         }
 
         $state = $this->add($kind);

@@ -320,6 +320,14 @@ final class MatchEquivalenceTest extends TestCase
         yield 'word boundary' => ['left' => '/\ba/', 'right' => '/a/', 'reason' => 'Word boundaries'];
         yield 'anchor before more text' => ['left' => '/a$b/', 'right' => '/ab/', 'reason' => 'An end anchor followed by more of the pattern'];
         yield 'anchor before an optional letter' => ['left' => '/a$(?:b|)/', 'right' => '/a/', 'reason' => 'An end anchor followed by more of the pattern'];
+        // PHP 8.4.27 / PCRE2 10.49: on "a\n" the left one matches "a\n" at
+        // 0, the right one "\n" at 1. A loop that may be skipped reads what
+        // follows it after its body as a loop that may not.
+        yield 'anchor in a loop of at least one' => ['left' => '/(?:a$)+\n/', 'right' => '/\n/', 'reason' => 'An end anchor followed by more of the pattern'];
+        yield 'anchor in a loop of any count' => ['left' => '/(?:a$)*\n/', 'right' => '/\n/', 'reason' => 'An end anchor followed by more of the pattern'];
+        yield 'anchor in a lazy loop of any count' => ['left' => '/(?:a$)*?\n/', 'right' => '/\n/', 'reason' => 'An end anchor followed by more of the pattern'];
+        yield 'anchor in an open count from zero' => ['left' => '/(?:a$){0,}\n/', 'right' => '/\n/', 'reason' => 'An end anchor followed by more of the pattern'];
+        yield 'anchor in a loop that iterates again' => ['left' => '/(?:a$)*/', 'right' => '/(?:a$)?/', 'reason' => 'An end anchor followed by more of the pattern'];
         yield 'letter on a sibling after shared empty branches' => ['left' => '/$(?:'.str_repeat('(?:|)', 30).'|a)/', 'right' => '/$/', 'reason' => 'An end anchor followed by more of the pattern'];
         yield 'start anchor after empty branches' => ['left' => '/$'.str_repeat('(?:|)', 30).'\\A/', 'right' => '/$/', 'reason' => 'An end anchor followed by more of the pattern'];
         yield 'multiline flag' => ['left' => '/a/m', 'right' => '/a/', 'reason' => 'Unsupported regex flags for the match solver: m.'];

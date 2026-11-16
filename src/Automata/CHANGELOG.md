@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `matchEquivalent()` refuses an end anchor inside a loop that may run no
+   time, `*`, `*?` or `{0,}`, as it refuses one inside `+`, when another turn
+   of the loop or what follows it reads more: `/(?:a$)*\n/` was proven
+   to write the `$matches` of `/\n/`, where `preg_match()` takes `a\n` at 0
+   for the one and `\n` at 1 for the other. The optimizer no longer offers
+   such a rewrite.
  * The lookaround bodies of a pattern share one allowance: their states count
    together against `maxNfaStates` and `maxDfaStates`, and their work against
    one `maxTransitionsProcessed` budget, whose diagnostic names the
