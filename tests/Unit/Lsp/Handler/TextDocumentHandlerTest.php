@@ -626,6 +626,47 @@ final class TextDocumentHandlerTest extends TestCase
     }
 
     /**
+     * The changes of one didChange are applied in order: under full sync
+     * each change is the whole text, so the last one is the document. A
+     * change that names a range holds part of the text only, and is not
+     * the document.
+     *
+     * @param list<array<string, mixed>> $changes
+     */
+    #[Test]
+    #[DataProvider('provideContentChanges')]
+    public function test_the_last_full_text_change_is_the_document(array $changes, string $expected): void
+    {
+        [, $change] = $this->handle(
+            new Message(jsonrpc: '2.0', method: 'textDocument/didOpen', id: null, params: ['textDocument' => ['uri' => 'file:///c.php', 'text' => "<?php\n", 'version' => 1]]),
+            new Message(jsonrpc: '2.0', method: 'textDocument/didChange', id: null, params: [
+                'textDocument' => ['uri' => 'file:///c.php', 'version' => 2],
+                'contentChanges' => $changes,
+            ]),
+        );
+
+        $this->assertSame($expected, $this->documents->getContent('file:///c.php'));
+        $this->assertIsArray($change['diagnostics'] ?? null);
+        $this->assertCount(str_contains($expected, '/(/') ? 1 : 0, $change['diagnostics']);
+    }
+
+    /**
+     * @return iterable<string, array{changes: list<array<string, mixed>>, expected: string}>
+     */
+    public static function provideContentChanges(): iterable
+    {
+        $valid = "<?php\npreg_match('/a/', \$s);\n";
+        $invalid = "<?php\npreg_match('/(/', \$s);\n";
+
+        yield 'the last of two full texts' => ['changes' => [['text' => $valid], ['text' => $invalid]], 'expected' => $invalid];
+        yield 'the last of two full texts, the other way round' => ['changes' => [['text' => $invalid], ['text' => $valid]], 'expected' => $valid];
+        yield 'a full text before a change naming a range' => [
+            'changes' => [['text' => $invalid], ['range' => ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 0, 'character' => 0]], 'text' => '//']],
+            'expected' => $invalid,
+        ];
+    }
+
+    /**
      * A version that is not an integer names no document state: none is
      * invented for the push.
      *

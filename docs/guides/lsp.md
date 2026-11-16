@@ -637,7 +637,7 @@ too.
 | `shutdown` | Graceful shutdown request: nothing else is served until `exit`, and a request sent in between, a second `shutdown` included, is answered Invalid Request (-32600) |
 | `exit` | Server exit: code 0 after `shutdown`, 1 without it |
 | `textDocument/didOpen` | Document opened |
-| `textDocument/didChange` | Document changed |
+| `textDocument/didChange` | Document changed: the changes are whole texts (full sync), applied in order, so the last one is the document |
 | `textDocument/didClose` | Document closed |
 | `textDocument/didSave` | Document saved: its declarations are read again |
 | `workspace/didChangeWatchedFiles` | Files changed outside the editor: their declarations are read again; the watcher is registered with the client when it offers dynamic registration |

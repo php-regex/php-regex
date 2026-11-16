@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `textDocument/didChange` applies its changes in order: the last whole
+   text is the document, where the first one was kept and the diagnostics
+   lagged one edit behind a client that sends several at once. A change
+   naming a range is no whole text and is passed over.
  * A ternary or a `match` whose arms are literals is diagnosed at each
    arm, and a global constant of another file of the workspace, a
    `const` or a `define()` at the top level of its file, is read like a
