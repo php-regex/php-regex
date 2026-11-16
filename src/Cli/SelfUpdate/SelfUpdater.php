@@ -17,6 +17,7 @@ use PHPRegex\Cli\Exception\CliException;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Toolkit\Regex;
 
 /**
  * @internal
@@ -31,11 +32,30 @@ final class SelfUpdater
     public const CHECKSUM_URL = self::UPDATE_URL.'.sha256';
 
     /**
-     * @param ?string $pharPath the phar to replace, the one running when null
+     * Where a release phar declares its version: Regex::VERSION, in the
+     * sources it packs, as the PHP compactor leaves them.
      */
-    public function __construct(private readonly Downloader $downloader = new HttpDownloader(), private readonly ?string $pharPath = null) {}
+    private const VERSION_FILE = '/src/Toolkit/Regex.php';
 
-    public function run(Output $output): void
+    private const VERSION_DECLARATION = "/\\bconst\\s+VERSION\\s*=\\s*'(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.]+)?)'/";
+
+    /**
+     * @param ?string $pharPath the phar to replace, the one running when null
+     * @param string  $version  the version installed
+     */
+    public function __construct(
+        private readonly Downloader $downloader = new HttpDownloader(),
+        private readonly ?string $pharPath = null,
+        private readonly string $version = Regex::VERSION
+    ) {}
+
+    /**
+     * The latest release replaces the phar when it is newer, as
+     * version_compare() orders them: the same one leaves it as it is, an
+     * older one, or one whose version cannot be read, is refused unless
+     * forced.
+     */
+    public function run(Output $output, bool $force = false): void
     {
         $pharPath = $this->pharPath ?? \Phar::running(false);
         $this->validatePharPath($pharPath);
@@ -52,6 +72,25 @@ final class SelfUpdater
             $this->verifyChecksum($tempPath, $checksum);
             $this->validateDownloadedPhar($tempPath);
 
+            // The version of the release is read from the phar downloaded,
+            // the very bytes the checksum vouches for: no other request,
+            // and no redirect or API answer to trust apart from them.
+            $release = $this->releaseVersion('phar://'.$tempPath);
+            if (null === $release && !$force) {
+                throw new CliException('The version of the latest release cannot be read: run self-update --force to install it anyway.');
+            }
+
+            $order = null === $release ? 1 : version_compare($release, $this->version);
+            if (0 === $order) {
+                $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success(\sprintf('PHPRegex is already up to date (%s).', $this->version))."\n");
+
+                return;
+            }
+
+            if ($order < 0 && !$force) {
+                throw new CliException(\sprintf('The latest release, %s, is older than the installed %s: run self-update --force to install it.', $release, $this->version));
+            }
+
             $this->replacePhar($pharPath, $tempPath);
         } finally {
             @unlink($tempPath);
@@ -59,6 +98,17 @@ final class SelfUpdater
         }
 
         $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('PHPRegex updated successfully.')."\n");
+    }
+
+    /**
+     * The version the sources under $root declare, a release phar's root
+     * among them; null when they declare none that can be read.
+     */
+    private function releaseVersion(string $root): ?string
+    {
+        $source = @file_get_contents($root.self::VERSION_FILE);
+
+        return false !== $source && 1 === LibraryPcre::match(self::VERSION_DECLARATION, $source, $match) ? $match[1] : null;
     }
 
     private function validatePharPath(string $pharPath): void

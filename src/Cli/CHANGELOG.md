@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex self-update` reads the version of the latest release from the
+   PHAR it downloads and compares it with the version installed: a newer
+   release is installed, the same one is left as it is (`PHPRegex is already
+   up to date`, exit 0), and an older one is refused with exit 1, naming
+   both versions, as is one whose version cannot be read, unless `--force`
+   is given. The latest stable release replaced a newer pre-release
+   installed.
  * A baseline entry of a file gone is read with the excludes as the lint
    reads them: under an `--exclude` naming a file or a directory by its
    path, behind `./` or absolute, it is not reported as stale.
