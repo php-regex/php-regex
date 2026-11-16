@@ -33,6 +33,10 @@ CHANGELOG
    `regex.lint.overlap.charset` where a subroutine call runs a group between
    the two, without the atomic group: `/^(?:(?>x((?:a+)+))|y(?1)$)/` and
    `/^(?:x((?:a+)+)++|y(?1)$)/` are reported.
+ * `regex.lint.backref.useless` no longer reports a backreference a loop
+   runs after an earlier iteration has set its group, where an iteration may
+   skip the reference: `/^(a|b\1)+$/`, which matches `aba`, and
+   `/^(?:x(a)|\1)+$/`, which matches `xaa`.
  * The lint reads pattern arguments it left out: a pattern built at the call
    from a local variable, an interpolated string or a heredoc
    (`"/^{$part}$/"`), an integer, a `sprintf()` whose format holds only

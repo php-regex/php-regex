@@ -923,6 +923,8 @@ preg_match('/[a-d]+$/', $input);
 
 A backreference inside a group that a subroutine call runs again is not reported: the call may run it after the group has captured, as in `/^(?:(a)|(\1))(?2)$/`. A recursive pattern (`(?R)`, `(?0)`) is not checked by this rule.
 
+Nor is a backreference that a loop around it and its group runs after an earlier iteration has captured, where an iteration may skip the reference through another branch or an optional item: `/^(a|b\1)+$/`, the PCRE2 manual's example, matches `aba`, and `/^(?:x(a)|\1)+$/` matches `xaa`. Where every way through the loop passes the reference first, as in `/^(a\1)+$/`, no iteration ever sets the group, and the reference is reported.
+
 **Example:**
 ```php
 // WARNING: Backreference appears before the group closes
