@@ -5,29 +5,23 @@
 Fixed together in one pull request before the final bump; each line
 leaves this list once its fix is in.
 
-ReDoS and lint rules
+Decided
 
-- Nested bounded repeats are `low` or `safe` whatever the outer bound
-  (`/^(?:a|a){1,40}$/` is safe, `/^(?:\d{1,3}\.?){1,30}$/` low); the
-  prover, which proves `/^(?:a+){1,30}$/` exponential, hands these two to
-  the heuristic.
-- `quantifier.nested` does not see a later inner loop behind a first one
-  that may match nothing: `/^(?:b?c+)+$/` is silent, and exhausts the
-  engine.
-
-Decide
-
+- `self-update` installs `releases/latest` without comparing versions:
+  from `2.0.0-RC1` it installs the newest stable release, which can be
+  older (`1.3.0`), and says it updated. Compare the versions: install a
+  newer one, say a same one is up to date, refuse an older one without
+  `--force`.
 - "More than two branches" of a named, `R`, assertion or `VERSION`
   condition: PCRE2 10.49 reports a leftover offset, the one recorded by
   the last item carrying an offset before the conditional in its branch
-  (`/(a)xx(?1)xx(?(R)a|b|c)/` gives 8), or 0; 10.40 and 10.44 report the
-  name, as the parser does. Answer 0 from 10.47 on, copy the leftover, or
-  keep the name and pin the divergence; it may be worth a report to PCRE2.
-- `self-update` installs `releases/latest` without comparing versions:
-  from `2.0.0-RC1` it installs the newest stable release, which can be
-  older (`1.3.0`), and says it updated. Compare the versions and refuse a
-  downgrade without `--force`, follow release channels as Composer does,
-  or document it.
+  (`/(a)xx(?1)xx(?(R)a|b|c)/` gives 8). Keep the offset of the name, as
+  10.40 and 10.44 report it, and pin the divergence.
+- The `access_control` and route analyses compare a path under `(*UTF)`
+  with one that is not as if both were read in one mode:
+  `(*UTF)(*NO_JIT)^/admin/users` before `^/admin` comes out as an overlap,
+  where Symfony's matcher makes it a carve-out. Read each side in its own
+  mode.
 
 Upstream
 
@@ -127,12 +121,6 @@ measured under 3 %.
 
 ## Linter precision
 
-- The `access_control` and route analyses compare a path under `(*UTF)`
-  with one that is not as if both were read in one mode:
-  `(*UTF)(*NO_JIT)^/admin/users` before `^/admin` comes out as an overlap,
-  where Symfony's matcher makes it a carve-out. The answer is weaker, not
-  wrong; reading each side in its own mode would make it exact for valid
-  UTF-8 paths.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. A small
   pull request to its type specifier, with an nsrt test, would fix it.
