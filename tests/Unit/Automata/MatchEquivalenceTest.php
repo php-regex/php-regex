@@ -354,6 +354,9 @@ final class MatchEquivalenceTest extends TestCase
         yield 'a conditional in a group repeated no time' => ['left' => '/(?:x|(?(?=a)a|b)){0}c/', 'right' => '/c/', 'reason' => 'Backreferences, subroutines, conditionals, callouts and control verbs'];
         yield 'anchor before more text' => ['left' => '/a$b/', 'right' => '/ab/', 'reason' => 'An end anchor followed by more of the pattern'];
         yield 'anchor before an optional letter' => ['left' => '/a$(?:b|)/', 'right' => '/a/', 'reason' => 'An end anchor followed by more of the pattern'];
+        // Two reasons hold: the anchor is refused where it is read, the
+        // possessive only once the whole pattern is built.
+        yield 'anchor before more text, after a possessive that gives back' => ['left' => '/a++a$b/', 'right' => '/ab/', 'reason' => 'An end anchor followed by more of the pattern'];
         // PHP 8.4.27 / PCRE2 10.49: on "a\n" the left one matches "a\n" at
         // 0, the right one "\n" at 1. A loop that may be skipped reads what
         // follows it after its body as a loop that may not.
