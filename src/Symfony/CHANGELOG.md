@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:security` compares a path under `(*UTF)` with one without it, and
+   `regex:routes` a route with the `utf8` option with one without it, on the
+   request paths that are valid UTF-8, as Symfony matches them:
+   `(*UTF)^/admin/users` before `^/admin` is a carve-out where it was an
+   overlap, `^/admin` before `(*UTF)^/admin/users` shadows it, and
+   `/users/{id}` before the same route with `utf8` shadows it.
  * `php_regex.php_version` takes a Composer constraint (`">=8.1"`,
    `"^8.1 <8.7"`) besides a single version: `regex:lint` judges the range as
    `regex lint --php-version` does, from its lowest PHP and at every later
