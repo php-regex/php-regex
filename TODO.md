@@ -33,19 +33,6 @@ ReDoS and lint rules
 - `/^(a|b\1)+$/` is critical by the backreference heuristic, though its
   two branches are disjoint and it runs in linear time.
 
-Integrations
-
-- The excludes of the Symfony validator scan, of the Laravel scan of
-  validation rules and of the stale baseline entries read a directory name
-  only, where `--exclude` now takes a file path, a `./` path and an
-  absolute path.
-- `--min-savings` of the Symfony `regex:lint` reads a value that is no
-  number as 1 and takes a negative one; the Laravel command casts it with
-  `(int)`.
-- The `access_control` analysis puts its `.*` before a leading `(*UTF)` or
-  other start option of a path, which PCRE refuses; the rule is then
-  neither read nor reported.
-
 Decide
 
 - "More than two branches" of a named, `R`, assertion or `VERSION`
@@ -158,6 +145,12 @@ measured under 3 %.
 
 ## Linter precision
 
+- The `access_control` and route analyses compare a path under `(*UTF)`
+  with one that is not as if both were read in one mode:
+  `(*UTF)(*NO_JIT)^/admin/users` before `^/admin` comes out as an overlap,
+  where Symfony's matcher makes it a carve-out. The answer is weaker, not
+  wrong; reading each side in its own mode would make it exact for valid
+  UTF-8 paths.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. A small
   pull request to its type specifier, with an nsrt test, would fix it.
