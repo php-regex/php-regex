@@ -29,6 +29,12 @@ final class PatternSourceContext
     private ?array $excludedRealPaths = null;
 
     /**
+     * The real path of the base, ending with "/", resolved on the first
+     * file the base does not hold by the path given.
+     */
+    private ?string $realBase = null;
+
+    /**
      * @param array<string> $paths
      * @param array<string> $excludePaths
      * @param array<string> $disabledSources
@@ -64,14 +70,14 @@ final class PatternSourceContext
      * a file or a directory, read from the directory the excludes are read
      * from or the working directory, behind "./" or absolute, excludes
      * that file or every file under that directory, whatever path the file
-     * is reached by.
+     * is reached by. A path that no longer exists, a file gone, is read by
+     * the real path of the nearest directory above it that does.
      *
      * @param string $file the file's path, written with "/" separators
      */
     public function excludes(string $file): bool
     {
-        $base = null === $this->excludeBase ? null : rtrim(Path::normalize($this->excludeBase), '/').'/';
-        $matched = null !== $base && str_starts_with($file, $base) ? substr($file, \strlen($base)) : $file;
+        $matched = $this->belowBase($file);
 
         foreach ($this->excludePaths as $exclude) {
             $exclude = trim(Path::normalize($exclude), '/');
@@ -81,12 +87,11 @@ final class PatternSourceContext
         }
 
         $this->excludedRealPaths ??= $this->excludedRealPaths();
-        $real = [] === $this->excludedRealPaths ? false : realpath($file);
-        if (false === $real) {
+        if ([] === $this->excludedRealPaths) {
             return false;
         }
 
-        $real = Path::fromHost($real);
+        $real = self::realPath($file);
         foreach ($this->excludedRealPaths as $excluded) {
             if ($real === $excluded || str_starts_with($real, $excluded.'/')) {
                 return true;
@@ -97,9 +102,10 @@ final class PatternSourceContext
     }
 
     /**
-     * The real path of each file or directory the excludes name, written
-     * with "/" separators: a relative exclude is read from the directory
-     * the excludes are read from, or from the working directory.
+     * The real path of each path the excludes name, written with "/"
+     * separators, one that does not exist read as realPath() reads it: a
+     * relative exclude is read from the directory the excludes are read
+     * from, or from the working directory.
      *
      * @return list<string>
      */
@@ -113,12 +119,49 @@ final class PatternSourceContext
             }
 
             $absolute = str_starts_with($spelled, '/') || (\strlen($spelled) > 2 && ':' === $spelled[1] && '/' === $spelled[2]);
-            $real = realpath($absolute || null === $this->excludeBase ? $exclude : $this->excludeBase.'/'.$exclude);
-            if (false !== $real) {
-                $paths[] = rtrim(Path::fromHost($real), '/');
-            }
+            $paths[] = rtrim(self::realPath($absolute || null === $this->excludeBase ? $exclude : $this->excludeBase.'/'.$exclude), '/');
         }
 
         return $paths;
+    }
+
+    /**
+     * The file's path below the base, as given or, when the base does not
+     * hold it so, as both real paths read it: a base reached through a
+     * symbolic link holds the files found by their real path. A file
+     * outside the base keeps the path given.
+     */
+    private function belowBase(string $file): string
+    {
+        if (null === $this->excludeBase) {
+            return $file;
+        }
+
+        $base = rtrim(Path::normalize($this->excludeBase), '/').'/';
+        if (str_starts_with($file, $base)) {
+            return substr($file, \strlen($base));
+        }
+
+        $this->realBase ??= rtrim(self::realPath($this->excludeBase), '/').'/';
+        $real = self::realPath($file);
+
+        return str_starts_with($real, $this->realBase) ? substr($real, \strlen($this->realBase)) : $file;
+    }
+
+    /**
+     * The real path of a path, written with "/" separators. A path that
+     * does not exist is the real path of the nearest directory above it
+     * that does, then the rest as written; with none, the path as written.
+     */
+    private static function realPath(string $path): string
+    {
+        $rest = '';
+        $current = $path;
+        while (false === ($real = realpath($current)) && \dirname($current) !== $current) {
+            $rest = '/'.basename($current).$rest;
+            $current = \dirname($current);
+        }
+
+        return false === $real ? Path::fromHost($path) : rtrim(Path::fromHost($real), '/').$rest;
     }
 }
