@@ -7,31 +7,9 @@ leaves this list once its fix is in.
 
 Parser
 
-- `(*:x)` followed by `=` four bytes later is refused (`/(*:x)a=b/`,
-  `/(*:foo=bar)/`): `VerbChecks` measures the short mark as `MARK:x`.
-- `(*TURKISH_CASING)` with the `r` modifier is accepted
-  (`/(*UTF)(*TURKISH_CASING)a/r`); PCRE refuses it, as it refuses it with
-  `(*CASELESS_RESTRICT)`.
-- The printer drops an empty no-branch: `(?(c)X|)` prints as `(?(c)X)`,
-  which inside a lookbehind changes its length and the match
-  (`compact('/(?<!(?(?=a)bb|))c/')` matches `c`). `StructuralFingerprint`
-  does not see the difference.
-- A scan substring `(*scs:…)` inside a lookbehind is measured as if it
-  consumed (`/(q)(?<=(*scs:(1)a+))/` is refused); the engine reads it as
-  zero-width.
-- `validate()` raises "Undefined array key 0" in
-  `CompiledLength::characterOf()` on
-  `/(*UTF)(*TURKISH_CASING)a{2}{3}[a-[:alpha:]]/`.
-- "More than two branches" is reported where the group opens for a named,
-  `R`, assertion or `VERSION` condition; PCRE2 10.49 reports offset 0.
-- Two error offsets fall inside a UTF-8 character: `/(?Cé)/u` (4, PCRE
-  says 5) and `/a(?+😀)/u` (5, PCRE says 8).
-- A missing reference under a lookbehind is reported before an earlier
-  error (`/\g{1}(?<=(?=\k{n}))/`: 15, PCRE says 5), and so is a type range
-  after a reversed range in `(?[…])` (`/(?[[^]--[a-\d]])/`: 13, PCRE says
-  8).
-- Past 512 levels of nesting, the recursion limit hides PCRE's own "too
-  deeply nested", which it reports at offset 251.
+- At the 251st level of nesting, a `(?` header that is itself wrong is
+  reported as the nesting: 250 `(` then `(?%` gives 252, where PCRE
+  reports the header at 253.
 
 ReDoS and lint rules
 
@@ -70,6 +48,12 @@ Integrations
 
 Decide
 
+- "More than two branches" of a named, `R`, assertion or `VERSION`
+  condition: PCRE2 10.49 reports a leftover offset, the one recorded by
+  the last item carrying an offset before the conditional in its branch
+  (`/(a)xx(?1)xx(?(R)a|b|c)/` gives 8), or 0; 10.40 and 10.44 report the
+  name, as the parser does. Answer 0 from 10.47 on, copy the leftover, or
+  keep the name and pin the divergence; it may be worth a report to PCRE2.
 - `self-update` installs `releases/latest` without comparing versions:
   from `2.0.0-RC1` it installs the newest stable release, which can be
   older (`1.3.0`), and says it updated. Compare the versions and refuse a
