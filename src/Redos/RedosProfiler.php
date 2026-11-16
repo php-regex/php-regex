@@ -15,6 +15,7 @@ namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -115,8 +116,22 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     private readonly FirstTriedStep $firstTriedStep;
 
+    /**
+     * The groups of the pattern, to find the one a call runs.
+     */
+    private GroupIndex $groups;
+
+    /**
+     * The calls already read as the group they run, by object id: each is
+     * read so once, which ends a recursion.
+     *
+     * @var array<int, true>
+     */
+    private array $callsReadThrough = [];
+
     public function __construct(private readonly CharSetAnalyzer $charSetAnalyzer = new CharSetAnalyzer())
     {
+        $this->groups = GroupIndex::empty();
         $this->nullability = new Nullability();
         $this->firstTriedStep = new FirstTriedStep();
     }
@@ -193,6 +208,8 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->backrefLoopDetected = false;
         $this->culpritNode = null;
         $this->culpritSeverity = RedosSeverity::Safe;
+        $this->groups = GroupIndex::of($node->pattern);
+        $this->callsReadThrough = [];
 
         // A recursion the attempt tries first, before it reads a character,
         // enters the pattern again where it started, and PCRE2 stops the
@@ -407,8 +424,6 @@ final class RedosProfiler extends AbstractNodeVisitor
     public function visitAlternation(AlternationNode $node): RedosSeverity
     {
         $max = RedosSeverity::Safe;
-        $previous = $this->previousNode;
-        $next = $this->nextNode;
 
         if ($this->unboundedQuantifierDepth > 0 && $this->hasOverlappingAlternatives($node)) {
             $this->addVulnerability(
@@ -422,14 +437,12 @@ final class RedosProfiler extends AbstractNodeVisitor
             $max = RedosSeverity::Critical;
         }
 
+        // Each alternative stands between the items around the alternation:
+        // those of the call it stands for when a call is read through, as
+        // the "," before "\d+" in "(?:,(?&v))*" over "(?<v>\[\]|\d+)".
         foreach ($node->alternatives as $alt) {
-            $this->previousNode = null;
-            $this->nextNode = null;
             $max = $this->maxSeverity($max, $alt->accept($this));
         }
-
-        $this->previousNode = $previous;
-        $this->nextNode = $next;
 
         return $max;
     }
@@ -668,7 +681,18 @@ final class RedosProfiler extends AbstractNodeVisitor
             'Medium false-positive risk; recursion depth and input shape matter.',
         );
 
-        return RedosSeverity::Low;
+        // In a loop, a call runs the group it calls at each iteration, as
+        // if its body stood in its place: "(?:(?1))+" over "(a|a)" is
+        // "(?:a|a)+". Each call is read so once, which ends a recursion.
+        $severity = RedosSeverity::Low;
+        if ($this->totalQuantifierDepth > 0 && !isset($this->callsReadThrough[spl_object_id($node)])) {
+            $this->callsReadThrough[spl_object_id($node)] = true;
+            foreach ($this->groups->groupsCalledBy($node) as $group) {
+                $severity = $this->maxSeverity($severity, $group->child->accept($this));
+            }
+        }
+
+        return $severity;
     }
 
     #[\Override]

@@ -172,6 +172,46 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * A call in a loop runs the group it calls at each iteration, as if
+     * written there: an ambiguous alternation or a run it calls is
+     * critical, as it is written in the loop, and the engine agrees on the
+     * unit repeated then "!" (8 -> 12 -> 16 units): 3 065 -> 49 145 ->
+     * 786 425 steps for "(?1)" of "(a|a)", 1 024 -> 16 384 -> 262 144 for a
+     * run of letters before an optional space, 2 554 -> 40 954 -> 655 354
+     * for "(a|a)" before a comma. A separator after the called run keeps
+     * the iterations apart (27 -> 39 -> 51), as one before it (3 -> 3 ->
+     * 3), and a call of disjoint alternatives reads one way (35 -> 51 ->
+     * 67). A comma before the call keeps apart a run that is one of the
+     * alternatives called, whether the group calls itself (31 -> 43 -> 55)
+     * or not (27 -> 39 -> 51).
+     *
+     * @return iterable<string, array{pattern: string, prefix: string, unit: string, critical: bool}>
+     */
+    public static function provideCallsInALoop(): iterable
+    {
+        yield 'call of an ambiguous alternation' => ['pattern' => '/^(?:(?1))+(a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'call of a run before an optional space' => ['pattern' => '/^(?:(?&w)\s?)+$(?(DEFINE)(?<w>[a-z]+))/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'call of an ambiguous alternation before a comma' => ['pattern' => '/^(?:(?1),)+(a|a)$/', 'prefix' => '', 'unit' => 'a,', 'critical' => true];
+        yield 'call of a run before a comma' => ['pattern' => '/^(?:(?&w),)+$(?(DEFINE)(?<w>[a-z]+))/', 'prefix' => '', 'unit' => 'a,', 'critical' => false];
+        yield 'call of a run after a letter it cannot take' => ['pattern' => '/^(a+)(?:x(?1))+$/', 'prefix' => 'a', 'unit' => 'xa', 'critical' => false];
+        yield 'call of disjoint alternatives' => ['pattern' => '/^(a|b)(?:(?1))+$/', 'prefix' => '', 'unit' => 'a', 'critical' => false];
+        yield 'recursive call of a list after a comma' => ['pattern' => '/^(?<value>\[(?:(?&value)(?:,(?&value))*)?\]|\d+)$/', 'prefix' => '[', 'unit' => '1,', 'critical' => false];
+        yield 'call of alternatives after a comma' => ['pattern' => '/^(?:,(?&v))*$(?(DEFINE)(?<v>\[\]|\d+))/', 'prefix' => '', 'unit' => ',1', 'critical' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideCallsInALoop')]
+    public function test_a_call_in_a_loop_is_read_as_the_group_it_calls(string $pattern, string $prefix, string $unit, bool $critical): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, $prefix.str_repeat($unit, 8).'!');
+        $long = self::steps($unoptimized, $prefix.str_repeat($unit, 12).'!');
+        $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
      * Whether PCRE compiles the pattern: a refused pattern warns, where a
      * match the engine stops, as on a recursion that could loop, does not.
      */

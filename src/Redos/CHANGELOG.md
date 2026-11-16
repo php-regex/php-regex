@@ -21,6 +21,10 @@ CHANGELOG
    `/^(?:(?:a+)+b(*COMMIT))+/`, which were safe, are critical, and so is
    `/^(?>(\w+\s?)+:)/`: an item that may match nothing keeps no two
    iterations of a loop apart.
+ * The heuristics read a subroutine call in a loop as the group it calls,
+   as PCRE runs it at each iteration: `/^(?:(?1))+(a|a)$/` and
+   `/^(?:(?&w)\s?)+$(?(DEFINE)(?<w>[a-z]+))/`, which were medium, are
+   critical. Each call is read through once, which ends a recursion.
  * The heuristics read a body repeated `{0}` as PCRE runs it: never where it
    stands. One holding no group gives no hotspot, as `x+x+` in
    `/(?:x+x+){0}^(?:a+)+$/` gave two, which a repair then tried first; the

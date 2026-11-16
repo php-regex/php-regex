@@ -308,6 +308,8 @@ A recursion into the whole pattern that the attempt tries first, before it reads
 
 An atomic group, a possessive repeat, or a repeat whose body ends with `(*COMMIT)`, `(*PRUNE)` or `(*SKIP)` stops the backtracking only once its body has matched: until then PCRE backtracks inside it as anywhere. The heuristics leave alone the loops that end such a body, as in `/^(?:(?:a+)+(*COMMIT))+b/`, and read every other loop in it as they read any loop: `/(?>(a+)+b)/`, `/^(?:(?:a+)+b)++/` and `/^(?>(\w+\s?)+:)/`, which exhaust the backtrack limit on 20 `a` and a `!` before the last character, are critical. An item that may match nothing, as `\s?` there, keeps no two iterations of a loop apart.
 
+A subroutine call in a loop runs the group it calls at each iteration: the heuristics read that group as if it stood in place of the call. `/^(?:(?1))+(a|a)$/` and `/^(?:(?&w)\s?)+$(?(DEFINE)(?<w>[a-z]+))/`, which exhaust the backtrack limit on 24 letters and a `!`, are critical, while `/^(?:(?&w),)+$(?(DEFINE)(?<w>[a-z]+))/` keeps its runs apart.
+
 The model works within a budget counted in states and steps, never in time, so the same pattern gets the same verdict on every machine. Past it, the heuristics decide:
 
 ```bash
