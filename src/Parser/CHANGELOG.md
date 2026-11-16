@@ -51,6 +51,12 @@ CHANGELOG
    that level stays the outcome. An error the parser meets before the level
    past 250 is no longer hidden by it: `)` followed by 300 `(` is
    `regex.group.unmatched_close` at offset 1, where it was refused at 252.
+ * The level of parentheses past 250 is refused where PCRE2 refuses it, past
+   its opener whole, wherever the parser stopped reading: 250 `(` then `(?:`
+   is `regex.group.nested_too_deep` at offset 253 and `(?<n>` at 255, where a
+   later error made it 252. An opener PCRE2 refuses for itself comes first:
+   250 `(` then `(?%` is `regex.group.syntax` at 253 on PCRE2 10.49, and
+   `(?<1` `regex.group.name_invalid`.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.

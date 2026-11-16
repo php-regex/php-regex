@@ -22,6 +22,7 @@ use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
@@ -297,8 +298,9 @@ final class FirstErrorLocator
      * The first error PCRE meets before $position, where parsing failed,
      * that the library only finds in the tree: a relative reference to no
      * group, a reversed count, a code point too large, a verb out of place
-     * or unknown. The tokens are parsed once to learn how far they are read
-     * whole; that much, its groups closed, is parsed and judged once.
+     * or unknown, a level of parentheses past PCRE's limit. The tokens are
+     * parsed once to learn how far they are read whole; that much, its
+     * groups closed, is parsed and judged once.
      *
      * @param list<Token> $tokens the tokens read in place
      */
@@ -308,48 +310,82 @@ final class FirstErrorLocator
             return null;
         }
 
-        // PCRE refuses the level of parentheses past its limit as it opens
-        // it, at the start of its body, though the groups are never closed:
-        // only an error before that level comes first.
-        $tooDeep = self::openerPastTheNestingLimit($tokens);
-        $nesting = null;
-        if (null !== $tooDeep && $tooDeep->end() < $position) {
-            $nesting = new SemanticErrorException(\sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', Validator::MAX_GROUP_NESTING), ErrorCode::GroupNestedTooDeep, $tooDeep->end(), $pattern, hint: 'Flatten the pattern: drop groups that only wrap one item.');
-            $position = $tooDeep->end();
-        }
-
         $length = \strlen($pattern);
         $parser = new TokenParser($this->maxRecursionDepth, $this->target);
 
         try {
             $ast = $parser->parse(new TokenStream([...$tokens, new Token(TokenType::Eof, '', $length)], $pattern), $flags, $delimiter, $length);
         } catch (LexerException|LimitException|ParserException) {
-            $read = \array_slice($tokens, 0, $parser->tokensReadWhole());
-            $cutAt = [] === $read ? 0 : $read[array_key_last($read)]->end();
+            // Not expected to fail: these are the tokens the first parse
+            // read whole, each group they open closed, no deeper than it
+            // went.
+            $ast = $this->parseClosed(\array_slice($tokens, 0, $parser->tokensReadWhole()), $pattern, $flags, $delimiter);
+        }
 
-            // Each group still open there is closed where the text read ends.
-            $closers = [];
-            foreach ($read as $token) {
-                if (TokenType::GroupClose === $token->type) {
-                    array_pop($closers);
-                } elseif (self::opensGroup($token)) {
-                    $closers[] = new Token(TokenType::GroupClose, ')', $cutAt, 0);
-                }
-            }
+        $error = null === $ast ? null : (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($ast, $position);
 
-            try {
-                $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
-                    ->parse(new TokenStream([...$read, ...$closers, new Token(TokenType::Eof, '', $cutAt)], $pattern), $flags, $delimiter, $length);
-            } catch (LexerException|LimitException|ParserException) {
-                // Not expected: these are the tokens the first parse read
-                // whole, each group they open closed, no deeper than it went.
-                // Kept should one throw: this runs while an error is being
-                // reported, where nothing may escape.
-                return null;
+        // A parse that failed deeper than the level of parentheses PCRE
+        // refuses read no item inside it, nor the opener of that level:
+        // the tokens up to the next level, their groups closed, are read
+        // for it. PCRE refuses it once it has read its opener whole, at the
+        // start of its body, and an opener it refuses comes first.
+        $deep = null === $error ? self::upToTheLevelPastTheNestingLimit($tokens) : null;
+        $deepAst = null === $deep ? null : $this->parseClosed($deep, $pattern, $flags, $delimiter);
+
+        return null === $deepAst ? $error : (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($deepAst, $position);
+    }
+
+    /**
+     * The tokens parsed with each group still open closed where the last
+     * one ends, or null where they do not parse: this runs while an error
+     * is being reported, where nothing may escape.
+     *
+     * @param list<Token> $tokens
+     */
+    private function parseClosed(array $tokens, string $pattern, string $flags, string $delimiter): ?RegexNode
+    {
+        $cutAt = [] === $tokens ? 0 : $tokens[array_key_last($tokens)]->end();
+
+        $closers = [];
+        foreach ($tokens as $token) {
+            if (TokenType::GroupClose === $token->type) {
+                array_pop($closers);
+            } elseif (self::opensGroup($token)) {
+                $closers[] = new Token(TokenType::GroupClose, ')', $cutAt, 0);
             }
         }
 
-        return (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($ast, $position) ?? $nesting;
+        try {
+            return (new TokenParser($this->maxRecursionDepth, $this->target))
+                ->parse(new TokenStream([...$tokens, ...$closers, new Token(TokenType::Eof, '', $cutAt)], $pattern), $flags, $delimiter, \strlen($pattern));
+        } catch (LexerException|LimitException|ParserException) {
+            return null;
+        }
+    }
+
+    /**
+     * The tokens up to the opener of the level after the one PCRE refuses,
+     * past its limit, or all of them where none opens; null where no level
+     * passes the limit.
+     *
+     * @param list<Token> $tokens
+     *
+     * @return list<Token>|null
+     */
+    private static function upToTheLevelPastTheNestingLimit(array $tokens): ?array
+    {
+        $open = 0;
+        foreach ($tokens as $index => $token) {
+            if (self::opensGroup($token)) {
+                if (++$open > Validator::MAX_GROUP_NESTING + 1) {
+                    return \array_slice($tokens, 0, $index);
+                }
+            } elseif (TokenType::GroupClose === $token->type) {
+                $open = max(0, $open - 1);
+            }
+        }
+
+        return null === self::openerPastTheNestingLimit($tokens) ? null : $tokens;
     }
 
     /**
