@@ -30,6 +30,10 @@ CHANGELOG
    class after the error, read up to it to look for an earlier one, holds
    no item yet, which the measure of the compiled length read as a pair of
    letters. A framework that turns warnings into exceptions threw there.
+ * A callout opened by a character past ASCII, `(?Cé)`, and `(?+` followed
+   by one, `(?+😀)`, are refused past that whole character in UTF mode from
+   PCRE2 10.47, as PCRE2 reports them: `/(?Cé)/u` at offset 5 and
+   `/a(?+😀)/u` at 8, where the offset fell inside the character, at 4 and 5.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.

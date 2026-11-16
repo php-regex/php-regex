@@ -192,6 +192,19 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'option setting with an unknown letter' => ['pattern' => '/(?iz)/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
         yield 'hyphen after a caret' => ['pattern' => '/(?^-)/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
         yield 'callout opened by no delimiter' => ['pattern' => '/(?Cx/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
+        // From 10.47 past the whole character at fault: in UTF mode the
+        // character, not its first byte.
+        yield 'callout opened by a two-byte letter' => ['pattern' => '/(?Cé)/u', 'bundled' => 3, 'newer' => 5, 'movedIn' => '10.47'];
+        yield 'callout opened by a two-byte letter under (*UTF)' => ['pattern' => '/(*UTF)(?Cé)/', 'bundled' => 9, 'newer' => 11, 'movedIn' => '10.47'];
+        yield 'callout opened by a two-byte letter without UTF' => ['pattern' => '/(?Cé)/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
+        yield 'callout opened by a four-byte character' => ['pattern' => '/(?C😀)/u', 'bundled' => 3, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'callout of a condition opened by a two-byte letter' => ['pattern' => '/(?(?Cé)a)/u', 'bundled' => 5, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'callout of a condition no ")" closes, opened by a two-byte letter' => ['pattern' => '/(?(?Cé/u', 'bundled' => 5, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'callout of a condition numbered past 255 under UTF' => ['pattern' => '/(?(?C256)(?=a)a)/u', 'bundled' => 8, 'newer' => 8, 'movedIn' => '10.40'];
+        yield 'callout string closed before a two-byte letter' => ['pattern' => '/(?C"a"é)/u', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
+        yield 'relative call followed by a two-byte letter' => ['pattern' => '/a(?+é)/u', 'bundled' => 3, 'newer' => 6, 'movedIn' => '10.47'];
+        yield 'relative call followed by a four-byte character' => ['pattern' => '/a(?+😀)/u', 'bundled' => 3, 'newer' => 8, 'movedIn' => '10.47'];
+        yield 'relative call followed by a two-byte letter without UTF' => ['pattern' => '/a(?+é)/', 'bundled' => 3, 'newer' => 5, 'movedIn' => '10.47'];
         yield 'quantifier after a boundary' => ['pattern' => '/\\b+/', 'bundled' => 2, 'newer' => 3, 'movedIn' => '10.47'];
         yield 'escape invalid in a class' => ['pattern' => '/[\\B]/', 'bundled' => 2, 'newer' => 3, 'movedIn' => '10.47'];
         yield 'relative reference to a missing group' => ['pattern' => '/\\g{2}/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];
