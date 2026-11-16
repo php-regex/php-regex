@@ -49,7 +49,7 @@ Configuration
 -------------
 
 - `maxRepetition` (int, default `3`): extra repetitions drawn for `*`, `+` and `{n,}`
-- `seed` (`?int`, default `null`, last argument of the `SampleGenerator` constructor): locks the random source for reproducible samples; each sample drawn starts again from it
+- `seed` (`?int`, default `null`, last argument of the `SampleGenerator` constructor): locks the random source for reproducible samples; each sample drawn starts again from it, and the draws `generate()` checks before it settles on one go on from one another
 - `setSeed(int $seed)` and `resetSeed()`: lock the random source later, or unlock it
 - `PcreEngine $engine` (constructor of both generators): the engine asked what a class or a property holds
 

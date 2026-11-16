@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The explanations read the `U` flag and `(?U)`, which swap greed: `/a+/U`
+   says "one or more times (as few as possible)", and `/a+?/U` no longer
+   does, as `preg_match()` takes `a` from `aaa` with the one and `aaa` with
+   the other.
  * `TextExplainer` and `AsciiTreeRenderer` stop at 8 MiB of output and throw a
    `ResourceLimitException` with the error code `regex.rendering.output_too_large`,
    so a short pattern whose nesting multiplies the indentation cannot exhaust memory.

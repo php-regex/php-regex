@@ -63,6 +63,11 @@ final class Modernizer extends AbstractNodeVisitor
      */
     private bool $unicodeProperties = false;
 
+    /**
+     * Whether the pattern reads UTF-8 characters, under "/u".
+     */
+    private bool $utf = false;
+
     public function __construct(
         /**
          * The LC_CTYPE locale the pattern runs under, when it is known:
@@ -76,6 +81,7 @@ final class Modernizer extends AbstractNodeVisitor
     public function visitRegex(RegexNode $node)
     {
         $this->unicodeProperties = UnicodeProperties::on($node);
+        $this->utf = str_contains($node->flags, 'u');
 
         return new RegexNode(
             $node->pattern->accept($this),
@@ -136,7 +142,7 @@ final class Modernizer extends AbstractNodeVisitor
 
         // Alternations need their group to keep surrounding sequence items
         // (including anchors) bound to every alternative when printed.
-        if (GroupType::NonCapturing === $node->type && null === $node->name && null === $node->flags && !$child instanceof AlternationNode) {
+        if (self::isPlain($node) && !$child instanceof AlternationNode) {
             return $child;
         }
 
@@ -185,8 +191,17 @@ final class Modernizer extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): NodeInterface
     {
+        $quantified = $node->node->accept($this);
+
+        // A quantifier repeats the one item written before it: unwrapped,
+        // "(?:a+)?" would read "a+?", which is lazy, "(?:ab)+" "ab+", and
+        // "(?:){3}" or "(?:a*)*" would not compile as "{3}" or "a**".
+        if ($node->node instanceof GroupNode && self::isPlain($node->node) && !$this->isOneItem($quantified)) {
+            $quantified = new GroupNode($quantified, GroupType::NonCapturing, null, null, $node->node->getStartPosition(), $node->node->getEndPosition());
+        }
+
         return new QuantifierNode(
-            $node->node->accept($this),
+            $quantified,
             $node->quantifier,
             $node->type,
             $node->getStartPosition(),
@@ -368,6 +383,38 @@ final class Modernizer extends AbstractNodeVisitor
         sort($codePoints);
 
         return $codePoints;
+    }
+
+    /**
+     * Whether a non-capturing group with neither name nor options, which
+     * changes nothing on what it holds.
+     */
+    private static function isPlain(GroupNode $node): bool
+    {
+        return GroupType::NonCapturing === $node->type && null === $node->name && null === $node->flags;
+    }
+
+    /**
+     * Whether a quantifier written right after the node repeats all of it:
+     * one character, a class, a reference, a call or a group.
+     */
+    private function isOneItem(NodeInterface $node): bool
+    {
+        return match (true) {
+            // Without "/u" a character is a byte: "é" is two.
+            $node instanceof LiteralNode => 1 === ($this->utf ? mb_strlen($node->value, 'UTF-8') : \strlen($node->value)),
+            // "(?i)" sets an option for what follows it and repeats nothing.
+            $node instanceof GroupNode => GroupType::InlineFlags !== $node->type || !self::isEmpty($node->child),
+            default => $node instanceof CharLiteralNode || $node instanceof CharTypeNode || $node instanceof DotNode
+                || $node instanceof CharClassNode || $node instanceof ExtendedCharClassNode || $node instanceof UnicodePropNode
+                || $node instanceof ControlCharNode || $node instanceof BackrefNode || $node instanceof SubroutineNode
+                || $node instanceof ConditionalNode || $node instanceof DefineNode || $node instanceof ScriptRunNode,
+        };
+    }
+
+    private static function isEmpty(NodeInterface $node): bool
+    {
+        return ($node instanceof LiteralNode && '' === $node->value) || ($node instanceof SequenceNode && [] === $node->children);
     }
 
     private function codePoint(NodeInterface $node): ?int

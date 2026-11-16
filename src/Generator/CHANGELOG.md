@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A seeded `SampleGenerator` starts each `generate()` from its seed once,
+   and each draw the engine refuses is followed by a new one: every retry
+   drew the same sample again, and 27 seeds in 40 threw
+   `SampleGenerationException` on `/(?>a|ab)c/`. The same seed still gives
+   the same sample.
  * A sample, and every piece built on the way to it, stops at 1,048,576 bytes
    before it is concatenated: a chain of doubling backreferences throws
    `SampleGenerationException` instead of exhausting memory. A group fitted to

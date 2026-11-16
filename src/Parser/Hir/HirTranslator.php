@@ -266,7 +266,9 @@ final class HirTranslator
         }
 
         $body = $this->node($node->node, $flags);
-        if (1 === $bounds->min && 1 === $bounds->max) {
+        // "X{1}+" never gives back what X matched, as an atomic group: it
+        // stays a possessive repeat.
+        if (1 === $bounds->min && 1 === $bounds->max && QuantifierType::Possessive !== $node->type) {
             return $body;
         }
 

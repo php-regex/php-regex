@@ -236,6 +236,38 @@ final class HirTranslatorTest extends TestCase
     }
 
     /**
+     * A possessive quantifier never gives back what it matched, once
+     * included: "/^(?:a|ab){1}+c\z/" refuses "abc", which "/^(?:a|ab)c\z/"
+     * takes, as an atomic group does.
+     */
+    #[Test]
+    #[DataProvider('providePossessiveSingleRepeats')]
+    public function test_a_possessive_single_repeat_stays_possessive(string $pattern): void
+    {
+        $this->assertSame(0, preg_match($pattern, 'abc'));
+        $this->assertSame(1, preg_match($pattern, 'ac'));
+        $this->assertSame(0, preg_match('/^(?>a|ab)c\z/', 'abc'));
+        $this->assertSame(1, preg_match('/^(?:a|ab)c\z/', 'abc'));
+
+        $hir = $this->translate($pattern);
+
+        $this->assertInstanceOf(ConcatHir::class, $hir);
+        $repeat = $hir->parts[1];
+        $this->assertInstanceOf(RepetitionHir::class, $repeat);
+        $this->assertSame([1, 1, Greed::Possessive], [$repeat->min, $repeat->max, $repeat->greed]);
+        $this->assertInstanceOf(AlternationHir::class, $repeat->body);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function providePossessiveSingleRepeats(): iterable
+    {
+        yield 'one' => ['pattern' => '/^(?:a|ab){1}+c\z/'];
+        yield 'one to one' => ['pattern' => '/^(?:a|ab){1,1}+c\z/'];
+    }
+
+    /**
      * @param list<AssertionKind> $kinds
      */
     #[Test]

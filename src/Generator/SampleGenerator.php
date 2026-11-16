@@ -318,6 +318,9 @@ final class SampleGenerator extends AbstractNodeVisitor
 
         $this->target = $target;
         $this->forgetEmptyRepeats();
+        if (null !== $this->seed) {
+            $this->resetRandomizer($this->seed);
+        }
 
         try {
             return $this->checkedSample($regex, $checked, $ast);
@@ -363,8 +366,9 @@ final class SampleGenerator extends AbstractNodeVisitor
         $this->unicode = str_contains($node->flags, 'u')
             || 1 === LibraryPcre::match('/^(?:\(\*[A-Z_=0-9]+\))*\(\*UTF8?\)/', $node->source ?? '');
 
-        // Ensure we are seeded if the user expects it
-        if (null !== $this->seed) {
+        // A seeded sample starts again from the seed; the draws of one
+        // generate() go on from one another, generate() seeds them once.
+        if (null !== $this->seed && null === $this->target) {
             $this->resetRandomizer($this->seed);
         }
 
