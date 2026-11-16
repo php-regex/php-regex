@@ -785,6 +785,12 @@ final class LinterFalsePositiveRegressionTest extends TestCase
             'withoutBackref' => '/^(?:x(a)|(?!))+$/',
             'subjects' => ['xaa', 'xaaxaa'],
         ];
+
+        yield 'optional reference before its group' => [
+            'pattern' => '/^(?:x\1?(a))+$/',
+            'withoutBackref' => '/^(?:x(?!)?(a))+$/',
+            'subjects' => ['xaxaa', 'xaxaaxaa'],
+        ];
     }
 
     /**
@@ -806,6 +812,8 @@ final class LinterFalsePositiveRegressionTest extends TestCase
     /**
      * Where every way through the loop passes the reference before its
      * group is set, no iteration ever sets it: "(a\1)+" matches nothing.
+     * A loop that runs once has no earlier iteration: in "(a|b\1)?" the
+     * branch holding the reference matches nothing.
      */
     #[Test]
     public function test_backref_no_earlier_iteration_can_fill_stays_useless(): void
@@ -813,9 +821,13 @@ final class LinterFalsePositiveRegressionTest extends TestCase
         foreach (['a', 'aa', 'aaa', 'aaaa'] as $subject) {
             $this->assertSame(0, preg_match('/^(a\1)+$/', $subject), $subject);
         }
+        foreach (['b', 'ba', 'bb'] as $subject) {
+            $this->assertSame(0, preg_match('/^(a|b\1)?$/', $subject), $subject);
+        }
 
         $this->assertContains('regex.lint.backref.useless', $this->issueIds('/^(a\1)+$/'));
         $this->assertContains('regex.lint.backref.useless', $this->issueIds('/^(a\1|b\1)+$/'));
+        $this->assertContains('regex.lint.backref.useless', $this->issueIds('/^(a|b\1)?$/'));
     }
 
     /**

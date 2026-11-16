@@ -60,12 +60,14 @@ final class PatternSourceContextTest extends TestCase
         yield 'written with slashes around' => ['file' => '/p/a/cache/x.twig', 'excludes' => ['/cache/'], 'base' => null, 'excluded' => true];
         yield 'written with a backslash' => ['file' => '/p/a/cache/sub/x.twig', 'excludes' => ['cache\\sub'], 'base' => null, 'excluded' => true];
         yield 'an empty exclude excludes nothing' => ['file' => '/p/a/cache/x.twig', 'excludes' => ['', '/'], 'base' => null, 'excluded' => false];
+        yield 'an empty exclude before another' => ['file' => '/p/a/cache/x.twig', 'excludes' => ['', 'cache'], 'base' => null, 'excluded' => true];
         yield 'under the base' => ['file' => '/p/templates/cache/x.twig', 'excludes' => ['cache'], 'base' => '/p/templates', 'excluded' => true];
         yield 'under the base, written with a trailing slash' => ['file' => '/p/templates/cache/x.twig', 'excludes' => ['cache'], 'base' => '/p/templates/', 'excluded' => true];
         yield 'a file of the base named as the directory' => ['file' => '/p/templates/cache.twig', 'excludes' => ['cache'], 'base' => '/p/templates', 'excluded' => false];
         yield 'deeper under the base' => ['file' => '/p/templates/mail/cache/x.twig', 'excludes' => ['cache'], 'base' => '/p/templates', 'excluded' => true];
         yield 'a directory above the base' => ['file' => '/p/templates/x.twig', 'excludes' => ['p'], 'base' => '/p/templates', 'excluded' => false];
         yield 'a path outside the base keeps its whole path' => ['file' => '/q/cache/x.twig', 'excludes' => ['cache'], 'base' => '/p/templates', 'excluded' => true];
+        yield 'a sibling of the base starting alike keeps its whole path' => ['file' => '/p/templatesx/x.twig', 'excludes' => ['templatesx'], 'base' => '/p/templates', 'excluded' => true];
     }
 
     /**
@@ -138,6 +140,38 @@ final class PatternSourceContextTest extends TestCase
         yield 'a directory below the base' => ['exclude' => 'cache', 'excluded' => true];
         yield 'a path below the base' => ['exclude' => 'templates/cache', 'excluded' => true];
         yield 'the directory the link points at, above the base' => ['exclude' => 'app', 'excluded' => false];
+    }
+
+    /**
+     * A file found below the base by the path written is read there, even
+     * when it links outside: the directory the base stands in, above it,
+     * excludes nothing.
+     */
+    #[Test]
+    public function test_a_file_linked_below_the_base_is_read_by_the_path_written(): void
+    {
+        $root = $this->makeProject(['app/templates/x.html.twig' => '', 'other/y.html.twig' => '']);
+        $this->assertTrue(symlink($root.'/other/y.html.twig', $root.'/app/templates/link.html.twig'));
+
+        $context = new PatternSourceContext(['templates'], ['app'], excludeBase: $root.'/app/');
+
+        $this->assertFalse($context->excludes($root.'/app/templates/link.html.twig'));
+    }
+
+    /**
+     * The real path of a base reached through a link holds what lies under
+     * that directory, not a sibling whose name starts alike: that one keeps
+     * its whole path, and the exclude naming it applies.
+     */
+    #[Test]
+    public function test_a_sibling_of_a_linked_base_starting_alike_is_not_below_it(): void
+    {
+        $root = $this->makeProject(['app/templates/x.html.twig' => '', 'apple/y.html.twig' => '']);
+        $this->assertTrue(symlink($root.'/app', $root.'/link'));
+
+        $context = new PatternSourceContext(['templates'], ['apple'], excludeBase: $root.'/link');
+
+        $this->assertTrue($context->excludes($root.'/apple/y.html.twig'));
     }
 
     /**
