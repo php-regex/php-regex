@@ -102,7 +102,7 @@ final class JsonDocument
         foreach ($lines as $index => $line) {
             $indent = \strlen($line) - 1;
             $excerpt = $lines[$index - 1] ?? '';
-            if ($indent >= 0 && '^' === $line[$indent] && $indent === strspn($line, ' ') && self::isSnippetLine($excerpt) && !mb_check_encoding((string) substr($excerpt, 0, $indent), 'UTF-8')) {
+            if (0 === substr_compare($line, '^', -strlen('^')) && $indent === strspn($line, ' ') && self::isSnippetLine($excerpt) && !mb_check_encoding((string) substr($excerpt, 0, $indent), 'UTF-8')) {
                 $spelled[] = str_repeat(' ', self::spelledColumns($excerpt, $indent)).'^';
 
                 continue;
