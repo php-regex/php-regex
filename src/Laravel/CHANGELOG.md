@@ -52,6 +52,9 @@ CHANGELOG
    reads it: a rules string is split on every `|`, so the rule after
    `nullable|string|` is read, and the parameter is linted as written,
    between braces or any other delimiter PHP takes.
+ * `regex:lint` reads the name of a validation rule as Laravel does, without
+   case, and `notregex:` as `not_regex:`: `REGEX:/^a$/`, `Regex:` and
+   `notregex:` run `preg_match()` and were not linted.
  * `regex:explain` no longer stops with an error on a pattern the optimizer
    shortens.
  * A route constraint is judged as the router compiles it: between braces,

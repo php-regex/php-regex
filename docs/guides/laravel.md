@@ -385,7 +385,8 @@ included: `'code' => 'required|regex:/^(?:a|b)$/'` hands `/^(?:a` to
 `preg_match()`, and the lint reports it as invalid. Write such a rule as an
 array element, `['required', 'regex:/^(?:a|b)$/']`, which keeps its `|`. The
 pattern is linted as written, between any delimiter PHP takes: `{^a$}` is
-the pattern between braces, not `/{^a$}/`.
+the pattern between braces, not `/{^a$}/`. The rule's name is read without
+case, as Laravel reads it, and `notregex:` is `not_regex:`.
 
 A route constraint is judged as the router compiles it: stripped of a
 leading `^` or `\A` and a trailing `$` or `\z`, its groups made

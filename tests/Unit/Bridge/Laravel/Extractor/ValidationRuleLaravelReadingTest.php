@@ -147,6 +147,41 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
+     * Laravel reads the name of a regex rule without case, and "notregex"
+     * as "not_regex": the parameter is all the text after the first ":",
+     * commas included.
+     *
+     * @param list<string>|string $rules
+     * @param list<string>        $patterns
+     * @param list<string>        $sources
+     */
+    #[Test]
+    #[DataProvider('provideRuleNames')]
+    public function test_a_regex_rule_is_read_whatever_the_case_of_its_name(array|string $rules, array $patterns, array $sources): void
+    {
+        $this->assertSame($patterns, self::laravelPatterns(['slug' => $rules]));
+
+        $literal = \is_string($rules) ? "'".$rules."'" : "['".implode("', '", $rules)."']";
+        $project = $this->makeProject(['app/Rules.php' => "<?php\n\$rules = ['slug' => ".$literal."];\n"]);
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame($patterns, array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+        $this->assertSame($sources, array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->source, $occurrences));
+    }
+
+    /**
+     * @return iterable<string, array{rules: list<string>|string, patterns: list<string>, sources: list<string>}>
+     */
+    public static function provideRuleNames(): iterable
+    {
+        yield 'an upper-case name' => ['rules' => ['required', 'REGEX:/^a,b$/'], 'patterns' => ['/^a,b$/'], 'sources' => ['validation:regex']];
+        yield 'a capitalized name in a rules string' => ['rules' => 'required|Regex:/^a$/', 'patterns' => ['/^a$/'], 'sources' => ['validation:regex']];
+        yield 'an upper-case negation' => ['rules' => ['NOT_REGEX:/^a,b$/'], 'patterns' => ['/^a,b$/'], 'sources' => ['validation:not_regex']];
+        yield 'a negation without its underscore' => ['rules' => ['notregex:/^a,b$/'], 'patterns' => ['/^a,b$/'], 'sources' => ['validation:not_regex']];
+        yield 'a negation without its underscore in a rules string' => ['rules' => 'nullable|NotRegex:/^a$/', 'patterns' => ['/^a$/'], 'sources' => ['validation:not_regex']];
+    }
+
+    /**
      * The regex parameters Laravel passes to preg_match() for these rules.
      *
      * @param array<string, mixed> $rules
@@ -164,7 +199,10 @@ final class ValidationRuleLaravelReadingTest extends TestCase
                 self::assertIsString($rule);
                 [$name, $parameters] = ValidationRuleParser::parse($rule);
                 self::assertIsArray($parameters);
-                if (\in_array($name, ['Regex', 'NotRegex'], true)) {
+                self::assertIsString($name);
+                // The validator calls validate{$name}(): PHP finds a method
+                // whatever the case of its name.
+                if (\in_array(strtolower($name), ['regex', 'notregex'], true)) {
                     self::assertIsString($parameters[0]);
                     $patterns[] = $parameters[0];
                 }
