@@ -461,7 +461,9 @@ command does not list them one by one:
 `vendor/bin/regex lint --report-dynamic` does.
 
 Every command is listed by `bin/console list`, and takes these arguments
-and options:
+and options. `regex:lint` refuses a `--jobs` that is not a whole number of 1
+or more, and a `--min-savings` that is not a whole number of 0 or more, with
+exit code 2 and stage `usage` in the JSON envelope, as `regex lint` does.
 
 | Command | Arguments | Options |
 |---|---|---|

@@ -101,6 +101,7 @@ final class LintCommand extends Command
         $skipValidators = (bool) $this->option('no-validators');
         $editorUrl = config('php-regex.ide');
         $jobs = $this->option('jobs');
+        $minSavings = $this->option('min-savings');
 
         return (new ConsoleLintRunner($this->formatterRegistry))->run(new ConsoleLintRequest(
             format: $this->stringOption('format'),
@@ -111,7 +112,7 @@ final class LintCommand extends Command
             // same name above it, where the application lives (Testbench's
             // skeleton lives under vendor/), excludes nothing.
             excludeBase: $configured ? base_path() : null,
-            minSavings: (int) $this->option('min-savings'),
+            minSavings: \is_string($minSavings) ? $minSavings : null,
             jobs: null === $jobs ? null : (\is_string($jobs) ? $jobs : ''),
             disabledSources: array_keys(array_filter(['routes' => (bool) $this->option('no-routes'), 'validators' => $skipValidators])),
             optimizations: self::normalizeOptimizations(config('php-regex.optimizations', [])),

@@ -351,7 +351,9 @@ under a key named for the method: `disjoint` and `example`, `subset` and
 `regex:lint --jobs=N` (or `-j N`) runs the analysis in `N` worker processes; left out,
 the count follows the CPUs (and the container's memory limit). A `--jobs`
 that is not a whole number of 1 or more is refused with exit code 2, as
-`regex lint` and Symfony's `regex:lint` refuse it. So is a path that does not
+`regex lint` and Symfony's `regex:lint` refuse it, and so is a
+`--min-savings` that is not a whole number of 0 or more (`The --min-savings
+value must be a non-negative integer.`). So is a path that does not
 exist: `Path not found: app/Legacy`, stage `usage` in the JSON envelope for a
 path given on the command line, `config` for one of `php-regex.paths`, which
 the message names.

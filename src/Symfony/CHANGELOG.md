@@ -27,6 +27,10 @@ CHANGELOG
    The JSON report keeps each value as found.
  * `regex:lint` reads the `matches` patterns of the Twig templates under the
    linted paths; `--no-twig` leaves them out.
+ * `regex:lint --min-savings` takes a whole number, 0 or more, and refuses
+   anything else as `--jobs` is refused, exit code 2 and `The --min-savings
+   value must be a non-negative integer.`: `--min-savings=abc` was read as 1
+   and `--min-savings=-5` as a negative saving.
  * `regex:lint` leaves a validator mapping file out as it leaves out a PHP
    file: an `exclude` is a directory name anywhere below the project, or the
    path of a file or a directory, from the project, behind `./` or absolute,
