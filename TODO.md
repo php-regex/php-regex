@@ -12,16 +12,14 @@ Decided
   older (`1.3.0`), and says it updated. Compare the versions: install a
   newer one, say a same one is up to date, refuse an older one without
   `--force`.
-- The `access_control` and route analyses compare a path under `(*UTF)`
-  with one that is not as if both were read in one mode:
-  `(*UTF)(*NO_JIT)^/admin/users` before `^/admin` comes out as an overlap,
-  where Symfony's matcher makes it a carve-out. Read each side in its own
-  mode.
 
 Upstream
 
 - PCRE2 10.49's JIT returns 0 for `/é.{2,}é|(?<=x)A/u` on `xA`, and 1
   without the JIT: report it to PCRE2.
+- `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)` are ignored under the JIT, PHP's
+  default, and honoured without it: `preg_match('/(*NOTEMPTY)a*/', 'b')`
+  returns 1 with the JIT and 0 with `pcre.jit=0`. Report it to PCRE2.
 
 
 ## Release 2.0.0
