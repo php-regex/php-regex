@@ -179,7 +179,7 @@ preg_match('/(a+)+$/', $value);    // nested unbounded quantifiers
 ```
 Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
 🪪 regex.lint.flag.useless.s
-Nested quantifiers can cause catastrophic backtracking.
+Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.
 🪪 regex.lint.quantifier.nested
 💡 Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 Exponential backtracking (ReDoS): /(a+)+$/

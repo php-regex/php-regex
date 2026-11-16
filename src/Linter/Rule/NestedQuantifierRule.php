@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Linter\Rule\Support\GroupLabel;
 use PHPRegex\Linter\Rule\Support\LoopShape;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
@@ -92,7 +93,10 @@ final class NestedQuantifierRule extends AbstractLintRule
 
         return [new RuleViolation(
             self::ID,
-            'Nested quantifiers can cause catastrophic backtracking.',
+            \sprintf(
+                'Nested quantifiers in %s can cause catastrophic backtracking.',
+                GroupLabel::of($node->node, $context) ?? GroupLabel::at($node->node, $context),
+            ),
             $node->startPosition,
             'Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.',
             end: $node->getEndPosition(),

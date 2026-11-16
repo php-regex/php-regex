@@ -319,8 +319,8 @@ Regex::create()->parse('/(a+)+b/')->accept($linter);
 foreach ($linter->getIssues() as $issue) {
     echo $issue->message, "\n";
 }
-// Nested quantifiers can cause catastrophic backtracking.
-// Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+// Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.
+// Quantified capturing group 1 "(a+)" with "+": only the last iteration's capture is retained.
 ```
 
 The lint rules read the shape of the pattern. The ReDoS verdict comes from `Regex::redos()`, below.

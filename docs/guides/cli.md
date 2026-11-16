@@ -141,9 +141,9 @@ Recursion : 100000
   [3/3] Suggesting optimizations
   src/Slug.php:7:33
       → /^([a-z0-9-]+)+\z/
-    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+    INFO Quantified capturing group 1 "([a-z0-9-]+)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-    WARN Nested quantifiers can cause catastrophic backtracking.
+    WARN Nested quantifiers in capturing group 1 "([a-z0-9-]+)" can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
            need.
 
@@ -863,12 +863,12 @@ final class Version
 ```
   app/Version.php:12:33
       → /^v(\d{1,4}\.)+\d{1,4}$/
-    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+    INFO Quantified capturing group 1 "(\d{1,4}\.)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
   app/Version.php:17:33
       → /^(feature|fix)+-2\.x$/
-    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+    INFO Quantified capturing group 1 "(feature|fix)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 ```
 
@@ -938,12 +938,12 @@ Each of the four literals is linted, where it is written:
   app/Tags.php:5:40
       → /^(\d+\.)+\d+$/
      ↳ via $rule
-    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+    INFO Quantified capturing group 1 "(\d+\.)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
   app/Tags.php:9:66
       → /^v?\d+(\.\d+)*$/
-    INFO Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+    INFO Quantified capturing group 1 "(\.\d+)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 ```
 
@@ -1366,9 +1366,9 @@ vendor/bin/regex lint src/ --redos
              - Replace inner quantifiers with possessive variants or wrap them in (?>...).
              - replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++.
          ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
-    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+    INFO Quantified capturing group 1 "(a+)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-    WARN Nested quantifiers can cause catastrophic backtracking.
+    WARN Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.
          ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
            need.
 

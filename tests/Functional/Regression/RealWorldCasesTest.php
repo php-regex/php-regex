@@ -41,13 +41,13 @@ final class RealWorldCasesTest extends TestCase
     {
         // Nested quantifiers. Anchored: a loop nothing follows never
         // backtracks (see test_trailing_nested_quantifiers_are_not_reported).
-        yield ['pattern' => '/(a+)+$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(b*)+$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(d{2,})*$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(e+)+$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(f*)+$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(h{3,})*$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(i+)+$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(a+)+$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(b*)+$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(b*)" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(d{2,})*$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(d{2,})" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(e+)+$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(e+)" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(f*)+$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(f*)" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(h{3,})*$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(h{3,})" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(i+)+$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(i+)" can cause catastrophic backtracking.'];
 
         // Flag useless
         yield ['pattern' => '@^0([0-7]+)$@i', 'expectedIssueMessage' => "Flag 'i' is useless: the pattern contains no case-sensitive characters."];
@@ -71,14 +71,14 @@ final class RealWorldCasesTest extends TestCase
         yield ['pattern' => '~{args.((?:[^{}}]++|(?R))*)}~', 'expectedIssueMessage' => 'Redundant elements detected in character class.'];
 
         // More nested quantifiers, anchored as well.
-        yield ['pattern' => '/(j+)+$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(k*)+$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(m{4,})*$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(n+)+$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(o*)+$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(q{5,})*$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(r+)+$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
-        yield ['pattern' => '/(s*)+$/', 'expectedIssueMessage' => 'Nested quantifiers can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(j+)+$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(j+)" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(k*)+$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(k*)" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(m{4,})*$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(m{4,})" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(n+)+$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(n+)" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(o*)+$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(o*)" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(q{5,})*$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(q{5,})" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(r+)+$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(r+)" can cause catastrophic backtracking.'];
+        yield ['pattern' => '/(s*)+$/', 'expectedIssueMessage' => 'Nested quantifiers in capturing group 1 "(s*)" can cause catastrophic backtracking.'];
 
         // More flag useless
         yield ['pattern' => '/222/i', 'expectedIssueMessage' => "Flag 'i' is useless: the pattern contains no case-sensitive characters."];
@@ -135,7 +135,7 @@ final class RealWorldCasesTest extends TestCase
             $messages[] = $issue->message;
         }
 
-        $this->assertContains('Nested quantifiers can cause catastrophic backtracking.', $messages);
+        $this->assertContains(self::nestedMessage($pattern), $messages);
     }
 
     /**
@@ -163,7 +163,7 @@ final class RealWorldCasesTest extends TestCase
             array_filter(Regex::create()->analyze($pattern)->lintIssues, static fn (mixed $issue): bool => $issue instanceof RuleViolation),
         );
 
-        $this->assertNotContains('Nested quantifiers can cause catastrophic backtracking.', $messages);
+        $this->assertNotContains(self::nestedMessage($pattern), $messages);
     }
 
     /**
@@ -190,6 +190,18 @@ final class RealWorldCasesTest extends TestCase
         yield '/(q{5,})*/' => ['pattern' => '/(q{5,})*/'];
         yield '/(r+)+/' => ['pattern' => '/(r+)+/'];
         yield '/(s*)+/' => ['pattern' => '/(s*)+/'];
+    }
+
+    /**
+     * What the lint says of a pattern whose first group is the loop: the
+     * group quoted as written, "(a+)" in /(a+)+$/.
+     */
+    private static function nestedMessage(string $pattern): string
+    {
+        $group = strstr(substr($pattern, 1), ')', true);
+        self::assertIsString($group);
+
+        return \sprintf('Nested quantifiers in capturing group 1 "%s)" can cause catastrophic backtracking.', $group);
     }
 
     /**
