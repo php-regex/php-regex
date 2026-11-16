@@ -1,5 +1,16 @@
 # TODO
 
+## Engine reports
+
+Found while fixing the bugs of #400; each is PCRE2's, not the library's.
+
+- PCRE2 10.49's JIT returns 0 for `/é.{2,}é|(?<=x)A/u` on `xA`, and 1
+  without the JIT: report it to PCRE2.
+- `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)` are ignored under the JIT, PHP's
+  default, and honoured without it: `preg_match('/(*NOTEMPTY)a*/', 'b')`
+  returns 1 with the JIT and 0 with `pcre.jit=0`. Report it to PCRE2.
+
+
 ## Release 2.0.0
 
 `v2.0.0-RC1` is out (2026-11-14, a pre-release from `a680f3979a`): the
@@ -92,51 +103,16 @@ measured under 3 %.
 
 ## Linter precision
 
-- Merge #389, which reads the conditions on the way to a pattern call
-  (the php/pie false positive), then remove its worktree.
-- The tokenizer reads two early exits on the PHP version that are none,
-  and judges what follows for the versions the guard keeps: an `if` that
-  is the body of a loop without braces
-  (`while ($more) if (PHP_VERSION_ID < 80000) break;`, the code after the
-  loop runs on PHP 7 too), and an early `continue` in a `foreach` of the
-  alternative syntax, whose rest runs past its `endforeach`. The PHP
-  parser reads neither. `TokenGuards::readIf()` and `restOfBlock()` should
-  ask what #389 asks of an early exit: an `if` standing among the
-  statements of a list, and a rest that stops at the end of an
-  alternative block. The two walks of an `if` on tokens could then be one.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. A small
   pull request to its type specifier, with an nsrt test, would fix it.
-- `PhpParserGuards::leaves()` reads a `throw` statement as
-  `Expression(Throw_)` only; nikic/php-parser 4.x, which `composer.json`
-  still allows, gives `Stmt\Throw_`, and neither the version guards nor
-  the guards of #389 read an early `throw` there.
-
-
-## Pull request checks
-
-- Make `CI` the required check of `2.x` in the branch protection: a pull
-  request of prose alone reports it (seen on #369), and the protection
-  requires no check yet.
 
 
 ## Counted benchmarks
 
-`tests/Counted/` is counted by Tally in CI (`Benchmarks (counted)`,
-gating), from #390 on.
+`tests/Benchmark/Tally/` is counted by Tally in CI, in the gating job
+`Benchmarks (counted)`, from #390 on.
 
-- The lint rules `quantifier.nested` and `dotstar.nested` read a sequence
-  again for each quantifier: every rule on `a*?` repeated takes about 2 s
-  at 16,000 quantifiers, and `(a)?` repeated about 1 s, four times as long
-  for twice as many (every other rule doubles). `LongSequenceLintTimeTest`
-  passes, under its one-second ceiling at 2,000 and 4,000 items. Read the
-  sequence once, then tighten
-  `LinterGrowthBench::benchNestingRulesOnLazyQuantifiers` to `#[Linear]`
-  (`tally accept` does it from a run that lists it as faster).
-- `PatternInfoAnalyzer` grows as the square of the nesting of anchored
-  sequences (`/((((^a$)a$)a$)a$)/`): about 9 ms at 200 levels. PCRE caps
-  the nesting at 250, so it stays small; `benchNestedAnchoredSequences`
-  holds it to `#[Quadratic]`.
 - Once the counted job has run on a few pull requests: drop the ratio of
   `assertLinearTime()` (the counted growth benchmarks are the measure)
   and keep its budget as a tripwire on every host, which shortens the
