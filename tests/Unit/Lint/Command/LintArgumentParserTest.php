@@ -252,6 +252,54 @@ final class LintArgumentParserTest extends TestCase
         $this->assertSame('Missing value for --format.', $result->error);
     }
 
+    /**
+     * --min-savings takes a whole number of characters, 0 or more, as
+     * --jobs takes a whole number of workers: anything else is refused,
+     * where it was read as 0, or as a negative saving.
+     */
+    #[Test]
+    #[DataProvider('provideMinSavingsThatAreNoNonNegativeInteger')]
+    public function test_parse_refuses_a_min_savings_that_is_no_non_negative_integer(string $value): void
+    {
+        $result = (new LintArgumentParser())->parse(['--min-savings='.$value]);
+
+        $this->assertNotInstanceOf(LintArguments::class, $result->arguments);
+        $this->assertSame('The --min-savings value must be a non-negative integer.', $result->error);
+    }
+
+    /**
+     * @return iterable<string, array{value: string}>
+     */
+    public static function provideMinSavingsThatAreNoNonNegativeInteger(): iterable
+    {
+        yield 'a word' => ['value' => 'abc'];
+        yield 'a negative number' => ['value' => '-5'];
+        yield 'a decimal' => ['value' => '1.5'];
+        yield 'no value' => ['value' => ''];
+        yield 'a sign' => ['value' => '+5'];
+        yield 'a space around it' => ['value' => ' 5'];
+        yield 'past the integer range' => ['value' => '99999999999999999999'];
+    }
+
+    #[Test]
+    #[DataProvider('provideMinSavings')]
+    public function test_parse_reads_a_min_savings_of_zero_or_more(string $value, int $expected): void
+    {
+        $result = (new LintArgumentParser())->parse(['--min-savings', $value]);
+
+        $this->assertInstanceOf(LintArguments::class, $result->arguments);
+        $this->assertSame($expected, $result->arguments->minSavings);
+    }
+
+    /**
+     * @return iterable<string, array{value: string, expected: int}>
+     */
+    public static function provideMinSavings(): iterable
+    {
+        yield 'zero' => ['value' => '0', 'expected' => 0];
+        yield 'a number' => ['value' => '10', 'expected' => 10];
+    }
+
     #[Test]
     public function test_parse_reports_unknown_option(): void
     {
