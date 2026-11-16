@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A `textDocument/hover` request without a document or a position is
+   answered with `null`, as a completion request is, where it was left
+   unanswered and the client waited. A completion or a code action sent as
+   a notification is no longer answered under the id `0`.
  * `textDocument/didChange` applies its changes in order: the last whole
    text is the document, where the first one was kept and the diagnostics
    lagged one edit behind a client that sends several at once. A change

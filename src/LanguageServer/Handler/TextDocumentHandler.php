@@ -279,7 +279,15 @@ final class TextDocumentHandler
         /** @var array{line?: int, character?: int}|null $position */
         $position = isset($params['position']) && \is_array($params['position']) ? $params['position'] : null;
 
-        if (null === $message->id || null === $uri || null === $position) {
+        // A notification is never answered; a request always is, with
+        // nothing when it names no document or no position.
+        if (null === $message->id) {
+            return;
+        }
+
+        if (null === $uri || null === $position) {
+            $this->transport->success($message->id, null);
+
             return;
         }
 

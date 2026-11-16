@@ -193,6 +193,39 @@ final class TextDocumentHandlerTest extends TestCase
     }
 
     /**
+     * A hover request without a document or a position is answered with
+     * nothing, as a completion or a code action request is: a request is
+     * always answered. A notification never is.
+     */
+    #[Test]
+    public function test_a_hover_request_without_a_document_or_a_position_is_answered_with_nothing(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $handler = new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null]));
+        $this->documents->open('file:///a.php', "<?php\npreg_match('/a/', \$s);\n");
+
+        foreach ([
+            [1, ['textDocument' => ['uri' => 'file:///a.php']]],
+            [2, ['position' => ['line' => 1, 'character' => 13]]],
+            [3, ['textDocument' => ['uri' => 'file:///a.php'], 'position' => 'here']],
+            [null, ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => 13]]],
+            [null, []],
+        ] as [$id, $params]) {
+            $handler->hover(new Message(jsonrpc: '2.0', method: 'textDocument/hover', id: $id, params: $params));
+        }
+
+        rewind($stream);
+        $frames = preg_split('/Content-Length: \d+\r\n\r\n/', (string) stream_get_contents($stream), -1, \PREG_SPLIT_NO_EMPTY);
+        $this->assertIsArray($frames);
+        $this->assertSame([
+            ['jsonrpc' => '2.0', 'id' => 1, 'result' => null],
+            ['jsonrpc' => '2.0', 'id' => 2, 'result' => null],
+            ['jsonrpc' => '2.0', 'id' => 3, 'result' => null],
+        ], array_map(static fn (string $frame): mixed => json_decode($frame, true, 512, \JSON_THROW_ON_ERROR), $frames));
+    }
+
+    /**
      * A limit of the library is no error in the pattern: the editor shows
      * it as a warning — the severity `regex lint` reports for the same
      * "Not analyzed" outcome — never as an error.

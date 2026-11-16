@@ -668,6 +668,11 @@ ends it:
 | A header block over 8 KiB, an endless run of header lines above all | `-32600` Invalid Request, `id` null; the session ends there, exit 0 — exit 1 stays the crash signal, not the answer to garbage |
 | JSON that is not a JSON-RPC 2.0 object: a batch, a scalar, no `"jsonrpc": "2.0"`, a `method` that is not a string, an `id` that is neither an integer nor a string, `params` that are neither an object nor an array | `-32600` Invalid Request, with the message's `id` when it is an integer or a string, else null |
 
+A `textDocument/hover`, `textDocument/completion` or `textDocument/codeAction`
+request that names no document, no position or no range is answered with
+nothing (`null`, or `[]` for code actions). The same method sent as a
+notification, without an `id`, is never answered.
+
 ### Server Capabilities
 
 ```json
