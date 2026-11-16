@@ -23,7 +23,9 @@ namespace PHPRegex\Tests\TestUtils;
  * the run mutates, and each of their lines names the test methods that reach
  * it once, whatever the number of their data sets. A mutant then runs every
  * data set of a method that reaches its line, which the tool already falls
- * back to when the list of data sets grows too long for a filter.
+ * back to when the list of data sets grows too long for a filter. The JUnit
+ * log beside the report names the file of each method, where the tool finds
+ * the tests a mutant runs.
  */
 final class MutationCoverage
 {
@@ -111,6 +113,12 @@ final class MutationCoverage
             throw new \UnexpectedValueException(\sprintf('Cannot write %s.', $indexPath));
         }
 
+        // The mutation tool reads the report and the JUnit log side by side.
+        $junit = \dirname($directory).'/junit.xml';
+        if (is_file($junit)) {
+            self::fileTheMethodSuites($junit);
+        }
+
         sort($kept);
 
         return $kept;
@@ -161,6 +169,59 @@ final class MutationCoverage
 
             $seen[$match[2]] = true;
             fwrite($output, $match[1].$match[2].$match[3]);
+        }
+
+        fclose($input);
+        fclose($output);
+
+        self::assertWellFormed($temporary);
+        if (!rename($temporary, $file)) {
+            throw new \UnexpectedValueException(\sprintf('Cannot replace %s.', $file));
+        }
+    }
+
+    /**
+     * Gives the suite of each test method in the JUnit log the file of its
+     * test cases. PHPUnit writes the file on the suite of a class and on each
+     * test case, not on the suite that groups the data sets of a method: the
+     * mutation tool looks a test reduced to its method up by that suite's
+     * name, and runs the mutant against the file it reads there, none, so no
+     * test runs and the mutant passes for one no test kills. Rewritten line
+     * by line, as PHPUnit writes the log: a suite's first test case on the
+     * line after it.
+     */
+    private static function fileTheMethodSuites(string $file): void
+    {
+        $input = @fopen($file, 'r');
+        $temporary = $file.'.reduced';
+        $output = @fopen($temporary, 'w');
+        if (false === $input || false === $output) {
+            throw new \UnexpectedValueException(\sprintf('Cannot rewrite %s.', $file));
+        }
+
+        $suite = null;
+        while (false !== ($line = fgets($input))) {
+            if (null !== $suite) {
+                if (1 === preg_match('~^\s*<testcase [^>]*?\bfile="([^"]*)"~', $line, $match)) {
+                    $path = $match[1];
+                    $suite = (string) preg_replace_callback('~^\s*<testsuite name="[^"]*"~', static fn (array $name): string => $name[0].' file="'.$path.'"', $suite, 1);
+                }
+
+                fwrite($output, $suite);
+                $suite = null;
+            }
+
+            if (1 === preg_match('~^\s*<testsuite name="[^"]*::[^"]*"(?![^>]*\bfile=")~', $line)) {
+                $suite = $line;
+
+                continue;
+            }
+
+            fwrite($output, $line);
+        }
+
+        if (null !== $suite) {
+            fwrite($output, $suite);
         }
 
         fclose($input);
