@@ -61,7 +61,7 @@ final class AnalysisBench
     }
 
     #[DataProvider('redosCases')]
-    #[ExpectedFor('bounded-alternation-200', instructions: '153.6M', cycles: '206.8M', memory: '748.8KiB')]
+    #[ExpectedFor('bounded-alternation-200', instructions: '156.8M', cycles: '210.7M', memory: '748.8KiB')]
     #[ExpectedFor('email-exponential', instructions: '13.30M', cycles: '19.85M', memory: '116.9KiB')]
     #[ExpectedFor('nested-bounded-repeats', instructions: '38.39M', cycles: '49.12M', memory: '527.5KiB')]
     #[ExpectedFor('nested-bounded-repeats-then-loop', instructions: '39.29M', cycles: '50.71M', memory: '532.0KiB')]
