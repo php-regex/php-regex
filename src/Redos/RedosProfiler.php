@@ -129,6 +129,13 @@ final class RedosProfiler extends AbstractNodeVisitor
      */
     private array $callsReadThrough = [];
 
+    /**
+     * Whether the pattern holds options that may change what a character
+     * set reads, the i modifier or an option setting: the sets of the
+     * analyzer do not follow them.
+     */
+    private bool $setsMayChange = false;
+
     public function __construct(private readonly CharSetAnalyzer $charSetAnalyzer = new CharSetAnalyzer())
     {
         $this->groups = GroupIndex::empty();
@@ -210,6 +217,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->culpritSeverity = RedosSeverity::Safe;
         $this->groups = GroupIndex::of($node->pattern);
         $this->callsReadThrough = [];
+        $this->setsMayChange = str_contains($node->flags, 'i') || self::holdsOptionSetting($node->pattern);
 
         // A recursion the attempt tries first, before it reads a character,
         // enters the pattern again where it started, and PCRE2 stops the
@@ -1034,12 +1042,112 @@ final class RedosProfiler extends AbstractNodeVisitor
     /**
      * Detects if a subtree contains a backreference and a variable-length capturing group,
      * which can lead to catastrophic backtracking when repeated.
+     *
+     * A body that reads its input one way, never matching nothing, gives
+     * each iteration one way through, whatever the length of what the
+     * reference reads: the engine gives the iterations back one at a time,
+     * as in the PCRE2 manual's "(a|b\1)+". The first characters of the
+     * branches are only known apart without options that change them:
+     * under i, "(a|A\1)+" reads "a" both ways.
      */
     private function hasBackrefLoop(NodeInterface $node): bool
     {
         $state = $this->analyzeBackrefLoop($node);
 
-        return $state['hasBackref'] && $state['hasVariableCapture'];
+        return $state['hasBackref'] && $state['hasVariableCapture']
+            && !(!$this->setsMayChange && false === $node->accept($this->nullability) && $this->readsOneWay($node));
+    }
+
+    private static function holdsOptionSetting(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsOptionSetting($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether the node reads its input one way: each alternation chooses
+     * its branch by the first character, no branch matching nothing, each
+     * count is fixed, and no other item gives a choice. An atomic group, a
+     * possessive repeat and "\R" keep the first way they find, and a
+     * reference reads the text its group holds.
+     */
+    private function readsOneWay(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode) {
+            return GroupType::Atomic === $node->type
+                || (\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named], true) && $this->readsOneWay($node->child));
+        }
+
+        if ($node instanceof QuantifierNode) {
+            [$min, $max] = $this->quantifierBounds($node);
+
+            return QuantifierType::Possessive === $node->type || ($min === $max && $this->readsOneWay($node->node));
+        }
+
+        if ($node instanceof ScriptRunNode) {
+            return $node->isAtomic || null === $node->content || $this->readsOneWay($node->content);
+        }
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                if (!$this->readsOneWay($child)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if ($node instanceof AlternationNode) {
+            return $this->choosesByTheFirstCharacter($node);
+        }
+
+        return $node instanceof LiteralNode
+            || $node instanceof CharLiteralNode
+            || $node instanceof CharClassNode
+            || $node instanceof CharTypeNode
+            || $node instanceof DotNode
+            || $node instanceof UnicodePropNode
+            || $node instanceof PosixClassNode
+            || $node instanceof ControlCharNode
+            || $node instanceof BackrefNode
+            || $node instanceof AnchorNode
+            || $node instanceof AssertionNode
+            || $node instanceof CommentNode;
+    }
+
+    private function choosesByTheFirstCharacter(AlternationNode $node): bool
+    {
+        $firsts = [];
+        foreach ($node->alternatives as $alternative) {
+            if (false !== $alternative->accept($this->nullability) || !$this->readsOneWay($alternative)) {
+                return false;
+            }
+
+            $first = $this->charSetAnalyzer->firstChars($alternative);
+            if ($first->isUnknown()) {
+                return false;
+            }
+
+            foreach ($firsts as $other) {
+                if ($first->intersects($other)) {
+                    return false;
+                }
+            }
+
+            $firsts[] = $first;
+        }
+
+        return true;
     }
 
     /**

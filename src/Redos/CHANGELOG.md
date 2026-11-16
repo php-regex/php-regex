@@ -25,6 +25,12 @@ CHANGELOG
    as PCRE runs it at each iteration: `/^(?:(?1))+(a|a)$/` and
    `/^(?:(?&w)\s?)+$(?(DEFINE)(?<w>[a-z]+))/`, which were medium, are
    critical. Each call is read through once, which ends a recursion.
+ * A backreference to a group of variable length in a loop is no longer
+   critical when the body of the loop reads its input one way, each
+   alternation choosing its branch by the first character and each count
+   fixed: `/^(a|b\1)+$/`, the PCRE2 manual's example, which PCRE2 reads in
+   linear steps, is medium as any loop is. Under `i` or an option setting
+   the branches are not told apart, and `/^(a|A\1)+$/i` stays critical.
  * The heuristics read a body repeated `{0}` as PCRE runs it: never where it
    stands. One holding no group gives no hotspot, as `x+x+` in
    `/(?:x+x+){0}^(?:a+)+$/` gave two, which a repair then tried first; the

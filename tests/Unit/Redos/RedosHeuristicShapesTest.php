@@ -80,6 +80,86 @@ final class RedosHeuristicShapesTest extends TestCase
         $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos('/((a?)\2+)+/')->severity);
     }
 
+    /**
+     * A loop whose body reads its input one way, each alternation choosing
+     * its branch by the first character and each count fixed, gives every
+     * iteration one way through, a reference to a capture of any length
+     * included: the engine gives the iterations back one at a time.
+     * Doubling the unit repeated before "!" doubles the steps (1 000 ->
+     * 2 000 -> 4 000 units): 3 004 -> 6 004 -> 12 004 for the PCRE2
+     * manual's "(a|b\1)+", 4 005 -> 8 005 -> 16 005 for "((a|b)\2)+".
+     *
+     * @return iterable<string, array{pattern: string, unit: string}>
+     */
+    public static function provideReferencesInALoopReadOneWay(): iterable
+    {
+        yield 'reference in a branch of its own group' => ['pattern' => '/^(a|b\1)+$/', 'unit' => 'a'];
+        yield 'reference after a group of disjoint branches' => ['pattern' => '/^((a|b)\2)+$/', 'unit' => 'aa'];
+    }
+
+    #[Test]
+    #[DataProvider('provideReferencesInALoopReadOneWay')]
+    public function test_a_reference_in_a_loop_read_one_way_is_not_critical(string $pattern, string $unit): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, str_repeat($unit, 1000).'!');
+        $long = self::steps($unoptimized, str_repeat($unit, 2000).'!');
+        $this->assertLessThan(3 * $short, $long, 'Oracle: the engine stays linear.');
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+
+        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
+        foreach ($analysis->findings as $finding) {
+            $this->assertStringNotContainsString('backreferences', $finding->message);
+        }
+    }
+
+    /**
+     * A body read more than one way keeps the reference critical, and the
+     * engine goes exponential on 8 -> 12 -> 16 letters then "!": a run
+     * in a branch (896 -> 14 336 -> 229 376), a branch starting with the
+     * reference, whose first character is not known (139 -> 799 -> 4 612),
+     * two branches starting with the same letter (139 -> 799 -> 4 612).
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideReferencesInALoopReadMoreThanOneWay(): iterable
+    {
+        yield 'run in a branch' => ['pattern' => '/^(a+|b\1)+$/'];
+        yield 'branch starting with the reference' => ['pattern' => '/^(a|\1a)+$/'];
+        yield 'branches starting with the same letter' => ['pattern' => '/^(a|a\1)+$/'];
+    }
+
+    #[Test]
+    #[DataProvider('provideReferencesInALoopReadMoreThanOneWay')]
+    public function test_a_reference_in_a_loop_read_more_than_one_way_stays_critical(string $pattern): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, str_repeat('a', 8).'!');
+        $long = self::steps($unoptimized, str_repeat('a', 12).'!');
+        $this->assertGreaterThan(4 * $short, $long, 'Oracle: the engine goes exponential.');
+
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * Under i the branches "a" and "A\1" both start with "a", and the loop
+     * chooses between them at each letter: 139 -> 799 -> 4 612 steps on
+     * 8 -> 12 -> 16 letters then "!". The reference stays critical, under
+     * the modifier or an option setting.
+     */
+    #[Test]
+    public function test_a_reference_in_a_loop_under_i_stays_critical(): void
+    {
+        $unoptimized = PcreInterpreter::pattern('/(*NO_START_OPT)^(a|A\1)+$/i');
+        $short = self::steps($unoptimized, str_repeat('a', 8).'!');
+        $long = self::steps($unoptimized, str_repeat('a', 12).'!');
+        $this->assertGreaterThan(4 * $short, $long, 'Oracle: the engine goes exponential.');
+
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos('/^(a|A\1)+$/i')->severity);
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos('/(?i)^(a|A\1)+$/')->severity);
+    }
+
     #[Test]
     public function test_the_engine_reads_the_condition_shape_in_constant_steps(): void
     {
