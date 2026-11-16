@@ -143,8 +143,10 @@ final class RedosRepairerTest extends TestCase
     /**
      * Every repair of a pattern, in the order it is offered, with what is
      * proven of it: the rewrites tried and what each costs may change, these
-     * answers may not. /^\s*(?:\w+\s*)*$/ is repaired though the analysis
-     * names no culprit and no hotspot in it.
+     * answers may not. /^a*b?a*$/ is repaired though the analysis names no
+     * culprit and no hotspot in it: it is proven quadratic, and PHP takes
+     * 6, 33 and 120 ms on 5,000, 10,000 and 20,000 "a" and a "!" (PCRE2
+     * 10.49, no JIT).
      *
      * @param list<array{string, bool|null, bool|null}> $repairs
      */
@@ -249,13 +251,27 @@ final class RedosRepairerTest extends TestCase
                 '/^c++(?:a*+)*+b++$/',
             ],
         ];
+        // Proven quadratic, which PHP confirms (6, 33 and 120 ms on 5,000,
+        // 10,000 and 20,000 "a" and a "!"), with no hotspot named.
         yield 'no hotspot: the order they had' => [
-            'pattern' => '/^\s*(?:\w+\s*)*$/',
+            'pattern' => '/^a*b?a*$/',
             'hotspots' => [],
             'candidates' => [
-                '/^\s*+(?:\w+\s*)*$/',
+                '/^a*+b?a*$/',
+                '/^a*b?a*+$/',
+                '/^a*+b?a*+$/',
+            ],
+        ];
+        // The runs of two iterations meet where "\s*" matches nothing:
+        // 385 -> 6 145 -> 98 305 steps on 8 -> 12 -> 16 "a" and a "!". The
+        // run is blamed, and the loop it lies in, before the others.
+        yield 'a run that meets the next one past a space that may be empty' => [
+            'pattern' => '/^\s*(?:\w+\s*)*$/',
+            'hotspots' => [[7, 10]],
+            'candidates' => [
                 '/^\s*(?:\w+\s*)*+$/',
                 '/^\s*(?:\w++\s*)*$/',
+                '/^\s*+(?:\w+\s*)*$/',
                 '/^\s*(?:\w+\s*+)*$/',
                 '/^\s*+(?:\w++\s*+)*+$/',
             ],
@@ -376,11 +392,15 @@ final class RedosRepairerTest extends TestCase
             ['/^[a]+$/', true, true],
             ['/^(?:a|a)++$/', null, null],
         ]];
-        yield 'no culprit and no hotspot named' => ['pattern' => '/^\\s*(?:\\w+\\s*)*$/', 'repairs' => [
+        yield 'no culprit and no hotspot named' => ['pattern' => '/^a*b?a*$/', 'repairs' => [
+            ['/^a*+b?a*$/', null, null],
+            ['/^a*+b?a*+$/', null, null],
+        ]];
+        yield 'a run meeting the next one past a space that may be empty' => ['pattern' => '/^\\s*(?:\\w+\\s*)*$/', 'repairs' => [
             ['/^\\s*(?:\\w++\\s*)*$/', null, null],
             ['/^\\s*+(?:\\w++\\s*+)*+$/', null, null],
         ]];
-        yield 'no culprit named, a literal after the repeat' => ['pattern' => '/^([a-zA-Z0-9]+[._-]?)*@x$/', 'repairs' => [
+        yield 'a run before an optional separator, a literal after the repeat' => ['pattern' => '/^([a-zA-Z0-9]+[._-]?)*@x$/', 'repairs' => [
             ['/^([a-zA-Z0-9]++[._-]?)*@x$/', null, null],
             ['/^([a-zA-Z0-9]++[._-]?)*+@x$/', null, null],
         ]];
