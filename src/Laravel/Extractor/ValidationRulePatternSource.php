@@ -78,7 +78,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 continue;
             }
 
-            $patterns = [...$patterns, ...$this->extractFromDirectory($path, $context->excludePaths)];
+            $patterns = [...$patterns, ...$this->extractFromDirectory($path, $context)];
         }
 
         return $patterns;
@@ -96,25 +96,16 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     }
 
     /**
-     * @param array<string> $excludePaths
-     *
      * @return array<\PHPRegex\Linter\PatternOccurrence>
      */
-    private function extractFromDirectory(string $directory, array $excludePaths): array
+    private function extractFromDirectory(string $directory, PatternSourceContext $context): array
     {
         $patterns = [];
-        // Walked and matched with "/" on every host: an exclude keeps its
-        // meaning whichever separator spelled it.
+        // Walked with "/" on every host; the excludes leave a file out as
+        // they leave out its PHP patterns.
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator(Path::fromHost($directory), \RecursiveDirectoryIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
         );
-        $excludes = [];
-        foreach ($excludePaths as $excludePath) {
-            $excludePath = trim(Path::normalize($excludePath), '/');
-            if ('' !== $excludePath) {
-                $excludes[] = '/'.$excludePath.'/';
-            }
-        }
 
         /** @var \SplFileInfo $file */
         foreach ($iterator as $file) {
@@ -123,12 +114,8 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             }
 
             $filePath = $file->getPathname();
-
-            // Check exclusions
-            foreach ($excludes as $exclude) {
-                if (str_contains($filePath, $exclude)) {
-                    continue 2;
-                }
+            if ($context->excludes($filePath)) {
+                continue;
             }
 
             $patterns = [...$patterns, ...$this->extractFromFile($filePath)];

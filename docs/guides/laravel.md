@@ -104,8 +104,11 @@ return [
 `paths` and `exclude` are read from `base_path()`: `regex:lint` lints the
 same files whatever directory it runs from. An `exclude` names a directory
 of the application, wherever it lies under the paths, never one above it:
-Testbench's skeleton, which lives under `vendor/`, is linted. The paths given
-to `regex:lint` on the command line are read from the working directory.
+Testbench's skeleton, which lives under `vendor/`, is linted. It may also be
+the path of a file or a directory, behind `./` or absolute, and it leaves the
+validation rules of a file out as it leaves out the file's patterns. The
+paths given to `regex:lint` on the command line are read from the working
+directory.
 
 A key missing from your file takes the package default, inside each section
 too: a file published by an older release keeps working after an upgrade.

@@ -52,6 +52,11 @@ CHANGELOG
    reads it: a rules string is split on every `|`, so the rule after
    `nullable|string|` is read, and the parameter is linted as written,
    between braces or any other delimiter PHP takes.
+ * `regex:lint` leaves the validation rules of a file out as it leaves out
+   its PHP patterns: an `exclude` is a directory name below `base_path()`,
+   never above it, or the path of a file or a directory, behind `./` or
+   absolute. A directory of the same name above the application, `vendor/`
+   for Testbench's skeleton, left every rule out.
  * `regex:lint` reads the name of a validation rule as Laravel does, without
    case, and `notregex:` as `not_regex:`: `REGEX:/^a$/`, `Regex:` and
    `notregex:` run `preg_match()` and were not linted.

@@ -103,4 +103,45 @@ final class ValidationRuleScanningTest extends TestCase
         yield 'an assignment opening a file that ends on brackets' => ['code' => "='regex:/k|l/';[]", 'expected' => [[1, '/k']]];
         yield 'an arrow opening the file' => ['code' => "=>'regex:/k|l/'", 'expected' => [[1, '/k']]];
     }
+
+    /**
+     * The excludes leave a file out of the rules read as they leave it out
+     * of the PHP files: a directory name below the project, the path of a
+     * file or a directory, from the project or the working directory,
+     * behind "./" or absolute; a directory above the project excludes
+     * nothing.
+     *
+     * @param list<string> $expected the files read, from the project
+     */
+    #[Test]
+    #[DataProvider('provideExcludes')]
+    public function test_the_excludes_leave_out_a_file_as_they_leave_out_a_php_file(string $exclude, bool $fromProject, array $expected): void
+    {
+        $root = $this->enterProject([
+            'app/Http/Requests/StoreRequest.php' => "<?php\n\$rules = ['a' => 'regex:/^a$/'];\n",
+            'app/Legacy/OldRequest.php' => "<?php\n\$rules = ['a' => 'regex:/^b$/'];\n",
+        ]);
+        $exclude = str_replace(['{root}', '{above}'], [$root, basename(\dirname($root))], $exclude);
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$root.'/app'], [$exclude], excludeBase: $fromProject ? $root : null));
+
+        $files = array_map(static fn (PatternOccurrence $occurrence): string => substr($occurrence->file, \strlen($root) + 1), $occurrences);
+        sort($files);
+        $this->assertSame($expected, $files);
+    }
+
+    /**
+     * @return iterable<string, array{exclude: string, fromProject: bool, expected: list<string>}>
+     */
+    public static function provideExcludes(): iterable
+    {
+        $kept = ['app/Http/Requests/StoreRequest.php'];
+
+        yield 'a directory name' => ['exclude' => 'Legacy', 'fromProject' => true, 'expected' => $kept];
+        yield 'a file, from the project' => ['exclude' => 'app/Legacy/OldRequest.php', 'fromProject' => true, 'expected' => $kept];
+        yield 'a directory behind ./, from the project' => ['exclude' => './app/Legacy', 'fromProject' => true, 'expected' => $kept];
+        yield 'a file behind ./, from the working directory' => ['exclude' => './app/Legacy/OldRequest.php', 'fromProject' => false, 'expected' => $kept];
+        yield 'a directory by its absolute path' => ['exclude' => '{root}/app/Legacy', 'fromProject' => false, 'expected' => $kept];
+        yield 'a directory above the project' => ['exclude' => '{above}', 'fromProject' => true, 'expected' => ['app/Http/Requests/StoreRequest.php', 'app/Legacy/OldRequest.php']];
+    }
 }
