@@ -65,6 +65,12 @@ final class SolverOnHirRefusalsTest extends TestCase
 
         yield 'lookahead inside a lookahead' => ['pattern' => '/(?=a(?=b))a/', 'expected' => $nested];
         yield 'anchor inside a negative lookbehind' => ['pattern' => '/(?<!^a)b/', 'expected' => $anchored];
+        // Oracle: preg_match('/(?:x|(?=a)){0}\w/', 'b') is 0 where
+        // preg_match('/\w/', 'b') is 1, and preg_match('/(?:x|^){0}b/', 'ab')
+        // is 0 where preg_match('/b/', 'ab') is 1: PCRE2 reads the group
+        // repeated no time to choose where it tries a match.
+        yield 'lookahead in a group repeated no time' => ['pattern' => '/(?:x|(?=a)){0}\w/', 'expected' => 'An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.'];
+        yield 'start anchor in a group repeated no time' => ['pattern' => '/(?:x|^){0}b/', 'expected' => 'An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.'];
 
         yield 'atomic group' => ['pattern' => '/(?>a+)b/', 'expected' => $atomic];
         // Oracle: preg_match('/^(?:a|ab){1}+c$/', 'abc') is 0, where the
@@ -153,6 +159,23 @@ final class SolverOnHirRefusalsTest extends TestCase
         $this->assertTrue($result->isEquivalent);
         $this->assertNull($result->leftOnlyExample);
         $this->assertNull($result->rightOnlyExample);
+    }
+
+    /**
+     * Oracle: "/(?:x|y){0}\w/" and "/\w/" find the same match in "\tb",
+     * "b", "xb" and "\t" (1, 1, 1, 0 each): a group repeated no time that
+     * holds no anchor, assertion or lookaround moves nothing.
+     */
+    #[Test]
+    public function test_a_group_repeated_no_time_without_an_assertion_is_answered(): void
+    {
+        foreach (["\tb", 'b', 'xb', "\t"] as $subject) {
+            $this->assertSame(preg_match('/\w/', $subject, $plain), preg_match('/(?:x|y){0}\w/', $subject, $repeated), bin2hex($subject));
+            $this->assertSame($plain, $repeated);
+        }
+
+        $this->assertTrue((new LanguageSolver())->equivalent('/(?:x|y){0}\w/', '/\w/', $this->fullMatchOptions())->isEquivalent);
+        $this->assertTrue((new LanguageSolver())->equivalent('/(?:x|y){0}\w/', '/\w/', new SolverOptions(matchMode: MatchMode::Partial))->isEquivalent);
     }
 
     private function fullMatchOptions(): SolverOptions

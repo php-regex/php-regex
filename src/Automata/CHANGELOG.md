@@ -16,6 +16,13 @@ CHANGELOG
    `/(?<x>a){0}b/` was proven to write the `$matches` of `/b/`, where
    `preg_match_all()` writes an empty group `x` for the one and none for the
    other. A group it cannot number there, inside a `(*scs:...)`, is refused.
+ * `equivalent()` and `matchEquivalent()` refuse an anchor, an assertion or a
+   lookaround in a group repeated no time, which PCRE2 still reads to choose
+   where it tries a match: `/(?:x|(?=a)){0}\w/` was proven alike `/\w/`, where
+   `preg_match()` finds no match in `\tb` with the one and `b` with the other.
+   `matchEquivalent()` refuses a verb, a callout or a conditional there too, as
+   it does anywhere else. The optimizer and the Infection judge no longer take
+   such a pair as proven.
  * The lookaround bodies of a pattern share one allowance: their states count
    together against `maxNfaStates` and `maxDfaStates`, and their work against
    one `maxTransitionsProcessed` budget, whose diagnostic names the

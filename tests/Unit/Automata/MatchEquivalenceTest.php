@@ -343,6 +343,15 @@ final class MatchEquivalenceTest extends TestCase
         yield 'possessive before an alternation' => ['left' => '/a++(?:a|b)/', 'right' => '/a+(?:a|b)/', 'reason' => 'Atomic groups and possessive quantifiers'];
         yield 'loop on a body that can match empty' => ['left' => '/(a*)*/', 'right' => '/(a*)/', 'reason' => 'A repeated body that can match empty'];
         yield 'word boundary' => ['left' => '/\ba/', 'right' => '/a/', 'reason' => 'Word boundaries'];
+        // PHP 8.4.27 / PCRE2 10.49: on "\tb" the left one of each of the
+        // first four finds no match, the right one "b": PCRE2 reads a group
+        // repeated no time to choose where it tries a match.
+        yield 'a lookahead in a group repeated no time' => ['left' => '/(?:x|(?=a)){0}\w/', 'right' => '/\w/', 'reason' => 'in a group repeated no time still moves where PCRE2 tries a match'];
+        yield 'a start anchor in a group repeated no time' => ['left' => '/(?:x|^){0}b/', 'right' => '/b/', 'reason' => 'in a group repeated no time still moves where PCRE2 tries a match'];
+        yield 'a subject start in a group repeated zero to zero times' => ['left' => '/(?:x|\A){0,0}b/', 'right' => '/b/', 'reason' => 'in a group repeated no time still moves where PCRE2 tries a match'];
+        yield 'a lookahead in a group repeated no time, in a capture' => ['left' => '/((?:x|(?=a)){0})\w/', 'right' => '/()\w/', 'reason' => 'in a group repeated no time still moves where PCRE2 tries a match'];
+        yield 'a callout in a group repeated no time' => ['left' => '/(?:x|(?C1)){0}b/', 'right' => '/b/', 'reason' => 'Backreferences, subroutines, conditionals, callouts and control verbs'];
+        yield 'a conditional in a group repeated no time' => ['left' => '/(?:x|(?(?=a)a|b)){0}c/', 'right' => '/c/', 'reason' => 'Backreferences, subroutines, conditionals, callouts and control verbs'];
         yield 'anchor before more text' => ['left' => '/a$b/', 'right' => '/ab/', 'reason' => 'An end anchor followed by more of the pattern'];
         yield 'anchor before an optional letter' => ['left' => '/a$(?:b|)/', 'right' => '/a/', 'reason' => 'An end anchor followed by more of the pattern'];
         // PHP 8.4.27 / PCRE2 10.49: on "a\n" the left one matches "a\n" at

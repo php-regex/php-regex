@@ -22,6 +22,7 @@ use PHPRegex\Parser\Hir\CaptureHir;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassHir;
 use PHPRegex\Parser\Hir\ConcatHir;
+use PHPRegex\Parser\Hir\ConditionalHir;
 use PHPRegex\Parser\Hir\EmptyHir;
 use PHPRegex\Parser\Hir\Greed;
 use PHPRegex\Parser\Hir\Hir;
@@ -53,6 +54,8 @@ final class PriorityNfaBuilder
     public const ASSERTION_MESSAGE = 'Word boundaries, multiline anchors, \G and \K are conditions the match solver does not read.';
 
     public const TRAILING_ANCHOR_MESSAGE = 'An end anchor followed by more of the pattern cannot be read by the match solver.';
+
+    public const ZERO_REPEAT_ASSERTION_MESSAGE = 'An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the match solver does not read.';
 
     private PriorityNfa $nfa;
 
@@ -238,7 +241,8 @@ final class PriorityNfaBuilder
     }
 
     /**
-     * The groups of a body no state is built for.
+     * The groups of a body no state is built for, which must hold nothing
+     * PCRE2 may read to choose where it tries a match.
      *
      * @throws ComplexityException
      */
@@ -248,9 +252,13 @@ final class PriorityNfaBuilder
         while (null !== $node = array_pop($pending)) {
             if ($node instanceof CaptureHir) {
                 $this->countGroup($node);
-            } elseif ($node instanceof OpaqueHir && null === $node->body && $node->properties->captureCount > 0) {
-                // Groups the tree does not show, as in "(*scs:(1)(b))": their
-                // numbers are not known.
+            } elseif ($node instanceof AssertionHir || $node instanceof LookHir) {
+                // "/(?:x|(?=a)){0}\w/" finds no match in "\tb", where "/\w/"
+                // finds "b".
+                throw new ComplexityException(self::ZERO_REPEAT_ASSERTION_MESSAGE, $node->startPosition, $this->pattern);
+            } elseif ($node instanceof OpaqueHir || $node instanceof ConditionalHir) {
+                // A verb, a condition or a group the tree does not show, as
+                // in "(*scs:(1)(b))", is read nowhere else either.
                 throw new ComplexityException(self::BACKREFERENCE_MESSAGE, $node->startPosition, $this->pattern);
             }
 

@@ -68,6 +68,8 @@ final class HirToNfaTransformer
 
     public const SURROGATE_MESSAGE = 'PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.';
 
+    public const ZERO_REPEAT_ASSERTION_MESSAGE = 'An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.';
+
     private const MIN_CODEPOINT = 0;
 
     private const MAX_CODEPOINT = 255;
@@ -245,6 +247,13 @@ final class HirToNfaTransformer
                 throw new ComplexityException(self::POSSESSIVE_MESSAGE, $node->startPosition, $this->pattern);
             }
 
+            // PCRE2 reads a group repeated no time to choose where it tries
+            // a match: "/(?:x|(?=a)){0}\w/" finds no "b" in "\tb".
+            $assertion = 0 === $node->max ? self::assertionIn($node->body) : null;
+            if (null !== $assertion) {
+                throw new ComplexityException(self::ZERO_REPEAT_ASSERTION_MESSAGE, $assertion->startPosition, $this->pattern);
+            }
+
             // Another iteration of the loop may follow the body, so the
             // loop's own first characters follow it too.
             $bodyFollow = null === $follow ? null
@@ -365,6 +374,23 @@ final class HirToNfaTransformer
         }
 
         return $rest;
+    }
+
+    /**
+     * The first anchor, assertion or lookaround under the node, or null.
+     */
+    private static function assertionIn(Hir $hir): ?Hir
+    {
+        $pending = [$hir];
+        while (null !== $node = array_pop($pending)) {
+            if ($node instanceof AssertionHir || $node instanceof LookHir) {
+                return $node;
+            }
+
+            array_push($pending, ...$node->children());
+        }
+
+        return null;
     }
 
     private static function surrogates(): CharSet
