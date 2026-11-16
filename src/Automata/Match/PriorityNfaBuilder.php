@@ -27,6 +27,7 @@ use PHPRegex\Parser\Hir\Greed;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\LiteralHir;
 use PHPRegex\Parser\Hir\LookHir;
+use PHPRegex\Parser\Hir\OpaqueHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
 
 /**
@@ -185,6 +186,14 @@ final class PriorityNfaBuilder
             throw new ComplexityException(self::NULLABLE_LOOP_MESSAGE, $hir->startPosition, $this->pattern);
         }
 
+        // Never tried, the body still numbers and names its groups:
+        // preg_match_all() writes an empty group 1 for "(a){0}b".
+        if (0 === $hir->max) {
+            $this->countGroupsIn($hir->body);
+
+            return $next;
+        }
+
         $greedy = Greed::Lazy !== $hir->greed;
         if (null === $hir->max) {
             // The loop: one more iteration or out, in the order the greed says.
@@ -213,14 +222,40 @@ final class PriorityNfaBuilder
      */
     private function capture(CaptureHir $hir, int $next): int
     {
-        $this->nfa->groupCount = max($this->nfa->groupCount, $hir->index);
-        if (null !== $hir->name) {
-            $this->nfa->names[$hir->index] ??= $hir->name;
-        }
+        $this->countGroup($hir);
 
         $close = $this->tag(2 * $hir->index + 1, $next);
 
         return $this->tag(2 * $hir->index, $this->state($hir->body, $close));
+    }
+
+    private function countGroup(CaptureHir $hir): void
+    {
+        $this->nfa->groupCount = max($this->nfa->groupCount, $hir->index);
+        if (null !== $hir->name) {
+            $this->nfa->names[$hir->index] ??= $hir->name;
+        }
+    }
+
+    /**
+     * The groups of a body no state is built for.
+     *
+     * @throws ComplexityException
+     */
+    private function countGroupsIn(Hir $hir): void
+    {
+        $pending = [$hir];
+        while (null !== $node = array_pop($pending)) {
+            if ($node instanceof CaptureHir) {
+                $this->countGroup($node);
+            } elseif ($node instanceof OpaqueHir && null === $node->body && $node->properties->captureCount > 0) {
+                // Groups the tree does not show, as in "(*scs:(1)(b))": their
+                // numbers are not known.
+                throw new ComplexityException(self::BACKREFERENCE_MESSAGE, $node->startPosition, $this->pattern);
+            }
+
+            array_push($pending, ...$node->children());
+        }
     }
 
     private function tag(int $slot, int $next): int

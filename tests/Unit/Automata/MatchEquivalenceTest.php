@@ -129,6 +129,25 @@ final class MatchEquivalenceTest extends TestCase
         (new LanguageSolver())->matchEquivalent($left, $right);
     }
 
+    /**
+     * PHP 8.4.27 / PCRE2 10.49: preg_match_all() writes an empty group 2
+     * on "ac" for the left one, which the right one does not have. The
+     * group stands inside a scan, which the tree does not take apart.
+     */
+    #[Test]
+    public function test_a_group_hidden_in_a_body_repeated_no_time_is_refused(): void
+    {
+        $left = '/(a)(?:(*scs:(1)(b))){0}c/';
+        $this->requiresPcre2('10.45', $left);
+        $this->assertSame(1, preg_match_all($left, 'ac', $matches));
+        $this->assertSame([['ac'], ['a'], ['']], $matches);
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('Backreferences, subroutines, conditionals, callouts and control verbs');
+
+        (new LanguageSolver())->matchEquivalent($left, '/(a)c/');
+    }
+
     #[Test]
     public function test_the_search_stops_at_its_budget(): void
     {
@@ -294,6 +313,12 @@ final class MatchEquivalenceTest extends TestCase
         yield 'shorter first, greedy option' => ['left' => '/a|ab/', 'right' => '/a(?:b)?/', 'shortest' => 'ab'];
         yield 'a group more' => ['left' => '/(a)/', 'right' => '/(?:a)/', 'shortest' => 'a'];
         yield 'named and numbered' => ['left' => '/(?<n>a)/', 'right' => '/(a)/', 'shortest' => 'a'];
+        // A group repeated no time still takes its number and its name:
+        // preg_match_all() writes it empty, PREG_UNMATCHED_AS_NULL null.
+        yield 'a named group repeated no time' => ['left' => '/(?<x>a){0}b/', 'right' => '/b/', 'shortest' => 'b'];
+        yield 'a group repeated zero to zero times' => ['left' => '/(a){0,0}b/', 'right' => '/b/', 'shortest' => 'b'];
+        yield 'a group inside a group repeated no time' => ['left' => '/(?:c(a)){0}b/', 'right' => '/b/', 'shortest' => 'b'];
+        yield 'a group repeated no time, another name' => ['left' => '/(?<x>a){0}b/', 'right' => '/(?<y>a){0}b/', 'shortest' => 'b'];
         yield 'dollar and end of subject' => ['left' => '/^ab$/', 'right' => '/^ab\z/', 'shortest' => "ab\n"];
         yield 'group moves' => ['left' => '/a(b)c/', 'right' => '/(a)bc/', 'shortest' => 'abc'];
         yield 'language differs' => ['left' => '/ab/', 'right' => '/ac/', 'shortest' => 'ab'];

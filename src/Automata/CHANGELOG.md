@@ -12,6 +12,10 @@ CHANGELOG
    to write the `$matches` of `/\n/`, where `preg_match()` takes `a\n` at 0
    for the one and `\n` at 1 for the other. The optimizer no longer offers
    such a rewrite.
+ * `matchEquivalent()` counts the groups of a body repeated no time, `{0}`:
+   `/(?<x>a){0}b/` was proven to write the `$matches` of `/b/`, where
+   `preg_match_all()` writes an empty group `x` for the one and none for the
+   other. A group it cannot number there, inside a `(*scs:...)`, is refused.
  * The lookaround bodies of a pattern share one allowance: their states count
    together against `maxNfaStates` and `maxDfaStates`, and their work against
    one `maxTransitionsProcessed` budget, whose diagnostic names the

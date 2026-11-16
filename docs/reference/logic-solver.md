@@ -119,7 +119,8 @@ empty, which PCRE stops after an empty iteration; word boundaries, multiline anc
 and `\K`; an end anchor followed by more of the pattern, another turn of the loop it stands
 in included (`/(?:a$)*\n/`, `/(?:a$)*/`); and two patterns of which one
 reads UTF-8 and the other bytes. Groups count by number and by name: `/(?<n>a)/` and `/(a)/`
-write different `$matches`.
+write different `$matches`, and so do `/(?<n>a){0}b/` and `/b/`, as a group repeated no time
+still takes its number.
 
 Neither question answers the other. The same `$matches` on every subject is the same
 answer on every subject, so the two patterns find a match in the same subjects; it is not
