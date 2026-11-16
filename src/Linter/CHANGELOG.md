@@ -28,6 +28,11 @@ CHANGELOG
    `/^(?:[0-9]{2}\w+)+$/` and `/^(?:(?:a+){2})+$/`, which it missed, are
    reported. A separator inside the count still keeps the iterations apart,
    `/^(?:(?:\d+\.){3}\d+,?)+$/` stays silent.
+ * A loop that ends an atomic group or a possessive body is no longer left
+   alone by `regex.lint.quantifier.nested`, `regex.lint.dotstar.nested` and
+   `regex.lint.overlap.charset` where a subroutine call runs a group between
+   the two, without the atomic group: `/^(?:(?>x((?:a+)+))|y(?1)$)/` and
+   `/^(?:x((?:a+)+)++|y(?1)$)/` are reported.
  * The lint reads pattern arguments it left out: a pattern built at the call
    from a local variable, an interpolated string or a heredoc
    (`"/^{$part}$/"`), an integer, a `sprintf()` whose format holds only

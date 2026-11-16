@@ -374,6 +374,39 @@ final class NestedLoopEdgeCaseTest extends TestCase
     }
 
     /**
+     * A loop that ends an atomic group, or the body of a possessive loop,
+     * is no tail of it where a call runs a group between the two: the call
+     * runs the loop without the group around it. "y" then the run then "!"
+     * goes exponential (8 -> 12 -> 16 letters): 387 -> 6 147 -> 98 307
+     * through the atomic group, 386 -> 6 146 -> 98 306 through the
+     * possessive loop, 1 026 -> 16 386 -> 262 146 for an alternation of
+     * one letter twice, 1 539 -> 24 579 -> 393 219 for a dot-star loop
+     * under s. A call of a group around the atomic group runs it whole
+     * (7 -> 7 -> 7).
+     *
+     * @return iterable<string, array{pattern: string, rule: string, reported: bool}>
+     */
+    public static function provideAtomicTailsACallRuns(): iterable
+    {
+        yield 'loop ending an atomic group' => ['pattern' => '/^(?:(?>x((?:a+)+))|y(?1)$)/', 'rule' => self::NESTED, 'reported' => true];
+        yield 'loop ending a possessive body' => ['pattern' => '/^(?:x((?:a+)+)++|y(?1)$)/', 'rule' => self::NESTED, 'reported' => true];
+        yield 'alternation ending an atomic group' => ['pattern' => '/^(?:(?>x((?:a|a)+))|y(?1)$)/', 'rule' => self::OVERLAP, 'reported' => true];
+        yield 'dot-star loop ending an atomic group' => ['pattern' => '/^(?:(?>x((?:.*)+))|y(?1)b)/s', 'rule' => self::DOT_STAR, 'reported' => true];
+        yield 'call of a group around the atomic group' => ['pattern' => '/^(?:x((?>(?:a+)+))|y(?1)$)/', 'rule' => self::NESTED, 'reported' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideAtomicTailsACallRuns')]
+    public function test_a_call_runs_an_atomic_tail_without_its_group(string $pattern, string $rule, bool $reported): void
+    {
+        $short = self::steps($pattern, 'y'.str_repeat('a', 8).'!');
+        $long = self::steps($pattern, 'y'.str_repeat('a', 12).'!');
+        $this->assertSame($reported, $long / $short > 8, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($reported, \in_array($rule, self::lint($pattern), true), $pattern);
+    }
+
+    /**
      * A loop that ends the pattern is left alone when it may stop after one
      * iteration: the first way through is the match ("(a+){1,}" takes 6
      * steps on a{n}b whatever n).
