@@ -263,7 +263,9 @@ final class RedosHeuristicShapesTest extends TestCase
      * 3), and a call of disjoint alternatives reads one way (35 -> 51 ->
      * 67). A comma before the call keeps apart a run that is one of the
      * alternatives called, whether the group calls itself (31 -> 43 -> 55)
-     * or not (27 -> 39 -> 51).
+     * or not (27 -> 39 -> 51). Past a branch reset, whose branches share
+     * their numbers, "(?2)" runs "(a|a)" (3 068 -> 49 148 -> 786 428 after an
+     * "x") and "(?1)" the "(x)" (47 -> 67 -> 87).
      *
      * @return iterable<string, array{pattern: string, prefix: string, unit: string, critical: bool}>
      */
@@ -277,6 +279,9 @@ final class RedosHeuristicShapesTest extends TestCase
         yield 'call of disjoint alternatives' => ['pattern' => '/^(a|b)(?:(?1))+$/', 'prefix' => '', 'unit' => 'a', 'critical' => false];
         yield 'recursive call of a list after a comma' => ['pattern' => '/^(?<value>\[(?:(?&value)(?:,(?&value))*)?\]|\d+)$/', 'prefix' => '[', 'unit' => '1,', 'critical' => false];
         yield 'call of alternatives after a comma' => ['pattern' => '/^(?:,(?&v))*$(?(DEFINE)(?<v>\[\]|\d+))/', 'prefix' => '', 'unit' => ',1', 'critical' => false];
+        yield 'call numbered past a branch reset' => ['pattern' => '/^(?|(x)|(y))(?:(?2))+(a|a)$/', 'prefix' => 'x', 'unit' => 'a', 'critical' => true];
+        yield 'call of a branch of a branch reset' => ['pattern' => '/^(?|(x)|(y))(?:(?1))+(a|a)$/', 'prefix' => 'x', 'unit' => 'x', 'critical' => false];
+        yield 'relative call back' => ['pattern' => '/^(a|a)(?:(?-1))+$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
     }
 
     #[Test]

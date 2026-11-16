@@ -15,7 +15,6 @@ namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
-use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -117,9 +116,20 @@ final class RedosProfiler extends AbstractNodeVisitor
     private readonly FirstTriedStep $firstTriedStep;
 
     /**
-     * The groups of the pattern, to find the one a call runs.
+     * The first capturing group bearing each number and each name, as PCRE
+     * numbers them, branch resets included: the group a call runs.
+     *
+     * @var array<int|string, GroupNode>
      */
-    private GroupIndex $groups;
+    private array $calledGroups = [];
+
+    /**
+     * The groups opened before each call, by object id: a relative call
+     * counts from there.
+     *
+     * @var array<int, int>
+     */
+    private array $groupsBeforeCall = [];
 
     /**
      * The calls already read as the group they run, by object id: each is
@@ -138,7 +148,6 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     public function __construct(private readonly CharSetAnalyzer $charSetAnalyzer = new CharSetAnalyzer())
     {
-        $this->groups = GroupIndex::empty();
         $this->nullability = new Nullability();
         $this->firstTriedStep = new FirstTriedStep();
     }
@@ -215,7 +224,9 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->backrefLoopDetected = false;
         $this->culpritNode = null;
         $this->culpritSeverity = RedosSeverity::Safe;
-        $this->groups = GroupIndex::of($node->pattern);
+        $this->calledGroups = [];
+        $this->groupsBeforeCall = [];
+        $this->indexGroups($node->pattern, 0);
         $this->callsReadThrough = [];
         $this->setsMayChange = str_contains($node->flags, 'i') || self::holdsOptionSetting($node->pattern);
 
@@ -695,7 +706,8 @@ final class RedosProfiler extends AbstractNodeVisitor
         $severity = RedosSeverity::Low;
         if ($this->totalQuantifierDepth > 0 && !isset($this->callsReadThrough[spl_object_id($node)])) {
             $this->callsReadThrough[spl_object_id($node)] = true;
-            foreach ($this->groups->groupsCalledBy($node) as $group) {
+            $group = $this->calledGroup($node);
+            if (null !== $group) {
                 $severity = $this->maxSeverity($severity, $group->child->accept($this));
             }
         }
@@ -725,6 +737,67 @@ final class RedosProfiler extends AbstractNodeVisitor
     public function visitCallout(CalloutNode $node): RedosSeverity
     {
         return RedosSeverity::Safe;
+    }
+
+    /**
+     * Numbers the capturing groups from $count, in the order written, and
+     * returns how many are open after the node: the branches of a branch
+     * reset each count from where it opens, and the most of them stands
+     * after it.
+     */
+    private function indexGroups(NodeInterface $node, int $count): int
+    {
+        if ($node instanceof SubroutineNode) {
+            $this->groupsBeforeCall[spl_object_id($node)] = $count;
+
+            return $count;
+        }
+
+        if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
+            $after = $count;
+            foreach ($node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child] as $branch) {
+                $after = max($after, $this->indexGroups($branch, $count));
+            }
+
+            return $after;
+        }
+
+        if ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::Named], true)) {
+            $count++;
+            $this->calledGroups[$count] ??= $node;
+            if (null !== $node->name) {
+                $this->calledGroups[$node->name] ??= $node;
+            }
+        }
+
+        foreach ($node->getChildren() as $child) {
+            $count = $this->indexGroups($child, $count);
+        }
+
+        return $count;
+    }
+
+    /**
+     * The group a call runs, by number, relative number or name; null for
+     * a recursion into the whole pattern or a group not found.
+     */
+    private function calledGroup(SubroutineNode $node): ?GroupNode
+    {
+        $reference = $node->reference;
+        $signed = str_starts_with($reference, '+') || str_starts_with($reference, '-');
+        $digits = $signed ? substr($reference, 1) : $reference;
+        if ('' === $digits || '' !== trim($digits, '0123456789')) {
+            return $this->calledGroups[$reference] ?? null;
+        }
+
+        if (!$signed) {
+            return $this->calledGroups[(int) $digits] ?? null;
+        }
+
+        $offset = (int) $reference;
+        $before = $this->groupsBeforeCall[spl_object_id($node)] ?? 0;
+
+        return $this->calledGroups[$offset < 0 ? $before + 1 + $offset : $before + $offset] ?? null;
     }
 
     /**
