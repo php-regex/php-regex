@@ -103,6 +103,7 @@ final class TextExplainerTest extends TestCase
         yield 'greedy after the setting is turned off' => ['pattern' => '/(?U)(?-U)a+/', 'lazy' => false];
         yield 'greedy after a reset of the other options' => ['pattern' => '/(?U)(?^)a+/', 'lazy' => true];
         yield 'greedy without the flag' => ['pattern' => '/a+/', 'lazy' => false];
+        yield 'greedy after another inline setting' => ['pattern' => '/(?i)a+/', 'lazy' => false];
         yield 'lazy without the flag' => ['pattern' => '/a+?/', 'lazy' => true];
         yield 'greedy under the flag after Unicode properties' => ['pattern' => '/(*UCP)a+/U', 'lazy' => true];
         yield 'greedy under the flag after a linebreak convention' => ['pattern' => '/(*BSR_ANYCRLF)a+/U', 'lazy' => true];
