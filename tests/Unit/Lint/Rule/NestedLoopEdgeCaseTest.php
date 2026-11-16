@@ -374,6 +374,37 @@ final class NestedLoopEdgeCaseTest extends TestCase
     }
 
     /**
+     * A first loop that may match nothing hides no loop after it: where it
+     * matches nothing, the run after it meets the run of the iteration
+     * before. Each reported row goes exponential on the unit repeated then
+     * "!" (384 -> 98 304 for n 8 -> 16), behind "b?" and between "x*" and
+     * "y*". A separator after the run keeps the iterations apart (10 -> 18
+     * -> 34 on "cd" or "c," repeated), and so does a first loop that always
+     * reads (17 -> 33 -> 65).
+     *
+     * @return iterable<string, array{pattern: string, prefix: string, unit: string, reported: bool}>
+     */
+    public static function provideLoopsBehindALoopThatMayMatchNothing(): iterable
+    {
+        yield 'run behind an optional letter' => ['pattern' => '/^(?:b?c+)+$/', 'prefix' => '', 'unit' => 'c', 'reported' => true];
+        yield 'run between two runs that may match nothing' => ['pattern' => '/^(?:x*a+y*)+$/', 'prefix' => '', 'unit' => 'a', 'reported' => true];
+        yield 'separator after the run' => ['pattern' => '/^(?:b?c+d)+$/', 'prefix' => '', 'unit' => 'cd', 'reported' => false];
+        yield 'comma after the run' => ['pattern' => '/^(?:b?c+,)+$/', 'prefix' => '', 'unit' => 'c,', 'reported' => false];
+        yield 'run behind a run that always reads' => ['pattern' => '/^(?:b+c+)+$/', 'prefix' => 'b', 'unit' => 'c', 'reported' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsBehindALoopThatMayMatchNothing')]
+    public function test_nested_loop_behind_a_loop_that_may_match_nothing_is_reported_only_when_the_engine_goes_exponential(string $pattern, string $prefix, string $unit, bool $reported): void
+    {
+        $short = self::steps($pattern, $prefix.str_repeat($unit, 8).'!');
+        $long = self::steps($pattern, $prefix.str_repeat($unit, 16).'!');
+        $this->assertSame($reported, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($reported, \in_array(self::NESTED, self::lint($pattern), true), $pattern);
+    }
+
+    /**
      * A loop that ends an atomic group, or the body of a possessive loop,
      * is no tail of it where a call runs a group between the two: the call
      * runs the loop without the group around it. "y" then the run then "!"

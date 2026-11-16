@@ -80,16 +80,70 @@ final class NestedQuantifierRule extends AbstractLintRule
 
         if (LoopShape::isTrailingLoopFromOneIteration($node, $context)
             || LoopShape::isShortRunBeforeTheEnd($node, $context)
-            || $this->isSafelySeparatedNestedQuantifier($node, $nested, $context)
         ) {
             return [];
         }
 
         $iteration = LoopShape::iteration($node);
-        if (null !== $iteration && LoopShape::isSeparatedIteration($iteration, $nested, $context)) {
+        if ($this->keepsTheIterationsApart($node, $nested, $iteration, $context)) {
+            // A later loop of the iteration, behind items that may all match
+            // nothing, meets the iteration before as the first one does: in
+            // "(?:b?c+)+" the "c+" of one iteration meets the next one's
+            // where "b?" matches nothing. Once one keeps the iterations apart,
+            // what follows it reads a character: no later loop is asked.
+            foreach ($this->loopsBehindNothing($iteration, $nested) as $later) {
+                if ($this->keepsTheIterationsApart($node, $later, $iteration, $context)) {
+                    return [];
+                }
+
+                return $this->violation($node);
+            }
+
             return [];
         }
 
+        return $this->violation($node);
+    }
+
+    /**
+     * Whether a separator keeps the runs of the inner loop of two
+     * iterations apart.
+     */
+    private function keepsTheIterationsApart(QuantifierNode $outer, QuantifierNode $nested, ?SequenceNode $iteration, LintContext $context): bool
+    {
+        return $this->isSafelySeparatedNestedQuantifier($outer, $nested, $context)
+            || (null !== $iteration && LoopShape::isSeparatedIteration($iteration, $nested, $context));
+    }
+
+    /**
+     * The loops written in the iteration, other than the first one found,
+     * that only items which may match nothing come before.
+     *
+     * @return iterable<QuantifierNode>
+     */
+    private function loopsBehindNothing(?SequenceNode $iteration, QuantifierNode $first): iterable
+    {
+        foreach ($iteration->children ?? [] as $child) {
+            $item = NodePredicates::unwrapTransparentNode($child);
+            if ($item !== $first
+                && $item instanceof QuantifierNode
+                && QuantifierType::Possessive !== $item->type
+                && QuantifierMath::isVariable($item)
+            ) {
+                yield $item;
+            }
+
+            if (!NodePredicates::canBeEmpty($child)) {
+                return;
+            }
+        }
+    }
+
+    /**
+     * @return list<RuleViolation>
+     */
+    private function violation(QuantifierNode $node): array
+    {
         return [new RuleViolation(
             self::ID,
             'Nested quantifiers can cause catastrophic backtracking.',

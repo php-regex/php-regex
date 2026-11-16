@@ -301,7 +301,7 @@ preg_match('/^\d+$/D', "123\n");  // 0
 
 **Identifier:** `regex.lint.quantifier.nested`
 
-**When it triggers:** A variable quantifier wraps another variable quantifier, creating catastrophic backtracking potential. A count fixed above zero hides neither the loop after it nor the one inside it: `/^(?:\d{4}|[a-z]+)+$/` and `/^(?:(?:a+){2})+$/` are reported.
+**When it triggers:** A variable quantifier wraps another variable quantifier, creating catastrophic backtracking potential. A count fixed above zero hides neither the loop after it nor the one inside it: `/^(?:\d{4}|[a-z]+)+$/` and `/^(?:(?:a+){2})+$/` are reported. Nor does a first loop that may match nothing hide the loop behind it: in `/^(?:b?c+)+$/` the runs of `c` of two iterations meet where `b?` matches nothing, and the pattern is reported.
 
 It is not reported when the nesting cannot blow up:
 

@@ -28,6 +28,13 @@ CHANGELOG
    `/^(?:[0-9]{2}\w+)+$/` and `/^(?:(?:a+){2})+$/`, which it missed, are
    reported. A separator inside the count still keeps the iterations apart,
    `/^(?:(?:\d+\.){3}\d+,?)+$/` stays silent.
+ * `regex.lint.quantifier.nested` also reads the loops of an iteration that
+   only items which may match nothing come before: `/^(?:b?c+)+$/` and
+   `/^(?:x*a+y*)+$/`, whose runs meet across iterations where the first
+   loop matches nothing, are reported, and so is the package name pattern
+   `/^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$/`,
+   which the ReDoS proof finds exponential. A separator after the run, as
+   in `/^(?:b?c+,)+$/`, still keeps the iterations apart.
  * A loop that ends an atomic group or a possessive body is no longer left
    alone by `regex.lint.quantifier.nested`, `regex.lint.dotstar.nested` and
    `regex.lint.overlap.charset` where a subroutine call runs a group between
