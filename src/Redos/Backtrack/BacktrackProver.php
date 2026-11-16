@@ -15,7 +15,9 @@ namespace PHPRegex\Redos\Backtrack;
 
 use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Analysis\LiteralSet;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Engine\PcreLimits;
 use PHPRegex\Parser\Hir\Utf8;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\ControlCharNode;
@@ -51,6 +53,22 @@ use PHPRegex\Redos\RedosComplexity;
  */
 final class BacktrackProver
 {
+    /**
+     * The limits PHP runs a pattern under by default: pcre.backtrack_limit
+     * and pcre.recursion_limit.
+     */
+    private const DEFAULT_BACKTRACK_LIMIT = 1_000_000;
+
+    private const DEFAULT_RECURSION_LIMIT = 100_000;
+
+    /**
+     * The pumps a witness through bounded repeats alone is run with, and the
+     * most rejecting suffixes it is tried with.
+     */
+    private const BOUNDED_PUMPS = [16, 64];
+
+    private const BOUNDED_SUFFIXES = 3;
+
     public function __construct(
         private readonly int $maxStates,
         private readonly int $maxSteps,
@@ -189,7 +207,10 @@ final class BacktrackProver
             }
         }
 
-        if ($best['approximated']) {
+        // A pump through bounded repeats read as unbounded, and nothing else
+        // the model approximates, holds up to the bound only: it is a proof
+        // where the engine, run as PHP runs it by default, gives up within it.
+        if ($best['approximated'] && !($best['abstracted'] && self::engineGivesUp($pattern, $best, $unicode, $target?->locale))) {
             throw ModelLimitException::approximated();
         }
 
@@ -537,6 +558,51 @@ final class BacktrackProver
         }
 
         return null === $bound ? null : $sofar + $bound;
+    }
+
+    /**
+     * Whether the engine, under PHP's default limits and the tables of the
+     * target's locale, gives up at the backtrack limit on the witness of an
+     * exponential pump that rests only on bounded repeats read as unbounded:
+     * past its bound a repeat takes no more copies and the cost stops
+     * growing, so only the engine says whether the bound leaves enough of
+     * them. "(?:a|a){1,40}" does on 24 letters and a "!", "(?:a|a){1,16}"
+     * never does. The witness is run with 16 pumps, then 64, with each of
+     * the first rejecting suffixes, its attempt pinned to the start with the
+     * "A" modifier: the search tries that attempt first, so each run costs
+     * the limit at most, whatever the length of the subject.
+     *
+     * @param Verdict     $verdict
+     * @param string|null $locale  the LC_CTYPE locale the pattern runs under; the one PHP
+     *                             compiles under now when null
+     */
+    private static function engineGivesUp(?string $pattern, array $verdict, bool $unicode, ?string $locale): bool
+    {
+        if (null === $pattern || !\function_exists('ini_set')) {
+            return false;
+        }
+
+        $engine = new PcreEngine();
+        $pinned = $engine->prepare($pattern).'A';
+        $limits = new PcreLimits(self::DEFAULT_BACKTRACK_LIMIT, self::DEFAULT_RECURSION_LIMIT);
+        $prefix = Utf8::encode($verdict['prefix'], $unicode);
+        $pump = Utf8::encode($verdict['pump'], $unicode);
+        $gaveUp = false;
+        CharacterTables::under($locale ?? CharacterTables::current(), static function () use ($engine, $limits, $pinned, $verdict, $unicode, $prefix, $pump, &$gaveUp): void {
+            foreach (\array_slice([$verdict['suffix'], ...$verdict['alternatives']], 0, self::BOUNDED_SUFFIXES) as $suffix) {
+                foreach (self::BOUNDED_PUMPS as $pumps) {
+                    $subject = $prefix.str_repeat($pump, $pumps).Utf8::encode($suffix, $unicode);
+                    $match = $verdict['withoutMatches'] ? $engine->test($pinned, $subject, $limits) : $engine->match($pinned, $subject, $limits);
+                    if (\PREG_BACKTRACK_LIMIT_ERROR === $match->errorCode) {
+                        $gaveUp = true;
+
+                        return;
+                    }
+                }
+            }
+        });
+
+        return $gaveUp;
     }
 
     /**

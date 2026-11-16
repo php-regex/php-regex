@@ -27,6 +27,7 @@ use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\Extraction\ValueExpr;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
+use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Path;
 
@@ -439,19 +440,15 @@ final class PatternExtractor
     private function collectPhpFiles(array $paths, array $excludePaths, ?LintProgress $progress = null, ?string $excludeBase = null): array
     {
         // Paths are walked and matched with "/" on every host: an exclude
-        // and a base keep their meaning whichever separator spelled them.
-        $basePrefix = null === $excludeBase ? null : rtrim(Path::normalize($excludeBase), '/').'/';
-        $normalizedExcludePaths = [];
-        foreach ($excludePaths as $excludePath) {
-            $excludePath = trim(Path::normalize($excludePath), '/');
-            if ('' !== $excludePath) {
-                $normalizedExcludePaths[] = $excludePath;
-            }
-        }
+        // and a base keep their meaning whichever separator spelled them,
+        // and leave a PHP file out as they leave out a file of any source.
+        $excludes = new PatternSourceContext([], $excludePaths, excludeBase: $excludeBase);
 
         // A file the paths name twice, by its own path and inside its
         // directory, or under two spellings, is one file: it is read once,
-        // under the first spelling that names it.
+        // under the first spelling that names it. A file named as a path is
+        // read whatever its suffix, as PHP runs a script it is given; a
+        // directory is walked for its .php files.
         $files = [];
         $read = [];
         foreach ($paths as $path) {
@@ -459,7 +456,7 @@ final class PatternExtractor
                 continue;
             }
 
-            if (is_file($path) && str_ends_with($path, '.php') && !$this->isTemplateFile($path)) {
+            if (is_file($path)) {
                 if (self::isNew($path, $read)) {
                     $files[] = $path;
                     self::reportFound($progress, \count($files));
@@ -488,24 +485,13 @@ final class PatternExtractor
                 }
 
                 $filePath = $file->getPathname();
-                $matchedPath = null !== $basePrefix && str_starts_with($filePath, $basePrefix) ? substr($filePath, \strlen($basePrefix)) : $filePath;
 
                 // Skip template files by default
                 if ($this->isTemplateFile($filePath)) {
                     continue;
                 }
 
-                // Skip excluded directories
-                $excluded = false;
-                foreach ($normalizedExcludePaths as $excludePath) {
-                    if (str_contains($matchedPath, '/'.$excludePath.'/') || str_starts_with($matchedPath, $excludePath.'/')) {
-                        $excluded = true;
-
-                        break;
-                    }
-                }
-
-                if (!$excluded) {
+                if (!$excludes->excludes($filePath)) {
                     $found[] = $filePath;
                 }
             }

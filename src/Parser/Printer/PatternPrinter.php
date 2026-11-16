@@ -1043,11 +1043,25 @@ final class PatternPrinter extends AbstractNodeVisitor
         $no = $node->no->accept($this);
         $this->flags = $flags;
 
-        if ('' === $no) {
+        if (!self::writesNoBranch($node)) {
             return '(?'.$condition.$yes.')';
         }
 
         return '(?'.$condition.$yes.'|'.$no.')';
+    }
+
+    /**
+     * Whether a conditional writes its "|": it does for a "no" branch its
+     * source wrote, even an empty one, "(?(c)X|)". The parser gives one
+     * written without "|" an empty "no" branch where its "yes" branch ends,
+     * and in a lookbehind PCRE gives "(?(c)X)" the length of X alone, where
+     * "(?(c)X|)" may also be empty.
+     *
+     * @internal PatternLayout writes the "|" of a conditional it lays out, and StructuralFingerprint tells the two apart
+     */
+    public static function writesNoBranch(ConditionalNode $node): bool
+    {
+        return !($node->no instanceof LiteralNode && '' === $node->no->value && $node->no->getStartPosition() <= $node->yes->getEndPosition());
     }
 
     #[\Override]

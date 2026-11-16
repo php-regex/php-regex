@@ -400,9 +400,10 @@ final class HelpCommand extends AbstractCommand
             'self-update' => self::commandHelp(
                 description: 'Update the CLI phar to the latest release',
                 declaration: SelfUpdateCommand::options(),
-                notes: ['Updates the installed phar file to the latest version.'],
+                notes: ['Updates the installed phar file to the latest release when it is newer; an older release, or one whose version cannot be read, only with --force.'],
                 examples: [
                     [[$this->resolveInvocation(), 'self-update'], 'Update to latest version'],
+                    [[$this->resolveInvocation(), 'self-update', '--force'], 'Install the latest release, even an older one'],
                 ],
             ),
             'help' => self::commandHelp(

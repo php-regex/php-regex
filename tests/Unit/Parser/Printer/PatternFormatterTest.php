@@ -2961,6 +2961,14 @@ final class PatternFormatterTest extends TestCase
             'operation' => 'format',
         ];
 
+        // The tree of "/(?(?=a)bb)c/" with its "no" branch written empty in
+        // its source: in a lookbehind, PCRE reads the two apart.
+        $conditional = Regex::create(['cache' => new NullCache()])->parse('/(?(?=a)bb)c/');
+        yield 'format, unchanged, a source whose conditional writes an empty "no" branch' => [
+            'regex' => new RegexNode($conditional->pattern, $conditional->flags, $conditional->delimiter, $conditional->startPosition, $conditional->endPosition, '(?(?=a)bb|)c'),
+            'operation' => 'format',
+        ];
+
         // A character whose spelling "\x41" says A while its code point says B.
         $sequence = new SequenceNode([new CharLiteralNode('\x41', 0x42, CharLiteralType::Unicode, 0, 4), new LiteralNode('b', 4, 5)], 0, 5);
         yield 'format, a tree that disagrees with itself' => ['regex' => new RegexNode($sequence, '', '/', 0, 5), 'operation' => 'format'];

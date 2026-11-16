@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Redos;
 
+use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
@@ -78,6 +80,113 @@ final class RedosHeuristicShapesTest extends TestCase
         $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos('/((a?)\2+)+/')->severity);
     }
 
+    /**
+     * A loop whose body reads its input one way, each alternation choosing
+     * its branch by the first character and each count fixed, gives every
+     * iteration one way through, a reference to a capture of any length
+     * included: the engine gives the iterations back one at a time.
+     * Doubling the unit repeated before "!" doubles the steps (1 000 ->
+     * 2 000 -> 4 000 units): 3 004 -> 6 004 -> 12 004 for the PCRE2
+     * manual's "(a|b\1)+", 4 005 -> 8 005 -> 16 005 for "((a|b)\2)+",
+     * and 3 004 -> 6 004 -> 12 004 again with a class, a dot, a property,
+     * a POSIX class, a control character, an anchor, an assertion, a
+     * comment, a fixed count or a possessive repeat in a branch. A script
+     * run reads its body one way when it is atomic or when its body does:
+     * 5 004 -> 10 004 -> 20 004 for "(*asr:x+)", 4 004 -> 8 004 -> 16 004
+     * for "(*sr:x)".
+     *
+     * @return iterable<string, array{pattern: string, unit: string}>
+     */
+    public static function provideReferencesInALoopReadOneWay(): iterable
+    {
+        yield 'reference in a branch of its own group' => ['pattern' => '/^(a|b\1)+$/', 'unit' => 'a'];
+        yield 'reference after a group of disjoint branches' => ['pattern' => '/^((a|b)\2)+$/', 'unit' => 'aa'];
+        yield 'class in a branch' => ['pattern' => '/^([ac]|b\1)+$/', 'unit' => 'a'];
+        yield 'dot in a branch' => ['pattern' => '/^(a.|b\1)+$/', 'unit' => 'ax'];
+        yield 'property in a branch' => ['pattern' => '/^(a\pL|b\1)+$/', 'unit' => 'ax'];
+        yield 'POSIX class in a branch' => ['pattern' => '/^(a[[:digit:]]|b\1)+$/', 'unit' => 'a1'];
+        yield 'control character in a branch' => ['pattern' => '/^(a\cA|b\1)+$/', 'unit' => "a\x01"];
+        yield 'anchor in a branch' => ['pattern' => '/^(a$\n|b\1)+$/m', 'unit' => "a\n"];
+        yield 'assertion in a branch' => ['pattern' => '/^(a\b-|b\1)+$/', 'unit' => 'a-'];
+        yield 'comment in a branch' => ['pattern' => '/^(a(?#x)|b\1)+$/', 'unit' => 'a'];
+        yield 'fixed count in a branch' => ['pattern' => '/^(a{2}|b\1)+$/', 'unit' => 'aa'];
+        yield 'possessive repeat in a branch' => ['pattern' => '/^(ax++|b\1)+$/', 'unit' => 'ax'];
+        yield 'atomic script run of a run in a branch' => ['pattern' => '/^(a(*asr:x+)|b\1)+$/', 'unit' => 'ax'];
+        yield 'script run of one letter in a branch' => ['pattern' => '/^(a(*sr:x)|b\1)+$/', 'unit' => 'ax'];
+    }
+
+    #[Test]
+    #[DataProvider('provideReferencesInALoopReadOneWay')]
+    public function test_a_reference_in_a_loop_read_one_way_is_not_critical(string $pattern, string $unit): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, str_repeat($unit, 1000).'!');
+        $long = self::steps($unoptimized, str_repeat($unit, 2000).'!');
+        $this->assertLessThan(3 * $short, $long, 'Oracle: the engine stays linear.');
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+
+        $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
+        foreach ($analysis->findings as $finding) {
+            $this->assertStringNotContainsString('backreferences', $finding->message);
+        }
+    }
+
+    /**
+     * A body read more than one way keeps the reference critical, and the
+     * engine goes exponential on 8 -> 12 -> 16 letters then "!": a run
+     * in a branch (896 -> 14 336 -> 229 376), a branch starting with the
+     * reference, whose first character is not known (139 -> 799 -> 4 612),
+     * two branches starting with the same letter (139 -> 799 -> 4 612), a
+     * script run of a run (1 024 -> 16 384 -> 262 144), and a call, an item
+     * the reading does not take apart, of an ambiguous alternation (2 044
+     * -> 32 764 -> 524 284 on "ax" units). The finding on the reference
+     * stays, beside any other the pattern holds.
+     *
+     * @return iterable<string, array{pattern: string, unit: string}>
+     */
+    public static function provideReferencesInALoopReadMoreThanOneWay(): iterable
+    {
+        yield 'run in a branch' => ['pattern' => '/^(a+|b\1)+$/', 'unit' => 'a'];
+        yield 'branch starting with the reference' => ['pattern' => '/^(a|\1a)+$/', 'unit' => 'a'];
+        yield 'branches starting with the same letter' => ['pattern' => '/^(a|a\1)+$/', 'unit' => 'a'];
+        yield 'script run of a run in a branch' => ['pattern' => '/^(a(*sr:a*)|b\1)+$/', 'unit' => 'a'];
+        yield 'call in a branch' => ['pattern' => '/^(a(?2)|b\1)+$(?(DEFINE)(x|x))/', 'unit' => 'ax'];
+    }
+
+    #[Test]
+    #[DataProvider('provideReferencesInALoopReadMoreThanOneWay')]
+    public function test_a_reference_in_a_loop_read_more_than_one_way_stays_critical(string $pattern, string $unit): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, str_repeat($unit, 8).'!');
+        $long = self::steps($unoptimized, str_repeat($unit, 12).'!');
+        $this->assertGreaterThan(4 * $short, $long, 'Oracle: the engine goes exponential.');
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+
+        $this->assertSame(RedosSeverity::Critical, $analysis->severity);
+        $this->assertNotSame([], array_filter($analysis->findings, static fn ($finding): bool => RedosSeverity::Critical === $finding->severity && str_contains($finding->message, 'backreferences')));
+    }
+
+    /**
+     * Under i the branches "a" and "A\1" both start with "a", and the loop
+     * chooses between them at each letter: 139 -> 799 -> 4 612 steps on
+     * 8 -> 12 -> 16 letters then "!". The reference stays critical, under
+     * the modifier or an option setting.
+     */
+    #[Test]
+    public function test_a_reference_in_a_loop_under_i_stays_critical(): void
+    {
+        $unoptimized = PcreInterpreter::pattern('/(*NO_START_OPT)^(a|A\1)+$/i');
+        $short = self::steps($unoptimized, str_repeat('a', 8).'!');
+        $long = self::steps($unoptimized, str_repeat('a', 12).'!');
+        $this->assertGreaterThan(4 * $short, $long, 'Oracle: the engine goes exponential.');
+
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos('/^(a|A\1)+$/i')->severity);
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos('/(?i)^(a|A\1)+$/')->severity);
+    }
+
     #[Test]
     public function test_the_engine_reads_the_condition_shape_in_constant_steps(): void
     {
@@ -91,6 +200,138 @@ final class RedosHeuristicShapesTest extends TestCase
     {
         $this->assertFalse(@preg_match(PcreInterpreter::pattern('/(*NO_START_OPT)((?R)?a?)+!/'), str_repeat('a', 16)));
         $this->assertSame(\PREG_INTERNAL_ERROR, preg_last_error());
+    }
+
+    /**
+     * An atomic group, a possessive loop, or a loop whose body ends with a
+     * verb that cuts backtracking holds once its body has matched; until
+     * then the engine backtracks inside the body as it does anywhere. A
+     * nested loop the body can still fail after is critical, as it is
+     * without the group, and the engine agrees: four more letters cost it
+     * about sixteen times the steps before the match fails (start
+     * optimizations off, PCRE2 10.49, JIT off): 641 -> 10 241 -> 163 841
+     * for "(?>(a+)+b)" and "^(?>(\w+\s?)+:)", 385 -> 6 145 -> 98 305 for
+     * "^(?:(?:a+)+b)++" and "^(*atomic:(?:a+)+b)", 384 -> 6 144 -> 98 304
+     * with "(*COMMIT)", 4 376 -> 354 296 -> 16 777 216 when the possessive
+     * loop needs thirty iterations the run never gives. An atomic script
+     * run is no exception (386 -> 6 146 -> 98 306), nor one checked once
+     * its body has matched (385 -> 6 145 -> 98 305).
+     *
+     * @return iterable<string, array{pattern: string, tail: string}>
+     */
+    public static function provideLoopsTheAtomicBodyMayStillFailAfter(): iterable
+    {
+        yield 'atomic group' => ['pattern' => '/(?>(a+)+b)/', 'tail' => '!b'];
+        yield 'atomic group of word runs before a colon' => ['pattern' => '/^(?>(\w+\s?)+:)/', 'tail' => '!:'];
+        yield 'possessive loop' => ['pattern' => '/^(?:(?:a+)+b)++/', 'tail' => '!b'];
+        yield 'atomic verb' => ['pattern' => '/^(*atomic:(?:a+)+b)/', 'tail' => '!b'];
+        yield 'loop ending with (*COMMIT)' => ['pattern' => '/^(?:(?:a+)+b(*COMMIT))+/', 'tail' => '!b'];
+        yield 'possessive loop needing thirty iterations' => ['pattern' => '/^(?:(?:a+)+){30,}+b/', 'tail' => '!b'];
+        yield 'atomic script run' => ['pattern' => '/^(*asr:(?:a+)+b)/', 'tail' => '!b'];
+        yield 'script run' => ['pattern' => '/^(*sr:(?:a+)+b)/', 'tail' => '!b'];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsTheAtomicBodyMayStillFailAfter')]
+    public function test_a_nested_loop_the_atomic_body_may_still_fail_after_is_critical(string $pattern, string $tail): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, str_repeat('a', 8).$tail);
+        $long = self::steps($unoptimized, str_repeat('a', 12).$tail);
+        $this->assertGreaterThan(8 * $short, $long, 'Oracle: the engine goes exponential.');
+
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * A nested loop that ends the body is matched the first way through,
+     * and nothing in the body can fail after it: the engine takes as many
+     * steps on 16 letters as on 8 (5, 6, 4, 6 and 6 steps), and the heuristic
+     * finds nothing. So does a loop needing at most one iteration whose
+     * body may fail after its alternation (21 -> 29 -> 37).
+     *
+     * @return iterable<string, array{pattern: string, prefix: string, tail: string}>
+     */
+    public static function provideLoopsEndingTheAtomicBody(): iterable
+    {
+        yield 'atomic group' => ['pattern' => '/^(?>(?:a+)+)b/', 'prefix' => '', 'tail' => '!b'];
+        yield 'possessive loop' => ['pattern' => '/^(?:(?:a+)+)++b/', 'prefix' => '', 'tail' => '!b'];
+        yield 'loop ending an iteration of a loop ending the body' => ['pattern' => '/^(?>(?:x(a+)+)*)y/', 'prefix' => 'x', 'tail' => '!y'];
+        yield 'loop before (*COMMIT)' => ['pattern' => '/^(?:(?:a+)+(*COMMIT))+b/', 'prefix' => '', 'tail' => '!b'];
+        yield 'atomic script run' => ['pattern' => '/^(*asr:(?:a+)+)b/', 'prefix' => '', 'tail' => '!b'];
+        yield 'alternation an iteration may fail after' => ['pattern' => '/^(?>(?:(?:a|a)x?)*)y/', 'prefix' => '', 'tail' => '!y'];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsEndingTheAtomicBody')]
+    public function test_a_nested_loop_ending_the_atomic_body_is_safe_for_the_heuristic(string $pattern, string $prefix, string $tail): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, $prefix.str_repeat('a', 8).$tail);
+        $long = self::steps($unoptimized, $prefix.str_repeat('a', 16).$tail);
+        $this->assertLessThan(2 * $short, $long, 'Oracle: the engine stays linear.');
+
+        $tree = Regex::create(['cache' => null])->parse($pattern);
+        $profiler = new RedosProfiler(CharSetAnalyzer::forRegex($tree));
+        $tree->accept($profiler);
+
+        $this->assertSame(RedosSeverity::Safe, $profiler->getResult()['severity']);
+    }
+
+    /**
+     * A call in a loop runs the group it calls at each iteration, as if
+     * written there: an ambiguous alternation or a run it calls is
+     * critical, as it is written in the loop, and the engine agrees on the
+     * unit repeated then "!" (8 -> 12 -> 16 units): 3 065 -> 49 145 ->
+     * 786 425 steps for "(?1)" of "(a|a)", 1 024 -> 16 384 -> 262 144 for a
+     * run of letters before an optional space, 2 554 -> 40 954 -> 655 354
+     * for "(a|a)" before a comma. A separator after the called run keeps
+     * the iterations apart (27 -> 39 -> 51), as one before it (3 -> 3 ->
+     * 3), and a call of disjoint alternatives reads one way (35 -> 51 ->
+     * 67). A comma before the call keeps apart a run that is one of the
+     * alternatives called, whether the group calls itself (31 -> 43 -> 55)
+     * or not (27 -> 39 -> 51). Past a branch reset, whose branches share
+     * their numbers, "(?2)" runs "(a|a)" (3 068 -> 49 148 -> 786 428 after an
+     * "x") and "(?1)" the "(x)" (47 -> 67 -> 87). "(?+1)" runs the group
+     * after it (3 065 -> 49 145 -> 786 425), "(?10)" the tenth (4 099 ->
+     * 65 539 -> 1 048 579), and a name two groups share under (?J) the
+     * first of them: 67 -> 99 -> 131 steps when it is "(a|b)", 4 081 ->
+     * 65 521 -> 1 048 561 when it is "(a|a)". A call in a loop inside an
+     * atomic script run still backtracks until the body has matched (2 047
+     * -> 32 767 -> 524 287).
+     *
+     * @return iterable<string, array{pattern: string, prefix: string, unit: string, critical: bool}>
+     */
+    public static function provideCallsInALoop(): iterable
+    {
+        yield 'call of an ambiguous alternation' => ['pattern' => '/^(?:(?1))+(a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'call of a run before an optional space' => ['pattern' => '/^(?:(?&w)\s?)+$(?(DEFINE)(?<w>[a-z]+))/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'call of an ambiguous alternation before a comma' => ['pattern' => '/^(?:(?1),)+(a|a)$/', 'prefix' => '', 'unit' => 'a,', 'critical' => true];
+        yield 'call of a run before a comma' => ['pattern' => '/^(?:(?&w),)+$(?(DEFINE)(?<w>[a-z]+))/', 'prefix' => '', 'unit' => 'a,', 'critical' => false];
+        yield 'call of a run after a letter it cannot take' => ['pattern' => '/^(a+)(?:x(?1))+$/', 'prefix' => 'a', 'unit' => 'xa', 'critical' => false];
+        yield 'call of disjoint alternatives' => ['pattern' => '/^(a|b)(?:(?1))+$/', 'prefix' => '', 'unit' => 'a', 'critical' => false];
+        yield 'recursive call of a list after a comma' => ['pattern' => '/^(?<value>\[(?:(?&value)(?:,(?&value))*)?\]|\d+)$/', 'prefix' => '[', 'unit' => '1,', 'critical' => false];
+        yield 'call of alternatives after a comma' => ['pattern' => '/^(?:,(?&v))*$(?(DEFINE)(?<v>\[\]|\d+))/', 'prefix' => '', 'unit' => ',1', 'critical' => false];
+        yield 'call numbered past a branch reset' => ['pattern' => '/^(?|(x)|(y))(?:(?2))+(a|a)$/', 'prefix' => 'x', 'unit' => 'a', 'critical' => true];
+        yield 'call of a branch of a branch reset' => ['pattern' => '/^(?|(x)|(y))(?:(?1))+(a|a)$/', 'prefix' => 'x', 'unit' => 'x', 'critical' => false];
+        yield 'relative call back' => ['pattern' => '/^(a|a)(?:(?-1))+$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'relative call forward' => ['pattern' => '/^(?:(?+1))+(a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'call of the tenth group' => ['pattern' => '/^(x)(x)(x)(x)(x)(x)(x)(x)(x)(a|a)(?:(?10))+$/', 'prefix' => 'xxxxxxxxxa', 'unit' => 'a', 'critical' => true];
+        yield 'call of a name two groups share, the first disjoint' => ['pattern' => '/(?J)^(?:(?&n))+(?<n>a|b)(?<n>a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => false];
+        yield 'call of a name two groups share, the first ambiguous' => ['pattern' => '/(?J)^(?:(?&n))+(?<n>a|a)(?<n>a|b)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'call in a loop of an atomic script run' => ['pattern' => '/^(*asr:(?:(?1))+c)(a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideCallsInALoop')]
+    public function test_a_call_in_a_loop_is_read_as_the_group_it_calls(string $pattern, string $prefix, string $unit, bool $critical): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, $prefix.str_repeat($unit, 8).'!');
+        $long = self::steps($unoptimized, $prefix.str_repeat($unit, 12).'!');
+        $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
     }
 
     /**

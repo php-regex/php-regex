@@ -230,6 +230,119 @@ final class AccessControlOrderTest extends TestCase
             ],
         ];
 
+        yield 'an alternation whose first branch takes the later path shadows it' => [
+            'rules' => [['path' => '^/assets|^/login'], ['path' => '^/assets/private']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/assets/private/report', 0, 1],
+                ['GET', 'http://localhost/login', 0, 0],
+            ],
+        ];
+
+        yield 'an alternation whose last branch takes the later path shadows it' => [
+            'rules' => [['path' => '^/login|^/assets'], ['path' => '^/assets/private']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/assets/private/report', 0, 1],
+                ['GET', 'http://localhost/login', 0, 0],
+            ],
+        ];
+
+        yield 'an unanchored alternation whose first branch takes the later path shadows it' => [
+            'rules' => [['path' => '/admin|/api'], ['path' => '^/admin/users']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/shop/api', 0, 0],
+            ],
+        ];
+
+        yield 'an unanchored alternation whose last branch takes the later path shadows it' => [
+            'rules' => [['path' => '/api|/admin'], ['path' => '^/admin/users']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/shop/api', 0, 0],
+            ],
+        ];
+
+        yield 'an end anchor binds the last branch of an alternation only' => [
+            'rules' => [['path' => '^/login|^/assets$'], ['path' => '^/login/form']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/login/form', 0, 1],
+                ['GET', 'http://localhost/assets', 0, 0],
+                ['GET', 'http://localhost/assets/logo', null, null],
+            ],
+        ];
+
+        yield 'an end anchor on the last branch keeps a longer path out of it' => [
+            'rules' => [['path' => '^/login|^/assets$'], ['path' => '^/assets/private']],
+            'expected' => null,
+            'requests' => [
+                ['GET', 'http://localhost/assets/private', 1, 1],
+                ['GET', 'http://localhost/login', 0, 0],
+            ],
+        ];
+
+        yield 'a path opening with a start option shadows a narrower one' => [
+            'rules' => [['path' => '(*UTF)^/admin'], ['path' => '^/admin/users']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/admin', 0, 0],
+            ],
+        ];
+
+        yield 'a path opening with several start options and an alternation shadows a narrower one' => [
+            'rules' => [['path' => '(*UCP)(*LIMIT_MATCH=1000)/api|/admin'], ['path' => '^/admin/users']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/shop/api', 0, 0],
+            ],
+        ];
+
+        yield 'a narrower path opening with a start option first is a carve-out' => [
+            'rules' => [['path' => '(*NO_JIT)(*LIMIT_MATCH=1000)^/admin/users'], ['path' => '^/admin']],
+            'expected' => 'carve-out',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/admin', 1, 1],
+            ],
+        ];
+
+        // A path under (*UTF) reads the URL a character at a time, one
+        // without it a byte at a time: compared on the same requests.
+        yield 'a narrower path read as UTF-8 first is a carve-out of a wider one read as bytes' => [
+            'rules' => [['path' => '(*UTF)(*NO_JIT)^/admin/users'], ['path' => '^/admin']],
+            'expected' => 'carve-out',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/admin/users%C4%80', 0, 1],
+                ['GET', 'http://localhost/admin', 1, 1],
+            ],
+        ];
+
+        yield 'a wider path read as bytes shadows a narrower one read as UTF-8' => [
+            'rules' => [['path' => '^/admin'], ['path' => '(*UTF)^/admin/users']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/admin/users%C4%80', 0, 1],
+                ['GET', 'http://localhost/admin', 0, 0],
+            ],
+        ];
+
+        yield 'a letter above ASCII read as one character shadows the same letter read as its bytes' => [
+            'rules' => [['path' => '(*UTF)^/café$'], ['path' => '^/café$']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/caf%C3%A9', 0, 1],
+                ['GET', 'http://localhost/cafe', null, null],
+            ],
+        ];
+
         yield 'paths that share no request are no conflict' => [
             'rules' => [['path' => '^/admin'], ['path' => '^/api']],
             'expected' => null,

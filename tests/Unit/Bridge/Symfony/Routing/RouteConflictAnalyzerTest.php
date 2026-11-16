@@ -19,6 +19,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\CompiledRoute;
+use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Matcher\CompiledUrlMatcher;
 use Symfony\Component\Routing\Matcher\Dumper\CompiledUrlMatcherDumper;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
@@ -245,6 +246,19 @@ final class RouteConflictAnalyzerTest extends TestCase
             'conflicts' => [['overlap', 'blog_id', 'blog_slug']],
             'shadowed' => 0,
             'overlaps' => 1,
+        ];
+
+        // Only the second route carries the utf8 option, so /u: its "[^/]++"
+        // takes "Ā" as one character, the first one as its two bytes.
+        yield 'a route read as bytes declared before the same route read as UTF-8' => [
+            'routes' => [
+                ['bytes', '/users/{id}', [], false],
+                ['characters', '/users/{id}', [], true],
+            ],
+            'probes' => ['/users/7' => 'bytes', "/users/\u{100}" => 'bytes'],
+            'conflicts' => [['shadowed', 'bytes', 'characters']],
+            'shadowed' => 1,
+            'overlaps' => 0,
         ];
 
         yield 'requirements that share no path' => [
@@ -585,6 +599,47 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * Symfony's matchers send a HEAD request to a route for GET: of a route
+     * for GET and a route for HEAD only, the earlier one takes the HEAD
+     * requests of both. The compiled matcher, which the framework runs, does
+     * so on every release; the UrlMatcher sends none to a route for HEAD
+     * only before symfony/routing 7.4.22 and 8.1.10, which read the HEAD
+     * request as GET alone.
+     *
+     * @param list<string> $earlier
+     * @param list<string> $later
+     */
+    #[Test]
+    #[DataProvider('provideHeadRoutes')]
+    public function test_a_route_for_get_takes_the_head_requests(array $earlier, array $later): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route('/x'))->setMethods($earlier));
+        $collection->add('later', (new Route('/x'))->setMethods($later));
+
+        $context = new RequestContext(method: 'HEAD');
+        $this->assertSame('earlier', (new CompiledUrlMatcher((new CompiledUrlMatcherDumper($collection))->getCompiledRoutes(), $context))->match('/x')['_route']);
+        $this->assertSame(['HEAD'] === $earlier && !self::urlMatcherSendsHeadToARouteForHeadOnly() ? 'later' : 'earlier', (new UrlMatcher($collection, $context))->match('/x')['_route']);
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertCount(1, $report->conflicts);
+        $this->assertSame('shadowed', $report->conflicts[0]['type']);
+        $this->assertSame(['HEAD'], $report->conflicts[0]['methods']);
+        $this->assertSame(0, $report->stats['pairs_filtered_methods']);
+    }
+
+    /**
+     * @return iterable<string, array{earlier: list<string>, later: list<string>}>
+     */
+    public static function provideHeadRoutes(): iterable
+    {
+        yield 'a route for HEAD only behind a route for GET' => ['earlier' => ['GET'], 'later' => ['HEAD']];
+        yield 'a route for GET behind a route for HEAD only' => ['earlier' => ['HEAD'], 'later' => ['GET']];
+        yield 'a route for HEAD only behind a route for GET and POST' => ['earlier' => ['post', 'get'], 'later' => ['head']];
+    }
+
+    /**
      * Two routes whose hosts share no name are compared no further than
      * their hosts; two whose hosts share one are compared on their paths.
      * A route without a host is never held apart by one.
@@ -814,6 +869,20 @@ final class RouteConflictAnalyzerTest extends TestCase
     {
         yield 'spelled in capitals, with blanks around' => ['minimizer' => " MOORE\t", 'determinizer' => ' SUBSET '];
         yield 'names the solver does not know' => ['minimizer' => 'bogus', 'determinizer' => 'bogus'];
+    }
+
+    private static function urlMatcherSendsHeadToARouteForHeadOnly(): bool
+    {
+        $collection = new RouteCollection();
+        $collection->add('head', (new Route('/x'))->setMethods(['HEAD']));
+
+        try {
+            (new UrlMatcher($collection, new RequestContext(method: 'HEAD')))->match('/x');
+        } catch (MethodNotAllowedException) {
+            return false;
+        }
+
+        return true;
     }
 }
 

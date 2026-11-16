@@ -8,6 +8,10 @@ CHANGELOG
    `preg_match_all()` from the pattern and reports invalid patterns as
    `InvalidRegexPattern`; see the
    [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The callback of `preg_replace_callback()` keeps the shape of its matches
+   on Psalm 7.7 and later, which type that callback with a provider of their
+   own, asked before the plugins: the plugin's is asked first, and a call it
+   cannot read is left to Psalm's, where `$m` was `array<array-key, string>`.
  * `<locale>` names the `LC_CTYPE` locale the patterns run under, the one
    of the PHP running Psalm by default.
  * What the running PCRE2 answers about Unicode classes is kept in Psalm's

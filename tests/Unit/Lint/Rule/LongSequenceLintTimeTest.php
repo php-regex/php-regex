@@ -71,6 +71,25 @@ final class LongSequenceLintTimeTest extends TestCase
     }
 
     /**
+     * The rule on nested quantifiers reads past the items of a loop's body
+     * that may match nothing, to the loops behind them, once each: a body
+     * of thousands of lookaheads before "b?c+" is read in linear time.
+     */
+    #[Test]
+    public function test_the_items_before_the_loops_of_a_long_body_are_read_once(): void
+    {
+        /** @var array<int, RegexNode> $trees */
+        $trees = [];
+        foreach ([4000, 16000] as $count) {
+            $trees[$count] = Regex::create(['cache' => null])->parse('/(?:'.str_repeat('(?=b)', $count).'b?c+)+$/');
+        }
+
+        $this->assertLinearTime(static function (int $count) use ($trees): void {
+            $trees[$count]->accept(new PatternLinter(['quantifier.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
+        }, 4000, 'lookaheads before the loops of a body');
+    }
+
+    /**
      * @return iterable<string, array{item: string}>
      */
     public static function provideSequencesOfQuantifiers(): iterable

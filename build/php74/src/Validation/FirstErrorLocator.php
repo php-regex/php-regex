@@ -17,13 +17,16 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Syntax\TokenParser;
@@ -50,6 +53,11 @@ final class FirstErrorLocator
     /**
      */
     private PcreTarget $target;
+    /**
+     * The most tokens an opener reads past its "(" before its body: "(?P<"
+     * and a name of 128 code units, or a condition on one, with room.
+     */
+    private const HEADER_TOKENS = 160;
 
     public function __construct(int $maxRecursionDepth, int $maxLookbehindLength, PcreTarget $target)
     {
@@ -70,13 +78,14 @@ final class FirstErrorLocator
      * was read before. The earliest of those before the error found is
      * PCRE's. What PCRE only finds once it has read the whole pattern, a
      * lookbehind's length or a group a name or number points to that does
-     * not exist, is not.
+     * not exist, is not. So may the parser's own limit on nesting, met past
+     * the level of parentheses PCRE refuses.
      *
      * A "\p{" that no "}" closes, or a "(*" that no ")" closes, ends what is
      * read: PCRE looks for the closing character to the end of the pattern,
      * so nothing after it is judged, and it is judged last.
      *
-     * @param LexerException|ParserException $error
+     * @param LexerException|ParserException|RecursionLimitException $error
      */
     public function earlierError(string $regex, $error): ?RegexException
     {
@@ -130,12 +139,18 @@ final class FirstErrorLocator
             null !== $swallowing ? $this->firstErrorBeforeAnUnclosedName($swallowing, $pattern, $flags, $delimiter) : null,
             $this->firstExtendedClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstVersionConditionErrorBefore($read, $pattern, $flags, $delimiter, $limit),
-            $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, $limit),
         ];
         foreach ($laterErrors as $laterError) {
             if (null !== $laterError && (null === $earlier || ($laterError->position ?? $position) < ($earlier->position ?? $position))) {
                 $earlier = $laterError;
             }
+        }
+
+        // What the tree read shows comes last, and only before the error
+        // found so far: the search stops short of it.
+        $readError = $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, null === $earlier ? $limit : min($limit, $earlier->position ?? $position));
+        if (null !== $readError && (null === $earlier || ($readError->position ?? $position) < ($earlier->position ?? $position))) {
+            $earlier = $readError;
         }
 
         if (null !== $swallowing || $error instanceof LexerException) {
@@ -308,8 +323,9 @@ final class FirstErrorLocator
      * The first error PCRE meets before $position, where parsing failed,
      * that the library only finds in the tree: a relative reference to no
      * group, a reversed count, a code point too large, a verb out of place
-     * or unknown. The tokens are parsed once to learn how far they are read
-     * whole; that much, its groups closed, is parsed and judged once.
+     * or unknown, a level of parentheses past PCRE's limit. The tokens are
+     * parsed once to learn how far they are read whole; that much, its
+     * groups closed, is parsed and judged once.
      *
      * @param list<Token> $tokens the tokens read in place
      */
@@ -319,45 +335,130 @@ final class FirstErrorLocator
             return null;
         }
 
-        // PCRE refuses the level of parentheses past its limit as it opens
-        // it, at the start of its body, though the groups are never closed.
-        $tooDeep = self::openerPastTheNestingLimit($tokens);
-        if (null !== $tooDeep) {
-            return new SemanticErrorException(\sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', Validator::MAX_GROUP_NESTING), ErrorCode::GroupNestedTooDeep(), $tooDeep->end(), $pattern, null, null, 'Flatten the pattern: drop groups that only wrap one item.');
-        }
-
         $length = \strlen($pattern);
         $parser = new TokenParser($this->maxRecursionDepth, $this->target);
 
         try {
             $ast = $parser->parse(new TokenStream(array_merge($tokens, [new Token(TokenType::Eof(), '', $length)]), $pattern), $flags, $delimiter, $length);
         } catch (LexerException|LimitException|ParserException $exception) {
-            $read = \array_slice($tokens, 0, $parser->tokensReadWhole());
-            $cutAt = [] === $read ? 0 : $read[array_key_last($read)]->end();
+            // Not expected to fail: these are the tokens the first parse
+            // read whole, each group they open closed, no deeper than it
+            // went.
+            $ast = $this->parseClosed(\array_slice($tokens, 0, $parser->tokensReadWhole()), $pattern, $flags, $delimiter);
+        }
 
-            // Each group still open there is closed where the text read ends.
-            $closers = [];
-            foreach ($read as $token) {
-                if (TokenType::GroupClose() === $token->type) {
-                    array_pop($closers);
-                } elseif (self::opensGroup($token)) {
-                    $closers[] = new Token(TokenType::GroupClose(), ')', $cutAt, 0);
-                }
-            }
+        $error = null === $ast ? null : (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($ast, $position);
 
-            try {
-                $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
-                    ->parse(new TokenStream(array_merge($read, $closers, [new Token(TokenType::Eof(), '', $cutAt)]), $pattern), $flags, $delimiter, $length);
-            } catch (LexerException|LimitException|ParserException $exception2) {
-                // Not expected: these are the tokens the first parse read
-                // whole, each group they open closed, no deeper than it went.
-                // Kept should one throw: this runs while an error is being
-                // reported, where nothing may escape.
-                return null;
+        if (null !== $error) {
+            return $error;
+        }
+
+        // A parse that failed inside the level of parentheses PCRE refuses,
+        // or deeper, read no item of it, nor its opener: the longest run of
+        // tokens from there that parses, its groups closed, is read for it.
+        // PCRE refuses that level once it has read its opener whole, at the
+        // start of its body, before anything in it; an opener it refuses for
+        // itself parses in no run, and comes first.
+        foreach (self::cutsAtTheLevelPastTheNestingLimit($tokens, $position) as $cut) {
+            $deep = $this->parseClosed($cut, $pattern, $flags, $delimiter);
+            if (null !== $deep) {
+                return (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($deep, $position);
             }
         }
 
-        return (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($ast, $position);
+        return null;
+    }
+
+    /**
+     * The tokens parsed with each group still open closed where the last
+     * one ends, or null where they do not parse: this runs while an error
+     * is being reported, where nothing may escape.
+     *
+     * @param list<Token> $tokens
+     */
+    private function parseClosed(array $tokens, string $pattern, string $flags, string $delimiter): ?RegexNode
+    {
+        $cutAt = [] === $tokens ? 0 : $tokens[array_key_last($tokens)]->end();
+
+        $closers = [];
+        foreach ($tokens as $token) {
+            if (TokenType::GroupClose() === $token->type) {
+                array_pop($closers);
+            } elseif (self::opensGroup($token)) {
+                $closers[] = new Token(TokenType::GroupClose(), ')', $cutAt, 0);
+            }
+        }
+
+        try {
+            return (new TokenParser($this->maxRecursionDepth, $this->target))
+                ->parse(new TokenStream(array_merge($tokens, $closers, [new Token(TokenType::Eof(), '', $cutAt)]), $pattern), $flags, $delimiter, \strlen($pattern));
+        } catch (LexerException|LimitException|ParserException $exception) {
+            return null;
+        }
+    }
+
+    /**
+     * The tokens up to the end of each run that follows the first opener of
+     * the level PCRE refuses, past its limit, longest first, each holding at
+     * most HEADER_TOKENS tokens past that opener, enough for the longest.
+     * A comment opens no level. A "(?" followed only by option letters is
+     * no run: closed there, it would read as an option setting where the
+     * opener goes on, or is refused for itself. None where no level passes
+     * the limit, or where its opener ends at or past $position: that level
+     * is refused past its opener, too late to come first.
+     *
+     * @param list<Token> $tokens
+     *
+     * @return iterable<list<Token>>
+     */
+    private static function cutsAtTheLevelPastTheNestingLimit(array $tokens, int $position): iterable
+    {
+        // Whether each opener still open is a group, and the groups.
+        $opened = [];
+        $groups = [];
+        $opener = null;
+        foreach ($tokens as $index => $token) {
+            if (TokenType::GroupClose() === $token->type) {
+                if (true === array_pop($opened)) {
+                    array_pop($groups);
+                }
+
+                continue;
+            }
+
+            if (!self::opensGroup($token)) {
+                continue;
+            }
+
+            $group = TokenType::CommentOpen() !== $token->type;
+            $opened[] = $group;
+            if (!$group) {
+                continue;
+            }
+
+            $groups[] = $index;
+            if (\count($groups) > Validator::MAX_GROUP_NESTING) {
+                $opener = $index;
+
+                break;
+            }
+        }
+
+        if (null === $opener || $tokens[$opener]->end() >= $position) {
+            return;
+        }
+
+        // Where the run of option letters after a "(?" ends.
+        $options = $opener;
+        if (TokenType::GroupModifierOpen() === $tokens[$opener]->type) {
+            do {
+                $next = $tokens[++$options] ?? null;
+            } while (null !== $next && TokenType::Literal() === $next->type && 1 === \strlen($next->value) && false !== strpos(InlineFlags::LETTERS.'-^', $next->value));
+        }
+
+        for ($cut = min(\count($tokens), $opener + 1 + self::HEADER_TOKENS); $cut > $options; --$cut) {
+            yield \array_slice($tokens, 0, $cut);
+        }
     }
 
     /**

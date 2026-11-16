@@ -1160,17 +1160,14 @@ final class Validator extends AbstractNodeVisitor
      * A reference to a group the pattern does not have. PCRE resolves it
      * once the whole pattern is read, or while measuring the lookbehind it
      * sits in: on a walk from the pattern root, it waits for the walk to end.
+     * The measure of a lookbehind keeps the references it meets itself: one
+     * it skips, in a lookahead, in a DEFINE group or after an "(*ACCEPT)",
+     * waits for the whole pattern as any other.
      */
     private function keepMissingReference(SemanticErrorException $error): void
     {
         if (!$this->walkingPattern || $this->measuringLookbehind) {
             throw $error;
-        }
-
-        if ($this->lookbehindDepth > 0) {
-            $this->lateErrors[0] ??= $error;
-
-            return;
         }
 
         // The walk meets the references in the order the first pass does.

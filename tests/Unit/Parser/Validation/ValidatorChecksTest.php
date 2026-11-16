@@ -132,6 +132,8 @@ final class ValidatorChecksTest extends TestCase
         yield 'verb with no name' => ['pattern' => '/(*)/', 'error' => [ErrorCode::QuantifierNothingToRepeat, 2, 'Quantifier "*" does not follow a repeatable item: "(*)" names no verb.']];
         yield 'unknown verb' => ['pattern' => '/(*FOO)/', 'error' => [ErrorCode::VerbInvalid, 5, 'Invalid or unsupported PCRE verb: "FOO".']];
         yield 'verb that takes no value' => ['pattern' => '/(*COMMIT=x)/', 'error' => [ErrorCode::VerbInvalid, 8, '(*COMMIT) takes no value: only the limits take one, as (*LIMIT_MATCH=10).']];
+        yield 'short mark whose name holds "="' => ['pattern' => '/(*:foo=bar)/', 'error' => null];
+        yield 'short mark before an "=" four characters on' => ['pattern' => '/(*:x)a=b/', 'error' => null];
         yield 'limit with no number' => ['pattern' => '/(*LIMIT_MATCH=)a/', 'error' => [ErrorCode::VerbInvalid, 14, '(*LIMIT_MATCH) needs a number: (*LIMIT_MATCH=10).']];
         yield 'limit with a letter after its digits' => ['pattern' => '/(*LIMIT_MATCH=5x)a/', 'error' => [ErrorCode::VerbInvalid, 15, '(*LIMIT_MATCH) needs a number: (*LIMIT_MATCH=10).']];
         yield 'second limit with no number' => ['pattern' => '/(*LIMIT_MATCH=1)(*LIMIT_MATCH=x)a/', 'error' => [ErrorCode::VerbInvalid, 30, '(*LIMIT_MATCH) needs a number: (*LIMIT_MATCH=10).']];
@@ -148,6 +150,11 @@ final class ValidatorChecksTest extends TestCase
         yield 'conflicting casings' => ['pattern' => '/(*TURKISH_CASING)(*CASELESS_RESTRICT)a/u', 'error' => [ErrorCode::VerbConflictingCasings, 37, '(*TURKISH_CASING) and (*CASELESS_RESTRICT) cannot be used together.']];
         yield 'turkish casing without UTF' => ['pattern' => '/(*TURKISH_CASING)a/', 'error' => [ErrorCode::VerbTurkishCasingWithoutUtf, 17, '(*TURKISH_CASING) needs UTF mode.']];
         yield 'turkish casing under UCP alone' => ['pattern' => '/(*UCP)(*TURKISH_CASING)a/', 'error' => [ErrorCode::VerbTurkishCasingWithoutUtf, 23, '(*TURKISH_CASING) needs UTF mode: UCP alone is not enough.']];
+        yield 'turkish casing under the "r" modifier' => ['pattern' => '/(*UTF)(*TURKISH_CASING)a/r', 'error' => [ErrorCode::VerbConflictingCasings, 23, '(*TURKISH_CASING) and the "r" modifier cannot be used together.']];
+        yield 'turkish casing under the "u" and "r" modifiers' => ['pattern' => '/(*TURKISH_CASING)a/ur', 'error' => [ErrorCode::VerbConflictingCasings, 17, '(*TURKISH_CASING) and the "r" modifier cannot be used together.']];
+        yield 'turkish casing under the "r" modifier without UTF' => ['pattern' => '/(*TURKISH_CASING)a/r', 'error' => [ErrorCode::VerbTurkishCasingWithoutUtf, 17, '(*TURKISH_CASING) needs UTF mode.']];
+        yield 'conflicting casings without UTF' => ['pattern' => '/(*TURKISH_CASING)(*CASELESS_RESTRICT)a/', 'error' => [ErrorCode::VerbTurkishCasingWithoutUtf, 37, '(*TURKISH_CASING) needs UTF mode.']];
+        yield 'turkish casing before a restricted group' => ['pattern' => '/(*TURKISH_CASING)a(?r)b/u', 'error' => null];
 
         // The items of classes.
         yield 'unknown POSIX class' => ['pattern' => '/[[:foo:]]/', 'error' => [ErrorCode::PosixInvalid, 8, 'Invalid POSIX class: "foo".']];

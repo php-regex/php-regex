@@ -390,6 +390,21 @@ final class EdgeCaseTest extends TestCase
         $this->assertFalse($short->spend('a'));
     }
 
+    /**
+     * PCRE2 reads a group repeated no time to choose where it tries a
+     * match: on "\tb", /(?:x|(?=a)){0}\w/ finds none where /\w/ finds "b".
+     */
+    #[Test]
+    public function test_judge_leaves_the_verdict_open_on_a_lookahead_in_a_group_repeated_no_time(): void
+    {
+        $this->assertSame([0, 1], [preg_match('/(?:x|(?=a)){0}\w/', "\tb"), preg_match('/\w/', "\tb")]);
+
+        $judge = new EquivalenceJudge();
+
+        $this->assertNull($judge->judge(Observation::Match, '/(?:x|(?=a)){0}\w/', '/\w/', new Budget())->alike);
+        $this->assertNull($judge->judge(Observation::Matches, '/(?:x|(?=a)){0}\w/', '/\w/', new Budget())->alike);
+    }
+
     #[Test]
     public function test_judge_leaves_the_verdict_open_without_budget_or_reading(): void
     {

@@ -1056,11 +1056,25 @@ final class PatternPrinter extends AbstractNodeVisitor
         $no = $node->no->accept($this);
         $this->flags = $flags;
 
-        if ('' === $no) {
+        if (!self::writesNoBranch($node)) {
             return '(?'.$condition.$yes.')';
         }
 
         return '(?'.$condition.$yes.'|'.$no.')';
+    }
+
+    /**
+     * Whether a conditional writes its "|": it does for a "no" branch its
+     * source wrote, even an empty one, "(?(c)X|)". The parser gives one
+     * written without "|" an empty "no" branch where its "yes" branch ends,
+     * and in a lookbehind PCRE gives "(?(c)X)" the length of X alone, where
+     * "(?(c)X|)" may also be empty.
+     *
+     * @internal PatternLayout writes the "|" of a conditional it lays out, and StructuralFingerprint tells the two apart
+     */
+    public static function writesNoBranch(ConditionalNode $node): bool
+    {
+        return !($node->no instanceof LiteralNode && '' === $node->no->value && $node->no->getStartPosition() <= $node->yes->getEndPosition());
     }
 
     #[\Override]
@@ -1385,24 +1399,24 @@ final class PatternPrinter extends AbstractNodeVisitor
             ) {
                 $result .= ($this->bracketMarkFor($char) ?? '\\').$char;
             } elseif (\ord($char) < 32 || 127 === \ord($char) || (!$unicodeMode && \ord($char) >= 128)) {
-                $matchSubject1395 = \ord($char);
+                $matchSubject1409 = \ord($char);
                 switch (true) {
-                    case 8 === $matchSubject1395:
+                    case 8 === $matchSubject1409:
                         $escape = $this->inCharClass ? '\\b' : '\\x08';
                         break;
-                    case 9 === $matchSubject1395:
+                    case 9 === $matchSubject1409:
                         $escape = '\\t';
                         break;
-                    case 10 === $matchSubject1395:
+                    case 10 === $matchSubject1409:
                         $escape = '\\n';
                         break;
-                    case 13 === $matchSubject1395:
+                    case 13 === $matchSubject1409:
                         $escape = '\\r';
                         break;
-                    case 12 === $matchSubject1395:
+                    case 12 === $matchSubject1409:
                         $escape = '\\f';
                         break;
-                    case 27 === $matchSubject1395:
+                    case 27 === $matchSubject1409:
                         $escape = '\\e';
                         break;
                     default:

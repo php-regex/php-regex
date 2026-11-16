@@ -674,7 +674,7 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
-    public function test_get_command_data_returns_empty_options_for_self_update(): void
+    public function test_get_command_data_lists_the_force_option_of_self_update(): void
     {
         $command = new HelpCommand();
 
@@ -682,10 +682,16 @@ final class HelpCommandTest extends TestCase
         $method = $reflection->getMethod('getCommandData');
 
         $data = $method->invoke($command, 'self-update');
+        $invocation = (new \ReflectionMethod($command, 'resolveInvocation'))->invoke($command);
 
         $this->assertIsArray($data);
         $this->assertArrayHasKey('options', $data);
-        $this->assertEmpty($data['options']);
+        $this->assertSame([['--force', 'Install the latest release even when it is older than this one, or its version cannot be read']], $data['options']);
+        $this->assertSame(['Updates the installed phar file to the latest release when it is newer; an older release, or one whose version cannot be read, only with --force.'], $data['notes']);
+        $this->assertSame([
+            [[$invocation, 'self-update'], 'Update to latest version'],
+            [[$invocation, 'self-update', '--force'], 'Install the latest release, even an older one'],
+        ], $data['examples']);
     }
 
     #[Test]

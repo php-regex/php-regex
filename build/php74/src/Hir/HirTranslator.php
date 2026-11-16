@@ -306,7 +306,9 @@ final class HirTranslator
         }
 
         $body = $this->node($node->node, $flags);
-        if (1 === $bounds->min && 1 === $bounds->max) {
+        // "X{1}+" never gives back what X matched, as an atomic group: it
+        // stays a possessive repeat.
+        if (1 === $bounds->min && 1 === $bounds->max && QuantifierType::Possessive() !== $node->type) {
             return $body;
         }
 
@@ -548,12 +550,12 @@ final class HirTranslator
         if ([] !== $codePoints) {
             $flat[] = new LiteralHir($codePoints, $literalStart, $literalEnd);
         }
-        $matchSubject555 = \count($flat);
+        $matchSubject557 = \count($flat);
 
         switch (true) {
-            case 0 === $matchSubject555:
+            case 0 === $matchSubject557:
                 return new EmptyHir($start, $end);
-            case 1 === $matchSubject555:
+            case 1 === $matchSubject557:
                 return $flat[0];
             default:
                 return new ConcatHir($flat, $start, $end);

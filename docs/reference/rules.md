@@ -301,7 +301,7 @@ preg_match('/^\d+$/D', "123\n");  // 0
 
 **Identifier:** `regex.lint.quantifier.nested`
 
-**When it triggers:** A variable quantifier wraps another variable quantifier, creating catastrophic backtracking potential.
+**When it triggers:** A variable quantifier wraps another variable quantifier, creating catastrophic backtracking potential. A count fixed above zero hides neither the loop after it nor the one inside it: `/^(?:\d{4}|[a-z]+)+$/` and `/^(?:(?:a+){2})+$/` are reported. Nor does a first loop that may match nothing hide the loop behind it: in `/^(?:b?c+)+$/` the runs of `c` of two iterations meet where `b?` matches nothing, and the pattern is reported.
 
 The message names the outer loop and quotes it as written, on one line without the layout and the comments, thirty columns at most, so two findings on one pattern read apart: `in capturing group 1 "(a+)"` for `/(a+)+b/`, `in named group "(?<run>a+)"` for `/(?<run>a+)+b/`, and for a loop that captures nothing its offset in bytes into the pattern, `in "(?:a+)" at offset 1` for `/x(?:a+)+b/`.
 
@@ -310,6 +310,7 @@ It is not reported when the nesting cannot blow up:
 - **Nothing at all follows the outer loop**: `/(a+)+/` and `/x(\d+\.?)+/` end the pattern, so the first way the engine finds is the match. This holds when the outer minimum is 0 or 1, and when no subroutine call runs the loop again. Anything after the loop, an anchor or an assertion included, keeps the issue: `/(a+)+$/` and `/(?:a+)+(?=b)/` are reported.
 - **A short run before the end**: an outer bound of at most 2 around a greedy run of one literal character, followed only by `$`, `\z` or `\Z`, without `/m`, as `/(a+){1,2}$/`. Any other shape keeps the issue: a bound of 3 or more (`/(a+){0,3}$/`), a class (`/([ab]+){1,2}$/`), a lazy run (`/(a+?){1,2}$/`), `/m`, or a lookahead after the loop.
 - **A separator splits each iteration**: the inner loop is followed right away by an item it cannot match, and every other item of the iteration matches one way only. In the unrolled loop `/"[^"\\]*(?:\\.[^"\\]*)*"/`, each iteration ends with `[^"\\]*`, and the `\\` that opens the next iteration is what `[^"\\]` refuses, so there is one way to split the input. Under `/i` the two sides are compared case-folded, so `/(?:a+,)+$/i` is still exempt, but a loop unrolled this way is never exempt: `/"[^"\\]*(?:\\.[^"\\]*)*"/i` is reported.
+- **The loop ends an atomic group**, or the body of a possessive loop, with nothing after it there that can fail: `/(?>(?:a+)+)$/` and `/(?:(?:a+)+)++$/` never retry the loop. A subroutine call that runs a group between the loop and the atomic group runs the loop without it, so `/^(?:(?>x((?:a+)+))|y(?1)$)/` is reported.
 
 With the ReDoS analysis on (`--redos`, or `checks.redos.enabled` in `regex.json`), a pattern the analysis proves linear drops the issue: the proof outranks the heuristic. That holds for a pattern with inline options too, an option setting such as `(?s)` or a scoped group such as `(?i-r:…)`, which the proof reads as PCRE does. The issue is also left out for a pattern listed in the ignored patterns or found trivially safe.
 
@@ -369,7 +370,7 @@ preg_match('/[^"]*/', $input);  // For double-quoted strings
 
 **Identifier:** `regex.lint.quantifier.useless`
 
-**When it triggers:** A quantifier that matches exactly once (e.g., `{1}` or `{1,1}`). A possessive one, `{1}+`, is an atomic group that never gives back, and is not reported: `/(a|ab){1}+ab/` does not match `"ababx"`, which `/(a|ab)ab/` does.
+**When it triggers:** A quantifier that matches exactly once (e.g., `{1}` or `{1,1}`). A possessive one, `{1}+`, is an atomic group that never gives back, and is not reported: `/(a|ab){1}+ab/` does not match `"ababx"`, which `/(a|ab)ab/` does. Nor is a count that keeps an escape apart from the digit after it: `/(a)\1{1}0/` matches `"aa0"`, `/(a)\10/` does not, and `/\x4{1}1/` is not `/\x41/`. The tip names the count as written, a lazy `{1}?` with its `?`: `/a{1}?b/` is `/ab/`, not `/a?b/`.
 
 **Example:**
 ```php
@@ -923,6 +924,8 @@ preg_match('/[a-d]+$/', $input);
 **When it triggers:** A backreference is used before its capturing group can be set or when the group is guaranteed to be empty.
 
 A backreference inside a group that a subroutine call runs again is not reported: the call may run it after the group has captured, as in `/^(?:(a)|(\1))(?2)$/`. A recursive pattern (`(?R)`, `(?0)`) is not checked by this rule.
+
+Nor is a backreference that a loop around it and its group runs after an earlier iteration has captured, where an iteration may skip the reference through another branch or an optional item: `/^(a|b\1)+$/`, the PCRE2 manual's example, matches `aba`, and `/^(?:x(a)|\1)+$/` matches `xaa`. Where every way through the loop passes the reference first, as in `/^(a\1)+$/`, no iteration ever sets the group, and the reference is reported.
 
 **Example:**
 ```php

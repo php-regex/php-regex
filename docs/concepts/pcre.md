@@ -399,6 +399,14 @@ Where the library still departs from what the target's PCRE2 reports:
   have, is never reached; where one of these items comes first, the library
   may find the limit passed later than PCRE2 does, and report such an error
   in its place.
+- **Where a conditional of more than two branches is refused.** On a
+  condition that is no group number, PCRE2 reports the offset left by the
+  last item of the branch before the conditional that kept one, a call or
+  a reference, and 0 where none did: on an assertion or a version on every
+  release, on a name or on `R` from 10.47 (before, on the name). The
+  library reports where the conditional opens, or on the name before 10.47:
+  `/x(?(?=a)a|b|c)/` at 1, PCRE2 at 0; `/(a)xx(?1)xx(?(R)a|b|c)/` at 11,
+  10.49 at 8. The verdict and the error code are the same.
 - **A delimiter byte past 127 on macOS and the BSDs.** PHP judges the
   delimiter, and skips the white space before it, with the C library's
   `isalnum()` and `isspace()` under the process's `LC_CTYPE`, not with

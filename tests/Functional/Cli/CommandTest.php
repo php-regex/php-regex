@@ -876,6 +876,48 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('PHPRegex updated successfully.', $buffer);
     }
 
+    /**
+     * The template phar is release 99.0.0: with 99.0.0 installed, self-update
+     * says it is up to date and exits 0; with a newer version installed, it
+     * fails with 1, naming both, and --force installs the release.
+     *
+     * @param list<string> $args
+     */
+    #[Test]
+    #[DataProvider('provideSelfUpdateVersions')]
+    public function test_self_update_command_installs_an_older_release_only_with_force(string $installed, array $args, int $expectedExitCode, string $said): void
+    {
+        $pharPath = sys_get_temp_dir().'/regex-self-update-'.bin2hex(random_bytes(4)).'.phar';
+        copy(__DIR__.'/../../Fixtures/Cli/template.phar', $pharPath);
+        $checksumFile = $pharPath.'.sha256';
+        file_put_contents($checksumFile, hash_file('sha256', $pharPath).'  regex.phar');
+
+        $command = new SelfUpdateCommand(new SelfUpdater(new LocalReleaseDownloader([SelfUpdater::UPDATE_URL => $pharPath, SelfUpdater::CHECKSUM_URL => $checksumFile]), $pharPath, $installed));
+        $output = OutputFactory::create();
+
+        $exitCode = 0;
+
+        try {
+            $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('self-update', $args), $output), $exitCode, $output);
+        } finally {
+            @unlink($pharPath);
+            @unlink($checksumFile);
+        }
+
+        $this->assertSame($expectedExitCode, $exitCode);
+        $this->assertStringContainsString($said, $buffer);
+    }
+
+    /**
+     * @return iterable<string, array{installed: string, args: list<string>, expectedExitCode: int, said: string}>
+     */
+    public static function provideSelfUpdateVersions(): iterable
+    {
+        yield 'the release installed' => ['installed' => '99.0.0', 'args' => [], 'expectedExitCode' => 0, 'said' => 'PHPRegex is already up to date (99.0.0).'];
+        yield 'a newer version installed' => ['installed' => '99.1.0', 'args' => [], 'expectedExitCode' => 1, 'said' => 'Self-update failed: The latest release, 99.0.0, is older than the installed 99.1.0: run self-update --force to install it.'];
+        yield 'a newer version installed, forced' => ['installed' => '99.1.0', 'args' => ['--force'], 'expectedExitCode' => 0, 'said' => 'PHPRegex updated successfully.'];
+    }
+
     #[Test]
     public function test_version_command_get_name_returns_correct_value(): void
     {

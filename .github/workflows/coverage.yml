@@ -131,6 +131,8 @@ jobs:
             .cache/infection/
             var/coverage/clover.xml
             var/coverage/mutated-paths
+          # The logs stand in .cache/, a directory the upload skips unless told.
+          include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 14
 
@@ -196,5 +198,7 @@ jobs:
           path: |
             .cache/infection/
             var/coverage/mutated-paths
+          # The logs stand in .cache/, a directory the upload skips unless told.
+          include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 14

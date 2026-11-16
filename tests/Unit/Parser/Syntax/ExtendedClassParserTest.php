@@ -82,6 +82,32 @@ final class ExtendedClassParserTest extends TestCase
         }
     }
 
+    /**
+     * PCRE judges each range of a nested class as it reads it: a reversed
+     * range comes before what is wrong further on in the class. Each row
+     * is the error preg_match() reports on PHP 8.4.27 with PCRE2 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideRangesBeforeAFault')]
+    public function test_a_reversed_range_before_a_fault_in_its_class_is_reported_first(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame($code, $result->errorCode, $pattern);
+        $this->assertSame($offset, $result->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideRangesBeforeAFault(): iterable
+    {
+        yield 'reversed range before a range no class takes' => ['pattern' => '/(?[[^]--[a-\d]])/', 'code' => ErrorCode::RangeReversed, 'offset' => 8];
+        yield 'reversed range before a range no class takes, side by side' => ['pattern' => '/(?[[z-ab-\d]])/', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
+        yield 'reversed range before an escape the lexer refuses' => ['pattern' => '/(?[[z-a\x{zz}]])/', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
+        yield 'escape no class takes as a range start' => ['pattern' => '/(?[[\X-\d]])/', 'code' => ErrorCode::CharclassInvalidEscape, 'offset' => 6];
+    }
+
     private static function parse(string $body): NodeInterface
     {
         $target = new PcreTarget(80400, '10.49');

@@ -181,7 +181,7 @@ final class LintContext
             }
 
             if ($parent instanceof QuantifierNode && QuantifierMath::isUnbounded($parent)) {
-                return !self::isAtomicTail($parent, \array_slice($parents, $index + 1));
+                return !$this->isAtomicTail($parent, \array_slice($parents, $index + 1));
             }
         }
 
@@ -199,7 +199,7 @@ final class LintContext
      */
     public function isTheTailOfAnAtomicGroup(NodeInterface $node): bool
     {
-        return self::isAtomicTail($node, array_reverse($this->parentStack));
+        return $this->isAtomicTail($node, array_reverse($this->parentStack));
     }
 
     /**
@@ -306,9 +306,13 @@ final class LintContext
     }
 
     /**
+     * A group a subroutine call runs, between the node and the atomic group,
+     * runs the node without the group around it: "(?1)" in
+     * "(?>x((?:a+)+))|y(?1)$" retries the loop when "$" fails.
+     *
      * @param list<NodeInterface> $parents the parents of the node, the closest first
      */
-    private static function isAtomicTail(NodeInterface $node, array $parents): bool
+    private function isAtomicTail(NodeInterface $node, array $parents): bool
     {
         $child = $node;
         foreach ($parents as $parent) {
@@ -322,6 +326,10 @@ final class LintContext
             } elseif ($parent instanceof GroupNode) {
                 if (GroupType::Atomic === $parent->type) {
                     return true;
+                }
+
+                if ($this->groups->isSubroutineTarget($parent)) {
+                    return false;
                 }
 
                 if (!\in_array($parent->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::BranchReset], true)) {

@@ -125,6 +125,34 @@ final class MutationCoverageTest extends TestCase
         );
     }
 
+    /**
+     * PHPUnit writes the file of a test on the suite of its class and on each
+     * test case, not on the suite that groups the data sets of a method. The
+     * mutation tool looks a test reduced to its method up by that suite's
+     * name and runs a mutant against the file it reads there: with none, the
+     * mutant runs no test and passes for one no test kills.
+     */
+    #[Test]
+    public function test_the_suite_of_a_method_in_the_junit_log_takes_the_file_of_its_test_cases(): void
+    {
+        file_put_contents($this->root().'/junit.xml', self::junit());
+
+        MutationCoverage::reduce($this->root().'/coverage', $this->root(), ['src/Parser/']);
+        MutationCoverage::reduce($this->root().'/coverage', $this->root(), ['src/Parser/']);
+
+        $this->assertSame(
+            [
+                '' => null,
+                'LexerTest' => '/p/tests/R&D/LexerTest.php',
+                'LexerTest::test_a' => '/p/tests/R&D/LexerTest.php',
+                'ParserTest' => '/p/tests/ParserTest.php',
+                'ParserTest::test_c' => '/p/tests/ParserTest.php',
+            ],
+            self::suiteFiles($this->root().'/junit.xml'),
+        );
+        $this->assertSame(5, substr_count((string) file_get_contents($this->root().'/junit.xml'), '<testcase '));
+    }
+
     #[Test]
     public function test_a_file_left_out_of_the_index_is_not_rewritten(): void
     {
@@ -263,6 +291,50 @@ final class MutationCoverageTest extends TestCase
         }
 
         return $lines;
+    }
+
+    /**
+     * @param non-empty-string $file
+     *
+     * @return array<string, ?string>
+     */
+    private static function suiteFiles(string $file): array
+    {
+        $document = new \DOMDocument();
+        $document->load($file);
+        $files = [];
+        foreach ($document->getElementsByTagName('testsuite') as $suite) {
+            $files[$suite->getAttribute('name')] = $suite->hasAttribute('file') ? $suite->getAttribute('file') : null;
+        }
+
+        ksort($files);
+
+        return $files;
+    }
+
+    private static function junit(): string
+    {
+        return <<<'XML'
+            <?xml version="1.0" encoding="UTF-8"?>
+            <testsuites>
+              <testsuite name="" tests="5" assertions="5" errors="0" failures="0" skipped="0" time="0.5">
+                <testsuite name="LexerTest" file="/p/tests/R&amp;D/LexerTest.php" tests="3" assertions="3" errors="0" failures="0" skipped="0" time="0.3">
+                  <testsuite name="LexerTest::test_a" tests="2" assertions="2" errors="0" failures="0" skipped="0" time="0.2">
+                    <testcase name="test_a with data set &quot;first&quot;" file="/p/tests/R&amp;D/LexerTest.php" line="10" class="LexerTest" classname="LexerTest" assertions="1" time="0.1"/>
+                    <testcase name="test_a with data set &quot;second&quot;" file="/p/tests/R&amp;D/LexerTest.php" line="10" class="LexerTest" classname="LexerTest" assertions="1" time="0.1"/>
+                  </testsuite>
+                  <testcase name="test_b" file="/p/tests/R&amp;D/LexerTest.php" line="20" class="LexerTest" classname="LexerTest" assertions="1" time="0.1"/>
+                </testsuite>
+                <testsuite name="ParserTest" file="/p/tests/ParserTest.php" tests="2" assertions="2" errors="0" failures="0" skipped="0" time="0.2">
+                  <testsuite name="ParserTest::test_c" tests="2" assertions="2" errors="0" failures="0" skipped="0" time="0.2">
+                    <testcase name="test_c with data set #0" file="/p/tests/ParserTest.php" line="30" class="ParserTest" classname="ParserTest" assertions="1" time="0.1"/>
+                    <testcase name="test_c with data set #1" file="/p/tests/ParserTest.php" line="30" class="ParserTest" classname="ParserTest" assertions="1" time="0.1"/>
+                  </testsuite>
+                </testsuite>
+              </testsuite>
+            </testsuites>
+
+            XML;
     }
 
     private static function index(string $source): string

@@ -64,7 +64,9 @@ final class ValidatorPatternSource implements PatternSourceInterface
 
         $patterns = [];
         foreach ($this->mappingFiles as $file) {
-            if (self::isExcluded($file, $context)) {
+            // The excludes leave a mapping file out as they leave out a PHP
+            // file, the project reached through a symbolic link included.
+            if ($context->excludes(Path::fromHost($file))) {
                 continue;
             }
 
@@ -240,29 +242,5 @@ final class ValidatorPatternSource implements PatternSourceInterface
         }
 
         return 1;
-    }
-
-    /**
-     * Whether the file lies in a directory the lint excludes: under the
-     * directory the excludes are read from, or, without one, anywhere in
-     * its path.
-     */
-    private static function isExcluded(string $file, PatternSourceContext $context): bool
-    {
-        $file = Path::normalize(realpath($file) ?: $file);
-        $base = null === $context->excludeBase ? null : rtrim(Path::normalize(realpath($context->excludeBase) ?: $context->excludeBase), '/');
-
-        foreach ($context->excludePaths as $exclude) {
-            $exclude = trim(Path::normalize($exclude), '/');
-            if ('' === $exclude) {
-                continue;
-            }
-
-            if (null === $base ? str_contains($file, '/'.$exclude.'/') : str_starts_with($file, $base.'/'.$exclude.'/')) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

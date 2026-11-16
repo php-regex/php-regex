@@ -19,6 +19,7 @@ use Psalm\Context;
 use Psalm\Internal\Analyzer\Statements\ExpressionAnalyzer;
 use Psalm\Internal\Analyzer\StatementsAnalyzer;
 use Psalm\Internal\Codebase\Functions;
+use Psalm\Internal\Provider\FunctionParamsProvider;
 use Psalm\Internal\Provider\NodeDataProvider;
 use Psalm\StatementsSource;
 use Psalm\Storage\FunctionLikeParameter;
@@ -136,6 +137,51 @@ final class PsalmInternals
         }
 
         return $source->getCodebase()->functions->functionExists($source, $function);
+    }
+
+    /**
+     * Has Psalm ask the plugin's parameters provider of a function before
+     * any other: Psalm keeps the first parameters a provider gives, and from
+     * 7.7 on types the callback of preg_replace_callback() itself, with a
+     * provider it registers before the plugins. False when the providers
+     * cannot be reached, which leaves them in their order.
+     *
+     * @param lowercase-string $function
+     * @param class-string     $provider
+     */
+    public static function askFirst(string $function, string $provider): bool
+    {
+        // Every Psalm release the plugin reads keeps them in this property.
+        $property = property_exists(FunctionParamsProvider::class, 'handlers') ? new \ReflectionProperty(FunctionParamsProvider::class, 'handlers') : null;
+        $handlers = $property?->getValue();
+        if (null === $property || !\is_array($handlers) || !\is_array($handlers[$function] ?? null)) {
+            return false;
+        }
+
+        $first = [];
+        $then = [];
+        foreach ($handlers[$function] as $handler) {
+            if ($handler instanceof \Closure && $provider === (new \ReflectionFunction($handler))->getClosureScopeClass()?->getName()) {
+                $first[] = $handler;
+            } else {
+                $then[] = $handler;
+            }
+        }
+
+        $handlers[$function] = [...$first, ...$then];
+        $property->setValue(null, $handlers);
+
+        return [] !== $first;
+    }
+
+    /**
+     * Whether Psalm types the callback of preg_replace_callback() itself, as
+     * 7.7 and later do from the flags of the call: a call the plugin cannot
+     * read is then left to it.
+     */
+    public static function typesPregReplaceCallback(): bool
+    {
+        return class_exists('Psalm\\Internal\\Provider\\ParamsProvider\\PregReplaceCallbackParamsProvider');
     }
 
     /**

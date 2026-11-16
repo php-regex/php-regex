@@ -29,7 +29,7 @@ use PHPRegex\Redos\RedosComplexity;
  * @internal
  *
  * @phpstan-type Witness array{prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool}
- * @phpstan-type Verdict array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, unwitnessed: int|null}
+ * @phpstan-type Verdict array{complexity: RedosComplexity, degree: int|null, prefix: list<int>, pump: list<int>, suffix: list<int>, alternatives: list<list<int>>, published: list<int>, withoutMatches: bool, approximated: bool, abstracted: bool, unwitnessed: int|null}
  */
 final class AmbiguityFinder
 {
@@ -282,7 +282,7 @@ final class AmbiguityFinder
                     continue;
                 }
 
-                $verdict = $this->verdict(RedosComplexity::Exponential, null, $witness, $inexact);
+                $verdict = $this->verdict(RedosComplexity::Exponential, null, $witness, $inexact, !$crosses && !$real);
                 if (!$inexact) {
                     return $verdict;
                 }
@@ -582,12 +582,14 @@ final class AmbiguityFinder
 
     /**
      * @param Witness $witness
+     * @param bool    $abstracted whether the pump rests only on loops the model
+     *                            made of bounded repeats, through exact sets
      *
      * @return Verdict
      */
-    private function verdict(RedosComplexity $complexity, ?int $degree, array $witness, bool $crosses): array
+    private function verdict(RedosComplexity $complexity, ?int $degree, array $witness, bool $crosses, bool $abstracted = false): array
     {
-        return ['complexity' => $complexity, 'degree' => $degree, ...$witness, 'approximated' => $crosses, 'unwitnessed' => null];
+        return ['complexity' => $complexity, 'degree' => $degree, ...$witness, 'approximated' => $crosses, 'abstracted' => $abstracted, 'unwitnessed' => null];
     }
 
     /**
@@ -607,6 +609,7 @@ final class AmbiguityFinder
             'published' => [],
             'withoutMatches' => false,
             'approximated' => false,
+            'abstracted' => false,
             'unwitnessed' => $this->automaton->offsetOf($state),
         ];
     }

@@ -477,6 +477,41 @@ final class LintBaselineTest extends TestCase
     }
 
     /**
+     * The excludes hold a file gone as they leave a file out of the lint:
+     * the path of a file or a directory, behind "./" or absolute, read
+     * from the working directory, holds the entries of the files gone
+     * under it, which are not reported.
+     *
+     * @param list<array{string, int}> $reported
+     */
+    #[Test]
+    #[DataProvider('provideExcludesOfFilesGone')]
+    public function test_filter_reads_the_excludes_as_the_lint_reads_them(string $exclude, array $reported): void
+    {
+        chdir($this->directory);
+        $baseline = $this->baselineFrom(['version' => 1, 'issues' => [
+            self::entryFor('regex.lint.known', 'app/Legacy/Gone.php', '/a+b/', 5),
+            self::entryFor('regex.lint.known', 'app/Gone.php', '/a+b/', 6),
+        ]]);
+
+        $filtered = $baseline->filter(self::report([]), [], ['app'], [str_replace('{root}', $this->directory, $exclude)]);
+
+        $this->assertSame($reported, array_map(static fn (array $result): array => [$result['file'], $result['line']], $filtered->results));
+    }
+
+    /**
+     * @return iterable<string, array{exclude: string, reported: list<array{string, int}>}>
+     */
+    public static function provideExcludesOfFilesGone(): iterable
+    {
+        yield 'a directory behind ./' => ['exclude' => './app/Legacy', 'reported' => [['app/Gone.php', 6]]];
+        yield 'a directory by its absolute path' => ['exclude' => '{root}/app/Legacy', 'reported' => [['app/Gone.php', 6]]];
+        yield 'a file' => ['exclude' => 'app/Gone.php', 'reported' => [['app/Legacy/Gone.php', 5]]];
+        yield 'a file behind ./' => ['exclude' => './app/Gone.php', 'reported' => [['app/Legacy/Gone.php', 5]]];
+        yield 'a directory name' => ['exclude' => 'Legacy', 'reported' => [['app/Gone.php', 6]]];
+    }
+
+    /**
      * The one issue left takes the entry on its line, whichever comes
      * last, and the entries left are reported in file and line order among
      * the results the baseline keeps.

@@ -16,6 +16,7 @@ namespace PHPRegex\Cli\Command;
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
 use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\SelfUpdate\SelfUpdater;
@@ -47,7 +48,9 @@ final class SelfUpdateCommand extends AbstractCommand
      */
     public static function options(): Options
     {
-        return new Options(Arguments::None, [], "Usage: regex self-update\n");
+        return new Options(Arguments::None, [
+            Option::flag('--force', 'Install the latest release even when it is older than this one, or its version cannot be read'),
+        ], "Usage: regex self-update [--force]\n");
     }
 
     public function run(Input $input, Output $output): int
@@ -58,9 +61,9 @@ final class SelfUpdateCommand extends AbstractCommand
             return self::SUCCESS;
         }
 
-        $error = self::options()->parse($input->args)->error;
-        if (null !== $error) {
-            return $this->usageError($output, $error, self::options()->usage);
+        $parsed = self::options()->parse($input->args);
+        if (null !== $parsed->error) {
+            return $this->usageError($output, $parsed->error, self::options()->usage);
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
@@ -68,7 +71,7 @@ final class SelfUpdateCommand extends AbstractCommand
         $style->renderSection('Updating', 1, 1);
 
         try {
-            $this->updater->run($output);
+            $this->updater->run($output, $parsed->has('--force'));
         } catch (\RuntimeException $e) {
             $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Self-update failed: '.$e->getMessage())."\n");
 

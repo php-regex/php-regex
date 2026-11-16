@@ -34,6 +34,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -69,6 +70,44 @@ final class TextExplainerTest extends TestCase
             "Regex matches\n  Quantified group, one or more times (as few as possible)\n    Non-capturing group\n      Character Class: any character in [ POSIX Class [[:alpha:]], 'b' ]\n      'c'\n    End group\n  End quantified group",
             Regex::create()->explain('/(?:[[:alpha:]b]c)+?/'),
         );
+    }
+
+    /**
+     * "U" swaps greed: "a+" takes as few as possible, "a+?" as many. A
+     * possessive quantifier keeps its own, and "(?^)" leaves "U" as it was.
+     */
+    #[Test]
+    #[DataProvider('provideUngreedyPatterns')]
+    public function test_greed_reads_the_ungreedy_option(string $pattern, bool $lazy): void
+    {
+        $this->assertSame(1, preg_match($pattern, 'aaa', $matches));
+        $this->assertSame($lazy ? 'a' : 'aaa', $matches[0]);
+
+        $explanation = Regex::create()->explain($pattern);
+
+        $this->assertStringContainsString("'a', one or more times", $explanation);
+        $this->assertSame($lazy, str_contains($explanation, "'a', one or more times (as few as possible)"), $explanation);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, lazy: bool}>
+     */
+    public static function provideUngreedyPatterns(): iterable
+    {
+        yield 'greedy under the flag' => ['pattern' => '/a+/U', 'lazy' => true];
+        yield 'lazy under the flag' => ['pattern' => '/a+?/U', 'lazy' => false];
+        yield 'possessive under the flag' => ['pattern' => '/a++/U', 'lazy' => false];
+        yield 'greedy after an inline setting' => ['pattern' => '/(?U)a+/', 'lazy' => true];
+        yield 'lazy after an inline setting' => ['pattern' => '/(?U)a+?/', 'lazy' => false];
+        yield 'greedy in a scoped setting' => ['pattern' => '/(?U:a+)/', 'lazy' => true];
+        yield 'greedy after the setting is turned off' => ['pattern' => '/(?U)(?-U)a+/', 'lazy' => false];
+        yield 'greedy after a reset of the other options' => ['pattern' => '/(?U)(?^)a+/', 'lazy' => true];
+        yield 'greedy without the flag' => ['pattern' => '/a+/', 'lazy' => false];
+        yield 'greedy after another inline setting' => ['pattern' => '/(?i)a+/', 'lazy' => false];
+        yield 'lazy without the flag' => ['pattern' => '/a+?/', 'lazy' => true];
+        yield 'greedy under the flag after Unicode properties' => ['pattern' => '/(*UCP)a+/U', 'lazy' => true];
+        yield 'greedy under the flag after a linebreak convention' => ['pattern' => '/(*BSR_ANYCRLF)a+/U', 'lazy' => true];
+        yield 'greedy under the flag after a newline convention' => ['pattern' => '/(*CR)a+/U', 'lazy' => true];
     }
 
     #[Test]

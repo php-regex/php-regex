@@ -18,6 +18,7 @@ use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Unicode\CodePointHelper;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -135,6 +136,48 @@ final class UnicodeSupportTest extends TestCase
         $this->assertFalse($solver->intersection('/\s/u', "/\u{2028}/u", $options)->isEmpty);
         $this->assertFalse($solver->intersection('/\d/u', "/\u{0661}/u", $options)->isEmpty);
         $this->assertTrue($solver->intersection('/\d/u', '/a/u', $options)->isEmpty);
+    }
+
+    /**
+     * A pattern read as UTF-8 and one read as bytes are compared on the
+     * subjects both can read, the valid UTF-8 strings: there "é" is one
+     * character to the one and two bytes to the other. A witness is such a
+     * string, and the engine tells the two apart on it.
+     */
+    #[Test]
+    #[DataProvider('provideMixedReadings')]
+    public function test_a_pattern_read_as_utf8_is_compared_with_one_read_as_bytes_on_utf8_subjects(string $left, string $right, bool $equivalent, ?string $leftOnly, ?string $rightOnly): void
+    {
+        foreach (['', 'a', 'é', "\u{80}", "\u{100}", '€', "\u{10FFFF}", 'éé', '/admin', '/admin/users', "/admin/users\u{100}"] as $subject) {
+            if ($equivalent) {
+                $this->assertSame(preg_match($left, $subject), preg_match($right, $subject), bin2hex($subject));
+            }
+        }
+
+        foreach ([[$leftOnly, 1, 0], [$rightOnly, 0, 1]] as [$witness, $leftAnswer, $rightAnswer]) {
+            if (null !== $witness) {
+                $this->assertSame(1, preg_match('//u', $witness), 'A witness is valid UTF-8.');
+                $this->assertSame([$leftAnswer, $rightAnswer], [preg_match($left, $witness), preg_match($right, $witness)], bin2hex($witness));
+            }
+        }
+
+        $result = (new LanguageSolver())->equivalent($left, $right, $this->fullMatchOptions());
+
+        $this->assertSame([$equivalent, $leftOnly, $rightOnly], [$result->isEquivalent, $result->leftOnlyExample, $result->rightOnlyExample]);
+        $this->assertSame(null === $leftOnly, (new LanguageSolver())->subsetOf($left, $right, $this->fullMatchOptions())->isSubset);
+        $this->assertFalse((new LanguageSolver())->intersection($left, $right, $this->fullMatchOptions())->isEmpty);
+    }
+
+    /**
+     * @return iterable<string, array{left: string, right: string, equivalent: bool, leftOnly: string|null, rightOnly: string|null}>
+     */
+    public static function provideMixedReadings(): iterable
+    {
+        yield 'a letter above ASCII under a start option' => ['left' => '/(*UTF)\Aé\z/', 'right' => '/\Aé\z/', 'equivalent' => true, 'leftOnly' => null, 'rightOnly' => null];
+        yield 'a letter above ASCII under the u flag' => ['left' => '/\Aé\z/u', 'right' => '/\Aé\z/', 'equivalent' => true, 'leftOnly' => null, 'rightOnly' => null];
+        yield 'the bytes above ASCII and the characters above it' => ['left' => '/\A[\x80-\xFF]+\z/', 'right' => '/(*UTF)\A[^\x00-\x7F]+\z/', 'equivalent' => true, 'leftOnly' => null, 'rightOnly' => null];
+        yield 'one character and one byte' => ['left' => '/(*UTF)\A.\z/', 'right' => '/\A.\z/', 'equivalent' => false, 'leftOnly' => "\u{80}", 'rightOnly' => null];
+        yield 'a narrower path searched for' => ['left' => '/(*UTF)(*NO_JIT).*(?:^\/admin\/users).*/', 'right' => '/.*(?:^\/admin).*/', 'equivalent' => false, 'leftOnly' => null, 'rightOnly' => '/admin'];
     }
 
     private function fullMatchOptions(): SolverOptions

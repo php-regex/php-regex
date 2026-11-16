@@ -90,6 +90,35 @@ final class SampleGeneratorSeedTest extends TestCase
     }
 
     /**
+     * A sample the engine refuses is drawn again, and on a seeded instance
+     * each new draw goes on from the last one: "/(?>a|ab)c/" matches "ac"
+     * alone, "/(?:(a)|b)\1/" "aa" alone, so a draw that starts with the
+     * other branch must not be drawn again.
+     */
+    #[Test]
+    #[DataProvider('provideRetriedPatterns')]
+    public function test_a_seeded_instance_draws_a_new_sample_on_each_retry(string $pattern, string $match): void
+    {
+        $this->assertSame(1, preg_match($pattern, $match));
+
+        for ($seed = 1; $seed <= 40; $seed++) {
+            $sample = (new SampleGenerator(seed: $seed))->generate($pattern);
+
+            $this->assertSame($match, $sample, 'seed '.$seed);
+            $this->assertSame($sample, (new SampleGenerator(seed: $seed))->generate($pattern), 'seed '.$seed);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, match: string}>
+     */
+    public static function provideRetriedPatterns(): iterable
+    {
+        yield 'an atomic choice' => ['pattern' => '/^(?>a|ab)c$/', 'match' => 'ac'];
+        yield 'a reference to a group a branch skips' => ['pattern' => '/^(?:(a)|b)\1$/', 'match' => 'aa'];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, seed: int}>
      */
     public static function provideSeededPatterns(): iterable

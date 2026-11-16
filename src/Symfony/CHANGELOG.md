@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:security` compares a path under `(*UTF)` with one without it, and
+   `regex:routes` a route with the `utf8` option with one without it, on the
+   request paths that are valid UTF-8, as Symfony matches them:
+   `(*UTF)^/admin/users` before `^/admin` is a carve-out where it was an
+   overlap, `^/admin` before `(*UTF)^/admin/users` shadows it, and
+   `/users/{id}` before the same route with `utf8` shadows it.
  * `php_regex.php_version` takes a Composer constraint (`">=8.1"`,
    `"^8.1 <8.7"`) besides a single version: `regex:lint` judges the range as
    `regex lint --php-version` does, from its lowest PHP and at every later
@@ -27,6 +33,15 @@ CHANGELOG
    The JSON report keeps each value as found.
  * `regex:lint` reads the `matches` patterns of the Twig templates under the
    linted paths; `--no-twig` leaves them out.
+ * `regex:lint --min-savings` takes a whole number, 0 or more, and refuses
+   anything else as `--jobs` is refused, exit code 2 and `The --min-savings
+   value must be a non-negative integer.`: `--min-savings=abc` was read as 1
+   and `--min-savings=-5` as a negative saving.
+ * `regex:lint` leaves a validator mapping file out as it leaves out a PHP
+   file: an `exclude` is a directory name anywhere below the project, or the
+   path of a file or a directory, from the project, behind `./` or absolute,
+   where only a directory at the root of the project left a mapping file
+   out.
  * `regex:lint` reads the `Regex` constraints of the validator mapping files
    FrameworkBundle hands the validator (`config/validator/`,
    `framework.validation.mapping.paths`, the bundles' validation files), where
@@ -54,6 +69,18 @@ CHANGELOG
    reported as an overlap; a later rule is shadowed only when the earlier
    one takes every request it takes, methods, host and addresses included,
    where `^/admin` for `GET` shadowed `^/admin/users` for every method.
+ * `regex:security` and `regex:analyze` keep the options an
+   `access_control` path or host opens with, `(*UTF)` or
+   `(*LIMIT_MATCH=1000)`, in front of the search they read it as: PCRE
+   reads them there only. `(*UTF)^/admin` before `^/admin/users` shadows it,
+   where the pair was compared on a pattern PCRE refuses and went
+   unreported.
+ * `regex:security` and `regex:analyze` search for every branch of an
+   `access_control` path or host written as a top-level alternation, as
+   Symfony's matchers do: `^/assets|^/login` with `PUBLIC_ACCESS` before
+   `^/assets/private` with `ROLE_ADMIN` is a critical shadow, where the first
+   branch was read as the whole path and the pair went unreported. An anchor
+   binds only the branch it is written in.
  * The `ValidRegex` messages ship in an English catalogue,
    `Resources/translations/validators.en.xlf`, of the `validators` domain:
    an application translates them as it translates the messages of
@@ -149,6 +176,10 @@ CHANGELOG
    an overlap whichever is declared first, the earlier one winning them, and
    a route is shadowed when an earlier one takes all its paths. A narrower
    route declared before a wider one is not reported.
+ * `regex:routes` and `regex:analyze` read a route for `GET` as taking the
+   `HEAD` requests too, as Symfony's matchers send them: a route for `HEAD`
+   only declared after a route for `GET` on its paths is shadowed, where the
+   pair was set apart on its methods.
  * `regex:security` and `regex:analyze` read the security configuration the
    application runs with, as `debug:config security` shows it: every file
    format the kernel loads, every YAML shape, the parameters resolved, where

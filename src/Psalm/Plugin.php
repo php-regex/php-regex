@@ -67,6 +67,9 @@ final class Plugin implements PluginEntryPointInterface
             class_exists($hooks);
             $registration->registerHooksFromClass($hooks);
         }
+        // Psalm 7.7 and later type the callback of preg_replace_callback()
+        // with a provider of their own, asked before the plugins.
+        PsalmInternals::askFirst('preg_replace_callback', CallbackParameters::class);
     }
 
     private static function option(?\SimpleXMLElement $config, string $name): ?string

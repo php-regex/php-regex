@@ -637,7 +637,7 @@ too.
 | `shutdown` | Graceful shutdown request: nothing else is served until `exit`, and a request sent in between, a second `shutdown` included, is answered Invalid Request (-32600) |
 | `exit` | Server exit: code 0 after `shutdown`, 1 without it |
 | `textDocument/didOpen` | Document opened |
-| `textDocument/didChange` | Document changed |
+| `textDocument/didChange` | Document changed: the changes are whole texts (full sync), applied in order, so the last one is the document |
 | `textDocument/didClose` | Document closed |
 | `textDocument/didSave` | Document saved: its declarations are read again |
 | `workspace/didChangeWatchedFiles` | Files changed outside the editor: their declarations are read again; the watcher is registered with the client when it offers dynamic registration |
@@ -667,6 +667,11 @@ ends it:
 | A declared `Content-Length` over 16 MiB | `-32600` Invalid Request, `id` null; the declared bytes are drained and the session goes on |
 | A header block over 8 KiB, an endless run of header lines above all | `-32600` Invalid Request, `id` null; the session ends there, exit 0 — exit 1 stays the crash signal, not the answer to garbage |
 | JSON that is not a JSON-RPC 2.0 object: a batch, a scalar, no `"jsonrpc": "2.0"`, a `method` that is not a string, an `id` that is neither an integer nor a string, `params` that are neither an object nor an array | `-32600` Invalid Request, with the message's `id` when it is an integer or a string, else null |
+
+A `textDocument/hover`, `textDocument/completion` or `textDocument/codeAction`
+request that names no document, no position or no range is answered with
+nothing (`null`, or `[]` for code actions). The same method sent as a
+notification, without an `id`, is never answered.
 
 ### Server Capabilities
 

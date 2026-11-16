@@ -124,7 +124,13 @@ final class AtomicScriptRunTest extends TestCase
 
         $this->assertSame(RedosSeverity::Critical, $regex->redos('/(*sr:(a+)+b)/')->severity);
         $this->assertSame($regex->redos('/(*sr:(?>(a+)+b))/')->severity, $regex->redos('/(*asr:(a+)+b)/')->severity);
-        $this->assertNotSame(RedosSeverity::Critical, $regex->redos('/(*asr:(a+)+b)/')->severity);
+        // An atomic body backtracks until it has matched: PCRE2 gives up on
+        // "a" x 24 . "!b" for "(a+)+b" inside it. A loop that ends the body
+        // is left alone once it has matched, as in an atomic group.
+        $this->assertSame(RedosSeverity::Critical, $regex->redos('/(*asr:(a+)+b)/')->severity);
+        $this->assertSame(RedosSeverity::Critical, $regex->redos('/(*sr:(a+)+)b/')->severity);
+        $this->assertSame($regex->redos('/(?>(a+)+)b/')->severity, $regex->redos('/(*asr:(a+)+)b/')->severity);
+        $this->assertNotSame(RedosSeverity::Critical, $regex->redos('/(*asr:(a+)+)b/')->severity);
     }
 
     #[Test]

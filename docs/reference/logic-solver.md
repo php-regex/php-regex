@@ -116,9 +116,13 @@ lookarounds; atomic groups, and a possessive quantifier that could have to give 
 it matched (one whose body may match more than one way, or that something after it may
 start like it does: `/a++a/`, `/(?:ab?)++b/`, `\s++$`); a loop over a body that can match
 empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
-and `\K`; an end anchor followed by more of the pattern; and two patterns of which one
+and `\K`; an end anchor followed by more of the pattern, another turn of the loop it stands
+in included (`/(?:a$)*\n/`, `/(?:a$)*/`); an anchor, an assertion or a lookaround in a group
+repeated no time, which PCRE2 still reads to choose where it tries a match (`/(?:x|(?=a)){0}\w/`
+finds no match in `"\tb"`, where `/\w/` finds `b`); and two patterns of which one
 reads UTF-8 and the other bytes. Groups count by number and by name: `/(?<n>a)/` and `/(a)/`
-write different `$matches`.
+write different `$matches`, and so do `/(?<n>a){0}b/` and `/b/`, as a group repeated no time
+still takes its number.
 
 Neither question answers the other. The same `$matches` on every subject is the same
 answer on every subject, so the two patterns find a match in the same subjects; it is not
@@ -226,6 +230,14 @@ The consequences:
   does either. Counter-example strings above byte `0x7F` are raw bytes, as the
   engine reads them. (When the code-point alphabet arrived, the sets' shape
   changed once; the pinned verdicts did not.)
+- **A pattern read as UTF-8 and one read as bytes**, `(*UTF)` or `/u` on one
+  side only, are compared on the valid UTF-8 strings: the one read as bytes
+  reads each character as its bytes. `/(*UTF)\Aé\z/` and `/\Aé\z/` are
+  equivalent, `/(*UTF)\A.\z/` and `/\A.\z/` differ on `"\u{80}"`, one
+  character and two bytes. A string that is not valid UTF-8 is not compared:
+  under `/u`, `preg_match()` returns `false` on it; under `(*UTF)` alone PHP
+  does not check it, and PCRE2 reads it as if it were valid, with no defined
+  answer (`/(*UTF)\A.\z/` matches `"\xFF"`, which `/\A.\z/u` refuses).
 
 The same engine-relative question, asked at the CLI:
 
@@ -412,6 +424,7 @@ verbatim:
 | an atomic group (and `\R`)                 | `Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.` |
 | `\K` or `\G`                               | `\K and \G read where a match starts or stood before, which the automata solver cannot read as a pure language.` |
 | a possessive quantifier the solver cannot prove inert | `Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.` |
+| an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
 | a start option such as `(*CRLF)` with `$`, `\Z` or `/m` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
 | the flag `A`                               | `Unsupported regex flags for automata: A.` (the pattern's own flags, in order) |

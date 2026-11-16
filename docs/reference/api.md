@@ -1025,7 +1025,8 @@ Each class lives in the `Exception` namespace of its package:
 every parse-time failure. `LimitException` sits beside it too: a limit of the
 library (`max_pattern_length`, `max_recursion_depth`) is no grammar error, the
 pattern was not read to its end, and `validate()` reports it with the `limit`
-category.
+category. An error PCRE meets before the level where the parser stopped comes
+first: past 250 levels, PCRE refuses the parentheses themselves.
 
 `InternalFailureException` is no `RegexException`: the library could not
 finish its own work, which says nothing of the pattern, so `parse()`,

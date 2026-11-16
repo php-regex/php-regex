@@ -14,12 +14,17 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\BackrefTarget;
+use PHPRegex\Linter\Rule\Support\QuantifierMath;
+use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
 
 /**
  * Detects backreferences that can never capture useful text: references to
  * unclosed groups, groups in a different alternative, or always-empty groups.
+ *
+ * @phpstan-import-type CapturingGroupInfo from GroupIndex
  *
  * @internal
  */
@@ -72,6 +77,11 @@ final class UselessBackrefRule extends AbstractLintRule
             return [];
         }
 
+        // In a loop, the reference reads what an earlier iteration captured.
+        if (self::isFilledByAnEarlierIteration($node, $groupInfo, $context)) {
+            return $groupInfo['alwaysEmpty'] ? $this->alwaysEmpty($node) : [];
+        }
+
         $backrefPos = $node->getStartPosition();
         if ($backrefPos < $groupInfo['end']) {
             return [new RuleViolation(
@@ -93,17 +103,74 @@ final class UselessBackrefRule extends AbstractLintRule
             )];
         }
 
-        if ($groupInfo['alwaysEmpty']) {
-            return [new RuleViolation(
-                self::ID,
-                'Backreference refers to a capturing group that always matches an empty string.',
-                $node->startPosition,
-                'Remove the backreference or replace the capturing group with literal text.',
-                end: $node->getEndPosition(),
-            )];
+        return $groupInfo['alwaysEmpty'] ? $this->alwaysEmpty($node) : [];
+    }
+
+    /**
+     * @return list<RuleViolation>
+     */
+    private function alwaysEmpty(BackrefNode $node): array
+    {
+        return [new RuleViolation(
+            self::ID,
+            'Backreference refers to a capturing group that always matches an empty string.',
+            $node->startPosition,
+            'Remove the backreference or replace the capturing group with literal text.',
+            end: $node->getEndPosition(),
+        )];
+    }
+
+    /**
+     * Whether a loop around both the reference and its group runs the
+     * reference after an earlier iteration has set the group: an iteration
+     * may take a way that skips the reference, through another branch
+     * holding no reference or past a count that may be zero, as in the
+     * PCRE2 manual's "(a|b\1)+" or in "(?:x(a)|\1)+". In "(a\1)+" every
+     * way passes the reference first, and no iteration ever sets the group.
+     *
+     * @param CapturingGroupInfo $group
+     */
+    private static function isFilledByAnEarlierIteration(BackrefNode $node, array $group, LintContext $context): bool
+    {
+        $skippable = false;
+        $child = $node;
+        foreach (array_reverse($context->parents()) as $parent) {
+            if ($parent instanceof QuantifierNode) {
+                [$min, $max] = QuantifierMath::parseRange($parent);
+                if ($skippable
+                    && (null === $max || $max > 1)
+                    && $parent->getStartPosition() <= $group['start']
+                    && $group['end'] <= $parent->getEndPosition()
+                ) {
+                    return true;
+                }
+
+                $skippable = $skippable || 0 === $min;
+            } elseif ($parent instanceof AlternationNode) {
+                foreach ($parent->alternatives as $alternative) {
+                    $skippable = $skippable || ($alternative !== $child && !self::holdsABackref($alternative));
+                }
+            }
+
+            $child = $parent;
         }
 
-        return [];
+        return false;
+    }
+
+    private static function holdsABackref(NodeInterface $node): bool
+    {
+        if ($node instanceof BackrefNode) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsABackref($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

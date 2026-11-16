@@ -79,6 +79,15 @@ final class LookbehindMeasureEndTest extends TestCase
         // A lookahead repeated directly is measured as if not repeated.
         yield 'optional lookahead' => ['pattern' => '/(?<=(?=a)?)b/', 'outcomes' => ['10.32' => null, '10.42' => null, '10.43' => null]];
         yield 'alphabetic lookahead counted once or twice' => ['pattern' => '/(?<=(*pla:a){1,2})b/', 'outcomes' => ['10.33' => null, '10.42' => null, '10.49' => null]];
+        // A substring scan matches nothing where it stands: it adds no
+        // length, and repeated directly it is measured as a lookahead is.
+        yield 'unbounded repeat in a substring scan' => ['pattern' => '/(q)(?<=(*scs:(1)a+))/', 'outcomes' => ['10.49' => null]];
+        yield 'unbounded repeat in a substring scan by its long name' => ['pattern' => '/(q)(?<=(*scan_substring:(1)a+)b)/', 'outcomes' => ['10.49' => null]];
+        yield 'substring scan after a range of counts' => ['pattern' => '/(q)(?<=b{1,200}(*scs:(1)a{100}))/', 'outcomes' => ['10.49' => null]];
+        yield 'substring scan repeated without bound' => ['pattern' => '/(q)(?<=(*scs:(1)a+)*)/', 'outcomes' => ['10.49' => null]];
+        yield 'substring scan in a group counted twice' => ['pattern' => '/(q)(?<=(?:b(*scs:(1)a+)){2})/', 'outcomes' => ['10.49' => null]];
+        yield 'group holding a substring scan repeated without bound' => ['pattern' => '/(q)(?<=(?:(*scs:(1)a))+)/', 'outcomes' => ['10.49' => 3]];
+        yield 'unbounded lookbehind in a substring scan' => ['pattern' => '/(q)(?<=(*scs:(1)(?<=a+)))/', 'outcomes' => ['10.49' => 16]];
         // Up to 10.42 the measure ends on the outer lookbehind at the first
         // item of no fixed length; from 10.43 it goes on to the inner one.
         yield 'optional character before an unbounded lookbehind' => ['pattern' => '/(?<=xa?(?<=b+))/', 'outcomes' => ['10.32' => 0, '10.42' => 0, '10.43' => 7, '10.49' => 7]];

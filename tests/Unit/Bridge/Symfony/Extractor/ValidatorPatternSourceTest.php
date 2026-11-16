@@ -187,6 +187,37 @@ final class ValidatorPatternSourceTest extends TestCase
         $this->assertCount(2, $files(new PatternSourceContext(['src'], [basename(\dirname($project))], excludeBase: $project)));
     }
 
+    /**
+     * The excludes leave a mapping file out as they leave out a PHP file:
+     * a directory name anywhere below the project, or the path of a file
+     * or a directory, from the project, behind "./" or absolute.
+     */
+    #[Test]
+    #[DataProvider('provideExcludes')]
+    public function test_the_excludes_leave_out_a_mapping_file_as_they_leave_out_a_php_file(string $exclude): void
+    {
+        $mapping = self::CUSTOMER.":\n    properties:\n        name:\n            - Regex: '/(a/'\n";
+        $project = $this->makeProject(['config/validator/customer.yaml' => $mapping, 'config/validator/legacy/order.yaml' => $mapping]);
+        $source = new ValidatorPatternSource([$project.'/config/validator/customer.yaml', $project.'/config/validator/legacy/order.yaml']);
+        chdir('/');
+
+        $occurrences = $source->extract(new PatternSourceContext(['src'], [str_replace('{root}', $project, $exclude)], excludeBase: $project));
+
+        $this->assertSame([$project.'/config/validator/customer.yaml'], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->file, $occurrences));
+    }
+
+    /**
+     * @return iterable<string, array{exclude: string}>
+     */
+    public static function provideExcludes(): iterable
+    {
+        yield 'a directory name below the project' => ['exclude' => 'legacy'];
+        yield 'a file, from the project' => ['exclude' => 'config/validator/legacy/order.yaml'];
+        yield 'a file behind ./' => ['exclude' => './config/validator/legacy/order.yaml'];
+        yield 'a directory behind ./' => ['exclude' => './config/validator/legacy'];
+        yield 'a directory by its absolute path' => ['exclude' => '{root}/config/validator/legacy'];
+    }
+
     #[Test]
     public function test_the_source_of_a_pattern_names_its_class_and_member(): void
     {

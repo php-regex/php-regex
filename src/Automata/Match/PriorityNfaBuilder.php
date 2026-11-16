@@ -22,11 +22,13 @@ use PHPRegex\Parser\Hir\CaptureHir;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassHir;
 use PHPRegex\Parser\Hir\ConcatHir;
+use PHPRegex\Parser\Hir\ConditionalHir;
 use PHPRegex\Parser\Hir\EmptyHir;
 use PHPRegex\Parser\Hir\Greed;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\LiteralHir;
 use PHPRegex\Parser\Hir\LookHir;
+use PHPRegex\Parser\Hir\OpaqueHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
 
 /**
@@ -53,6 +55,8 @@ final class PriorityNfaBuilder
 
     public const TRAILING_ANCHOR_MESSAGE = 'An end anchor followed by more of the pattern cannot be read by the match solver.';
 
+    public const ZERO_REPEAT_ASSERTION_MESSAGE = 'An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the match solver does not read.';
+
     private PriorityNfa $nfa;
 
     /**
@@ -64,6 +68,16 @@ final class PriorityNfaBuilder
      */
     private array $possessives = [];
 
+    /**
+     * The end anchors, each with the state that follows it, checked again
+     * once the whole automaton is built: inside a loop, what follows the
+     * body, another iteration or what comes after the loop, is written only
+     * once the body is.
+     *
+     * @var list<array{next: int, position: int}>
+     */
+    private array $endAnchors = [];
+
     public function __construct(private readonly int $maxStates, private readonly string $pattern) {}
 
     /**
@@ -73,11 +87,18 @@ final class PriorityNfaBuilder
     {
         $this->nfa = new PriorityNfa($unicode);
         $this->possessives = [];
+        $this->endAnchors = [];
         $match = $this->add(PriorityNfa::MATCH);
         $this->nfa->start = $this->state($hir, $match);
         ksort($this->nfa->names);
 
         $this->assertPossessivesNeverGiveBack();
+
+        foreach ($this->endAnchors as $anchor) {
+            if ($this->readsMore($anchor['next'])) {
+                throw new ComplexityException(self::TRAILING_ANCHOR_MESSAGE, $anchor['position'], $this->pattern);
+            }
+        }
 
         return $this->nfa;
     }
@@ -168,6 +189,14 @@ final class PriorityNfaBuilder
             throw new ComplexityException(self::NULLABLE_LOOP_MESSAGE, $hir->startPosition, $this->pattern);
         }
 
+        // Never tried, the body still numbers and names its groups:
+        // preg_match_all() writes an empty group 1 for "(a){0}b".
+        if (0 === $hir->max) {
+            $this->countGroupsIn($hir->body);
+
+            return $next;
+        }
+
         $greedy = Greed::Lazy !== $hir->greed;
         if (null === $hir->max) {
             // The loop: one more iteration or out, in the order the greed says.
@@ -196,14 +225,45 @@ final class PriorityNfaBuilder
      */
     private function capture(CaptureHir $hir, int $next): int
     {
-        $this->nfa->groupCount = max($this->nfa->groupCount, $hir->index);
-        if (null !== $hir->name) {
-            $this->nfa->names[$hir->index] ??= $hir->name;
-        }
+        $this->countGroup($hir);
 
         $close = $this->tag(2 * $hir->index + 1, $next);
 
         return $this->tag(2 * $hir->index, $this->state($hir->body, $close));
+    }
+
+    private function countGroup(CaptureHir $hir): void
+    {
+        $this->nfa->groupCount = max($this->nfa->groupCount, $hir->index);
+        if (null !== $hir->name) {
+            $this->nfa->names[$hir->index] ??= $hir->name;
+        }
+    }
+
+    /**
+     * The groups of a body no state is built for, which must hold nothing
+     * PCRE2 may read to choose where it tries a match.
+     *
+     * @throws ComplexityException
+     */
+    private function countGroupsIn(Hir $hir): void
+    {
+        $pending = [$hir];
+        while (null !== $node = array_pop($pending)) {
+            if ($node instanceof CaptureHir) {
+                $this->countGroup($node);
+            } elseif ($node instanceof AssertionHir || $node instanceof LookHir) {
+                // "/(?:x|(?=a)){0}\w/" finds no match in "\tb", where "/\w/"
+                // finds "b".
+                throw new ComplexityException(self::ZERO_REPEAT_ASSERTION_MESSAGE, $node->startPosition, $this->pattern);
+            } elseif ($node instanceof OpaqueHir || $node instanceof ConditionalHir) {
+                // A verb, a condition or a group the tree does not show, as
+                // in "(*scs:(1)(b))", is read nowhere else either.
+                throw new ComplexityException(self::BACKREFERENCE_MESSAGE, $node->startPosition, $this->pattern);
+            }
+
+            array_push($pending, ...$node->children());
+        }
     }
 
     private function tag(int $slot, int $next): int
@@ -229,8 +289,12 @@ final class PriorityNfaBuilder
 
         // What follows an end anchor must read nothing: it is checked when
         // the subject ends, or a final newline is all that is left.
-        if (PriorityNfa::START !== $kind && $this->readsMore($next)) {
-            throw new ComplexityException(self::TRAILING_ANCHOR_MESSAGE, $hir->startPosition, $this->pattern);
+        if (PriorityNfa::START !== $kind) {
+            if ($this->readsMore($next)) {
+                throw new ComplexityException(self::TRAILING_ANCHOR_MESSAGE, $hir->startPosition, $this->pattern);
+            }
+
+            $this->endAnchors[] = ['next' => $next, 'position' => $hir->startPosition];
         }
 
         $state = $this->add($kind);

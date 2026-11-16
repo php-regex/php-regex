@@ -112,7 +112,7 @@ final class ConsoleLintRunnerEmptySummaryTest extends TestCase
             pathsSetting: null,
             exclude: ['vendor'],
             excludeBase: null,
-            minSavings: 1,
+            minSavings: '1',
             jobs: '1',
             disabledSources: ['routes'],
             optimizations: new OptimizerOptions(verifyWithAutomata: true),
