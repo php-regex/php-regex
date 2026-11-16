@@ -5,14 +5,6 @@
 Fixed together in one pull request before the final bump; each line
 leaves this list once its fix is in.
 
-Decided
-
-- `self-update` installs `releases/latest` without comparing versions:
-  from `2.0.0-RC1` it installs the newest stable release, which can be
-  older (`1.3.0`), and says it updated. Compare the versions: install a
-  newer one, say a same one is up to date, refuse an older one without
-  `--force`.
-
 Upstream
 
 - PCRE2 10.49's JIT returns 0 for `/é.{2,}é|(?<=x)A/u` on `xA`, and 1
