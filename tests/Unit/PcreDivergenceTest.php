@@ -196,6 +196,61 @@ final class PcreDivergenceTest extends TestCase
     }
 
     /**
+     * Where the library still reports another offset than PCRE, on purpose:
+     * a conditional of three branches on an assertion, on a version, and
+     * from PCRE2 10.47 on a name or on "R". PCRE then reports the offset
+     * left by the last item before the conditional in its branch that kept
+     * one, a call or a reference, or 0 where none did; the library reports
+     * where the conditional opens, or on the name the condition tests
+     * before 10.47. Each row holds what PHP printed on the release named
+     * ("pcreOffset") and what the library reports ("offset").
+     */
+    #[Test]
+    #[DataProvider('provideKnownDifferences')]
+    public function test_a_known_difference_keeps_the_offset_the_library_reports(string $pattern, string $release, string $message, int $pcreOffset, int $offset, ErrorCode $code): void
+    {
+        $this->assertContains($code->value, PcreMessageCodes::codesFor($message, $release), \sprintf('%s does not name "%s" on %s.', $code->value, $message, $release));
+        $this->assertNotSame($pcreOffset, $offset, 'A row of a known difference holds two offsets.');
+
+        if (self::runtimePin() === $release) {
+            $this->assertSame(
+                ['message' => $message, 'offset' => $pcreOffset],
+                PcreMessageCodes::read(PcreMessageCodes::warningOf($pattern) ?? 'compiles'),
+                \sprintf('%s: the running PCRE2 %s no longer reports what this row holds.', $pattern, $release),
+            );
+        }
+
+        $result = RegexParser::create(['cache' => null, 'pcre_version' => $release])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], \sprintf('%s on %s: %s', $pattern, $release, (string) $result->error));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, release: string, message: string, pcreOffset: int, offset: int, code: ErrorCode}>
+     */
+    public static function provideKnownDifferences(): iterable
+    {
+        $message = 'conditional subpattern contains more than two branches';
+        $rows = [
+            // From 10.47, the name the condition tests no longer leaves its offset.
+            'named condition with three branches' => ['/(?<n>x)(?(<n>)a|b|c)/', ['10.49'], 0, 7],
+            'recursion condition with three branches, after a letter' => ['/x(?(R)a|b|c)/', ['10.49'], 0, 1],
+            'recursion condition with three branches, after a call' => ['/(a)xx(?1)xx(?(R)a|b|c)/', ['10.49'], 8, 11],
+            'named condition with three branches, after a reference by name' => ['/(?<n>a)xx\k<n>xx(?(<n>)a|b|c)/', ['10.49'], 12, 16],
+            // An assertion or a version leaves no offset on any release.
+            'assertion condition with three branches, after a letter' => ['/x(?(?=a)a|b|c)/', self::LIVE_RELEASES, 0, 1],
+            'version condition with three branches, after a letter' => ['/x(?(VERSION>=10.4)a|b|c)/', self::LIVE_RELEASES, 0, 1],
+            'assertion condition with three branches, after a call' => ['/(a)xx(?1)xx(?(?=a)a|b|c)/', self::LIVE_RELEASES, 8, 11],
+        ];
+
+        foreach ($rows as $name => [$pattern, $releases, $pcreOffset, $offset]) {
+            foreach ($releases as $release) {
+                yield $name.', '.$release => ['pattern' => $pattern, 'release' => $release, 'message' => $message, 'pcreOffset' => $pcreOffset, 'offset' => $offset, 'code' => ErrorCode::ConditionalTooManyBranches];
+            }
+        }
+    }
+
+    /**
      * Parentheses nested in an extended class count against the library's
      * nesting limit, like groups do: 10.49 compiles this pattern (its own
      * limit sits past fourteen levels), so only the library refuses it.
