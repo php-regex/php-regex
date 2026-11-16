@@ -127,12 +127,18 @@ final class FirstErrorLocator
             null !== $swallowing ? $this->firstErrorBeforeAnUnclosedName($swallowing, $pattern, $flags, $delimiter) : null,
             $this->firstExtendedClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstVersionConditionErrorBefore($read, $pattern, $flags, $delimiter, $limit),
-            $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, $limit),
         ];
         foreach ($laterErrors as $laterError) {
             if (null !== $laterError && (null === $earlier || ($laterError->position ?? $position) < ($earlier->position ?? $position))) {
                 $earlier = $laterError;
             }
+        }
+
+        // What the tree read shows comes last, and only before the error
+        // found so far: the search stops short of it.
+        $readError = $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, null === $earlier ? $limit : min($limit, $earlier->position ?? $position));
+        if (null !== $readError && (null === $earlier || ($readError->position ?? $position) < ($earlier->position ?? $position))) {
+            $earlier = $readError;
         }
 
         if (null !== $swallowing || $error instanceof LexerException) {
@@ -341,7 +347,7 @@ final class FirstErrorLocator
         // PCRE refuses that level once it has read its opener whole, at the
         // start of its body, before anything in it; an opener it refuses for
         // itself parses in no run, and comes first.
-        foreach (self::cutsAtTheLevelPastTheNestingLimit($tokens) as $cut) {
+        foreach (self::cutsAtTheLevelPastTheNestingLimit($tokens, $position) as $cut) {
             $deep = $this->parseClosed($cut, $pattern, $flags, $delimiter);
             if (null !== $deep) {
                 return (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($deep, $position);
@@ -386,13 +392,14 @@ final class FirstErrorLocator
      * A comment opens no level. A "(?" followed only by option letters is
      * no run: closed there, it would read as an option setting where the
      * opener goes on, or is refused for itself. None where no level passes
-     * the limit.
+     * the limit, or where its opener ends at or past $position: that level
+     * is refused past its opener, too late to come first.
      *
      * @param list<Token> $tokens
      *
      * @return iterable<list<Token>>
      */
-    private static function cutsAtTheLevelPastTheNestingLimit(array $tokens): iterable
+    private static function cutsAtTheLevelPastTheNestingLimit(array $tokens, int $position): iterable
     {
         // Whether each opener still open is a group, and the groups.
         $opened = [];
@@ -425,7 +432,7 @@ final class FirstErrorLocator
             }
         }
 
-        if (null === $opener) {
+        if (null === $opener || $tokens[$opener]->end() >= $position) {
             return;
         }
 
