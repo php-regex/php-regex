@@ -347,7 +347,7 @@ Each one is read as the pattern Symfony runs:
   A path under `(*UTF)` and one without it are compared on the request
   paths that are valid UTF-8, a character at a time for the one and a byte
   at a time for the other: `(*UTF)^/admin/users` before `^/admin` is a
-  carve-out. A request path Symfony decodes into invalid UTF-8, `/caf%E9`,
+  carve-out. A request path Symfony decodes into invalid UTF-8, `/%E9t%E9`,
   is not compared: PHP does not check it against a `(*UTF)` path, and PCRE2
   reads it as if it were valid, with no defined answer. Routes are compared
   the same way when only one sets the `utf8` option; such a route matches no
