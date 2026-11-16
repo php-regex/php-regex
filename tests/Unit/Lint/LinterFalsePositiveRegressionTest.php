@@ -765,6 +765,60 @@ final class LinterFalsePositiveRegressionTest extends TestCase
     }
 
     /**
+     * In a loop, a backreference reads what its group captured in an
+     * earlier iteration, once an iteration has taken a way that skips the
+     * reference: the other branch of the group, as in the PCRE2 manual's
+     * "(a|b\1)+", or another branch of the loop.
+     *
+     * @return iterable<string, array{pattern: string, withoutBackref: string, subjects: list<string>}>
+     */
+    public static function provideBackrefsAnEarlierIterationFills(): iterable
+    {
+        yield 'reference in the group it reads' => [
+            'pattern' => '/^(a|b\1)+$/',
+            'withoutBackref' => '/^(a|b(?!))+$/',
+            'subjects' => ['aba', 'ababba'],
+        ];
+
+        yield 'reference in another branch of the loop' => [
+            'pattern' => '/^(?:x(a)|\1)+$/',
+            'withoutBackref' => '/^(?:x(a)|(?!))+$/',
+            'subjects' => ['xaa', 'xaaxaa'],
+        ];
+    }
+
+    /**
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideBackrefsAnEarlierIterationFills')]
+    public function test_backref_an_earlier_iteration_fills_is_not_useless(string $pattern, string $withoutBackref, array $subjects): void
+    {
+        foreach ($subjects as $subject) {
+            // Oracle: removing the backreference loses the match.
+            $this->assertSame(1, preg_match($pattern, $subject), $subject);
+            $this->assertSame(0, preg_match($withoutBackref, $subject), $subject);
+        }
+
+        $this->assertNotContains('regex.lint.backref.useless', $this->issueIds($pattern), $pattern);
+    }
+
+    /**
+     * Where every way through the loop passes the reference before its
+     * group is set, no iteration ever sets it: "(a\1)+" matches nothing.
+     */
+    #[Test]
+    public function test_backref_no_earlier_iteration_can_fill_stays_useless(): void
+    {
+        foreach (['a', 'aa', 'aaa', 'aaaa'] as $subject) {
+            $this->assertSame(0, preg_match('/^(a\1)+$/', $subject), $subject);
+        }
+
+        $this->assertContains('regex.lint.backref.useless', $this->issueIds('/^(a\1)+$/'));
+        $this->assertContains('regex.lint.backref.useless', $this->issueIds('/^(a\1|b\1)+$/'));
+    }
+
+    /**
      * Inside a branch reset two groups share a number, and (?2) calls the
      * first of them. A backreference in the called one is re-entered after
      * group 1 captured; one in the other is never reached that way, and

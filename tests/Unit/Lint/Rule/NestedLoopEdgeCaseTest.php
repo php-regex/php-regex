@@ -337,6 +337,107 @@ final class NestedLoopEdgeCaseTest extends TestCase
     }
 
     /**
+     * A count the loop repeats a fixed number of times hides no loop: one
+     * before the inner loop, in an earlier alternative, or around it. Each
+     * reported row goes exponential on the unit repeated, then "!" (n 8 ->
+     * 16): 768 -> 196 608 behind "\d{4}" in an earlier alternative, 22 ->
+     * 466 behind "[0-9]{2}" in the same iteration, 256 -> 65 536 for
+     * "(?:a+){2}", 78 -> 1 278 when a run follows the count. The others stay
+     * linear: a separator still keeps the run apart past the count (18 ->
+     * 34, 17 -> 33), inside it as well (24 -> 48, 6 -> 10), and the body of
+     * "{0}" never runs (10 -> 18).
+     *
+     * @return iterable<string, array{pattern: string, prefix: string, unit: string, reported: bool}>
+     */
+    public static function provideLoopsBesideAFixedCount(): iterable
+    {
+        yield 'fixed count in an earlier alternative' => ['pattern' => '/^(?:\d{4}|[a-z]+)+$/', 'prefix' => '', 'unit' => 'a', 'reported' => true];
+        yield 'fixed count before the run' => ['pattern' => '/^(?:[0-9]{2}\w+)+$/', 'prefix' => '', 'unit' => '1', 'reported' => true];
+        yield 'run inside a fixed count' => ['pattern' => '/^(?:(?:a+){2})+$/', 'prefix' => '', 'unit' => 'a', 'reported' => true];
+        yield 'run after a fixed count holding a separated run' => ['pattern' => '/(?:(?:,a*){2}a*)*$/', 'prefix' => '', 'unit' => ',a', 'reported' => true];
+        yield 'separator after a fixed count' => ['pattern' => '/^(?:\d{4}-[a-z]+)+$/', 'prefix' => '1234-', 'unit' => 'a', 'reported' => false];
+        yield 'fixed count of other characters before the run' => ['pattern' => '/^(?:[a-z]{2}\d+)+$/', 'prefix' => 'ab', 'unit' => '1', 'reported' => false];
+        yield 'separator inside a fixed count' => ['pattern' => '/^(?:(?:\d+\.){3}\d+,?)+$/', 'prefix' => '', 'unit' => '1.1.1.1', 'reported' => false];
+        yield 'separator ending a fixed count' => ['pattern' => '/^(?:(?:a+b){2})+$/', 'prefix' => '', 'unit' => 'ab', 'reported' => false];
+        yield 'run in a count of zero' => ['pattern' => '/^(?:(?:a+){0}b)+$/', 'prefix' => '', 'unit' => 'b', 'reported' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsBesideAFixedCount')]
+    public function test_nested_loop_beside_a_fixed_count_is_reported_only_when_the_engine_goes_exponential(string $pattern, string $prefix, string $unit, bool $reported): void
+    {
+        $short = self::steps($pattern, $prefix.str_repeat($unit, 8).'!');
+        $long = self::steps($pattern, $prefix.str_repeat($unit, 16).'!');
+        $this->assertSame($reported, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($reported, \in_array(self::NESTED, self::lint($pattern), true), $pattern);
+    }
+
+    /**
+     * A first loop that may match nothing hides no loop after it: where it
+     * matches nothing, the run after it meets the run of the iteration
+     * before. Each reported row goes exponential on the unit repeated then
+     * "!" (384 -> 98 304 for n 8 -> 16), behind "b?" and between "x*" and
+     * "y*". A separator after the run keeps the iterations apart (10 -> 18
+     * -> 34 on "cd" or "c," repeated), and so does a first loop that always
+     * reads (17 -> 33 -> 65).
+     *
+     * @return iterable<string, array{pattern: string, prefix: string, unit: string, reported: bool}>
+     */
+    public static function provideLoopsBehindALoopThatMayMatchNothing(): iterable
+    {
+        yield 'run behind an optional letter' => ['pattern' => '/^(?:b?c+)+$/', 'prefix' => '', 'unit' => 'c', 'reported' => true];
+        yield 'run between two runs that may match nothing' => ['pattern' => '/^(?:x*a+y*)+$/', 'prefix' => '', 'unit' => 'a', 'reported' => true];
+        yield 'separator after the run' => ['pattern' => '/^(?:b?c+d)+$/', 'prefix' => '', 'unit' => 'cd', 'reported' => false];
+        yield 'comma after the run' => ['pattern' => '/^(?:b?c+,)+$/', 'prefix' => '', 'unit' => 'c,', 'reported' => false];
+        yield 'run behind a run that always reads' => ['pattern' => '/^(?:b+c+)+$/', 'prefix' => 'b', 'unit' => 'c', 'reported' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsBehindALoopThatMayMatchNothing')]
+    public function test_nested_loop_behind_a_loop_that_may_match_nothing_is_reported_only_when_the_engine_goes_exponential(string $pattern, string $prefix, string $unit, bool $reported): void
+    {
+        $short = self::steps($pattern, $prefix.str_repeat($unit, 8).'!');
+        $long = self::steps($pattern, $prefix.str_repeat($unit, 16).'!');
+        $this->assertSame($reported, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($reported, \in_array(self::NESTED, self::lint($pattern), true), $pattern);
+    }
+
+    /**
+     * A loop that ends an atomic group, or the body of a possessive loop,
+     * is no tail of it where a call runs a group between the two: the call
+     * runs the loop without the group around it. "y" then the run then "!"
+     * goes exponential (8 -> 12 -> 16 letters): 387 -> 6 147 -> 98 307
+     * through the atomic group, 386 -> 6 146 -> 98 306 through the
+     * possessive loop, 1 026 -> 16 386 -> 262 146 for an alternation of
+     * one letter twice, 1 539 -> 24 579 -> 393 219 for a dot-star loop
+     * under s. A call of a group around the atomic group runs it whole
+     * (7 -> 7 -> 7).
+     *
+     * @return iterable<string, array{pattern: string, rule: string, reported: bool}>
+     */
+    public static function provideAtomicTailsACallRuns(): iterable
+    {
+        yield 'loop ending an atomic group' => ['pattern' => '/^(?:(?>x((?:a+)+))|y(?1)$)/', 'rule' => self::NESTED, 'reported' => true];
+        yield 'loop ending a possessive body' => ['pattern' => '/^(?:x((?:a+)+)++|y(?1)$)/', 'rule' => self::NESTED, 'reported' => true];
+        yield 'alternation ending an atomic group' => ['pattern' => '/^(?:(?>x((?:a|a)+))|y(?1)$)/', 'rule' => self::OVERLAP, 'reported' => true];
+        yield 'dot-star loop ending an atomic group' => ['pattern' => '/^(?:(?>x((?:.*)+))|y(?1)b)/s', 'rule' => self::DOT_STAR, 'reported' => true];
+        yield 'call of a group around the atomic group' => ['pattern' => '/^(?:x((?>(?:a+)+))|y(?1)$)/', 'rule' => self::NESTED, 'reported' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideAtomicTailsACallRuns')]
+    public function test_a_call_runs_an_atomic_tail_without_its_group(string $pattern, string $rule, bool $reported): void
+    {
+        $short = self::steps($pattern, 'y'.str_repeat('a', 8).'!');
+        $long = self::steps($pattern, 'y'.str_repeat('a', 12).'!');
+        $this->assertSame($reported, $long / $short > 8, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($reported, \in_array($rule, self::lint($pattern), true), $pattern);
+    }
+
+    /**
      * A loop that ends the pattern is left alone when it may stop after one
      * iteration: the first way through is the match ("(a+){1,}" takes 6
      * steps on a{n}b whatever n).

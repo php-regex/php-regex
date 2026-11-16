@@ -43,6 +43,31 @@ CHANGELOG
    layout and the comments `x` skips, on thirty columns at most, as the
    branches of `regex.lint.overlap.charset` are quoted; neither keeps a
    comment group, `(?#...)`, any longer.
+ * `regex.lint.quantifier.nested` looks for the inner loop past a count
+   fixed above zero and inside it: `/^(?:\d{4}|[a-z]+)+$/`,
+   `/^(?:[0-9]{2}\w+)+$/` and `/^(?:(?:a+){2})+$/`, which it missed, are
+   reported. A separator inside the count still keeps the iterations apart,
+   `/^(?:(?:\d+\.){3}\d+,?)+$/` stays silent.
+ * `regex.lint.quantifier.nested` also reads the loops of an iteration that
+   only items which may match nothing come before: `/^(?:b?c+)+$/` and
+   `/^(?:x*a+y*)+$/`, whose runs meet across iterations where the first
+   loop matches nothing, are reported, and so is the package name pattern
+   `/^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$/`,
+   which the ReDoS proof finds exponential. A separator after the run, as
+   in `/^(?:b?c+,)+$/`, still keeps the iterations apart.
+ * A loop that ends an atomic group or a possessive body is no longer left
+   alone by `regex.lint.quantifier.nested`, `regex.lint.dotstar.nested` and
+   `regex.lint.overlap.charset` where a subroutine call runs a group between
+   the two, without the atomic group: `/^(?:(?>x((?:a+)+))|y(?1)$)/` and
+   `/^(?:x((?:a+)+)++|y(?1)$)/` are reported.
+ * `regex.lint.backref.useless` no longer reports a backreference a loop
+   runs after an earlier iteration has set its group, where an iteration may
+   skip the reference: `/^(a|b\1)+$/`, which matches `aba`, and
+   `/^(?:x(a)|\1)+$/`, which matches `xaa`.
+ * `regex.lint.quantifier.useless` no longer reports a `{1}` that keeps an
+   escape apart from the digit after it, `/(a)\1{1}0/` or `/\x4{1}1/`, whose
+   removal would read `\10` or `\x41`; its tip names the count as written,
+   `{1}?` in `/a{1}?b/`, which without the `?` would read `/a?b/`.
  * The lint reads pattern arguments it left out: a pattern built at the call
    from a local variable, an interpolated string or a heredoc
    (`"/^{$part}$/"`), an integer, a `sprintf()` whose format holds only

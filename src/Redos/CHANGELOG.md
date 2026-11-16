@@ -13,6 +13,31 @@ CHANGELOG
    outer loop, `/^(?:a+)++$/` for `/^(?:a+)+$/`. A body that splits a run
    into many copies, `(?:a+){30,}+`, is kept as written: PCRE tries every
    way to split it before it fails.
+ * A pump that goes round bounded repeats analysed as unbounded alone is
+   proven once PHP's PCRE2, under its default limits, gives up at the
+   backtrack limit on the witness, its attempt pinned to the start:
+   `/^(?:a|a){1,40}$/` and `/^(?:\d{1,3}\.?){1,30}$/`, safe and low by the
+   heuristics, are exponential (proven), critical. A bound the engine never
+   reaches the limit within, `/^(?:a|a){1,16}$/`, keeps the heuristics'
+   verdict.
+ * The heuristics read the body of an atomic group, of a possessive repeat
+   and of a repeat ending with `(*COMMIT)`, `(*PRUNE)` or `(*SKIP)` as PCRE
+   runs it: the engine backtracks inside it until it has matched, so only
+   the loops that end the body are left alone. `/(?>(a+)+b)/`,
+   `/^(?:(?:a+)+b)++/`, `/^(*atomic:(?:a+)+b)/` and
+   `/^(?:(?:a+)+b(*COMMIT))+/`, which were safe, are critical, and so is
+   `/^(?>(\w+\s?)+:)/`: an item that may match nothing keeps no two
+   iterations of a loop apart.
+ * The heuristics read a subroutine call in a loop as the group it calls,
+   as PCRE runs it at each iteration: `/^(?:(?1))+(a|a)$/` and
+   `/^(?:(?&w)\s?)+$(?(DEFINE)(?<w>[a-z]+))/`, which were medium, are
+   critical. Each call is read through once, which ends a recursion.
+ * A backreference to a group of variable length in a loop is no longer
+   critical when the body of the loop reads its input one way, each
+   alternation choosing its branch by the first character and each count
+   fixed: `/^(a|b\1)+$/`, the PCRE2 manual's example, which PCRE2 reads in
+   linear steps, is medium as any loop is. Under `i` or an option setting
+   the branches are not told apart, and `/^(a|A\1)+$/i` stays critical.
  * The heuristics read a body repeated `{0}` as PCRE runs it: never where it
    stands. One holding no group gives no hotspot, as `x+x+` in
    `/(?:x+x+){0}^(?:a+)+$/` gave two, which a repair then tried first; the
