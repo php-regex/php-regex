@@ -22,6 +22,7 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -460,11 +461,15 @@ final class SecurityAccessControlAnalyzer
      * A search for the pattern, as a whole-subject match: any text before,
      * the pattern grouped, any text after. Grouped, every branch of a
      * top-level alternation is searched for, and an anchor binds only the
-     * branch it is written in, as in preg_match().
+     * branch it is written in, as in preg_match(). The options the pattern
+     * opens with, "(*UTF)" or "(*LIMIT_MATCH=1000)", stay first: PCRE reads
+     * them there only.
      */
     private function normalizeSearchPattern(string $pattern): string
     {
-        return '.*(?:'.$pattern.').*';
+        $options = StartOptions::of($pattern);
+
+        return $options.'.*(?:'.substr($pattern, \strlen($options)).').*';
     }
 
     /**

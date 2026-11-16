@@ -59,6 +59,12 @@ CHANGELOG
    reported as an overlap; a later rule is shadowed only when the earlier
    one takes every request it takes, methods, host and addresses included,
    where `^/admin` for `GET` shadowed `^/admin/users` for every method.
+ * `regex:security` and `regex:analyze` keep the options an
+   `access_control` path or host opens with, `(*UTF)` or
+   `(*LIMIT_MATCH=1000)`, in front of the search they read it as: PCRE
+   reads them there only. `(*UTF)^/admin` before `^/admin/users` shadows it,
+   where the pair was compared on a pattern PCRE refuses and went
+   unreported.
  * `regex:security` and `regex:analyze` search for every branch of an
    `access_control` path or host written as a top-level alternation, as
    Symfony's matchers do: `^/assets|^/login` with `PUBLIC_ACCESS` before

@@ -342,7 +342,8 @@ Each one is read as the pattern Symfony runs:
   makes it non-capturing) are not reported.
 - A security `path` (in `access_control` or as a firewall `pattern`) is
   matched with `{...}s`, and a `host` with `{...}i`, without anchors:
-  `path: /api` matches `/v1/api` too.
+  `path: /api` matches `/v1/api` too. The options a path opens with,
+  `(*UTF)` or `(*LIMIT_MATCH=1000)`, are read there, as PCRE reads them.
 
 ## The service and the lint judge for different targets
 

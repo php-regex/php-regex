@@ -285,6 +285,33 @@ final class AccessControlOrderTest extends TestCase
             ],
         ];
 
+        yield 'a path opening with a start option shadows a narrower one' => [
+            'rules' => [['path' => '(*UTF)^/admin'], ['path' => '^/admin/users']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/admin', 0, 0],
+            ],
+        ];
+
+        yield 'a path opening with several start options and an alternation shadows a narrower one' => [
+            'rules' => [['path' => '(*UCP)(*LIMIT_MATCH=1000)/api|/admin'], ['path' => '^/admin/users']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/shop/api', 0, 0],
+            ],
+        ];
+
+        yield 'a narrower path opening with a start option first is a carve-out' => [
+            'rules' => [['path' => '(*NO_JIT)(*LIMIT_MATCH=1000)^/admin/users'], ['path' => '^/admin']],
+            'expected' => 'carve-out',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/admin', 1, 1],
+            ],
+        ];
+
         yield 'paths that share no request are no conflict' => [
             'rules' => [['path' => '^/admin'], ['path' => '^/api']],
             'expected' => null,
