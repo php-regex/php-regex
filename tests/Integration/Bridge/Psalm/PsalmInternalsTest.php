@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
+use PHPRegex\Psalm\CallbackParameters;
 use PHPRegex\Psalm\PsalmInternals;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +24,7 @@ use Psalm\Context;
 use Psalm\Internal\Analyzer\FileAnalyzer;
 use Psalm\Internal\Analyzer\ProjectAnalyzer;
 use Psalm\Internal\Analyzer\StatementsAnalyzer;
+use Psalm\Internal\Provider\FunctionParamsProvider;
 use Psalm\Internal\Provider\NodeDataProvider;
 use Psalm\StatementsSource;
 use Psalm\Storage\Assertion\Truthy;
@@ -113,6 +115,48 @@ final class PsalmInternalsTest extends TestCase
         $this->assertFalse(PsalmInternals::analyse(new String_('/a/'), $source, new Context()));
         $this->assertTrue(PsalmInternals::functionExists($source, 'preg_match'));
         $this->assertNull(PsalmInternals::parameters($source, 'preg_replace_callback'));
+    }
+
+    /**
+     * Psalm keeps the first parameters a provider gives for a call, and
+     * from 7.7 on types the callback of preg_replace_callback() itself,
+     * with a provider it registers before any plugin: the plugin's is
+     * moved ahead of it. Psalm's own still answers the calls the plugin
+     * leaves to it.
+     */
+    #[Test]
+    public function test_psalm_internals_ask_the_plugin_first_for_the_callback_parameters(): void
+    {
+        $handlers = new \ReflectionProperty(FunctionParamsProvider::class, 'handlers');
+        $kept = $handlers->getValue();
+
+        try {
+            $provider = new FunctionParamsProvider();
+            $psalm = \count(self::handlersOf($handlers));
+            $provider->registerClass(CallbackParameters::class);
+
+            $this->assertTrue(PsalmInternals::askFirst('preg_replace_callback', CallbackParameters::class));
+            $askedFor = array_map(static fn (\Closure $handler): ?string => (new \ReflectionFunction($handler))->getClosureScopeClass()?->getName(), self::handlersOf($handlers));
+            $this->assertSame(CallbackParameters::class, $askedFor[0] ?? null);
+            $this->assertCount($psalm + 1, $askedFor);
+            $this->assertSame($psalm > 0, PsalmInternals::typesPregReplaceCallback());
+            $this->assertFalse(PsalmInternals::askFirst('regex_no_such_function', CallbackParameters::class));
+        } finally {
+            $handlers->setValue(null, $kept);
+        }
+    }
+
+    /**
+     * @return list<\Closure>
+     */
+    private static function handlersOf(\ReflectionProperty $handlers): array
+    {
+        $all = $handlers->getValue();
+        self::assertIsArray($all);
+        $of = $all['preg_replace_callback'] ?? [];
+        self::assertIsArray($of);
+
+        return array_values(array_filter($of, static fn (mixed $handler): bool => $handler instanceof \Closure));
     }
 
     private static function call(): FuncCall
