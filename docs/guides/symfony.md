@@ -344,6 +344,14 @@ Each one is read as the pattern Symfony runs:
   matched with `{...}s`, and a `host` with `{...}i`, without anchors:
   `path: /api` matches `/v1/api` too. The options a path opens with,
   `(*UTF)` or `(*LIMIT_MATCH=1000)`, are read there, as PCRE reads them.
+  A path under `(*UTF)` and one without it are compared on the request
+  paths that are valid UTF-8, a character at a time for the one and a byte
+  at a time for the other: `(*UTF)^/admin/users` before `^/admin` is a
+  carve-out. A request path Symfony decodes into invalid UTF-8, `/caf%E9`,
+  is not compared: PHP does not check it against a `(*UTF)` path, and PCRE2
+  reads it as if it were valid, with no defined answer. Routes are compared
+  the same way when only one sets the `utf8` option; such a route matches no
+  path that is not valid UTF-8.
 
 ## The service and the lint judge for different targets
 

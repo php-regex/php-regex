@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `equivalent()`, `intersection()` and `subsetOf()` compare a pattern read
+   as UTF-8 with one read as bytes, `(*UTF)` or `u` on one side only, on the
+   valid UTF-8 strings: the one read as bytes reads each character as its
+   bytes. `/(*UTF)\Aé\z/` and `/\Aé\z/` are equivalent, where they were told
+   apart on `Ã©`, which neither matches; `/(*UTF).*(?:^\/admin\/users).*/` is
+   a subset of `/.*(?:^\/admin).*/`. A string that is not valid UTF-8 is not
+   compared.
  * `matchEquivalent()` refuses an end anchor inside a loop that may run no
    time, `*`, `*?` or `{0,}`, as it refuses one inside `+`, when another turn
    of the loop or what follows it reads more: `/(?:a$)*\n/` was proven

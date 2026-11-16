@@ -247,6 +247,19 @@ final class RouteConflictAnalyzerTest extends TestCase
             'overlaps' => 1,
         ];
 
+        // Only the second route carries the utf8 option, so /u: its "[^/]++"
+        // takes "Ā" as one character, the first one as its two bytes.
+        yield 'a route read as bytes declared before the same route read as UTF-8' => [
+            'routes' => [
+                ['bytes', '/users/{id}', [], false],
+                ['characters', '/users/{id}', [], true],
+            ],
+            'probes' => ['/users/7' => 'bytes', "/users/\u{100}" => 'bytes'],
+            'conflicts' => [['shadowed', 'bytes', 'characters']],
+            'shadowed' => 1,
+            'overlaps' => 0,
+        ];
+
         yield 'requirements that share no path' => [
             'routes' => [
                 ['blog_id', '/blog/{id}', ['id' => '\\d+'], false],

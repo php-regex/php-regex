@@ -230,6 +230,14 @@ The consequences:
   does either. Counter-example strings above byte `0x7F` are raw bytes, as the
   engine reads them. (When the code-point alphabet arrived, the sets' shape
   changed once; the pinned verdicts did not.)
+- **A pattern read as UTF-8 and one read as bytes**, `(*UTF)` or `/u` on one
+  side only, are compared on the valid UTF-8 strings: the one read as bytes
+  reads each character as its bytes. `/(*UTF)\Aé\z/` and `/\Aé\z/` are
+  equivalent, `/(*UTF)\A.\z/` and `/\A.\z/` differ on `"\u{80}"`, one
+  character and two bytes. A string that is not valid UTF-8 is not compared:
+  under `/u`, `preg_match()` returns `false` on it; under `(*UTF)` alone PHP
+  does not check it, and PCRE2 reads it as if it were valid, with no defined
+  answer (`/(*UTF)\A.\z/` matches `"\xFF"`, which `/\A.\z/u` refuses).
 
 The same engine-relative question, asked at the CLI:
 

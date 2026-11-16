@@ -312,6 +312,37 @@ final class AccessControlOrderTest extends TestCase
             ],
         ];
 
+        // A path under (*UTF) reads the URL a character at a time, one
+        // without it a byte at a time: compared on the same requests.
+        yield 'a narrower path read as UTF-8 first is a carve-out of a wider one read as bytes' => [
+            'rules' => [['path' => '(*UTF)(*NO_JIT)^/admin/users'], ['path' => '^/admin']],
+            'expected' => 'carve-out',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/admin/users%C4%80', 0, 1],
+                ['GET', 'http://localhost/admin', 1, 1],
+            ],
+        ];
+
+        yield 'a wider path read as bytes shadows a narrower one read as UTF-8' => [
+            'rules' => [['path' => '^/admin'], ['path' => '(*UTF)^/admin/users']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/users', 0, 1],
+                ['GET', 'http://localhost/admin/users%C4%80', 0, 1],
+                ['GET', 'http://localhost/admin', 0, 0],
+            ],
+        ];
+
+        yield 'a letter above ASCII read as one character shadows the same letter read as its bytes' => [
+            'rules' => [['path' => '(*UTF)^/café$'], ['path' => '^/café$']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/caf%C3%A9', 0, 1],
+                ['GET', 'http://localhost/cafe', null, null],
+            ],
+        ];
+
         yield 'paths that share no request are no conflict' => [
             'rules' => [['path' => '^/admin'], ['path' => '^/api']],
             'expected' => null,

@@ -29,6 +29,7 @@ use PHPRegex\Automata\Solver\MatchEquivalenceResult;
 use PHPRegex\Automata\Solver\PrefixReader;
 use PHPRegex\Automata\Solver\RewriteSites;
 use PHPRegex\Automata\Solver\SubsetResult;
+use PHPRegex\Automata\Solver\Utf8Reading;
 use PHPRegex\Automata\Support\WorkBudget;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
@@ -736,10 +737,18 @@ final class LanguageSolver
             return [$dfa, $dfa];
         }
 
-        return [
-            $this->buildDfa($left, $options),
-            $this->buildDfa($right, $options),
-        ];
+        $leftDfa = $this->buildDfa($left, $options);
+        $rightDfa = $this->buildDfa($right, $options);
+
+        // A pattern read as UTF-8 and one read as bytes, as "(*UTF)" or "u"
+        // on one side only: the one read as bytes reads each character of a
+        // UTF-8 subject as its bytes, and both are compared on the valid
+        // UTF-8 strings, the only subjects the other one matches.
+        if (($leftDfa->maxCodePoint > self::MAX_BYTE) !== ($rightDfa->maxCodePoint > self::MAX_BYTE)) {
+            return $leftDfa->maxCodePoint > self::MAX_BYTE ? [$leftDfa, Utf8Reading::of($rightDfa)] : [Utf8Reading::of($leftDfa), $rightDfa];
+        }
+
+        return [$leftDfa, $rightDfa];
     }
 
     /**
