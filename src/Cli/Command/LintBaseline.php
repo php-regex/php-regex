@@ -19,6 +19,7 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\LintStatsCounter;
+use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\Ascii;
@@ -232,11 +233,14 @@ final class LintBaseline
             $scanned[self::escape(self::relativePath($file))] = true;
         }
 
+        // The excludes, read from the working directory as the lint reads
+        // them.
+        $excludes = new PatternSourceContext([], $excludePaths);
         $results = [];
         foreach ($this->lines as $key => $lines) {
             [$issueId, $file] = explode("\0", $key);
             $issues = $candidates[$key] ?? [];
-            if (!(isset($scanned[$file]) || self::goneUnder($file, $lintedPaths, $excludePaths)) || \count($lines) <= \count($issues)) {
+            if (!(isset($scanned[$file]) || self::goneUnder($file, $lintedPaths, $excludes)) || \count($lines) <= \count($issues)) {
                 continue;
             }
 
@@ -268,22 +272,15 @@ final class LintBaseline
 
     /**
      * Whether an entry's file is gone from a path the run lints, out of
-     * the paths it excludes: the entry is stale.
+     * the paths it excludes, read as the lint reads them: the entry is
+     * stale.
      *
      * @param list<string> $lintedPaths
-     * @param list<string> $excludePaths
      */
-    private static function goneUnder(string $file, array $lintedPaths, array $excludePaths): bool
+    private static function goneUnder(string $file, array $lintedPaths, PatternSourceContext $excludes): bool
     {
-        if (file_exists($file)) {
+        if (file_exists($file) || $excludes->excludes($file)) {
             return false;
-        }
-
-        foreach ($excludePaths as $exclude) {
-            $exclude = trim(Path::normalize($exclude), '/');
-            if ('' !== $exclude && (str_starts_with($file, $exclude.'/') || str_contains($file, '/'.$exclude.'/'))) {
-                return false;
-            }
         }
 
         $cwd = getcwd();

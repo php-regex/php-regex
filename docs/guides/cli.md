@@ -2684,7 +2684,8 @@ Both options take their file after a space or an `=`.
   issue fixed or its pattern removed, is reported as `regex.ignore.unmatched`
   on the entry's file and line: remove it, or generate the baseline again.
   The entries of a file gone since, under a path the run lints and out of
-  those it excludes, are stale and reported too. A run over `src/Controller`
+  those it excludes (each exclude read as the lint reads it, a directory
+  name or the path of a file or a directory), are stale and reported too. A run over `src/Controller`
   says nothing of the entries of `src/Legacy`, read or gone. `--no-report-unmatched-ignores`
   turns the report off, as it does for the inline markers. A baseline holds
   what the run that wrote it reported: one written with `--report-dynamic`
