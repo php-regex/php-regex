@@ -88,6 +88,18 @@ final class JsonDocumentTest extends TestCase
     }
 
     /**
+     * Only a line of spaces and a caret under the line of a snippet moves: a
+     * line ending in another character stays where it is, and so does a
+     * caret under a line that only looks like a snippet's.
+     */
+    #[Test]
+    public function test_only_the_caret_line_under_a_snippet_moves(): void
+    {
+        $this->assertSame("Line 1: \\xFF(\n         x", JsonDocument::spellInvalidBytes("Line 1: \xFF(\n         x"));
+        $this->assertSame("Note 1: \\xFF(\n         ^", JsonDocument::spellInvalidBytes("Note 1: \xFF(\n         ^"));
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, position: int, before: string, after: string, expected: string}>
      */
     public static function provideCaretSnippets(): iterable
