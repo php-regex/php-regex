@@ -43,6 +43,14 @@ CHANGELOG
    range further on that no class takes, as PCRE2 reads them:
    `/(?[[^]--[a-\d]])/` is `regex.range.reversed` at offset 8, where it was
    refused for `a-\d` at 13.
+ * `validate()` reports parentheses nested past the parser's own limit,
+   `max_recursion_depth`, as PCRE2 does when it has refused them before that
+   limit: `regex.group.nested_too_deep` at the level past 250, offset 251 for
+   600 `(` in a row, or an error PCRE2 meets before that level, where it gave
+   the limit, `regex.nesting.too_deep`, and no verdict. A limit met before
+   that level stays the outcome. An error the parser meets before the level
+   past 250 is no longer hidden by it: `)` followed by 300 `(` is
+   `regex.group.unmatched_close` at offset 1, where it was refused at 252.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.

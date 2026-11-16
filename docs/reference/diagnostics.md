@@ -514,7 +514,8 @@ For the same fixes on one table, see the [Diagnostics Cheat Sheet](diagnostics-c
 
 A `limit` result is not a judgement on the pattern: PCRE may compile it. The
 result is still not valid, since nothing was checked; `hint` names the option
-to raise. The lint reports it as a warning, `Not analyzed: …`, never as an
+to raise. An error PCRE meets before the level where the parser stopped is
+reported instead, parentheses nested past 250 levels among them. The lint reports it as a warning, `Not analyzed: …`, never as an
 invalid pattern.
 
 ---

@@ -29,6 +29,7 @@ use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
@@ -73,7 +74,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-db4555f340e931cf6989036c4d73c80d';
+    public const CACHE_VERSION = 'ast-4eea1c73eaa120879a7ee33964bf07e1';
 
     /**
      * ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, by the name the parser gave it first.
@@ -435,6 +436,11 @@ final class RegexParser
             }
 
             return new ValidationResult(true, null, $complexityScore, ast: $ast);
+        } catch (RecursionLimitException $e) {
+            // The parser's own limit on nesting: an error PCRE meets before
+            // it, the level of parentheses past 250 among them, is the
+            // verdict. Past it, nothing is read.
+            return $this->buildValidationFailure((new FirstErrorLocator($this->maxRecursionDepth, $this->maxLookbehindLength, $this->target))->earlierError($regex, $e) ?? $e);
         } catch (LimitException $e) {
             // The library's own limits: the pattern is not read further,
             // and no verdict is given on it.

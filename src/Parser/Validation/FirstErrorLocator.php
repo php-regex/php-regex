@@ -17,6 +17,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Lexer;
@@ -59,13 +60,14 @@ final class FirstErrorLocator
      * was read before. The earliest of those before the error found is
      * PCRE's. What PCRE only finds once it has read the whole pattern, a
      * lookbehind's length or a group a name or number points to that does
-     * not exist, is not.
+     * not exist, is not. So may the parser's own limit on nesting, met past
+     * the level of parentheses PCRE refuses.
      *
      * A "\p{" that no "}" closes, or a "(*" that no ")" closes, ends what is
      * read: PCRE looks for the closing character to the end of the pattern,
      * so nothing after it is judged, and it is judged last.
      */
-    public function earlierError(string $regex, LexerException|ParserException $error): ?RegexException
+    public function earlierError(string $regex, LexerException|ParserException|RecursionLimitException $error): ?RegexException
     {
         $position = $error->position ?? 0;
 
@@ -307,10 +309,13 @@ final class FirstErrorLocator
         }
 
         // PCRE refuses the level of parentheses past its limit as it opens
-        // it, at the start of its body, though the groups are never closed.
+        // it, at the start of its body, though the groups are never closed:
+        // only an error before that level comes first.
         $tooDeep = self::openerPastTheNestingLimit($tokens);
-        if (null !== $tooDeep) {
-            return new SemanticErrorException(\sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', Validator::MAX_GROUP_NESTING), ErrorCode::GroupNestedTooDeep, $tooDeep->end(), $pattern, hint: 'Flatten the pattern: drop groups that only wrap one item.');
+        $nesting = null;
+        if (null !== $tooDeep && $tooDeep->end() < $position) {
+            $nesting = new SemanticErrorException(\sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', Validator::MAX_GROUP_NESTING), ErrorCode::GroupNestedTooDeep, $tooDeep->end(), $pattern, hint: 'Flatten the pattern: drop groups that only wrap one item.');
+            $position = $tooDeep->end();
         }
 
         $length = \strlen($pattern);
@@ -344,7 +349,7 @@ final class FirstErrorLocator
             }
         }
 
-        return (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($ast, $position);
+        return (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($ast, $position) ?? $nesting;
     }
 
     /**
