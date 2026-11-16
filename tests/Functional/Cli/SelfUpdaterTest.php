@@ -871,7 +871,8 @@ final class SelfUpdaterTest extends TestCase
         ob_start();
 
         try {
-            $updater->run(new Output(false, false), $force);
+            // An update is forced only when asked.
+            $force ? $updater->run(new Output(false, false), true) : $updater->run(new Output(false, false));
             $this->assertNull($refusal, 'The release was installed.');
         } catch (CliException $e) {
             $this->assertSame($refusal, $e->getMessage());
@@ -894,8 +895,8 @@ final class SelfUpdaterTest extends TestCase
     {
         yield 'an older version installed' => ['installed' => '98.1.0', 'force' => false, 'refusal' => null, 'replaced' => true, 'said' => 'PHPRegex updated successfully.'];
         yield 'a pre-release of the release installed' => ['installed' => '99.0.0-RC1', 'force' => false, 'refusal' => null, 'replaced' => true, 'said' => 'PHPRegex updated successfully.'];
-        yield 'the release installed' => ['installed' => '99.0.0', 'force' => false, 'refusal' => null, 'replaced' => false, 'said' => 'PHPRegex is already up to date (99.0.0).'];
-        yield 'the release installed, forced' => ['installed' => '99.0.0', 'force' => true, 'refusal' => null, 'replaced' => false, 'said' => 'PHPRegex is already up to date (99.0.0).'];
+        yield 'the release installed' => ['installed' => '99.0.0', 'force' => false, 'refusal' => null, 'replaced' => false, 'said' => "\n  PASS PHPRegex is already up to date (99.0.0).\n"];
+        yield 'the release installed, forced' => ['installed' => '99.0.0', 'force' => true, 'refusal' => null, 'replaced' => false, 'said' => "\n  PASS PHPRegex is already up to date (99.0.0).\n"];
         yield 'a newer patch installed' => ['installed' => '99.0.1', 'force' => false, 'refusal' => 'The latest release, 99.0.0, is older than the installed 99.0.1: run self-update --force to install it.', 'replaced' => false, 'said' => 'Downloading latest release'];
         yield 'a pre-release of a newer major installed' => ['installed' => '100.0.0-RC1', 'force' => false, 'refusal' => 'The latest release, 99.0.0, is older than the installed 100.0.0-RC1: run self-update --force to install it.', 'replaced' => false, 'said' => 'Downloading latest release'];
         yield 'a newer version installed, forced' => ['installed' => '100.0.0', 'force' => true, 'refusal' => null, 'replaced' => true, 'said' => 'PHPRegex updated successfully.'];
