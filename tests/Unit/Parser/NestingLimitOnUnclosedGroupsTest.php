@@ -59,6 +59,8 @@ final class NestingLimitOnUnclosedGroupsTest extends TestCase
     {
         // PHP: "missing closing parenthesis at offset 5".
         yield 'a group closed, then one left open' => ['pattern' => '/(a)(b/', 'offset' => 5];
+        // PHP: "missing closing parenthesis at offset 14".
+        yield 'a group closed, a comment and a count, then a group left open' => ['pattern' => '/(a)(?#c)b{2}(c/', 'offset' => 14];
     }
 
     /**
@@ -69,6 +71,10 @@ final class NestingLimitOnUnclosedGroupsTest extends TestCase
         yield 'groups left open' => ['pattern' => '/'.str_repeat('(', 300).'/'];
         yield 'groups closed' => ['pattern' => '/'.str_repeat('(', 251).str_repeat(')', 251).'/'];
         yield 'groups left open, then a class never closed' => ['pattern' => '/'.str_repeat('(', 251).'[/'];
+        yield 'groups left open, then a class holding items never closed' => ['pattern' => '/'.str_repeat('(', 251).'[ab/'];
+        yield 'groups left open, then a comment never closed' => ['pattern' => '/'.str_repeat('(', 251).'(?#/'];
+        yield 'groups left open, then a property never closed' => ['pattern' => '/'.str_repeat('(', 251).'\\p{/'];
+        yield 'groups left open, then a verb never closed' => ['pattern' => '/'.str_repeat('(', 251).'(*FOO/'];
         yield 'groups closed, then a class never closed' => ['pattern' => '/'.str_repeat('(', 251).str_repeat(')', 251).'[/'];
     }
 }
