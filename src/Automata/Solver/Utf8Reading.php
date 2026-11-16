@@ -48,18 +48,18 @@ final class Utf8Reading
     {
         $reading = new self($bytes);
         $states = [];
-        $boundaries = [0 => true, self::LAST_CODE_POINT + 1 => true];
+        $points = [0, self::LAST_CODE_POINT + 1];
         foreach ($bytes->states as $id => $state) {
             $ranges = $reading->characters($id);
             for ($at = 0, $count = \count($ranges); $at < $count; $at += 3) {
-                $boundaries[$ranges[$at]] = true;
-                $boundaries[$ranges[$at + 1] + 1] = true;
+                $points[] = $ranges[$at];
+                $points[] = $ranges[$at + 1] + 1;
             }
 
             $states[$id] = new DfaState($id, [], $state->isAccepting, $ranges);
         }
 
-        $points = array_keys($boundaries);
+        $points = array_unique($points);
         sort($points);
         $alphabet = [];
         for ($i = 0, $last = \count($points) - 1; $i < $last; $i++) {

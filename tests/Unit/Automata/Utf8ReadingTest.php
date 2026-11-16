@@ -42,6 +42,7 @@ final class Utf8ReadingTest extends TestCase
         $this->assertSame([[0xE9, 0xE9, 2]], $characters->getState(0)->ranges());
         $this->assertSame([], $characters->getState(1)->ranges());
         $this->assertSame([false, false, true], [$characters->getState(0)->isAccepting, $characters->getState(1)->isAccepting, $characters->getState(2)->isAccepting]);
+        $this->assertSame([[0, 0xE8], [0xE9, 0xE9], [0xEA, 0x10FFFF]], $characters->alphabetRanges);
     }
 
     /**
@@ -60,5 +61,48 @@ final class Utf8ReadingTest extends TestCase
         $characters = Utf8Reading::of(new Dfa(0, [0 => new DfaState(0, array_fill(0, 256, 0), true)]));
 
         $this->assertSame([[0, 0xD7FF, 0], [0xE000, 0x10FFFF, 0]], $characters->getState(0)->ranges());
+        $this->assertSame([[0, 0xD7FF], [0xD800, 0xDFFF], [0xE000, 0x10FFFF]], $characters->alphabetRanges);
+    }
+
+    /**
+     * "€" is E2 82 AC and "₮" E2 82 AE: the last byte goes to one state or
+     * the other, and each character to the state its last byte reaches.
+     */
+    #[Test]
+    public function test_a_three_byte_form_reads_each_character_its_last_byte_tells_apart(): void
+    {
+        $this->assertSame(['e282ac', 'e282ae'], [bin2hex("\u{20AC}"), bin2hex("\u{20AE}")]);
+        $bytes = new Dfa(0, [
+            0 => new DfaState(0, [0xE2 => 1], false),
+            1 => new DfaState(1, [0x82 => 2], false),
+            2 => new DfaState(2, [0xAC => 3, 0xAE => 4], false),
+            3 => new DfaState(3, [], true),
+            4 => new DfaState(4, [], true),
+        ]);
+
+        $characters = Utf8Reading::of($bytes);
+
+        $this->assertSame([[0x20AC, 0x20AC, 3], [0x20AE, 0x20AE, 4]], $characters->getState(0)->ranges());
+        $this->assertSame([[0, 0x20AB], [0x20AC, 0x20AC], [0x20AD, 0x20AD], [0x20AE, 0x20AE], [0x20AF, 0x10FFFF]], $characters->alphabetRanges);
+    }
+
+    /**
+     * Two states that read the same character cut the alphabet at the same
+     * code points, once.
+     */
+    #[Test]
+    public function test_states_that_read_the_same_character_cut_the_alphabet_once(): void
+    {
+        $bytes = new Dfa(0, [
+            0 => new DfaState(0, [0x61 => 1], false),
+            1 => new DfaState(1, [0x61 => 2], false),
+            2 => new DfaState(2, [], true),
+        ]);
+
+        $characters = Utf8Reading::of($bytes);
+
+        $this->assertSame([[0x61, 0x61, 1]], $characters->getState(0)->ranges());
+        $this->assertSame([[0x61, 0x61, 2]], $characters->getState(1)->ranges());
+        $this->assertSame([[0, 0x60], [0x61, 0x61], [0x62, 0x10FFFF]], $characters->alphabetRanges);
     }
 }
