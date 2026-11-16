@@ -271,6 +271,15 @@ final class ModernizerTest extends TestCase
         yield 'one class' => ['pattern' => '/(?:[0-9])+/', 'expected' => '/\d+/'];
         yield 'one capturing group' => ['pattern' => '/(?:(a))+b/', 'expected' => '/(a)+b/'];
         yield 'grouped alternation' => ['pattern' => '/(?:(?:a|b))+/', 'expected' => '/(?:a|b)+/'];
+        yield 'one dot' => ['pattern' => '/(?:.)+/', 'expected' => '/.+/'];
+        yield 'one class kept' => ['pattern' => '/(?:[ab])+/', 'expected' => '/[ab]+/'];
+        yield 'one property' => ['pattern' => '/(?:\pL)+/', 'expected' => '/\pL+/'];
+        yield 'one control character' => ['pattern' => '/(?:\cA)+/', 'expected' => '/\cA+/'];
+        yield 'one reference' => ['pattern' => '/(a)(?:\1)+/', 'expected' => '/(a)\g{1}+/'];
+        yield 'one call' => ['pattern' => '/(a)(?:(?1))+/', 'expected' => '/(a)(?1)+/'];
+        yield 'one conditional' => ['pattern' => '/(a)?(?:(?(1)b|c))+/', 'expected' => '/(a)?(?(1)b|c)+/'];
+        yield 'one script run' => ['pattern' => '/(?:(*sr:a))+/', 'expected' => '/(*script_run:a)+/'];
+        yield 'option scope over a sequence' => ['pattern' => '/(?:(?i:a.))+b/', 'expected' => '/(?i:a.)+b/'];
     }
 
     /**
