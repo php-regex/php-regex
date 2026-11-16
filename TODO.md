@@ -33,13 +33,6 @@ Parser
 - Past 512 levels of nesting, the recursion limit hides PCRE's own "too
   deeply nested", which it reports at offset 251.
 
-Optimizer and automata
-
-- The match solver reads a body repeated `{0}` as nothing, though PCRE2
-  still reads an assertion inside it when it decides where a match may
-  start: `/(?:x|(?=a)){0}\w/` is match-equivalent to `/\w/`, yet only the
-  second matches `\tb`.
-
 ReDoS and lint rules
 
 - A nested loop inside an atomic group or a possessive quantifier is
