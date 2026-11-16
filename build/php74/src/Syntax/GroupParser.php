@@ -22,6 +22,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Text\Utf8;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
@@ -430,10 +431,11 @@ final class GroupParser
             }
         }
 
-        // "(?+" without a number: past the character after the "+", from
-        // PCRE2 10.47; on the "+" before.
+        // "(?+" without a number: past the character after the "+", whole in
+        // UTF mode, from PCRE2 10.47; on the "+" before.
         if ('+' === $char) {
-            $fault = $this->target->faultOffset(min($position + 2, $length), min($position + 2, $length) - $position);
+            $after = min($position + 1 + ($this->state->unicodeMode ? Utf8::width($this->pattern, $position + 1) : 1), $length);
+            $fault = $this->target->faultOffset($after, $after - $position);
 
             return $position + 1 >= $length
                 ? array_merge([$fault], $unclosed)
@@ -441,7 +443,7 @@ final class GroupParser
         }
 
         if ('C' === $char) {
-            [$fault, $code] = Callout::fault($this->pattern, $start, $this->target) ?? [$start, ErrorCode::GroupSyntax()];
+            [$fault, $code] = Callout::fault($this->pattern, $start, $this->target, $this->state->unicodeMode) ?? [$start, ErrorCode::GroupSyntax()];
 
             return [$fault, $code, 'Invalid callout at position %d: '.str_replace('%', '%%', Callout::problem($code)).'.'];
         }

@@ -193,10 +193,12 @@ final class VerbChecks
         }
 
         // Only the limits take a value after "=": after any other name PCRE
-        // refuses the "=" where it stands. "(*=name)", a mark written short,
-        // is refused further down.
+        // refuses the "=" where it stands. A mark written short, "(*:name)"
+        // or "(*=name)", writes no name: the first is read whole, an "="
+        // in its name included, and the second is refused further down.
         $equals = $node->startPosition + 2 + \strlen($verbName);
-        if (!isset(self::LIMIT_VERBS[$verbName]) && '=' === ($this->source[$equals] ?? '') && '=' !== ($this->source[$node->startPosition + 2] ?? '')) {
+        $short = \in_array($this->source[$node->startPosition + 2] ?? '', [':', '='], true);
+        if (!isset(self::LIMIT_VERBS[$verbName]) && !$short && '=' === ($this->source[$equals] ?? '')) {
             $this->raise(
                 \sprintf('(*%s) takes no value: only the limits take one, as (*LIMIT_MATCH=10).', $verbName),
                 1 === LibraryPcre::match('/^[a-z]/', $verbName) ? $this->target->faultOffset($equals + 1) : $equals,
@@ -259,9 +261,10 @@ final class VerbChecks
     }
 
     /**
-     * "(*TURKISH_CASING)" needs UTF mode, and does not go with
-     * "(*CASELESS_RESTRICT)": PCRE2 refuses both where the opening run of
-     * settings ends, before it reads the rest.
+     * "(*TURKISH_CASING)" needs UTF mode, and then does not go with
+     * "(*CASELESS_RESTRICT)" nor with the "r" modifier, which sets the
+     * same option: PCRE2 refuses each where the opening run of settings
+     * ends, before it reads the rest.
      *
      * @param string $flags the flags of the pattern
      */
@@ -276,14 +279,6 @@ final class VerbChecks
             return;
         }
 
-        if (false !== strpos($settings, '(*CASELESS_RESTRICT)')) {
-            $this->raise(
-                '(*TURKISH_CASING) and (*CASELESS_RESTRICT) cannot be used together.',
-                $this->startOfPatternEnd,
-                ErrorCode::VerbConflictingCasings(),
-            );
-        }
-
         if (false === strpos($flags, 'u') && 1 !== LibraryPcre::match('/\(\*UTF8?\)/', $settings)) {
             $this->raise(
                 false !== strpos($settings, '(*UCP)')
@@ -292,6 +287,22 @@ final class VerbChecks
                 $this->startOfPatternEnd,
                 ErrorCode::VerbTurkishCasingWithoutUtf(),
                 'Add the "u" modifier.',
+            );
+        }
+
+        if (false !== strpos($settings, '(*CASELESS_RESTRICT)')) {
+            $this->raise(
+                '(*TURKISH_CASING) and (*CASELESS_RESTRICT) cannot be used together.',
+                $this->startOfPatternEnd,
+                ErrorCode::VerbConflictingCasings(),
+            );
+        }
+
+        if (false !== strpos($flags, 'r')) {
+            $this->raise(
+                '(*TURKISH_CASING) and the "r" modifier cannot be used together.',
+                $this->startOfPatternEnd,
+                ErrorCode::VerbConflictingCasings(),
             );
         }
     }

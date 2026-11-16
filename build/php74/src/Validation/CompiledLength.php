@@ -1011,8 +1011,9 @@ final class CompiledLength
             }
 
             // A letter and its other case is one caseless letter: read as
-            // the negated code point, minus one.
-            [$first, $second] = $members[0] + [1 => -1];
+            // the negated code point, minus one. A class of no item, one
+            // read up to an earlier error, is no character.
+            [$first, $second] = $members[0] + [-1, -1];
 
             return !$node->isNegated && 2 === \count($members[0]) && $this->target->supports(PcreFeature::CasePairClassIsACaselessCharacter()) && true === $this->isCasePair($first, $second) ? -1 - $first : null;
         }
@@ -1522,12 +1523,12 @@ final class CompiledLength
                 break;
         }
         $numbers = array_unique($numbers);
-        $matchSubject1544 = \count($numbers);
+        $matchSubject1545 = \count($numbers);
 
         switch (true) {
-            case 0 === $matchSubject1544:
+            case 0 === $matchSubject1545:
                 return null;
-            case 1 === $matchSubject1544:
+            case 1 === $matchSubject1545:
                 return 3;
             default:
                 return 5;

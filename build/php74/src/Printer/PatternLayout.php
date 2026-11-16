@@ -584,7 +584,7 @@ final class PatternLayout
             ++$this->indentLevel;
             $yes = $node->yes->accept($this->printer);
             $yesKeepsX = false !== strpos($this->printer->flags(), 'x');
-            $hasNo = !($node->no instanceof LiteralNode && '' === $node->no->value);
+            $hasNo = PatternPrinter::writesNoBranch($node);
             $no = $yesKeepsX ? $node->no->accept($this->printer) : $this->forceInline($node->no);
             --$this->indentLevel;
             $closesOnItsLine = false !== strpos($this->printer->flags(), 'x');

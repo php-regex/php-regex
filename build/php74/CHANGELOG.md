@@ -6,6 +6,65 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A mark written short accepts an `=` in its name, `/(*:foo=bar)/`, and
+   four characters after it, `/(*:x)a=b/`: the check that only the limits
+   take a value read it as `(*MARK:`, four characters longer, and refused
+   that `=` as `regex.verb.invalid`.
+ * `(*TURKISH_CASING)` under the `r` modifier is refused where the opening
+   run of settings ends, `regex.verb.conflicting_casings`, as with
+   `(*CASELESS_RESTRICT)`: `/(*UTF)(*TURKISH_CASING)a/r` was valid. A pattern
+   that also leaves out UTF mode is refused for that first, as PCRE2 does:
+   `/(*TURKISH_CASING)(*CASELESS_RESTRICT)a/` is
+   `regex.verb.turkish_casing_without_utf`.
+ * `PatternPrinter`, and with it `PatternFormatter` and the optimizer, keeps
+   the `|` of a conditional whose "no" branch is written empty, `(?(c)X|)`:
+   it wrote `(?(c)X)`, which PCRE gives, in a lookbehind, the length of `X`
+   alone, so `/(?<!(?(?=a)bb|))c/` compacted matched `c`. The formatter's
+   check of its own output reads the two apart.
+ * A substring scan, `(*scs:(1)...)`, adds no length to the lookbehind that
+   holds it, and repeated directly it is measured as a lookahead is, as PCRE2
+   does: `/(q)(?<=(*scs:(1)a+))/` was refused as unbounded, and
+   `/(q)(?<=b{1,200}(*scs:(1)a{100}))/` as longer than 255.
+ * `validate()` reports `/(*UTF)(*TURKISH_CASING)a{2}{3}[a-[:alpha:]]/` at
+   the repeat, offset 30, without the warning "Undefined array key 0": the
+   class after the error, read up to it to look for an earlier one, holds
+   no item yet, which the measure of the compiled length read as a pair of
+   letters. A framework that turns warnings into exceptions threw there.
+ * A callout opened by a character past ASCII, `(?Cé)`, and `(?+` followed
+   by one, `(?+😀)`, are refused past that whole character in UTF mode from
+   PCRE2 10.47, as PCRE2 reports them: `/(?Cé)/u` at offset 5 and
+   `/a(?+😀)/u` at 8, where the offset fell inside the character, at 4 and 5.
+ * A reference to a missing group in a lookbehind comes before the errors of
+   the whole pattern only where the measure of that lookbehind meets it:
+   one in a lookahead, in a DEFINE group or after an `(*ACCEPT)` there waits
+   its turn, as PCRE2 orders them. `/\g{1}(?<=(?=\k{n}))/` is refused on
+   `\g{1}`, offset 5, where it was refused on `\k{n}`.
+ * A reversed range in a class nested in an extended class comes before a
+   range further on that no class takes, as PCRE2 reads them:
+   `/(?[[^]--[a-\d]])/` is `regex.range.reversed` at offset 8, where it was
+   refused for `a-\d` at 13.
+ * `validate()` reports parentheses nested past the parser's own limit,
+   `max_recursion_depth`, as PCRE2 does when it has refused them before that
+   limit: `regex.group.nested_too_deep` at the level past 250, offset 251 for
+   600 `(` in a row, or an error PCRE2 meets before that level, where it gave
+   the limit, `regex.nesting.too_deep`, and no verdict. A limit met before
+   that level stays the outcome. An error the parser meets before the level
+   past 250 is no longer hidden by it: `)` followed by 300 `(` is
+   `regex.group.unmatched_close` at offset 1, where it was refused at 252.
+ * The level of parentheses past 250 is refused where PCRE2 refuses it, past
+   its opener whole, wherever the parser stopped reading: 250 `(` then `(?:`
+   is `regex.group.nested_too_deep` at offset 253 and `(?<n>` at 255, where a
+   later error made it 252. An opener PCRE2 refuses for itself comes first:
+   250 `(` then `(?%` is `regex.group.syntax` at 253 on PCRE2 10.49, and
+   `(?<1` `regex.group.name_invalid`.
+ * A possessive count of one, `X{1}+` or `X{1,1}+`, stays possessive where
+   the automata read the pattern: it never gives back what `X` matched, as
+   PCRE2 runs it. `TrivialMatchClassifier` named `/^(?:a|ab){1}+c\z/` one of
+   `ac` and `abc`, where `preg_match()` refuses `abc`; it names none now,
+   and the solver refuses it as it refuses `{2}+`.
+ * A caret snippet in a JSON, Checkstyle or JUnit report stays under the
+   character at fault once the invalid bytes before it are spelled `\xHH`:
+   `Line 1: \xFF\xFE(` had its caret under the first `\xFF`.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.

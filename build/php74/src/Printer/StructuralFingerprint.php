@@ -15,6 +15,7 @@ namespace PHPRegex\Parser\Printer;
 
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -91,6 +92,13 @@ final class StructuralFingerprint
             }
         }
 
+        // A "no" branch written empty, "(?(c)X|)", is not the one a
+        // conditional without "|" is given: in a lookbehind PCRE reads the
+        // two apart.
+        if ($node instanceof ConditionalNode) {
+            $canonical['writesNo'] = PatternPrinter::writesNoBranch($node);
+        }
+
         // A "(?:...)" whose body matches nothing but the empty string, "(?:)"
         // or one holding only comments, is empty wherever it stands, the
         // whole pattern or the body of a group as much as in a sequence. Its
@@ -127,12 +135,12 @@ final class StructuralFingerprint
 
             $items[] = $item;
         }
-        $matchSubject130 = \count($items);
+        $matchSubject138 = \count($items);
 
         switch (true) {
-            case 0 === $matchSubject130:
+            case 0 === $matchSubject138:
                 return ['literal', false, ''];
-            case 1 === $matchSubject130:
+            case 1 === $matchSubject138:
                 return $items[0];
             default:
                 return ['sequence', $items];

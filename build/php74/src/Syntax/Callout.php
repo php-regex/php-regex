@@ -19,6 +19,7 @@ use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Parser\Node\CalloutNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Utf8;
 use PHPRegex\Parser\Token\Token;
 
 /**
@@ -50,8 +51,10 @@ final class Callout
     /**
      * The callout the lexer's token stands for, its value the argument as
      * written: "", "12", "{a}}b}".
+     *
+     * @param bool $utf whether the pattern is read in UTF mode
      */
-    public static function read(Token $token, string $pattern, PcreTarget $target): CalloutNode
+    public static function read(Token $token, string $pattern, PcreTarget $target, bool $utf = false): CalloutNode
     {
         $startPosition = $token->position;
         $value = $token->value;
@@ -73,7 +76,7 @@ final class Callout
             if (1 === LibraryPcre::match('/^\d++/', $value, $number)) {
                 $code = \strlen(ltrim($number[0], '0')) > 3 || (int) $number[0] > 255 ? ErrorCode::CalloutOutOfRange() : ErrorCode::CalloutUnclosed();
             }
-            $position = self::fault($pattern, $startPosition, $target)[0] ?? $startPosition + 4;
+            $position = self::fault($pattern, $startPosition, $target, $utf)[0] ?? $startPosition + 4;
 
             throw SyntaxErrorException::withContext(\sprintf('Invalid callout argument: %s at position %d: %s.', $value, $position, self::problem($code)), $code, $position, $pattern);
         }
@@ -84,7 +87,7 @@ final class Callout
             // "(?C"a"b)": the string is closed, and ")" is due after it.
             $closed = 1 === LibraryPcre::match('/^.(?:[^'.$quoted.']|'.$quoted.$quoted.')*+'.$quoted.'/s', $value);
             $code = $closed ? ErrorCode::CalloutUnclosed() : ErrorCode::CalloutUnclosedString();
-            $position = self::fault($pattern, $startPosition, $target)[0] ?? $startPosition;
+            $position = self::fault($pattern, $startPosition, $target, $utf)[0] ?? $startPosition;
 
             throw SyntaxErrorException::withContext(\sprintf('Invalid callout argument: %s at position %d: %s.', $value, $position, self::problem($code)), $code, $position, $pattern);
         }
@@ -98,11 +101,13 @@ final class Callout
      * closed, past a character that opens no string, where the ")" should
      * follow the argument, or at the end of a pattern that ends after "(?C".
      *
-     * @param int $start the offset of the "(" of "(?C"
+     * @param int  $start the offset of the "(" of "(?C"
+     * @param bool $utf   whether the pattern is read in UTF mode, where PCRE
+     *                    steps past a character whole
      *
      * @return array{0: int, 1: ErrorCode}|null
      */
-    public static function fault(string $pattern, int $start, PcreTarget $target): ?array
+    public static function fault(string $pattern, int $start, PcreTarget $target, bool $utf = false): ?array
     {
         $length = \strlen($pattern);
         $position = $start + 3;
@@ -122,7 +127,9 @@ final class Callout
         } elseif (')' !== $pattern[$position]) {
             $closing = self::STRING_DELIMITERS[$pattern[$position]] ?? null;
             if (null === $closing) {
-                return [$target->faultOffset($position + 1), ErrorCode::CalloutInvalidDelimiter()];
+                $width = $utf ? Utf8::width($pattern, $position) : 1;
+
+                return [$target->faultOffset($position + $width, $width), ErrorCode::CalloutInvalidDelimiter()];
             }
 
             $opening = $position;

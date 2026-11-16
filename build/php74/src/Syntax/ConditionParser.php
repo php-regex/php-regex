@@ -151,7 +151,7 @@ final class ConditionParser
             // "(?(?C1" that no ")" closes, the "(?" read alone: the callout
             // is refused as anywhere else.
             if ($this->stream->checkLiteral('C')) {
-                [$fault, $code] = Callout::fault($this->pattern, $conditionStartPos, $this->target) ?? [\strlen($this->pattern), ErrorCode::CalloutUnclosed()];
+                [$fault, $code] = Callout::fault($this->pattern, $conditionStartPos, $this->target, $this->state->unicodeMode) ?? [\strlen($this->pattern), ErrorCode::CalloutUnclosed()];
 
                 throw $this->state->error(\sprintf('Invalid callout at position %d: %s.', $fault, Callout::problem($code)), $code, $fault);
             }
@@ -178,12 +178,12 @@ final class ConditionParser
      */
     public function calloutConditional(int $startPosition): NodeInterface
     {
-        $callout = Callout::read($this->stream->previous(), $this->pattern, $this->target);
+        $callout = Callout::read($this->stream->previous(), $this->pattern, $this->target, $this->state->unicodeMode);
 
         // PCRE refuses a number past 255 as it reads it, before it looks
         // for the assertion due after the callout.
         if (!$callout->isStringIdentifier && \is_int($callout->identifier) && $callout->identifier > 255) {
-            $position = Callout::fault($this->pattern, $callout->startPosition, $this->target)[0] ?? $callout->startPosition;
+            $position = Callout::fault($this->pattern, $callout->startPosition, $this->target, $this->state->unicodeMode)[0] ?? $callout->startPosition;
 
             throw $this->state->error(\sprintf('Invalid callout at position %d: %s.', $position, Callout::problem(ErrorCode::CalloutOutOfRange())), ErrorCode::CalloutOutOfRange(), $position);
         }

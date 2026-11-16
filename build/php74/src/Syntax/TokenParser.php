@@ -755,7 +755,7 @@ final class TokenParser
      */
     private function parseCallout(): CalloutNode
     {
-        return Callout::read($this->stream->previous(), $this->pattern, $this->target);
+        return Callout::read($this->stream->previous(), $this->pattern, $this->target, $this->unicodeMode);
     }
 
     /**

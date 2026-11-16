@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Json;
 
 use PHPRegex\Parser\Exception\JsonEncodingException;
+use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Utf8;
 
 /**
@@ -84,6 +85,11 @@ final class JsonDocument
      * Each byte of a sequence that is not valid UTF-8 as the text \xNN; a
      * valid sequence, control characters included, kept as it is. The one
      * spelling of an invalid byte in every machine report, JSON or not.
+     *
+     * A caret snippet ("Line N: " and an excerpt, then a line of spaces
+     * and a caret) counts the columns before its caret in bytes when they
+     * are no UTF-8: its caret is moved under the same character once the
+     * bytes before it are spelled, whatever text is around the snippet.
      */
     public static function spellInvalidBytes(string $text): string
     {
@@ -91,6 +97,61 @@ final class JsonDocument
             return $text;
         }
 
+        $lines = explode("\n", $text);
+        $spelled = [];
+        foreach ($lines as $index => $line) {
+            $indent = \strlen($line) - 1;
+            $excerpt = $lines[$index - 1] ?? '';
+            if ($indent >= 0 && '^' === $line[$indent] && $indent === strspn($line, ' ') && self::isSnippetLine($excerpt) && !mb_check_encoding((string) substr($excerpt, 0, $indent), 'UTF-8')) {
+                $spelled[] = str_repeat(' ', self::spelledColumns($excerpt, $indent)).'^';
+
+                continue;
+            }
+
+            $spelled[] = self::spell($line);
+        }
+
+        return implode("\n", $spelled);
+    }
+
+    /**
+     * Whether a line opens as the line of a caret snippet: "Line N: ".
+     */
+    private static function isSnippetLine(string $line): bool
+    {
+        $colon = strpos($line, ': ');
+
+        return 0 === strncmp($line, 'Line ', strlen('Line ')) && false !== $colon && Ascii::isDigit((string) substr($line, 5, $colon - 5));
+    }
+
+    /**
+     * The columns the first bytes of a line take once its invalid bytes
+     * are spelled: four for an invalid byte, two for a wide character, one
+     * for any other, as a snippet counts them; a byte past the end of the
+     * line is one column.
+     */
+    private static function spelledColumns(string $line, int $bytes): int
+    {
+        $columns = 0;
+        $end = min($bytes, \strlen($line));
+        for ($i = 0; $i < $end;) {
+            $sequence = (string) substr($line, $i, Utf8::width($line, $i));
+            if (mb_check_encoding($sequence, 'UTF-8')) {
+                $columns += mb_strwidth($sequence, 'UTF-8') > 1 ? 2 : 1;
+                $i += \strlen($sequence);
+
+                continue;
+            }
+
+            $columns += 4;
+            ++$i;
+        }
+
+        return $columns + $bytes - $end;
+    }
+
+    private static function spell(string $text): string
+    {
         $spelled = '';
         $length = \strlen($text);
         for ($i = 0; $i < $length;) {
