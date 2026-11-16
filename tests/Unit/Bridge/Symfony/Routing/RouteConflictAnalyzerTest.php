@@ -19,6 +19,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\CompiledRoute;
+use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Matcher\CompiledUrlMatcher;
 use Symfony\Component\Routing\Matcher\Dumper\CompiledUrlMatcherDumper;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
@@ -598,9 +599,12 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
-     * Symfony's matchers, the UrlMatcher and the compiled one, send a HEAD
-     * request to a route for GET: of a route for GET and a route for HEAD
-     * only, the earlier one takes the HEAD requests of both.
+     * Symfony's matchers send a HEAD request to a route for GET: of a route
+     * for GET and a route for HEAD only, the earlier one takes the HEAD
+     * requests of both. The compiled matcher, which the framework runs, does
+     * so on every release; the UrlMatcher sends none to a route for HEAD
+     * only before symfony/routing 7.4.22 and 8.1.10, which read the HEAD
+     * request as GET alone.
      *
      * @param list<string> $earlier
      * @param list<string> $later
@@ -614,8 +618,8 @@ final class RouteConflictAnalyzerTest extends TestCase
         $collection->add('later', (new Route('/x'))->setMethods($later));
 
         $context = new RequestContext(method: 'HEAD');
-        $this->assertSame('earlier', (new UrlMatcher($collection, $context))->match('/x')['_route']);
         $this->assertSame('earlier', (new CompiledUrlMatcher((new CompiledUrlMatcherDumper($collection))->getCompiledRoutes(), $context))->match('/x')['_route']);
+        $this->assertSame(['HEAD'] === $earlier && !self::urlMatcherSendsHeadToARouteForHeadOnly() ? 'later' : 'earlier', (new UrlMatcher($collection, $context))->match('/x')['_route']);
 
         $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
 
@@ -865,6 +869,20 @@ final class RouteConflictAnalyzerTest extends TestCase
     {
         yield 'spelled in capitals, with blanks around' => ['minimizer' => " MOORE\t", 'determinizer' => ' SUBSET '];
         yield 'names the solver does not know' => ['minimizer' => 'bogus', 'determinizer' => 'bogus'];
+    }
+
+    private static function urlMatcherSendsHeadToARouteForHeadOnly(): bool
+    {
+        $collection = new RouteCollection();
+        $collection->add('head', (new Route('/x'))->setMethods(['HEAD']));
+
+        try {
+            (new UrlMatcher($collection, new RequestContext(method: 'HEAD')))->match('/x');
+        } catch (MethodNotAllowedException) {
+            return false;
+        }
+
+        return true;
     }
 }
 
