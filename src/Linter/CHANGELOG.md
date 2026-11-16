@@ -6,6 +6,16 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
+   directory its path names, from the working directory, behind `./` or
+   absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and
+   `--exclude=$PWD/build` left nothing out, as an exclude matched a
+   directory below a linted path only. A directory name is still matched
+   anywhere under the linted paths, and any exclude still replaces the
+   default `vendor`.
+ * A file named as a path to lint is read whatever its suffix: `regex lint
+   bin/console` and `regex lint Legacy.PHP` found no pattern and passed. A
+   directory is still walked for its `.php` files.
  * `regex.lint.overlap.charset` compares characters, not first bytes, past
    ASCII: under u, `/(?:ö|è)+/u` was reported because both start with the
    byte `\xC3`, and a byte read caselessly, `/(?:\xE9+|c)+/i` with a raw

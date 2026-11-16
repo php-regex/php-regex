@@ -618,7 +618,14 @@ vendor/bin/regex lint src/ --format=github
 
 # Exclude directories
 vendor/bin/regex lint src/ --exclude=vendor --exclude=tests
+
+# Lint a script without the .php suffix
+vendor/bin/regex lint bin/console
 ```
+
+A directory is walked for its `.php` files, templates such as `.blade.php`
+left out. A file named as a path is read as PHP whatever its suffix, as PHP
+runs a script it is given.
 
 #### Patterns Behind a Wrapper
 
@@ -2299,6 +2306,14 @@ In `regex.json`:
 }
 ```
 
+An exclude, in `regex.json` or as `--exclude`, is a directory name, left out
+wherever it stands below a linted path (`tests` leaves out `src/Bundle/tests/`
+too), or the path of a file or a directory, from the working directory, behind
+`./` or absolute: `src/Kernel.php`, `./var/cache`, `/srv/app/build`. A file
+named on the command line is linted whatever the excludes say. An `exclude`
+key, even an empty list, or an `--exclude` replaces the default `vendor`: list
+`vendor` again to keep it out.
+
 ---
 
 ## Output Formats
@@ -2314,7 +2329,9 @@ pattern's mode, per byte in byte mode (`\xE2\x80\xAE`) and per code point in
 UTF mode, under `u` or after a leading `(*UTF)` (`\x{202E}`), and the pattern
 is then printed without colours. The caret stays under the character at
 fault. JSON output keeps the pattern as given, except that each invalid
-UTF-8 byte becomes the text `\xNN`, in uppercase hexadecimal (`\xFF`).
+UTF-8 byte becomes the text `\xNN`, in uppercase hexadecimal (`\xFF`); the
+caret of a snippet moves with it, under the same character, in JSON,
+Checkstyle and JUnit alike.
 
 `lint` ends its report on a summary line, then, when some pattern arguments
 are built at run time, on the number it could not verify:
@@ -2495,7 +2512,7 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | Option              | Description                                        |
 |---------------------|----------------------------------------------------|
 | `--exclude <path>`  | Exclude path (repeatable)                          |
-| `--min-savings <n>` | Minimum optimization savings                       |
+| `--min-savings <n>` | Minimum optimization savings, in characters: a whole number, 0 or more; anything else is a usage error (exit 2) |
 | `-j, --jobs <n>`    | Parallel workers (default: the logical CPUs, see [Parallel workers](#parallel-workers)) |
 | `--format <format>` | Output format (console, json, github, checkstyle, junit) |
 | `--json`            | Same as `--format=json`                            |
@@ -2667,7 +2684,8 @@ Both options take their file after a space or an `=`.
   issue fixed or its pattern removed, is reported as `regex.ignore.unmatched`
   on the entry's file and line: remove it, or generate the baseline again.
   The entries of a file gone since, under a path the run lints and out of
-  those it excludes, are stale and reported too. A run over `src/Controller`
+  those it excludes (each exclude read as the lint reads it, a directory
+  name or the path of a file or a directory), are stale and reported too. A run over `src/Controller`
   says nothing of the entries of `src/Legacy`, read or gone. `--no-report-unmatched-ignores`
   turns the report off, as it does for the inline markers. A baseline holds
   what the run that wrote it reported: one written with `--report-dynamic`

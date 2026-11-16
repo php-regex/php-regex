@@ -52,6 +52,30 @@ final class UsageErrorExitCodeTest extends LaravelTestCase
         yield 'regex:lint with a negative --jobs' => ['regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--jobs' => '-3']];
         yield 'regex:lint with a --jobs that is not a number' => ['regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--jobs' => 'many']];
         yield 'regex:lint with a fractional --jobs' => ['regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--jobs' => '1.5']];
+        yield 'regex:lint with a --min-savings that is not a number' => ['regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--min-savings' => 'abc']];
+        yield 'regex:lint with a negative --min-savings' => ['regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--min-savings' => '-5']];
+        yield 'regex:lint with a fractional --min-savings' => ['regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--min-savings' => '1.5']];
+    }
+
+    /**
+     * A --min-savings that is no whole number of 0 or more is refused as a
+     * --jobs the lint cannot use is, in the console and in the JSON
+     * document alike; one of 0 is read.
+     */
+    #[Test]
+    public function test_a_min_savings_below_zero_is_refused_with_a_message(): void
+    {
+        $this->assertSame(2, Artisan::call('regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--min-savings' => '-5']));
+        $this->assertStringContainsString('The --min-savings value must be a non-negative integer.', Artisan::output());
+
+        $this->assertSame(2, Artisan::call('regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--min-savings' => '-5', '--format' => 'json']));
+        $document = json_decode(Artisan::output(), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($document);
+        $this->assertSame(['error' => 'The --min-savings value must be a non-negative integer.', 'stage' => 'usage'], $document);
+
+        // Read before the paths: a --min-savings of 0 is not what stops the run.
+        Artisan::call('regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--min-savings' => '0', '--format' => 'json']);
+        $this->assertStringNotContainsString('--min-savings', Artisan::output());
     }
 
     /**

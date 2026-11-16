@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Parser\Json;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\JsonEncodingException;
+use PHPRegex\Parser\Exception\Snippet;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
@@ -68,6 +69,35 @@ final class JsonDocumentTest extends TestCase
         yield 'a lead byte UTF-8 never uses' => ['value' => "\xF8\x88\x80\x80\x80", 'expected' => '\xF8\x88\x80\x80\x80'];
         yield 'valid sequences around an invalid byte' => ['value' => "《\xFE》\n", 'expected' => "《\\xFE》\n"];
         yield 'a four-byte sequence kept' => ['value' => "\xF0\x9F\x98\x80\xFF", 'expected' => "\u{1F600}\\xFF"];
+    }
+
+    /**
+     * A caret snippet counts the columns before its caret in bytes when
+     * they are no UTF-8: once each invalid byte is spelled "\xHH", the
+     * caret moves under the same character, in a snippet alone or in a
+     * message that quotes one.
+     */
+    #[Test]
+    #[DataProvider('provideCaretSnippets')]
+    public function test_a_caret_stays_under_its_character_once_the_bytes_are_spelled(string $pattern, int $position, string $before, string $after, string $expected): void
+    {
+        $text = $before.Snippet::render($pattern, $position).$after;
+
+        $this->assertSame($expected, JsonDocument::spellInvalidBytes($text));
+        $this->assertSame(['value' => $expected], json_decode(JsonDocument::encode(['value' => $text]), true, 512, \JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, position: int, before: string, after: string, expected: string}>
+     */
+    public static function provideCaretSnippets(): iterable
+    {
+        yield 'after two invalid bytes' => ['pattern' => "\xFF\xFE(", 'position' => 3, 'before' => '', 'after' => '', 'expected' => "Line 1: \\xFF\\xFE(\n                 ^"];
+        yield 'on an invalid byte' => ['pattern' => "a\xFFb", 'position' => 1, 'before' => '', 'after' => '', 'expected' => "Line 1: a\\xFFb\n         ^"];
+        yield 'after an invalid byte and a character of two bytes' => ['pattern' => "\xFFé(", 'position' => 3, 'before' => '', 'after' => '', 'expected' => "Line 1: \\xFFé(\n             ^"];
+        yield 'after an invalid byte and a wide character' => ['pattern' => "\xFF中(", 'position' => 4, 'before' => '', 'after' => '', 'expected' => "Line 1: \\xFF中(\n              ^"];
+        yield 'on the second line, past the end' => ['pattern' => "a\n\xFF", 'position' => 3, 'before' => '', 'after' => '', 'expected' => "Line 2: \\xFF\n            ^"];
+        yield 'quoted in a message' => ['pattern' => "\xFF(", 'position' => 2, 'before' => "Expected ) at end of input (found eof).\n", 'after' => "\nSuggestion: \xFF", 'expected' => "Expected ) at end of input (found eof).\nLine 1: \\xFF(\n             ^\nSuggestion: \\xFF"];
     }
 
     #[Test]

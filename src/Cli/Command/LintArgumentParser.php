@@ -140,7 +140,9 @@ final class LintArgumentParser
             '--json' => $this->withFormat($arguments, 'json'),
             '--format' => $this->withFormat($arguments, $value),
             '--exclude' => $arguments->with(exclude: [...$arguments->exclude, $value]),
-            '--min-savings' => $arguments->with(minSavings: (int) $value),
+            // A whole number of characters, written in digits alone, that
+            // reads back as written: no sign, no leading zero, no overflow.
+            '--min-savings' => Ascii::isDigit($value) && (string) (int) $value === $value ? $arguments->with(minSavings: (int) $value) : 'The --min-savings value must be a non-negative integer.',
             '--jobs' => (int) $value < 1 ? 'The --jobs value must be a positive integer.' : $arguments->with(jobs: (int) $value),
             default => $arguments->with(output: $value),
         };

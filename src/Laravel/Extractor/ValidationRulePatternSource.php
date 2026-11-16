@@ -31,20 +31,22 @@ use PHPRegex\Parser\Text\Path;
 final class ValidationRulePatternSource implements PatternSourceInterface
 {
     /**
-     * A single- or double-quoted literal on one line that holds a 'regex:'
-     * or 'not_regex:' rule, at its start or after a "|", up to the quote
-     * that opened it. Group 1 is the quote, group 2 the literal as written.
+     * A single- or double-quoted literal on one line that holds a 'regex:',
+     * 'not_regex:' or 'notregex:' rule, in any case, at its start or after
+     * a "|", up to the quote that opened it. Group 1 is the quote, group 2
+     * the literal as written.
      * An escaped character (a backslash and the character after it) and any
      * other character but a backslash, the quote and a newline are
      * disjoint, so a run of backslashes is read in one pass.
      */
-    private const RULE_PATTERN = '/(?|(\')(?=(?:(?:\\\\.|[^\'\\\\\n|])*+\|)*(?:not_)?regex:)((?:\\\\.|[^\'\\\\\n])++)\'|(")(?=(?:(?:\\\\.|[^"\\\\\n|])*+\|)*(?:not_)?regex:)((?:\\\\.|[^"\\\\\n])++)")/';
+    private const RULE_PATTERN = '/(?|(\')(?=(?:(?:\\\\.|[^\'\\\\\n|])*+\|)*(?i:(?:not_?)?regex):)((?:\\\\.|[^\'\\\\\n])++)\'|(")(?=(?:(?:\\\\.|[^"\\\\\n|])*+\|)*(?i:(?:not_?)?regex):)((?:\\\\.|[^"\\\\\n])++)")/';
 
     /**
      * A regex rule as Laravel's ValidationRuleParser reads one rule: the
-     * name, then all the text after the first ":".
+     * name, then all the text after the first ":". ruleIsRegex() reads the
+     * name without case, and "notregex" as "not_regex".
      */
-    private const RULE = '/^(not_)?regex:/';
+    private const RULE = '/^(not_?)?regex:/i';
 
     /**
      * The files the last extract() could not read, each with why.
@@ -76,7 +78,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 continue;
             }
 
-            $patterns = [...$patterns, ...$this->extractFromDirectory($path, $context->excludePaths)];
+            $patterns = [...$patterns, ...$this->extractFromDirectory($path, $context)];
         }
 
         return $patterns;
@@ -94,25 +96,16 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     }
 
     /**
-     * @param array<string> $excludePaths
-     *
      * @return array<\PHPRegex\Linter\PatternOccurrence>
      */
-    private function extractFromDirectory(string $directory, array $excludePaths): array
+    private function extractFromDirectory(string $directory, PatternSourceContext $context): array
     {
         $patterns = [];
-        // Walked and matched with "/" on every host: an exclude keeps its
-        // meaning whichever separator spelled it.
+        // Walked with "/" on every host; the excludes leave a file out as
+        // they leave out its PHP patterns.
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator(Path::fromHost($directory), \RecursiveDirectoryIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
         );
-        $excludes = [];
-        foreach ($excludePaths as $excludePath) {
-            $excludePath = trim(Path::normalize($excludePath), '/');
-            if ('' !== $excludePath) {
-                $excludes[] = '/'.$excludePath.'/';
-            }
-        }
 
         /** @var \SplFileInfo $file */
         foreach ($iterator as $file) {
@@ -121,12 +114,8 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             }
 
             $filePath = $file->getPathname();
-
-            // Check exclusions
-            foreach ($excludes as $exclude) {
-                if (str_contains($filePath, $exclude)) {
-                    continue 2;
-                }
+            if ($context->excludes($filePath)) {
+                continue;
             }
 
             $patterns = [...$patterns, ...$this->extractFromFile($filePath)];

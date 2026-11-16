@@ -219,8 +219,8 @@ final class CompletionHandlerTest extends TestCase
 
     /**
      * A request without a document or a position, and one outside every
-     * pattern, is answered with no completion; a notification is answered
-     * under the id 0, as it always was.
+     * pattern, is answered with no completion; a notification, with or
+     * without them, is never answered.
      */
     #[Test]
     public function test_completion_answers_nothing_where_it_cannot_complete(): void
@@ -235,6 +235,7 @@ final class CompletionHandlerTest extends TestCase
             [2, ['position' => ['line' => 1, 'character' => 13]]],
             [3, ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => 2]]],
             [null, ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => 13]]],
+            [null, []],
         ] as [$id, $params]) {
             $handler->handle(new Message(jsonrpc: '2.0', method: 'textDocument/completion', id: $id, params: $params));
         }
@@ -246,7 +247,6 @@ final class CompletionHandlerTest extends TestCase
             ['jsonrpc' => '2.0', 'id' => 1, 'result' => null],
             ['jsonrpc' => '2.0', 'id' => 2, 'result' => null],
             ['jsonrpc' => '2.0', 'id' => 3, 'result' => null],
-            ['jsonrpc' => '2.0', 'id' => 0, 'result' => null],
         ], array_map(static fn (string $frame): mixed => json_decode($frame, true, 512, \JSON_THROW_ON_ERROR), $frames));
     }
 

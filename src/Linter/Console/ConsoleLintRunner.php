@@ -86,9 +86,10 @@ final class ConsoleLintRunner
     private function lint(ConsoleLintRequest $request, string $format, OutputInterface $output, OutputInterface $errors): int
     {
         $console = self::FORMAT_CONSOLE === $format;
-        // --jobs is read before the paths, and the paths before the target,
-        // as `regex lint` reads them.
+        // --jobs and --min-savings are read before the paths, and the paths
+        // before the target, as `regex lint` reads them.
         $jobs = self::jobs($request->jobs);
+        $minSavings = self::minSavings($request->minSavings);
         LintRunner::checkPaths($request->paths, $request->pathsSetting);
         $setup = LintRunner::resolve($request->setup, $request->invalidOptionPrefix);
 
@@ -106,7 +107,7 @@ final class ConsoleLintRunner
         $lintRequest = new LintRequest(
             paths: $request->paths,
             excludePaths: $request->exclude,
-            minSavings: $request->minSavings,
+            minSavings: $minSavings,
             disabledSources: $request->disabledSources,
             analysisWorkers: $jobs,
             optimizations: $request->optimizations,
@@ -198,6 +199,27 @@ final class ConsoleLintRunner
         $count = (int) $jobs;
         if ('' === $jobs || strspn($jobs, '0123456789') !== \strlen($jobs) || (string) $count !== $jobs || $count < 1) {
             throw new LintRunFailureException('The --jobs value must be a positive integer.', JsonDocument::STAGE_USAGE, LintRunFailureException::EXIT_INVALID);
+        }
+
+        return $count;
+    }
+
+    /**
+     * The characters a rewrite must save to be suggested, a whole number of
+     * 0 or more that --min-savings gives; 1 when it is not given.
+     *
+     * @throws LintRunFailureException
+     */
+    private static function minSavings(?string $minSavings): int
+    {
+        if (null === $minSavings) {
+            return 1;
+        }
+
+        // digits alone, that read back as the same number, as for --jobs
+        $count = (int) $minSavings;
+        if ('' === $minSavings || strspn($minSavings, '0123456789') !== \strlen($minSavings) || (string) $count !== $minSavings) {
+            throw new LintRunFailureException('The --min-savings value must be a non-negative integer.', JsonDocument::STAGE_USAGE, LintRunFailureException::EXIT_INVALID);
         }
 
         return $count;

@@ -165,15 +165,21 @@ final class TextDocumentHandler
         $textDocument = $params['textDocument'] ?? [];
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
         $version = isset($textDocument['version']) && \is_int($textDocument['version']) ? $textDocument['version'] : null;
-        /** @var array<int, array{text?: string}> $contentChanges */
         $contentChanges = isset($params['contentChanges']) && \is_array($params['contentChanges']) ? $params['contentChanges'] : [];
 
         if (null === $uri || [] === $contentChanges) {
             return;
         }
 
-        // For full sync, we get the complete text
-        $text = isset($contentChanges[0]['text']) && \is_string($contentChanges[0]['text']) ? $contentChanges[0]['text'] : null;
+        // Under full sync each change is the whole text, applied in order:
+        // the last one is the document. A change naming a range holds part
+        // of the text only.
+        $text = null;
+        foreach ($contentChanges as $change) {
+            if (\is_array($change) && !isset($change['range']) && \is_string($change['text'] ?? null)) {
+                $text = $change['text'];
+            }
+        }
         if (null === $text) {
             return;
         }
@@ -273,7 +279,15 @@ final class TextDocumentHandler
         /** @var array{line?: int, character?: int}|null $position */
         $position = isset($params['position']) && \is_array($params['position']) ? $params['position'] : null;
 
-        if (null === $message->id || null === $uri || null === $position) {
+        // A notification is never answered; a request always is, with
+        // nothing when it names no document or no position.
+        if (null === $message->id) {
+            return;
+        }
+
+        if (null === $uri || null === $position) {
+            $this->transport->success($message->id, null);
+
             return;
         }
 

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony\Security;
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -50,6 +51,39 @@ final class SecurityAccessControlMatchModeTest extends TestCase
         $report = $this->analyze($rules);
 
         $this->assertSame(1, $report->stats['shadowed']);
+    }
+
+    /**
+     * Symfony matches the path with preg_match('{'.$path.'}s', ...): each
+     * branch of the earlier rule's alternation is searched for, so a public
+     * branch that takes the later path hides it whatever its place.
+     */
+    #[Test]
+    #[DataProvider('provideAlternations')]
+    public function test_detects_critical_shadowing_behind_an_alternation(string $earlier, string $later): void
+    {
+        $this->assertSame(1, preg_match('{'.$earlier.'}s', '/admin/users'));
+
+        $report = $this->analyze($this->buildRules([
+            [$earlier, ['PUBLIC_ACCESS']],
+            [$later, ['ROLE_ADMIN']],
+        ]));
+
+        $this->assertSame(1, $report->stats['shadowed']);
+        $this->assertSame(1, $report->stats['critical']);
+        $this->assertSame('shadowed', $report->conflicts[0]['type']);
+    }
+
+    /**
+     * @return iterable<string, array{earlier: string, later: string}>
+     */
+    public static function provideAlternations(): iterable
+    {
+        yield 'first branch, anchored' => ['earlier' => '^/admin|^/login', 'later' => '^/admin/users'];
+        yield 'last branch, anchored' => ['earlier' => '^/login|^/admin', 'later' => '^/admin/users'];
+        yield 'first branch, unanchored' => ['earlier' => '/admin|/api', 'later' => '^/admin/users'];
+        yield 'last branch, unanchored' => ['earlier' => '/api|/admin', 'later' => '^/admin/users'];
+        yield 'first branch, the last one fully anchored' => ['earlier' => '^/admin|^/login$', 'later' => '^/admin/users'];
     }
 
     #[Test]

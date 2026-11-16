@@ -585,6 +585,44 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * Symfony's matchers, the UrlMatcher and the compiled one, send a HEAD
+     * request to a route for GET: of a route for GET and a route for HEAD
+     * only, the earlier one takes the HEAD requests of both.
+     *
+     * @param list<string> $earlier
+     * @param list<string> $later
+     */
+    #[Test]
+    #[DataProvider('provideHeadRoutes')]
+    public function test_a_route_for_get_takes_the_head_requests(array $earlier, array $later): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route('/x'))->setMethods($earlier));
+        $collection->add('later', (new Route('/x'))->setMethods($later));
+
+        $context = new RequestContext(method: 'HEAD');
+        $this->assertSame('earlier', (new UrlMatcher($collection, $context))->match('/x')['_route']);
+        $this->assertSame('earlier', (new CompiledUrlMatcher((new CompiledUrlMatcherDumper($collection))->getCompiledRoutes(), $context))->match('/x')['_route']);
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertCount(1, $report->conflicts);
+        $this->assertSame('shadowed', $report->conflicts[0]['type']);
+        $this->assertSame(['HEAD'], $report->conflicts[0]['methods']);
+        $this->assertSame(0, $report->stats['pairs_filtered_methods']);
+    }
+
+    /**
+     * @return iterable<string, array{earlier: list<string>, later: list<string>}>
+     */
+    public static function provideHeadRoutes(): iterable
+    {
+        yield 'a route for HEAD only behind a route for GET' => ['earlier' => ['GET'], 'later' => ['HEAD']];
+        yield 'a route for GET behind a route for HEAD only' => ['earlier' => ['HEAD'], 'later' => ['GET']];
+        yield 'a route for HEAD only behind a route for GET and POST' => ['earlier' => ['post', 'get'], 'later' => ['head']];
+    }
+
+    /**
      * Two routes whose hosts share no name are compared no further than
      * their hosts; two whose hosts share one are compared on their paths.
      * A route without a host is never held apart by one.

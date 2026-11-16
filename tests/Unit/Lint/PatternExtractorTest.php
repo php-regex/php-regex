@@ -504,6 +504,96 @@ final class PatternExtractorTest extends TestCase
     }
 
     /**
+     * An exclude that names a file or a directory of the project, from the
+     * working directory, behind "./" or by its absolute path, leaves that
+     * file, or every file under that directory, out of the walk, whatever
+     * path the walk reads it by.
+     *
+     * @param list<string> $paths    the paths walked, "{root}" standing for the project
+     * @param string       $exclude  "{root}" standing for the project
+     * @param list<string> $expected the files read, from the project
+     */
+    #[Test]
+    #[DataProvider('provideExcludeSpellings')]
+    public function test_an_exclude_leaves_out_the_file_or_the_directory_it_names_however_spelled(array $paths, string $exclude, array $expected): void
+    {
+        $root = $this->enterProject([
+            'app/Keep.php' => "<?php\n",
+            'app/Bad.php' => "<?php\n",
+            'app/Legacy/Old.php' => "<?php\n",
+            'lib/Shared.php' => "<?php\n",
+        ]);
+        $this->extractor->method('extract')->willReturnCallback(self::onePerFile(...));
+
+        $occurrences = $this->patternExtractor->extract(
+            array_map(static fn (string $path): string => str_replace('{root}', $root, $path), $paths),
+            [str_replace('{root}', $root, $exclude)],
+        );
+
+        $files = array_map(static fn (PatternOccurrence $occurrence): string => str_starts_with($occurrence->file, $root.'/') ? substr($occurrence->file, \strlen($root) + 1) : ltrim($occurrence->file, './'), $occurrences);
+        sort($files);
+        $this->assertSame($expected, $files);
+    }
+
+    /**
+     * @return iterable<string, array{paths: list<string>, exclude: string, expected: list<string>}>
+     */
+    public static function provideExcludeSpellings(): iterable
+    {
+        $withoutBad = ['app/Keep.php', 'app/Legacy/Old.php'];
+        $withoutLegacy = ['app/Bad.php', 'app/Keep.php'];
+
+        yield 'a file' => ['paths' => ['app'], 'exclude' => 'app/Bad.php', 'expected' => $withoutBad];
+        yield 'a file behind ./' => ['paths' => ['app'], 'exclude' => './app/Bad.php', 'expected' => $withoutBad];
+        yield 'a file by its absolute path' => ['paths' => ['app'], 'exclude' => '{root}/app/Bad.php', 'expected' => $withoutBad];
+        yield 'a file, the walk from the working directory' => ['paths' => ['.'], 'exclude' => 'app/Bad.php', 'expected' => [...$withoutBad, 'lib/Shared.php']];
+        yield 'a file, the walk by its absolute path' => ['paths' => ['{root}/app'], 'exclude' => 'app/Bad.php', 'expected' => $withoutBad];
+        yield 'a directory behind ./' => ['paths' => ['app'], 'exclude' => './app/Legacy', 'expected' => $withoutLegacy];
+        yield 'a directory behind ./, with a trailing slash' => ['paths' => ['app'], 'exclude' => './app/Legacy/', 'expected' => $withoutLegacy];
+        yield 'a directory by its absolute path' => ['paths' => ['app'], 'exclude' => '{root}/app/Legacy', 'expected' => $withoutLegacy];
+        yield 'a directory by its absolute path, the walk from the working directory' => ['paths' => ['.'], 'exclude' => '{root}/app/Legacy', 'expected' => [...$withoutLegacy, 'lib/Shared.php']];
+        yield 'a directory behind ./, the walk by its absolute path' => ['paths' => ['{root}/app'], 'exclude' => './app/Legacy', 'expected' => $withoutLegacy];
+        yield 'a directory by a path with a dot segment' => ['paths' => ['app'], 'exclude' => 'app/./Legacy', 'expected' => $withoutLegacy];
+        yield 'a directory by its absolute path, outside the walk' => ['paths' => ['app'], 'exclude' => '{root}/lib', 'expected' => ['app/Bad.php', 'app/Keep.php', 'app/Legacy/Old.php']];
+    }
+
+    /**
+     * A file named as a path is read whatever its suffix, as PHP reads a
+     * script it is given: an executable without one, an upper-case .PHP, a
+     * template. A directory walk keeps reading the .php files only, and
+     * passes the templates over.
+     *
+     * @param list<string> $expected the files read, from the project
+     */
+    #[Test]
+    #[DataProvider('provideNamedFiles')]
+    public function test_a_file_named_as_a_path_is_read_whatever_its_suffix(string $path, array $expected): void
+    {
+        $this->enterProject([
+            'bin/console' => "#!/usr/bin/env php\n<?php\n",
+            'app/Keep.php' => "<?php\n",
+            'app/Legacy.PHP' => "<?php\n",
+            'app/view.blade.php' => "<?php\n",
+        ]);
+        $this->extractor->method('extract')->willReturnCallback(self::onePerFile(...));
+
+        $files = array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->file, $this->patternExtractor->extract([$path], []));
+
+        $this->assertSame($expected, $files);
+    }
+
+    /**
+     * @return iterable<string, array{path: string, expected: list<string>}>
+     */
+    public static function provideNamedFiles(): iterable
+    {
+        yield 'no suffix' => ['path' => 'bin/console', 'expected' => ['bin/console']];
+        yield 'an upper-case suffix' => ['path' => 'app/Legacy.PHP', 'expected' => ['app/Legacy.PHP']];
+        yield 'a template' => ['path' => 'app/view.blade.php', 'expected' => ['app/view.blade.php']];
+        yield 'a directory' => ['path' => 'app', 'expected' => ['app/Keep.php']];
+    }
+
+    /**
      * One occurrence per file, named after it.
      *
      * @param array<string> $files

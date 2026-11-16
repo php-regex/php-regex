@@ -37,6 +37,8 @@ final class ConsoleLintRequest
      * @param list<string>                        $exclude
      * @param string|null                         $excludeBase         the directory the excludes are read from; null reads
      *                                                                 them as the files are walked
+     * @param string|null                         $minSavings          --min-savings as given; null when it is not, for a
+     *                                                                 saving of 1 character
      * @param string|null                         $jobs                --jobs as given; null when it is not, for one worker per
      *                                                                 CPU the run may use
      * @param list<string>                        $disabledSources     the pattern sources the run skips
@@ -58,7 +60,7 @@ final class ConsoleLintRequest
         public readonly ?string $pathsSetting,
         public readonly array $exclude,
         public readonly ?string $excludeBase,
-        public readonly int $minSavings,
+        public readonly ?string $minSavings,
         public readonly ?string $jobs,
         public readonly array $disabledSources,
         public readonly OptimizerOptions $optimizations,

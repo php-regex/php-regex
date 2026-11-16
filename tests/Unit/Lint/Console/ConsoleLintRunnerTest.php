@@ -403,10 +403,10 @@ final class ConsoleLintRunnerTest extends TestCase
     /**
      * Each stage that stops the run: its message, on the error output on the
      * console, as the envelope naming the stage in JSON, and its exit code.
-     * --jobs is read before the paths, the paths before the target, as
-     * `regex lint` reads them.
+     * --jobs and --min-savings are read before the paths, the paths before
+     * the target, as `regex lint` reads them.
      *
-     * @param array{paths?: list<string>, pathsSetting?: string, jobs?: string, setup?: \Closure(): LintSetup, failure?: \Throwable} $request
+     * @param array{paths?: list<string>, pathsSetting?: string, jobs?: string, minSavings?: string, setup?: \Closure(): LintSetup, failure?: \Throwable} $request
      */
     #[Test]
     #[DataProvider('provideFailures')]
@@ -426,7 +426,7 @@ final class ConsoleLintRunnerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{request: array{paths?: list<string>, pathsSetting?: string, jobs?: string, setup?: \Closure(): LintSetup, failure?: \Throwable}, message: string, stage: string, exitCode: int}>
+     * @return iterable<string, array{request: array{paths?: list<string>, pathsSetting?: string, jobs?: string, minSavings?: string, setup?: \Closure(): LintSetup, failure?: \Throwable}, message: string, stage: string, exitCode: int}>
      */
     public static function provideFailures(): iterable
     {
@@ -437,6 +437,12 @@ final class ConsoleLintRunnerTest extends TestCase
         yield 'a --jobs with a space around it' => ['request' => ['jobs' => ' 5'], 'message' => 'The --jobs value must be a positive integer.', 'stage' => 'usage', 'exitCode' => 2];
         yield 'a --jobs with a leading zero' => ['request' => ['jobs' => '05'], 'message' => 'The --jobs value must be a positive integer.', 'stage' => 'usage', 'exitCode' => 2];
         yield 'a --jobs past the integer range' => ['request' => ['jobs' => '99999999999999999999'], 'message' => 'The --jobs value must be a positive integer.', 'stage' => 'usage', 'exitCode' => 2];
+        yield 'a --min-savings that is a word' => ['request' => ['minSavings' => 'abc', 'paths' => ['missing']], 'message' => 'The --min-savings value must be a non-negative integer.', 'stage' => 'usage', 'exitCode' => 2];
+        yield 'a negative --min-savings' => ['request' => ['minSavings' => '-5'], 'message' => 'The --min-savings value must be a non-negative integer.', 'stage' => 'usage', 'exitCode' => 2];
+        yield 'a --min-savings that is no whole number' => ['request' => ['minSavings' => '1.5'], 'message' => 'The --min-savings value must be a non-negative integer.', 'stage' => 'usage', 'exitCode' => 2];
+        yield 'a --min-savings with no value' => ['request' => ['minSavings' => ''], 'message' => 'The --min-savings value must be a non-negative integer.', 'stage' => 'usage', 'exitCode' => 2];
+        yield 'a --min-savings with a sign' => ['request' => ['minSavings' => '+5'], 'message' => 'The --min-savings value must be a non-negative integer.', 'stage' => 'usage', 'exitCode' => 2];
+        yield 'a --min-savings past the integer range' => ['request' => ['minSavings' => '99999999999999999999'], 'message' => 'The --min-savings value must be a non-negative integer.', 'stage' => 'usage', 'exitCode' => 2];
         yield 'a path given that does not exist' => ['request' => ['paths' => ['missing'], 'setup' => self::failingSetup(new UnsupportedTargetException('No target.'))], 'message' => 'Path not found: missing', 'stage' => 'usage', 'exitCode' => 2];
         yield 'a configured path that does not exist' => ['request' => ['paths' => ['missing'], 'pathsSetting' => 'php_regex.paths'], 'message' => 'Path not found: missing (from php_regex.paths)', 'stage' => 'config', 'exitCode' => 2];
         yield 'a target the run cannot judge for' => ['request' => ['setup' => self::failingSetup(new UnsupportedTargetException('No target.'))], 'message' => 'No target.', 'stage' => 'target', 'exitCode' => 2];
@@ -549,6 +555,7 @@ final class ConsoleLintRunnerTest extends TestCase
         ?array $paths = null,
         ?string $pathsSetting = null,
         ?string $jobs = '1',
+        ?string $minSavings = null,
         array $exclude = ['vendor'],
         ?string $excludeBase = null,
         ?string $projectDir = null,
@@ -558,7 +565,7 @@ final class ConsoleLintRunnerTest extends TestCase
         ?\Throwable $failure = null,
         array $arguments = [],
     ): \Closure {
-        return static function (self $test) use ($patterns, $format, $paths, $pathsSetting, $jobs, $exclude, $excludeBase, $projectDir, $warnings, $unread, $setup, $failure, $arguments): ConsoleLintRequest {
+        return static function (self $test) use ($patterns, $format, $paths, $pathsSetting, $jobs, $minSavings, $exclude, $excludeBase, $projectDir, $warnings, $unread, $setup, $failure, $arguments): ConsoleLintRequest {
             $occurrences = [
                 ...array_map(static fn (string $pattern): PatternOccurrence => new PatternOccurrence($pattern, 'test.php', 3, 'php'), $patterns),
                 ...ArgumentCarriers::of($arguments, 'other.php'),
@@ -600,7 +607,7 @@ final class ConsoleLintRunnerTest extends TestCase
                 pathsSetting: $pathsSetting,
                 exclude: $exclude,
                 excludeBase: $excludeBase,
-                minSavings: 1,
+                minSavings: $minSavings,
                 jobs: $jobs,
                 disabledSources: ['routes'],
                 optimizations: new OptimizerOptions(verifyWithAutomata: true),
