@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
-use Mcp\Server;
+use Mcp\Server\Builder;
 use PHPRegex\Cli\ApplicationFactory;
 use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\Command\McpCommand;
@@ -47,10 +47,10 @@ final class McpCommandTest extends TestCase
             file_put_contents($directory.'/stdin', $initialize."\n".$initialized."\n".$list."\n");
             // The SDK is installed for the tests only, beside PHPUnit: the
             // server process reads that autoloader first.
-            $sdk = (new \ReflectionClass(Server::class))->getFileName();
+            $sdk = (new \ReflectionClass(Builder::class))->getFileName();
             $this->assertIsString($sdk);
             $process = proc_open(
-                [\PHP_BINARY, '-d', 'auto_prepend_file='.\dirname($sdk, 4).'/autoload.php', \dirname(__DIR__, 3).'/bin/regex', 'mcp'],
+                [\PHP_BINARY, '-d', 'auto_prepend_file='.\dirname($sdk, 5).'/autoload.php', \dirname(__DIR__, 3).'/bin/regex', 'mcp'],
                 [0 => ['file', $directory.'/stdin', 'r'], 1 => ['file', $directory.'/stdout', 'w'], 2 => ['file', $directory.'/stderr', 'w']],
                 $pipes,
                 $directory,

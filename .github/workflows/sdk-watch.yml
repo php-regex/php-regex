@@ -1,9 +1,10 @@
 name: SDK watch
 
-# The MCP server speaks through mcp/sdk, pinned to one minor in
-# src/Mcp/composer.json while the SDK is experimental. Once a week, the
-# newest release on Packagist is compared with the pin; one issue is opened,
-# or kept up to date, when a newer minor exists. Nothing is bumped here.
+# The MCP server speaks through mcp/sdk, pinned in src/Mcp/composer.json
+# to the minors it is tested with, oldest first, while the SDK is
+# experimental. Once a week, the newest release on Packagist is compared with
+# the newest minor of the pin; one issue is opened, or kept up to date, when
+# a newer minor exists. Nothing is bumped here.
 
 on:
   schedule:
@@ -34,10 +35,12 @@ jobs:
         shell: bash
         run: |
           pin=$(jq -r '.require["mcp/sdk"]' src/Mcp/composer.json)
-          case "$pin" in
-            ^*) pinned=${pin#^} ;;
-            *) echo "src/Mcp/composer.json pins mcp/sdk as \"$pin\", not as a caret minor." >&2; exit 1 ;;
-          esac
+          if ! printf '%s' "$pin" | grep -Eq '^\^[0-9]+\.[0-9]+([|]\^[0-9]+\.[0-9]+)*$'; then
+            echo "src/Mcp/composer.json pins mcp/sdk as \"$pin\", not as caret minors." >&2
+            exit 1
+          fi
+          # The newest minor of the pin, the last one written.
+          pinned=${pin##*^}
           newest=$(curl -sSf https://repo.packagist.org/p2/mcp/sdk.json | jq -r '.packages["mcp/sdk"] | map(.version | ltrimstr("v")) | map(select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))) | sort_by(split(".") | map(tonumber)) | last')
           if ! printf '%s' "$newest" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "Packagist gave no release for mcp/sdk (read \"$newest\")." >&2
@@ -63,7 +66,7 @@ jobs:
           PINNED: ${{ steps.compare.outputs.pinned }}
         run: |
           title="mcp/sdk $NEWEST is out: the MCP server pins ^$PINNED"
-          body="A new minor of mcp/sdk, $NEWEST, is on Packagist; src/Mcp/composer.json pins ^$PINNED and phar/composer.lock carries the release of that minor.<br><br>To move: read the changelog at https://github.com/modelcontextprotocol/php-sdk/blob/main/CHANGELOG.md, adjust src/Mcp/Sdk/SdkServer.php (the one file that speaks to the SDK), bump the pin and the conflict in src/Mcp/composer.json, bump phar/composer.json and run phar/lock, then run the suite."
+          body="A new minor of mcp/sdk, $NEWEST, is on Packagist; src/Mcp/composer.json pins minors up to ^$PINNED.<br><br>To move: read the changelog at https://github.com/modelcontextprotocol/php-sdk/blob/main/CHANGELOG.md, adjust src/Mcp/Sdk/SdkServer.php (the one file that speaks to the SDK) so that it speaks to every minor of the pin, add the new minor to the pin in src/Mcp/composer.json, tools/phpunit/composer.json and tools/paratest/composer.json, then run the suite with each minor. phar/composer.lock keeps a release of the oldest minor of the pin, the one the phar's PHP installs."
           existing=$(gh issue list --state open --search "\"mcp/sdk\" in:title" --json number,title --jq '.[] | select(.title | startswith("mcp/sdk ")) | .number' | head -n1)
           if [ -n "$existing" ]; then
             gh issue edit "$existing" --title "$title" --body "$body"

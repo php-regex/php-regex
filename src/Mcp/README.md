@@ -43,7 +43,7 @@ Installation
 composer require --dev php-regex/regex-mcp
 ```
 
-Requires PHP 8.1 or newer with the `fileinfo` extension (and `mbstring`, which the parser needs). The binary is installed as `vendor/bin/regex-mcp`; `--help` prints its options, `--version` the release it was built from. The [regex.phar](https://php-regex.com/guides/cli/) carries the server too: `php regex.phar mcp` starts it with nothing else installed.
+Requires PHP 8.1 or newer with `mbstring`, which the parser needs; the SDK installed on PHP 8.1 and carried by the phar, `mcp/sdk` 0.9, also needs the `fileinfo` extension. The binary is installed as `vendor/bin/regex-mcp`; `--help` prints its options, `--version` the release it was built from. The [regex.phar](https://php-regex.com/guides/cli/) carries the server too: `php regex.phar mcp` starts it with nothing else installed.
 
 Usage
 -----
@@ -108,7 +108,7 @@ $result->structured; // ['pattern' => '/a+/', 'validation' => [...], 'target' =>
 $result->isError;    // false
 ```
 
-The protocol is spoken by the official PHP SDK, [mcp/sdk](https://github.com/modelcontextprotocol/php-sdk), through one class of this package; the SDK is experimental, pinned to one minor, and a change of SDK is a change of that class alone.
+The protocol is spoken by the official PHP SDK, [mcp/sdk](https://github.com/modelcontextprotocol/php-sdk), through one class of this package; the SDK is experimental, pinned to the minors that class is tested with, 0.9 on PHP 8.1 and 0.10 from PHP 8.2 (the phar carries 0.9), and a change of SDK is a change of that class alone.
 
 Documentation
 -------------

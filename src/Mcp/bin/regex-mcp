@@ -82,7 +82,8 @@ foreach (array_slice($argv, 1) as $argument) {
     exit(2);
 }
 
-if (!class_exists('Mcp\Server')) {
+// The builder the server starts from, where mcp/sdk 0.9 and 0.10 keep it.
+if (!class_exists('Mcp\Server\Builder')) {
     fwrite(STDERR, "The MCP server needs the mcp/sdk library: run composer require mcp/sdk.\n");
     exit(2);
 }

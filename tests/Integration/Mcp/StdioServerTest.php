@@ -134,7 +134,7 @@ final class StdioServerTest extends TestCase
         $answers = $this->serve([
             self::request(1, 'initialize', self::INITIALIZE),
             self::notification('notifications/initialized'),
-            self::request(2, 'tools/call', ['name' => 'regex_boom', 'arguments' => []]),
+            self::request(2, 'tools/call', ['name' => 'regex_boom', 'arguments' => (object) []]),
             self::request(3, 'tools/call', ['name' => 'regex_validate', 'arguments' => ['pattern' => '/a/']]),
         ], [], $catalog);
 
@@ -142,24 +142,41 @@ final class StdioServerTest extends TestCase
         $this->assertSame('Valid.', self::at($answers, 3, 'result', 'content', '0', 'text'));
     }
 
+    /**
+     * A memory stream cannot be selected on. mcp/sdk 0.9, which PHP 8.1
+     * installs, stops on it: the failure is logged and the process gets 1,
+     * never a stack trace on the channel. 0.10, from PHP 8.2, reads such a
+     * stream as any other and answers.
+     */
     #[Test]
-    public function test_an_input_the_transport_cannot_select_on_exits_with_one_and_logs_why(): void
+    public function test_an_input_the_transport_cannot_select_on_is_read_or_refused_with_one(): void
     {
-        // A memory stream cannot be selected on: the transport's loop fails,
-        // the failure is logged, and the process gets an exit code, never a
-        // stack trace on the channel.
         $input = fopen('php://memory', 'r+');
-        $output = fopen('php://memory', 'w+');
+        $path = (string) tempnam(sys_get_temp_dir(), 'regex-mcp-out-');
+        $output = fopen($path, 'w');
         $errors = fopen('php://memory', 'w+');
         $this->assertIsResource($input);
         $this->assertIsResource($output);
         $this->assertIsResource($errors);
+        fwrite($input, self::request(1, 'initialize', self::INITIALIZE)."\n");
+        rewind($input);
 
-        $exitCode = (new Application(null, new StderrLogger($errors)))->run([], $input, $output);
-
+        try {
+            $exitCode = (new Application(null, new StderrLogger($errors)))->run([], $input, $output);
+            $answer = (string) file_get_contents($path);
+        } finally {
+            @unlink($path);
+        }
         rewind($errors);
-        $this->assertSame(1, $exitCode);
-        $this->assertStringContainsString('[error] The MCP server stopped on a transport failure: ', (string) stream_get_contents($errors));
+        $log = (string) stream_get_contents($errors);
+
+        if (class_exists('Mcp\Server\Server')) {
+            $this->assertSame(0, $exitCode, $log);
+            $this->assertStringContainsString('"serverInfo":{"name":"php-regex"', $answer);
+        } else {
+            $this->assertSame(1, $exitCode);
+            $this->assertStringContainsString('[error] The MCP server stopped on a transport failure: ', $log);
+        }
     }
 
     #[Test]
@@ -203,21 +220,53 @@ final class StdioServerTest extends TestCase
     #[Test]
     public function test_a_transport_failure_is_logged_with_its_cause(): void
     {
-        $input = fopen('php://memory', 'w+');
-        $readOnly = fopen('php://memory', 'r');
-        $errors = fopen('php://memory', 'w+');
-        $this->assertIsResource($input);
-        $this->assertIsResource($readOnly);
-        $this->assertIsResource($errors);
-        fwrite($input, self::request(1, 'initialize', self::INITIALIZE)."\n");
-        rewind($input);
+        // An input whose reading fails, as on a device error: the SDK, 0.9 or
+        // 0.10, stops listening on it. A failed write it logs and goes past.
+        $broken = new class {
+            /**
+             * @var resource|null
+             */
+            public $context;
 
-        $exitCode = (new Application(null, new StderrLogger($errors)))->run([], $input, $readOnly);
+            public function stream_open(string $path, string $mode, int $options, ?string &$openedPath): bool
+            {
+                return true;
+            }
+
+            public function stream_read(int $count): string
+            {
+                throw new \RuntimeException('Input/output error.');
+            }
+
+            public function stream_eof(): bool
+            {
+                return false;
+            }
+
+            public function stream_set_option(int $option, int $first, ?int $second): bool
+            {
+                return false;
+            }
+        };
+        $this->assertTrue(stream_wrapper_register('regex-mcp-broken', $broken::class));
+
+        try {
+            $input = fopen('regex-mcp-broken://in', 'r');
+            $output = fopen('php://memory', 'w+');
+            $errors = fopen('php://memory', 'w+');
+            $this->assertIsResource($input);
+            $this->assertIsResource($output);
+            $this->assertIsResource($errors);
+
+            $exitCode = (new Application(null, new StderrLogger($errors)))->run([], $input, $output);
+        } finally {
+            stream_wrapper_unregister('regex-mcp-broken');
+        }
         rewind($errors);
         $log = (string) stream_get_contents($errors);
 
         $this->assertSame(1, $exitCode);
-        $this->assertStringStartsWith('[error] The MCP server stopped on a transport failure: ', $log);
+        $this->assertSame("[error] The MCP server stopped on a transport failure: Input/output error.\n", $log);
     }
 
     /**

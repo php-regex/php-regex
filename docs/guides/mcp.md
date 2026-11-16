@@ -33,7 +33,7 @@ Every tool is read-only and idempotent, and tells the client so. Every tool take
 
 ## Quick Start
 
-The server requires PHP 8.1 or later with the `fileinfo` extension, and `mbstring`, which the parser needs.
+The server requires PHP 8.1 or later with `mbstring`, which the parser needs. It speaks through `mcp/sdk`: Composer installs 0.10 from PHP 8.2 and 0.9 on PHP 8.1, and the phar carries 0.9, which also needs the `fileinfo` extension.
 
 {% include install.html package="php-regex/regex-mcp" dev=true %}
 

@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package; see the
    [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The server speaks to `mcp/sdk` 0.9 and 0.10: Composer installs 0.9 on
+   PHP 8.1 and 0.10, which requires PHP 8.2, from PHP 8.2. The phar carries
+   0.9.
  * An MCP server over stdio, `regex mcp` or `vendor/bin/regex-mcp`, serving
    five read-only tools: `regex_validate`, `regex_explain`, `regex_format`,
    `regex_transpile` and `regex_redos`. Each tool answers a text and the

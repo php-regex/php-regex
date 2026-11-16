@@ -161,8 +161,9 @@ The bridges and tools carry more than their classes:
 - `regex-language-server`: the protocol it speaks.
 - `regex-mcp`: the tools' names, arguments and the documents they answer
   ([every key](json-output.md)), and the classes above. The `mcp/sdk`
-  constraint is not covered: the SDK is experimental, pinned to one minor,
-  and a minor release of PHPRegex may move the pin to the SDK's next minor.
+  constraint is not covered: the SDK is experimental, pinned to the minors
+  the server is tested with, and a minor release of PHPRegex may add the
+  SDK's next minor to the pin or drop the oldest.
 
 ## Using the API: call, extend, implement
 

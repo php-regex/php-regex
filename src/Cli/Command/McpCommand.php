@@ -31,9 +31,10 @@ final class McpCommand extends AbstractCommand
 {
     /**
      * @param string $applicationClass the server's entry class, named rather than imported: the CLI package runs without it
-     * @param string $sdkClass         a class of the SDK the server speaks through, which the package requires and the monorepo does not
+     * @param string $sdkClass         a class of the SDK the server speaks through, which the package requires and the monorepo does not:
+     *                                 the builder the server starts from, where mcp/sdk 0.9 and 0.10 keep it
      */
-    public function __construct(private readonly string $applicationClass = 'PHPRegex\Mcp\Application', private readonly string $sdkClass = 'Mcp\Server') {}
+    public function __construct(private readonly string $applicationClass = 'PHPRegex\Mcp\Application', private readonly string $sdkClass = 'Mcp\Server\Builder') {}
 
     public function getName(): string
     {
