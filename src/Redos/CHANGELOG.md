@@ -13,6 +13,13 @@ CHANGELOG
    outer loop, `/^(?:a+)++$/` for `/^(?:a+)+$/`. A body that splits a run
    into many copies, `(?:a+){30,}+`, is kept as written: PCRE tries every
    way to split it before it fails.
+ * A pump that goes round bounded repeats analysed as unbounded alone is
+   proven once PHP's PCRE2, under its default limits, gives up at the
+   backtrack limit on the witness, its attempt pinned to the start:
+   `/^(?:a|a){1,40}$/` and `/^(?:\d{1,3}\.?){1,30}$/`, safe and low by the
+   heuristics, are exponential (proven), critical. A bound the engine never
+   reaches the limit within, `/^(?:a|a){1,16}$/`, keeps the heuristics'
+   verdict.
  * The heuristics read the body of an atomic group, of a possessive repeat
    and of a repeat ending with `(*COMMIT)`, `(*PRUNE)` or `(*SKIP)` as PCRE
    runs it: the engine backtracks inside it until it has matched, so only
