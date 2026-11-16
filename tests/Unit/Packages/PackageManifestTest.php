@@ -131,6 +131,8 @@ final class PackageManifestTest extends TestCase
             'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId',
             'Linter\Exception\LintRunFailureException', 'Linter\LintRunner',
             'Linter\LintService', 'Linter\Source\PatternSourceCollection',
+            // The baseline reads its excludes as lint reads them.
+            'Linter\Source\PatternSourceContext',
             'Linter\Source\PhpFilePatternSource', 'Linter\Source\TwigTemplatePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
             'Parser\Hir\HirTranslator', 'Parser\Text\Ascii', 'Parser\Printer\DisplayEscaper', 'Parser\Engine\IniFlag',
             'Parser\Exception\Snippet',
@@ -262,6 +264,9 @@ final class PackageManifestTest extends TestCase
             // php_version takes a Composer constraint: the bundle reads it
             // as regex.json's phpVersion is read, refused in lint's words.
             'Linter\Config\TargetSpec',
+            // An access_control path keeps the start options PCRE reads at
+            // the very start ahead of what the search adds around it.
+            'Parser\Syntax\StartOptions',
         ],
         // The HTML pattern attribute takes no flag: /i is spelled out
         // with the characters the running PCRE takes for each atom.
