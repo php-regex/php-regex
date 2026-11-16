@@ -1,11 +1,8 @@
 # TODO
 
-## Bugs found before 2.0.0
+## Engine reports
 
-Fixed together in one pull request before the final bump; each line
-leaves this list once its fix is in.
-
-Upstream
+Found while fixing the bugs of #400; each is PCRE2's, not the library's.
 
 - PCRE2 10.49's JIT returns 0 for `/é.{2,}é|(?<=x)A/u` on `xA`, and 1
   without the JIT: report it to PCRE2.
