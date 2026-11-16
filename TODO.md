@@ -12,11 +12,6 @@ Decided
   older (`1.3.0`), and says it updated. Compare the versions: install a
   newer one, say a same one is up to date, refuse an older one without
   `--force`.
-- "More than two branches" of a named, `R`, assertion or `VERSION`
-  condition: PCRE2 10.49 reports a leftover offset, the one recorded by
-  the last item carrying an offset before the conditional in its branch
-  (`/(a)xx(?1)xx(?(R)a|b|c)/` gives 8). Keep the offset of the name, as
-  10.40 and 10.44 report it, and pin the divergence.
 - The `access_control` and route analyses compare a path under `(*UTF)`
   with one that is not as if both were read in one mode:
   `(*UTF)(*NO_JIT)^/admin/users` before `^/admin` comes out as an overlap,
