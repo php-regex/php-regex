@@ -74,6 +74,12 @@ final class MatchSettings
          * builds PCRE2 with, when none does.
          */
         public readonly BsrConvention $bsr = BsrConvention::Unicode,
+        /**
+         * Whether quantifiers swap greed, "a+" taking as few as it may and
+         * "a+?" as many: the U flag, from the pattern or an inline setting,
+         * which "(?^)" leaves as it was.
+         */
+        public readonly bool $ungreedy = false,
     ) {}
 
     /**
@@ -88,6 +94,7 @@ final class MatchSettings
             dollarEndOnly: str_contains($regex->flags, 'D'),
             ucp: str_contains($regex->flags, 'u'),
             dotAll: str_contains($regex->flags, 's'),
+            ungreedy: str_contains($regex->flags, 'U'),
         );
     }
 
@@ -111,6 +118,7 @@ final class MatchSettings
             $asciiTypes,
             self::turns('s', $on, $off, $this->dotAll),
             $this->bsr,
+            str_contains($off, 'U') ? false : (str_contains($on, 'U') || $this->ungreedy),
         );
     }
 
@@ -130,13 +138,13 @@ final class MatchSettings
     public function withOption(string $option): self
     {
         if ('UCP' === $option) {
-            return new self($this->utf, $this->multiline, $this->dollarEndOnly, $this->newline, true, $this->asciiTypes, $this->dotAll, $this->bsr);
+            return new self($this->utf, $this->multiline, $this->dollarEndOnly, $this->newline, true, $this->asciiTypes, $this->dotAll, $this->bsr, $this->ungreedy);
         }
 
         if (str_starts_with($option, 'BSR_')) {
             $bsr = BsrConvention::tryFrom(substr($option, 4));
 
-            return null === $bsr ? $this : new self($this->utf, $this->multiline, $this->dollarEndOnly, $this->newline, $this->ucp, $this->asciiTypes, $this->dotAll, $bsr);
+            return null === $bsr ? $this : new self($this->utf, $this->multiline, $this->dollarEndOnly, $this->newline, $this->ucp, $this->asciiTypes, $this->dotAll, $bsr, $this->ungreedy);
         }
 
         $newline = NewlineConvention::tryFrom($option);
@@ -144,7 +152,7 @@ final class MatchSettings
             return $this;
         }
 
-        return new self($this->utf, $this->multiline, $this->dollarEndOnly, $newline, $this->ucp, $this->asciiTypes, $this->dotAll, $this->bsr);
+        return new self($this->utf, $this->multiline, $this->dollarEndOnly, $newline, $this->ucp, $this->asciiTypes, $this->dotAll, $this->bsr, $this->ungreedy);
     }
 
     /**

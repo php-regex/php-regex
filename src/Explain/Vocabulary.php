@@ -268,9 +268,10 @@ final class Vocabulary
     }
 
     /**
-     * How many times a quantifier repeats, and how greedily.
+     * How many times a quantifier repeats, and how greedily where the
+     * settings hold.
      */
-    public static function quantifier(QuantifierNode $node): string
+    public static function quantifier(QuantifierNode $node, MatchSettings $settings = new MatchSettings()): string
     {
         $q = $node->quantifier;
         $bounds = $node->bounds;
@@ -285,9 +286,9 @@ final class Vocabulary
         };
 
         $desc .= match ($node->type) {
-            QuantifierType::Lazy => ' (as few as possible)',
             QuantifierType::Possessive => ' (and do not backtrack)',
-            default => '',
+            // "U" swaps greed: "a+" takes as few as possible, "a+?" as many.
+            default => (QuantifierType::Lazy === $node->type) !== $settings->ungreedy ? ' (as few as possible)' : '',
         };
 
         return $desc;
