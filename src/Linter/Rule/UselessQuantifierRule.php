@@ -13,13 +13,16 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Linter\Rule\Support\EscapeJoin;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 
 /**
- * Detects {1} quantifiers, which match exactly once and can be removed.
+ * Detects {1} quantifiers, which match exactly once and can be removed. A
+ * count that keeps an escape apart from the digit after it stays, as in
+ * "(a)\1{1}0", which is not "(a)\10".
  *
  * @internal
  */
@@ -53,11 +56,19 @@ final class UselessQuantifierRule extends AbstractLintRule
             return [];
         }
 
+        $source = $context->pattern->source;
+        if (EscapeJoin::extends(substr($source, 0, max(0, $node->node->getEndPosition())), substr($source, max(0, $node->getEndPosition())))) {
+            return [];
+        }
+
+        // The lazy marker goes with the count: "a{1}?b" without "{1}" is "a?b".
+        $written = $node->quantifier.(QuantifierType::Lazy === $node->type ? '?' : '');
+
         return [new RuleViolation(
             self::ID,
             'Quantifier is redundant; it matches exactly once.',
             $node->startPosition,
-            'Remove the {1} quantifier; it does not change the match.',
+            \sprintf('Remove the %s quantifier; it does not change the match.', $written),
             end: $node->getEndPosition(),
         )];
     }

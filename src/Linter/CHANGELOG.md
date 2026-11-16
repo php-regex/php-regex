@@ -37,6 +37,10 @@ CHANGELOG
    runs after an earlier iteration has set its group, where an iteration may
    skip the reference: `/^(a|b\1)+$/`, which matches `aba`, and
    `/^(?:x(a)|\1)+$/`, which matches `xaa`.
+ * `regex.lint.quantifier.useless` no longer reports a `{1}` that keeps an
+   escape apart from the digit after it, `/(a)\1{1}0/` or `/\x4{1}1/`, whose
+   removal would read `\10` or `\x41`; its tip names the count as written,
+   `{1}?` in `/a{1}?b/`, which without the `?` would read `/a?b/`.
  * The lint reads pattern arguments it left out: a pattern built at the call
    from a local variable, an interpolated string or a heredoc
    (`"/^{$part}$/"`), an integer, a `sprintf()` whose format holds only
