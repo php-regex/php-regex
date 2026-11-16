@@ -674,7 +674,7 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
-    public function test_get_command_data_returns_empty_options_for_self_update(): void
+    public function test_get_command_data_lists_the_force_option_of_self_update(): void
     {
         $command = new HelpCommand();
 
@@ -685,7 +685,7 @@ final class HelpCommandTest extends TestCase
 
         $this->assertIsArray($data);
         $this->assertArrayHasKey('options', $data);
-        $this->assertEmpty($data['options']);
+        $this->assertSame([['--force', 'Install the latest release even when it is older than this one, or its version cannot be read']], $data['options']);
     }
 
     #[Test]

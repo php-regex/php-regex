@@ -21,6 +21,8 @@ use PHPRegex\Cli\SelfUpdate\SelfUpdater;
 use PHPRegex\Tests\Support\LocalReleaseDownloader;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\SelfUpdateFunctionOverrides;
+use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -848,6 +850,101 @@ final class SelfUpdaterTest extends TestCase
     }
 
     /**
+     * The version of the release, read from the phar downloaded, is
+     * compared with the one installed, as version_compare() orders them, a
+     * pre-release before its release: a newer release is installed, the
+     * same one leaves the install as it is and says so, an older one is
+     * refused, naming both versions, unless forced.
+     */
+    #[Test]
+    #[DataProvider('provideInstalledVersions')]
+    public function test_the_release_is_installed_only_when_it_is_newer_or_forced(string $installed, bool $force, ?string $refusal, bool $replaced, string $said): void
+    {
+        // The install is another phar than the release, 99.0.0, so that
+        // replacing it shows.
+        $pharPath = $this->copyFixturePhar('original.phar');
+        $release = $this->copyTemplatePhar();
+        $checksumFile = $this->writeChecksumFile($release);
+        $installedHash = hash_file('sha256', $pharPath);
+        $updater = new SelfUpdater(new LocalReleaseDownloader([SelfUpdater::UPDATE_URL => $release, SelfUpdater::CHECKSUM_URL => $checksumFile]), $pharPath, $installed);
+
+        ob_start();
+
+        try {
+            $updater->run(new Output(false, false), $force);
+            $this->assertNull($refusal, 'The release was installed.');
+        } catch (CliException $e) {
+            $this->assertSame($refusal, $e->getMessage());
+        } finally {
+            $written = (string) ob_get_clean();
+            $hash = hash_file('sha256', $pharPath);
+            @unlink($pharPath);
+            @unlink($release);
+            @unlink($checksumFile);
+        }
+
+        $this->assertSame($replaced ? hash_file('sha256', __DIR__.'/../../Fixtures/Cli/template.phar') : $installedHash, $hash);
+        $this->assertStringContainsString($said, $written);
+    }
+
+    /**
+     * @return iterable<string, array{installed: string, force: bool, refusal: string|null, replaced: bool, said: string}>
+     */
+    public static function provideInstalledVersions(): iterable
+    {
+        yield 'an older version installed' => ['installed' => '98.1.0', 'force' => false, 'refusal' => null, 'replaced' => true, 'said' => 'PHPRegex updated successfully.'];
+        yield 'a pre-release of the release installed' => ['installed' => '99.0.0-RC1', 'force' => false, 'refusal' => null, 'replaced' => true, 'said' => 'PHPRegex updated successfully.'];
+        yield 'the release installed' => ['installed' => '99.0.0', 'force' => false, 'refusal' => null, 'replaced' => false, 'said' => 'PHPRegex is already up to date (99.0.0).'];
+        yield 'the release installed, forced' => ['installed' => '99.0.0', 'force' => true, 'refusal' => null, 'replaced' => false, 'said' => 'PHPRegex is already up to date (99.0.0).'];
+        yield 'a newer patch installed' => ['installed' => '99.0.1', 'force' => false, 'refusal' => 'The latest release, 99.0.0, is older than the installed 99.0.1: run self-update --force to install it.', 'replaced' => false, 'said' => 'Downloading latest release'];
+        yield 'a pre-release of a newer major installed' => ['installed' => '100.0.0-RC1', 'force' => false, 'refusal' => 'The latest release, 99.0.0, is older than the installed 100.0.0-RC1: run self-update --force to install it.', 'replaced' => false, 'said' => 'Downloading latest release'];
+        yield 'a newer version installed, forced' => ['installed' => '100.0.0', 'force' => true, 'refusal' => null, 'replaced' => true, 'said' => 'PHPRegex updated successfully.'];
+    }
+
+    /**
+     * A release whose version cannot be read, from a phar that does not
+     * carry it, is refused, unless forced.
+     */
+    #[Test]
+    public function test_a_release_whose_version_cannot_be_read_is_installed_only_when_forced(): void
+    {
+        $release = $this->copyFixturePhar('original.phar');
+        $checksumFile = $this->writeChecksumFile($release);
+
+        foreach ([false, true] as $force) {
+            $pharPath = $this->copyTemplatePhar();
+            $updater = new SelfUpdater(new LocalReleaseDownloader([SelfUpdater::UPDATE_URL => $release, SelfUpdater::CHECKSUM_URL => $checksumFile]), $pharPath, '2.0.0');
+
+            try {
+                $updater->run(new Output(false, true), $force);
+                $this->assertTrue($force);
+                $this->assertSame(hash_file('sha256', $release), hash_file('sha256', $pharPath));
+            } catch (CliException $e) {
+                $this->assertFalse($force);
+                $this->assertSame('The version of the latest release cannot be read: run self-update --force to install it anyway.', $e->getMessage());
+                $this->assertSame(hash_file('sha256', __DIR__.'/../../Fixtures/Cli/template.phar'), hash_file('sha256', $pharPath));
+            } finally {
+                @unlink($pharPath);
+            }
+        }
+
+        @unlink($release);
+        @unlink($checksumFile);
+    }
+
+    /**
+     * The version is read where a release phar holds it: Regex::VERSION, in
+     * src/Toolkit/Regex.php, as the sources declare it.
+     */
+    #[Test]
+    public function test_the_version_is_read_where_the_sources_declare_it(): void
+    {
+        $method = new \ReflectionMethod(SelfUpdater::class, 'releaseVersion');
+
+        $this->assertSame(Regex::VERSION, $method->invoke(new SelfUpdater(), \dirname(__DIR__, 3)));
+    }
+
+    /**
      * An updater replacing $pharPath with the phar at $update, checked
      * against the checksum at $checksum.
      */
@@ -856,12 +953,19 @@ final class SelfUpdaterTest extends TestCase
         return new SelfUpdater(new LocalReleaseDownloader([SelfUpdater::UPDATE_URL => $update, SelfUpdater::CHECKSUM_URL => $checksum]), $pharPath);
     }
 
+    /**
+     * A copy of the template phar, a release of version 99.0.0.
+     */
     private function copyTemplatePhar(): string
     {
-        $source = __DIR__.'/../../Fixtures/Cli/template.phar';
+        return $this->copyFixturePhar('template.phar');
+    }
+
+    private function copyFixturePhar(string $name): string
+    {
         $target = sys_get_temp_dir().'/regex-parser-phar-'.bin2hex(random_bytes(4)).'.phar';
 
-        copy($source, $target);
+        copy(__DIR__.'/../../Fixtures/Cli/'.$name, $target);
 
         return $target;
     }

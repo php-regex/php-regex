@@ -2116,7 +2116,7 @@ pattern.
 | `analyze`, `debug`                           | `--redos-mode=confirmed` reproduces a ReDoS verdict of high severity or more, at or above `--redos-threshold`, on the running PCRE, or proves one it cannot replay because `ini_set()` is disabled |
 | `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared; or a later version of a range named with `--php-version` refuses either pattern |
 | `redos`                                      | PHP refuses to compile the pattern or the `--safe` one, or a later version of a range named with `--php-version` refuses either; a slow run alone leaves 0 |
-| `self-update`                                | The update fails                                                                   |
+| `self-update`                                | The update fails, or the latest release is older than the one installed, or its version cannot be read, without `--force` |
 
 Every command also exits with 1, `Error: A regex of the library gave up: …` on
 stderr, when one of the library's own regexes gives up: `pcre.backtrack_limit`
@@ -2913,6 +2913,21 @@ If using the PHAR, update to the latest version:
 
 ```bash
 regex self-update
+```
+
+The version of the latest release is read from the PHAR downloaded, once its
+checksum is verified, and compared with the version installed as
+`version_compare()` orders them, a pre-release before its release
+(`2.1.0-RC1` before `2.1.0`). A newer release replaces the PHAR. The same
+one changes nothing: `PHPRegex is already up to date (2.1.0).`, exit 0. An
+older one, as the latest stable release is when a newer pre-release is
+installed, is refused with exit 1, naming both versions: `The latest
+release, 2.1.0, is older than the installed 2.2.0-RC1: run self-update
+--force to install it.` So is a release whose version cannot be read.
+`--force` installs either.
+
+```bash
+regex self-update --force
 ```
 
 The new PHAR is downloaded into a directory of its own, created with a
