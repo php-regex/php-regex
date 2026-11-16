@@ -26,6 +26,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Syntax\TokenParser;
@@ -43,6 +44,12 @@ use PHPRegex\Parser\Token\TokenType;
  */
 final class FirstErrorLocator
 {
+    /**
+     * The most tokens an opener reads past its "(" before its body: "(?P<"
+     * and a name of 128 code units, or a condition on one, with room.
+     */
+    private const HEADER_TOKENS = 160;
+
     public function __construct(
         private readonly int $maxRecursionDepth,
         private readonly int $maxLookbehindLength,
@@ -324,15 +331,24 @@ final class FirstErrorLocator
 
         $error = null === $ast ? null : (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($ast, $position);
 
-        // A parse that failed deeper than the level of parentheses PCRE
-        // refuses read no item inside it, nor the opener of that level:
-        // the tokens up to the next level, their groups closed, are read
-        // for it. PCRE refuses it once it has read its opener whole, at the
-        // start of its body, and an opener it refuses comes first.
-        $deep = null === $error ? self::upToTheLevelPastTheNestingLimit($tokens) : null;
-        $deepAst = null === $deep ? null : $this->parseClosed($deep, $pattern, $flags, $delimiter);
+        if (null !== $error) {
+            return $error;
+        }
 
-        return null === $deepAst ? $error : (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($deepAst, $position);
+        // A parse that failed inside the level of parentheses PCRE refuses,
+        // or deeper, read no item of it, nor its opener: the longest run of
+        // tokens from there that parses, its groups closed, is read for it.
+        // PCRE refuses that level once it has read its opener whole, at the
+        // start of its body, before anything in it; an opener it refuses for
+        // itself parses in no run, and comes first.
+        foreach (self::cutsAtTheLevelPastTheNestingLimit($tokens) as $cut) {
+            $deep = $this->parseClosed($cut, $pattern, $flags, $delimiter);
+            if (null !== $deep) {
+                return (new Validator($this->maxLookbehindLength, $pattern, $this->target))->firstErrorReadBefore($deep, $position);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -364,28 +380,66 @@ final class FirstErrorLocator
     }
 
     /**
-     * The tokens up to the opener of the level after the one PCRE refuses,
-     * past its limit, or all of them where none opens; null where no level
-     * passes the limit.
+     * The tokens up to the end of each run that follows the first opener of
+     * the level PCRE refuses, past its limit, longest first, each holding at
+     * most HEADER_TOKENS tokens past that opener, enough for the longest.
+     * A comment opens no level. A "(?" followed only by option letters is
+     * no run: closed there, it would read as an option setting where the
+     * opener goes on, or is refused for itself. None where no level passes
+     * the limit.
      *
      * @param list<Token> $tokens
      *
-     * @return list<Token>|null
+     * @return iterable<list<Token>>
      */
-    private static function upToTheLevelPastTheNestingLimit(array $tokens): ?array
+    private static function cutsAtTheLevelPastTheNestingLimit(array $tokens): iterable
     {
-        $open = 0;
+        // Whether each opener still open is a group, and the groups.
+        $opened = [];
+        $groups = [];
+        $opener = null;
         foreach ($tokens as $index => $token) {
-            if (self::opensGroup($token)) {
-                if (++$open > Validator::MAX_GROUP_NESTING + 1) {
-                    return \array_slice($tokens, 0, $index);
+            if (TokenType::GroupClose === $token->type) {
+                if (true === array_pop($opened)) {
+                    array_pop($groups);
                 }
-            } elseif (TokenType::GroupClose === $token->type) {
-                $open = max(0, $open - 1);
+
+                continue;
+            }
+
+            if (!self::opensGroup($token)) {
+                continue;
+            }
+
+            $group = TokenType::CommentOpen !== $token->type;
+            $opened[] = $group;
+            if (!$group) {
+                continue;
+            }
+
+            $groups[] = $index;
+            if (\count($groups) > Validator::MAX_GROUP_NESTING) {
+                $opener = $index;
+
+                break;
             }
         }
 
-        return null === self::openerPastTheNestingLimit($tokens) ? null : $tokens;
+        if (null === $opener) {
+            return;
+        }
+
+        // Where the run of option letters after a "(?" ends.
+        $options = $opener;
+        if (TokenType::GroupModifierOpen === $tokens[$opener]->type) {
+            do {
+                $next = $tokens[++$options] ?? null;
+            } while (null !== $next && TokenType::Literal === $next->type && 1 === \strlen($next->value) && str_contains(InlineFlags::LETTERS.'-^', $next->value));
+        }
+
+        for ($cut = min(\count($tokens), $opener + 1 + self::HEADER_TOKENS); $cut > $options; $cut--) {
+            yield \array_slice($tokens, 0, $cut);
+        }
     }
 
     /**

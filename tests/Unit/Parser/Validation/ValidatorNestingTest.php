@@ -121,6 +121,16 @@ final class ValidatorNestingTest extends TestCase
         yield 'group after a comment, a ")" too many' => ['opener' => '(?#c)(', 'after' => $unmatched, 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 256, 'newer' => 256];
         yield 'non-capturing group past the parser limit' => ['opener' => '(?:', 'after' => $deeper, 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 253, 'newer' => 253];
         yield 'named group past the parser limit' => ['opener' => '(?<n>', 'after' => $deeper, 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 255, 'newer' => 255];
+        // What follows the opener is not read before that level is refused:
+        // a class never closed there is never reached.
+        yield 'non-capturing group, then a class never closed' => ['opener' => '(?:', 'after' => '[', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 253, 'newer' => 253];
+        yield 'named group, then a class never closed' => ['opener' => '(?<n>', 'after' => '[', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 255, 'newer' => 255];
+        yield 'quoted name, then a class never closed' => ['opener' => "(?'n'", 'after' => '[', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 255, 'newer' => 255];
+        yield 'group with options, then a class never closed' => ['opener' => '(?i:', 'after' => '[', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 254, 'newer' => 254];
+        yield 'conditional, then a class never closed' => ['opener' => '(?(1)', 'after' => '[', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 255, 'newer' => 255];
+        yield 'alphabetic lookahead, then a class never closed' => ['opener' => '(*pla:', 'after' => '[', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 256, 'newer' => 256];
+        yield 'named group, then a property never closed' => ['opener' => '(?<n>', 'after' => '\\p{', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 255, 'newer' => 255];
+        yield 'non-capturing group, then a comment never closed' => ['opener' => '(?:', 'after' => '(?#', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 253, 'newer' => 253];
     }
 
     /**
