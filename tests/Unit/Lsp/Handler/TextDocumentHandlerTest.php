@@ -193,6 +193,39 @@ final class TextDocumentHandlerTest extends TestCase
     }
 
     /**
+     * A hover request without a document or a position is answered with
+     * nothing, as a completion or a code action request is: a request is
+     * always answered. A notification never is.
+     */
+    #[Test]
+    public function test_a_hover_request_without_a_document_or_a_position_is_answered_with_nothing(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $handler = new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null]));
+        $this->documents->open('file:///a.php', "<?php\npreg_match('/a/', \$s);\n");
+
+        foreach ([
+            [1, ['textDocument' => ['uri' => 'file:///a.php']]],
+            [2, ['position' => ['line' => 1, 'character' => 13]]],
+            [3, ['textDocument' => ['uri' => 'file:///a.php'], 'position' => 'here']],
+            [null, ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => 13]]],
+            [null, []],
+        ] as [$id, $params]) {
+            $handler->hover(new Message(jsonrpc: '2.0', method: 'textDocument/hover', id: $id, params: $params));
+        }
+
+        rewind($stream);
+        $frames = preg_split('/Content-Length: \d+\r\n\r\n/', (string) stream_get_contents($stream), -1, \PREG_SPLIT_NO_EMPTY);
+        $this->assertIsArray($frames);
+        $this->assertSame([
+            ['jsonrpc' => '2.0', 'id' => 1, 'result' => null],
+            ['jsonrpc' => '2.0', 'id' => 2, 'result' => null],
+            ['jsonrpc' => '2.0', 'id' => 3, 'result' => null],
+        ], array_map(static fn (string $frame): mixed => json_decode($frame, true, 512, \JSON_THROW_ON_ERROR), $frames));
+    }
+
+    /**
      * A limit of the library is no error in the pattern: the editor shows
      * it as a warning — the severity `regex lint` reports for the same
      * "Not analyzed" outcome — never as an error.
@@ -623,6 +656,47 @@ final class TextDocumentHandlerTest extends TestCase
         );
 
         $this->assertSame(4, $change['version'] ?? null);
+    }
+
+    /**
+     * The changes of one didChange are applied in order: under full sync
+     * each change is the whole text, so the last one is the document. A
+     * change that names a range holds part of the text only, and is not
+     * the document.
+     *
+     * @param list<array<string, mixed>> $changes
+     */
+    #[Test]
+    #[DataProvider('provideContentChanges')]
+    public function test_the_last_full_text_change_is_the_document(array $changes, string $expected): void
+    {
+        [, $change] = $this->handle(
+            new Message(jsonrpc: '2.0', method: 'textDocument/didOpen', id: null, params: ['textDocument' => ['uri' => 'file:///c.php', 'text' => "<?php\n", 'version' => 1]]),
+            new Message(jsonrpc: '2.0', method: 'textDocument/didChange', id: null, params: [
+                'textDocument' => ['uri' => 'file:///c.php', 'version' => 2],
+                'contentChanges' => $changes,
+            ]),
+        );
+
+        $this->assertSame($expected, $this->documents->getContent('file:///c.php'));
+        $this->assertIsArray($change['diagnostics'] ?? null);
+        $this->assertCount(str_contains($expected, '/(/') ? 1 : 0, $change['diagnostics']);
+    }
+
+    /**
+     * @return iterable<string, array{changes: list<array<string, mixed>>, expected: string}>
+     */
+    public static function provideContentChanges(): iterable
+    {
+        $valid = "<?php\npreg_match('/a/', \$s);\n";
+        $invalid = "<?php\npreg_match('/(/', \$s);\n";
+
+        yield 'the last of two full texts' => ['changes' => [['text' => $valid], ['text' => $invalid]], 'expected' => $invalid];
+        yield 'the last of two full texts, the other way round' => ['changes' => [['text' => $invalid], ['text' => $valid]], 'expected' => $valid];
+        yield 'a full text before a change naming a range' => [
+            'changes' => [['text' => $invalid], ['range' => ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 0, 'character' => 0]], 'text' => '//']],
+            'expected' => $invalid,
+        ];
     }
 
     /**

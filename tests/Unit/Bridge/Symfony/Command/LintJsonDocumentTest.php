@@ -209,6 +209,45 @@ final class LintJsonDocumentTest extends TestCase
     }
 
     /**
+     * A --min-savings that is no whole number of 0 or more is refused as a
+     * --jobs the lint cannot use is: exit code 2, the envelope at stage
+     * usage.
+     */
+    #[Test]
+    #[DataProvider('provideInvalidMinSavings')]
+    public function test_invalid_min_savings_prints_the_envelope(?string $minSavings): void
+    {
+        $tester = new CommandTester($this->createCommand($this->sourceOf([])));
+
+        $status = $tester->execute(['paths' => ['.'], '--format' => 'json', '--min-savings' => $minSavings]);
+
+        $this->assertSame(2, $status);
+        $this->assertSame(['error' => 'The --min-savings value must be a non-negative integer.', 'stage' => 'usage'], $this->decodeDocument($tester->getDisplay()));
+    }
+
+    /**
+     * @return iterable<string, array{minSavings: string|null}>
+     */
+    public static function provideInvalidMinSavings(): iterable
+    {
+        yield 'a word' => ['minSavings' => 'abc'];
+        yield 'a negative number' => ['minSavings' => '-5'];
+        yield 'a decimal' => ['minSavings' => '1.5'];
+        yield 'no value' => ['minSavings' => null];
+    }
+
+    /**
+     * A --min-savings of 0 or more is read: the run goes on.
+     */
+    #[Test]
+    public function test_a_min_savings_of_zero_is_read(): void
+    {
+        $tester = new CommandTester($this->createCommand($this->sourceOf([])));
+
+        $this->assertSame(0, $tester->execute(['paths' => ['.'], '--format' => 'json', '--min-savings' => '0']));
+    }
+
+    /**
      * One JSON object, ending with exactly one newline.
      *
      * @return array<mixed>

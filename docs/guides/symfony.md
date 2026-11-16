@@ -112,7 +112,10 @@ the links open the editor FrameworkBundle links its own pages to:
 in a debug kernel.
 
 `paths` and `exclude` are read from `%kernel.project_dir%`: `regex:lint`
-lints the same files whatever directory it runs from. The paths given to
+lints the same files whatever directory it runs from. An `exclude` is a
+directory name, left out wherever it lies under the project, never above
+it, or the path of a file or a directory, from the project, behind `./` or
+absolute, as `regex lint --exclude` reads it. The paths given to
 `regex:lint` on the command line are read from the working directory, as
 `lint:yaml` reads them. A path that does not exist stops `regex:lint` with
 exit code 2, as it stops `regex lint`: `Path not found: src/Legacy`, stage
@@ -214,8 +217,8 @@ and a marker that silences nothing is reported the same way.
 `regex:lint` reads the `Regex` constraints of the validator mapping files
 FrameworkBundle hands the validator: `config/validator/*.yaml` and `*.xml`,
 the files and directories of `framework.validation.mapping.paths`, and the
-`validation.yaml` or `validation.xml` of each bundle, those under an
-`exclude` directory (`vendor/`) left out. Each file is read with the
+`validation.yaml` or `validation.xml` of each bundle, but those the
+excludes leave out as they leave out a PHP file (`vendor/`). Each file is read with the
 validator's own loader, nested constraints (`All`, `Collection`,
 `Sequentially`) included, and each pattern is reported at the file and the
 line that write it, its source naming the class and the member,
@@ -339,7 +342,8 @@ Each one is read as the pattern Symfony runs:
   makes it non-capturing) are not reported.
 - A security `path` (in `access_control` or as a firewall `pattern`) is
   matched with `{...}s`, and a `host` with `{...}i`, without anchors:
-  `path: /api` matches `/v1/api` too.
+  `path: /api` matches `/v1/api` too. The options a path opens with,
+  `(*UTF)` or `(*LIMIT_MATCH=1000)`, are read there, as PCRE reads them.
 
 ## The service and the lint judge for different targets
 
@@ -457,7 +461,9 @@ command does not list them one by one:
 `vendor/bin/regex lint --report-dynamic` does.
 
 Every command is listed by `bin/console list`, and takes these arguments
-and options:
+and options. `regex:lint` refuses a `--jobs` that is not a whole number of 1
+or more, and a `--min-savings` that is not a whole number of 0 or more, with
+exit code 2 and stage `usage` in the JSON envelope, as `regex lint` does.
 
 | Command | Arguments | Options |
 |---|---|---|
@@ -507,7 +513,9 @@ host requirement, say), leave the paths to decide, and the finding notes
 `Host requirements were not evaluated.` A route that names no method or no
 scheme takes any; one given only empty ones, `setMethods([''])` or
 `setSchemes([''])`, takes no request, as Symfony's matchers read it, and
-conflicts with no other route.
+conflicts with no other route. A route for `GET` takes the `HEAD` requests
+too, as the router sends them: a later route for `HEAD` only on the same
+path is shadowed.
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods and addresses take a request applies to it. A later

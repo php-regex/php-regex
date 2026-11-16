@@ -178,12 +178,13 @@ final class CodeActionHandlerTest extends TestCase
 
     /**
      * A request without a document or a range is answered with no action;
-     * a notification under the id 0, as it always was.
+     * a notification, with or without them, is never answered.
      */
     #[Test]
     public function test_a_request_without_a_document_or_a_range_is_offered_no_action(): void
     {
-        foreach ([[4, ['textDocument' => ['uri' => self::URI]]], [5, ['range' => ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 0, 'character' => 1]]]], [null, []]] as [$id, $params]) {
+        $range = ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 0, 'character' => 1]];
+        foreach ([[4, ['textDocument' => ['uri' => self::URI]]], [5, ['range' => $range]], [null, []], [null, ['textDocument' => ['uri' => self::URI], 'range' => $range]]] as [$id, $params]) {
             $this->handler->handle(new Message(jsonrpc: '2.0', method: 'textDocument/codeAction', id: $id, params: $params));
         }
 
@@ -193,7 +194,6 @@ final class CodeActionHandlerTest extends TestCase
         $this->assertSame([
             ['jsonrpc' => '2.0', 'id' => 4, 'result' => []],
             ['jsonrpc' => '2.0', 'id' => 5, 'result' => []],
-            ['jsonrpc' => '2.0', 'id' => 0, 'result' => []],
         ], array_map(static fn (string $frame): mixed => json_decode($frame, true, 512, \JSON_THROW_ON_ERROR), $frames));
     }
 

@@ -177,7 +177,8 @@ final class LintCommand extends Command
             // An exclude names a directory of the project: one of the same
             // name above it, where the project lives, excludes nothing.
             excludeBase: $configured ? $this->projectDir : null,
-            minSavings: is_numeric($minSavings) ? (int) $minSavings : 1,
+            // --min-savings with no value is no number either.
+            minSavings: $input->hasParameterOption(['--min-savings'], true) ? (\is_string($minSavings) ? $minSavings : '') : null,
             // --jobs with no value is no count either.
             jobs: $input->hasParameterOption(['--jobs', '-j'], true) ? (\is_string($jobs) ? $jobs : '') : null,
             disabledSources: array_keys(array_filter(['routes' => (bool) $input->getOption('no-routes'), 'validators' => (bool) $input->getOption('no-validators'), 'twig' => (bool) $input->getOption('no-twig')])),

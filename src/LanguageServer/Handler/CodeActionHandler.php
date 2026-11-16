@@ -99,8 +99,14 @@ final class CodeActionHandler
         /** @var array{diagnostics?: list<array{code?: int|string|null, range?: Range}>} $context */
         $context = isset($params['context']) && \is_array($params['context']) ? $params['context'] : [];
 
-        if (null === $message->id || null === $uri || null === $range) {
-            $this->transport->success($message->id ?? 0, []);
+        // A notification is never answered; a request always is, with no
+        // action when it names no document or no range.
+        if (null === $message->id) {
+            return;
+        }
+
+        if (null === $uri || null === $range) {
+            $this->transport->success($message->id, []);
 
             return;
         }

@@ -11,6 +11,9 @@ CHANGELOG
    PCRE2 runs it. `TrivialMatchClassifier` named `/^(?:a|ab){1}+c\z/` one of
    `ac` and `abc`, where `preg_match()` refuses `abc`; it names none now,
    and the solver refuses it as it refuses `{2}+`.
+ * A caret snippet in a JSON, Checkstyle or JUnit report stays under the
+   character at fault once the invalid bytes before it are spelled `\xHH`:
+   `Line 1: \xFF\xFE(` had its caret under the first `\xFF`.
  * `max_recursion_depth` is 512 by default, where it was 1024: PCRE refuses
    parentheses nested past 250, which the parser reads in 251 levels, and
    some 800 levels end PHP on a C stack of 1 MB.

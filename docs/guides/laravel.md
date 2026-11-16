@@ -104,8 +104,11 @@ return [
 `paths` and `exclude` are read from `base_path()`: `regex:lint` lints the
 same files whatever directory it runs from. An `exclude` names a directory
 of the application, wherever it lies under the paths, never one above it:
-Testbench's skeleton, which lives under `vendor/`, is linted. The paths given
-to `regex:lint` on the command line are read from the working directory.
+Testbench's skeleton, which lives under `vendor/`, is linted. It may also be
+the path of a file or a directory, behind `./` or absolute, and it leaves the
+validation rules of a file out as it leaves out the file's patterns. The
+paths given to `regex:lint` on the command line are read from the working
+directory.
 
 A key missing from your file takes the package default, inside each section
 too: a file published by an older release keeps working after an upgrade.
@@ -348,7 +351,9 @@ under a key named for the method: `disjoint` and `example`, `subset` and
 `regex:lint --jobs=N` (or `-j N`) runs the analysis in `N` worker processes; left out,
 the count follows the CPUs (and the container's memory limit). A `--jobs`
 that is not a whole number of 1 or more is refused with exit code 2, as
-`regex lint` and Symfony's `regex:lint` refuse it. So is a path that does not
+`regex lint` and Symfony's `regex:lint` refuse it, and so is a
+`--min-savings` that is not a whole number of 0 or more (`The --min-savings
+value must be a non-negative integer.`). So is a path that does not
 exist: `Path not found: app/Legacy`, stage `usage` in the JSON envelope for a
 path given on the command line, `config` for one of `php-regex.paths`, which
 the message names.
@@ -385,7 +390,8 @@ included: `'code' => 'required|regex:/^(?:a|b)$/'` hands `/^(?:a` to
 `preg_match()`, and the lint reports it as invalid. Write such a rule as an
 array element, `['required', 'regex:/^(?:a|b)$/']`, which keeps its `|`. The
 pattern is linted as written, between any delimiter PHP takes: `{^a$}` is
-the pattern between braces, not `/{^a$}/`.
+the pattern between braces, not `/{^a$}/`. The rule's name is read without
+case, as Laravel reads it, and `notregex:` is `not_regex:`.
 
 A route constraint is judged as the router compiles it: stripped of a
 leading `^` or `\A` and a trailing `$` or `\z`, its groups made

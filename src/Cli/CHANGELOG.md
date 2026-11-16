@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A baseline entry of a file gone is read with the excludes as the lint
+   reads them: under an `--exclude` naming a file or a directory by its
+   path, behind `./` or absolute, it is not reported as stale.
+ * `regex lint --min-savings` takes a whole number, 0 or more, and refuses
+   anything else as `--jobs` does, exit code 2 and `The --min-savings value
+   must be a non-negative integer.`: `--min-savings=abc` was read as 0 and
+   `--min-savings=-5` as a negative saving.
  * `regex lint` spells a control character a note quotes from
    `composer.json` for the terminal (`\x1B`), in the banner as on stderr.
  * `regex lint` reads more pattern arguments (patterns built from parts,
