@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Mcp;
 
-use Mcp\Client;
+use Mcp\Client\Builder;
 use Mcp\Client\Transport\StdioTransport;
 use Mcp\Schema\Tool;
 use PHPRegex\Tests\Support\JsonContract;
@@ -46,8 +46,10 @@ final class ProcessSmokeTest extends TestCase
     public function test_a_client_lists_and_calls_the_tools(array $command): void
     {
         // Hard deadlines on the handshake and on every request: a server that
-        // never answers fails the test, it never holds the suite.
-        $client = Client::builder()->setClientInfo('php-regex tests', Regex::VERSION)->setInitTimeout(30)->setRequestTimeout(30)->build();
+        // never answers fails the test, it never holds the suite. The builder
+        // is what Client::builder() returns, in mcp/sdk 0.9 and in 0.10, which
+        // moved the client class.
+        $client = (new Builder())->setClientInfo('php-regex tests', Regex::VERSION)->setInitTimeout(30)->setRequestTimeout(30)->build();
         // The SDK is installed for the tests only, beside PHPUnit: the server
         // process reads that autoloader first, as the phar carries its own.
         $client->connect(new StdioTransport(command: \PHP_BINARY, args: ['-d', 'auto_prepend_file='.self::sdkAutoloader(), ...$command], cwd: \dirname(__DIR__, 3)));
@@ -79,9 +81,9 @@ final class ProcessSmokeTest extends TestCase
 
     private static function sdkAutoloader(): string
     {
-        $autoloader = (new \ReflectionClass(Client::class))->getFileName();
+        $autoloader = (new \ReflectionClass(Builder::class))->getFileName();
         self::assertIsString($autoloader);
 
-        return \dirname($autoloader, 4).'/autoload.php';
+        return \dirname($autoloader, 5).'/autoload.php';
     }
 }

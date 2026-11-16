@@ -17,7 +17,7 @@ use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\Tool;
 use Mcp\Schema\ToolAnnotations;
-use Mcp\Server;
+use Mcp\Server\Builder;
 use Mcp\Server\ClientGateway;
 use Mcp\Server\Handler\ToolHandlerInterface;
 use Mcp\Server\Transport\StdioTransport;
@@ -30,9 +30,11 @@ use Psr\Log\LoggerInterface;
 /**
  * The protocol, spoken by the official SDK (mcp/sdk). The one file of the
  * package that sees an SDK type: the SDK is experimental and moves between
- * minors, so a change of SDK is a change of this file alone. The catalog
- * is registered tool by tool with the schemas it wrote; nothing is derived
- * from a signature.
+ * minors, so a change of SDK is a change of this file alone. It speaks to
+ * 0.9, which PHP 8.1 installs, and to 0.10 from PHP 8.2 through what both
+ * keep alike: 0.10 moved the server class, not the builder it returns. The
+ * catalog is registered tool by tool with the schemas it wrote; nothing is
+ * derived from a signature.
  *
  * @internal
  */
@@ -42,7 +44,7 @@ final class SdkServer implements ServerInterface
 
     public function run($input, $output): int
     {
-        $builder = Server::builder()
+        $builder = (new Builder())
             ->setServerInfo('php-regex', Regex::VERSION)
             ->setInstructions('Read-only questions about PCRE patterns written as in PHP source (/…/flags): whether a PHP compiles one, what it means, how it lays out, how it reads in JavaScript, HTML or Python, and whether it backtracks catastrophically.')
             ->setLogger($this->logger);

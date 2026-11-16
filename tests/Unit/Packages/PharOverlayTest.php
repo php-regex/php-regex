@@ -62,12 +62,33 @@ final class PharOverlayTest extends TestCase
 
         $this->assertSame('v'.self::pharSdkVersion(), $locked);
 
+        // The package pins the minors its server speaks to, oldest first;
+        // the phar, which runs on PHP 8.1, locks a release of the oldest.
         $manifest = self::decode(self::root().'/src/Mcp/composer.json');
         $pin = self::strings($manifest['require'] ?? null)['mcp/sdk'] ?? null;
         $this->assertIsString($pin);
-        $this->assertMatchesRegularExpression('~^\^\d+\.\d+$~', $pin);
-        $this->assertStringStartsWith(substr($pin, 1).'.', self::pharSdkVersion(), 'The phar locks a release of the minor the package pins.');
-        $this->assertSame('<'.substr($pin, 1), self::strings($manifest['conflict'] ?? null)['mcp/sdk'] ?? null);
+        $this->assertMatchesRegularExpression('~^\^\d+\.\d+(?:\|\^\d+\.\d+)*$~', $pin);
+        $minors = array_map(static fn (string $minor): string => substr($minor, 1), explode('|', $pin));
+        foreach (\array_slice($minors, 1) as $at => $minor) {
+            $this->assertSame(1, version_compare($minor, $minors[$at]), 'The minors are pinned oldest first.');
+        }
+        $this->assertStringStartsWith($minors[0].'.', self::pharSdkVersion(), 'The phar locks a release of the oldest minor the package pins.');
+        $this->assertSame('<'.$minors[0], self::strings($manifest['conflict'] ?? null)['mcp/sdk'] ?? null);
+    }
+
+    /**
+     * The suite runs the server against the SDK the test tools install: they
+     * pin every minor the package does, and each PHP of the matrix installs
+     * the newest one it can run.
+     */
+    #[Test]
+    public function test_the_test_tools_install_every_minor_the_package_pins(): void
+    {
+        $pin = self::strings(self::decode(self::root().'/src/Mcp/composer.json')['require'] ?? null)['mcp/sdk'] ?? null;
+
+        foreach (['phpunit', 'paratest'] as $tool) {
+            $this->assertSame($pin, self::strings(self::decode(self::root().'/tools/'.$tool.'/composer.json')['require-dev'] ?? null)['mcp/sdk'] ?? null, $tool);
+        }
     }
 
     #[Test]
