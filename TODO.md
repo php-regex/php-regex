@@ -32,25 +32,13 @@ Parser
   8).
 - Past 512 levels of nesting, the recursion limit hides PCRE's own "too
   deeply nested", which it reports at offset 251.
-- The caret of the JSON, checkstyle and junit reports stands under the
-  wrong byte after invalid bytes spelled `\xHH` (`JsonDocument`).
 
 Optimizer and automata
 
-- `Modernizer` unwraps `(?:X)` around a quantified or empty `X`:
-  `(?:a+)?b` becomes `a+?b`, and `(?:a*)*b` becomes `a**b`, which does not
-  compile.
-- The automata read `X{1}+` as `X` where PCRE runs `(?>X)`:
-  `TrivialMatchClassifier` gives `["ac", "abc"]` for `/^(?:a|ab){1}+c\z/`,
-  which feeds the `in_array` rewrite and the PHPStan rule.
-- An end anchor in a loop of minimum 0 escapes the check of the match
-  solver for an anchor followed by more: `RewriteCheck` accepts
-  `/(?:a$)*\n/` to `/\n/`.
-- The match solver does not count a group repeated `{0}`: `/(?<x>a){0}b/`
-  is match-equivalent to `/b/`, though `$matches` differs.
-- A seeded `SampleGenerator` reseeds on each retry and draws the same
-  sample 32 times (`/(?>a|ab)c/` fails for 27 seeds out of 40).
-- The explanations ignore `/U` and `(?U)`, and describe greed backwards.
+- The match solver reads a body repeated `{0}` as nothing, though PCRE2
+  still reads an assertion inside it when it decides where a match may
+  start: `/(?:x|(?=a)){0}\w/` is match-equivalent to `/\w/`, yet only the
+  second matches `\tb`.
 
 ReDoS and lint rules
 
@@ -76,27 +64,24 @@ ReDoS and lint rules
 
 Integrations
 
-- The `access_control` analysis misses a shadow when the earlier path
-  holds a top-level alternation (`^/assets|^/login` before
-  `^/assets/private`): the `.*` it adds binds to one branch only.
-- The route analysis does not read HEAD as GET, as both Symfony matchers
-  do: a GET route that shadows a later HEAD-only route is not reported.
-- `--exclude`, and `exclude` in `regex.json`, ignore a file path, a `./`
-  path and an absolute path.
-- A PHP file named on the command line without the `.php` suffix
-  (`bin/console`) is skipped, and the run passes.
-- The language server leaves a hover without a position unanswered, and
-  answers a completion or a code action sent as a notification with id 0.
-- `didChange` keeps the first full content change instead of the last.
-- The Laravel extractor reads `regex:` and `not_regex:` case-sensitively,
-  and misses `notregex:`, which Laravel runs.
-- `--min-savings` reads any text as 0 and takes a negative number, where
-  `--jobs` refuses both.
+- The excludes of the Symfony validator scan, of the Laravel scan of
+  validation rules and of the stale baseline entries read a directory name
+  only, where `--exclude` now takes a file path, a `./` path and an
+  absolute path.
+- `--min-savings` of the Symfony `regex:lint` reads a value that is no
+  number as 1 and takes a negative one; the Laravel command casts it with
+  `(int)`.
+- The `access_control` analysis puts its `.*` before a leading `(*UTF)` or
+  other start option of a path, which PCRE refuses; the rule is then
+  neither read nor reported.
 
-To confirm, then decide
+Decide
 
 - `self-update` installs `releases/latest` without comparing versions:
-  from a newer pre-release it would go back.
+  from `2.0.0-RC1` it installs the newest stable release, which can be
+  older (`1.3.0`), and says it updated. Compare the versions and refuse a
+  downgrade without `--force`, follow release channels as Composer does,
+  or document it.
 
 Upstream
 
