@@ -2329,7 +2329,9 @@ pattern's mode, per byte in byte mode (`\xE2\x80\xAE`) and per code point in
 UTF mode, under `u` or after a leading `(*UTF)` (`\x{202E}`), and the pattern
 is then printed without colours. The caret stays under the character at
 fault. JSON output keeps the pattern as given, except that each invalid
-UTF-8 byte becomes the text `\xNN`, in uppercase hexadecimal (`\xFF`).
+UTF-8 byte becomes the text `\xNN`, in uppercase hexadecimal (`\xFF`); the
+caret of a snippet moves with it, under the same character, in JSON,
+Checkstyle and JUnit alike.
 
 `lint` ends its report on a summary line, then, when some pattern arguments
 are built at run time, on the number it could not verify:
