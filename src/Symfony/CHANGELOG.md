@@ -20,10 +20,11 @@ CHANGELOG
    does not require the same way no longer shadows it, and two rules for
    different ports share no request. `{ route: app_login, roles:
    PUBLIC_ACCESS }` before `{ path: ^/admin, roles: ROLE_ADMIN }` is an
-   overlap, where it was reported as a critical shadow. A rule naming a
-   route or attributes and no path is no longer counted among the rules
-   that have no path and match all requests. A `port` that is no number is
-   an error.
+   overlap, where it was reported as a critical shadow. A rule with no
+   path is said to match every path, where it was said to match all
+   requests whatever its methods, host, port or addresses; one naming a
+   route or attributes is no longer counted among them. A `port` that is no
+   number is an error.
  * `regex:security` compares a path under `(*UTF)` with one without it, and
    `regex:routes` a route with the `utf8` option with one without it, on the
    request paths that are valid UTF-8, as Symfony matches them:

@@ -340,35 +340,40 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
     }
 
     /**
-     * A rule with no path takes the requests on every path; one that names
-     * a route or request attributes takes only those the router gives
-     * them, and is neither noted nor counted as matching all requests.
+     * A rule with no path takes the requests on every path, whatever its
+     * methods, host, port or addresses keep it to; one that names a route
+     * or request attributes takes only the paths the router gives them, and
+     * is neither noted nor counted as matching every path.
      *
-     * @param array{route?: string, attributes?: array<string, string>} $restriction
+     * @param array{route?: string, attributes?: array<string, string>, methods?: list<string>, host?: string, port?: int, ips?: list<string>} $restriction
      */
     #[Test]
     #[DataProvider('provideRestrictionsBesideAMissingPath')]
-    public function test_a_rule_with_no_path_matches_all_requests_only_without_a_route_or_attributes(array $restriction, bool $matchesAll): void
+    public function test_a_rule_with_no_path_matches_every_path_unless_a_route_or_attributes_keep_it(array $restriction, bool $everyPath): void
     {
         $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
             $restriction + self::rule(path: null, roles: ['PUBLIC_ACCESS']),
             self::rule(path: '^/admin', line: 4),
         ], true);
 
-        $this->assertSame($matchesAll ? [1] : [], $report->rulesWithNoPath);
+        $this->assertSame($everyPath ? [1] : [], $report->rulesWithNoPath);
         $this->assertCount(1, $report->conflicts);
-        $this->assertSame($matchesAll, \in_array('Rule has no path; it matches all requests.', $report->conflicts[0]['notes'], true));
-        $this->assertSame([] !== $restriction, \in_array('Route and attribute restrictions are not evaluated.', $report->conflicts[0]['notes'], true));
+        $this->assertSame($everyPath, \in_array('Rule has no path; it matches every path.', $report->conflicts[0]['notes'], true));
+        $this->assertSame(isset($restriction['route']) || isset($restriction['attributes']), \in_array('Route and attribute restrictions are not evaluated.', $report->conflicts[0]['notes'], true));
     }
 
     /**
-     * @return iterable<string, array{restriction: array{route?: string, attributes?: array<string, string>}, matchesAll: bool}>
+     * @return iterable<string, array{restriction: array{route?: string, attributes?: array<string, string>, methods?: list<string>, host?: string, port?: int, ips?: list<string>}, everyPath: bool}>
      */
     public static function provideRestrictionsBesideAMissingPath(): iterable
     {
-        yield 'neither a route nor attributes' => ['restriction' => [], 'matchesAll' => true];
-        yield 'a route' => ['restriction' => ['route' => 'app_login'], 'matchesAll' => false];
-        yield 'request attributes' => ['restriction' => ['attributes' => ['_format' => 'json']], 'matchesAll' => false];
+        yield 'no other restriction' => ['restriction' => [], 'everyPath' => true];
+        yield 'methods' => ['restriction' => ['methods' => ['POST']], 'everyPath' => true];
+        yield 'a host' => ['restriction' => ['host' => '^api\.example\.com$'], 'everyPath' => true];
+        yield 'a port' => ['restriction' => ['port' => 8080], 'everyPath' => true];
+        yield 'addresses' => ['restriction' => ['ips' => ['10.0.0.0/8']], 'everyPath' => true];
+        yield 'a route' => ['restriction' => ['route' => 'app_login'], 'everyPath' => false];
+        yield 'request attributes' => ['restriction' => ['attributes' => ['_format' => 'json']], 'everyPath' => false];
     }
 
     /**

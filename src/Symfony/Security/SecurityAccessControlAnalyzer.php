@@ -271,10 +271,11 @@ final class SecurityAccessControlAnalyzer
         $attributes = $rule['attributes'] ?? [];
         if (null === $path || '' === trim((string) $path, " \t\n\r\0\x0B")) {
             $path = '';
-            // A route or request attributes keep the rule to the requests
-            // the router gives them.
+            // A route or request attributes keep the rule to the paths the
+            // router gives them; methods, a host, a port or addresses keep
+            // it to some requests, on every path.
             if (null === $route && [] === $attributes) {
-                $notes[] = 'Rule has no path; it matches all requests.';
+                $notes[] = 'Rule has no path; it matches every path.';
                 $rulesWithNoPath[] = $index;
             }
         }
