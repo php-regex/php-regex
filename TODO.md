@@ -1,11 +1,37 @@
 # TODO
 
+## Left from the second pass before 2.0.0
+
+The bugs of the second pass are fixed in #403; these were left out of it.
+
+- `readAlike()` and the rewrite check read `(?(c)X)` and `(?(c)X|)` alike,
+  while a lookbehind tells them apart on `c`: the normalized form carries
+  no "`|` written". No rewrite flips that `|` since #403, so nothing wrong
+  ships; carrying it moves the cache fingerprint and the PHP 7.4 twin.
+- Error offsets: an unclosed `\p{` in an extended class,
+  `(?[[\p{-\Q\cé]])` 11 against 13; the `a` option of 10.43+ at level 251,
+  `(?^a[` 254 against 255; check the code of `(?(+0)`.
+- `CharSetAnalyzer` reads a class written with hex escapes as an unknown
+  set, so the ReDoS heuristic rates `[\xC2-\xDF][\x80-\xBF]` loops
+  critical.
+- `redos --repeat` takes a count that fits but exhausts the memory
+  (10^10): cap it, or refuse it with a message.
+- `SecurityPatternNormalizer` trims an `access_control` path, which Symfony
+  does not: `"^/a\\\n"` becomes an invalid pattern and is skipped.
+- Trailing-slash redirects are modelled only where the raw paths share
+  nothing, and not across disjoint schemes, where Symfony redirects before
+  it checks the scheme.
+- A HEAD-only route before a GET route of the same path is an overlap; the
+  security side would call it a carve-out and say nothing.
+
 ## Engine reports
 
 Found while fixing the bugs of #400; each is PCRE2's, not the library's.
 
 - PCRE2 10.49's JIT returns 0 for `/é.{2,}é|(?<=x)A/u` on `xA`, and 1
   without the JIT: report it to PCRE2.
+- PCRE2 10.49's JIT returns 0 for `/(?<=(?:a|bc)|\b)x/` on `x`, and 1
+  without the JIT; `/(?<!(?:a|bc)|\b)x/` gives the reverse.
 - `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)` are ignored under the JIT, PHP's
   default, and honoured without it: `preg_match('/(*NOTEMPTY)a*/', 'b')`
   returns 1 with the JIT and 0 with `pcre.jit=0`. Report it to PCRE2.
