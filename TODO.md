@@ -23,7 +23,11 @@ The bugs of the second pass are fixed in #403; these were left out of it.
   `.*` catch-all (GET `/admin/` is redirected). It needs a three-way
   language operation the solver lacks, and would flag every static route
   declared before a catch-all. On disjoint schemes the overlap is reported
-  only when the solver's example lies outside the earlier route's paths.
+  only when the solver's shortest example lies outside the earlier route's
+  paths: https `/{x<a|a/|long>}` before http `/{y<a|a/|long/>}` loses
+  `/long/` unreported (example `/a/`). Both need a search over three
+  languages, (swapped(E) ∩ L) \ E, a new `LanguageSolver` operation
+  (declined on #403 by the maintainer, 2026-11-17).
 - Read from the kernel, `access_control.port: '%env(int:APP_PORT)%'` fails
   ("Expected "int", but got "string"") even with `APP_PORT` set, on 2.x
   before #403 too: `extractFromKernel` runs the bundle's `Processor` on the
