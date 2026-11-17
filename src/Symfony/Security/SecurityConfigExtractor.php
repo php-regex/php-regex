@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Security;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Symfony\Exception\SecurityConfigException;
 use Symfony\Component\Config\Definition\Exception\Exception as ConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
@@ -563,7 +564,7 @@ final class SecurityConfigExtractor
      */
     private static function port(string $value): int
     {
-        if (!ctype_digit($value)) {
+        if (!Ascii::isDigit($value)) {
             throw new SecurityConfigException(\sprintf('The access_control port "%s" is not a port number.', $value));
         }
 
