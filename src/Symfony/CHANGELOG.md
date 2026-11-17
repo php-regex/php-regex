@@ -20,8 +20,10 @@ CHANGELOG
    does not require the same way no longer shadows it, and two rules for
    different ports share no request. `{ route: app_login, roles:
    PUBLIC_ACCESS }` before `{ path: ^/admin, roles: ROLE_ADMIN }` is an
-   overlap, where it was reported as a critical shadow. A `port` that is no
-   number is an error.
+   overlap, where it was reported as a critical shadow. A rule naming a
+   route or attributes and no path is no longer counted among the rules
+   that have no path and match all requests. A `port` that is no number is
+   an error.
  * `regex:security` compares a path under `(*UTF)` with one without it, and
    `regex:routes` a route with the `utf8` option with one without it, on the
    request paths that are valid UTF-8, as Symfony matches them:
@@ -195,9 +197,12 @@ CHANGELOG
  * `regex:routes` and `regex:analyze` read the redirect of the trailing
    slash, as the framework's matcher sends it: a `GET` or `HEAD` request
    whose path differs from an earlier route's by a trailing slash alone
-   goes to that route. `/foo/` before `/foo`, or `/a/{x}/` before
-   `/a/{x}`, is an overlap, or a shadow when the later route takes only
-   `GET` and `HEAD`, where the pair was reported as no conflict. The report
+   goes to that route, and a later route never gets it, whatever its
+   scheme. `/foo/` before `/foo`, or `/a/{x}/` before `/a/{x}`, is an
+   overlap, or a shadow when the later route takes only `GET` and `HEAD`,
+   where the pair was reported as no conflict. A later route whose paths
+   the earlier one matches in part and redirects for the rest,
+   `/blog{slash}` (`/?`) after `/blog`, is shadowed too. The report
    suggests paths that differ by more than the slash, never the reorder
    that only turns the redirect round.
  * `regex:routes` and `regex:analyze` call a route shadowed only when an

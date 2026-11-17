@@ -538,8 +538,11 @@ or `HEAD` request whose path differs from a route's by a trailing slash
 alone to that route, and tries no later one: `/foo/` declared before
 `/foo` takes `GET /foo`, so the later route is shadowed when it takes only
 `GET` and `HEAD`, and an overlap otherwise; the report then suggests paths
-that differ by more than the slash. A route that takes no `GET` request
-redirects none.
+that differ by more than the slash. The router checks the slash before the
+scheme: a later route on another scheme loses those requests too. A later
+route whose paths the earlier one matches in part and redirects for the
+rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
+route that takes no `GET` request redirects none.
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods, addresses, port, route and attributes take a request

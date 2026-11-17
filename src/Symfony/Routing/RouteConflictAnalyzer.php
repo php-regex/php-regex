@@ -124,7 +124,11 @@ final class RouteConflictAnalyzer
                     continue;
                 }
 
-                if (!$this->schemesOverlap($earlier['schemes'], $later['schemes'])) {
+                // The matchers check the trailing slash of a route before
+                // its scheme: an earlier route on other schemes still stops
+                // the GET and HEAD requests it would redirect.
+                $schemesOverlap = $this->schemesOverlap($earlier['schemes'], $later['schemes']);
+                if (!$schemesOverlap && !$this->redirects($earlier, $later)) {
                     $pairsFilteredSchemes++;
 
                     continue;
@@ -154,8 +158,11 @@ final class RouteConflictAnalyzer
                 try {
                     $pathIntersections++;
                     $intersection = $this->solver->intersection($earlier['pathPattern'], $later['pathPattern'], $options);
-                    if ($intersection->isEmpty) {
-                        $redirect = $this->redirectConflict($earlier, $later, $options, null === $hostsOverlap);
+                    // On disjoint schemes, each route keeps the paths both
+                    // match for its own scheme: only the redirect is read,
+                    // where the two share no path.
+                    if ($intersection->isEmpty || !$schemesOverlap) {
+                        $redirect = $intersection->isEmpty ? $this->redirectConflict($earlier, $later, $options, null === $hostsOverlap) : null;
                         if (null !== $redirect && 'shadowed' === $redirect['type']) {
                             $shadowed++;
                             $conflicts[] = $redirect;
@@ -171,8 +178,19 @@ final class RouteConflictAnalyzer
 
                     $pathSubsets++;
                     $equivalence = $this->solver->equivalent($earlier['pathPattern'], $later['pathPattern'], $options);
+                    $redirectsTheRest = null !== $equivalence->rightOnlyExample && $this->redirectTakesTheRest($earlier, $later, $options);
                 } catch (ComplexityException) {
                     $skippedPairs++;
+
+                    continue;
+                }
+
+                // A later route the earlier one matches in part and
+                // redirects for the rest is shadowed: a path of it the
+                // earlier route does not match is one the redirect takes.
+                if ($redirectsTheRest) {
+                    $shadowed++;
+                    $conflicts[] = $this->redirected($earlier, $later, 'shadowed', $equivalence->rightOnlyExample, null === $hostsOverlap);
 
                     continue;
                 }
@@ -366,13 +384,31 @@ final class RouteConflictAnalyzer
     }
 
     /**
+     * Whether the framework's matcher may send a request of the later route
+     * to the earlier one for its trailing slash: it stops a GET or HEAD
+     * request whose path differs from the path of an earlier route for GET
+     * by the slash alone, before it checks the scheme, and tries no later
+     * route. A route given only empty schemes takes no request.
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     * @phpstan-param RouteDescriptor $later
+     */
+    private function redirects(array $earlier, array $later): bool
+    {
+        return self::NO_REQUEST !== $earlier['schemes']
+            && self::NO_REQUEST !== $later['schemes']
+            && $this->listHolds($earlier['methods'], ['GET'])
+            && $this->methodsOverlap(['GET', 'HEAD'], $later['methods']);
+    }
+
+    /**
      * The conflict of two routes whose paths share none: the framework's
      * matcher redirects a GET or HEAD request whose path differs from an
-     * earlier route's by a trailing slash alone to that route, and tries no
-     * later one. Null when the earlier route takes no GET request, the
-     * later one no GET or HEAD request, or none of its paths is
-     * redirected. The later route is shadowed when it takes only GET and
-     * HEAD requests, on hosts the earlier one holds.
+     * earlier route's by a trailing slash alone to that route, whatever
+     * the scheme, and tries no later one. Null when the earlier route takes
+     * no GET request, the later one no GET or HEAD request, or none of its
+     * paths is redirected. The later route is shadowed when it takes only
+     * GET and HEAD requests, on hosts the earlier one holds.
      *
      * @param bool $hostsUnread whether the solver gave up on the two hosts
      *
@@ -385,7 +421,7 @@ final class RouteConflictAnalyzer
      */
     private function redirectConflict(array $earlier, array $later, SolverOptions $options, bool $hostsUnread): ?array
     {
-        if (!$this->listHolds($earlier['methods'], ['GET']) || !$this->methodsOverlap(['GET', 'HEAD'], $later['methods'])) {
+        if (!$this->redirects($earlier, $later)) {
             return null;
         }
 
@@ -394,14 +430,54 @@ final class RouteConflictAnalyzer
             return null;
         }
 
-        $everyPath = null === $this->solver->equivalent($earlier['slashPattern'], $later['pathPattern'], $options)->rightOnlyExample;
+        $everyPath = $this->solver->subsetOf($later['pathPattern'], $earlier['slashPattern'], $options)->isSubset;
         $shadowed = $everyPath && $this->takesEveryRequestOf(['methods' => ['GET', 'HEAD'], 'schemes' => []] + $earlier, $later, $options);
 
+        return $this->redirected($earlier, $later, $shadowed ? 'shadowed' : 'overlap', $redirected->example, $hostsUnread);
+    }
+
+    /**
+     * Whether the earlier route takes every request of a later one whose
+     * paths it matches only in part, redirecting the rest: the later route
+     * takes only GET and HEAD requests, on schemes and hosts the earlier
+     * route takes, and each of its paths is a path of the earlier route or
+     * differs from one by a trailing slash alone. A redirect the solver
+     * gives up on leaves the pair to the paths both match.
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     * @phpstan-param RouteDescriptor $later
+     */
+    private function redirectTakesTheRest(array $earlier, array $later, SolverOptions $options): bool
+    {
+        if (!$this->redirects($earlier, $later) || !$this->takesEveryRequestOf(['methods' => ['GET', 'HEAD']] + $earlier, $later, $options)) {
+            return false;
+        }
+
+        try {
+            return $this->solver->subsetOf($later['pathPattern'], $earlier['slashPattern'], $options)->isSubset;
+        } catch (ComplexityException) {
+            return false;
+        }
+    }
+
+    /**
+     * A conflict the trailing-slash redirect makes, scoped to the GET and
+     * HEAD requests of the later route.
+     *
+     * @param bool $hostsUnread whether the solver gave up on the two hosts
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     * @phpstan-param RouteDescriptor $later
+     *
+     * @phpstan-return RouteConflict
+     */
+    private function redirected(array $earlier, array $later, string $type, ?string $example, bool $hostsUnread): array
+    {
         return [
             'route' => $earlier,
             'conflict' => $later,
-            'type' => $shadowed ? 'shadowed' : 'overlap',
-            'example' => $redirected->example,
+            'type' => $type,
+            'example' => $example,
             'equivalent' => false,
             'methods' => $this->intersectMethods(['GET', 'HEAD'], $later['methods']),
             'schemes' => $later['schemes'],

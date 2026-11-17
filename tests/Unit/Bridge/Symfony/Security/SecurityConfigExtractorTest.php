@@ -411,6 +411,37 @@ final class SecurityConfigExtractorTest extends TestCase
         (new SecurityConfigExtractor())->extract($path, null, new Container());
     }
 
+    /**
+     * A file reads no environment: an "env()" value neither the file nor
+     * the application defines stops the reading, whichever field of the
+     * rule holds it, as any parameter nothing defines does.
+     */
+    #[Test]
+    #[DataProvider('provideFieldsHoldingAnEnvironmentValue')]
+    public function test_an_environment_value_nothing_defines_stops_the_reading_whatever_field_holds_it(string $rule, string $parameter): void
+    {
+        $path = $this->makeProject(['security.yaml' => "security:\n    access_control:\n        - ".$rule."\n"]).'/security.yaml';
+
+        try {
+            (new SecurityConfigExtractor())->extract($path, null, new Container());
+            $this->fail('An environment value nothing defines was read.');
+        } catch (SecurityConfigException $e) {
+            $this->assertSame(\sprintf('The parameter "%s" used in "%s" is defined neither in the file nor in the application.', $parameter, $path), $e->getMessage());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{rule: string, parameter: string}>
+     */
+    public static function provideFieldsHoldingAnEnvironmentValue(): iterable
+    {
+        yield 'path' => ['rule' => "{ path: '%env(ADMIN_PATH)%' }", 'parameter' => 'env(ADMIN_PATH)'];
+        yield 'host' => ['rule' => "{ path: ^/admin, host: '%env(ADMIN_HOST)%' }", 'parameter' => 'env(ADMIN_HOST)'];
+        yield 'port' => ['rule' => "{ path: ^/admin, port: '%env(int:ADMIN_PORT)%' }", 'parameter' => 'env(int:ADMIN_PORT)'];
+        yield 'route' => ['rule' => "{ route: '%env(LOGIN_ROUTE)%' }", 'parameter' => 'env(LOGIN_ROUTE)'];
+        yield 'attribute' => ['rule' => "{ path: ^/api, attributes: { _format: '%env(API_FORMAT)%' } }", 'parameter' => 'env(API_FORMAT)'];
+    }
+
     #[Test]
     public function test_a_file_that_is_no_yaml_is_an_error(): void
     {

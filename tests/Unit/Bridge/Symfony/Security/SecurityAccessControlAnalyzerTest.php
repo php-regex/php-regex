@@ -340,6 +340,38 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
     }
 
     /**
+     * A rule with no path takes the requests on every path; one that names
+     * a route or request attributes takes only those the router gives
+     * them, and is neither noted nor counted as matching all requests.
+     *
+     * @param array{route?: string, attributes?: array<string, string>} $restriction
+     */
+    #[Test]
+    #[DataProvider('provideRestrictionsBesideAMissingPath')]
+    public function test_a_rule_with_no_path_matches_all_requests_only_without_a_route_or_attributes(array $restriction, bool $matchesAll): void
+    {
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            $restriction + self::rule(path: null, roles: ['PUBLIC_ACCESS']),
+            self::rule(path: '^/admin', line: 4),
+        ], true);
+
+        $this->assertSame($matchesAll ? [1] : [], $report->rulesWithNoPath);
+        $this->assertCount(1, $report->conflicts);
+        $this->assertSame($matchesAll, \in_array('Rule has no path; it matches all requests.', $report->conflicts[0]['notes'], true));
+        $this->assertSame([] !== $restriction, \in_array('Route and attribute restrictions are not evaluated.', $report->conflicts[0]['notes'], true));
+    }
+
+    /**
+     * @return iterable<string, array{restriction: array{route?: string, attributes?: array<string, string>}, matchesAll: bool}>
+     */
+    public static function provideRestrictionsBesideAMissingPath(): iterable
+    {
+        yield 'neither a route nor attributes' => ['restriction' => [], 'matchesAll' => true];
+        yield 'a route' => ['restriction' => ['route' => 'app_login'], 'matchesAll' => false];
+        yield 'request attributes' => ['restriction' => ['attributes' => ['_format' => 'json']], 'matchesAll' => false];
+    }
+
+    /**
      * The attributes are a map: written in another order, or with the
      * route as its "_route" attribute, they require the same requests.
      */
