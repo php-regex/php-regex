@@ -41,6 +41,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
@@ -308,10 +309,12 @@ final class TextDocumentHandler
 
             $markdown = "**Regex Pattern**\n\n```\n{$occurrence->pattern}\n```\n\n".(null === $occurrence->writtenElsewhere ? '' : "{$occurrence->writtenElsewhere}\n\n")."**Explanation**\n\n{$explanation}";
 
+            // The answer is JSON, which holds UTF-8 only: a byte of the
+            // pattern no UTF-8 character takes is spelled \xHH.
             $this->transport->success($message->id, [
                 'contents' => [
                     'kind' => 'markdown',
-                    'value' => $markdown,
+                    'value' => JsonDocument::spellInvalidBytes($markdown),
                 ],
                 'range' => [
                     'start' => $occurrence->start,
@@ -322,14 +325,14 @@ final class TextDocumentHandler
             $this->transport->success($message->id, [
                 'contents' => [
                     'kind' => 'markdown',
-                    'value' => "**Not analyzed**\n\n{$e->getMessage()}",
+                    'value' => JsonDocument::spellInvalidBytes("**Not analyzed**\n\n{$e->getMessage()}"),
                 ],
             ]);
         } catch (LexerException|ParserException $e) {
             $this->transport->success($message->id, [
                 'contents' => [
                     'kind' => 'markdown',
-                    'value' => "**Regex Error**\n\n{$e->getMessage()}",
+                    'value' => JsonDocument::spellInvalidBytes("**Regex Error**\n\n{$e->getMessage()}"),
                 ],
             ]);
         }
@@ -436,6 +439,13 @@ final class TextDocumentHandler
             foreach ($marker->unmatched($used[$index] ?? [], $this->leavesOff(...)) as $message) {
                 $diagnostics[] = $this->diagnosticConverter->fromUnmatchedIgnore($message, $range);
             }
+        }
+
+        // The push is JSON, which holds UTF-8 only: a message quoting a
+        // byte of the pattern no UTF-8 character takes spells it \xHH, or
+        // the push would not be sent at all.
+        foreach ($diagnostics as $index => $diagnostic) {
+            $diagnostics[$index]['message'] = JsonDocument::spellInvalidBytes($diagnostic['message']);
         }
 
         $payload = [

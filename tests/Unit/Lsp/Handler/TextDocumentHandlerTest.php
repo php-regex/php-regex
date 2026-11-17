@@ -22,6 +22,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -190,6 +191,47 @@ final class TextDocumentHandlerTest extends TestCase
             ['jsonrpc' => '2.0', 'id' => 2, 'result' => null],
             ['jsonrpc' => '2.0', 'id' => 3, 'result' => ['contents' => ['kind' => 'markdown', 'value' => "**Regex Error**\n\n\\c must be followed by a character it can read."]]],
         ], array_map(static fn (string $frame): mixed => json_decode($frame, true, 512, \JSON_THROW_ON_ERROR), $frames));
+    }
+
+    /**
+     * A pattern holding bytes that are no UTF-8, a JPEG signature read as
+     * bytes, is hovered and diagnosed: the protocol speaks JSON, which holds
+     * UTF-8 only, so each such byte is spelled \xHH, in the hover and in a
+     * diagnostic quoting it.
+     */
+    #[Test]
+    public function test_a_pattern_holding_bytes_that_are_no_utf8_is_hovered_and_diagnosed(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $handler = new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null]));
+        $handler->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///a.php', 'text' => "<?php\npreg_match(\"/^\\xff\\xd8\\xff(?:\\xe0|\\xe1)/\", \$s);\npreg_match(\"/(?:\\xff)/\", \$s);\n"]],
+        ));
+        $handler->hover(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/hover',
+            id: 1,
+            params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => 14]],
+        ));
+
+        rewind($stream);
+        $frames = preg_split('/Content-Length: \d+\r\n\r\n/', (string) stream_get_contents($stream), -1, \PREG_SPLIT_NO_EMPTY);
+        $this->assertIsArray($frames);
+        $this->assertCount(2, $frames);
+        [$push, $hover] = array_map(static fn (string $frame): mixed => json_decode($frame, true, 512, \JSON_THROW_ON_ERROR), $frames);
+        $this->assertIsArray($push);
+        $this->assertIsArray($hover);
+
+        $messages = array_column(JsonContract::asArray(JsonContract::asArray($push['params'] ?? null)['diagnostics'] ?? null), 'message');
+        $this->assertContains('Redundant non-capturing group "(?:\xFF)" at offset 0; it can be removed without changing behavior.', $messages);
+
+        $value = JsonContract::asArray(JsonContract::asArray($hover['result'] ?? null)['contents'] ?? null)['value'] ?? null;
+        $this->assertIsString($value);
+        $this->assertStringContainsString("```\n/^\\xFF\\xD8\\xFF(?:\\xE0|\\xE1)/\n```", (string) $value);
     }
 
     /**

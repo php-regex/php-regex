@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A pattern holding bytes that are no UTF-8, `"/^\xff\xd8\xff/"`, is
+   hovered and diagnosed, each such byte spelled `\xFF`: the hover was
+   answered with an Internal Error (`-32603`, malformed UTF-8) and the
+   diagnostics of a document whose message quoted one were not published.
+   A code action writes such a pattern between double quotes, the byte as
+   `\xFF`, and the quick fix adding `u`, which PCRE refuses on it, is not
+   offered.
  * A `textDocument/hover` request without a document or a position is
    answered with `null`, as a completion request is, where it was left
    unanswered and the client waited. A completion or a code action sent as
