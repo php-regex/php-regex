@@ -148,6 +148,27 @@ final class SecurityCommandTest extends TestCase
         $this->assertStringNotContainsString('shadowed rules detected', $display);
     }
 
+    /**
+     * Symfony compiles '{(?x)^/admin  # back office}s': the comment runs to
+     * the end of the path, and the rule takes every path under /admin. A
+     * path PCRE refuses is left out, the others still compared.
+     */
+    #[Test]
+    public function test_command_reads_a_path_ending_on_a_comment_and_leaves_out_one_pcre_refuses(): void
+    {
+        $path = $this->makeProject([
+            'security.yaml' => "security:\n    access_control:\n        - { path: '^/(shop', roles: PUBLIC_ACCESS }\n        - { path: '(?x)^/admin  # back office', roles: ROLE_ADMIN }\n        - { path: ^/admin/login, roles: PUBLIC_ACCESS }\n",
+        ]).'/security.yaml';
+
+        $tester = new CommandTester(self::command());
+        $status = $tester->execute(['--config' => [$path]]);
+        $display = $tester->getDisplay();
+
+        $this->assertSame(Command::FAILURE, $status, $display);
+        $this->assertStringContainsString('1 shadowed rules detected.', $display);
+        $this->assertStringContainsString('1 access_control rules skipped', $display);
+    }
+
     #[Test]
     public function test_command_refuses_a_named_file_that_is_no_yaml(): void
     {

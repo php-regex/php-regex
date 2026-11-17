@@ -350,6 +350,37 @@ final class AccessControlOrderTest extends TestCase
             ],
         ];
 
+        // Symfony compiles the path alone: a comment of the x flag runs to
+        // its end, and so does a \Q left open.
+        yield 'a path under the x flag ending on a comment shadows a narrower one' => [
+            'rules' => [['path' => '(?x)^/admin  # back office (the whole of it)'], ['path' => '^/admin/login']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/login', 0, 1],
+                ['GET', 'http://localhost/admin', 0, 0],
+                ['GET', 'http://localhost/shop', null, null],
+            ],
+        ];
+
+        yield 'a path quoted to its end shadows a narrower one' => [
+            'rules' => [['path' => '^/admin\Q.x'], ['path' => '^/admin\.x/y']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin.x/y', 0, 1],
+                ['GET', 'http://localhost/admin.xz', 0, 0],
+                ['GET', 'http://localhost/adminyx', null, null],
+            ],
+        ];
+
+        yield 'a narrower path under the x flag ending on a comment first is a carve-out' => [
+            'rules' => [['path' => '(?x) ^/admin/login  # the form'], ['path' => '^/admin']],
+            'expected' => 'carve-out',
+            'requests' => [
+                ['GET', 'http://localhost/admin/login', 0, 1],
+                ['GET', 'http://localhost/admin/users', 1, 1],
+            ],
+        ];
+
         // SecurityExtension::createAuthorization() adds the route to the
         // attributes as "_route", and createRequestMatcher() chains an
         // AttributesRequestMatcher and a PortRequestMatcher to the path.

@@ -17,6 +17,7 @@ use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -188,6 +189,65 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
 
         $this->assertSame([['index' => 1, 'file' => 'security.yaml', 'line' => 3, 'reason' => 'Invalid path regex.']], $report->skippedRules);
         $this->assertSame(2, $report->stats['rules']);
+    }
+
+    /**
+     * PathRequestMatcher compiles the path alone, '{'.$path.'}s': a path
+     * PCRE refuses there takes no request, whatever the search the
+     * analysis builds from it would read, and its rule is left out.
+     */
+    #[Test]
+    #[DataProvider('provideInvalidPaths')]
+    public function test_a_path_pcre_refuses_skips_its_rule(string $path): void
+    {
+        $this->assertFalse(@preg_match('{'.$path.'}s', ''));
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: $path, roles: ['PUBLIC_ACCESS']),
+            self::rule(path: '^/admin', line: 4),
+        ], true);
+
+        $this->assertSame([['index' => 1, 'file' => 'security.yaml', 'line' => 3, 'reason' => 'Invalid path regex.']], $report->skippedRules);
+        $this->assertSame([], $report->conflicts);
+    }
+
+    /**
+     * @return iterable<string, array{path: string}>
+     */
+    public static function provideInvalidPaths(): iterable
+    {
+        yield 'a group left open' => ['path' => '^/(admin'];
+        yield 'a comment left open' => ['path' => '^/admin(?#oops'];
+        yield 'an unbounded lookbehind' => ['path' => '^/admin(?<=a+)'];
+        yield 'a reference to no group' => ['path' => '^/admin\\2(a)'];
+        yield 'a class left open' => ['path' => '^/admin[a'];
+    }
+
+    /**
+     * HostRequestMatcher compiles the host alone, '{'.$host.'}i': a host
+     * PCRE refuses there leaves the paths to decide.
+     */
+    #[Test]
+    #[DataProvider('provideInvalidHosts')]
+    public function test_a_host_pcre_refuses_is_not_evaluated(string $host): void
+    {
+        $this->assertFalse(@preg_match('{'.$host.'}i', ''));
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin', host: $host),
+        ]);
+
+        $this->assertSame([], $report->skippedRules);
+        $this->assertSame([1], $report->rulesWithUnsupportedHosts);
+    }
+
+    /**
+     * @return iterable<string, array{host: string}>
+     */
+    public static function provideInvalidHosts(): iterable
+    {
+        yield 'a group left open' => ['host' => '^(admin\\.example\\.com$'];
+        yield 'an unbounded lookbehind' => ['host' => '(?<=a+)\\.example\\.com$'];
     }
 
     #[Test]

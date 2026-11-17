@@ -343,7 +343,11 @@ Each one is read as the pattern Symfony runs:
 - A security `path` (in `access_control` or as a firewall `pattern`) is
   matched with `{...}s`, and a `host` with `{...}i`, without anchors:
   `path: /api` matches `/v1/api` too. The options a path opens with,
-  `(*UTF)` or `(*LIMIT_MATCH=1000)`, are read there, as PCRE reads them.
+  `(*UTF)` or `(*LIMIT_MATCH=1000)`, are read there, as PCRE reads them,
+  and a path ending on a comment of the `x` flag or on a `\Q` left open
+  means what it means alone: `(?x)^/admin  # back office` takes every path
+  under `/admin`. The rule of an `access_control` path PCRE refuses,
+  `^/(admin`, is left out of the comparison and reported as skipped.
   A path under `(*UTF)` and one without it are compared on the request
   paths that are valid UTF-8, a character at a time for the one and a byte
   at a time for the other: `(*UTF)^/admin/users` before `^/admin` is a

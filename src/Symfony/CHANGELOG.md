@@ -6,6 +6,14 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:security` and `regex:analyze` read an `access_control` path or
+   host ending on a comment of the `x` flag, `(?x)^/admin  # back office`,
+   or on a `\Q` left open, `^/admin\Q.x`, as Symfony compiles it, where the
+   search built from it swallowed its closing parenthesis and the command
+   stopped on a syntax error. A path PCRE refuses, `^/(admin` or
+   `(?<=a+)b`, leaves its rule out as an invalid path regex, and a host PCRE
+   refuses is not evaluated, where the first stopped the command and the
+   second was compared.
  * `regex:security` and `regex:analyze` read the `port`, `route` and
    `attributes` of an `access_control` rule, as the security bundle chains
    them to its request matcher: an earlier rule holding one the later rule

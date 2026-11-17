@@ -21,7 +21,6 @@ use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
-use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Toolkit\Regex;
 
@@ -294,11 +293,8 @@ final class SecurityAccessControlAnalyzer
             $notes[] = 'Route and attribute restrictions are not evaluated.';
         }
 
-        // Only the parser's refusal of the delimited path is the path's
-        // fault; anything else is a bug and surfaces.
-        try {
-            $pathPattern = $this->normalizePattern($path);
-        } catch (ExceptionInterface) {
+        $pathPattern = $this->normalizePattern($path);
+        if (null === $pathPattern) {
             $skippedRules[] = [
                 'index' => $index,
                 'file' => $rule['file'],
@@ -313,9 +309,8 @@ final class SecurityAccessControlAnalyzer
         $hostUnsupported = false;
         $host = $rule['host'];
         if (null !== $host && '' !== trim($host, " \t\n\r\0\x0B")) {
-            try {
-                $hostPattern = $this->normalizePattern($host, true);
-            } catch (ExceptionInterface) {
+            $hostPattern = $this->normalizePattern($host, true);
+            if (null === $hostPattern) {
                 $hostUnsupported = true;
                 $rulesWithUnsupportedHosts[] = $index;
                 $notes[] = 'Host restrictions are not evaluated.';
@@ -464,13 +459,20 @@ final class SecurityAccessControlAnalyzer
     /**
      * The pattern Symfony matches the path, or the host, of a rule with,
      * read as a whole-subject match: a side left unanchored takes any text
-     * there, as a search does.
+     * there, as a search does. Null when PCRE refuses the pattern Symfony
+     * compiles, or the search built from it.
      */
-    private function normalizePattern(string $pattern, bool $host = false): string
+    private function normalizePattern(string $pattern, bool $host = false): ?string
     {
-        $regexPattern = DelimitedPattern::fromDelimited($this->patternNormalizer->normalize($pattern, $host));
+        $delimited = $this->patternNormalizer->normalize($pattern, $host);
+        if (!$this->regex->validate($delimited)->isValid) {
+            return null;
+        }
 
-        return (string) new DelimitedPattern($this->normalizeSearchPattern($regexPattern->pattern), $regexPattern->flags, $regexPattern->delimiter);
+        $regexPattern = DelimitedPattern::fromDelimited($delimited);
+        $search = (string) new DelimitedPattern($this->normalizeSearchPattern($regexPattern->pattern), $regexPattern->flags, $regexPattern->delimiter);
+
+        return $this->regex->validate($search)->isValid ? $search : null;
     }
 
     /**
@@ -480,12 +482,20 @@ final class SecurityAccessControlAnalyzer
      * branch it is written in, as in preg_match(). The options the pattern
      * opens with, "(*UTF)" or "(*LIMIT_MATCH=1000)", stay first: PCRE reads
      * them there only.
+     *
+     * The pattern was written to end where Symfony's delimiter does, so the
+     * group is closed whatever state its end leaves PCRE in: "\E" ends a
+     * "\Q" left open, and the newline ends a comment the x flag opened with
+     * "#". Out of such a comment, the newline lies in the comment "(?#" opens
+     * and "(?#)" closes; in one, it ends it, and "(?#)" is a comment of its
+     * own. Either way the group closes on the last ")", and the pattern
+     * matches what it matched alone.
      */
     private function normalizeSearchPattern(string $pattern): string
     {
         $options = StartOptions::of($pattern);
 
-        return $options.'.*(?:'.substr($pattern, \strlen($options)).').*';
+        return $options.'.*(?:'.substr($pattern, \strlen($options))."\\E(?#\n(?#)).*";
     }
 
     /**
