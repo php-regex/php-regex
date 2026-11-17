@@ -168,8 +168,16 @@ final class RouteConflictAnalyzer
 
                 $notes = $this->buildNotes($earlier, $later, null === $hostsOverlap);
 
-                if (null === $equivalence->rightOnlyExample) {
-                    // Every path of the later route goes to the earlier one.
+                // The later route is shadowed when the earlier one takes
+                // every request it takes: every path, and its methods, its
+                // schemes and its host. An earlier route whose paths are a
+                // strict part of the later one's is declared first on
+                // purpose: both stay reachable. Any other pair sharing a
+                // path overlaps: each route keeps some requests.
+                $laterPathInEarlier = null === $equivalence->rightOnlyExample;
+                $earlierPathInLater = null === $equivalence->leftOnlyExample;
+                $laterTakesEarlier = $earlierPathInLater && $this->takesEveryRequestOf($later, $earlier, $options);
+                if ($laterPathInEarlier && $this->takesEveryRequestOf($earlier, $later, $options)) {
                     $shadowed++;
                     $conflictType = 'shadowed';
                     if ($equivalence->isEquivalent) {
@@ -177,9 +185,7 @@ final class RouteConflictAnalyzer
                         $notes[] = 'Equivalent route patterns.';
                     }
                     $notes[] = 'Less specific route declared BEFORE more specific route.';
-                } elseif (null === $equivalence->leftOnlyExample) {
-                    // The earlier route is a part of the later one, declared
-                    // first on purpose: both stay reachable.
+                } elseif ($earlierPathInLater && !$laterPathInEarlier) {
                     continue;
                 } else {
                     $overlaps++;
@@ -201,6 +207,7 @@ final class RouteConflictAnalyzer
                     'methods' => $this->intersectMethods($earlier['methods'], $later['methods']),
                     'schemes' => $this->intersectSchemes($earlier['schemes'], $later['schemes']),
                     'notes' => $notes,
+                    'laterTakesEarlier' => $laterTakesEarlier,
                 ];
             }
         }
@@ -422,6 +429,59 @@ final class RouteConflictAnalyzer
         }
 
         return !$intersection->isEmpty;
+    }
+
+    /**
+     * Whether every request the inner route takes, the outer route takes
+     * too, but for the path: no method, scheme or host of its own, or one
+     * that holds the inner route's. The matchers send a HEAD request to a
+     * route for GET. A host the analysis cannot read, or one the solver
+     * gives up on, leaves the paths to decide, as it does when the hosts
+     * are intersected.
+     *
+     * @phpstan-param RouteDescriptor $outer
+     * @phpstan-param RouteDescriptor $inner
+     */
+    private function takesEveryRequestOf(array $outer, array $inner, SolverOptions $options): bool
+    {
+        $methods = \in_array('GET', $outer['methods'], true) ? [...$outer['methods'], 'HEAD'] : $outer['methods'];
+        if (!$this->listHolds($methods, $inner['methods']) || !$this->listHolds($outer['schemes'], $inner['schemes'])) {
+            return false;
+        }
+
+        if (!$outer['hasHostRequirement']) {
+            return true;
+        }
+
+        if (!$inner['hasHostRequirement']) {
+            return false;
+        }
+
+        if ($outer['hostUnsupported'] || $inner['hostUnsupported']) {
+            return true;
+        }
+
+        try {
+            return null === $this->solver->equivalent($outer['hostPattern'], $inner['hostPattern'], $options)->rightOnlyExample;
+        } catch (ComplexityException) {
+            return true;
+        }
+    }
+
+    /**
+     * Whether a list of methods or schemes takes every value the inner one
+     * takes: an empty list takes them all.
+     *
+     * @param array<int, string> $outer
+     * @param array<int, string> $inner
+     */
+    private function listHolds(array $outer, array $inner): bool
+    {
+        if ([] === $outer) {
+            return true;
+        }
+
+        return [] !== $inner && [] === array_diff($inner, $outer);
     }
 
     /**

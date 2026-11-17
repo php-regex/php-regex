@@ -192,6 +192,16 @@ CHANGELOG
    an overlap whichever is declared first, the earlier one winning them, and
    a route is shadowed when an earlier one takes all its paths. A narrower
    route declared before a wider one is not reported.
+ * `regex:routes` and `regex:analyze` call a route shadowed only when an
+   earlier route takes every request of it, its methods (`GET` taking
+   `HEAD`), its schemes and its host included, as the security analysis
+   does; any other pair sharing a path is an overlap. A route for `HEAD`
+   only before a route for `GET` on the same path, a route for `GET` before
+   one for `GET` and `POST`, a route for `https` before one for any scheme
+   and a route for a host before one for any host were reported as
+   shadowed. The report no longer suggests moving the later route of such
+   an overlap first, which would leave the earlier route unreachable, nor
+   merging two routes on the same paths that each keep some requests.
  * `regex:routes` and `regex:analyze` read a route for `GET` as taking the
    `HEAD` requests too, as Symfony's matchers send them: a route for `HEAD`
    only declared after a route for `GET` on its paths is shadowed, where the

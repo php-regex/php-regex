@@ -40,15 +40,22 @@ final class RouteConflictSuggestionBuilder
         foreach ($conflicts as $conflict) {
             $route = $conflict['route'];
             $other = $conflict['conflict'];
+            $shadowed = 'shadowed' === $conflict['type'];
 
-            $moveSuggestion = \sprintf(
-                'Reorder routes: move "%s" before "%s".',
-                $other['name'],
-                $route['name'],
-            );
-            $suggestions[$moveSuggestion] = true;
+            // An overlap whose later route, moved first, would take every
+            // request of the earlier one is the order that serves both: a
+            // route for HEAD only before a route for GET.
+            if ($shadowed || !$conflict['laterTakesEarlier']) {
+                $suggestions[\sprintf(
+                    'Reorder routes: move "%s" before "%s".',
+                    $other['name'],
+                    $route['name'],
+                )] = true;
+            }
 
-            if (($conflict['equivalent'] ?? false) === true) {
+            // Two routes on the same paths that each keep some requests
+            // are no duplicates.
+            if ($shadowed && $conflict['equivalent']) {
                 $suggestions[\sprintf(
                     'Merge duplicate routes: "%s" and "%s" match the same paths.',
                     $route['name'],

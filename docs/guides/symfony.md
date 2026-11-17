@@ -513,11 +513,14 @@ it `/a\x{2028}/u`. A value cannot open a line of its own or style the
 report; the JSON report keeps each value as found.
 
 `regex:routes` reads the routes in the order they are declared, as the router
-matches them: the first route that matches a path wins it. A route is
-**shadowed** when an earlier route takes every path it matches, so it can
-never be reached. Two routes that share some paths but not all are an
+matches them: the first route that matches a request wins it. A route is
+**shadowed** when an earlier route takes every request it takes, every path
+it matches, its methods, its schemes and its host included, so it can never
+be reached. Two routes that share some requests but not all are an
 **overlap**, listed with `--show-overlaps`: `/blog/{slug}` (`[a-z]+`) declared
-before `/blog/{id}` (`\d+|new`) takes `/blog/new`. A narrower route declared
+before `/blog/{id}` (`\d+|new`) takes `/blog/new`, and a route for `GET`
+declared before a route for `GET` and `POST` on the same path leaves it the
+`POST` requests. A narrower route declared
 before a wider one, `/users/list` before `/users/{id}`, is the order the
 router expects and is not reported. Two hosts the analysis cannot compare,
 a host it cannot read or one the solver gives up on (a conditional in a
@@ -527,7 +530,10 @@ scheme takes any; one given only empty ones, `setMethods([''])` or
 `setSchemes([''])`, takes no request, as Symfony's matchers read it, and
 conflicts with no other route. A route for `GET` takes the `HEAD` requests
 too, as the router sends them: a later route for `HEAD` only on the same
-path is shadowed.
+path is shadowed, and a route for `HEAD` only declared before a route for
+`GET` on the same path is an overlap that serves both. The report suggests
+moving a later route first, or merging two routes on the same paths, only
+where neither would leave a route unreachable.
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods, addresses, port, route and attributes take a request

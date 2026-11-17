@@ -163,7 +163,7 @@ final class RoutesAnalyzerTest extends TestCase
     {
         $collection = new RouteCollection();
         $collection->add('user_show', (new Route('/users/{id}'))->setMethods($methods)->setSchemes($schemes));
-        $collection->add('user_list', new Route('/users/list'));
+        $collection->add('user_list', (new Route('/users/list'))->setMethods($methods)->setSchemes($schemes));
 
         $section = $this->analyze($collection, new AnalysisContext(null, null));
 
@@ -248,8 +248,8 @@ final class RoutesAnalyzerTest extends TestCase
 
     /**
      * An overlap on the blog paths, the slug route first, and a placeholder
-     * route shadowing a static one on the user paths, on GET and POST over
-     * https.
+     * route shadowing a static one on the user paths, both on GET and POST
+     * over https.
      */
     private static function conflictingRoutes(): RouteCollection
     {
@@ -257,7 +257,7 @@ final class RoutesAnalyzerTest extends TestCase
         $collection->add('blog_slug', new Route('/blog/{slug}', [], ['slug' => '[a-z]+']));
         $collection->add('blog_id', new Route('/blog/{id}', [], ['id' => '\d+|new']));
         $collection->add('user_show', (new Route('/users/{id}'))->setMethods(['GET', 'POST'])->setSchemes(['https']));
-        $collection->add('user_list', new Route('/users/list'));
+        $collection->add('user_list', (new Route('/users/list'))->setMethods(['GET', 'POST'])->setSchemes(['https']));
 
         return $collection;
     }
