@@ -17,9 +17,13 @@ use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Hir\Utf8;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Redos\Backtrack\LastCodeUnit;
 use PHPRegex\Redos\Backtrack\WitnessReplayer;
 
 /**
@@ -89,6 +93,7 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
 
         [$baseChar, $suffixChar, $baseLength] = $this->resolveBaseInput($regex, $analysis, $options);
         $lengths = $this->buildLengths($baseLength, $options);
+        $required = self::requiredCharacter($regex);
 
         $samples = [];
         $confirmed = false;
@@ -96,7 +101,7 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
         $evidence = null;
 
         foreach ($lengths as $length) {
-            $input = $this->buildInput($baseChar, $suffixChar, $length);
+            $input = $this->buildInput($baseChar, $suffixChar, $length, $required);
             $preview = $options->previewLength > 0 ? substr($input, 0, $options->previewLength) : null;
 
             $durationMs = 0.0;
@@ -224,11 +229,37 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
         return $lengths;
     }
 
-    private function buildInput(string $baseChar, string $suffixChar, int $length): string
+    /**
+     * The base character repeated, then the one that fails the match, then
+     * the character every match requires when the rest does not hold it:
+     * PCRE2 rejects a subject without it before it tries the pattern.
+     */
+    private function buildInput(string $baseChar, string $suffixChar, int $length, ?string $required = null): string
     {
-        $prefixLength = max(1, $length - 1);
+        $tail = $suffixChar;
+        if (null !== $required && $required !== $baseChar && $required !== $suffixChar) {
+            $tail .= $required;
+        }
 
-        return str_repeat($baseChar, $prefixLength).$suffixChar;
+        return str_repeat($baseChar, max(1, $length - \strlen($tail))).$tail;
+    }
+
+    /**
+     * The character PCRE2 requires in every subject it tries the pattern
+     * on, as the pattern encodes it; null when it requires none or the
+     * pattern does not parse.
+     */
+    private static function requiredCharacter(string $regex): ?string
+    {
+        try {
+            $tree = RegexParser::create()->parse($regex);
+        } catch (ExceptionInterface) {
+            return null;
+        }
+
+        $character = LastCodeUnit::of($tree);
+
+        return null === $character ? null : Utf8::character($character, $tree->isUnicode());
     }
 
     private function evidenceForError(int $errorCode): ?string

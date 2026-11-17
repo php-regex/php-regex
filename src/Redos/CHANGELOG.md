@@ -57,6 +57,10 @@ CHANGELOG
    loop as a nested loop: `/^(?:a|a){1,40}(*MARK:y)$/`, which was safe,
    `/^(?:\d{1,3}\.?){1,30}(*MARK:y)$/` and `/^(?:(?1)){1,30}(a|a)$/`, which
    were low, are critical.
+ * In confirmed mode, a heuristic verdict runs on inputs that end with the
+   code unit every match requires, which PCRE2 looks for before it tries
+   the pattern: `/^(x)?(?:\w+\s?)+:\1/`, critical in theoretical mode, was
+   rejected at once on inputs without its `:`, never confirmed and dropped.
  * A backreference to a group of variable length in a loop is no longer
    critical when the body of the loop reads its input one way, each
    alternation choosing its branch by the first character and each count

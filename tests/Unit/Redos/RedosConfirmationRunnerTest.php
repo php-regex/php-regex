@@ -16,7 +16,12 @@ namespace PHPRegex\Tests\Unit\Redos;
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\ConfirmationRunner;
 use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PcreInterpreter;
+use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -63,6 +68,51 @@ final class RedosConfirmationRunnerTest extends TestCase
         $this->assertSame(22, $confirmation->samples[0]->inputLength);
         $this->assertGreaterThan(1.0, $confirmation->samples[0]->durationMs);
         $this->assertNull($confirmation->samples[0]->pregErrorCode);
+    }
+
+    /**
+     * PCRE2 looks for the character every match requires before it tries
+     * the pattern, and rejects a subject without it at once: the runs end
+     * with it, after the character that fails the match. Oracle (JIT off,
+     * the backtrack limit of the options): fifty letters then "!" are
+     * rejected without an error, and give up at the limit with the ":"
+     * after them, anchored or not.
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function providePatternsRequiringACharacter(): iterable
+    {
+        yield 'anchored, a colon before a reference' => ['pattern' => '/^(x)?(?:\w+\s?)+:\1/'];
+        yield 'unanchored, a colon before a reference' => ['pattern' => '/(x)?(?:\w+\s?)+:\1/'];
+    }
+
+    #[Test]
+    #[DataProvider('providePatternsRequiringACharacter')]
+    public function test_a_run_holds_the_character_every_match_requires(string $pattern): void
+    {
+        $limit = (string) \ini_get('pcre.backtrack_limit');
+        \ini_set('pcre.backtrack_limit', '100000');
+
+        try {
+            $without = @preg_match(PcreInterpreter::pattern($pattern), str_repeat('a', 50).'!');
+            $withoutError = preg_last_error();
+            $with = @preg_match(PcreInterpreter::pattern($pattern), str_repeat('a', 50).'!:');
+            $withError = preg_last_error();
+        } finally {
+            \ini_set('pcre.backtrack_limit', $limit);
+        }
+        $this->assertSame([0, \PREG_NO_ERROR], [$without, $withoutError], 'Oracle: rejected at once without the colon.');
+        $this->assertSame([false, \PREG_BACKTRACK_LIMIT_ERROR], [$with, $withError], 'Oracle: gives up with it.');
+
+        $confirmation = (new ConfirmationRunner())->confirm($pattern, new RedosAnalysis(RedosSeverity::Critical, 10));
+
+        $this->assertTrue($confirmation->confirmed);
+        $this->assertSame('backtrack_limit', $confirmation->evidence);
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern, mode: RedosMode::Confirmed);
+
+        $this->assertSame(RedosProof::Heuristic, $analysis->proof);
+        $this->assertTrue($analysis->isConfirmed());
     }
 
     /**
