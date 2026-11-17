@@ -149,6 +149,11 @@ final class NestedLoopEdgeCaseTest extends TestCase
         yield 'hyphen separator under i' => ['pattern' => '/^\w+(?:-\w+)*$/i', 'unit' => 'a-', 'reported' => false];
         yield 'separator before two runs of the same letter' => ['pattern' => '/(?:,a*a*)*$/', 'unit' => ',a', 'reported' => true];
         yield 'separator before one run' => ['pattern' => '/(?:,a*)*$/', 'unit' => ',a', 'reported' => false];
+        // Under i a range takes the other case of each letter in it:
+        // "[X-c]" takes "y" through "Y", and "[a-c]" takes "C".
+        yield 'range across the two cases under i, separator of a letter it takes folded' => ['pattern' => '/(?:[X-c]+y)+$/i', 'unit' => 'y', 'reported' => true];
+        yield 'range under i, separator of the other case' => ['pattern' => '/(?:[a-c]+C)+$/i', 'unit' => 'c', 'reported' => true];
+        yield 'range under i, separator of a letter out of it' => ['pattern' => '/(?:[a-c]+D)+$/i', 'unit' => 'aD', 'reported' => false];
         // What follows the run is read past the items that may match
         // nothing: behind "b?" (78 -> 1 278) or an optional lookahead
         // (138 -> 2 298) the second run still takes the "a" of the first.

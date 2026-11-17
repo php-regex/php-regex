@@ -31,7 +31,6 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
-use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Detects nested variable quantifiers that can cause catastrophic
@@ -493,6 +492,8 @@ final class NestedQuantifierRule extends AbstractLintRule
      * The set with the other case of each ASCII letter added. A byte above
      * ASCII stands for a character whose case variants the byte set cannot
      * hold (the Kelvin sign is a "k" under iu), so such a set is unknown.
+     * The part of each range in "A" to "Z" or in "a" to "z" is added again
+     * shifted to the other case: the rule asks it at every step of a walk.
      */
     private function fold(ByteCharSet $set, bool $caseless): ByteCharSet
     {
@@ -500,17 +501,18 @@ final class NestedQuantifierRule extends AbstractLintRule
             return $set;
         }
 
-        for ($byte = 0x80; $byte <= 0xFF; $byte++) {
-            if ($set->intersects(ByteCharSet::fromChar(\chr($byte)))) {
+        $folded = $set;
+        foreach ($set->ranges() as [$start, $end]) {
+            if ($end > 0x7F) {
                 return ByteCharSet::unknown();
             }
-        }
 
-        $folded = $set;
-        foreach (range('a', 'z') as $lower) {
-            $pair = ByteCharSet::fromChar($lower)->union(ByteCharSet::fromChar(Ascii::upper($lower)));
-            if ($set->intersects($pair)) {
-                $folded = $folded->union($pair);
+            foreach ([[0x41, 0x5A, 0x20], [0x61, 0x7A, -0x20]] as [$first, $last, $shift]) {
+                $from = max($start, $first);
+                $to = min($end, $last);
+                if ($from <= $to) {
+                    $folded = $folded->union(ByteCharSet::fromRange($from + $shift, $to + $shift));
+                }
             }
         }
 
