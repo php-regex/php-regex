@@ -173,6 +173,7 @@ final class ParseState
             case $type === TokenType::LiteralEscaped():
                 return '\\x' === (string) substr($this->pattern, $token->position, 2) && 2 === $token->end() - $token->position
                     && '{' !== ($this->pattern[$token->end()] ?? '')
+                    && !($this->badEscapeIsLiteral && BadEscape::at($this->pattern, $token->position, false, $this->unicodeMode, $this->target))
                     ? new CharLiteralNode('\\x', 0, CharLiteralType::Unicode(), $startPosition, $token->end())
                     : new LiteralNode($token->value, $startPosition, $token->end());
             case $type === TokenType::CharType():

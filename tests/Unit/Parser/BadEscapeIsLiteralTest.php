@@ -295,6 +295,68 @@ final class BadEscapeIsLiteralTest extends TestCase
     }
 
     /**
+     * From PCRE2 10.45 a "\x" with no hex digit is refused as PCRE2 reads
+     * it, where the releases before read it as NUL: PHP 7.4 linked against
+     * such a PCRE2 reads it as the letter "x", and refuses it with "X" (PHP
+     * 7.4.33 linked against PCRE2 10.49).
+     */
+    #[Test]
+    #[DataProvider('provideBareHexEscapes')]
+    public function test_php_7_4_reads_a_bare_x_its_pcre2_refuses_as_the_letter(string $pattern, string $subject, string $match, int $offset): void
+    {
+        foreach (['10.45', '10.49'] as $release) {
+            $parser = self::parser('7.4', $release);
+            $validation = $parser->validate($pattern);
+            $this->assertTrue($validation->isValid, \sprintf('%s on PCRE2 %s: %s', $pattern, $release, $validation->error ?? ''));
+
+            $printed = $parser->parse($pattern)->accept(new PatternPrinter());
+            $this->assertSame(1 === preg_match($printed, $subject, $found) ? $found[0] : null, $match, \sprintf('%s printed as %s on PCRE2 %s', $pattern, $printed, $release));
+
+            $refusal = $parser->validate($pattern.'X');
+            $this->assertFalse($refusal->isValid, \sprintf('%sX on PCRE2 %s', $pattern, $release));
+            $this->assertSame($offset, $refusal->offset, \sprintf('%sX on PCRE2 %s', $pattern, $release));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, match: string, offset: int}>
+     */
+    public static function provideBareHexEscapes(): iterable
+    {
+        yield 'x alone' => ['pattern' => '/\x/', 'subject' => 'x', 'match' => 'x', 'offset' => 2];
+        yield 'x and a letter past the hex digits' => ['pattern' => '/\xg/', 'subject' => 'xg', 'match' => 'xg', 'offset' => 2];
+        yield 'x repeated' => ['pattern' => '/\x+/', 'subject' => 'xxx', 'match' => 'xxx', 'offset' => 2];
+        yield 'x under u' => ['pattern' => '/\x/u', 'subject' => 'x', 'match' => 'x', 'offset' => 2];
+        yield 'x in a lookbehind' => ['pattern' => '/(?<=\x)a/', 'subject' => 'xa', 'match' => 'a', 'offset' => 6];
+        yield 'x in a class' => ['pattern' => '/[\x]/', 'subject' => 'x', 'match' => 'x', 'offset' => 3];
+        yield 'x ending a range' => ['pattern' => '/[a-\x]/', 'subject' => 'w', 'match' => 'w', 'offset' => 5];
+        yield 'x starting a range' => ['pattern' => '/[\x-z]/', 'subject' => 'y', 'match' => 'y', 'offset' => 3];
+    }
+
+    /**
+     * The letter "x" bounds a range as itself, not as NUL.
+     */
+    #[Test]
+    #[DataProvider('provideRangesABareXReverses')]
+    public function test_php_7_4_refuses_a_range_a_bare_x_its_pcre2_refuses_reverses(string $pattern, int $offset): void
+    {
+        $validation = self::parser('7.4', '10.49')->validate($pattern);
+
+        $this->assertFalse($validation->isValid, $pattern);
+        $this->assertSame($offset, $validation->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideRangesABareXReverses(): iterable
+    {
+        yield 'x starting a range down to a' => ['pattern' => '/[\x-a]/', 'offset' => 5];
+        yield 'y down to x' => ['pattern' => '/[y-\x]/', 'offset' => 5];
+        yield 'x starting a range down to a, in a class left open' => ['pattern' => '/[\x-a/', 'offset' => 5];
+    }
+
+    /**
      * PCRE2 10.32 also reads as a literal the escapes it refuses in a class
      * once it has read them: an assertion, "\N", "\k", and a class escape
      * ending a range. 10.33 refuses them, the option set or not (pcre2test

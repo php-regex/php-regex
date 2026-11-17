@@ -141,10 +141,11 @@ final class ClassRanges
     private static function rangeBound(PatternText $text, Token $token, bool $start): ?int
     {
         // "\x" with no digit is NUL where PCRE takes it (up to 10.44). A
-        // "\x{" PCRE2 refuses, which PHP 7.3 and 7.4 read as the letter x
-        // then text, stays the x.
+        // "\x" or "\x{" PCRE2 refuses, which PHP 7.3 and 7.4 read as the
+        // letter x then text, stays the x.
         if (TokenType::LiteralEscaped === $token->type && 2 === $token->end() - $token->position && '\\x' === substr($text->pattern, $token->position, 2)
-            && '{' !== ($text->pattern[$token->end()] ?? '')) {
+            && '{' !== ($text->pattern[$token->end()] ?? '')
+            && !($text->badEscapeIsLiteral && BadEscape::at($text->pattern, $token->position, true, $text->utf, $text->syntax->target))) {
             return 0;
         }
 

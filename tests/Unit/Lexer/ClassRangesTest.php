@@ -90,6 +90,24 @@ final class ClassRangesTest extends TestCase
         $this->assertFalse((new ClassRanges())->startsRangeEnd($plain, $tokens, 3, 0));
     }
 
+    /**
+     * A "\x" with no hex digit is NUL up to PCRE2 10.44, and refused from
+     * 10.45, which PHP 7.4 linked against such a release reads as the letter
+     * x: a bound of a range as itself (PHP 7.4.33 linked against PCRE2 10.49
+     * refuses "/[\x-a/" as a range out of order at offset 5).
+     */
+    #[Test]
+    public function test_a_bare_x_php_7_4_reads_as_its_letter_bounds_a_range_as_x(): void
+    {
+        $linked = new PcreTarget(70400, '10.49');
+        $end = ClassRanges::reversedRangeEnd(new PatternText(new TargetSyntax($linked), '[\x-a]', '', '[\x-a]', 0), (new Lexer($linked))->tokenize('[\x-a]')->getTokens(), 0);
+        $this->assertNotNull($end);
+        $this->assertSame(5, $linked->faultOffset($end));
+
+        $bundled = PcreTarget::bundledWith(70400);
+        $this->assertNull(ClassRanges::reversedRangeEnd(new PatternText(new TargetSyntax($bundled), '[\x-a]', '', '[\x-a]', 0), (new Lexer($bundled))->tokenize('[\x-a]')->getTokens(), 0));
+    }
+
     #[Test]
     public function test_incremental_ranges_reset_between_classes_and_tokenizing_calls(): void
     {
