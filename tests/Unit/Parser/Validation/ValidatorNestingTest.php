@@ -76,6 +76,60 @@ final class ValidatorNestingTest extends TestCase
     }
 
     /**
+     * PCRE reads an opener whole, a condition written in it or an option
+     * setting included, and refuses what is wrong in it before it counts
+     * the level: an assertion or a callout that decides a conditional is
+     * an item of its own, read after. A verb nests no level: one the
+     * pattern ends in is refused for itself. Each row is what preg_match()
+     * reports on PHP 8.4.27 with PCRE2 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideOpenersReadBeforeTheLevelIsCounted')]
+    public function test_the_level_past_the_limit_is_refused_after_what_pcre_reads_with_its_opener(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), 'Oracle: the engine refuses the pattern.');
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset]);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideOpenersReadBeforeTheLevelIsCounted(): iterable
+    {
+        $open = str_repeat('(', 250);
+        $close = str_repeat(')', 250);
+
+        yield 'condition on group zero' => ['pattern' => '/'.$open.'(?(0)a)'.$close.'/', 'code' => ErrorCode::BackrefZero, 'offset' => 254];
+        yield 'malformed VERSION condition' => ['pattern' => '/'.$open.'(?(VERSION=1x)a)'.$close.'/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 263];
+        yield 'hyphen after a caret in an option setting' => ['pattern' => '/'.$open.'(?^-i:a)'.$close.'/', 'code' => ErrorCode::GroupOptionHyphen, 'offset' => 254];
+        yield 'hyphen alone after a caret' => ['pattern' => '/'.$open.'(?^-:a)'.$close.'/', 'code' => ErrorCode::GroupOptionHyphen, 'offset' => 254];
+        yield 'callout deciding a conditional alone' => ['pattern' => '/'.$open.'(?(?C1)x)'.$close.'/', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 252];
+        yield 'string callout deciding a conditional alone' => ['pattern' => '/'.$open.'(?(?C"x")x)'.$close.'/', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 252];
+        yield 'lookahead deciding a conditional' => ['pattern' => '/'.$open.'(?(?=b)x)'.$close.'/', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 252];
+        yield 'callout and lookbehind deciding a conditional' => ['pattern' => '/'.$open.'(?(?C1)(?<=b)x)'.$close.'/', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 252];
+        yield 'mark the pattern ends in' => ['pattern' => '/'.$open.'(*:a/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 254];
+        yield 'spelled mark the pattern ends in' => ['pattern' => '/'.$open.'(*MARK:a/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 258];
+        yield 'verb with a name the pattern ends in' => ['pattern' => '/'.$open.'(*THEN:a/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 258];
+        yield 'unknown verb the pattern ends in' => ['pattern' => '/'.$open.'(*a/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 253];
+        // The parentheses of a condition, "(1)", open no level: the group
+        // the conditional holds is the level past the limit.
+        $belowTheConditional = '/()'.str_repeat('(', 249);
+        yield 'mark the pattern ends in, in a conditional' => ['pattern' => $belowTheConditional.'(?(1)(*:a(/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 261];
+        yield 'unknown character after "(?", in a conditional' => ['pattern' => $belowTheConditional.'(?(1)(?%/', 'code' => ErrorCode::GroupSyntax, 'offset' => 259];
+        yield 'name expected, in a DEFINE group' => ['pattern' => $belowTheConditional.'(?(DEFINE)(?P</', 'code' => ErrorCode::GroupNameExpected, 'offset' => 265];
+        yield 'name expected, in a conditional on a name' => ['pattern' => $belowTheConditional.'(?(<n>)(?P</', 'code' => ErrorCode::GroupNameExpected, 'offset' => 262];
+        // Nor do those of an option setting, which opens nothing.
+        yield 'unknown character after "(?", after an option setting' => ['pattern' => '/'.$open.'(?i)(?%/', 'code' => ErrorCode::GroupSyntax, 'offset' => 257];
+        yield 'unknown character after "(?", after an empty option setting' => ['pattern' => '/'.$open.'(?)(?%/', 'code' => ErrorCode::GroupSyntax, 'offset' => 256];
+        yield 'hyphen after a caret, after a caret setting' => ['pattern' => '/'.$open.'(?^)(?^-:a)/', 'code' => ErrorCode::GroupOptionHyphen, 'offset' => 258];
+        yield 'mark the pattern ends in, after an option setting' => ['pattern' => '/'.$open.'(?i)(*:a/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 258];
+        yield 'name expected, after an option setting that turns one off' => ['pattern' => '/'.$open.'(?i-x)(?P</', 'code' => ErrorCode::GroupNameExpected, 'offset' => 260];
+    }
+
+    /**
      * Past the parser's own limit on nesting, 512 levels by default, PCRE
      * has refused the level past 250, or an error before it, already: that
      * error is the verdict, not the limit. Each row is what preg_match()

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Validation;
 
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
@@ -21,6 +22,7 @@ use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
@@ -138,7 +140,7 @@ final class FirstErrorLocator
             $error instanceof LexerException ? $this->firstErrorInClassLeftOpen($read, $pattern, $flags, $delimiter, $error) : null,
             null !== $swallowing ? $this->firstErrorBeforeAnUnclosedName($swallowing, $pattern, $flags, $delimiter) : null,
             $this->firstExtendedClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
-            $this->firstVersionConditionErrorBefore($read, $pattern, $flags, $delimiter, $limit),
+            $this->firstOpenerConditionErrorBefore($read, $pattern, $flags, $delimiter, $limit),
         ];
         foreach ($laterErrors as $laterError) {
             if (null !== $laterError && (null === $earlier || ($laterError->position ?? $position) < ($earlier->position ?? $position))) {
@@ -405,7 +407,9 @@ final class FirstErrorLocator
      * no run: closed there, it would read as an option setting where the
      * opener goes on, or is refused for itself. None where no level passes
      * the limit, or where its opener ends at or past $position: that level
-     * is refused past its opener, too late to come first.
+     * is refused past its opener, too late to come first. A conditional an
+     * assertion or a callout decides is one run: the tokens before it and
+     * a group opening at its "(?".
      *
      * @param list<Token> $tokens
      *
@@ -417,7 +421,12 @@ final class FirstErrorLocator
         $opened = [];
         $groups = [];
         $opener = null;
+        $noLevel = self::parenthesesOfNoLevel($tokens);
         foreach ($tokens as $index => $token) {
+            if (isset($noLevel[$index])) {
+                continue;
+            }
+
             if (TokenType::GroupClose() === $token->type) {
                 if (true === array_pop($opened)) {
                     array_pop($groups);
@@ -426,7 +435,7 @@ final class FirstErrorLocator
                 continue;
             }
 
-            if (!self::opensGroup($token)) {
+            if (!self::opensLevel($tokens, $index)) {
                 continue;
             }
 
@@ -448,12 +457,32 @@ final class FirstErrorLocator
             return;
         }
 
+        // A conditional an assertion or a callout decides, "(?(?=" or
+        // "(?(?C1)": PCRE counts its level on the "(" of that item, before it
+        // reads anything there, as it would a group's opening at its "(?".
+        $condition = $tokens[$opener + 1] ?? null;
+        yield from TokenType::GroupModifierOpen() === $tokens[$opener]->type && null !== $condition && $condition->position === $tokens[$opener]->end()
+            && \in_array($condition->type, [TokenType::Callout(), TokenType::GroupModifierOpen(), TokenType::PcreVerb(), TokenType::CommentOpen()], true)
+            ? [array_merge(\array_slice($tokens, 0, $opener), [new Token(TokenType::GroupOpen(), '(', $tokens[$opener]->position, $tokens[$opener]->sourceLength)])]
+            : self::cutsPastTheOpener($tokens, $opener);
+    }
+
+    /**
+     * The runs of tokens past the opener at $opener, longest first, as
+     * cutsAtTheLevelPastTheNestingLimit() gives them.
+     *
+     * @param list<Token> $tokens
+     *
+     * @return iterable<list<Token>>
+     */
+    private static function cutsPastTheOpener(array $tokens, int $opener): iterable
+    {
         // Where the run of option letters after a "(?" ends.
         $options = $opener;
         if (TokenType::GroupModifierOpen() === $tokens[$opener]->type) {
             do {
                 $next = $tokens[++$options] ?? null;
-            } while (null !== $next && TokenType::Literal() === $next->type && 1 === \strlen($next->value) && false !== strpos(InlineFlags::LETTERS.'-^', $next->value));
+            } while (null !== $next && self::isOptionLetter($next));
         }
 
         for ($cut = min(\count($tokens), $opener + 1 + self::HEADER_TOKENS); $cut > $options; --$cut) {
@@ -523,8 +552,13 @@ final class FirstErrorLocator
     private static function openerPastTheNestingLimit(array $tokens): ?Token
     {
         $open = [];
-        foreach ($tokens as $token) {
-            if (self::opensGroup($token)) {
+        $noLevel = self::parenthesesOfNoLevel($tokens);
+        foreach ($tokens as $index => $token) {
+            if (isset($noLevel[$index])) {
+                continue;
+            }
+
+            if (self::opensLevel($tokens, $index)) {
                 $open[] = $token;
                 if (\count($open) > Validator::MAX_GROUP_NESTING) {
                     return $token;
@@ -535,6 +569,73 @@ final class FirstErrorLocator
         }
 
         return null;
+    }
+
+    /**
+     * The indexes of the parentheses that open no level, which the lexer
+     * reads as a group: those around the condition of a conditional, the
+     * "(1)" of "(?(1)", as PCRE counts the conditional as one level, and
+     * those of an option setting, "(?i)", which opens nothing.
+     *
+     * @param list<Token> $tokens
+     *
+     * @return array<int, true>
+     */
+    private static function parenthesesOfNoLevel(array $tokens): array
+    {
+        $parentheses = [];
+        $open = null;
+        $setting = false;
+        foreach ($tokens as $index => $token) {
+            if (null !== $open) {
+                if (TokenType::GroupClose() === $token->type) {
+                    $parentheses[$open] = true;
+                    $parentheses[$index] = true;
+                    $open = null;
+
+                    continue;
+                }
+
+                if (!self::opensGroup($token) && (!$setting || self::isOptionLetter($token))) {
+                    continue;
+                }
+
+                $open = null;
+            }
+
+            $before = $tokens[$index - 1] ?? null;
+            $setting = TokenType::GroupModifierOpen() === $token->type;
+            if ($setting || (TokenType::GroupOpen() === $token->type && TokenType::GroupModifierOpen() === (($nullsafeVariable2 = $before) ? $nullsafeVariable2->type : null) && $before->end() === $token->position)) {
+                $open = $index;
+            }
+        }
+
+        return $parentheses;
+    }
+
+    /**
+     * Whether the token is a letter of an option setting, "-" and "^"
+     * included; the lexer reads the "^" as an anchor.
+     */
+    private static function isOptionLetter(Token $token): bool
+    {
+        return \in_array($token->type, [TokenType::Literal(), TokenType::Anchor()], true) && 1 === \strlen($token->value) && false !== strpos(InlineFlags::LETTERS.'-^', $token->value);
+    }
+
+    /**
+     * Whether the token at $index opens a group a ")" closes, a verb no ")"
+     * closes aside: the lexer reads it as "(" then "*", and PCRE counts no
+     * level for a verb.
+     *
+     * @param list<Token> $tokens
+     */
+    private static function opensLevel(array $tokens, int $index): bool
+    {
+        $token = $tokens[$index];
+        $star = $tokens[$index + 1] ?? null;
+
+        return self::opensGroup($token)
+            && !(TokenType::GroupOpen() === $token->type && null !== $star && TokenType::Quantifier() === $star->type && $star->position === $token->end() && '*' === $star->value[0]);
     }
 
     /**
@@ -768,13 +869,14 @@ final class FirstErrorLocator
     }
 
     /**
-     * The first error in a version condition, "(?(VERSION>=10.4)", the tokens
-     * close before $position, where parsing failed: PCRE judges the version
-     * as it reads it. Each such condition is parsed alone and judged.
+     * The first error in a condition PCRE judges as it reads it, a version,
+     * "(?(VERSION>=10.4)", or group zero, "(?(0)", that the tokens close
+     * before $position, where parsing failed. Each such condition is parsed
+     * alone and judged.
      *
      * @param list<Token> $tokens
      */
-    private function firstVersionConditionErrorBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?SemanticErrorException
+    private function firstOpenerConditionErrorBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?SemanticErrorException
     {
         // Where the first ")" at or after each token stands, read once from
         // the end: a run of conditions that no ")" closes is not read to the
@@ -788,8 +890,12 @@ final class FirstErrorLocator
 
         foreach ($tokens as $index => $open) {
             $group = $tokens[$index + 1] ?? null;
-            if (TokenType::GroupModifierOpen() !== $open->type || null === $group || TokenType::GroupOpen() !== $group->type
-                || $group->position !== $open->end() || 0 !== strncmp((string) substr($pattern, $group->end(), 7), 'VERSION', strlen('VERSION'))) {
+            if (TokenType::GroupModifierOpen() !== $open->type || null === $group || TokenType::GroupOpen() !== $group->type || $group->position !== $open->end()) {
+                continue;
+            }
+
+            $zero = 1 === LibraryPcre::match('/\\G[+-]?0++\\)/', $pattern, $matches, 0, $group->end());
+            if (!$zero && 0 !== strncmp((string) substr($pattern, $group->end(), 7), 'VERSION', strlen('VERSION'))) {
                 continue;
             }
 
@@ -811,7 +917,7 @@ final class FirstErrorLocator
                 );
                 // A condition the parser reads as a name is looked up once the
                 // whole pattern is read.
-                if (!$ast->pattern instanceof ConditionalNode || !$ast->pattern->condition instanceof VersionConditionNode) {
+                if (!$ast->pattern instanceof ConditionalNode || !($ast->pattern->condition instanceof VersionConditionNode || ($zero && $ast->pattern->condition instanceof BackrefNode))) {
                     continue;
                 }
 

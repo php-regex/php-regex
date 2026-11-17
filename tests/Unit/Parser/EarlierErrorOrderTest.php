@@ -105,6 +105,12 @@ final class EarlierErrorOrderTest extends TestCase
         // PCRE: "missing closing parenthesis": "(?(VERSION)" names the group
         // called VERSION, no version is judged before the group left open.
         yield 'condition on a group named VERSION before a group left open' => ['pattern' => '/(?<VERSION>a)(?(VERSION)b)(/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 27];
+        // PCRE: "reference to non-existent subpattern": group zero is refused
+        // as the condition is read, before the body that is left open.
+        yield 'condition on group zero the pattern ends in' => ['pattern' => '/(?(0)/', 'code' => ErrorCode::BackrefZero, 'offset' => 4];
+        yield 'condition on group zero after text the pattern ends in' => ['pattern' => '/a(?(0)/', 'code' => ErrorCode::BackrefZero, 'offset' => 5];
+        yield 'condition on group zero written with two zeros' => ['pattern' => '/(?(00)/', 'code' => ErrorCode::BackrefZero, 'offset' => 5];
+        yield 'condition on group zero before a class left open' => ['pattern' => '/(?(0)[/', 'code' => ErrorCode::BackrefZero, 'offset' => 4];
         // PCRE: "(*alpha_assertion) not recognized".
         yield 'unknown assertion before a group left open' => ['pattern' => '/(*foo:a)(/', 'code' => ErrorCode::VerbInvalid, 'offset' => 5];
         yield 'unknown assertion before a stray parenthesis' => ['pattern' => '/(*foo:a)x)/', 'code' => ErrorCode::VerbInvalid, 'offset' => 5];

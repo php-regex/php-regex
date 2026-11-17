@@ -762,11 +762,13 @@ final class Validator extends AbstractNodeVisitor
     {
         $this->referenceAt = $node->startPosition + $this->positionOffset;
 
-        // PCRE counts the conditional as it opens it: past a reference, or
-        // on the assertion that decides it.
-        $this->enterNesting($node->condition instanceof GroupNode || $this->isCalloutThenAssertion($node->condition)
-            ? $node->condition->getStartPosition()
-            : $node->yes->getStartPosition());
+        // PCRE counts the conditional as it opens it: on the assertion that
+        // decides it, an item read after, or past a condition written in
+        // the opener, which it judges first.
+        $assertion = $node->condition instanceof GroupNode || $this->isCalloutThenAssertion($node->condition);
+        if ($assertion) {
+            $this->enterNesting($node->condition->getStartPosition());
+        }
 
         // Check if the condition is a valid *type* of condition first
         // (e.g., a backreference, a subroutine call, or a lookaround)
@@ -806,6 +808,10 @@ final class Validator extends AbstractNodeVisitor
                 $node->condition->getStartPosition(),
                 ErrorCode::ConditionalInvalid(),
             );
+        }
+
+        if (!$assertion) {
+            $this->enterNesting($node->yes->getStartPosition());
         }
 
         $this->conditionals->branches($node);
