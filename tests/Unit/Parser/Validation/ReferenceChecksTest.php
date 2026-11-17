@@ -24,6 +24,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -65,14 +66,27 @@ final class ReferenceChecksTest extends TestCase
      * PCRE keeps one offset for each group a reference names by a number
      * below 10, that of the first such reference, and reports a missing
      * group there, whichever reference it meets first: one in a lookbehind,
-     * which it measures before it compiles the rest. A name, a call, a
-     * condition, or a reference to another group keeps its own offset. Each
-     * row is the offset preg_match() reports on PHP 8.4.27 with PCRE2 10.49.
+     * which it measures before it compiles the rest. The first reference is
+     * the first written, wherever the measure meets one: in a lookahead or a
+     * DEFINE group of the lookbehind, after an "(*ACCEPT)" there, or after
+     * the lookbehind, in a group it calls. A name, a call, a condition, or a
+     * reference to another group keeps its own offset. Each row is the
+     * offset preg_match() reports on PHP 8.4.27 with PCRE2 10.49.
      */
     #[Test]
     #[DataProvider('provideReferencesToTheSameMissingGroup')]
     public function test_a_missing_group_below_10_is_reported_at_its_first_reference(string $pattern, int $offset, ErrorCode $code): void
     {
+        // PHP first: it refuses the pattern at the row's offset where it
+        // links PCRE2 10.49, and where the library judging the running PHP
+        // says on any release.
+        $reported = PhpErrorOffset::of($pattern);
+        $this->assertNotNull($reported, 'Oracle: PHP refuses '.$pattern);
+        if ('10.49' === PcreTarget::runtime()->pcreVersion) {
+            $this->assertSame($offset, $reported, 'Oracle on PCRE2 10.49: '.$pattern);
+        }
+        $this->assertSame($reported, RegexParser::create(['cache' => null, 'runtime_pcre_validation' => false])->validate($pattern)->offset, \sprintf('%s on PCRE2 %s', $pattern, \PCRE_VERSION));
+
         $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
 
         $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], $pattern);
@@ -102,6 +116,19 @@ final class ReferenceChecksTest extends TestCase
         yield 'named reference first' => ['pattern' => '/\k<n>(?<=\k<n>)/', 'offset' => 12, 'code' => ErrorCode::BackrefMissingNamedGroup];
         yield 'condition first' => ['pattern' => '/(?(1)a)(?<=\1)/', 'offset' => 13, 'code' => ErrorCode::BackrefMissingGroup];
         yield 'call first' => ['pattern' => '/(?1)(?<=\1)/', 'offset' => 10, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in a lookahead of the lookbehind, then one the measure meets' => ['pattern' => '/(?<=(?=\1)\1)/', 'offset' => 9, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in a negative lookahead of the lookbehind, then one the measure meets' => ['pattern' => '/(?<=(?!\1)\1)/', 'offset' => 9, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in a lookahead of one branch, then one in another' => ['pattern' => '/(?<=(?=\1)a|\1)/', 'offset' => 9, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'braced reference in a lookahead of the lookbehind, then one the measure meets' => ['pattern' => '/(?<=a(?=\g{1})\1)/', 'offset' => 13, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in a lookahead of the lookbehind, then a braced one' => ['pattern' => '/(?<=(?=\1)\g{1})/', 'offset' => 9, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference after an (*ACCEPT) in the lookbehind, then one in another branch' => ['pattern' => '/(?<=(*ACCEPT)\1|\1)/', 'offset' => 15, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in a DEFINE group of the lookbehind, then one the measure meets' => ['pattern' => '/(?<=(?(DEFINE)\1)\1)/', 'offset' => 16, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in a lookahead of a nested lookbehind, then one the measure meets' => ['pattern' => '/(?<=(?<=(?=\1))\1)/', 'offset' => 13, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in a lookahead of the lookbehind, then one in a nested lookbehind' => ['pattern' => '/(?<=(?=\1)(?<=\1))/', 'offset' => 9, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in a lookahead of a lookbehind in a payload' => ['pattern' => '/(*pla:(?<=(?=\1)\1))/', 'offset' => 15, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference after the lookbehind, then one in the group it calls' => ['pattern' => '/(?<=(?1))\2(\2)/', 'offset' => 11, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in a lookahead after the lookbehind, then one in the group it calls' => ['pattern' => '/(?<=(?1))(?=\2)(\2)/', 'offset' => 14, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in the group the lookbehind calls, then one after it' => ['pattern' => '/(?<=(?1))(\2)\2/', 'offset' => 12, 'code' => ErrorCode::BackrefMissingGroup];
     }
 
     /**
@@ -116,6 +143,10 @@ final class ReferenceChecksTest extends TestCase
         $lookbehind = new GroupNode(new BackrefNode('\\1', 4, 6), GroupType::LookbehindPositive, null, null, 0, 7);
         $lookahead = new GroupNode($lookbehind, GroupType::LookaheadPositive, null, null, 2, 16);
         $tree = new RegexNode(new SequenceNode([new BackrefNode('\\1', 0, 2), $lookahead], 0, 16), '', '/', 0, 16, '\\1(*pla:(?<=\\1))');
+
+        if ('10.49' === PcreTarget::runtime()->pcreVersion) {
+            $this->assertSame(2, PhpErrorOffset::of('/\\1(*pla:(?<=\\1))/'), 'Oracle on PCRE2 10.49.');
+        }
 
         try {
             $tree->accept(new Validator(pattern: '/\\1(*pla:(?<=\\1))/', target: new PcreTarget(80400, '10.49')));

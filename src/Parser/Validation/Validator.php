@@ -258,6 +258,14 @@ final class Validator extends AbstractNodeVisitor
      */
     private array $firstReferences = [];
 
+    /**
+     * The group, numbered below 10, of the reference the measure of a
+     * lookbehind refused, kept in $lateErrors[0]: PCRE reports it where the
+     * first reference to that group is written, which the walk may read
+     * after the measure.
+     */
+    private ?int $lookbehindReferenceGroup = null;
+
     private readonly PcreTarget $target;
 
     /**
@@ -938,6 +946,7 @@ final class Validator extends AbstractNodeVisitor
         );
         $groups = GroupIndex::of($node->pattern);
         $this->firstReferences = [];
+        $this->lookbehindReferenceGroup = null;
         $this->references = new ReferenceChecks($groups, $groups->numbering(), $this->target, $this->keepMissingReference(...), $this->pattern, $node->source, 0, $this->unicodeMode, $this->firstReference(...));
         $this->verbs = VerbChecks::forPattern($this->target, $this->pattern, $node->source, $this->unicodeMode);
         $this->classes = new ClassChecks($this->target, $this->pattern, $node->source);
@@ -956,6 +965,28 @@ final class Validator extends AbstractNodeVisitor
             $node->pattern->accept($this);
         } finally {
             $this->walkingPattern = false;
+        }
+
+        $this->placeMeasuredReference();
+    }
+
+    /**
+     * The measure of a lookbehind meets a reference before those it skips,
+     * in a lookahead or a DEFINE group of the lookbehind, after an
+     * "(*ACCEPT)" there, and those past it in a group it calls: PCRE reports
+     * a missing group where the first reference to it is written, which the
+     * walk has read by now.
+     */
+    private function placeMeasuredReference(): void
+    {
+        $error = $this->lateErrors[0] ?? null;
+        if (null === $error || null === $this->lookbehindReferenceGroup) {
+            return;
+        }
+
+        $first = $this->firstReferences[$this->lookbehindReferenceGroup] ?? $error->position;
+        if ($first !== $error->position) {
+            $this->lateErrors[0] = new SemanticErrorException($error->getMessage(), $error->errorCode, $first, $this->pattern, hint: $error->hint);
         }
     }
 
@@ -1203,13 +1234,20 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * Where the first back reference to $group stands, this one at
-     * $position if it is the first the walk meets: the walk meets them in
-     * the order PCRE reads them, before any lookbehind measured past them.
+     * Where the first back reference to $group stands that the walk has
+     * met, this one at $position included: the walk meets them in the order
+     * PCRE reads them, but the measure of a lookbehind may meet one before
+     * others written earlier.
      */
     private function firstReference(int $group, int $position): int
     {
-        return $this->firstReferences[$group] ??= $position;
+        // The measure refuses the reference at once: its error is the one
+        // kept for the lookbehinds unless one is kept already.
+        if ($this->measuringLookbehind && !isset($this->lateErrors[0])) {
+            $this->lookbehindReferenceGroup = $group;
+        }
+
+        return $this->firstReferences[$group] = min($this->firstReferences[$group] ?? $position, $position);
     }
 
     private function raiseSemanticError(string $message, int $position, ErrorCode $code, ?string $hint = null): never
