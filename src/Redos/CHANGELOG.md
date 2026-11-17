@@ -28,6 +28,11 @@ CHANGELOG
    `/^(?:(?:a+)+b(*COMMIT))+/`, which were safe, are critical, and so is
    `/^(?>(\w+\s?)+:)/`: an item that may match nothing keeps no two
    iterations of a loop apart.
+ * A `(*SKIP:NAME)` with no `(*MARK:NAME)` written before it, which PCRE
+   ignores, and a verb inside a lookaround or an atomic group, which acts
+   there alone, no longer stop the loop around them in the heuristics:
+   `/(?:\w+\s?(*SKIP:n))+:/` and `/^(?:\w+\s?(?=(*COMMIT)))+:/`, which
+   were safe, are critical.
  * The heuristics read a subroutine call in a loop as the group it calls,
    as PCRE runs it at each iteration: `/^(?:(?1))+(a|a)$/` and
    `/^(?:(?&w)\s?)+$(?(DEFINE)(?<w>[a-z]+))/`, which were medium, are

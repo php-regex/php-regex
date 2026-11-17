@@ -244,6 +244,70 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * A verb that ends an iteration cuts backtracking only where the engine
+     * honours it: "(*SKIP:NAME)" with no "(*MARK:NAME)" before it is
+     * ignored, as is a mark of another name, a mark cuts nothing, and a
+     * verb inside a lookaround or an atomic group acts only there. The
+     * nested loop stays critical, and the engine agrees: 765 -> 12 285 ->
+     * 196 605 steps on 8 -> 12 -> 16 letters then "!:" (start
+     * optimizations off, the JIT counting).
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideVerbsThatCutNothing(): iterable
+    {
+        yield 'skip to a name no mark sets' => ['pattern' => '/^(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a name another mark does not set' => ['pattern' => '/^(?:(*MARK:m)\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a mark set after it' => ['pattern' => '/^(?:\w+\s?(*SKIP:n))+(*MARK:n):/'];
+        yield 'commit in a lookahead' => ['pattern' => '/^(?:\w+\s?(?=(*COMMIT)))+:/'];
+        yield 'commit in an atomic group' => ['pattern' => '/^(?:\w+\s?(?>(*COMMIT)))+:/'];
+        yield 'prune in a lookbehind' => ['pattern' => '/^(?:\w+\s?(?<=(*PRUNE)))+:/'];
+        yield 'mark' => ['pattern' => '/^(?:\w+\s?(*MARK:n))+:/'];
+    }
+
+    #[Test]
+    #[DataProvider('provideVerbsThatCutNothing')]
+    public function test_a_verb_that_cuts_nothing_leaves_a_nested_loop_critical(string $pattern): void
+    {
+        if (true === \constant('PCRE_JIT_SUPPORT')) {
+            $unoptimized = $pattern[0].'(*NO_START_OPT)'.substr($pattern, 1);
+            $short = self::steps($unoptimized, str_repeat('a', 8).'!:', true);
+            $long = self::steps($unoptimized, str_repeat('a', 12).'!:', true);
+            $this->assertGreaterThan(8 * $short, $long, 'Oracle: the engine goes exponential.');
+        }
+
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * A skip to a mark set before it, like a bare "(*COMMIT)", ends the
+     * attempt the first time the engine backtracks onto it: 3 steps
+     * whatever the letters, and the loop it ends is safe.
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideVerbsThatCut(): iterable
+    {
+        yield 'skip to a mark set in the iteration' => ['pattern' => '/^(?:(*MARK:n)\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a mark set as (*:NAME) before the loop' => ['pattern' => '/^(*:n)(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'commit in a group' => ['pattern' => '/^(?:\w+\s?(?:(*COMMIT)))+:/'];
+    }
+
+    #[Test]
+    #[DataProvider('provideVerbsThatCut')]
+    public function test_a_verb_that_cuts_backtracking_keeps_a_nested_loop_safe(string $pattern): void
+    {
+        if (true === \constant('PCRE_JIT_SUPPORT')) {
+            $unoptimized = $pattern[0].'(*NO_START_OPT)'.substr($pattern, 1);
+            $short = self::steps($unoptimized, str_repeat('a', 8).'!:', true);
+            $long = self::steps($unoptimized, str_repeat('a', 16).'!:', true);
+            $this->assertSame($short, $long, 'Oracle: the engine ends the attempt at once.');
+        }
+
+        $this->assertSame(RedosSeverity::Safe, Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
      * A nested loop that ends the body is matched the first way through,
      * and nothing in the body can fail after it: the engine takes as many
      * steps on 16 letters as on 8 (5, 6, 4, 6 and 6 steps), and the heuristic
@@ -357,11 +421,13 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
-     * The smallest backtrack limit under which the match attempt ends.
+     * The smallest backtrack limit under which the match attempt ends, the
+     * JIT on when asked.
      */
-    private static function steps(string $pattern, string $subject): int
+    private static function steps(string $pattern, string $subject, bool $jit = false): int
     {
         $saved = (string) ini_get('pcre.backtrack_limit');
+        $savedJit = $jit ? ini_set('pcre.jit', '1') : false;
 
         try {
             $low = 1;
@@ -379,6 +445,9 @@ final class RedosHeuristicShapesTest extends TestCase
             return $low;
         } finally {
             ini_set('pcre.backtrack_limit', $saved);
+            if (false !== $savedJit) {
+                ini_set('pcre.jit', $savedJit);
+            }
         }
     }
 }

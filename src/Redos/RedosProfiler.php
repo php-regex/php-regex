@@ -140,6 +140,14 @@ final class RedosProfiler extends AbstractNodeVisitor
     private array $callsReadThrough = [];
 
     /**
+     * Where the first mark of each name is written, by name: a skip to a
+     * name cuts backtracking only past it.
+     *
+     * @var array<string, int>
+     */
+    private array $markPositions = [];
+
+    /**
      * Whether the pattern holds options that may change what a character
      * set reads, the i modifier or an option setting: the sets of the
      * analyzer do not follow them.
@@ -228,6 +236,8 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->groupsBeforeCall = [];
         $this->indexGroups($node->pattern, 0);
         $this->callsReadThrough = [];
+        $this->markPositions = [];
+        $this->indexMarks($node->pattern);
         $this->setsMayChange = str_contains($node->flags, 'i') || self::holdsOptionSetting($node->pattern);
 
         // A recursion the attempt tries first, before it reads a character,
@@ -976,13 +986,35 @@ final class RedosProfiler extends AbstractNodeVisitor
             && \in_array(Ascii::upper(explode(':', $node->verb, 2)[0]), ['COMMIT', 'PRUNE', 'SKIP'], true);
     }
 
+    /**
+     * Whether the engine cuts backtracking at the verb: "(*SKIP:NAME)" only
+     * past a "(*MARK:NAME)" written before it, being ignored otherwise.
+     */
+    private function cutsBacktracking(PcreVerbNode $verb): bool
+    {
+        if (!$this->isBacktrackingControl($verb)) {
+            return false;
+        }
+
+        if ('SKIP' !== Ascii::upper($verb->name) || null === $verb->argument) {
+            return true;
+        }
+
+        return ($this->markPositions[$verb->argument] ?? \PHP_INT_MAX) < $verb->getStartPosition();
+    }
+
     private function hasTrailingBacktrackingControl(NodeInterface $node): bool
     {
         $verbNode = $this->extractTrailingVerb($node);
 
-        return null !== $verbNode && $this->isBacktrackingControl($verbNode);
+        return null !== $verbNode && $this->cutsBacktracking($verbNode);
     }
 
+    /**
+     * The verb that ends the node, through the groups that only wrap what
+     * they hold: a verb inside a lookaround or an atomic group acts there
+     * alone, that group never backtracked into once it has matched.
+     */
     private function extractTrailingVerb(NodeInterface $node): ?PcreVerbNode
     {
         if ($node instanceof PcreVerbNode) {
@@ -995,11 +1027,25 @@ final class RedosProfiler extends AbstractNodeVisitor
             return $this->extractTrailingVerb($last);
         }
 
-        if ($node instanceof GroupNode) {
+        if ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::BranchReset], true)) {
             return $this->extractTrailingVerb($node->child);
         }
 
         return null;
+    }
+
+    /**
+     * Records where the first mark of each name is written.
+     */
+    private function indexMarks(NodeInterface $node): void
+    {
+        if ($node instanceof PcreVerbNode && 'MARK' === Ascii::upper($node->name) && null !== $node->argument) {
+            $this->markPositions[$node->argument] ??= $node->getStartPosition();
+        }
+
+        foreach ($node->getChildren() as $child) {
+            $this->indexMarks($child);
+        }
     }
 
     private function hasMutuallyExclusiveBoundary(?NodeInterface $previous, NodeInterface $current): bool
