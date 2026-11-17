@@ -554,7 +554,9 @@ What this library does about it:
   and the bridges.
 - The ReDoS confirmation replays a pattern holding `(*SKIP:NAME)` under the
   JIT, as PHP runs it by default, and its confirmation says so
-  (`jit_setting: true`).
+  (`jit_setting: true`). Where `pcre.jit` cannot be turned on for the call
+  (fixed by `php_admin_flag`), nothing is replayed, as where a limit cannot
+  be set.
 - The `redos` command's benchmark alone runs the JIT, unless `--jit 0` says
   otherwise: it measures what production sees.
 
@@ -597,7 +599,9 @@ and gets the same verdict under a tiny limit as under the default.
   `PREG_INTERNAL_ERROR`, `matchAll()` and `answer()` return `null`, and a
   limit already changed is put back. The ReDoS confirmation then reports the
   run as skipped, its evidence `engine limits unavailable`, as it does where
-  `ini_set()` is disabled. A pattern the engine runs without the JIT by
+  `ini_set()` is disabled. So does the engine that replays a pattern under
+  the JIT where `ini_set()` refuses `pcre.jit` (`… ini_set() refused
+  pcre.jit`), with or without limits. A pattern the engine runs without the JIT by
   turning `pcre.jit` off (one whose delimiters leave no room for
   `(*NO_JIT)`) runs with your settings instead. The engine reads no setting
   with `ini_get()`: it restores the value `ini_set()` hands back, so a

@@ -178,7 +178,11 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
     {
         $visitor = new RedosProfiler();
         // A branch whose first characters are not known, a Unicode property
-        // here, may start as the literal does, whichever comes first.
+        // here, may start as the literal does, whichever comes first. The
+        // engine agrees on whole patterns of this shape, in both orders:
+        // RedosHeuristicShapesTest::test_a_branch_of_unknown_first_characters_overlaps_in_either_order
+        // counts its steps ("a class before a property", "a property
+        // before a class").
         $literalFirst = new AlternationNode([
             new LiteralNode('a', 0, 0),
             new UnicodePropNode('Unknown', false, 0, 0),

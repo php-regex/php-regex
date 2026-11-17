@@ -13,8 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Engine;
 
+use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Engine\PcreLimits;
 use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -276,6 +279,43 @@ final class PcreEngineDisabledIniTest extends TestCase
     {
         yield 'the first limit, nothing changed yet' => ['refused' => 'pcre.backtrack_limit', 'iniCalls' => ['pcre.backtrack_limit']];
         yield 'the second limit, the first put back' => ['refused' => 'pcre.recursion_limit', 'iniCalls' => ['pcre.backtrack_limit', 'pcre.recursion_limit', 'pcre.backtrack_limit']];
+    }
+
+    /**
+     * The engine that runs a pattern under the JIT runs nothing where
+     * ini_set() refuses pcre.jit (kept off by a php_admin_flag under FPM),
+     * under limits or not: its answer would be the one of the engine
+     * without the JIT. The engine without the JIT still answers, through
+     * "(*NO_JIT)" in the pattern. The refusal is an ini_set() of the
+     * engine's namespace, declared in a process of its own before the
+     * engine first calls it. Oracle (JIT off): "/(a+)+$/" on "a" x 12 . "!"
+     * gives up with PREG_BACKTRACK_LIMIT_ERROR under a backtrack limit of 10.
+     */
+    #[Test]
+    #[RunInSeparateProcess]
+    public function test_a_refused_jit_stops_the_engine_that_runs_under_it(): void
+    {
+        eval('namespace PHPRegex\\Parser\\Engine; function ini_set(string $key, string $value): string|false { return "pcre.jit" === $key ? false : \\ini_set($key, $value); } '
+            .'function preg_match(...$args): int|false { $GLOBALS["nativeCalls"] = ($GLOBALS["nativeCalls"] ?? 0) + 1; return \\preg_match(...$args); }');
+        $jit = (string) \ini_get('pcre.jit');
+        \ini_set('pcre.jit', '0');
+
+        try {
+            $subject = str_repeat('a', 12).'!';
+            $limits = new PcreLimits(10, 500);
+            $refused = [null, \PREG_INTERNAL_ERROR, 'The PCRE limits could not be set: ini_set() refused pcre.jit'];
+            foreach (['under limits' => $limits, 'without limits' => null] as $name => $given) {
+                $answer = PcreEngine::withJit()->match('/(a+)+$/', $subject, $given);
+                $this->assertSame($refused, [$answer->matched, $answer->errorCode, $answer->error], $name);
+            }
+            $this->assertSame(0, $GLOBALS['nativeCalls'] ?? 0, 'No native match runs once pcre.jit is refused.');
+
+            $answer = (new PcreEngine())->match('/(a+)+$/', $subject, $limits);
+            $this->assertSame([null, \PREG_BACKTRACK_LIMIT_ERROR, 'Backtrack limit exhausted'], [$answer->matched, $answer->errorCode, $answer->error]);
+            $this->assertSame('0', \ini_get('pcre.jit'), 'The setting stays as the process has it.');
+        } finally {
+            \ini_set('pcre.jit', $jit);
+        }
     }
 
     /**

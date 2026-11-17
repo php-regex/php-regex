@@ -42,7 +42,8 @@ use PHPRegex\Redos\Backtrack\WitnessReplayer;
  * does on every run, whatever the machine.
  *
  * Where the engine cannot set the limits (ini_set() disabled or refusing
- * one), nothing is run: the confirmation is not confirmed, holds no sample, and its evidence
+ * one), or the JIT a pattern holding "(*SKIP:NAME)" runs under, nothing is
+ * run: the confirmation is not confirmed, holds no sample, and its evidence
  * says the engine limits are unavailable.
  */
 final class ConfirmationRunner implements ConfirmationRunnerInterface
@@ -156,7 +157,7 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
 
             $averageMs = $iterationsRun > 0 ? $durationMs / $iterationsRun : 0.0;
             $samples[] = new ConfirmationSample(
-                $length,
+                \strlen($input),
                 $averageMs,
                 $preview,
                 $pregErrorCode,
@@ -246,16 +247,19 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
     /**
      * The base character repeated, then the one that fails the match, then
      * the character every match requires when the rest does not hold it:
-     * PCRE2 rejects a subject without it before it tries the pattern.
+     * PCRE2 rejects a subject without it before it tries the pattern. The
+     * subject holds the length asked for: the required character only when
+     * a base character and the failing one still fit before it, a single
+     * byte the base character alone.
      */
     private function buildInput(string $baseChar, string $suffixChar, int $length, ?string $required = null): string
     {
         $tail = $suffixChar;
-        if (null !== $required && $required !== $baseChar && $required !== $suffixChar) {
+        if (null !== $required && $required !== $baseChar && $required !== $suffixChar && \strlen($required) <= $length - 2) {
             $tail .= $required;
         }
 
-        return str_repeat($baseChar, max(1, $length - \strlen($tail))).$tail;
+        return substr(str_repeat($baseChar, max(1, $length - \strlen($tail))).$tail, 0, $length);
     }
 
     /**
