@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +37,8 @@ final class ValidatorNestingTest extends TestCase
     public function test_the_level_past_the_limit_is_refused_before_the_spaces_x_skips(): void
     {
         $pattern = '/(?x)'.str_repeat('(', 250).'(   a'.str_repeat(')', 251).'/';
+        $this->assertSame(255, PhpErrorOffset::of($pattern), 'Oracle on PCRE2 '.\PCRE_VERSION);
+
         $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
 
         $this->assertSame([ErrorCode::GroupNestedTooDeep, 255], [$result->errorCode, $result->offset]);
@@ -44,12 +47,15 @@ final class ValidatorNestingTest extends TestCase
     /**
      * Nor does PCRE read the quotes or the Unicode spaces that follow the
      * opener: each row is the offset preg_match() reports on PHP 8.4.27 with
-     * PCRE2 10.49, right after the opener of the 251st level.
+     * PCRE2 10.49, right after the opener of the 251st level, as with the
+     * PCRE2 that PHP 7.4 to 8.4 bundle.
      */
     #[Test]
     #[DataProvider('provideTextSkippedAfterTheOpener')]
     public function test_the_level_past_the_limit_is_refused_before_the_quotes_and_spaces_pcre_skips(string $pattern, int $offset): void
     {
+        $this->assertSame($offset, PhpErrorOffset::of($pattern), 'Oracle on PCRE2 '.\PCRE_VERSION);
+
         $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
 
         $this->assertSame([ErrorCode::GroupNestedTooDeep, $offset], [$result->errorCode, $result->offset]);
