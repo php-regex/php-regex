@@ -116,6 +116,55 @@ final class RedosConfirmationRunnerTest extends TestCase
     }
 
     /**
+     * A run never holds more bytes than the length asked for: the character
+     * every match requires is added only where a letter and the character
+     * that fails the match still fit before it, and one byte holds the
+     * letter alone. Oracle (JIT off, a backtrack limit of 100): twelve
+     * letters then "!" are rejected without an error, and give up at the
+     * limit with the ":" after them ("é" under u): the character is the
+     * one every match requires.
+     *
+     * @return iterable<string, array{pattern: string, length: int, subject: string}>
+     */
+    public static function provideShortRuns(): iterable
+    {
+        yield 'one byte' => ['pattern' => '/^(x)?(?:\w+\s?)+:\1/', 'length' => 1, 'subject' => 'a'];
+        yield 'two bytes, no room for the colon' => ['pattern' => '/^(x)?(?:\w+\s?)+:\1/', 'length' => 2, 'subject' => 'a!'];
+        yield 'three bytes, the colon last' => ['pattern' => '/^(x)?(?:\w+\s?)+:\1/', 'length' => 3, 'subject' => 'a!:'];
+        yield 'three bytes, no room for a character of two' => ['pattern' => '/^(x)?(?:\w+\s?)+é\1/u', 'length' => 3, 'subject' => 'aa!'];
+        yield 'four bytes, a character of two last' => ['pattern' => '/^(x)?(?:\w+\s?)+é\1/u', 'length' => 4, 'subject' => 'a!é'];
+    }
+
+    #[Test]
+    #[DataProvider('provideShortRuns')]
+    public function test_a_run_holds_no_more_bytes_than_its_length(string $pattern, int $length, string $subject): void
+    {
+        $required = str_ends_with($pattern, 'u') ? 'é' : ':';
+        $limit = (string) \ini_get('pcre.backtrack_limit');
+        \ini_set('pcre.backtrack_limit', '100');
+
+        try {
+            $without = [@preg_match(PcreInterpreter::pattern($pattern), str_repeat('a', 12).'!'), preg_last_error()];
+            $with = [@preg_match(PcreInterpreter::pattern($pattern), str_repeat('a', 12).'!'.$required), preg_last_error()];
+        } finally {
+            \ini_set('pcre.backtrack_limit', $limit);
+        }
+        $this->assertSame([0, \PREG_NO_ERROR], $without, 'Oracle: rejected at once without the character.');
+        $this->assertSame([false, \PREG_BACKTRACK_LIMIT_ERROR], $with, 'Oracle: tried with it.');
+
+        $confirmation = (new ConfirmationRunner())->confirm(
+            $pattern,
+            new RedosAnalysis(RedosSeverity::Critical, 10),
+            new ConfirmationOptions(minInputLength: $length, maxInputLength: $length, steps: 1, iterations: 1),
+        );
+
+        $this->assertCount(1, $confirmation->samples);
+        $this->assertSame($subject, $confirmation->samples[0]->inputPreview);
+        $this->assertSame(\strlen($subject), $confirmation->samples[0]->inputLength);
+        $this->assertLessThanOrEqual($length, $confirmation->samples[0]->inputLength);
+    }
+
+    /**
      * A pattern holding "(*SKIP:NAME)" is replayed under the JIT, as PHP
      * runs it by default, and its confirmation says so. Oracle (JIT on, the
      * backtrack limit of the options): "(?:a|a)+" before a skip to a name no
