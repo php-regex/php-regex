@@ -46,6 +46,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
 
 /**
  * Transforms the AST to apply optimizations, returning a new, simplified AST.
@@ -461,6 +462,13 @@ final class Rewriter extends AbstractNodeVisitor
         $optimizedNo = $node->no->accept($this);
 
         if ($optimizedCond !== $node->condition || $optimizedYes !== $node->yes || $optimizedNo !== $node->no) {
+            // With no "|" written, the "no" branch stays empty where the
+            // "yes" branch ends: in a lookbehind, "(?(c)X|)" may be empty
+            // where "(?(c)X)" may not.
+            if (!PatternPrinter::writesNoBranch($node)) {
+                $optimizedNo = new LiteralNode('', $optimizedYes->getEndPosition(), $optimizedYes->getEndPosition());
+            }
+
             return new ConditionalNode($optimizedCond, $optimizedYes, $optimizedNo, $node->startPosition, $node->endPosition);
         }
 

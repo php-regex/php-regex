@@ -15,14 +15,16 @@ namespace PHPRegex\Automata\Transform;
 
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Options\SolverOptions;
-use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\InlineFlags;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Bytes;
 
 /**
@@ -34,8 +36,6 @@ use PHPRegex\Parser\Text\Bytes;
  */
 final class RegularSubsetValidator
 {
-    private string $pattern = '';
-
     /**
      * Whether the solver can answer for the pattern, and the normalized
      * form it can answer from.
@@ -47,15 +47,53 @@ final class RegularSubsetValidator
      */
     public function assertSupported(RegexNode $regex, string $pattern, SolverOptions $options, ?PcreTarget $target = null): Hir
     {
-        $this->pattern = $pattern;
         $this->assertSupportedFlags($regex->flags);
-        $this->assertNewlineConvention($regex);
+        self::assertNewlineConvention($regex, $pattern);
+        self::assertEmptyMatchesAllowed($regex, $pattern);
 
         $hir = (new HirTranslator($target))->translate($regex);
         (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($regex)))
             ->assertTranslatable($hir, $options);
 
         return $hir;
+    }
+
+    /**
+     * "$", "\Z" and the multiline anchors read where lines end, which a start
+     * option such as "(*CR)" moves: the solvers read the newline "\n" only.
+     * The last convention the options name holds.
+     *
+     * @internal the match solver asks it too
+     *
+     * @throws ComplexityException
+     */
+    public static function assertNewlineConvention(RegexNode $regex, string $pattern): void
+    {
+        if ('LF' === StartOptions::newline($regex->source ?? '')) {
+            return;
+        }
+
+        if (str_contains($regex->flags, 'm') || self::turnsMultilineOn($regex->pattern) || null !== self::lineAnchor($regex->pattern)) {
+            throw new ComplexityException('A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.', 0, $pattern);
+        }
+    }
+
+    /**
+     * "(*NOTEMPTY)" and "(*NOTEMPTY_ATSTART)" refuse an empty match where
+     * the engine runs without the JIT; PHP's JIT ignores them, so the answer
+     * moves with pcre.jit: "/(*NOTEMPTY)a?/" finds no match in "b" without
+     * it and "" with it.
+     *
+     * @internal the match solver asks it too
+     *
+     * @throws ComplexityException
+     */
+    public static function assertEmptyMatchesAllowed(RegexNode $regex, string $pattern): void
+    {
+        $options = StartOptions::items($regex->source ?? '');
+        if (\in_array('NOTEMPTY', $options, true) || \in_array('NOTEMPTY_ATSTART', $options, true)) {
+            throw new ComplexityException('(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse an empty match without the JIT and are ignored with it, which the automata solver does not read.', 0, $pattern);
+        }
     }
 
     /**
@@ -78,21 +116,25 @@ final class RegularSubsetValidator
     }
 
     /**
-     * "$", "\Z" and the multiline anchors read where lines end, which a start
-     * option such as "(*CRLF)" moves: the solver reads the newline "\n" only.
-     *
-     * @throws ComplexityException
+     * Whether a group turns "m" on, as "(?m)" or "(?m:...)" do: "^" then
+     * also holds after a newline.
      */
-    private function assertNewlineConvention(RegexNode $regex): void
+    private static function turnsMultilineOn(NodeInterface $node): bool
     {
-        $source = $regex->source ?? '';
-        if (1 !== LibraryPcre::match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*(?:CR|CRLF|ANYCRLF|ANY|NUL)\)/', $source)) {
-            return;
+        if ($node instanceof GroupNode && null !== $node->flags) {
+            $flags = InlineFlags::read(InlineFlags::withoutAsciiOptions($node->flags), InlineFlags::LETTERS.'r');
+            if (null !== $flags && str_contains($flags->set, 'm')) {
+                return true;
+            }
         }
 
-        if (str_contains($regex->flags, 'm') || null !== self::lineAnchor($regex->pattern)) {
-            throw new ComplexityException('A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.', 0, $this->pattern);
+        foreach ($node->getChildren() as $child) {
+            if (self::turnsMultilineOn($child)) {
+                return true;
+            }
         }
+
+        return false;
     }
 
     private static function lineAnchor(NodeInterface $node): AnchorNode|AssertionNode|null

@@ -641,9 +641,10 @@ Notes:
   nothing to translate. `Transpiler`, called directly, reads the tree as it parses.
 - Unsupported PCRE constructs throw `TranspileException`, and so does a construct the target engine would match
   otherwise and has no way to write: in Python a backreference inside a lookbehind or under `/iu`, a lookbehind
-  branch whose length varies (`(?<=a{1,3})`; a top-level alternation of fixed branches is split, `(?<=ab|c)`), `\w` or
-  `\b` under `u`, and an atomic group or a possessive quantifier unless `pythonVersion` is 3.11 or later; in JavaScript a
-  backreference to a group that may not have matched (it matches the empty string there), a capturing group a
+  branch whose length in characters varies (`(?<=a{1,3})`, and `(?<=(?:ab|é))` without `u` too; a top-level
+  alternation of fixed branches is split, `(?<=ab|c)`), `\w` or `\b` under `u`, and an atomic group or a
+  possessive quantifier unless `pythonVersion` is 3.11 or later; in JavaScript a backreference to a group that may
+  not have matched (it matches the empty string there), a capturing group a
   repetition may leave unset, a repetition whose empty match sets a group or may be tried before a longer match, and
   `\p{Lu}`, `\p{Ll}` or `\p{Lt}` under `/i`. PCRE takes one empty repetition and stops where JavaScript takes none:
   the two agree, and the pattern is written, where the empty repetition sets no group and comes after every longer

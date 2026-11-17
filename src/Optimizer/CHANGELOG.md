@@ -20,6 +20,9 @@ CHANGELOG
    item: `/(?:a+)?b/` stays as written instead of becoming `/a+?b/`, a lazy
    `a+` that no longer matched `b`, and `/(?:a*)*b/` no longer becomes
    `/a**b/`, which does not compile.
+ * `Modernizer` keeps a non-capturing group that sets an option with no
+   colon: `/(?:(?i)a)b/` stays as written instead of becoming `/(?i)ab/`,
+   which also matched `aB`, and `/(?:(?n)a)(b)/` keeps its group 1.
  * `Modernizer` reads `(*UCP)` from the tree's opening options, not from the
    source text: `/(*UTF)(*UCP)^[0-9]$/` keeps `[0-9]` once the tree was
    rebuilt or modernized twice, where `\d` also matched `٣` (U+0663).
