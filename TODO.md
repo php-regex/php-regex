@@ -18,9 +18,28 @@ The bugs of the second pass are fixed in #403; these were left out of it.
   (10^10): cap it, or refuse it with a message.
 - `SecurityPatternNormalizer` trims an `access_control` path, which Symfony
   does not: `"^/a\\\n"` becomes an invalid pattern and is skipped.
-- Trailing-slash redirects are modelled only where the raw paths share
-  nothing, and not across disjoint schemes, where Symfony redirects before
-  it checks the scheme.
+- A trailing-slash redirect that takes only part of a later route's paths,
+  while the two routes also share paths, is not reported: `/admin` before a
+  `.*` catch-all (GET `/admin/` is redirected), or disjoint schemes with
+  shared paths. It needs a three-way language operation the solver lacks,
+  and would flag every static route declared before a catch-all.
+- Read from the kernel, `access_control.port: '%env(int:APP_PORT)%'` fails
+  ("Expected "int", but got "string"") even with `APP_PORT` set, on 2.x
+  before #403 too: `extractFromKernel` runs the bundle's `Processor` on the
+  raw configs, without the merge pass that turns `%env()%` into
+  placeholders. Choose: resolve parameters and env values before
+  processing (an unset env in any field then aborts), copy the merge pass
+  (`BaseNode::setPlaceholder`, `@internal`), or document it.
+- symfony/http-foundation 6.4 compiles an `access_control` path as
+  `'{'.$regexp.'}'`, without `s`; 8.1 adds it. The analyzer always reads
+  with `s`, so on 6.4 it can disagree where `.` meets a decoded newline.
+- Laravel 12+ `Rule::anyOf(['regex:/^(a|b)$/'])` validates each element
+  through `Validator::make`, which splits it (`/^(a`); the extractor reads
+  it whole. An escaped `|` or `:` in a double-quoted rule (`\x7c`) is not
+  read either.
+- `test_the_jit_decides_what_an_empty_match_option_refuses` asserts the JIT
+  answer ungated, as `LookaroundEdgeQuantifierTest` does: a PHP without JIT
+  support fails it. A `requiresJit()` gate in `PcreGates` would cover both.
 - A HEAD-only route before a GET route of the same path is an overlap; the
   security side would call it a carve-out and say nothing.
 
