@@ -450,6 +450,37 @@ final class NestedLoopEdgeCaseTest extends TestCase
     }
 
     /**
+     * A lookaround holds without being tried again once it has matched: a
+     * loop inside it splits no run of the loop around, and the engine stays
+     * linear on the unit repeated then "!" (3 -> 3 for a lookbehind before
+     * a letter, 19 -> 35 for a lookahead of a run, 36 -> 68 for a
+     * lookbehind after a letter, 19 -> 35 for a negative lookahead). A
+     * lookahead PCRE backtracks into, "(*napla:...)", still hides one:
+     * 259 522 -> past 16 777 216.
+     *
+     * @return iterable<string, array{pattern: string, unit: string, reported: bool}>
+     */
+    public static function provideLoopsInALookaround(): iterable
+    {
+        yield 'run of spaces in a lookbehind before a letter' => ['pattern' => '/^(?:(?<=\s{1,3})\w)+$/', 'unit' => ' a', 'reported' => false];
+        yield 'run of letters in a lookahead' => ['pattern' => '/^(?:(?=\w+)\w)+$/', 'unit' => 'a', 'reported' => false];
+        yield 'run of letters in a lookbehind after a letter' => ['pattern' => '/^(?:x(?<=\w{1,3}))+$/', 'unit' => 'x', 'reported' => false];
+        yield 'run of digits in a negative lookahead' => ['pattern' => '/^(?:(?!\d+x)\w)+$/', 'unit' => '1', 'reported' => false];
+        yield 'run in a lookahead PCRE backtracks into' => ['pattern' => '/^(?:(*napla:a+)a)+$/', 'unit' => 'a', 'reported' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsInALookaround')]
+    public function test_nested_loop_in_a_lookaround_is_reported_only_when_the_engine_goes_exponential(string $pattern, string $unit, bool $reported): void
+    {
+        $short = self::steps($pattern, str_repeat($unit, 8).'!');
+        $long = self::steps($pattern, str_repeat($unit, 16).'!');
+        $this->assertSame($reported, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($reported, \in_array(self::NESTED, self::lint($pattern), true), $pattern);
+    }
+
+    /**
      * A body of many optional characters, each its own, before a separator
      * is read within a bounded amount of work, and left to the first
      * loop's verdict: each iteration reads its characters one way, and the

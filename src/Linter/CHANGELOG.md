@@ -63,6 +63,11 @@ CHANGELOG
    behind items that may match nothing and take none of the loop's
    characters: `/^(?:\s*\d+\s*,)*\s*\d+\s*$/` and `/^(\s*\w+\s*,)*$/`,
    which were reported, are not.
+ * `regex.lint.quantifier.nested` no longer looks for the inner loop inside
+   a lookaround, which holds without being tried again once it has
+   matched: `/^(?:(?=\w+)\w)+$/` and `/^(?:(?<=\s{1,3})\w)+$/`, which PCRE
+   reads in linear steps, are no longer reported. A non-atomic lookahead,
+   `(*napla:...)`, is backtracked into, and `/^(?:(*napla:a+)a)+$/` still is.
  * A loop that ends an atomic group or a possessive body is no longer left
    alone by `regex.lint.quantifier.nested`, `regex.lint.dotstar.nested` and
    `regex.lint.overlap.charset` where a subroutine call runs a group between

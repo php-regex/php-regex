@@ -2820,9 +2820,7 @@
     },
     {
         "pattern": "/([\"])(?:(?=(\\\\?))\\2.)*?\\1/u",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
+        "issues": []
     },
     {
         "pattern": "/(\\\\(((.)(?!((AM\\/PM)|(A\\/P))))|([^ ])))(?=(?:[^\"]|\"[^\"]*\")*$)/ui",
@@ -5100,9 +5098,7 @@
     },
     {
         "pattern": "~^\\w(?:(?!\\/\\.{0,2}\\/)[\\w\\/\\-\\.])*$~",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
+        "issues": []
     },
     {
         "pattern": "/\\R/su",

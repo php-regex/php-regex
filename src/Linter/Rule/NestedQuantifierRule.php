@@ -232,8 +232,13 @@ final class NestedQuantifierRule extends AbstractLintRule
             return $count > 0 ? $this->findNestedQuantifier($node->node) : null;
         }
 
+        // An atomic group, and a lookaround once it has matched, is never
+        // tried again: a loop inside splits no run of the loop around.
+        // "(*napla:...)" and "(?*...)" are backtracked into.
         if ($node instanceof GroupNode) {
-            if (GroupType::Atomic === $node->type) {
+            if (GroupType::Atomic === $node->type
+                || ('*' !== $node->flags && \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true))
+            ) {
                 return null;
             }
 
