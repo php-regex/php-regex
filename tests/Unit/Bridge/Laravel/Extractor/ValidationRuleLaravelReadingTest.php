@@ -275,6 +275,47 @@ final class ValidationRuleLaravelReadingTest extends TestCase
         yield 'an escaped tab before the name' => ['literal' => '"required|\tregex:/^a{1,2}$/"', 'compiles' => false];
         yield 'an escaped line feed after the name' => ['literal' => '"regex\n:/^b$/"', 'compiles' => true];
         yield 'an escaped letter in the name' => ['literal' => '"nullable|\x72egex:/^c$/"', 'compiles' => true];
+        yield 'an escaped bar between two rules' => ['literal' => '"required\x7cregex:/^c$/"', 'compiles' => true];
+    }
+
+    /**
+     * A double-quoted literal whose escapes spell no regex rule once PHP
+     * decodes it holds no pattern: Laravel reads "regex=/a/" as a rule named
+     * "regex=/a/", and a line feed as no rule at all.
+     */
+    #[Test]
+    public function test_a_literal_whose_escapes_spell_no_rule_is_not_read(): void
+    {
+        $this->assertSame([], self::laravelPatterns(['a' => "regex\x3d/a/", 'b' => "required|regex\x3d/a/"]));
+
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            return ['a' => "regex\x3d/a/", 'b' => "required|regex\x3d/a/", 'c' => "required\n", 'd' => ["min:2\x7cmax:3"]];
+            PHP]);
+
+        $this->assertSame([], (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], [])));
+    }
+
+    /**
+     * A double quote inside a single-quoted literal, with a backslash after
+     * it, opens no literal: the rules written after it on the line are read.
+     */
+    #[Test]
+    public function test_a_double_quote_inside_a_single_quoted_literal_hides_no_rule_after_it(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $path = 'C:\dir "x\y'; $rules = ['c' => "regex:/^d$/"];
+            $label = 'say "hi\n'; $more = ['e' => "required|regex:/^f$/"];
+            return $rules + $more;
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $this->assertSame(['/^d$/', '/^f$/'], self::laravelPatterns($rules));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[2, '/^d$/'], [3, '/^f$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
     }
 
     /**
