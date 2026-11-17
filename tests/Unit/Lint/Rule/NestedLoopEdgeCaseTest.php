@@ -478,6 +478,11 @@ final class NestedLoopEdgeCaseTest extends TestCase
     #[DataProvider('provideLoopsInALookaround')]
     public function test_nested_loop_in_a_lookaround_is_reported_only_when_the_engine_goes_exponential(string $pattern, string $unit, bool $reported): void
     {
+        // "(*napla:" is PCRE2 10.34 and later, a lookbehind of variable
+        // length 10.43 and later: an engine that refuses the pattern counts
+        // nothing.
+        $this->requiresCompile($pattern);
+
         $short = self::steps($pattern, str_repeat($unit, 8).'!');
         $long = self::steps($pattern, str_repeat($unit, 16).'!');
         $this->assertSame($reported, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
