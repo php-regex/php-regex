@@ -156,6 +156,9 @@ final class SecurityCommandTest extends TestCase
     #[Test]
     public function test_command_reads_a_path_ending_on_a_comment_and_leaves_out_one_pcre_refuses(): void
     {
+        $this->assertFalse(@preg_match('{^/(shop}s', ''));
+        $this->assertSame(1, preg_match('{(?x)^/admin  # back office}s', '/admin/login'));
+
         $path = $this->makeProject([
             'security.yaml' => "security:\n    access_control:\n        - { path: '^/(shop', roles: PUBLIC_ACCESS }\n        - { path: '(?x)^/admin  # back office', roles: ROLE_ADMIN }\n        - { path: ^/admin/login, roles: PUBLIC_ACCESS }\n",
         ]).'/security.yaml';
