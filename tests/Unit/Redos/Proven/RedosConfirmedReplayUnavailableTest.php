@@ -120,6 +120,31 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
     }
 
     /**
+     * A pattern holding "(*SKIP:NAME)" is confirmed under the JIT. Where
+     * ini_set() refuses pcre.jit (a php_admin_flag under FPM keeping it
+     * off), the confirmation runs nothing and says the engine settings are
+     * unavailable, rather than naming a JIT setting its runs did not have.
+     */
+    #[Test]
+    public function test_confirmed_mode_skips_a_skip_to_a_name_when_ini_set_refuses_the_jit(): void
+    {
+        $result = self::analyzeWithoutIniSet(
+            '/^(?:a|a)+(*SKIP:x)$/',
+            '',
+            'namespace { \\ini_set("pcre.jit", "0"); } namespace PHPRegex\\Parser\\Engine { function ini_set($key, $value) { return "pcre.jit" === $key ? false : \\ini_set($key, $value); } }',
+        );
+
+        $this->assertTrue($result['ini_set']);
+        $this->assertNull($result['error'], (string) json_encode($result));
+        $this->assertSame(RedosSeverity::Critical->value, $result['severity']);
+        $this->assertSame(RedosProof::Heuristic->value, $result['proof']);
+        $this->assertIsArray($result['confirmation']);
+        $this->assertFalse($result['confirmation']['confirmed']);
+        $this->assertSame([], $result['confirmation']['samples'], 'Nothing was run.');
+        $this->assertSame(self::LIMITS_UNAVAILABLE, $result['confirmation']['evidence']);
+    }
+
+    /**
      * Oracle (PHP 8.4, PCRE2 10.49 and PHP 8.1, PCRE2 10.39, JIT off, a
      * backtrack limit of 100000): each pattern fails preg_match() with
      * "Backtrack limit exhausted" on its subject within 2 ms, checked again

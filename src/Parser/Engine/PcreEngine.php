@@ -55,7 +55,8 @@ final class PcreEngine
     /**
      * An engine that runs the pattern as written, with the JIT turned on
      * for the call, under the limits asked for, the ini left as it was
-     * found.
+     * found. Where ini_set() refuses the JIT, it runs nothing: its answer
+     * says the setting could not be made, as for a refused limit.
      *
      * @internal the ReDoS confirmation replays a pattern holding "(*SKIP:NAME)" under the JIT
      */
@@ -69,8 +70,8 @@ final class PcreEngine
 
     /**
      * Whether the engine ran nothing because the limits asked for could not
-     * be set, ini_set() disabled or refusing one: the answer of no run, not
-     * of an engine error.
+     * be set, ini_set() disabled or refusing one, or the JIT it runs under:
+     * the answer of no run, not of an engine error.
      *
      * @internal the ReDoS confirmation reports such a run as skipped
      */
@@ -310,8 +311,9 @@ final class PcreEngine
      * Each setting is put back from the value ini_set() returned when it was
      * changed, so a disabled ini_get() changes nothing. Where ini_set() is
      * disabled or refuses a limit, a call under limits gets no answer and an error saying so;
-     * a pattern that needs the JIT off runs as it is, under the caller's
-     * settings.
+     * where it refuses the JIT, so does every call of the engine that runs
+     * under it. A pattern that needs the JIT off runs as it is, under the
+     * caller's settings.
      *
      * @param \Closure(string): (int|false) $call
      *
@@ -375,8 +377,9 @@ final class PcreEngine
                 $previous = ini_set($key, $value);
                 if (false !== $previous) {
                     $saved[$key] = $previous;
-                } elseif (null !== $limits && 'pcre.jit' !== $key) {
-                    // A refused limit may leave a higher inherited budget.
+                } elseif ('pcre.jit' === $key ? $this->jit : null !== $limits) {
+                    // A refused limit may leave a higher inherited budget,
+                    // and a refused JIT the run of the engine without it.
                     // Return inside the try so earlier changes are restored.
                     return [
                         'result' => false,
