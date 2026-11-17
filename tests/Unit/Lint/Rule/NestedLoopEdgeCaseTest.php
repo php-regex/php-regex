@@ -490,7 +490,7 @@ final class NestedLoopEdgeCaseTest extends TestCase
     #[Test]
     public function test_a_body_of_many_optional_characters_is_read_within_bounded_work(): void
     {
-        $characters = [...range('a', 'z'), ...range('A', 'Z'), ...range('0', '9')];
+        $characters = str_split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
         $pattern = '/^(?:'.implode('', array_map(static fn (string $character): string => $character.'?', $characters)).';)+$/';
         $unit = implode('', $characters).';';
 
