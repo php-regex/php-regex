@@ -110,6 +110,12 @@ final class JsonDocumentTest extends TestCase
         yield 'after an invalid byte and a wide character' => ['pattern' => "\xFF中(", 'position' => 4, 'before' => '', 'after' => '', 'expected' => "Line 1: \\xFF中(\n              ^"];
         yield 'on the second line, past the end' => ['pattern' => "a\n\xFF", 'position' => 3, 'before' => '', 'after' => '', 'expected' => "Line 2: \\xFF\n            ^"];
         yield 'quoted in a message' => ['pattern' => "\xFF(", 'position' => 2, 'before' => "Expected ) at end of input (found eof).\n", 'after' => "\nSuggestion: \xFF", 'expected' => "Expected ) at end of input (found eof).\nLine 1: \\xFF(\n             ^\nSuggestion: \\xFF"];
+        // Valid UTF-8 before the caret is counted in columns, fewer than its
+        // bytes: the caret does not move for an invalid byte past it.
+        yield 'after characters of two bytes, an invalid byte past the caret' => ['pattern' => "\u{E9}\u{E9}\u{E9}a)\xFF", 'position' => 7, 'before' => '', 'after' => '', 'expected' => "Line 1: \u{E9}\u{E9}\u{E9}a)\\xFF\n            ^"];
+        yield 'on an invalid byte after characters of two bytes' => ['pattern' => "\u{E9}\u{E9}\u{E9}a)\xFF", 'position' => 8, 'before' => '', 'after' => '', 'expected' => "Line 1: \u{E9}\u{E9}\u{E9}a)\\xFF\n             ^"];
+        yield 'after wide characters, an invalid byte past the caret' => ['pattern' => "\u{4E00}\u{4E00})\xFF", 'position' => 6, 'before' => '', 'after' => '', 'expected' => "Line 1: \u{4E00}\u{4E00})\\xFF\n            ^"];
+        yield 'on an invalid byte after wide characters' => ['pattern' => "/\u{4E00}\u{4E00})\xFF/", 'position' => 8, 'before' => '', 'after' => '', 'expected' => "Line 1: /\u{4E00}\u{4E00})\\xFF/\n              ^"];
     }
 
     #[Test]

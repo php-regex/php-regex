@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Json;
 
 use PHPRegex\Parser\Exception\JsonEncodingException;
+use PHPRegex\Parser\Exception\Snippet;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Utf8;
 
@@ -102,7 +103,7 @@ final class JsonDocument
         foreach ($lines as $index => $line) {
             $indent = \strlen($line) - 1;
             $excerpt = $lines[$index - 1] ?? '';
-            if (str_ends_with($line, '^') && $indent === strspn($line, ' ') && self::isSnippetLine($excerpt) && !mb_check_encoding(substr($excerpt, 0, $indent), 'UTF-8')) {
+            if (str_ends_with($line, '^') && $indent === strspn($line, ' ') && self::isSnippetLine($excerpt) && self::countsBytes($excerpt, $indent)) {
                 $spelled[] = str_repeat(' ', self::spelledColumns($excerpt, $indent)).'^';
 
                 continue;
@@ -122,6 +123,29 @@ final class JsonDocument
         $colon = strpos($line, ': ');
 
         return str_starts_with($line, 'Line ') && false !== $colon && Ascii::isDigit(substr($line, 5, $colon - 5));
+    }
+
+    /**
+     * Whether a snippet counted the columns before its caret in bytes, as it
+     * does when the text before the caret is no UTF-8: an invalid byte
+     * comes before the characters of the line take that many columns.
+     * Valid UTF-8 takes no more columns than bytes, so a caret counted in
+     * columns always has valid characters before it that take them all.
+     */
+    private static function countsBytes(string $line, int $columns): bool
+    {
+        $length = \strlen($line);
+        for ($i = 0, $taken = 0; $taken < $columns && $i < $length;) {
+            $sequence = substr($line, $i, Utf8::width($line, $i));
+            if (!mb_check_encoding($sequence, 'UTF-8')) {
+                return true;
+            }
+
+            $taken += Snippet::columns($sequence);
+            $i += \strlen($sequence);
+        }
+
+        return false;
     }
 
     /**

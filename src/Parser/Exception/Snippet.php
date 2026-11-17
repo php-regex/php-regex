@@ -127,6 +127,23 @@ final class Snippet
     }
 
     /**
+     * The columns a terminal draws a UTF-8 text in: two for a wide East
+     * Asian character or an emoji, one for any other. A table of its own,
+     * not mb_strwidth(), whose tables change with the PHP release: the same
+     * pattern gets the same caret on every PHP.
+     */
+    public static function columns(string $text): int
+    {
+        $columns = 0;
+        foreach (mb_str_split($text, 1, 'UTF-8') as $character) {
+            $codePoint = (int) mb_ord($character, 'UTF-8');
+            $columns += self::isWide($codePoint) ? 2 : 1;
+        }
+
+        return $columns;
+    }
+
+    /**
      * The window moved inward to whole characters: its start past the
      * character it falls inside, never past the caret, its end back to the
      * start of the character it cuts.
@@ -144,23 +161,6 @@ final class Snippet
         }
 
         return [$start, $end];
-    }
-
-    /**
-     * The columns a terminal draws a UTF-8 text in: two for a wide East
-     * Asian character or an emoji, one for any other. A table of its own,
-     * not mb_strwidth(), whose tables change with the PHP release: the same
-     * pattern gets the same caret on every PHP.
-     */
-    private static function columns(string $text): int
-    {
-        $columns = 0;
-        foreach (mb_str_split($text, 1, 'UTF-8') as $character) {
-            $codePoint = (int) mb_ord($character, 'UTF-8');
-            $columns += self::isWide($codePoint) ? 2 : 1;
-        }
-
-        return $columns;
     }
 
     private static function isWide(int $codePoint): bool
