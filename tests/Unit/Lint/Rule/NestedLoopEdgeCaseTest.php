@@ -498,13 +498,12 @@ final class NestedLoopEdgeCaseTest extends TestCase
 
     /**
      * A body of many optional characters, each its own, before a separator
-     * is read within a bounded amount of work, and left to the first
-     * loop's verdict: each iteration reads its characters one way, and the
-     * engine stays linear on all of them then ";" repeated (10 -> 18 -> 34
-     * for n 8 -> 16 -> 32).
+     * is not reported: no loop of it meets what follows it, as each
+     * iteration reads its characters one way, and the engine stays linear
+     * on all of them then ";" repeated (10 -> 18 -> 34 for n 8 -> 16 -> 32).
      */
     #[Test]
-    public function test_a_body_of_many_optional_characters_is_read_within_bounded_work(): void
+    public function test_a_body_of_many_optional_characters_is_not_reported(): void
     {
         $characters = str_split('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
         $pattern = '/^(?:'.implode('', array_map(static fn (string $character): string => $character.'?', $characters)).';)+$/';
