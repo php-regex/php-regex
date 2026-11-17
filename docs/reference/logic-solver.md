@@ -117,7 +117,8 @@ it matched (one whose body may match more than one way, or that something after 
 start like it does: `/a++a/`, `/(?:ab?)++b/`, `\s++$`); a loop over a body that can match
 empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
 and `\K`; a newline convention other than `\n` where `$` or `\Z` reads it, and `(*CRLF)`
-anywhere, under which the dot reads a `\r` alone but not one before a `\n`; an end anchor
+anywhere, under which the dot reads a `\r` alone but not one before a `\n`; `(*NOTEMPTY)` and
+`(*NOTEMPTY_ATSTART)`, as `equivalent()` refuses them; an end anchor
 followed by more of the pattern, another turn of the loop it stands
 in included (`/(?:a$)*\n/`, `/(?:a$)*/`); an anchor, an assertion or a lookaround in a group
 repeated no time, which PCRE2 still reads to choose where it tries a match (`/(?:x|(?=a)){0}\w/`
@@ -429,6 +430,7 @@ verbatim:
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
 | a newline convention other than `\n`, such as `(*CR)`, with `$`, `\Z`, `/m` or `(?m)` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
+| `(*NOTEMPTY)` or `(*NOTEMPTY_ATSTART)`, which PHP's JIT ignores | `(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse an empty match without the JIT and are ignored with it, which the automata solver does not read.` |
 | the flag `A`                               | `Unsupported regex flags for automata: A.` (the pattern's own flags, in order) |
 
 Two refinements inside those rules:
@@ -664,7 +666,8 @@ Use this to surface safe failure messages in CI or tooling.
   [What the Solver Refuses](#what-the-solver-refuses).
 - The pattern flags `i`, `s`, `u`, `D`, `m` and `r` are read; `x`, `U`, `n`, `J`, `S` and `X`
   change nothing a language says. `A` is refused, and so is a newline convention
-  other than `\n` where `$`, `\Z`, `/m` or `(?m)` would read it.
+  other than `\n` where `$`, `\Z`, `/m` or `(?m)` would read it, and so are
+  `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`.
 - In partial match mode, a search, `$` and `\Z` also match before a newline that ends
   the subject, as PCRE's do without `/D`: `/^ab$/` matches `"ab\n"`, `/^ab\z/` does not.
   A full match covers the whole subject, so there `$` is the end of the subject.

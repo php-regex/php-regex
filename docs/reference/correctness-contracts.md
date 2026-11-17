@@ -127,9 +127,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   `i` stays apart, as in PCRE. Folds that produce several code points (the Turkish `İ`, the `DŽ` digraph) are not
   modeled. The flags `i`, `s`, `u`, `D`, `m` and `r` are read, and `x`, `U`, `n`, `J`, `S` and `X` change nothing a
   language says. `A` is refused, and so is a newline convention other than `\n`, such as `(*CR)`, when `$`, `\Z`,
-  `/m` or `(?m)` would read the newline it sets. `matchEquivalent()` reads the same flags except `m`, which it refuses,
-  refuses the same newline conventions where `$` or `\Z` reads them, and refuses `(*CRLF)` in any pattern: under it
-  the dot reads a `\r` alone but not one before a `\n`.
+  `/m` or `(?m)` would read the newline it sets, and so are `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`, which refuse an
+  empty match without the JIT and which PHP's JIT ignores. `matchEquivalent()` reads the same flags except `m`, which
+  it refuses, refuses the same start options, the newline conventions where `$` or `\Z` reads them, and refuses
+  `(*CRLF)` in any pattern: under it the dot reads a `\r` alone but not one before a `\n`.
 - **Lookarounds and anchors:** Lookaheads and lookbehinds, positive and negative, are read, and so are `\b` and `\B`,
   as the lookarounds they stand for. `^`, `$`, `\A`, `\z` and `\Z` are read wherever they stand, under `/m` too:
   `/(?:^|,)a/` and `/^\d+$/m` are answered. A lookaround inside a lookaround, an anchor or word boundary inside a
@@ -137,8 +138,8 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Fallbacks:** None — there is no approximation. A construct outside the subset raises `ComplexityException` with
   one message per reason (backreferences, subroutines, callouts and control verbs, conditionals, nested lookarounds,
   anchors inside a lookaround, non-atomic lookarounds, atomic groups, `\K` and `\G`, unsafe possessives, the flag `A`,
-  a newline convention other than `\n`, a surrogate code point named under `/u`, which PCRE refuses to
-  compile); the list is in
+  a newline convention other than `\n`, `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`, a surrogate code point named under
+  `/u`, which PCRE refuses to compile); the list is in
   [the logic solver reference](logic-solver.md#what-the-solver-refuses). Atomic groups and possessive quantifiers commit to
   what they first matched and never retry — ordered behaviour the solver cannot read as a pure language
   (`/^a*+a$/` matches nothing at all), so they are refused — except a possessive quantifier nothing that follows can

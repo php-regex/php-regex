@@ -49,6 +49,7 @@ final class RegularSubsetValidator
     {
         $this->assertSupportedFlags($regex->flags);
         self::assertNewlineConvention($regex, $pattern);
+        self::assertEmptyMatchesAllowed($regex, $pattern);
 
         $hir = (new HirTranslator($target))->translate($regex);
         (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($regex)))
@@ -74,6 +75,24 @@ final class RegularSubsetValidator
 
         if (str_contains($regex->flags, 'm') || self::turnsMultilineOn($regex->pattern) || null !== self::lineAnchor($regex->pattern)) {
             throw new ComplexityException('A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.', 0, $pattern);
+        }
+    }
+
+    /**
+     * "(*NOTEMPTY)" and "(*NOTEMPTY_ATSTART)" refuse an empty match where
+     * the engine runs without the JIT; PHP's JIT ignores them, so the answer
+     * moves with pcre.jit: "/(*NOTEMPTY)a?/" finds no match in "b" without
+     * it and "" with it.
+     *
+     * @internal the match solver asks it too
+     *
+     * @throws ComplexityException
+     */
+    public static function assertEmptyMatchesAllowed(RegexNode $regex, string $pattern): void
+    {
+        $options = StartOptions::items($regex->source ?? '');
+        if (\in_array('NOTEMPTY', $options, true) || \in_array('NOTEMPTY_ATSTART', $options, true)) {
+            throw new ComplexityException('(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse an empty match without the JIT and are ignored with it, which the automata solver does not read.', 0, $pattern);
         }
     }
 

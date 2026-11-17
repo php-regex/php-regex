@@ -387,6 +387,14 @@ final class MatchEquivalenceTest extends TestCase
         yield 'a dollar under (*CR) on the right' => ['left' => '/a$/', 'right' => '/(*CR)a$/', 'reason' => $newline];
         yield 'a dollar under (*CR) after another option' => ['left' => '/(*UTF)(*CR)a$/', 'right' => '/(*UTF)a$/', 'reason' => $newline];
         yield 'a lazy loop before a dollar under (*CR)' => ['left' => '/(*CR)a\r*?(?:$|b)/', 'right' => '/(*CR)a\r*(?:$|b)/', 'reason' => $newline];
+        // PHP 8.4.27 / PCRE2 10.49: on "b" the left one finds no match
+        // without the JIT, the right one ""; with the JIT, which ignores the
+        // option, both find "".
+        $notEmpty = '(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse';
+        yield 'not empty without the JIT' => ['left' => '/(*NO_JIT)(*NOTEMPTY)a?/', 'right' => '/a?/', 'reason' => $notEmpty];
+        yield 'not empty' => ['left' => '/(*NOTEMPTY)a?/', 'right' => '/a?/', 'reason' => $notEmpty];
+        yield 'not empty at start' => ['left' => '/(*NOTEMPTY_ATSTART)a?/', 'right' => '/a?/', 'reason' => $notEmpty];
+        yield 'not empty on the right' => ['left' => '/a/', 'right' => '/(*NOTEMPTY)a/', 'reason' => $notEmpty];
     }
 
     /**

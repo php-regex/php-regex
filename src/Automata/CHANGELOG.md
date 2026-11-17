@@ -30,6 +30,11 @@ CHANGELOG
    `/(*CR)(?m)^a/` was proven equivalent to `/(?m)^a/`, where `preg_match()`
    finds `a` in `\ra` with the one and nothing with the other. `compare` no
    longer passes them.
+ * `equivalent()`, `intersection()`, `subsetOf()` and `matchEquivalent()`
+   refuse `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`, which refuse an empty
+   match without the JIT and which PHP's JIT ignores: `/(*NO_JIT)(*NOTEMPTY)a?/`
+   was proven alike `/a?/`, where `preg_match()` finds no match in `b` with
+   the one and `""` with the other.
  * `matchEquivalent()` counts the groups of a body repeated no time, `{0}`:
    `/(?<x>a){0}b/` was proven to write the `$matches` of `/b/`, where
    `preg_match_all()` writes an empty group `x` for the one and none for the

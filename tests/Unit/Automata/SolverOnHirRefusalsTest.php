@@ -99,6 +99,12 @@ final class SolverOnHirRefusalsTest extends TestCase
         // refuses it word for word.
         yield 'A flag' => ['pattern' => '/a/A', 'expected' => 'Unsupported regex flags for automata: A.'];
         yield 'newline convention under m' => ['pattern' => '/(*CR)ab/m', 'expected' => 'A newline convention other than "\n" moves where'];
+        // PHP 8.4.27 / PCRE2 10.49: "/(*NOTEMPTY)a?/" finds no match in "b"
+        // under pcre.jit=0, and "" with the JIT, which ignores the option:
+        // "/(*NO_JIT)(*NOTEMPTY)a?/" finds none either way.
+        yield 'not empty' => ['pattern' => '/(*NOTEMPTY)a?/', 'expected' => '(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse'];
+        yield 'not empty at start' => ['pattern' => '/(*NOTEMPTY_ATSTART)a?/', 'expected' => '(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse'];
+        yield 'not empty without the JIT' => ['pattern' => '/(*NO_JIT)(*NOTEMPTY)a?/', 'expected' => '(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse'];
     }
 
     #[Test]
