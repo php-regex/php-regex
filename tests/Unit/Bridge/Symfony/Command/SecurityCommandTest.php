@@ -19,6 +19,7 @@ use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Symfony\Security\SecurityConfigLocator;
 use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\SecurityConfigFunctionOverrides;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Toolkit\Regex;
@@ -156,7 +157,7 @@ final class SecurityCommandTest extends TestCase
     #[Test]
     public function test_command_reads_a_path_ending_on_a_comment_and_leaves_out_one_pcre_refuses(): void
     {
-        $this->assertFalse(@preg_match('{^/(shop}s', ''));
+        $this->assertFalse(EngineProbe::compiles('{^/(shop}s'));
         $this->assertSame(1, preg_match('{(?x)^/admin  # back office}s', '/admin/login'));
 
         $path = $this->makeProject([
