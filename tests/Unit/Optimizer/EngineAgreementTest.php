@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -35,13 +36,18 @@ use PHPUnit\Framework\TestCase;
  */
 final class EngineAgreementTest extends TestCase
 {
+    use PcreGates;
+
     /**
+     * A row whose lookbehind varies in length runs from PCRE2 10.43.
+     *
      * @param list<string> $subjects
      */
     #[Test]
     #[DataProvider('providePatterns')]
     public function test_the_rewrite_matches_what_the_engine_matched(string $pattern, string $expected, array $subjects): void
     {
+        $this->requiresCompile($pattern);
         $optimized = Regex::create(['cache' => null])->optimize($pattern)->optimized;
 
         foreach ($subjects as $subject) {

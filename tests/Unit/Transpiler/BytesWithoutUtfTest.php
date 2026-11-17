@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
@@ -30,6 +31,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class BytesWithoutUtfTest extends TestCase
 {
+    use PcreGates;
     use PhpUnitForwardCompat;
 
     #[Test]
@@ -171,6 +173,9 @@ final class BytesWithoutUtfTest extends TestCase
     #[DataProvider('provideLookbehindsOfOneLengthInCharacters')]
     public function test_a_python_lookbehind_is_measured_in_characters(string $pattern, string $python, string $subject, int $offset): void
     {
+        // A lookbehind of one length in characters is of two in bytes,
+        // which PCRE2 reads from 10.43.
+        $this->requiresCompile($pattern);
         $this->assertSame(1, preg_match($pattern, $subject, $matches, \PREG_OFFSET_CAPTURE));
         $this->assertSame($offset, $matches[0][1]);
 
