@@ -36,12 +36,31 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * A single- or double-quoted literal on one line that holds a 'regex:',
      * 'not_regex:' or 'notregex:' rule, in any case and blanks around its
      * name, at its start or after a "|", up to the quote that opened it.
+     * A double-quoted one may spell that name and its blanks with escapes,
+     * as "\tregex:" or "\x72egex:": a name of letters, digits, braces,
+     * blanks and escapes, one escape at least, is taken too, and the rule
+     * is read once PHP has decoded the literal.
      * Group 1 is the quote, group 2 the literal as written.
      * An escaped character (a backslash and the character after it) and any
      * other character but a backslash, the quote and a newline are
      * disjoint, so a run of backslashes is read in one pass.
      */
-    private const RULE_PATTERN = '/(?|(\')(?=(?:(?:\\\\.|[^\'\\\\\n|])*+\|)*[ \t\r\0\x0B]*+(?i:(?:not_?)?regex)[ \t\r\0\x0B]*+:)((?:\\\\.|[^\'\\\\\n])++)\'|(")(?=(?:(?:\\\\.|[^"\\\\\n|])*+\|)*[ \t\r\0\x0B]*+(?i:(?:not_?)?regex)[ \t\r\0\x0B]*+:)((?:\\\\.|[^"\\\\\n])++)")/';
+    private const RULE_PATTERN = '/(?|(\')(?=(?:(?:\\\\.|[^\'\\\\\n|])*+\|)*[ \t\r\0\x0B]*+(?i:(?:not_?)?regex)[ \t\r\0\x0B]*+:)((?:\\\\.|[^\'\\\\\n])++)\'|(")(?=(?:(?:\\\\.|[^"\\\\\n|])*+\|)*(?:[ \t\r\0\x0B]*+(?i:(?:not_?)?regex)[ \t\r\0\x0B]*+:|(?=[ \t\r\0\x0B0-9A-Za-z_{}]*+\\\\)(?:[ \t\r\0\x0B0-9A-Za-z_{}]|\\\\[^\n:])++:))((?:\\\\.|[^"\\\\\n])++)")/';
+
+    /**
+     * The calls that take a rules string, which Laravel splits on "|", by
+     * the name of the method, or of the class built, in lower case: the
+     * arguments that are one, by position from 0 and by name.
+     * Validator::sometimes() explodes [$key => $rules], and
+     * ConditionalRules::rules() and defaultRules() a string, as
+     * Rule::when() and Rule::unless() keep it.
+     */
+    private const RULES_ARGUMENTS = [
+        'sometimes' => [1 => 'rules'],
+        'when' => [1 => 'rules', 2 => 'defaultRules'],
+        'unless' => [1 => 'rules', 2 => 'defaultRules'],
+        'conditionalrules' => [1 => 'rules', 2 => 'defaultRules'],
+    ];
 
     /**
      * A regex rule as Laravel's ValidationRuleParser reads one rule: the
@@ -60,12 +79,13 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     private array $failures = [];
 
     /**
-     * The offsets of the string literals of the file read that are an
-     * argument of a call, read once a literal asks.
+     * The offsets of the string literals of the file read that a call takes
+     * as rules, and of the parentheses that only group what they hold, read
+     * once a literal asks.
      *
-     * @var array<int, true>|null
+     * @var array{rules: array<int, true>, grouping: array<int, true>}|null
      */
-    private ?array $callArguments = null;
+    private ?array $tokenReading = null;
 
     public function getName(): string
     {
@@ -152,7 +172,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         }
 
         $patterns = [];
-        $this->callArguments = null;
+        $this->tokenReading = null;
 
         // The pattern runs until the quote that opened the string literal,
         // so the other quote character (and escaped quotes) may appear
@@ -222,9 +242,9 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * rather than one element of a rules array: a rule before the regex one,
      * as "nullable|regex:/a/", a literal given to a key ('a' => '…') or
      * assigned ($rules['a'] = '…'), where $rules['a'][] = '…' pushes one
-     * element, or an argument of a call: Validator::sometimes() explodes
-     * [$key => $rules], and ConditionalRules::rules() a string, as
-     * Rule::when() keeps it.
+     * element, or the rules a call takes (RULES_ARGUMENTS), where a string
+     * another call takes, as array_push() appends it, is one element.
+     * Parentheses that only group the literal change nothing.
      *
      * @param int $start the offset of the quote that opens the literal
      */
@@ -235,13 +255,17 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         }
 
         $before = $this->previousNonWhitespace($content, $start - 1);
+        while ($before >= 0 && '(' === $content[$before] && isset($this->tokenReading($content)['grouping'][$before])) {
+            $before = $this->previousNonWhitespace($content, $before - 1);
+        }
+
         if ($before >= 1 && '=>' === substr($content, $before - 1, 2)) {
             return true;
         }
 
         // "==", "!=", "<=" and ">=" compare; "=", ".=" and "??=" assign.
         if ($before < 0 || '=' !== $content[$before] || ($before > 0 && str_contains('=!<>', $content[$before - 1]))) {
-            return isset($this->callArguments($content)[$start]);
+            return isset($this->tokenReading($content)['rules'][$start]);
         }
 
         $before = $this->previousNonWhitespace($content, $before - 1);
@@ -261,34 +285,129 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     }
 
     /**
-     * The offsets of the string literals of the file whose innermost
-     * bracket is the parenthesis of a call: a name, a variable or a closing
-     * bracket before it. array(), isset() or a control structure is none.
+     * The offsets of the string literals of the file that a call takes as
+     * rules, by position or by name, and of the parentheses that only group
+     * what they hold. A literal is an argument of the innermost bracket
+     * around it that does not only group.
      *
-     * @return array<int, true>
+     * @return array{rules: array<int, true>, grouping: array<int, true>}
      */
-    private function callArguments(string $content): array
+    private function tokenReading(string $content): array
     {
-        if (null !== $this->callArguments) {
-            return $this->callArguments;
+        if (null !== $this->tokenReading) {
+            return $this->tokenReading;
         }
 
         $tokens = token_get_all($content);
         $offsets = PhpTokens::offsets($tokens);
-        $calls = [];
-        $this->callArguments = [];
+        $rules = [];
+        $grouping = [];
+        // Each open bracket, null where it only groups: the arguments it
+        // takes as rules, the position of the one read and its name.
+        $brackets = [];
         foreach ($tokens as $index => $token) {
             if (PhpTokens::opensNesting($token)) {
                 $previous = PhpTokens::previousSignificant($tokens, $index - 1);
-                $callee = null === $previous ? null : $tokens[$previous];
-                $calls[] = '(' === $token && null !== $callee && (null !== PhpTokens::name($callee) || \in_array($callee, [')', ']'], true) || (\is_array($callee) && \T_VARIABLE === $callee[0]));
-            } elseif (')' === $token || ']' === $token || '}' === $token) {
-                array_pop($calls);
-            } elseif (\is_array($token) && \T_CONSTANT_ENCAPSED_STRING === $token[0] && true === end($calls)) {
-                $this->callArguments[$offsets[$index]] = true;
+                // An open tag stands before any bracket.
+                if ('(' === $token && null !== $previous && self::groups($tokens[$previous])) {
+                    $grouping[$offsets[$index]] = true;
+                    $brackets[] = null;
+                } else {
+                    $brackets[] = ['rules' => '(' === $token && null !== $previous ? self::rulesArgumentsOf($tokens, $previous) : [], 'position' => 0, 'name' => null];
+                }
+
+                continue;
+            }
+
+            if (')' === $token || ']' === $token || '}' === $token) {
+                array_pop($brackets);
+
+                continue;
+            }
+
+            $top = \count($brackets) - 1;
+            if (',' === $token || ':' === $token) {
+                $bracket = $brackets[$top] ?? null;
+                if (null === $bracket || [] === $bracket['rules']) {
+                    continue;
+                }
+
+                if (',' === $token) {
+                    $bracket['position']++;
+                    $bracket['name'] = null;
+                } else {
+                    // "rules:" names the argument after a "(" or a ",";
+                    // a ternary's ":" follows no such label.
+                    $label = PhpTokens::previousSignificant($tokens, $index - 1);
+                    $opener = null === $label ? null : PhpTokens::previousSignificant($tokens, $label - 1);
+                    if (null !== $label && null !== $opener && \in_array($tokens[$opener], ['(', ','], true)) {
+                        $bracket['name'] = PhpTokens::identifier($tokens[$label]);
+                    }
+                }
+                $brackets[$top] = $bracket;
+
+                continue;
+            }
+
+            if (!\is_array($token) || \T_CONSTANT_ENCAPSED_STRING !== $token[0]) {
+                continue;
+            }
+
+            while ($top >= 0 && null === $brackets[$top]) {
+                $top--;
+            }
+            $bracket = $brackets[$top] ?? null;
+            if (null !== $bracket && (null === $bracket['name'] ? isset($bracket['rules'][$bracket['position']]) : \in_array($bracket['name'], $bracket['rules'], true))) {
+                $rules[$offsets[$index]] = true;
             }
         }
 
-        return $this->callArguments;
+        return $this->tokenReading = ['rules' => $rules, 'grouping' => $grouping];
+    }
+
+    /**
+     * Whether a parenthesis after this token only groups what it holds:
+     * after an operator, a cast or a punctuation mark. After a name, a
+     * variable, a string, a ")" or a "]" it opens a call, after a keyword a
+     * control structure, array(), isset() or a closure.
+     *
+     * @param array{0: int, 1: string, 2?: int}|string $token
+     */
+    private static function groups(array|string $token): bool
+    {
+        if (!\is_array($token)) {
+            return ')' !== $token && ']' !== $token;
+        }
+
+        return \T_VARIABLE !== $token[0] && \T_CONSTANT_ENCAPSED_STRING !== $token[0] && null === PhpTokens::name($token) && null === PhpTokens::identifier($token);
+    }
+
+    /**
+     * The arguments the call after this name takes as rules, by position
+     * and by name: the method sometimes(), when() or unless(), or the
+     * ConditionalRules built. A function of these names takes none.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array<int, string>
+     */
+    private static function rulesArgumentsOf(array $tokens, int $callee): array
+    {
+        $name = PhpTokens::name($tokens[$callee]);
+        if (null === $name) {
+            return [];
+        }
+
+        // The last segment of a qualified name: the "\" put before the name
+        // stands one byte before the last one of the name itself.
+        $short = strtolower(substr($name, (int) strrpos('\\'.$name, '\\')));
+        $arguments = self::RULES_ARGUMENTS[$short] ?? [];
+        if ([] === $arguments || 'conditionalrules' === $short) {
+            return $arguments;
+        }
+
+        $operator = PhpTokens::previousSignificant($tokens, $callee - 1);
+
+        return null !== $operator && PhpTokens::isObjectOrStaticOperator($tokens[$operator]) ? $arguments : [];
     }
 }

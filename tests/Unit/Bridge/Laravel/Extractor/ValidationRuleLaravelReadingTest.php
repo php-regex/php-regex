@@ -13,13 +13,18 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Laravel\Extractor;
 
+use Illuminate\Translation\ArrayLoader;
+use Illuminate\Translation\Translator;
+use Illuminate\Validation\ConditionalRules;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationRuleParser;
+use Illuminate\Validation\Validator;
 use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Tests\Fixtures\Laravel\ValidationRules\UpdateUserLanePipedRequest;
 use PHPRegex\Tests\Fixtures\Laravel\ValidationRules\UpdateUserLaneRequest;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -130,21 +135,27 @@ final class ValidationRuleLaravelReadingTest extends TestCase
 
     /**
      * A rules string assigned to a key is split, an element pushed onto a
-     * list is not.
+     * list is not, by "[] =" or by array_push(), whatever its position.
      */
     #[Test]
     public function test_a_rules_string_is_split_and_a_pushed_element_is_not(): void
     {
+        $pushed = ['required'];
+        array_push($pushed, 'nullable', 'regex:/x|y/');
+        $this->assertSame(['/x|y/'], self::laravelPatterns(['d' => $pushed]));
+        $this->assertSame([true, false], array_map(EngineProbe::compiles(...), ['/x|y/', '/x']));
+
         $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
             <?php
             $rules['a'] = 'regex:/x|y/';
             $rules['b'][] = 'regex:/x|y/';
             $rules['c'] = ['nullable', 'regex:/x|y/'];
+            array_push($rules['d'], 'nullable', 'regex:/x|y/');
             PHP]);
 
         $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
 
-        $this->assertSame([[2, '/x'], [3, '/x|y/'], [4, '/x|y/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+        $this->assertSame([[2, '/x'], [3, '/x|y/'], [4, '/x|y/'], [5, '/x|y/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
     }
 
     /**
@@ -192,18 +203,21 @@ final class ValidationRuleLaravelReadingTest extends TestCase
 
     /**
      * A literal is read as PHP reads it: a double-quoted one decodes \u{…},
-     * \x, octal and \$ escapes before Laravel sees the rule, a single-quoted
-     * one \\ and \' alone. The file's own rules are the oracle.
+     * \x, octal and \$ escapes before Laravel sees the rule, the blanks and
+     * the letters of its name included, a single-quoted one \\ and \' alone.
+     * The file's own rules are the oracle, and the engine says whether the
+     * pattern Laravel runs compiles.
      */
     #[Test]
     #[DataProvider('provideLiterals')]
-    public function test_a_literal_is_read_as_php_reads_it(string $literal): void
+    public function test_a_literal_is_read_as_php_reads_it(string $literal, bool $compiles): void
     {
         $project = $this->makeProject(['app/Rules.php' => "<?php\nreturn ['slug' => ".$literal."];\n"]);
         $rules = require $project.'/app/Rules.php';
         $this->assertIsArray($rules);
         $expected = self::laravelPatterns(['slug' => $rules['slug'] ?? null]);
         $this->assertCount(1, $expected);
+        $this->assertSame($compiles, EngineProbe::compiles($expected[0]), $expected[0]);
 
         $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
 
@@ -211,18 +225,24 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{literal: string}>
+     * @return iterable<string, array{literal: string, compiles: bool}>
      */
     public static function provideLiterals(): iterable
     {
-        yield 'a code point escape' => ['literal' => '"required|regex:/^[\u{0600}-\u{06FF} ]+$/u"'];
-        yield 'a hexadecimal escape' => ['literal' => '"regex:/^\x41+$/"'];
-        yield 'an escaped dollar' => ['literal' => '"required|regex:/^[0-9]+\$/"'];
-        yield 'an octal escape' => ['literal' => '"regex:/(k)\1/"'];
-        yield 'a doubled backslash' => ['literal' => '"regex:/(x)\\\\1/"'];
-        yield 'an escaped double quote' => ['literal' => '"regex:/^\"$/"'];
-        yield 'a code point escape in single quotes' => ['literal' => "'regex:/^\\u{e9}$/u'"];
-        yield 'an escaped single quote' => ['literal' => "'nullable|regex:/^j\\'k$/'"];
+        yield 'a code point escape' => ['literal' => '"required|regex:/^[\u{0600}-\u{06FF} ]+$/u"', 'compiles' => true];
+        yield 'a hexadecimal escape' => ['literal' => '"regex:/^\x41+$/"', 'compiles' => true];
+        yield 'an escaped dollar' => ['literal' => '"required|regex:/^[0-9]+\$/"', 'compiles' => true];
+        yield 'an octal escape' => ['literal' => '"regex:/(k)\1/"', 'compiles' => true];
+        yield 'a doubled backslash' => ['literal' => '"regex:/(x)\\\\1/"', 'compiles' => true];
+        yield 'an escaped double quote' => ['literal' => '"regex:/^\"$/"', 'compiles' => true];
+        // PCRE2 refuses "\u" without an option PHP never sets.
+        yield 'a code point escape in single quotes' => ['literal' => "'regex:/^\\u{e9}$/u'", 'compiles' => false];
+        yield 'an escaped single quote' => ['literal' => "'nullable|regex:/^j\\'k$/'", 'compiles' => true];
+        // Laravel trims the name a tab starts, then runs the first field of
+        // the parameter read as CSV, which has no closing delimiter.
+        yield 'an escaped tab before the name' => ['literal' => '"required|\tregex:/^a{1,2}$/"', 'compiles' => false];
+        yield 'an escaped line feed after the name' => ['literal' => '"regex\n:/^b$/"', 'compiles' => true];
+        yield 'an escaped letter in the name' => ['literal' => '"nullable|\x72egex:/^c$/"', 'compiles' => true];
     }
 
     /**
@@ -235,12 +255,14 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     public function test_a_rules_string_given_to_a_call_is_split(): void
     {
         $expected = [
-            ...self::laravelPatterns(['code' => 'regex:/^(a|b)$/']),
+            ...self::laravelPatterns(self::sometimes('code', 'regex:/^(a|b)$/')),
             ...self::laravelPatterns(['x' => ValidationRuleParser::filterConditionalRules(['x' => Rule::when(true, 'regex:/^(c|d)$/')])['x'] ?? null]),
             ...self::laravelPatterns(['y' => ['required', 'regex:/^(e|f)$/']]),
             ...self::laravelPatterns(['z' => ['regex:/^(g|h)$/']]),
         ];
         $this->assertSame(['/^(a', '/^(c', '/^(e|f)$/', '/^(g|h)$/'], $expected);
+        // A split one loses its closing delimiter: the engine refuses it.
+        $this->assertSame([false, false, true, true], array_map(EngineProbe::compiles(...), $expected));
 
         $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
             <?php
@@ -256,9 +278,99 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
+     * A string is a rules string where the call takes rules: the second
+     * argument of Validator::sometimes(), the second and third of
+     * Rule::when(), Rule::unless() and the ConditionalRules they build, by
+     * position or by name, and through parentheses that only group it. A
+     * string another call takes is one rule, as array_unshift() adds it.
+     *
+     * @param \Closure(): array<mixed> $rules the rules as Laravel holds them
+     */
+    #[Test]
+    #[DataProvider('provideCallArguments')]
+    public function test_a_string_is_split_where_the_call_takes_rules(string $code, \Closure $rules, string $expected, bool $compiles): void
+    {
+        $this->assertSame([$expected], self::laravelPatterns($rules()));
+        $this->assertSame($compiles, EngineProbe::compiles($expected), $expected);
+
+        $project = $this->makeProject(['app/Rules.php' => "<?php\nuse Illuminate\\Validation\\ConditionalRules;\nuse Illuminate\\Validation\\Rule;\n".$code."\n"]);
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([$expected], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+    }
+
+    /**
+     * @return iterable<string, array{code: string, rules: \Closure(): array<mixed>, expected: string, compiles: bool}>
+     */
+    public static function provideCallArguments(): iterable
+    {
+        yield 'a rules string in parentheses' => [
+            'code' => "\$validator->sometimes('code', ('regex:/^(a|b)$/'), fn () => true);",
+            'rules' => static fn (): array => self::sometimes('code', 'regex:/^(a|b)$/'),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a rules string given by name' => [
+            'code' => "\$validator->sometimes('code', callback: fn () => true, rules: 'regex:/^(a|b)$/');",
+            'rules' => static fn (): array => self::sometimes('code', 'regex:/^(a|b)$/'),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'the default rules of Rule::when()' => [
+            'code' => "return ['code' => Rule::when(\$condition, 'required', 'regex:/^(a|b)$/')];",
+            'rules' => static fn (): array => ValidationRuleParser::filterConditionalRules(['code' => Rule::when(false, 'required', 'regex:/^(a|b)$/')]),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'the rules of Rule::unless() given by name' => [
+            'code' => "return ['code' => Rule::unless(\$condition, rules: 'regex:/^(a|b)$/')];",
+            'rules' => static fn (): array => ValidationRuleParser::filterConditionalRules(['code' => Rule::unless(false, rules: 'regex:/^(a|b)$/')]),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'the rules of a ConditionalRules' => [
+            'code' => "return ['code' => new ConditionalRules(\$condition, 'regex:/^(a|b)$/')];",
+            'rules' => static fn (): array => ValidationRuleParser::filterConditionalRules(['code' => new ConditionalRules(true, 'regex:/^(a|b)$/')]),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a rules string in parentheses given to a key' => [
+            'code' => "return ['code' => ('regex:/^(a|b)$/')];",
+            'rules' => static fn (): array => ['code' => 'regex:/^(a|b)$/'],
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element another call adds' => [
+            'code' => "array_unshift(\$rules['code'], 'regex:/^(a|b)$/');",
+            'rules' => static function (): array {
+                $rules = ['code' => ['required']];
+                array_unshift($rules['code'], 'regex:/^(a|b)$/');
+
+                return $rules;
+            },
+            'expected' => '/^(a|b)$/',
+            'compiles' => true,
+        ];
+    }
+
+    /**
+     * The rules Validator::sometimes() adds for the attribute, its callback
+     * passing.
+     *
+     * @return array<mixed>
+     */
+    private static function sometimes(string $attribute, string $rules): array
+    {
+        $validator = new Validator(new Translator(new ArrayLoader(), 'en'), [], []);
+        $validator->sometimes($attribute, $rules, static fn (): bool => true);
+
+        return $validator->getRules();
+    }
+
+    /**
      * The regex parameters Laravel passes to preg_match() for these rules.
      *
-     * @param array<string, mixed> $rules
+     * @param array<mixed> $rules
      *
      * @return list<string>
      */
