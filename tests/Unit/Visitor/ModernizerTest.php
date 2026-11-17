@@ -283,6 +283,51 @@ final class ModernizerTest extends TestCase
     }
 
     /**
+     * An option set with no colon, "(?i)", holds to the end of the group
+     * it stands in: unwrapped, "(?:(?i)a)b" would read "b" without case too.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideGroupsSettingOptions')]
+    public function test_group_keeps_its_parentheses_when_it_sets_an_option(string $pattern, string $expected, array $subjects): void
+    {
+        $modernized = $this->modernize($pattern);
+
+        $this->assertSame($expected, $modernized);
+        foreach ($subjects as $subject) {
+            $this->assertSame(
+                [preg_match($pattern, $subject, $original), $original],
+                [preg_match($modernized, $subject, $rewritten), $rewritten],
+                \sprintf('%s modernized as %s differs on %s.', $pattern, $modernized, json_encode($subject)),
+            );
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string, subjects: list<string>}>
+     */
+    public static function provideGroupsSettingOptions(): iterable
+    {
+        yield 'caseless' => ['pattern' => '/(?:(?i)a)b/', 'expected' => '/(?:(?i)a)b/', 'subjects' => ['aB', 'AB', 'Ab']];
+        yield 'no auto capture' => ['pattern' => '/(?:(?n)a)(b)/', 'expected' => '/(?:(?n)a)(b)/', 'subjects' => ['ab']];
+        yield 'reset' => ['pattern' => '/(?i)(?:(?^)a)b/', 'expected' => '/(?i)(?:(?^)a)b/', 'subjects' => ['aB', 'AB']];
+        yield 'ungreedy' => ['pattern' => '/(?:(?U)a+)a+/', 'expected' => '/(?:(?U)a+)a+/', 'subjects' => ['aaaa']];
+        yield 'dot all' => ['pattern' => '/(?:(?s)a)./', 'expected' => '/(?:(?s)a)./', 'subjects' => ["a\n", 'ab']];
+        yield 'an option alone' => ['pattern' => '/(?:(?i))b/', 'expected' => '/(?:(?i))b/', 'subjects' => ['B', 'b']];
+        yield 'an option set and unset' => ['pattern' => '/(?:(?i)a(?-i))b/', 'expected' => '/(?:(?i)a(?-i))b/', 'subjects' => ['aB', 'Ab']];
+        yield 'before an alternative' => ['pattern' => '/(?:(?i)a)|b/', 'expected' => '/(?:(?i)a)|b/', 'subjects' => ['B', 'A']];
+        yield 'in an alternative' => ['pattern' => '/(?:a(?i)|b)c/', 'expected' => '/(?:a(?i)|b)c/', 'subjects' => ['aC', 'bC']];
+        yield 'after a character' => ['pattern' => '/x(?:(?i)a)b/', 'expected' => '/x(?:(?i)a)b/', 'subjects' => ['xaB', 'xAb']];
+        yield 'in a nested group' => ['pattern' => '/(?:x(?:y(?i)))z/', 'expected' => '/x(?:y(?i))z/', 'subjects' => ['xyZ', 'xyz']];
+        yield 'in a group nested first' => ['pattern' => '/(?:(?:(?i)a)b)c/', 'expected' => '/(?:(?i)a)bc/', 'subjects' => ['abC', 'aBc', 'Abc']];
+        yield 'in a group with options' => ['pattern' => '/(?i:(?:(?s)a)b.)/', 'expected' => '/(?i:(?:(?s)a)b.)/', 'subjects' => ["ab\n", 'aBc']];
+        yield 'in a nested sequence' => ['pattern' => '/(?:(?:a.)(?i)b)c/', 'expected' => '/(?:a.(?i)b)c/', 'subjects' => ['axbC', 'axBc']];
+        yield 'in a lookahead' => ['pattern' => '/(?=(?:(?i)a))a/', 'expected' => '/(?=(?:(?i)a))a/', 'subjects' => ['a', 'A']];
+        yield 'in a quantified group' => ['pattern' => '/(?:(?i)a)+b/', 'expected' => '/(?:(?i)a)+b/', 'subjects' => ['AaB', 'Aab']];
+    }
+
+    /**
      * In a lookbehind, "(?(c)X)" has the length of X alone, where
      * "(?(c)X|)" may also be empty: a modernized "yes" branch writes no
      * "|" its source did not write.

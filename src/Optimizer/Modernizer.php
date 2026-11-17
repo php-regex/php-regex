@@ -142,8 +142,10 @@ final class Modernizer extends AbstractNodeVisitor
         $child = $node->child->accept($this);
 
         // Alternations need their group to keep surrounding sequence items
-        // (including anchors) bound to every alternative when printed.
-        if (self::isPlain($node) && !$child instanceof AlternationNode) {
+        // (including anchors) bound to every alternative when printed, and
+        // an option set with no colon, "(?i)", holds to the end of the group
+        // it stands in: unwrapped, "(?:(?i)a)b" would read "b" without case.
+        if (self::isPlain($node) && !$child instanceof AlternationNode && !self::setsOption($child)) {
             return $child;
         }
 
@@ -411,6 +413,31 @@ final class Modernizer extends AbstractNodeVisitor
                 || $node instanceof ControlCharNode || $node instanceof BackrefNode || $node instanceof SubroutineNode
                 || $node instanceof ConditionalNode || $node instanceof DefineNode || $node instanceof ScriptRunNode,
         };
+    }
+
+    /**
+     * Whether the node sets an option for what follows it in its group: a
+     * "(?i)" in it, or in a sequence or an alternative of it.
+     */
+    private static function setsOption(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode) {
+            return GroupType::InlineFlags === $node->type && self::isEmpty($node->child);
+        }
+
+        $parts = match (true) {
+            $node instanceof SequenceNode => $node->children,
+            $node instanceof AlternationNode => $node->alternatives,
+            default => [],
+        };
+
+        foreach ($parts as $part) {
+            if (self::setsOption($part)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function isEmpty(NodeInterface $node): bool
