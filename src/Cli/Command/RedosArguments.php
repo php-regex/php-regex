@@ -164,9 +164,14 @@ final class RedosArguments
         return \sprintf($option->attached ? 'Invalid value for %s.' : 'Missing or invalid value for %s.', $option->name);
     }
 
+    /**
+     * A count written in digits alone that reads back as written: no sign,
+     * no leading zero, nothing past the integer range, which (int) reads as
+     * PHP_INT_MAX.
+     */
     private static function integer(string $value, int $min): ?int
     {
-        if ('' === $value || !Ascii::isDigit($value)) {
+        if ('' === $value || !Ascii::isDigit($value) || (string) (int) $value !== $value) {
             return null;
         }
 

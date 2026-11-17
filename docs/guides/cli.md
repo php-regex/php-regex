@@ -2513,7 +2513,7 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 |---------------------|----------------------------------------------------|
 | `--exclude <path>`  | Exclude path (repeatable)                          |
 | `--min-savings <n>` | Minimum optimization savings, in characters: a whole number, 0 or more; anything else is a usage error (exit 2) |
-| `-j, --jobs <n>`    | Parallel workers (default: the logical CPUs, see [Parallel workers](#parallel-workers)) |
+| `-j, --jobs <n>`    | Parallel workers, a whole number of 1 or more (default: the logical CPUs, see [Parallel workers](#parallel-workers)) |
 | `--format <format>` | Output format (console, json, github, checkstyle, junit) |
 | `--json`            | Same as `--format=json`                            |
 | `--output <file>`   | Also write the report to a file                    |

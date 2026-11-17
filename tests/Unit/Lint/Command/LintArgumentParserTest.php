@@ -281,6 +281,36 @@ final class LintArgumentParserTest extends TestCase
         yield 'past the integer range' => ['value' => '99999999999999999999'];
     }
 
+    /**
+     * --jobs takes a whole number of workers, 1 or more, written in digits
+     * alone and read back as written, as the Symfony and Laravel commands
+     * read it: "4abc" was 4 workers, "1e3" one, "+3" three.
+     */
+    #[Test]
+    #[DataProvider('provideJobsThatAreNoPositiveInteger')]
+    public function test_parse_refuses_a_jobs_that_is_no_positive_integer(string $value): void
+    {
+        $result = (new LintArgumentParser())->parse(['--jobs='.$value]);
+
+        $this->assertNotInstanceOf(LintArguments::class, $result->arguments);
+        $this->assertSame('The --jobs value must be a positive integer.', $result->error);
+    }
+
+    /**
+     * @return iterable<string, array{value: string}>
+     */
+    public static function provideJobsThatAreNoPositiveInteger(): iterable
+    {
+        yield 'digits then letters' => ['value' => '4abc'];
+        yield 'an exponent' => ['value' => '1e3'];
+        yield 'a decimal' => ['value' => '2.7'];
+        yield 'a sign' => ['value' => '+3'];
+        yield 'a leading zero' => ['value' => '03'];
+        yield 'past the integer range' => ['value' => '99999999999999999999'];
+        yield 'zero' => ['value' => '0'];
+        yield 'no value' => ['value' => ''];
+    }
+
     #[Test]
     #[DataProvider('provideMinSavings')]
     public function test_parse_reads_a_min_savings_of_zero_or_more(string $value, int $expected): void
