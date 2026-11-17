@@ -362,7 +362,14 @@ final class RedosHeuristicShapesTest extends TestCase
      * first of them: 67 -> 99 -> 131 steps when it is "(a|b)", 4 081 ->
      * 65 521 -> 1 048 561 when it is "(a|a)". A call in a loop inside an
      * atomic script run still backtracks until the body has matched (2 047
-     * -> 32 767 -> 524 287).
+     * -> 32 767 -> 524 287). A branch that is a call starts as the group
+     * it calls: one that shares a letter with the other branch is read
+     * twice at each letter (2 045 -> 32 765 -> 524 285 for "[a-z]" beside
+     * a call of "[a-z0-9]", 2 046 -> 32 766 -> 524 286 for "a" beside a
+     * call of "(a)"), one that does not chooses its branch (69 -> 101 ->
+     * 133 for "-" beside a call of "[a-z0-9]", on "a-" units). A branch
+     * that recurses into the whole pattern is left out of the comparison
+     * (42 -> 58 -> 74 for nested parentheses after a "(").
      *
      * @return iterable<string, array{pattern: string, prefix: string, unit: string, critical: bool}>
      */
@@ -384,6 +391,11 @@ final class RedosHeuristicShapesTest extends TestCase
         yield 'call of a name two groups share, the first disjoint' => ['pattern' => '/(?J)^(?:(?&n))+(?<n>a|b)(?<n>a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => false];
         yield 'call of a name two groups share, the first ambiguous' => ['pattern' => '/(?J)^(?:(?&n))+(?<n>a|a)(?<n>a|b)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
         yield 'call in a loop of an atomic script run' => ['pattern' => '/^(*asr:(?:(?1))+c)(a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'branch calling a group that shares a letter with the other branch' => ['pattern' => '/^(?:[a-z]|(?&c))+$(?(DEFINE)(?<c>[a-z0-9]))/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'branch calling a group before the letter it shares' => ['pattern' => '/^(?:(?&c)|[a-z])+$(?(DEFINE)(?<c>[a-z0-9]))/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'branch calling the group that opens the pattern' => ['pattern' => '/^(a)(?:a|(?1))+$/', 'prefix' => 'a', 'unit' => 'a', 'critical' => true];
+        yield 'branch recursing into the whole pattern' => ['pattern' => '/^\((?:[^()]|(?R))*\)/', 'prefix' => '(', 'unit' => 'a', 'critical' => false];
+        yield 'branch calling a group the other branch never starts' => ['pattern' => '/^(?:-|(?&c))+$(?(DEFINE)(?<c>[a-z0-9]))/', 'prefix' => '', 'unit' => 'a-', 'critical' => false];
     }
 
     #[Test]

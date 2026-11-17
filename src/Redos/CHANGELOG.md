@@ -36,7 +36,10 @@ CHANGELOG
  * The heuristics read a subroutine call in a loop as the group it calls,
    as PCRE runs it at each iteration: `/^(?:(?1))+(a|a)$/` and
    `/^(?:(?&w)\s?)+$(?(DEFINE)(?<w>[a-z]+))/`, which were medium, are
-   critical. Each call is read through once, which ends a recursion.
+   critical. Each call is read through once, which ends a recursion. A
+   branch that is a call starts as the group it calls:
+   `/^(?:[a-z]|(?&c))+$(?(DEFINE)(?<c>[a-z0-9]))/` and `/^(a)(?:a|(?1))+$/`,
+   which were medium, are critical.
  * A backreference to a group of variable length in a loop is no longer
    critical when the body of the loop reads its input one way, each
    alternation choosing its branch by the first character and each count

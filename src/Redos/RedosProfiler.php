@@ -903,16 +903,23 @@ final class RedosProfiler extends AbstractNodeVisitor
      */
     private function hasOverlappingAlternatives(AlternationNode $node): bool
     {
-        // If any alternative is a subroutine (recursion), consider it non-overlapping for ReDoS purposes
+        // A branch that calls a group starts as that group does; a recursion
+        // into the whole pattern is left out, read as no overlap.
+        $branches = [];
         foreach ($node->alternatives as $alt) {
             if ($alt instanceof SubroutineNode) {
-                return false;
+                $alt = $this->calledGroup($alt);
+                if (null === $alt) {
+                    return false;
+                }
             }
+
+            $branches[] = $alt;
         }
 
         $sets = [];
 
-        foreach ($node->alternatives as $alt) {
+        foreach ($branches as $alt) {
             $set = $this->charSetAnalyzer->firstChars($alt);
 
             if ($this->startsWithDot($alt)) {
