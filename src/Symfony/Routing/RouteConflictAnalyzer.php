@@ -161,7 +161,16 @@ final class RouteConflictAnalyzer
                     $intersection = $this->solver->intersection($earlier['pathPattern'], $later['pathPattern'], $options);
                     // On disjoint schemes, each route keeps the paths both
                     // match for its own scheme: only the redirect is read,
-                    // which takes the later route's other paths.
+                    // which takes the later route's other paths. Beside
+                    // shared paths, the path the matcher redirects for an
+                    // earlier route ending on a variable is PCRE's ordered
+                    // choice, which no language reads: the pair is left out.
+                    if (!$intersection->isEmpty && !$schemesOverlap && self::endsOnAVariable($earlier['path'])) {
+                        $skippedPairs++;
+
+                        continue;
+                    }
+
                     if ($intersection->isEmpty || !$schemesOverlap) {
                         $redirect = $intersection->isEmpty
                             ? $this->redirectConflict($earlier, $later, $options, null === $hostsOverlap)
@@ -373,6 +382,16 @@ final class RouteConflictAnalyzer
     }
 
     /**
+     * Whether the path ends on a variable, its slash aside, as the
+     * framework's matcher dumper reads it to match the path with the slash
+     * or without it.
+     */
+    private static function endsOnAVariable(string $path): bool
+    {
+        return 1 === LibraryPcre::match('#\{[\w\x80-\xFF]+\}/?$#', $path);
+    }
+
+    /**
      * The paths that differ from those of the regex by their trailing slash:
      * the slash before the closing anchor is dropped, or one is added.
      */
@@ -455,10 +474,10 @@ final class RouteConflictAnalyzer
      * The conflict of two routes on disjoint schemes that share paths: the
      * later route keeps those on its own schemes, and loses to the redirect
      * a path that differs from one of the earlier route by its trailing
-     * slash alone, and that the earlier route does not match. An overlap at
-     * most; null when the solver finds no such path, or names one the
-     * earlier route matches as well, as a last variable that takes a slash.
-     * The pair reaches it on disjoint schemes only where redirects() holds.
+     * slash alone. An overlap at most; null when it has no such path. The
+     * earlier route ends on no variable, so no path of its own differs from
+     * another of them by the slash, and the pair reaches it only where
+     * redirects() holds.
      *
      * @param bool $hostsUnread whether the solver gave up on the two hosts
      *
@@ -470,7 +489,7 @@ final class RouteConflictAnalyzer
     private function redirectBesideSharedPaths(array $earlier, array $later, SolverOptions $options, bool $hostsUnread): ?array
     {
         $redirected = $this->solver->intersection(self::slashSwapped($earlier['pathPattern']), $later['pathPattern'], $options);
-        if ($redirected->isEmpty || null === $redirected->example || 1 === LibraryPcre::match($earlier['pathPattern'], $redirected->example)) {
+        if ($redirected->isEmpty) {
             return null;
         }
 

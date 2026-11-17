@@ -205,7 +205,9 @@ CHANGELOG
    the earlier one matches in part and redirects for the rest,
    `/blog{slash}` (`/?`) after `/blog`, is shadowed too. On another
    scheme, a later route that shares paths with the earlier one keeps them
-   and loses the redirected ones: an overlap. The report
+   and loses the redirected ones: an overlap, or a pair skipped where the
+   earlier route ends on a variable, whose redirect PCRE's order decides.
+   The report
    suggests paths that differ by more than the slash, never the reorder
    that only turns the redirect round.
  * `regex:routes` and `regex:analyze` call a route shadowed only when an

@@ -923,6 +923,59 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * An earlier route ending on a variable is matched, slash or no slash,
+     * and redirected when the variable PCRE captured does not end on the
+     * slash: which path it redirects is PCRE's ordered choice, not a
+     * language the solver reads. Beside paths it shares with a later route
+     * on another scheme, the pair is left out as one the solver gives up
+     * on, rather than judged on one example.
+     *
+     * @param array{0: string, 1: list<string>, 2: list<string>}    $earlier
+     * @param array{0: string, 1: list<string>, 2: list<string>}    $later
+     * @param list<array{0: string, 1: string, 2: string, 3: bool}> $probes
+     */
+    #[Test]
+    #[DataProvider('provideEarlierRoutesEndingOnAVariable')]
+    public function test_an_earlier_route_ending_on_a_variable_is_left_out_beside_shared_paths_on_disjoint_schemes(array $earlier, array $later, array $probes): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route($earlier[0]))->setMethods($earlier[1])->setSchemes($earlier[2]));
+        $collection->add('later', (new Route($later[0]))->setMethods($later[1])->setSchemes($later[2]));
+
+        $compiled = (new CompiledUrlMatcherDumper($collection))->getCompiledRoutes();
+        foreach ($probes as [$method, $scheme, $path, $laterTakesIt]) {
+            $this->assertSame($laterTakesIt, 'later' === FrameworkMatcher::reached($compiled, $method, $path, $scheme), $method.' '.$scheme.' '.$path);
+        }
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame([], $report->conflicts);
+        $this->assertSame(1, $report->stats['skipped_pairs']);
+    }
+
+    /**
+     * @return iterable<string, array{earlier: array{0: string, 1: list<string>, 2: list<string>}, later: array{0: string, 1: list<string>, 2: list<string>}, probes: list<array{0: string, 1: string, 2: string, 3: bool}>}>
+     */
+    public static function provideEarlierRoutesEndingOnAVariable(): iterable
+    {
+        yield 'a variable that may end on the slash' => [
+            'earlier' => ['/{x<a/?|b>}', ['GET'], ['https']],
+            'later' => ['/{y<a/|b/>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/b/', false]],
+        ];
+        yield 'the same variable, its branches swapped' => [
+            'earlier' => ['/{x<b/?|a>}', ['GET'], ['https']],
+            'later' => ['/{y<b/|a/>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/a/', false]],
+        ];
+        yield 'a lazy variable before a route ending on the slash' => [
+            'earlier' => ['/files/{path<.+?>}', ['GET'], ['https']],
+            'later' => ['/files/{name}/', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/files/a/', false], ['HEAD', 'http', '/files/a/', false]],
+        ];
+    }
+
+    /**
      * @return iterable<string, array{earlier: array{0: string, 1: list<string>, 2: list<string>}, later: array{0: string, 1: list<string>, 2: list<string>}, probes: list<array{0: string, 1: string, 2: string, 3: bool}>, type: string|null, filtered: int}>
      */
     public static function provideTrailingSlashPairsOnDisjointSchemes(): iterable
@@ -958,23 +1011,23 @@ final class RouteConflictAnalyzerTest extends TestCase
         // The paths both match stay the later route's on its scheme; the
         // redirect still takes the others.
         yield 'a route on https sharing some paths with a later one on http, which loses the rest to the redirect' => [
-            'earlier' => ['/{x<a|b>}', ['GET'], ['https']],
-            'later' => ['/{y<a|b/>}', ['GET'], ['http']],
-            'probes' => [['GET', 'http', '/a', true], ['GET', 'http', '/b/', false], ['HEAD', 'http', '/b/', false]],
+            'earlier' => ['/{x<a|b>}.html', ['GET'], ['https']],
+            'later' => ['/{y<a\.html|b\.html/>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/a.html', true], ['GET', 'http', '/b.html/', false], ['HEAD', 'http', '/b.html/', false]],
             'type' => 'overlap',
             'filtered' => 0,
         ];
-        yield 'a route on https with a trailing slash sharing a path with a later one on http, which loses the path without it' => [
-            'earlier' => ['/{x<a|b>}/', ['GET'], ['https']],
-            'later' => ['/{y<a/|b>}', ['GET'], ['http']],
-            'probes' => [['GET', 'http', '/a/', true], ['GET', 'http', '/b', false], ['HEAD', 'http', '/b', false]],
+        yield 'a route on https ending on a slash sharing a path with a later one on http, which loses the path without it' => [
+            'earlier' => ['/{x<a|b>}.d/', ['GET'], ['https']],
+            'later' => ['/{y<a\.d/|b\.d>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/a.d/', true], ['GET', 'http', '/b.d', false], ['HEAD', 'http', '/b.d', false]],
             'type' => 'overlap',
             'filtered' => 0,
         ];
         yield 'a route on https sharing every path with a later one on http, whose paths the redirect leaves alone' => [
-            'earlier' => ['/{x<a|b>}', ['GET'], ['https']],
-            'later' => ['/{y<a>}', ['GET'], ['http']],
-            'probes' => [['GET', 'http', '/a', true]],
+            'earlier' => ['/{x<a|b>}.html', ['GET'], ['https']],
+            'later' => ['/{y<a>}.html', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/a.html', true]],
             'type' => null,
             'filtered' => 0,
         ];
