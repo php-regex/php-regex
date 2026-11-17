@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Visitor;
 
 use PHPRegex\Optimizer\Modernizer;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,6 +23,8 @@ use PHPUnit\Framework\TestCase;
 
 final class ModernizerTest extends TestCase
 {
+    use PcreGates;
+
     private Regex $regexService;
 
     protected function setUp(): void
@@ -338,6 +341,11 @@ final class ModernizerTest extends TestCase
     #[DataProvider('provideConditionalsWithoutNoBranch')]
     public function test_conditional_keeps_writing_no_bar_it_did_not_write(string $pattern, string $expected, array $subjects): void
     {
+        // Before PCRE2 10.43 a lookbehind whose conditional may be empty has
+        // no fixed length: the match results compared below would both be
+        // false.
+        $this->requiresCompile($pattern);
+
         $modernized = $this->regexService->parse($pattern)->accept(new Modernizer());
 
         foreach ([PatternPrinter::normalized(), PatternPrinter::asWritten()] as $printer) {
