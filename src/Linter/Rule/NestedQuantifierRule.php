@@ -114,47 +114,105 @@ final class NestedQuantifierRule extends AbstractLintRule
      * "(?:\w+\s*\w+)*" the two runs of letters meet where "\s*" matches
      * nothing; a loop met again after every other item meets itself.
      *
-     * Each walk stops at the first item that always reads a character; past
-     * a fixed amount of work, a body of many loops that may match nothing
-     * is left to the first loop's verdict.
+     * One walk around the ring, then on to the last loop again, reads each
+     * item once against the characters of every loop still walking to it:
+     * an item that always reads a character ends the walk of each. A body
+     * of many loops that may match nothing costs no more than one of them.
      */
     private function hasLoopMeetingWhatFollows(QuantifierNode $outer, SequenceNode $iteration, LintContext $context): bool
     {
         $children = array_values($iteration->children);
         $count = \count($children);
         $flags = array_values($context->flagsAtEachChild($iteration, $context->flagsAt($iteration, $outer->node)));
-        $work = 8 * $count;
 
-        foreach ($children as $index => $child) {
-            $loop = NodePredicates::unwrapTransparentNode($child);
+        // The characters of the loops still walking: those of the loops
+        // read with case as they are, those of the caseless ones folded;
+        // null while none of the kind walks.
+        $cased = null;
+        $caseless = null;
+        $aboveAscii = false;
+        $lastLoop = 0;
+
+        for ($position = 0; $position < 2 * $count; $position++) {
+            $index = $position % $count;
+            $item = $children[$index];
+            if (null !== $cased || null !== $caseless) {
+                if ($this->meetsTheLoops($item, $flags[$index], $cased, $caseless, $aboveAscii, $context)) {
+                    return true;
+                }
+
+                if (!NodePredicates::canBeEmpty($item)) {
+                    $cased = null;
+                    $caseless = null;
+                    $aboveAscii = false;
+                }
+            }
+
+            // Past the ring, each walk still going ends at its own loop.
+            if ($position >= $count) {
+                if ((null === $cased && null === $caseless) || $index >= $lastLoop) {
+                    break;
+                }
+
+                continue;
+            }
+
+            $loop = NodePredicates::unwrapTransparentNode($item);
             if (!$loop instanceof QuantifierNode || QuantifierType::Possessive === $loop->type || !QuantifierMath::isVariable($loop)) {
                 continue;
             }
 
-            $caseless = self::isReadCaseless($loop->node, $flags[$index]);
-            $boundary = $this->correctlyFoldedBoundary($loop->node, $context, $flags[$index], $caseless);
+            $readCaseless = self::isReadCaseless($loop->node, $flags[$index]);
+            $boundary = $this->correctlyFoldedBoundary($loop->node, $context, $flags[$index], $readCaseless);
             if ($boundary->isUnknown() || $boundary->isEmpty()) {
                 return true;
             }
 
-            $takesAboveAscii = LoopShape::mayTakeACharacterAboveAscii($loop->node, $context);
-            for ($step = 1; $step <= $count; $step++) {
-                if (--$work < 0) {
-                    return false;
-                }
-
-                $next = ($index + $step) % $count;
-                if ($this->tailCanTake([$next => $children[$next]], $flags, $boundary, $caseless, $takesAboveAscii, $context)) {
-                    return true;
-                }
-
-                if (!NodePredicates::canBeEmpty($children[$next])) {
-                    break;
-                }
+            if ($readCaseless) {
+                $boundary = $this->fold($boundary, true);
+                $caseless = $caseless?->union($boundary) ?? $boundary;
+            } else {
+                $cased = $cased?->union($boundary) ?? $boundary;
             }
+
+            $aboveAscii = $aboveAscii || LoopShape::mayTakeACharacterAboveAscii($loop->node, $context);
+            $lastLoop = $index;
         }
 
         return false;
+    }
+
+    /**
+     * Whether the item may take a character of the loops walking to it,
+     * read as tailCanTake() reads it against each: caseless where either
+     * is, above ASCII where both may go.
+     */
+    private function meetsTheLoops(NodeInterface $item, string $flags, ?ByteCharSet $cased, ?ByteCharSet $caseless, bool $aboveAscii, LintContext $context): bool
+    {
+        if ($item instanceof AnchorNode
+            || $item instanceof AssertionNode
+            || $item instanceof CommentNode
+            || NodePredicates::isStandaloneInlineFlagsGroup($item)
+        ) {
+            return false;
+        }
+
+        if ($aboveAscii && LoopShape::mayTakeACharacterAboveAscii($item, $context)) {
+            return true;
+        }
+
+        if (self::isReadCaseless($item, $flags)) {
+            $loops = $caseless;
+            if (null !== $cased) {
+                $folded = $this->fold($cased, true);
+                $loops = null === $loops ? $folded : $folded->union($loops);
+            }
+
+            return null !== $loops && $this->correctlyFoldedFirstChars($item, $context, $flags, true)->intersects($loops);
+        }
+
+        return (null !== $cased && $this->correctlyFoldedFirstChars($item, $context, $flags, false)->intersects($cased))
+            || (null !== $caseless && $this->correctlyFoldedFirstChars($item, $context, $flags, true)->intersects($caseless));
     }
 
     /**

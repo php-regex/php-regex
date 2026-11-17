@@ -419,14 +419,18 @@ final class NestedLoopEdgeCaseTest extends TestCase
      * and so do two loops of one iteration. Each reported row goes
      * exponential on the unit repeated then "!" (n 8 -> 16): 766 -> 196 606
      * for the "\s*" ending a word and the "\s+" starting the next, 12 029
-     * -> past 16 777 216 for the "\s*" around a comma, 39 363 -> past
+     * -> past 16 777 216 for the "\s*" around a comma, under u too, where
+     * both may also take a character above ASCII, 39 363 -> past
      * 16 777 216 for two runs of letters behind "\s*", 638 -> 163 838 for
      * the runs of "a" around a "b", 163 839 -> past 16 777 216 on "a,aaa"
-     * for a run of a property whose characters are not listed. A loop that
-     * always meets a character it cannot take keeps the iterations apart: a
-     * run of letters then of spaces (11 -> 19), a list after a comma (27 ->
-     * 51), words after spaces (11 -> 19), a negated class under i before a
-     * run of the letter it leaves out, in either case (10 -> 18).
+     * for a run of a property whose characters are not listed, 257 ->
+     * 65 537 for two runs of digits behind twenty optional letters, each
+     * loop read whatever number of loops that may match nothing comes
+     * before it. A loop that always meets a character it cannot take keeps
+     * the iterations apart: a run of letters then of spaces (11 -> 19), a
+     * list after a comma (27 -> 51), words after spaces (11 -> 19), a
+     * negated class under i before a run of the letter it leaves out, in
+     * either case (10 -> 18).
      *
      * @return iterable<string, array{pattern: string, prefix: string, unit: string, reported: bool}>
      */
@@ -434,9 +438,11 @@ final class NestedLoopEdgeCaseTest extends TestCase
     {
         yield 'spaces ending a word before the spaces starting the next' => ['pattern' => '/^\w+(?:\s+\w+\s*)*$/', 'prefix' => 'a', 'unit' => '  a', 'reported' => true];
         yield 'spaces around a comma' => ['pattern' => '/^(?:\s*,\s*\w+\s*)*$/', 'prefix' => '', 'unit' => ' ,0 ', 'reported' => true];
+        yield 'spaces around a comma under u' => ['pattern' => '/^(?:\s*,\s*\w+\s*)*$/u', 'prefix' => '', 'unit' => ' ,0 ', 'reported' => true];
         yield 'two runs of letters behind spaces' => ['pattern' => '/^(?:\s*;\s*\w+\s*\w+)*$/', 'prefix' => '', 'unit' => ';bbbb', 'reported' => true];
         yield 'runs of a letter around another' => ['pattern' => '/^(?:a+ba+)*$/', 'prefix' => '', 'unit' => 'aaab', 'reported' => true];
         yield 'run of a property before the next iteration' => ['pattern' => '/^(?:a+,\p{L}*)+$/u', 'prefix' => '', 'unit' => 'a,aaa', 'reported' => true];
+        yield 'two runs of digits behind many optional letters' => ['pattern' => '/^(?:a?b?c?d?e?f?g?h?i?j?k?l?m?n?o?p?q?r?s?t?\d+\d+)*$/', 'prefix' => '', 'unit' => '1', 'reported' => true];
         yield 'letters then spaces' => ['pattern' => '/^(?:[a-z]+\s+)*$/', 'prefix' => '', 'unit' => 'ab ', 'reported' => false];
         yield 'negated class under i before the letter it leaves out' => ['pattern' => '/(?:[^z]+Z+)+$/i', 'prefix' => '', 'unit' => 'aZ', 'reported' => false];
         yield 'list after a comma' => ['pattern' => '/^(?:\s*,\s*\w+)*$/', 'prefix' => '', 'unit' => ' , ab', 'reported' => false];

@@ -59,7 +59,9 @@ CHANGELOG
    what follows it, the iteration read as a ring whose last item comes
    before its first: `/^\w+(?:\s+\w+\s*)*$/`, `/^(?:\s*,\s*\w+\s*)*$/`
    and `/^(?:\s*;\s*\w+\s*\w+)*$/`, which PCRE runs out of its backtrack
-   limit on and the rule passed, are reported. A separator may stand
+   limit on and the rule passed, are reported, whatever the number of
+   items that may match nothing before a loop:
+   `/^(?:a?b?c?d?e?f?g?h?i?j?k?l?m?n?o?p?q?r?s?t?\d+\d+)*$/` is. A separator may stand
    behind items that may match nothing and take none of the loop's
    characters: `/^(?:\s*\d+\s*,)*\s*\d+\s*$/` and `/^(\s*\w+\s*,)*$/`,
    which were reported, are not.
