@@ -19,6 +19,7 @@ use PHPRegex\Parser\Lexing\PatternText;
 use PHPRegex\Parser\Lexing\TargetSyntax;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Token\Token;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -99,6 +100,13 @@ final class ClassRangesTest extends TestCase
     #[Test]
     public function test_a_bare_x_php_7_4_reads_as_its_letter_bounds_a_range_as_x(): void
     {
+        // The two readings written out, for the running engine: the letter x
+        // starts a range out of order, NUL one in order. PHP 7.4 itself
+        // cannot be asked here: the running PHP compiles without
+        // PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, and from 10.45 refuses "\x".
+        $this->assertStringContainsString('range out of order', (string) EngineProbe::warning('/[x-a]/'));
+        $this->assertTrue(EngineProbe::compiles('/[\x00-a]/'));
+
         $linked = new PcreTarget(70400, '10.49');
         $end = ClassRanges::reversedRangeEnd(new PatternText(new TargetSyntax($linked), '[\x-a]', '', '[\x-a]', 0), (new Lexer($linked))->tokenize('[\x-a]')->getTokens(), 0);
         $this->assertNotNull($end);

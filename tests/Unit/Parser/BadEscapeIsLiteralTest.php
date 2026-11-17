@@ -13,9 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\RangeDiff;
+use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -298,12 +301,21 @@ final class BadEscapeIsLiteralTest extends TestCase
      * From PCRE2 10.45 a "\x" with no hex digit is refused as PCRE2 reads
      * it, where the releases before read it as NUL: PHP 7.4 linked against
      * such a PCRE2 reads it as the letter "x", and refuses it with "X" (PHP
-     * 7.4.33 linked against PCRE2 10.49).
+     * 7.4.33 linked against PCRE2 10.49). The running PHP cannot read a 7.4
+     * target: it is asked about the pattern written with the letter, and
+     * about the pattern itself, which it compiles without the option, as
+     * PHP 7.4 does under "X".
      */
     #[Test]
     #[DataProvider('provideBareHexEscapes')]
-    public function test_php_7_4_reads_a_bare_x_its_pcre2_refuses_as_the_letter(string $pattern, string $subject, string $match, int $offset): void
+    public function test_php_7_4_reads_a_bare_x_its_pcre2_refuses_as_the_letter(string $pattern, string $literal, string $subject, string $match, int $offset): void
     {
+        $this->assertSame(1, preg_match($literal, $subject, $written), $literal);
+        $this->assertSame($match, $written[0], $literal);
+        if ('10.49' === PcreTarget::runtime()->pcreVersion) {
+            $this->assertSame($offset, PhpErrorOffset::of($pattern.'X'), 'Oracle on PCRE2 10.49: '.$pattern.'X');
+        }
+
         foreach (['10.45', '10.49'] as $release) {
             $parser = self::parser('7.4', $release);
             $validation = $parser->validate($pattern);
@@ -319,27 +331,34 @@ final class BadEscapeIsLiteralTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, subject: string, match: string, offset: int}>
+     * @return iterable<string, array{pattern: string, literal: string, subject: string, match: string, offset: int}>
      */
     public static function provideBareHexEscapes(): iterable
     {
-        yield 'x alone' => ['pattern' => '/\x/', 'subject' => 'x', 'match' => 'x', 'offset' => 2];
-        yield 'x and a letter past the hex digits' => ['pattern' => '/\xg/', 'subject' => 'xg', 'match' => 'xg', 'offset' => 2];
-        yield 'x repeated' => ['pattern' => '/\x+/', 'subject' => 'xxx', 'match' => 'xxx', 'offset' => 2];
-        yield 'x under u' => ['pattern' => '/\x/u', 'subject' => 'x', 'match' => 'x', 'offset' => 2];
-        yield 'x in a lookbehind' => ['pattern' => '/(?<=\x)a/', 'subject' => 'xa', 'match' => 'a', 'offset' => 6];
-        yield 'x in a class' => ['pattern' => '/[\x]/', 'subject' => 'x', 'match' => 'x', 'offset' => 3];
-        yield 'x ending a range' => ['pattern' => '/[a-\x]/', 'subject' => 'w', 'match' => 'w', 'offset' => 5];
-        yield 'x starting a range' => ['pattern' => '/[\x-z]/', 'subject' => 'y', 'match' => 'y', 'offset' => 3];
+        yield 'x alone' => ['pattern' => '/\x/', 'literal' => '/x/', 'subject' => 'x', 'match' => 'x', 'offset' => 2];
+        yield 'x and a letter past the hex digits' => ['pattern' => '/\xg/', 'literal' => '/xg/', 'subject' => 'xg', 'match' => 'xg', 'offset' => 2];
+        yield 'x repeated' => ['pattern' => '/\x+/', 'literal' => '/x+/', 'subject' => 'xxx', 'match' => 'xxx', 'offset' => 2];
+        yield 'x under u' => ['pattern' => '/\x/u', 'literal' => '/x/u', 'subject' => 'x', 'match' => 'x', 'offset' => 2];
+        yield 'x in a lookbehind' => ['pattern' => '/(?<=\x)a/', 'literal' => '/(?<=x)a/', 'subject' => 'xa', 'match' => 'a', 'offset' => 6];
+        yield 'x in a class' => ['pattern' => '/[\x]/', 'literal' => '/[x]/', 'subject' => 'x', 'match' => 'x', 'offset' => 3];
+        yield 'x ending a range' => ['pattern' => '/[a-\x]/', 'literal' => '/[a-x]/', 'subject' => 'w', 'match' => 'w', 'offset' => 5];
+        yield 'x starting a range' => ['pattern' => '/[\x-z]/', 'literal' => '/[x-z]/', 'subject' => 'y', 'match' => 'y', 'offset' => 3];
     }
 
     /**
-     * The letter "x" bounds a range as itself, not as NUL.
+     * The letter "x" bounds a range as itself, not as NUL. The running PHP
+     * cannot read a 7.4 target: it is asked about the range written with
+     * the letter, which it refuses one byte short of the backslash.
      */
     #[Test]
     #[DataProvider('provideRangesABareXReverses')]
-    public function test_php_7_4_refuses_a_range_a_bare_x_its_pcre2_refuses_reverses(string $pattern, int $offset): void
+    public function test_php_7_4_refuses_a_range_a_bare_x_its_pcre2_refuses_reverses(string $pattern, string $literal, int $offset): void
     {
+        $this->assertStringContainsString('range out of order', (string) EngineProbe::warning($literal), $literal);
+        if ('10.49' === PcreTarget::runtime()->pcreVersion) {
+            $this->assertSame($offset - 1, PhpErrorOffset::of($literal), 'Oracle on PCRE2 10.49: '.$literal);
+        }
+
         $validation = self::parser('7.4', '10.49')->validate($pattern);
 
         $this->assertFalse($validation->isValid, $pattern);
@@ -347,13 +366,13 @@ final class BadEscapeIsLiteralTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, offset: int}>
+     * @return iterable<string, array{pattern: string, literal: string, offset: int}>
      */
     public static function provideRangesABareXReverses(): iterable
     {
-        yield 'x starting a range down to a' => ['pattern' => '/[\x-a]/', 'offset' => 5];
-        yield 'y down to x' => ['pattern' => '/[y-\x]/', 'offset' => 5];
-        yield 'x starting a range down to a, in a class left open' => ['pattern' => '/[\x-a/', 'offset' => 5];
+        yield 'x starting a range down to a' => ['pattern' => '/[\x-a]/', 'literal' => '/[x-a]/', 'offset' => 5];
+        yield 'y down to x' => ['pattern' => '/[y-\x]/', 'literal' => '/[y-x]/', 'offset' => 5];
+        yield 'x starting a range down to a, in a class left open' => ['pattern' => '/[\x-a/', 'literal' => '/[x-a/', 'offset' => 5];
     }
 
     /**
