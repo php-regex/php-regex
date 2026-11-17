@@ -105,6 +105,13 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     private ?NodeInterface $nextNode = null;
 
+    /**
+     * The body of the loop whose iteration the node ends: the next
+     * iteration starts there. A run that ends "([^/*][^*]*\*+)*" never
+     * takes the "[^/*]" that starts the next one.
+     */
+    private ?NodeInterface $iterationHead = null;
+
     private bool $backrefLoopDetected = false;
 
     private ?NodeInterface $culpritNode = null;
@@ -229,6 +236,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->endsAtomicBody = false;
         $this->previousNode = null;
         $this->nextNode = null;
+        $this->iterationHead = null;
         $this->backrefLoopDetected = false;
         $this->culpritNode = null;
         $this->culpritSeverity = RedosSeverity::Safe;
@@ -276,7 +284,8 @@ final class RedosProfiler extends AbstractNodeVisitor
         $boundarySeparatedNext = $this->hasForwardMutuallyExclusiveBoundary($node->node, $this->nextNode);
         $boundarySeparated = $boundarySeparatedPrev || $boundarySeparatedNext;
         $iterationsSeparated = ($boundarySeparatedPrev && $this->separatesIterations($this->previousNode))
-            || ($boundarySeparatedNext && $this->separatesIterations($this->nextNode));
+            || ($boundarySeparatedNext && $this->separatesIterations($this->nextNode))
+            || (null === $this->nextNode && $this->hasForwardMutuallyExclusiveBoundary($node->node, $this->iterationHead) && $this->separatesIterations($this->iterationHead));
 
         $controlVerbShield = $this->hasTrailingBacktrackingControl($node->node);
         $isPossessive = QuantifierType::Possessive === $node->type;
@@ -420,11 +429,14 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         $childPrevious = $this->previousNode;
         $childNext = $this->nextNode;
+        $head = $this->iterationHead;
         $this->previousNode = null;
         $this->nextNode = null;
+        $this->iterationHead = $this->quantifierAllowsMultiple($qMax) ? $node->node : null;
         $childSeverity = $node->node->accept($this);
         $this->previousNode = $childPrevious;
         $this->nextNode = $childNext;
+        $this->iterationHead = $head;
 
         if ($entersUnbounded && !$boundarySeparated && RedosSeverity::High === $childSeverity) {
             $hasRecursion = $this->hasRecursion($node->node);
@@ -508,11 +520,18 @@ final class RedosProfiler extends AbstractNodeVisitor
             $this->repeatingLoopDepth = 0;
         }
 
+        // Only a group that wraps what it holds ends the iteration with it.
+        $head = $this->iterationHead;
+        if (!\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::BranchReset], true)) {
+            $this->iterationHead = null;
+        }
+
         $this->previousNode = null;
         $this->nextNode = null;
         $severity = $node->child->accept($this);
         $this->previousNode = $previous;
         $this->nextNode = $next;
+        $this->iterationHead = $head;
 
         [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth, $this->repeatingLoopDepth] = $depths;
         $this->endsAtomicBody = $wasAtomic;
@@ -527,6 +546,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $previous = $this->previousNode;
         $next = $this->nextNode;
         $endsAtomicBody = $this->endsAtomicBody;
+        $head = $this->iterationHead;
         $last = null;
         $children = $node->children;
         $total = \count($children);
@@ -540,6 +560,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         foreach ($children as $index => $child) {
             $this->previousNode = $last;
             $this->nextNode = $index + 1 < $total ? $children[$index + 1] : null;
+            $this->iterationHead = $index + 1 < $total ? null : $head;
             $this->endsAtomicBody = $index === $tail;
             $max = $this->maxSeverity($max, $child->accept($this));
             $last = $child;
@@ -547,6 +568,7 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         $this->previousNode = $previous;
         $this->nextNode = $next;
+        $this->iterationHead = $head;
         $this->endsAtomicBody = $endsAtomicBody;
 
         return $max;
@@ -818,13 +840,16 @@ final class RedosProfiler extends AbstractNodeVisitor
     {
         $depths = [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth, $this->repeatingLoopDepth];
         $endsAtomicBody = $this->endsAtomicBody;
+        $head = $this->iterationHead;
         $this->unboundedQuantifierDepth = 0;
         $this->totalQuantifierDepth = 0;
         $this->repeatingLoopDepth = 0;
         $this->endsAtomicBody = false;
+        $this->iterationHead = null;
         $severity = $node->accept($this);
         [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth, $this->repeatingLoopDepth] = $depths;
         $this->endsAtomicBody = $endsAtomicBody;
+        $this->iterationHead = $head;
 
         return $severity;
     }

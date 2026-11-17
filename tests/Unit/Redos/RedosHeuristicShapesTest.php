@@ -442,6 +442,37 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * A loop that ends an iteration meets the next iteration where its
+     * head starts: one that never takes the head's first character ends
+     * where the next iteration begins, as in Friedl's unrolled C comment,
+     * and the engine stays linear on its units then a failing tail (18 ->
+     * 26 -> 34 steps on 8 -> 12 -> 16 units of "*a", 27 -> 39 -> 51 on
+     * "a**"). A head that may take that character leaves the loop critical:
+     * 2 585 -> 121 394 -> 5 702 888 on "**". The callout keeps each pattern
+     * from the proof, and the heuristic decides.
+     *
+     * @return iterable<string, array{pattern: string, prefix: string, unit: string, critical: bool}>
+     */
+    public static function provideLoopsEndingAnIteration(): iterable
+    {
+        yield 'unrolled C comment' => ['pattern' => '/(?C1)\/\*[^*]*\*+([^\/*][^*]*\*+)*\//', 'prefix' => '/*', 'unit' => '*a', 'critical' => false];
+        yield 'run of stars before a letter' => ['pattern' => '/(?C1)^(?:a[^*]*\*+)*$/', 'prefix' => '', 'unit' => 'a**', 'critical' => false];
+        yield 'run of stars before a head that takes a star' => ['pattern' => '/(?C1)^(?:[a*]\*+)*$/', 'prefix' => '', 'unit' => '**', 'critical' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsEndingAnIteration')]
+    public function test_a_loop_ending_an_iteration_is_read_against_the_next_head(string $pattern, string $prefix, string $unit, bool $critical): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, $prefix.str_repeat($unit, 8).'!');
+        $long = self::steps($unoptimized, $prefix.str_repeat($unit, 12).'!');
+        $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
      * Whether PCRE compiles the pattern: a refused pattern warns, where a
      * match the engine stops, as on a recursion that could loop, does not.
      */

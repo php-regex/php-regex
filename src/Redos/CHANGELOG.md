@@ -45,6 +45,11 @@ CHANGELOG
    branch, whichever comes first: `/^(a)(?:a|\1)+$/` and
    `/^(["'])(?:[a-z]|\p{Ll})+\1$/u`, which were medium while their branches
    swapped were critical, are critical.
+ * The heuristics read a loop that ends the body of another against the
+   first characters of the next iteration: Friedl's unrolled C comment,
+   `/(?C1)\/\*[^*]*\*+([^\/*][^*]*\*+)*\//`, which was critical, is safe
+   again, its run of stars never taking the `[^\/*]` that starts the next
+   iteration.
  * A backreference to a group of variable length in a loop is no longer
    critical when the body of the loop reads its input one way, each
    alternation choosing its branch by the first character and each count
