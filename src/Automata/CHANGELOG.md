@@ -25,6 +25,11 @@ CHANGELOG
    `preg_match()` finds nothing in `a\n` with the one and `a` with the other.
    The lint no longer calls the lazy marker of `/(*CR)a\r*?(?:$|b)/` useless.
    The last convention the options name holds: `/(*CR)(*LF)a$/` is read.
+ * `equivalent()`, `intersection()` and `subsetOf()` refuse a newline
+   convention other than `\n` under an inline `(?m)` as under `/m`:
+   `/(*CR)(?m)^a/` was proven equivalent to `/(?m)^a/`, where `preg_match()`
+   finds `a` in `\ra` with the one and nothing with the other. `compare` no
+   longer passes them.
  * `matchEquivalent()` counts the groups of a body repeated no time, `{0}`:
    `/(?<x>a){0}b/` was proven to write the `$matches` of `/b/`, where
    `preg_match_all()` writes an empty group `x` for the one and none for the

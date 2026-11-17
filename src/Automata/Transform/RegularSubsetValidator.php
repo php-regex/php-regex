@@ -19,9 +19,11 @@ use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Bytes;
 
@@ -70,7 +72,7 @@ final class RegularSubsetValidator
             return;
         }
 
-        if (str_contains($regex->flags, 'm') || null !== self::lineAnchor($regex->pattern)) {
+        if (str_contains($regex->flags, 'm') || self::turnsMultilineOn($regex->pattern) || null !== self::lineAnchor($regex->pattern)) {
             throw new ComplexityException('A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.', 0, $pattern);
         }
     }
@@ -92,6 +94,28 @@ final class RegularSubsetValidator
         if ([] !== $unsupported) {
             throw new ComplexityException('Unsupported regex flags for automata: '.\implode(', ', $unsupported).'.');
         }
+    }
+
+    /**
+     * Whether a group turns "m" on, as "(?m)" or "(?m:...)" do: "^" then
+     * also holds after a newline.
+     */
+    private static function turnsMultilineOn(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && null !== $node->flags) {
+            $flags = InlineFlags::read(InlineFlags::withoutAsciiOptions($node->flags), InlineFlags::LETTERS.'r');
+            if (null !== $flags && str_contains($flags->set, 'm')) {
+                return true;
+            }
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::turnsMultilineOn($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function lineAnchor(NodeInterface $node): AnchorNode|AssertionNode|null

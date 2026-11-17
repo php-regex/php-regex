@@ -98,6 +98,10 @@ final class AnchorsAnywhereTest extends TestCase
         yield 'lines with ungreedy' => ['pattern' => '/^a+$/mU'];
         // The last convention the options name holds.
         yield 'a line feed named after a carriage return' => ['pattern' => '/(*CR)(*LF)a$/'];
+        // "^" without "/m" holds at the start of the subject only, whatever
+        // the newline.
+        yield 'a start under (*CR), multiline turned off' => ['pattern' => '/(*CR)(?-m)^a/'];
+        yield 'a start under (*CR), multiline turned on and off' => ['pattern' => '/(*CR)(?m-m)^a/'];
     }
 
     /**
@@ -108,6 +112,12 @@ final class AnchorsAnywhereTest extends TestCase
         yield 'crlf dollar' => ['pattern' => '/(*CRLF)a$/'];
         yield 'cr capital Z' => ['pattern' => '/(*CR)a\Z/'];
         yield 'anycrlf multiline' => ['pattern' => '/(*ANYCRLF)^a/m'];
+        // PHP 8.4.27 / PCRE2 10.49: "/(*CR)(?m)^a/" finds "a" in "\ra" and
+        // nothing in "\na", as "(?m)" turns on what "/m" turns on.
+        yield 'cr inline multiline' => ['pattern' => '/(*CR)(?m)^a/'];
+        yield 'nul inline multiline among other options' => ['pattern' => '/(*NUL)(?im)^a/'];
+        yield 'cr multiline group' => ['pattern' => '/(*CR)(?m:^a)/'];
+        yield 'any multiline turned on after a reset' => ['pattern' => '/(*ANY)(?^m)b|^a/'];
     }
 
     private static function accepts(Dfa $dfa, string $subject): bool
