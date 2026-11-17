@@ -36,9 +36,36 @@ final class PcreEngine
      */
     private const FRESH_CACHE_KEY = "\v";
 
+    /**
+     * The white space that leads a pattern run with the JIT: a key of its
+     * own in PHP's cache, compiled with the JIT on.
+     */
+    private const JIT_CACHE_KEY = "\f";
+
     private const LIMITS_NOT_SET = 'The PCRE limits could not be set: ';
 
     private const LIMITS_UNAVAILABLE = self::LIMITS_NOT_SET.'ini_set() is disabled';
+
+    /**
+     * Whether the engine runs the pattern with the JIT, as PHP does by
+     * default, rather than without it.
+     */
+    private bool $jit = false;
+
+    /**
+     * An engine that runs the pattern as written, with the JIT turned on
+     * for the call, under the limits asked for, the ini left as it was
+     * found.
+     *
+     * @internal the ReDoS confirmation replays a pattern holding "(*SKIP:NAME)" under the JIT
+     */
+    public static function withJit(): self
+    {
+        $engine = new self();
+        $engine->jit = true;
+
+        return $engine;
+    }
 
     /**
      * Whether the engine ran nothing because the limits asked for could not
@@ -321,18 +348,23 @@ final class PcreEngine
             ];
         }
 
-        $prepared = $this->withVerb($pattern);
+        $prepared = $this->jit ? null : $this->withVerb($pattern);
         $shift = null === $prepared ? 0 : \strlen(NoJit::VERB);
-        $jitOff = $canSet && null === $prepared && null !== NoJit::split($pattern);
-        $runnable = $prepared ?? ($jitOff ? self::FRESH_CACHE_KEY.$pattern : $pattern);
+        $jitOff = !$this->jit && $canSet && null === $prepared && null !== NoJit::split($pattern);
+        $runnable = match (true) {
+            null !== $prepared => $prepared,
+            $jitOff => self::FRESH_CACHE_KEY.$pattern,
+            $this->jit => self::JIT_CACHE_KEY.$pattern,
+            default => $pattern,
+        };
 
         $settings = [];
         if (null !== $limits) {
             $settings['pcre.backtrack_limit'] = (string) $limits->backtrackLimit;
             $settings['pcre.recursion_limit'] = (string) $limits->recursionLimit;
         }
-        if ($jitOff) {
-            $settings['pcre.jit'] = '0';
+        if ($jitOff || ($this->jit && $canSet)) {
+            $settings['pcre.jit'] = $jitOff ? '0' : '1';
         }
 
         $saved = [];

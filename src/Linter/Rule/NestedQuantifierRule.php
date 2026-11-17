@@ -93,17 +93,69 @@ final class NestedQuantifierRule extends AbstractLintRule
             // where "b?" matches nothing. Once one keeps the iterations apart,
             // what follows it reads a character: no later loop is asked.
             foreach ($this->loopsBehindNothing($iteration, $nested) as $later) {
-                if ($this->keepsTheIterationsApart($node, $later, $iteration, $context)) {
-                    return [];
+                if (!$this->keepsTheIterationsApart($node, $later, $iteration, $context)) {
+                    return $this->violation($node, $context);
                 }
 
-                return $this->violation($node, $context);
+                break;
             }
 
-            return [];
+            return null !== $iteration && $this->hasLoopMeetingWhatFollows($node, $iteration, $context) ? $this->violation($node, $context) : [];
         }
 
         return $this->violation($node, $context);
+    }
+
+    /**
+     * Whether a loop of the iteration meets what follows it, the iteration
+     * read as a ring, the next one starting where it ends: an item that
+     * may take one of the loop's characters, reached past items that may
+     * match nothing and take none. In "(?:\s+\w+\s*)*" the "\s*" that ends
+     * one iteration meets the "\s+" that starts the next; in
+     * "(?:\w+\s*\w+)*" the two runs of letters meet where "\s*" matches
+     * nothing; a loop met again after every other item meets itself.
+     *
+     * Each walk stops at the first item that always reads a character; past
+     * a fixed amount of work, a body of many loops that may match nothing
+     * is left to the first loop's verdict.
+     */
+    private function hasLoopMeetingWhatFollows(QuantifierNode $outer, SequenceNode $iteration, LintContext $context): bool
+    {
+        $children = array_values($iteration->children);
+        $count = \count($children);
+        $flags = array_values($context->flagsAtEachChild($iteration, $context->flagsAt($iteration, $outer->node)));
+        $work = 8 * $count;
+
+        foreach ($children as $index => $child) {
+            $loop = NodePredicates::unwrapTransparentNode($child);
+            if (!$loop instanceof QuantifierNode || QuantifierType::Possessive === $loop->type || !QuantifierMath::isVariable($loop)) {
+                continue;
+            }
+
+            $caseless = self::isReadCaseless($loop->node, $flags[$index]);
+            $boundary = $this->correctlyFoldedBoundary($loop->node, $context, $flags[$index], $caseless);
+            if ($boundary->isUnknown() || $boundary->isEmpty()) {
+                return true;
+            }
+
+            $takesAboveAscii = LoopShape::mayTakeACharacterAboveAscii($loop->node, $context);
+            for ($step = 1; $step <= $count; $step++) {
+                if (--$work < 0) {
+                    return false;
+                }
+
+                $next = ($index + $step) % $count;
+                if ($this->tailCanTake([$next => $children[$next]], $flags, $boundary, $caseless, $takesAboveAscii, $context)) {
+                    return true;
+                }
+
+                if (!NodePredicates::canBeEmpty($children[$next])) {
+                    break;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -180,8 +232,13 @@ final class NestedQuantifierRule extends AbstractLintRule
             return $count > 0 ? $this->findNestedQuantifier($node->node) : null;
         }
 
+        // An atomic group, and a lookaround once it has matched, is never
+        // tried again: a loop inside splits no run of the loop around.
+        // "(*napla:...)" and "(?*...)" are backtracked into.
         if ($node instanceof GroupNode) {
-            if (GroupType::Atomic === $node->type) {
+            if (GroupType::Atomic === $node->type
+                || ('*' !== $node->flags && \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true))
+            ) {
                 return null;
             }
 
@@ -266,9 +323,18 @@ final class NestedQuantifierRule extends AbstractLintRule
             return true;
         }
 
+        // The separator may stand behind items that may match nothing and
+        // take none of the inner loop's characters: the "," behind "\s*" in
+        // "(?:\d+\s*,)*".
         $count = \count($children);
         for ($afterIdx = $index + 1; $afterIdx < $count; $afterIdx++) {
             if (!NodePredicates::isConsuming($children[$afterIdx])) {
+                continue;
+            }
+
+            if (NodePredicates::isOptionalNode($children[$afterIdx])
+                && $this->separates($children[$afterIdx], $flags[$afterIdx], $innerBoundary, $innerCaseless, $innerTakesAboveAscii, $context, true)
+            ) {
                 continue;
             }
 
@@ -281,12 +347,16 @@ final class NestedQuantifierRule extends AbstractLintRule
     /**
      * Whether the item next to the inner loop is a separator, both sets
      * folded when either of the two is read under the i flag.
+     *
+     * @param bool $mayMatchNothing whether an item that may match nothing is
+     *                              asked only to take none of the inner
+     *                              loop's characters
      */
-    private function separates(NodeInterface $item, string $flags, ByteCharSet $innerBoundary, bool $innerCaseless, bool $innerTakesAboveAscii, LintContext $context): bool
+    private function separates(NodeInterface $item, string $flags, ByteCharSet $innerBoundary, bool $innerCaseless, bool $innerTakesAboveAscii, LintContext $context, bool $mayMatchNothing = false): bool
     {
         $caseless = $innerCaseless || self::isReadCaseless($item, $flags);
 
-        return $this->isExclusiveSeparator($item, $this->fold($innerBoundary, $caseless), $context, $caseless, $flags, $innerTakesAboveAscii);
+        return $this->isExclusiveSeparator($item, $this->fold($innerBoundary, $caseless), $context, $caseless, $flags, $innerTakesAboveAscii, $mayMatchNothing);
     }
 
     /**
@@ -319,7 +389,7 @@ final class NestedQuantifierRule extends AbstractLintRule
             }
 
             $caseless = $innerCaseless || self::isReadCaseless($item, $flags[$index]);
-            $first = $this->fold($context->firstChars($item, $flags[$index]), $caseless);
+            $first = $this->correctlyFoldedFirstChars($item, $context, $flags[$index], $caseless);
             if ($first->intersects($this->fold($innerBoundary, $caseless))
                 || ($innerTakesAboveAscii && LoopShape::mayTakeACharacterAboveAscii($item, $context))
             ) {
@@ -403,6 +473,23 @@ final class NestedQuantifierRule extends AbstractLintRule
     }
 
     /**
+     * The characters the item starts with, folded as correctlyFoldedBoundary()
+     * folds a negated class, through the loops and the groups around it:
+     * "[^z]+" takes no "Z" under the i flag.
+     */
+    private function correctlyFoldedFirstChars(NodeInterface $item, LintContext $context, string $flags, bool $caseless): ByteCharSet
+    {
+        $node = NodePredicates::unwrapTransparentNode($item);
+        while ($node instanceof QuantifierNode) {
+            $node = NodePredicates::unwrapTransparentNode($node->node);
+        }
+
+        return $node instanceof CharClassNode && $node->isNegated
+            ? $this->correctlyFoldedBoundary($node, $context, $flags, $caseless)
+            : $this->fold($context->firstChars($item, $flags), $caseless);
+    }
+
+    /**
      * The set with the other case of each ASCII letter added. A byte above
      * ASCII stands for a character whose case variants the byte set cannot
      * hold (the Kelvin sign is a "k" under iu), so such a set is unknown.
@@ -439,10 +526,12 @@ final class NestedQuantifierRule extends AbstractLintRule
      *                                          reads the ones at the current position
      * @param bool        $innerTakesAboveAscii whether the inner loop may take a character
      *                                          above ASCII; assumed when not said
+     * @param bool        $mayMatchNothing      whether a separator that may match nothing is
+     *                                          read as one
      */
-    private function isExclusiveSeparator(NodeInterface $separator, ByteCharSet $innerBoundary, LintContext $context, bool $caseless, ?string $flags = null, bool $innerTakesAboveAscii = true): bool
+    private function isExclusiveSeparator(NodeInterface $separator, ByteCharSet $innerBoundary, LintContext $context, bool $caseless, ?string $flags = null, bool $innerTakesAboveAscii = true, bool $mayMatchNothing = false): bool
     {
-        if (NodePredicates::isOptionalNode($separator)
+        if ((!$mayMatchNothing && NodePredicates::isOptionalNode($separator))
             || !NodePredicates::isConsuming($separator)
             || ($innerTakesAboveAscii && LoopShape::mayTakeACharacterAboveAscii($separator, $context))
         ) {

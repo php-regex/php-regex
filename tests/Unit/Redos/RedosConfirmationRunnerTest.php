@@ -16,7 +16,12 @@ namespace PHPRegex\Tests\Unit\Redos;
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\ConfirmationRunner;
 use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PcreInterpreter;
+use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -63,6 +68,93 @@ final class RedosConfirmationRunnerTest extends TestCase
         $this->assertSame(22, $confirmation->samples[0]->inputLength);
         $this->assertGreaterThan(1.0, $confirmation->samples[0]->durationMs);
         $this->assertNull($confirmation->samples[0]->pregErrorCode);
+    }
+
+    /**
+     * PCRE2 looks for the character every match requires before it tries
+     * the pattern, and rejects a subject without it at once: the runs end
+     * with it, after the character that fails the match. Oracle (JIT off,
+     * the backtrack limit of the options): fifty letters then "!" are
+     * rejected without an error, and give up at the limit with the ":"
+     * after them, anchored or not.
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function providePatternsRequiringACharacter(): iterable
+    {
+        yield 'anchored, a colon before a reference' => ['pattern' => '/^(x)?(?:\w+\s?)+:\1/'];
+        yield 'unanchored, a colon before a reference' => ['pattern' => '/(x)?(?:\w+\s?)+:\1/'];
+    }
+
+    #[Test]
+    #[DataProvider('providePatternsRequiringACharacter')]
+    public function test_a_run_holds_the_character_every_match_requires(string $pattern): void
+    {
+        $limit = (string) \ini_get('pcre.backtrack_limit');
+        \ini_set('pcre.backtrack_limit', '100000');
+
+        try {
+            $without = @preg_match(PcreInterpreter::pattern($pattern), str_repeat('a', 50).'!');
+            $withoutError = preg_last_error();
+            $with = @preg_match(PcreInterpreter::pattern($pattern), str_repeat('a', 50).'!:');
+            $withError = preg_last_error();
+        } finally {
+            \ini_set('pcre.backtrack_limit', $limit);
+        }
+        $this->assertSame([0, \PREG_NO_ERROR], [$without, $withoutError], 'Oracle: rejected at once without the colon.');
+        $this->assertSame([false, \PREG_BACKTRACK_LIMIT_ERROR], [$with, $withError], 'Oracle: gives up with it.');
+
+        $confirmation = (new ConfirmationRunner())->confirm($pattern, new RedosAnalysis(RedosSeverity::Critical, 10));
+
+        $this->assertTrue($confirmation->confirmed);
+        $this->assertSame('backtrack_limit', $confirmation->evidence);
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern, mode: RedosMode::Confirmed);
+
+        $this->assertSame(RedosProof::Heuristic, $analysis->proof);
+        $this->assertTrue($analysis->isConfirmed());
+    }
+
+    /**
+     * A pattern holding "(*SKIP:NAME)" is replayed under the JIT, as PHP
+     * runs it by default, and its confirmation says so. Oracle (JIT on, the
+     * backtrack limit of the options): "(?:a|a)+" before a skip to a name no
+     * mark sets gives up at the limit on fifty letters then "!", in well
+     * under a millisecond.
+     */
+    #[Test]
+    public function test_a_pattern_skipping_to_a_name_is_replayed_under_the_jit(): void
+    {
+        $pattern = '/(?:a|a)+(*SKIP:x)$/';
+        if (true !== \constant('PCRE_JIT_SUPPORT')) {
+            $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity, 'A PCRE built without the JIT runs the pattern as it is.');
+
+            return;
+        }
+
+        $limit = (string) \ini_get('pcre.backtrack_limit');
+        $jit = (string) \ini_get('pcre.jit');
+        \ini_set('pcre.backtrack_limit', '100000');
+        \ini_set('pcre.jit', '1');
+
+        try {
+            $oracle = @preg_match("\f".$pattern, str_repeat('a', 50).'!');
+            $oracleError = preg_last_error();
+        } finally {
+            \ini_set('pcre.backtrack_limit', $limit);
+            \ini_set('pcre.jit', $jit);
+        }
+        $this->assertSame([false, \PREG_BACKTRACK_LIMIT_ERROR], [$oracle, $oracleError], 'Oracle: the JIT gives up at the limit.');
+
+        $start = hrtime(true);
+        $confirmation = (new ConfirmationRunner())->confirm($pattern, new RedosAnalysis(RedosSeverity::Critical, 10));
+        $seconds = (hrtime(true) - $start) / 1e9;
+
+        $this->assertTrue($confirmation->confirmed);
+        $this->assertSame('backtrack_limit', $confirmation->evidence);
+        $this->assertSame('1', $confirmation->jitSetting);
+        $this->assertLessThan(5.0, $seconds);
+        $this->assertSame($jit, (string) \ini_get('pcre.jit'), 'The ini is left as it was found.');
     }
 
     /**

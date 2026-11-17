@@ -47,7 +47,7 @@ CHANGELOG
    fixed above zero and inside it: `/^(?:\d{4}|[a-z]+)+$/`,
    `/^(?:[0-9]{2}\w+)+$/` and `/^(?:(?:a+){2})+$/`, which it missed, are
    reported. A separator inside the count still keeps the iterations apart,
-   `/^(?:(?:\d+\.){3}\d+,?)+$/` stays silent.
+   `/^(?:(?:\d+\.){3}\d+,)+$/` stays silent.
  * `regex.lint.quantifier.nested` also reads the loops of an iteration that
    only items which may match nothing come before: `/^(?:b?c+)+$/` and
    `/^(?:x*a+y*)+$/`, whose runs meet across iterations where the first
@@ -55,6 +55,19 @@ CHANGELOG
    `/^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$/`,
    which the ReDoS proof finds exponential. A separator after the run, as
    in `/^(?:b?c+,)+$/`, still keeps the iterations apart.
+ * `regex.lint.quantifier.nested` reads every loop of an iteration against
+   what follows it, the iteration read as a ring whose last item comes
+   before its first: `/^\w+(?:\s+\w+\s*)*$/`, `/^(?:\s*,\s*\w+\s*)*$/`
+   and `/^(?:\s*;\s*\w+\s*\w+)*$/`, which PCRE runs out of its backtrack
+   limit on and the rule passed, are reported. A separator may stand
+   behind items that may match nothing and take none of the loop's
+   characters: `/^(?:\s*\d+\s*,)*\s*\d+\s*$/` and `/^(\s*\w+\s*,)*$/`,
+   which were reported, are not.
+ * `regex.lint.quantifier.nested` no longer looks for the inner loop inside
+   a lookaround, which holds without being tried again once it has
+   matched: `/^(?:(?=\w+)\w)+$/` and `/^(?:(?<=\s{1,3})\w)+$/`, which PCRE
+   reads in linear steps, are no longer reported. A non-atomic lookahead,
+   `(*napla:...)`, is backtracked into, and `/^(?:(*napla:a+)a)+$/` still is.
  * A loop that ends an atomic group or a possessive body is no longer left
    alone by `regex.lint.quantifier.nested`, `regex.lint.dotstar.nested` and
    `regex.lint.overlap.charset` where a subroutine call runs a group between

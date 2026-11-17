@@ -174,19 +174,22 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
     }
 
     #[Test]
-    public function test_overlapping_alternatives_does_not_assume_overlap_for_unknown_sets(): void
+    public function test_overlapping_alternatives_assume_overlap_for_unknown_sets_in_either_order(): void
     {
         $visitor = new RedosProfiler();
-        // Create an alternation with unknown set (e.g., UnicodePropNode) and a literal
-        // Should not trigger overlap since unknown doesn't mean overlap
-        $alternation = new AlternationNode([
+        // A branch whose first characters are not known, a Unicode property
+        // here, may start as the literal does, whichever comes first.
+        $literalFirst = new AlternationNode([
             new LiteralNode('a', 0, 0),
             new UnicodePropNode('Unknown', false, 0, 0),
         ], 0, 0);
+        $propertyFirst = new AlternationNode([
+            new UnicodePropNode('Unknown', false, 0, 0),
+            new LiteralNode('a', 0, 0),
+        ], 0, 0);
 
-        $result = $this->invokePrivate($visitor, 'hasOverlappingAlternatives', [$alternation]);
-
-        $this->assertFalse($result, 'Unknown sets should not cause assumed overlap');
+        $this->assertTrue($this->invokePrivate($visitor, 'hasOverlappingAlternatives', [$literalFirst]), 'An unknown set after a known one may overlap it');
+        $this->assertTrue($this->invokePrivate($visitor, 'hasOverlappingAlternatives', [$propertyFirst]), 'An unknown set before a known one may overlap it');
     }
 
     #[Test]

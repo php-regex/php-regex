@@ -342,10 +342,12 @@ final class NestedLoopEdgeCaseTest extends TestCase
      * reported row goes exponential on the unit repeated, then "!" (n 8 ->
      * 16): 768 -> 196 608 behind "\d{4}" in an earlier alternative, 22 ->
      * 466 behind "[0-9]{2}" in the same iteration, 256 -> 65 536 for
-     * "(?:a+){2}", 78 -> 1 278 when a run follows the count. The others stay
-     * linear: a separator still keeps the run apart past the count (18 ->
-     * 34, 17 -> 33), inside it as well (24 -> 48, 6 -> 10), and the body of
-     * "{0}" never runs (10 -> 18).
+     * "(?:a+){2}", 78 -> 1 278 when a run follows the count, 1 021 ->
+     * 262 141 on "1.1.1.11" when the run after a count of dotted runs meets
+     * the next iteration's first run behind an optional comma. The others
+     * stay linear: a separator still keeps the run apart past the count (18
+     * -> 34, 17 -> 33), inside it as well (10 -> 18, 6 -> 10), and the body
+     * of "{0}" never runs (10 -> 18).
      *
      * @return iterable<string, array{pattern: string, prefix: string, unit: string, reported: bool}>
      */
@@ -357,7 +359,8 @@ final class NestedLoopEdgeCaseTest extends TestCase
         yield 'run after a fixed count holding a separated run' => ['pattern' => '/(?:(?:,a*){2}a*)*$/', 'prefix' => '', 'unit' => ',a', 'reported' => true];
         yield 'separator after a fixed count' => ['pattern' => '/^(?:\d{4}-[a-z]+)+$/', 'prefix' => '1234-', 'unit' => 'a', 'reported' => false];
         yield 'fixed count of other characters before the run' => ['pattern' => '/^(?:[a-z]{2}\d+)+$/', 'prefix' => 'ab', 'unit' => '1', 'reported' => false];
-        yield 'separator inside a fixed count' => ['pattern' => '/^(?:(?:\d+\.){3}\d+,?)+$/', 'prefix' => '', 'unit' => '1.1.1.1', 'reported' => false];
+        yield 'separator inside a fixed count' => ['pattern' => '/^(?:(?:\d+\.){3}\d+,)+$/', 'prefix' => '', 'unit' => '1.1.1.1,', 'reported' => false];
+        yield 'run after a fixed count before an optional separator' => ['pattern' => '/^(?:(?:\d+\.){3}\d+,?)+$/', 'prefix' => '', 'unit' => '1.1.1.11', 'reported' => true];
         yield 'separator ending a fixed count' => ['pattern' => '/^(?:(?:a+b){2})+$/', 'prefix' => '', 'unit' => 'ab', 'reported' => false];
         yield 'run in a count of zero' => ['pattern' => '/^(?:(?:a+){0}b)+$/', 'prefix' => '', 'unit' => 'b', 'reported' => false];
     }
@@ -399,6 +402,134 @@ final class NestedLoopEdgeCaseTest extends TestCase
     {
         $short = self::steps($pattern, $prefix.str_repeat($unit, 8).'!');
         $long = self::steps($pattern, $prefix.str_repeat($unit, 16).'!');
+        $this->assertSame($reported, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($reported, \in_array(self::NESTED, self::lint($pattern), true), $pattern);
+    }
+
+    /**
+     * Every loop of an iteration is read against what follows it, the
+     * iteration read as a ring: the loop that ends one iteration meets the
+     * loop that starts the next where the items between may match nothing,
+     * and so do two loops of one iteration. Each reported row goes
+     * exponential on the unit repeated then "!" (n 8 -> 16): 766 -> 196 606
+     * for the "\s*" ending a word and the "\s+" starting the next, 12 029
+     * -> past 16 777 216 for the "\s*" around a comma, 39 363 -> past
+     * 16 777 216 for two runs of letters behind "\s*", 638 -> 163 838 for
+     * the runs of "a" around a "b", 163 839 -> past 16 777 216 on "a,aaa"
+     * for a run of a property whose characters are not listed. A loop that
+     * always meets a character it cannot take keeps the iterations apart: a
+     * run of letters then of spaces (11 -> 19), a list after a comma (27 ->
+     * 51), words after spaces (11 -> 19), a negated class under i before a
+     * run of the letter it leaves out, in either case (10 -> 18).
+     *
+     * @return iterable<string, array{pattern: string, prefix: string, unit: string, reported: bool}>
+     */
+    public static function provideLoopsMeetingAcrossTheIteration(): iterable
+    {
+        yield 'spaces ending a word before the spaces starting the next' => ['pattern' => '/^\w+(?:\s+\w+\s*)*$/', 'prefix' => 'a', 'unit' => '  a', 'reported' => true];
+        yield 'spaces around a comma' => ['pattern' => '/^(?:\s*,\s*\w+\s*)*$/', 'prefix' => '', 'unit' => ' ,0 ', 'reported' => true];
+        yield 'two runs of letters behind spaces' => ['pattern' => '/^(?:\s*;\s*\w+\s*\w+)*$/', 'prefix' => '', 'unit' => ';bbbb', 'reported' => true];
+        yield 'runs of a letter around another' => ['pattern' => '/^(?:a+ba+)*$/', 'prefix' => '', 'unit' => 'aaab', 'reported' => true];
+        yield 'run of a property before the next iteration' => ['pattern' => '/^(?:a+,\p{L}*)+$/u', 'prefix' => '', 'unit' => 'a,aaa', 'reported' => true];
+        yield 'letters then spaces' => ['pattern' => '/^(?:[a-z]+\s+)*$/', 'prefix' => '', 'unit' => 'ab ', 'reported' => false];
+        yield 'negated class under i before the letter it leaves out' => ['pattern' => '/(?:[^z]+Z+)+$/i', 'prefix' => '', 'unit' => 'aZ', 'reported' => false];
+        yield 'list after a comma' => ['pattern' => '/^(?:\s*,\s*\w+)*$/', 'prefix' => '', 'unit' => ' , ab', 'reported' => false];
+        yield 'words after spaces' => ['pattern' => '/^\w+(?:\s+\w+)*$/', 'prefix' => 'a', 'unit' => '  a', 'reported' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsMeetingAcrossTheIteration')]
+    public function test_nested_loop_meeting_another_across_the_iteration_is_reported_only_when_the_engine_goes_exponential(string $pattern, string $prefix, string $unit, bool $reported): void
+    {
+        $short = self::steps($pattern, $prefix.str_repeat($unit, 8).'!');
+        $long = self::steps($pattern, $prefix.str_repeat($unit, 16).'!');
+        $this->assertSame($reported, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($reported, \in_array(self::NESTED, self::lint($pattern), true), $pattern);
+    }
+
+    /**
+     * A lookaround holds without being tried again once it has matched: a
+     * loop inside it splits no run of the loop around, and the engine stays
+     * linear on the unit repeated then "!" (3 -> 3 for a lookbehind before
+     * a letter, 19 -> 35 for a lookahead of a run, 36 -> 68 for a
+     * lookbehind after a letter, 19 -> 35 for a negative lookahead). A
+     * lookahead PCRE backtracks into, "(*napla:...)", still hides one:
+     * 259 522 -> past 16 777 216.
+     *
+     * @return iterable<string, array{pattern: string, unit: string, reported: bool}>
+     */
+    public static function provideLoopsInALookaround(): iterable
+    {
+        yield 'run of spaces in a lookbehind before a letter' => ['pattern' => '/^(?:(?<=\s{1,3})\w)+$/', 'unit' => ' a', 'reported' => false];
+        yield 'run of letters in a lookahead' => ['pattern' => '/^(?:(?=\w+)\w)+$/', 'unit' => 'a', 'reported' => false];
+        yield 'run of letters in a lookbehind after a letter' => ['pattern' => '/^(?:x(?<=\w{1,3}))+$/', 'unit' => 'x', 'reported' => false];
+        yield 'run of digits in a negative lookahead' => ['pattern' => '/^(?:(?!\d+x)\w)+$/', 'unit' => '1', 'reported' => false];
+        yield 'run in a lookahead PCRE backtracks into' => ['pattern' => '/^(?:(*napla:a+)a)+$/', 'unit' => 'a', 'reported' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsInALookaround')]
+    public function test_nested_loop_in_a_lookaround_is_reported_only_when_the_engine_goes_exponential(string $pattern, string $unit, bool $reported): void
+    {
+        $short = self::steps($pattern, str_repeat($unit, 8).'!');
+        $long = self::steps($pattern, str_repeat($unit, 16).'!');
+        $this->assertSame($reported, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($reported, \in_array(self::NESTED, self::lint($pattern), true), $pattern);
+    }
+
+    /**
+     * A body of many optional characters, each its own, before a separator
+     * is read within a bounded amount of work, and left to the first
+     * loop's verdict: each iteration reads its characters one way, and the
+     * engine stays linear on all of them then ";" repeated (10 -> 18 -> 34
+     * for n 8 -> 16 -> 32).
+     */
+    #[Test]
+    public function test_a_body_of_many_optional_characters_is_read_within_bounded_work(): void
+    {
+        $characters = [...range('a', 'z'), ...range('A', 'Z'), ...range('0', '9')];
+        $pattern = '/^(?:'.implode('', array_map(static fn (string $character): string => $character.'?', $characters)).';)+$/';
+        $unit = implode('', $characters).';';
+
+        $short = self::steps($pattern, str_repeat($unit, 8).'!');
+        $long = self::steps($pattern, str_repeat($unit, 16).'!');
+        $this->assertLessThan(3, $long / $short, \sprintf('Oracle: %d -> %d steps.', $short, $long));
+
+        $this->assertNotContains(self::NESTED, self::lint($pattern));
+    }
+
+    /**
+     * The separator after a run may stand behind an item that may match
+     * nothing and takes none of the run's characters: the "," behind "\s*"
+     * in a list keeps the runs of two iterations apart, and the engine stays
+     * linear on the unit repeated then "!" (19 -> 35 -> 67 for n 8 -> 16 ->
+     * 32 on " 1 ,", 20 -> 36 -> 68 on " ab ,", 11 -> 19 -> 35 on "1 ,", 10
+     * -> 18 -> 34 on "1 ;"). An item behind it that takes the run's
+     * characters lets two runs of one iteration meet: 768 -> 196 608 on
+     * "11," for "\d*" behind "\s*", 1 022 -> 262 142 on "111;" for "\d?"
+     * behind " ?".
+     *
+     * @return iterable<string, array{pattern: string, unit: string, reported: bool}>
+     */
+    public static function provideSeparatorsBehindAnItemThatMayMatchNothing(): iterable
+    {
+        yield 'comma behind spaces in a list of numbers' => ['pattern' => '/^(?:\s*\d+\s*,)*\s*\d+\s*$/', 'unit' => ' 1 ,', 'reported' => false];
+        yield 'comma behind spaces in a list of words' => ['pattern' => '/^(\s*\w+\s*,)*$/', 'unit' => ' ab ,', 'reported' => false];
+        yield 'comma behind spaces after the only run' => ['pattern' => '/^(?:\d+\s*,)*$/', 'unit' => '1 ,', 'reported' => false];
+        yield 'semicolon behind an optional space' => ['pattern' => '/^(?:\d+ ?;)+$/', 'unit' => '1 ;', 'reported' => false];
+        yield 'run of digits behind spaces' => ['pattern' => '/^(?:\s*\d+\s*\d*,)*$/', 'unit' => '11,', 'reported' => true];
+        yield 'optional digit behind an optional space' => ['pattern' => '/^(?:\d+ ?\d?;)+$/', 'unit' => '111;', 'reported' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideSeparatorsBehindAnItemThatMayMatchNothing')]
+    public function test_a_separator_behind_an_item_that_may_match_nothing_keeps_the_iterations_apart(string $pattern, string $unit, bool $reported): void
+    {
+        $short = self::steps($pattern, str_repeat($unit, 8).'!');
+        $long = self::steps($pattern, str_repeat($unit, 16).'!');
         $this->assertSame($reported, $long / $short > 3, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
 
         $this->assertSame($reported, \in_array(self::NESTED, self::lint($pattern), true), $pattern);
