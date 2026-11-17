@@ -61,6 +61,9 @@ CHANGELOG
    code unit every match requires, which PCRE2 looks for before it tries
    the pattern: `/^(x)?(?:\w+\s?)+:\1/`, critical in theoretical mode, was
    rejected at once on inputs without its `:`, never confirmed and dropped.
+ * In confirmed mode, a heuristic verdict on a pattern holding `(*SKIP:NAME)`
+   is replayed under the JIT, as PHP runs the pattern by default, and its
+   confirmation reports `jit_setting: true`, as for `/(?:a|a)+(*SKIP:x)$/`.
  * A backreference to a group of variable length in a loop is no longer
    critical when the body of the loop reads its input one way, each
    alternation choosing its branch by the first character and each count

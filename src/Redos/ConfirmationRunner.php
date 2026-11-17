@@ -22,13 +22,18 @@ use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Hir\Utf8;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Redos\Backtrack\LastCodeUnit;
 use PHPRegex\Redos\Backtrack\WitnessReplayer;
 
 /**
  * Runs the pattern on inputs growing in length, through the engine: without
- * the JIT, under the limits of the options, the ini left as it was found.
+ * the JIT, a pattern holding "(*SKIP:NAME)" aside, which runs under the JIT,
+ * under the limits of the options, the ini left as it was found.
  *
  * An exponential verdict with a witness is replayed: the witness is built
  * with one pump, then two, and so on up to 64, until preg_match() gives up
@@ -43,11 +48,17 @@ use PHPRegex\Redos\Backtrack\WitnessReplayer;
 final class ConfirmationRunner implements ConfirmationRunnerInterface
 {
     /**
-     * The engine runs every pattern without the JIT: this is the setting the
-     * confirmation reports, whatever the ini says and whether or not the
-     * options asked for it.
+     * The engine runs every pattern without the JIT, a pattern holding
+     * "(*SKIP:NAME)" aside: this is the setting the confirmation reports,
+     * whatever the ini says and whether or not the options asked for it.
      */
     private const JIT_SETTING = '0';
+
+    /**
+     * The setting the confirmation of a pattern holding "(*SKIP:NAME)"
+     * reports: it runs under the JIT.
+     */
+    private const SKIP_TO_A_NAME_JIT_SETTING = '1';
 
     /**
      * @param string|null $locale the LC_CTYPE the pattern runs under, as RedosAnalyzer runs it under its
@@ -93,7 +104,10 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
 
         [$baseChar, $suffixChar, $baseLength] = $this->resolveBaseInput($regex, $analysis, $options);
         $lengths = $this->buildLengths($baseLength, $options);
-        $required = self::requiredCharacter($regex);
+        $tree = self::tree($regex);
+        $required = null === $tree ? null : self::requiredCharacter($tree);
+        $underTheJit = null !== $tree && self::skipsToAName($tree->pattern);
+        $engine = $underTheJit ? PcreEngine::withJit() : $this->engine;
 
         $samples = [];
         $confirmed = false;
@@ -112,7 +126,7 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
             for ($i = 0; $i < $options->iterations; $i++) {
                 $iterationsRun++;
                 $start = hrtime(true);
-                $match = $this->engine->match($regex, $input, $limits);
+                $match = $engine->match($regex, $input, $limits);
                 $elapsed = (hrtime(true) - $start) / 1_000_000;
                 if (PcreEngine::limitsWereNotSet($match)) {
                     return WitnessReplayer::unavailable($options);
@@ -157,7 +171,7 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
         return new Confirmation(
             $confirmed,
             $samples,
-            self::JIT_SETTING,
+            $underTheJit ? self::SKIP_TO_A_NAME_JIT_SETTING : self::JIT_SETTING,
             $options->backtrackLimit,
             $options->recursionLimit,
             $options->iterations,
@@ -245,21 +259,44 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
     }
 
     /**
-     * The character PCRE2 requires in every subject it tries the pattern
-     * on, as the pattern encodes it; null when it requires none or the
-     * pattern does not parse.
+     * The tree of the pattern, or null when it does not parse.
      */
-    private static function requiredCharacter(string $regex): ?string
+    private static function tree(string $regex): ?RegexNode
     {
         try {
-            $tree = RegexParser::create()->parse($regex);
+            return RegexParser::create()->parse($regex);
         } catch (ExceptionInterface) {
             return null;
         }
+    }
 
+    /**
+     * The character PCRE2 requires in every subject it tries the pattern
+     * on, as the pattern encodes it; null when it requires none.
+     */
+    private static function requiredCharacter(RegexNode $tree): ?string
+    {
         $character = LastCodeUnit::of($tree);
 
         return null === $character ? null : Utf8::character($character, $tree->isUnicode());
+    }
+
+    /**
+     * Whether the pattern holds a "(*SKIP:NAME)".
+     */
+    private static function skipsToAName(NodeInterface $node): bool
+    {
+        if ($node instanceof PcreVerbNode && 'SKIP' === Ascii::upper($node->name) && null !== $node->argument) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::skipsToAName($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function evidenceForError(int $errorCode): ?string

@@ -116,6 +116,48 @@ final class RedosConfirmationRunnerTest extends TestCase
     }
 
     /**
+     * A pattern holding "(*SKIP:NAME)" is replayed under the JIT, as PHP
+     * runs it by default, and its confirmation says so. Oracle (JIT on, the
+     * backtrack limit of the options): "(?:a|a)+" before a skip to a name no
+     * mark sets gives up at the limit on fifty letters then "!", in well
+     * under a millisecond.
+     */
+    #[Test]
+    public function test_a_pattern_skipping_to_a_name_is_replayed_under_the_jit(): void
+    {
+        $pattern = '/(?:a|a)+(*SKIP:x)$/';
+        if (true !== \constant('PCRE_JIT_SUPPORT')) {
+            $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity, 'A PCRE built without the JIT runs the pattern as it is.');
+
+            return;
+        }
+
+        $limit = (string) \ini_get('pcre.backtrack_limit');
+        $jit = (string) \ini_get('pcre.jit');
+        \ini_set('pcre.backtrack_limit', '100000');
+        \ini_set('pcre.jit', '1');
+
+        try {
+            $oracle = @preg_match("\f".$pattern, str_repeat('a', 50).'!');
+            $oracleError = preg_last_error();
+        } finally {
+            \ini_set('pcre.backtrack_limit', $limit);
+            \ini_set('pcre.jit', $jit);
+        }
+        $this->assertSame([false, \PREG_BACKTRACK_LIMIT_ERROR], [$oracle, $oracleError], 'Oracle: the JIT gives up at the limit.');
+
+        $start = hrtime(true);
+        $confirmation = (new ConfirmationRunner())->confirm($pattern, new RedosAnalysis(RedosSeverity::Critical, 10));
+        $seconds = (hrtime(true) - $start) / 1e9;
+
+        $this->assertTrue($confirmation->confirmed);
+        $this->assertSame('backtrack_limit', $confirmation->evidence);
+        $this->assertSame('1', $confirmation->jitSetting);
+        $this->assertLessThan(5.0, $seconds);
+        $this->assertSame($jit, (string) \ini_get('pcre.jit'), 'The ini is left as it was found.');
+    }
+
+    /**
      * A pattern without delimiters confirms nothing: its flags read as none,
      * and each run reports the compile error PHP gives (preg_match('abc', '')
      * is false, preg_last_error() 1).

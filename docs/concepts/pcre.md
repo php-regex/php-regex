@@ -549,6 +549,9 @@ What this library does about it:
   no result. That covers `generate()` and its samples, runtime validation,
   the ReDoS confirmation (`--redos-mode=confirmed`), the PHPStan extension
   and the bridges.
+- The ReDoS confirmation replays a pattern holding `(*SKIP:NAME)` under the
+  JIT, as PHP runs it by default, and its confirmation says so
+  (`jit_setting: true`).
 - The `redos` command's benchmark alone runs the JIT, unless `--jit 0` says
   otherwise: it measures what production sees.
 
