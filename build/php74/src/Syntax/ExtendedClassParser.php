@@ -210,6 +210,12 @@ final class ExtendedClassParser
         try {
             return ($this->readPart)($tokens, true);
         } catch (ParserException $error) {
+            // A range is refused once its end is read, whatever that end
+            // holds past the refusal.
+            if ($class && ErrorCode::RangeInvalidBounds() === $error->errorCode) {
+                $error = $this->refusalAsRead($error, $tokens, \PHP_INT_MAX) ?? $error;
+            }
+
             throw ($class ? $this->firstMemberErrorBefore($tokens, $error->position ?? $at) : null) ?? $error;
         }
     }
@@ -268,8 +274,9 @@ final class ExtendedClassParser
     /**
      * The class read up to $position, closed there, judged whole: a range
      * PCRE refuses once it has read it, "]--" reversed before a range no
-     * class takes. Should the parser refuse a range there too, the class is
-     * read up to that range's hyphen.
+     * class takes. Should the parser refuse a range there too, PCRE refuses
+     * it once it has read its end: the class read up to that range's hyphen
+     * is judged too, and the earlier of the two faults is the one.
      *
      * @param list<Token> $tokens the class, from its "["
      */
@@ -290,6 +297,7 @@ final class ExtendedClassParser
         }
 
         $class = null;
+        $refused = null;
         foreach (null === $lastHyphen ? [$read] : [$read, \array_slice($read, 0, $lastHyphen)] as $prefix) {
             $end = $prefix[array_key_last($prefix)]->end();
 
@@ -297,14 +305,60 @@ final class ExtendedClassParser
                 $class = ($this->readPart)(array_merge($prefix, [new Token(TokenType::CharClassClose(), ']', $end, 0), new Token(TokenType::Eof(), '', $end)]), false);
 
                 break;
-            } catch (LimitException|ParserException $exception) {
+            } catch (LimitException $exception) {
+                // Read up to the hyphen of the last range.
+            } catch (ParserException $error) {
                 // The range refused there: read up to its hyphen.
+                $refused ??= $this->refusalAsRead($error, $read, $position);
             }
         }
 
         $error = null === $class ? null : $this->firstOperandError([$class], $read[0]->position);
+        if (null === $error || (null !== $refused && ($refused->position ?? $position) < ($error->position ?? $position))) {
+            $error = $refused;
+        }
 
         return null !== $error && ($error->position ?? $position) < $position ? $error : null;
+    }
+
+    /**
+     * What PCRE refuses first in a class whose range the parser refused:
+     * PCRE judges a range once it has read its end, so a member it refuses
+     * up to that end, refused before $position, comes first; a POSIX item
+     * ending the range is refused as the range before its name is read.
+     * Null when PCRE never reads that end: the fault cuts the class after
+     * the hyphen, or the pattern ends there.
+     *
+     * @param list<Token> $read the class read, from its "["
+     */
+    private function refusalAsRead(ParserException $refusal, array $read, int $position): ?ParserException
+    {
+        $at = $refusal->position ?? $position;
+        $hyphen = null;
+        foreach ($read as $index => $token) {
+            if (TokenType::Range() === $token->type && $token->position < $at) {
+                $hyphen = $index;
+            }
+        }
+
+        $end = null;
+        foreach (null === $hyphen ? [] : \array_slice($read, $hyphen + 1, null, true) as $index => $token) {
+            if (!\in_array($token->type, [TokenType::QuoteModeStart(), TokenType::QuoteModeEnd()], true)) {
+                $end = $index;
+
+                break;
+            }
+        }
+
+        // The "]" that closes a class the pattern leaves open is read past
+        // its end.
+        if (null === $end || $read[$end]->end() > \strlen($this->pattern)) {
+            return null;
+        }
+
+        $posix = TokenType::PosixClass() === $read[$end]->type || ('[' === $read[$end]->value && null !== PosixItem::terminator($this->pattern, $read[$end]->position));
+
+        return $this->firstLoneMemberErrorBefore(\array_slice($read, 0, $posix ? $hyphen : $end + 1), $position) ?? $refusal;
     }
 
     /**
@@ -315,8 +369,16 @@ final class ExtendedClassParser
      */
     private function firstLoneMemberErrorBefore(array $tokens, int $position): ?ParserException
     {
+        $quoted = false;
         foreach ($tokens as $token) {
-            if ($token->end() > $position || \in_array($token->type, [TokenType::CharClassOpen(), TokenType::CharClassClose(), TokenType::Range(), TokenType::Eof()], true)) {
+            // What "\Q" quotes is text: a "[" there opens no POSIX item.
+            if (\in_array($token->type, [TokenType::QuoteModeStart(), TokenType::QuoteModeEnd()], true)) {
+                $quoted = TokenType::QuoteModeStart() === $token->type;
+
+                continue;
+            }
+
+            if ($quoted || $token->end() > $position || \in_array($token->type, [TokenType::CharClassOpen(), TokenType::CharClassClose(), TokenType::Range(), TokenType::Eof()], true)) {
                 continue;
             }
 
