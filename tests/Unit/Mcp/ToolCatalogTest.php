@@ -69,6 +69,20 @@ final class ToolCatalogTest extends TestCase
         $this->assertSame($pinned, $actual, 'tests/Fixtures/Mcp/schemas.json pins the tools\' contract: regenerate it on purpose, never on a whim.');
     }
 
+    /**
+     * The protocol's Tool schema (2025-06-18) types outputSchema as an
+     * object whose "type" is "object": a client that checks it, as the
+     * TypeScript SDK's listTools() does, refuses the whole list otherwise.
+     */
+    #[Test]
+    public function test_every_output_schema_is_an_object_at_its_root(): void
+    {
+        foreach (ToolCatalog::v1()->tools() as $tool) {
+            $this->assertSame('object', $tool->outputSchema['type'] ?? null, $tool->name);
+            $this->assertSame('object', $tool->inputSchema['type'] ?? null, $tool->name);
+        }
+    }
+
     #[Test]
     public function test_every_name_follows_the_sdk_rule(): void
     {
