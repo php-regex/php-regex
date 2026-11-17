@@ -27,7 +27,10 @@ The bugs of the second pass are fixed in #403; these were left out of it.
   paths: https `/{x<a|a/|long>}` before http `/{y<a|a/|long/>}` loses
   `/long/` unreported (example `/a/`). Both need a search over three
   languages, (swapped(E) ∩ L) \ E, a new `LanguageSolver` operation
-  (declined on #403 by the maintainer, 2026-11-17).
+  (declined on #403 by the maintainer, 2026-11-17). An earlier route ending
+  on a variable, beside shared paths on disjoint schemes, is counted among
+  the skipped pairs: its redirect is PCRE's ordered choice. One whose last
+  requirement cannot end on "/" (the default `[^/]++`) could be read.
 - Read from the kernel, `access_control.port: '%env(int:APP_PORT)%'` fails
   ("Expected "int", but got "string"") even with `APP_PORT` set, on 2.x
   before #403 too: `extractFromKernel` runs the bundle's `Processor` on the
