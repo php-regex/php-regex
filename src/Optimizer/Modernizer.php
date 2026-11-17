@@ -45,6 +45,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
 
 /**
  * Modernizes legacy or messy regular expressions into clean, concise PCRE2-compliant patterns.
@@ -269,14 +270,14 @@ final class Modernizer extends AbstractNodeVisitor
         // The reference of a condition is no back reference: "(?(\g{1})…)"
         // is refused, so it keeps the spelling it was written with.
         $condition = $node->condition instanceof BackrefNode ? $node->condition : $node->condition->accept($this);
+        $yes = $node->yes->accept($this);
 
-        return new ConditionalNode(
-            $condition,
-            $node->yes->accept($this),
-            $node->no->accept($this),
-            $node->getStartPosition(),
-            $node->getEndPosition(),
-        );
+        // With no "|" written, the "no" branch stays empty where the "yes"
+        // branch ends: in a lookbehind, "(?(c)X|)" may be empty where
+        // "(?(c)X)" may not.
+        $no = PatternPrinter::writesNoBranch($node) ? $node->no->accept($this) : new LiteralNode('', $yes->getEndPosition(), $yes->getEndPosition());
+
+        return new ConditionalNode($condition, $yes, $no, $node->getStartPosition(), $node->getEndPosition());
     }
 
     #[\Override]

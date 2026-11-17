@@ -131,5 +131,44 @@ final class EngineAgreementTest extends TestCase
             'expected' => '/\.a+(?>-b)a/',
             'subjects' => ['.a-ba', '.aaaa'],
         ];
+
+        // In a lookbehind, "(?(c)X)" has the length of X alone, where
+        // "(?(c)X|)" may also be empty: a rewritten "yes" branch writes no
+        // "|" its source did not write.
+        yield 'a conditional without a "no" branch whose "yes" branch is a group' => [
+            'pattern' => '/(?<!(?(?=b)(?:bb)))c/',
+            'expected' => '/(?<!(?(?=b)bb))c/',
+            'subjects' => ['c', 'bc', 'bbc'],
+        ];
+
+        yield 'a conditional on a group without a "no" branch' => [
+            'pattern' => '/(a)?(?<!(?(1)(?:a)))c/',
+            'expected' => '/(a)?(?<!(?(1)a))c/',
+            'subjects' => ['c', 'ac'],
+        ];
+
+        yield 'a conditional without a "no" branch whose "yes" branch is counted once' => [
+            'pattern' => '/(a)?(?<!(?(1)(?:b){1}))c/',
+            'expected' => '/(a)?(?<!(?(1)b))c/',
+            'subjects' => ['c', 'ac', 'abc'],
+        ];
+
+        yield 'a conditional without a "no" branch whose "yes" branch is counted from one to one' => [
+            'pattern' => '/(a)?(?<!(?(1)b{1,1}))c/',
+            'expected' => '/(a)?(?<!(?(1)b))c/',
+            'subjects' => ['c', 'ac', 'abc'],
+        ];
+
+        yield 'a conditional without a "no" branch whose "yes" branch holds a space under x' => [
+            'pattern' => '/(a)?(?<!(?(1)a a))c/x',
+            'expected' => '/(a)?(?<!(?(1)a a))c/x',
+            'subjects' => ['c', 'ac', 'aac'],
+        ];
+
+        yield 'a conditional whose "no" branch is written empty' => [
+            'pattern' => '/(a)?(?<!(?(1)(?:a)|))c/',
+            'expected' => '/(a)?(?<!(?(1)a|))c/',
+            'subjects' => ['c', 'ac'],
+        ];
     }
 }

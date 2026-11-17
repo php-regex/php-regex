@@ -283,6 +283,43 @@ final class ModernizerTest extends TestCase
     }
 
     /**
+     * In a lookbehind, "(?(c)X)" has the length of X alone, where
+     * "(?(c)X|)" may also be empty: a modernized "yes" branch writes no
+     * "|" its source did not write.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideConditionalsWithoutNoBranch')]
+    public function test_conditional_keeps_writing_no_bar_it_did_not_write(string $pattern, string $expected, array $subjects): void
+    {
+        $modernized = $this->regexService->parse($pattern)->accept(new Modernizer());
+
+        foreach ([PatternPrinter::normalized(), PatternPrinter::asWritten()] as $printer) {
+            $printed = $modernized->accept($printer);
+            $this->assertSame($expected, $printed);
+            foreach ($subjects as $subject) {
+                $this->assertSame(
+                    [preg_match($pattern, $subject, $original), $original],
+                    [preg_match($printed, $subject, $rewritten), $rewritten],
+                    \sprintf('%s modernized as %s differs on %s.', $pattern, $printed, json_encode($subject)),
+                );
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string, subjects: list<string>}>
+     */
+    public static function provideConditionalsWithoutNoBranch(): iterable
+    {
+        yield 'a lookahead condition and a grouped "yes" branch' => ['pattern' => '/(?<!(?(?=b)(?:bb)))c/', 'expected' => '/(?<!(?(?=b)bb))c/', 'subjects' => ['c', 'bc', 'bbc']];
+        yield 'a group condition and a grouped "yes" branch' => ['pattern' => '/(a)?(?<!(?(1)(?:a)))c/', 'expected' => '/(a)?(?<!(?(1)a))c/', 'subjects' => ['c', 'ac']];
+        yield 'a "no" branch written empty' => ['pattern' => '/(a)?(?<!(?(1)(?:a)|))c/', 'expected' => '/(a)?(?<!(?(1)a|))c/', 'subjects' => ['c', 'ac']];
+        yield 'a "no" branch written' => ['pattern' => '/(a)?(?<!(?(1)(?:a)|b))c/', 'expected' => '/(a)?(?<!(?(1)a|b))c/', 'subjects' => ['c', 'ac', 'bc']];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, accepted: string, rejected: string}>
      */
     public static function provideGroupedAlternations(): iterable
