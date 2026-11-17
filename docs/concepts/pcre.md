@@ -137,7 +137,10 @@ character after the backslash, and what follows is read again as pattern text.
 the text `g{-1}`, `\g{+65535}` after a group, past the 65535 groups PCRE2
 numbers, `g`, then `{` repeated by the `+`, then the text `65535}`, and `\o{8}`
 is `o` repeated eight times, as the braces read again make a count. PHP 8.0 compiles without the option and ignores `X`, so it
-refuses all of them. The library judges a 7.3 or 7.4 target the same way, and
+refuses all of them. A `\x` with no hex digit is NUL up to PCRE2 10.44 and
+refused from 10.45: PHP 7.3 and 7.4 linked against 10.45 or later read it as
+the letter `x`, so `/[\x-a]/` is a range out of order there, and refuse it
+under `X`. The library judges a 7.3 or 7.4 target the same way, and
 reads the escape as that character in the tree it builds:
 
 ```php
