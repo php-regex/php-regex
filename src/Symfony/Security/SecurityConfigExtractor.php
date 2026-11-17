@@ -52,6 +52,9 @@ use Symfony\Component\Yaml\Yaml;
  *     allowIf: ?string,
  *     requestMatcher: ?string,
  *     requiresChannel: ?string,
+ *     port?: ?int,
+ *     attributes?: array<string, string>,
+ *     route?: ?string,
  * }
  * @phpstan-type FirewallRule array{
  *     name: string,
@@ -257,6 +260,16 @@ final class SecurityConfigExtractor
                     continue;
                 }
 
+                // The request attributes, by name, as the bundle's map
+                // holds them: a scalar value each.
+                $attributes = [];
+                foreach (\is_array($rule['attributes'] ?? null) ? $rule['attributes'] : [] as $name => $value) {
+                    $value = self::text($value);
+                    if (null !== $value) {
+                        $attributes[(string) $name] = $value;
+                    }
+                }
+
                 $accessControl[] = $this->accessRule([
                     'path' => self::text($rule['path'] ?? null),
                     'host' => self::text($rule['host'] ?? null),
@@ -266,6 +279,9 @@ final class SecurityConfigExtractor
                     'allowIf' => self::text($rule['allow_if'] ?? null),
                     'requestMatcher' => self::text($rule['request_matcher'] ?? null),
                     'requiresChannel' => self::text($rule['requires_channel'] ?? null),
+                    'port' => self::text($rule['port'] ?? null),
+                    'attributes' => $attributes,
+                    'route' => self::text($rule['route'] ?? null),
                 ], $sources, $taken, $resolve);
             }
 
@@ -293,10 +309,12 @@ final class SecurityConfigExtractor
     }
 
     /**
-     * @param array{path: ?string, host: ?string, roles: list<string>, methods: list<string>, ips: list<string>, allowIf: ?string, requestMatcher: ?string, requiresChannel: ?string} $rule
-     * @param list<array{file: string, lines: array<int, string>}>                                                                                                                    $sources
-     * @param array<int, array<int, bool>>                                                                                                                                            $taken
-     * @param \Closure(string): string                                                                                                                                                $resolve
+     * @param array{path: ?string, host: ?string, roles: list<string>, methods: list<string>, ips: list<string>, allowIf: ?string, requestMatcher: ?string, requiresChannel: ?string, port: ?string, attributes: array<string, string>, route: ?string} $rule
+     * @param list<array{file: string, lines: array<int, string>}>                                                                                                                                                                                      $sources
+     * @param array<int, array<int, bool>>                                                                                                                                                                                                              $taken
+     * @param \Closure(string): string                                                                                                                                                                                                                  $resolve
+     *
+     * @throws SecurityConfigException
      *
      * @return AccessControlRule
      */
@@ -305,6 +323,7 @@ final class SecurityConfigExtractor
         $matchers = [
             ...self::valueMatchers($rule['path'], 'path'),
             ...self::valueMatchers($rule['host'], 'host'),
+            ...self::valueMatchers($rule['route'], 'route'),
             ...self::valueMatchers($rule['requestMatcher'], 'request_matcher'),
             ...self::valueMatchers($rule['allowIf'], 'allow_if'),
         ];
@@ -332,6 +351,9 @@ final class SecurityConfigExtractor
             'allowIf' => self::filled($rule['allowIf']),
             'requestMatcher' => self::filled($rule['requestMatcher']),
             'requiresChannel' => self::filled($rule['requiresChannel']),
+            'port' => null === $rule['port'] ? null : self::port($resolve($rule['port'])),
+            'attributes' => array_map($resolve, $rule['attributes']),
+            'route' => null === $rule['route'] ? null : $resolve($rule['route']),
         ];
     }
 
@@ -531,6 +553,21 @@ final class SecurityConfigExtractor
         }
 
         return \is_int($value) || \is_float($value) ? (string) $value : null;
+    }
+
+    /**
+     * The port a rule's request matcher compares the request's with: the
+     * security bundle takes an integer only.
+     *
+     * @throws SecurityConfigException
+     */
+    private static function port(string $value): int
+    {
+        if (!ctype_digit($value)) {
+            throw new SecurityConfigException(\sprintf('The access_control port "%s" is not a port number.', $value));
+        }
+
+        return (int) $value;
     }
 
     private static function notAString(string $value): SecurityConfigException

@@ -119,6 +119,11 @@ final class SecurityAccessControlAnalyzer
                     continue;
                 }
 
+                // Two ports take no request in common.
+                if (null !== $left['port'] && null !== $right['port'] && $left['port'] !== $right['port']) {
+                    continue;
+                }
+
                 if (!$this->hostsOverlap($left, $right, $options, $hostChecks, $hostIntersections)) {
                     continue;
                 }
@@ -283,6 +288,12 @@ final class SecurityAccessControlAnalyzer
             $notes[] = 'requires_channel is not evaluated.';
         }
 
+        $route = $rule['route'] ?? null;
+        $attributes = $rule['attributes'] ?? [];
+        if (null !== $route || [] !== $attributes) {
+            $notes[] = 'Route and attribute restrictions are not evaluated.';
+        }
+
         // Only the parser's refusal of the delimited path is the path's
         // fault; anything else is a bug and surfaces.
         try {
@@ -329,6 +340,9 @@ final class SecurityAccessControlAnalyzer
             'ips' => $ips,
             'allowIf' => $rule['allowIf'],
             'requiresChannel' => $rule['requiresChannel'],
+            'port' => $rule['port'] ?? null,
+            'attributes' => $attributes,
+            'route' => $route,
             'accessLevel' => $this->resolveAccessLevel($roles, $rule['allowIf']),
             'notes' => $notes,
         ];
@@ -386,6 +400,8 @@ final class SecurityAccessControlAnalyzer
             && $left['hostPattern'] === $right['hostPattern']
             && $this->sameList($left['ips'], $right['ips'], true)
             && $left['requiresChannel'] === $right['requiresChannel']
+            && $left['port'] === $right['port']
+            && self::requestAttributes($left) === self::requestAttributes($right)
             && $left['allowIf'] === $right['allowIf'];
     }
 
@@ -507,10 +523,12 @@ final class SecurityAccessControlAnalyzer
 
     /**
      * Whether every request the inner rule takes, the outer rule takes too,
-     * but for the path: no method, host or address of its own, or one that
-     * holds the inner rule's. Addresses are compared as written. A host
-     * the parser or the solver cannot read leaves the paths to decide, as
-     * it does when the hosts are intersected.
+     * but for the path: no method, host, address, port or request attribute
+     * of its own, or one that holds the inner rule's. Addresses and
+     * attributes are compared as written: an attribute of the outer rule
+     * the inner one does not require the same way may refuse some of its
+     * requests. A host the parser or the solver cannot read leaves the
+     * paths to decide, as it does when the hosts are intersected.
      *
      * @phpstan-param AccessRule $outer
      * @phpstan-param AccessRule $inner
@@ -523,6 +541,17 @@ final class SecurityAccessControlAnalyzer
 
         if ([] !== $outer['ips'] && !$this->listHolds($outer['ips'], $inner['ips'])) {
             return false;
+        }
+
+        if (null !== $outer['port'] && $outer['port'] !== $inner['port']) {
+            return false;
+        }
+
+        $required = self::requestAttributes($inner);
+        foreach (self::requestAttributes($outer) as $name => $pattern) {
+            if (($required[$name] ?? null) !== $pattern) {
+                return false;
+            }
         }
 
         if ($outer['hostUnsupported'] || $inner['hostUnsupported'] || null === $outer['hostPattern']) {
@@ -538,6 +567,22 @@ final class SecurityAccessControlAnalyzer
         } catch (ComplexityException) {
             return true;
         }
+    }
+
+    /**
+     * The attributes a rule's request matcher requires, its route as
+     * "_route", as the security bundle builds the matcher, by name.
+     *
+     * @phpstan-param AccessRule $rule
+     *
+     * @return array<string, string>
+     */
+    private static function requestAttributes(array $rule): array
+    {
+        $attributes = null === $rule['route'] ? $rule['attributes'] : ['_route' => $rule['route']] + $rule['attributes'];
+        ksort($attributes);
+
+        return $attributes;
     }
 
     /**

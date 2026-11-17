@@ -259,6 +259,43 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
     }
 
     /**
+     * A route and request attributes are compared as written, as addresses
+     * are: the finding says so, and an earlier rule for one route is no
+     * critical shadow of a later rule for every route.
+     */
+    #[Test]
+    public function test_a_rule_for_a_route_notes_its_restriction_and_shadows_no_wider_rule(): void
+    {
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            ['route' => 'app_login', 'attributes' => ['_format' => 'html']] + self::rule(path: null, roles: ['PUBLIC_ACCESS']),
+            self::rule(path: '^/admin', line: 4),
+        ], true);
+
+        $this->assertSame(0, $report->stats['shadowed']);
+        $this->assertSame(0, $report->stats['critical']);
+        $this->assertSame('overlap', $report->conflicts[0]['type']);
+        $this->assertSame('app_login', $report->conflicts[0]['rule']['route']);
+        $this->assertSame(['_format' => 'html'], $report->conflicts[0]['rule']['attributes']);
+        $this->assertContains('Route and attribute restrictions are not evaluated.', $report->conflicts[0]['notes']);
+    }
+
+    /**
+     * The attributes are a map: written in another order, or with the
+     * route as its "_route" attribute, they require the same requests.
+     */
+    #[Test]
+    public function test_a_rule_requiring_the_same_attributes_in_another_order_is_redundant(): void
+    {
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            ['route' => 'api_orders', 'attributes' => ['_format' => 'json', '_locale' => 'fr']] + self::rule(path: '^/api'),
+            ['attributes' => ['_locale' => 'fr', '_route' => 'api_orders', '_format' => 'json']] + self::rule(path: '^/api', line: 4),
+        ]);
+
+        $this->assertSame(1, $report->stats['shadowed']);
+        $this->assertSame(1, $report->stats['redundant']);
+    }
+
+    /**
      * @param list<string> $roles
      *
      * @return array{file: string, line: int, path: ?string, host: ?string, roles: array<int, string>, methods: array<int, string>, ips: array<int, string>, allowIf: ?string, requestMatcher: ?string, requiresChannel: ?string}

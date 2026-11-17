@@ -128,6 +128,26 @@ final class SecurityCommandTest extends TestCase
         $this->assertStringContainsString('1 shadowed rules detected.', $display);
     }
 
+    /**
+     * The first rule takes the login route only (its route becomes the
+     * "_route" attribute of its request matcher): the admin rule after it
+     * still applies to every other path under /admin.
+     */
+    #[Test]
+    public function test_command_reports_no_shadow_behind_a_rule_for_one_route(): void
+    {
+        $path = $this->makeProject([
+            'security.yaml' => "security:\n    access_control:\n        - { route: app_login, roles: PUBLIC_ACCESS }\n        - { path: ^/admin, roles: ROLE_ADMIN }\n",
+        ]).'/security.yaml';
+
+        $tester = new CommandTester(self::command());
+        $status = $tester->execute(['--config' => [$path]]);
+        $display = $tester->getDisplay();
+
+        $this->assertSame(Command::SUCCESS, $status, $display);
+        $this->assertStringNotContainsString('shadowed rules detected', $display);
+    }
+
     #[Test]
     public function test_command_refuses_a_named_file_that_is_no_yaml(): void
     {

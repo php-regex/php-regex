@@ -20,10 +20,12 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\ChainRequestMatcher;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestMatcher\AttributesRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\HostRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\IpsRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher;
+use Symfony\Component\HttpFoundation\RequestMatcher\PortRequestMatcher;
 use Symfony\Component\Security\Http\AccessMap;
 
 /**
@@ -40,14 +42,17 @@ use Symfony\Component\Security\Http\AccessMap;
  *
  * Each case is first checked against Symfony's own AccessMap: which rule
  * applies to some requests, in the declared order and in the swapped one.
+ *
+ * @phpstan-type OrderRule array{path?: string, methods?: list<string>, host?: string, ips?: list<string>, port?: int, attributes?: array<string, string>, route?: string}
+ * @phpstan-type OrderRequest array{0: string, 1: string, 2: int|null, 3: int|null, 4?: string, 5?: array<string, string>}
  */
 final class AccessControlOrderTest extends TestCase
 {
     /**
-     * @param list<array{path: string, methods?: list<string>, host?: string, ips?: list<string>}> $rules
-     * @param list<array{0: string, 1: string, 2: int|null, 3: int|null, 4?: string}>              $requests each request's method and URL, and
-     *                                                                                                       the rule that applies to it in the
-     *                                                                                                       declared order and in the swapped one
+     * @param list<OrderRule>    $rules
+     * @param list<OrderRequest> $requests each request's method and URL, the rule that applies to it in
+     *                                     the declared order and in the swapped one, its address and the
+     *                                     attributes the router gave it
      */
     #[Test]
     #[DataProvider('providePairs')]
@@ -56,8 +61,9 @@ final class AccessControlOrderTest extends TestCase
         foreach ($requests as $request) {
             [$method, $url, $declared, $swapped] = $request;
             $address = $request[4] ?? '10.0.0.1';
-            $this->assertSame($declared, self::ruleApplied($rules, $method, $url, $address), 'declared order, '.$method.' '.$url.' from '.$address);
-            $this->assertSame($swapped, self::ruleApplied(array_reverse($rules, true), $method, $url, $address), 'swapped order, '.$method.' '.$url.' from '.$address);
+            $attributes = $request[5] ?? [];
+            $this->assertSame($declared, self::ruleApplied($rules, $method, $url, $address, $attributes), 'declared order, '.$method.' '.$url.' from '.$address);
+            $this->assertSame($swapped, self::ruleApplied(array_reverse($rules, true), $method, $url, $address, $attributes), 'swapped order, '.$method.' '.$url.' from '.$address);
         }
 
         $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze(array_map(self::rule(...), array_values($rules)), true);
@@ -77,14 +83,15 @@ final class AccessControlOrderTest extends TestCase
         $example = $report->conflicts[0]['example'];
         $this->assertIsString($example);
         $method = self::methodOf($rules);
-        $url = 'http://'.self::hostOf($rules).$example;
+        $url = 'http://'.self::hostOf($rules).self::portOf($rules).$example;
         $address = self::addressOf($rules);
-        $this->assertSame(0, self::ruleApplied($rules, $method, $url, $address), $method.' '.$url);
-        $this->assertSame(1, self::ruleApplied(array_reverse($rules, true), $method, $url, $address), $method.' '.$url);
+        $attributes = self::attributesOf($rules);
+        $this->assertSame(0, self::ruleApplied($rules, $method, $url, $address, $attributes), $method.' '.$url);
+        $this->assertSame(1, self::ruleApplied(array_reverse($rules, true), $method, $url, $address, $attributes), $method.' '.$url);
     }
 
     /**
-     * @return iterable<string, array{rules: list<array{path: string, methods?: list<string>, host?: string, ips?: list<string>}>, expected: 'shadowed'|'overlap'|'carve-out'|null, requests: list<array{0: string, 1: string, 2: int|null, 3: int|null, 4?: string}>}>
+     * @return iterable<string, array{rules: list<OrderRule>, expected: 'shadowed'|'overlap'|'carve-out'|null, requests: list<OrderRequest>}>
      */
     public static function providePairs(): iterable
     {
@@ -343,6 +350,87 @@ final class AccessControlOrderTest extends TestCase
             ],
         ];
 
+        // SecurityExtension::createAuthorization() adds the route to the
+        // attributes as "_route", and createRequestMatcher() chains an
+        // AttributesRequestMatcher and a PortRequestMatcher to the path.
+        yield 'a rule for one route leaves the other routes to a later rule on a path' => [
+            'rules' => [['route' => 'app_login'], ['path' => '^/admin']],
+            'expected' => 'overlap',
+            'requests' => [
+                ['GET', 'http://localhost/admin/login', 0, 1, '10.0.0.1', ['_route' => 'app_login']],
+                ['GET', 'http://localhost/admin/users', 1, 1, '10.0.0.1', ['_route' => 'admin_users']],
+            ],
+        ];
+
+        yield 'a later rule for the route of an earlier one, on a path it holds, is shadowed' => [
+            'rules' => [['route' => 'app_login'], ['path' => '^/login', 'route' => 'app_login']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/login', 0, 1, '10.0.0.1', ['_route' => 'app_login']],
+            ],
+        ];
+
+        yield 'a wider path for one port leaves the other ports to the later rule' => [
+            'rules' => [['path' => '^/admin', 'port' => 8080], ['path' => '^/admin/users']],
+            'expected' => 'overlap',
+            'requests' => [
+                ['GET', 'http://localhost:8080/admin/users', 0, 1],
+                ['GET', 'http://localhost/admin/users', 1, 1],
+            ],
+        ];
+
+        yield 'a later rule for a port, on a path an earlier rule for any port holds, is shadowed' => [
+            'rules' => [['path' => '^/admin'], ['path' => '^/admin/users', 'port' => 8080]],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost:8080/admin/users', 0, 1],
+            ],
+        ];
+
+        yield 'one path for the same port is shadowed' => [
+            'rules' => [['path' => '^/admin', 'port' => 8080], ['path' => '^/admin', 'port' => 8080]],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost:8080/admin', 0, 1],
+                ['GET', 'http://localhost/admin', null, null],
+            ],
+        ];
+
+        yield 'one path for two ports is no conflict' => [
+            'rules' => [['path' => '^/admin', 'port' => 8080], ['path' => '^/admin', 'port' => 9090]],
+            'expected' => null,
+            'requests' => [
+                ['GET', 'http://localhost:8080/admin', 0, 0],
+                ['GET', 'http://localhost:9090/admin', 1, 1],
+            ],
+        ];
+
+        yield 'one path, the earlier rule restricted to an attribute, is a carve-out' => [
+            'rules' => [['path' => '^/api', 'attributes' => ['_format' => 'json']], ['path' => '^/api']],
+            'expected' => 'carve-out',
+            'requests' => [
+                ['GET', 'http://localhost/api/orders', 0, 1, '10.0.0.1', ['_format' => 'json']],
+                ['GET', 'http://localhost/api/orders', 1, 1, '10.0.0.1', ['_format' => 'html']],
+            ],
+        ];
+
+        yield 'a wider path restricted to an attribute leaves the other requests to the later rule' => [
+            'rules' => [['path' => '^/api', 'attributes' => ['_format' => 'json']], ['path' => '^/api/orders']],
+            'expected' => 'overlap',
+            'requests' => [
+                ['GET', 'http://localhost/api/orders', 0, 1, '10.0.0.1', ['_format' => 'json']],
+                ['GET', 'http://localhost/api/orders', 1, 1, '10.0.0.1', ['_format' => 'html']],
+            ],
+        ];
+
+        yield 'a wider path and the same attribute shadows the narrower one' => [
+            'rules' => [['path' => '^/api', 'attributes' => ['_format' => 'json']], ['path' => '^/api/orders', 'attributes' => ['_format' => 'json']]],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/api/orders', 0, 1, '10.0.0.1', ['_format' => 'json']],
+            ],
+        ];
+
         yield 'paths that share no request are no conflict' => [
             'rules' => [['path' => '^/admin'], ['path' => '^/api']],
             'expected' => null,
@@ -357,13 +445,17 @@ final class AccessControlOrderTest extends TestCase
      * The index of the rule Symfony's AccessMap applies to the request, in
      * the order of the array, or null when none does.
      *
-     * @param array<int, array{path: string, methods?: list<string>, host?: string, ips?: list<string>}> $rules
+     * @param array<int, OrderRule> $rules
+     * @param array<string, string> $attributes the attributes the router gave the request
      */
-    private static function ruleApplied(array $rules, string $method, string $url, string $address): ?int
+    private static function ruleApplied(array $rules, string $method, string $url, string $address, array $attributes = []): ?int
     {
         $map = new AccessMap();
         foreach ($rules as $index => $rule) {
-            $matchers = [new PathRequestMatcher($rule['path'])];
+            $matchers = [];
+            if (isset($rule['path'])) {
+                $matchers[] = new PathRequestMatcher($rule['path']);
+            }
             if (isset($rule['host'])) {
                 $matchers[] = new HostRequestMatcher($rule['host']);
             }
@@ -373,27 +465,36 @@ final class AccessControlOrderTest extends TestCase
             if (isset($rule['ips'])) {
                 $matchers[] = new IpsRequestMatcher($rule['ips']);
             }
+            $required = ($rule['attributes'] ?? []) + (isset($rule['route']) ? ['_route' => $rule['route']] : []);
+            if ([] !== $required) {
+                $matchers[] = new AttributesRequestMatcher($required);
+            }
+            if (isset($rule['port'])) {
+                $matchers[] = new PortRequestMatcher($rule['port']);
+            }
             $map->add(new ChainRequestMatcher($matchers), ['RULE_'.$index]);
         }
 
-        [$attributes] = $map->getPatterns(Request::create($url, $method, server: ['REMOTE_ADDR' => $address]));
+        $request = Request::create($url, $method, server: ['REMOTE_ADDR' => $address]);
+        $request->attributes->add($attributes);
+        [$applied] = $map->getPatterns($request);
 
-        $applied = $attributes[0] ?? null;
+        $applied = $applied[0] ?? null;
 
         return \is_string($applied) ? (int) substr($applied, 5) : null;
     }
 
     /**
-     * @param array{path: string, methods?: list<string>, host?: string, ips?: list<string>} $rule
+     * @param OrderRule $rule
      *
-     * @return array{file: string, line: int, path: string, host: string|null, roles: list<string>, methods: list<string>, ips: list<string>, allowIf: null, requestMatcher: null, requiresChannel: null}
+     * @return array{file: string, line: int, path: string|null, host: string|null, roles: list<string>, methods: list<string>, ips: list<string>, allowIf: null, requestMatcher: null, requiresChannel: null, port: int|null, attributes: array<string, string>, route: string|null}
      */
     private static function rule(array $rule): array
     {
         return [
             'file' => 'security.yaml',
             'line' => 1,
-            'path' => $rule['path'],
+            'path' => $rule['path'] ?? null,
             'host' => $rule['host'] ?? null,
             'roles' => ['ROLE_USER'],
             'methods' => $rule['methods'] ?? [],
@@ -401,6 +502,9 @@ final class AccessControlOrderTest extends TestCase
             'allowIf' => null,
             'requestMatcher' => null,
             'requiresChannel' => null,
+            'port' => $rule['port'] ?? null,
+            'attributes' => $rule['attributes'] ?? [],
+            'route' => $rule['route'] ?? null,
         ];
     }
 
@@ -408,7 +512,7 @@ final class AccessControlOrderTest extends TestCase
      * A method every rule of the pair takes: a rule without methods takes
      * them all.
      *
-     * @param list<array{path: string, methods?: list<string>, host?: string, ips?: list<string>}> $rules
+     * @param list<OrderRule> $rules
      */
     private static function methodOf(array $rules): string
     {
@@ -425,7 +529,7 @@ final class AccessControlOrderTest extends TestCase
     /**
      * An address every rule of the pair takes.
      *
-     * @param list<array{path: string, methods?: list<string>, host?: string, ips?: list<string>}> $rules
+     * @param list<OrderRule> $rules
      */
     private static function addressOf(array $rules): string
     {
@@ -441,7 +545,7 @@ final class AccessControlOrderTest extends TestCase
     /**
      * A host every rule of the pair takes.
      *
-     * @param list<array{path: string, methods?: list<string>, host?: string, ips?: list<string>}> $rules
+     * @param list<OrderRule> $rules
      */
     private static function hostOf(array $rules): string
     {
@@ -452,5 +556,39 @@ final class AccessControlOrderTest extends TestCase
         }
 
         return 'localhost';
+    }
+
+    /**
+     * The port of a URL every rule of the pair takes, written after the host.
+     *
+     * @param list<OrderRule> $rules
+     */
+    private static function portOf(array $rules): string
+    {
+        foreach ($rules as $rule) {
+            if (isset($rule['port'])) {
+                return ':'.$rule['port'];
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * The attributes the router gives a request every rule of the pair
+     * takes.
+     *
+     * @param list<OrderRule> $rules
+     *
+     * @return array<string, string>
+     */
+    private static function attributesOf(array $rules): array
+    {
+        $attributes = [];
+        foreach ($rules as $rule) {
+            $attributes = [...$attributes, ...($rule['attributes'] ?? []), ...(isset($rule['route']) ? ['_route' => $rule['route']] : [])];
+        }
+
+        return $attributes;
     }
 }

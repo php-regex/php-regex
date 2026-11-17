@@ -526,9 +526,10 @@ too, as the router sends them: a later route for `HEAD` only on the same
 path is shadowed.
 
 `regex:security` reads `access_control` the same way: the first rule whose
-path, host, methods and addresses take a request applies to it. A later
-rule is **shadowed** when an earlier one takes every request it takes, its
-path, its host, its methods and its addresses included: it never applies.
+path, host, methods, addresses, port, route and attributes take a request
+applies to it. A later rule is **shadowed** when an earlier one takes every
+request it takes, its path, its host, its methods, its addresses, its port,
+its route and its attributes included: it never applies.
 An earlier rule is a **carve-out** of a later one when its path is strictly
 narrower, or when it takes only requests the later one takes too: that is
 the order `access_control` expects, and it is never reported.
@@ -543,9 +544,13 @@ Any other pair of rules that share a request is an **overlap**, listed with
 `--show-overlaps`: the order decides which rule applies to the requests both
 take. `{ path: ^/admin, methods: [GET] }` before `{ path: ^/admin/users }`
 leaves `POST /admin/users` to the later rule, an overlap and not a shadow.
-Addresses are compared as written, and a host the analysis cannot read
-leaves the paths to decide; `allow_if` and `requires_channel` decide access,
-not which rule applies, and play no part.
+Addresses, a route and attributes are compared as written: an earlier rule
+holding a route or an attribute the later one does not require the same way
+leaves it the other requests, so `{ route: app_login }` before
+`{ path: ^/admin }` is an overlap. Two rules for different ports share no
+request. A host the analysis cannot read leaves the paths to decide;
+`allow_if` and `requires_channel` decide access, not which rule applies, and
+play no part.
 
 `regex:security` and `regex:analyze` read the security configuration the
 application runs with, as `bin/console debug:config security` shows it:
@@ -554,7 +559,7 @@ loads, in any YAML shape (block or flow lists, anchors and aliases,
 `when@<env>` blocks), with its `%parameters%` and `%env()%` values resolved.
 Each finding names the file and the line its value is written on, or
 `security configuration` when no `security.*` file under `config/` writes it.
-A rule with no path, host, `request_matcher` or `allow_if`, such as
+A rule with no path, host, `route`, `request_matcher` or `allow_if`, such as
 `{ roles: ROLE_USER }`, is found by its roles, `ips`, `methods` or
 `requires_channel`, on the line that opens its entry.
 `--config=<file>` analyzes that YAML file instead, read with `symfony/yaml`
