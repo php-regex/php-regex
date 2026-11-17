@@ -121,6 +121,8 @@ final class ValidatorNestingTest extends TestCase
         yield 'unknown character after "(?", in a conditional' => ['pattern' => $belowTheConditional.'(?(1)(?%/', 'code' => ErrorCode::GroupSyntax, 'offset' => 259];
         yield 'name expected, in a DEFINE group' => ['pattern' => $belowTheConditional.'(?(DEFINE)(?P</', 'code' => ErrorCode::GroupNameExpected, 'offset' => 265];
         yield 'name expected, in a conditional on a name' => ['pattern' => $belowTheConditional.'(?(<n>)(?P</', 'code' => ErrorCode::GroupNameExpected, 'offset' => 262];
+        yield 'unknown character after "(?", in a conditional on recursion' => ['pattern' => $belowTheConditional.'(?(R)(?%/', 'code' => ErrorCode::GroupSyntax, 'offset' => 259];
+        yield 'mark the pattern ends in, in a conditional on recursion into a group' => ['pattern' => $belowTheConditional.'(?(R1)(*:a(/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 262];
         // Nor do those of an option setting, which opens nothing.
         yield 'unknown character after "(?", after an option setting' => ['pattern' => '/'.$open.'(?i)(?%/', 'code' => ErrorCode::GroupSyntax, 'offset' => 257];
         yield 'unknown character after "(?", after an empty option setting' => ['pattern' => '/'.$open.'(?)(?%/', 'code' => ErrorCode::GroupSyntax, 'offset' => 256];

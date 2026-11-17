@@ -605,7 +605,7 @@ final class FirstErrorLocator
 
             $before = $tokens[$index - 1] ?? null;
             $setting = TokenType::GroupModifierOpen() === $token->type;
-            if ($setting || (TokenType::GroupOpen() === $token->type && TokenType::GroupModifierOpen() === (($nullsafeVariable2 = $before) ? $nullsafeVariable2->type : null) && $before->end() === $token->position)) {
+            if ($setting || (TokenType::GroupOpen() === $token->type && null !== $before && TokenType::GroupModifierOpen() === $before->type && $before->end() === $token->position)) {
                 $open = $index;
             }
         }
