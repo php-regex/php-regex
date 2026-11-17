@@ -25,6 +25,7 @@ use PHPRegex\Parser\Syntax\ParseState;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -91,6 +92,8 @@ final class ExtendedClassParserTest extends TestCase
     #[DataProvider('provideRangesBeforeAFault')]
     public function test_a_reversed_range_before_a_fault_in_its_class_is_reported_first(string $pattern, ErrorCode $code, int $offset): void
     {
+        $this->assertTheEngineRefusesAt($offset, $pattern);
+
         $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
 
         $this->assertSame($code, $result->errorCode, $pattern);
@@ -137,6 +140,8 @@ final class ExtendedClassParserTest extends TestCase
     #[DataProvider('provideQuotedBrackets')]
     public function test_a_quoted_bracket_opens_no_posix_item_before_a_fault(string $pattern, int $offset): void
     {
+        $this->assertTheEngineRefusesAt($offset, $pattern);
+
         $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
 
         $this->assertSame(ErrorCode::CharclassUnclosed, $result->errorCode, $pattern);
@@ -152,6 +157,18 @@ final class ExtendedClassParserTest extends TestCase
         yield 'quoted collating element' => ['pattern' => '/(?[[\Q[.a.]]])/', 'offset' => 14];
         yield 'quoted equivalence class under u' => ['pattern' => '/(?[[\Q[=a=]^]-[b])/u', 'offset' => 18];
         yield 'quoted unknown POSIX class after a member, under x' => ['pattern' => '/(?[[b\Q[:foo:]\B]-[b])/x', 'offset' => 22];
+    }
+
+    /**
+     * PHP first, where it links the PCRE2 10.49 the rows were read on: a
+     * PCRE2 before 10.45 refuses "(?[" itself, and one before 10.47 reports
+     * most errors on the character at fault.
+     */
+    private function assertTheEngineRefusesAt(int $offset, string $pattern): void
+    {
+        if ('10.49' === PcreTarget::runtime()->pcreVersion) {
+            $this->assertSame($offset, PhpErrorOffset::of($pattern), 'Oracle on PCRE2 10.49: '.$pattern);
+        }
     }
 
     private static function parse(string $body): NodeInterface
