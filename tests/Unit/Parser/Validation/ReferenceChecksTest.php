@@ -15,7 +15,13 @@ namespace PHPRegex\Tests\Unit\Parser\Validation;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SemanticErrorException;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -53,6 +59,70 @@ final class ReferenceChecksTest extends TestCase
         yield 'number of five digits' => ['pattern' => '/(a)\g{12345 }/', 'offset' => 5, 'code' => ErrorCode::BackrefInvalidSyntax];
         yield 'highest group number' => ['pattern' => '/(a)\g{65535 }/', 'offset' => 5, 'code' => ErrorCode::BackrefInvalidSyntax];
         yield 'number past the groups' => ['pattern' => '/(a)\g{5 }/', 'offset' => 5, 'code' => ErrorCode::BackrefInvalidSyntax];
+    }
+
+    /**
+     * PCRE keeps one offset for each group a reference names by a number
+     * below 10, that of the first such reference, and reports a missing
+     * group there, whichever reference it meets first: one in a lookbehind,
+     * which it measures before it compiles the rest. A name, a call, a
+     * condition, or a reference to another group keeps its own offset. Each
+     * row is the offset preg_match() reports on PHP 8.4.27 with PCRE2 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideReferencesToTheSameMissingGroup')]
+    public function test_a_missing_group_below_10_is_reported_at_its_first_reference(string $pattern, int $offset, ErrorCode $code): void
+    {
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int, code: ErrorCode}>
+     */
+    public static function provideReferencesToTheSameMissingGroup(): iterable
+    {
+        yield 'reference, then one in a lookbehind' => ['pattern' => '/\1(?<=\1)/', 'offset' => 2, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'braced reference, then one in a lookbehind' => ['pattern' => '/\g{1}(?<=\1)/', 'offset' => 5, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference, then a braced one in a lookbehind' => ['pattern' => '/\1(?<=\g{1})/', 'offset' => 2, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'unbraced \g, then a braced one in a lookbehind' => ['pattern' => '/\g1(?<=\g{1})/', 'offset' => 3, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'forward reference, then one in a lookbehind' => ['pattern' => '/\g{+1}(?<=\1)/', 'offset' => 6, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'forward reference past a group, then one in a lookbehind' => ['pattern' => '/(a)\g{+1}(?<=\2)/', 'offset' => 9, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference to group 9, then one in a lookbehind' => ['pattern' => '/\9(?<=\9)/', 'offset' => 2, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference repeated no time, then one in a lookbehind' => ['pattern' => '/\1{0}(?<=\1)/', 'offset' => 2, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in a lookahead, then one in a lookbehind' => ['pattern' => '/(?=\1)(?<=\1)/', 'offset' => 5, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference in a DEFINE group, then one in a lookbehind' => ['pattern' => '/(?(DEFINE)\1)(?<=\1)/', 'offset' => 12, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference, then one in a branch of a lookbehind' => ['pattern' => '/\1(?<=a|\1)/', 'offset' => 2, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference, then one in a negative lookbehind' => ['pattern' => '/\1(?<!\1)/', 'offset' => 2, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference, then one in an alphabetic lookbehind' => ['pattern' => '/\1(*plb:\1)/', 'offset' => 2, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference, then one in a nested lookbehind' => ['pattern' => '/\1(?<=(?<=\1))/', 'offset' => 2, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'two references, then both in a lookbehind' => ['pattern' => '/\1\2(?<=\2\1)/', 'offset' => 4, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'reference to another group first' => ['pattern' => '/\1(?<=\2)/', 'offset' => 8, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'named reference first' => ['pattern' => '/\k<n>(?<=\k<n>)/', 'offset' => 12, 'code' => ErrorCode::BackrefMissingNamedGroup];
+        yield 'condition first' => ['pattern' => '/(?(1)a)(?<=\1)/', 'offset' => 13, 'code' => ErrorCode::BackrefMissingGroup];
+        yield 'call first' => ['pattern' => '/(?1)(?<=\1)/', 'offset' => 10, 'code' => ErrorCode::BackrefMissingGroup];
+    }
+
+    /**
+     * In a tree built by hand whose lookahead body counts positions from its
+     * own start, as a payload read apart does, a reference in a lookbehind
+     * there is still reported where the first one to its group stands
+     * (PHP 8.4.27, PCRE2 10.49: "/\\1(*pla:(?<=\\1))/" at offset 2).
+     */
+    #[Test]
+    public function test_a_missing_group_below_10_in_a_payload_read_apart_is_reported_at_its_first_reference(): void
+    {
+        $lookbehind = new GroupNode(new BackrefNode('\\1', 4, 6), GroupType::LookbehindPositive, null, null, 0, 7);
+        $lookahead = new GroupNode($lookbehind, GroupType::LookaheadPositive, null, null, 2, 16);
+        $tree = new RegexNode(new SequenceNode([new BackrefNode('\\1', 0, 2), $lookahead], 0, 16), '', '/', 0, 16, '\\1(*pla:(?<=\\1))');
+
+        try {
+            $tree->accept(new Validator(pattern: '/\\1(*pla:(?<=\\1))/', target: new PcreTarget(80400, '10.49')));
+            $this->fail('A reference to a missing group is refused.');
+        } catch (SemanticErrorException $error) {
+            $this->assertSame([ErrorCode::BackrefMissingGroup, 2], [$error->errorCode, $error->position]);
+        }
     }
 
     /**

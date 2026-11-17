@@ -248,6 +248,14 @@ final class Validator extends AbstractNodeVisitor
     private int $referenceAt = 0;
 
     /**
+     * Where the first back reference to each group numbered below 10 stands,
+     * by that number, in the pattern walked.
+     *
+     * @var array<int, int>
+     */
+    private array $firstReferences = [];
+
+    /**
      */
     private PcreTarget $target;
 
@@ -929,7 +937,8 @@ final class Validator extends AbstractNodeVisitor
             $this->engine,
         );
         $groups = GroupIndex::of($node->pattern);
-        $this->references = new ReferenceChecks($groups, $groups->numbering(), $this->target, \Closure::fromCallable([$this, 'keepMissingReference']), $this->pattern, $node->source, 0, $this->unicodeMode);
+        $this->firstReferences = [];
+        $this->references = new ReferenceChecks($groups, $groups->numbering(), $this->target, \Closure::fromCallable([$this, 'keepMissingReference']), $this->pattern, $node->source, 0, $this->unicodeMode, \Closure::fromCallable([$this, 'firstReference']));
         $this->verbs = VerbChecks::forPattern($this->target, $this->pattern, $node->source, $this->unicodeMode);
         $this->classes = new ClassChecks($this->target, $this->pattern, $node->source);
         $this->ranges = new RangeChecks($this->target, $this->pattern, $node->source, 0, $this->unicodeMode);
@@ -1193,6 +1202,16 @@ final class Validator extends AbstractNodeVisitor
         if (!isset($this->lateErrors[1])) {
             $this->keepFirstPassError($error, $this->referenceAt);
         }
+    }
+
+    /**
+     * Where the first back reference to $group stands, this one at
+     * $position if it is the first the walk meets: the walk meets them in
+     * the order PCRE reads them, before any lookbehind measured past them.
+     */
+    private function firstReference(int $group, int $position): int
+    {
+        return $this->firstReferences[$group] ??= $position;
     }
 
     /**

@@ -73,6 +73,10 @@ final class ReferenceChecks
      *                                                          pattern
      * @param bool                                   $utf       whether PCRE reads the pattern
      *                                                          as UTF-8
+     * @param (\Closure(int, int): int)|null         $first     given a group numbered below 10
+     *                                                          and where a reference to it is
+     *                                                          refused, where the first one to
+     *                                                          it stands, which PCRE reports
      */
     public function __construct(
         private readonly GroupIndex $groups,
@@ -83,6 +87,7 @@ final class ReferenceChecks
         private readonly ?string $source = null,
         private readonly int $offset = 0,
         private readonly bool $utf = false,
+        private readonly ?\Closure $first = null,
     ) {}
 
     /**
@@ -91,7 +96,7 @@ final class ReferenceChecks
      */
     public function reading(?string $source, int $offset): self
     {
-        return new self($this->groups, $this->numbering, $this->target, $this->missing, $this->pattern, $source, $offset, $this->utf);
+        return new self($this->groups, $this->numbering, $this->target, $this->missing, $this->pattern, $source, $offset, $this->utf, $this->first);
     }
 
     /**
@@ -124,6 +129,7 @@ final class ReferenceChecks
                     \sprintf('Backreference to non-existent group: \\%d.', $num),
                     $this->missingReferenceOffset($node),
                     ErrorCode::BackrefMissingGroup,
+                    group: $num,
                 );
             }
 
@@ -220,7 +226,7 @@ final class ReferenceChecks
 
             if (str_starts_with($numStr, '+') || str_starts_with($numStr, '-')) {
                 $offset = (int) $numStr;
-                $this->assertRelativeReferenceExists($offset, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Backreference', $node);
+                $this->assertRelativeReferenceExists($offset, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Backreference', $node, ($this->groups->nextNumberAt($node) ?? 1) - 1 + $offset);
 
                 return;
             }
@@ -231,6 +237,7 @@ final class ReferenceChecks
                     \sprintf('Backreference to non-existent group: \\g{%d}.', $num),
                     $this->missingReferenceOffset($node),
                     ErrorCode::BackrefMissingGroup,
+                    group: $num,
                 );
             }
 
@@ -702,7 +709,11 @@ final class ReferenceChecks
         }
     }
 
-    private function assertRelativeReferenceExists(int $offset, int $position, ErrorCode $code, string $context, BackrefNode|SubroutineNode|null $node = null): void
+    /**
+     * @param int|null $group the group a back reference counts to, which PCRE
+     *                        reports where the first reference to it stands
+     */
+    private function assertRelativeReferenceExists(int $offset, int $position, ErrorCode $code, string $context, BackrefNode|SubroutineNode|null $node = null, ?int $group = null): void
     {
         if (0 === $offset) {
             $this->raise(
@@ -723,6 +734,7 @@ final class ReferenceChecks
                 \sprintf('%s relative reference %d is outside the range of available capture groups.', $context, $offset),
                 $position,
                 $code,
+                group: $group,
             );
 
             return;
@@ -784,11 +796,20 @@ final class ReferenceChecks
 
     /**
      * A reference to a group the pattern does not have, which the validator
-     * raises when PCRE would.
+     * raises when PCRE would. PCRE keeps one offset for each group a back
+     * reference names by a number below 10, that of the first such
+     * reference, and reports there whichever reference to it fails.
+     *
+     * @param int|null $group the group a back reference names by number
      */
-    private function raiseMissingReference(string $message, int $position, ErrorCode $code, ?string $hint = null): void
+    private function raiseMissingReference(string $message, int $position, ErrorCode $code, ?string $hint = null, ?int $group = null): void
     {
-        ($this->missing)(new SemanticErrorException($message, $code, $position + $this->offset, $this->pattern, hint: $hint));
+        $position += $this->offset;
+        if (null !== $group && $group < 10 && null !== $this->first) {
+            $position = ($this->first)($group, $position);
+        }
+
+        ($this->missing)(new SemanticErrorException($message, $code, $position, $this->pattern, hint: $hint));
     }
 
     private function raise(string $message, int $position, ErrorCode $code, ?string $hint = null): never
