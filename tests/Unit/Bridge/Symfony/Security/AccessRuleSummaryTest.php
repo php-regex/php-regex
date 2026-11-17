@@ -59,6 +59,18 @@ final class AccessRuleSummaryTest extends TestCase
     }
 
     /**
+     * A port, a route and request attributes restrict the requests a rule
+     * takes as a host does: the scope names them.
+     */
+    #[Test]
+    public function test_the_scope_names_the_port_the_route_and_the_attributes(): void
+    {
+        $rule = self::rule(port: 8080, attributes: ['_format' => 'json', '_locale' => 'fr'], route: 'app_login');
+
+        $this->assertSame('#0 a.yaml:1  path=(any)  roles=any  scope=port=8080 • route=app_login • attributes=_format:json|_locale:fr', AccessRuleSummary::of($rule, 'a.yaml:1'));
+    }
+
+    /**
      * `host: ''` in access_control restricts nothing: no "scope=" with
      * nothing after it.
      */
@@ -88,18 +100,19 @@ final class AccessRuleSummaryTest extends TestCase
     }
 
     /**
-     * @param array<int, string> $roles
-     * @param array<int, string> $methods
-     * @param array<int, string> $ips
+     * @param array<int, string>    $roles
+     * @param array<int, string>    $methods
+     * @param array<int, string>    $ips
+     * @param array<string, string> $attributes
      *
      * @return AccessRule
      */
-    private static function rule(int $index = 0, ?string $path = null, array $roles = [], array $methods = [], ?string $host = null, array $ips = [], ?string $requiresChannel = null): array
+    private static function rule(int $index = 0, ?string $path = null, array $roles = [], array $methods = [], ?string $host = null, array $ips = [], ?string $requiresChannel = null, ?int $port = null, array $attributes = [], ?string $route = null): array
     {
         return [
             'index' => $index, 'file' => 'a.yaml', 'line' => 1, 'path' => $path, 'pattern' => '', 'roles' => $roles, 'methods' => $methods,
             'host' => $host, 'hostPattern' => null, 'hostUnsupported' => false, 'ips' => $ips, 'allowIf' => null,
-            'requiresChannel' => $requiresChannel, 'accessLevel' => 'roles', 'notes' => [],
+            'requiresChannel' => $requiresChannel, 'port' => $port, 'attributes' => $attributes, 'route' => $route, 'accessLevel' => 'roles', 'notes' => [],
         ];
     }
 }

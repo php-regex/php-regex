@@ -673,6 +673,12 @@ request that names no document, no position or no range is answered with
 nothing (`null`, or `[]` for code actions). The same method sent as a
 notification, without an `id`, is never answered.
 
+A pattern may hold bytes that are no UTF-8, as `"/^\xff\xd8\xff/"` does;
+the protocol speaks JSON, which holds UTF-8 only. The hover and the
+diagnostics spell such a byte `\xFF`, and a code action writes the pattern
+between double quotes with the same escape. The quick fix that adds `u` is
+not offered for such a pattern: PCRE refuses it under `u`.
+
 ### Server Capabilities
 
 ```json

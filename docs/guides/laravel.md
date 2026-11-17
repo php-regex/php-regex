@@ -388,10 +388,17 @@ A `regex:` or `not_regex:` validation rule is linted as Laravel's validator
 reads it. A rules string is split on every `|`, one inside the pattern
 included: `'code' => 'required|regex:/^(?:a|b)$/'` hands `/^(?:a` to
 `preg_match()`, and the lint reports it as invalid. Write such a rule as an
-array element, `['required', 'regex:/^(?:a|b)$/']`, which keeps its `|`. The
-pattern is linted as written, between any delimiter PHP takes: `{^a$}` is
-the pattern between braces, not `/{^a$}/`. The rule's name is read without
-case, as Laravel reads it, and `notregex:` is `not_regex:`.
+array element, `['required', 'regex:/^(?:a|b)$/']`, which keeps its `|`. A
+string given to a call is a rules string too: `$validator->sometimes('code',
+'regex:/^(a|b)$/', …)` and `Rule::when($condition, 'regex:/^(a|b)$/')` split
+it. The pattern is linted as written, between any delimiter PHP takes:
+`{^a$}` is the pattern between braces, not `/{^a$}/`, and a double-quoted
+literal as PHP decodes it: `"regex:/^[\u{0600}-\u{06FF}]+$/u"` holds the
+characters PHP decodes, not `\u`. The rule's name is read without case, as
+Laravel reads it, and `notregex:` is `not_regex:`. A name with blanks around
+it, `'required | regex:/^a$/'`, is still the regex rule, but Laravel then
+reads its parameter as comma-separated values and runs the first one:
+`' regex:/^a{1,2}$/'` runs `/^a{1`, and that is what is linted.
 
 A route constraint is judged as the router compiles it: stripped of a
 leading `^` or `\A` and a trailing `$` or `\z`, its groups made

@@ -21,7 +21,6 @@ use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
-use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Toolkit\Regex;
 
@@ -116,6 +115,11 @@ final class SecurityAccessControlAnalyzer
                 if (!$this->methodsOverlap($left['methods'], $right['methods'])) {
                     $pairsFilteredMethods++;
 
+                    continue;
+                }
+
+                // Two ports take no request in common.
+                if (null !== $left['port'] && null !== $right['port'] && $left['port'] !== $right['port']) {
                     continue;
                 }
 
@@ -283,11 +287,14 @@ final class SecurityAccessControlAnalyzer
             $notes[] = 'requires_channel is not evaluated.';
         }
 
-        // Only the parser's refusal of the delimited path is the path's
-        // fault; anything else is a bug and surfaces.
-        try {
-            $pathPattern = $this->normalizePattern($path);
-        } catch (ExceptionInterface) {
+        $route = $rule['route'] ?? null;
+        $attributes = $rule['attributes'] ?? [];
+        if (null !== $route || [] !== $attributes) {
+            $notes[] = 'Route and attribute restrictions are not evaluated.';
+        }
+
+        $pathPattern = $this->normalizePattern($path);
+        if (null === $pathPattern) {
             $skippedRules[] = [
                 'index' => $index,
                 'file' => $rule['file'],
@@ -302,9 +309,8 @@ final class SecurityAccessControlAnalyzer
         $hostUnsupported = false;
         $host = $rule['host'];
         if (null !== $host && '' !== trim($host, " \t\n\r\0\x0B")) {
-            try {
-                $hostPattern = $this->normalizePattern($host, true);
-            } catch (ExceptionInterface) {
+            $hostPattern = $this->normalizePattern($host, true);
+            if (null === $hostPattern) {
                 $hostUnsupported = true;
                 $rulesWithUnsupportedHosts[] = $index;
                 $notes[] = 'Host restrictions are not evaluated.';
@@ -329,6 +335,9 @@ final class SecurityAccessControlAnalyzer
             'ips' => $ips,
             'allowIf' => $rule['allowIf'],
             'requiresChannel' => $rule['requiresChannel'],
+            'port' => $rule['port'] ?? null,
+            'attributes' => $attributes,
+            'route' => $route,
             'accessLevel' => $this->resolveAccessLevel($roles, $rule['allowIf']),
             'notes' => $notes,
         ];
@@ -386,6 +395,8 @@ final class SecurityAccessControlAnalyzer
             && $left['hostPattern'] === $right['hostPattern']
             && $this->sameList($left['ips'], $right['ips'], true)
             && $left['requiresChannel'] === $right['requiresChannel']
+            && $left['port'] === $right['port']
+            && self::requestAttributes($left) === self::requestAttributes($right)
             && $left['allowIf'] === $right['allowIf'];
     }
 
@@ -448,13 +459,20 @@ final class SecurityAccessControlAnalyzer
     /**
      * The pattern Symfony matches the path, or the host, of a rule with,
      * read as a whole-subject match: a side left unanchored takes any text
-     * there, as a search does.
+     * there, as a search does. Null when PCRE refuses the pattern Symfony
+     * compiles, or the search built from it.
      */
-    private function normalizePattern(string $pattern, bool $host = false): string
+    private function normalizePattern(string $pattern, bool $host = false): ?string
     {
-        $regexPattern = DelimitedPattern::fromDelimited($this->patternNormalizer->normalize($pattern, $host));
+        $delimited = $this->patternNormalizer->normalize($pattern, $host);
+        if (!$this->regex->validate($delimited)->isValid) {
+            return null;
+        }
 
-        return (string) new DelimitedPattern($this->normalizeSearchPattern($regexPattern->pattern), $regexPattern->flags, $regexPattern->delimiter);
+        $regexPattern = DelimitedPattern::fromDelimited($delimited);
+        $search = (string) new DelimitedPattern($this->normalizeSearchPattern($regexPattern->pattern), $regexPattern->flags, $regexPattern->delimiter);
+
+        return $this->regex->validate($search)->isValid ? $search : null;
     }
 
     /**
@@ -464,12 +482,20 @@ final class SecurityAccessControlAnalyzer
      * branch it is written in, as in preg_match(). The options the pattern
      * opens with, "(*UTF)" or "(*LIMIT_MATCH=1000)", stay first: PCRE reads
      * them there only.
+     *
+     * The pattern was written to end where Symfony's delimiter does, so the
+     * group is closed whatever state its end leaves PCRE in: "\E" ends a
+     * "\Q" left open, and the newline ends a comment the x flag opened with
+     * "#". Out of such a comment, the newline lies in the comment "(?#" opens
+     * and "(?#)" closes; in one, it ends it, and "(?#)" is a comment of its
+     * own. Either way the group closes on the last ")", and the pattern
+     * matches what it matched alone.
      */
     private function normalizeSearchPattern(string $pattern): string
     {
         $options = StartOptions::of($pattern);
 
-        return $options.'.*(?:'.substr($pattern, \strlen($options)).').*';
+        return $options.'.*(?:'.substr($pattern, \strlen($options))."\\E(?#\n(?#)).*";
     }
 
     /**
@@ -507,10 +533,12 @@ final class SecurityAccessControlAnalyzer
 
     /**
      * Whether every request the inner rule takes, the outer rule takes too,
-     * but for the path: no method, host or address of its own, or one that
-     * holds the inner rule's. Addresses are compared as written. A host
-     * the parser or the solver cannot read leaves the paths to decide, as
-     * it does when the hosts are intersected.
+     * but for the path: no method, host, address, port or request attribute
+     * of its own, or one that holds the inner rule's. Addresses and
+     * attributes are compared as written: an attribute of the outer rule
+     * the inner one does not require the same way may refuse some of its
+     * requests. A host the parser or the solver cannot read leaves the
+     * paths to decide, as it does when the hosts are intersected.
      *
      * @phpstan-param AccessRule $outer
      * @phpstan-param AccessRule $inner
@@ -523,6 +551,17 @@ final class SecurityAccessControlAnalyzer
 
         if ([] !== $outer['ips'] && !$this->listHolds($outer['ips'], $inner['ips'])) {
             return false;
+        }
+
+        if (null !== $outer['port'] && $outer['port'] !== $inner['port']) {
+            return false;
+        }
+
+        $required = self::requestAttributes($inner);
+        foreach (self::requestAttributes($outer) as $name => $pattern) {
+            if (($required[$name] ?? null) !== $pattern) {
+                return false;
+            }
         }
 
         if ($outer['hostUnsupported'] || $inner['hostUnsupported'] || null === $outer['hostPattern']) {
@@ -538,6 +577,22 @@ final class SecurityAccessControlAnalyzer
         } catch (ComplexityException) {
             return true;
         }
+    }
+
+    /**
+     * The attributes a rule's request matcher requires, its route as
+     * "_route", as the security bundle builds the matcher, by name.
+     *
+     * @phpstan-param AccessRule $rule
+     *
+     * @return array<string, string>
+     */
+    private static function requestAttributes(array $rule): array
+    {
+        $attributes = null === $rule['route'] ? $rule['attributes'] : ['_route' => $rule['route']] + $rule['attributes'];
+        ksort($attributes);
+
+        return $attributes;
     }
 
     /**

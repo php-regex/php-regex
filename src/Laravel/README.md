@@ -35,7 +35,8 @@ Features
   anchored and flagged as the router matches it
 * A `regex:` or `not_regex:` validation rule is read as Laravel reads it: a rules string is split on every `|`, one
   inside the pattern included, so `'code' => 'required|regex:/^(?:a|b)$/'` is linted as the `/^(?:a` Laravel runs (write
-  such a rule as an array element); the pattern is linted as written, `{^a$}` between its braces
+  such a rule as an array element), a string given to a call such as `Rule::when()` or `$validator->sometimes()` is split
+  too, and the pattern is linted as written, `{^a$}` between its braces, a double-quoted literal as PHP decodes it
 * In PHP files, `regex:lint` reads the calls `regex lint` reads: `preg_*`, `RegexIterator`, `filter_var()`, Laravel's `Str::match()` and the other wrapper libraries, PHPUnit's regex assertions, and a pattern held in a constant, a variable or a property of the same file
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
 * `regex:lint` judges patterns for the PHP your `composer.json` supports, not for the one running it

@@ -17,6 +17,7 @@ use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -190,6 +191,65 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
         $this->assertSame(2, $report->stats['rules']);
     }
 
+    /**
+     * PathRequestMatcher compiles the path alone, '{'.$path.'}s': a path
+     * PCRE refuses there takes no request, whatever the search the
+     * analysis builds from it would read, and its rule is left out.
+     */
+    #[Test]
+    #[DataProvider('provideInvalidPaths')]
+    public function test_a_path_pcre_refuses_skips_its_rule(string $path): void
+    {
+        $this->assertFalse(@preg_match('{'.$path.'}s', ''));
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: $path, roles: ['PUBLIC_ACCESS']),
+            self::rule(path: '^/admin', line: 4),
+        ], true);
+
+        $this->assertSame([['index' => 1, 'file' => 'security.yaml', 'line' => 3, 'reason' => 'Invalid path regex.']], $report->skippedRules);
+        $this->assertSame([], $report->conflicts);
+    }
+
+    /**
+     * @return iterable<string, array{path: string}>
+     */
+    public static function provideInvalidPaths(): iterable
+    {
+        yield 'a group left open' => ['path' => '^/(admin'];
+        yield 'a comment left open' => ['path' => '^/admin(?#oops'];
+        yield 'an unbounded lookbehind' => ['path' => '^/admin(?<=a+)'];
+        yield 'a reference to no group' => ['path' => '^/admin\\2(a)'];
+        yield 'a class left open' => ['path' => '^/admin[a'];
+    }
+
+    /**
+     * HostRequestMatcher compiles the host alone, '{'.$host.'}i': a host
+     * PCRE refuses there leaves the paths to decide.
+     */
+    #[Test]
+    #[DataProvider('provideInvalidHosts')]
+    public function test_a_host_pcre_refuses_is_not_evaluated(string $host): void
+    {
+        $this->assertFalse(@preg_match('{'.$host.'}i', ''));
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin', host: $host),
+        ]);
+
+        $this->assertSame([], $report->skippedRules);
+        $this->assertSame([1], $report->rulesWithUnsupportedHosts);
+    }
+
+    /**
+     * @return iterable<string, array{host: string}>
+     */
+    public static function provideInvalidHosts(): iterable
+    {
+        yield 'a group left open' => ['host' => '^(admin\\.example\\.com$'];
+        yield 'an unbounded lookbehind' => ['host' => '(?<=a+)\\.example\\.com$'];
+    }
+
     #[Test]
     public function test_a_host_the_parser_refuses_is_not_evaluated(): void
     {
@@ -256,6 +316,43 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
         $this->assertSame(3, $report->stats['path_intersections']);
         $this->assertSame(1, $report->stats['path_subsets']);
         $this->assertSame(['^/admin', '^/admin/users'], [$report->conflicts[0]['rule']['path'], $report->conflicts[0]['conflict']['path']]);
+    }
+
+    /**
+     * A route and request attributes are compared as written, as addresses
+     * are: the finding says so, and an earlier rule for one route is no
+     * critical shadow of a later rule for every route.
+     */
+    #[Test]
+    public function test_a_rule_for_a_route_notes_its_restriction_and_shadows_no_wider_rule(): void
+    {
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            ['route' => 'app_login', 'attributes' => ['_format' => 'html']] + self::rule(path: null, roles: ['PUBLIC_ACCESS']),
+            self::rule(path: '^/admin', line: 4),
+        ], true);
+
+        $this->assertSame(0, $report->stats['shadowed']);
+        $this->assertSame(0, $report->stats['critical']);
+        $this->assertSame('overlap', $report->conflicts[0]['type']);
+        $this->assertSame('app_login', $report->conflicts[0]['rule']['route']);
+        $this->assertSame(['_format' => 'html'], $report->conflicts[0]['rule']['attributes']);
+        $this->assertContains('Route and attribute restrictions are not evaluated.', $report->conflicts[0]['notes']);
+    }
+
+    /**
+     * The attributes are a map: written in another order, or with the
+     * route as its "_route" attribute, they require the same requests.
+     */
+    #[Test]
+    public function test_a_rule_requiring_the_same_attributes_in_another_order_is_redundant(): void
+    {
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            ['route' => 'api_orders', 'attributes' => ['_format' => 'json', '_locale' => 'fr']] + self::rule(path: '^/api'),
+            ['attributes' => ['_locale' => 'fr', '_route' => 'api_orders', '_format' => 'json']] + self::rule(path: '^/api', line: 4),
+        ]);
+
+        $this->assertSame(1, $report->stats['shadowed']);
+        $this->assertSame(1, $report->stats['redundant']);
     }
 
     /**

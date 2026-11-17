@@ -24,6 +24,10 @@ CHANGELOG
    (`php_target` for `regex_transpile`, whose `target` is the dialect), and
    `range`, the verdict of each version on the pattern. The output schemas
    declare both.
+ * Each tool's output schema is an object at its root (`"type": "object"`
+   beside the `oneOf` of the success document and the error envelope), as
+   the protocol's tool schema requires: a client that checks it, as the
+   TypeScript SDK's `listTools()` does, refused the whole list of tools.
  * Over a range, the text answer says what the later versions find in a
    pattern the lowest accepts, in the words of `regex lint`: an `Error:`
    line for the lowest version that refuses it, else a `Warning:` line for

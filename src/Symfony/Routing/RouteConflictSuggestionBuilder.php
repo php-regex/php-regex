@@ -40,15 +40,37 @@ final class RouteConflictSuggestionBuilder
         foreach ($conflicts as $conflict) {
             $route = $conflict['route'];
             $other = $conflict['conflict'];
+            $shadowed = 'shadowed' === $conflict['type'];
 
-            $moveSuggestion = \sprintf(
-                'Reorder routes: move "%s" before "%s".',
-                $other['name'],
-                $route['name'],
-            );
-            $suggestions[$moveSuggestion] = true;
+            // Whichever of two routes differing by a trailing slash comes
+            // first takes the GET requests of the other: the order cannot
+            // serve both.
+            if ($conflict['redirected']) {
+                $suggestions[\sprintf(
+                    'Give "%s" and "%s" paths that differ by more than a trailing slash: the GET and HEAD requests of "%s" are redirected to "%s".',
+                    $route['name'],
+                    $other['name'],
+                    $other['name'],
+                    $route['name'],
+                )] = true;
 
-            if (($conflict['equivalent'] ?? false) === true) {
+                continue;
+            }
+
+            // An overlap whose later route, moved first, would take every
+            // request of the earlier one is the order that serves both: a
+            // route for HEAD only before a route for GET.
+            if ($shadowed || !$conflict['laterTakesEarlier']) {
+                $suggestions[\sprintf(
+                    'Reorder routes: move "%s" before "%s".',
+                    $other['name'],
+                    $route['name'],
+                )] = true;
+            }
+
+            // Two routes on the same paths that each keep some requests
+            // are no duplicates.
+            if ($shadowed && $conflict['equivalent']) {
                 $suggestions[\sprintf(
                     'Merge duplicate routes: "%s" and "%s" match the same paths.',
                     $route['name'],

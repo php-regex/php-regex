@@ -56,6 +56,9 @@ final class StdioServerTest extends TestCase
             $this->assertSame(['title' => $tool['title'], 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false], $tool['annotations']);
             $this->assertArrayHasKey('inputSchema', $tool);
             $this->assertArrayHasKey('outputSchema', $tool);
+            // The protocol's Tool schema requires both roots to be objects.
+            $this->assertSame('object', JsonContract::asArray($tool['inputSchema'])['type'] ?? null);
+            $this->assertSame('object', JsonContract::asArray($tool['outputSchema'])['type'] ?? null);
         }
         $this->assertSame(['regex_validate', 'regex_explain', 'regex_format', 'regex_transpile', 'regex_redos'], $names);
     }

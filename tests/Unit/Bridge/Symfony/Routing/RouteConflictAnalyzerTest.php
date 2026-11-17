@@ -19,9 +19,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\CompiledRoute;
+use Symfony\Component\Routing\Exception\ExceptionInterface as RoutingException;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Matcher\CompiledUrlMatcher;
 use Symfony\Component\Routing\Matcher\Dumper\CompiledUrlMatcherDumper;
+use Symfony\Component\Routing\Matcher\RedirectableUrlMatcherInterface;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\Route;
@@ -407,6 +409,25 @@ final class RouteConflictAnalyzerTest extends TestCase
         $this->assertStringStartsWith('Route regex normalization failed: ', $report->skippedRoutes[0]['reason']);
     }
 
+    /**
+     * The regex the matchers try on a GET request swaps the "$" of the
+     * route's regex for "/?$": a regex of the application's own without a
+     * "$" is compared as given, with no redirect.
+     */
+    #[Test]
+    public function test_a_compiled_regex_without_an_end_anchor_is_compared_as_given(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('odd', new CompiledAsRoute('/x', new CompiledRoute('/x', '{^/x}sD', [], [])));
+        $collection->add('fine', new Route('/x/'));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame([], $report->skippedRoutes);
+        $this->assertSame([], $report->conflicts);
+        $this->assertSame(1, $report->stats['path_intersections']);
+    }
+
     #[Test]
     public function test_a_host_regex_the_parser_refuses_leaves_the_host_unchecked(): void
     {
@@ -476,7 +497,9 @@ final class RouteConflictAnalyzerTest extends TestCase
 
     /**
      * A conflict is scoped to the methods and the schemes both routes
-     * take; a route that names none takes the other's.
+     * take; a route that names none takes the other's. The later route is
+     * shadowed when the earlier one takes all its methods and schemes too,
+     * an overlap when it keeps some.
      *
      * @param array{0: list<string>, 1: list<string>} $earlier
      * @param array{0: list<string>, 1: list<string>} $later
@@ -485,7 +508,7 @@ final class RouteConflictAnalyzerTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideConflictScopes')]
-    public function test_a_conflict_is_scoped_to_what_both_routes_take(array $earlier, array $later, array $methods, array $schemes): void
+    public function test_a_conflict_is_scoped_to_what_both_routes_take(array $earlier, array $later, array $methods, array $schemes, string $type): void
     {
         $collection = new RouteCollection();
         $collection->add('user_show', (new Route('/users/{id}'))->setMethods($earlier[0])->setSchemes($earlier[1]));
@@ -497,13 +520,13 @@ final class RouteConflictAnalyzerTest extends TestCase
         $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
 
         $this->assertCount(1, $report->conflicts);
-        $this->assertSame('shadowed', $report->conflicts[0]['type']);
+        $this->assertSame($type, $report->conflicts[0]['type']);
         $this->assertSame($methods, $report->conflicts[0]['methods']);
         $this->assertSame($schemes, $report->conflicts[0]['schemes']);
     }
 
     /**
-     * @return iterable<string, array{earlier: array{0: list<string>, 1: list<string>}, later: array{0: list<string>, 1: list<string>}, methods: list<string>, schemes: list<string>}>
+     * @return iterable<string, array{earlier: array{0: list<string>, 1: list<string>}, later: array{0: list<string>, 1: list<string>}, methods: list<string>, schemes: list<string>, type: string}>
      */
     public static function provideConflictScopes(): iterable
     {
@@ -512,24 +535,30 @@ final class RouteConflictAnalyzerTest extends TestCase
             'later' => [[], []],
             'methods' => [],
             'schemes' => [],
+            'type' => 'shadowed',
         ];
+        // PUT /users/list goes to the later route.
         yield 'both name some, the scope is what they share' => [
             'earlier' => [['GET', 'post'], ['HTTPS', 'http']],
             'later' => [['get', 'PUT'], ['https']],
             'methods' => ['GET'],
             'schemes' => ['https'],
+            'type' => 'overlap',
         ];
         yield 'only the later route names some' => [
             'earlier' => [[], []],
             'later' => [['PUT'], ['https']],
             'methods' => ['PUT'],
             'schemes' => ['https'],
+            'type' => 'shadowed',
         ];
+        // GET /users/list goes to the later route.
         yield 'only the earlier route names some' => [
             'earlier' => [['PUT'], ['https']],
             'later' => [[], []],
             'methods' => ['PUT'],
             'schemes' => ['https'],
+            'type' => 'overlap',
         ];
     }
 
@@ -604,14 +633,15 @@ final class RouteConflictAnalyzerTest extends TestCase
      * requests of both. The compiled matcher, which the framework runs, does
      * so on every release; the UrlMatcher sends none to a route for HEAD
      * only before symfony/routing 7.4.22 and 8.1.10, which read the HEAD
-     * request as GET alone.
+     * request as GET alone. A route for GET behind a route for HEAD only
+     * keeps its GET requests: an overlap, not a shadow.
      *
      * @param list<string> $earlier
      * @param list<string> $later
      */
     #[Test]
     #[DataProvider('provideHeadRoutes')]
-    public function test_a_route_for_get_takes_the_head_requests(array $earlier, array $later): void
+    public function test_a_route_for_get_takes_the_head_requests(array $earlier, array $later, string $type): void
     {
         $collection = new RouteCollection();
         $collection->add('earlier', (new Route('/x'))->setMethods($earlier));
@@ -624,19 +654,231 @@ final class RouteConflictAnalyzerTest extends TestCase
         $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
 
         $this->assertCount(1, $report->conflicts);
-        $this->assertSame('shadowed', $report->conflicts[0]['type']);
+        $this->assertSame($type, $report->conflicts[0]['type']);
         $this->assertSame(['HEAD'], $report->conflicts[0]['methods']);
         $this->assertSame(0, $report->stats['pairs_filtered_methods']);
     }
 
     /**
-     * @return iterable<string, array{earlier: list<string>, later: list<string>}>
+     * @return iterable<string, array{earlier: list<string>, later: list<string>, type: string}>
      */
     public static function provideHeadRoutes(): iterable
     {
-        yield 'a route for HEAD only behind a route for GET' => ['earlier' => ['GET'], 'later' => ['HEAD']];
-        yield 'a route for GET behind a route for HEAD only' => ['earlier' => ['HEAD'], 'later' => ['GET']];
-        yield 'a route for HEAD only behind a route for GET and POST' => ['earlier' => ['post', 'get'], 'later' => ['head']];
+        yield 'a route for HEAD only behind a route for GET' => ['earlier' => ['GET'], 'later' => ['HEAD'], 'type' => 'shadowed'];
+        yield 'a route for GET behind a route for HEAD only' => ['earlier' => ['HEAD'], 'later' => ['GET'], 'type' => 'overlap'];
+        yield 'a route for HEAD only behind a route for GET and POST' => ['earlier' => ['post', 'get'], 'later' => ['head'], 'type' => 'shadowed'];
+    }
+
+    /**
+     * Of two routes on the same paths, the later one is shadowed only when
+     * the earlier one takes every request of it: its methods (a route for
+     * GET takes HEAD), its schemes and its host. Otherwise the later route
+     * keeps some requests, as the compiled matcher shows, and the pair is
+     * an overlap.
+     *
+     * @param array{methods?: list<string>, schemes?: list<string>, host?: string} $earlier
+     * @param array{methods?: list<string>, schemes?: list<string>, host?: string} $later
+     * @param list<array{0: string, 1: string, 2: string, 3: string}>              $probes  method, scheme, host, and the route the matcher picks for "/x"
+     */
+    #[Test]
+    #[DataProvider('provideRequestScopes')]
+    public function test_a_route_is_shadowed_only_when_an_earlier_one_takes_every_request_of_it(array $earlier, array $later, array $probes, string $type): void
+    {
+        $collection = new RouteCollection();
+        foreach (['earlier' => $earlier, 'later' => $later] as $name => $scope) {
+            $route = (new Route('/x'))->setMethods($scope['methods'] ?? [])->setSchemes($scope['schemes'] ?? []);
+            if (isset($scope['host'])) {
+                $route->setHost($scope['host']);
+            }
+            $collection->add($name, $route);
+        }
+
+        $compiled = (new CompiledUrlMatcherDumper($collection))->getCompiledRoutes();
+        foreach ($probes as [$method, $scheme, $host, $winner]) {
+            $context = new RequestContext(method: $method, host: $host, scheme: $scheme);
+            $this->assertSame($winner, (new CompiledUrlMatcher($compiled, $context))->match('/x')['_route'], $method.' '.$scheme.'://'.$host);
+        }
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame([[$type, 'earlier', 'later']], array_map(
+            static fn (array $conflict): array => [$conflict['type'], $conflict['route']['name'], $conflict['conflict']['name']],
+            $report->conflicts,
+        ));
+        $this->assertSame('shadowed' === $type ? 1 : 0, $report->stats['shadowed']);
+        $this->assertSame('overlap' === $type ? 1 : 0, $report->stats['overlaps']);
+    }
+
+    /**
+     * @return iterable<string, array{earlier: array{methods?: list<string>, schemes?: list<string>, host?: string}, later: array{methods?: list<string>, schemes?: list<string>, host?: string}, probes: list<array{0: string, 1: string, 2: string, 3: string}>, type: string}>
+     */
+    public static function provideRequestScopes(): iterable
+    {
+        yield 'a route for HEAD only before a route for GET' => [
+            'earlier' => ['methods' => ['HEAD']],
+            'later' => ['methods' => ['GET']],
+            'probes' => [['HEAD', 'http', 'localhost', 'earlier'], ['GET', 'http', 'localhost', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a route for GET before a route for GET and POST' => [
+            'earlier' => ['methods' => ['GET']],
+            'later' => ['methods' => ['GET', 'POST']],
+            'probes' => [['GET', 'http', 'localhost', 'earlier'], ['POST', 'http', 'localhost', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a route for GET and POST before a route for GET' => [
+            'earlier' => ['methods' => ['GET', 'POST']],
+            'later' => ['methods' => ['GET']],
+            'probes' => [['GET', 'http', 'localhost', 'earlier'], ['HEAD', 'http', 'localhost', 'earlier']],
+            'type' => 'shadowed',
+        ];
+        yield 'a route for https only before a route for any scheme' => [
+            'earlier' => ['schemes' => ['https']],
+            'later' => [],
+            'probes' => [['GET', 'https', 'localhost', 'earlier'], ['GET', 'http', 'localhost', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a route for any scheme before a route for https only' => [
+            'earlier' => [],
+            'later' => ['schemes' => ['https']],
+            'probes' => [['GET', 'https', 'localhost', 'earlier']],
+            'type' => 'shadowed',
+        ];
+        yield 'a route for a host before a route for any host' => [
+            'earlier' => ['host' => 'admin.example.com'],
+            'later' => [],
+            'probes' => [['GET', 'http', 'admin.example.com', 'earlier'], ['GET', 'http', 'shop.example.com', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a route for a host before a route for a host it holds' => [
+            'earlier' => ['host' => '{sub}.example.com'],
+            'later' => ['host' => 'admin.example.com'],
+            'probes' => [['GET', 'http', 'admin.example.com', 'earlier']],
+            'type' => 'shadowed',
+        ];
+        yield 'a route for a host before a route for a wider host' => [
+            'earlier' => ['host' => 'admin.example.com'],
+            'later' => ['host' => '{sub}.example.com'],
+            'probes' => [['GET', 'http', 'admin.example.com', 'earlier'], ['GET', 'http', 'shop.example.com', 'later']],
+            'type' => 'overlap',
+        ];
+    }
+
+    /**
+     * The framework's matcher redirects a GET or HEAD request whose path
+     * differs from a route's by a trailing slash alone to that route's
+     * path, and tries no later route: for those requests, the earlier
+     * route takes the paths of the later one. A later route that takes
+     * only GET and HEAD requests is then shadowed; one that takes others
+     * keeps them, an overlap. An earlier route that takes no GET request
+     * redirects none.
+     *
+     * @param array{0: string, 1: list<string>}                 $earlier
+     * @param array{0: string, 1: list<string>}                 $later
+     * @param list<array{0: string, 1: string, 2: string|null}> $probes  method, path, and the route the request reaches, redirected or not
+     */
+    #[Test]
+    #[DataProvider('provideTrailingSlashPairs')]
+    public function test_a_get_request_redirected_for_its_trailing_slash_goes_to_the_earlier_route(array $earlier, array $later, array $probes, ?string $type): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route($earlier[0]))->setMethods($earlier[1]));
+        $collection->add('later', (new Route($later[0]))->setMethods($later[1]));
+
+        $compiled = (new CompiledUrlMatcherDumper($collection))->getCompiledRoutes();
+        foreach ($probes as [$method, $path, $winner]) {
+            $this->assertSame($winner, self::reached($compiled, $method, $path), $method.' '.$path);
+        }
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame(null === $type ? [] : [[$type, 'earlier', 'later']], array_map(
+            static fn (array $conflict): array => [$conflict['type'], $conflict['route']['name'], $conflict['conflict']['name']],
+            $report->conflicts,
+        ));
+        if (null !== $type) {
+            $this->assertContains('GET and HEAD requests differing by a trailing slash are redirected to the earlier route.', $report->conflicts[0]['notes']);
+            $this->assertIsString($report->conflicts[0]['example']);
+            $this->assertSame('earlier', self::reached($compiled, 'GET', $report->conflicts[0]['example']));
+        }
+    }
+
+    /**
+     * An overlap through the redirect is counted and left out of the list
+     * as any other, a shadow listed.
+     */
+    #[Test]
+    public function test_a_trailing_slash_overlap_left_out_of_the_list_is_still_counted(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('slash', new Route('/foo/'));
+        $collection->add('no_slash', new Route('/foo'));
+        $collection->add('slash_for_get', (new Route('/bar/'))->setMethods(['GET']));
+        $collection->add('no_slash_for_get', (new Route('/bar'))->setMethods(['GET']));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, false);
+
+        $this->assertSame(1, $report->stats['overlaps']);
+        $this->assertSame(1, $report->stats['shadowed']);
+        $this->assertSame([['shadowed', 'slash_for_get', 'no_slash_for_get']], array_map(
+            static fn (array $conflict): array => [$conflict['type'], $conflict['route']['name'], $conflict['conflict']['name']],
+            $report->conflicts,
+        ));
+    }
+
+    /**
+     * @return iterable<string, array{earlier: array{0: string, 1: list<string>}, later: array{0: string, 1: list<string>}, probes: list<array{0: string, 1: string, 2: string|null}>, type: string|null}>
+     */
+    public static function provideTrailingSlashPairs(): iterable
+    {
+        yield 'a route with a trailing slash before the same route without' => [
+            'earlier' => ['/foo/', []],
+            'later' => ['/foo', []],
+            'probes' => [['GET', '/foo', 'earlier'], ['HEAD', '/foo', 'earlier'], ['POST', '/foo', 'later'], ['GET', '/foo/', 'earlier']],
+            'type' => 'overlap',
+        ];
+        yield 'a route with a trailing slash before the same route without, for GET only' => [
+            'earlier' => ['/foo/', []],
+            'later' => ['/foo', ['GET']],
+            'probes' => [['GET', '/foo', 'earlier'], ['HEAD', '/foo', 'earlier']],
+            'type' => 'shadowed',
+        ];
+        yield 'a route without a trailing slash before the same route with one' => [
+            'earlier' => ['/foo', []],
+            'later' => ['/foo/', []],
+            'probes' => [['GET', '/foo/', 'earlier'], ['POST', '/foo/', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a placeholder route with a trailing slash before one without, for GET and HEAD' => [
+            'earlier' => ['/a/{x}/', []],
+            'later' => ['/a/{x}', ['GET', 'HEAD']],
+            'probes' => [['GET', '/a/b', 'earlier'], ['HEAD', '/a/b', 'earlier']],
+            'type' => 'shadowed',
+        ];
+        yield 'a route for GET before the same route without its slash, for HEAD only' => [
+            'earlier' => ['/foo/', ['GET']],
+            'later' => ['/foo', ['HEAD']],
+            'probes' => [['HEAD', '/foo', 'earlier']],
+            'type' => 'shadowed',
+        ];
+        yield 'an earlier route for POST only redirects nothing' => [
+            'earlier' => ['/foo/', ['POST']],
+            'later' => ['/foo', []],
+            'probes' => [['GET', '/foo', 'later'], ['POST', '/foo/', 'earlier']],
+            'type' => null,
+        ];
+        yield 'a later route for POST only is never redirected' => [
+            'earlier' => ['/foo/', []],
+            'later' => ['/foo', ['POST']],
+            'probes' => [['POST', '/foo', 'later'], ['GET', '/foo', 'earlier']],
+            'type' => null,
+        ];
+        yield 'paths that differ by more than a trailing slash' => [
+            'earlier' => ['/foo/', []],
+            'later' => ['/foobar', []],
+            'probes' => [['GET', '/foobar', 'later'], ['GET', '/foo', 'earlier']],
+            'type' => null,
+        ];
     }
 
     /**
@@ -869,6 +1111,34 @@ final class RouteConflictAnalyzerTest extends TestCase
     {
         yield 'spelled in capitals, with blanks around' => ['minimizer' => " MOORE\t", 'determinizer' => ' SUBSET '];
         yield 'names the solver does not know' => ['minimizer' => 'bogus', 'determinizer' => 'bogus'];
+    }
+
+    /**
+     * The route a request reaches through the framework's matcher, which
+     * redirects: the route of the redirect when it redirects, null when no
+     * route takes the request.
+     *
+     * @param array<mixed> $compiled
+     */
+    private static function reached(array $compiled, string $method, string $path): ?string
+    {
+        $matcher = new class($compiled, new RequestContext(method: $method)) extends CompiledUrlMatcher implements RedirectableUrlMatcherInterface {
+            /**
+             * @return array{_route: string}
+             */
+            public function redirect(string $path, string $route, ?string $scheme = null): array
+            {
+                return ['_route' => $route];
+            }
+        };
+
+        try {
+            $route = $matcher->match($path)['_route'] ?? null;
+        } catch (RoutingException) {
+            return null;
+        }
+
+        return \is_string($route) ? $route : null;
     }
 
     private static function urlMatcherSendsHeadToARouteForHeadOnly(): bool

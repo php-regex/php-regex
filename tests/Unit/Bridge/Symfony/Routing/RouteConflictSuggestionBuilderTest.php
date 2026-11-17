@@ -127,6 +127,91 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
     }
 
     /**
+     * An earlier route that takes only some requests of a later route on
+     * the same paths, a route for HEAD only before a route for GET, is the
+     * order that serves both: moving the later route first would take
+     * every request of the earlier one, and merging them would drop one.
+     * Neither is suggested.
+     *
+     * @param list<string> $earlier
+     * @param list<string> $later
+     */
+    #[Test]
+    #[DataProvider('provideOrdersServingBoth')]
+    public function test_an_overlap_the_reorder_would_shadow_gets_no_reorder_and_no_merge(array $earlier, array $later): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('first', (new Route('/foo'))->setMethods($earlier));
+        $collection->add('second', (new Route('/foo'))->setMethods($later));
+
+        $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
+        $this->assertSame(['overlap'], array_column($conflicts, 'type'));
+
+        $this->assertSame([], (new RouteConflictSuggestionBuilder())->collect($conflicts));
+    }
+
+    /**
+     * @return iterable<string, array{earlier: list<string>, later: list<string>}>
+     */
+    public static function provideOrdersServingBoth(): iterable
+    {
+        yield 'a route for HEAD only before a route for GET' => ['earlier' => ['HEAD'], 'later' => ['GET']];
+        yield 'a route for GET before a route for GET and POST' => ['earlier' => ['GET'], 'later' => ['GET', 'POST']];
+    }
+
+    /**
+     * Two routes whose paths differ by a trailing slash alone: whichever
+     * comes first takes the GET and HEAD requests of the other, redirected,
+     * so moving the later one first only turns the redirect round. The
+     * paths are what to change.
+     *
+     * @param list<string> $methods
+     */
+    #[Test]
+    #[DataProvider('provideTrailingSlashConflicts')]
+    public function test_a_trailing_slash_redirect_gets_no_reorder_but_distinct_paths(string $earlier, string $later, array $methods): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('first', new Route($earlier));
+        $collection->add('second', (new Route($later))->setMethods($methods));
+
+        $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
+        $this->assertCount(1, $conflicts);
+
+        $this->assertSame(
+            ['Give "first" and "second" paths that differ by more than a trailing slash: the GET and HEAD requests of "second" are redirected to "first".'],
+            (new RouteConflictSuggestionBuilder())->collect($conflicts),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{earlier: string, later: string, methods: list<string>}>
+     */
+    public static function provideTrailingSlashConflicts(): iterable
+    {
+        yield 'an overlap' => ['earlier' => '/foo/', 'later' => '/foo', 'methods' => []];
+        yield 'a shadow' => ['earlier' => '/foo', 'later' => '/foo/', 'methods' => ['GET']];
+    }
+
+    /**
+     * An overlap whose later route takes requests of its own and leaves
+     * the earlier one some: moving the later route first still serves
+     * both, and the reorder stays.
+     */
+    #[Test]
+    public function test_an_overlap_the_reorder_would_not_shadow_keeps_the_reorder(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('first', (new Route('/foo'))->setMethods(['GET', 'PUT']));
+        $collection->add('second', (new Route('/foo'))->setMethods(['GET', 'POST']));
+
+        $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
+        $this->assertSame(['overlap'], array_column($conflicts, 'type'));
+
+        $this->assertSame(['Reorder routes: move "second" before "first".'], (new RouteConflictSuggestionBuilder())->collect($conflicts));
+    }
+
+    /**
      * No requirement is suggested where the later route has no static
      * segment, nor where the placeholder took a value none of its static
      * segments holds.

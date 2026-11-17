@@ -343,7 +343,11 @@ Each one is read as the pattern Symfony runs:
 - A security `path` (in `access_control` or as a firewall `pattern`) is
   matched with `{...}s`, and a `host` with `{...}i`, without anchors:
   `path: /api` matches `/v1/api` too. The options a path opens with,
-  `(*UTF)` or `(*LIMIT_MATCH=1000)`, are read there, as PCRE reads them.
+  `(*UTF)` or `(*LIMIT_MATCH=1000)`, are read there, as PCRE reads them,
+  and a path ending on a comment of the `x` flag or on a `\Q` left open
+  means what it means alone: `(?x)^/admin  # back office` takes every path
+  under `/admin`. The rule of an `access_control` path PCRE refuses,
+  `^/(admin`, is left out of the comparison and reported as skipped.
   A path under `(*UTF)` and one without it are compared on the request
   paths that are valid UTF-8, a character at a time for the one and a byte
   at a time for the other: `(*UTF)^/admin/users` before `^/admin` is a
@@ -509,11 +513,14 @@ it `/a\x{2028}/u`. A value cannot open a line of its own or style the
 report; the JSON report keeps each value as found.
 
 `regex:routes` reads the routes in the order they are declared, as the router
-matches them: the first route that matches a path wins it. A route is
-**shadowed** when an earlier route takes every path it matches, so it can
-never be reached. Two routes that share some paths but not all are an
+matches them: the first route that matches a request wins it. A route is
+**shadowed** when an earlier route takes every request it takes, every path
+it matches, its methods, its schemes and its host included, so it can never
+be reached. Two routes that share some requests but not all are an
 **overlap**, listed with `--show-overlaps`: `/blog/{slug}` (`[a-z]+`) declared
-before `/blog/{id}` (`\d+|new`) takes `/blog/new`. A narrower route declared
+before `/blog/{id}` (`\d+|new`) takes `/blog/new`, and a route for `GET`
+declared before a route for `GET` and `POST` on the same path leaves it the
+`POST` requests. A narrower route declared
 before a wider one, `/users/list` before `/users/{id}`, is the order the
 router expects and is not reported. Two hosts the analysis cannot compare,
 a host it cannot read or one the solver gives up on (a conditional in a
@@ -523,12 +530,22 @@ scheme takes any; one given only empty ones, `setMethods([''])` or
 `setSchemes([''])`, takes no request, as Symfony's matchers read it, and
 conflicts with no other route. A route for `GET` takes the `HEAD` requests
 too, as the router sends them: a later route for `HEAD` only on the same
-path is shadowed.
+path is shadowed, and a route for `HEAD` only declared before a route for
+`GET` on the same path is an overlap that serves both. The report suggests
+moving a later route first, or merging two routes on the same paths, only
+where neither would leave a route unreachable. The router redirects a `GET`
+or `HEAD` request whose path differs from a route's by a trailing slash
+alone to that route, and tries no later one: `/foo/` declared before
+`/foo` takes `GET /foo`, so the later route is shadowed when it takes only
+`GET` and `HEAD`, and an overlap otherwise; the report then suggests paths
+that differ by more than the slash. A route that takes no `GET` request
+redirects none.
 
 `regex:security` reads `access_control` the same way: the first rule whose
-path, host, methods and addresses take a request applies to it. A later
-rule is **shadowed** when an earlier one takes every request it takes, its
-path, its host, its methods and its addresses included: it never applies.
+path, host, methods, addresses, port, route and attributes take a request
+applies to it. A later rule is **shadowed** when an earlier one takes every
+request it takes, its path, its host, its methods, its addresses, its port,
+its route and its attributes included: it never applies.
 An earlier rule is a **carve-out** of a later one when its path is strictly
 narrower, or when it takes only requests the later one takes too: that is
 the order `access_control` expects, and it is never reported.
@@ -543,9 +560,13 @@ Any other pair of rules that share a request is an **overlap**, listed with
 `--show-overlaps`: the order decides which rule applies to the requests both
 take. `{ path: ^/admin, methods: [GET] }` before `{ path: ^/admin/users }`
 leaves `POST /admin/users` to the later rule, an overlap and not a shadow.
-Addresses are compared as written, and a host the analysis cannot read
-leaves the paths to decide; `allow_if` and `requires_channel` decide access,
-not which rule applies, and play no part.
+Addresses, a route and attributes are compared as written: an earlier rule
+holding a route or an attribute the later one does not require the same way
+leaves it the other requests, so `{ route: app_login }` before
+`{ path: ^/admin }` is an overlap. Two rules for different ports share no
+request. A host the analysis cannot read leaves the paths to decide;
+`allow_if` and `requires_channel` decide access, not which rule applies, and
+play no part.
 
 `regex:security` and `regex:analyze` read the security configuration the
 application runs with, as `bin/console debug:config security` shows it:
@@ -554,7 +575,7 @@ loads, in any YAML shape (block or flow lists, anchors and aliases,
 `when@<env>` blocks), with its `%parameters%` and `%env()%` values resolved.
 Each finding names the file and the line its value is written on, or
 `security configuration` when no `security.*` file under `config/` writes it.
-A rule with no path, host, `request_matcher` or `allow_if`, such as
+A rule with no path, host, `route`, `request_matcher` or `allow_if`, such as
 `{ roles: ROLE_USER }`, is found by its roles, `ips`, `methods` or
 `requires_channel`, on the line that opens its entry.
 `--config=<file>` analyzes that YAML file instead, read with `symfony/yaml`

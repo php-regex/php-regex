@@ -217,7 +217,9 @@ final class ToolCatalog
      * The structured answer: the success document, which ends with the
      * target judged and the verdict of each version of its range, or the
      * CLI's error envelope, which carries the pattern's validation when the
-     * pattern is what failed.
+     * pattern is what failed. Both are objects, and the root says so: the
+     * protocol types an output schema as an object schema, and a client
+     * that checks it refuses the tool list otherwise.
      *
      * @param array<string, array<string, mixed>> $properties
      * @param list<string>                        $required
@@ -231,6 +233,7 @@ final class ToolCatalog
         $required = [...$required, $targetKey, 'range'];
 
         return [
+            'type' => 'object',
             'oneOf' => [
                 ['type' => 'object', 'properties' => $properties, 'required' => $required, 'additionalProperties' => false],
                 [

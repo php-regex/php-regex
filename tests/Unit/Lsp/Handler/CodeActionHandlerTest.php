@@ -316,9 +316,11 @@ final class CodeActionHandlerTest extends TestCase
         $this->assertIsString($literal);
 
         // The literal has to read back as the pattern it came from, and the
-        // file it lands in has to stay valid PHP.
+        // file it lands in has to stay valid PHP. The answer carries it as
+        // JSON, which holds UTF-8 only.
         $evaluated = eval('return '.$literal.';');
         $this->assertSame($pattern, $evaluated);
+        $this->assertTrue(mb_check_encoding($literal, 'UTF-8'), $literal);
     }
 
     /**
@@ -332,6 +334,38 @@ final class CodeActionHandlerTest extends TestCase
         yield 'a pattern holding a quote' => ['pattern' => "/it's/u"];
         yield 'a pattern holding a backslash and a quote' => ['pattern' => "/\\d'\\w/u"];
         yield 'a pattern ending on a backslash' => ['pattern' => '/a\\\\/u'];
+        // A byte that is no part of a UTF-8 character is written \xHH, in a
+        // double-quoted literal whose backslashes, quotes and dollars are
+        // escaped.
+        yield 'a pattern holding a byte that is no UTF-8' => ['pattern' => "/[\u{e9}]\xff/"];
+        yield 'a pattern holding such a byte, a backslash, a quote and a dollar' => ['pattern' => "/\\d\xC3\"{\$x}'\\\\$/"];
+    }
+
+    /**
+     * A literal holding a byte that is no UTF-8 is answered: the answer is
+     * JSON, and every replacement spells such a byte. Adding u would make
+     * PCRE refuse the pattern, so that fix is not offered.
+     */
+    #[Test]
+    #[DataProvider('provideLiteralsHoldingBytesThatAreNoUtf8')]
+    public function test_a_literal_holding_a_byte_that_is_no_utf8_is_answered_without_the_unicode_fix(string $pattern, string $literal): void
+    {
+        $this->assertSame(0, preg_match($pattern, 'a'));
+        $this->assertFalse(@preg_match($pattern.'u', 'a'));
+
+        $source = "<?php\npreg_match(".$literal.", \$s);\n";
+        $this->assertSame($pattern, eval('return '.$literal.';'));
+        $actions = $this->codeActions($source, ['line' => 1, 'character' => 13], ['line' => 1, 'character' => 13]);
+
+        $this->assertNull(self::action($actions, 'Add /u flag for Unicode support'));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, literal: string}>
+     */
+    public static function provideLiteralsHoldingBytesThatAreNoUtf8(): iterable
+    {
+        yield 'a letter in a class and a byte after it' => ['pattern' => "/[\u{e9}]\xff/", 'literal' => "\"/[\u{e9}]\\xff/\""];
     }
 
     #[Test]

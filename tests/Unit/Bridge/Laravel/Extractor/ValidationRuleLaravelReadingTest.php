@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Laravel\Extractor;
 
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationRuleParser;
 use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
 use PHPRegex\Linter\PatternOccurrence;
@@ -179,6 +180,79 @@ final class ValidationRuleLaravelReadingTest extends TestCase
         yield 'an upper-case negation' => ['rules' => ['NOT_REGEX:/^a,b$/'], 'patterns' => ['/^a,b$/'], 'sources' => ['validation:not_regex']];
         yield 'a negation without its underscore' => ['rules' => ['notregex:/^a,b$/'], 'patterns' => ['/^a,b$/'], 'sources' => ['validation:not_regex']];
         yield 'a negation without its underscore in a rules string' => ['rules' => 'nullable|NotRegex:/^a$/', 'patterns' => ['/^a$/'], 'sources' => ['validation:not_regex']];
+        // parseStringRule() trims the name before Str::studly(), and
+        // ruleIsRegex() reads it untrimmed: a name with blanks around it
+        // runs the rule on the first field of str_getcsv(), its commas
+        // splitting the parameter.
+        yield 'a name after a blank in a rules string' => ['rules' => 'required | regex:/^b+$/', 'patterns' => ['/^b+$/'], 'sources' => ['validation:regex']];
+        yield 'a blank between the name and its colon' => ['rules' => ['regex :/^h$/'], 'patterns' => ['/^h$/'], 'sources' => ['validation:regex']];
+        yield 'a negation after a blank' => ['rules' => 'nullable | not_regex:/^n$/', 'patterns' => ['/^n$/'], 'sources' => ['validation:not_regex']];
+        yield 'a name after a blank, its parameter cut at a comma' => ['rules' => 'required | regex:/^a{1,2}$/', 'patterns' => ['/^a{1'], 'sources' => ['validation:regex']];
+    }
+
+    /**
+     * A literal is read as PHP reads it: a double-quoted one decodes \u{…},
+     * \x, octal and \$ escapes before Laravel sees the rule, a single-quoted
+     * one \\ and \' alone. The file's own rules are the oracle.
+     */
+    #[Test]
+    #[DataProvider('provideLiterals')]
+    public function test_a_literal_is_read_as_php_reads_it(string $literal): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => "<?php\nreturn ['slug' => ".$literal."];\n"]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = self::laravelPatterns(['slug' => $rules['slug'] ?? null]);
+        $this->assertCount(1, $expected);
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame($expected, array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+    }
+
+    /**
+     * @return iterable<string, array{literal: string}>
+     */
+    public static function provideLiterals(): iterable
+    {
+        yield 'a code point escape' => ['literal' => '"required|regex:/^[\u{0600}-\u{06FF} ]+$/u"'];
+        yield 'a hexadecimal escape' => ['literal' => '"regex:/^\x41+$/"'];
+        yield 'an escaped dollar' => ['literal' => '"required|regex:/^[0-9]+\$/"'];
+        yield 'an octal escape' => ['literal' => '"regex:/(k)\1/"'];
+        yield 'a doubled backslash' => ['literal' => '"regex:/(x)\\\\1/"'];
+        yield 'an escaped double quote' => ['literal' => '"regex:/^\"$/"'];
+        yield 'a code point escape in single quotes' => ['literal' => "'regex:/^\\u{e9}$/u'"];
+        yield 'an escaped single quote' => ['literal' => "'nullable|regex:/^j\\'k$/'"];
+    }
+
+    /**
+     * A rules string given to a call is a rules string: Validator::sometimes()
+     * explodes [$key => $rules], and ConditionalRules::rules() explodes a
+     * string on "|". An element of an array literal, an argument of the call
+     * or not, is one rule.
+     */
+    #[Test]
+    public function test_a_rules_string_given_to_a_call_is_split(): void
+    {
+        $expected = [
+            ...self::laravelPatterns(['code' => 'regex:/^(a|b)$/']),
+            ...self::laravelPatterns(['x' => ValidationRuleParser::filterConditionalRules(['x' => Rule::when(true, 'regex:/^(c|d)$/')])['x'] ?? null]),
+            ...self::laravelPatterns(['y' => ['required', 'regex:/^(e|f)$/']]),
+            ...self::laravelPatterns(['z' => ['regex:/^(g|h)$/']]),
+        ];
+        $this->assertSame(['/^(a', '/^(c', '/^(e|f)$/', '/^(g|h)$/'], $expected);
+
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            use Illuminate\Validation\Rule;
+            function rules($validator, $condition) {
+                $validator->sometimes('code', 'regex:/^(a|b)$/', fn () => true);
+                return ['x' => [Rule::when($condition, 'regex:/^(c|d)$/')], 'y' => ['required', 'regex:/^(e|f)$/'], 'z' => Rule::when($condition, ['regex:/^(g|h)$/'])];
+            }
+            PHP]);
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame($expected, array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
     }
 
     /**

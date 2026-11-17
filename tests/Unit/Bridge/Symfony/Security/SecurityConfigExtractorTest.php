@@ -213,6 +213,68 @@ final class SecurityConfigExtractorTest extends TestCase
     }
 
     /**
+     * The security bundle's MainConfiguration gives a rule a port, request
+     * attributes and a route: each restricts the requests the rule takes,
+     * so each is read, its parameters resolved.
+     *
+     * @param array{port: ?int, attributes: array<string, string>, route: ?string, line: int} $expected
+     */
+    #[Test]
+    #[DataProvider('provideRequestRestrictions')]
+    public function test_access_control_reads_the_port_the_attributes_and_the_route(string $yaml, array $expected): void
+    {
+        $path = $this->makeProject(['security.yaml' => $yaml]).'/security.yaml';
+
+        $rules = (new SecurityConfigExtractor())->extract($path)['accessControl'];
+
+        $this->assertCount(2, $rules);
+        $rule = $rules[1];
+        $this->assertSame($expected, ['port' => $rule['port'] ?? null, 'attributes' => $rule['attributes'] ?? [], 'route' => $rule['route'] ?? null, 'line' => $rule['line']]);
+        $this->assertSame(['port' => null, 'attributes' => [], 'route' => null], ['port' => $rules[0]['port'] ?? null, 'attributes' => $rules[0]['attributes'] ?? [], 'route' => $rules[0]['route'] ?? null]);
+    }
+
+    /**
+     * @return iterable<string, array{yaml: string, expected: array{port: ?int, attributes: array<string, string>, route: ?string, line: int}}>
+     */
+    public static function provideRequestRestrictions(): iterable
+    {
+        $first = "security:\n    access_control:\n        - { path: ^/admin, roles: ROLE_ADMIN }\n";
+
+        yield 'a route' => [
+            'yaml' => $first."        - { route: app_login, roles: PUBLIC_ACCESS }\n",
+            'expected' => ['port' => null, 'attributes' => [], 'route' => 'app_login', 'line' => 4],
+        ];
+        yield 'a port' => [
+            'yaml' => $first."        - { path: ^/admin, port: 8080, roles: PUBLIC_ACCESS }\n",
+            'expected' => ['port' => 8080, 'attributes' => [], 'route' => null, 'line' => 4],
+        ];
+        yield 'a port written as a string' => [
+            'yaml' => $first."        - { path: ^/admin, port: '8080', roles: PUBLIC_ACCESS }\n",
+            'expected' => ['port' => 8080, 'attributes' => [], 'route' => null, 'line' => 4],
+        ];
+        yield 'attributes' => [
+            'yaml' => $first."        - { path: ^/api, attributes: { _format: json, _locale: fr }, roles: PUBLIC_ACCESS }\n",
+            'expected' => ['port' => null, 'attributes' => ['_format' => 'json', '_locale' => 'fr'], 'route' => null, 'line' => 4],
+        ];
+        yield 'parameters' => [
+            'yaml' => "parameters:\n    login_route: app_login\n    admin_port: 8443\n    api_format: json\n"
+                .$first."        - { route: '%login_route%', port: '%admin_port%', attributes: { _format: '%api_format%' }, roles: PUBLIC_ACCESS }\n",
+            'expected' => ['port' => 8443, 'attributes' => ['_format' => 'json'], 'route' => 'app_login', 'line' => 8],
+        ];
+    }
+
+    #[Test]
+    public function test_a_port_that_is_no_number_is_an_error(): void
+    {
+        $path = $this->makeProject(['security.yaml' => "security:\n    access_control:\n        - { path: ^/admin, port: http, roles: PUBLIC_ACCESS }\n"]).'/security.yaml';
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('The access_control port "http" is not a port number.');
+
+        (new SecurityConfigExtractor())->extract($path);
+    }
+
+    /**
      * A file named with --config is read by symfony/yaml: every shape YAML
      * allows, where the line scanner read the block style only.
      *
