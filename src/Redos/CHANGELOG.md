@@ -52,6 +52,11 @@ CHANGELOG
    `/(?C1)\/\*[^*]*\*+([^\/*][^*]*\*+)*\//`, which was critical, is safe
    again, its run of stars never taking the `[^\/*]` that starts the next
    iteration.
+ * Where the proof does not decide, the heuristics read a count of more than
+   16 as a loop, as the proof does, and a count of variable length inside a
+   loop as a nested loop: `/^(?:a|a){1,40}(*MARK:y)$/`, which was safe,
+   `/^(?:\d{1,3}\.?){1,30}(*MARK:y)$/` and `/^(?:(?1)){1,30}(a|a)$/`, which
+   were low, are critical.
  * A backreference to a group of variable length in a loop is no longer
    critical when the body of the loop reads its input one way, each
    alternation choosing its branch by the first character and each count

@@ -61,6 +61,12 @@ use PHPRegex\Parser\Text\Ascii;
 final class RedosProfiler extends AbstractNodeVisitor
 {
     /**
+     * The largest count the proof unrolls, by default: past it, a count is
+     * analysed as a loop.
+     */
+    private const UNROLLED_COUNT = 16;
+
+    /**
      * The unbounded loops around the node that may come back into it: an
      * atomic group or a possessive loop between them counts them from none.
      */
@@ -326,13 +332,20 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         $severity = RedosSeverity::Safe;
         $entersUnbounded = $isUnbounded && !$isTargetAtomic;
-        $isNestedUnbounded = $entersUnbounded && $this->unboundedQuantifierDepth > 0;
+        // Past the count the proof unrolls, a count repeats its body as a
+        // loop does, "(?:a|a){1,40}"; in a loop, a count of variable length
+        // splits a run as a loop does, the "\d{1,3}" of "(?:\d{1,3}\.?)+".
+        $entersLongCount = !$isUnbounded && !$isTargetAtomic && null !== $qMax && $qMin !== $qMax && $qMax > self::UNROLLED_COUNT;
+        $loopsAround = $this->unboundedQuantifierDepth;
+        $isNestedUnbounded = !$isTargetAtomic && $qMin !== $qMax && $loopsAround > 0;
 
-        if ($entersUnbounded) {
+        if ($entersUnbounded || $entersLongCount) {
             $this->unboundedQuantifierDepth++;
             $this->repeatingLoopDepth++;
+        }
 
-            if ($this->hasBackrefLoop($node->node)) {
+        if ($entersUnbounded || $isNestedUnbounded) {
+            if ($entersUnbounded && $this->hasBackrefLoop($node->node)) {
                 $this->backrefLoopDetected = true;
                 $this->addVulnerability(
                     RedosSeverity::Critical,
@@ -351,7 +364,9 @@ final class RedosProfiler extends AbstractNodeVisitor
                     $vulnSeverity = $hasRecursion ? RedosSeverity::Medium : RedosSeverity::Critical;
                     $this->addVulnerability(
                         $vulnSeverity,
-                        'Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).',
+                        $isUnbounded
+                            ? 'Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).'
+                            : 'A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).',
                         $node,
                         'Replace inner quantifiers with possessive variants or wrap them in (?>...).',
                         RedosConfidence::High,
@@ -382,7 +397,7 @@ final class RedosProfiler extends AbstractNodeVisitor
                     RedosConfidence::Low,
                     'High false-positive risk; bounded quantifiers may still be safe in context.',
                 );
-            } elseif ($this->totalQuantifierDepth > 1 && 0 === $this->unboundedQuantifierDepth) {
+            } elseif ($this->totalQuantifierDepth > 1 && 0 === $loopsAround) {
                 $severity = RedosSeverity::Low;
                 $this->addVulnerability(
                     RedosSeverity::Low,
@@ -454,7 +469,7 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         $this->endsAtomicBody = $wasAtomic;
         [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth] = $depths;
-        if ($entersUnbounded) {
+        if ($entersUnbounded || $entersLongCount) {
             $this->repeatingLoopDepth--;
         }
 

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Redos\RedosProfiler;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
@@ -439,6 +440,50 @@ final class RedosHeuristicShapesTest extends TestCase
         $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
 
         $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * Where the proof does not decide, a mark here, a count of more than 16
+     * repeats its body as a loop does, and a count of variable length in a
+     * loop splits a run as a loop does. PCRE runs out of its default
+     * backtrack limit on 24 units then "!" for an ambiguous alternation
+     * repeated up to 40 times, runs of one to three digits each maybe
+     * followed by a dot up to 30 times, and a call of an ambiguous
+     * alternation up to 30 times. Up to 16 times the alternation never
+     * reaches the limit (262 141 steps at most), and a dot after each run
+     * keeps the runs apart (50 steps on 24 units).
+     *
+     * @return iterable<string, array{pattern: string, unit: string, critical: bool}>
+     */
+    public static function provideCountsReadAsLoops(): iterable
+    {
+        yield 'ambiguous alternation repeated up to 40 times' => ['pattern' => '/^(?:a|a){1,40}(*MARK:y)$/', 'unit' => 'a', 'critical' => true];
+        yield 'runs of digits before an optional dot up to 30 times' => ['pattern' => '/^(?:\d{1,3}\.?){1,30}(*MARK:y)$/', 'unit' => '1', 'critical' => true];
+        yield 'call of an ambiguous alternation up to 30 times' => ['pattern' => '/^(?:(?1)){1,30}(a|a)$/', 'unit' => 'a', 'critical' => true];
+        yield 'runs of digits before an optional dot in a loop' => ['pattern' => '/^(?:\d{1,3}\.?)+(*MARK:y)$/', 'unit' => '1', 'critical' => true];
+        yield 'ambiguous alternation repeated up to 16 times' => ['pattern' => '/^(?:a|a){1,16}(*MARK:y)$/', 'unit' => 'a', 'critical' => false];
+        yield 'runs of digits each before a dot up to 30 times' => ['pattern' => '/^(?:\d{1,3}\.){1,30}(*MARK:y)$/', 'unit' => '1.', 'critical' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideCountsReadAsLoops')]
+    public function test_a_count_where_the_proof_does_not_decide_is_read_as_a_loop(string $pattern, string $unit, bool $critical): void
+    {
+        $saved = (string) ini_get('pcre.backtrack_limit');
+        ini_set('pcre.backtrack_limit', '1000000');
+
+        try {
+            $result = @preg_match(PcreInterpreter::pattern($pattern), str_repeat($unit, 24).'!');
+            $error = preg_last_error();
+        } finally {
+            ini_set('pcre.backtrack_limit', $saved);
+        }
+
+        $this->assertSame($critical, false === $result && \PREG_BACKTRACK_LIMIT_ERROR === $error, 'Oracle disagrees with the row.');
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+        $this->assertSame(RedosProof::Heuristic, $analysis->proof);
+        $this->assertSame($critical, RedosSeverity::Critical === $analysis->severity);
     }
 
     /**
