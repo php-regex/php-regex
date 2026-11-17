@@ -159,6 +159,38 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
+     * An element pushed onto a list is one rule even when a rule comes
+     * before the regex one: Laravel reads "nullable|regex:/x|y/" as a rule
+     * named "nullable|regex", and runs no pattern. A literal assigned to a
+     * key, or left where nothing says it is one element, stays a rules
+     * string.
+     */
+    #[Test]
+    public function test_a_pushed_element_with_a_rule_before_the_regex_one_runs_no_pattern(): void
+    {
+        $pushed = ['required'];
+        array_push($pushed, 'nullable|regex:/x|y/');
+        $unshifted = ['required'];
+        array_unshift($unshifted, 'nullable|regex:/x|y/');
+        $this->assertSame([], self::laravelPatterns(['d' => $pushed, 'e' => $unshifted]));
+        $this->assertSame(['/x'], self::laravelPatterns(['a' => 'nullable|regex:/x|y/']));
+        $this->assertSame([false, true], array_map(EngineProbe::compiles(...), ['/x', '/x|y/']));
+
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $rules['a'] = 'nullable|regex:/x|y/';
+            $rules['b'][] = 'nullable|regex:/x|y/';
+            array_push($rules['d'], 'nullable|regex:/x|y/');
+            array_unshift($rules['e'], ('nullable|regex:/x|y/'));
+            return 'nullable|regex:/x|y/';
+            PHP]);
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[2, '/x'], [6, '/x']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
      * Laravel reads the name of a regex rule without case, and "notregex"
      * as "not_regex": the parameter is all the text after the first ":",
      * commas included.

@@ -72,7 +72,10 @@ CHANGELOG
    `Rule::unless()` and `ConditionalRules` do, through parentheses that only
    group it: `Rule::when($condition, 'regex:/^(a|b)$/')` runs `/^(a`, where
    `/^(a|b)$/` was linted. An element of an array literal, or a string
-   another call takes, as `array_push()` appends it, stays one rule.
+   another call takes, as `array_push()` appends it, stays one rule; one
+   `array_push()`, `array_unshift()` or `[] =` adds with a rule before the
+   regex one, `'nullable|regex:/x|y/'`, is a rule Laravel names
+   `nullable|regex`, and no pattern is linted.
  * `regex:lint` reads a regex rule whose name has blanks around it,
    `'required | regex:/^b+$/'` or `'regex :/^b+$/'`, which Laravel trims and
    runs: it was not linted. Laravel reads the parameter of such a rule as

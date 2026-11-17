@@ -83,7 +83,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * as rules, and of the parentheses that only group what they hold, read
      * once a literal asks.
      *
-     * @var array{rules: array<int, true>, grouping: array<int, true>}|null
+     * @var array{rules: array<int, true>, grouping: array<int, true>, appended: array<int, true>}|null
      */
     private ?array $tokenReading = null;
 
@@ -239,21 +239,20 @@ final class ValidationRulePatternSource implements PatternSourceInterface
 
     /**
      * Whether the literal is a rules string, which Laravel splits on "|",
-     * rather than one element of a rules array: a rule before the regex one,
-     * as "nullable|regex:/a/", a literal given to a key ('a' => '…') or
-     * assigned ($rules['a'] = '…'), where $rules['a'][] = '…' pushes one
-     * element, or the rules a call takes (RULES_ARGUMENTS), where a string
-     * another call takes, as array_push() appends it, is one element.
-     * Parentheses that only group the literal change nothing.
+     * rather than one element of a rules array: a literal given to a key
+     * ('a' => '…') or assigned ($rules['a'] = '…'), where $rules['a'][] = '…'
+     * pushes one element, or the rules a call takes (RULES_ARGUMENTS), where
+     * a string another call takes, as array_push() appends it, is one
+     * element. Anywhere else, a rule before the regex one, as
+     * "nullable|regex:/a/", makes a rules string, unless array_push() or
+     * array_unshift() appends it: Laravel then reads one rule named
+     * "nullable|regex", and runs no pattern. Parentheses that only group the
+     * literal change nothing.
      *
      * @param int $start the offset of the quote that opens the literal
      */
     private function isRulesString(string $literal, string $content, int $start): bool
     {
-        if (1 !== LibraryPcre::match(self::RULE, $literal)) {
-            return true;
-        }
-
         $before = $this->previousNonWhitespace($content, $start - 1);
         while ($before >= 0 && '(' === $content[$before] && isset($this->tokenReading($content)['grouping'][$before])) {
             $before = $this->previousNonWhitespace($content, $before - 1);
@@ -265,7 +264,12 @@ final class ValidationRulePatternSource implements PatternSourceInterface
 
         // "==", "!=", "<=" and ">=" compare; "=", ".=" and "??=" assign.
         if ($before < 0 || '=' !== $content[$before] || ($before > 0 && str_contains('=!<>', $content[$before - 1]))) {
-            return isset($this->tokenReading($content)['rules'][$start]);
+            $reading = $this->tokenReading($content);
+            if (isset($reading['rules'][$start])) {
+                return true;
+            }
+
+            return 1 !== LibraryPcre::match(self::RULE, $literal) && !isset($reading['appended'][$start]);
         }
 
         $before = $this->previousNonWhitespace($content, $before - 1);
@@ -286,11 +290,12 @@ final class ValidationRulePatternSource implements PatternSourceInterface
 
     /**
      * The offsets of the string literals of the file that a call takes as
-     * rules, by position or by name, and of the parentheses that only group
-     * what they hold. A literal is an argument of the innermost bracket
-     * around it that does not only group.
+     * rules, by position or by name, of those array_push() or
+     * array_unshift() appends as elements, and of the parentheses that only
+     * group what they hold. A literal is an argument of the innermost
+     * bracket around it that does not only group.
      *
-     * @return array{rules: array<int, true>, grouping: array<int, true>}
+     * @return array{rules: array<int, true>, grouping: array<int, true>, appended: array<int, true>}
      */
     private function tokenReading(string $content): array
     {
@@ -302,8 +307,10 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         $offsets = PhpTokens::offsets($tokens);
         $rules = [];
         $grouping = [];
+        $appended = [];
         // Each open bracket, null where it only groups: the arguments it
-        // takes as rules, the position of the one read and its name.
+        // takes as rules, whether it appends its arguments after the first,
+        // the position of the one read and its name.
         $brackets = [];
         foreach ($tokens as $index => $token) {
             if (PhpTokens::opensNesting($token)) {
@@ -313,7 +320,8 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                     $grouping[$offsets[$index]] = true;
                     $brackets[] = null;
                 } else {
-                    $brackets[] = ['rules' => '(' === $token && null !== $previous ? self::rulesArgumentsOf($tokens, $previous) : [], 'position' => 0, 'name' => null];
+                    $call = '(' === $token && null !== $previous;
+                    $brackets[] = ['rules' => $call ? self::rulesArgumentsOf($tokens, $previous) : [], 'appends' => $call && self::appendsElements($tokens, $previous), 'position' => 0, 'name' => null];
                 }
 
                 continue;
@@ -328,7 +336,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             $top = \count($brackets) - 1;
             if (',' === $token || ':' === $token) {
                 $bracket = $brackets[$top] ?? null;
-                if (null === $bracket || [] === $bracket['rules']) {
+                if (null === $bracket || ([] === $bracket['rules'] && !$bracket['appends'])) {
                     continue;
                 }
 
@@ -360,9 +368,12 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             if (null !== $bracket && (null === $bracket['name'] ? isset($bracket['rules'][$bracket['position']]) : \in_array($bracket['name'], $bracket['rules'], true))) {
                 $rules[$offsets[$index]] = true;
             }
+            if (null !== $bracket && $bracket['appends'] && $bracket['position'] > 0) {
+                $appended[$offsets[$index]] = true;
+            }
         }
 
-        return $this->tokenReading = ['rules' => $rules, 'grouping' => $grouping];
+        return $this->tokenReading = ['rules' => $rules, 'grouping' => $grouping, 'appended' => $appended];
     }
 
     /**
@@ -380,6 +391,26 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         }
 
         return \T_VARIABLE !== $token[0] && \T_CONSTANT_ENCAPSED_STRING !== $token[0] && null === PhpTokens::name($token) && null === PhpTokens::identifier($token);
+    }
+
+    /**
+     * Whether the call after this name is the function array_push() or
+     * array_unshift(), which add each argument after the first as one
+     * element.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    private static function appendsElements(array $tokens, int $callee): bool
+    {
+        $name = PhpTokens::name($tokens[$callee]);
+        if (null === $name) {
+            return false;
+        }
+
+        $short = strtolower(substr($name, (int) strrpos('\\'.$name, '\\')));
+        $operator = PhpTokens::previousSignificant($tokens, $callee - 1);
+
+        return \in_array($short, ['array_push', 'array_unshift'], true) && (null === $operator || !PhpTokens::isObjectOrStaticOperator($tokens[$operator]));
     }
 
     /**
