@@ -144,6 +144,11 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
         $collection->add('first', (new Route('/foo'))->setMethods($earlier));
         $collection->add('second', (new Route('/foo'))->setMethods($later));
 
+        // As declared, the matcher sends some requests to each route;
+        // moved first, the later route takes all of them.
+        $this->assertSame(['first', 'second'], self::routesReached($collection, '/foo'));
+        $this->assertSame(['second'], self::routesReached(self::reversed($collection), '/foo'));
+
         $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
         $this->assertSame(['overlap'], array_column($conflicts, 'type'));
 
@@ -175,6 +180,14 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
         $collection->add('first', new Route($earlier));
         $collection->add('second', (new Route($later))->setMethods($methods));
 
+        // As declared, the GET and HEAD requests of the later path are
+        // redirected to the earlier route; moved first, the later route
+        // takes those of the earlier path the same way.
+        foreach (['GET', 'HEAD'] as $method) {
+            $this->assertSame('first', FrameworkMatcher::reached($collection, $method, $later), $method.' '.$later);
+            $this->assertSame('second', FrameworkMatcher::reached(self::reversed($collection), $method, $earlier), $method.' '.$earlier.', reversed');
+        }
+
         $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
         $this->assertCount(1, $conflicts);
 
@@ -204,6 +217,10 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
         $collection = new RouteCollection();
         $collection->add('first', (new Route('/foo'))->setMethods(['GET', 'PUT']));
         $collection->add('second', (new Route('/foo'))->setMethods(['GET', 'POST']));
+
+        // Either way round, the matcher sends some requests to each route.
+        $this->assertSame(['first', 'second'], self::routesReached($collection, '/foo'));
+        $this->assertSame(['first', 'second'], self::routesReached(self::reversed($collection), '/foo'));
 
         $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
         $this->assertSame(['overlap'], array_column($conflicts, 'type'));
@@ -239,5 +256,38 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
     {
         yield 'a later route of a placeholder only' => ['earlier' => '/{a}', 'later' => '/{b}', 'example' => '/a'];
         yield 'a value the static segment does not hold' => ['earlier' => '/x/{a}', 'later' => '/x/{b}', 'example' => '/x/a'];
+    }
+
+    /**
+     * The routes the framework's matcher sends a request on the path to,
+     * for some method: each name once, sorted.
+     *
+     * @return list<string>
+     */
+    private static function routesReached(RouteCollection $collection, string $path): array
+    {
+        $routes = [];
+        foreach (['GET', 'HEAD', 'POST', 'PUT'] as $method) {
+            $route = FrameworkMatcher::reached($collection, $method, $path);
+            if (null !== $route) {
+                $routes[$route] = true;
+            }
+        }
+        ksort($routes);
+
+        return array_keys($routes);
+    }
+
+    /**
+     * The same routes, declared the other way round.
+     */
+    private static function reversed(RouteCollection $collection): RouteCollection
+    {
+        $reversed = new RouteCollection();
+        foreach (array_reverse($collection->all()) as $name => $route) {
+            $reversed->add($name, $route);
+        }
+
+        return $reversed;
     }
 }
