@@ -19,6 +19,12 @@ CHANGELOG
    to write the `$matches` of `/\n/`, where `preg_match()` takes `a\n` at 0
    for the one and `\n` at 1 for the other. The optimizer no longer offers
    such a rewrite.
+ * `matchEquivalent()` refuses a newline convention other than `\n`, such as
+   `(*CR)`, where `$` or `\Z` reads it, as `equivalent()` does:
+   `/(*CR)a$/` was proven to write the `$matches` of `/a$/`, where
+   `preg_match()` finds nothing in `a\n` with the one and `a` with the other.
+   The lint no longer calls the lazy marker of `/(*CR)a\r*?(?:$|b)/` useless.
+   The last convention the options name holds: `/(*CR)(*LF)a$/` is read.
  * `matchEquivalent()` counts the groups of a body repeated no time, `{0}`:
    `/(?<x>a){0}b/` was proven to write the `$matches` of `/b/`, where
    `preg_match_all()` writes an empty group `x` for the one and none for the

@@ -721,6 +721,8 @@ final class LanguageSolver
             throw new ComplexityException('Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the match solver does not model.', 0, $pattern);
         }
 
+        RegularSubsetValidator::assertNewlineConvention($ast, $pattern);
+
         return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator($this->parser->target()))->translate($ast), $ast->isUnicode());
     }
 

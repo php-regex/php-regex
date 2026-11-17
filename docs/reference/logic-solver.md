@@ -116,7 +116,9 @@ lookarounds; atomic groups, and a possessive quantifier that could have to give 
 it matched (one whose body may match more than one way, or that something after it may
 start like it does: `/a++a/`, `/(?:ab?)++b/`, `\s++$`); a loop over a body that can match
 empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
-and `\K`; an end anchor followed by more of the pattern, another turn of the loop it stands
+and `\K`; a newline convention other than `\n` where `$` or `\Z` reads it, and `(*CRLF)`
+anywhere, under which the dot reads a `\r` alone but not one before a `\n`; an end anchor
+followed by more of the pattern, another turn of the loop it stands
 in included (`/(?:a$)*\n/`, `/(?:a$)*/`); an anchor, an assertion or a lookaround in a group
 repeated no time, which PCRE2 still reads to choose where it tries a match (`/(?:x|(?=a)){0}\w/`
 finds no match in `"\tb"`, where `/\w/` finds `b`); and two patterns of which one
@@ -426,7 +428,7 @@ verbatim:
 | a possessive quantifier the solver cannot prove inert | `Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.` |
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
-| a start option such as `(*CRLF)` with `$`, `\Z` or `/m` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
+| a newline convention other than `\n`, such as `(*CR)`, with `$`, `\Z` or `/m` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
 | the flag `A`                               | `Unsupported regex flags for automata: A.` (the pattern's own flags, in order) |
 
 Two refinements inside those rules:

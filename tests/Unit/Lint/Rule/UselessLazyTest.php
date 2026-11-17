@@ -29,7 +29,7 @@ final class UselessLazyTest extends TestCase
 {
     private const RULE = 'regex.lint.quantifier.uselessLazy';
 
-    private const SUBJECTS = ['', 'a', 'aa', 'aaa', 'ab', 'aab', 'aaab', 'abab', 'AAb', 'b', '12x', '1x2y', 'abcd', 'ababc', 'ababa', 'xaab', 'aaaab'];
+    private const SUBJECTS = ['', 'a', 'aa', 'aaa', 'ab', 'aab', 'aaab', 'abab', 'AAb', 'b', '12x', '1x2y', 'abcd', 'ababc', 'ababa', 'xaab', 'aaaab', "a\r"];
 
     #[Test]
     #[DataProvider('provideUselessLazy')]
@@ -83,6 +83,9 @@ final class UselessLazyTest extends TestCase
         yield 'a dot before a character' => ['pattern' => '/(.+?)b/', 'greedy' => '/(.+)b/'];
         yield 'nothing after the quantifier' => ['pattern' => '/x?(a*?)/', 'greedy' => '/x?(a*)/'];
         yield 'a group repeated before a character it may start with' => ['pattern' => '/((?:ab)+?)a/', 'greedy' => '/((?:ab)+)a/'];
+        // Under (*CR) "$" stands before a final "\r": on "a\r" the lazy
+        // loop matches "a", the greedy one "a\r".
+        yield 'a run before a dollar under (*CR)' => ['pattern' => '/(*CR)a\r*?(?:$|b)/', 'greedy' => '/(*CR)a\r*(?:$|b)/'];
     }
 
     /**

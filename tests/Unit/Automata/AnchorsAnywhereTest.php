@@ -96,6 +96,8 @@ final class AnchorsAnywhereTest extends TestCase
         yield 'duplicate names' => ['pattern' => '/(?<n>a)|(?<n>b)/J'];
         yield 'study and extra' => ['pattern' => '/ab/SX'];
         yield 'lines with ungreedy' => ['pattern' => '/^a+$/mU'];
+        // The last convention the options name holds.
+        yield 'a line feed named after a carriage return' => ['pattern' => '/(*CR)(*LF)a$/'];
     }
 
     /**

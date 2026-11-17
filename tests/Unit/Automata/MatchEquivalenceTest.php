@@ -373,6 +373,43 @@ final class MatchEquivalenceTest extends TestCase
         // in $2 and the right one does not match: the dot reads a "\r"
         // alone but not one before a "\n".
         yield 'a dot under (*CRLF)' => ['left' => '/(*CRLF)(.*)(\r?)\n/', 'right' => '/(*CRLF)(.*)()\n/', 'reason' => 'Under (*CRLF)'];
+        // PHP 8.4.27 / PCRE2 10.49: "$" and "\Z" stand before the final
+        // newline the convention sets. On "a\n" the left one finds no match
+        // under (*CR) and (*NUL), the right one "a"; on "a\r" the left one
+        // finds "a" under (*ANYCRLF) and (*ANY), the right one nothing; on
+        // "a\r" the lazy loop matches "a", the greedy one "a\r".
+        $newline = 'A newline convention other than "\n" moves where';
+        yield 'a dollar under (*CR)' => ['left' => '/(*CR)a$/', 'right' => '/a$/', 'reason' => $newline];
+        yield 'a dollar under (*NUL)' => ['left' => '/(*NUL)a$/', 'right' => '/a$/', 'reason' => $newline];
+        yield 'a dollar under (*ANYCRLF)' => ['left' => '/(*ANYCRLF)a$/', 'right' => '/a$/', 'reason' => $newline];
+        yield 'a dollar under (*ANY)' => ['left' => '/(*ANY)a$/', 'right' => '/a$/', 'reason' => $newline];
+        yield 'a capital Z under (*CR)' => ['left' => '/(*CR)a\Z/', 'right' => '/a\Z/', 'reason' => $newline];
+        yield 'a dollar under (*CR) on the right' => ['left' => '/a$/', 'right' => '/(*CR)a$/', 'reason' => $newline];
+        yield 'a dollar under (*CR) after another option' => ['left' => '/(*UTF)(*CR)a$/', 'right' => '/(*UTF)a$/', 'reason' => $newline];
+        yield 'a lazy loop before a dollar under (*CR)' => ['left' => '/(*CR)a\r*?(?:$|b)/', 'right' => '/(*CR)a\r*(?:$|b)/', 'reason' => $newline];
+    }
+
+    /**
+     * The newline a convention sets is read where no "$" or "\Z" reads it,
+     * and the last convention the options name is the one that holds:
+     * PHP 8.4.27 / PCRE2 10.49 finds "a" in "a\n" with "/(*CR)(*LF)a$/".
+     */
+    #[Test]
+    #[DataProvider('provideNewlineConventionsLeftUnread')]
+    public function test_a_newline_convention_no_end_anchor_reads_is_answered(string $left, string $right, bool $equivalent): void
+    {
+        $this->assertSame($equivalent, (new LanguageSolver())->matchEquivalent($left, $right)->isEquivalent);
+    }
+
+    /**
+     * @return iterable<string, array{left: string, right: string, equivalent: bool}>
+     */
+    public static function provideNewlineConventionsLeftUnread(): iterable
+    {
+        yield 'no end anchor' => ['left' => '/(*CR)ab/', 'right' => '/ab/', 'equivalent' => true];
+        yield 'a dot' => ['left' => '/(*CR)a./', 'right' => '/a./', 'equivalent' => false];
+        yield 'an end of subject' => ['left' => '/(*CR)a\z/', 'right' => '/a\z/', 'equivalent' => true];
+        yield 'a line feed named last' => ['left' => '/(*CR)(*LF)a$/', 'right' => '/a$/', 'equivalent' => true];
     }
 
     /**
