@@ -42,6 +42,21 @@ final class RouteConflictSuggestionBuilder
             $other = $conflict['conflict'];
             $shadowed = 'shadowed' === $conflict['type'];
 
+            // Whichever of two routes differing by a trailing slash comes
+            // first takes the GET requests of the other: the order cannot
+            // serve both.
+            if ($conflict['redirected']) {
+                $suggestions[\sprintf(
+                    'Give "%s" and "%s" paths that differ by more than a trailing slash: the GET and HEAD requests of "%s" are redirected to "%s".',
+                    $route['name'],
+                    $other['name'],
+                    $other['name'],
+                    $route['name'],
+                )] = true;
+
+                continue;
+            }
+
             // An overlap whose later route, moved first, would take every
             // request of the earlier one is the order that serves both: a
             // route for HEAD only before a route for GET.

@@ -16,7 +16,7 @@ namespace PHPRegex\Symfony\Routing;
 /**
  * @internal
  *
- * @phpstan-type RouteDescriptor array{name: string, path: string, pathPattern: string, staticPrefix: string, staticSegments: array<int, string>, methods: array<int, string>, schemes: array<int, string>, hostPattern: string, hasHostRequirement: bool, hostUnsupported: bool, hasCondition: bool, index: int}
+ * @phpstan-type RouteDescriptor array{name: string, path: string, pathPattern: string, slashPattern: string, staticPrefix: string, staticSegments: array<int, string>, methods: array<int, string>, schemes: array<int, string>, hostPattern: string, hasHostRequirement: bool, hostUnsupported: bool, hasCondition: bool, index: int}
  * @phpstan-type RouteConflict array{
  *     route: RouteDescriptor,
  *     conflict: RouteDescriptor,
@@ -27,6 +27,7 @@ namespace PHPRegex\Symfony\Routing;
  *     schemes: array<int, string>,
  *     notes: array<int, string>,
  *     laterTakesEarlier: bool,
+ *     redirected: bool,
  * }
  * @phpstan-type RouteSkip array{route: string, reason: string}
  */

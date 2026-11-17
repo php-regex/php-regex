@@ -533,7 +533,13 @@ too, as the router sends them: a later route for `HEAD` only on the same
 path is shadowed, and a route for `HEAD` only declared before a route for
 `GET` on the same path is an overlap that serves both. The report suggests
 moving a later route first, or merging two routes on the same paths, only
-where neither would leave a route unreachable.
+where neither would leave a route unreachable. The router redirects a `GET`
+or `HEAD` request whose path differs from a route's by a trailing slash
+alone to that route, and tries no later one: `/foo/` declared before
+`/foo` takes `GET /foo`, so the later route is shadowed when it takes only
+`GET` and `HEAD`, and an overlap otherwise; the report then suggests paths
+that differ by more than the slash. A route that takes no `GET` request
+redirects none.
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods, addresses, port, route and attributes take a request

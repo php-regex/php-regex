@@ -160,6 +160,40 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
     }
 
     /**
+     * Two routes whose paths differ by a trailing slash alone: whichever
+     * comes first takes the GET and HEAD requests of the other, redirected,
+     * so moving the later one first only turns the redirect round. The
+     * paths are what to change.
+     *
+     * @param list<string> $methods
+     */
+    #[Test]
+    #[DataProvider('provideTrailingSlashConflicts')]
+    public function test_a_trailing_slash_redirect_gets_no_reorder_but_distinct_paths(string $earlier, string $later, array $methods): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('first', new Route($earlier));
+        $collection->add('second', (new Route($later))->setMethods($methods));
+
+        $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
+        $this->assertCount(1, $conflicts);
+
+        $this->assertSame(
+            ['Give "first" and "second" paths that differ by more than a trailing slash: the GET and HEAD requests of "second" are redirected to "first".'],
+            (new RouteConflictSuggestionBuilder())->collect($conflicts),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{earlier: string, later: string, methods: list<string>}>
+     */
+    public static function provideTrailingSlashConflicts(): iterable
+    {
+        yield 'an overlap' => ['earlier' => '/foo/', 'later' => '/foo', 'methods' => []];
+        yield 'a shadow' => ['earlier' => '/foo', 'later' => '/foo/', 'methods' => ['GET']];
+    }
+
+    /**
      * An overlap whose later route takes requests of its own and leaves
      * the earlier one some: moving the later route first still serves
      * both, and the reorder stays.

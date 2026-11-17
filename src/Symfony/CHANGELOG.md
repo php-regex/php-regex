@@ -192,6 +192,14 @@ CHANGELOG
    an overlap whichever is declared first, the earlier one winning them, and
    a route is shadowed when an earlier one takes all its paths. A narrower
    route declared before a wider one is not reported.
+ * `regex:routes` and `regex:analyze` read the redirect of the trailing
+   slash, as the framework's matcher sends it: a `GET` or `HEAD` request
+   whose path differs from an earlier route's by a trailing slash alone
+   goes to that route. `/foo/` before `/foo`, or `/a/{x}/` before
+   `/a/{x}`, is an overlap, or a shadow when the later route takes only
+   `GET` and `HEAD`, where the pair was reported as no conflict. The report
+   suggests paths that differ by more than the slash, never the reorder
+   that only turns the redirect round.
  * `regex:routes` and `regex:analyze` call a route shadowed only when an
    earlier route takes every request of it, its methods (`GET` taking
    `HEAD`), its schemes and its host included, as the security analysis

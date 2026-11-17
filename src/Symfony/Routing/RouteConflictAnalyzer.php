@@ -155,6 +155,17 @@ final class RouteConflictAnalyzer
                     $pathIntersections++;
                     $intersection = $this->solver->intersection($earlier['pathPattern'], $later['pathPattern'], $options);
                     if ($intersection->isEmpty) {
+                        $redirect = $this->redirectConflict($earlier, $later, $options, null === $hostsOverlap);
+                        if (null !== $redirect && 'shadowed' === $redirect['type']) {
+                            $shadowed++;
+                            $conflicts[] = $redirect;
+                        } elseif (null !== $redirect) {
+                            $overlaps++;
+                            if ($includeOverlaps) {
+                                $conflicts[] = $redirect;
+                            }
+                        }
+
                         continue;
                     }
 
@@ -208,6 +219,7 @@ final class RouteConflictAnalyzer
                     'schemes' => $this->intersectSchemes($earlier['schemes'], $later['schemes']),
                     'notes' => $notes,
                     'laterTakesEarlier' => $laterTakesEarlier,
+                    'redirected' => false,
                 ];
             }
         }
@@ -326,6 +338,7 @@ final class RouteConflictAnalyzer
             'name' => $name,
             'path' => $route->getPath(),
             'pathPattern' => $pathNormalization['pattern'],
+            'slashPattern' => $this->normalizePattern(self::slashToggled($pathRegex))['pattern'],
             'staticPrefix' => $this->resolveStaticPrefix($compiled),
             'staticSegments' => $this->extractStaticSegments($route->getPath()),
             'methods' => $this->normalizeMethods($route->getMethods()),
@@ -335,6 +348,66 @@ final class RouteConflictAnalyzer
             'hostUnsupported' => $hostUnsupported,
             'hasCondition' => $hasCondition,
             'index' => $index,
+        ];
+    }
+
+    /**
+     * The route regex as the matchers try it on a GET or HEAD request,
+     * with its trailing slash or without it, as UrlMatcher::matchCollection()
+     * rewrites it: "$" becomes "/?$", the slash before it dropped. A regex
+     * of the application's own with no "$" is left as it is.
+     */
+    private static function slashToggled(string $regex): string
+    {
+        $end = strrpos($regex, '$');
+        $slash = false !== $end && $end > 0 && '/' === $regex[$end - 1] ? 1 : 0;
+
+        return false === $end ? $regex : substr_replace($regex, '/?$', $end - $slash, 1 + $slash);
+    }
+
+    /**
+     * The conflict of two routes whose paths share none: the framework's
+     * matcher redirects a GET or HEAD request whose path differs from an
+     * earlier route's by a trailing slash alone to that route, and tries no
+     * later one. Null when the earlier route takes no GET request, the
+     * later one no GET or HEAD request, or none of its paths is
+     * redirected. The later route is shadowed when it takes only GET and
+     * HEAD requests, on hosts the earlier one holds.
+     *
+     * @param bool $hostsUnread whether the solver gave up on the two hosts
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     * @phpstan-param RouteDescriptor $later
+     *
+     * @throws ComplexityException When the solver gives up on the paths
+     *
+     * @phpstan-return RouteConflict|null
+     */
+    private function redirectConflict(array $earlier, array $later, SolverOptions $options, bool $hostsUnread): ?array
+    {
+        if (!$this->listHolds($earlier['methods'], ['GET']) || !$this->methodsOverlap(['GET', 'HEAD'], $later['methods'])) {
+            return null;
+        }
+
+        $redirected = $this->solver->intersection($earlier['slashPattern'], $later['pathPattern'], $options);
+        if ($redirected->isEmpty) {
+            return null;
+        }
+
+        $everyPath = null === $this->solver->equivalent($earlier['slashPattern'], $later['pathPattern'], $options)->rightOnlyExample;
+        $shadowed = $everyPath && $this->takesEveryRequestOf(['methods' => ['GET', 'HEAD'], 'schemes' => []] + $earlier, $later, $options);
+
+        return [
+            'route' => $earlier,
+            'conflict' => $later,
+            'type' => $shadowed ? 'shadowed' : 'overlap',
+            'example' => $redirected->example,
+            'equivalent' => false,
+            'methods' => $this->intersectMethods(['GET', 'HEAD'], $later['methods']),
+            'schemes' => $later['schemes'],
+            'notes' => [...$this->buildNotes($earlier, $later, $hostsUnread), 'GET and HEAD requests differing by a trailing slash are redirected to the earlier route.'],
+            'laterTakesEarlier' => false,
+            'redirected' => true,
         ];
     }
 
