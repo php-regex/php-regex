@@ -64,11 +64,15 @@ CHANGELOG
  * `regex:lint` reads a double-quoted validation rule as PHP decodes it, its
    `\u{…}`, `\x`, octal and `\$` escapes included:
    `"regex:/^[\u{0600}-\u{06FF}]+$/u"` was linted with its `\u`, which PCRE
-   refuses, where Laravel runs the characters PHP decodes.
- * `regex:lint` splits on `|` a rules string given to a call, as
-   `Validator::sometimes()` and `Rule::when()` do: `Rule::when($condition,
-   'regex:/^(a|b)$/')` runs `/^(a`, where `/^(a|b)$/` was linted. An element
-   of an array literal stays one rule.
+   refuses, where Laravel runs the characters PHP decodes. An escape in the
+   rule's name or the blanks around it, `"required|\tregex:/^a$/"`, no longer
+   hides the rule.
+ * `regex:lint` splits on `|` a rules string a call takes as rules, by
+   position or by name, as `Validator::sometimes()`, `Rule::when()`,
+   `Rule::unless()` and `ConditionalRules` do, through parentheses that only
+   group it: `Rule::when($condition, 'regex:/^(a|b)$/')` runs `/^(a`, where
+   `/^(a|b)$/` was linted. An element of an array literal, or a string
+   another call takes, as `array_push()` appends it, stays one rule.
  * `regex:lint` reads a regex rule whose name has blanks around it,
    `'required | regex:/^b+$/'` or `'regex :/^b+$/'`, which Laravel trims and
    runs: it was not linted. Laravel reads the parameter of such a rule as

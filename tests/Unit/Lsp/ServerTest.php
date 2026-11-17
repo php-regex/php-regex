@@ -17,6 +17,7 @@ use PHPRegex\LanguageServer\Protocol\MessageLimits;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Parser\Text\Path;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\TestUtils\FileUri;
 use PHPRegex\Toolkit\Regex;
@@ -72,6 +73,10 @@ final class ServerTest extends TestCase
     #[Test]
     public function test_a_hover_quoting_a_byte_json_cannot_carry_is_answered(): void
     {
+        // The engine runs the pattern on bytes and refuses it as UTF-8.
+        $this->assertSame(1, preg_match("/\xFF\xFEa+/", "\xFF\xFEaa"));
+        $this->assertStringContainsString('UTF-8 error', (string) EngineProbe::warning("/\xFF\xFEa+/u"));
+
         $this->serve([
             ['id' => 1, 'method' => 'initialize', 'params' => []],
             ['method' => 'initialized'],
