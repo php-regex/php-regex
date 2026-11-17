@@ -104,8 +104,8 @@ final class ValidationBench
     #[ExpectedFor('lookbehind-alternatives', instructions: '57.68M', cycles: '65.03M', memory: '507.8KiB')]
     #[ExpectedFor('many-backreferences', instructions: '20.94M', cycles: '28.65M', memory: '113.2KiB')]
     #[ExpectedFor('recursion-balanced', instructions: '1.166M', cycles: '2.574M', memory: '14.70KiB')]
-    #[ExpectedFor('reversed-quantifier', instructions: '623.9K', cycles: '1.649M', memory: '23.73KiB')]
-    #[ExpectedFor('unclosed-group', instructions: '946.2K', cycles: '1.901M', memory: '28.39KiB')]
+    #[ExpectedFor('reversed-quantifier', instructions: '604.1K', cycles: '1.626M', memory: '24.12KiB')]
+    #[ExpectedFor('unclosed-group', instructions: '925.3K', cycles: '1.888M', memory: '28.39KiB')]
     public function benchValidate(string $pattern): void
     {
         $this->regex->validate($pattern);
