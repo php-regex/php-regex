@@ -161,7 +161,7 @@ final class JsonDocument
         for ($i = 0; $i < $end;) {
             $sequence = (string) substr($line, $i, Utf8::width($line, $i));
             if (mb_check_encoding($sequence, 'UTF-8')) {
-                $columns += mb_strwidth($sequence, 'UTF-8') > 1 ? 2 : 1;
+                $columns += Snippet::columns($sequence);
                 $i += \strlen($sequence);
 
                 continue;

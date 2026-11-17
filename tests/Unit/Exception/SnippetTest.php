@@ -147,4 +147,42 @@ final class SnippetTest extends TestCase
         // A line that is not UTF-8 is counted in bytes.
         $this->assertSame("Line 1: \xE9t(\n".str_repeat(' ', 8 + 2).'^', Snippet::render("\xE9t(", 2));
     }
+
+    /**
+     * Every character Unicode gives an East Asian Width of Wide or Fullwidth
+     * is two columns, as a terminal draws it and as mb_strwidth() counts it
+     * on PHP 8.4: the emoji past the first blocks among them. A character
+     * of any other width is one, an emoji or not.
+     */
+    #[Test]
+    #[DataProvider('provideCharacterWidths')]
+    public function test_the_caret_counts_two_columns_for_every_wide_character(string $character, int $columns): void
+    {
+        $this->assertSame($columns, mb_strwidth($character, 'UTF-8'), 'Oracle: mbstring on PHP 8.4.');
+        $this->assertSame("Line 1: {$character}a(\n".str_repeat(' ', 8 + $columns + 1).'^', Snippet::render($character.'a(', \strlen($character) + 1));
+        $this->assertSame($columns, Snippet::columns($character));
+    }
+
+    /**
+     * @return iterable<string, array{character: string, columns: int}>
+     */
+    public static function provideCharacterWidths(): iterable
+    {
+        yield 'rocket' => ['character' => "\u{1F680}", 'columns' => 2];
+        yield 'high voltage' => ['character' => "\u{26A1}", 'columns' => 2];
+        yield 'check mark' => ['character' => "\u{2705}", 'columns' => 2];
+        yield 'watch' => ['character' => "\u{231A}", 'columns' => 2];
+        yield 'mahjong tile' => ['character' => "\u{1F004}", 'columns' => 2];
+        yield 'umbrella with rain drops' => ['character' => "\u{2614}", 'columns' => 2];
+        yield 'skin tone modifier' => ['character' => "\u{1F3FB}", 'columns' => 2];
+        yield 'white heart' => ['character' => "\u{1F90D}", 'columns' => 2];
+        yield 'ballet shoes' => ['character' => "\u{1FA70}", 'columns' => 2];
+        yield 'squared CJK ideograph' => ['character' => "\u{1F200}", 'columns' => 2];
+        yield 'Tangut iteration mark' => ['character' => "\u{16FE0}", 'columns' => 2];
+        yield 'katakana letter archaic e' => ['character' => "\u{1B000}", 'columns' => 2];
+        yield 'ideographic space' => ['character' => "\u{3000}", 'columns' => 2];
+        yield 'regional indicator' => ['character' => "\u{1F1E6}", 'columns' => 1];
+        yield 'black sun with rays' => ['character' => "\u{2600}", 'columns' => 1];
+        yield 'letter with an accent' => ['character' => "\u{E9}", 'columns' => 1];
+    }
 }

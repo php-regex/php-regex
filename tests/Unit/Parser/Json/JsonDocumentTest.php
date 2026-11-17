@@ -108,6 +108,7 @@ final class JsonDocumentTest extends TestCase
         yield 'on an invalid byte' => ['pattern' => "a\xFFb", 'position' => 1, 'before' => '', 'after' => '', 'expected' => "Line 1: a\\xFFb\n         ^"];
         yield 'after an invalid byte and a character of two bytes' => ['pattern' => "\xFFé(", 'position' => 3, 'before' => '', 'after' => '', 'expected' => "Line 1: \\xFFé(\n             ^"];
         yield 'after an invalid byte and a wide character' => ['pattern' => "\xFF中(", 'position' => 4, 'before' => '', 'after' => '', 'expected' => "Line 1: \\xFF中(\n              ^"];
+        yield 'after an invalid byte and an emoji' => ['pattern' => "\xFF\u{1F680}(", 'position' => 5, 'before' => '', 'after' => '', 'expected' => "Line 1: \\xFF\u{1F680}(\n              ^"];
         yield 'on the second line, past the end' => ['pattern' => "a\n\xFF", 'position' => 3, 'before' => '', 'after' => '', 'expected' => "Line 2: \\xFF\n            ^"];
         yield 'quoted in a message' => ['pattern' => "\xFF(", 'position' => 2, 'before' => "Expected ) at end of input (found eof).\n", 'after' => "\nSuggestion: \xFF", 'expected' => "Expected ) at end of input (found eof).\nLine 1: \\xFF(\n             ^\nSuggestion: \\xFF"];
         // Valid UTF-8 before the caret is counted in columns, fewer than its
