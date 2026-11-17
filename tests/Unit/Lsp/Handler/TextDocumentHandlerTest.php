@@ -22,6 +22,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -202,6 +203,15 @@ final class TextDocumentHandlerTest extends TestCase
     #[Test]
     public function test_a_pattern_holding_bytes_that_are_no_utf8_is_hovered_and_diagnosed(): void
     {
+        // The engine reads both patterns as bytes and refuses them as
+        // UTF-8; the group around "\xFF" changes no match.
+        $this->assertSame(1, preg_match("/^\xff\xd8\xff(?:\xe0|\xe1)/", "\xff\xd8\xff\xe1"));
+        $this->assertStringContainsString('UTF-8 error', (string) EngineProbe::warning("/^\xff\xd8\xff(?:\xe0|\xe1)/u"));
+        $this->assertStringContainsString('UTF-8 error', (string) EngineProbe::warning("/(?:\xff)/u"));
+        foreach (['', "\xff", "a\xff", "\xfe", "\xff\xff"] as $subject) {
+            $this->assertSame([preg_match("/\xff/", $subject, $plain, \PREG_OFFSET_CAPTURE), $plain], [preg_match("/(?:\xff)/", $subject, $grouped, \PREG_OFFSET_CAPTURE), $grouped], bin2hex($subject));
+        }
+
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
         $handler = new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null]));
