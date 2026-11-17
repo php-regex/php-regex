@@ -39,7 +39,9 @@ CHANGELOG
    critical. Each call is read through once, which ends a recursion. A
    branch that is a call starts as the group it calls:
    `/^(?:[a-z]|(?&c))+$(?(DEFINE)(?<c>[a-z0-9]))/` and `/^(a)(?:a|(?1))+$/`,
-   which were medium, are critical.
+   which were medium, are critical. A call outside any loop is read so too:
+   `/^(?:(?>x((?:a+)+))|y(?1)$)/`, which was low, is critical where the call
+   runs the nested loops the atomic group kept safe.
  * The heuristics read a branch whose first characters they cannot list, a
    backreference or a Unicode property, as one that may start as any other
    branch, whichever comes first: `/^(a)(?:a|\1)+$/` and

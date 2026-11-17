@@ -411,6 +411,37 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * A call outside any loop still runs the group it calls, there and not
+     * where the group is written: nested loops kept safe by an atomic group
+     * around their definition backtrack where the call runs them, and the
+     * engine goes exponential on 8 -> 12 -> 16 letters then "!" (387 ->
+     * 6 147 -> 98 307 steps). A call of a single loop (12 -> 16 -> 20), or
+     * one that ends an atomic group itself (8 -> 8 -> 8), stays below
+     * critical.
+     *
+     * @return iterable<string, array{pattern: string, prefix: string, critical: bool}>
+     */
+    public static function provideCallsOutsideALoop(): iterable
+    {
+        yield 'call in another branch of nested loops written in an atomic group' => ['pattern' => '/^(?:(?>x((?:a+)+))|y(?1)$)/', 'prefix' => 'y', 'critical' => true];
+        yield 'call after an optional atomic group of nested loops' => ['pattern' => '/^(?>x((?:a+)+))?y(?1)$/', 'prefix' => 'y', 'critical' => true];
+        yield 'call of a single loop' => ['pattern' => '/^(?:(?>x(a+))|y(?1)$)/', 'prefix' => 'y', 'critical' => false];
+        yield 'call ending an atomic group' => ['pattern' => '/^(?:(?>x((?:a+)+))|y(?>(?1))$)/', 'prefix' => 'y', 'critical' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideCallsOutsideALoop')]
+    public function test_a_call_outside_a_loop_is_read_as_the_group_it_calls(string $pattern, string $prefix, bool $critical): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, $prefix.str_repeat('a', 8).'!');
+        $long = self::steps($unoptimized, $prefix.str_repeat('a', 12).'!');
+        $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
      * A branch whose first characters are not known, a backreference or a
      * Unicode property, may start as any other branch does: the verdict
      * does not depend on the order the branches are written in. The engine

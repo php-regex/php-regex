@@ -732,11 +732,14 @@ final class RedosProfiler extends AbstractNodeVisitor
             'Medium false-positive risk; recursion depth and input shape matter.',
         );
 
-        // In a loop, a call runs the group it calls at each iteration, as
-        // if its body stood in its place: "(?:(?1))+" over "(a|a)" is
-        // "(?:a|a)+". Each call is read so once, which ends a recursion.
+        // A call runs the group it calls where it stands, as if its body
+        // stood in its place: in a loop at each iteration, "(?:(?1))+" over
+        // "(a|a)" is "(?:a|a)+", and outside one without the atomic group
+        // written around the group, "y(?1)$" backtracking into the
+        // "(?:a+)+" of an atomic "x((?:a+)+)". Each call is read so once,
+        // which ends a recursion.
         $severity = RedosSeverity::Low;
-        if ($this->totalQuantifierDepth > 0 && !isset($this->callsReadThrough[spl_object_id($node)])) {
+        if (!isset($this->callsReadThrough[spl_object_id($node)])) {
             $this->callsReadThrough[spl_object_id($node)] = true;
             $group = $this->calledGroup($node);
             if (null !== $group) {
