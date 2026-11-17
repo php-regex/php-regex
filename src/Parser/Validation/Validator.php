@@ -98,6 +98,17 @@ final class Validator extends AbstractNodeVisitor
     public const MAX_GROUP_NESTING = 250;
 
     /**
+     * What PCRE reads past an opener before the first item of its body, a
+     * longer text before one it ends with: the quotes, and the spaces "x"
+     * skips, NEL and the marks and separators of UTF-8 among them, NEL a
+     * byte outside UTF. Outside "x" or UTF a space is that first item.
+     */
+    private const SKIPPED_AFTER_OPENER = [
+        "\u{85}", "\u{200E}", "\u{200F}", "\u{2028}", "\u{2029}", '\Q', '\E',
+        ' ', "\t", "\n", "\r", "\v", "\f", "\x85",
+    ];
+
+    /**
      * The assertions an escaped letter stands for.
      */
     private const VALID_ASSERTIONS = [
@@ -936,7 +947,7 @@ final class Validator extends AbstractNodeVisitor
     /**
      * One more level of parentheses, whose body starts at $bodyStart. PCRE
      * refuses the level past its limit once it has read the opener, before
-     * any space that "x" skips.
+     * the quotes and the spaces that "x" skips after it.
      */
     private function enterNesting(int $bodyStart): void
     {
@@ -946,9 +957,18 @@ final class Validator extends AbstractNodeVisitor
 
         $this->nestingDepth--;
         $source = $this->source ?? '';
-        while ($bodyStart > 0 && isset($source[$bodyStart - 1]) && Ascii::isSpace($source[$bodyStart - 1])) {
-            $bodyStart--;
-        }
+        do {
+            $skipped = false;
+            foreach (self::SKIPPED_AFTER_OPENER as $text) {
+                $length = \strlen($text);
+                if ($bodyStart >= $length && substr($source, $bodyStart - $length, $length) === $text) {
+                    $bodyStart -= $length;
+                    $skipped = true;
+
+                    break;
+                }
+            }
+        } while ($skipped);
 
         $this->raiseSemanticError(
             \sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', self::MAX_GROUP_NESTING),

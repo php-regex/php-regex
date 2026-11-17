@@ -42,6 +42,40 @@ final class ValidatorNestingTest extends TestCase
     }
 
     /**
+     * Nor does PCRE read the quotes or the Unicode spaces that follow the
+     * opener: each row is the offset preg_match() reports on PHP 8.4.27 with
+     * PCRE2 10.49, right after the opener of the 251st level.
+     */
+    #[Test]
+    #[DataProvider('provideTextSkippedAfterTheOpener')]
+    public function test_the_level_past_the_limit_is_refused_before_the_quotes_and_spaces_pcre_skips(string $pattern, int $offset): void
+    {
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([ErrorCode::GroupNestedTooDeep, $offset], [$result->errorCode, $result->offset]);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideTextSkippedAfterTheOpener(): iterable
+    {
+        $open = str_repeat('(', 250);
+        $close = str_repeat(')', 251);
+
+        yield 'quoted text' => ['pattern' => '/'.$open.'(\Qa\E'.$close.'/', 'offset' => 251];
+        yield 'empty quotes' => ['pattern' => '/'.$open.'(?:\Q\Ea'.$close.'/', 'offset' => 253];
+        yield 'a lone \E' => ['pattern' => '/'.$open.'(?<n>\Ea'.$close.'/', 'offset' => 255];
+        yield 'empty quotes, then a space x skips' => ['pattern' => '/()'.$open.'(?(1)\Q\E a'.$close.'/x', 'offset' => 257];
+        yield 'a space x skips, then empty quotes' => ['pattern' => '/'.$open.'(?i: \Q\Ea'.$close.'/x', 'offset' => 254];
+        yield 'line separator under xu' => ['pattern' => '/'.$open."(\u{2028}a".$close.'/xu', 'offset' => 251];
+        yield 'paragraph separator under (*UTF) and x' => ['pattern' => '/(*UTF)'.$open."(\u{2029}a".$close.'/x', 'offset' => 257];
+        yield 'next line under xu' => ['pattern' => '/'.$open."(*pla:\u{85}a".$close.'/xu', 'offset' => 256];
+        yield 'left-to-right mark under xu' => ['pattern' => '/'.$open."(?=\u{200E}a".$close.'/xu', 'offset' => 253];
+        yield 'next line byte under x' => ['pattern' => '/'.$open."(\x85a".$close.'/x', 'offset' => 251];
+    }
+
+    /**
      * Past the parser's own limit on nesting, 512 levels by default, PCRE
      * has refused the level past 250, or an error before it, already: that
      * error is the verdict, not the limit. Each row is what preg_match()
