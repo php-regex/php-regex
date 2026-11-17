@@ -28,18 +28,26 @@ CHANGELOG
    `/^(?:(?:a+)+b(*COMMIT))+/`, which were safe, are critical, and so is
    `/^(?>(\w+\s?)+:)/`: an item that may match nothing keeps no two
    iterations of a loop apart.
- * A `(*SKIP:NAME)` with no `(*MARK:NAME)` written before it, which PCRE
-   ignores, and a verb inside a lookaround or an atomic group, which acts
-   there alone, no longer stop the loop around them in the heuristics:
-   `/(?:\w+\s?(*SKIP:n))+:/` and `/^(?:\w+\s?(?=(*COMMIT)))+:/`, which
-   were safe, are critical.
+ * A `(*SKIP:NAME)` with no `(*MARK:NAME)` PCRE finds going back from it,
+   which PCRE ignores, and a verb inside a lookaround or an atomic group,
+   which acts there alone, no longer stop the loop around them in the
+   heuristics: `/(?:\w+\s?(*SKIP:n))+:/` and
+   `/^(?:\w+\s?(?=(*COMMIT)))+:/`, which were safe, are critical. A mark
+   written before the skip inside a lookaround or an atomic group, or on a
+   branch the match may not take, is not found: `/^(?=(*MARK:n))(?:\w+\s?(*SKIP:n))+:/`,
+   which was safe, is critical.
  * The heuristics read a subroutine call in a loop as the group it calls,
    as PCRE runs it at each iteration: `/^(?:(?1))+(a|a)$/` and
    `/^(?:(?&w)\s?)+$(?(DEFINE)(?<w>[a-z]+))/`, which were medium, are
-   critical. Each call is read through once, which ends a recursion. A
-   branch that is a call starts as the group it calls:
+   critical. Each call is read through once from each place it runs from,
+   and a call met again while its group is read, a recursion, is left
+   there: `/(?(DEFINE)(?<wrap>(?&atom))(?<atom>a|a))^(?&wrap)+$/`, whose
+   DEFINE block reaches the call of `atom` first, was medium and is
+   critical. A branch that is a call starts as the group it calls:
    `/^(?:[a-z]|(?&c))+$(?(DEFINE)(?<c>[a-z0-9]))/` and `/^(a)(?:a|(?1))+$/`,
-   which were medium, are critical. A call outside any loop is read so too:
+   which were medium, are critical, and a branch that recurses into the
+   whole pattern is left out while the others are still compared:
+   `/^x(?:a|a|(?R))+$/`, which was medium, is critical. A call outside any loop is read so too:
    `/^(?:(?>x((?:a+)+))|y(?1)$)/`, which was low, is critical where the call
    runs the nested loops the atomic group kept safe.
  * The heuristics read a branch whose first characters they cannot list, a
@@ -61,9 +69,14 @@ CHANGELOG
    code unit every match requires, which PCRE2 looks for before it tries
    the pattern: `/^(x)?(?:\w+\s?)+:\1/`, critical in theoretical mode, was
    rejected at once on inputs without its `:`, never confirmed and dropped.
+   An input holds no more bytes than its length, the code unit left out
+   where a character and the one that fails the match do not fit before
+   it, and each sample gives the length of the input it ran on.
  * In confirmed mode, a heuristic verdict on a pattern holding `(*SKIP:NAME)`
    is replayed under the JIT, as PHP runs the pattern by default, and its
    confirmation reports `jit_setting: true`, as for `/(?:a|a)+(*SKIP:x)$/`.
+   Where `ini_set()` refuses `pcre.jit`, nothing is run and the
+   confirmation's evidence is `engine limits unavailable`.
  * A backreference to a group of variable length in a loop is no longer
    critical when the body of the loop reads its input one way, each
    alternation choosing its branch by the first character and each count

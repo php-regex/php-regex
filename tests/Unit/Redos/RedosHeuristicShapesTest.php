@@ -248,10 +248,13 @@ final class RedosHeuristicShapesTest extends TestCase
      * A verb that ends an iteration cuts backtracking only where the engine
      * honours it: "(*SKIP:NAME)" with no "(*MARK:NAME)" before it is
      * ignored, as is a mark of another name, a mark cuts nothing, and a
-     * verb inside a lookaround or an atomic group acts only there. The
-     * nested loop stays critical, and the engine agrees: 765 -> 12 285 ->
-     * 196 605 steps on 8 -> 12 -> 16 letters then "!:" (start
-     * optimizations off, the JIT counting).
+     * verb inside a lookaround or an atomic group acts only there. A mark
+     * written before the skip is no help where the engine does not find it
+     * on its way back: inside a lookahead or an atomic group, which it never
+     * goes back into once they have matched, or on a branch the match did
+     * not take (766 -> 12 286 -> 196 606). The nested loop stays critical,
+     * and the engine agrees: 765 -> 12 285 -> 196 605 steps on 8 -> 12 ->
+     * 16 letters then "!:" (start optimizations off, the JIT counting).
      *
      * @return iterable<string, array{pattern: string}>
      */
@@ -264,6 +267,9 @@ final class RedosHeuristicShapesTest extends TestCase
         yield 'commit in an atomic group' => ['pattern' => '/^(?:\w+\s?(?>(*COMMIT)))+:/'];
         yield 'prune in a lookbehind' => ['pattern' => '/^(?:\w+\s?(?<=(*PRUNE)))+:/'];
         yield 'mark' => ['pattern' => '/^(?:\w+\s?(*MARK:n))+:/'];
+        yield 'skip to a name a mark sets in a lookahead before it' => ['pattern' => '/^(?=(*MARK:n))(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a name a mark sets in an atomic group before it' => ['pattern' => '/^(?>(*MARK:n))(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a name a mark sets on a branch not taken' => ['pattern' => '/^(?:x(*MARK:n)|)(?:\w+\s?(*SKIP:n))+:/'];
     }
 
     #[Test]
@@ -282,8 +288,9 @@ final class RedosHeuristicShapesTest extends TestCase
 
     /**
      * A skip to a mark set before it, like a bare "(*COMMIT)", ends the
-     * attempt the first time the engine backtracks onto it: 3 steps
-     * whatever the letters, and the loop it ends is safe.
+     * attempt the first time the engine backtracks onto it: 3 or 4 steps
+     * whatever the letters, and the loop it ends is safe. A mark in a group
+     * that only wraps it is found as one written in the sequence.
      *
      * @return iterable<string, array{pattern: string}>
      */
@@ -291,6 +298,8 @@ final class RedosHeuristicShapesTest extends TestCase
     {
         yield 'skip to a mark set in the iteration' => ['pattern' => '/^(?:(*MARK:n)\w+\s?(*SKIP:n))+:/'];
         yield 'skip to a mark set as (*:NAME) before the loop' => ['pattern' => '/^(*:n)(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a mark set in a group before the loop' => ['pattern' => '/^((*MARK:n))(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a mark set in a group before the loop, beside a letter' => ['pattern' => '/^(?:(*MARK:n)\w?)(?:\w+\s?(*SKIP:n))+:/'];
         yield 'commit in a group' => ['pattern' => '/^(?:\w+\s?(?:(*COMMIT)))+:/'];
     }
 
@@ -370,7 +379,14 @@ final class RedosHeuristicShapesTest extends TestCase
      * call of "(a)"), one that does not chooses its branch (69 -> 101 ->
      * 133 for "-" beside a call of "[a-z0-9]", on "a-" units). A branch
      * that recurses into the whole pattern is left out of the comparison
-     * (42 -> 58 -> 74 for nested parentheses after a "(").
+     * (42 -> 58 -> 74 for nested parentheses after a "("), and the other
+     * branches are still compared: two "a" beside it are read twice at
+     * each letter (2 556 -> 40 956 -> 655 356 after an "x"), an "a" and a
+     * "b" are not (46 -> 66 -> 86). A call is read again wherever it runs:
+     * reached first from a DEFINE block, outside any loop, then from a
+     * repeated call of the group holding it (2 556 -> 40 956 -> 655 356),
+     * or first from a loop where a comma keeps its runs apart, then from
+     * a loop where nothing does (1 286 -> 20 486 -> 327 686 after "a,;").
      *
      * @return iterable<string, array{pattern: string, prefix: string, unit: string, critical: bool}>
      */
@@ -397,6 +413,10 @@ final class RedosHeuristicShapesTest extends TestCase
         yield 'branch calling the group that opens the pattern' => ['pattern' => '/^(a)(?:a|(?1))+$/', 'prefix' => 'a', 'unit' => 'a', 'critical' => true];
         yield 'branch recursing into the whole pattern' => ['pattern' => '/^\((?:[^()]|(?R))*\)/', 'prefix' => '(', 'unit' => 'a', 'critical' => false];
         yield 'branch calling a group the other branch never starts' => ['pattern' => '/^(?:-|(?&c))+$(?(DEFINE)(?<c>[a-z0-9]))/', 'prefix' => '', 'unit' => 'a-', 'critical' => false];
+        yield 'branch recursing into the whole pattern beside two that overlap' => ['pattern' => '/^x(?:a|a|(?R))+$/', 'prefix' => 'x', 'unit' => 'a', 'critical' => true];
+        yield 'branch recursing into the whole pattern beside two that do not' => ['pattern' => '/^x(?:a|b|(?R))+$/', 'prefix' => 'x', 'unit' => 'a', 'critical' => false];
+        yield 'call a DEFINE block reads first, then a repeated call' => ['pattern' => '/(?(DEFINE)(?<wrap>(?&atom))(?<atom>a|a))^(?&wrap)+$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'call read first where a comma keeps its runs apart' => ['pattern' => '/^(?:(?&w),)+;(?:(?&w))+$(?(DEFINE)(?<w>(?&a))(?<a>[a-z]+))/', 'prefix' => 'a,;', 'unit' => 'a', 'critical' => true];
     }
 
     #[Test]
