@@ -373,12 +373,6 @@ final class RouteConflictAnalyzer
     }
 
     /**
-     * The route regex as the matchers try it on a GET or HEAD request,
-     * with its trailing slash or without it, as UrlMatcher::matchCollection()
-     * rewrites it: "$" becomes "/?$", the slash before it dropped. A regex
-     * of the application's own with no "$" is left as it is.
-     */
-    /**
      * The paths that differ from those of the regex by their trailing slash:
      * the slash before the closing anchor is dropped, or one is added.
      */
@@ -390,6 +384,12 @@ final class RouteConflictAnalyzer
         return false === $end ? $regex : substr_replace($regex, 1 === $slash ? '$' : '/$', $end - $slash, 1 + $slash);
     }
 
+    /**
+     * The route regex as the matchers try it on a GET or HEAD request,
+     * with its trailing slash or without it, as UrlMatcher::matchCollection()
+     * rewrites it: "$" becomes "/?$", the slash before it dropped. A regex
+     * of the application's own with no "$" is left as it is.
+     */
     private static function slashToggled(string $regex): string
     {
         $end = strrpos($regex, '$');

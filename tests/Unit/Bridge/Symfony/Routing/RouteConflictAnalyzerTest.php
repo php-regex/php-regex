@@ -964,6 +964,13 @@ final class RouteConflictAnalyzerTest extends TestCase
             'type' => 'overlap',
             'filtered' => 0,
         ];
+        yield 'a route on https with a trailing slash sharing a path with a later one on http, which loses the path without it' => [
+            'earlier' => ['/{x<a|b>}/', ['GET'], ['https']],
+            'later' => ['/{y<a/|b>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/a/', true], ['GET', 'http', '/b', false], ['HEAD', 'http', '/b', false]],
+            'type' => 'overlap',
+            'filtered' => 0,
+        ];
         yield 'a route on https sharing every path with a later one on http, whose paths the redirect leaves alone' => [
             'earlier' => ['/{x<a|b>}', ['GET'], ['https']],
             'later' => ['/{y<a>}', ['GET'], ['http']],
