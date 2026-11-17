@@ -267,10 +267,16 @@ final class SecurityAccessControlAnalyzer
 
         $notes = [];
         $path = $rule['path'];
+        $route = $rule['route'] ?? null;
+        $attributes = $rule['attributes'] ?? [];
         if (null === $path || '' === trim((string) $path, " \t\n\r\0\x0B")) {
             $path = '';
-            $notes[] = 'Rule has no path; it matches all requests.';
-            $rulesWithNoPath[] = $index;
+            // A route or request attributes keep the rule to the requests
+            // the router gives them.
+            if (null === $route && [] === $attributes) {
+                $notes[] = 'Rule has no path; it matches all requests.';
+                $rulesWithNoPath[] = $index;
+            }
         }
 
         if (null !== $rule['allowIf']) {
@@ -287,8 +293,6 @@ final class SecurityAccessControlAnalyzer
             $notes[] = 'requires_channel is not evaluated.';
         }
 
-        $route = $rule['route'] ?? null;
-        $attributes = $rule['attributes'] ?? [];
         if (null !== $route || [] !== $attributes) {
             $notes[] = 'Route and attribute restrictions are not evaluated.';
         }
