@@ -20,9 +20,10 @@ The bugs of the second pass are fixed in #403; these were left out of it.
   does not: `"^/a\\\n"` becomes an invalid pattern and is skipped.
 - A trailing-slash redirect that takes only part of a later route's paths,
   while the two routes also share paths, is not reported: `/admin` before a
-  `.*` catch-all (GET `/admin/` is redirected), or disjoint schemes with
-  shared paths. It needs a three-way language operation the solver lacks,
-  and would flag every static route declared before a catch-all.
+  `.*` catch-all (GET `/admin/` is redirected). It needs a three-way
+  language operation the solver lacks, and would flag every static route
+  declared before a catch-all. On disjoint schemes the overlap is reported
+  only when the solver's example lies outside the earlier route's paths.
 - Read from the kernel, `access_control.port: '%env(int:APP_PORT)%'` fails
   ("Expected "int", but got "string"") even with `APP_PORT` set, on 2.x
   before #403 too: `extractFromKernel` runs the bundle's `Processor` on the
