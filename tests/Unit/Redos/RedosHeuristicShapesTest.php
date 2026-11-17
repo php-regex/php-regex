@@ -411,6 +411,37 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * A branch whose first characters are not known, a backreference or a
+     * Unicode property, may start as any other branch does: the verdict
+     * does not depend on the order the branches are written in. The engine
+     * reads each letter both ways, whichever comes first: 1 535 -> 24 575
+     * -> 393 215 steps on 8 -> 12 -> 16 letters for "a" beside "\1" over
+     * "(a)", 1 024 -> 16 384 -> 262 144 for "[a-z]" beside "\p{Ll}" after a
+     * quote.
+     *
+     * @return iterable<string, array{pattern: string, prefix: string}>
+     */
+    public static function provideBranchesOfUnknownFirstCharacters(): iterable
+    {
+        yield 'a letter before a reference to it' => ['pattern' => '/^(a)(?:a|\1)+$/', 'prefix' => 'a'];
+        yield 'a reference before the letter it reads' => ['pattern' => '/^(a)(?:\1|a)+$/', 'prefix' => 'a'];
+        yield 'a class before a property' => ['pattern' => '/^(["\'])(?:[a-z]|\p{Ll})+\1$/u', 'prefix' => '"'];
+        yield 'a property before a class' => ['pattern' => '/^(["\'])(?:\p{Ll}|[a-z])+\1$/u', 'prefix' => '"'];
+    }
+
+    #[Test]
+    #[DataProvider('provideBranchesOfUnknownFirstCharacters')]
+    public function test_a_branch_of_unknown_first_characters_overlaps_in_either_order(string $pattern, string $prefix): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, $prefix.str_repeat('a', 8).'!');
+        $long = self::steps($unoptimized, $prefix.str_repeat('a', 12).'!');
+        $this->assertGreaterThan(8 * $short, $long, 'Oracle: the engine goes exponential.');
+
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
      * Whether PCRE compiles the pattern: a refused pattern warns, where a
      * match the engine stops, as on a recursion that could loop, does not.
      */

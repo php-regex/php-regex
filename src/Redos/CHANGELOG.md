@@ -40,6 +40,11 @@ CHANGELOG
    branch that is a call starts as the group it calls:
    `/^(?:[a-z]|(?&c))+$(?(DEFINE)(?<c>[a-z0-9]))/` and `/^(a)(?:a|(?1))+$/`,
    which were medium, are critical.
+ * The heuristics read a branch whose first characters they cannot list, a
+   backreference or a Unicode property, as one that may start as any other
+   branch, whichever comes first: `/^(a)(?:a|\1)+$/` and
+   `/^(["'])(?:[a-z]|\p{Ll})+\1$/u`, which were medium while their branches
+   swapped were critical, are critical.
  * A backreference to a group of variable length in a loop is no longer
    critical when the body of the loop reads its input one way, each
    alternation choosing its branch by the first character and each count

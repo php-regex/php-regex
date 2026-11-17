@@ -931,11 +931,11 @@ final class RedosProfiler extends AbstractNodeVisitor
                 continue;
             }
 
-            if (!$set->isUnknown()) {
-                foreach ($sets as $existing) {
-                    if ($set->intersects($existing)) {
-                        return true;
-                    }
+            // A set not known may meet any other, in whichever order the
+            // branches are written: "a|\1" as "\1|a".
+            foreach ($sets as $existing) {
+                if ($set->intersects($existing)) {
+                    return true;
                 }
             }
 
