@@ -369,7 +369,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 1 \"([a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_…\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }

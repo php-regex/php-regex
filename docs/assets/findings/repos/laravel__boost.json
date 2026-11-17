@@ -20,7 +20,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?!\\n[ \\t]*\\n|\\n[ \\t]*`{3,}…\" at offset 50 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -115,7 +115,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?!\\n[ \\t]*\\n|\\n[ \\t]*`{3,}…\" at offset 50 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -1144,13 +1144,13 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"EXPLAIN \" . \"()FORMAT 0 \" x n . \"!DELETE\" Replayed on PCRE2 10.49: preg_match fails from length 147 (backtrack_limit 100000, JIT off). Suggested (verify behavior): Use possessive quantifiers (*+ instead of *, ++ instead of +, or {m,n}+ instead of {m,n}) to prevent ReDoS. Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"EXPLAIN \" . \"()FORMAT 0 \" x n . \"!DELETE\" Replayed on PCRE2 10.49: preg_match fails from length 147 (backtrack_limit 100000, JIT off). The risky part is: \\w+ Hotspot offsets: 76-79 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:\\([^)]*\\)\\s*|(?:ANALYZE|VER…\" at offset 14 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }

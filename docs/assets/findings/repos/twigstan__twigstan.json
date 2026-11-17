@@ -1,6 +1,6 @@
 {
     "repo": "twigstan/twigstan",
-    "sha": "49be00a86130bb0db7d603324d65f4edb7fdadb7",
+    "sha": "d17fcc6fdbe7c006f90f33f1e5d73ee27ce684b4",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -20,7 +20,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.quantifiedCapture",
-                    "message": "Quantified named group \"(?<line_number>...)\" with \"+\": only the last iteration's capture is retained.",
+                    "message": "Quantified named group \"(?<line_number>\\d+)\" with \"+\": only the last iteration's capture is retained.",
                     "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
                     "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
                 }
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/twigstan/twigstan/blob/49be00a86130bb0db7d603324d65f4edb7fdadb7/src/Processing/Compilation/PhpVisitor/AppendFilePathToLineCommentVisitor.php#L26-L32",
+            "permalink": "https://github.com/twigstan/twigstan/blob/d17fcc6fdbe7c006f90f33f1e5d73ee27ce684b4/src/Processing/Compilation/PhpVisitor/AppendFilePathToLineCommentVisitor.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,

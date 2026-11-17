@@ -422,21 +422,21 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[\\p{L}_][\\p{L}_\\d]*(?<separ…\" at offset 83 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.quantifiedCapture",
-                    "message": "Quantified named group \"(?<separator>...)\" with \"+\": only the last iteration's capture is retained.",
+                    "message": "Quantified named group \"(?<separator>\\\\(?:\\\\)?)\" with \"+\": only the last iteration's capture is retained.",
                     "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
                     "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in named group \"(?<separator>\\\\(?:\\\\)?)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -817,21 +817,21 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[\\p{L}_][\\p{L}_\\d]*(?<separ…\" at offset 83 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.quantifiedCapture",
-                    "message": "Quantified named group \"(?<separator>...)\" with \"+\": only the last iteration's capture is retained.",
+                    "message": "Quantified named group \"(?<separator>\\\\(?:\\\\)?)\" with \"+\": only the last iteration's capture is retained.",
                     "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
                     "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in named group \"(?<separator>\\\\(?:\\\\)?)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },

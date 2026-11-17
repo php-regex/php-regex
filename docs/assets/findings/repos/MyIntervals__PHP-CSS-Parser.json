@@ -1,6 +1,6 @@
 {
     "repo": "MyIntervals/PHP-CSS-Parser",
-    "sha": "e0a7d440012439fa91f8c7b5ef1377e05cb4e64f",
+    "sha": "a78aaa2ae9e6619ee2ecae3398b9aa6cf5c10299",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/e0a7d440012439fa91f8c7b5ef1377e05cb4e64f/src/Parsing/ParserState.php#L116-L122",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a78aaa2ae9e6619ee2ecae3398b9aa6cf5c10299/src/Parsing/ParserState.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,
@@ -203,14 +203,14 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/e0a7d440012439fa91f8c7b5ef1377e05cb4e64f/src/Parsing/ParserState.php#L154-L160",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a78aaa2ae9e6619ee2ecae3398b9aa6cf5c10299/src/Parsing/ParserState.php#L154-L160",
             "snippet": [
                 {
                     "number": 154,
                     "focus": false,
                     "runs": [
                         [
-                            "            $hexCodePoint = $this->consumeExpression('/^[0-9a-fA-F]{1,6}/u', 6);",
+                            "            $hexCodePoint = $this->consumeExpression('/^[0-9a-fA-F]{1,6}+/u', 6);",
                             ""
                         ]
                     ]
@@ -338,7 +338,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/e0a7d440012439fa91f8c7b5ef1377e05cb4e64f/src/Parsing/ParserState.php#L227-L233",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a78aaa2ae9e6619ee2ecae3398b9aa6cf5c10299/src/Parsing/ParserState.php#L227-L233",
             "snippet": [
                 {
                     "number": 227,
@@ -473,7 +473,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/e0a7d440012439fa91f8c7b5ef1377e05cb4e64f/src/Value/CSSString.php#L57-L63",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a78aaa2ae9e6619ee2ecae3398b9aa6cf5c10299/src/Value/CSSString.php#L57-L63",
             "snippet": [
                 {
                     "number": 57,

@@ -1,6 +1,6 @@
 {
     "repo": "phpstan/phpstan-src",
-    "sha": "04856c1a8f46db53d10462aa1875b76cbcdc1c06",
+    "sha": "73fbad4dc76156b6815f77f7e20adb651a6bb81f",
     "target": {
         "php": "8.2.99",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/04856c1a8f46db53d10462aa1875b76cbcdc1c06/src/Parser/RichParser.php#L182-L188",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/73fbad4dc76156b6815f77f7e20adb651a6bb81f/src/Parser/RichParser.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,
@@ -133,7 +133,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/04856c1a8f46db53d10462aa1875b76cbcdc1c06/src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php#L63-L69",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/73fbad4dc76156b6815f77f7e20adb651a6bb81f/src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -233,7 +233,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/04856c1a8f46db53d10462aa1875b76cbcdc1c06/src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php#L63-L69",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/73fbad4dc76156b6815f77f7e20adb651a6bb81f/src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -310,7 +310,7 @@
         {
             "id": "f-0150e14ce8",
             "file": "src/Type/Constant/ConstantArrayType.php",
-            "line": 3813,
+            "line": 3816,
             "column": 36,
             "pattern": "~^(?:[\\\\]?+[a-z_\\x80-\\xFF][0-9a-z_\\x80-\\xFF-]*+)++$~si",
             "source": "Strings::match()",
@@ -333,10 +333,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/04856c1a8f46db53d10462aa1875b76cbcdc1c06/src/Type/Constant/ConstantArrayType.php#L3810-L3816",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/73fbad4dc76156b6815f77f7e20adb651a6bb81f/src/Type/Constant/ConstantArrayType.php#L3813-L3819",
             "snippet": [
                 {
-                    "number": 3810,
+                    "number": 3813,
                     "focus": false,
                     "runs": [
                         [
@@ -346,7 +346,7 @@
                     ]
                 },
                 {
-                    "number": 3811,
+                    "number": 3814,
                     "focus": false,
                     "runs": [
                         [
@@ -356,7 +356,7 @@
                     ]
                 },
                 {
-                    "number": 3812,
+                    "number": 3815,
                     "focus": false,
                     "runs": [
                         [
@@ -366,7 +366,7 @@
                     ]
                 },
                 {
-                    "number": 3813,
+                    "number": 3816,
                     "focus": true,
                     "runs": [
                         [
@@ -512,7 +512,7 @@
                     ]
                 },
                 {
-                    "number": 3814,
+                    "number": 3817,
                     "focus": false,
                     "runs": [
                         [
@@ -522,7 +522,7 @@
                     ]
                 },
                 {
-                    "number": 3815,
+                    "number": 3818,
                     "focus": false,
                     "runs": [
                         [
@@ -532,7 +532,7 @@
                     ]
                 },
                 {
-                    "number": 3816,
+                    "number": 3819,
                     "focus": false,
                     "runs": [
                         [
@@ -569,7 +569,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/04856c1a8f46db53d10462aa1875b76cbcdc1c06/src/Type/Php/SscanfFunctionDynamicReturnTypeExtension.php#L47-L53",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/73fbad4dc76156b6815f77f7e20adb651a6bb81f/src/Type/Php/SscanfFunctionDynamicReturnTypeExtension.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,

@@ -1,6 +1,6 @@
 {
     "repo": "PHPCompatibility/PHPCompatibility",
-    "sha": "9937b9fba0505bc29d8d8ef1f52488b3105e0bdb",
+    "sha": "606d2b35f6777fc99955b3d0332d0c59e55ba9a7",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPCompatibility/PHPCompatibility/blob/9937b9fba0505bc29d8d8ef1f52488b3105e0bdb/PHPCompatibility/Sniffs/Numbers/ValidIntegersSniff.php#L173-L179",
+            "permalink": "https://github.com/PHPCompatibility/PHPCompatibility/blob/606d2b35f6777fc99955b3d0332d0c59e55ba9a7/PHPCompatibility/Sniffs/Numbers/ValidIntegersSniff.php#L173-L179",
             "snippet": [
                 {
                     "number": 173,
@@ -254,7 +254,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPCompatibility/PHPCompatibility/blob/9937b9fba0505bc29d8d8ef1f52488b3105e0bdb/PHPCompatibility/Sniffs/Numbers/ValidIntegersSniff.php#L178-L184",
+            "permalink": "https://github.com/PHPCompatibility/PHPCompatibility/blob/606d2b35f6777fc99955b3d0332d0c59e55ba9a7/PHPCompatibility/Sniffs/Numbers/ValidIntegersSniff.php#L178-L184",
             "snippet": [
                 {
                     "number": 178,

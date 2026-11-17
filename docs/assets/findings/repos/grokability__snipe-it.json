@@ -1,16 +1,16 @@
 {
     "repo": "grokability/snipe-it",
-    "sha": "947ac808c7205367b21c9474f0a0de91ee560751",
+    "sha": "cee9ffdaf06bcf28332726be5705672ced1bd2ef",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
-        "source": "composer.json require.php"
+        "source": "composer.json config.platform.php"
     },
     "findings": [
         {
             "id": "f-94059a04a4",
             "file": "app/Providers/ValidationServiceProvider.php",
-            "line": 430,
+            "line": 442,
             "column": 31,
             "pattern": "/\\pL/",
             "source": "preg_match()",
@@ -28,10 +28,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/grokability/snipe-it/blob/947ac808c7205367b21c9474f0a0de91ee560751/app/Providers/ValidationServiceProvider.php#L427-L433",
+            "permalink": "https://github.com/grokability/snipe-it/blob/cee9ffdaf06bcf28332726be5705672ced1bd2ef/app/Providers/ValidationServiceProvider.php#L439-L445",
             "snippet": [
                 {
-                    "number": 427,
+                    "number": 439,
                     "focus": false,
                     "runs": [
                         [
@@ -41,7 +41,7 @@
                     ]
                 },
                 {
-                    "number": 428,
+                    "number": 440,
                     "focus": false,
                     "runs": [
                         [
@@ -51,7 +51,7 @@
                     ]
                 },
                 {
-                    "number": 429,
+                    "number": 441,
                     "focus": false,
                     "runs": [
                         [
@@ -61,7 +61,7 @@
                     ]
                 },
                 {
-                    "number": 430,
+                    "number": 442,
                     "focus": true,
                     "runs": [
                         [
@@ -95,7 +95,7 @@
                     ]
                 },
                 {
-                    "number": 431,
+                    "number": 443,
                     "focus": false,
                     "runs": [
                         [
@@ -105,7 +105,7 @@
                     ]
                 },
                 {
-                    "number": 432,
+                    "number": 444,
                     "focus": false,
                     "runs": [
                         [
@@ -115,7 +115,7 @@
                     ]
                 },
                 {
-                    "number": 433,
+                    "number": 445,
                     "focus": false,
                     "runs": [
                         [
@@ -129,7 +129,7 @@
         {
             "id": "f-137f7701bf",
             "file": "app/Providers/ValidationServiceProvider.php",
-            "line": 434,
+            "line": 446,
             "column": 31,
             "pattern": "/\\pN/",
             "source": "preg_match()",
@@ -147,10 +147,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/grokability/snipe-it/blob/947ac808c7205367b21c9474f0a0de91ee560751/app/Providers/ValidationServiceProvider.php#L431-L437",
+            "permalink": "https://github.com/grokability/snipe-it/blob/cee9ffdaf06bcf28332726be5705672ced1bd2ef/app/Providers/ValidationServiceProvider.php#L443-L449",
             "snippet": [
                 {
-                    "number": 431,
+                    "number": 443,
                     "focus": false,
                     "runs": [
                         [
@@ -160,7 +160,7 @@
                     ]
                 },
                 {
-                    "number": 432,
+                    "number": 444,
                     "focus": false,
                     "runs": [
                         [
@@ -170,7 +170,7 @@
                     ]
                 },
                 {
-                    "number": 433,
+                    "number": 445,
                     "focus": false,
                     "runs": [
                         [
@@ -180,7 +180,7 @@
                     ]
                 },
                 {
-                    "number": 434,
+                    "number": 446,
                     "focus": true,
                     "runs": [
                         [
@@ -214,7 +214,7 @@
                     ]
                 },
                 {
-                    "number": 435,
+                    "number": 447,
                     "focus": false,
                     "runs": [
                         [
@@ -224,7 +224,7 @@
                     ]
                 },
                 {
-                    "number": 436,
+                    "number": 448,
                     "focus": false,
                     "runs": [
                         [
@@ -234,7 +234,7 @@
                     ]
                 },
                 {
-                    "number": 437,
+                    "number": 449,
                     "focus": false,
                     "runs": [
                         [
@@ -248,7 +248,7 @@
         {
             "id": "f-5a91670690",
             "file": "app/Providers/ValidationServiceProvider.php",
-            "line": 442,
+            "line": 454,
             "column": 31,
             "pattern": "/\\p{Z}|\\p{S}|\\p{P}/",
             "source": "preg_match()",
@@ -280,10 +280,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/grokability/snipe-it/blob/947ac808c7205367b21c9474f0a0de91ee560751/app/Providers/ValidationServiceProvider.php#L439-L445",
+            "permalink": "https://github.com/grokability/snipe-it/blob/cee9ffdaf06bcf28332726be5705672ced1bd2ef/app/Providers/ValidationServiceProvider.php#L451-L457",
             "snippet": [
                 {
-                    "number": 439,
+                    "number": 451,
                     "focus": false,
                     "runs": [
                         [
@@ -293,7 +293,7 @@
                     ]
                 },
                 {
-                    "number": 440,
+                    "number": 452,
                     "focus": false,
                     "runs": [
                         [
@@ -303,7 +303,7 @@
                     ]
                 },
                 {
-                    "number": 441,
+                    "number": 453,
                     "focus": false,
                     "runs": [
                         [
@@ -313,7 +313,7 @@
                     ]
                 },
                 {
-                    "number": 442,
+                    "number": 454,
                     "focus": true,
                     "runs": [
                         [
@@ -363,7 +363,7 @@
                     ]
                 },
                 {
-                    "number": 443,
+                    "number": 455,
                     "focus": false,
                     "runs": [
                         [
@@ -373,7 +373,7 @@
                     ]
                 },
                 {
-                    "number": 444,
+                    "number": 456,
                     "focus": false,
                     "runs": [
                         [
@@ -383,7 +383,7 @@
                     ]
                 },
                 {
-                    "number": 445,
+                    "number": 457,
                     "focus": false,
                     "runs": [
                         [

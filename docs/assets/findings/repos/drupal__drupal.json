@@ -1,6 +1,6 @@
 {
     "repo": "drupal/drupal",
-    "sha": "7480c58b75c058f850b45e81664ac1df7d309744",
+    "sha": "e95c24bbda976d0bee0bb63c80be22b904e1bb3d",
     "target": {
         "php": "8.5",
         "pcre": "10.44",
@@ -57,7 +57,7 @@
                 "limit": 100000
             },
             "subject": "FTP://!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/lib/Drupal/Component/Utility/UrlHelper.php#L453-L459",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/lib/Drupal/Component/Utility/UrlHelper.php#L453-L459",
             "snippet": [
                 {
                     "number": 453,
@@ -152,7 +152,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/lib/Drupal/Component/Utility/Xss.php#L385-L391",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/lib/Drupal/Component/Utility/Xss.php#L385-L391",
             "snippet": [
                 {
                     "number": 385,
@@ -290,7 +290,7 @@
                 "limit": 100000
             },
             "subject": "@IMPORTURL(\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"!;",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/lib/Drupal/Core/Asset/CssCollectionOptimizerLazy.php#L188-L194",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/lib/Drupal/Core/Asset/CssCollectionOptimizerLazy.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,
@@ -384,14 +384,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 1 \"([a-zA-Z0-9_-]*[a-zA-Z0-9])\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 2 \"([a-zA-Z0-9_-]*[a-zA-Z0-9])\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -407,7 +407,7 @@
                 "limit": 100000
             },
             "subject": "a0000000000000000000000000000000000000000000000000000000000000000!:",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/lib/Drupal/Core/Template/ComponentNodeVisitor.php#L117-L123",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/lib/Drupal/Core/Template/ComponentNodeVisitor.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -750,7 +750,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/lib/Drupal/Core/Template/Loader/ComponentLoader.php#L28-L34",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/lib/Drupal/Core/Template/Loader/ComponentLoader.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -977,7 +977,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/lib/Drupal/Core/Test/EnvironmentCleaner.php#L83-L89",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/lib/Drupal/Core/Test/EnvironmentCleaner.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -1116,7 +1116,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/lib/Drupal/Core/Validation/Plugin/Validation/Constraint/PrimitiveTypeConstraintValidator.php#L46-L52",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/lib/Drupal/Core/Validation/Plugin/Validation/Constraint/PrimitiveTypeConstraintValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -1323,7 +1323,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/field/src/Entity/FieldStorageConfig.php#L269-L275",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/field/src/Entity/FieldStorageConfig.php#L269-L275",
             "snippet": [
                 {
                     "number": 269,
@@ -1502,7 +1502,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/file/src/EventSubscriber/FileEventSubscriber.php#L114-L120",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/file/src/EventSubscriber/FileEventSubscriber.php#L114-L120",
             "snippet": [
                 {
                     "number": 114,
@@ -1658,13 +1658,13 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"0\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). The risky part is: ([a-z0-9]+([._][a-z0-9])* ?)+ Hotspot offsets: 1-30 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"0\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 2-11 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 1 \"([a-z0-9]+([._][a-z0-9])* ?)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -1680,7 +1680,7 @@
                 "limit": 100000
             },
             "subject": "000000000000000000000000000000000000000000000000000000000000!",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/file/src/Plugin/Field/FieldType/FileItem.php#L262-L268",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/file/src/Plugin/Field/FieldType/FileItem.php#L262-L268",
             "snippet": [
                 {
                     "number": 262,
@@ -1903,7 +1903,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/filter/src/Plugin/Filter/FilterUrl.php#L148-L154",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/filter/src/Plugin/Filter/FilterUrl.php#L148-L154",
             "snippet": [
                 {
                     "number": 148,
@@ -2046,7 +2046,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/jsonapi/src/Revisions/ResourceVersionRouteEnhancer.php#L60-L66",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/jsonapi/src/Revisions/ResourceVersionRouteEnhancer.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -2341,7 +2341,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/link/src/AttributeXss.php#L129-L135",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/link/src/AttributeXss.php#L129-L135",
             "snippet": [
                 {
                     "number": 129,
@@ -2436,7 +2436,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/locale/src/File/LocaleFile.php#L86-L92",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/locale/src/File/LocaleFile.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -2523,7 +2523,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?:'(?:\\\\'|[^'])*'|\"(?:\\\\\"|…\" at offset 179 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -2544,7 +2544,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?:'(?:\\\\'|[^'])*'|\"(?:\\\\\"|…\" at offset 653 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -2566,7 +2566,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/locale/src/LocaleJs.php#L190-L196",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/locale/src/LocaleJs.php#L190-L196",
             "snippet": [
                 {
                     "number": 190,
@@ -2653,7 +2653,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?:'(?:\\\\'|[^'])*'|\"(?:\\\\\"|…\" at offset 235 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -2674,7 +2674,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?:'(?:\\\\'|[^'])*'|\"(?:\\\\\"|…\" at offset 409 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -2695,7 +2695,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?:'(?:\\\\'|[^'])*'|\"(?:\\\\\"|…\" at offset 1377 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -2717,7 +2717,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/locale/src/LocaleJs.php#L201-L207",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/locale/src/LocaleJs.php#L201-L207",
             "snippet": [
                 {
                     "number": 201,
@@ -2817,7 +2817,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/locale/src/LocaleJs.php#L452-L458",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/locale/src/LocaleJs.php#L452-L458",
             "snippet": [
                 {
                     "number": 452,
@@ -2988,7 +2988,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/mysql/src/Driver/Database/mysql/Connection.php#L278-L284",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/mysql/src/Driver/Database/mysql/Connection.php#L278-L284",
             "snippet": [
                 {
                     "number": 278,
@@ -3180,8 +3180,15 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"EXT-0\" . \"-00\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 51 (backtrack_limit 100000, JIT off). The risky part is: (?:[_.\\-]?[a-z0-9]+)* Hotspot offsets: 62-82 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"EXT-0\" . \"-00\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 51 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 71-80 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:[_.-]?[a-z0-9]+)\" at offset 62 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
             ],
             "rewrite": null,
@@ -3195,7 +3202,7 @@
                 "limit": 100000
             },
             "subject": "EXT-0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/package_manager/src/SandboxManagerBase.php#L130-L136",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/package_manager/src/SandboxManagerBase.php#L130-L136",
             "snippet": [
                 {
                     "number": 130,
@@ -3539,13 +3546,20 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"0\" . \"-00\" x n . \"!/\" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). Suggested (verify behavior): Use possessive quantifiers (*+ instead of *, ++ instead of +, or {m,n}+ instead of {m,n}) to prevent ReDoS. Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"0\" . \"-00\" x n . \"!/\" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 16-25 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 1 \"([_.-]?[a-z0-9]+)\" can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in capturing group 2 \"(([_.]?|-{0,2})[a-z0-9]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -3561,7 +3575,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/package_manager/src/SandboxManagerBase.php#L143-L149",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/package_manager/src/SandboxManagerBase.php#L143-L149",
             "snippet": [
                 {
                     "number": 143,
@@ -3663,35 +3677,35 @@
                         ],
                         [
                             "[",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "a",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "-",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "z0",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "-",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "9",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "]",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "+",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             ")",
@@ -3771,35 +3785,35 @@
                         ],
                         [
                             "[",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "a",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "-",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "z0",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "-",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "9",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "]",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "+",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             ")",
@@ -3880,7 +3894,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/7480c58b75c058f850b45e81664ac1df7d309744/core/modules/views/src/Plugin/views/field/FieldPluginBase.php#L1873-L1879",
+            "permalink": "https://github.com/drupal/drupal/blob/e95c24bbda976d0bee0bb63c80be22b904e1bb3d/core/modules/views/src/Plugin/views/field/FieldPluginBase.php#L1873-L1879",
             "snippet": [
                 {
                     "number": 1873,

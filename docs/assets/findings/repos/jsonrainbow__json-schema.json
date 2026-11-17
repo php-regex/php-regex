@@ -1,6 +1,6 @@
 {
     "repo": "jsonrainbow/json-schema",
-    "sha": "e54745a680fa2eeb2b7516c834bd40404fa6c6da",
+    "sha": "c25bb4a2fc8749a3777410a455e786f46f99ee62",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -27,7 +27,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 6 \"(\\/[a-zA-Z0-9._~!$&'()*+,;=:@…\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -43,7 +43,7 @@
                 "limit": 100000
             },
             "subject": "A://-////////////////////////////////////////////////////////\"",
-            "permalink": "https://github.com/jsonrainbow/json-schema/blob/e54745a680fa2eeb2b7516c834bd40404fa6c6da/src/JsonSchema/Tool/Validator/UriValidator.php#L9-L15",
+            "permalink": "https://github.com/jsonrainbow/json-schema/blob/c25bb4a2fc8749a3777410a455e786f46f99ee62/src/JsonSchema/Tool/Validator/UriValidator.php#L9-L15",
             "snippet": [
                 {
                     "number": 9,

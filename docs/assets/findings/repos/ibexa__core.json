@@ -1,6 +1,6 @@
 {
     "repo": "ibexa/core",
-    "sha": "767542c901cb8e1d80927d3f8c074693eb158a32",
+    "sha": "73ee08f43780fae69cc790fe7505b2a1989d3715",
     "target": {
         "php": "8.5",
         "pcre": "10.44",
@@ -20,7 +20,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[^\\\\\"]+|\\\\\\\\|\\\\'|\\\\\")\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ibexa/core/blob/767542c901cb8e1d80927d3f8c074693eb158a32/src/lib/Persistence/TransformationProcessor/PcreCompiler.php#L232-L238",
+            "permalink": "https://github.com/ibexa/core/blob/73ee08f43780fae69cc790fe7505b2a1989d3715/src/lib/Persistence/TransformationProcessor/PcreCompiler.php#L232-L238",
             "snippet": [
                 {
                     "number": 232,
@@ -203,7 +203,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ibexa/core/blob/767542c901cb8e1d80927d3f8c074693eb158a32/src/lib/QueryType/BuiltIn/SortSpec/SortSpecLexer.php#L95-L101",
+            "permalink": "https://github.com/ibexa/core/blob/73ee08f43780fae69cc790fe7505b2a1989d3715/src/lib/QueryType/BuiltIn/SortSpec/SortSpecLexer.php#L95-L101",
             "snippet": [
                 {
                     "number": 95,
@@ -298,7 +298,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ibexa/core/blob/767542c901cb8e1d80927d3f8c074693eb158a32/src/lib/Repository/NameSchema/SchemaIdentifierExtractor.php#L27-L33",
+            "permalink": "https://github.com/ibexa/core/blob/73ee08f43780fae69cc790fe7505b2a1989d3715/src/lib/Repository/NameSchema/SchemaIdentifierExtractor.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,

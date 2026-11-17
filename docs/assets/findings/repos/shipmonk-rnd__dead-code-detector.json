@@ -1,6 +1,6 @@
 {
     "repo": "shipmonk-rnd/dead-code-detector",
-    "sha": "79a0408978a321ce1a39ca61774aee0163eb469a",
+    "sha": "ae624a696b5c835650b250c85928ae943c1ecb77",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shipmonk-rnd/dead-code-detector/blob/79a0408978a321ce1a39ca61774aee0163eb469a/src/Provider/NetteUsageProvider.php#L179-L185",
+            "permalink": "https://github.com/shipmonk-rnd/dead-code-detector/blob/ae624a696b5c835650b250c85928ae943c1ecb77/src/Provider/NetteUsageProvider.php#L179-L185",
             "snippet": [
                 {
                     "number": 179,

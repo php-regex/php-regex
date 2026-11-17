@@ -1,6 +1,6 @@
 {
     "repo": "mpdf/mpdf",
-    "sha": "9928267eb9ff91e5ef6d7515d7c2d230b9e8892d",
+    "sha": "9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -34,7 +34,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Css/CssLoader.php#L88-L94",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Css/CssLoader.php#L88-L94",
             "snippet": [
                 {
                     "number": 88,
@@ -259,7 +259,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Css/CssLoader.php#L93-L99",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Css/CssLoader.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
@@ -496,7 +496,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Css/CssLoader.php#L140-L146",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Css/CssLoader.php#L140-L146",
             "snippet": [
                 {
                     "number": 140,
@@ -747,7 +747,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Css/CssParser.php#L164-L170",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Css/CssParser.php#L164-L170",
             "snippet": [
                 {
                     "number": 164,
@@ -879,7 +879,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Css/CssParser.php#L167-L173",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Css/CssParser.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -1018,7 +1018,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Css/InlineStyleParser.php#L39-L45",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Css/InlineStyleParser.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -1197,7 +1197,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Css/NormalizeProperties.php#L971-L977",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Css/NormalizeProperties.php#L971-L977",
             "snippet": [
                 {
                     "number": 971,
@@ -1348,7 +1348,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Gradient.php#L682-L688",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Gradient.php#L682-L688",
             "snippet": [
                 {
                     "number": 682,
@@ -1491,7 +1491,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Gradient.php#L691-L697",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Gradient.php#L691-L697",
             "snippet": [
                 {
                     "number": 691,
@@ -1634,7 +1634,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Gradient.php#L822-L828",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Gradient.php#L822-L828",
             "snippet": [
                 {
                     "number": 822,
@@ -1777,7 +1777,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Gradient.php#L830-L836",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Gradient.php#L830-L836",
             "snippet": [
                 {
                     "number": 830,
@@ -1932,7 +1932,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L1040-L1046",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L1040-L1046",
             "snippet": [
                 {
                     "number": 1040,
@@ -2067,7 +2067,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L1096-L1102",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L1096-L1102",
             "snippet": [
                 {
                     "number": 1096,
@@ -2230,7 +2230,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L1097-L1103",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L1097-L1103",
             "snippet": [
                 {
                     "number": 1097,
@@ -2393,7 +2393,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L1352-L1358",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L1352-L1358",
             "snippet": [
                 {
                     "number": 1352,
@@ -2548,7 +2548,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L2881-L2887",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L2881-L2887",
             "snippet": [
                 {
                     "number": 2881,
@@ -2731,7 +2731,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L2954-L2960",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L2954-L2960",
             "snippet": [
                 {
                     "number": 2954,
@@ -2890,7 +2890,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L2972-L2978",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L2972-L2978",
             "snippet": [
                 {
                     "number": 2972,
@@ -3054,7 +3054,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L3034-L3040",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L3034-L3040",
             "snippet": [
                 {
                     "number": 3034,
@@ -3257,7 +3257,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L3096-L3102",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L3096-L3102",
             "snippet": [
                 {
                     "number": 3096,
@@ -3397,7 +3397,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L3113-L3119",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L3113-L3119",
             "snippet": [
                 {
                     "number": 3113,
@@ -3525,7 +3525,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L3122-L3128",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L3122-L3128",
             "snippet": [
                 {
                     "number": 3122,
@@ -3665,7 +3665,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L3155-L3161",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L3155-L3161",
             "snippet": [
                 {
                     "number": 3155,
@@ -3921,7 +3921,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L3169-L3175",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L3169-L3175",
             "snippet": [
                 {
                     "number": 3169,
@@ -4181,7 +4181,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L3224-L3230",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L3224-L3230",
             "snippet": [
                 {
                     "number": 3224,
@@ -4453,7 +4453,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Image/Svg.php#L3332-L3338",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Image/Svg.php#L3332-L3338",
             "snippet": [
                 {
                     "number": 3332,
@@ -4602,7 +4602,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L10051-L10057",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L10051-L10057",
             "snippet": [
                 {
                     "number": 10051,
@@ -4771,7 +4771,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L10052-L10058",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L10052-L10058",
             "snippet": [
                 {
                     "number": 10052,
@@ -4919,7 +4919,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L13239-L13245",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L13239-L13245",
             "snippet": [
                 {
                     "number": 13239,
@@ -5110,7 +5110,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L13243-L13249",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L13243-L13249",
             "snippet": [
                 {
                     "number": 13243,
@@ -5298,7 +5298,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L13248-L13254",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L13248-L13254",
             "snippet": [
                 {
                     "number": 13248,
@@ -5474,7 +5474,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L13251-L13257",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L13251-L13257",
             "snippet": [
                 {
                     "number": 13251,
@@ -5638,7 +5638,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L13251-L13257",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L13251-L13257",
             "snippet": [
                 {
                     "number": 13251,
@@ -5809,7 +5809,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L13254-L13260",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L13254-L13260",
             "snippet": [
                 {
                     "number": 13254,
@@ -5977,7 +5977,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L13260-L13266",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L13260-L13266",
             "snippet": [
                 {
                     "number": 13260,
@@ -6141,7 +6141,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L13433-L13439",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L13433-L13439",
             "snippet": [
                 {
                     "number": 13433,
@@ -6296,7 +6296,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L13790-L13796",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L13790-L13796",
             "snippet": [
                 {
                     "number": 13790,
@@ -6467,7 +6467,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L13794-L13800",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L13794-L13800",
             "snippet": [
                 {
                     "number": 13794,
@@ -6630,7 +6630,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L13822-L13828",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L13822-L13828",
             "snippet": [
                 {
                     "number": 13822,
@@ -6805,7 +6805,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L18121-L18127",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L18121-L18127",
             "snippet": [
                 {
                     "number": 18121,
@@ -6976,7 +6976,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L18221-L18227",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L18221-L18227",
             "snippet": [
                 {
                     "number": 18221,
@@ -7135,7 +7135,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L18239-L18245",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L18239-L18245",
             "snippet": [
                 {
                     "number": 18239,
@@ -7299,7 +7299,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L25622-L25628",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L25622-L25628",
             "snippet": [
                 {
                     "number": 25622,
@@ -7447,7 +7447,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L26798-L26804",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L26798-L26804",
             "snippet": [
                 {
                     "number": 26798,
@@ -7602,7 +7602,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L27039-L27045",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L27039-L27045",
             "snippet": [
                 {
                     "number": 27039,
@@ -7730,7 +7730,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L27085-L27091",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L27085-L27091",
             "snippet": [
                 {
                     "number": 27085,
@@ -7866,7 +7866,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L27087-L27093",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L27087-L27093",
             "snippet": [
                 {
                     "number": 27087,
@@ -8022,7 +8022,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L27175-L27181",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L27175-L27181",
             "snippet": [
                 {
                     "number": 27175,
@@ -8178,7 +8178,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L27179-L27185",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L27179-L27185",
             "snippet": [
                 {
                     "number": 27179,
@@ -8414,7 +8414,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L27245-L27251",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L27245-L27251",
             "snippet": [
                 {
                     "number": 27245,
@@ -8558,7 +8558,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L27310-L27316",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L27310-L27316",
             "snippet": [
                 {
                     "number": 27310,
@@ -8706,7 +8706,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Mpdf.php#L27313-L27319",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Mpdf.php#L27313-L27319",
             "snippet": [
                 {
                     "number": 27313,
@@ -8849,7 +8849,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Otl.php#L1254-L1260",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Otl.php#L1254-L1260",
             "snippet": [
                 {
                     "number": 1254,
@@ -9028,7 +9028,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 1 \"([CR]J?((Z?F)?[N]{0,2})?[ZJ]?G…\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -9036,7 +9036,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Shaper/Indic.php#L306-L312",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Shaper/Indic.php#L306-L312",
             "snippet": [
                 {
                     "number": 306,
@@ -9639,7 +9639,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Shaper/Myanmar.php#L271-L277",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Shaper/Myanmar.php#L271-L277",
             "snippet": [
                 {
                     "number": 271,
@@ -10303,7 +10303,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Utils/UtfString.php#L16-L22",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Utils/UtfString.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -10451,7 +10451,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9928267eb9ff91e5ef6d7515d7c2d230b9e8892d/src/Utils/UtfString.php#L19-L25",
+            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Utils/UtfString.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,

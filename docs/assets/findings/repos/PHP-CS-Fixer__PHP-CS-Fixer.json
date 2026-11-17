@@ -1,6 +1,6 @@
 {
     "repo": "PHP-CS-Fixer/PHP-CS-Fixer",
-    "sha": "d73772aac5a1482f5e9042ac703b06a586dcf0ee",
+    "sha": "d1d94d8cced539d86a5824235b63f880fd6f5f5e",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -125,7 +125,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4558 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -161,7 +161,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/DocBlock/TypeExpression.php#L475-L481",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/DocBlock/TypeExpression.php#L475-L481",
             "snippet": [
                 {
                     "number": 475,
@@ -360,7 +360,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4619 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -396,7 +396,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/DocBlock/TypeExpression.php#L704-L710",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/DocBlock/TypeExpression.php#L704-L710",
             "snippet": [
                 {
                     "number": 704,
@@ -602,7 +602,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4628 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -638,7 +638,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/DocBlock/TypeExpression.php#L727-L733",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/DocBlock/TypeExpression.php#L727-L733",
             "snippet": [
                 {
                     "number": 727,
@@ -837,7 +837,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4618 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -873,7 +873,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/DocBlock/TypeExpression.php#L740-L746",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/DocBlock/TypeExpression.php#L740-L746",
             "snippet": [
                 {
                     "number": 740,
@@ -1079,7 +1079,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4628 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -1115,7 +1115,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/DocBlock/TypeExpression.php#L777-L783",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/DocBlock/TypeExpression.php#L777-L783",
             "snippet": [
                 {
                     "number": 777,
@@ -1314,7 +1314,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4618 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -1350,7 +1350,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/DocBlock/TypeExpression.php#L790-L796",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/DocBlock/TypeExpression.php#L790-L796",
             "snippet": [
                 {
                     "number": 790,
@@ -1556,7 +1556,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4628 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -1592,7 +1592,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/DocBlock/TypeExpression.php#L812-L818",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/DocBlock/TypeExpression.php#L812-L818",
             "snippet": [
                 {
                     "number": 812,
@@ -1791,7 +1791,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4618 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -1827,7 +1827,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/DocBlock/TypeExpression.php#L825-L831",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/DocBlock/TypeExpression.php#L825-L831",
             "snippet": [
                 {
                     "number": 825,
@@ -1922,7 +1922,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Comment/NoEmptyCommentFixer.php#L157-L163",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Comment/NoEmptyCommentFixer.php#L157-L163",
             "snippet": [
                 {
                     "number": 157,
@@ -2185,7 +2185,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4638 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -2221,7 +2221,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Import/FullyQualifiedStrictTypesFixer.php#L686-L692",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Import/FullyQualifiedStrictTypesFixer.php#L686-L692",
             "snippet": [
                 {
                     "number": 686,
@@ -2268,7 +2268,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "            if (!\\in_array($matches[2], $allowedTags, true)) {",
+                            "            if (!\\in_array($matches[2], $allowedTags, true) || ('see' === $matches[2] && str_ends_with($matches[4], '()'))) {",
                             ""
                         ]
                     ]
@@ -2420,7 +2420,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4634 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -2456,7 +2456,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L586-L592",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L586-L592",
             "snippet": [
                 {
                     "number": 586,
@@ -2655,7 +2655,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4632 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -2691,7 +2691,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L588-L594",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L588-L594",
             "snippet": [
                 {
                     "number": 588,
@@ -2890,7 +2890,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4635 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -2926,7 +2926,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L590-L596",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L590-L596",
             "snippet": [
                 {
                     "number": 590,
@@ -3125,7 +3125,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4632 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -3161,7 +3161,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Phpdoc/PhpdocNoDuplicateTypesFixer.php#L90-L96",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Phpdoc/PhpdocNoDuplicateTypesFixer.php#L90-L96",
             "snippet": [
                 {
                     "number": 90,
@@ -3256,7 +3256,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Phpdoc/PhpdocParamOrderFixer.php#L242-L248",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Phpdoc/PhpdocParamOrderFixer.php#L242-L248",
             "snippet": [
                 {
                     "number": 242,
@@ -3391,7 +3391,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:\\R\\h*(?:\\*\\h*)?(?!\\R\\h*\\*/)…\" at offset 72 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -3399,7 +3399,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L89-L95",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L89-L95",
             "snippet": [
                 {
                     "number": 89,
@@ -3486,7 +3486,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?<!/\\*\\*)\\R\\h*(?:\\*\\h*)?)\" at offset 88 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -3494,7 +3494,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L108-L114",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -3693,7 +3693,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4632 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -3729,7 +3729,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Phpdoc/PhpdocTypesOrderFixer.php#L185-L191",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Phpdoc/PhpdocTypesOrderFixer.php#L185-L191",
             "snippet": [
                 {
                     "number": 185,
@@ -3816,7 +3816,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[^<\\s]|<[^>]*>)\" at offset 36 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -3824,7 +3824,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Phpdoc/PhpdocVarAnnotationCorrectOrderFixer.php#L74-L80",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Phpdoc/PhpdocVarAnnotationCorrectOrderFixer.php#L74-L80",
             "snippet": [
                 {
                     "number": 74,
@@ -4100,7 +4100,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d73772aac5a1482f5e9042ac703b06a586dcf0ee/src/Fixer/Whitespace/MethodChainingIndentationFixer.php#L182-L188",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/d1d94d8cced539d86a5824235b63f880fd6f5f5e/src/Fixer/Whitespace/MethodChainingIndentationFixer.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,

@@ -1,6 +1,6 @@
 {
     "repo": "FOSSBilling/FOSSBilling",
-    "sha": "1d9f3e321d30128478a653cebdba956653ebd295",
+    "sha": "2c35bfc75229681ae37878fc1939d76d60efcaeb",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -47,7 +47,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/1d9f3e321d30128478a653cebdba956653ebd295/src/core/Doctrine/InstallSeeder.php#L307-L313",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/core/Doctrine/InstallSeeder.php#L307-L313",
             "snippet": [
                 {
                     "number": 307,
@@ -195,7 +195,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/1d9f3e321d30128478a653cebdba956653ebd295/src/core/Update/Patch/Patch52.php#L76-L82",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/core/Update/Patch/Patch52.php#L76-L82",
             "snippet": [
                 {
                     "number": 76,
@@ -403,7 +403,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/1d9f3e321d30128478a653cebdba956653ebd295/src/core/Update/Patch/Patch57.php#L120-L126",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/core/Update/Patch/Patch57.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,
@@ -611,7 +611,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/1d9f3e321d30128478a653cebdba956653ebd295/src/core/Update/Patch/Patch90.php#L121-L127",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/core/Update/Patch/Patch90.php#L121-L127",
             "snippet": [
                 {
                     "number": 121,
@@ -814,7 +814,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/1d9f3e321d30128478a653cebdba956653ebd295/src/core/Validation/DomainValidator.php#L46-L52",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/core/Validation/DomainValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -1019,7 +1019,7 @@
         {
             "id": "f-bc93c2ffd8",
             "file": "src/modules/Email/Service.php",
-            "line": 471,
+            "line": 514,
             "column": 24,
             "pattern": "#{%.?block subject.?%}((.*?)+){%.?endblock.?%}#",
             "source": "preg_match()",
@@ -1043,7 +1043,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 2 \"(.*?)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -1059,10 +1059,10 @@
                 "limit": 100000
             },
             "subject": "{%block subject%}!!!!!!!!!!!!!!!!!!!!!!!!!endblock",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/1d9f3e321d30128478a653cebdba956653ebd295/src/modules/Email/Service.php#L468-L474",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/modules/Email/Service.php#L511-L517",
             "snippet": [
                 {
-                    "number": 468,
+                    "number": 511,
                     "focus": false,
                     "runs": [
                         [
@@ -1072,7 +1072,7 @@
                     ]
                 },
                 {
-                    "number": 469,
+                    "number": 512,
                     "focus": false,
                     "runs": [
                         [
@@ -1082,7 +1082,7 @@
                     ]
                 },
                 {
-                    "number": 470,
+                    "number": 513,
                     "focus": false,
                     "runs": [
                         [
@@ -1092,7 +1092,7 @@
                     ]
                 },
                 {
-                    "number": 471,
+                    "number": 514,
                     "focus": true,
                     "runs": [
                         [
@@ -1206,7 +1206,7 @@
                     ]
                 },
                 {
-                    "number": 472,
+                    "number": 515,
                     "focus": false,
                     "runs": [
                         [
@@ -1216,7 +1216,7 @@
                     ]
                 },
                 {
-                    "number": 473,
+                    "number": 516,
                     "focus": false,
                     "runs": [
                         [
@@ -1226,7 +1226,7 @@
                     ]
                 },
                 {
-                    "number": 474,
+                    "number": 517,
                     "focus": false,
                     "runs": [
                         [
@@ -1240,7 +1240,7 @@
         {
             "id": "f-adaa269a6b",
             "file": "src/modules/Email/Service.php",
-            "line": 477,
+            "line": 520,
             "column": 24,
             "pattern": "/{%.?block content.?%}((.*?\\n)+){%.?endblock.?%}/m",
             "source": "preg_match()",
@@ -1263,10 +1263,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/1d9f3e321d30128478a653cebdba956653ebd295/src/modules/Email/Service.php#L474-L480",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/modules/Email/Service.php#L517-L523",
             "snippet": [
                 {
-                    "number": 474,
+                    "number": 517,
                     "focus": false,
                     "runs": [
                         [
@@ -1276,7 +1276,7 @@
                     ]
                 },
                 {
-                    "number": 475,
+                    "number": 518,
                     "focus": false,
                     "runs": [
                         [
@@ -1286,7 +1286,7 @@
                     ]
                 },
                 {
-                    "number": 476,
+                    "number": 519,
                     "focus": false,
                     "runs": [
                         [
@@ -1296,7 +1296,7 @@
                     ]
                 },
                 {
-                    "number": 477,
+                    "number": 520,
                     "focus": true,
                     "runs": [
                         [
@@ -1414,7 +1414,7 @@
                     ]
                 },
                 {
-                    "number": 478,
+                    "number": 521,
                     "focus": false,
                     "runs": [
                         [
@@ -1424,7 +1424,7 @@
                     ]
                 },
                 {
-                    "number": 479,
+                    "number": 522,
                     "focus": false,
                     "runs": [
                         [
@@ -1434,7 +1434,7 @@
                     ]
                 },
                 {
-                    "number": 480,
+                    "number": 523,
                     "focus": false,
                     "runs": [
                         [
@@ -1466,7 +1466,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/1d9f3e321d30128478a653cebdba956653ebd295/src/modules/Theme/Model/Theme.php#L180-L186",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/modules/Theme/Model/Theme.php#L180-L186",
             "snippet": [
                 {
                     "number": 180,

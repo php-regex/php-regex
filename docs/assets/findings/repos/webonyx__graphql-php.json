@@ -1,6 +1,6 @@
 {
     "repo": "webonyx/graphql-php",
-    "sha": "b6f4a4cfa3c20426b05ba35155bd45e9b2a6714c",
+    "sha": "53151c72b1b5e1b66a055bda338a101103cdfd44",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/webonyx/graphql-php/blob/b6f4a4cfa3c20426b05ba35155bd45e9b2a6714c/src/Utils/PhpDoc.php#L11-L17",
+            "permalink": "https://github.com/webonyx/graphql-php/blob/53151c72b1b5e1b66a055bda338a101103cdfd44/src/Utils/PhpDoc.php#L11-L17",
             "snippet": [
                 {
                     "number": 11,
@@ -187,7 +187,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/webonyx/graphql-php/blob/b6f4a4cfa3c20426b05ba35155bd45e9b2a6714c/src/Utils/PhpDoc.php#L14-L20",
+            "permalink": "https://github.com/webonyx/graphql-php/blob/53151c72b1b5e1b66a055bda338a101103cdfd44/src/Utils/PhpDoc.php#L14-L20",
             "snippet": [
                 {
                     "number": 14,

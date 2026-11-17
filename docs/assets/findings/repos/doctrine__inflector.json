@@ -1,6 +1,6 @@
 {
     "repo": "doctrine/inflector",
-    "sha": "1222eb5b557ae4eadd75b83ee62fc219d6187f03",
+    "sha": "bf4ac6e67f83a9d63f2bf57eeef2060ba7c6ef7f",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/doctrine/inflector/blob/1222eb5b557ae4eadd75b83ee62fc219d6187f03/src/Inflector.php#L464-L470",
+            "permalink": "https://github.com/doctrine/inflector/blob/bf4ac6e67f83a9d63f2bf57eeef2060ba7c6ef7f/src/Inflector.php#L464-L470",
             "snippet": [
                 {
                     "number": 464,

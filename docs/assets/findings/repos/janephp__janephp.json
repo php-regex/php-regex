@@ -1,6 +1,6 @@
 {
     "repo": "janephp/janephp",
-    "sha": "f70c22cf67f5f0c5442170f7c36bd41b9a064196",
+    "sha": "9c2362d7da8d93007a670c46706424b0f83c7832",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/janephp/janephp/blob/f70c22cf67f5f0c5442170f7c36bd41b9a064196/src/Component/JsonSchema/Generator/Naming.php#L11-L17",
+            "permalink": "https://github.com/janephp/janephp/blob/9c2362d7da8d93007a670c46706424b0f83c7832/src/Component/JsonSchema/Generator/Naming.php#L11-L17",
             "snippet": [
                 {
                     "number": 11,
@@ -128,7 +128,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/janephp/janephp/blob/f70c22cf67f5f0c5442170f7c36bd41b9a064196/src/Component/JsonSchema/Registry/Schema.php#L228-L234",
+            "permalink": "https://github.com/janephp/janephp/blob/9c2362d7da8d93007a670c46706424b0f83c7832/src/Component/JsonSchema/Registry/Schema.php#L228-L234",
             "snippet": [
                 {
                     "number": 228,
@@ -267,7 +267,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.quantifiedCapture",
-                    "message": "Quantified named group \"(?<separator>...)\" with \"+\": only the last iteration's capture is retained.",
+                    "message": "Quantified named group \"(?<separator>[^a-zA-Z0-9_{}])\" with \"+\": only the last iteration's capture is retained.",
                     "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
                     "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
                 }
@@ -275,7 +275,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/janephp/janephp/blob/f70c22cf67f5f0c5442170f7c36bd41b9a064196/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php#L53-L59",
+            "permalink": "https://github.com/janephp/janephp/blob/9c2362d7da8d93007a670c46706424b0f83c7832/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -502,7 +502,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/janephp/janephp/blob/f70c22cf67f5f0c5442170f7c36bd41b9a064196/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php#L68-L74",
+            "permalink": "https://github.com/janephp/janephp/blob/9c2362d7da8d93007a670c46706424b0f83c7832/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,

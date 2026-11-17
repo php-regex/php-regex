@@ -751,6 +751,101 @@
                     ]
                 }
             ]
+        },
+        {
+            "id": "f-96587ce309",
+            "file": "src/DocBlockFactory.php",
+            "line": 177,
+            "column": 13,
+            "pattern": "/\n            \\A\n            # 1. Extract the template marker\n            (?:(\\#\\@\\+|\\#\\@\\-)\\n?)?\n\n            # 2. Extract the summary\n            (?:\n              (?! @\\pL ) # The summary may not start with an @\n              (\n                [^\\n.]+\n                (?:\n                  (?! \\. \\n | \\n{2} )     # End summary upon a dot followed by newline or two newlines\n                  [\\n.]* (?! [ \\t]* @\\pL ) # End summary when an @ is found as first character on a new line\n                  [^\\n.]+                 # Include anything else\n                )*\n                \\.?\n              )?\n            )\n\n            # 3. Extract the description\n            (?:\n              \\s*        # Some form of whitespace _must_ precede a description because a summary must be there\n              (?! @\\pL ) # The description may not start with an @\n              (\n                [^\\n]+\n                (?: \\n+\n                  (?! [ \\t]* @\\pL ) # End description when an @ is found as first character on a new line\n                  [^\\n]+            # Include anything else\n                )*\n              )\n            )?\n\n            # 4. Extract the tags (anything that follows)\n            (\\s+ [\\s\\S]*)? # everything that follows\n            /ux",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:(?!\\.\\n|\\n{2})[\\n.]*(?![ \\t…\" at offset 270 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpDocumentor/ReflectionDocBlock/blob/8426ea0fc242413c930d2d2508684efaae4b0a17/src/DocBlockFactory.php#L174-L180",
+            "snippet": [
+                {
+                    "number": 174,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "         * Big thanks to RichardJ for contributing this Regular Expression",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 175,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "         */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 176,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 177,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            '/",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 178,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \\A",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 179,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            # 1. Extract the template marker",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 180,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            (?:(\\#\\@\\+|\\#\\@\\-)\\n?)?",
+                            ""
+                        ]
+                    ]
+                }
+            ]
         }
     ]
 }

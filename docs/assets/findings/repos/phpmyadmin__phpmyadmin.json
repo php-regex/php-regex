@@ -1,6 +1,6 @@
 {
     "repo": "phpmyadmin/phpmyadmin",
-    "sha": "f4aeb7801c2d8a811d13bcffdd8871ec41247a33",
+    "sha": "e68adb31b040e19f7b8cd7bb853430e136940118",
     "target": {
         "php": "8.2.99",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Bookmarks/Bookmark.php#L133-L139",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/e68adb31b040e19f7b8cd7bb853430e136940118/src/Bookmarks/Bookmark.php#L133-L139",
             "snippet": [
                 {
                     "number": 133,
@@ -216,7 +216,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Html/Generator.php#L786-L792",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/e68adb31b040e19f7b8cd7bb853430e136940118/src/Html/Generator.php#L786-L792",
             "snippet": [
                 {
                     "number": 786,
@@ -386,7 +386,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Server/Status/Monitor.php#L329-L335",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/e68adb31b040e19f7b8cd7bb853430e136940118/src/Server/Status/Monitor.php#L329-L335",
             "snippet": [
                 {
                     "number": 329,
@@ -569,7 +569,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Table/Table.php#L509-L515",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/e68adb31b040e19f7b8cd7bb853430e136940118/src/Table/Table.php#L509-L515",
             "snippet": [
                 {
                     "number": 509,
@@ -724,7 +724,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Table/Table.php#L511-L517",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/e68adb31b040e19f7b8cd7bb853430e136940118/src/Table/Table.php#L511-L517",
             "snippet": [
                 {
                     "number": 511,
@@ -884,7 +884,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/f4aeb7801c2d8a811d13bcffdd8871ec41247a33/src/Table/Table.php#L577-L583",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/e68adb31b040e19f7b8cd7bb853430e136940118/src/Table/Table.php#L577-L583",
             "snippet": [
                 {
                     "number": 577,

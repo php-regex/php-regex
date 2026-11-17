@@ -1,6 +1,6 @@
 {
     "repo": "WordPress/wordpress-develop",
-    "sha": "f939960c4c6a59f9889e640925a5079fbe18f42c",
+    "sha": "0239f9b5de94ef7eb4d0db41e5de57af339b3926",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/ajax-actions.php#L4285-L4291",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/ajax-actions.php#L4285-L4291",
             "snippet": [
                 {
                     "number": 4285,
@@ -177,7 +177,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/ajax-actions.php#L4380-L4386",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/ajax-actions.php#L4380-L4386",
             "snippet": [
                 {
                     "number": 4380,
@@ -312,7 +312,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/class-ftp-pure.php#L106-L112",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/class-ftp-pure.php#L106-L112",
             "snippet": [
                 {
                     "number": 106,
@@ -643,7 +643,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/class-ftp-sockets.php#L127-L133",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/class-ftp-sockets.php#L127-L133",
             "snippet": [
                 {
                     "number": 127,
@@ -979,7 +979,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/class-wp-debug-data.php#L625-L631",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/class-wp-debug-data.php#L625-L631",
             "snippet": [
                 {
                     "number": 625,
@@ -1127,7 +1127,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/class-wp-filesystem-base.php#L243-L249",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/class-wp-filesystem-base.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -1291,7 +1291,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-admin/includes/upgrade.php#L3083-L3089",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/upgrade.php#L3083-L3089",
             "snippet": [
                 {
                     "number": 3083,
@@ -1439,7 +1439,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/ID3/getid3.php#L1593-L1599",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/ID3/getid3.php#L1593-L1599",
             "snippet": [
                 {
                     "number": 1593,
@@ -1586,7 +1586,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/ID3/module.audio-video.quicktime.php#L1698-L1704",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/ID3/module.audio-video.quicktime.php#L1698-L1704",
             "snippet": [
                 {
                     "number": 1698,
@@ -1834,7 +1834,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/ID3/module.audio-video.riff.php#L1645-L1651",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/ID3/module.audio-video.riff.php#L1645-L1651",
             "snippet": [
                 {
                     "number": 1645,
@@ -2014,7 +2014,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/ID3/module.audio-video.riff.php#L1726-L1732",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/ID3/module.audio-video.riff.php#L1726-L1732",
             "snippet": [
                 {
                     "number": 1726,
@@ -2188,14 +2188,14 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 1 \"([^\\x00]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 3 \"([^\\x00]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -2211,7 +2211,7 @@
                 "limit": 100000
             },
             "subject": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\u0000",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/ID3/module.tag.id3v2.php#L2080-L2086",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/ID3/module.tag.id3v2.php#L2080-L2086",
             "snippet": [
                 {
                     "number": 2080,
@@ -2435,7 +2435,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L943-L949",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L943-L949",
             "snippet": [
                 {
                     "number": 943,
@@ -2565,7 +2565,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:.*[a-f0-9][:\\]])\" at offset 516 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -2579,7 +2579,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:.*[a-f0-9]:)\" at offset 606 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -2587,7 +2587,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L1541-L1547",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L1541-L1547",
             "snippet": [
                 {
                     "number": 1541,
@@ -2687,7 +2687,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L1559-L1565",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L1559-L1565",
             "snippet": [
                 {
                     "number": 1559,
@@ -2787,7 +2787,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L1576-L1582",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L1576-L1582",
             "snippet": [
                 {
                     "number": 1576,
@@ -2881,7 +2881,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 3 \"(.+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -2889,7 +2889,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L2613-L2619",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L2613-L2619",
             "snippet": [
                 {
                     "number": 2613,
@@ -3120,7 +3120,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/PHPMailer.php#L5056-L5062",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L5056-L5062",
             "snippet": [
                 {
                     "number": 5056,
@@ -3360,7 +3360,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/PHPMailer/SMTP.php#L328-L334",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/SMTP.php#L328-L334",
             "snippet": [
                 {
                     "number": 328,
@@ -3496,7 +3496,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/Requests/src/IdnaEncoder.php#L141-L147",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/Requests/src/IdnaEncoder.php#L141-L147",
             "snippet": [
                 {
                     "number": 141,
@@ -3639,7 +3639,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/Requests/src/Requests.php#L765-L771",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/Requests/src/Requests.php#L765-L771",
             "snippet": [
                 {
                     "number": 765,
@@ -3773,7 +3773,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[\\w-]*)\" at offset 33 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -3801,7 +3801,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/Requests/src/Requests.php#L853-L859",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/Requests/src/Requests.php#L853-L859",
             "snippet": [
                 {
                     "number": 853,
@@ -4091,7 +4091,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[\\w-]*)\" at offset 33 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -4119,7 +4119,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/Requests/src/Requests.php#L861-L867",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/Requests/src/Requests.php#L861-L867",
             "snippet": [
                 {
                     "number": 861,
@@ -4422,7 +4422,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Item.php#L2301-L2307",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Item.php#L2301-L2307",
             "snippet": [
                 {
                     "number": 2301,
@@ -4713,7 +4713,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Item.php#L2326-L2332",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Item.php#L2326-L2332",
             "snippet": [
                 {
                     "number": 2326,
@@ -4991,7 +4991,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[\\x09\\x0A\\x0B\\x0C\\x0D\\x20]+…\" at offset 89 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -5007,7 +5007,7 @@
                 "limit": 100000
             },
             "subject": "</A ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! =",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Sanitize.php#L418-L424",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Sanitize.php#L418-L424",
             "snippet": [
                 {
                     "number": 418,
@@ -5107,7 +5107,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Sanitize.php#L574-L580",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Sanitize.php#L574-L580",
             "snippet": [
                 {
                     "number": 574,
@@ -5214,7 +5214,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/SimplePie.php#L2984-L2990",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/SimplePie.php#L2984-L2990",
             "snippet": [
                 {
                     "number": 2984,
@@ -5505,7 +5505,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/SimplePie.php#L3009-L3015",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/SimplePie.php#L3009-L3015",
             "snippet": [
                 {
                     "number": 3009,
@@ -5796,7 +5796,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Source.php#L469-L475",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Source.php#L469-L475",
             "snippet": [
                 {
                     "number": 469,
@@ -6087,7 +6087,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/SimplePie/src/Source.php#L485-L491",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Source.php#L485-L491",
             "snippet": [
                 {
                     "number": 485,
@@ -6366,7 +6366,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/blocks/cover.php#L150-L156",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/blocks/cover.php#L150-L156",
             "snippet": [
                 {
                     "number": 150,
@@ -6557,7 +6557,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/canonical.php#L582-L588",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/canonical.php#L582-L588",
             "snippet": [
                 {
                     "number": 582,
@@ -6692,7 +6692,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/canonical.php#L685-L691",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/canonical.php#L685-L691",
             "snippet": [
                 {
                     "number": 685,
@@ -6827,7 +6827,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-json.php#L823-L829",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-json.php#L823-L829",
             "snippet": [
                 {
                     "number": 823,
@@ -7026,7 +7026,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-json.php#L832-L838",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-json.php#L832-L838",
             "snippet": [
                 {
                     "number": 832,
@@ -7204,7 +7204,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-snoopy.php#L678-L684",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-snoopy.php#L678-L684",
             "snippet": [
                 {
                     "number": 678,
@@ -7363,7 +7363,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-snoopy.php#L751-L757",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-snoopy.php#L751-L757",
             "snippet": [
                 {
                     "number": 751,
@@ -7497,7 +7497,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[\\x09\\x0A\\x0B\\x0C\\x0D\\x20]+…\" at offset 89 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -7513,7 +7513,7 @@
                 "limit": 100000
             },
             "subject": "</A ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! =",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wp-simplepie-sanitize-kses.php#L39-L45",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wp-simplepie-sanitize-kses.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -7615,7 +7615,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wp-theme.php#L1968-L1974",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wp-theme.php#L1968-L1974",
             "snippet": [
                 {
                     "number": 1968,
@@ -7775,7 +7775,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wp-xmlrpc-server.php#L7212-L7218",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wp-xmlrpc-server.php#L7212-L7218",
             "snippet": [
                 {
                     "number": 7212,
@@ -7931,7 +7931,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wpdb.php#L2118-L2124",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wpdb.php#L2118-L2124",
             "snippet": [
                 {
                     "number": 2118,
@@ -8167,7 +8167,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wpdb.php#L3898-L3904",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wpdb.php#L3898-L3904",
             "snippet": [
                 {
                     "number": 3898,
@@ -8322,7 +8322,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:\\s+LOW_PRIORITY|\\s+QUICK|\\s…\" at offset 203 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -8337,7 +8337,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wpdb.php#L3905-L3911",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wpdb.php#L3905-L3911",
             "snippet": [
                 {
                     "number": 3905,
@@ -8432,7 +8432,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wpdb.php#L3930-L3936",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wpdb.php#L3930-L3936",
             "snippet": [
                 {
                     "number": 3930,
@@ -8825,7 +8825,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/class-wpdb.php#L3936-L3942",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wpdb.php#L3936-L3942",
             "snippet": [
                 {
                     "number": 3936,
@@ -8902,7 +8902,7 @@
         {
             "id": "f-1f56565604",
             "file": "src/wp-includes/comment.php",
-            "line": 3344,
+            "line": 3337,
             "column": 19,
             "pattern": "#(image|audio|video|model)/#is",
             "source": "preg_match()",
@@ -8925,10 +8925,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/comment.php#L3341-L3347",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/comment.php#L3334-L3340",
             "snippet": [
                 {
-                    "number": 3341,
+                    "number": 3334,
                     "focus": false,
                     "runs": [
                         [
@@ -8938,7 +8938,7 @@
                     ]
                 },
                 {
-                    "number": 3342,
+                    "number": 3335,
                     "focus": false,
                     "runs": [
                         [
@@ -8948,7 +8948,7 @@
                     ]
                 },
                 {
-                    "number": 3343,
+                    "number": 3336,
                     "focus": false,
                     "runs": [
                         [
@@ -8958,7 +8958,7 @@
                     ]
                 },
                 {
-                    "number": 3344,
+                    "number": 3337,
                     "focus": true,
                     "runs": [
                         [
@@ -9032,7 +9032,7 @@
                     ]
                 },
                 {
-                    "number": 3345,
+                    "number": 3338,
                     "focus": false,
                     "runs": [
                         [
@@ -9042,7 +9042,7 @@
                     ]
                 },
                 {
-                    "number": 3346,
+                    "number": 3339,
                     "focus": false,
                     "runs": [
                         [
@@ -9052,7 +9052,7 @@
                     ]
                 },
                 {
-                    "number": 3347,
+                    "number": 3340,
                     "focus": false,
                     "runs": [
                         [
@@ -9110,7 +9110,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/deprecated.php#L5155-L5161",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/deprecated.php#L5155-L5161",
             "snippet": [
                 {
                     "number": 5155,
@@ -9440,7 +9440,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/deprecated.php#L5172-L5178",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/deprecated.php#L5172-L5178",
             "snippet": [
                 {
                     "number": 5172,
@@ -9712,7 +9712,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/embed.php#L963-L969",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/embed.php#L963-L969",
             "snippet": [
                 {
                     "number": 963,
@@ -9903,7 +9903,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/formatting.php#L2058-L2064",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/formatting.php#L2058-L2064",
             "snippet": [
                 {
                     "number": 2058,
@@ -10031,7 +10031,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/formatting.php#L2648-L2654",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/formatting.php#L2648-L2654",
             "snippet": [
                 {
                     "number": 2648,
@@ -10181,7 +10181,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[a-z0-9._-]+)\" at offset 30 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -10197,7 +10197,7 @@
                 "limit": 100000
             },
             "subject": "<a-------------------------------------------------------------!>",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/formatting.php#L2665-L2671",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/formatting.php#L2665-L2671",
             "snippet": [
                 {
                     "number": 2665,
@@ -10297,7 +10297,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/formatting.php#L3266-L3272",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/formatting.php#L3266-L3272",
             "snippet": [
                 {
                     "number": 3266,
@@ -10492,7 +10492,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/formatting.php#L4955-L4961",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/formatting.php#L4955-L4961",
             "snippet": [
                 {
                     "number": 4955,
@@ -10689,7 +10689,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[^`!()\\[\\]{}:'\".,<>«»“”‘’\\s…\" at offset 53 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -10704,7 +10704,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/functions.php#L860-L866",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/functions.php#L860-L866",
             "snippet": [
                 {
                     "number": 860,
@@ -10862,7 +10862,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/functions.php#L5440-L5446",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/functions.php#L5440-L5446",
             "snippet": [
                 {
                     "number": 5440,
@@ -10957,7 +10957,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/functions.php#L6585-L6591",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/functions.php#L6585-L6591",
             "snippet": [
                 {
                     "number": 6585,
@@ -11120,7 +11120,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/functions.php#L6590-L6596",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/functions.php#L6590-L6596",
             "snippet": [
                 {
                     "number": 6590,
@@ -11263,7 +11263,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/functions.php#L6602-L6608",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/functions.php#L6602-L6608",
             "snippet": [
                 {
                     "number": 6602,
@@ -11406,7 +11406,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/html-api/class-wp-html-tag-processor.php#L4003-L4009",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/html-api/class-wp-html-tag-processor.php#L4003-L4009",
             "snippet": [
                 {
                     "number": 4003,
@@ -11553,7 +11553,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1006-L1012",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1006-L1012",
             "snippet": [
                 {
                     "number": 1006,
@@ -11704,7 +11704,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1159-L1165",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1159-L1165",
             "snippet": [
                 {
                     "number": 1159,
@@ -11851,7 +11851,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/link-template.php#L4620-L4626",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/link-template.php#L4620-L4626",
             "snippet": [
                 {
                     "number": 4620,
@@ -11998,7 +11998,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/load.php#L2087-L2093",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/load.php#L2087-L2093",
             "snippet": [
                 {
                     "number": 2087,
@@ -12261,7 +12261,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L307-L313",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L307-L313",
             "snippet": [
                 {
                     "number": 307,
@@ -12540,7 +12540,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L315-L321",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L315-L321",
             "snippet": [
                 {
                     "number": 315,
@@ -12727,7 +12727,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L554-L560",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L554-L560",
             "snippet": [
                 {
                     "number": 554,
@@ -12827,7 +12827,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/f939960c4c6a59f9889e640925a5079fbe18f42c/src/wp-includes/script-loader.php#L4345-L4351",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/script-loader.php#L4345-L4351",
             "snippet": [
                 {
                     "number": 4345,

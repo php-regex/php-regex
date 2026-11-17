@@ -1,6 +1,6 @@
 {
     "repo": "php/web-php",
-    "sha": "fe674bb99c3a7116a903633e4cd669d44cc1ffa2",
+    "sha": "776d63edc225fdf28bd7c951a1cd373eb5fce012",
     "target": {
         "php": "8.4",
         "pcre": "10.49",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/web-php/blob/fe674bb99c3a7116a903633e4cd669d44cc1ffa2/public/credits.php#L9-L15",
+            "permalink": "https://github.com/php/web-php/blob/776d63edc225fdf28bd7c951a1cd373eb5fce012/public/credits.php#L9-L15",
             "snippet": [
                 {
                     "number": 9,
@@ -193,7 +193,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/web-php/blob/fe674bb99c3a7116a903633e4cd669d44cc1ffa2/public/credits.php#L10-L16",
+            "permalink": "https://github.com/php/web-php/blob/776d63edc225fdf28bd7c951a1cd373eb5fce012/public/credits.php#L10-L16",
             "snippet": [
                 {
                     "number": 10,

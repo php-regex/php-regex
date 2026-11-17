@@ -1,6 +1,6 @@
 {
     "repo": "TYPO3/Fluid",
-    "sha": "cf322cf231a990b7e178deb86974702aa3891f59",
+    "sha": "c41e9901f1a871b036aebe45193c2a50f5d1ba49",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/Fluid/blob/cf322cf231a990b7e178deb86974702aa3891f59/src/Core/Parser/SyntaxTree/Expression/MathExpressionNode.php#L41-L47",
+            "permalink": "https://github.com/TYPO3/Fluid/blob/c41e9901f1a871b036aebe45193c2a50f5d1ba49/src/Core/Parser/SyntaxTree/Expression/MathExpressionNode.php#L41-L47",
             "snippet": [
                 {
                     "number": 41,
@@ -213,7 +213,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/Fluid/blob/cf322cf231a990b7e178deb86974702aa3891f59/src/Core/Parser/SyntaxTree/Expression/TernaryExpressionNode.php#L45-L51",
+            "permalink": "https://github.com/TYPO3/Fluid/blob/c41e9901f1a871b036aebe45193c2a50f5d1ba49/src/Core/Parser/SyntaxTree/Expression/TernaryExpressionNode.php#L45-L51",
             "snippet": [
                 {
                     "number": 45,
@@ -357,7 +357,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/Fluid/blob/cf322cf231a990b7e178deb86974702aa3891f59/src/Core/Parser/SyntaxTree/Expression/TernaryExpressionNode.php#L105-L111",
+            "permalink": "https://github.com/TYPO3/Fluid/blob/c41e9901f1a871b036aebe45193c2a50f5d1ba49/src/Core/Parser/SyntaxTree/Expression/TernaryExpressionNode.php#L105-L111",
             "snippet": [
                 {
                     "number": 105,
@@ -488,7 +488,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 3 \"(\"[^\"]+\"|'[^']+')\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -496,7 +496,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/Fluid/blob/cf322cf231a990b7e178deb86974702aa3891f59/src/Core/Parser/TemplateProcessor/NamespaceDetectionTemplateProcessor.php#L50-L56",
+            "permalink": "https://github.com/TYPO3/Fluid/blob/c41e9901f1a871b036aebe45193c2a50f5d1ba49/src/Core/Parser/TemplateProcessor/NamespaceDetectionTemplateProcessor.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,

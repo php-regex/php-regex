@@ -1,6 +1,6 @@
 {
     "repo": "PHPCSStandards/PHP_CodeSniffer",
-    "sha": "c17bea2b241d09596accb728e097de010a002c8a",
+    "sha": "f6e26925587d9731afd711dc1ceea934a325dd0d",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -27,7 +27,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in capturing group 3 \"([\\da-zA-Z-_+.\\w]*[\\da-zA-Z-_+…\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 },
@@ -50,7 +50,7 @@
                 "limit": 100000
             },
             "subject": " <+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>",
-            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/c17bea2b241d09596accb728e097de010a002c8a/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php#L472-L478",
+            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/f6e26925587d9731afd711dc1ceea934a325dd0d/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php#L472-L478",
             "snippet": [
                 {
                     "number": 472,
@@ -150,7 +150,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/c17bea2b241d09596accb728e097de010a002c8a/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php#L499-L505",
+            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/f6e26925587d9731afd711dc1ceea934a325dd0d/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php#L499-L505",
             "snippet": [
                 {
                     "number": 499,
@@ -369,7 +369,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/c17bea2b241d09596accb728e097de010a002c8a/src/Util/Common.php#L489-L495",
+            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/f6e26925587d9731afd711dc1ceea934a325dd0d/src/Util/Common.php#L489-L495",
             "snippet": [
                 {
                     "number": 489,

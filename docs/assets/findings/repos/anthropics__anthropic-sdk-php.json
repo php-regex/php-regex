@@ -1,6 +1,6 @@
 {
     "repo": "anthropics/anthropic-sdk-php",
-    "sha": "67df24ec030b3d21a1b88edc057ba6d3e9593028",
+    "sha": "69f5beca073b094689e3ff5a5cd63eaa64e584b8",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -34,7 +34,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/anthropics/anthropic-sdk-php/blob/67df24ec030b3d21a1b88edc057ba6d3e9593028/src/Core/Util.php#L23-L29",
+            "permalink": "https://github.com/anthropics/anthropic-sdk-php/blob/69f5beca073b094689e3ff5a5cd63eaa64e584b8/src/Core/Util.php#L23-L29",
             "snippet": [
                 {
                     "number": 23,

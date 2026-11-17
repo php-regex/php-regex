@@ -1,6 +1,6 @@
 {
     "repo": "laravel/prompts",
-    "sha": "e84c227ae83ffef9f8fc1059bb2b79f2b0cfc0ca",
+    "sha": "93c196de0529f8995b5368ccef6a1234f7799908",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/prompts/blob/e84c227ae83ffef9f8fc1059bb2b79f2b0cfc0ca/src/Task.php#L241-L247",
+            "permalink": "https://github.com/laravel/prompts/blob/93c196de0529f8995b5368ccef6a1234f7799908/src/Task.php#L241-L247",
             "snippet": [
                 {
                     "number": 241,

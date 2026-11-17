@@ -1,6 +1,6 @@
 {
     "repo": "symfony/polyfill",
-    "sha": "c999eaf54db0e673e7624d2edd8666c75b4dc1bf",
+    "sha": "769d0bf6ad61c9dff2b7e42a0f1186e6deb1503f",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/polyfill/blob/c999eaf54db0e673e7624d2edd8666c75b4dc1bf/src/Intl/Grapheme/Grapheme.php#L42-L48",
+            "permalink": "https://github.com/symfony/polyfill/blob/769d0bf6ad61c9dff2b7e42a0f1186e6deb1503f/src/Intl/Grapheme/Grapheme.php#L42-L48",
             "snippet": [
                 {
                     "number": 42,
@@ -785,7 +785,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/polyfill/blob/c999eaf54db0e673e7624d2edd8666c75b4dc1bf/src/Intl/Icu/NumberFormatter.php#L508-L514",
+            "permalink": "https://github.com/symfony/polyfill/blob/769d0bf6ad61c9dff2b7e42a0f1186e6deb1503f/src/Intl/Icu/NumberFormatter.php#L508-L514",
             "snippet": [
                 {
                     "number": 508,
@@ -885,7 +885,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/polyfill/blob/c999eaf54db0e673e7624d2edd8666c75b4dc1bf/src/Intl/Idn/Idn.php#L826-L832",
+            "permalink": "https://github.com/symfony/polyfill/blob/769d0bf6ad61c9dff2b7e42a0f1186e6deb1503f/src/Intl/Idn/Idn.php#L826-L832",
             "snippet": [
                 {
                     "number": 826,
@@ -1237,7 +1237,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/polyfill/blob/c999eaf54db0e673e7624d2edd8666c75b4dc1bf/src/Mbstring/Mbstring.php#L631-L637",
+            "permalink": "https://github.com/symfony/polyfill/blob/769d0bf6ad61c9dff2b7e42a0f1186e6deb1503f/src/Mbstring/Mbstring.php#L631-L637",
             "snippet": [
                 {
                     "number": 631,
@@ -1589,7 +1589,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/polyfill/blob/c999eaf54db0e673e7624d2edd8666c75b4dc1bf/src/Php84/Php84.php#L515-L521",
+            "permalink": "https://github.com/symfony/polyfill/blob/769d0bf6ad61c9dff2b7e42a0f1186e6deb1503f/src/Php84/Php84.php#L515-L521",
             "snippet": [
                 {
                     "number": 515,

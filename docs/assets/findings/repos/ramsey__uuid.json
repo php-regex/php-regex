@@ -1,6 +1,6 @@
 {
     "repo": "ramsey/uuid",
-    "sha": "8945a1b01c9322b9d08cc854e03edc2d8158b6d5",
+    "sha": "7a16331da5bbcade32198a18b25f937f2cf3c4b1",
     "target": {
         "php": "8.0",
         "pcre": "10.35",
@@ -8,13 +8,108 @@
     },
     "findings": [
         {
+            "id": "f-b60819c9b8",
+            "file": "src/Codec/StringCodec.php",
+            "line": 42,
+            "column": 37,
+            "pattern": "/\\A(?:urn:)?(?:uuid:)?(\\{)?([0-9a-f]{8})(-?)([0-9a-f]{4})\\3([0-9a-f]{4})\\3([0-9a-f]{4})\\3([0-9a-f]{12})(?(1)\\})\\z/Di",
+            "source": "preg_match()",
+            "location": "via self::ENCODED_PATTERN",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.D",
+                    "message": "Flag 'D' is useless: the pattern contains no $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-d-dollar-end-only"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/ramsey/uuid/blob/7a16331da5bbcade32198a18b25f937f2cf3c4b1/src/Codec/StringCodec.php#L39-L45",
+            "snippet": [
+                {
+                    "number": 39,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * Pattern to match a UUID string: 32 hexadecimal digits with hyphens in all four standard positions or with no",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 40,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * hyphens, optionally in one pair of braces, optionally after one \"urn:\" prefix, one \"uuid:\" prefix, or both.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 41,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 42,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    private const ENCODED_PATTERN = '/\\A(?:urn:)?(?:uuid:)?(\\{)?'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 43,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        . '([0-9a-f]{8})(-?)([0-9a-f]{4})\\3([0-9a-f]{4})\\3([0-9a-f]{4})\\3([0-9a-f]{12})'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 44,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        . '(?(1)\\})\\z/Di';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 45,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-1029e77381",
             "file": "src/Lazy/LazyUuidFromString.php",
-            "line": 53,
+            "line": 57,
             "column": 32,
             "pattern": "/\\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\z/ms",
             "source": "preg_match()",
-            "location": "via LazyUuidFromString::VALID_REGEX",
+            "location": "via self::VALID_REGEX",
             "level": "warn",
             "issues": [
                 {
@@ -40,10 +135,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ramsey/uuid/blob/8945a1b01c9322b9d08cc854e03edc2d8158b6d5/src/Lazy/LazyUuidFromString.php#L50-L56",
+            "permalink": "https://github.com/ramsey/uuid/blob/7a16331da5bbcade32198a18b25f937f2cf3c4b1/src/Lazy/LazyUuidFromString.php#L54-L60",
             "snippet": [
                 {
-                    "number": 50,
+                    "number": 54,
                     "focus": false,
                     "runs": [
                         [
@@ -53,7 +148,7 @@
                     ]
                 },
                 {
-                    "number": 51,
+                    "number": 55,
                     "focus": false,
                     "runs": [
                         [
@@ -63,7 +158,7 @@
                     ]
                 },
                 {
-                    "number": 52,
+                    "number": 56,
                     "focus": false,
                     "runs": [
                         [
@@ -73,7 +168,7 @@
                     ]
                 },
                 {
-                    "number": 53,
+                    "number": 57,
                     "focus": true,
                     "runs": [
                         [
@@ -291,7 +386,7 @@
                     ]
                 },
                 {
-                    "number": 54,
+                    "number": 58,
                     "focus": false,
                     "runs": [
                         [
@@ -301,21 +396,228 @@
                     ]
                 },
                 {
-                    "number": 55,
+                    "number": 59,
                     "focus": false,
                     "runs": [
                         [
-                            "    private ?UuidInterface $unwrapped = null;",
+                            "    /**",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 56,
+                    "number": 60,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * The factory that builds every wrapped UUID; it is created on first use.",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4fd333de10",
+            "file": "src/Rfc4122/Validator.php",
+            "line": 38,
+            "column": 37,
+            "pattern": "/\\A(?:urn:)?(?:uuid:)?(?:\\{(.*)\\}|(.*))\\z/Dis",
+            "source": "preg_replace()",
+            "location": "via self::WRAPPER_PATTERN",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.D",
+                    "message": "Flag 'D' is useless: the pattern contains no $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-d-dollar-end-only"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/ramsey/uuid/blob/7a16331da5bbcade32198a18b25f937f2cf3c4b1/src/Rfc4122/Validator.php#L35-L41",
+            "snippet": [
+                {
+                    "number": 35,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 36,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * Pattern to match the optional \"urn:\" and \"uuid:\" prefixes and the optional pair of braces around a UUID.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 37,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 38,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    private const WRAPPER_PATTERN = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\A",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "urn:",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "uuid:",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\{",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\z",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Dis",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 39,
                     "focus": false,
                     "runs": [
                         [
                             "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 40,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 41,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * The length of the longest valid form: \"urn:uuid:\", braces, and 36 characters.",
                             ""
                         ]
                     ]
@@ -325,7 +627,7 @@
         {
             "id": "f-19e907fbee",
             "file": "src/Rfc4122/Validator.php",
-            "line": 47,
+            "line": 67,
             "column": 73,
             "pattern": "/\\A[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[1-8][0-9A-Fa-f]{3}-[ABab89][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}\\z/Dms",
             "source": "preg_match()",
@@ -362,20 +664,20 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ramsey/uuid/blob/8945a1b01c9322b9d08cc854e03edc2d8158b6d5/src/Rfc4122/Validator.php#L44-L50",
+            "permalink": "https://github.com/ramsey/uuid/blob/7a16331da5bbcade32198a18b25f937f2cf3c4b1/src/Rfc4122/Validator.php#L64-L70",
             "snippet": [
                 {
-                    "number": 44,
+                    "number": 64,
                     "focus": false,
                     "runs": [
                         [
-                            "        $uuid = strtolower(str_replace(['urn:', 'uuid:', 'URN:', 'UUID:', '{', '}'], '', $uuid));",
+                            "        $uuid = strtolower($uuid);",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 45,
+                    "number": 65,
                     "focus": false,
                     "runs": [
                         [
@@ -385,7 +687,7 @@
                     ]
                 },
                 {
-                    "number": 46,
+                    "number": 66,
                     "focus": false,
                     "runs": [
                         [
@@ -395,7 +697,7 @@
                     ]
                 },
                 {
-                    "number": 47,
+                    "number": 67,
                     "focus": true,
                     "runs": [
                         [
@@ -405,7 +707,7 @@
                     ]
                 },
                 {
-                    "number": 48,
+                    "number": 68,
                     "focus": false,
                     "runs": [
                         [
@@ -415,7 +717,7 @@
                     ]
                 },
                 {
-                    "number": 49,
+                    "number": 69,
                     "focus": false,
                     "runs": [
                         [
@@ -425,7 +727,7 @@
                     ]
                 },
                 {
-                    "number": 50,
+                    "number": 70,
                     "focus": false,
                     "runs": [
                         [
@@ -437,9 +739,216 @@
             ]
         },
         {
+            "id": "f-cafa605aec",
+            "file": "src/Validator/GenericValidator.php",
+            "line": 38,
+            "column": 37,
+            "pattern": "/\\A(?:urn:)?(?:uuid:)?(?:\\{(.*)\\}|(.*))\\z/Dis",
+            "source": "preg_replace()",
+            "location": "via self::WRAPPER_PATTERN",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.D",
+                    "message": "Flag 'D' is useless: the pattern contains no $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-d-dollar-end-only"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/ramsey/uuid/blob/7a16331da5bbcade32198a18b25f937f2cf3c4b1/src/Validator/GenericValidator.php#L35-L41",
+            "snippet": [
+                {
+                    "number": 35,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 36,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * Pattern to match the optional \"urn:\" and \"uuid:\" prefixes and the optional pair of braces around a UUID.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 37,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 38,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    private const WRAPPER_PATTERN = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\A",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "urn:",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "uuid:",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\{",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\z",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Dis",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 39,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 40,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 41,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * The length of the longest valid form: \"urn:uuid:\", braces, and 36 characters.",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-0780fb972e",
             "file": "src/Validator/GenericValidator.php",
-            "line": 48,
+            "line": 65,
             "column": 50,
             "pattern": "/\\A[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\\z/Dms",
             "source": "preg_match()",
@@ -476,20 +985,20 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ramsey/uuid/blob/8945a1b01c9322b9d08cc854e03edc2d8158b6d5/src/Validator/GenericValidator.php#L45-L51",
+            "permalink": "https://github.com/ramsey/uuid/blob/7a16331da5bbcade32198a18b25f937f2cf3c4b1/src/Validator/GenericValidator.php#L62-L68",
             "snippet": [
                 {
-                    "number": 45,
+                    "number": 62,
                     "focus": false,
                     "runs": [
                         [
-                            "        $uuid = str_replace(['urn:', 'uuid:', 'URN:', 'UUID:', '{', '}'], '', $uuid);",
+                            "        $uuid = preg_replace(self::WRAPPER_PATTERN, '$1$2', $uuid) ?? $uuid;",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 46,
+                    "number": 63,
                     "focus": false,
                     "runs": [
                         [
@@ -499,7 +1008,7 @@
                     ]
                 },
                 {
-                    "number": 47,
+                    "number": 64,
                     "focus": false,
                     "runs": [
                         [
@@ -509,7 +1018,7 @@
                     ]
                 },
                 {
-                    "number": 48,
+                    "number": 65,
                     "focus": true,
                     "runs": [
                         [
@@ -519,7 +1028,7 @@
                     ]
                 },
                 {
-                    "number": 49,
+                    "number": 66,
                     "focus": false,
                     "runs": [
                         [
@@ -529,7 +1038,7 @@
                     ]
                 },
                 {
-                    "number": 50,
+                    "number": 67,
                     "focus": false,
                     "runs": [
                         [
@@ -539,7 +1048,7 @@
                     ]
                 },
                 {
-                    "number": 51,
+                    "number": 68,
                     "focus": false,
                     "runs": [
                         [

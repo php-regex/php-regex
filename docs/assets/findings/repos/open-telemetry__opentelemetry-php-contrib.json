@@ -1,6 +1,6 @@
 {
     "repo": "open-telemetry/opentelemetry-php-contrib",
-    "sha": "09bba2c40b77b8bf7e1c4c56f492a76598c74e1e",
+    "sha": "db4bf86aaa00a001b3e95a0c93beccbfcf7d9f55",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -27,7 +27,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:--[^\\n]*\\n|\\/\\*[\\s\\S]*?\\*\\/…\" at offset 4 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -43,7 +43,7 @@
                 "limit": 100000
             },
             "subject": "--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/",
-            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/09bba2c40b77b8bf7e1c4c56f492a76598c74e1e/src/Instrumentation/MySqli/src/MySqliInstrumentation.php#L882-L888",
+            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/db4bf86aaa00a001b3e95a0c93beccbfcf7d9f55/src/Instrumentation/MySqli/src/MySqliInstrumentation.php#L882-L888",
             "snippet": [
                 {
                     "number": 882,
@@ -321,7 +321,7 @@
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:--[^\\n]*\\n|\\/\\*[\\s\\S]*?\\*\\/…\" at offset 4 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -337,7 +337,7 @@
                 "limit": 100000
             },
             "subject": "--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/",
-            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/09bba2c40b77b8bf7e1c4c56f492a76598c74e1e/src/Instrumentation/PostgreSql/src/PostgreSqlInstrumentation.php#L639-L645",
+            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/db4bf86aaa00a001b3e95a0c93beccbfcf7d9f55/src/Instrumentation/PostgreSql/src/PostgreSqlInstrumentation.php#L639-L645",
             "snippet": [
                 {
                     "number": 639,

@@ -1,6 +1,6 @@
 {
     "repo": "shopware/shopware",
-    "sha": "4a398e183a55bc6127e9f2ccca29d087bbfec924",
+    "sha": "07c65ace01bacde0af411fa8e21e7e32b6e230ea",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/Content/Cms/DataResolver/Element/AbstractCmsElementResolver.php#L181-L187",
+            "permalink": "https://github.com/shopware/shopware/blob/07c65ace01bacde0af411fa8e21e7e32b6e230ea/src/Core/Content/Cms/DataResolver/Element/AbstractCmsElementResolver.php#L181-L187",
             "snippet": [
                 {
                     "number": 181,
@@ -207,7 +207,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L28-L34",
+            "permalink": "https://github.com/shopware/shopware/blob/07c65ace01bacde0af411fa8e21e7e32b6e230ea/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -370,7 +370,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L29-L35",
+            "permalink": "https://github.com/shopware/shopware/blob/07c65ace01bacde0af411fa8e21e7e32b6e230ea/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -538,7 +538,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L117-L123",
+            "permalink": "https://github.com/shopware/shopware/blob/07c65ace01bacde0af411fa8e21e7e32b6e230ea/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -686,7 +686,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L122-L128",
+            "permalink": "https://github.com/shopware/shopware/blob/07c65ace01bacde0af411fa8e21e7e32b6e230ea/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L122-L128",
             "snippet": [
                 {
                     "number": 122,
@@ -834,7 +834,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L126-L132",
+            "permalink": "https://github.com/shopware/shopware/blob/07c65ace01bacde0af411fa8e21e7e32b6e230ea/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L126-L132",
             "snippet": [
                 {
                     "number": 126,
@@ -982,7 +982,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L131-L137",
+            "permalink": "https://github.com/shopware/shopware/blob/07c65ace01bacde0af411fa8e21e7e32b6e230ea/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L131-L137",
             "snippet": [
                 {
                     "number": 131,
@@ -1118,13 +1118,13 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"A\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). The risky part is: (?:[A-Z]+(_[A-Z]+)*)+ Hotspot offsets: 1-22 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"A\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). The risky part is: [A-Z]+ Hotspot offsets: 4-10 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "message": "Nested quantifiers in \"(?:[A-Z]+(_[A-Z]+)*)\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
@@ -1140,7 +1140,7 @@
                 "limit": 100000
             },
             "subject": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!",
-            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/DevOps/Test/AnnotationTagTester.php#L187-L193",
+            "permalink": "https://github.com/shopware/shopware/blob/07c65ace01bacde0af411fa8e21e7e32b6e230ea/src/Core/DevOps/Test/AnnotationTagTester.php#L187-L193",
             "snippet": [
                 {
                     "number": 187,
@@ -1348,7 +1348,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Core/Test/FixtureLoader.php#L54-L60",
+            "permalink": "https://github.com/shopware/shopware/blob/07c65ace01bacde0af411fa8e21e7e32b6e230ea/src/Core/Test/FixtureLoader.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -1483,7 +1483,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Storefront/Theme/ThemeConfigValueAccessor.php#L253-L259",
+            "permalink": "https://github.com/shopware/shopware/blob/07c65ace01bacde0af411fa8e21e7e32b6e230ea/src/Storefront/Theme/ThemeConfigValueAccessor.php#L253-L259",
             "snippet": [
                 {
                     "number": 253,
@@ -1654,7 +1654,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/4a398e183a55bc6127e9f2ccca29d087bbfec924/src/Storefront/Theme/Validator/SCSSValidator.php#L196-L202",
+            "permalink": "https://github.com/shopware/shopware/blob/07c65ace01bacde0af411fa8e21e7e32b6e230ea/src/Storefront/Theme/Validator/SCSSValidator.php#L196-L202",
             "snippet": [
                 {
                     "number": 196,

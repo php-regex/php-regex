@@ -1,6 +1,6 @@
 {
     "repo": "Heyosseus/sloppy",
-    "sha": "885218d43ab2f8626d6e4ea8e5b58b4d04264467",
+    "sha": "b1e48160c4fde0bc62073972b7137a990abcdb91",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/PlaceholderImplementationRule.php#L58-L64",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/b1e48160c4fde0bc62073972b7137a990abcdb91/src/Rules/Php/PlaceholderImplementationRule.php#L58-L64",
             "snippet": [
                 {
                     "number": 58,
@@ -191,7 +191,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/UnexplainedSuppressionRule.php#L168-L174",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/b1e48160c4fde0bc62073972b7137a990abcdb91/src/Rules/Php/UnexplainedSuppressionRule.php#L168-L174",
             "snippet": [
                 {
                     "number": 168,
@@ -330,7 +330,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/UnexplainedSuppressionRule.php#L182-L188",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/b1e48160c4fde0bc62073972b7137a990abcdb91/src/Rules/Php/UnexplainedSuppressionRule.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,
@@ -469,7 +469,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/UnexplainedSuppressionRule.php#L214-L220",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/b1e48160c4fde0bc62073972b7137a990abcdb91/src/Rules/Php/UnexplainedSuppressionRule.php#L214-L220",
             "snippet": [
                 {
                     "number": 214,
@@ -564,7 +564,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/UnexplainedSuppressionRule.php#L215-L221",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/b1e48160c4fde0bc62073972b7137a990abcdb91/src/Rules/Php/UnexplainedSuppressionRule.php#L215-L221",
             "snippet": [
                 {
                     "number": 215,
@@ -659,7 +659,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/885218d43ab2f8626d6e4ea8e5b58b4d04264467/src/Rules/Php/UnexplainedSuppressionRule.php#L217-L223",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/b1e48160c4fde0bc62073972b7137a990abcdb91/src/Rules/Php/UnexplainedSuppressionRule.php#L217-L223",
             "snippet": [
                 {
                     "number": 217,
