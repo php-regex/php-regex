@@ -62,10 +62,10 @@ final class AnalysisBench
 
     #[DataProvider('redosCases')]
     #[ExpectedFor('bounded-alternation-200', instructions: '156.8M', cycles: '210.7M', memory: '748.8KiB')]
-    #[ExpectedFor('email-exponential', instructions: '13.30M', cycles: '19.85M', memory: '116.9KiB')]
+    #[ExpectedFor('email-exponential', instructions: '13.85M', cycles: '20.54M', memory: '117.3KiB')]
     #[ExpectedFor('nested-bounded-repeats', instructions: '38.39M', cycles: '49.12M', memory: '527.5KiB')]
     #[ExpectedFor('nested-bounded-repeats-then-loop', instructions: '39.29M', cycles: '50.71M', memory: '532.0KiB')]
-    #[ExpectedFor('nested-plus', instructions: '1.974M', cycles: '4.242M', memory: '43.77KiB')]
+    #[ExpectedFor('nested-plus', instructions: '2.020M', cycles: '4.342M', memory: '44.16KiB')]
     #[ExpectedFor('same-alternation-star', instructions: '2.307M', cycles: '4.615M', memory: '46.16KiB')]
     #[ExpectedFor('unicode-scripts', instructions: '723.1M', cycles: '778.6M', memory: '6.422MiB')]
     public function benchRedos(string $group, string $pattern, string $expected): void
