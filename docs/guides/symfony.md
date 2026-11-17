@@ -539,7 +539,10 @@ alone to that route, and tries no later one: `/foo/` declared before
 `/foo` takes `GET /foo`, so the later route is shadowed when it takes only
 `GET` and `HEAD`, and an overlap otherwise; the report then suggests paths
 that differ by more than the slash. The router checks the slash before the
-scheme: a later route on another scheme loses those requests too. A later
+scheme: a later route on another scheme loses those requests too, and
+keeps on its own scheme the paths both routes match: `/{x<a|b>}` on `https`
+before `/{y<a|b/>}` on `http` is an overlap, the later route serving
+`http://…/a` and losing `/b/` to the redirect. A later
 route whose paths the earlier one matches in part and redirects for the
 rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
 route that takes no `GET` request redirects none.

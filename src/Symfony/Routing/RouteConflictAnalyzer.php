@@ -21,6 +21,7 @@ use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Routing\CompiledRoute;
@@ -160,9 +161,11 @@ final class RouteConflictAnalyzer
                     $intersection = $this->solver->intersection($earlier['pathPattern'], $later['pathPattern'], $options);
                     // On disjoint schemes, each route keeps the paths both
                     // match for its own scheme: only the redirect is read,
-                    // where the two share no path.
+                    // which takes the later route's other paths.
                     if ($intersection->isEmpty || !$schemesOverlap) {
-                        $redirect = $intersection->isEmpty ? $this->redirectConflict($earlier, $later, $options, null === $hostsOverlap) : null;
+                        $redirect = $intersection->isEmpty
+                            ? $this->redirectConflict($earlier, $later, $options, null === $hostsOverlap)
+                            : $this->redirectBesideSharedPaths($earlier, $later, $options, null === $hostsOverlap);
                         if (null !== $redirect && 'shadowed' === $redirect['type']) {
                             $shadowed++;
                             $conflicts[] = $redirect;
@@ -375,6 +378,18 @@ final class RouteConflictAnalyzer
      * rewrites it: "$" becomes "/?$", the slash before it dropped. A regex
      * of the application's own with no "$" is left as it is.
      */
+    /**
+     * The paths that differ from those of the regex by their trailing slash:
+     * the slash before the closing anchor is dropped, or one is added.
+     */
+    private static function slashSwapped(string $regex): string
+    {
+        $end = strrpos($regex, '$');
+        $slash = false !== $end && $end > 0 && '/' === $regex[$end - 1] ? 1 : 0;
+
+        return false === $end ? $regex : substr_replace($regex, 1 === $slash ? '$' : '/$', $end - $slash, 1 + $slash);
+    }
+
     private static function slashToggled(string $regex): string
     {
         $end = strrpos($regex, '$');
@@ -434,6 +449,32 @@ final class RouteConflictAnalyzer
         $shadowed = $everyPath && $this->takesEveryRequestOf(['methods' => ['GET', 'HEAD'], 'schemes' => []] + $earlier, $later, $options);
 
         return $this->redirected($earlier, $later, $shadowed ? 'shadowed' : 'overlap', $redirected->example, $hostsUnread);
+    }
+
+    /**
+     * The conflict of two routes on disjoint schemes that share paths: the
+     * later route keeps those on its own schemes, and loses to the redirect
+     * a path that differs from one of the earlier route by its trailing
+     * slash alone, and that the earlier route does not match. An overlap at
+     * most; null when the solver finds no such path, or names one the
+     * earlier route matches as well, as a last variable that takes a slash.
+     * The pair reaches it on disjoint schemes only where redirects() holds.
+     *
+     * @param bool $hostsUnread whether the solver gave up on the two hosts
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     * @phpstan-param RouteDescriptor $later
+     *
+     * @phpstan-return RouteConflict|null
+     */
+    private function redirectBesideSharedPaths(array $earlier, array $later, SolverOptions $options, bool $hostsUnread): ?array
+    {
+        $redirected = $this->solver->intersection(self::slashSwapped($earlier['pathPattern']), $later['pathPattern'], $options);
+        if ($redirected->isEmpty || null === $redirected->example || 1 === LibraryPcre::match($earlier['pathPattern'], $redirected->example)) {
+            return null;
+        }
+
+        return $this->redirected($earlier, $later, 'overlap', $redirected->example, $hostsUnread);
     }
 
     /**

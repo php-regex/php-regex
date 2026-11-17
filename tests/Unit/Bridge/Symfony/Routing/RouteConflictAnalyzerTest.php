@@ -955,6 +955,22 @@ final class RouteConflictAnalyzerTest extends TestCase
             'type' => null,
             'filtered' => 0,
         ];
+        // The paths both match stay the later route's on its scheme; the
+        // redirect still takes the others.
+        yield 'a route on https sharing some paths with a later one on http, which loses the rest to the redirect' => [
+            'earlier' => ['/{x<a|b>}', ['GET'], ['https']],
+            'later' => ['/{y<a|b/>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/a', true], ['GET', 'http', '/b/', false], ['HEAD', 'http', '/b/', false]],
+            'type' => 'overlap',
+            'filtered' => 0,
+        ];
+        yield 'a route on https sharing every path with a later one on http, whose paths the redirect leaves alone' => [
+            'earlier' => ['/{x<a|b>}', ['GET'], ['https']],
+            'later' => ['/{y<a>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/a', true]],
+            'type' => null,
+            'filtered' => 0,
+        ];
         yield 'an earlier route for POST only on another scheme redirects nothing' => [
             'earlier' => ['/foo/', ['POST'], ['https']],
             'later' => ['/foo', [], ['http']],

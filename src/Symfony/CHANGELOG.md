@@ -202,7 +202,9 @@ CHANGELOG
    overlap, or a shadow when the later route takes only `GET` and `HEAD`,
    where the pair was reported as no conflict. A later route whose paths
    the earlier one matches in part and redirects for the rest,
-   `/blog{slash}` (`/?`) after `/blog`, is shadowed too. The report
+   `/blog{slash}` (`/?`) after `/blog`, is shadowed too. On another
+   scheme, a later route that shares paths with the earlier one keeps them
+   and loses the redirected ones: an overlap. The report
    suggests paths that differ by more than the slash, never the reorder
    that only turns the redirect round.
  * `regex:routes` and `regex:analyze` call a route shadowed only when an
