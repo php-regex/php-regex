@@ -758,9 +758,7 @@
     },
     {
         "pattern": "#^((?:\\w+,? )*or [a-z]+) element(?:, or if there is no more content in the parent element and the parent element is an HTML element that is not an? (?:\\w+, )*or \\w+ element, or an autonomous custom element)?$#",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
+        "issues": []
     },
     {
         "pattern": "(^[\\d.\\s]*The (?:\\w+, )*(?:(?:\\w+ )?and )*\\w+ elements?\\s*$)",
@@ -5424,7 +5422,8 @@
     {
         "pattern": "@^/\\*\\*\\n(\\s*\\*\\s*\\n)*\\s*\\*?\\*/$@",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -5575,9 +5574,7 @@
     },
     {
         "pattern": "/^(?:\\h*-?\\d+(?:\\.\\d+)?\\h*[a-z]+)+$/i",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
+        "issues": []
     },
     {
         "pattern": "/^(-?\\d(\\d(?![\\/-])|[^\\d\\/-]([\\/-])?)*|P[T\\d].*|(?:\\h*\\d+(?:\\.\\d+)?\\h*[a-z]+)+)$/i",
@@ -6743,13 +6740,15 @@
         "pattern": "/--TEST--\\s*(.*?)\\s*(?:--CONDITION--\\s*(.*))?\\s*(?:--DEPRECATION--\\s*(.*?))?\\s*((?:--TEMPLATE(?:\\(.*?\\))?--(?:.*?))+)\\s*(?:--DATA--\\s*(.*))?\\s*--EXCEPTION--\\s*(.*)/sx",
         "issues": [
             "regex.lint.dotstar.nested",
-            "regex.lint.flag.useless.x"
+            "regex.lint.flag.useless.x",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
         "pattern": "/--TEST--\\s*(.*?)\\s*(?:--CONDITION--\\s*(.*))?\\s*(?:--DEPRECATION--\\s*(.*?))?\\s*((?:--TEMPLATE(?:\\(.*?\\))?--(?:.*?))+)--DATA--.*?--EXPECT--.*/s",
         "issues": [
-            "regex.lint.dotstar.nested"
+            "regex.lint.dotstar.nested",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -7745,7 +7744,8 @@
     {
         "pattern": "/^[ \\t]*From:[ \\t]*.+(?:\\r?\\n.*){0,5}?\\r?\\n[ \\t]*Subject:[ \\t]*.*$/im",
         "issues": [
-            "regex.lint.quantifier.concatenation"
+            "regex.lint.quantifier.concatenation",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -8096,7 +8096,8 @@
     {
         "pattern": "/^(crop)(-[\\d]{1,3}-[\\d]{1,3}(?:-[\\d]{1,3}(?:\\.\\d+)?)?)*$/",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -8368,7 +8369,8 @@
     {
         "pattern": "/^(RH|r)?V((Z?F)?[N]{0,2})?(J|([ZJ]?G(JN?)?[CR]J?((Z?F)?[N]{0,2})?){0,4}((([ZJ]?G(JN?)?)|GZ)|(GJ)?([ZJ]{0,3}MN?(H|JHJR)?){0,4})?(G([CR]J?((Z?F)?[N]{0,2})?|V))?(SZ?)?[v]{0,2})/",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -8785,7 +8787,8 @@
     {
         "pattern": "#^([a-z0-9]+(-[a-z0-9]+)*)(--[a-z0-9]+(-[a-z0-9]+)*)*$#",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -8945,7 +8948,8 @@
     {
         "pattern": "/^<(\\w+|(\\w+=[\\w,]+;?)*)>.+<\\/(\\w+|(\\w+=\\w+;?)*)?>$/",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -9756,13 +9760,15 @@
         "pattern": "/([0-9]{4}\\.[0-9]{1,2}\\.[0-9]{1,2}\\-[0-9]{1,2}\\.[0-9]{1,2}.[0-9]{1,2})+$/i",
         "issues": [
             "regex.lint.flag.useless.i",
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
         "pattern": "/([0-9]{2} [A-Z]{3} [0-9]{4} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2} [+-][0-9]{1,4} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2} [+-][0-9]{1,4})+$/i",
         "issues": [
-            "regex.lint.group.quantifiedCapture"
+            "regex.lint.group.quantifiedCapture",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
@@ -9814,7 +9820,8 @@
             "regex.lint.charclass.redundant",
             "regex.lint.dotstar.nested",
             "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.concatenation"
+            "regex.lint.quantifier.concatenation",
+            "regex.lint.quantifier.nested"
         ]
     },
     {
