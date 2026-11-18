@@ -34,6 +34,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Exception\ExceptionInterface as DependencyInjectionException;
 
 /**
  * Inside an application the security configuration is the one the kernel
@@ -661,6 +662,61 @@ final class SecurityConfigKernelTest extends TestCase
         } finally {
             chmod($cache, 0o755);
         }
+    }
+
+    /**
+     * A parameter of the application that holds no string is taken as it
+     * is: a port given as an integer is that port.
+     */
+    #[Test]
+    public function test_a_named_file_takes_a_parameter_of_the_application_that_is_no_string(): void
+    {
+        $project = $this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_port: 8080\n",
+            'security.yaml' => "security:\n    access_control: [{ path: ^/admin, port: '%admin_port%' }]\n",
+        ]);
+        $kernel = new SecurityConfigKernel($project, withSecurityBundle: false);
+        $kernel->boot();
+        $this->assertSame(8080, $kernel->getContainer()->getParameter('admin_port'));
+
+        $config = (new SecurityConfigExtractor())->read([$project.'/security.yaml'], $kernel, new SecurityConfigLocator(), $project, 'test');
+
+        $this->assertNotNull($config);
+        $this->assertSame(8080, $config['accessControl'][0]['port'] ?? null);
+    }
+
+    /**
+     * The container a named file takes its parameters from is compiled
+     * anew from the files of the application: one the container component
+     * refuses since the kernel booted stops the reading with its reason.
+     */
+    #[Test]
+    public function test_a_named_file_stops_where_the_application_container_cannot_be_compiled(): void
+    {
+        $project = $this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_path: ^/admin\n",
+            'security.yaml' => "security:\n    access_control: [{ path: '%admin_path%' }]\n",
+        ]);
+        $kernel = new SecurityConfigKernel($project, withSecurityBundle: false);
+        $kernel->boot();
+        file_put_contents($project.'/config/services.yaml', "parameters:\n    admin_path: ^/admin\nservices:\n    app.mailer:\n        class: stdClass\n        public: true\n        arguments: ['@app.missing']\n");
+
+        $build = \Closure::bind(fn (): mixed => $this->buildContainer(), clone $kernel, SecurityConfigKernel::class);
+        $this->assertNotNull($build);
+        $container = $build();
+        $this->assertInstanceOf(ContainerBuilder::class, $container);
+
+        try {
+            $container->compile();
+            $this->fail('The container compiled with a service that names a missing one.');
+        } catch (DependencyInjectionException $e) {
+            $reason = $e->getMessage();
+        }
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('The container of the application cannot be compiled: '.$reason);
+
+        (new SecurityConfigExtractor())->read([$project.'/security.yaml'], $kernel, new SecurityConfigLocator(), $project, 'test');
     }
 
     /**
