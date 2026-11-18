@@ -42,6 +42,20 @@ CHANGELOG
    that no `)` follows is refused on the number, as PCRE2 refuses it before
    it looks for the `)`: `/(?(0x)a)/` and `/(?(+0 )a)/` are
    `regex.backref.zero`, where they were `regex.conditional.unclosed`.
+ * The characters a node may start and end with, which the linter's rules,
+   the ReDoS heuristics and the optimizer's possessive rewrite compare, are
+   read past a lookaround, in either direction, positive or negative and in
+   its alphabetic forms, and past a substring scan: they read nothing.
+   `(?!x)a` and `(?<=x)a` start with `a`, where they were read as starting
+   with `x`, `a(?=x)` and `a(?<!x)` end with it, and a lookaround alone
+   reads nothing. An alternation that may match empty through one branch
+   lets the items around it lead too: `(?:|b)a` starts with `a` or `b`,
+   where it was read as starting with `b` alone. Two branches overlap on
+   the characters they take, never on what a lookaround looks at:
+   `regex.lint.overlap.charset` no longer reports `/(?:[^$]+|(?<=\\)\$)+/`
+   or `/^(?:>(?:(?!!)|!))+$/`, and reports `/^(?:(?!x)a|a)+$/`, which the
+   ReDoS heuristics, where it was medium, now rate critical: PCRE takes 94,
+   1 534 and 393 214 steps on 4, 8 and 16 `a` then `!`.
  * A mark written short accepts an `=` in its name, `/(*:foo=bar)/`, and
    four characters after it, `/(*:x)a=b/`: the check that only the limits
    take a value read it as `(*MARK:`, four characters longer, and refused
