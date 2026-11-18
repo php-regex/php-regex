@@ -69,7 +69,7 @@ final class LintSourceWarningTest extends TestCase
 
             $pattern = '/b+/';
             preg_match($pattern, $s);
-            preg_match(Patterns::DIGITS, $s); // @regex-target php>=8.2
+            preg_match(Patterns::DIGITS, $s); // @regex-target php>=8.1
             check('/c+/');
             preg_match('/(a+)+$/', $s); // @regex-ignore regex.lint.redos
 
