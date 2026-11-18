@@ -351,6 +351,47 @@ final class ExtendedClassParserTest extends TestCase
     }
 
     /**
+     * A nested class past the depth limit is refused on its "[", before
+     * PCRE reads its members, whether it closes or not: a property name or
+     * a class it leaves open, or a fault at its end, comes after the limit.
+     * At the limit what PCRE refuses in it comes first, and a POSIX class
+     * in place of a nested one opens no level. Each row is the error
+     * preg_match() reports on PHP 8.4.27 with PCRE2 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideNestedClassesAroundTheDepthLimit')]
+    public function test_a_nested_class_past_the_depth_limit_is_refused_before_its_members(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $this->assertTheEngineRefusesAt($offset, $pattern);
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideNestedClassesAroundTheDepthLimit(): iterable
+    {
+        $past = '/(?['.str_repeat('(', 14);
+        $at = '/(?['.str_repeat('(', 13);
+        $tooDeep = ErrorCode::ExtendedClassNestedTooDeep;
+
+        yield 'a class past the limit whose property name never closes' => ['pattern' => $past.'[\p{L]/', 'code' => $tooDeep, 'offset' => 17];
+        yield 'a class past the limit that never closes' => ['pattern' => $past.'[a/', 'code' => $tooDeep, 'offset' => 17];
+        yield 'a class past the limit that never closes, holding a POSIX class' => ['pattern' => $past.'[[:alpha:]/', 'code' => $tooDeep, 'offset' => 17];
+        yield 'a class past the limit that ends in "\c"' => ['pattern' => $past.'[\c/', 'code' => $tooDeep, 'offset' => 17];
+        yield 'a class past the limit that ends in a range to a class escape' => ['pattern' => $past.'[a-\d/', 'code' => $tooDeep, 'offset' => 17];
+        yield 'a class past the limit that ends in a quote' => ['pattern' => $past.'[\Qa/', 'code' => $tooDeep, 'offset' => 17];
+        yield 'a class past the limit that closes' => ['pattern' => $past.'[\p{L}]/', 'code' => $tooDeep, 'offset' => 17];
+        yield 'a class at the limit whose property name never closes' => ['pattern' => $at.'[\p{L]/', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 22];
+        yield 'a class at the limit that never closes' => ['pattern' => $at.'[a/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 18];
+        yield 'a class at the limit that never closes, holding a POSIX class' => ['pattern' => $at.'[[:alpha:]/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 26];
+        yield 'a POSIX class where a level past the limit would open' => ['pattern' => $past.'[:alpha:]/', 'code' => ErrorCode::ExtendedClassUnclosed, 'offset' => 26];
+    }
+
+    /**
      * PHP first, where it links the PCRE2 10.49 the rows were read on: a
      * PCRE2 before 10.45 refuses "(?[" itself, and one before 10.47 reports
      * most errors on the character at fault.

@@ -63,6 +63,41 @@ final class CompiledLengthTest extends TestCase
         $this->assertSame($length, self::lengthOf($pattern), $pattern);
     }
 
+    /**
+     * Without UTF a class reads a character of two bytes as its two bytes:
+     * "[é-\xff]" is 0xC3, then the range 0xA9 to 0xFF; "[à-é]" is 0xC3, the
+     * range 0xA0 to 0xC3, then 0xA9; "[a-é]" is the range "a" to 0xC3, then
+     * 0xA9. The bytes each class takes are asked of the engine one at a
+     * time, then the length: a map of 256 bits, 40 code units with the
+     * end marker in pcre2test 10.49, as "[\xc3\xa9-\xff]" is.
+     *
+     * @param list<int> $bytes
+     */
+    #[Test]
+    #[DataProvider('provideRangesOfTwoByteCharactersWithoutUtf')]
+    public function test_a_range_of_a_class_without_utf_runs_between_bytes(string $pattern, array $bytes, int $length): void
+    {
+        $taken = [];
+        for ($byte = 0; $byte <= 0xFF; $byte++) {
+            if (1 === preg_match($pattern, \chr($byte))) {
+                $taken[] = $byte;
+            }
+        }
+
+        $this->assertSame($bytes, $taken, 'Oracle: the bytes '.$pattern.' takes.');
+        $this->assertSame($length, self::lengthOf($pattern), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, bytes: list<int>, length: int}>
+     */
+    public static function provideRangesOfTwoByteCharactersWithoutUtf(): iterable
+    {
+        yield 'range from a two-byte letter' => ['pattern' => '/[é-\\xff]/', 'bytes' => range(0xA9, 0xFF), 'length' => 40];
+        yield 'range between two-byte letters' => ['pattern' => '/[à-é]/', 'bytes' => range(0xA0, 0xC3), 'length' => 40];
+        yield 'range to a two-byte letter' => ['pattern' => '/[a-é]/', 'bytes' => range(0x61, 0xC3), 'length' => 40];
+    }
+
     #[Test]
     #[DataProvider('provideLengthsOnEachRelease')]
     public function test_the_length_is_the_one_each_release_compiles(string $pattern, string $release, int $length): void

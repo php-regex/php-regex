@@ -237,13 +237,16 @@ final class ValidatorNestingTest extends TestCase
      * level is counted, a ":" after them opens the level past the limit,
      * and a ")" makes them an option setting, which opens none. Each row is
      * what preg_match() reports on PHP 8.4.27 with PCRE2 10.49; "text" is
-     * what follows the 250 levels.
+     * what follows the 250 levels. Every engine refuses each row: a release
+     * before 10.43 refuses the letter it does not know, past the limit or
+     * not, at an offset of its own (PCRE2 10.39 and 10.42 agree).
      */
     #[Test]
     #[DataProvider('provideOptionsOfPcre1043AtTheLevelPastTheLimit')]
     public function test_the_options_of_pcre2_10_43_are_read_with_the_opener_of_the_level_past_the_limit(string $text, ErrorCode $code, int $offset): void
     {
         $pattern = '/'.str_repeat('(', 250).$text.'/';
+        $this->assertFalse(@preg_match($pattern, ''), 'Oracle: the engine refuses '.$text);
         if ('10.49' === PcreTarget::runtime()->pcreVersion) {
             $this->assertSame($offset, PhpErrorOffset::of($pattern), 'Oracle on PCRE2 10.49: '.$text);
         }
@@ -276,6 +279,45 @@ final class ValidatorNestingTest extends TestCase
         yield 'unknown character after "(?", after an ASCII option setting' => ['text' => '(?a)(?%', 'code' => ErrorCode::GroupSyntax, 'offset' => 257];
         yield 'unknown character after "(?", after an ASCII digit option setting' => ['text' => '(?aD)(?%', 'code' => ErrorCode::GroupSyntax, 'offset' => 258];
         yield 'unknown character after "(?", after a caseless restriction setting' => ['text' => '(?r)(?%', 'code' => ErrorCode::GroupSyntax, 'offset' => 257];
+    }
+
+    /**
+     * PCRE reads the option letters of the opener of the level past the
+     * limit to their end, however many, before it counts the level: past
+     * a ":" it refuses the level at the start of the body, before an error
+     * there; a ")" makes them an option setting, which opens none, and the
+     * error after it is the verdict. Each row is what preg_match() reports
+     * on PHP 8.4.27 with PCRE2 10.49; PCRE2 10.39 and 10.42 refuse the rows
+     * of a ":" at the same offsets.
+     */
+    #[Test]
+    #[DataProvider('provideOptionLettersOfTheLevelPastTheLimit')]
+    public function test_the_option_letters_of_the_opener_past_the_limit_are_read_however_many(int $letters, string $after, ErrorCode $code, int $offset): void
+    {
+        $pattern = '/'.str_repeat('(', 250).'(?'.str_repeat('i', $letters).$after.'/';
+        $this->assertFalse(@preg_match($pattern, ''), 'Oracle: the engine refuses the pattern.');
+        if ('10.49' === PcreTarget::runtime()->pcreVersion) {
+            $this->assertSame($offset, PhpErrorOffset::of($pattern), \sprintf('Oracle on PCRE2 10.49: %d letters, then %s', $letters, $after));
+        }
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], \sprintf('%d letters, then %s', $letters, $after));
+    }
+
+    /**
+     * @return iterable<string, array{letters: int, after: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideOptionLettersOfTheLevelPastTheLimit(): iterable
+    {
+        yield 'a short header' => ['letters' => 3, 'after' => ':\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 256];
+        yield '159 letters' => ['letters' => 159, 'after' => ':\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 412];
+        yield '160 letters' => ['letters' => 160, 'after' => ':\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 413];
+        yield '161 letters' => ['letters' => 161, 'after' => ':\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 414];
+        yield '400 letters' => ['letters' => 400, 'after' => ':\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 653];
+        yield '400 letters, then a letter' => ['letters' => 400, 'after' => ':a\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 653];
+        yield '160 letters setting options' => ['letters' => 160, 'after' => ')\x{}', 'code' => ErrorCode::EscapeDigitsMissing, 'offset' => 416];
+        yield '400 letters setting options' => ['letters' => 400, 'after' => ')\x{}', 'code' => ErrorCode::EscapeDigitsMissing, 'offset' => 656];
     }
 
     /**

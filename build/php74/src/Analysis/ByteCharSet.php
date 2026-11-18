@@ -78,7 +78,7 @@ final class ByteCharSet
      */
     public static function fromBytes(int $start, int $end): self
     {
-        if ($start < 0 || $end > self::BYTE_MAX) {
+        if (min($start, $end) < 0 || max($start, $end) > self::BYTE_MAX) {
             return self::unknown();
         }
 

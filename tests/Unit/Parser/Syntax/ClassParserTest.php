@@ -25,6 +25,7 @@ use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\PcreTarget;
@@ -116,13 +117,20 @@ final class ClassParserTest extends TestCase
      * each a member, as PCRE reads them: a range starts at the last byte of
      * its start and ends at the first byte of its end, "[à-é]" is 0xC3, the
      * range 0xA0 to 0xC3, then 0xA9. A byte an escape writes keeps its
-     * backslash. In UTF mode the character stays whole.
+     * backslash. In UTF mode the character stays whole. The engine says
+     * first which characters the class matches, one at a time: every byte
+     * without UTF, the code points up to U+02FF under it, those the tree
+     * expected holds. The tree read is then the one expected, node by node,
+     * with the bytes and the offsets of each.
      */
     #[Test]
     #[DataProvider('provideMultibyteMembers')]
     public function test_parse_reads_a_multibyte_member_as_its_bytes_without_utf(string $pattern, string $flags, CharClassNode $expected): void
     {
-        $this->assertEquals($expected, self::parse($pattern, $flags));
+        $utf = str_contains($flags, 'u');
+        $this->assertSame(self::membersOf($expected, $utf), self::charactersMatched('/\A'.$pattern.'\z/'.$flags, $utf), 'Oracle: '.$pattern.' matches the members of the tree expected.');
+
+        $this->assertSame(self::shape($expected), self::shape(self::parse($pattern, $flags)));
     }
 
     /**
@@ -390,5 +398,73 @@ final class ClassParserTest extends TestCase
         $stream->advance();
 
         return new ParseState($stream, $pattern, $target, str_contains($flags, 'u'), PhpVersionGates::badEscapeIsLiteral($target->phpVersionId, $flags));
+    }
+
+    /**
+     * The characters a class of literals and ranges holds, each a byte
+     * without UTF and a code point under it, up to U+02FF.
+     *
+     * @return list<int>
+     */
+    private static function membersOf(CharClassNode $class, bool $utf): array
+    {
+        $members = [];
+        $parts = $class->expression instanceof AlternationNode ? $class->expression->alternatives : [$class->expression];
+        foreach ($parts as $part) {
+            [$start, $end] = $part instanceof RangeNode ? [$part->start, $part->end] : [$part, $part];
+            self::assertInstanceOf(LiteralNode::class, $start);
+            self::assertInstanceOf(LiteralNode::class, $end);
+            $members = [...$members, ...range(self::characterOf($start->value, $utf), self::characterOf($end->value, $utf))];
+        }
+
+        $members = $class->isNegated ? array_diff(range(0, $utf ? 0x2FF : 0xFF), $members) : array_unique($members);
+        sort($members);
+
+        return $members;
+    }
+
+    private static function characterOf(string $value, bool $utf): int
+    {
+        $character = $utf ? mb_ord($value, 'UTF-8') : \ord($value);
+        self::assertIsInt($character);
+
+        return $character;
+    }
+
+    /**
+     * The characters the engine matches whole: every byte without UTF, the
+     * code points up to U+02FF under it.
+     *
+     * @return list<int>
+     */
+    private static function charactersMatched(string $pattern, bool $utf): array
+    {
+        $matched = [];
+        for ($character = 0; $character <= ($utf ? 0x2FF : 0xFF); $character++) {
+            if (1 === preg_match($pattern, $utf ? (string) mb_chr($character, 'UTF-8') : \chr($character))) {
+                $matched[] = $character;
+            }
+        }
+
+        return $matched;
+    }
+
+    /**
+     * The tree node by node: its kind, its offsets, a literal's bytes, a
+     * class's negation and what each holds.
+     *
+     * @return list<mixed>
+     */
+    private static function shape(NodeInterface $node): array
+    {
+        $shape = [$node::class, $node->getStartPosition(), $node->getEndPosition()];
+
+        return match (true) {
+            $node instanceof LiteralNode => [...$shape, bin2hex($node->value)],
+            $node instanceof RangeNode => [...$shape, self::shape($node->start), self::shape($node->end)],
+            $node instanceof AlternationNode => [...$shape, array_map(self::shape(...), $node->alternatives)],
+            $node instanceof CharClassNode => [...$shape, $node->isNegated, self::shape($node->expression)],
+            default => $shape,
+        };
     }
 }
