@@ -288,6 +288,9 @@ final class PackageManifestTest extends TestCase
             // The closing delimiter of the body the engine is asked about
             // under u, before a refusal advises adding it.
             'Parser\Syntax\Delimiters',
+            // The character a byte of a class without u is part of, found in
+            // the source so that the refusal still advises u for it.
+            'Parser\Text\Utf8',
         ],
     ];
 
