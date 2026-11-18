@@ -8,10 +8,12 @@ CHANGELOG
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * The possessive rewrite leaves a repetition greedy before a lookaround,
    which reads nothing yet looks at the characters the repetition would
-   give back: `/a+(?!b)/` matches `a` in `aab`, `/a++(?!b)/` nothing. Such a
+   give back: `/a+(?!b)/` matches `a` in `aab`, `/a++(?!b)/` nothing. The
+   lookaround may stand past the group the repetition ends, after items
+   that may match nothing: `/(a+b?)(?!c)/` matches `a` in `aac`. Such a
    rewrite, which the check of the result refused, no longer takes the
    other rewrites of the pattern with it: under the possessive option
-   `/x\s+(?!y)/s` loses its useless `s`, and
+   `/x\s+(?!y)/s` and `/(a+b?)(?!c)/s` lose their useless `s`, and
    `/^[a-z](?:[a-z0-9_](?!__))*[a-z0-9]+$/` becomes
    `/^[a-z](?:[0-9_a-z](?!__))*[0-9a-z]+$/`. The last `\s*` of
    `#^(?:([=<>!]=?|<>)\s*)?((?:\d*\.)?\d+)\s*(K|M|G|)B?$#Di` stays greedy:

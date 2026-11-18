@@ -15,7 +15,10 @@ namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Optimizer\Rewriter;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,13 +32,63 @@ use PHPUnit\Framework\TestCase;
  */
 final class PossessiveBeforeLookaroundTest extends TestCase
 {
-    private const SUBJECTS = ['aab', 'ab', 'a.b', 'a-', 'ab.c', 'b', '', 'x.y.', 'abc.', "x \ny", "x \nz", 'a_b', 'a__b', 'ab_'];
+    private const SUBJECTS = ['aab', 'aac', 'ab', 'a.b', 'a-', 'ab.c', 'b', '', 'x.y.', 'abc.', "x \ny", "x \nz", 'a_b', 'a__b', 'ab_'];
 
     #[Test]
     public function test_a_possessive_repetition_before_a_lookahead_matches_less(): void
     {
         $this->assertSame(1, preg_match('/a+(?!b)/', 'aab'), 'Oracle: the repetition gives an "a" back.');
         $this->assertSame(0, preg_match('/a++(?!b)/', 'aab'), 'Oracle: the possessive one does not.');
+    }
+
+    /**
+     * The lookaround may stand past the end of the group the repetition
+     * ends, after items that may match nothing: "(a+b?)(?!c)" matches "a"
+     * in "aac", where "(a++b?)(?!c)" matches nothing.
+     */
+    #[Test]
+    #[DataProvider('provideRepetitionsEndingAGroupBeforeALookaround')]
+    public function test_a_repetition_ending_a_group_before_a_lookaround_stays_greedy(string $pattern, string $possessive, string $subject): void
+    {
+        $this->assertNotSame(self::matched($pattern, $subject), self::matched($possessive, $subject), \sprintf('Oracle: %s and %s match alike on "%s".', $pattern, $possessive, $subject));
+
+        $this->assertSame($pattern, self::rewrite($pattern));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, possessive: string, subject: string}>
+     */
+    public static function provideRepetitionsEndingAGroupBeforeALookaround(): iterable
+    {
+        yield 'a capturing group' => ['pattern' => '/(a+b?)(?!c)/', 'possessive' => '/(a++b?)(?!c)/', 'subject' => 'aac'];
+        yield 'a branch of an alternation' => ['pattern' => '/(?:x|a+b?)(?!c)/', 'possessive' => '/(?:x|a++b?)(?!c)/', 'subject' => 'aac'];
+        yield 'a repeated group' => ['pattern' => '/(?:a+b?)+(?!c)/', 'possessive' => '/(?:a++b?)+(?!c)/', 'subject' => 'aac'];
+        yield 'an optional item after the group' => ['pattern' => '/(a+b?)x?(?!c)/', 'possessive' => '/(a++b?)x?(?!c)/', 'subject' => 'aac'];
+        yield 'a lookbehind' => ['pattern' => '/(a+b?)(?<!aa)/', 'possessive' => '/(a++b?)(?<!aa)/', 'subject' => 'aa'];
+    }
+
+    /**
+     * Nothing after an atomic group or a lookaround backtracks into it: a
+     * repetition that ends one is made possessive whatever follows it.
+     */
+    #[Test]
+    #[DataProvider('provideRepetitionsEndingAnAtomicGroup')]
+    public function test_a_repetition_ending_an_atomic_group_is_made_possessive(string $pattern, string $possessive): void
+    {
+        foreach (self::SUBJECTS as $subject) {
+            $this->assertSame(self::matched($pattern, $subject), self::matched($possessive, $subject), \sprintf('Oracle: %s and %s differ on "%s".', $pattern, $possessive, $subject));
+        }
+
+        $this->assertSame($possessive, self::rewrite($pattern));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, possessive: string}>
+     */
+    public static function provideRepetitionsEndingAnAtomicGroup(): iterable
+    {
+        yield 'an atomic group' => ['pattern' => '/(?>a+b?)(?!c)/', 'possessive' => '/(?>a++b?)(?!c)/'];
+        yield 'a lookahead' => ['pattern' => '/(?=a+b?)(?!c)/', 'possessive' => '/(?=a++b?)(?!c)/'];
     }
 
     #[Test]
@@ -63,6 +116,12 @@ final class PossessiveBeforeLookaroundTest extends TestCase
         yield 'a lookahead in a group' => ['pattern' => '/[a-z.-]*(?:(?!b))/', 'optimized' => '/[\-.a-z]*(?:(?!b))/'];
         yield 'a lookahead that left the other rewrites undone' => ['pattern' => '/x\s+(?!y)/s', 'optimized' => '/x\s+(?!y)/'];
         yield 'a lookahead at the end of a loop body' => ['pattern' => '/^[a-z](?:[a-z0-9_](?!__))*[a-z0-9]+$/', 'optimized' => '/^[a-z](?:[0-9_a-z](?!__))*[0-9a-z]+$/'];
+        yield 'a lookahead past the group the repetition ends' => ['pattern' => '/(a+b?)(?!c)/s', 'optimized' => '/(a+b?)(?!c)/'];
+    }
+
+    private static function rewrite(string $pattern): string
+    {
+        return Regex::create(['cache' => null])->parse($pattern)->accept(new Rewriter(possessive: true))->accept(new PatternPrinter());
     }
 
     /**

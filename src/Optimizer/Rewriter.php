@@ -254,8 +254,16 @@ final class Rewriter extends AbstractNodeVisitor
         $optimizedChildren = [];
         $hasChanged = false;
 
-        foreach ($node->children as $child) {
-            $optimizedChild = $child->accept($this);
+        foreach ($node->children as $i => $child) {
+            // The possessive rewrite inside the child reads what follows it:
+            // the items after it here, then what follows this sequence.
+            $this->possessiveRewrites->enter($node->children, $i + 1);
+
+            try {
+                $optimizedChild = $child->accept($this);
+            } finally {
+                $this->possessiveRewrites->leave();
+            }
 
             if ($optimizedChild instanceof SequenceNode) {
                 array_push($optimizedChildren, ...$optimizedChild->children);
@@ -344,7 +352,13 @@ final class Rewriter extends AbstractNodeVisitor
     #[\Override]
     public function visitGroup(GroupNode $node): NodeInterface
     {
-        $optimizedChild = $node->child->accept($this);
+        $this->possessiveRewrites->enterGroup($node);
+
+        try {
+            $optimizedChild = $node->child->accept($this);
+        } finally {
+            $this->possessiveRewrites->leave();
+        }
 
         // Enhanced Group Unwrapping: (?:x) -> x
         // If the group is non-capturing and contains a single atomic node, remove the group.
