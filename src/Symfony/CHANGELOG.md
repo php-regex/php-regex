@@ -271,7 +271,9 @@ CHANGELOG
    earlier route ends on a variable a value of which may end on the slash
    or be empty, `.+` or `[a-z]*`, whose redirect PCRE's order decides; the
    default `[^/]++`, or `\d+`, redirects whatever that order and is read.
-   Such a route matches a path ending on the slash as is, on its own
+   A requirement holding a lookaround, a boundary or an anchor reads the
+   route around the variable, `(?<=e)a/` after `pre`, and counts as one
+   that may end on the slash. Such a route matches a path ending on the slash as is, on its own
    schemes, or redirects it, as PCRE captured the value: a later route it
    matches only with that slash, `/{y<a//>}` after `/{x<a/?>}`, is shadowed
    only when the earlier route takes every scheme of it, and one for other
@@ -284,32 +286,39 @@ CHANGELOG
    route, `/files/{path<[a-z/]+>}` on `http` after `/files/{name}` on
    `https`, the pair is skipped. A route with no variable is looked up by
    its path, every trailing slash of the request trimmed off, before any
-   route tried with a regex, unless an earlier one of those matches its
-   path: `/admin` redirects `GET /admin//` too, shadowing `/{p<admin//>}`,
+   route tried with a regex, unless one of those the router sorts before
+   it matches its path, the routes sorted by host first when one names a
+   host, as the router's dumper reads them: `/admin` redirects `GET /admin//` too, shadowing `/{p<admin//>}`,
    `/admin/` takes `/admin//` as is, for any method on its own schemes,
    and `/` answers `GET //` with a 404; a route tried with a regex takes
-   one slash at most. A later route ending on a variable that may end on
+   one slash at most. Such a route takes the requests of a route tried
+   with a regex declared before it, `/admin/` those of `/{x<admin//>}`:
+   the pair is read in the matcher's order, noted, and offered distinct
+   paths, which a reorder would not give. A later route ending on a variable that may end on
    the slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its
    own ending on the slash for the slash: for `POST` it passes `/a/` on,
-   which it does not lose, and a pair whose shortest shared path it passes
-   on is skipped; a redirect leading to a path it reads for its slash
-   still loses the request. Each such finding notes what the router does
-   with the request: redirects it to the earlier route, matches it as is, or
-   answers it with a 404. The report
+   which it does not lose, and a pair whose shortest shared path it, or
+   the earlier route, passes on is skipped; a redirect leading to a path
+   it reads for its slash still loses the request. Each such finding
+   notes what the router does with the request: redirects it to the
+   earlier route, matches it as is, or answers it with a 404. The report
    suggests paths that differ by more than the slash, never the reorder
    that only turns the redirect round.
  * `regex:routes` and `regex:analyze` call a route shadowed only when an
    earlier route takes every request of it, its methods (`GET` taking
    `HEAD`), its schemes and its host included, as the security analysis
    does. An earlier route whose requests are all among the later one's,
-   narrower by path, method, scheme or host, is a carve-out and is not
-   reported, as the security analysis reads it: a route for `HEAD` only
+   narrower by method, scheme or host, is a carve-out and is not reported,
+   as one strictly narrower by path is, as the security analysis reads
+   them: a route for `HEAD` only
    before a route for `GET` on the same path, a route for `GET` before one
    for `GET` and `POST`, a route for `https` before one for any scheme and
    a route for a host before one for any host, which were reported as
    shadowed. Any other pair sharing a path is an overlap. The report no
    longer suggests merging two routes on the same paths that each keep
-   some requests.
+   some requests, nor moving first a later route that would then take
+   every request of the earlier one, a duplicate or a route whose paths
+   it matches or redirects to its own.
  * `regex:routes` and `regex:analyze` read a route for `GET` as taking the
    `HEAD` requests too, as Symfony's matchers send them: a route for `HEAD`
    only declared after a route for `GET` on its paths is shadowed, where the

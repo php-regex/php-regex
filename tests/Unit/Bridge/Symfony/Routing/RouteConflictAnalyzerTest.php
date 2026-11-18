@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Routing;
 
 use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
+use PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -1120,6 +1121,29 @@ final class RouteConflictAnalyzerTest extends TestCase
         // A path ending on the slash whose value PCRE captured without it
         // is redirected for GET and HEAD, and passed on to the later route
         // for any other method.
+        // A lookaround reads the route around the variable, which the
+        // requirement alone does not show: "(?<=e)a/" is a value after "pre".
+        yield 'a requirement that looks behind the variable, on https before a route on http' => [
+            'earlier' => ['/pre{x<(?<=e)a/?|b>}', ['GET'], ['https']],
+            'later' => ['/{y<prea/|preb>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/prea/', true], ['GET', 'https', '/prea/', false]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+        yield 'a requirement that can end on the slash, for POST, before a route ending on a slash whose only path it passes on' => [
+            'earlier' => ['/files/{p<a|a/>}', ['POST'], []],
+            'later' => ['/files/{q<a>}/', ['POST'], []],
+            'probes' => [['POST', 'http', '/files/a/', true], ['POST', 'http', '/files/a', false]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+        yield 'a requirement that can end on the slash, for GET, before a route ending on a slash whose only path it redirects' => [
+            'earlier' => ['/files/{p<a|a/>}', ['GET'], []],
+            'later' => ['/files/{q<a>}/', ['GET'], []],
+            'probes' => [['GET', 'http', '/files/a/', false], ['HEAD', 'http', '/files/a/', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
         yield 'a lazy requirement that can end on the slash, before a route for any method ending on a slash' => [
             'earlier' => ['/files/{path<.+?>}', [], []],
             'later' => ['/files/{name}/', [], []],
@@ -1314,6 +1338,76 @@ final class RouteConflictAnalyzerTest extends TestCase
         yield 'the same host' => ['earlierHost' => 'a.example.com', 'laterHost' => 'a.example.com', 'winner' => 'earlier', 'conflicts' => 1];
         yield 'a host the earlier route matches with a variable' => ['earlierHost' => '{sub}.example.com', 'laterHost' => 'a.example.com', 'winner' => 'earlier', 'conflicts' => 1];
         yield 'another host' => ['earlierHost' => 'a.example.com', 'laterHost' => 'b.example.com', 'winner' => 'later', 'conflicts' => 0];
+    }
+
+    /**
+     * When a route names a host, the dumper sorts the routes by host
+     * before it tells the routes it looks up by their path from those it
+     * tries with a regex: a route tried with a regex declared after a
+     * route with no variable may come before it, or one declared before
+     * after it.
+     *
+     * @param list<array{0: string, 1: string, 2: list<string>, 3: string}> $routes    name, path, methods, host
+     * @param array{0: string, 1: string, 2: string}                        $probe     host, path, and the route a GET request reaches
+     * @param list<string>                                                  $conflicts
+     */
+    #[Test]
+    #[DataProvider('provideRoutesTheDumperSortsByHost')]
+    public function test_a_route_with_no_variable_is_looked_up_by_its_path_as_the_dumper_sorts_the_hosts(array $routes, array $probe, array $conflicts): void
+    {
+        $collection = new RouteCollection();
+        foreach ($routes as [$name, $path, $methods, $host]) {
+            $collection->add($name, (new Route($path))->setMethods($methods)->setHost($host));
+        }
+
+        $this->assertSame($probe[2], FrameworkMatcher::reached($collection, 'GET', $probe[1], 'http', $probe[0]));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame($conflicts, array_map(
+            static fn (array $conflict): string => $conflict['type'].' '.$conflict['route']['name'].' '.$conflict['conflict']['name'],
+            $report->conflicts,
+        ));
+    }
+
+    /**
+     * @return iterable<string, array{routes: list<array{0: string, 1: string, 2: list<string>, 3: string}>, probe: array{0: string, 1: string, 2: string}, conflicts: list<string>}>
+     */
+    public static function provideRoutesTheDumperSortsByHost(): iterable
+    {
+        yield 'a route tried with a regex declared before, sorted after' => [
+            'routes' => [['unused', '/unused', [], '{sub}.a.com'], ['regex', '/{x<admin>}', ['POST'], 'A.COM'], ['admin', '/admin', ['GET'], 'a.com'], ['later', '/{p<admin//>}', ['GET'], 'a.com']],
+            'probe' => ['a.com', '/admin//', 'admin'],
+            'conflicts' => ['shadowed admin later'],
+        ];
+        yield 'a route tried with a regex declared after, sorted before' => [
+            'routes' => [['unused', '/unused', [], 'x.a.com'], ['admin', '/admin', ['GET'], '{sub}.b.org'], ['regex', '/{x<admin>}', ['POST'], 'a.com'], ['later', '/{p<admin//>}', ['GET'], '{sub}.b.org']],
+            'probe' => ['x.b.org', '/admin//', 'later'],
+            'conflicts' => [],
+        ];
+    }
+
+    /**
+     * A route regex the engine refuses stops the dumper, as it stops the
+     * router: the routes are then all read as tried with a regex, the pairs
+     * of that route left out, and the others still read.
+     */
+    #[Test]
+    public function test_a_route_regex_the_engine_refuses_leaves_the_other_routes_read(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('refused', new Route('/x/{a}', [], ['a' => '(b)\2']));
+        $collection->add('list', new Route('/x/list'));
+        $collection->add('user', new Route('/users/{id}'));
+        $collection->add('users', new Route('/users/list'));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame(['shadowed user users'], array_map(
+            static fn (array $conflict): string => $conflict['type'].' '.$conflict['route']['name'].' '.$conflict['conflict']['name'],
+            $report->conflicts,
+        ));
+        $this->assertSame(1, $report->stats['skipped_pairs']);
     }
 
     /**
@@ -1593,14 +1687,58 @@ final class RouteConflictAnalyzerTest extends TestCase
             'type' => null,
             'skipped' => 0,
         ];
-        // The static path is looked up first: the earlier route never gets
-        // it, whatever it matches.
-        yield 'a route matched with a regex before a route with no variable that it does not match' => [
-            'earlier' => ['/{x<admin//|other>}', ['GET'], []],
-            'later' => ['/admin/', ['GET'], []],
-            'probes' => [['GET', 'http', '/admin//', true], ['GET', 'http', '/admin/', true], ['GET', 'http', '/other', false]],
-            'type' => null,
-            'skipped' => 0,
+    }
+
+    /**
+     * The matcher looks a route with no variable up by its path before it
+     * tries any route with a regex, whatever their order: of a route tried
+     * with a regex declared before it, it takes the requests first. The
+     * pair is read in that order, noted, and offered distinct paths rather
+     * than a reorder that changes nothing.
+     *
+     * @param list<array{0: string, 1: string, 2: string|null}> $probes method, path, and the route the request reaches
+     */
+    #[Test]
+    #[DataProvider('provideRoutesTriedWithARegexBeforeOneLookedUpByItsPath')]
+    public function test_a_later_route_looked_up_by_its_path_is_read_before_an_earlier_one_tried_with_a_regex(string $earlier, array $probes, string $type): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route($earlier))->setMethods(['GET']));
+        $collection->add('later', (new Route('/admin/'))->setMethods(['GET']));
+
+        foreach ($probes as [$method, $path, $winner]) {
+            $this->assertSame($winner, FrameworkMatcher::reached($collection, $method, $path), $method.' '.$path);
+        }
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame([$type.' later earlier'], array_map(
+            static fn (array $conflict): string => $conflict['type'].' '.$conflict['route']['name'].' '.$conflict['conflict']['name'],
+            $report->conflicts,
+        ));
+        $this->assertContains('The router looks up the route with no variable by its path before it tries the other with a regex, whatever their order.', $report->conflicts[0]['notes']);
+        $this->assertIsString($report->conflicts[0]['example']);
+        $this->assertSame('later', FrameworkMatcher::reached($collection, 'GET', $report->conflicts[0]['example']));
+        $this->assertSame(
+            ['Give "later" and "earlier" paths that do not overlap: "later" has no variable, and the router looks it up by its path before it tries "earlier" with a regex, whatever their order.'],
+            (new RouteConflictSuggestionBuilder())->collect($report->conflicts),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{earlier: string, probes: list<array{0: string, 1: string, 2: string|null}>, type: string}>
+     */
+    public static function provideRoutesTriedWithARegexBeforeOneLookedUpByItsPath(): iterable
+    {
+        yield 'an earlier route all of whose paths the later one takes' => [
+            'earlier' => '/{x<admin//>}',
+            'probes' => [['GET', '/admin//', 'later'], ['HEAD', '/admin//', 'later'], ['GET', '/admin/', 'later']],
+            'type' => 'shadowed',
+        ];
+        yield 'an earlier route with a path of its own' => [
+            'earlier' => '/{x<admin//|other>}',
+            'probes' => [['GET', '/admin//', 'later'], ['GET', '/admin/', 'later'], ['GET', '/other', 'earlier']],
+            'type' => 'overlap',
         ];
     }
 

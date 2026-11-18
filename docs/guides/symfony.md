@@ -527,12 +527,13 @@ be reached. Two routes that share some requests but not all are an
 **overlap**, listed with `--show-overlaps`: `/blog/{slug}` (`[a-z]+`) declared
 before `/blog/{id}` (`\d+|new`) takes `/blog/new`, and a route for `GET` and
 `POST` declared before a route for `GET` and `PUT` on the same path leaves
-it the `PUT` requests. A narrower route declared before a wider one, whose
-requests are all among the later route's, is a **carve-out**, the order the
-router expects, and is not reported: `/users/list` before `/users/{id}`, a
-route for `GET` before a route for `GET` and `POST` on the same path, a
-route for `https` before one for any scheme, a route for a host before one
-for any host. Two hosts the analysis cannot compare,
+it the `PUT` requests. A route declared before a wider one, strictly
+narrower by path or with all its requests among the later route's, is a
+**carve-out**, the order the router expects, and is not reported, as an
+`access_control` rule is: `/users/list` before `/users/{id}`, a route for
+`GET` before a route for `GET` and `POST` on the same path, a route for
+`https` before one for any scheme, a route for a host before one for any
+host. Two hosts the analysis cannot compare,
 a host it cannot read or one the solver gives up on (a conditional in a
 host requirement, say), leave the paths to decide, and the finding notes
 `Host requirements were not evaluated.` Two routes whose hosts part on
@@ -576,23 +577,31 @@ it, and a later route for other methods than `GET` and `HEAD` keeps those
 on its paths ending on the slash, `/files/{name}/` after
 `/files/{path<.+?>}` being an overlap. The default requirement `[^/]++`,
 or `\d+`, redirects whatever that order, and the pair is read as any
-other. A later
+other. A requirement holding a lookaround, a boundary or an anchor reads
+the route around the variable, `(?<=e)a/` matching after `pre` alone, and
+counts as one that may end on the slash. A later
 route whose paths the earlier one matches in part and redirects for the
 rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
 route that takes no `GET` request redirects none. The router looks a route
 with no variable up by its path, every trailing slash of the request
-trimmed off, before it tries any route with a regex, unless an earlier
-route it tries with a regex matches that path: `/admin` redirects
+trimmed off, before it tries any route with a regex, unless a route it
+tries with a regex and sorts before it matches that path, the routes
+sorted by host first when one names a host, as the router's dumper reads
+them: `/admin` redirects
 `GET /admin//` too, so `/{p<admin//>}` after it is shadowed, `/admin/`
 takes `/admin//` as is, for any method on its own schemes, and `/` answers
 `GET //` with a 404. A route tried with a regex takes its path with one
-slash at most. A later route ending on a variable that may end on the
+slash at most. A route with no variable therefore takes the requests of a
+route tried with a regex declared before it, `/admin/` those of
+`/{x<admin//>}`: the pair is read in the order the router tries them,
+noted, and offered distinct paths, which a reorder would not give. A later route ending on a variable that may end on the
 slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its own
 ending on the slash for the slash, as PCRE captures the value: it
 redirects `GET /a/` to `/a`, and passes `POST /a/` on to the routes after
-it. A request it passes on is none it loses, so a pair whose shortest
-shared path is one it passes on for the methods both routes take is
-counted among the pairs skipped; a redirect of an earlier route leading to
+it. A request it passes on is none it loses, nor is one the earlier route
+passes on, so a pair whose shortest shared path either route passes on
+for the methods both routes take is counted among the pairs skipped; a
+redirect of an earlier route leading to
 a path it reads for its slash still loses it the request. Each such
 finding notes what the router does with the
 request: it redirects it to the earlier route, matches it as is where the
