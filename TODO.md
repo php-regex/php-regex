@@ -43,8 +43,10 @@ The bugs of the second pass are fixed in #403; these were left out of it.
   with `s`, so on 6.4 it can disagree where `.` meets a decoded newline.
 - Laravel 12+ `Rule::anyOf(['regex:/^(a|b)$/'])` validates each element
   through `Validator::make`, which splits it (`/^(a`); the extractor reads
-  it whole. An escaped `|` or `:` in a double-quoted rule (`\x7c`) is not
-  read either.
+  it whole. A `:` written as an escape in a double-quoted rule
+  (`"regex\x3a/^a$/"`) is not read either: the extractor finds literals
+  with a regex over the file, which a double quote inside a single-quoted
+  literal misleads; reading the literals from the tokens would allow it.
 - `test_the_jit_decides_what_an_empty_match_option_refuses` asserts the JIT
   answer ungated, as `LookaroundEdgeQuantifierTest` does: a PHP without JIT
   support fails it. A `requiresJit()` gate in `PcreGates` would cover both.
