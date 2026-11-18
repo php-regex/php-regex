@@ -424,6 +424,31 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
     }
 
     /**
+     * The methods a rule takes are asked of the MethodRequestMatcher
+     * installed through requests built as they are: a factory the
+     * application gives Request::setFactory() plays no part in them.
+     */
+    #[Test]
+    public function test_the_methods_are_read_without_the_application_request_factory(): void
+    {
+        $getTakesHead = (new MethodRequestMatcher(['GET']))->matches(Request::create('/', 'HEAD'));
+        Request::setFactory(static function (): Request {
+            throw new \LogicException('The application builds no request here.');
+        });
+
+        try {
+            $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+                ['methods' => ['GET']] + self::rule(path: '^/x'),
+                ['methods' => ['HEAD']] + self::rule(path: '^/x', line: 4),
+            ]);
+        } finally {
+            Request::setFactory(null);
+        }
+
+        $this->assertSame($getTakesHead ? 1 : 0, $report->stats['shadowed']);
+    }
+
+    /**
      * A rule is public when the security bundle's AuthenticatedVoter grants
      * its roles to a visitor: "PUBLIC_ACCESS" as written, and nothing else
      * (IS_AUTHENTICATED_ANONYMOUSLY is gone since Symfony 6.0). A public rule

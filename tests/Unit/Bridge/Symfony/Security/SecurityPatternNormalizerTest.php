@@ -137,6 +137,26 @@ final class SecurityPatternNormalizerTest extends TestCase
     }
 
     /**
+     * The modifier is asked of the PathRequestMatcher installed through a
+     * request built as is: a factory the application gives
+     * Request::setFactory() plays no part in it.
+     */
+    #[Test]
+    public function test_the_path_modifier_is_read_without_the_application_request_factory(): void
+    {
+        $modifier = self::pathModifier();
+        Request::setFactory(static function (): Request {
+            throw new \LogicException('The application builds no request here.');
+        });
+
+        try {
+            $this->assertSame('{^/a}'.$modifier, (new SecurityPatternNormalizer())->normalize('^/a'));
+        } finally {
+            Request::setFactory(null);
+        }
+    }
+
+    /**
      * The modifier the PathRequestMatcher installed compiles a path with:
      * "s" when a dot takes a line feed ("%0A" decoded), none otherwise.
      */

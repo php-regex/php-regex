@@ -35,8 +35,10 @@ final class SecurityPatternNormalizer
 
     public function __construct()
     {
-        // Under "s", a dot takes the line feed "%0A" decodes to.
-        $this->pathModifier = (new PathRequestMatcher('^/.$'))->matches(Request::create('/%0A')) ? 's' : '';
+        // Under "s", a dot takes the line feed "%0A" decodes to. The request
+        // is built as is: Request::create() would call the factory the
+        // application may give Request::setFactory().
+        $this->pathModifier = (new PathRequestMatcher('^/.$'))->matches(new Request(server: ['REQUEST_URI' => '/%0A'])) ? 's' : '';
     }
 
     public function normalize(string $pattern, bool $host = false): string

@@ -664,7 +664,9 @@ final class SecurityAccessControlAnalyzer
         // Every token of the list, cut at its commas and its spaces.
         $tokens = explode(',', strtr(strtoupper(implode(',', $methods)), " \t\n\v\f\r", ',,,,,,'));
         foreach (array_unique([...array_filter($tokens, static fn (string $token): bool => '' !== $token), 'HEAD']) as $method) {
-            if ($matcher->matches(Request::create('/', $method))) {
+            // Built as is: Request::create() would call the factory the
+            // application may give Request::setFactory().
+            if ($matcher->matches(new Request(server: ['REQUEST_METHOD' => $method]))) {
                 $taken[] = $method;
             }
         }
