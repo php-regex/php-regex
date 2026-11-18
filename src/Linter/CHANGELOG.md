@@ -28,13 +28,16 @@ CHANGELOG
  * A byte above ASCII written as it is, not as an escape, is read as the
    target reads it. `\b` or `\B` after it, before the newline an end anchor
    lets through, is not reported as never matching where the engine
-   matches: it is no word character under PCRE2's own tables, so
-   `/ÿ$\B\n/` (the byte 0xFF) matches `"ÿ\n"`, and may be one under u,
-   (*UCP) or another locale's tables, so `/(*UCP)ÿ$\b\n/` and `/é$\b\n/u`
-   match too; all three were reported. Without u a branch starting with
-   such a byte is compared with the others by the engine under the target's
-   locale: `/(?:\W|é)+/` with the byte 0xE9 overlaps under C and
-   `/(?:\w|é)+/` under fr_FR.ISO8859-1, which were not reported.
+   matches: it is no word character under PCRE2's own tables, so, in PHP,
+   `"/\xFF\$\\B\\n/"` matches `"\xFF\n"`, and may be one under u, (*UCP)
+   or another locale's tables, so `"/(*UCP)\xFF\$\\b\\n/"` and
+   `'/é$\b\n/u'` match too; all three were reported. So were `\B` after a
+   class of the bytes above ASCII, `'/a[^\x00-\x7F]$\B\n/'` on
+   `"a\xFF\n"`, and `\b` after a class of the characters above ASCII under
+   u, `'/[^\x00-\x7E]$\b\n/u'` on `"é\n"`. Without u a branch starting
+   with such a byte is compared with the others by the engine under the
+   target's locale: `"/(?:\\W|\xE9)+/"` overlaps under C and
+   `"/(?:\\w|\xE9)+/"` under fr_FR.ISO8859-1, which were not reported.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

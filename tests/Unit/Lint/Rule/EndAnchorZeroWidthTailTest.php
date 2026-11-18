@@ -45,10 +45,15 @@ final class EndAnchorZeroWidthTailTest extends TestCase
     {
         $this->requiresPcre2For($pattern, self::RELEASES);
 
-        // Oracle, PHP 8.4.26 / PCRE2 10.49: the pattern matches.
-        $this->assertSame(1, preg_match($pattern, $subject), $pattern);
+        // Oracle, PHP 8.4.26 / PCRE2 10.49: the pattern matches, under the C
+        // locale the rows are read for, whatever locale the process is in.
+        $matched = new \ArrayObject();
+        CharacterTables::under('C', static function () use ($pattern, $subject, $matched): void {
+            $matched[] = preg_match($pattern, $subject);
+        });
+        $this->assertSame([1], $matched->getArrayCopy(), $pattern);
 
-        $this->assertNotContains('regex.lint.anchor.impossible.end', $this->issueIds($pattern), $pattern);
+        $this->assertNotContains('regex.lint.anchor.impossible.end', $this->issueIds($pattern, 'C'), $pattern);
     }
 
     /**
@@ -107,6 +112,11 @@ final class EndAnchorZeroWidthTailTest extends TestCase
         yield 'word boundary after a letter of Latin-1 written as a byte under UCP' => ['pattern' => "/(*UCP)\xFF\$\\b\\n/", 'subject' => "\xFF\n"];
         yield 'non-boundary after a byte above ASCII, no word character in C' => ['pattern' => "/\xFF\$\\B\\n/", 'subject' => "\xFF\n"];
         yield 'word boundary after a two-byte letter under u' => ['pattern' => '/é$\b\n/u', 'subject' => "é\n"];
+        // A class of bytes or characters above ASCII, which the sets of ASCII leave out.
+        yield 'non-boundary after a class of the bytes above ASCII after a letter' => ['pattern' => '/a[^\x00-\x7F]$\B\n/', 'subject' => "a\xFF\n"];
+        yield 'non-boundary after a group ending with a class of the bytes above ASCII' => ['pattern' => '/b(?:a[^\x00-\x7F])$\B\n/', 'subject' => "ba\xFF\n"];
+        yield 'word boundary after a class of DEL and the characters above ASCII under u' => ['pattern' => '/[^\x00-\x7E]$\b\n/u', 'subject' => "é\n"];
+        yield 'word boundary after a class of the characters above ASCII after a non-word character under u' => ['pattern' => '/-[^\x00-\x7F]$\b\n/u', 'subject' => "-é\n"];
     }
 
     #[Test]
@@ -155,6 +165,7 @@ final class EndAnchorZeroWidthTailTest extends TestCase
         yield 'small z before the newline' => ['pattern' => '/a$\z\n/'];
         yield 'non-boundary after a letter before the newline' => ['pattern' => '/a$\B\n/'];
         yield 'word boundary after a non-word character before the newline' => ['pattern' => '/-$\b\n/'];
+        yield 'word boundary after a non-word character before the newline under u' => ['pattern' => '/-$\b\n/u'];
         yield 'conditional of two letters after small z' => ['pattern' => '/a\z(?(?=x)b|c)/'];
         yield 'circumflex after the final newline under m, nothing before' => ['pattern' => '/\Z\n^/m'];
         yield 'circumflex at the end after a newline' => ['pattern' => '/()\n\z^\1/'];
@@ -162,9 +173,27 @@ final class EndAnchorZeroWidthTailTest extends TestCase
     }
 
     /**
+     * Under C, PCRE2's own tables hold no word character above ASCII: "\b"
+     * never holds between the byte "\xE9" and the newline.
+     */
+    #[Test]
+    public function test_a_word_boundary_after_a_byte_above_ascii_is_reported_under_c(): void
+    {
+        $pattern = "/\xE9\$\\b\\n/";
+
+        $matched = new \ArrayObject();
+        CharacterTables::under('C', static function () use ($pattern, $matched): void {
+            $matched[] = preg_match($pattern, "\xE9\n");
+        });
+        $this->assertSame([0], $matched->getArrayCopy(), 'Oracle: under C "\xE9" is no word character.');
+
+        $this->assertContains('regex.lint.anchor.impossible.end', $this->issueIds($pattern, 'C'));
+    }
+
+    /**
      * Under another locale the tables say which bytes above ASCII are word
      * characters: under fr_FR.ISO8859-1 "\xE9" is one, and "\b" holds
-     * between it and the newline, as it does not under C.
+     * between it and the newline.
      */
     #[Test]
     public function test_a_word_boundary_after_a_byte_above_ascii_follows_the_locale(): void
@@ -173,14 +202,12 @@ final class EndAnchorZeroWidthTailTest extends TestCase
         $this->requiresLocale($locale, 'The Latin-1 row');
         $pattern = "/\xE9\$\\b\\n/";
 
-        $this->assertSame(0, preg_match($pattern, "\xE9\n"), 'Oracle: under C "\xE9" is no word character.');
         $matched = new \ArrayObject();
         CharacterTables::under($locale, static function () use ($pattern, $matched): void {
             $matched[] = preg_match($pattern, "\xE9\n");
         });
         $this->assertSame([1], $matched->getArrayCopy(), 'Oracle: under the Latin-1 locale "\xE9" is a word character.');
 
-        $this->assertContains('regex.lint.anchor.impossible.end', $this->issueIds($pattern));
         $this->assertNotContains('regex.lint.anchor.impossible.end', $this->issueIds($pattern, $locale));
     }
 
