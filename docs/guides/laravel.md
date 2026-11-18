@@ -392,7 +392,11 @@ array element, `['required', 'regex:/^(?:a|b)$/']`, which keeps its `|`. The
 rules a call takes are a rules string too, given by position or by name:
 `$validator->sometimes('code', 'regex:/^(a|b)$/', …)`, the `$rules` and
 `$defaultRules` of `Rule::when()` and `Rule::unless()`, and those of
-`new ConditionalRules()` are split. A string another call takes is one rule:
+`new ConditionalRules()` are split. So is each string element of the array
+`Rule::anyOf()` takes, which the rule validates alone:
+`Rule::anyOf(['regex:/^(a|b)$/'])` hands `/^(a` to `preg_match()`, where
+`Rule::anyOf([['regex:/^(a|b)$/']])` keeps its `|`. A string another call
+takes is one rule:
 `array_push($rules['code'], 'regex:/^(a|b)$/')` appends one element, and
 one element with a rule before the regex one, `'nullable|regex:/^a$/'`, is a
 rule Laravel names `nullable|regex`, which runs no pattern. The

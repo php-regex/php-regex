@@ -49,6 +49,15 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     ];
 
     /**
+     * The calls that take an array of rule sets, which validate each
+     * element alone: Rule::anyOf() and the AnyOf rule it builds hand each
+     * one to Validator::make(), which splits a string on "|". By the name
+     * of the method, or of the class built, in lower case: the argument
+     * that is one, by position from 0 and by name.
+     */
+    private const RULE_SETS_ARGUMENTS = ['anyof' => [0 => 'rules']];
+
+    /**
      * A regex rule as Laravel's ValidationRuleParser reads one rule: the
      * name, then all the text after the first ":". parseStringRule() trims
      * the name before Str::studly() picks the rule, ruleIsRegex() reads it
@@ -246,8 +255,9 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * Whether the literal is a rules string, which Laravel splits on "|",
      * rather than one element of a rules array: a literal given to a key
      * ('a' => '…') or assigned ($rules['a'] = '…'), where $rules['a'][] = '…'
-     * pushes one element, or the rules a call takes (RULES_ARGUMENTS), where
-     * a string another call takes, as array_push() appends it, is one
+     * pushes one element, the rules a call takes (RULES_ARGUMENTS), or an
+     * element of the array of rule sets a call takes (RULE_SETS_ARGUMENTS),
+     * where a string another call takes, as array_push() appends it, is one
      * element. Anywhere else, a rule before the regex one, as
      * "nullable|regex:/a/", makes a rules string, unless array_push() or
      * array_unshift() appends it: Laravel then reads one rule named
@@ -296,11 +306,12 @@ final class ValidationRulePatternSource implements PatternSourceInterface
 
     /**
      * The offsets of the string literals of the file that a call takes as
-     * rules, by position or by name, of those array_push() or
-     * array_unshift() appends as elements, and of the parentheses that only
-     * group what they hold. A literal is an argument of the innermost
-     * bracket around it that does not only group. A double-quoted string
-     * that interpolates is placed by its opening quote.
+     * rules, by position or by name, or that the array of rule sets a call
+     * takes holds as elements, of those array_push() or array_unshift()
+     * appends as elements, and of the parentheses that only group what they
+     * hold. A literal is an argument of the innermost bracket around it
+     * that does not only group. A double-quoted string that interpolates is
+     * placed by its opening quote.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $offsets
@@ -313,8 +324,9 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         $grouping = [];
         $appended = [];
         // Each open bracket, null where it only groups: the arguments it
-        // takes as rules, whether it appends its arguments after the first,
-        // the position of the one read and its name.
+        // takes as rules and as an array of rule sets, whether it appends
+        // its arguments after the first, whether it is an array of rule
+        // sets, the position of the argument read and its name.
         $brackets = [];
         foreach ($tokens as $index => $token) {
             if (PhpTokens::opensNesting($token)) {
@@ -325,7 +337,20 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                     $brackets[] = null;
                 } else {
                     $call = '(' === $token && null !== $previous;
-                    $brackets[] = ['rules' => $call ? self::rulesArgumentsOf($tokens, $previous) : [], 'appends' => $call && self::appendsElements($tokens, $previous), 'position' => 0, 'name' => null];
+                    // An array literal: a "[" after no operand, or array().
+                    $array = null !== $previous && ('[' === $token ? self::groups($tokens[$previous]) : '(' === $token && \is_array($tokens[$previous]) && \T_ARRAY === $tokens[$previous][0]);
+                    $outer = null;
+                    for ($level = \count($brackets) - 1; $level >= 0 && null === $outer; $level--) {
+                        $outer = $brackets[$level];
+                    }
+                    $brackets[] = [
+                        'rules' => $call ? self::rulesArgumentsOf($tokens, $previous) : [],
+                        'sets' => $call ? self::ruleSetsArgumentsOf($tokens, $previous) : [],
+                        'appends' => $call && self::appendsElements($tokens, $previous),
+                        'holdsSets' => $array && null !== $outer && self::isOneOf($outer['sets'], $outer['position'], $outer['name']),
+                        'position' => 0,
+                        'name' => null,
+                    ];
                 }
 
                 continue;
@@ -340,7 +365,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             $top = \count($brackets) - 1;
             if (',' === $token || ':' === $token) {
                 $bracket = $brackets[$top] ?? null;
-                if (null === $bracket || ([] === $bracket['rules'] && !$bracket['appends'])) {
+                if (null === $bracket || ([] === $bracket['rules'] && [] === $bracket['sets'] && !$bracket['appends'])) {
                     continue;
                 }
 
@@ -369,7 +394,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 $top--;
             }
             $bracket = $brackets[$top] ?? null;
-            if (null !== $bracket && (null === $bracket['name'] ? isset($bracket['rules'][$bracket['position']]) : \in_array($bracket['name'], $bracket['rules'], true))) {
+            if (null !== $bracket && ($bracket['holdsSets'] || self::isOneOf($bracket['rules'], $bracket['position'], $bracket['name']))) {
                 $rules[$offsets[$index]] = true;
             }
             if (null !== $bracket && $bracket['appends'] && $bracket['position'] > 0) {
@@ -378,6 +403,17 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         }
 
         return ['rules' => $rules, 'grouping' => $grouping, 'appended' => $appended];
+    }
+
+    /**
+     * Whether the argument at this position, or of this name when it is
+     * given by name, is one of these.
+     *
+     * @param array<int, string> $arguments
+     */
+    private static function isOneOf(array $arguments, int $position, ?string $name): bool
+    {
+        return null === $name ? isset($arguments[$position]) : \in_array($name, $arguments, true);
     }
 
     /**
@@ -526,5 +562,27 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         $operator = PhpTokens::previousSignificant($tokens, $callee - 1);
 
         return null !== $operator && PhpTokens::isObjectOrStaticOperator($tokens[$operator]) ? $arguments : [];
+    }
+
+    /**
+     * The arguments the call after this name takes as an array of rule
+     * sets, by position and by name: the method anyOf(), or the AnyOf rule
+     * built. A function of this name takes none.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array<int, string>
+     */
+    private static function ruleSetsArgumentsOf(array $tokens, int $callee): array
+    {
+        $name = PhpTokens::name($tokens[$callee]);
+        if (null === $name) {
+            return [];
+        }
+
+        $arguments = self::RULE_SETS_ARGUMENTS[strtolower(substr($name, (int) strrpos('\\'.$name, '\\')))] ?? [];
+        $before = PhpTokens::previousSignificant($tokens, $callee - 1);
+
+        return null !== $before && (PhpTokens::isObjectOrStaticOperator($tokens[$before]) || (\is_array($tokens[$before]) && \T_NEW === $tokens[$before][0])) ? $arguments : [];
     }
 }

@@ -13,10 +13,15 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Laravel\Extractor;
 
+use Illuminate\Contracts\Translation\Translator as TranslatorContract;
+use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\Validator as ValidatorFacade;
 use Illuminate\Translation\ArrayLoader;
 use Illuminate\Translation\Translator;
 use Illuminate\Validation\ConditionalRules;
+use Illuminate\Validation\Factory;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\AnyOf;
 use Illuminate\Validation\ValidationRuleParser;
 use Illuminate\Validation\Validator;
 use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
@@ -464,8 +469,11 @@ final class ValidationRuleLaravelReadingTest extends TestCase
      * A string is a rules string where the call takes rules: the second
      * argument of Validator::sometimes(), the second and third of
      * Rule::when(), Rule::unless() and the ConditionalRules they build, by
-     * position or by name, and through parentheses that only group it. A
-     * string another call takes is one rule, as array_unshift() adds it.
+     * position or by name, and through parentheses that only group it, and
+     * an element of the array Rule::anyOf() or an AnyOf rule takes, which
+     * the rule validates alone through Validator::make(). A string another
+     * call takes is one rule, as array_unshift() adds it, and so is an
+     * element of an array inside the one AnyOf takes.
      *
      * @param \Closure(): array<mixed> $rules the rules as Laravel holds them
      */
@@ -476,7 +484,7 @@ final class ValidationRuleLaravelReadingTest extends TestCase
         $this->assertSame([$expected], self::laravelPatterns($rules()));
         $this->assertSame($compiles, EngineProbe::compiles($expected), $expected);
 
-        $project = $this->makeProject(['app/Rules.php' => "<?php\nuse Illuminate\\Validation\\ConditionalRules;\nuse Illuminate\\Validation\\Rule;\n".$code."\n"]);
+        $project = $this->makeProject(['app/Rules.php' => "<?php\nuse Illuminate\\Validation\\ConditionalRules;\nuse Illuminate\\Validation\\Rule;\nuse Illuminate\\Validation\\Rules\\AnyOf;\n".$code."\n"]);
         $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
 
         $this->assertSame([$expected], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
@@ -534,6 +542,60 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             'expected' => '/^(a|b)$/',
             'compiles' => true,
         ];
+        yield 'an element of the array Rule::anyOf() takes' => [
+            'code' => "return ['code' => Rule::anyOf(['regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf(['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element after another of the array Rule::anyOf() takes' => [
+            'code' => "return ['code' => Rule::anyOf(['required', 'regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf(['required', 'regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of the rules of Rule::anyOf() given by name' => [
+            'code' => "return ['code' => Rule::anyOf(rules: ['regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf(rules: ['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of the array Rule::anyOf() takes in parentheses' => [
+            'code' => "return ['code' => Rule::anyOf((['regex:/^(a|b)$/']))];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf(['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of the array() Rule::anyOf() takes' => [
+            'code' => "return ['code' => \\Illuminate\\Validation\\Rule::anyOf(array('regex:/^(a|b)$/'))];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf(['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of the array an AnyOf rule takes' => [
+            'code' => "return ['code' => new AnyOf(['regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => self::anyOfRules(new AnyOf(['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of a rules array Rule::anyOf() takes' => [
+            'code' => "return ['code' => Rule::anyOf([['required', 'regex:/^(a|b)$/']])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf([['required', 'regex:/^(a|b)$/']])),
+            'expected' => '/^(a|b)$/',
+            'compiles' => true,
+        ];
+        yield 'a rules string of keyed rules Rule::anyOf() takes' => [
+            'code' => "return ['code' => Rule::anyOf([['code' => 'regex:/^(a|b)$/']])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf([['code' => 'regex:/^(a|b)$/']])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of an array a call inside Rule::anyOf() takes' => [
+            'code' => "return ['code' => Rule::anyOf([Rule::when(\$condition, ['regex:/^(a|b)$/'])])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf([Rule::when(true, ['regex:/^(a|b)$/'])])),
+            'expected' => '/^(a|b)$/',
+            'compiles' => true,
+        ];
     }
 
     /**
@@ -548,6 +610,39 @@ final class ValidationRuleLaravelReadingTest extends TestCase
         $validator->sometimes($attribute, $rules, static fn (): bool => true);
 
         return $validator->getRules();
+    }
+
+    /**
+     * The rules of each validator the AnyOf rule makes through the
+     * Validator facade, one for each element of its array, as each
+     * validator holds them. None runs: the factory hands the rule a
+     * validator that fails, so the rule makes the next one.
+     *
+     * @return list<mixed>
+     */
+    private static function anyOfRules(AnyOf $rule): array
+    {
+        $translator = new Translator(new ArrayLoader(), 'en');
+        $factory = new Factory($translator);
+        $validated = [];
+        $factory->resolver(static function (TranslatorContract $translator, array $data, array $rules, array $messages, array $attributes) use (&$validated): Validator {
+            array_push($validated, ...array_values((new Validator($translator, $data, $rules, $messages, $attributes))->getRules()));
+
+            return new Validator($translator, [], ['value' => 'required']);
+        });
+
+        $application = Facade::getFacadeApplication();
+        Facade::setFacadeApplication(null);
+        ValidatorFacade::swap($factory);
+
+        try {
+            self::assertFalse($rule->setValidator(new Validator($translator, [], []))->passes('code', 'a'));
+        } finally {
+            ValidatorFacade::clearResolvedInstance();
+            Facade::setFacadeApplication($application);
+        }
+
+        return $validated;
     }
 
     /**

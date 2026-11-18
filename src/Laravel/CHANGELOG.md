@@ -76,6 +76,12 @@ CHANGELOG
    `array_push()`, `array_unshift()` or `[] =` adds with a rule before the
    regex one, `'nullable|regex:/x|y/'`, is a rule Laravel names
    `nullable|regex`, and no pattern is linted.
+ * `regex:lint` splits on `|` each string element of the array
+   `Rule::anyOf()` or `new AnyOf()` takes (Laravel 12.8 and later), which
+   the rule validates alone through `Validator::make()`:
+   `Rule::anyOf(['regex:/^(a|b)$/'])` runs `/^(a`, where `/^(a|b)$/` was
+   linted. An array element, `Rule::anyOf([['required', 'regex:/^(a|b)$/']])`,
+   stays one rule.
  * `regex:lint` reads validation rules from the string literals of the PHP
    code as PHP reads them, where it searched the file's text for quotes. A
    rule whose `:` an escape writes, `"regex\x3a/^a$/"`, is read; a literal
