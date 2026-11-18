@@ -3514,22 +3514,6 @@ main .page-filter-hidden {
   color: var(--ink);
 }
 
-.footer-install code {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: .85rem;
-  background: var(--code-bg);
-  color: var(--code-ink);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-s);
-  padding: .6rem .8rem;
-  overflow-wrap: anywhere;
-}
-
-.footer-install a {
-  text-decoration: none;
-}
-
 /* The closing line: the license facts, centered on the column, separated
    by middots the datelines already use. */
 .footer-baseline {

@@ -1925,11 +1925,116 @@ main > section:not([class]) p > a.button:hover {
   color: var(--ink-soft);
 }
 
-.footer-install code {
-  border: 0;
+/* ---- The brand column ----------------------------------------------------
+ * The wordmark carries its release beside it, the way the header does; the
+ * line under it says what PHPRegex is; three facts in the label voice say
+ * what it runs on; and the column ends on the one way in that holds for
+ * every reader — the page that chooses among the packages. */
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .9rem;
+}
+
+.footer-brand-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem .7rem;
+}
+
+.footer-release {
+  padding: .1rem .5rem;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+  background: var(--amber-tint);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color .15s ease, box-shadow .15s ease;
+}
+
+.footer-release:hover,
+.footer-release:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--amber);
+}
+
+.footer-brand .footer-blurb {
+  max-width: 30ch;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.footer-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer-facts li {
+  padding: .2rem .55rem;
   border-radius: var(--radius-s);
   box-shadow: inset 0 0 0 1px var(--line-soft);
-  font-size: .75rem;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  letter-spacing: .02em;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.footer-choose {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 44px;
+  margin-top: -.35rem;
+  color: var(--ink);
+  font-size: .875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* The underline is the words', not the arrow's: the arrow moves. */
+.footer-choose-label {
+  text-decoration: underline;
+  text-decoration-color: var(--link-line);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+
+.footer-choose-arrow {
+  color: var(--amber);
+  transition: transform .15s ease;
+}
+
+.footer-choose:hover {
+  color: var(--amber-deep);
+}
+
+.footer-choose:hover .footer-choose-label {
+  text-decoration-color: var(--amber);
+}
+
+.footer-choose:hover .footer-choose-arrow,
+.footer-choose:focus-visible .footer-choose-arrow {
+  transform: translateX(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-choose-arrow {
+    transition: none;
+  }
 }
 
 /* ==========================================================================
