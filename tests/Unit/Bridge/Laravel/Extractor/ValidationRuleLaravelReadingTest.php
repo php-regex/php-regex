@@ -762,7 +762,9 @@ final class ValidationRuleLaravelReadingTest extends TestCase
 
     /**
      * Reading what Rule::anyOf() validates leaves the Validator facade as it
-     * found it: a factory it held before is its factory after.
+     * found it: a factory it held before is its factory after. The test
+     * leaves it as it found it too: what an earlier test left in it is
+     * there after.
      */
     #[Test]
     #[RequiresMethod(Rule::class, 'anyOf')]
@@ -770,6 +772,8 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     {
         $application = Facade::getFacadeApplication();
         Facade::setFacadeApplication(null);
+        // What the facade holds itself, none without an application.
+        $cached = ValidatorFacade::getFacadeRoot();
         $factory = new Factory(new Translator(new ArrayLoader(), 'en'));
         ValidatorFacade::swap($factory);
 
@@ -777,9 +781,16 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             $this->assertSame([['regex:/^(a', 'b)$/']], self::anyOfRules(Rule::anyOf(['regex:/^(a|b)$/'])));
             $this->assertSame($factory, ValidatorFacade::getFacadeRoot());
         } finally {
-            ValidatorFacade::clearResolvedInstance();
+            if (null === $cached) {
+                ValidatorFacade::clearResolvedInstance();
+            } else {
+                ValidatorFacade::swap($cached);
+            }
+            $left = ValidatorFacade::getFacadeRoot();
             Facade::setFacadeApplication($application);
         }
+
+        $this->assertSame($cached, $left);
     }
 
     /**
