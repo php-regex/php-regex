@@ -8,5 +8,10 @@
         "shipmonk/phpstan-rules": "^4.4",
         "spaze/phpstan-disallowed-calls": "^4.15",
         "thecodingmachine/phpstan-strict-rules": "^2.0"
+    },
+    "config": {
+        "platform": {
+            "php": "8.1.99"
+        }
     }
 }

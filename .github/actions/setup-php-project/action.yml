@@ -48,14 +48,14 @@ runs:
       shell: bash
       run: echo "dir=$(composer config --global cache-files-dir)" >> "$GITHUB_OUTPUT"
 
-    # Downloads only: no lock file is committed, the root and the tools
-    # resolve afresh on every run, so a stale archive costs a download and
-    # never pins a version.
+    # Downloads only: the versions come from the tools' committed locks
+    # (phpunit and paratest excepted, they resolve afresh for the matrix),
+    # so a stale archive costs a download and never pins a version.
     - name: Restore the Composer cache
       uses: actions/cache@v6
       with:
         path: ${{ steps.composer-cache.outputs.dir }}
-        key: composer-${{ runner.os }}-${{ github.job }}-php${{ inputs.php-version }}-${{ inputs.dependencies }}-${{ hashFiles('composer.json', 'tools/*/composer.json') }}
+        key: composer-${{ runner.os }}-${{ github.job }}-php${{ inputs.php-version }}-${{ inputs.dependencies }}-${{ hashFiles('composer.json', 'tools/*/composer.json', 'tools/*/composer.lock') }}
         restore-keys: |
           composer-${{ runner.os }}-${{ github.job }}-php${{ inputs.php-version }}-${{ inputs.dependencies }}-
           composer-${{ runner.os }}-${{ github.job }}-php${{ inputs.php-version }}-

@@ -1,5 +1,10 @@
 {
     "require-dev": {
         "phpstan/tally": "1.0.1"
+    },
+    "config": {
+        "platform": {
+            "php": "8.2.99"
+        }
     }
 }
