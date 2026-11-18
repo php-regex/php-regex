@@ -63,6 +63,57 @@ final class RedosInputTest extends TestCase
         $this->assertSame('Input file not readable: '.sys_get_temp_dir(), RedosInput::from(new RedosArguments('/a/', inputFile: sys_get_temp_dir()), Regex::create()));
     }
 
+    /**
+     * An input file of 8 MiB is read whole; one a byte longer is past the
+     * limit whatever the count, refused with its own length.
+     */
+    #[Test]
+    public function test_an_input_file_is_held_to_the_limit_of_the_input_repeated(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'regex-redos-');
+        $this->assertIsString($file);
+
+        try {
+            file_put_contents($file, str_repeat('a', 8_388_608));
+            $whole = RedosInput::from(new RedosArguments('/a/', inputFile: $file), Regex::create());
+            file_put_contents($file, 'b', \FILE_APPEND);
+            $past = RedosInput::from(new RedosArguments('/a/', inputFile: $file), Regex::create());
+        } finally {
+            unlink($file);
+        }
+
+        $this->assertInstanceOf(RedosInput::class, $whole);
+        $this->assertSame(8_388_608, \strlen($whole->subject));
+        $this->assertSame(self::pastTheLimit(1, 8_388_609, 0), $past);
+    }
+
+    /**
+     * A longer file is read to one byte past the limit, never whole, and
+     * refused with the length the file system gives it.
+     */
+    #[Test]
+    public function test_an_input_file_past_the_limit_is_read_to_one_byte_past_it(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'regex-redos-');
+        $this->assertIsString($file);
+        $handle = fopen($file, 'w');
+        $this->assertIsResource($handle);
+        ftruncate($handle, 16 * 1024 * 1024);
+        fclose($handle);
+
+        try {
+            $read = RedosInput::readFile($file);
+            $refusal = RedosInput::from(new RedosArguments('/a/', inputFile: $file), Regex::create());
+        } finally {
+            unlink($file);
+        }
+
+        $this->assertNotNull($read);
+        $this->assertSame(8_388_609, \strlen($read[0]));
+        $this->assertSame(16_777_216, $read[1]);
+        $this->assertSame(self::pastTheLimit(1, 16_777_216, 0), $refusal);
+    }
+
     #[Test]
     public function test_without_an_input_one_is_generated_from_the_culprit_of_the_pattern(): void
     {
@@ -112,10 +163,10 @@ final class RedosInputTest extends TestCase
 
     /**
      * The input repeated weighs 8 MiB at most: printed with --show-input, a
-     * subject of bytes to escape takes about five times its size, which
-     * stays within PHP's default memory_limit of 128M at 8 MiB and goes past
-     * it at 16 MiB. A count past the limit is refused before the subject is
-     * built: ten billion copies of one byte would take 10 GB.
+     * subject of bytes to escape takes up to about 115 MiB at 8 MiB, within
+     * PHP's default memory_limit of 128M, and goes past it at 16 MiB. A count
+     * past the limit is refused before the subject is built: ten billion
+     * copies of one byte would take 10 GB.
      */
     #[Test]
     #[DataProvider('provideRepeatsPastTheLimit')]
@@ -129,7 +180,7 @@ final class RedosInputTest extends TestCase
      */
     public static function provideRepeatsPastTheLimit(): iterable
     {
-        yield 'ten billion copies of a byte' => ['input' => 'a', 'repeat' => 10_000_000_000, 'error' => self::pastTheLimit(10_000_000_000, 1, 8_388_608)];
+        yield 'the largest integer of copies of a byte' => ['input' => 'a', 'repeat' => \PHP_INT_MAX, 'error' => self::pastTheLimit(\PHP_INT_MAX, 1, 8_388_608)];
         yield 'one copy of a byte past the limit' => ['input' => 'a', 'repeat' => 8_388_609, 'error' => self::pastTheLimit(8_388_609, 1, 8_388_608)];
         yield 'one copy of two bytes past the limit' => ['input' => 'ab', 'repeat' => 4_194_305, 'error' => self::pastTheLimit(4_194_305, 2, 4_194_304)];
         yield 'the largest count of a long input' => ['input' => str_repeat('x', 8_388_609), 'repeat' => \PHP_INT_MAX, 'error' => self::pastTheLimit(\PHP_INT_MAX, 8_388_609, 0)];
@@ -186,6 +237,6 @@ final class RedosInputTest extends TestCase
 
     private static function pastTheLimit(int $repeat, int $length, int $largest): string
     {
-        return \sprintf('--repeat %d repeats the %d-byte input past 8 MiB (8388608 bytes), the most it may weigh: printed with --show-input, a subject takes up to five times its size, which must fit in PHP\'s default memory_limit of 128M. The largest count for this input is %d.', $repeat, $length, $largest);
+        return \sprintf('--repeat %d repeats the %d-byte input past 8 MiB (8388608 bytes), the most it may weigh: printed with --show-input, an 8 MiB subject of bytes to escape takes up to about 115 MiB, which must fit in PHP\'s default memory_limit of 128M. The largest count for this input is %d.', $repeat, $length, $largest);
     }
 }
