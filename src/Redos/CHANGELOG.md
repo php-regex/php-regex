@@ -83,6 +83,13 @@ CHANGELOG
    either case reads one way under i too: `/^(a|b\1)+$/i`, which was
    critical, is medium, where PCRE reads it in 3 004 and 6 004 steps on 1 000
    and 2 000 `a`.
+ * An item that reads nothing, an option setting above all, no longer
+   keeps a loop apart from what stands before or after it, nor two loops
+   apart: the heuristics read the pattern as its twin without the item.
+   `/^((?i)a+)\1$/`, `/(?i)^((?-i)(?:a|A)+)\1$/`, `/^(x|(?i)a+)\1$/`,
+   `/^((?:a|A)+(?i))\1$/` and `/^(a+(?i)A+)\1$/`, which were safe, are
+   medium, as `/^(a+)\1$/i`, `/^((?:a|A)+)\1$/` and `/^(a+[aA]+)\1$/` are,
+   and PCRE takes the same steps on each and on its twin.
  * The heuristics read a loop that ends the body of another against the
    first characters of the next iteration: Friedl's unrolled C comment,
    `/(?C1)\/\*[^*]*\*+([^\/*][^*]*\*+)*\//`, which was critical, is safe

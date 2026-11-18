@@ -587,15 +587,39 @@ final class RedosProfiler extends AbstractNodeVisitor
         // turn, past the verbs that cut backtracking: they never fail.
         $tail = $endsAtomicBody ? $this->tailIndex($children) : null;
 
-        $max = $this->maxSeverity($max, $this->analyzeAdjacentQuantifiers($node, $tail));
+        // An item that reads nothing, an option setting above all, keeps
+        // no two items apart: the ones before and after it meet, and a loop
+        // followed by such items alone ends the sequence.
+        $reads = [];
+        $readsAll = true;
+        foreach ($children as $index => $child) {
+            $reads[$index] = $child instanceof LiteralNode ? '' !== $child->value : !self::readsNothing($child);
+            $readsAll = $readsAll && $reads[$index];
+        }
+
+        $max = $this->maxSeverity($max, $this->analyzeAdjacentQuantifiers($children, $readsAll ? null : $reads, $tail));
+
+        // The reading item after each one, read from the end when an item
+        // reads nothing.
+        $following = [];
+        $after = null;
+        for ($index = $readsAll ? -1 : $total - 1; $index >= 0; $index--) {
+            $following[$index] = $after;
+            if ($reads[$index]) {
+                $after = $children[$index];
+            }
+        }
 
         foreach ($children as $index => $child) {
+            $followedBy = $readsAll ? ($children[$index + 1] ?? null) : $following[$index];
             $this->previousNode = $last;
-            $this->nextNode = $index + 1 < $total ? $children[$index + 1] : null;
-            $this->iterationHead = $index + 1 < $total ? null : $head;
+            $this->nextNode = $followedBy;
+            $this->iterationHead = null === $followedBy ? $head : null;
             $this->endsAtomicBody = $index === $tail;
             $max = $this->maxSeverity($max, $child->accept($this));
-            $last = $child;
+            if ($reads[$index]) {
+                $last = $child;
+            }
         }
 
         $this->previousNode = $previous;
@@ -1348,6 +1372,35 @@ final class RedosProfiler extends AbstractNodeVisitor
         return null !== $this->setsInForce && $this->setsInForce->contains($node) ? $this->setsInForce[$node] : $this->charSetAnalyzer;
     }
 
+    /**
+     * Whether the item reads no character and holds nothing a match could
+     * stop on: an option setting, "(?i)", a group that holds no more, a
+     * comment.
+     */
+    private static function readsNothing(NodeInterface $node): bool
+    {
+        if ($node instanceof LiteralNode) {
+            return '' === $node->value;
+        }
+
+        if ($node instanceof GroupNode) {
+            return \in_array($node->type, [GroupType::InlineFlags, GroupType::NonCapturing, GroupType::Capturing, GroupType::Named, GroupType::Atomic], true)
+                && self::readsNothing($node->child);
+        }
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                if (!self::readsNothing($child)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return $node instanceof CommentNode;
+    }
+
     private static function holdsOptionSetting(NodeInterface $node): bool
     {
         if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type) {
@@ -1569,23 +1622,28 @@ final class RedosProfiler extends AbstractNodeVisitor
     }
 
     /**
-     * @param int|null $tail the index of the item that ends an atomic body, if
-     *                       any: a pair it closes is matched the first way
-     *                       through
+     * @param array<NodeInterface> $children the items of the sequence
+     * @param array<bool>|null     $reads    whether each item reads a character, null when each
+     *                                       does: two loops meet across one that reads nothing,
+     *                                       "a+(?i)A+"
+     * @param int|null             $tail     the index of the item that ends an atomic body, if
+     *                                       any: a pair it closes is matched the first way
+     *                                       through
      */
-    private function analyzeAdjacentQuantifiers(SequenceNode $node, ?int $tail): RedosSeverity
+    private function analyzeAdjacentQuantifiers(array $children, ?array $reads, ?int $tail): RedosSeverity
     {
         $max = RedosSeverity::Safe;
-        $children = $node->children;
-        $count = \count($children);
+        $reading = null === $reads ? null : array_keys(array_filter($reads));
+        $count = null === $reading ? \count($children) : \count($reading);
 
-        for ($i = 0; $i < $count - 1; $i++) {
-            if ($i + 1 === $tail) {
+        for ($k = 0; $k < $count - 1; $k++) {
+            [$leftIndex, $rightIndex] = null === $reading ? [$k, $k + 1] : [$reading[$k], $reading[$k + 1]];
+            if ($rightIndex === $tail) {
                 continue;
             }
 
-            $left = $children[$i];
-            $right = $children[$i + 1];
+            $left = $children[$leftIndex];
+            $right = $children[$rightIndex];
 
             $leftQuantifier = $this->unwrapAdjacentQuantifier($left);
             $rightQuantifier = $this->unwrapAdjacentQuantifier($right);

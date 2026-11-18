@@ -688,6 +688,50 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * An item that reads nothing, an option setting above all, neither
+     * separates a loop from what stands before or after it nor stands
+     * between two loops: each row is read as its twin without the item,
+     * written under the options in force, and the engine takes the same
+     * steps on both (20 -> 28 on 8 -> 12 units of "a" then "!" for the
+     * loop of "a" or "A", 10 -> 14 for "a+", 11 -> 15 in a branch or a
+     * lookahead, 31 -> 69 for two loops of "a", 1 024 -> 16 384 where the
+     * case makes the branches meet).
+     *
+     * @return iterable<string, array{pattern: string, twin: string, unit: string}>
+     */
+    public static function provideItemsThatReadNothing(): iterable
+    {
+        yield 'an option setting turning i off at the head of a captured loop' => ['pattern' => '/(?i)^((?-i)(?:a|A)+)\1$/', 'twin' => '/^((?:a|A)+)\1$/', 'unit' => 'a'];
+        yield 'an option setting at the head of a captured loop' => ['pattern' => '/^((?i)a+)\1$/', 'twin' => '/^(a+)\1$/i', 'unit' => 'a'];
+        yield 'an option setting that makes the branches meet' => ['pattern' => '/^((?i)(?:a|A)+)\1$/', 'twin' => '/^((?:a|A)+)\1$/i', 'unit' => 'a'];
+        yield 'an option setting at the head of a branch' => ['pattern' => '/^(x|(?i)a+)\1$/', 'twin' => '/^(x|a+)\1$/i', 'unit' => 'a'];
+        yield 'an option setting at the head of a lookahead' => ['pattern' => '/^(?=((?i)a+)\1$)/', 'twin' => '/^(?=(a+)\1$)/i', 'unit' => 'a'];
+        yield 'an option setting in a nested group' => ['pattern' => '/^((?:(?i))(?:a|A)+)\1$/', 'twin' => '/^((?:a|A)+)\1$/', 'unit' => 'a'];
+        yield 'an empty group that sets options' => ['pattern' => '/^((?i:)(?:a|A)+)\1$/', 'twin' => '/^((?:a|A)+)\1$/', 'unit' => 'a'];
+        yield 'two option settings in a nested group' => ['pattern' => '/^((?:(?i)(?s))(?:a|A)+)\1$/', 'twin' => '/^((?:a|A)+)\1$/', 'unit' => 'a'];
+        yield 'an option setting after the loop' => ['pattern' => '/^((?:a|A)+(?i))\1$/', 'twin' => '/^((?:a|A)+)\1$/', 'unit' => 'a'];
+        yield 'an option setting between two loops' => ['pattern' => '/^(a+(?i)A+)\1$/', 'twin' => '/^(a+[aA]+)\1$/', 'unit' => 'a'];
+        yield 'an option setting between two loops that stay apart' => ['pattern' => '/^(a+(?i)B+)\1$/', 'twin' => '/^(a+[bB]+)\1$/', 'unit' => 'a'];
+        yield 'a comment at the head of a captured loop' => ['pattern' => '/^((?#c)a+)\1$/', 'twin' => '/^(a+)\1$/', 'unit' => 'a'];
+    }
+
+    #[Test]
+    #[DataProvider('provideItemsThatReadNothing')]
+    public function test_an_item_that_reads_nothing_is_read_as_its_twin_without_it(string $pattern, string $twin, string $unit): void
+    {
+        foreach ([8, 12] as $units) {
+            $subject = str_repeat($unit, $units).'!';
+            $this->assertSame(
+                self::steps(PcreInterpreter::pattern($twin[0].'(*NO_START_OPT)'.substr($twin, 1)), $subject),
+                self::steps(PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1)), $subject),
+                'Oracle: the engine reads the row as its twin.',
+            );
+        }
+
+        $this->assertSame(Regex::create(['cache' => null])->redos($twin)->severity, Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
      * A byte above ASCII is read under PCRE2's own tables, which PHP
      * compiles with under "C": there "\w" leaves "\xE9" out, and the loop
      * beside it gives its iterations back one at a time (8 -> 12 units of
