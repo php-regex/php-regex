@@ -149,6 +149,19 @@ final class SecurityConfigExtractor
         // alone, for this one processing (checked on Symfony 6.4.0, 7.4.0
         // and 8.1.11).
         $prefix = $parameters->getEnvPlaceholderUniquePrefix();
+
+        // The pass resolves the parameters first, and the configuration tree
+        // checks what each holds: a port given as the string "8080" is
+        // refused.
+        $resolved = $configs;
+        array_walk_recursive($resolved, static function (&$value) use ($parameters): void {
+            try {
+                $value = \is_string($value) ? $parameters->resolveValue($value) : $value;
+            } catch (DependencyInjectionException) {
+                // Left as written: reading the value says why it cannot be.
+            }
+        });
+
         $written = [];
         $pieces = [];
         array_walk_recursive($configs, static function (&$value, int|string $key) use ($parameters, $prefix, &$written, &$pieces): void {
@@ -162,17 +175,21 @@ final class SecurityConfigExtractor
             }
 
             // The bundle splits a string of roles or methods once the pass
-            // has resolved it: each piece it splits is a placeholder of its
-            // own, its entry found by the string as written, and read as the
-            // piece.
+            // has resolved it, and takes a list a parameter holds as it is:
+            // each piece is a placeholder of its own, its entry found by the
+            // value as written, and read as the piece.
+            $list = \is_array($resolved) ? array_map(self::text(...), $resolved) : null;
             if (\is_string($resolved) && \in_array($key, ['roles', 'role', 'methods', 'method'], true)) {
+                $list = LibraryPcre::split('/\s*,\s*/', $resolved) ?: [];
+            }
+            if (null !== $list && !\in_array(null, $list, true) && \in_array($key, ['roles', 'role', 'methods', 'method', 'ips', 'ip'], true)) {
                 $split = [];
-                foreach (LibraryPcre::split('/\s*,\s*/', $resolved) ?: [] as $piece) {
+                foreach ($list as $piece) {
                     $placeholder = $prefix.'_piece_'.\count($pieces);
                     $pieces[$placeholder] = [$value, $piece];
                     $split[] = $placeholder;
                 }
-                $value = implode(',', $split);
+                $value = $split;
 
                 return;
             }
@@ -185,6 +202,7 @@ final class SecurityConfigExtractor
         BaseNode::setPlaceholderUniquePrefix($prefix);
 
         try {
+            (new Processor())->processConfiguration($configuration, $resolved);
             $processed = (new Processor())->processConfiguration($configuration, $configs);
         } catch (ConfigurationException $e) {
             throw new SecurityConfigException('The security configuration is invalid: '.$e->getMessage(), previous: $e);
@@ -396,8 +414,8 @@ final class SecurityConfigExtractor
      */
     private function accessRule(array $rule, int $index, array $sources, array &$taken, \Closure $resolve, array $pieces): array
     {
-        // A piece of a string of roles or methods a parameter holds is found
-        // by the string as written, and read as the piece.
+        // A piece of the roles, methods or addresses a parameter holds is
+        // found by the value as written, and read as the piece.
         $writtenAs = static fn (string $item): string => $pieces[$item][0] ?? $item;
         $readAs = static fn (string $item): string => $pieces[$item][1] ?? $item;
 
@@ -413,7 +431,7 @@ final class SecurityConfigExtractor
             // what else it writes.
             $matchers = self::entryMatchers([
                 'roles' => array_map($writtenAs, self::listOf($rule['roles'], true)),
-                'ips' => $rule['ips'],
+                'ips' => array_map($writtenAs, $rule['ips']),
                 'methods' => array_map($writtenAs, self::listOf($rule['methods'], true)),
                 'requires_channel' => null === $rule['requiresChannel'] ? [] : [$rule['requiresChannel']],
             ]);
@@ -457,7 +475,7 @@ final class SecurityConfigExtractor
             'host' => $host,
             'roles' => $roles,
             'methods' => $methods,
-            'ips' => array_map(static fn (string $ip): string => $read($ip, 'ips'), $rule['ips']),
+            'ips' => array_map(static fn (string $ip): string => $read($readAs($ip), 'ips'), $rule['ips']),
             // SecurityExtension takes an allow_if when it is truthy, and a
             // request_matcher and a channel as written.
             'allowIf' => '' === $rule['allowIf'] || '0' === $rule['allowIf'] ? null : $rule['allowIf'],

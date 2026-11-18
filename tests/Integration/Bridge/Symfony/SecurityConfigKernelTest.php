@@ -463,6 +463,59 @@ final class SecurityConfigKernelTest extends TestCase
     }
 
     /**
+     * The kernel resolves a parameter before the configuration tree reads
+     * it, which checks what it holds: a port given by a parameter holding
+     * the string "8080" is refused, as it is no integer.
+     */
+    #[Test]
+    public function test_a_parameter_is_checked_by_the_configuration_tree_as_what_it_holds(): void
+    {
+        $project = $this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_port: '8080'\n",
+            'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n        - { path: ^/admin, port: '%admin_port%', roles: ROLE_ADMIN }\n",
+        ]);
+
+        try {
+            (new SecurityConfigKernel($project))->boot();
+            $this->fail('The kernel took a string as a port.');
+        } catch (\Exception $e) {
+            $refusal = $e->getMessage();
+        }
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('The security configuration is invalid: '.$refusal);
+
+        (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
+    }
+
+    /**
+     * A parameter holding a list gives a list of roles, methods or
+     * addresses as the kernel resolves it, each of its items one value; the
+     * rule is still found by the parameter it writes.
+     */
+    #[Test]
+    public function test_a_parameter_holding_a_list_gives_its_items(): void
+    {
+        $project = $this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_roles: [ROLE_A, ROLE_B]\n    admin_methods: [get, post]\n    admin_ips: [10.0.0.1, 10.0.0.2]\n",
+            'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n"
+                ."        - { roles: '%admin_roles%' }\n"
+                ."        - { path: ^/b, methods: '%admin_methods%', ips: '%admin_ips%', roles: ROLE_C }\n",
+        ]);
+        $kernel = new SecurityConfigKernel($project);
+        $kernel->boot();
+        $kernel->shutdown();
+
+        $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
+
+        $this->assertNotNull($config);
+        $this->assertSame(
+            [[6, ['ROLE_A', 'ROLE_B'], [], []], [7, ['ROLE_C'], ['get', 'post'], ['10.0.0.1', '10.0.0.2']]],
+            array_map(static fn (array $rule): array => [$rule['line'], $rule['roles'], $rule['methods'], $rule['ips']], $config['accessControl']),
+        );
+    }
+
+    /**
      * The security bundle joins a list of firewall patterns into one
      * alternation once their parameters are resolved, as the kernel
      * resolves them; one read from the environment is said to be so.
@@ -483,15 +536,24 @@ final class SecurityConfigKernelTest extends TestCase
     #[Test]
     public function test_a_parameter_that_is_no_string_is_an_error(): void
     {
-        $kernel = new SecurityConfigKernel($this->makeProject([
+        $project = $this->makeProject([
             'config/services.yaml' => "parameters:\n    admin_paths: [^/a, ^/b]\n",
             'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n        - { path: '%admin_paths%' }\n",
-        ]));
+        ]);
+
+        // The kernel resolves the parameter first, and the configuration
+        // tree refuses the list it holds.
+        try {
+            (new SecurityConfigKernel($project))->boot();
+            $this->fail('The kernel took a list as a path.');
+        } catch (\Exception $e) {
+            $refusal = $e->getMessage();
+        }
 
         $this->expectException(SecurityConfigException::class);
-        $this->expectExceptionMessageIsOrContains('The security configuration value "%admin_paths%" does not resolve to a string.');
+        $this->expectExceptionMessageIsOrContains('The security configuration is invalid: '.$refusal);
 
-        (new SecurityConfigExtractor())->extractFromKernel($kernel);
+        (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
     }
 
     /**

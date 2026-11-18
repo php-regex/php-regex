@@ -644,7 +644,10 @@ application runs with, as `bin/console debug:config security` shows it:
 `config/packages/security.yaml`, `security.php` or any other file the kernel
 loads, in any YAML shape (block or flow lists, anchors and aliases,
 `when@<env>` blocks), with its `%parameters%` resolved, as the kernel
-resolves them: `port: '%admin_port%'` is the port the parameter holds.
+resolves them, and checked as the bundle checks what they hold:
+`port: '%admin_port%'` is the port the parameter holds, a parameter holding
+a list gives a rule its roles, methods or addresses, and one holding the
+string `'8080'` as a port is refused, as the bundle refuses it.
 An `%env()%` value is known at run time only, in the environment the
 application runs in: it is never read from the one the command runs in,
 not even its `env()` default, and a rule holding one in its path, host,

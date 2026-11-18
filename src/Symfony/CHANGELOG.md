@@ -47,9 +47,12 @@ CHANGELOG
    is read as written.
  * `regex:security` and `regex:analyze` read the security configuration of
    the kernel as `MergeExtensionConfigurationPass` has the bundle process
-   it, its parameters and environment values taken by any node:
-   `port: '%admin_port%'` or a firewall's `stateless: '%env(bool:STATELESS)%'`
-   no longer stops the command with `Expected "int", but got "string"`. An
+   it, its parameters checked as what they hold and its environment values
+   taken by any node: `port: '%admin_port%'` holding `8080`, roles, methods
+   or addresses a parameter holds as a list, or a firewall's
+   `stateless: '%env(bool:STATELESS)%'` no longer stops the command, and a
+   port given by a parameter holding the string `'8080'` stops it as the
+   bundle refuses it. An
    `%env()%` value, in the kernel or in a `--config` file, is never read
    from the environment the command runs in, nor from its `env()` default,
    nor through a parameter of the application a `--config` file takes:
