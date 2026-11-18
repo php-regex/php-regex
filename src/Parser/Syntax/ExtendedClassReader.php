@@ -384,12 +384,15 @@ final class ExtendedClassReader
                 $this->refuse('POSIX collating elements are not supported', ErrorCode::PosixCollatingElement, $posixEnd);
             }
 
-            $end = $posixEnd ?? self::closedClassEnd($this->pattern, $start) ?? $this->refuseUnclosedClass($start);
+            // A nested class past the limit is refused on its "[", before
+            // PCRE reads its members, whether it closes or not; a POSIX
+            // class opens no level.
             if (null === $posixEnd) {
                 $this->enter($start);
                 $this->depth--;
             }
 
+            $end = $posixEnd ?? self::closedClassEnd($this->pattern, $start) ?? $this->refuseUnclosedClass($start);
             $this->at = $end;
 
             return $this->operands[] = $this->readApart($this->class, substr($this->pattern, $start, $end - $start), $start);

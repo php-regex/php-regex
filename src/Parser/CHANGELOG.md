@@ -25,6 +25,11 @@ CHANGELOG
    both were `regex.charclass.unclosed`. A range to an unknown POSIX class is
    refused as the range, before PCRE2 reads the name: `/(?[[a-[:foo:]])/` is
    `regex.range.invalid_bounds` at 13, where it was `regex.posix.invalid`.
+   Past the depth limit such a class is refused on its `[`, before what it
+   holds, as one that closes is: `(?[`, 14 `(`, then `[\p{L]` or `[a` is
+   `regex.extended_class.nested_too_deep` at offset 17, where they were
+   `regex.unicode.property_malformed` at 23 and `regex.charclass.unclosed`
+   at 19.
  * The braced name of a `\p{` or `\P{` in an extended class is read as PCRE2
    reads it, past the `]` of a nested class, a `\Q` or a `-`, up to its `}`
    or to where PCRE2 gives up on it: `/(?[[\p{-\Q\cé]])/` is
