@@ -19,6 +19,8 @@ use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestMatcher\HostRequestMatcher;
 
 /**
  * One access_control rule on one line, as regex:security and
@@ -71,14 +73,18 @@ final class AccessRuleSummaryTest extends TestCase
     }
 
     /**
-     * `host: ''` in access_control restricts nothing: no "scope=" with
-     * nothing after it.
+     * `host: ''` in access_control restricts nothing, and neither does a
+     * channel of a tab: no "scope=" with nothing after it. A host of a space
+     * is one: the security bundle chains a HostRequestMatcher for it, which
+     * takes no host of a request.
      */
     #[Test]
     public function test_a_blank_host_or_channel_is_no_scope(): void
     {
+        $this->assertFalse((new HostRequestMatcher(' '))->matches(Request::create('http://example.com/')));
+
         $this->assertSame('#0 a.yaml:1  path=(any)  roles=any', AccessRuleSummary::of(self::rule(host: ''), 'a.yaml:1'));
-        $this->assertSame('#0 a.yaml:1  path=(any)  roles=any', AccessRuleSummary::of(self::rule(host: ' ', requiresChannel: "\t"), 'a.yaml:1'));
+        $this->assertSame('#0 a.yaml:1  path=(any)  roles=any  scope=host= ', AccessRuleSummary::of(self::rule(host: ' ', requiresChannel: "\t"), 'a.yaml:1'));
     }
 
     #[Test]
