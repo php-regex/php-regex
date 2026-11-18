@@ -111,11 +111,6 @@ final class RedosProfiler extends AbstractNodeVisitor
     private ?NodeInterface $previousNode = null;
 
     /**
-     * Whether the pattern holds a lookaround, which the sets read through.
-     */
-    private bool $holdsLookaround = false;
-
-    /**
      * Whether each node read so far always reads a character, by object id.
      *
      * @var array<int, bool>
@@ -300,7 +295,6 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->culpritSeverity = RedosSeverity::Safe;
         $this->calledGroups = [];
         $this->groupsBeforeCall = [];
-        $this->holdsLookaround = false;
         $this->reads = [];
         $this->indexGroups($node->pattern, 0);
         $this->callsReadThrough = [];
@@ -925,10 +919,6 @@ final class RedosProfiler extends AbstractNodeVisitor
             return $count;
         }
 
-        if ($node instanceof GroupNode && self::isLookaround($node)) {
-            $this->holdsLookaround = true;
-        }
-
         if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
             $after = $count;
             foreach ($node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child] as $branch) {
@@ -1316,108 +1306,20 @@ final class RedosProfiler extends AbstractNodeVisitor
     }
 
     /**
-     * The characters the node may start or end with, read past a
-     * lookaround, which reads nothing: the sets read its body as if the
-     * engine took it, "(?!x)a" as starting with "x".
+     * The characters the node may start or end with, under the options in
+     * force there.
      */
     private function edgeChars(NodeInterface $node, bool $fromStart): ByteCharSet
     {
-        if (!$this->holdsLookaround || !$this->edgeIsLookaround($node, $fromStart)) {
-            $sets = $this->setsAt($node);
+        $sets = $this->setsAt($node);
 
-            return $fromStart ? $sets->firstChars($node) : $sets->lastChars($node);
-        }
-
-        if (self::isLookaround($node)) {
-            return ByteCharSet::empty();
-        }
-
-        if ($node instanceof GroupNode) {
-            return $this->edgeChars($node->child, $fromStart);
-        }
-
-        if ($node instanceof QuantifierNode) {
-            return $this->edgeChars($node->node, $fromStart);
-        }
-
-        $set = ByteCharSet::empty();
-        if ($node instanceof AlternationNode) {
-            foreach ($node->alternatives as $alternative) {
-                $set = $set->union($this->edgeChars($alternative, $fromStart));
-            }
-
-            return $set;
-        }
-
-        // A sequence, the only node left whose edge may be a lookaround.
-        foreach ($fromStart ? $node->getChildren() : array_reverse($node->getChildren()) as $child) {
-            $set = $set->union($this->edgeChars($child, $fromStart));
-            if (false === $child->accept($this->nullability)) {
-                break;
-            }
-        }
-
-        return $set;
-    }
-
-    /**
-     * Whether the node is a lookaround, which reads nothing, whatever its
-     * body reads.
-     */
-    private static function isLookaround(NodeInterface $node): bool
-    {
-        return $node instanceof GroupNode
-            && \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring], true);
-    }
-
-    /**
-     * Whether a lookaround stands at the start or the end of the node, past
-     * what may match empty.
-     */
-    private function edgeIsLookaround(NodeInterface $node, bool $fromStart): bool
-    {
-        if (self::isLookaround($node)) {
-            return true;
-        }
-
-        if ($node instanceof GroupNode) {
-            return $this->edgeIsLookaround($node->child, $fromStart);
-        }
-
-        if ($node instanceof QuantifierNode) {
-            return $this->edgeIsLookaround($node->node, $fromStart);
-        }
-
-        if ($node instanceof AlternationNode) {
-            foreach ($node->alternatives as $alternative) {
-                if ($this->edgeIsLookaround($alternative, $fromStart)) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        if ($node instanceof SequenceNode) {
-            foreach ($fromStart ? $node->children : array_reverse($node->children) as $child) {
-                if ($this->edgeIsLookaround($child, $fromStart)) {
-                    return true;
-                }
-
-                if (false === $child->accept($this->nullability)) {
-                    return false;
-                }
-            }
-        }
-
-        return false;
+        return $fromStart ? $sets->firstChars($node) : $sets->lastChars($node);
     }
 
     /**
      * The items on one side of the node being read, nearest first, past
-     * those that read nothing, a lookaround among them, to the first that
-     * always reads a character; and whether the walk ran out of items
-     * before one. An item that may
+     * those that read nothing, to the first that always reads a character;
+     * and whether the walk ran out of items before one. An item that may
      * match empty and ends with a verb that cuts backtracking ends the walk
      * on its own: the engine always gets through it and never goes back
      * past it, "\s?(*COMMIT)" after "\w+".
@@ -1431,7 +1333,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $items = [];
         for ($index = $this->position + $direction; isset($this->siblings[$index]); $index += $direction) {
             $item = $this->siblings[$index];
-            if (self::readsNothing($item) || self::isLookaround($item)) {
+            if (self::readsNothing($item)) {
                 continue;
             }
 
