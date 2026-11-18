@@ -14,6 +14,57 @@ CHANGELOG
    `(?<=a+)b`, leaves its rule out as an invalid path regex, and a host PCRE
    refuses is not evaluated, where the first stopped the command and the
    second was compared.
+ * `regex:security` and `regex:analyze` read an `access_control` path or
+   host, and a firewall pattern, as written, as the security bundle
+   compiles it: `^/admin\` and a line feed matches that line feed, where it
+   was trimmed into an invalid path regex and its rule left out, and
+   `' ^/admin'` matches no path, where it was read as `^/admin`. A path or
+   a host of spaces only is one, where it was read as none, and one of
+   `"0"` is none, as the bundle reads it.
+ * `regex:security` and `regex:analyze` read an `access_control` path, and
+   a firewall pattern, with the `s` modifier only where the application's
+   `symfony/http-foundation` compiles it with `s` (6.4.46, 7.4.19 and 8.1.7
+   on, never 8.0): elsewhere `^/admin.x` no longer takes `/admin%0Ax`, nor
+   shadows `^/admin\nx`. A path is still searched for across the line
+   feeds of a request path, whatever the modifier. The package requires
+   `symfony/http-foundation`, which `symfony/http-kernel` already installs.
+ * `regex:security` and `regex:analyze` read an `access_control` rule for
+   `GET` as taking the `HEAD` requests where the application's
+   `symfony/http-foundation` sends them to it (6.4.50, 7.4.23 and 8.1.11
+   on, never 8.0): there `{ path: ^/x, methods: [GET] }` shadows a later
+   `{ path: ^/x, methods: [HEAD] }`, where the pair was set apart on its
+   methods.
+ * `regex:security` and `regex:analyze` read the roles, methods and
+   addresses of an `access_control` rule as the security bundle and its
+   request matchers do, where they were trimmed and a string was split on
+   every comma: `roles: '%admin_roles%'` holding `ROLE_A,ROLE_B` is two
+   roles, `methods: ['GET,POST']` takes `GET` and `POST`, ` get` takes no
+   request, `ips: '10.0.0.1, 10.0.0.2'` holds both addresses, and a rule
+   is public only for `PUBLIC_ACCESS` as written, no longer for
+   `public_access` or `IS_AUTHENTICATED_ANONYMOUSLY`, which grant nothing.
+   Roles differing in case are other roles. An `allow_if` of `"0"` is none,
+   one of a space is one, and a `request_matcher` or a `requires_channel`
+   is read as written.
+ * `regex:security` and `regex:analyze` read the security configuration of
+   the kernel as `MergeExtensionConfigurationPass` has the bundle process
+   it, its parameters and environment values taken by any node:
+   `port: '%admin_port%'` or a firewall's `stateless: '%env(bool:STATELESS)%'`
+   no longer stops the command with `Expected "int", but got "string"`. An
+   `%env()%` value, in the kernel or in a `--config` file, is never read
+   from the environment the command runs in, nor from its `env()` default,
+   nor through a parameter of the application a `--config` file takes:
+   a rule holding one in its path, host, addresses, route or attributes is
+   restricted to a value the analysis cannot know, shadows no later rule
+   through it, and notes
+   `Values read from the environment are not evaluated: host.`; a firewall
+   whose pattern holds one is skipped, with that reason. Two rules reading
+   a field through the same expression, the same processors over the same
+   variable, compare as holding one value, so the shadow between them is
+   found. An `%env()%` value nothing defines no longer stops the reading of
+   a `--config` file. A
+   `port` or `methods` read from the environment stops the command with
+   exit code 2, naming the field and the rule, as the security bundle
+   refuses them: the application does not boot.
  * `regex:security` and `regex:analyze` read the `port`, `route` and
    `attributes` of an `access_control` rule, as the security bundle chains
    them to its request matcher: an earlier rule holding one the later rule

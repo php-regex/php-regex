@@ -23,6 +23,8 @@ use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Toolkit\Regex;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
 
 /**
  * Analyzes Symfony security access_control ordering with regex automata.
@@ -112,7 +114,7 @@ final class SecurityAccessControlAnalyzer
                 $right = $descriptors[$j];
                 $pairsTotal++;
 
-                if (!$this->methodsOverlap($left['methods'], $right['methods'])) {
+                if (!self::methodsOverlap($left, $right)) {
                     $pairsFilteredMethods++;
 
                     continue;
@@ -149,8 +151,14 @@ final class SecurityAccessControlAnalyzer
                 // later one takes too, or when its path is strictly
                 // narrower. Any other pair sharing a request overlaps: the
                 // order decides which rule applies to what both take.
-                $laterPathInEarlier = null === $equivalence->rightOnlyExample;
-                $earlierPathInLater = null === $equivalence->leftOnlyExample;
+                //
+                // A path read from the environment is read as every path,
+                // which it may be, but holds no other path, nor is held by
+                // any other than every path, unless the same expression
+                // gives both: the same value.
+                $samePathFromEnvironment = self::sameFromEnvironment($left, $right, 'path');
+                $laterPathInEarlier = null === $equivalence->rightOnlyExample && (!\in_array('path', $left['fromEnvironment'], true) || $samePathFromEnvironment);
+                $earlierPathInLater = null === $equivalence->leftOnlyExample && (!\in_array('path', $right['fromEnvironment'], true) || $samePathFromEnvironment);
                 $isSubset = $laterPathInEarlier && $this->takesEveryRequestOf($left, $right, $options);
                 if (!$isSubset && $earlierPathInLater && (!$laterPathInEarlier || $this->takesEveryRequestOf($right, $left, $options))) {
                     $carveOuts++;
@@ -159,7 +167,7 @@ final class SecurityAccessControlAnalyzer
                 }
 
                 $example = $intersection->example;
-                $isEquivalent = $equivalence->isEquivalent;
+                $isEquivalent = $equivalence->isEquivalent && $laterPathInEarlier && $earlierPathInLater;
                 if ($isEquivalent) {
                     $equivalent++;
                 }
@@ -269,7 +277,7 @@ final class SecurityAccessControlAnalyzer
         $path = $rule['path'];
         $route = $rule['route'] ?? null;
         $attributes = $rule['attributes'] ?? [];
-        if (null === $path || '' === trim((string) $path, " \t\n\r\0\x0B")) {
+        if (!self::chainsAMatcher($path)) {
             $path = '';
             // A route or request attributes keep the rule to the paths the
             // router gives them; methods, a host, a port or addresses keep
@@ -298,7 +306,13 @@ final class SecurityAccessControlAnalyzer
             $notes[] = 'Route and attribute restrictions are not evaluated.';
         }
 
-        $pathPattern = $this->normalizePattern($path);
+        // A value read from the environment is known at run time only.
+        $fromEnvironment = $rule['fromEnvironment'] ?? [];
+        if ([] !== $fromEnvironment) {
+            $notes[] = 'Values read from the environment are not evaluated: '.implode(', ', $fromEnvironment).'.';
+        }
+
+        $pathPattern = $this->normalizePattern(\in_array('path', $fromEnvironment, true) ? '' : $path);
         if (null === $pathPattern) {
             $skippedRules[] = [
                 'index' => $index,
@@ -312,8 +326,8 @@ final class SecurityAccessControlAnalyzer
 
         $hostPattern = null;
         $hostUnsupported = false;
-        $host = $rule['host'];
-        if (null !== $host && '' !== trim($host, " \t\n\r\0\x0B")) {
+        $host = self::chainsAMatcher($rule['host']) ? $rule['host'] : null;
+        if (null !== $host && !\in_array('host', $fromEnvironment, true)) {
             $hostPattern = $this->normalizePattern($host, true);
             if (null === $hostPattern) {
                 $hostUnsupported = true;
@@ -322,9 +336,14 @@ final class SecurityAccessControlAnalyzer
             }
         }
 
-        $methods = $this->normalizeList($rule['methods']);
-        $roles = $this->normalizeList($rule['roles']);
-        $ips = $this->normalizeList($rule['ips']);
+        $methods = self::distinct($rule['methods']);
+        $roles = self::distinct($rule['roles']);
+        // IpsRequestMatcher splits each address it is given on its commas.
+        $ips = [];
+        foreach ($rule['ips'] as $item) {
+            $ips = [...$ips, ...(preg_split('/\s*,\s*/', $item) ?: [])];
+        }
+        $ips = self::distinct($ips);
 
         return [
             'index' => $index,
@@ -334,6 +353,7 @@ final class SecurityAccessControlAnalyzer
             'pattern' => $pathPattern,
             'roles' => $roles,
             'methods' => $methods,
+            'methodsTaken' => self::methodsTaken($methods),
             'host' => $host,
             'hostPattern' => $hostPattern,
             'hostUnsupported' => $hostUnsupported,
@@ -343,9 +363,22 @@ final class SecurityAccessControlAnalyzer
             'port' => $rule['port'] ?? null,
             'attributes' => $attributes,
             'route' => $route,
-            'accessLevel' => $this->resolveAccessLevel($roles, $rule['allowIf']),
+            'fromEnvironment' => $fromEnvironment,
+            'accessLevel' => $this->resolveAccessLevel(\in_array('roles', $fromEnvironment, true) ? [] : $roles, $rule['allowIf']),
             'notes' => $notes,
         ];
+    }
+
+    /**
+     * Whether SecurityExtension chains a request matcher for a path or a
+     * host: it tests the value as PHP does, so "" and "0" are none, and a
+     * value holding only spaces is one, compiled as written.
+     *
+     * @phpstan-assert-if-true string $value
+     */
+    private static function chainsAMatcher(?string $value): bool
+    {
+        return null !== $value && '' !== $value && '0' !== $value;
     }
 
     /**
@@ -361,11 +394,9 @@ final class SecurityAccessControlAnalyzer
             return self::LEVEL_UNKNOWN;
         }
 
-        $roleLookup = [];
-        foreach ($roles as $role) {
-            $roleLookup[strtoupper($role)] = true;
-        }
-        if (isset($roleLookup['PUBLIC_ACCESS']) || isset($roleLookup['IS_AUTHENTICATED_ANONYMOUSLY'])) {
+        // AuthenticatedVoter grants a visitor "PUBLIC_ACCESS" as written,
+        // and no other role.
+        if (\in_array('PUBLIC_ACCESS', $roles, true)) {
             return self::LEVEL_PUBLIC;
         }
 
@@ -395,8 +426,10 @@ final class SecurityAccessControlAnalyzer
      */
     private function accessRulesEquivalent(array $left, array $right): bool
     {
-        return $this->sameList($left['roles'], $right['roles'], true)
-            && $this->sameList($left['methods'], $right['methods'], true)
+        return $left['fromEnvironment'] === $right['fromEnvironment']
+            && $this->sameList($left['roles'], $right['roles'], false)
+            && $left['methodsTaken'] === $right['methodsTaken']
+            && $left['host'] === $right['host']
             && $left['hostPattern'] === $right['hostPattern']
             && $this->sameList($left['ips'], $right['ips'], true)
             && $left['requiresChannel'] === $right['requiresChannel']
@@ -419,21 +452,16 @@ final class SecurityAccessControlAnalyzer
     }
 
     /**
+     * The values of a list, each once and as written: the security bundle
+     * trims none.
+     *
      * @param array<int, string> $values
      *
-     * @return array<int, string>
+     * @return list<string>
      */
-    private function normalizeList(array $values): array
+    private static function distinct(array $values): array
     {
-        $normalized = [];
-        foreach ($values as $value) {
-            $trimmed = trim($value, " \t\n\r\0\x0B");
-            if ('' !== $trimmed) {
-                $normalized[] = $trimmed;
-            }
-        }
-
-        return array_values(array_unique($normalized));
+        return array_values(array_unique($values));
     }
 
     /**
@@ -482,7 +510,8 @@ final class SecurityAccessControlAnalyzer
 
     /**
      * A search for the pattern, as a whole-subject match: any text before,
-     * the pattern grouped, any text after. Grouped, every branch of a
+     * the pattern grouped, any text after, line feeds included whether or
+     * not Symfony compiles the pattern with "s". Grouped, every branch of a
      * top-level alternation is searched for, and an anchor binds only the
      * branch it is written in, as in preg_match(). The options the pattern
      * opens with, "(*UTF)" or "(*LIMIT_MATCH=1000)", stay first: PCRE reads
@@ -500,7 +529,7 @@ final class SecurityAccessControlAnalyzer
     {
         $options = StartOptions::of($pattern);
 
-        return $options.'.*(?:'.substr($pattern, \strlen($options))."\\E(?#\n(?#)).*";
+        return $options.'(?s:.*)(?:'.substr($pattern, \strlen($options))."\\E(?#\n(?#))(?s:.*)";
     }
 
     /**
@@ -550,11 +579,15 @@ final class SecurityAccessControlAnalyzer
      */
     private function takesEveryRequestOf(array $outer, array $inner, SolverOptions $options): bool
     {
-        if (!$this->listHolds($outer['methods'], $inner['methods'])) {
+        if (null !== $outer['methodsTaken'] && (null === $inner['methodsTaken'] || [] !== array_diff($inner['methodsTaken'], $outer['methodsTaken']))) {
             return false;
         }
 
-        if ([] !== $outer['ips'] && !$this->listHolds($outer['ips'], $inner['ips'])) {
+        // Addresses read from the environment compare as written, as do a
+        // route and attributes: the same expression gives the same value,
+        // any other may give any.
+        $fromEnvironment = \in_array('ips', $outer['fromEnvironment'], true) || \in_array('ips', $inner['fromEnvironment'], true);
+        if ([] !== $outer['ips'] && !$this->listHolds($outer['ips'], $inner['ips'], !$fromEnvironment)) {
             return false;
         }
 
@@ -567,6 +600,12 @@ final class SecurityAccessControlAnalyzer
             if (($required[$name] ?? null) !== $pattern) {
                 return false;
             }
+        }
+
+        // A host read from the environment holds the one the same
+        // expression gives alone.
+        if (\in_array('host', $outer['fromEnvironment'], true)) {
+            return self::sameFromEnvironment($outer, $inner, 'host');
         }
 
         if ($outer['hostUnsupported'] || $inner['hostUnsupported'] || null === $outer['hostPattern']) {
@@ -601,13 +640,45 @@ final class SecurityAccessControlAnalyzer
     }
 
     /**
-     * Whether a list of methods or addresses takes every value the inner
-     * one takes: an empty list takes them all.
+     * The methods a rule takes, asked of the application's
+     * MethodRequestMatcher: it reads those the rule lists in upper case,
+     * split on their commas, and takes HEAD beside GET on the releases
+     * that add it (6.4.50, 7.4.23 and 8.1.11 on, never 8.0). A request
+     * method is a token, so each method the matcher takes is one the list
+     * writes, or HEAD. Null when the rule lists none: the security bundle
+     * then chains no method matcher, and every method is taken.
+     *
+     * @param list<string> $methods
+     *
+     * @return list<string>|null
+     */
+    private static function methodsTaken(array $methods): ?array
+    {
+        if ([] === $methods) {
+            return null;
+        }
+
+        $matcher = new MethodRequestMatcher($methods);
+        $taken = [];
+        foreach (array_unique([...(preg_split('/[\s,]+/', strtoupper(implode(',', $methods)), -1, \PREG_SPLIT_NO_EMPTY) ?: []), 'HEAD']) as $method) {
+            if ($matcher->matches(Request::create('/', $method))) {
+                $taken[] = $method;
+            }
+        }
+        sort($taken);
+
+        return $taken;
+    }
+
+    /**
+     * Whether a list of addresses takes every value the inner one takes:
+     * an empty list takes them all. An address is read in any case, an
+     * expression read from the environment as written.
      *
      * @param array<int, string> $outer
      * @param array<int, string> $inner
      */
-    private function listHolds(array $outer, array $inner): bool
+    private function listHolds(array $outer, array $inner, bool $caseInsensitive): bool
     {
         if ([] === $outer) {
             return true;
@@ -617,29 +688,43 @@ final class SecurityAccessControlAnalyzer
             return false;
         }
 
-        return [] === array_diff(array_map(strtoupper(...), $inner), array_map(strtoupper(...), $outer));
+        return $caseInsensitive
+            ? [] === array_diff(array_map(strtoupper(...), $inner), array_map(strtoupper(...), $outer))
+            : [] === array_diff($inner, $outer);
     }
 
     /**
-     * @param array<int, string> $left
-     * @param array<int, string> $right
+     * Whether two rules read a field from the environment through the same
+     * expression, the same processors over the same variable: the value
+     * is the same at run time.
+     *
+     * @param 'path'|'host' $field
+     *
+     * @phpstan-param AccessRule $left
+     * @phpstan-param AccessRule $right
      */
-    private function methodsOverlap(array $left, array $right): bool
+    private static function sameFromEnvironment(array $left, array $right, string $field): bool
     {
-        if ([] === $left || [] === $right) {
-            return true;
+        return \in_array($field, $left['fromEnvironment'], true)
+            && \in_array($field, $right['fromEnvironment'], true)
+            && $left[$field] === $right[$field];
+    }
+
+    /**
+     * Whether two rules take a method in common: a rule that lists none
+     * takes them all, one whose list the matcher reads as no request method
+     * takes none.
+     *
+     * @phpstan-param AccessRule $left
+     * @phpstan-param AccessRule $right
+     */
+    private static function methodsOverlap(array $left, array $right): bool
+    {
+        if ([] === $left['methodsTaken'] || [] === $right['methodsTaken']) {
+            return false;
         }
 
-        $upperLeft = [];
-        foreach ($left as $value) {
-            $upperLeft[] = strtoupper($value);
-        }
-        $upperRight = [];
-        foreach ($right as $value) {
-            $upperRight[] = strtoupper($value);
-        }
-
-        return [] !== array_intersect($upperLeft, $upperRight);
+        return null === $left['methodsTaken'] || null === $right['methodsTaken'] || [] !== array_intersect($left['methodsTaken'], $right['methodsTaken']);
     }
 
     private function resolveMinimizationAlgorithm(): MinimizationAlgorithm

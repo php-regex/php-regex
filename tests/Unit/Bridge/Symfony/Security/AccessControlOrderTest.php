@@ -18,14 +18,14 @@ use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\ChainRequestMatcher;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestMatcher\AttributesRequestMatcher;
-use Symfony\Component\HttpFoundation\RequestMatcher\HostRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\IpsRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher;
-use Symfony\Component\HttpFoundation\RequestMatcher\PortRequestMatcher;
+use Symfony\Component\HttpFoundation\RequestMatcherInterface;
 use Symfony\Component\Security\Http\AccessMap;
 
 /**
@@ -40,7 +40,8 @@ use Symfony\Component\Security\Http\AccessMap;
  * - otherwise the order decides which rule applies to the requests both
  *   take, and the pair is an overlap.
  *
- * Each case is first checked against Symfony's own AccessMap: which rule
+ * Each case is first checked against Symfony's own AccessMap, given the
+ * request matchers SecurityExtension chains for the rules: which rule
  * applies to some requests, in the declared order and in the swapped one.
  *
  * @phpstan-type OrderRule array{path?: string, methods?: list<string>, host?: string, ips?: list<string>, port?: int, attributes?: array<string, string>, route?: string}
@@ -79,11 +80,12 @@ final class AccessControlOrderTest extends TestCase
 
         // The request the report gives as an example is one both rules
         // take: the earlier one applies to it, and the later one would
-        // were they swapped.
+        // were they swapped. Its path is sent encoded, as a client sends a
+        // space or a line feed, and Symfony decodes it.
         $example = $report->conflicts[0]['example'];
         $this->assertIsString($example);
         $method = self::methodOf($rules);
-        $url = 'http://'.self::hostOf($rules).self::portOf($rules).$example;
+        $url = 'http://'.self::hostOf($rules).self::portOf($rules).implode('/', array_map(rawurlencode(...), explode('/', $example)));
         $address = self::addressOf($rules);
         $attributes = self::attributesOf($rules);
         $this->assertSame(0, self::ruleApplied($rules, $method, $url, $address, $attributes), $method.' '.$url);
@@ -462,6 +464,183 @@ final class AccessControlOrderTest extends TestCase
             ],
         ];
 
+        // SecurityExtension::createRequestMatcher() chains a path or a host
+        // as written, when it is no "" and no "0": a space or a line feed
+        // at either end is part of it.
+        yield 'a path ending on an escaped line feed first is a carve-out' => [
+            'rules' => [['path' => "^/admin\\\n"], ['path' => '^/admin']],
+            'expected' => 'carve-out',
+            'requests' => [
+                ['GET', 'http://localhost/admin%0A', 0, 1],
+                ['GET', 'http://localhost/admin', 1, 1],
+            ],
+        ];
+
+        yield 'a path opening with a space takes no request' => [
+            'rules' => [['path' => ' ^/admin'], ['path' => '^/admin']],
+            'expected' => null,
+            'requests' => [
+                ['GET', 'http://localhost/admin', 1, 1],
+                ['GET', 'http://localhost/%20/admin', null, null],
+            ],
+        ];
+
+        yield 'a path of a space takes the paths holding one' => [
+            'rules' => [['path' => ' '], ['path' => '^/admin']],
+            'expected' => 'overlap',
+            'requests' => [
+                ['GET', 'http://localhost/admin/a%20b', 0, 1],
+                ['GET', 'http://localhost/admin', 1, 1],
+                ['GET', 'http://localhost/a%20b', 0, 0],
+            ],
+        ];
+
+        yield 'a path of "0" is no path' => [
+            'rules' => [['path' => '0'], ['path' => '^/admin']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin', 0, 1],
+                ['GET', 'http://localhost/shop', 0, 0],
+            ],
+        ];
+
+        yield 'a host ending on a space after its end takes no request' => [
+            'rules' => [['path' => '^/admin', 'host' => '^admin\.example\.com$ '], ['path' => '^/admin', 'host' => '^admin\.example\.com$']],
+            'expected' => null,
+            'requests' => [
+                ['GET', 'http://admin.example.com/admin', 1, 1],
+            ],
+        ];
+
+        yield 'a host of "0" is no host' => [
+            'rules' => [['path' => '^/admin', 'host' => '0'], ['path' => '^/admin']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://admin.example.com/admin', 0, 1],
+                ['GET', 'http://shop.example.com/admin', 0, 1],
+            ],
+        ];
+
+        // symfony/http-foundation compiles a path with "s" since 6.4.46,
+        // 7.4.19 and 8.1.7, and never on 8.0: a dot takes a line feed where
+        // the PathRequestMatcher installed does. Whatever the modifier, a
+        // path is searched for in the whole request path, line feeds and
+        // all.
+        $dotAll = (new PathRequestMatcher('^/.$'))->matches(Request::create('/%0A'));
+        yield 'a dot takes a line feed where the path is compiled with "s"' => [
+            'rules' => [['path' => '^/admin.x'], ['path' => '^/admin\nx']],
+            'expected' => $dotAll ? 'shadowed' : null,
+            'requests' => [
+                ['GET', 'http://localhost/admin%0Ax', $dotAll ? 0 : 1, 1],
+                ['GET', 'http://localhost/adminyx', 0, 0],
+            ],
+        ];
+
+        yield 'a path is searched for after a line feed' => [
+            'rules' => [['path' => '/admin'], ['path' => '^/x\n/admin']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/x%0A/admin', 0, 1],
+                ['GET', 'http://localhost/shop/admin', 0, 0],
+            ],
+        ];
+
+        yield 'a path is searched for before a line feed' => [
+            'rules' => [['path' => '^/admin'], ['path' => '^/admin\n']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin%0Ausers', 0, 1],
+                ['GET', 'http://localhost/admin', 0, 0],
+            ],
+        ];
+
+        // symfony/http-foundation's MethodRequestMatcher takes a HEAD request
+        // for GET since 6.4.50, 7.4.23 and 8.1.11, and never on 8.0, as the
+        // router serves it: a rule for GET then shares the HEAD requests of
+        // a rule for HEAD, where the matcher installed does.
+        $getTakesHead = (new MethodRequestMatcher(['GET']))->matches(Request::create('/', 'HEAD'));
+        yield 'a rule for HEAD only after a rule for GET' => [
+            'rules' => [['path' => '^/x', 'methods' => ['GET']], ['path' => '^/x', 'methods' => ['HEAD']]],
+            'expected' => $getTakesHead ? 'shadowed' : null,
+            'requests' => [
+                ['HEAD', 'http://localhost/x', $getTakesHead ? 0 : 1, 1],
+                ['GET', 'http://localhost/x', 0, 0],
+            ],
+        ];
+
+        yield 'a rule for HEAD only before a rule for GET' => [
+            'rules' => [['path' => '^/x', 'methods' => ['HEAD']], ['path' => '^/x', 'methods' => ['GET']]],
+            'expected' => $getTakesHead ? 'carve-out' : null,
+            'requests' => [
+                ['HEAD', 'http://localhost/x', 0, $getTakesHead ? 1 : 0],
+                ['GET', 'http://localhost/x', 1, 1],
+            ],
+        ];
+
+        yield 'a rule for GET written in lower case before a rule for HEAD only' => [
+            'rules' => [['path' => '^/x', 'methods' => ['get']], ['path' => '^/x', 'methods' => ['head']]],
+            'expected' => $getTakesHead ? 'shadowed' : null,
+            'requests' => [
+                ['HEAD', 'http://localhost/x', $getTakesHead ? 0 : 1, 1],
+            ],
+        ];
+
+        yield 'a rule for GET before a rule for GET and HEAD' => [
+            'rules' => [['path' => '^/x', 'methods' => ['GET']], ['path' => '^/x', 'methods' => ['GET', 'HEAD']]],
+            'expected' => $getTakesHead ? 'shadowed' : 'carve-out',
+            'requests' => [
+                ['HEAD', 'http://localhost/x', $getTakesHead ? 0 : 1, 1],
+                ['GET', 'http://localhost/x', 0, 1],
+            ],
+        ];
+
+        yield 'a rule for GET before a rule for HEAD and POST' => [
+            'rules' => [['path' => '^/x', 'methods' => ['GET']], ['path' => '^/x', 'methods' => ['HEAD', 'POST']]],
+            'expected' => $getTakesHead ? 'overlap' : null,
+            'requests' => [
+                ['HEAD', 'http://localhost/x', $getTakesHead ? 0 : 1, 1],
+                ['POST', 'http://localhost/x', 1, 1],
+                ['GET', 'http://localhost/x', 0, 0],
+            ],
+        ];
+
+        yield 'a rule for HEAD and POST before a rule for GET on a narrower path' => [
+            'rules' => [['path' => '^/x', 'methods' => ['HEAD', 'POST']], ['path' => '^/x/y', 'methods' => ['GET']]],
+            'expected' => $getTakesHead ? 'overlap' : null,
+            'requests' => [
+                ['HEAD', 'http://localhost/x/y', 0, $getTakesHead ? 1 : 0],
+                ['GET', 'http://localhost/x/y', 1, 1],
+            ],
+        ];
+
+        // The security bundle trims no method nor address, and its request
+        // matchers split each on its commas.
+        yield 'a method list item holding a comma' => [
+            'rules' => [['path' => '^/x', 'methods' => ['GET,POST']], ['path' => '^/x', 'methods' => ['POST']]],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['POST', 'http://localhost/x', 0, 1],
+                ['GET', 'http://localhost/x', 0, 0],
+            ],
+        ];
+
+        yield 'a method written with a space takes no request' => [
+            'rules' => [['path' => '^/x', 'methods' => [' get']], ['path' => '^/x']],
+            'expected' => null,
+            'requests' => [
+                ['GET', 'http://localhost/x', 1, 1],
+            ],
+        ];
+
+        yield 'addresses written as one string' => [
+            'rules' => [['path' => '^/admin', 'ips' => ['10.0.0.1, 10.0.0.2']], ['path' => '^/admin/x', 'ips' => ['10.0.0.2']]],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/x', 0, 1, '10.0.0.2'],
+                ['GET', 'http://localhost/admin/x', 0, 0, '10.0.0.1'],
+            ],
+        ];
+
         yield 'paths that share no request are no conflict' => [
             'rules' => [['path' => '^/admin'], ['path' => '^/api']],
             'expected' => null,
@@ -473,37 +652,194 @@ final class AccessControlOrderTest extends TestCase
     }
 
     /**
-     * The index of the rule Symfony's AccessMap applies to the request, in
-     * the order of the array, or null when none does.
+     * A value read from the environment is known at run time only: the
+     * rule is restricted to a value the analysis cannot know. Through that
+     * value it shadows no later rule, and a later rule holding one is
+     * shadowed only by an earlier rule that takes every value of it. The
+     * same expression, the same processors over the same variable, gives
+     * the same value: two rules holding it compare as holding one value.
+     * Each case is checked against the AccessMap for values the environment
+     * may give: "%env(VALUE)%" is replaced by each, or each variable by the
+     * value a probe gives it.
      *
-     * @param array<int, OrderRule> $rules
-     * @param array<string, string> $attributes the attributes the router gave the request
+     * @param list<array<string, mixed>>                                                                   $rules
+     * @param list<array{0: string|array<string, string>, 1: string, 2: string, 3: int|null, 4: int|null}> $probes the value or values, the method and URL of a
+     *                                                                                                             request, and the rule that applies to it in the
+     *                                                                                                             declared and the swapped order
+     */
+    #[Test]
+    #[DataProvider('provideValuesFromTheEnvironment')]
+    public function test_a_value_read_from_the_environment_is_one_the_analysis_cannot_know(array $rules, string $field, ?string $expected, array $probes): void
+    {
+        foreach ($probes as [$value, $method, $url, $declared, $swapped]) {
+            $concrete = self::withEnvironment($rules, $value);
+            $this->assertSame($declared, self::ruleApplied($concrete, $method, $url, '10.0.0.1'), 'declared order, '.json_encode($value).', '.$method.' '.$url);
+            $this->assertSame($swapped, self::ruleApplied(array_reverse($concrete, true), $method, $url, '10.0.0.1'), 'swapped order, '.json_encode($value).', '.$method.' '.$url);
+        }
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze(array_map(self::ruleFromEnvironment(...), $rules), true);
+
+        $this->assertSame('carve-out' === $expected ? null : $expected, $report->conflicts[0]['type'] ?? null);
+        $this->assertSame('shadowed' === $expected ? 1 : 0, $report->stats['shadowed']);
+        $this->assertSame('overlap' === $expected ? 1 : 0, $report->stats['overlaps']);
+        $this->assertSame('carve-out' === $expected ? 1 : 0, $report->stats['carve_outs']);
+        if (null !== $expected && 'carve-out' !== $expected) {
+            $this->assertContains('Values read from the environment are not evaluated: '.$field.'.', $report->conflicts[0]['notes']);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{rules: list<array<string, mixed>>, field: string, expected: 'shadowed'|'overlap'|'carve-out'|null, probes: list<array{0: string|array<string, string>, 1: string, 2: string, 3: int|null, 4: int|null}>}>
+     */
+    public static function provideValuesFromTheEnvironment(): iterable
+    {
+        yield 'two rules for the path the same expression gives' => [
+            'rules' => [['path' => '%env(VALUE)%'], ['path' => '%env(VALUE)%']],
+            'field' => 'path',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['^/admin', 'GET', 'http://localhost/admin', 0, 1],
+                ['^/shop', 'GET', 'http://localhost/shop', 0, 1],
+            ],
+        ];
+
+        yield 'two rules for the paths two variables give' => [
+            'rules' => [['path' => '%env(ADMIN_PATH)%'], ['path' => '%env(SHOP_PATH)%']],
+            'field' => 'path',
+            'expected' => 'overlap',
+            'probes' => [
+                [['ADMIN_PATH' => '^/', 'SHOP_PATH' => '^/shop'], 'GET', 'http://localhost/shop', 0, 1],
+                [['ADMIN_PATH' => '^/admin', 'SHOP_PATH' => '^/shop'], 'GET', 'http://localhost/shop', 1, 1],
+            ],
+        ];
+
+        yield 'a later rule for the host the same expression gives, on a narrower path' => [
+            'rules' => [['path' => '^/admin', 'host' => '%env(VALUE)%'], ['path' => '^/admin/x', 'host' => '%env(VALUE)%']],
+            'field' => 'host',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['^admin\\.example\\.com$', 'GET', 'http://admin.example.com/admin/x', 0, 1],
+                ['\\.example\\.com$', 'GET', 'http://shop.example.com/admin/x', 0, 1],
+            ],
+        ];
+
+        yield 'two rules for the hosts two processor chains give' => [
+            'rules' => [['path' => '^/admin', 'host' => '%env(trim:VALUE)%'], ['path' => '^/admin/x', 'host' => '%env(VALUE)%']],
+            'field' => 'host',
+            'expected' => 'overlap',
+            'probes' => [
+                ['^admin\\.example\\.com$', 'GET', 'http://admin.example.com/admin/x', 0, 1],
+            ],
+        ];
+
+        yield 'a later rule for the addresses the same expression gives, on a narrower path' => [
+            'rules' => [['path' => '^/admin', 'ips' => ['%env(VALUE)%']], ['path' => '^/admin/x', 'ips' => ['%env(VALUE)%']]],
+            'field' => 'ips',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['10.0.0.1', 'GET', 'http://localhost/admin/x', 0, 1],
+                ['10.0.0.0/8', 'GET', 'http://localhost/admin/x', 0, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for a path from the environment' => [
+            'rules' => [['path' => '%env(VALUE)%'], ['path' => '^/admin']],
+            'field' => 'path',
+            'expected' => 'overlap',
+            'probes' => [
+                ['^/', 'GET', 'http://localhost/admin', 0, 1],
+                ['^/shop', 'GET', 'http://localhost/admin', 1, 1],
+            ],
+        ];
+
+        yield 'a later rule for a path from the environment, after a rule with no path' => [
+            'rules' => [[], ['path' => '%env(VALUE)%']],
+            'field' => 'path',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['^/admin', 'GET', 'http://localhost/admin', 0, 1],
+                ['^/shop', 'GET', 'http://localhost/shop', 0, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for a host from the environment, before a rule for any host' => [
+            'rules' => [['path' => '^/admin', 'host' => '%env(VALUE)%'], ['path' => '^/admin']],
+            'field' => 'host',
+            'expected' => 'carve-out',
+            'probes' => [
+                ['^admin\.example\.com$', 'GET', 'http://admin.example.com/admin', 0, 1],
+                ['^admin\.example\.com$', 'GET', 'http://shop.example.com/admin', 1, 1],
+            ],
+        ];
+
+        yield 'a later rule for a host from the environment, after a rule for any host' => [
+            'rules' => [['path' => '^/admin'], ['path' => '^/admin', 'host' => '%env(VALUE)%']],
+            'field' => 'host',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['^admin\.example\.com$', 'GET', 'http://admin.example.com/admin', 0, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for a host from the environment, before a rule for a host' => [
+            'rules' => [['path' => '^/admin', 'host' => '%env(VALUE)%'], ['path' => '^/admin', 'host' => '^admin\.example\.com$']],
+            'field' => 'host',
+            'expected' => 'overlap',
+            'probes' => [
+                ['example\.com$', 'GET', 'http://admin.example.com/admin', 0, 1],
+                ['^shop\.', 'GET', 'http://admin.example.com/admin', 1, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for addresses from the environment, before a rule for any address' => [
+            'rules' => [['path' => '^/admin', 'ips' => ['%env(VALUE)%']], ['path' => '^/admin']],
+            'field' => 'ips',
+            'expected' => 'carve-out',
+            'probes' => [
+                ['10.0.0.1', 'GET', 'http://localhost/admin', 0, 1],
+                ['10.0.0.2', 'GET', 'http://localhost/admin', 1, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for addresses from the environment, before a rule for an address' => [
+            'rules' => [['path' => '^/admin', 'ips' => ['%env(VALUE)%']], ['path' => '^/admin/x', 'ips' => ['10.0.0.1']]],
+            'field' => 'ips',
+            'expected' => 'overlap',
+            'probes' => [
+                ['10.0.0.0/8', 'GET', 'http://localhost/admin/x', 0, 1],
+                ['10.0.0.2', 'GET', 'http://localhost/admin/x', 1, 1],
+            ],
+        ];
+    }
+
+    /**
+     * The index of the rule Symfony's AccessMap applies to the request, in
+     * the order of the array, or null when none does. Each rule is given
+     * the request matcher the security bundle chains for it.
+     *
+     * @param array<int, array<string, mixed>> $rules
+     * @param array<string, string>            $attributes the attributes the router gave the request
      */
     private static function ruleApplied(array $rules, string $method, string $url, string $address, array $attributes = []): ?int
     {
-        $map = new AccessMap();
+        $accessControl = [];
         foreach ($rules as $index => $rule) {
-            $matchers = [];
-            if (isset($rule['path'])) {
-                $matchers[] = new PathRequestMatcher($rule['path']);
-            }
-            if (isset($rule['host'])) {
-                $matchers[] = new HostRequestMatcher($rule['host']);
-            }
-            if (isset($rule['methods'])) {
-                $matchers[] = new MethodRequestMatcher($rule['methods']);
-            }
-            if (isset($rule['ips'])) {
-                $matchers[] = new IpsRequestMatcher($rule['ips']);
-            }
-            $required = ($rule['attributes'] ?? []) + (isset($rule['route']) ? ['_route' => $rule['route']] : []);
-            if ([] !== $required) {
-                $matchers[] = new AttributesRequestMatcher($required);
-            }
-            if (isset($rule['port'])) {
-                $matchers[] = new PortRequestMatcher($rule['port']);
-            }
-            $map->add(new ChainRequestMatcher($matchers), ['RULE_'.$index]);
+            $accessControl[] = ['roles' => ['RULE_'.$index]] + $rule;
+        }
+
+        $container = new ContainerBuilder();
+        (new SecurityExtension())->load([['firewalls' => ['main' => ['security' => false]], 'access_control' => $accessControl]], $container);
+
+        $map = new AccessMap();
+        foreach ($container->getDefinition('security.access_map')->getMethodCalls() as $call) {
+            self::assertIsArray($call);
+            self::assertIsArray($call[1]);
+            [$matcher, $roles] = $call[1];
+            self::assertInstanceOf(Reference::class, $matcher);
+            self::assertIsArray($roles);
+            $chain = $container->get((string) $matcher);
+            self::assertInstanceOf(RequestMatcherInterface::class, $chain);
+            $map->add($chain, $roles);
         }
 
         $request = Request::create($url, $method, server: ['REMOTE_ADDR' => $address]);
@@ -540,34 +876,49 @@ final class AccessControlOrderTest extends TestCase
     }
 
     /**
-     * A method every rule of the pair takes: a rule without methods takes
-     * them all.
+     * A method every rule of the pair takes, as MethodRequestMatcher reads
+     * its methods: a rule without methods takes them all.
      *
      * @param list<OrderRule> $rules
      */
     private static function methodOf(array $rules): string
     {
-        $methods = null;
-        foreach ($rules as $rule) {
-            if (isset($rule['methods'])) {
-                $methods = null === $methods ? $rule['methods'] : array_values(array_intersect($methods, $rule['methods']));
+        foreach (['GET', 'HEAD', 'POST', 'PUT'] as $method) {
+            foreach ($rules as $rule) {
+                if (isset($rule['methods']) && !(new MethodRequestMatcher($rule['methods']))->matches(Request::create('/', $method))) {
+                    continue 2;
+                }
             }
+
+            return $method;
         }
 
-        return $methods[0] ?? 'GET';
+        return 'GET';
     }
 
     /**
-     * An address every rule of the pair takes.
+     * An address every rule of the pair takes, as IpsRequestMatcher reads
+     * its addresses.
      *
      * @param list<OrderRule> $rules
      */
     private static function addressOf(array $rules): string
     {
+        $candidates = ['10.0.0.1'];
         foreach ($rules as $rule) {
-            if (isset($rule['ips'])) {
-                return $rule['ips'][0];
+            foreach ($rule['ips'] ?? [] as $ips) {
+                $candidates = [...$candidates, ...explode(',', str_replace(' ', '', $ips))];
             }
+        }
+
+        foreach ($candidates as $address) {
+            foreach ($rules as $rule) {
+                if (isset($rule['ips']) && !(new IpsRequestMatcher($rule['ips']))->matches(Request::create('/', server: ['REMOTE_ADDR' => $address]))) {
+                    continue 2;
+                }
+            }
+
+            return $address;
         }
 
         return '10.0.0.1';
@@ -621,5 +972,74 @@ final class AccessControlOrderTest extends TestCase
         }
 
         return $attributes;
+    }
+
+    /**
+     * The rules with the value the environment gives each variable in
+     * place of each "%env(...)%" that reads it: one value is the value of
+     * VALUE.
+     *
+     * @param list<array<string, mixed>>   $rules
+     * @param string|array<string, string> $values
+     *
+     * @return list<array<string, mixed>>
+     */
+    private static function withEnvironment(array $rules, string|array $values): array
+    {
+        $values = \is_string($values) ? ['VALUE' => $values] : $values;
+        array_walk_recursive($rules, static function (mixed &$item) use ($values): void {
+            if (\is_string($item)) {
+                $item = preg_replace_callback('/%env\((?:[a-z]+:)*(\w+)\)%/', static fn (array $match): string => $values[$match[1]] ?? $match[0], $item);
+            }
+        });
+
+        return $rules;
+    }
+
+    /**
+     * A rule as the analysis is given it, its fields written "%env(...)%"
+     * named among those read from the environment, a port so written
+     * unknown.
+     *
+     * @param array<string, mixed> $rule
+     *
+     * @return array{file: string, line: int, path: string|null, host: string|null, roles: list<string>, methods: list<string>, ips: list<string>, allowIf: null, requestMatcher: null, requiresChannel: null, port: int|null, attributes: array<string, string>, route: string|null, fromEnvironment: list<string>}
+     */
+    private static function ruleFromEnvironment(array $rule): array
+    {
+        $fromEnvironment = [];
+        foreach ($rule as $field => $value) {
+            if (str_contains(serialize($value), '%env(')) {
+                $fromEnvironment[] = $field;
+            }
+        }
+
+        $path = $rule['path'] ?? null;
+        $host = $rule['host'] ?? null;
+        $port = $rule['port'] ?? null;
+        $methods = $rule['methods'] ?? [];
+        $ips = $rule['ips'] ?? [];
+        self::assertTrue(null === $path || \is_string($path));
+        self::assertTrue(null === $host || \is_string($host));
+        self::assertTrue(null === $port || \is_int($port) || \in_array('port', $fromEnvironment, true));
+        self::assertIsArray($methods);
+        self::assertIsArray($ips);
+
+        return [
+            'file' => 'security.yaml',
+            'line' => 1,
+            'path' => $path,
+            'host' => $host,
+            'roles' => ['ROLE_USER'],
+            'methods' => array_values(array_filter($methods, \is_string(...))),
+            'ips' => array_values(array_filter($ips, \is_string(...))),
+            'allowIf' => null,
+            'requestMatcher' => null,
+            'requiresChannel' => null,
+            'port' => \is_int($port) ? $port : null,
+            'attributes' => [],
+            'route' => null,
+            'fromEnvironment' => $fromEnvironment,
+        ];
     }
 }

@@ -341,8 +341,15 @@ Each one is read as the pattern Symfony runs:
   rewrite that only drops a flag, and a repeated unnamed group (the router
   makes it non-capturing) are not reported.
 - A security `path` (in `access_control` or as a firewall `pattern`) is
-  matched with `{...}s`, and a `host` with `{...}i`, without anchors:
-  `path: /api` matches `/v1/api` too. The options a path opens with,
+  matched with `{...}s`, and a `host` with `{...}i`, as written and without
+  anchors: `path: /api` matches `/v1/api` too, and a space or a line feed
+  at either end is part of the pattern, so `' ^/admin'` matches no path.
+  `symfony/http-foundation` adds the `s` to a path since 6.4.46, 7.4.19
+  and 8.1.7, and never on 8.0: a path is read with the `s` where the
+  application's release adds it, and without it elsewhere, so that `.`
+  takes the line feed a request path decodes `%0A` to only where Symfony
+  lets it. An `access_control` path or host of `""` or `"0"` is none, as
+  the security bundle reads it. The options a path opens with,
   `(*UTF)` or `(*LIMIT_MATCH=1000)`, are read there, as PCRE reads them,
   and a path ending on a comment of the `x` flag or on a `\Q` left open
   means what it means alone: `(?x)^/admin  # back office` takes every path
@@ -611,19 +618,48 @@ Any other pair of rules that share a request is an **overlap**, listed with
 `--show-overlaps`: the order decides which rule applies to the requests both
 take. `{ path: ^/admin, methods: [GET] }` before `{ path: ^/admin/users }`
 leaves `POST /admin/users` to the later rule, an overlap and not a shadow.
+Roles, methods and addresses are read as the security bundle reads them,
+trimmed of nothing: a string of roles or methods is split on its commas
+once its parameters are resolved (`roles: '%admin_roles%'` holding
+`ROLE_A,ROLE_B` is two roles, `['%admin_roles%']` one),
+the request matchers split each method and each address on its commas
+(`['GET,POST']` takes `GET` and `POST`), a method written ` get` takes no
+request, and a rule is public only for `PUBLIC_ACCESS` written so
+(`IS_AUTHENTICATED_ANONYMOUSLY` grants nothing since Symfony 6.0). An
+`allow_if` of `"0"` is none, as the bundle reads it.
 Addresses, a route and attributes are compared as written: an earlier rule
 holding a route or an attribute the later one does not require the same way
 leaves it the other requests, so `{ route: app_login }` before
 `{ path: ^/admin }` is an overlap. Two rules for different ports share no
-request. A host the analysis cannot read leaves the paths to decide;
-`allow_if` and `requires_channel` decide access, not which rule applies, and
-play no part.
+request. A rule for `GET` takes the `HEAD` requests too where the
+application's `symfony/http-foundation` sends them to it, as the router
+does (6.4.50, 7.4.23 and 8.1.11 on, never 8.0): there a rule for `HEAD`
+only declared after a rule for `GET` on its paths is shadowed, and one
+declared before it is a carve-out. A host the analysis cannot read leaves
+the paths to decide; `allow_if` and `requires_channel` decide access, not
+which rule applies, and play no part.
 
 `regex:security` and `regex:analyze` read the security configuration the
 application runs with, as `bin/console debug:config security` shows it:
 `config/packages/security.yaml`, `security.php` or any other file the kernel
 loads, in any YAML shape (block or flow lists, anchors and aliases,
-`when@<env>` blocks), with its `%parameters%` and `%env()%` values resolved.
+`when@<env>` blocks), with its `%parameters%` resolved, as the kernel
+resolves them: `port: '%admin_port%'` is the port the parameter holds.
+An `%env()%` value is known at run time only, in the environment the
+application runs in: it is never read from the one the command runs in,
+not even its `env()` default, and a rule holding one in its path, host,
+addresses, route or attributes is restricted to a value the analysis cannot
+know. Through that value it shadows no later rule, a later rule holding one
+is shadowed only by an earlier rule that takes every value of it, and the
+finding notes `Values read from the environment are not evaluated: host.`
+The same expression, the same processors over the same variable, gives the
+same value: two rules with `host: '%env(ADMIN_HOST)%'`, written so or
+through a parameter, compare as holding one host, and
+`'%env(trim:ADMIN_HOST)%'` is another value. A firewall whose pattern holds
+an `%env()%` value is skipped. A `port` or `methods` read
+from the environment is refused, as the security bundle refuses them: it
+builds the port matcher, and upper-cases the methods, when the container is
+compiled, and the application does not boot.
 Each finding names the file and the line its value is written on, or
 `security configuration` when no `security.*` file under `config/` writes it.
 A rule with no path, host, `route`, `request_matcher` or `allow_if`, such as
@@ -631,12 +667,15 @@ A rule with no path, host, `route`, `request_matcher` or `allow_if`, such as
 `requires_channel`, on the line that opens its entry.
 `--config=<file>` analyzes that YAML file instead, read with `symfony/yaml`
 (`composer require symfony/yaml`), its `%parameters%` taken from its own
-`parameters` and then from the application's.
+`parameters` and then from the application's, as the application writes
+them, its `%env()%` values left unknown as above: a parameter the
+application reads from the environment stays unknown too.
 
 A security configuration either command cannot read stops it with exit code 2:
 a `--config` file that is missing, is not YAML or does not parse, a parameter
-nothing defines, a configuration the SecurityBundle refuses, `symfony/yaml`
-not installed. `regex:analyze --format=json` prints the
+nothing defines, a configuration the SecurityBundle refuses (a `port` or
+`methods` read from the environment among them, the message naming the
+field and the rule), `symfony/yaml` not installed. `regex:analyze --format=json` prints the
 [error envelope](../reference/json-output.md#the-error-envelope), stage
 `config`. An application without the SecurityBundle has no security
 configuration: `regex:security` stops with exit code 2 and says so, and

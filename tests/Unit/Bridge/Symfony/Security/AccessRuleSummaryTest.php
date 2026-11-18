@@ -111,8 +111,8 @@ final class AccessRuleSummaryTest extends TestCase
     {
         return [
             'index' => $index, 'file' => 'a.yaml', 'line' => 1, 'path' => $path, 'pattern' => '', 'roles' => $roles, 'methods' => $methods,
-            'host' => $host, 'hostPattern' => null, 'hostUnsupported' => false, 'ips' => $ips, 'allowIf' => null,
-            'requiresChannel' => $requiresChannel, 'port' => $port, 'attributes' => $attributes, 'route' => $route, 'accessLevel' => 'roles', 'notes' => [],
+            'methodsTaken' => [] === $methods ? null : array_values($methods), 'host' => $host, 'hostPattern' => null, 'hostUnsupported' => false, 'ips' => $ips, 'allowIf' => null,
+            'requiresChannel' => $requiresChannel, 'port' => $port, 'attributes' => $attributes, 'route' => $route, 'fromEnvironment' => [], 'accessLevel' => 'roles', 'notes' => [],
         ];
     }
 }

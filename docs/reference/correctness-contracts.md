@@ -169,7 +169,7 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Fallbacks:** Unsupported flags or host requirements are reported and skipped; route conditions are treated as unknown.
 
 **Security Access Control (`regex:security`)**
-- **Semantics:** Models access_control as search semantics (`Σ* L Σ*`) to match `preg_match` behavior, a path under `s` and a host under `i`, as Symfony matches them (`{...}s`, `{...}i`).
+- **Semantics:** Models access_control as search semantics (`Σ* L Σ*`) to match `preg_match` behavior, a path and a host as written, the host under `i` and the path under `s` where the application's `symfony/http-foundation` compiles it so (6.4.46, 7.4.19 and 8.1.7 on, never 8.0), as Symfony matches them (`{...}s` or `{...}`, `{...}i`).
 - **Guarantee:** Sound for supported regex subset and listed rule constraints.
 - **Fallbacks:** `allow_if`, IP constraints, and request matchers are reported in notes and excluded from automata checks.
 

@@ -262,21 +262,222 @@ final class SecurityConfigKernelTest extends TestCase
         );
     }
 
+    /**
+     * Symfony reads an environment value at run time, in the environment
+     * the application runs in: the analysis knows no such value, and never
+     * reads the one of the machine it runs on. The kernel builds its
+     * container with a path, a host, addresses, roles and a typed firewall
+     * option read from the environment, directly or through a parameter;
+     * the rule keeps each as written and names it.
+     */
     #[Test]
-    public function test_an_environment_variable_in_a_path_is_resolved(): void
+    public function test_an_environment_value_is_unknown_and_never_read_from_the_machine(): void
     {
-        $_ENV['PHPREGEX_TEST_ADMIN_PATH'] = '^/back-office';
+        $project = $this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_host: '%env(PHPREGEX_TEST_ADMIN_HOST)%'\n",
+            'config/packages/security.yaml' => "security:\n    firewalls:\n        main:\n            pattern: ^/\n            stateless: '%env(bool:PHPREGEX_TEST_STATELESS)%'\n"
+                ."    access_control:\n        - { path: '%env(PHPREGEX_TEST_ADMIN_PATH)%', host: '%admin_host%', ips: ['%env(PHPREGEX_TEST_ADMIN_IP)%'], roles: '%env(PHPREGEX_TEST_ADMIN_ROLE)%' }\n",
+        ]);
+        $_ENV['PHPREGEX_TEST_ADMIN_PATH'] = $_SERVER['PHPREGEX_TEST_ADMIN_PATH'] = '^/back-office';
 
         try {
-            $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($this->makeProject([
-                'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n        - { path: '%env(PHPREGEX_TEST_ADMIN_PATH)%' }\n",
-            ])));
+            $kernel = new SecurityConfigKernel($project);
+            $kernel->boot();
+            $this->assertTrue($kernel->getContainer()->has('kernel'));
+            $kernel->shutdown();
+
+            $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
         } finally {
-            unset($_ENV['PHPREGEX_TEST_ADMIN_PATH']);
+            unset($_ENV['PHPREGEX_TEST_ADMIN_PATH'], $_SERVER['PHPREGEX_TEST_ADMIN_PATH']);
         }
 
         $this->assertNotNull($config);
-        $this->assertSame('^/back-office', $config['accessControl'][0]['path']);
+        $rule = $config['accessControl'][0];
+        $this->assertSame('%env(PHPREGEX_TEST_ADMIN_PATH)%', $rule['path']);
+        $this->assertSame('%env(PHPREGEX_TEST_ADMIN_HOST)%', $rule['host']);
+        $this->assertSame(['%env(PHPREGEX_TEST_ADMIN_IP)%'], $rule['ips']);
+        $this->assertSame(['%env(PHPREGEX_TEST_ADMIN_ROLE)%'], $rule['roles']);
+        $this->assertSame(['path', 'host', 'roles', 'ips'], $rule['fromEnvironment'] ?? []);
+    }
+
+    /**
+     * The security bundle refuses a port or methods read from the
+     * environment: SecurityExtension hands the port to the matcher it builds
+     * when the container is compiled, which takes an integer only, and
+     * upper-cases the methods there, which loses the environment value. The
+     * application does not boot, and the analysis stops as it does on any
+     * configuration the bundle refuses, naming the field and the rule.
+     *
+     * @param \Closure(\Throwable): bool $refusal what the kernel throws when it boots
+     */
+    #[Test]
+    #[DataProvider('provideFieldsTheBundleRefusesFromTheEnvironment')]
+    public function test_a_field_the_security_bundle_refuses_from_the_environment_stops_the_reading(string $rule, \Closure $refusal, string $message): void
+    {
+        $project = $this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_port: '%env(int:PHPREGEX_TEST_PORT)%'\n",
+            'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n        - { path: ^/, roles: ROLE_USER }\n        - ".$rule."\n",
+        ]);
+        $_ENV['PHPREGEX_TEST_PORT'] = $_SERVER['PHPREGEX_TEST_PORT'] = '8080';
+        $_ENV['PHPREGEX_TEST_METHOD'] = $_SERVER['PHPREGEX_TEST_METHOD'] = 'POST';
+
+        try {
+            try {
+                (new SecurityConfigKernel($project))->boot();
+                $this->fail('The kernel booted.');
+            } catch (\Throwable $e) {
+                $this->assertTrue($refusal($e), $e::class.': '.$e->getMessage());
+            }
+
+            $status = (new CommandTester(self::securityCommand(new SecurityConfigKernel($project))))->execute([]);
+            $this->assertSame(Command::INVALID, $status);
+
+            $this->expectException(SecurityConfigException::class);
+            $this->expectExceptionMessageIsOrContains(\sprintf($message, $project.'/config/packages/security.yaml:7'));
+
+            (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
+        } finally {
+            unset($_ENV['PHPREGEX_TEST_PORT'], $_SERVER['PHPREGEX_TEST_PORT'], $_ENV['PHPREGEX_TEST_METHOD'], $_SERVER['PHPREGEX_TEST_METHOD']);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{rule: string, refusal: \Closure(\Throwable): bool, message: string}>
+     */
+    public static function provideFieldsTheBundleRefusesFromTheEnvironment(): iterable
+    {
+        $port = 'The security configuration is invalid: the port of access_control rule 2 (%s), "%%env(int:PHPREGEX_TEST_PORT)%%", is read from the environment, which the security bundle refuses: it builds the port matcher when the container is compiled, from an integer only.';
+        $portRefused = static fn (\Throwable $e): bool => $e instanceof \TypeError && str_contains($e->getMessage(), '$port');
+
+        yield 'a port' => ['rule' => "{ path: ^/admin, port: '%env(int:PHPREGEX_TEST_PORT)%', roles: ROLE_ADMIN }", 'refusal' => $portRefused, 'message' => $port];
+        yield 'a port held by a parameter' => ['rule' => "{ path: ^/admin, port: '%admin_port%', roles: ROLE_ADMIN }", 'refusal' => $portRefused, 'message' => $port];
+        yield 'methods' => [
+            'rule' => "{ path: ^/admin, methods: ['%env(PHPREGEX_TEST_METHOD)%'], roles: ROLE_ADMIN }",
+            'refusal' => static fn (\Throwable $e): bool => str_contains($e->getMessage(), '"PHPREGEX_TEST_METHOD" are never used'),
+            'message' => 'The security configuration is invalid: the methods of access_control rule 2 (%s), "%%env(PHPREGEX_TEST_METHOD)%%", are read from the environment, which the security bundle refuses: it upper-cases them when the container is compiled, which loses the environment value.',
+        ];
+    }
+
+    /**
+     * A rule no security file writes is named by its place in
+     * access_control alone.
+     */
+    #[Test]
+    public function test_a_port_from_the_environment_no_security_file_writes_is_refused_by_its_place(): void
+    {
+        $project = $this->makeProject([
+            'config/packages/app.php' => <<<'CONFIG'
+                <?php
+
+                use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+                return static function (ContainerConfigurator $container): void {
+                    $container->extension('security', [
+                        'firewalls' => ['main' => ['pattern' => '^/']],
+                        'access_control' => [['path' => '^/admin', 'port' => '%env(int:PHPREGEX_TEST_PORT)%', 'roles' => 'ROLE_ADMIN']],
+                    ]);
+                };
+                CONFIG,
+        ]);
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('the port of access_control rule 1 (security configuration), "%env(int:PHPREGEX_TEST_PORT)%", is read from the environment');
+
+        (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
+    }
+
+    /**
+     * A parameter is resolved before the configuration tree reads it, as
+     * the kernel resolves it: a port given by a parameter is the integer
+     * it holds.
+     */
+    #[Test]
+    public function test_a_port_given_by_a_parameter_is_the_value_it_holds(): void
+    {
+        $project = $this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_port: 8080\n",
+            'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n        - { path: ^/admin, port: '%admin_port%', roles: ROLE_ADMIN }\n",
+        ]);
+        $kernel = new SecurityConfigKernel($project);
+        $kernel->boot();
+        $kernel->shutdown();
+
+        $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
+
+        $this->assertNotNull($config);
+        $this->assertSame(8080, $config['accessControl'][0]['port'] ?? null);
+        $this->assertSame([], $config['accessControl'][0]['fromEnvironment'] ?? []);
+        $this->assertSame(6, $config['accessControl'][0]['line']);
+    }
+
+    /**
+     * The kernel resolves a parameter before the bundle splits a string of
+     * roles or methods: a parameter holding "ROLE_A,ROLE_B" is two roles
+     * where it is the whole string, as a file named with --config reads it
+     * (SecurityConfigExtractorTest checks that reading against the bundle).
+     */
+    #[Test]
+    public function test_a_list_held_by_a_parameter_is_split_as_the_kernel_splits_it(): void
+    {
+        $parameters = "parameters:\n    admin_roles: 'ROLE_A,ROLE_B'\n    admin_methods: 'GET, POST'\n";
+        $security = "security:\n".self::FIREWALLS."    access_control:\n"
+            ."        - { path: ^/a, roles: '%admin_roles%', methods: '%admin_methods%' }\n"
+            ."        - { path: ^/b, roles: ['%admin_roles%', ROLE_C] }\n";
+        $project = $this->makeProject([
+            'config/services.yaml' => $parameters,
+            'config/packages/security.yaml' => $security,
+            'security.yaml' => $parameters.$security,
+        ]);
+
+        $kernel = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
+        $file = (new SecurityConfigExtractor())->extract($project.'/security.yaml');
+
+        $this->assertNotNull($kernel);
+        $this->assertSame([['ROLE_A', 'ROLE_B'], ['ROLE_A,ROLE_B', 'ROLE_C']], array_column($kernel['accessControl'], 'roles'));
+        $this->assertSame(array_column($file['accessControl'], 'roles'), array_column($kernel['accessControl'], 'roles'));
+        $this->assertSame(['GET', 'POST'], $kernel['accessControl'][0]['methods']);
+    }
+
+    /**
+     * A rule is found in the files by its values as written, before the
+     * parameters they hold are resolved and split: one written with roles
+     * alone is found by them, one with methods alone by them, one with a
+     * path by its path. Each is then read with its parameters resolved.
+     */
+    #[Test]
+    public function test_a_rule_written_with_parameters_is_located_at_its_line(): void
+    {
+        $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_roles: 'ROLE_A,ROLE_B'\n    admin_method: post\n",
+            'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n"
+                ."        - { roles: '%admin_roles%' }\n"
+                ."        - { methods: ['%admin_method%'] }\n"
+                ."        - { path: ^/c, roles: '%admin_roles%' }\n",
+        ])));
+
+        $this->assertNotNull($config);
+        $this->assertSame(
+            [[6, ['ROLE_A', 'ROLE_B'], []], [7, [], ['post']], [8, ['ROLE_A', 'ROLE_B'], []]],
+            array_map(static fn (array $rule): array => [$rule['line'], $rule['roles'], $rule['methods']], $config['accessControl']),
+        );
+    }
+
+    /**
+     * The security bundle joins a list of firewall patterns into one
+     * alternation once their parameters are resolved, as the kernel
+     * resolves them; one read from the environment is said to be so.
+     */
+    #[Test]
+    public function test_a_list_of_firewall_patterns_is_one_alternation_with_its_values_resolved(): void
+    {
+        $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($this->makeProject([
+            'config/services.yaml' => "parameters:\n    api_pattern: ^/api\n",
+            'config/packages/security.yaml' => "security:\n    firewalls:\n        api: { pattern: ['%api_pattern%', ^/app] }\n        main: { pattern: [^/shop, '%env(PHPREGEX_TEST_PATTERN)%'] }\n",
+        ])));
+
+        $this->assertNotNull($config);
+        $this->assertSame(['api' => '(?:^/api|^/app)', 'main' => '(?:^/shop|%env(PHPREGEX_TEST_PATTERN)%)'], array_column($config['firewalls'], 'pattern', 'name'));
+        $this->assertSame(['api' => false, 'main' => true], array_column($config['firewalls'], 'fromEnvironment', 'name'));
     }
 
     #[Test]
@@ -352,6 +553,36 @@ final class SecurityConfigKernelTest extends TestCase
 
         $this->assertNotNull($config);
         $this->assertSame(['^/admin'], array_column($config['accessControl'], 'path'));
+    }
+
+    /**
+     * A parameter the named file lacks is taken from the application as it
+     * writes it: one the application reads from the environment stays
+     * unknown there too, where the compiled container resolves it from the
+     * environment of the machine the command runs on.
+     */
+    #[Test]
+    public function test_a_parameter_the_application_reads_from_the_environment_stays_unknown_in_a_named_file(): void
+    {
+        $project = $this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_path: '%env(PHPREGEX_TEST_ADMIN_PATH)%'\n    public_path: '%admin_path%/public'\n",
+            'security.yaml' => "security:\n    access_control: [{ path: '%admin_path%' }, { path: '%public_path%' }]\n",
+        ]);
+        $_ENV['PHPREGEX_TEST_ADMIN_PATH'] = $_SERVER['PHPREGEX_TEST_ADMIN_PATH'] = '^/back-office';
+
+        try {
+            $kernel = new SecurityConfigKernel($project, withSecurityBundle: false);
+            $kernel->boot();
+            $this->assertSame('^/back-office', $kernel->getContainer()->getParameter('admin_path'));
+
+            $config = (new SecurityConfigExtractor())->read([$project.'/security.yaml'], $kernel, new SecurityConfigLocator(), $project, 'test');
+        } finally {
+            unset($_ENV['PHPREGEX_TEST_ADMIN_PATH'], $_SERVER['PHPREGEX_TEST_ADMIN_PATH']);
+        }
+
+        $this->assertNotNull($config);
+        $this->assertSame(['%env(PHPREGEX_TEST_ADMIN_PATH)%', '%env(PHPREGEX_TEST_ADMIN_PATH)%/public'], array_column($config['accessControl'], 'path'));
+        $this->assertSame([['path'], ['path']], array_column($config['accessControl'], 'fromEnvironment'));
     }
 
     #[Test]
