@@ -63,11 +63,14 @@ CHANGELOG
    `/^((?:[a-z]|[\xC2-\xDF][\x80-\xBF])+)%?\1/` and WordPress's `SHOW
    TABLES LIKE` pattern, which were critical, are medium: PCRE reads the
    first in 20, 28 and 36 steps on 8, 12 and 16 units. Above ASCII a negated
-   class, the dot, `\D`, `\W` and `\S` take every byte they do not name,
+   class, `\D`, `\W` and `\S` take every byte they do not name, the dot
+   every byte but the newlines of the convention in force unless s is set,
    `\h` the no-break space and `\v` and `\R` the next line:
    `/^((?:[^a]|é)+)\1$/` and `/^((?:.|é)+)\1$/`, which were medium, are
-   critical. Under u a character above ASCII ends a repeat as it starts the
-   next one: `/^((?:é+é)+)\1$/u`, which was medium, is critical, as
+   critical. Under `(*ANY)` the next line is a newline the dot does not
+   take: `/(*ANY)^((?:.|\x85)+)\1$/` is medium, and critical under s.
+   Under u a character above ASCII ends a repeat as it starts the next
+   one: `/^((?:é+é)+)\1$/u`, which was medium, is critical, as
    `/^((?:a+a)+)\1$/` is.
  * The heuristics compare first and last characters in the case the engine
    reads them: under i, set by the modifier, an option setting or a group,

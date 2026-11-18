@@ -591,9 +591,10 @@ final class RedosHeuristicShapesTest extends TestCase
      * every byte above ASCII, "\h" the no-break space, "\v" and "\R" the
      * next line, "\s" both under (*UCP) or u, and under i, set by the
      * modifier or by an option setting, "\x41" an "a".
-     * Under (*ANY) the dot stops at the next line. Under u a character
-     * above ASCII ends a repeat as it starts the next one: "é+é" in a loop
-     * is critical as "a+a" is (69 -> 467 -> 3 195).
+     * Under (*ANY) the dot stops at the next line, unless s is set (1 536
+     * -> 24 576). Under u a character above ASCII ends a repeat as it
+     * starts the next one: "é+é" in a loop is critical as "a+a" is (69 ->
+     * 467 -> 3 195).
      *
      * @return iterable<string, array{pattern: string, unit: string, critical: bool}>
      */
@@ -606,6 +607,7 @@ final class RedosHeuristicShapesTest extends TestCase
         yield 'the sequence under i and s' => ['pattern' => '/^((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)%?\1/is', 'unit' => "\xC3\xA9", 'critical' => false];
         yield 'the code points under u' => ['pattern' => '/^((?:[a-z]|[\xC2-\xDF][\x80-\xBF])+)%?\1/u', 'unit' => "\u{C3}\u{A9}", 'critical' => false];
         yield 'the dot beside the next line under (*ANY)' => ['pattern' => '/(*ANY)^((?:.|\x85)+)\1$/', 'unit' => "\x85", 'critical' => false];
+        yield 'the dot beside the next line under (*ANY) and s' => ['pattern' => '/(*ANY)^((?:.|\x85)+)\1$/s', 'unit' => "\x85", 'critical' => true];
         yield 'a negated class beside a byte it takes' => ['pattern' => '/^((?:[^a]|\xC3)+)\1$/', 'unit' => "\xC3", 'critical' => true];
         yield 'a negated class beside a two-byte letter' => ['pattern' => '/^((?:[^a]|é)+)\1$/', 'unit' => 'é', 'critical' => true];
         yield 'a negated class beside a letter under u' => ['pattern' => '/^((?:[^a]|\xE9)+)\1$/u', 'unit' => 'é', 'critical' => true];
