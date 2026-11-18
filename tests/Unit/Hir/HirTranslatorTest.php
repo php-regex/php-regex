@@ -355,6 +355,38 @@ final class HirTranslatorTest extends TestCase
         $this->assertInstanceOf(LiteralHir::class, $conditional->no);
     }
 
+    /**
+     * Whether a "|" stands before the "no" branch, an empty one included:
+     * in a lookbehind PCRE gives "(?(c)X)" the length of X alone, where
+     * "(?(c)X|)" may also be empty, so "/(a)?(?<!(?(1)a))c/" finds "c" in
+     * "c" and "/(a)?(?<!(?(1)a|))c/" nothing.
+     */
+    #[Test]
+    #[DataProvider('provideConditionalBars')]
+    public function test_a_conditional_keeps_whether_a_bar_was_written_before_its_no_branch(string $pattern, bool $written): void
+    {
+        $hir = $this->translate($pattern);
+
+        $this->assertInstanceOf(ConcatHir::class, $hir);
+        $conditional = $hir->parts[1];
+        $this->assertInstanceOf(ConditionalHir::class, $conditional);
+        $this->assertSame($written, $conditional->noBranchWritten);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, written: bool}>
+     */
+    public static function provideConditionalBars(): iterable
+    {
+        yield 'no bar' => ['pattern' => '/(a)?(?(1)b)/', 'written' => false];
+        yield 'a bar before an empty branch' => ['pattern' => '/(a)?(?(1)b|)/', 'written' => true];
+        yield 'a bar before a branch' => ['pattern' => '/(a)?(?(1)b|c)/', 'written' => true];
+        yield 'no bar after an empty yes branch' => ['pattern' => '/(a)?(?(1))/', 'written' => false];
+        yield 'a bar between two empty branches' => ['pattern' => '/(a)?(?(1)|)/', 'written' => true];
+        yield 'no bar after a space x skips' => ['pattern' => '/(a)?(?(1)b )/x', 'written' => false];
+        yield 'a bar after a space x skips' => ['pattern' => '/(a)?(?(1)b |)/x', 'written' => true];
+    }
+
     #[Test]
     public function test_comments_definitions_and_option_settings_match_empty(): void
     {

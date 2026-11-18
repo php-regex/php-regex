@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The class rules read the bytes PCRE2 reads in a class without UTF mode:
+   `regex.lint.charclass.redundant` reports a character written twice,
+   `/[ää]/`, and a byte written beside a character that starts with it,
+   `/[aä\xC3]/`, where each multibyte character was left out as one it
+   could not read. A byte two different characters share, the `\xC3` of
+   `/[äö]/`, is no duplicate: `regex.lint.unicode.multibyteInClassWithoutU`
+   reports that class, with the fix, `/u`.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

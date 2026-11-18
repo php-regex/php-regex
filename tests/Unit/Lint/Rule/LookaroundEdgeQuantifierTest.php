@@ -75,27 +75,23 @@ final class LookaroundEdgeQuantifierTest extends TestCase
     {
         // Every lookbehind here has a variable length, which compiles from
         // PCRE2 10.43 on: before, both sides fail alike and prove nothing.
+        // Each one tells the pattern from its rewrite under the JIT, which
+        // PHP runs by default. PCRE2's interpreter reads the end of the
+        // subject in a variable-length lookbehind at the real end, as a
+        // fixed-length one does: there /(?<=b{1,2}\z)a/ and /(?<=b\z)a/
+        // answer alike (10.44 to 10.49, pcre.jit=0), as the other rows with
+        // a lookbehind do on 10.49.
         if (str_contains($pattern, '(?<')) {
             $this->requiresPcre2('10.43', $pattern);
+            $this->requiresJit($pattern);
         }
 
-        // Under the JIT, which PHP runs by default. PCRE2's interpreter reads
-        // the end of the subject in a variable-length lookbehind at the real
-        // end, as a fixed-length one does: there /(?<=b{1,2}\z)a/ and
-        // /(?<=b\z)a/ answer alike (10.44 to 10.49, pcre.jit=0). A pattern
-        // another test compiled with the JIT off stays so in PHP's cache, so
-        // the patterns run here under a delimiter of their own.
-        $jit = (string) \ini_get('pcre.jit');
-        ini_set('pcre.jit', '1');
-
-        try {
-            $differs = false;
-            foreach (self::SUBJECTS as $subject) {
-                $original = [preg_match_all(self::keyed($pattern), $subject, $actual, \PREG_OFFSET_CAPTURE), $actual];
-                $differs = $differs || $original !== [preg_match_all(self::keyed($rewrite), $subject, $expected, \PREG_OFFSET_CAPTURE), $expected];
-            }
-        } finally {
-            ini_set('pcre.jit', $jit);
+        // A pattern another test compiled with the JIT off stays so in PHP's
+        // cache, so the patterns run here under a delimiter of their own.
+        $differs = false;
+        foreach (self::SUBJECTS as $subject) {
+            $original = [preg_match_all(self::keyed($pattern), $subject, $actual, \PREG_OFFSET_CAPTURE), $actual];
+            $differs = $differs || $original !== [preg_match_all(self::keyed($rewrite), $subject, $expected, \PREG_OFFSET_CAPTURE), $expected];
         }
 
         $this->assertTrue($differs, $pattern.' behaves as '.$rewrite);

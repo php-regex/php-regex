@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\Rule\Support\CharClassSets;
 use PHPRegex\Linter\Rule\Support\CodePoints;
 use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RangeNode;
 
@@ -46,9 +47,13 @@ final class RedundantCharClassRule extends AbstractLintRule
 
         $parts = CharClassSets::collectParts($node->expression);
         $unicodeMode = $context->pattern->unicodeMode;
+        $source = $context->pattern->source;
 
         $ranges = [];
         $literals = [];
+        // The characters each member is a byte of, null for one written as it is.
+        $rangeOrigins = [];
+        $literalOrigins = [];
         $redundant = false;
         $redundantNotes = [];
         $redundantOverflow = 0;
@@ -57,23 +62,28 @@ final class RedundantCharClassRule extends AbstractLintRule
             if (!$part instanceof RangeNode) {
                 $codePoint = CodePoints::fromNode($part, $unicodeMode);
                 if (null !== $codePoint) {
+                    $origin = self::origin($part, $unicodeMode, $source);
                     if (isset($literals[$codePoint])) {
-                        $redundant = true;
-                        $this->recordRedundantNote(
-                            $redundantNotes,
-                            $redundantOverflow,
-                            CodePoints::formatCodePointForHint($codePoint).' (duplicate)',
-                        );
-                    } else {
-                        $coveringRange = $this->findCoveringRange($codePoint, $ranges);
-                        if (null !== $coveringRange) {
+                        if (!self::fromSplitting($origin, $literalOrigins[$codePoint] ?? null)) {
                             $redundant = true;
                             $this->recordRedundantNote(
                                 $redundantNotes,
                                 $redundantOverflow,
-                                CodePoints::formatCodePointForHint($codePoint).' (covered by range '.$coveringRange['label'].')',
+                                CodePoints::formatCodePointForHint($codePoint).' (duplicate)',
                             );
                         }
+                    } else {
+                        $covering = $this->findCoveringRange($codePoint, $ranges);
+                        if (null !== $covering && !self::fromSplitting($origin, $rangeOrigins[$covering] ?? null)) {
+                            $redundant = true;
+                            $this->recordRedundantNote(
+                                $redundantNotes,
+                                $redundantOverflow,
+                                CodePoints::formatCodePointForHint($codePoint).' (covered by range '.$ranges[$covering]['label'].')',
+                            );
+                        }
+
+                        $literalOrigins[$codePoint] = $origin;
                     }
                     $literals[$codePoint] = true;
 
@@ -92,9 +102,12 @@ final class RedundantCharClassRule extends AbstractLintRule
                     continue;
                 }
 
+                $startOrigin = self::origin($part->start, $unicodeMode, $source);
+                $endOrigin = self::origin($part->end, $unicodeMode, $source);
+                $origin = null === $startOrigin || null === $endOrigin ? null : $startOrigin + $endOrigin;
                 $rangeLabel = $this->formatRangeForHint($start, $end);
-                foreach ($ranges as $existingRange) {
-                    if ($start <= $existingRange['end'] && $end >= $existingRange['start']) {
+                foreach ($ranges as $key => $existingRange) {
+                    if ($start <= $existingRange['end'] && $end >= $existingRange['start'] && !self::fromSplitting($origin, $rangeOrigins[$key] ?? null)) {
                         $redundant = true;
                         $this->recordRedundantNote(
                             $redundantNotes,
@@ -108,17 +121,20 @@ final class RedundantCharClassRule extends AbstractLintRule
 
                 foreach ($literals as $codePoint => $seen) {
                     if ($codePoint >= $start && $codePoint <= $end) {
-                        $redundant = true;
-                        $this->recordRedundantNote(
-                            $redundantNotes,
-                            $redundantOverflow,
-                            CodePoints::formatCodePointForHint($codePoint).' (covered by range '.$rangeLabel.')',
-                        );
-                        unset($literals[$codePoint]);
+                        if (!self::fromSplitting($origin, $literalOrigins[$codePoint] ?? null)) {
+                            $redundant = true;
+                            $this->recordRedundantNote(
+                                $redundantNotes,
+                                $redundantOverflow,
+                                CodePoints::formatCodePointForHint($codePoint).' (covered by range '.$rangeLabel.')',
+                            );
+                        }
+                        unset($literals[$codePoint], $literalOrigins[$codePoint]);
                     }
                 }
 
                 $ranges[] = ['start' => $start, 'end' => $end, 'label' => $rangeLabel];
+                $rangeOrigins[array_key_last($ranges)] = $origin;
             }
         }
 
@@ -207,16 +223,60 @@ final class RedundantCharClassRule extends AbstractLintRule
     /**
      * @param array<int, array{start: int, end: int, label: string}> $ranges
      *
-     * @return array{start: int, end: int, label: string}|null
+     * @return int|null the key of the first range holding the code point
      */
-    private function findCoveringRange(int $ord, array $ranges): ?array
+    private function findCoveringRange(int $ord, array $ranges): ?int
     {
-        foreach ($ranges as $range) {
+        foreach ($ranges as $key => $range) {
             if ($ord >= $range['start'] && $ord <= $range['end']) {
-                return $range;
+                return $key;
             }
         }
 
         return null;
+    }
+
+    /**
+     * The characters the pattern writes whole that a member of the class is
+     * a byte of, by where each starts: without UTF the tree holds each byte
+     * of a multibyte character apart. Null for a member written as it is.
+     *
+     * @return array<int, string>|null
+     */
+    private static function origin(NodeInterface $node, bool $unicodeMode, string $source): ?array
+    {
+        if ($unicodeMode || !$node instanceof LiteralNode) {
+            return null;
+        }
+
+        $character = SplitCharacter::holding($source, $node);
+
+        return null === $character ? null : [$character[1] => $character[0]];
+    }
+
+    /**
+     * Whether two members that hold the same byte are only bytes of
+     * characters the pattern writes, none of them written twice: "[äö]"
+     * holds 0xC3 twice, which no one wrote twice. The class is reported
+     * for the missing u already, whose fix leaves no duplicate.
+     *
+     * @param array<int, string>|null $one
+     * @param array<int, string>|null $other
+     */
+    private static function fromSplitting(?array $one, ?array $other): bool
+    {
+        if (null === $one || null === $other) {
+            return false;
+        }
+
+        foreach ($one as $at => $character) {
+            foreach ($other as $otherAt => $otherCharacter) {
+                if ($character === $otherCharacter && $at !== $otherAt) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }

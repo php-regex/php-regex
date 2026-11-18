@@ -44,6 +44,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\ConditionParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
@@ -216,6 +217,7 @@ final class HirTranslator
                     $node->condition,
                     $this->node($node->yes, $flags),
                     $this->node($node->no, $this->flagsAfter($node->yes, $flags)),
+                    ConditionParser::writesNoBranch($node),
                     self::capturesIn($node->condition),
                     $node->getStartPosition(),
                     $node->getEndPosition(),
@@ -550,12 +552,12 @@ final class HirTranslator
         if ([] !== $codePoints) {
             $flat[] = new LiteralHir($codePoints, $literalStart, $literalEnd);
         }
-        $matchSubject557 = \count($flat);
+        $matchSubject559 = \count($flat);
 
         switch (true) {
-            case 0 === $matchSubject557:
+            case 0 === $matchSubject559:
                 return new EmptyHir($start, $end);
-            case 1 === $matchSubject557:
+            case 1 === $matchSubject559:
                 return $flat[0];
             default:
                 return new ConcatHir($flat, $start, $end);
