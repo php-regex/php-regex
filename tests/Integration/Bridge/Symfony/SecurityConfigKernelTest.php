@@ -640,7 +640,9 @@ final class SecurityConfigKernelTest extends TestCase
 
         try {
             try {
-                (\Closure::bind(fn (): mixed => $this->buildContainer(), clone $kernel, SecurityConfigKernel::class))();
+                $build = \Closure::bind(fn (): mixed => $this->buildContainer(), clone $kernel, SecurityConfigKernel::class);
+                $this->assertNotNull($build);
+                $build();
                 $this->fail('The kernel built its container in a read-only cache directory.');
             } catch (\RuntimeException $e) {
                 $reason = $e->getMessage();
