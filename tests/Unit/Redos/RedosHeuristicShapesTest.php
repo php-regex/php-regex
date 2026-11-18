@@ -688,6 +688,72 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * Branches that start alike in a loop are critical only where the loop
+     * reads some text in two ways: "a" and "ab" start alike, but "ab" is
+     * read one way, and PCRE stays linear on 8 -> 12 units then "!" (36 ->
+     * 52 steps, 20 -> 28 for "ab" beside "abc"), under i too. The loop read
+     * alone before an end that fails is proven linear there, and stays
+     * exponential where it splits a text in two ways: "a" beside "a"
+     * (1 024 -> 16 384), "a", "ab" and "b" (2 300 -> 36 860), "a" beside
+     * "aa" (178 -> 1 220), "\w" beside "\d" (1 024 -> 16 384), "a\w"
+     * beside "ab" (1 024 -> 16 384), and a run in a loop (385 -> 6 145).
+     *
+     * @return iterable<string, array{pattern: string, unit: string, critical: bool}>
+     */
+    public static function provideLoopsOfBranchesThatStartAlike(): iterable
+    {
+        yield 'a letter beside the letter and another' => ['pattern' => '/^((?:a|ab)+)\1$/', 'unit' => 'ab', 'critical' => false];
+        yield 'the same under i' => ['pattern' => '/^((?:a|Ab)+)\1$/i', 'unit' => 'ab', 'critical' => false];
+        yield 'the longer branch first' => ['pattern' => '/^((?:ab|a)+)\1$/', 'unit' => 'ab', 'critical' => false];
+        yield 'two words, one the start of the other' => ['pattern' => '/^((?:ab|abc)+)\1$/', 'unit' => 'ab', 'critical' => false];
+        yield 'a letter beside itself' => ['pattern' => '/^((?:a|a)+)\1$/', 'unit' => 'a', 'critical' => true];
+        yield 'a letter, the letter and another, and the other' => ['pattern' => '/^((?:a|ab|b)+)\1$/', 'unit' => 'ab', 'critical' => true];
+        yield 'a letter beside two of it' => ['pattern' => '/^((?:a|aa)+)\1$/', 'unit' => 'a', 'critical' => true];
+        yield 'a word character beside a digit' => ['pattern' => '/^((?:\w|\d)+)\1$/', 'unit' => '1', 'critical' => true];
+        yield 'a letter and a word character beside two letters' => ['pattern' => '/^((?:a\w|ab)+)\1$/', 'unit' => 'ab', 'critical' => true];
+        yield 'a run in a loop' => ['pattern' => '/^((?:a+)+)\1$/', 'unit' => 'a', 'critical' => true];
+        yield 'the same loop twice' => ['pattern' => '/^((?:a|ab)+)x((?:a|ab)+)\1$/', 'unit' => 'ab', 'critical' => false];
+        yield 'a loop holding the slash, under another delimiter' => ['pattern' => '#^((?:/|/b)+)\1$#', 'unit' => '/b', 'critical' => false];
+    }
+
+    /**
+     * A loop whose text does not read alone as it reads in place is not put
+     * to the proof, and keeps the finding though PCRE stays linear (44 -> 64
+     * steps for the lookahead, 5 -> 5 for the reference, 36 -> 52 for the
+     * loop that holds every delimiter): a lookahead may read past it, a
+     * reference reads a group outside it, and no delimiter writes it alone.
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideLoopsThatDoNotReadAlone(): iterable
+    {
+        yield 'a loop holding a lookahead' => ['pattern' => '/^((?:a|a(?=b)b)+)\1$/'];
+        yield 'a loop holding a reference to a group outside it' => ['pattern' => '/^(a)((?:a|ab\1)+)\2$/'];
+        yield 'a loop holding every delimiter' => ['pattern' => '/^((?:\/#~%@;,`|\/#~%@;,`b)+)\1$/'];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsThatDoNotReadAlone')]
+    public function test_a_loop_that_does_not_read_alone_keeps_the_finding(string $pattern): void
+    {
+        $this->assertNotFalse(@preg_match($pattern, ''), 'Oracle: PCRE compiles the pattern.');
+
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsOfBranchesThatStartAlike')]
+    public function test_branches_that_start_alike_are_critical_where_the_loop_reads_a_text_two_ways(string $pattern, string $unit, bool $critical): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, str_repeat($unit, 8).'!');
+        $long = self::steps($unoptimized, str_repeat($unit, 12).'!');
+        $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
      * An item that reads nothing, an option setting above all, neither
      * separates a loop from what stands before or after it nor stands
      * between two loops: each row is read as its twin without the item,

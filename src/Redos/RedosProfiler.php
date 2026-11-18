@@ -183,7 +183,17 @@ final class RedosProfiler extends AbstractNodeVisitor
      */
     private ?\SplObjectStorage $setsInForce = null;
 
-    public function __construct(private readonly CharSetAnalyzer $charSetAnalyzer = new CharSetAnalyzer())
+    /**
+     * The innermost unbounded loop around the node being read.
+     */
+    private ?QuantifierNode $loop = null;
+
+    /**
+     * @param (\Closure(QuantifierNode): bool)|null $provenLinearAlone whether the loop, read alone before an end that
+     *                                                                 fails, is proven linear: no text it reads two
+     *                                                                 ways; null when it is not asked
+     */
+    public function __construct(private readonly CharSetAnalyzer $charSetAnalyzer = new CharSetAnalyzer(), private readonly ?\Closure $provenLinearAlone = null)
     {
         $this->nullability = new Nullability();
         $this->firstTriedStep = new FirstTriedStep();
@@ -462,13 +472,16 @@ final class RedosProfiler extends AbstractNodeVisitor
         $childPrevious = $this->previousNode;
         $childNext = $this->nextNode;
         $head = $this->iterationHead;
+        $loop = $this->loop;
         $this->previousNode = null;
         $this->nextNode = null;
         $this->iterationHead = $this->quantifierAllowsMultiple($qMax) ? $node->node : null;
+        $this->loop = $entersUnbounded ? $node : $loop;
         $childSeverity = $node->node->accept($this);
         $this->previousNode = $childPrevious;
         $this->nextNode = $childNext;
         $this->iterationHead = $head;
+        $this->loop = $loop;
 
         if ($entersUnbounded && !$boundarySeparated && RedosSeverity::High === $childSeverity) {
             $hasRecursion = $this->hasRecursion($node->node);
@@ -498,7 +511,7 @@ final class RedosProfiler extends AbstractNodeVisitor
     {
         $max = RedosSeverity::Safe;
 
-        if ($this->unboundedQuantifierDepth > 0 && $this->hasOverlappingAlternatives($node)) {
+        if ($this->unboundedQuantifierDepth > 0 && $this->hasOverlappingAlternatives($node) && !$this->loopReadsOneWayAlone()) {
             $this->addVulnerability(
                 RedosSeverity::Critical,
                 'Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking.',
@@ -1362,6 +1375,42 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         return $state['hasBackref'] && $state['hasVariableCapture']
             && !(false === $node->accept($this->nullability) && $this->readsOneWay($node));
+    }
+
+    /**
+     * Whether the loop around the alternation, read alone before an end
+     * that fails, is proven linear: its branches start alike, "a" and "ab",
+     * yet it reads no text in two ways. Its text reads alone as it does in
+     * place only where no option setting of the pattern and no assertion in
+     * it looks past the loop.
+     */
+    private function loopReadsOneWayAlone(): bool
+    {
+        return null !== $this->provenLinearAlone
+            && null !== $this->loop
+            && null === $this->setsInForce
+            && !self::holdsAssertion($this->loop)
+            && ($this->provenLinearAlone)($this->loop);
+    }
+
+    /**
+     * Whether the node holds an anchor, an assertion or a lookaround, which
+     * may read past the loop it stands in.
+     */
+    private static function holdsAssertion(NodeInterface $node): bool
+    {
+        if ($node instanceof AnchorNode || $node instanceof AssertionNode
+            || ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true))) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsAssertion($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

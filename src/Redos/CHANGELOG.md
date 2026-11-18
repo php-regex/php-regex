@@ -90,6 +90,15 @@ CHANGELOG
    `/^((?:a|A)+(?i))\1$/` and `/^(a+(?i)A+)\1$/`, which were safe, are
    medium, as `/^(a+)\1$/i`, `/^((?:a|A)+)\1$/` and `/^(a+[aA]+)\1$/` are,
    and PCRE takes the same steps on each and on its twin.
+ * Without a proof of the whole pattern, a loop whose branches start alike
+   is critical only where the loop, read alone before an end that never
+   matches, is not proven linear: `/^((?:a|ab)+)\1$/`, `/^((?:ab|abc)+)\1$/`
+   and `/^((?:a|Ab)+)\1$/i`, which were critical, are medium, where PCRE
+   takes 36 and 52 steps on 8 and 12 `ab` then `!`; `/^((?:a|a)+)\1$/`,
+   `/^((?:a|ab|b)+)\1$/`, `/^((?:a|aa)+)\1$/` and `/^((?:\w|\d)+)\1$/`, which
+   PCRE reads exponentially, stay critical. A loop holding an anchor, an
+   assertion or a lookaround, a reference or a call to a group outside it,
+   or in a pattern that sets options inline, keeps the finding.
  * The heuristics read a loop that ends the body of another against the
    first characters of the next iteration: Friedl's unrolled C comment,
    `/(?C1)\/\*[^*]*\*+([^\/*][^*]*\*+)*\//`, which was critical, is safe
