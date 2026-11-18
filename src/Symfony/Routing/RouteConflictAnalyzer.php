@@ -23,6 +23,12 @@ use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Routing\CompiledRoute;
 use Symfony\Component\Routing\Route;
@@ -485,7 +491,9 @@ final class RouteConflictAnalyzer
      * requirement ends on the slash, "[^/]++" or "\d+", it redirects every
      * path that differs from one of the route by its trailing slash,
      * whatever that order. A requirement the compiled route does not name
-     * may.
+     * may, as may one holding a lookaround, a boundary or an anchor, which
+     * reads the route around the variable: "(?<=e)a/" is a value of it
+     * after "pre", none of it alone.
      *
      * @phpstan-param RouteDescriptor $route
      *
@@ -498,8 +506,14 @@ final class RouteConflictAnalyzer
         }
 
         $flags = DelimitedPattern::fromDelimited($route['pathPattern'])->flags;
+        $readsAround = NodeFinder::findFirst(
+            $this->regex->parser()->parse((string) new DelimitedPattern('(?:'.$route['lastRequirement'].')', $flags, '{'))->pattern,
+            static fn (NodeInterface $node): bool => $node instanceof AnchorNode || $node instanceof AssertionNode
+                || ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true)),
+        );
 
-        return $this->sharesAString((string) new DelimitedPattern('^(?:'.$route['lastRequirement'].')$', $flags, '{'), '^(?:.*/)?$', $options);
+        return null !== $readsAround
+            || $this->sharesAString((string) new DelimitedPattern('^(?:'.$route['lastRequirement'].')$', $flags, '{'), '^(?:.*/)?$', $options);
     }
 
     /**

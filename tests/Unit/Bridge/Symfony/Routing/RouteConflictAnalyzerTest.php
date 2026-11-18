@@ -1120,6 +1120,15 @@ final class RouteConflictAnalyzerTest extends TestCase
         // A path ending on the slash whose value PCRE captured without it
         // is redirected for GET and HEAD, and passed on to the later route
         // for any other method.
+        // A lookaround reads the route around the variable, which the
+        // requirement alone does not show: "(?<=e)a/" is a value after "pre".
+        yield 'a requirement that looks behind the variable, on https before a route on http' => [
+            'earlier' => ['/pre{x<(?<=e)a/?|b>}', ['GET'], ['https']],
+            'later' => ['/{y<prea/|preb>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/prea/', true], ['GET', 'https', '/prea/', false]],
+            'type' => null,
+            'skipped' => 1,
+        ];
         yield 'a requirement that can end on the slash, for POST, before a route ending on a slash whose only path it passes on' => [
             'earlier' => ['/files/{p<a|a/>}', ['POST'], []],
             'later' => ['/files/{q<a>}/', ['POST'], []],

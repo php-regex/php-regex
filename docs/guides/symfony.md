@@ -576,7 +576,9 @@ it, and a later route for other methods than `GET` and `HEAD` keeps those
 on its paths ending on the slash, `/files/{name}/` after
 `/files/{path<.+?>}` being an overlap. The default requirement `[^/]++`,
 or `\d+`, redirects whatever that order, and the pair is read as any
-other. A later
+other. A requirement holding a lookaround, a boundary or an anchor reads
+the route around the variable, `(?<=e)a/` matching after `pre` alone, and
+counts as one that may end on the slash. A later
 route whose paths the earlier one matches in part and redirects for the
 rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
 route that takes no `GET` request redirects none. The router looks a route

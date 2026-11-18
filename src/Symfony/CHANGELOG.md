@@ -263,7 +263,9 @@ CHANGELOG
    earlier route ends on a variable a value of which may end on the slash
    or be empty, `.+` or `[a-z]*`, whose redirect PCRE's order decides; the
    default `[^/]++`, or `\d+`, redirects whatever that order and is read.
-   Such a route matches a path ending on the slash as is, on its own
+   A requirement holding a lookaround, a boundary or an anchor reads the
+   route around the variable, `(?<=e)a/` after `pre`, and counts as one
+   that may end on the slash. Such a route matches a path ending on the slash as is, on its own
    schemes, or redirects it, as PCRE captured the value: a later route it
    matches only with that slash, `/{y<a//>}` after `/{x<a/?>}`, is shadowed
    only when the earlier route takes every scheme of it, and one for other
