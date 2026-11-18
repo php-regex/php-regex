@@ -21,6 +21,7 @@ use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\HttpFoundation\Request;
@@ -341,7 +342,7 @@ final class SecurityAccessControlAnalyzer
         // IpsRequestMatcher splits each address it is given on its commas.
         $ips = [];
         foreach ($rule['ips'] as $item) {
-            $ips = [...$ips, ...(preg_split('/\s*,\s*/', $item) ?: [])];
+            $ips = [...$ips, ...(LibraryPcre::split('/\s*,\s*/', $item) ?: [])];
         }
         $ips = self::distinct($ips);
 
@@ -660,7 +661,9 @@ final class SecurityAccessControlAnalyzer
 
         $matcher = new MethodRequestMatcher($methods);
         $taken = [];
-        foreach (array_unique([...(preg_split('/[\s,]+/', strtoupper(implode(',', $methods)), -1, \PREG_SPLIT_NO_EMPTY) ?: []), 'HEAD']) as $method) {
+        // Every token of the list, cut at its commas and its spaces.
+        $tokens = explode(',', strtr(strtoupper(implode(',', $methods)), " \t\n\v\f\r", ',,,,,,'));
+        foreach (array_unique([...array_filter($tokens, static fn (string $token): bool => '' !== $token), 'HEAD']) as $method) {
             if ($matcher->matches(Request::create('/', $method))) {
                 $taken[] = $method;
             }

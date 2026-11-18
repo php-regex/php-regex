@@ -529,10 +529,6 @@ final class SecurityConfigExtractorTest extends TestCase
     }
 
     /**
-     * A firewall pattern read from the environment, alone or in a list, is
-     * kept as written and said to be so.
-     */
-    /**
      * The security bundle refuses a port or methods read from the
      * environment, from whatever file (SecurityConfigKernelTest boots an
      * application on it): the reading stops, naming the field and the rule.
@@ -563,6 +559,10 @@ final class SecurityConfigExtractorTest extends TestCase
         yield 'methods written as a string' => ['rule' => "{ path: ^/admin, methods: 'GET, %env(ADMIN_METHOD)%' }", 'message' => \sprintf($methods, '%s', 'GET, %%env(ADMIN_METHOD)%%')];
     }
 
+    /**
+     * A firewall pattern read from the environment, alone or in a list, is
+     * kept as written and said to be so.
+     */
     #[Test]
     public function test_a_firewall_pattern_read_from_the_environment_is_said_so(): void
     {

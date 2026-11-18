@@ -167,7 +167,7 @@ final class SecurityConfigExtractor
             // piece.
             if (\is_string($resolved) && \in_array($key, ['roles', 'role', 'methods', 'method'], true)) {
                 $split = [];
-                foreach (preg_split('/\s*,\s*/', $resolved) ?: [] as $piece) {
+                foreach (LibraryPcre::split('/\s*,\s*/', $resolved) ?: [] as $piece) {
                     $placeholder = $prefix.'_piece_'.\count($pieces);
                     $pieces[$placeholder] = [$value, $piece];
                     $split[] = $placeholder;
@@ -749,7 +749,7 @@ final class SecurityConfigExtractor
     private static function listOf(mixed $value, bool $splitOnCommas): array
     {
         if (\is_string($value)) {
-            return $splitOnCommas ? (preg_split('/\s*,\s*/', $value) ?: []) : [$value];
+            return $splitOnCommas ? (LibraryPcre::split('/\s*,\s*/', $value) ?: []) : [$value];
         }
 
         $items = [];
