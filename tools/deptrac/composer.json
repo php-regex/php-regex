@@ -1,5 +1,10 @@
 {
     "require-dev": {
         "deptrac/deptrac": "^4.0"
+    },
+    "config": {
+        "platform": {
+            "php": "8.4.99"
+        }
     }
 }
