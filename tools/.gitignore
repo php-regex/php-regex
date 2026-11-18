@@ -1,2 +1,7 @@
 **/vendor
-**/composer.lock
+# phpunit and paratest are installed on every PHP of the test matrix, from
+# PHPUnit 10 and Symfony 6.4 up to PHPUnit 13 and Symfony 8: one lock cannot
+# hold them all, so they resolve afresh on each run. The other tools keep
+# their lock, resolved for the lowest PHP that runs them (config.platform).
+phpunit/composer.lock
+paratest/composer.lock
