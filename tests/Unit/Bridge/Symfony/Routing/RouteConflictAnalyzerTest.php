@@ -614,11 +614,11 @@ final class RouteConflictAnalyzerTest extends TestCase
     public function test_an_empty_method_beside_a_real_one_leaves_the_real_one(): void
     {
         $collection = new RouteCollection();
-        $collection->add('earlier', (new Route('/x'))->setMethods(['GET', '']));
-        $collection->add('later', new Route('/x'));
+        $collection->add('earlier', (new Route('/x'))->setMethods(['GET', 'POST', '']));
+        $collection->add('later', (new Route('/x'))->setMethods(['GET', 'PUT']));
 
         $this->assertSame('earlier', (new UrlMatcher($collection, new RequestContext(method: 'GET')))->match('/x')['_route']);
-        $this->assertSame('later', (new UrlMatcher($collection, new RequestContext(method: 'POST')))->match('/x')['_route']);
+        $this->assertSame('later', (new UrlMatcher($collection, new RequestContext(method: 'PUT')))->match('/x')['_route']);
 
         $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
 
@@ -640,7 +640,7 @@ final class RouteConflictAnalyzerTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideHeadRoutes')]
-    public function test_a_route_for_get_takes_the_head_requests(array $earlier, array $later, string $type): void
+    public function test_a_route_for_get_takes_the_head_requests(array $earlier, array $later, ?string $type): void
     {
         $collection = new RouteCollection();
         $collection->add('earlier', (new Route('/x'))->setMethods($earlier));
@@ -652,28 +652,32 @@ final class RouteConflictAnalyzerTest extends TestCase
 
         $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
 
-        $this->assertCount(1, $report->conflicts);
-        $this->assertSame($type, $report->conflicts[0]['type']);
-        $this->assertSame(['HEAD'], $report->conflicts[0]['methods']);
+        $this->assertCount(null === $type ? 0 : 1, $report->conflicts);
+        if (null !== $type) {
+            $this->assertSame($type, $report->conflicts[0]['type']);
+            $this->assertSame(['HEAD'], $report->conflicts[0]['methods']);
+        }
         $this->assertSame(0, $report->stats['pairs_filtered_methods']);
     }
 
     /**
-     * @return iterable<string, array{earlier: list<string>, later: list<string>, type: string}>
+     * @return iterable<string, array{earlier: list<string>, later: list<string>, type: string|null}>
      */
     public static function provideHeadRoutes(): iterable
     {
         yield 'a route for HEAD only behind a route for GET' => ['earlier' => ['GET'], 'later' => ['HEAD'], 'type' => 'shadowed'];
-        yield 'a route for GET behind a route for HEAD only' => ['earlier' => ['HEAD'], 'later' => ['GET'], 'type' => 'overlap'];
+        // Its requests all among the later route's: a carve-out.
+        yield 'a route for GET behind a route for HEAD only' => ['earlier' => ['HEAD'], 'later' => ['GET'], 'type' => null];
         yield 'a route for HEAD only behind a route for GET and POST' => ['earlier' => ['post', 'get'], 'later' => ['head'], 'type' => 'shadowed'];
     }
 
     /**
      * Of two routes on the same paths, the later one is shadowed only when
      * the earlier one takes every request of it: its methods (a route for
-     * GET takes HEAD), its schemes and its host. Otherwise the later route
-     * keeps some requests, as the compiled matcher shows, and the pair is
-     * an overlap.
+     * GET takes HEAD), its schemes and its host. An earlier route whose
+     * requests are all among the later one's is a carve-out of it, which
+     * is not reported. Otherwise each route keeps some requests, as the
+     * compiled matcher shows, and the pair is an overlap.
      *
      * @param array{methods?: list<string>, schemes?: list<string>, host?: string} $earlier
      * @param array{methods?: list<string>, schemes?: list<string>, host?: string} $later
@@ -681,7 +685,7 @@ final class RouteConflictAnalyzerTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideRequestScopes')]
-    public function test_a_route_is_shadowed_only_when_an_earlier_one_takes_every_request_of_it(array $earlier, array $later, array $probes, string $type): void
+    public function test_a_route_is_shadowed_only_when_an_earlier_one_takes_every_request_of_it(array $earlier, array $later, array $probes, ?string $type): void
     {
         $collection = new RouteCollection();
         foreach (['earlier' => $earlier, 'later' => $later] as $name => $scope) {
@@ -700,7 +704,7 @@ final class RouteConflictAnalyzerTest extends TestCase
 
         $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
 
-        $this->assertSame([[$type, 'earlier', 'later']], array_map(
+        $this->assertSame(null === $type ? [] : [[$type, 'earlier', 'later']], array_map(
             static fn (array $conflict): array => [$conflict['type'], $conflict['route']['name'], $conflict['conflict']['name']],
             $report->conflicts,
         ));
@@ -709,7 +713,7 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{earlier: array{methods?: list<string>, schemes?: list<string>, host?: string}, later: array{methods?: list<string>, schemes?: list<string>, host?: string}, probes: list<array{0: string, 1: string, 2: string, 3: string}>, type: string}>
+     * @return iterable<string, array{earlier: array{methods?: list<string>, schemes?: list<string>, host?: string}, later: array{methods?: list<string>, schemes?: list<string>, host?: string}, probes: list<array{0: string, 1: string, 2: string, 3: string}>, type: string|null}>
      */
     public static function provideRequestScopes(): iterable
     {
@@ -717,12 +721,24 @@ final class RouteConflictAnalyzerTest extends TestCase
             'earlier' => ['methods' => ['HEAD']],
             'later' => ['methods' => ['GET']],
             'probes' => [['HEAD', 'http', 'localhost', 'earlier'], ['GET', 'http', 'localhost', 'later']],
-            'type' => 'overlap',
+            'type' => null,
         ];
         yield 'a route for GET before a route for GET and POST' => [
             'earlier' => ['methods' => ['GET']],
             'later' => ['methods' => ['GET', 'POST']],
             'probes' => [['GET', 'http', 'localhost', 'earlier'], ['POST', 'http', 'localhost', 'later']],
+            'type' => null,
+        ];
+        yield 'a route for GET and POST before a route for GET and PUT' => [
+            'earlier' => ['methods' => ['GET', 'POST']],
+            'later' => ['methods' => ['GET', 'PUT']],
+            'probes' => [['GET', 'http', 'localhost', 'earlier'], ['POST', 'http', 'localhost', 'earlier'], ['PUT', 'http', 'localhost', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a route for https only, for GET and POST, before a route for any scheme, for GET' => [
+            'earlier' => ['methods' => ['GET', 'POST'], 'schemes' => ['https']],
+            'later' => ['methods' => ['GET']],
+            'probes' => [['GET', 'https', 'localhost', 'earlier'], ['GET', 'http', 'localhost', 'later']],
             'type' => 'overlap',
         ];
         yield 'a route for GET and POST before a route for GET' => [
@@ -735,7 +751,7 @@ final class RouteConflictAnalyzerTest extends TestCase
             'earlier' => ['schemes' => ['https']],
             'later' => [],
             'probes' => [['GET', 'https', 'localhost', 'earlier'], ['GET', 'http', 'localhost', 'later']],
-            'type' => 'overlap',
+            'type' => null,
         ];
         yield 'a route for any scheme before a route for https only' => [
             'earlier' => [],
@@ -747,7 +763,7 @@ final class RouteConflictAnalyzerTest extends TestCase
             'earlier' => ['host' => 'admin.example.com'],
             'later' => [],
             'probes' => [['GET', 'http', 'admin.example.com', 'earlier'], ['GET', 'http', 'shop.example.com', 'later']],
-            'type' => 'overlap',
+            'type' => null,
         ];
         yield 'a route for a host before a route for a host it holds' => [
             'earlier' => ['host' => '{sub}.example.com'],
@@ -759,7 +775,7 @@ final class RouteConflictAnalyzerTest extends TestCase
             'earlier' => ['host' => 'admin.example.com'],
             'later' => ['host' => '{sub}.example.com'],
             'probes' => [['GET', 'http', 'admin.example.com', 'earlier'], ['GET', 'http', 'shop.example.com', 'later']],
-            'type' => 'overlap',
+            'type' => null,
         ];
     }
 

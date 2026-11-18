@@ -129,16 +129,16 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
     /**
      * An earlier route that takes only some requests of a later route on
      * the same paths, a route for HEAD only before a route for GET, is the
-     * order that serves both: moving the later route first would take
-     * every request of the earlier one, and merging them would drop one.
-     * Neither is suggested.
+     * order that serves both, a carve-out: moving the later route first
+     * would take every request of the earlier one, and merging them would
+     * drop one. The pair is not reported, and nothing is suggested.
      *
      * @param list<string> $earlier
      * @param list<string> $later
      */
     #[Test]
     #[DataProvider('provideOrdersServingBoth')]
-    public function test_an_overlap_the_reorder_would_shadow_gets_no_reorder_and_no_merge(array $earlier, array $later): void
+    public function test_a_carve_out_the_reorder_would_shadow_gets_no_reorder_and_no_merge(array $earlier, array $later): void
     {
         $collection = new RouteCollection();
         $collection->add('first', (new Route('/foo'))->setMethods($earlier));
@@ -150,7 +150,7 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
         $this->assertSame(['second'], self::routesReached(self::reversed($collection), '/foo'));
 
         $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
-        $this->assertSame(['overlap'], array_column($conflicts, 'type'));
+        $this->assertSame([], array_column($conflicts, 'type'));
 
         $this->assertSame([], (new RouteConflictSuggestionBuilder())->collect($conflicts));
     }

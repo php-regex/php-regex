@@ -225,8 +225,9 @@ final class RouteConflictAnalyzer
                 // The later route is shadowed when the earlier one takes
                 // every request it takes: every path, and its methods, its
                 // schemes and its host. An earlier route whose paths are a
-                // strict part of the later one's is declared first on
-                // purpose: both stay reachable. Any other pair sharing a
+                // strict part of the later one's, or whose requests are all
+                // among the later one's, is declared first on purpose, a
+                // carve-out: both stay reachable. Any other pair sharing a
                 // path overlaps: each route keeps some requests, or may, as
                 // PCRE captures the variable the earlier route ends on.
                 $laterPathInEarlier = null === $equivalence->rightOnlyExample;
@@ -240,7 +241,7 @@ final class RouteConflictAnalyzer
                         $notes[] = 'Equivalent route patterns.';
                     }
                     $notes[] = 'Less specific route declared BEFORE more specific route.';
-                } elseif ($earlierPathInLater && !$laterPathInEarlier) {
+                } elseif (($earlierPathInLater && !$laterPathInEarlier) || $laterTakesEarlier) {
                     continue;
                 } else {
                     $overlaps++;

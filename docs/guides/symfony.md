@@ -518,11 +518,14 @@ matches them: the first route that matches a request wins it. A route is
 it matches, its methods, its schemes and its host included, so it can never
 be reached. Two routes that share some requests but not all are an
 **overlap**, listed with `--show-overlaps`: `/blog/{slug}` (`[a-z]+`) declared
-before `/blog/{id}` (`\d+|new`) takes `/blog/new`, and a route for `GET`
-declared before a route for `GET` and `POST` on the same path leaves it the
-`POST` requests. A narrower route declared
-before a wider one, `/users/list` before `/users/{id}`, is the order the
-router expects and is not reported. Two hosts the analysis cannot compare,
+before `/blog/{id}` (`\d+|new`) takes `/blog/new`, and a route for `GET` and
+`POST` declared before a route for `GET` and `PUT` on the same path leaves
+it the `PUT` requests. A narrower route declared before a wider one, whose
+requests are all among the later route's, is a **carve-out**, the order the
+router expects, and is not reported: `/users/list` before `/users/{id}`, a
+route for `GET` before a route for `GET` and `POST` on the same path, a
+route for `https` before one for any scheme, a route for a host before one
+for any host. Two hosts the analysis cannot compare,
 a host it cannot read or one the solver gives up on (a conditional in a
 host requirement, say), leave the paths to decide, and the finding notes
 `Host requirements were not evaluated.` A route that names no method or no
@@ -531,7 +534,7 @@ scheme takes any; one given only empty ones, `setMethods([''])` or
 conflicts with no other route. A route for `GET` takes the `HEAD` requests
 too, as the router sends them: a later route for `HEAD` only on the same
 path is shadowed, and a route for `HEAD` only declared before a route for
-`GET` on the same path is an overlap that serves both. The report suggests
+`GET` on the same path is a carve-out that serves both. The report suggests
 moving a later route first, or merging two routes on the same paths, only
 where neither would leave a route unreachable. The router redirects a `GET`
 or `HEAD` request whose path differs from a route's by a trailing slash
