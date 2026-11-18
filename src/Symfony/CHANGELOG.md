@@ -300,8 +300,9 @@ CHANGELOG
    earlier route takes every request of it, its methods (`GET` taking
    `HEAD`), its schemes and its host included, as the security analysis
    does. An earlier route whose requests are all among the later one's,
-   narrower by path, method, scheme or host, is a carve-out and is not
-   reported, as the security analysis reads it: a route for `HEAD` only
+   narrower by method, scheme or host, is a carve-out and is not reported,
+   as one strictly narrower by path is, as the security analysis reads
+   them: a route for `HEAD` only
    before a route for `GET` on the same path, a route for `GET` before one
    for `GET` and `POST`, a route for `https` before one for any scheme and
    a route for a host before one for any host, which were reported as

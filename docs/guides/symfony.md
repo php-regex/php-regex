@@ -527,12 +527,13 @@ be reached. Two routes that share some requests but not all are an
 **overlap**, listed with `--show-overlaps`: `/blog/{slug}` (`[a-z]+`) declared
 before `/blog/{id}` (`\d+|new`) takes `/blog/new`, and a route for `GET` and
 `POST` declared before a route for `GET` and `PUT` on the same path leaves
-it the `PUT` requests. A narrower route declared before a wider one, whose
-requests are all among the later route's, is a **carve-out**, the order the
-router expects, and is not reported: `/users/list` before `/users/{id}`, a
-route for `GET` before a route for `GET` and `POST` on the same path, a
-route for `https` before one for any scheme, a route for a host before one
-for any host. Two hosts the analysis cannot compare,
+it the `PUT` requests. A route declared before a wider one, strictly
+narrower by path or with all its requests among the later route's, is a
+**carve-out**, the order the router expects, and is not reported, as an
+`access_control` rule is: `/users/list` before `/users/{id}`, a route for
+`GET` before a route for `GET` and `POST` on the same path, a route for
+`https` before one for any scheme, a route for a host before one for any
+host. Two hosts the analysis cannot compare,
 a host it cannot read or one the solver gives up on (a conditional in a
 host requirement, say), leave the paths to decide, and the finding notes
 `Host requirements were not evaluated.` Two routes whose hosts part on
