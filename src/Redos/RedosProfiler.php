@@ -1111,17 +1111,10 @@ final class RedosProfiler extends AbstractNodeVisitor
         foreach ($branches as $alt) {
             $set = $this->setsAt($alt)->firstChars($alt);
 
-            if ($this->startsWithDot($alt)) {
-                if (!empty($sets)) {
-                    return true;
-                }
-                $sets[] = $set;
-
-                continue;
-            }
-
             // A set not known may meet any other, in whichever order the
-            // branches are written: "a|\1" as "\1|a".
+            // branches are written: "a|\1" as "\1|a". The dot's set leaves
+            // out the newlines of the convention in force without s: under
+            // (*ANY), "\x85|." starts apart as ".|\x85" does.
             foreach ($sets as $existing) {
                 if ($set->intersects($existing)) {
                     return true;
@@ -1132,32 +1125,6 @@ final class RedosProfiler extends AbstractNodeVisitor
         }
 
         return false;
-    }
-
-    /**
-     * Generates a "signature" for the starting element of a node, used for overlap detection.
-     */
-    private function getPrefixSignature(NodeInterface $node): string
-    {
-        if ($node instanceof DotNode) {
-            return 'DOT';
-        }
-        if ($node instanceof SequenceNode && !empty($node->children)) {
-            return $this->getPrefixSignature($node->children[0]);
-        }
-        if ($node instanceof GroupNode) {
-            return $this->getPrefixSignature($node->child);
-        }
-        if ($node instanceof QuantifierNode) {
-            return $this->getPrefixSignature($node->node);
-        }
-
-        return '';
-    }
-
-    private function startsWithDot(NodeInterface $node): bool
-    {
-        return 'DOT' === $this->getPrefixSignature($node);
     }
 
     /**

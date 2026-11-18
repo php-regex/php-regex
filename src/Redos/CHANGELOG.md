@@ -68,7 +68,8 @@ CHANGELOG
    `\h` the no-break space and `\v` and `\R` the next line:
    `/^((?:[^a]|é)+)\1$/` and `/^((?:.|é)+)\1$/`, which were medium, are
    critical. Under `(*ANY)` the next line is a newline the dot does not
-   take: `/(*ANY)^((?:.|\x85)+)\1$/` is medium, and critical under s.
+   take, whichever branch comes first: `/(*ANY)^((?:.|\x85)+)\1$/` and
+   `/(*ANY)^((?:\x85|.)+)\1$/` are medium, and critical under s.
    Under u a character above ASCII ends a repeat as it starts the next
    one: `/^((?:é+é)+)\1$/u`, which was medium, is critical, as
    `/^((?:a+a)+)\1$/` is.
