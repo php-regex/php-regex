@@ -6,6 +6,18 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * What follows an operand of an extended class, where an operator, a `)`
+   or the `]` is due, is refused as PCRE2 names it: a character that starts
+   no operand is `regex.extended_class.unexpected_character`, `/(?[\d a])/`
+   at offset 7, where it was `regex.extended_class.missing_operator`, which
+   a class, an escape, a `(` or a `!` there stays.
+ * A nested class an extended class leaves open is read as written to the
+   end of the pattern, with no `]` added, and a fault there comes before the
+   missing `]`: `/(?[[\c/` is `regex.control_char.invalid` at offset 6 and
+   `/(?[[\p{Lu}|-[:alpha:]/` is `regex.range.invalid_bounds` at 21, where
+   both were `regex.charclass.unclosed`. A range to an unknown POSIX class is
+   refused as the range, before PCRE2 reads the name: `/(?[[a-[:foo:]])/` is
+   `regex.range.invalid_bounds` at 13, where it was `regex.posix.invalid`.
  * The braced name of a `\p{` or `\P{` in an extended class is read as PCRE2
    reads it, past the `]` of a nested class, a `\Q` or a `-`, up to its `}`
    or to where PCRE2 gives up on it: `/(?[[\p{-\Q\cé]])/` is

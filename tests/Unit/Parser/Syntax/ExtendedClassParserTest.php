@@ -123,9 +123,16 @@ final class ExtendedClassParserTest extends TestCase
         yield 'class escape starting a range whose octal end PCRE refuses' => ['pattern' => '/(?[[\d-\o{8}]])/', 'code' => ErrorCode::OctalInvalidDigit, 'offset' => 11];
         yield 'class escape starting a range whose hex end PCRE refuses, then a quote' => ['pattern' => '/(?[[\d-\x{zz}\Q/', 'code' => ErrorCode::UnicodeInvalidDigit, 'offset' => 11];
         yield 'class escape starting a range a POSIX class ends' => ['pattern' => '/(?[[\d-[:foo:]]])/', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 7];
+        // Where the range is refused, at the end of the POSIX item, its name
+        // is not read yet; past a range that ended, the "-" is a member and
+        // the name is judged.
+        yield 'a range to an unknown POSIX class' => ['pattern' => '/(?[[a-[:foo:]])/', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 13];
+        yield 'a range to an unknown POSIX class past a lone \E' => ['pattern' => '/(?[[a\E-[:foo:]])/', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 15];
+        yield 'a range to an unknown POSIX class past empty quotes' => ['pattern' => '/(?[[a-\Q\E[:foo:]])/', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 17];
+        yield 'an unknown POSIX class after a range that ended' => ['pattern' => '/(?[[a-c-[:foo:]])/', 'code' => ErrorCode::PosixInvalid, 'offset' => 15];
         // A range the pattern or the fault ends before its end is never
         // judged.
-        yield 'class escape starting a range the pattern ends in' => ['pattern' => '/(?[[b\d-\E\c/u', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 12];
+        yield 'class escape starting a range the pattern ends in' => ['pattern' => '/(?[[b\d-\E\c/u', 'code' => ErrorCode::ControlCharInvalid, 'offset' => 12];
         yield 'class escape starting a range a quote then an escape PCRE refuses end' => ['pattern' => "/(?[[\d-\E\c\u{E9}])/", 'code' => ErrorCode::ControlCharInvalid, 'offset' => 12];
         // A refusal that is no range's stays the member's.
         yield 'escape no class takes before an escape PCRE refuses' => ['pattern' => "/(?[[\X\c\u{E9}])/", 'code' => ErrorCode::CharclassInvalidEscape, 'offset' => 6];
@@ -230,6 +237,117 @@ final class ExtendedClassParserTest extends TestCase
         yield 'nested class, a name closed past an operator and a class' => ['pattern' => '/(?[[\p{L]] + [b])x}/', 'code' => $unknown, 'offset' => 19];
         yield 'nested class, a "]" then a byte no name holds' => ['pattern' => '/(?[[\p{L]é}])/', 'code' => $malformed, 'offset' => 10];
         yield 'nested class, a "]" then a character no name holds' => ['pattern' => '/(?[[\p{L]] ! [b])x}/', 'code' => $malformed, 'offset' => 12];
+    }
+
+    /**
+     * After an operand, past the spaces and tabs it skips and a lone "\E",
+     * PCRE takes an operator, a ")" or the "]" that closes the class. What
+     * would start an operand, a class, an escape, a "(" or a "!", is refused
+     * as an expression with no operator before it; any other character as
+     * one no extended class takes, a newline or a "#" under "x" included.
+     * Each row is the error preg_match() reports on PHP 8.4.27 with PCRE2
+     * 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideWhatFollowsAnOperand')]
+    public function test_what_follows_an_operand_is_refused_as_pcre_names_it(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $this->assertTheEngineRefusesAt($offset, $pattern);
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideWhatFollowsAnOperand(): iterable
+    {
+        $character = ErrorCode::ExtendedClassUnexpectedCharacter;
+        $operand = ErrorCode::ExtendedClassMissingOperator;
+
+        yield 'a letter after a class escape' => ['pattern' => '/(?[\da])/', 'code' => $character, 'offset' => 6];
+        yield 'a letter after a class escape and a space' => ['pattern' => '/(?[\d a])/', 'code' => $character, 'offset' => 7];
+        yield 'a letter after a class escape and a lone \E' => ['pattern' => '/(?[\d\Ea])/', 'code' => $character, 'offset' => 8];
+        yield 'a newline after a class escape' => ['pattern' => "/(?[\\d\na])/", 'code' => $character, 'offset' => 6];
+        yield 'a byte above ASCII after a class escape' => ['pattern' => '/(?[\dé])/', 'code' => $character, 'offset' => 6];
+        yield 'a character above ASCII after a class escape, under u' => ['pattern' => '/(?[\dé])/u', 'code' => $character, 'offset' => 7];
+        yield 'a letter after a nested class' => ['pattern' => '/(?[[a]b])/', 'code' => $character, 'offset' => 7];
+        yield 'a letter after a nested class and two spaces' => ['pattern' => '/(?[[a]  a])/', 'code' => $character, 'offset' => 9];
+        yield 'a letter after a braced property' => ['pattern' => '/(?[\p{L} a])/', 'code' => $character, 'offset' => 10];
+        yield 'a letter after a property letter' => ['pattern' => '/(?[\pLa])/', 'code' => $character, 'offset' => 7];
+        yield 'a letter after a POSIX item' => ['pattern' => '/(?[[:alpha:]a])/', 'code' => $character, 'offset' => 13];
+        yield 'a letter after a parenthesised expression' => ['pattern' => '/(?[(\d)a])/', 'code' => $character, 'offset' => 8];
+        yield 'a letter after an operand in parentheses' => ['pattern' => '/(?[(\d a)])/', 'code' => $character, 'offset' => 8];
+        yield 'a letter after a complement' => ['pattern' => '/(?[!\d a])/', 'code' => $character, 'offset' => 8];
+        yield 'a comment start after a class escape, under x' => ['pattern' => '/(?[\d #c])/x', 'code' => $character, 'offset' => 7];
+        yield 'a letter after a class escape and a space, under xx' => ['pattern' => '/(?[\d a])/xx', 'code' => $character, 'offset' => 7];
+
+        // What would start an operand.
+        yield 'a nested class after a class escape' => ['pattern' => '/(?[\d[a]])/', 'code' => $operand, 'offset' => 6];
+        yield 'a class escape after a class escape' => ['pattern' => '/(?[\d\w])/', 'code' => $operand, 'offset' => 7];
+        yield 'a POSIX item after a class escape' => ['pattern' => '/(?[\d[:alpha:]])/', 'code' => $operand, 'offset' => 14];
+        yield 'a parenthesis after a class escape' => ['pattern' => '/(?[\d(\w)])/', 'code' => $operand, 'offset' => 6];
+        yield 'a complement after a class escape' => ['pattern' => '/(?[\d!\w])/', 'code' => $operand, 'offset' => 6];
+    }
+
+    /**
+     * A nested class the pattern leaves open is read item by item to the
+     * end of the pattern: what PCRE refuses there, a "\c" or an escape the
+     * pattern ends in, a range whose end is the last item, comes before the
+     * missing "]". Nor does a "]" PCRE never reads close a POSIX item:
+     * "[a-[:foo:" ranges from "a" to "[". Each row is the error
+     * preg_match() reports on PHP 8.4.27 with PCRE2 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideFaultsAtTheEndOfAClassLeftOpen')]
+    public function test_a_fault_at_the_end_of_a_nested_class_left_open_is_reported(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $this->assertTheEngineRefusesAt($offset, $pattern);
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideFaultsAtTheEndOfAClassLeftOpen(): iterable
+    {
+        $invalidRange = ErrorCode::RangeInvalidBounds;
+
+        yield 'a "\c" the pattern ends in' => ['pattern' => '/(?[[\c/', 'code' => ErrorCode::ControlCharInvalid, 'offset' => 6];
+        yield 'a "\c" the pattern ends in, under u' => ['pattern' => '/(?[[\c/u', 'code' => ErrorCode::ControlCharInvalid, 'offset' => 6];
+        yield 'a "\c" the pattern ends in, in parentheses' => ['pattern' => '/(?[([\c/', 'code' => ErrorCode::ControlCharInvalid, 'offset' => 7];
+        yield 'a "\c" before a character past ASCII, under u' => ['pattern' => '/(?[[\cé/u', 'code' => ErrorCode::ControlCharInvalid, 'offset' => 8];
+        yield 'a range to a class escape the pattern ends in' => ['pattern' => '/(?[[a-\d/', 'code' => $invalidRange, 'offset' => 8];
+        yield 'a range to a class escape the pattern ends in, under x' => ['pattern' => '/(?[[a-\d/x', 'code' => $invalidRange, 'offset' => 8];
+        yield 'a range to a class escape after a space, under xx' => ['pattern' => '/(?[[a- \d/xx', 'code' => $invalidRange, 'offset' => 9];
+        yield 'a range to a property the pattern ends in' => ['pattern' => '/(?[[a-\pL/', 'code' => $invalidRange, 'offset' => 9];
+        yield 'a range to a POSIX class the pattern ends in' => ['pattern' => '/(?[[a-[:alpha:]/', 'code' => $invalidRange, 'offset' => 15];
+        yield 'a range from a property to a POSIX class' => ['pattern' => '/(?[[\p{Lu}|-[:alpha:]/', 'code' => $invalidRange, 'offset' => 21];
+        yield 'a range in a class after an operator' => ['pattern' => '/(?[\d+[a-\d/', 'code' => $invalidRange, 'offset' => 11];
+        yield 'a range to an unknown POSIX class the pattern ends in' => ['pattern' => '/(?[[a-[:foo:]/', 'code' => $invalidRange, 'offset' => 13];
+        yield 'an unknown POSIX class the pattern ends in, after a range that ended' => ['pattern' => '/(?[[a-c-[:foo:]/', 'code' => ErrorCode::PosixInvalid, 'offset' => 15];
+        yield 'a range to a POSIX item no "]" closes' => ['pattern' => '/(?[[a-[:foo:/', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
+        yield 'a range from a class escape to a POSIX item no "]" closes' => ['pattern' => '/(?[[\d-[:foo:/', 'code' => $invalidRange, 'offset' => 7];
+        yield 'a range to "\x{" the pattern ends in' => ['pattern' => '/(?[[\d-\x{/', 'code' => ErrorCode::EscapeDigitsMissing, 'offset' => 10];
+        yield 'a range to "\x" the pattern ends in' => ['pattern' => '/(?[[\d-\x/', 'code' => ErrorCode::EscapeDigitsMissing, 'offset' => 9];
+        yield 'a range to "\x{41" the pattern ends in' => ['pattern' => '/(?[[\d-\x{41/', 'code' => ErrorCode::UnicodeInvalidDigit, 'offset' => 12];
+        yield 'a range to "\o{7" the pattern ends in' => ['pattern' => '/(?[[\d-\o{7/', 'code' => ErrorCode::OctalInvalidDigit, 'offset' => 11];
+        // The escape ending a range is read before the range is judged: the
+        // lexer's "z-o" or "z-x" is no range of PCRE's.
+        yield 'a range from "z" to "\o{7", then text' => ['pattern' => '/(?[[z-\o{7)/', 'code' => ErrorCode::OctalInvalidDigit, 'offset' => 11];
+        yield 'a range from "z" to "\x{4" the pattern ends in' => ['pattern' => '/(?[[z-\x{4/', 'code' => ErrorCode::UnicodeInvalidDigit, 'offset' => 10];
+        yield 'a range from "z" to "\x{" the pattern ends in' => ['pattern' => '/(?[[z-\x{/', 'code' => ErrorCode::EscapeDigitsMissing, 'offset' => 9];
+        yield 'a reversed range before an escape PCRE refuses' => ['pattern' => '/(?[[z-a\x{zz}/', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
+
+        // Nothing refused before the end: the "]" is missing.
+        yield 'a letter the pattern ends in' => ['pattern' => '/(?[[a/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 5];
+        yield 'a quote the pattern ends in' => ['pattern' => '/(?[[a\Q/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 7];
+        yield 'a reversed range the pattern ends in' => ['pattern' => '/(?[[z-a/', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
     }
 
     /**

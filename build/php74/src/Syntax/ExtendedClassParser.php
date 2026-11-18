@@ -202,7 +202,13 @@ final class ExtendedClassParser
             $read = $lexer->tokenize($text, $this->flags, $class)->getTokens();
         } catch (LexerException $error) {
             $moved = $this->state->movedError($error, $at);
-            [$tokens, $position] = $this->readUpToAPropertyLeftOpen($this->movedTokens($lexer->tokensRead(), $at), $moved->position ?? $at, $lexer->literalEscapesRead(), $at);
+            // A class left open is read item by item to the end of the
+            // pattern, where the lexer refuses it, for the missing "]" or a
+            // reversed range: an item refused on the way, or a range ending
+            // there, comes first, each in its turn.
+            $leftOpen = \in_array($moved->errorCode, [ErrorCode::CharclassUnclosed(), ErrorCode::RangeReversed()], true);
+            $position = $leftOpen ? \strlen($this->pattern) + 1 : $moved->position ?? $at;
+            [$tokens, $position] = $this->readUpToAPropertyLeftOpen($this->movedTokens($lexer->tokensRead(), $at), $position, $lexer->literalEscapesRead(), $at);
 
             throw $this->firstMemberErrorBefore($tokens, $position) ?? $moved;
         }
@@ -220,7 +226,8 @@ final class ExtendedClassParser
 
             if ($class) {
                 [$read, $position] = $this->readUpToAPropertyLeftOpen($tokens, $error->position ?? $at, $lexer->literalEscapesRead(), $at);
-                $error = $this->firstMemberErrorBefore($read, $position) ?? $error;
+                $member = $this->firstMemberErrorBefore($read, $position);
+                $error = null === $member || self::refusedBeforeItsName($member, $error) ? $error : $member;
             }
 
             throw $error;
@@ -306,7 +313,17 @@ final class ExtendedClassParser
         // one, holds no range.
         $range = TokenType::CharClassOpen() === (($nullsafeVariable1 = $tokens[0] ?? null) ? $nullsafeVariable1->type : null) ? $this->firstRangeErrorBefore($tokens, $position) : null;
 
-        return null === $range || (null !== $member && ($member->position ?? $position) <= ($range->position ?? $position)) ? $member : $range;
+        return null === $range || (null !== $member && ($member->position ?? $position) <= ($range->position ?? $position) && !self::refusedBeforeItsName($member, $range)) ? $member : $range;
+    }
+
+    /**
+     * Whether the range is refused before the unknown POSIX name its last
+     * item holds: both are refused at the end of that item, and PCRE judges
+     * the range before it reads the name.
+     */
+    private static function refusedBeforeItsName(ParserException $member, ParserException $range): bool
+    {
+        return ErrorCode::PosixInvalid() === $member->errorCode && ErrorCode::RangeInvalidBounds() === $range->errorCode && $member->position === $range->position;
     }
 
     /**

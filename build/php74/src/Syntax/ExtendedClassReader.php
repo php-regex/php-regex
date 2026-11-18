@@ -465,8 +465,11 @@ final class ExtendedClassReader
     }
 
     /**
-     * An operand right after another one: PCRE refuses it past an escape or a
-     * POSIX class it reads whole, and past the first character of the rest.
+     * What stands right after an operand, but an operator, a ")" or a "]":
+     * PCRE refuses what would start an operand, "[", "\", "(" or "!", as an
+     * expression with no operator before it, past an escape or a POSIX class
+     * it reads whole, and past the first character of the rest; any other
+     * character as one no extended class takes, past it.
      */
     private function refuseOperandAfterOperand(): void
     {
@@ -494,6 +497,10 @@ final class ExtendedClassReader
         // An escape is read, and judged, before it is found out of place.
         if ('\\' === $char) {
             $this->operands[] = $this->readApart($this->escape, (string) substr($this->pattern, $this->at, $end - $this->at), $this->at);
+        }
+
+        if (!\in_array($char, ['[', '\\', '(', '!'], true)) {
+            $this->refuse('Unexpected character in an extended class', ErrorCode::ExtendedClassUnexpectedCharacter(), $end);
         }
 
         $this->refuse('Two operands with no operator between them in an extended class', ErrorCode::ExtendedClassMissingOperator(), $end);
@@ -538,20 +545,20 @@ final class ExtendedClassReader
     }
 
     /**
-     * A class that never closes: what PCRE refuses in it comes first, as it
-     * reads it before it meets the end.
+     * A class that never closes: PCRE reads it item by item to the end of
+     * the pattern, so what it refuses there comes before the missing "]".
+     * The class is read as written, with no "]" added: one would close a
+     * POSIX item, "[:foo:", or be the character of a "\c" the pattern ends
+     * in.
      *
      * @return never
      */
     private function refuseUnclosedClass(int $start)
     {
         try {
-            $this->operands[] = ($this->class)(substr($this->pattern, $start).']', $start);
+            $this->operands[] = ($this->class)((string) substr($this->pattern, $start), $start);
         } catch (LexerException|ParserException $error) {
-            // A fault in what the pattern writes comes first; one at its end
-            // is the "]" added to read it, but for a property PCRE reads the
-            // rest of the pattern for, and refuses there.
-            if (($error->position ?? $this->length) < $this->length || ErrorCode::UnicodePropertyMalformed() === $error->errorCode) {
+            if (ErrorCode::CharclassUnclosed() !== $error->errorCode) {
                 ($this->fail)($error, $start, $this->operands);
             }
         }
