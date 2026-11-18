@@ -1546,7 +1546,7 @@ final class RedosProfiler extends AbstractNodeVisitor
      */
     private function setsAt(NodeInterface $node): CharSetAnalyzer
     {
-        return null !== $this->setsInForce && $this->setsInForce->contains($node) ? $this->setsInForce[$node] : $this->charSetAnalyzer;
+        return null !== $this->setsInForce && isset($this->setsInForce[$node]) ? $this->setsInForce[$node] : $this->charSetAnalyzer;
     }
 
     /**
