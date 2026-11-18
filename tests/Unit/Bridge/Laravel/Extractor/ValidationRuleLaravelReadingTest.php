@@ -460,17 +460,47 @@ final class ValidationRuleLaravelReadingTest extends TestCase
                 'h' => "regex:/^l" . '$/',
                 'i' => 'required|max:' . strlen($prefix) . '|regex:/^(m|n)$/',
                 'j' => trim($base) . '|regex:/^(o|p)$/',
+                'k' => $base . $max . '|regex:/^(q|r)$/',
             ];
             PHP]);
         $rules = require $project.'/app/Rules.php';
         $this->assertIsArray($rules);
         $expected = self::laravelPatterns($rules);
-        $this->assertSame(['/^(ab)$/', '/^(c|d)$/', '/^(e', '/^(g', '/^ab[a-z]+$/', '/^(i', '/^l$/', '/^(m', '/^(o'], $expected);
-        $this->assertSame([true, true, false, false, true, false, true, false, false], array_map(EngineProbe::compiles(...), $expected));
+        $this->assertSame(['/^(ab)$/', '/^(c|d)$/', '/^(e', '/^(g', '/^ab[a-z]+$/', '/^(i', '/^l$/', '/^(m', '/^(o', '/^(q'], $expected);
+        $this->assertSame([true, true, false, false, true, false, true, false, false, false], array_map(EngineProbe::compiles(...), $expected));
 
         $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
 
-        $this->assertSame([[4, '/^(ab)$/'], [5, '/^(c|d)$/'], [6, '/^(e'], [9, '/^(g'], [11, '/^(i'], [13, '/^l$/'], [14, '/^(m'], [15, '/^(o']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+        $this->assertSame([[4, '/^(ab)$/'], [5, '/^(c|d)$/'], [8, '/^(e'], [9, '/^(g'], [11, '/^(i'], [13, '/^l$/'], [14, '/^(m'], [15, '/^(o'], [16, '/^(q']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A rule of a concatenation is placed on the line of the literal it
+     * starts in, where a marker on that line finds it: the literals before
+     * it change nothing.
+     */
+    #[Test]
+    public function test_a_rule_of_a_concatenation_is_placed_on_the_line_of_its_literal(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            return [
+                'a' => 'required|'
+                    . 'regex:/[/',
+                'b' => 'regex:/^(a'
+                    . '|b)$/',
+                'c' => ['required', ('regex:/^c' . '$/')],
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = self::laravelPatterns($rules);
+        $this->assertSame(['/[/', '/^(a', '/^c$/'], $expected);
+        $this->assertSame([false, false, true], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[4, '/[/'], [5, '/^(a'], [7, '/^c$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
     }
 
     /**

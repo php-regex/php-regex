@@ -232,6 +232,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 // parentheses that only group it, is read as the string PHP
                 // builds from the expression around it.
                 [$pieces, $end, $heredoc] = $literal;
+                $lines = self::linesOf($pieces, PhpTokens::lineOf($tokens, $index));
                 $start = $index;
                 [$first, $last] = [$index, $end];
                 $before = PhpTokens::previousSignificant($tokens, $first - 1);
@@ -245,7 +246,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 if ((null !== $before && ('.' === $tokens[$before] || self::isOperandToken($tokens[$before])))
                     || (null !== $after && (\in_array($tokens[$after], ['.', '(', '['], true) || self::isOperandToken($tokens[$after])))) {
                     $start = self::expressionStart($tokens, $first, $openers);
-                    [$pieces, $heredoc, $literals] = self::concatenation($tokens, $start, $closers);
+                    [$pieces, $heredoc, $literals, , $lines] = self::concatenation($tokens, $start, $closers);
                     $joined += array_fill_keys($literals, true);
                 } else {
                     $index = $end;
@@ -273,10 +274,11 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 if ($rulesString ?? 1 !== LibraryPcre::match(self::RULE, $literal)) {
                     $rules = self::rulesOf($pieces);
                 } else {
-                    $rules = \in_array(null, $pieces, true) ? [] : [$literal];
+                    $rules = \in_array(null, $pieces, true) ? [] : [[$literal, 0, 0]];
                 }
 
-                foreach ($rules as $rule) {
+                // A rule stands on the line of the literal it starts in.
+                foreach ($rules as [$rule, $piece, $at]) {
                     if (1 !== LibraryPcre::match(self::RULE, $rule, $name)) {
                         continue;
                     }
@@ -297,7 +299,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                     $patterns[] = new PatternOccurrence(
                         $trimmed,
                         $filePath,
-                        PhpTokens::lineOf($tokens, $start),
+                        self::lineAt($lines, $piece, $at),
                         'validation:'.('' === $name[2] ? 'regex' : 'not_regex'),
                         $pattern,
                         'Laravel validation rule',
@@ -730,40 +732,82 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * no expression inside. The value of an expression may hold a "|" of
      * its own, so the rule it is part of is not known.
      *
+     * Each rule comes with where it starts: its text and its offset in it.
+     *
      * @param list<string|null> $pieces the texts of the string, null for each expression between them
      *
-     * @return list<string>
+     * @return list<array{string, int, int}>
      */
     private static function rulesOf(array $pieces): array
     {
         $rules = [];
         $rule = '';
-        foreach ($pieces as $piece) {
+        $start = [0, 0];
+        foreach ($pieces as $text => $piece) {
             if (null === $piece) {
                 $rule = null;
 
                 continue;
             }
 
+            $offset = 0;
             foreach (explode('|', $piece) as $position => $part) {
                 if ($position > 0) {
                     if (null !== $rule) {
-                        $rules[] = $rule;
+                        $rules[] = [$rule, ...$start];
                     }
-                    $rule = '';
+                    [$rule, $start] = ['', [$text, $offset]];
                 }
 
                 if (null !== $rule) {
                     $rule .= $part;
                 }
+                $offset += \strlen($part) + 1;
             }
         }
 
         if (null !== $rule) {
-            $rules[] = $rule;
+            $rules[] = [$rule, ...$start];
         }
 
         return $rules;
+    }
+
+    /**
+     * Where each text of the literal on $line starts: its index among the
+     * texts, its offset in it, and the line.
+     *
+     * @param list<string|null> $pieces
+     *
+     * @return list<array{int, int, int}>
+     */
+    private static function linesOf(array $pieces, int $line): array
+    {
+        $lines = [];
+        foreach ($pieces as $text => $piece) {
+            if (null !== $piece) {
+                $lines[] = [$text, 0, $line];
+            }
+        }
+
+        return $lines;
+    }
+
+    /**
+     * The line of the literal that writes this offset of this text.
+     *
+     * @param list<array{int, int, int}> $lines where each literal starts, from linesOf() and join()
+     */
+    private static function lineAt(array $lines, int $text, int $offset): int
+    {
+        $line = $lines[0][2] ?? 1;
+        foreach ($lines as [$at, $from, $of]) {
+            if ($at === $text && $from <= $offset) {
+                $line = $of;
+            }
+        }
+
+        return $line;
     }
 
     /**
@@ -799,30 +843,33 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * "." that are a literal alone joined into the string PHP builds, null
      * for each other operand; whether one of its literals is a heredoc or a
      * nowdoc; the first token of each literal it holds outside brackets
-     * other than grouping ones; and its last token.
+     * other than grouping ones; its last token; and where its literals
+     * start in its texts, as linesOf() says.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $closers
      *
-     * @return array{list<string|null>, bool, list<int>, int}
+     * @return array{list<string|null>, bool, list<int>, int, list<array{int, int, int}>}
      */
     private static function concatenation(array $tokens, int $start, array $closers): array
     {
         $pieces = [];
+        $lines = [];
         $heredoc = false;
         $literals = [];
-        // The texts of the last literal of the operand being read, and the
-        // count of the units it holds: a literal alone is one, a bracket
-        // with what it holds one.
+        // The texts of the last literal of the operand being read and where
+        // its literals start, and the count of the units it holds: a
+        // literal alone is one, a bracket with what it holds one.
         $operand = null;
+        $operandLines = [];
         $units = 0;
         $count = \count($tokens);
         $end = $start - 1;
         for ($index = $start; null !== $index; $index = PhpTokens::nextSignificant($tokens, $end + 1, $count)) {
             $token = $tokens[$index];
             if ('.' === $token) {
-                $pieces = self::join($pieces, 1 === $units && null !== $operand ? $operand : [null]);
-                [$operand, $units, $end] = [null, 0, $index];
+                self::join($pieces, $lines, 1 === $units && null !== $operand ? $operand : [null], 1 === $units ? $operandLines : []);
+                [$operand, $operandLines, $units, $end] = [null, [], 0, $index];
 
                 continue;
             }
@@ -831,6 +878,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             if (null !== $literal) {
                 $literals[] = $index;
                 $operand = $literal[0];
+                $operandLines = self::linesOf($literal[0], PhpTokens::lineOf($tokens, $index));
                 $heredoc = $heredoc || (0 === $units && $literal[2]);
                 $end = $literal[1];
             } elseif ('(' === $token && 0 === $units && isset($closers[$index])) {
@@ -840,7 +888,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 $grouped = null === $inner ? null : self::concatenation($tokens, $inner, $closers);
                 $operand = null;
                 if (null !== $grouped && PhpTokens::nextSignificant($tokens, $grouped[3] + 1, $count) === $closers[$index]) {
-                    [$operand, $groupedHeredoc, $groupedLiterals] = $grouped;
+                    [$operand, $groupedHeredoc, $groupedLiterals, , $operandLines] = $grouped;
                     $heredoc = $heredoc || $groupedHeredoc;
                     array_push($literals, ...$groupedLiterals);
                 }
@@ -856,31 +904,41 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             $units++;
         }
 
-        return [self::join($pieces, 1 === $units && null !== $operand ? $operand : [null]), $heredoc, $literals, $end];
+        self::join($pieces, $lines, 1 === $units && null !== $operand ? $operand : [null], 1 === $units ? $operandLines : []);
+
+        return [$pieces, $heredoc, $literals, $end, $lines];
     }
 
     /**
-     * The texts with these after them: two texts in a row are one, as PHP
-     * joins them, and two expressions in a row one unknown.
+     * Puts these texts after the texts, and where their literals start
+     * after where theirs do: two texts in a row are one, as PHP joins them,
+     * appended in place, and two expressions in a row one unknown.
      *
-     * @param list<string|null> $pieces
-     * @param list<string|null> $more
-     *
-     * @return list<string|null>
+     * @param list<string|null>          $pieces
+     * @param list<array{int, int, int}> $lines     where the literals of $pieces start, as linesOf() gives them
+     * @param list<string|null>          $more
+     * @param list<array{int, int, int}> $moreLines where the literals of $more start
      */
-    private static function join(array $pieces, array $more): array
+    private static function join(array &$pieces, array &$lines, array $more, array $moreLines): void
     {
-        foreach ($more as $piece) {
+        foreach ($more as $text => $piece) {
             $last = array_key_last($pieces);
-            $previous = null === $last ? null : $pieces[$last];
-            if (null !== $last && null !== $previous && null !== $piece) {
-                $pieces[$last] = $previous.$piece;
-            } elseif (null === $last || null !== $previous || null !== $piece) {
+            if (null !== $last && \is_string($pieces[$last]) && null !== $piece) {
+                [$at, $from] = [$last, \strlen($pieces[$last])];
+                $pieces[$last] .= $piece;
+            } elseif (null === $last || null !== $pieces[$last] || null !== $piece) {
+                [$at, $from] = [\count($pieces), 0];
                 $pieces[] = $piece;
+            } else {
+                continue;
+            }
+
+            foreach ($moreLines as [$of, $offset, $line]) {
+                if ($of === $text) {
+                    $lines[] = [$at, $from + $offset, $line];
+                }
             }
         }
-
-        return $pieces;
     }
 
     /**
