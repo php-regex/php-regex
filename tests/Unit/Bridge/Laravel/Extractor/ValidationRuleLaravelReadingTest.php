@@ -782,7 +782,7 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             $this->assertSame($factory, ValidatorFacade::getFacadeRoot());
         } finally {
             if (null === $cached) {
-                ValidatorFacade::clearResolvedInstance();
+                ValidatorFacade::clearResolvedInstance('validator');
             } else {
                 ValidatorFacade::swap($cached);
             }
@@ -1096,7 +1096,7 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             self::assertFalse($rule->setValidator(new Validator($translator, [], []))->passes('code', 'a'));
         } finally {
             if (null === $previous) {
-                ValidatorFacade::clearResolvedInstance();
+                ValidatorFacade::clearResolvedInstance('validator');
             } else {
                 ValidatorFacade::swap($previous);
             }
