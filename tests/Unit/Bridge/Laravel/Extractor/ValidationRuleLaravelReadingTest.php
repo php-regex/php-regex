@@ -910,6 +910,30 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             'expected' => '/^(a',
             'compiles' => false,
         ];
+        yield 'a string beside keyed rules for other keys' => [
+            'code' => "#[Validate(['other' => 'required'])]\n#[Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['other' => 'required'], ['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a string beside keyed rules for other keys written with array()' => [
+            'code' => "#[Validate(array('other' => 'required'))]\n#[Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['other' => 'required'], ['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a string beside an attribute that gives no rule' => [
+            'code' => "#[Validate(as: 'lane code')]\n#[Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive([], ['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a string of a typed property beside keyed rules for its elements' => [
+            'code' => "#[Validate('regex:/^(a|b)$/')]\n#[Validate(rule: ['code.*' => 'required'])]\npublic ?string \$code = null;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(a|b)$/'], ['code.*' => 'required']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
     }
 
     /**
@@ -953,6 +977,11 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             'code' => "#[Validate(rule: 'regex:/^(d|e)$/'), Rule('required')]\npublic \$code;",
             'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(d|e)$/'], ['code' => 'required']),
             'expected' => ['/^(d|e)$/'],
+        ];
+        yield 'a string beside keyed rules for the property' => [
+            'code' => "#[Validate(['code' => 'required'])]\n#[Validate('regex:/^(f|g)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'required'], ['code' => 'regex:/^(f|g)$/']),
+            'expected' => ['/^(f|g)$/'],
         ];
     }
 

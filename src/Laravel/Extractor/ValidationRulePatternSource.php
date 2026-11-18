@@ -494,8 +494,9 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     /**
      * The closing bracket of the last attribute group of the run that opens
      * at $start, groups that follow one another, and how many of Livewire's
-     * rule attributes with arguments the run holds: the run marks one
-     * declaration.
+     * rule attributes the run holds give rules to the property the run
+     * marks: BaseValidate::boot() gives a keyed array as it is, keys and
+     * all, and any other rule under the name of the property.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $closers
@@ -504,26 +505,113 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      */
     private static function livewireRun(array $tokens, int $start, array $closers, NameResolutionContext $context): array
     {
-        $attributes = 0;
         $count = \count($tokens);
-        for ($group = $start; ; $group = $next) {
+        // The rule each of Livewire's attributes is given, by the index of
+        // its first token; null where it is given none.
+        $rules = [];
+        $end = $start;
+        for ($group = $start; null !== $group; $group = null !== $next && \is_array($tokens[$next]) && \T_ATTRIBUTE === $tokens[$next][0] ? $next : null) {
             $end = $closers[$group] ?? $count - 1;
             // A name of the group, its arguments between parentheses that
             // are stepped over.
             for ($index = $group + 1; $index < $end; $index++) {
-                $next = PhpTokens::nextSignificant($tokens, $index + 1, $end);
-                if (null !== $next && '(' === $tokens[$next] && self::isLivewireRuleAttribute($tokens[$index], $context)) {
-                    $attributes++;
+                $open = PhpTokens::nextSignificant($tokens, $index + 1, $end);
+                if (null !== $open && '(' === $tokens[$open] && self::isLivewireRuleAttribute($tokens[$index], $context)) {
+                    $rules[] = self::ruleArgument($tokens, $open, $closers);
                 }
 
                 $index = $closers[$index] ?? $index;
             }
 
             $next = PhpTokens::nextSignificant($tokens, $end + 1, $count);
-            if (null === $next || !\is_array($tokens[$next]) || \T_ATTRIBUTE !== $tokens[$next][0]) {
-                return [$end, $attributes];
+        }
+
+        // The property the run marks, after its modifiers and its type.
+        $property = null;
+        for ($index = PhpTokens::nextSignificant($tokens, $end + 1, $count); null !== $index && null === $property && !\in_array($tokens[$index], [';', '(', '{', '='], true); $index = PhpTokens::nextSignificant($tokens, $index + 1, $count)) {
+            if (\is_array($tokens[$index]) && \T_VARIABLE === $tokens[$index][0]) {
+                $property = substr($tokens[$index][1], 1);
             }
         }
+
+        $attributes = 0;
+        foreach ($rules as $rule) {
+            $keys = null === $rule ? [] : self::arrayKeys($tokens, $rule, $closers);
+            $attributes += null === $rule ? 0 : (int) (null === $keys || \in_array($property, $keys, true));
+        }
+
+        return [$end, $attributes];
+    }
+
+    /**
+     * The first token of the rule the attribute whose arguments open at
+     * $open is given, first or named "rule"; null where it is given none.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     */
+    private static function ruleArgument(array $tokens, int $open, array $closers): ?int
+    {
+        $close = $closers[$open] ?? \count($tokens);
+        $position = 0;
+        $argument = PhpTokens::nextSignificant($tokens, $open + 1, $close);
+        while (null !== $argument) {
+            $colon = PhpTokens::nextSignificant($tokens, $argument + 1, $close);
+            $named = null !== $colon && ':' === $tokens[$colon] && null !== PhpTokens::identifier($tokens[$argument]);
+            if ($named ? 'rule' === PhpTokens::identifier($tokens[$argument]) : 0 === $position) {
+                return $named ? PhpTokens::nextSignificant($tokens, $colon + 1, $close) : $argument;
+            }
+
+            // The next argument, after the comma that ends this one.
+            for ($index = $argument; $index < $close && ',' !== $tokens[$index]; $index++) {
+                $index = $closers[$index] ?? $index;
+            }
+            $argument = PhpTokens::nextSignificant($tokens, $index + 1, $close);
+            $position++;
+        }
+
+        return null;
+    }
+
+    /**
+     * The keys of the array literal at $start, decoded, where its first
+     * element is given a key, as Livewire tells keyed rules from a list;
+     * null for anything else. A key that is no literal is left out.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     *
+     * @return list<string>|null
+     */
+    private static function arrayKeys(array $tokens, int $start, array $closers): ?array
+    {
+        $open = '[' === $tokens[$start] ? $start : null;
+        if (\is_array($tokens[$start]) && \T_ARRAY === $tokens[$start][0]) {
+            $open = PhpTokens::nextSignificant($tokens, $start + 1, \count($tokens));
+        }
+        $close = null === $open ? null : $closers[$open] ?? null;
+        if (null === $open || null === $close) {
+            return null;
+        }
+
+        $keys = [];
+        $keyed = false;
+        for ($index = $open + 1; $index < $close; $index++) {
+            if (PhpTokens::isDoubleArrow($tokens[$index])) {
+                $keyed = true;
+                $key = PhpTokens::previousSignificant($tokens, $index - 1);
+                if (null !== $key && \is_array($tokens[$key]) && \T_CONSTANT_ENCAPSED_STRING === $tokens[$key][0]) {
+                    $keys[] = PhpTokens::stringValue($tokens[$key][1]);
+                }
+            } elseif (',' === $tokens[$index] && !$keyed) {
+                // The first element holds no key: a list.
+                return null;
+            }
+
+            $index = $closers[$index] ?? $index;
+        }
+
+        return $keyed ? $keys : null;
     }
 
     /**
