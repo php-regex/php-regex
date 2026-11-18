@@ -231,6 +231,15 @@ parameters:
             - tests/Unit/Parser/ValidationHintTest.php
             - tests/Unit/Redos/Proven/RedosInlineOptionsTest.php
             - tests/Support/RangeFixtureReadings.php
+        # Symfony's config component lets a node take a parameter or an
+        # environment value it would refuse as written only through the
+        # placeholder prefix of BaseNode, @internal, which
+        # MergeExtensionConfigurationPass sets: the security configuration
+        # is read as that pass reads it, in one method that sets the prefix
+        # and clears it.
+        - identifier: staticMethod.internal
+          count: 2
+          path: src/Symfony/Security/SecurityConfigExtractor.php
         # The tests use each PHPUnit compatibility trait by its feature's
         # name, which class_alias() gives the implementation the installed
         # PHPUnit calls for: the analysis reads that one through the alias,

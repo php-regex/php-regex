@@ -460,34 +460,55 @@ final class SecurityConfigExtractorTest extends TestCase
     }
 
     /**
-     * A file reads no environment: an "env()" value neither the file nor
-     * the application defines stops the reading, whichever field of the
-     * rule holds it, as any parameter nothing defines does.
+     * An environment value is known at run time only, in the environment
+     * the application runs in: a file gives no value of it, not even its
+     * "env()" default, which Symfony takes only when the environment has
+     * none. The rule keeps the value as written, and names the field that
+     * holds it, whether the file writes it or a parameter holds it.
+     *
+     * @param array<string, string>|list<string>|string|null $value
      */
     #[Test]
     #[DataProvider('provideFieldsHoldingAnEnvironmentValue')]
-    public function test_an_environment_value_nothing_defines_stops_the_reading_whatever_field_holds_it(string $rule, string $parameter): void
+    public function test_an_environment_value_is_unknown_whatever_field_holds_it(string $rule, string $field, string $key, array|string|null $value): void
     {
-        $path = $this->makeProject(['security.yaml' => "security:\n    access_control:\n        - ".$rule."\n"]).'/security.yaml';
+        $path = $this->makeProject(['security.yaml' => "parameters:\n    env(ADMIN_PATH): ^/default\n    admin_host: '%env(ADMIN_HOST)%'\nsecurity:\n    access_control:\n        - ".$rule."\n"]).'/security.yaml';
 
-        try {
-            (new SecurityConfigExtractor())->extract($path, null, new Container());
-            $this->fail('An environment value nothing defines was read.');
-        } catch (SecurityConfigException $e) {
-            $this->assertSame(\sprintf('The parameter "%s" used in "%s" is defined neither in the file nor in the application.', $parameter, $path), $e->getMessage());
-        }
+        $read = (new SecurityConfigExtractor())->extract($path, null, new Container())['accessControl'][0];
+
+        $this->assertSame([$field], $read['fromEnvironment'] ?? []);
+        $this->assertSame($value, $read[$key] ?? null);
     }
 
     /**
-     * @return iterable<string, array{rule: string, parameter: string}>
+     * @return iterable<string, array{rule: string, field: string, key: string, value: array<string, string>|list<string>|string|null}>
      */
     public static function provideFieldsHoldingAnEnvironmentValue(): iterable
     {
-        yield 'path' => ['rule' => "{ path: '%env(ADMIN_PATH)%' }", 'parameter' => 'env(ADMIN_PATH)'];
-        yield 'host' => ['rule' => "{ path: ^/admin, host: '%env(ADMIN_HOST)%' }", 'parameter' => 'env(ADMIN_HOST)'];
-        yield 'port' => ['rule' => "{ path: ^/admin, port: '%env(int:ADMIN_PORT)%' }", 'parameter' => 'env(int:ADMIN_PORT)'];
-        yield 'route' => ['rule' => "{ route: '%env(LOGIN_ROUTE)%' }", 'parameter' => 'env(LOGIN_ROUTE)'];
-        yield 'attribute' => ['rule' => "{ path: ^/api, attributes: { _format: '%env(API_FORMAT)%' } }", 'parameter' => 'env(API_FORMAT)'];
+        yield 'path, its default left aside' => ['rule' => "{ path: '%env(ADMIN_PATH)%' }", 'field' => 'path', 'key' => 'path', 'value' => '%env(ADMIN_PATH)%'];
+        yield 'host' => ['rule' => "{ path: ^/admin, host: '%env(ADMIN_HOST)%' }", 'field' => 'host', 'key' => 'host', 'value' => '%env(ADMIN_HOST)%'];
+        yield 'host held by a parameter' => ['rule' => "{ path: ^/admin, host: '%admin_host%' }", 'field' => 'host', 'key' => 'host', 'value' => '%env(ADMIN_HOST)%'];
+        yield 'port' => ['rule' => "{ path: ^/admin, port: '%env(int:ADMIN_PORT)%' }", 'field' => 'port', 'key' => 'port', 'value' => null];
+        yield 'route' => ['rule' => "{ route: '%env(LOGIN_ROUTE)%' }", 'field' => 'route', 'key' => 'route', 'value' => '%env(LOGIN_ROUTE)%'];
+        yield 'attribute' => ['rule' => "{ path: ^/api, attributes: { _format: '%env(API_FORMAT)%' } }", 'field' => 'attributes', 'key' => 'attributes', 'value' => ['_format' => '%env(API_FORMAT)%']];
+        yield 'roles' => ['rule' => "{ path: ^/admin, roles: '%env(ADMIN_ROLE)%' }", 'field' => 'roles', 'key' => 'roles', 'value' => ['%env(ADMIN_ROLE)%']];
+        yield 'methods' => ['rule' => "{ path: ^/admin, methods: ['%env(ADMIN_METHOD)%'] }", 'field' => 'methods', 'key' => 'methods', 'value' => ['%env(ADMIN_METHOD)%']];
+        yield 'addresses' => ['rule' => "{ path: ^/admin, ips: ['%env(ADMIN_IP)%'] }", 'field' => 'ips', 'key' => 'ips', 'value' => ['%env(ADMIN_IP)%']];
+    }
+
+    /**
+     * A firewall pattern read from the environment, alone or in a list, is
+     * kept as written and said to be so.
+     */
+    #[Test]
+    public function test_a_firewall_pattern_read_from_the_environment_is_said_so(): void
+    {
+        $path = $this->makeProject(['security.yaml' => "security:\n    firewalls:\n        api: { pattern: '%env(API_PATTERN)%' }\n        main: { pattern: [^/app, '%env(APP_PATTERN)%'] }\n        dev: { pattern: ^/_profiler }\n"]).'/security.yaml';
+
+        $firewalls = (new SecurityConfigExtractor())->extract($path)['firewalls'];
+
+        $this->assertSame(['api' => '%env(API_PATTERN)%', 'main' => '(?:^/app|%env(APP_PATTERN)%)', 'dev' => '^/_profiler'], array_column($firewalls, 'pattern', 'name'));
+        $this->assertSame(['api' => true, 'main' => true, 'dev' => false], array_column($firewalls, 'fromEnvironment', 'name'));
     }
 
     #[Test]

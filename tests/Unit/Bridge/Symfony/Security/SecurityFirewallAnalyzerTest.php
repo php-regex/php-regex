@@ -81,4 +81,19 @@ final class SecurityFirewallAnalyzerTest extends TestCase
         $this->assertSame([], $report->skippedFirewalls);
         $this->assertSame(['api'], array_column($report->findings, 'name'));
     }
+
+    /**
+     * A pattern read from the environment is known at run time only: its
+     * firewall is left out of the analysis, and the report says why.
+     */
+    #[Test]
+    public function test_a_pattern_read_from_the_environment_is_not_analysed(): void
+    {
+        $report = (new SecurityFirewallAnalyzer(Regex::create()))->analyze([
+            ['name' => 'api', 'file' => 'security.yaml', 'line' => 4, 'pattern' => '%env(API_PATTERN)%', 'requestMatcher' => null, 'fromEnvironment' => true],
+        ], RedosSeverity::High);
+
+        $this->assertSame([['name' => 'api', 'file' => 'security.yaml', 'line' => 4, 'reason' => 'The pattern is read from the environment and is not evaluated.']], $report->skippedFirewalls);
+        $this->assertSame([], $report->findings);
+    }
 }

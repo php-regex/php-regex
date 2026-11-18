@@ -209,7 +209,7 @@ final class SecurityConfigReadingTest extends TestCase
     }
 
     /**
-     * @return array{accessControl: list<array{file: string, line: int, path: ?string, host: ?string, roles: array<int, string>, methods: array<int, string>, ips: array<int, string>, allowIf: ?string, requestMatcher: ?string, requiresChannel: ?string, port?: ?int, attributes?: array<string, string>, route?: ?string}>, firewalls: list<array{name: string, file: string, line: int, pattern: ?string, requestMatcher: ?string}>}
+     * @return array{accessControl: list<array{file: string, line: int, path: ?string, host: ?string, roles: array<int, string>, methods: array<int, string>, ips: array<int, string>, allowIf: ?string, requestMatcher: ?string, requiresChannel: ?string, port?: ?int, attributes?: array<string, string>, route?: ?string, fromEnvironment?: list<string>}>, firewalls: list<array{name: string, file: string, line: int, pattern: ?string, requestMatcher: ?string, fromEnvironment?: bool}>}
      */
     private function extract(string $yaml, ?string $environment = null): array
     {

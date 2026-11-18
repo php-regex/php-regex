@@ -652,12 +652,170 @@ final class AccessControlOrderTest extends TestCase
     }
 
     /**
+     * A value read from the environment is known at run time only: the
+     * rule is restricted to a value the analysis cannot know. Through that
+     * value it shadows no later rule, and a later rule holding one is
+     * shadowed only by an earlier rule that takes every value of it. Each
+     * case is checked against the AccessMap for values the environment may
+     * give: "%env(VALUE)%" is replaced by each.
+     *
+     * @param list<array<string, mixed>>                                             $rules
+     * @param list<array{0: string, 1: string, 2: string, 3: int|null, 4: int|null}> $probes the value, the method and URL of a request, and the
+     *                                                                                       rule that applies to it in the declared and the swapped order
+     */
+    #[Test]
+    #[DataProvider('provideValuesFromTheEnvironment')]
+    public function test_a_value_read_from_the_environment_is_one_the_analysis_cannot_know(array $rules, string $field, ?string $expected, array $probes): void
+    {
+        foreach ($probes as [$value, $method, $url, $declared, $swapped]) {
+            $concrete = self::withEnvironment($rules, $value);
+            $this->assertSame($declared, self::ruleApplied($concrete, $method, $url, '10.0.0.1'), 'declared order, '.$value.', '.$method.' '.$url);
+            $this->assertSame($swapped, self::ruleApplied(array_reverse($concrete, true), $method, $url, '10.0.0.1'), 'swapped order, '.$value.', '.$method.' '.$url);
+        }
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze(array_map(self::ruleFromEnvironment(...), $rules), true);
+
+        $this->assertSame('carve-out' === $expected ? null : $expected, $report->conflicts[0]['type'] ?? null);
+        $this->assertSame('shadowed' === $expected ? 1 : 0, $report->stats['shadowed']);
+        $this->assertSame('overlap' === $expected ? 1 : 0, $report->stats['overlaps']);
+        $this->assertSame('carve-out' === $expected ? 1 : 0, $report->stats['carve_outs']);
+        if (null !== $expected && 'carve-out' !== $expected) {
+            $this->assertContains('Values read from the environment are not evaluated: '.$field.'.', $report->conflicts[0]['notes']);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{rules: list<array<string, mixed>>, field: string, expected: 'shadowed'|'overlap'|'carve-out'|null, probes: list<array{0: string, 1: string, 2: string, 3: int|null, 4: int|null}>}>
+     */
+    public static function provideValuesFromTheEnvironment(): iterable
+    {
+        yield 'an earlier rule for a port from the environment, before a rule for any port' => [
+            'rules' => [['path' => '^/admin', 'port' => '%env(VALUE)%'], ['path' => '^/admin']],
+            'field' => 'port',
+            'expected' => 'carve-out',
+            'probes' => [
+                ['8080', 'GET', 'http://localhost:8080/admin', 0, 1],
+                ['8080', 'GET', 'http://localhost/admin', 1, 1],
+                ['9090', 'GET', 'http://localhost:9090/admin', 0, 1],
+            ],
+        ];
+
+        yield 'a later rule for a port from the environment, after a rule for any port' => [
+            'rules' => [['path' => '^/admin'], ['path' => '^/admin/x', 'port' => '%env(VALUE)%']],
+            'field' => 'port',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['8080', 'GET', 'http://localhost:8080/admin/x', 0, 1],
+                ['9090', 'GET', 'http://localhost:9090/admin/x', 0, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for a port from the environment, before a rule for a port' => [
+            'rules' => [['path' => '^/admin', 'port' => '%env(VALUE)%'], ['path' => '^/admin/x', 'port' => 8080]],
+            'field' => 'port',
+            'expected' => 'overlap',
+            'probes' => [
+                ['8080', 'GET', 'http://localhost:8080/admin/x', 0, 1],
+                ['9090', 'GET', 'http://localhost:8080/admin/x', 1, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for a path from the environment' => [
+            'rules' => [['path' => '%env(VALUE)%'], ['path' => '^/admin']],
+            'field' => 'path',
+            'expected' => 'overlap',
+            'probes' => [
+                ['^/', 'GET', 'http://localhost/admin', 0, 1],
+                ['^/shop', 'GET', 'http://localhost/admin', 1, 1],
+            ],
+        ];
+
+        yield 'a later rule for a path from the environment, after a rule with no path' => [
+            'rules' => [[], ['path' => '%env(VALUE)%']],
+            'field' => 'path',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['^/admin', 'GET', 'http://localhost/admin', 0, 1],
+                ['^/shop', 'GET', 'http://localhost/shop', 0, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for a host from the environment, before a rule for any host' => [
+            'rules' => [['path' => '^/admin', 'host' => '%env(VALUE)%'], ['path' => '^/admin']],
+            'field' => 'host',
+            'expected' => 'carve-out',
+            'probes' => [
+                ['^admin\.example\.com$', 'GET', 'http://admin.example.com/admin', 0, 1],
+                ['^admin\.example\.com$', 'GET', 'http://shop.example.com/admin', 1, 1],
+            ],
+        ];
+
+        yield 'a later rule for a host from the environment, after a rule for any host' => [
+            'rules' => [['path' => '^/admin'], ['path' => '^/admin', 'host' => '%env(VALUE)%']],
+            'field' => 'host',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['^admin\.example\.com$', 'GET', 'http://admin.example.com/admin', 0, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for a host from the environment, before a rule for a host' => [
+            'rules' => [['path' => '^/admin', 'host' => '%env(VALUE)%'], ['path' => '^/admin', 'host' => '^admin\.example\.com$']],
+            'field' => 'host',
+            'expected' => 'overlap',
+            'probes' => [
+                ['example\.com$', 'GET', 'http://admin.example.com/admin', 0, 1],
+                ['^shop\.', 'GET', 'http://admin.example.com/admin', 1, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for a method from the environment, before a rule for any method' => [
+            'rules' => [['path' => '^/x', 'methods' => ['%env(VALUE)%']], ['path' => '^/x']],
+            'field' => 'methods',
+            'expected' => 'carve-out',
+            'probes' => [
+                ['POST', 'POST', 'http://localhost/x', 0, 1],
+                ['POST', 'GET', 'http://localhost/x', 1, 1],
+            ],
+        ];
+
+        yield 'a later rule for a method from the environment, after a rule for any method' => [
+            'rules' => [['path' => '^/x'], ['path' => '^/x', 'methods' => ['%env(VALUE)%']]],
+            'field' => 'methods',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['POST', 'POST', 'http://localhost/x', 0, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for addresses from the environment, before a rule for any address' => [
+            'rules' => [['path' => '^/admin', 'ips' => ['%env(VALUE)%']], ['path' => '^/admin']],
+            'field' => 'ips',
+            'expected' => 'carve-out',
+            'probes' => [
+                ['10.0.0.1', 'GET', 'http://localhost/admin', 0, 1],
+                ['10.0.0.2', 'GET', 'http://localhost/admin', 1, 1],
+            ],
+        ];
+
+        yield 'an earlier rule for addresses from the environment, before a rule for an address' => [
+            'rules' => [['path' => '^/admin', 'ips' => ['%env(VALUE)%']], ['path' => '^/admin/x', 'ips' => ['10.0.0.1']]],
+            'field' => 'ips',
+            'expected' => 'overlap',
+            'probes' => [
+                ['10.0.0.0/8', 'GET', 'http://localhost/admin/x', 0, 1],
+                ['10.0.0.2', 'GET', 'http://localhost/admin/x', 1, 1],
+            ],
+        ];
+    }
+
+    /**
      * The index of the rule Symfony's AccessMap applies to the request, in
      * the order of the array, or null when none does. Each rule is given
      * the request matcher the security bundle chains for it.
      *
-     * @param array<int, OrderRule> $rules
-     * @param array<string, string> $attributes the attributes the router gave the request
+     * @param array<int, array<string, mixed>> $rules
+     * @param array<string, string>            $attributes the attributes the router gave the request
      */
     private static function ruleApplied(array $rules, string $method, string $url, string $address, array $attributes = []): ?int
     {
@@ -811,5 +969,71 @@ final class AccessControlOrderTest extends TestCase
         }
 
         return $attributes;
+    }
+
+    /**
+     * The rules with the value the environment gives in place of
+     * "%env(VALUE)%", a number for a port.
+     *
+     * @param list<array<string, mixed>> $rules
+     *
+     * @return list<array<string, mixed>>
+     */
+    private static function withEnvironment(array $rules, string $value): array
+    {
+        array_walk_recursive($rules, static function (mixed &$item, int|string $key) use ($value): void {
+            if ('%env(VALUE)%' === $item) {
+                $item = 'port' === $key ? (int) $value : $value;
+            }
+        });
+
+        return $rules;
+    }
+
+    /**
+     * A rule as the analysis is given it, its fields written "%env(...)%"
+     * named among those read from the environment, a port so written
+     * unknown.
+     *
+     * @param array<string, mixed> $rule
+     *
+     * @return array{file: string, line: int, path: string|null, host: string|null, roles: list<string>, methods: list<string>, ips: list<string>, allowIf: null, requestMatcher: null, requiresChannel: null, port: int|null, attributes: array<string, string>, route: string|null, fromEnvironment: list<string>}
+     */
+    private static function ruleFromEnvironment(array $rule): array
+    {
+        $fromEnvironment = [];
+        foreach ($rule as $field => $value) {
+            if (str_contains(serialize($value), '%env(')) {
+                $fromEnvironment[] = $field;
+            }
+        }
+
+        $path = $rule['path'] ?? null;
+        $host = $rule['host'] ?? null;
+        $port = $rule['port'] ?? null;
+        $methods = $rule['methods'] ?? [];
+        $ips = $rule['ips'] ?? [];
+        self::assertTrue(null === $path || \is_string($path));
+        self::assertTrue(null === $host || \is_string($host));
+        self::assertTrue(null === $port || \is_int($port) || \in_array('port', $fromEnvironment, true));
+        self::assertIsArray($methods);
+        self::assertIsArray($ips);
+
+        return [
+            'file' => 'security.yaml',
+            'line' => 1,
+            'path' => $path,
+            'host' => $host,
+            'roles' => ['ROLE_USER'],
+            'methods' => array_values(array_filter($methods, \is_string(...))),
+            'ips' => array_values(array_filter($ips, \is_string(...))),
+            'allowIf' => null,
+            'requestMatcher' => null,
+            'requiresChannel' => null,
+            'port' => \is_int($port) ? $port : null,
+            'attributes' => [],
+            'route' => null,
+            'fromEnvironment' => $fromEnvironment,
+        ];
     }
 }

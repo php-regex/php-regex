@@ -43,6 +43,11 @@ final class SecurityAccessControlAnalyzer
     private const LEVEL_CONDITIONAL = 'conditional';
     private const LEVEL_UNKNOWN = 'unknown';
 
+    /**
+     * The fields of a rule its request matcher reads, but for the path.
+     */
+    private const REQUEST_FIELDS = ['host', 'port', 'methods', 'ips', 'route', 'attributes'];
+
     private readonly LanguageSolver $solver;
 
     public function __construct(
@@ -114,7 +119,7 @@ final class SecurityAccessControlAnalyzer
                 $right = $descriptors[$j];
                 $pairsTotal++;
 
-                if (!self::methodsOverlap($left['methodsTaken'], $right['methodsTaken'])) {
+                if (!self::methodsOverlap($left, $right)) {
                     $pairsFilteredMethods++;
 
                     continue;
@@ -151,8 +156,12 @@ final class SecurityAccessControlAnalyzer
                 // later one takes too, or when its path is strictly
                 // narrower. Any other pair sharing a request overlaps: the
                 // order decides which rule applies to what both take.
-                $laterPathInEarlier = null === $equivalence->rightOnlyExample;
-                $earlierPathInLater = null === $equivalence->leftOnlyExample;
+                //
+                // A path read from the environment is read as every path,
+                // which it may be, but holds no other path, nor is held by
+                // any other than every path.
+                $laterPathInEarlier = null === $equivalence->rightOnlyExample && !\in_array('path', $left['fromEnvironment'], true);
+                $earlierPathInLater = null === $equivalence->leftOnlyExample && !\in_array('path', $right['fromEnvironment'], true);
                 $isSubset = $laterPathInEarlier && $this->takesEveryRequestOf($left, $right, $options);
                 if (!$isSubset && $earlierPathInLater && (!$laterPathInEarlier || $this->takesEveryRequestOf($right, $left, $options))) {
                     $carveOuts++;
@@ -161,7 +170,7 @@ final class SecurityAccessControlAnalyzer
                 }
 
                 $example = $intersection->example;
-                $isEquivalent = $equivalence->isEquivalent;
+                $isEquivalent = $equivalence->isEquivalent && $laterPathInEarlier && $earlierPathInLater;
                 if ($isEquivalent) {
                     $equivalent++;
                 }
@@ -300,7 +309,13 @@ final class SecurityAccessControlAnalyzer
             $notes[] = 'Route and attribute restrictions are not evaluated.';
         }
 
-        $pathPattern = $this->normalizePattern($path);
+        // A value read from the environment is known at run time only.
+        $fromEnvironment = $rule['fromEnvironment'] ?? [];
+        if ([] !== $fromEnvironment) {
+            $notes[] = 'Values read from the environment are not evaluated: '.implode(', ', $fromEnvironment).'.';
+        }
+
+        $pathPattern = $this->normalizePattern(\in_array('path', $fromEnvironment, true) ? '' : $path);
         if (null === $pathPattern) {
             $skippedRules[] = [
                 'index' => $index,
@@ -315,7 +330,7 @@ final class SecurityAccessControlAnalyzer
         $hostPattern = null;
         $hostUnsupported = false;
         $host = self::chainsAMatcher($rule['host']) ? $rule['host'] : null;
-        if (null !== $host) {
+        if (null !== $host && !\in_array('host', $fromEnvironment, true)) {
             $hostPattern = $this->normalizePattern($host, true);
             if (null === $hostPattern) {
                 $hostUnsupported = true;
@@ -351,7 +366,8 @@ final class SecurityAccessControlAnalyzer
             'port' => $rule['port'] ?? null,
             'attributes' => $attributes,
             'route' => $route,
-            'accessLevel' => $this->resolveAccessLevel($roles, $rule['allowIf']),
+            'fromEnvironment' => $fromEnvironment,
+            'accessLevel' => $this->resolveAccessLevel(\in_array('roles', $fromEnvironment, true) ? [] : $roles, $rule['allowIf']),
             'notes' => $notes,
         ];
     }
@@ -413,7 +429,8 @@ final class SecurityAccessControlAnalyzer
      */
     private function accessRulesEquivalent(array $left, array $right): bool
     {
-        return $this->sameList($left['roles'], $right['roles'], false)
+        return [] === $left['fromEnvironment'] && [] === $right['fromEnvironment']
+            && $this->sameList($left['roles'], $right['roles'], false)
             && $left['methodsTaken'] === $right['methodsTaken']
             && $left['hostPattern'] === $right['hostPattern']
             && $this->sameList($left['ips'], $right['ips'], true)
@@ -564,7 +581,12 @@ final class SecurityAccessControlAnalyzer
      */
     private function takesEveryRequestOf(array $outer, array $inner, SolverOptions $options): bool
     {
-        if (null !== $outer['methodsTaken'] && (null === $inner['methodsTaken'] || [] !== array_diff($inner['methodsTaken'], $outer['methodsTaken']))) {
+        // A value of the outer rule read from the environment holds none.
+        if ([] !== array_intersect($outer['fromEnvironment'], self::REQUEST_FIELDS)) {
+            return false;
+        }
+
+        if (null !== $outer['methodsTaken'] && (null === $inner['methodsTaken'] || \in_array('methods', $inner['fromEnvironment'], true) || [] !== array_diff($inner['methodsTaken'], $outer['methodsTaken']))) {
             return false;
         }
 
@@ -668,18 +690,23 @@ final class SecurityAccessControlAnalyzer
     /**
      * Whether two rules take a method in common: a rule that lists none
      * takes them all, one whose list the matcher reads as no request method
-     * takes none.
+     * takes none, and one whose methods are read from the environment may
+     * take any.
      *
-     * @param list<string>|null $left
-     * @param list<string>|null $right
+     * @phpstan-param AccessRule $left
+     * @phpstan-param AccessRule $right
      */
-    private static function methodsOverlap(?array $left, ?array $right): bool
+    private static function methodsOverlap(array $left, array $right): bool
     {
-        if ([] === $left || [] === $right) {
+        if (\in_array('methods', $left['fromEnvironment'], true) || \in_array('methods', $right['fromEnvironment'], true)) {
+            return true;
+        }
+
+        if ([] === $left['methodsTaken'] || [] === $right['methodsTaken']) {
             return false;
         }
 
-        return null === $left || null === $right || [] !== array_intersect($left, $right);
+        return null === $left['methodsTaken'] || null === $right['methodsTaken'] || [] !== array_intersect($left['methodsTaken'], $right['methodsTaken']);
     }
 
     private function resolveMinimizationAlgorithm(): MinimizationAlgorithm

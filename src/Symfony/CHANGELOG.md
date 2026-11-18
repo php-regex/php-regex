@@ -44,6 +44,19 @@ CHANGELOG
    Roles differing in case are other roles. An `allow_if` of `"0"` is none,
    one of a space is one, and a `request_matcher` or a `requires_channel`
    is read as written.
+ * `regex:security` and `regex:analyze` read the security configuration of
+   the kernel as `MergeExtensionConfigurationPass` has the bundle process
+   it, its parameters and environment values taken by any node:
+   `port: '%admin_port%'` or a firewall's `stateless: '%env(bool:STATELESS)%'`
+   no longer stops the command with `Expected "int", but got "string"`. An
+   `%env()%` value, in the kernel or in a `--config` file, is never read
+   from the environment the command runs in, nor from its `env()` default:
+   a rule holding one in its path, host, port, methods, addresses, route or
+   attributes is restricted to a value the analysis cannot know, shadows no
+   later rule through it, and notes
+   `Values read from the environment are not evaluated: port.`; a firewall
+   whose pattern holds one is skipped, with that reason. An `%env()%` value
+   nothing defines no longer stops the reading of a `--config` file.
  * `regex:security` and `regex:analyze` read the `port`, `route` and
    `attributes` of an `access_control` rule, as the security bundle chains
    them to its request matcher: an earlier rule holding one the later rule

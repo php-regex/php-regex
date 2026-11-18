@@ -599,7 +599,19 @@ which rule applies, and play no part.
 application runs with, as `bin/console debug:config security` shows it:
 `config/packages/security.yaml`, `security.php` or any other file the kernel
 loads, in any YAML shape (block or flow lists, anchors and aliases,
-`when@<env>` blocks), with its `%parameters%` and `%env()%` values resolved.
+`when@<env>` blocks), with its `%parameters%` resolved, as the kernel
+resolves them: `port: '%admin_port%'` is the port the parameter holds.
+An `%env()%` value is known at run time only, in the environment the
+application runs in: it is never read from the one the command runs in,
+not even its `env()` default, and a rule holding one in its path, host,
+port, methods, addresses, route or attributes is restricted to a value the
+analysis cannot know. Through that value it shadows no later rule, a later
+rule holding one is shadowed only by an earlier rule that takes every value
+of it, and the finding notes
+`Values read from the environment are not evaluated: port.`; a firewall
+whose pattern holds one is skipped. Symfony itself builds the port matcher
+when it compiles the container, so an application whose `port` is an
+`%env()%` value does not boot.
 Each finding names the file and the line its value is written on, or
 `security configuration` when no `security.*` file under `config/` writes it.
 A rule with no path, host, `route`, `request_matcher` or `allow_if`, such as
@@ -607,7 +619,8 @@ A rule with no path, host, `route`, `request_matcher` or `allow_if`, such as
 `requires_channel`, on the line that opens its entry.
 `--config=<file>` analyzes that YAML file instead, read with `symfony/yaml`
 (`composer require symfony/yaml`), its `%parameters%` taken from its own
-`parameters` and then from the application's.
+`parameters` and then from the application's, its `%env()%` values left
+unknown as above.
 
 A security configuration either command cannot read stops it with exit code 2:
 a `--config` file that is missing, is not YAML or does not parse, a parameter
