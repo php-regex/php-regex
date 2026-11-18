@@ -1,51 +1,97 @@
 {% comment %}
-  The sponsor frame: an open slot drawn as a selection on the page — a
-  dashed outline with its four corner handles — around an empty named
-  group, /(?<your_logo>)/, waiting for a match. The companies listed in
-  _data/sponsors.yml take their places in the same frame, the featured one
-  first; the developers who back the project line the frame's foot, beside
-  a dashed place of their own for the next one. The title is a paragraph,
-  not a heading: the frame belongs to the page's furniture, never to its
-  outline or its "On this page" rail.
+  The sponsor frame, drawn as a selection on the page — a dashed outline
+  with its four corner handles. What it holds depends on the page
+  (_data/sponsors.yml says it all):
+
+    - a page of a spot that a company backs: that company, alone;
+    - a page of a spot still open: the pitch for that spot;
+    - any other page: every company, in a random order — a thank-you;
+    - no company yet: the open slot, an empty named group
+      /(?<your_logo>)/ waiting for a match.
+
+  The developers who back the project line the frame's foot in every case.
+  The title is a paragraph, not a heading: the frame belongs to the page's
+  furniture, never to its outline or its "On this page" rail.
 {% endcomment %}
 {% assign sp = site.data.sponsors %}
-{% assign sp_companies = sp.sponsors %}
-{% assign sp_backers = sp.backers %}
-{% assign sp_featured = sp_companies | where: 'featured', true %}
-{% assign sp_others = sp_companies | where_exp: 'c', 'c.featured != true' %}
-{% assign sp_ordered = sp_featured | concat: sp_others %}
+{% assign sp_spot = nil %}
+{% for spot in sp.spots %}
+  {% if spot.pages contains page.url %}{% assign sp_spot = spot %}{% break %}{% endif %}
+  {% for prefix in spot.prefixes %}
+    {% assign sp_head = page.url | slice: 0, prefix.size %}
+    {% if sp_head == prefix %}{% assign sp_spot = spot %}{% endif %}
+  {% endfor %}
+  {% if sp_spot %}{% break %}{% endif %}
+{% endfor %}
+{% assign sp_company = nil %}
+{% if sp_spot and sp_spot.sponsor %}
+  {% assign sp_company = sp.companies | where: 'id', sp_spot.sponsor | first %}
+{% endif %}
+{% if sp_company %}{% assign sp_state = 'backed' %}{% elsif sp_spot %}{% assign sp_state = 'open-spot' %}{% elsif sp.companies.size > 0 %}{% assign sp_state = 'thanks' %}{% else %}{% assign sp_state = 'open' %}{% endif %}
 {% assign sp_mail_subject = 'PHPRegex sponsorship' | url_encode | replace: '+', '%20' %}
-<aside class="sponsor" aria-labelledby="sponsor-title">
-  <div class="sponsor-well"{% if sp_companies.size > 0 %} data-sponsors="{{ sp_companies.size }}"{% endif %}>
-    {% if sp_companies.size > 0 %}
-      <ul class="sponsor-logos">
-        {% for s in sp_ordered %}
-        <li{% if s.featured %} class="is-featured"{% endif %}>
-          <a href="{{ s.url }}" rel="sponsored noopener" title="{{ s.name }}">
-            <img class="sponsor-logo{% if s.logo_dark %} sponsor-logo-light{% endif %}" src="{{ s.logo }}" alt="{{ s.name }}" loading="lazy" decoding="async">
-            {% if s.logo_dark %}<img class="sponsor-logo sponsor-logo-dark" src="{{ s.logo_dark }}" alt="" loading="lazy" decoding="async">{% endif %}
-          </a>
-        </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <span class="sponsor-pattern" aria-hidden="true"><span class="rx-delim">/</span><span class="rx-group">(?&lt;</span><span class="rx-name">your_logo</span><span class="rx-group">&gt;</span><span class="sponsor-caret"></span><span class="rx-group">)</span><span class="rx-delim">/</span></span>
-      <span class="sponsor-status" aria-hidden="true">0 matches, for now</span>
-    {% endif %}
+<aside class="sponsor" data-state="{{ sp_state }}" aria-labelledby="sponsor-title">
+  {% if sp_state == 'backed' %}
+  <div class="sponsor-well" data-sponsors="1">
+    <a class="sponsor-logo-link" href="{{ sp_company.url }}" rel="sponsored noopener">
+      <img class="sponsor-logo{% if sp_company.logo_dark %} sponsor-logo-light{% endif %}" src="{{ sp_company.logo }}" alt="{{ sp_company.name }}" decoding="async">
+      {% if sp_company.logo_dark %}<img class="sponsor-logo sponsor-logo-dark" src="{{ sp_company.logo_dark }}" alt="" decoding="async">{% endif %}
+    </a>
   </div>
   <div class="sponsor-body">
-    <p class="sponsor-eyebrow">{% if sp_companies.size > 0 %}Sponsored by{% else %}Open slot{% endif %}</p>
-    <p class="sponsor-title" id="sponsor-title">{% if sp_companies.size > 0 %}Thanks to the companies that fund PHPRegex.{% else %}Your logo, right here.{% endif %}</p>
-    <p class="sponsor-text">This frame sits at the foot of every documentation page, read by PHP developers who care what their patterns actually do. Company logos start at {{ sp.company_from }} a month; sponsoring funds the parser, the ReDoS analysis and these docs.</p>
+    <p class="sponsor-eyebrow">{{ sp_spot.title }} · backed by</p>
+    <p class="sponsor-title" id="sponsor-title"><a href="{{ sp_company.url }}" rel="sponsored noopener">{{ sp_company.name }}</a> backs {{ sp_spot.what }}{% if sp_spot.held_for %} for PHPRegex {{ sp_spot.held_for }}{% endif %}.</p>
+    {% if sp_company.tagline %}<p class="sponsor-text">{{ sp_company.tagline }}</p>{% endif %}
     <p class="sponsor-actions">
-      <a class="sponsor-cta" href="{{ sp.github }}" rel="noopener"><svg class="icon" data-icon="heart" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></svg>Sponsor on GitHub</a>
+      <a class="sponsor-mail" href="{{ sp.policy }}">How sponsorship works</a>
+    </p>
+  </div>
+  {% elsif sp_state == 'thanks' %}
+  <div class="sponsor-well" data-sponsors="{{ sp.companies.size }}">
+    <ul class="sponsor-logos" data-shuffle>
+      {% for s in sp.companies %}
+      <li>
+        <a href="{{ s.url }}" rel="sponsored noopener" title="{{ s.name }}">
+          <img class="sponsor-logo{% if s.logo_dark %} sponsor-logo-light{% endif %}" src="{{ s.logo }}" alt="{{ s.name }}" loading="lazy" decoding="async">
+          {% if s.logo_dark %}<img class="sponsor-logo sponsor-logo-dark" src="{{ s.logo_dark }}" alt="" loading="lazy" decoding="async">{% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="sponsor-body">
+    <p class="sponsor-eyebrow">Thank you</p>
+    <p class="sponsor-title" id="sponsor-title">PHPRegex is backed by {% if sp.companies.size == 1 %}{{ sp.companies.first.name }}{% else %}these companies{% endif %}.</p>
+    <p class="sponsor-text">They fund the time that goes into the parser, the ReDoS analysis and these docs. Any company can join them, for the amount it chooses — and a spot of its own names it on a part of the project, and in the README Composer installs.</p>
+    <p class="sponsor-actions">
+      <a class="sponsor-cta" href="{{ sp.policy }}">{% include sponsor-heart.html %}Become a sponsor</a>
       <a class="sponsor-mail" href="mailto:{{ sp.email }}?subject={{ sp_mail_subject }}"><span class="sponsor-mail-label">or write to</span> {{ sp.email }}</a>
     </p>
   </div>
+  {% else %}
+  <div class="sponsor-well">
+    <span class="sponsor-pattern" aria-hidden="true"><span class="rx-delim">/</span><span class="rx-group">(?&lt;</span><span class="rx-name">your_logo</span><span class="rx-group">&gt;</span><span class="sponsor-caret"></span><span class="rx-group">)</span><span class="rx-delim">/</span></span>
+    <span class="sponsor-status" aria-hidden="true">0 matches, for now</span>
+  </div>
+  <div class="sponsor-body">
+    {% if sp_state == 'open-spot' %}
+    <p class="sponsor-eyebrow">Open spot · {{ sp_spot.title }}</p>
+    <p class="sponsor-title" id="sponsor-title">Back {{ sp_spot.what }}.</p>
+    <p class="sponsor-text">{% if sp_spot.pitch %}{{ sp_spot.pitch }}{% else %}One company backs this guide and the php-regex/{{ sp_spot.packages.first }} package: its logo stands here, and a line in the README that Composer installs into every vendor/ folder.{% endif %} One company holds it for the whole {{ sp.release }} release: the first to ask takes it.</p>
+    {% else %}
+    <p class="sponsor-eyebrow">Open slot</p>
+    <p class="sponsor-title" id="sponsor-title">Your logo, right here.</p>
+    <p class="sponsor-text">This frame sits at the foot of every documentation page, read by PHP developers who care what their patterns actually do. Any company can put its logo here, for the amount it chooses; sponsoring funds the parser, the ReDoS analysis and these docs.</p>
+    {% endif %}
+    <p class="sponsor-actions">
+      <a class="sponsor-cta" href="{{ sp.github }}" rel="noopener">{% include sponsor-heart.html %}Sponsor on GitHub</a>
+      <a class="sponsor-mail" href="{{ sp.policy }}{% if sp_spot %}#spot-{{ sp_spot.id }}{% endif %}">How it works</a>
+    </p>
+  </div>
+  {% endif %}
   <div class="sponsor-backers">
     <p class="sponsor-backers-label"><a href="{{ sp.backers_md }}">Backers</a></p>
     <ul class="sponsor-backers-list">
-      {% for b in sp_backers %}
+      {% for b in sp.backers %}
       <li>
         <a class="sponsor-backer" href="https://github.com/{{ b.login }}" title="{{ b.name | default: b.login }}" rel="noopener">
           {% if b.avatar %}<img src="{{ b.avatar }}" alt="" width="32" height="32" loading="lazy" decoding="async">{% else %}<span class="sponsor-backer-initial" aria-hidden="true">{{ b.name | default: b.login | slice: 0 | upcase }}</span>{% endif %}
@@ -54,7 +100,7 @@
       </li>
       {% endfor %}
       <li>
-        <a class="sponsor-backer sponsor-backer-open" href="{{ sp.github }}" rel="noopener"><span class="sponsor-backer-plus" aria-hidden="true">+</span><span class="sponsor-backer-you">{% if sp_backers.size > 0 %}You?{% else %}Your name here{% endif %} <span class="sponsor-backer-price">from {{ sp.backer_from }} a month, for solo developers</span></span></a>
+        <a class="sponsor-backer sponsor-backer-open" href="{{ sp.policy }}#backers"><span class="sponsor-backer-plus" aria-hidden="true">+</span><span class="sponsor-backer-you">{% if sp.backers.size > 0 %}You?{% else %}Your name here{% endif %} <span class="sponsor-backer-price">back PHPRegex as a developer</span></span></a>
       </li>
     </ul>
   </div>
