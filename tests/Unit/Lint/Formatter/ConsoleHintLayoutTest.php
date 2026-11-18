@@ -102,6 +102,25 @@ final class ConsoleHintLayoutTest extends TestCase
     }
 
     #[Test]
+    public function test_a_risky_part_over_several_lines_keeps_each_line_under_the_arrow(): void
+    {
+        // An x-flag excerpt keeps the newline that ends each comment.
+        $output = self::render([
+            "The risky part is: # flags\n[a-z]+# letters\n)*# repeat\n",
+            'Hotspot offsets: 4-40',
+        ]);
+
+        $this->assertStringContainsString(
+            "    WARN Message.\n"
+            ."         ↳ The risky part is: # flags\n"
+            ."           [a-z]+# letters\n"
+            ."           )*# repeat\n"
+            ."         ↳ Hotspot offsets: 4-40\n",
+            $output,
+        );
+    }
+
+    #[Test]
     public function test_an_attack_string_with_escaped_quotes_stays_whole(): void
     {
         $attack = 'Attack: "a \\"b\\" c" x n . "!" and a tail long enough to fold the line once';
