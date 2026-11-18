@@ -42,10 +42,10 @@ CHANGELOG
    request, `ips: '10.0.0.1, 10.0.0.2'` holds both addresses, and a rule
    is public only for `PUBLIC_ACCESS` as written and alone, no longer for
    `public_access` or `IS_AUTHENTICATED_ANONYMOUSLY`, which grant nothing,
-   nor for `PUBLIC_ACCESS` beside another role. Roles differing in case are other roles. An `allow_if` of `"0"`, or a
-   parameter holding it, is none,
-   one of a space is one, and a `request_matcher` or a `requires_channel`
-   is read as written.
+   nor for `PUBLIC_ACCESS` beside another role. Roles differing in case
+   are other roles. An `allow_if` of `"0"`, or a parameter holding it, is
+   none, one of a space is one, and a `request_matcher` or a
+   `requires_channel` is read as written.
  * `regex:security` and `regex:analyze` read the security configuration of
    the kernel as `MergeExtensionConfigurationPass` has the bundle process
    it, its parameters checked as what they hold and its environment values
@@ -56,7 +56,9 @@ CHANGELOG
    bundle refuses it. An
    `%env()%` value, in the kernel or in a `--config` file, is never read
    from the environment the command runs in, nor from its `env()` default,
-   nor through a parameter of the application a `--config` file takes:
+   nor through a parameter of the application a `--config` file takes,
+   which is read from the application's compiled container, compiler
+   passes included, built only when the file asks for one:
    a rule holding one in its path, host, addresses, route or attributes is
    restricted to a value the analysis cannot know, shadows no later rule
    through it, and notes

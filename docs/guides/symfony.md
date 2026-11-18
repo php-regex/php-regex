@@ -673,9 +673,11 @@ A rule with no path, host, `route`, `request_matcher` or `allow_if`, such as
 `requires_channel`, on the line that opens its entry.
 `--config=<file>` analyzes that YAML file instead, read with `symfony/yaml`
 (`composer require symfony/yaml`), its `%parameters%` taken from its own
-`parameters` and then from the application's, as the application writes
-them, its `%env()%` values left unknown as above: a parameter the
-application reads from the environment stays unknown too.
+`parameters` and then from the application's, as its compiled container
+holds them, a parameter a compiler pass sets included, its `%env()%` values
+left unknown as above: a parameter the application reads from the
+environment stays unknown too. The application's container is built only
+when the file asks for one of its parameters.
 
 A security configuration either command cannot read stops it with exit code 2:
 a `--config` file that is missing, is not YAML or does not parse, a parameter

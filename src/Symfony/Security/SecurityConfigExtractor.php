@@ -235,13 +235,16 @@ final class SecurityConfigExtractor
      * A YAML security file: its root "security" key, then the one under
      * "when@<environment>" (under every "when@" block when no environment is
      * given). A "%parameter%" is read from the file's "parameters", then
-     * from the container given.
+     * from the container given, or from what the closure given returns for
+     * its name.
+     *
+     * @param ContainerInterface|(\Closure(string): (scalar|null))|null $container
      *
      * @throws SecurityConfigException
      *
      * @return array{accessControl: list<AccessControlRule>, firewalls: list<FirewallRule>}
      */
-    public function extract(string $path, ?string $environment = null, ?ContainerInterface $container = null): array
+    public function extract(string $path, ?string $environment = null, ContainerInterface|\Closure|null $container = null): array
     {
         if (!class_exists(Yaml::class)) {
             throw new SecurityConfigException('Reading a YAML security file needs symfony/yaml: composer require symfony/yaml');
@@ -275,12 +278,15 @@ final class SecurityConfigExtractor
                     return self::written($placeholders, self::text($parameters->unescapeValue($parameters->resolveValue($value))) ?? throw self::notAString($value));
                 } catch (ParameterNotFoundException $e) {
                     $name = $e->getKey();
-                    $found = null !== $container && $container->hasParameter($name) ? $container->getParameter($name) : null;
+                    $found = $container instanceof \Closure ? $container($name) : (null !== $container && $container->hasParameter($name) ? $container->getParameter($name) : null);
                     if (!\is_scalar($found)) {
                         throw new SecurityConfigException(\sprintf('The parameter "%s" used in "%s" is defined neither in the file nor in the application.', $name, $path), previous: $e);
                     }
 
                     $parameters->set($name, $found);
+                } catch (DependencyInjectionException $e) {
+                    // An environment variable name the bag refuses, say.
+                    throw new SecurityConfigException(\sprintf('The security configuration value "%s" cannot be resolved: %s', $value, $e->getMessage()), previous: $e);
                 }
             }
         };
@@ -295,7 +301,7 @@ final class SecurityConfigExtractor
      *
      * @return array{accessControl: list<AccessControlRule>, firewalls: list<FirewallRule>, skippedFiles: list<array{file: string, reason: string}>}
      */
-    private function readFiles(array $paths, ?string $environment, ?ContainerInterface $container, bool $named): array
+    private function readFiles(array $paths, ?string $environment, ?\Closure $container, bool $named): array
     {
         $accessControl = [];
         $firewalls = [];
@@ -580,18 +586,28 @@ final class SecurityConfigExtractor
             return $this->buildContainer();
         }, $copy, Kernel::class) ?? throw new SecurityConfigException('The kernel cannot build its container.');
 
-        return $build();
+        try {
+            return $build();
+        } catch (\RuntimeException $e) {
+            // A cache or build directory the kernel cannot write in, as a
+            // production one may be.
+            throw new SecurityConfigException('The kernel cannot build its container: '.$e->getMessage(), previous: $e);
+        }
     }
 
     /**
      * The parameters of the application a file named with --config may use,
-     * as the application writes them: those of the container its kernel
-     * builds, before compiling it. The compiled container resolves one read
-     * from the environment from the environment the analysis runs in. A
-     * kernel that is not booted, or of another making than Kernel, lends
-     * the file none.
+     * as the application holds them once the container its kernel builds is
+     * compiled, parameters a compiler pass sets included; a value read from
+     * the environment is written as the configuration writes it,
+     * "%env(APP_PATH)%", where the compiled container the kernel runs would
+     * read it from the environment the analysis runs in. The container is
+     * built the first time the file asks for a parameter. A kernel that is
+     * not booted, or of another making than Kernel, lends the file none.
+     *
+     * @return (\Closure(string): (scalar|null))|null
      */
-    private static function applicationParameters(KernelInterface $kernel): ?ContainerInterface
+    private static function applicationParameters(KernelInterface $kernel): ?\Closure
     {
         try {
             $kernel->getContainer();
@@ -601,7 +617,34 @@ final class SecurityConfigExtractor
             return null;
         }
 
-        return $kernel instanceof Kernel ? self::uncompiledContainer($kernel) : null;
+        if (!$kernel instanceof Kernel) {
+            return null;
+        }
+
+        $container = null;
+
+        return static function (string $name) use ($kernel, &$container): string|int|float|bool|null {
+            if (null === $container) {
+                $container = self::uncompiledContainer($kernel);
+
+                try {
+                    $container->compile();
+                } catch (DependencyInjectionException $e) {
+                    throw new SecurityConfigException('The container of the application cannot be compiled: '.$e->getMessage(), previous: $e);
+                }
+            }
+
+            $value = $container->hasParameter($name) ? $container->getParameter($name) : null;
+            if (!\is_string($value)) {
+                return \is_scalar($value) ? $value : null;
+            }
+
+            // As the configuration writes it: "%" escaped, and a value read
+            // from the environment as the "%env()%" it is read through.
+            $written = $container->resolveEnvPlaceholders(str_replace('%', '%%', $value), '%%env(%s)%%');
+
+            return \is_string($written) ? $written : null;
+        };
     }
 
     /**

@@ -15,21 +15,35 @@ namespace PHPRegex\Tests\Support;
 
 use Symfony\Bundle\SecurityBundle\SecurityBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Kernel;
 
 /**
  * An application kernel over a project directory: its config/packages
- * files loaded as an application's are, YAML and PHP alike, and the
- * SecurityBundle registered unless the test leaves it out.
+ * files loaded as an application's are, YAML and PHP alike, the
+ * SecurityBundle registered unless the test leaves it out, and the
+ * compiler passes the test gives it.
  */
 final class SecurityConfigKernel extends Kernel
 {
+    /**
+     * @param list<CompilerPassInterface> $compilerPasses
+     */
     public function __construct(
         private readonly string $projectDirectory,
         string $environment = 'test',
         private readonly bool $withSecurityBundle = true,
+        private readonly array $compilerPasses = [],
     ) {
         parent::__construct($environment, false);
+    }
+
+    protected function build(ContainerBuilder $container): void
+    {
+        foreach ($this->compilerPasses as $pass) {
+            $container->addCompilerPass($pass);
+        }
     }
 
     /**

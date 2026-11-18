@@ -27,6 +27,7 @@ use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
 use Symfony\Component\DependencyInjection\Compiler\MergeExtensionConfigurationPass;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Exception\ExceptionInterface as DependencyInjectionException;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpFoundation\RequestMatcher\IpsRequestMatcher;
@@ -588,6 +589,28 @@ final class SecurityConfigExtractorTest extends TestCase
 
         $this->assertSame(['api' => '%env(API_PATTERN)%', 'main' => '(?:^/app|%env(APP_PATTERN)%)', 'dev' => '^/_profiler'], array_column($firewalls, 'pattern', 'name'));
         $this->assertSame(['api' => true, 'main' => true, 'dev' => false], array_column($firewalls, 'fromEnvironment', 'name'));
+    }
+
+    /**
+     * An environment variable name the parameter bag refuses stops the
+     * reading as any value that cannot be resolved does, with the bag's
+     * reason.
+     */
+    #[Test]
+    public function test_an_environment_name_the_parameter_bag_refuses_stops_the_reading(): void
+    {
+        try {
+            (new ContainerBuilder())->getParameterBag()->resolveValue('%env(BAD-NAME)%');
+            $this->fail('The parameter bag took a name with a hyphen.');
+        } catch (DependencyInjectionException $e) {
+            $reason = $e->getMessage();
+        }
+        $path = $this->makeProject(['security.yaml' => "security:\n    access_control:\n        - { path: '%env(BAD-NAME)%' }\n"]).'/security.yaml';
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('The security configuration value "%env(BAD-NAME)%" cannot be resolved: '.$reason);
+
+        (new SecurityConfigExtractor())->extract($path);
     }
 
     #[Test]

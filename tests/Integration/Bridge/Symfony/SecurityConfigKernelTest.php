@@ -32,6 +32,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Inside an application the security configuration is the one the kernel
@@ -615,6 +617,84 @@ final class SecurityConfigKernelTest extends TestCase
 
         $this->assertNotNull($config);
         $this->assertSame(['^/admin'], array_column($config['accessControl'], 'path'));
+    }
+
+    /**
+     * The container a named file takes its parameters from is built when the
+     * file asks for one: a file that asks for none is read even where the
+     * kernel cannot build its container, its cache directory left read only
+     * as in production; one that asks for one stops with the kernel's
+     * reason.
+     */
+    #[Test]
+    public function test_a_named_file_builds_the_container_of_the_application_only_for_a_parameter_it_asks_for(): void
+    {
+        $project = $this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_path: ^/admin\n",
+            'plain.yaml' => "security:\n    access_control: [{ path: ^/plain }]\n",
+            'parameter.yaml' => "security:\n    access_control: [{ path: '%admin_path%' }]\n",
+        ]);
+        $kernel = new SecurityConfigKernel($project, withSecurityBundle: false);
+        $kernel->boot();
+        $cache = $kernel->getCacheDir();
+        chmod($cache, 0o555);
+
+        try {
+            try {
+                (\Closure::bind(fn (): mixed => $this->buildContainer(), clone $kernel, SecurityConfigKernel::class))();
+                $this->fail('The kernel built its container in a read-only cache directory.');
+            } catch (\RuntimeException $e) {
+                $reason = $e->getMessage();
+            }
+
+            $config = (new SecurityConfigExtractor())->read([$project.'/plain.yaml'], $kernel, new SecurityConfigLocator(), $project, 'test');
+            $this->assertNotNull($config);
+            $this->assertSame(['^/plain'], array_column($config['accessControl'], 'path'));
+
+            try {
+                (new SecurityConfigExtractor())->read([$project.'/parameter.yaml'], $kernel, new SecurityConfigLocator(), $project, 'test');
+                $this->fail('A parameter was read from a container the kernel cannot build.');
+            } catch (SecurityConfigException $e) {
+                $this->assertStringContainsString($reason, $e->getMessage());
+            }
+        } finally {
+            chmod($cache, 0o755);
+        }
+    }
+
+    /**
+     * A parameter a compiler pass of the application sets is taken from the
+     * container the kernel compiles, as the application holds it: one the
+     * pass gives an environment value stays unknown.
+     */
+    #[Test]
+    public function test_a_named_file_takes_a_parameter_a_compiler_pass_sets(): void
+    {
+        $pass = new class implements CompilerPassInterface {
+            public function process(ContainerBuilder $container): void
+            {
+                $container->setParameter('admin_path', '^/admin');
+                $container->setParameter('admin_host', '%env(PHPREGEX_TEST_ADMIN_HOST)%');
+            }
+        };
+        $project = $this->makeProject([
+            'config/services.yaml' => "parameters:\n    unused: ~\n",
+            'security.yaml' => "security:\n    access_control: [{ path: '%admin_path%', host: '%admin_host%' }]\n",
+        ]);
+        $_ENV['PHPREGEX_TEST_ADMIN_HOST'] = $_SERVER['PHPREGEX_TEST_ADMIN_HOST'] = 'admin.example.com';
+
+        try {
+            $kernel = new SecurityConfigKernel($project, withSecurityBundle: false, compilerPasses: [$pass]);
+            $kernel->boot();
+            $this->assertSame('^/admin', $kernel->getContainer()->getParameter('admin_path'));
+
+            $config = (new SecurityConfigExtractor())->read([$project.'/security.yaml'], $kernel, new SecurityConfigLocator(), $project, 'test');
+        } finally {
+            unset($_ENV['PHPREGEX_TEST_ADMIN_HOST'], $_SERVER['PHPREGEX_TEST_ADMIN_HOST']);
+        }
+
+        $this->assertNotNull($config);
+        $this->assertSame([['^/admin', '%env(PHPREGEX_TEST_ADMIN_HOST)%', ['host']]], array_map(static fn (array $rule): array => [$rule['path'], $rule['host'], $rule['fromEnvironment'] ?? []], $config['accessControl']));
     }
 
     /**
