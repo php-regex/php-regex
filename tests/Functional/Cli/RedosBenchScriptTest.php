@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Cli;
+namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Tests\Support\Newlines;
 use PHPRegex\Tests\Support\ProcessPipes;
@@ -51,10 +51,21 @@ final class RedosBenchScriptTest extends TestCase
     {
         $process = proc_open([\PHP_BINARY, '-d', 'memory_limit=128M', \dirname(__DIR__, 3).'/bin/redos-bench', ...$arguments], ProcessPipes::descriptors(), $pipes);
         self::assertIsResource($process);
-        $output = Newlines::lf(implode('', ProcessPipes::drain($pipes)));
-        fclose($pipes[1]);
-        fclose($pipes[2]);
+        $output = null;
 
-        return [proc_close($process), $output];
+        try {
+            $output = Newlines::lf(implode('', ProcessPipes::drain($pipes)));
+        } finally {
+            // A child whose output is read no more is stopped before it is
+            // reaped: it could wait on a full pipe for ever.
+            if (null === $output) {
+                proc_terminate($process);
+            }
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            $exitCode = proc_close($process);
+        }
+
+        return [$exitCode, $output];
     }
 }
