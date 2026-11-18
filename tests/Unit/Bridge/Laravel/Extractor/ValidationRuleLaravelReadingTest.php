@@ -756,6 +756,18 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             'expected' => '/^(a',
             'compiles' => false,
         ];
+        yield 'an element of the array an AnyOf rule imported under another name takes' => [
+            'code' => "use Illuminate\\Validation\\Rules\\AnyOf as Either;\nreturn ['code' => new Either(['regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => self::anyOfRules(new AnyOf(['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of the array another class named AnyOf takes' => [
+            'code' => "return ['code' => new \\App\\Rules\\AnyOf(['regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => ['code' => ['regex:/^(a|b)$/']],
+            'expected' => '/^(a|b)$/',
+            'compiles' => true,
+        ];
         yield 'an element of a rules array Rule::anyOf() takes' => [
             'code' => "return ['code' => Rule::anyOf([['required', 'regex:/^(a|b)$/']])];",
             'rules' => static fn (): array => self::anyOfRules(Rule::anyOf([['required', 'regex:/^(a|b)$/']])),

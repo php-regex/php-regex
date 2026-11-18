@@ -51,13 +51,17 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     ];
 
     /**
-     * The calls that take an array of rule sets, which validate each
-     * element alone: Rule::anyOf() and the AnyOf rule it builds hand each
-     * one to Validator::make(), which splits a string on "|". By the name
-     * of the method, or of the class built, in lower case: the argument
-     * that is one, by position from 0 and by name.
+     * The argument of the calls that take an array of rule sets, which
+     * validate each element alone, by position from 0 and by name:
+     * Rule::anyOf() and the AnyOf rule it builds (ANY_OF) hand each one to
+     * Validator::make(), which splits a string on "|".
      */
-    private const RULE_SETS_ARGUMENTS = ['anyof' => [0 => 'rules']];
+    private const RULE_SETS_ARGUMENTS = [0 => 'rules'];
+
+    /**
+     * Laravel's AnyOf rule, in lower case.
+     */
+    private const ANY_OF = 'illuminate\validation\rules\anyof';
 
     /**
      * Livewire's attributes that hand their rule, given first or named
@@ -442,7 +446,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                             $livewire => 1 === $run[1] ? [0 => 'rule'] : [],
                             default => self::rulesArgumentsOf($tokens, $previous),
                         },
-                        'sets' => $call ? self::ruleSetsArgumentsOf($tokens, $previous) : [],
+                        'sets' => $call ? self::ruleSetsArgumentsOf($tokens, $previous, $context) : [],
                         'elements' => $livewire && $run[1] > 1 ? [0 => 'rule'] : [],
                         'appends' => $call && self::appendsElements($tokens, $previous),
                         'holdsSets' => $array && null !== $outer && self::isOneOf($outer['sets'], $outer['position'], $outer['name']),
@@ -884,23 +888,26 @@ final class ValidationRulePatternSource implements PatternSourceInterface
 
     /**
      * The arguments the call after this name takes as an array of rule
-     * sets, by position and by name: the method anyOf(), or the AnyOf rule
-     * built. A function of this name takes none.
+     * sets, by position and by name: the method anyOf(), or Laravel's AnyOf
+     * rule built, under whatever name the file imports it. A function of
+     * this name, or another class, takes none.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      *
      * @return array<int, string>
      */
-    private static function ruleSetsArgumentsOf(array $tokens, int $callee): array
+    private static function ruleSetsArgumentsOf(array $tokens, int $callee, NameResolutionContext $context): array
     {
         $name = PhpTokens::name($tokens[$callee]);
-        if (null === $name) {
+        $before = PhpTokens::previousSignificant($tokens, $callee - 1);
+        if (null === $name || null === $before) {
             return [];
         }
 
-        $arguments = self::RULE_SETS_ARGUMENTS[strtolower(substr($name, (int) strrpos('\\'.$name, '\\')))] ?? [];
-        $before = PhpTokens::previousSignificant($tokens, $callee - 1);
+        if (PhpTokens::isObjectOrStaticOperator($tokens[$before])) {
+            return 'anyof' === strtolower($name) ? self::RULE_SETS_ARGUMENTS : [];
+        }
 
-        return null !== $before && (PhpTokens::isObjectOrStaticOperator($tokens[$before]) || (\is_array($tokens[$before]) && \T_NEW === $tokens[$before][0])) ? $arguments : [];
+        return \is_array($tokens[$before]) && \T_NEW === $tokens[$before][0] && self::ANY_OF === strtolower($context->resolveClass($name)) ? self::RULE_SETS_ARGUMENTS : [];
     }
 }
