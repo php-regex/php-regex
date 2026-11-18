@@ -47,26 +47,25 @@ final class RouteConflictSuggestionBuilder
             // serve both.
             if ($conflict['redirected']) {
                 $suggestions[\sprintf(
-                    'Give "%s" and "%s" paths that differ by more than a trailing slash: the GET and HEAD requests of "%s" are redirected to "%s".',
+                    'Give "%s" and "%s" paths that differ by more than a trailing slash: "%s" answers the GET and HEAD requests of "%s" that differ from its paths by the slash.',
                     $route['name'],
                     $other['name'],
-                    $other['name'],
                     $route['name'],
+                    $other['name'],
                 )] = true;
 
                 continue;
             }
 
-            // An overlap whose later route, moved first, would take every
-            // request of the earlier one is the order that serves both: a
-            // route for HEAD only before a route for GET.
-            if ($shadowed || !$conflict['laterTakesEarlier']) {
-                $suggestions[\sprintf(
-                    'Reorder routes: move "%s" before "%s".',
-                    $other['name'],
-                    $route['name'],
-                )] = true;
-            }
+            // Moved first, a shadowed route is reached, and the routes of
+            // an overlap each keep requests of their own. An earlier route
+            // the later one would take every request of, moved first, is a
+            // carve-out, never reported.
+            $suggestions[\sprintf(
+                'Reorder routes: move "%s" before "%s".',
+                $other['name'],
+                $route['name'],
+            )] = true;
 
             // Two routes on the same paths that each keep some requests
             // are no duplicates.

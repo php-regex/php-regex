@@ -518,37 +518,79 @@ matches them: the first route that matches a request wins it. A route is
 it matches, its methods, its schemes and its host included, so it can never
 be reached. Two routes that share some requests but not all are an
 **overlap**, listed with `--show-overlaps`: `/blog/{slug}` (`[a-z]+`) declared
-before `/blog/{id}` (`\d+|new`) takes `/blog/new`, and a route for `GET`
-declared before a route for `GET` and `POST` on the same path leaves it the
-`POST` requests. A narrower route declared
-before a wider one, `/users/list` before `/users/{id}`, is the order the
-router expects and is not reported. Two hosts the analysis cannot compare,
+before `/blog/{id}` (`\d+|new`) takes `/blog/new`, and a route for `GET` and
+`POST` declared before a route for `GET` and `PUT` on the same path leaves
+it the `PUT` requests. A narrower route declared before a wider one, whose
+requests are all among the later route's, is a **carve-out**, the order the
+router expects, and is not reported: `/users/list` before `/users/{id}`, a
+route for `GET` before a route for `GET` and `POST` on the same path, a
+route for `https` before one for any scheme, a route for a host before one
+for any host. Two hosts the analysis cannot compare,
 a host it cannot read or one the solver gives up on (a conditional in a
 host requirement, say), leave the paths to decide, and the finding notes
-`Host requirements were not evaluated.` A route that names no method or no
+`Host requirements were not evaluated.` Two routes whose hosts part on
+letter case alone, `A.COM` and `a.com`, are counted among the pairs
+skipped: the router sorts the routes that name a host by the end of it,
+letter case included, and may try the later one first. A route that names no method or no
 scheme takes any; one given only empty ones, `setMethods([''])` or
 `setSchemes([''])`, takes no request, as Symfony's matchers read it, and
 conflicts with no other route. A route for `GET` takes the `HEAD` requests
 too, as the router sends them: a later route for `HEAD` only on the same
 path is shadowed, and a route for `HEAD` only declared before a route for
-`GET` on the same path is an overlap that serves both. The report suggests
+`GET` on the same path is a carve-out that serves both. The report suggests
 moving a later route first, or merging two routes on the same paths, only
 where neither would leave a route unreachable. The router redirects a `GET`
 or `HEAD` request whose path differs from a route's by a trailing slash
 alone to that route, and tries no later one: `/foo/` declared before
 `/foo` takes `GET /foo`, so the later route is shadowed when it takes only
 `GET` and `HEAD`, and an overlap otherwise; the report then suggests paths
-that differ by more than the slash. The router checks the slash before the
+that differ by more than the slash. A route carved out of a catch-all,
+`/admin` declared before `/{path<.*>}`, takes `GET /admin/` the same way:
+that is the router normalising the slash, not a conflict, and the pair is
+not reported. The router checks the slash before the
 scheme: a later route on another scheme loses those requests too, and
 keeps on its own scheme the paths both routes match: `/{x<a|b>}.html` on
 `https` before `/{y<a\.html|b\.html/>}` on `http` is an overlap, the later
-route serving `http://…/a.html` and losing `/b.html/` to the redirect.
-Where the earlier route ends on a variable, which path the router
-redirects is the order in which PCRE tries the variable's requirement, and
-such a pair is counted among the pairs skipped. A later
+route serving `http://…/a.html` and losing `/b.html/` to the redirect. A
+later route serves the path a redirect leads to when it matches it: one
+that matches every path of the earlier one, `/{path<.*>}` on `http` after
+`/admin` on `https`, loses none. Where it serves the path the shortest
+redirected one leads to but not every path of the earlier route,
+`/files/{path<[a-z/]+>}` on `http` after `/files/{name}` on `https`, which
+paths it loses is a question on three languages the solver does not
+answer, and the pair is counted among the pairs skipped. Where the
+earlier route ends on a variable a value of which may end on the slash or
+be empty, `.+` or `[a-z]*`, the router matches a path ending on the slash
+as is, on that route's schemes, or redirects it, as PCRE captured the
+value: on another scheme such a pair is counted among the pairs skipped, a
+later route it matches only with the slash, `/{y<a//>}` after
+`/{x<a/?>}`, is shadowed only when the earlier route takes every scheme of
+it, and a later route for other methods than `GET` and `HEAD` keeps those
+on its paths ending on the slash, `/files/{name}/` after
+`/files/{path<.+?>}` being an overlap. The default requirement `[^/]++`,
+or `\d+`, redirects whatever that order, and the pair is read as any
+other. A later
 route whose paths the earlier one matches in part and redirects for the
 rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
-route that takes no `GET` request redirects none.
+route that takes no `GET` request redirects none. The router looks a route
+with no variable up by its path, every trailing slash of the request
+trimmed off, before it tries any route with a regex, unless an earlier
+route it tries with a regex matches that path: `/admin` redirects
+`GET /admin//` too, so `/{p<admin//>}` after it is shadowed, `/admin/`
+takes `/admin//` as is, for any method on its own schemes, and `/` answers
+`GET //` with a 404. A route tried with a regex takes its path with one
+slash at most. A later route ending on a variable that may end on the
+slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its own
+ending on the slash for the slash, as PCRE captures the value: it
+redirects `GET /a/` to `/a`, and passes `POST /a/` on to the routes after
+it. A request it passes on is none it loses, so a pair whose shortest
+shared path is one it passes on for the methods both routes take is
+counted among the pairs skipped; a redirect of an earlier route leading to
+a path it reads for its slash still loses it the request. Each such
+finding notes what the router does with the
+request: it redirects it to the earlier route, matches it as is where the
+earlier route ends on a variable whose value PCRE captures with the slash,
+or, for `//` after `/`, answers it with a 404.
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods, addresses, port, route and attributes take a request

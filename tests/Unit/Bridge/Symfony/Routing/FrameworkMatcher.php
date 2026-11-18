@@ -32,25 +32,48 @@ final class FrameworkMatcher
      *
      * @param array<mixed>|RouteCollection $routes the routes, or what the dumper compiled of them
      */
-    public static function reached(array|RouteCollection $routes, string $method, string $path, string $scheme = 'http'): ?string
+    public static function reached(array|RouteCollection $routes, string $method, string $path, string $scheme = 'http', string $host = 'localhost'): ?string
+    {
+        $route = self::match($routes, $method, $path, $scheme, $host)['_route'] ?? null;
+
+        return \is_string($route) ? $route : null;
+    }
+
+    /**
+     * How the matcher answers a request: "redirect" to a route, "match" of
+     * one as is, or "404" when no route takes it.
+     *
+     * @param array<mixed>|RouteCollection $routes the routes, or what the dumper compiled of them
+     */
+    public static function answer(array|RouteCollection $routes, string $method, string $path, string $scheme = 'http'): string
+    {
+        $match = self::match($routes, $method, $path, $scheme, 'localhost');
+
+        return null === $match ? '404' : (isset($match['_redirect']) ? 'redirect' : 'match');
+    }
+
+    /**
+     * @param array<mixed>|RouteCollection $routes
+     *
+     * @return array<mixed>|null
+     */
+    private static function match(array|RouteCollection $routes, string $method, string $path, string $scheme, string $host): ?array
     {
         $compiled = $routes instanceof RouteCollection ? (new CompiledUrlMatcherDumper($routes))->getCompiledRoutes() : $routes;
-        $matcher = new class($compiled, new RequestContext(method: $method, scheme: $scheme)) extends CompiledUrlMatcher implements RedirectableUrlMatcherInterface {
+        $matcher = new class($compiled, new RequestContext(method: $method, host: $host, scheme: $scheme)) extends CompiledUrlMatcher implements RedirectableUrlMatcherInterface {
             /**
-             * @return array{_route: string}
+             * @return array{_route: string, _redirect: string}
              */
             public function redirect(string $path, string $route, ?string $scheme = null): array
             {
-                return ['_route' => $route];
+                return ['_route' => $route, '_redirect' => $path];
             }
         };
 
         try {
-            $route = $matcher->match($path)['_route'] ?? null;
+            return $matcher->match($path);
         } catch (RoutingException) {
             return null;
         }
-
-        return \is_string($route) ? $route : null;
     }
 }

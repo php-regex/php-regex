@@ -129,16 +129,16 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
     /**
      * An earlier route that takes only some requests of a later route on
      * the same paths, a route for HEAD only before a route for GET, is the
-     * order that serves both: moving the later route first would take
-     * every request of the earlier one, and merging them would drop one.
-     * Neither is suggested.
+     * order that serves both, a carve-out: moving the later route first
+     * would take every request of the earlier one, and merging them would
+     * drop one. The pair is not reported, and nothing is suggested.
      *
      * @param list<string> $earlier
      * @param list<string> $later
      */
     #[Test]
     #[DataProvider('provideOrdersServingBoth')]
-    public function test_an_overlap_the_reorder_would_shadow_gets_no_reorder_and_no_merge(array $earlier, array $later): void
+    public function test_a_carve_out_the_reorder_would_shadow_gets_no_reorder_and_no_merge(array $earlier, array $later): void
     {
         $collection = new RouteCollection();
         $collection->add('first', (new Route('/foo'))->setMethods($earlier));
@@ -150,7 +150,7 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
         $this->assertSame(['second'], self::routesReached(self::reversed($collection), '/foo'));
 
         $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
-        $this->assertSame(['overlap'], array_column($conflicts, 'type'));
+        $this->assertSame([], array_column($conflicts, 'type'));
 
         $this->assertSame([], (new RouteConflictSuggestionBuilder())->collect($conflicts));
     }
@@ -192,7 +192,7 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
         $this->assertCount(1, $conflicts);
 
         $this->assertSame(
-            ['Give "first" and "second" paths that differ by more than a trailing slash: the GET and HEAD requests of "second" are redirected to "first".'],
+            ['Give "first" and "second" paths that differ by more than a trailing slash: "first" answers the GET and HEAD requests of "second" that differ from its paths by the slash.'],
             (new RouteConflictSuggestionBuilder())->collect($conflicts),
         );
     }
@@ -207,25 +207,61 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
     }
 
     /**
-     * An overlap whose later route takes requests of its own and leaves
-     * the earlier one some: moving the later route first still serves
-     * both, and the reorder stays.
+     * An overlap leaves each route requests of its own, by method, scheme,
+     * host or path: moving the later route first still serves both, so the
+     * reorder is suggested. An earlier route whose requests the later one
+     * all takes is a carve-out, not reported.
+     *
+     * @param array{0: string, 1: list<string>, 2: list<string>, 3: string} $first  path, methods, schemes, host
+     * @param array{0: string, 1: list<string>, 2: list<string>, 3: string} $second path, methods, schemes, host
+     * @param list<array{0: string, 1: string, 2: string, 3: string}>       $probes method, scheme, host, path
      */
     #[Test]
-    public function test_an_overlap_the_reorder_would_not_shadow_keeps_the_reorder(): void
+    #[DataProvider('provideOverlapsServedInEitherOrder')]
+    public function test_an_overlap_the_reorder_would_not_shadow_keeps_the_reorder(array $first, array $second, array $probes): void
     {
         $collection = new RouteCollection();
-        $collection->add('first', (new Route('/foo'))->setMethods(['GET', 'PUT']));
-        $collection->add('second', (new Route('/foo'))->setMethods(['GET', 'POST']));
+        foreach (['first' => $first, 'second' => $second] as $name => [$path, $methods, $schemes, $host]) {
+            $collection->add($name, (new Route($path))->setMethods($methods)->setSchemes($schemes)->setHost($host));
+        }
 
         // Either way round, the matcher sends some requests to each route.
-        $this->assertSame(['first', 'second'], self::routesReached($collection, '/foo'));
-        $this->assertSame(['first', 'second'], self::routesReached(self::reversed($collection), '/foo'));
+        $this->assertSame(['first', 'second'], self::routesReachedBy($collection, $probes));
+        $this->assertSame(['first', 'second'], self::routesReachedBy(self::reversed($collection), $probes));
 
         $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
         $this->assertSame(['overlap'], array_column($conflicts, 'type'));
 
-        $this->assertSame(['Reorder routes: move "second" before "first".'], (new RouteConflictSuggestionBuilder())->collect($conflicts));
+        $this->assertContains('Reorder routes: move "second" before "first".', (new RouteConflictSuggestionBuilder())->collect($conflicts));
+    }
+
+    /**
+     * @return iterable<string, array{first: array{0: string, 1: list<string>, 2: list<string>, 3: string}, second: array{0: string, 1: list<string>, 2: list<string>, 3: string}, probes: list<array{0: string, 1: string, 2: string, 3: string}>}>
+     */
+    public static function provideOverlapsServedInEitherOrder(): iterable
+    {
+        $methods = [['GET', 'http', 'localhost', '/foo'], ['POST', 'http', 'localhost', '/foo'], ['PUT', 'http', 'localhost', '/foo']];
+
+        yield 'each route for a method of its own' => [
+            'first' => ['/foo', ['GET', 'PUT'], [], ''],
+            'second' => ['/foo', ['GET', 'POST'], [], ''],
+            'probes' => $methods,
+        ];
+        yield 'the earlier route on https for a method of its own' => [
+            'first' => ['/foo', ['GET', 'POST'], ['https'], ''],
+            'second' => ['/foo', ['GET'], [], ''],
+            'probes' => [['GET', 'http', 'localhost', '/foo'], ['GET', 'https', 'localhost', '/foo'], ['POST', 'https', 'localhost', '/foo']],
+        ];
+        yield 'the earlier route on a host for a method of its own' => [
+            'first' => ['/foo', ['GET', 'POST'], [], 'admin.example.com'],
+            'second' => ['/foo', ['GET'], [], ''],
+            'probes' => [['GET', 'http', 'shop.example.com', '/foo'], ['GET', 'http', 'admin.example.com', '/foo'], ['POST', 'http', 'admin.example.com', '/foo']],
+        ];
+        yield 'each route for paths of its own' => [
+            'first' => ['/blog/{slug<[a-z]+>}', [], [], ''],
+            'second' => ['/blog/{id<\d+|new>}', [], [], ''],
+            'probes' => [['GET', 'http', 'localhost', '/blog/abc'], ['GET', 'http', 'localhost', '/blog/new'], ['GET', 'http', 'localhost', '/blog/1']],
+        ];
     }
 
     /**
@@ -269,6 +305,28 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
         $routes = [];
         foreach (['GET', 'HEAD', 'POST', 'PUT'] as $method) {
             $route = FrameworkMatcher::reached($collection, $method, $path);
+            if (null !== $route) {
+                $routes[$route] = true;
+            }
+        }
+        ksort($routes);
+
+        return array_keys($routes);
+    }
+
+    /**
+     * The routes the framework's matcher sends the requests to: each name
+     * once, sorted.
+     *
+     * @param list<array{0: string, 1: string, 2: string, 3: string}> $requests method, scheme, host, path
+     *
+     * @return list<string>
+     */
+    private static function routesReachedBy(RouteCollection $collection, array $requests): array
+    {
+        $routes = [];
+        foreach ($requests as [$method, $scheme, $host, $path]) {
+            $route = FrameworkMatcher::reached($collection, $method, $path, $scheme, $host);
             if (null !== $route) {
                 $routes[$route] = true;
             }
