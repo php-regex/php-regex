@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -109,7 +110,30 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     private ?NodeInterface $previousNode = null;
 
+    /**
+     * Whether the pattern holds a lookaround, which the sets read through.
+     */
+    private bool $holdsLookaround = false;
+
+    /**
+     * Whether each node read so far always reads a character, by object id.
+     *
+     * @var array<int, bool>
+     */
+    private array $reads = [];
+
     private ?NodeInterface $nextNode = null;
+
+    /**
+     * The items of the sequence the node being read stands in, and its
+     * place there: the items around it are read past those that may match
+     * empty. None outside a sequence.
+     *
+     * @var array<NodeInterface>
+     */
+    private array $siblings = [];
+
+    private int $position = -1;
 
     /**
      * The body of the loop whose iteration the node ends: the next
@@ -268,12 +292,16 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->endsAtomicBody = false;
         $this->previousNode = null;
         $this->nextNode = null;
+        $this->siblings = [];
+        $this->position = -1;
         $this->iterationHead = null;
         $this->backrefLoopDetected = false;
         $this->culpritNode = null;
         $this->culpritSeverity = RedosSeverity::Safe;
         $this->calledGroups = [];
         $this->groupsBeforeCall = [];
+        $this->holdsLookaround = false;
+        $this->reads = [];
         $this->indexGroups($node->pattern, 0);
         $this->callsReadThrough = [];
         $this->groupsReadThrough = [];
@@ -313,12 +341,18 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         $wasAtomic = $this->endsAtomicBody;
         $depths = [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth];
-        $boundarySeparatedPrev = $this->hasMutuallyExclusiveBoundary($this->previousNode, $node->node);
-        $boundarySeparatedNext = $this->hasForwardMutuallyExclusiveBoundary($node->node, $this->nextNode);
+        // An item that may match empty keeps the loop apart only with the
+        // ones past it: each, to the first that always reads a character,
+        // must start or end apart from the loop. The walk that runs out of
+        // items is kept apart by nothing, but after the loop by the head of
+        // the iteration the sequence ends.
+        [$before, $afterTheStart] = $this->itemsAround(-1);
+        [$after, $beforeTheEnd] = $this->itemsAround(1);
+        $boundarySeparatedPrev = !$afterTheStart && $this->apartFrom($before, $node->node, false);
+        $boundarySeparatedNext = !$beforeTheEnd && $this->apartFrom($after, $node->node, true);
         $boundarySeparated = $boundarySeparatedPrev || $boundarySeparatedNext;
-        $iterationsSeparated = ($boundarySeparatedPrev && $this->separatesIterations($this->previousNode))
-            || ($boundarySeparatedNext && $this->separatesIterations($this->nextNode))
-            || (null === $this->nextNode && $this->hasForwardMutuallyExclusiveBoundary($node->node, $this->iterationHead) && $this->separatesIterations($this->iterationHead));
+        $iterationsSeparated = $boundarySeparated
+            || ($beforeTheEnd && null !== $this->iterationHead && $this->apartFrom([...$after, $this->iterationHead], $node->node, true) && $this->separatesIterations($this->iterationHead));
 
         $controlVerbShield = $this->hasTrailingBacktrackingControl($node->node);
         $isPossessive = QuantifierType::Possessive === $node->type;
@@ -473,13 +507,19 @@ final class RedosProfiler extends AbstractNodeVisitor
         $childNext = $this->nextNode;
         $head = $this->iterationHead;
         $loop = $this->loop;
+        $siblings = $this->siblings;
+        $position = $this->position;
         $this->previousNode = null;
         $this->nextNode = null;
+        $this->siblings = [];
+        $this->position = -1;
         $this->iterationHead = $this->quantifierAllowsMultiple($qMax) ? $node->node : null;
         $this->loop = $entersUnbounded ? $node : $loop;
         $childSeverity = $node->node->accept($this);
         $this->previousNode = $childPrevious;
         $this->nextNode = $childNext;
+        $this->siblings = $siblings;
+        $this->position = $position;
         $this->iterationHead = $head;
         $this->loop = $loop;
 
@@ -571,11 +611,17 @@ final class RedosProfiler extends AbstractNodeVisitor
             $this->iterationHead = null;
         }
 
+        $siblings = $this->siblings;
+        $position = $this->position;
         $this->previousNode = null;
         $this->nextNode = null;
+        $this->siblings = [];
+        $this->position = -1;
         $severity = $node->child->accept($this);
         $this->previousNode = $previous;
         $this->nextNode = $next;
+        $this->siblings = $siblings;
+        $this->position = $position;
         $this->iterationHead = $head;
 
         [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth, $this->repeatingLoopDepth] = $depths;
@@ -623,11 +669,26 @@ final class RedosProfiler extends AbstractNodeVisitor
             }
         }
 
+        // The iteration may end after each item from the last that always
+        // reads a character: the ones after it may all match empty.
+        $lastSolid = -1;
+        for ($index = null === $head ? -1 : $total - 1; $index >= 0; $index--) {
+            if ($reads[$index] && $this->alwaysReads($children[$index])) {
+                $lastSolid = $index;
+
+                break;
+            }
+        }
+
+        $siblings = $this->siblings;
+        $position = $this->position;
+        $this->siblings = $children;
         foreach ($children as $index => $child) {
             $followedBy = $readsAll ? ($children[$index + 1] ?? null) : $following[$index];
             $this->previousNode = $last;
             $this->nextNode = $followedBy;
-            $this->iterationHead = null === $followedBy ? $head : null;
+            $this->position = $index;
+            $this->iterationHead = $index >= $lastSolid ? $head : null;
             $this->endsAtomicBody = $index === $tail;
             $max = $this->maxSeverity($max, $child->accept($this));
             if ($reads[$index]) {
@@ -635,6 +696,8 @@ final class RedosProfiler extends AbstractNodeVisitor
             }
         }
 
+        $this->siblings = $siblings;
+        $this->position = $position;
         $this->previousNode = $previous;
         $this->nextNode = $next;
         $this->iterationHead = $head;
@@ -860,6 +923,10 @@ final class RedosProfiler extends AbstractNodeVisitor
             $this->groupsBeforeCall[spl_object_id($node)] = $count;
 
             return $count;
+        }
+
+        if ($node instanceof GroupNode && self::isLookaround($node)) {
+            $this->holdsLookaround = true;
         }
 
         if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
@@ -1248,36 +1315,168 @@ final class RedosProfiler extends AbstractNodeVisitor
         return \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::BranchReset], true);
     }
 
-    private function hasMutuallyExclusiveBoundary(?NodeInterface $previous, NodeInterface $current): bool
+    /**
+     * The characters the node may start or end with, read past a
+     * lookaround, which reads nothing: the sets read its body as if the
+     * engine took it, "(?!x)a" as starting with "x".
+     */
+    private function edgeChars(NodeInterface $node, bool $fromStart): ByteCharSet
     {
-        if (null === $previous) {
-            return false;
+        if (!$this->holdsLookaround || !$this->edgeIsLookaround($node, $fromStart)) {
+            $sets = $this->setsAt($node);
+
+            return $fromStart ? $sets->firstChars($node) : $sets->lastChars($node);
         }
 
-        $previousTail = $this->setsAt($previous)->lastChars($previous);
-        $currentHead = $this->setsAt($current)->firstChars($current);
-
-        if ($previousTail->isUnknown() || $currentHead->isUnknown()) {
-            return false;
+        if (self::isLookaround($node)) {
+            return ByteCharSet::empty();
         }
 
-        return !$previousTail->intersects($currentHead);
+        if ($node instanceof GroupNode) {
+            return $this->edgeChars($node->child, $fromStart);
+        }
+
+        if ($node instanceof QuantifierNode) {
+            return $this->edgeChars($node->node, $fromStart);
+        }
+
+        $set = ByteCharSet::empty();
+        if ($node instanceof AlternationNode) {
+            foreach ($node->alternatives as $alternative) {
+                $set = $set->union($this->edgeChars($alternative, $fromStart));
+            }
+
+            return $set;
+        }
+
+        // A sequence, the only node left whose edge may be a lookaround.
+        foreach ($fromStart ? $node->getChildren() : array_reverse($node->getChildren()) as $child) {
+            $set = $set->union($this->edgeChars($child, $fromStart));
+            if (false === $child->accept($this->nullability)) {
+                break;
+            }
+        }
+
+        return $set;
     }
 
-    private function hasForwardMutuallyExclusiveBoundary(NodeInterface $current, ?NodeInterface $next): bool
+    /**
+     * Whether the node is a lookaround, which reads nothing, whatever its
+     * body reads.
+     */
+    private static function isLookaround(NodeInterface $node): bool
     {
-        if (null === $next) {
+        return $node instanceof GroupNode
+            && \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring], true);
+    }
+
+    /**
+     * Whether a lookaround stands at the start or the end of the node, past
+     * what may match empty.
+     */
+    private function edgeIsLookaround(NodeInterface $node, bool $fromStart): bool
+    {
+        if (self::isLookaround($node)) {
+            return true;
+        }
+
+        if ($node instanceof GroupNode) {
+            return $this->edgeIsLookaround($node->child, $fromStart);
+        }
+
+        if ($node instanceof QuantifierNode) {
+            return $this->edgeIsLookaround($node->node, $fromStart);
+        }
+
+        if ($node instanceof AlternationNode) {
+            foreach ($node->alternatives as $alternative) {
+                if ($this->edgeIsLookaround($alternative, $fromStart)) {
+                    return true;
+                }
+            }
+
             return false;
         }
 
-        $currentTail = $this->setsAt($current)->lastChars($current);
-        $nextHead = $this->setsAt($next)->firstChars($next);
+        if ($node instanceof SequenceNode) {
+            foreach ($fromStart ? $node->children : array_reverse($node->children) as $child) {
+                if ($this->edgeIsLookaround($child, $fromStart)) {
+                    return true;
+                }
 
-        if ($currentTail->isUnknown() || $nextHead->isUnknown()) {
+                if (false === $child->accept($this->nullability)) {
+                    return false;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The items on one side of the node being read, nearest first, past
+     * those that read nothing, a lookaround among them, to the first that
+     * always reads a character; and whether the walk ran out of items
+     * before one. An item that may
+     * match empty and ends with a verb that cuts backtracking ends the walk
+     * on its own: the engine always gets through it and never goes back
+     * past it, "\s?(*COMMIT)" after "\w+".
+     *
+     * @param -1|1 $direction
+     *
+     * @return array{list<NodeInterface>, bool}
+     */
+    private function itemsAround(int $direction): array
+    {
+        $items = [];
+        for ($index = $this->position + $direction; isset($this->siblings[$index]); $index += $direction) {
+            $item = $this->siblings[$index];
+            if (self::readsNothing($item) || self::isLookaround($item)) {
+                continue;
+            }
+
+            if ($this->alwaysReads($item)) {
+                $items[] = $item;
+
+                return [$items, false];
+            }
+
+            if ($this->hasTrailingBacktrackingControl($item)) {
+                return [$items, false];
+            }
+
+            $items[] = $item;
+        }
+
+        return [$items, true];
+    }
+
+    /**
+     * Whether each item starts, or ends before the loop, apart from it:
+     * what may end the one before and start the one after are known and
+     * apart.
+     *
+     * @param list<NodeInterface> $items
+     */
+    private function apartFrom(array $items, NodeInterface $loop, bool $after): bool
+    {
+        if ([] === $items) {
+            return true;
+        }
+
+        $edge = $this->edgeChars($loop, !$after);
+        if ($edge->isUnknown()) {
             return false;
         }
 
-        return !$currentTail->intersects($nextHead);
+        foreach ($items as $item) {
+            $other = $this->edgeChars($item, $after);
+            if ($other->isUnknown() || $other->intersects($edge)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -1287,7 +1486,34 @@ final class RedosProfiler extends AbstractNodeVisitor
      */
     private function separatesIterations(?NodeInterface $item): bool
     {
-        return null !== $item && false === $item->accept($this->nullability);
+        return null !== $item && $this->alwaysReads($item);
+    }
+
+    /**
+     * Whether every match of the item reads a character, a call read
+     * through the group it runs: "(?&s)" over "(?<s>"[^"]*")" does.
+     */
+    private function alwaysReads(NodeInterface $item): bool
+    {
+        if ($item instanceof LiteralNode) {
+            return '' !== $item->value;
+        }
+
+        if ($item instanceof CharTypeNode || $item instanceof CharClassNode || $item instanceof DotNode || $item instanceof CharLiteralNode) {
+            return true;
+        }
+
+        $id = spl_object_id($item);
+        if (isset($this->reads[$id])) {
+            return $this->reads[$id];
+        }
+
+        $nullable = $item->accept($this->nullability);
+        if (null === $nullable && $item instanceof SubroutineNode) {
+            $nullable = $this->calledGroup($item)?->child->accept($this->nullability);
+        }
+
+        return $this->reads[$id] = false === $nullable;
     }
 
     private function reduceSeverity(RedosSeverity $severity, RedosSeverity $cap): RedosSeverity
@@ -1686,75 +1912,90 @@ final class RedosProfiler extends AbstractNodeVisitor
         $count = null === $reading ? \count($children) : \count($reading);
 
         for ($k = 0; $k < $count - 1; $k++) {
-            [$leftIndex, $rightIndex] = null === $reading ? [$k, $k + 1] : [$reading[$k], $reading[$k + 1]];
-            if ($rightIndex === $tail) {
-                continue;
-            }
-
-            $left = $children[$leftIndex];
-            $right = $children[$rightIndex];
-
+            $left = $children[null === $reading ? $k : $reading[$k]];
             $leftQuantifier = $this->unwrapAdjacentQuantifier($left);
-            $rightQuantifier = $this->unwrapAdjacentQuantifier($right);
-
-            if (null === $leftQuantifier || null === $rightQuantifier) {
+            if (null === $leftQuantifier) {
                 continue;
             }
 
-            if ($this->isQuantifierShielded($leftQuantifier) || $this->isQuantifierShielded($rightQuantifier)) {
-                continue;
+            // A loop meets each item after it as far as the first that
+            // always reads a character: "a+x?a+" meets the second "a+"
+            // where "x?" matches empty.
+            for ($m = $k + 1; $m < $count; $m++) {
+                $rightIndex = null === $reading ? $m : $reading[$m];
+                $right = $children[$rightIndex];
+                if ($rightIndex !== $tail) {
+                    $max = $this->maxSeverity($max, $this->adjacentLoops($left, $leftQuantifier, $right));
+                }
+
+                if ($this->alwaysReads($right) || $this->hasTrailingBacktrackingControl($right)) {
+                    break;
+                }
             }
-
-            [, $leftMax] = $this->quantifierBounds($leftQuantifier);
-            [, $rightMax] = $this->quantifierBounds($rightQuantifier);
-
-            if (!$this->quantifierAllowsMultiple($leftMax) || !$this->quantifierAllowsMultiple($rightMax)) {
-                continue;
-            }
-
-            $leftTail = $this->setsAt($leftQuantifier->node)->lastChars($leftQuantifier->node);
-            $rightHead = $this->setsAt($rightQuantifier->node)->firstChars($rightQuantifier->node);
-            $overlapKnown = !$leftTail->isUnknown() && !$rightHead->isUnknown();
-
-            if ($overlapKnown && !$leftTail->intersects($rightHead)) {
-                continue;
-            }
-
-            $leftUnbounded = $this->isUnbounded($leftQuantifier);
-            $rightUnbounded = $this->isUnbounded($rightQuantifier);
-            $leftLarge = $this->isLargeBounded($leftQuantifier);
-            $rightLarge = $this->isLargeBounded($rightQuantifier);
-
-            if (!$overlapKnown && !$leftUnbounded && !$rightUnbounded && !$leftLarge && !$rightLarge) {
-                continue;
-            }
-
-            $severity = ($leftUnbounded || $rightUnbounded) ? RedosSeverity::Medium : RedosSeverity::Low;
-            if ($this->unboundedQuantifierDepth > 0) {
-                $severity = $this->maxSeverity($severity, RedosSeverity::High);
-            }
-
-            $confidence = $overlapKnown ? RedosConfidence::Medium : RedosConfidence::Low;
-            $falsePositiveRisk = $overlapKnown
-                ? 'Medium false-positive risk; overlap is inferred from boundary character sets.'
-                : 'High false-positive risk; overlap could not be determined precisely.';
-
-            $adjacentSpan = new SequenceNode([$left, $right], $left->getStartPosition(), $right->getEndPosition());
-
-            $this->addVulnerability(
-                $severity,
-                'Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*).',
-                $adjacentSpan,
-                'Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.',
-                $confidence,
-                $falsePositiveRisk,
-                'adjacent quantifiers',
-            );
-
-            $max = $this->maxSeverity($max, $severity);
         }
 
         return $max;
+    }
+
+    /**
+     * The finding of a loop and an item it meets, when the item is a loop
+     * too and the two may read the same characters.
+     */
+    private function adjacentLoops(NodeInterface $left, QuantifierNode $leftQuantifier, NodeInterface $right): RedosSeverity
+    {
+        $rightQuantifier = $this->unwrapAdjacentQuantifier($right);
+
+        if (null === $rightQuantifier || $this->isQuantifierShielded($leftQuantifier) || $this->isQuantifierShielded($rightQuantifier)) {
+            return RedosSeverity::Safe;
+        }
+
+        [, $leftMax] = $this->quantifierBounds($leftQuantifier);
+        [, $rightMax] = $this->quantifierBounds($rightQuantifier);
+
+        if (!$this->quantifierAllowsMultiple($leftMax) || !$this->quantifierAllowsMultiple($rightMax)) {
+            return RedosSeverity::Safe;
+        }
+
+        $leftTail = $this->edgeChars($leftQuantifier->node, false);
+        $rightHead = $this->edgeChars($rightQuantifier->node, true);
+        $overlapKnown = !$leftTail->isUnknown() && !$rightHead->isUnknown();
+
+        if ($overlapKnown && !$leftTail->intersects($rightHead)) {
+            return RedosSeverity::Safe;
+        }
+
+        $leftUnbounded = $this->isUnbounded($leftQuantifier);
+        $rightUnbounded = $this->isUnbounded($rightQuantifier);
+        $leftLarge = $this->isLargeBounded($leftQuantifier);
+        $rightLarge = $this->isLargeBounded($rightQuantifier);
+
+        if (!$overlapKnown && !$leftUnbounded && !$rightUnbounded && !$leftLarge && !$rightLarge) {
+            return RedosSeverity::Safe;
+        }
+
+        $severity = ($leftUnbounded || $rightUnbounded) ? RedosSeverity::Medium : RedosSeverity::Low;
+        if ($this->unboundedQuantifierDepth > 0) {
+            $severity = $this->maxSeverity($severity, RedosSeverity::High);
+        }
+
+        $confidence = $overlapKnown ? RedosConfidence::Medium : RedosConfidence::Low;
+        $falsePositiveRisk = $overlapKnown
+            ? 'Medium false-positive risk; overlap is inferred from boundary character sets.'
+            : 'High false-positive risk; overlap could not be determined precisely.';
+
+        $adjacentSpan = new SequenceNode([$left, $right], $left->getStartPosition(), $right->getEndPosition());
+
+        $this->addVulnerability(
+            $severity,
+            'Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*).',
+            $adjacentSpan,
+            'Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.',
+            $confidence,
+            $falsePositiveRisk,
+            'adjacent quantifiers',
+        );
+
+        return $severity;
     }
 
     private function unwrapAdjacentQuantifier(NodeInterface $node): ?QuantifierNode
