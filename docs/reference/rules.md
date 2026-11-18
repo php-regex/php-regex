@@ -1261,7 +1261,9 @@ pattern has neither `/u` nor `(*UTF)`. The class holds each byte on its own, and
 starts at the last byte of its start and ends at the first byte of its end: `[à-é]` is
 `\xC3`, the range `\xA0-\xC3`, then `\xA9`. The other class rules read those bytes too,
 but a byte two different characters share is reported here alone: `[äö]` holds `\xC3`
-twice, and the fix is `/u`, not removing it. A character written twice, `[ää]`, or a byte
+twice, and the fix is `/u`, not removing it. So is a byte of a character that a range to
+it holds: `[a-ä]` is the range `a-\xC3`, then the `\xA4` it holds. A character written
+twice, `[ää]`, even where others hold each of its bytes first, `[ö¤ää]`, or a byte
 written beside a character that starts with it, `[aä\xC3]`, is a duplicate
 `regex.lint.charclass.redundant` reports.
 

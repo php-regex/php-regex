@@ -8,11 +8,13 @@ CHANGELOG
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * The class rules read the bytes PCRE2 reads in a class without UTF mode:
    `regex.lint.charclass.redundant` reports a character written twice,
-   `/[ää]/`, and a byte written beside a character that starts with it,
-   `/[aä\xC3]/`, where each multibyte character was left out as one it
-   could not read. A byte two different characters share, the `\xC3` of
-   `/[äö]/`, is no duplicate: `regex.lint.unicode.multibyteInClassWithoutU`
-   reports that class, with the fix, `/u`.
+   `/[ää]/` or `/[ö¤ää]/`, and a byte written beside a character that
+   starts with it, `/[aä\xC3]/`, where each multibyte character was left
+   out as one it could not read. A byte two different characters share,
+   the `\xC3` of `/[äö]/`, is no duplicate, nor is the `\xA4` of
+   `/[a-ä]/`, which the range `a-\xC3` holds:
+   `regex.lint.unicode.multibyteInClassWithoutU` reports that class, with
+   the fix, `/u`.
  * The rules that compare first and last characters read an escape that
    names an ASCII character, `\x41`, `\101`, `\x{41}`, `\o{101}` or `\cA`,
    as that character, where they asked the engine or gave up:

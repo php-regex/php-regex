@@ -73,5 +73,17 @@ final class RedundantSplitCharacterTest extends TestCase
         yield 'a range written twice' => ['pattern' => '/[à-éà-é]/', 'without' => '/[\xA0-\xC3]/', 'issues' => [$redundant, $multibyte]];
         yield 'a character written again after a range from it' => ['pattern' => '/[à-éà]/', 'without' => '/[\xA0-\xC3]/', 'issues' => [$redundant, $multibyte]];
         yield 'a byte written before a range between characters' => ['pattern' => '/[\xC3à-é]/', 'without' => '/[\xA0-\xC3]/', 'issues' => [$redundant, $multibyte]];
+        // Each byte of the character is shared with a different one before it.
+        yield 'two characters holding each byte of a third' => ['pattern' => '/[ö¤ä]/', 'without' => '/[\xC3\xB6\xC2\xA4]/', 'issues' => [$multibyte]];
+        yield 'two other characters holding each byte of a third' => ['pattern' => '/[àĤä]/', 'without' => '/[\xC3\xA0\xC4\xA4]/', 'issues' => [$multibyte]];
+        yield 'a character written twice after two holding each of its bytes' => ['pattern' => '/[ö¤ää]/', 'without' => '/[\xC3\xB6\xC2\xA4]/', 'issues' => [$redundant, $multibyte]];
+        yield 'a character written twice after two others holding each of its bytes' => ['pattern' => '/[àĤää]/', 'without' => '/[\xC3\xA0\xC4\xA4]/', 'issues' => [$redundant, $multibyte]];
+        yield 'a character written twice around a range between others' => ['pattern' => '/[äà-éä]/', 'without' => '/[\xA0-\xC3]/', 'issues' => [$redundant, $multibyte]];
+        yield 'a character written again after the second range from it' => ['pattern' => '/[à-éè-êè]/', 'without' => '/[\xA0-\xC3]/', 'issues' => [$redundant, $multibyte]];
+        // A range from an ASCII character, or to an escape, holds bytes of the character at its other end.
+        yield 'a range from an ASCII character to a multibyte one' => ['pattern' => '/[a-ä]/', 'without' => '/[a-\xC3]/', 'issues' => [$multibyte]];
+        yield 'a range from a multibyte character to an escape' => ['pattern' => '/[ä-\xFF]/', 'without' => '/[\xA4-\xFF]/', 'issues' => [$multibyte]];
+        yield 'a byte written beside a range from an ASCII character to a multibyte one' => ['pattern' => '/[a-ä\xA4]/', 'without' => '/[a-\xC3]/', 'issues' => [$redundant, $multibyte]];
+        yield 'an ASCII character written beside a range from it to a multibyte one' => ['pattern' => '/[a-äa]/', 'without' => '/[a-\xC3]/', 'issues' => [$redundant, $multibyte]];
     }
 }

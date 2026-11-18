@@ -51,9 +51,11 @@ final class RedundantCharClassRule extends AbstractLintRule
 
         $ranges = [];
         $literals = [];
-        // The characters each member is a byte of, null for one written as it is.
+        // The characters each member is a byte of, null for one written as
+        // it is, and where the class writes each of those characters first.
         $rangeOrigins = [];
         $literalOrigins = [];
+        $written = [];
         $redundant = false;
         $redundantNotes = [];
         $redundantOverflow = 0;
@@ -63,8 +65,9 @@ final class RedundantCharClassRule extends AbstractLintRule
                 $codePoint = CodePoints::fromNode($part, $unicodeMode);
                 if (null !== $codePoint) {
                     $origin = self::origin($part, $unicodeMode, $source);
+                    self::write($origin, $written);
                     if (isset($literals[$codePoint])) {
-                        if (!self::fromSplitting($origin, $literalOrigins[$codePoint] ?? null)) {
+                        if (!self::fromSplitting($origin, $literalOrigins[$codePoint] ?? null, $written)) {
                             $redundant = true;
                             $this->recordRedundantNote(
                                 $redundantNotes,
@@ -74,7 +77,7 @@ final class RedundantCharClassRule extends AbstractLintRule
                         }
                     } else {
                         $covering = $this->findCoveringRange($codePoint, $ranges);
-                        if (null !== $covering && !self::fromSplitting($origin, $rangeOrigins[$covering] ?? null)) {
+                        if (null !== $covering && !self::fromSplitting($origin, $rangeOrigins[$covering] ?? null, $written)) {
                             $redundant = true;
                             $this->recordRedundantNote(
                                 $redundantNotes,
@@ -102,12 +105,15 @@ final class RedundantCharClassRule extends AbstractLintRule
                     continue;
                 }
 
+                // A range from "a" to "ä" holds "\xA4", the last byte of "ä":
+                // an end written as it is holds no byte of the other's.
                 $startOrigin = self::origin($part->start, $unicodeMode, $source);
                 $endOrigin = self::origin($part->end, $unicodeMode, $source);
-                $origin = null === $startOrigin || null === $endOrigin ? null : $startOrigin + $endOrigin;
+                $origin = null === $startOrigin && null === $endOrigin ? null : ($startOrigin ?? []) + ($endOrigin ?? []);
+                self::write($origin, $written);
                 $rangeLabel = $this->formatRangeForHint($start, $end);
                 foreach ($ranges as $key => $existingRange) {
-                    if ($start <= $existingRange['end'] && $end >= $existingRange['start'] && !self::fromSplitting($origin, $rangeOrigins[$key] ?? null)) {
+                    if ($start <= $existingRange['end'] && $end >= $existingRange['start'] && !self::fromSplitting($origin, $rangeOrigins[$key] ?? null, $written)) {
                         $redundant = true;
                         $this->recordRedundantNote(
                             $redundantNotes,
@@ -121,7 +127,7 @@ final class RedundantCharClassRule extends AbstractLintRule
 
                 foreach ($literals as $codePoint => $seen) {
                     if ($codePoint >= $start && $codePoint <= $end) {
-                        if (!self::fromSplitting($origin, $literalOrigins[$codePoint] ?? null)) {
+                        if (!self::fromSplitting($origin, $literalOrigins[$codePoint] ?? null, $written)) {
                             $redundant = true;
                             $this->recordRedundantNote(
                                 $redundantNotes,
@@ -255,25 +261,39 @@ final class RedundantCharClassRule extends AbstractLintRule
     }
 
     /**
-     * Whether two members that hold the same byte are only bytes of
-     * characters the pattern writes, none of them written twice: "[äö]"
-     * holds 0xC3 twice, which no one wrote twice. The class is reported
-     * for the missing u already, whose fix leaves no duplicate.
+     * Notes where the class writes each character of the member first.
      *
-     * @param array<int, string>|null $one
-     * @param array<int, string>|null $other
+     * @param array<int, string>|null $origin
+     * @param array<string, int>      $written
      */
-    private static function fromSplitting(?array $one, ?array $other): bool
+    private static function write(?array $origin, array &$written): void
+    {
+        foreach ($origin ?? [] as $at => $character) {
+            $written[$character] ??= $at;
+        }
+    }
+
+    /**
+     * Whether a member that holds a byte an earlier one holds is only a
+     * byte of a character the pattern writes, as the earlier one is, the
+     * class writing that character nowhere before: "[äö]" holds 0xC3
+     * twice, which no one wrote twice, and "[ö¤ää]" writes "ä" twice,
+     * though "ö" and "¤" hold each of its bytes first. The class is
+     * reported for the missing u already, whose fix leaves no duplicate.
+     *
+     * @param array<int, string>|null $one     the member's characters, by where each starts
+     * @param array<int, string>|null $other   the earlier member's
+     * @param array<string, int>      $written where the class writes each character first
+     */
+    private static function fromSplitting(?array $one, ?array $other, array $written): bool
     {
         if (null === $one || null === $other) {
             return false;
         }
 
         foreach ($one as $at => $character) {
-            foreach ($other as $otherAt => $otherCharacter) {
-                if ($character === $otherCharacter && $at !== $otherAt) {
-                    return false;
-                }
+            if (($written[$character] ?? $at) !== $at) {
+                return false;
             }
         }
 
