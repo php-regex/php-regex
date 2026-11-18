@@ -107,10 +107,13 @@ final class SecurityConfigReadingTest extends TestCase
     {
         $rule = $this->extract("security:\n    access_control:\n        - path: ^/admin\n          roles: ' ROLE_A, ROLE_B '\n          methods: get, post\n          ips: '127.0.0.1, ::1'\n          allow_if: ' '\n          requires_channel: https\n        - path: 404\n          ips: [10, 1.5, ~]\n")['accessControl'];
 
-        $this->assertSame(['ROLE_A', 'ROLE_B'], $rule[0]['roles']);
+        // As SecurityExtension::load() reads them: roles and methods split on
+        // their commas and trimmed of nothing else, addresses kept whole for
+        // IpsRequestMatcher to split, an allow_if of a space taken.
+        $this->assertSame([' ROLE_A', 'ROLE_B '], $rule[0]['roles']);
         $this->assertSame(['get', 'post'], $rule[0]['methods']);
-        $this->assertSame(['127.0.0.1', '::1'], $rule[0]['ips']);
-        $this->assertNull($rule[0]['allowIf']);
+        $this->assertSame(['127.0.0.1, ::1'], $rule[0]['ips']);
+        $this->assertSame(' ', $rule[0]['allowIf']);
         $this->assertSame('https', $rule[0]['requiresChannel']);
         $this->assertSame('404', $rule[1]['path']);
         $this->assertSame(['10', '1.5'], $rule[1]['ips']);

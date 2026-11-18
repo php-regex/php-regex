@@ -23,8 +23,13 @@ use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
 use Symfony\Component\DependencyInjection\Container;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\HttpFoundation\RequestMatcher\IpsRequestMatcher;
+use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Yaml\Yaml;
 
@@ -388,6 +393,49 @@ final class SecurityConfigExtractorTest extends TestCase
         ];
     }
 
+    /**
+     * The security bundle splits a string of roles or methods on its
+     * commas, wraps a string of addresses whole, and trims nothing; it
+     * gives a rule its allow_if when that value is truthy ("0" is not),
+     * and its request_matcher and requires_channel as written. Each rule
+     * is read as SecurityExtension::load() hands it to the AccessMap; an
+     * allow_if it takes needs symfony/expression-language to load, which
+     * the suite does not install.
+     */
+    #[Test]
+    #[DataProvider('provideListsAndFlags')]
+    public function test_a_rule_is_read_as_the_security_bundle_loads_it(string $rule): void
+    {
+        $yaml = "security:\n    access_control:\n        - ".$rule."\n";
+        $loaded = self::loadedRule($yaml);
+
+        $read = (new SecurityConfigExtractor())->extract($this->makeProject(['security.yaml' => $yaml]).'/security.yaml')['accessControl'][0];
+
+        $this->assertSame($loaded['roles'], $read['roles']);
+        $this->assertSame($loaded['methods'], array_map(strtoupper(...), $read['methods']));
+        $this->assertSame($loaded['ips'], $read['ips']);
+        $this->assertSame($loaded['allowIf'], null !== $read['allowIf']);
+        $this->assertSame($loaded['requestMatcher'], $read['requestMatcher']);
+        $this->assertSame($loaded['requiresChannel'], $read['requiresChannel']);
+    }
+
+    /**
+     * @return iterable<string, array{rule: string}>
+     */
+    public static function provideListsAndFlags(): iterable
+    {
+        yield 'roles written as a string, spaces around a comma' => ['rule' => "{ path: ^/a, roles: ' ROLE_A , ROLE_B' }"];
+        yield 'roles written as a list, a comma in an item' => ['rule' => "{ path: ^/a, roles: [' ROLE_A', 'ROLE_B,ROLE_C'] }"];
+        yield 'roles ending on a comma' => ['rule' => "{ path: ^/a, roles: 'ROLE_A,' }"];
+        yield 'methods written as a string' => ['rule' => "{ path: ^/a, methods: 'get , POST', roles: ROLE_A }"];
+        yield 'methods written as a list, a comma in an item' => ['rule' => "{ path: ^/a, methods: ['GET,POST', ' put'], roles: ROLE_A }"];
+        yield 'addresses written as a string' => ['rule' => "{ path: ^/a, ips: '10.0.0.1, 10.0.0.2', roles: ROLE_A }"];
+        yield 'addresses written as a list' => ['rule' => "{ path: ^/a, ips: ['10.0.0.1, 10.0.0.2', '::1'], roles: ROLE_A }"];
+        yield 'an allow_if of "0"' => ['rule' => "{ path: ^/a, allow_if: '0', roles: ROLE_A }"];
+        yield 'a requires_channel of a space' => ['rule' => "{ path: ^/a, requires_channel: ' ', roles: ROLE_A }"];
+        yield 'a request_matcher of a space' => ['rule' => "{ request_matcher: ' ', roles: ROLE_A }"];
+    }
+
     #[Test]
     public function test_a_file_parameter_may_come_from_the_kernel(): void
     {
@@ -550,5 +598,56 @@ final class SecurityConfigExtractorTest extends TestCase
     protected function restoreYaml(): void
     {
         SecurityConfigFunctionOverrides::reset();
+    }
+
+    /**
+     * What SecurityExtension::load() gives the AccessMap for the first rule
+     * of a YAML security file: its roles, the methods and addresses its
+     * request matcher is built with, whether it has an allow_if, the
+     * service id of its request_matcher and its channel.
+     *
+     * @return array{roles: list<string>, methods: list<string>, ips: list<string>, allowIf: bool, requestMatcher: ?string, requiresChannel: ?string}
+     */
+    private static function loadedRule(string $yaml): array
+    {
+        $config = Yaml::parse($yaml);
+        self::assertIsArray($config);
+        self::assertIsArray($config['security']);
+        $container = new ContainerBuilder();
+        (new SecurityExtension())->load([['firewalls' => ['main' => ['security' => false]]] + $config['security']], $container);
+
+        $call = $container->getDefinition('security.access_map')->getMethodCalls()[0] ?? null;
+        self::assertIsArray($call);
+        self::assertIsArray($call[1]);
+        [$matcher, $attributes, $channel] = $call[1];
+        self::assertInstanceOf(Reference::class, $matcher);
+        self::assertIsArray($attributes);
+        self::assertTrue(null === $channel || \is_string($channel));
+
+        $roles = array_values(array_filter($attributes, \is_string(...)));
+        $loaded = ['roles' => $roles, 'methods' => [], 'ips' => [], 'allowIf' => \count($roles) !== \count($attributes), 'requestMatcher' => null, 'requiresChannel' => $channel];
+        if (!$container->hasDefinition((string) $matcher)) {
+            $loaded['requestMatcher'] = (string) $matcher;
+
+            return $loaded;
+        }
+
+        $chain = $container->getDefinition((string) $matcher)->getArgument(0);
+        self::assertIsArray($chain);
+        foreach ($chain as $reference) {
+            self::assertInstanceOf(Reference::class, $reference);
+            $definition = $container->getDefinition((string) $reference);
+            $values = $definition->getArgument(0);
+            if (MethodRequestMatcher::class === $definition->getClass()) {
+                self::assertIsArray($values);
+                $loaded['methods'] = array_values(array_filter($values, \is_string(...)));
+            }
+            if (IpsRequestMatcher::class === $definition->getClass()) {
+                self::assertIsArray($values);
+                $loaded['ips'] = array_values(array_filter($values, \is_string(...)));
+            }
+        }
+
+        return $loaded;
     }
 }

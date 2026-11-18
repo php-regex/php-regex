@@ -22,6 +22,7 @@ use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestMatcher\IpsRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcherInterface;
@@ -612,6 +613,34 @@ final class AccessControlOrderTest extends TestCase
             ],
         ];
 
+        // The security bundle trims no method nor address, and its request
+        // matchers split each on its commas.
+        yield 'a method list item holding a comma' => [
+            'rules' => [['path' => '^/x', 'methods' => ['GET,POST']], ['path' => '^/x', 'methods' => ['POST']]],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['POST', 'http://localhost/x', 0, 1],
+                ['GET', 'http://localhost/x', 0, 0],
+            ],
+        ];
+
+        yield 'a method written with a space takes no request' => [
+            'rules' => [['path' => '^/x', 'methods' => [' get']], ['path' => '^/x']],
+            'expected' => null,
+            'requests' => [
+                ['GET', 'http://localhost/x', 1, 1],
+            ],
+        ];
+
+        yield 'addresses written as one string' => [
+            'rules' => [['path' => '^/admin', 'ips' => ['10.0.0.1, 10.0.0.2']], ['path' => '^/admin/x', 'ips' => ['10.0.0.2']]],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin/x', 0, 1, '10.0.0.2'],
+                ['GET', 'http://localhost/admin/x', 0, 0, '10.0.0.1'],
+            ],
+        ];
+
         yield 'paths that share no request are no conflict' => [
             'rules' => [['path' => '^/admin'], ['path' => '^/api']],
             'expected' => null,
@@ -707,16 +736,28 @@ final class AccessControlOrderTest extends TestCase
     }
 
     /**
-     * An address every rule of the pair takes.
+     * An address every rule of the pair takes, as IpsRequestMatcher reads
+     * its addresses.
      *
      * @param list<OrderRule> $rules
      */
     private static function addressOf(array $rules): string
     {
+        $candidates = ['10.0.0.1'];
         foreach ($rules as $rule) {
-            if (isset($rule['ips'])) {
-                return $rule['ips'][0];
+            foreach ($rule['ips'] ?? [] as $ips) {
+                $candidates = [...$candidates, ...explode(',', str_replace(' ', '', $ips))];
             }
+        }
+
+        foreach ($candidates as $address) {
+            foreach ($rules as $rule) {
+                if (isset($rule['ips']) && !(new IpsRequestMatcher($rule['ips']))->matches(Request::create('/', server: ['REMOTE_ADDR' => $address]))) {
+                    continue 2;
+                }
+            }
+
+            return $address;
         }
 
         return '10.0.0.1';

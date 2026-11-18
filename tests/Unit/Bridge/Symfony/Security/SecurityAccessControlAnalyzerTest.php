@@ -22,6 +22,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
+use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolver;
+use Symfony\Component\Security\Core\Authentication\Token\NullToken;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\Authorization\Voter\AuthenticatedVoter;
+use Symfony\Component\Security\Core\Authorization\Voter\RoleVoter;
+use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
+use Symfony\Component\Security\Core\User\InMemoryUser;
 
 final class SecurityAccessControlAnalyzerTest extends TestCase
 {
@@ -414,6 +421,61 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
         $this->assertSame($getTakesHead ? 1 : 0, $report->stats['shadowed']);
         $this->assertSame($getTakesHead ? 1 : 0, $report->stats['redundant']);
         $this->assertSame($getTakesHead ? 0 : 1, $report->stats['carve_outs']);
+    }
+
+    /**
+     * A rule is public when the security bundle's AuthenticatedVoter grants
+     * its roles to a visitor: "PUBLIC_ACCESS" as written, and nothing else
+     * (IS_AUTHENTICATED_ANONYMOUSLY is gone since Symfony 6.0). A public rule
+     * before a restricted one it shadows is critical.
+     *
+     * @param list<string> $roles
+     */
+    #[Test]
+    #[DataProvider('providePublicRoles')]
+    public function test_a_rule_is_public_as_the_authenticated_voter_reads_its_roles(array $roles): void
+    {
+        $public = VoterInterface::ACCESS_GRANTED === (new AuthenticatedVoter(new AuthenticationTrustResolver()))->vote(new NullToken(), null, $roles);
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin', roles: $roles),
+            self::rule(path: '^/admin/users', line: 4),
+        ]);
+
+        $this->assertSame('shadowed', $report->conflicts[0]['type']);
+        $this->assertSame($public ? 'critical' : 'warning', $report->conflicts[0]['severity']);
+    }
+
+    /**
+     * @return iterable<string, array{roles: list<string>}>
+     */
+    public static function providePublicRoles(): iterable
+    {
+        yield 'PUBLIC_ACCESS' => ['roles' => ['PUBLIC_ACCESS']];
+        yield 'PUBLIC_ACCESS after a space' => ['roles' => [' PUBLIC_ACCESS']];
+        yield 'PUBLIC_ACCESS in lower case' => ['roles' => ['public_access']];
+        yield 'IS_AUTHENTICATED_ANONYMOUSLY' => ['roles' => ['IS_AUTHENTICATED_ANONYMOUSLY']];
+    }
+
+    /**
+     * The RoleVoter compares roles as written: a later rule for "role_admin"
+     * does not take the users an earlier rule for "ROLE_ADMIN" takes, and is
+     * not redundant.
+     */
+    #[Test]
+    public function test_roles_differing_in_case_are_other_roles(): void
+    {
+        $token = new UsernamePasswordToken(new InMemoryUser('admin', null, ['ROLE_ADMIN']), 'main', ['ROLE_ADMIN']);
+        $this->assertSame(VoterInterface::ACCESS_GRANTED, (new RoleVoter())->vote($token, null, ['ROLE_ADMIN']));
+        $this->assertNotSame(VoterInterface::ACCESS_GRANTED, (new RoleVoter())->vote($token, null, ['role_admin']));
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin', roles: ['ROLE_ADMIN']),
+            self::rule(path: '^/admin', roles: ['role_admin'], line: 4),
+        ]);
+
+        $this->assertSame(1, $report->stats['shadowed']);
+        $this->assertSame(0, $report->stats['redundant']);
     }
 
     /**

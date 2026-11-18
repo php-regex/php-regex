@@ -34,6 +34,16 @@ CHANGELOG
    on, never 8.0): there `{ path: ^/x, methods: [GET] }` shadows a later
    `{ path: ^/x, methods: [HEAD] }`, where the pair was set apart on its
    methods.
+ * `regex:security` and `regex:analyze` read the roles, methods and
+   addresses of an `access_control` rule as the security bundle and its
+   request matchers do, where they were trimmed and a string was split on
+   every comma: `methods: ['GET,POST']` takes `GET` and `POST`, ` get` takes
+   no request, `ips: '10.0.0.1, 10.0.0.2'` holds both addresses, and a rule
+   is public only for `PUBLIC_ACCESS` as written, no longer for
+   `public_access` or `IS_AUTHENTICATED_ANONYMOUSLY`, which grant nothing.
+   Roles differing in case are other roles. An `allow_if` of `"0"` is none,
+   one of a space is one, and a `request_matcher` or a `requires_channel`
+   is read as written.
  * `regex:security` and `regex:analyze` read the `port`, `route` and
    `attributes` of an `access_control` rule, as the security bundle chains
    them to its request matcher: an earlier rule holding one the later rule

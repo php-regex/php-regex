@@ -274,9 +274,9 @@ final class SecurityConfigExtractor
                 $accessControl[] = $this->accessRule([
                     'path' => self::text($rule['path'] ?? null),
                     'host' => self::text($rule['host'] ?? null),
-                    'roles' => self::listOf($rule['roles'] ?? null),
-                    'methods' => self::listOf($rule['methods'] ?? null),
-                    'ips' => self::listOf($rule['ips'] ?? null),
+                    'roles' => self::listOf($rule['roles'] ?? null, true),
+                    'methods' => self::listOf($rule['methods'] ?? null, true),
+                    'ips' => self::listOf($rule['ips'] ?? null, false),
                     'allowIf' => self::text($rule['allow_if'] ?? null),
                     'requestMatcher' => self::text($rule['request_matcher'] ?? null),
                     'requiresChannel' => self::text($rule['requires_channel'] ?? null),
@@ -300,7 +300,7 @@ final class SecurityConfigExtractor
             $pattern = $firewall['pattern'] ?? null;
             $single = self::text($pattern);
             $firewallRules[] = $this->firewallRule((string) $name, [
-                'patterns' => \is_array($pattern) ? self::listOf($pattern) : (null === $single ? [] : [$single]),
+                'patterns' => \is_array($pattern) ? self::listOf($pattern, false) : (null === $single ? [] : [$single]),
                 'alternation' => \is_array($pattern),
                 'requestMatcher' => self::text($firewall['request_matcher'] ?? null),
             ], $sources, $taken, $resolve);
@@ -349,9 +349,11 @@ final class SecurityConfigExtractor
             'roles' => $rule['roles'],
             'methods' => $rule['methods'],
             'ips' => $rule['ips'],
-            'allowIf' => self::filled($rule['allowIf']),
-            'requestMatcher' => self::filled($rule['requestMatcher']),
-            'requiresChannel' => self::filled($rule['requiresChannel']),
+            // SecurityExtension takes an allow_if when it is truthy, and a
+            // request_matcher and a channel as written.
+            'allowIf' => '' === $rule['allowIf'] || '0' === $rule['allowIf'] ? null : $rule['allowIf'],
+            'requestMatcher' => $rule['requestMatcher'],
+            'requiresChannel' => $rule['requiresChannel'],
             'port' => null === $rule['port'] ? null : self::port($resolve($rule['port'])),
             'attributes' => array_map($resolve, $rule['attributes']),
             'route' => null === $rule['route'] ? null : $resolve($rule['route']),
@@ -387,7 +389,7 @@ final class SecurityConfigExtractor
             'file' => $file,
             'line' => $line,
             'pattern' => $pattern,
-            'requestMatcher' => self::filled($firewall['requestMatcher']),
+            'requestMatcher' => $firewall['requestMatcher'],
         ];
     }
 
@@ -576,28 +578,24 @@ final class SecurityConfigExtractor
         return new SecurityConfigException(\sprintf('The security configuration value "%s" does not resolve to a string.', $value));
     }
 
-    private static function filled(?string $value): ?string
-    {
-        return null === $value || '' === trim($value, " \t\n\r\0\x0B") ? null : $value;
-    }
-
     /**
-     * A list of roles, methods, addresses or patterns. A string of roles,
-     * methods or addresses is split on its commas, as the security bundle
-     * splits it.
+     * A list of roles, methods, addresses or patterns, its items as
+     * written. A string of roles or methods is split on its commas and
+     * the spaces around them, as the security bundle splits it, and any
+     * other string is one item.
      *
      * @return list<string>
      */
-    private static function listOf(mixed $value): array
+    private static function listOf(mixed $value, bool $splitOnCommas): array
     {
         if (\is_string($value)) {
-            $value = explode(',', $value);
+            return $splitOnCommas ? (preg_split('/\s*,\s*/', $value) ?: []) : [$value];
         }
 
         $items = [];
         foreach (\is_array($value) ? $value : [] as $item) {
-            $item = trim(self::text($item) ?? '', " \t\n\r\0\x0B");
-            if ('' !== $item) {
+            $item = self::text($item);
+            if (null !== $item) {
                 $items[] = $item;
             }
         }

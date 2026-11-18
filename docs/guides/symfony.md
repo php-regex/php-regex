@@ -576,6 +576,13 @@ Any other pair of rules that share a request is an **overlap**, listed with
 `--show-overlaps`: the order decides which rule applies to the requests both
 take. `{ path: ^/admin, methods: [GET] }` before `{ path: ^/admin/users }`
 leaves `POST /admin/users` to the later rule, an overlap and not a shadow.
+Roles, methods and addresses are read as the security bundle reads them,
+trimmed of nothing: a string of roles or methods is split on its commas,
+the request matchers split each method and each address on its commas
+(`['GET,POST']` takes `GET` and `POST`), a method written ` get` takes no
+request, and a rule is public only for `PUBLIC_ACCESS` written so
+(`IS_AUTHENTICATED_ANONYMOUSLY` grants nothing since Symfony 6.0). An
+`allow_if` of `"0"` is none, as the bundle reads it.
 Addresses, a route and attributes are compared as written: an earlier rule
 holding a route or an attribute the later one does not require the same way
 leaves it the other requests, so `{ route: app_login }` before

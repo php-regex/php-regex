@@ -45,14 +45,6 @@ final class SecurityAccessControlAnalyzer
 
     private readonly LanguageSolver $solver;
 
-    /**
-     * Whether a rule for GET takes the HEAD requests, as the router serves
-     * them: symfony/http-foundation's MethodRequestMatcher does since
-     * 6.4.50, 7.4.23 and 8.1.11, and never on 8.0. The application's
-     * matcher is asked.
-     */
-    private readonly bool $getTakesHead;
-
     public function __construct(
         private readonly Regex $regex,
         private readonly SecurityPatternNormalizer $patternNormalizer = new SecurityPatternNormalizer(),
@@ -61,7 +53,6 @@ final class SecurityAccessControlAnalyzer
         private readonly string $determinizationAlgorithm = 'subset-indexed',
     ) {
         $this->solver = $solver ?? new LanguageSolver($this->regex->parser(), new InMemoryDfaCache());
-        $this->getTakesHead = (new MethodRequestMatcher('GET'))->matches(Request::create('/', 'HEAD'));
     }
 
     /**
@@ -123,7 +114,7 @@ final class SecurityAccessControlAnalyzer
                 $right = $descriptors[$j];
                 $pairsTotal++;
 
-                if (!$this->methodsOverlap($this->methodsTaken($left['methods']), $this->methodsTaken($right['methods']))) {
+                if (!self::methodsOverlap($left['methodsTaken'], $right['methodsTaken'])) {
                     $pairsFilteredMethods++;
 
                     continue;
@@ -333,9 +324,14 @@ final class SecurityAccessControlAnalyzer
             }
         }
 
-        $methods = $this->normalizeList($rule['methods']);
-        $roles = $this->normalizeList($rule['roles']);
-        $ips = $this->normalizeList($rule['ips']);
+        $methods = self::distinct($rule['methods']);
+        $roles = self::distinct($rule['roles']);
+        // IpsRequestMatcher splits each address it is given on its commas.
+        $ips = [];
+        foreach ($rule['ips'] as $item) {
+            $ips = [...$ips, ...(preg_split('/\s*,\s*/', $item) ?: [])];
+        }
+        $ips = self::distinct($ips);
 
         return [
             'index' => $index,
@@ -345,6 +341,7 @@ final class SecurityAccessControlAnalyzer
             'pattern' => $pathPattern,
             'roles' => $roles,
             'methods' => $methods,
+            'methodsTaken' => self::methodsTaken($methods),
             'host' => $host,
             'hostPattern' => $hostPattern,
             'hostUnsupported' => $hostUnsupported,
@@ -384,11 +381,9 @@ final class SecurityAccessControlAnalyzer
             return self::LEVEL_UNKNOWN;
         }
 
-        $roleLookup = [];
-        foreach ($roles as $role) {
-            $roleLookup[strtoupper($role)] = true;
-        }
-        if (isset($roleLookup['PUBLIC_ACCESS']) || isset($roleLookup['IS_AUTHENTICATED_ANONYMOUSLY'])) {
+        // AuthenticatedVoter grants a visitor "PUBLIC_ACCESS" as written,
+        // and no other role.
+        if (\in_array('PUBLIC_ACCESS', $roles, true)) {
             return self::LEVEL_PUBLIC;
         }
 
@@ -418,8 +413,8 @@ final class SecurityAccessControlAnalyzer
      */
     private function accessRulesEquivalent(array $left, array $right): bool
     {
-        return $this->sameList($left['roles'], $right['roles'], true)
-            && $this->sameList($this->methodsTaken($left['methods']), $this->methodsTaken($right['methods']), true)
+        return $this->sameList($left['roles'], $right['roles'], false)
+            && $left['methodsTaken'] === $right['methodsTaken']
             && $left['hostPattern'] === $right['hostPattern']
             && $this->sameList($left['ips'], $right['ips'], true)
             && $left['requiresChannel'] === $right['requiresChannel']
@@ -442,21 +437,16 @@ final class SecurityAccessControlAnalyzer
     }
 
     /**
+     * The values of a list, each once and as written: the security bundle
+     * trims none.
+     *
      * @param array<int, string> $values
      *
-     * @return array<int, string>
+     * @return list<string>
      */
-    private function normalizeList(array $values): array
+    private static function distinct(array $values): array
     {
-        $normalized = [];
-        foreach ($values as $value) {
-            $trimmed = trim($value, " \t\n\r\0\x0B");
-            if ('' !== $trimmed) {
-                $normalized[] = $trimmed;
-            }
-        }
-
-        return array_values(array_unique($normalized));
+        return array_values(array_unique($values));
     }
 
     /**
@@ -574,7 +564,7 @@ final class SecurityAccessControlAnalyzer
      */
     private function takesEveryRequestOf(array $outer, array $inner, SolverOptions $options): bool
     {
-        if (!$this->listHolds($this->methodsTaken($outer['methods']), $this->methodsTaken($inner['methods']))) {
+        if (null !== $outer['methodsTaken'] && (null === $inner['methodsTaken'] || [] !== array_diff($inner['methodsTaken'], $outer['methodsTaken']))) {
             return false;
         }
 
@@ -625,27 +615,39 @@ final class SecurityAccessControlAnalyzer
     }
 
     /**
-     * The methods a rule takes, as MethodRequestMatcher reads those it
-     * lists: in upper case, and HEAD beside GET where the application's
-     * matcher adds it. A rule that lists none takes every method.
+     * The methods a rule takes, asked of the application's
+     * MethodRequestMatcher: it reads those the rule lists in upper case,
+     * split on their commas, and takes HEAD beside GET on the releases
+     * that add it (6.4.50, 7.4.23 and 8.1.11 on, never 8.0). A request
+     * method is a token, so each method the matcher takes is one the list
+     * writes, or HEAD. Null when the rule lists none: the security bundle
+     * then chains no method matcher, and every method is taken.
      *
-     * @param array<int, string> $methods
+     * @param list<string> $methods
      *
-     * @return list<string>
+     * @return list<string>|null
      */
-    private function methodsTaken(array $methods): array
+    private static function methodsTaken(array $methods): ?array
     {
-        $taken = array_values(array_map(strtoupper(...), $methods));
-        if ($this->getTakesHead && \in_array('GET', $taken, true) && !\in_array('HEAD', $taken, true)) {
-            $taken[] = 'HEAD';
+        if ([] === $methods) {
+            return null;
         }
+
+        $matcher = new MethodRequestMatcher($methods);
+        $taken = [];
+        foreach (array_unique([...(preg_split('/[\s,]+/', strtoupper(implode(',', $methods)), -1, \PREG_SPLIT_NO_EMPTY) ?: []), 'HEAD']) as $method) {
+            if ($matcher->matches(Request::create('/', $method))) {
+                $taken[] = $method;
+            }
+        }
+        sort($taken);
 
         return $taken;
     }
 
     /**
-     * Whether a list of methods or addresses takes every value the inner
-     * one takes: an empty list takes them all.
+     * Whether a list of addresses takes every value the inner one takes:
+     * an empty list takes them all.
      *
      * @param array<int, string> $outer
      * @param array<int, string> $inner
@@ -664,25 +666,20 @@ final class SecurityAccessControlAnalyzer
     }
 
     /**
-     * @param array<int, string> $left
-     * @param array<int, string> $right
+     * Whether two rules take a method in common: a rule that lists none
+     * takes them all, one whose list the matcher reads as no request method
+     * takes none.
+     *
+     * @param list<string>|null $left
+     * @param list<string>|null $right
      */
-    private function methodsOverlap(array $left, array $right): bool
+    private static function methodsOverlap(?array $left, ?array $right): bool
     {
         if ([] === $left || [] === $right) {
-            return true;
+            return false;
         }
 
-        $upperLeft = [];
-        foreach ($left as $value) {
-            $upperLeft[] = strtoupper($value);
-        }
-        $upperRight = [];
-        foreach ($right as $value) {
-            $upperRight[] = strtoupper($value);
-        }
-
-        return [] !== array_intersect($upperLeft, $upperRight);
+        return null === $left || null === $right || [] !== array_intersect($left, $right);
     }
 
     private function resolveMinimizationAlgorithm(): MinimizationAlgorithm
