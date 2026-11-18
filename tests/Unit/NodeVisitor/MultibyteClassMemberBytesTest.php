@@ -85,15 +85,21 @@ final class MultibyteClassMemberBytesTest extends TestCase
         $this->assertSame(self::bytesMatched('/^'.$class.'$/'), self::bytesMatched('/^'.substr($normalized, 1, -1).'$/'), $normalized);
     }
 
+    /**
+     * The sample is one byte the class matches, whole: "$" would also take
+     * a byte followed by a newline, which "\z" does not.
+     */
     #[Test]
     #[DataProvider('provideClasses')]
     #[DataProvider('provideQuotedClasses')]
     public function test_a_sample_of_the_class_is_a_byte_it_matches(string $class): void
     {
-        $pattern = '/^'.$class.'$/';
+        $pattern = '/\A'.$class.'\z/';
         $sample = Regex::create(['cache' => null])->generate($pattern);
 
+        $this->assertSame(1, \strlen($sample), bin2hex($sample));
         $this->assertSame(1, preg_match($pattern, $sample), bin2hex($sample));
+        $this->assertSame(1, preg_match($pattern, Regex::create(['cache' => null])->generate('/^'.$class.'$/')), $class.' between "^" and "$"');
     }
 
     /**
