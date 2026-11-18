@@ -634,34 +634,104 @@ body {
 
 /* The rail card: the sponsor frame's open-spot design, drawn small for
  * the 13rem column — the frame's own styles do the drawing, this only
- * tunes the size. */
+ * tunes the size and the place.
+ *
+ * The card leads the rail and the "On this page" title follows it: the
+ * title names the list under it, so nothing may come between the two. The
+ * rail is a column, and the order puts the card first, the title second,
+ * the list last — the markup and the pseudo-element stay where they are.
+ *
+ * The rail scrolls, and a scroll box clips what sticks out of it: the
+ * card keeps the room its frame name (above it) and its corner handles
+ * (on its edges) need inside the box. It stays short — the list it sits
+ * on is the rail's job — so the slot draws the pattern on one line, and
+ * the pitch shows its first lines; the frame at the foot of the page
+ * carries it whole. */
+@media (min-width: 1280px) {
+  .toc {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .toc::before {
+    order: 1;
+  }
+
+  .toc > .sponsor-rail {
+    order: 0;
+  }
+
+  .toc > nav {
+    order: 2;
+  }
+}
+
 .sponsor.sponsor-rail {
-  margin: 0 0 1.75rem;
-  padding: .875rem;
-  gap: .875rem;
+  flex: none;
+  margin: 1.35rem 4px 1.75rem;
+  padding: .75rem;
+  gap: .7rem;
   font-size: .8125rem;
 }
 
 .sponsor.sponsor-rail::after {
-  top: -1.3rem;
+  top: -1.25rem;
   font-size: .625rem;
 }
 
+.sponsor.sponsor-rail .sponsor-well {
+  flex-direction: row;
+  gap: 0;
+  min-height: 0;
+  padding: .7rem .5rem;
+}
+
+.sponsor.sponsor-rail .sponsor-pattern {
+  font-size: .8125rem;
+}
+
+.sponsor.sponsor-rail .sponsor-status {
+  display: none;
+}
+
+.sponsor.sponsor-rail .sponsor-eyebrow {
+  margin-bottom: .35rem;
+  font-size: .625rem;
+  line-height: 1.5;
+}
+
 .sponsor.sponsor-rail .sponsor-title {
+  margin-bottom: .3rem;
   font-size: .9375rem;
+  line-height: 1.3;
 }
 
 .sponsor.sponsor-rail .sponsor-text {
+  display: -webkit-box;
+  margin-bottom: .8rem;
+  overflow: hidden;
   font-size: .75rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.sponsor.sponsor-rail .sponsor-actions {
+  flex-direction: column;
+  align-items: stretch;
+  gap: .5rem;
 }
 
 .sponsor.sponsor-rail .sponsor-cta {
+  justify-content: center;
   min-height: 2.25rem;
   padding: 0 .875rem;
   font-size: .8125rem;
 }
 
 .sponsor.sponsor-rail .sponsor-mail {
+  align-self: center;
   font-size: .75rem;
 }
 
