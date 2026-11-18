@@ -731,6 +731,28 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
+     * Reading what Rule::anyOf() validates leaves the Validator facade as it
+     * found it: a factory it held before is its factory after.
+     */
+    #[Test]
+    #[RequiresMethod(Rule::class, 'anyOf')]
+    public function test_the_any_of_oracle_leaves_the_validator_facade_as_it_found_it(): void
+    {
+        $application = Facade::getFacadeApplication();
+        Facade::setFacadeApplication(null);
+        $factory = new Factory(new Translator(new ArrayLoader(), 'en'));
+        ValidatorFacade::swap($factory);
+
+        try {
+            $this->assertSame([['regex:/^(a', 'b)$/']], self::anyOfRules(Rule::anyOf(['regex:/^(a|b)$/'])));
+            $this->assertSame($factory, ValidatorFacade::getFacadeRoot());
+        } finally {
+            ValidatorFacade::clearResolvedInstance();
+            Facade::setFacadeApplication($application);
+        }
+    }
+
+    /**
      * @return iterable<string, array{code: string, rules: \Closure(): array<mixed>, expected: string, compiles: bool}>
      */
     public static function provideRuleSetArguments(): iterable
@@ -993,14 +1015,21 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             return new Validator($translator, [], ['value' => 'required']);
         });
 
+        // The facade answers what it holds itself, none without an
+        // application: that is what it holds again after.
         $application = Facade::getFacadeApplication();
         Facade::setFacadeApplication(null);
+        $previous = ValidatorFacade::getFacadeRoot();
         ValidatorFacade::swap($factory);
 
         try {
             self::assertFalse($rule->setValidator(new Validator($translator, [], []))->passes('code', 'a'));
         } finally {
-            ValidatorFacade::clearResolvedInstance();
+            if (null === $previous) {
+                ValidatorFacade::clearResolvedInstance();
+            } else {
+                ValidatorFacade::swap($previous);
+            }
             Facade::setFacadeApplication($application);
         }
 
