@@ -577,7 +577,9 @@ Any other pair of rules that share a request is an **overlap**, listed with
 take. `{ path: ^/admin, methods: [GET] }` before `{ path: ^/admin/users }`
 leaves `POST /admin/users` to the later rule, an overlap and not a shadow.
 Roles, methods and addresses are read as the security bundle reads them,
-trimmed of nothing: a string of roles or methods is split on its commas,
+trimmed of nothing: a string of roles or methods is split on its commas
+once its parameters are resolved (`roles: '%admin_roles%'` holding
+`ROLE_A,ROLE_B` is two roles, `['%admin_roles%']` one),
 the request matchers split each method and each address on its commas
 (`['GET,POST']` takes `GET` and `POST`), a method written ` get` takes no
 request, and a rule is public only for `PUBLIC_ACCESS` written so

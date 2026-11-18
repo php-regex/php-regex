@@ -24,6 +24,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
+use Symfony\Component\DependencyInjection\Compiler\MergeExtensionConfigurationPass;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
@@ -420,6 +421,39 @@ final class SecurityConfigExtractorTest extends TestCase
     }
 
     /**
+     * The bundle splits a string of roles or methods once
+     * MergeExtensionConfigurationPass has resolved its parameters: a
+     * parameter holding "ROLE_A,ROLE_B" is two roles where it is the whole
+     * string, and one where it is an item of a list. A string of addresses
+     * stays one item, which IpsRequestMatcher splits.
+     */
+    #[Test]
+    #[DataProvider('provideListsHeldByParameters')]
+    public function test_a_list_held_by_a_parameter_is_split_as_the_security_bundle_splits_it(string $rule): void
+    {
+        $yaml = "parameters:\n    admin_roles: 'ROLE_A,ROLE_B'\n    admin_methods: 'GET, POST'\n    admin_ips: '10.0.0.1, 10.0.0.2'\nsecurity:\n    access_control:\n        - ".$rule."\n";
+        $loaded = self::loadedRule($yaml);
+
+        $read = (new SecurityConfigExtractor())->extract($this->makeProject(['security.yaml' => $yaml]).'/security.yaml')['accessControl'][0];
+
+        $this->assertSame($loaded['roles'], $read['roles']);
+        $this->assertSame($loaded['methods'], array_map(strtoupper(...), $read['methods']));
+        $this->assertSame($loaded['ips'], $read['ips']);
+    }
+
+    /**
+     * @return iterable<string, array{rule: string}>
+     */
+    public static function provideListsHeldByParameters(): iterable
+    {
+        yield 'roles held by a parameter, the whole string' => ['rule' => "{ path: ^/a, roles: '%admin_roles%' }"];
+        yield 'roles held by a parameter beside another role' => ['rule' => "{ path: ^/a, roles: '%admin_roles%, ROLE_C' }"];
+        yield 'roles held by a parameter, an item of a list' => ['rule' => "{ path: ^/a, roles: ['%admin_roles%', ROLE_C] }"];
+        yield 'methods held by a parameter, the whole string' => ['rule' => "{ path: ^/a, methods: '%admin_methods%', roles: ROLE_A }"];
+        yield 'addresses held by a parameter, the whole string' => ['rule' => "{ path: ^/a, ips: '%admin_ips%', roles: ROLE_A }"];
+    }
+
+    /**
      * @return iterable<string, array{rule: string}>
      */
     public static function provideListsAndFlags(): iterable
@@ -652,9 +686,10 @@ final class SecurityConfigExtractorTest extends TestCase
 
     /**
      * What SecurityExtension::load() gives the AccessMap for the first rule
-     * of a YAML security file: its roles, the methods and addresses its
-     * request matcher is built with, whether it has an allow_if, the
-     * service id of its request_matcher and its channel.
+     * of a YAML security file, its parameters resolved first, as
+     * MergeExtensionConfigurationPass resolves them: its roles, the methods
+     * and addresses its request matcher is built with, whether it has an
+     * allow_if, the service id of its request_matcher and its channel.
      *
      * @return array{roles: list<string>, methods: list<string>, ips: list<string>, allowIf: bool, requestMatcher: ?string, requiresChannel: ?string}
      */
@@ -664,7 +699,13 @@ final class SecurityConfigExtractorTest extends TestCase
         self::assertIsArray($config);
         self::assertIsArray($config['security']);
         $container = new ContainerBuilder();
-        (new SecurityExtension())->load([['firewalls' => ['main' => ['security' => false]]] + $config['security']], $container);
+        foreach (\is_array($config['parameters'] ?? null) ? $config['parameters'] : [] as $name => $value) {
+            self::assertIsString($value);
+            $container->setParameter((string) $name, $value);
+        }
+        $container->registerExtension(new SecurityExtension());
+        $container->loadFromExtension('security', ['firewalls' => ['main' => ['security' => false]]] + $config['security']);
+        (new MergeExtensionConfigurationPass())->process($container);
 
         $call = $container->getDefinition('security.access_map')->getMethodCalls()[0] ?? null;
         self::assertIsArray($call);

@@ -150,13 +150,22 @@ final class SecurityConfigExtractor
         // and 8.1.11).
         $prefix = $parameters->getEnvPlaceholderUniquePrefix();
         $written = [];
-        array_walk_recursive($configs, static function (&$value) use ($parameters, $prefix, &$written): void {
+        array_walk_recursive($configs, static function (&$value, int|string $key) use ($parameters, $prefix, &$written): void {
             try {
-                if (!\is_string($value) || $value === $parameters->resolveValue($value)) {
+                if (!\is_string($value) || $value === $resolved = $parameters->resolveValue($value)) {
                     return;
                 }
             } catch (DependencyInjectionException) {
                 // Left as written: resolving it again says why it cannot be.
+                return;
+            }
+
+            // The bundle splits a string of roles or methods once the pass
+            // has resolved it: it is given resolved, and its entry is found
+            // by what else it writes.
+            if (\is_string($resolved) && \in_array($key, ['roles', 'role', 'methods', 'method'], true)) {
+                $value = $resolved;
+
                 return;
             }
 
@@ -329,8 +338,8 @@ final class SecurityConfigExtractor
                 $accessControl[] = $this->accessRule([
                     'path' => self::text($rule['path'] ?? null),
                     'host' => self::text($rule['host'] ?? null),
-                    'roles' => self::listOf($rule['roles'] ?? null, true),
-                    'methods' => self::listOf($rule['methods'] ?? null, true),
+                    'roles' => \is_string($rule['roles'] ?? null) ? $rule['roles'] : self::listOf($rule['roles'] ?? null, false),
+                    'methods' => \is_string($rule['methods'] ?? null) ? $rule['methods'] : self::listOf($rule['methods'] ?? null, false),
                     'ips' => self::listOf($rule['ips'] ?? null, false),
                     'allowIf' => self::text($rule['allow_if'] ?? null),
                     'requestMatcher' => self::text($rule['request_matcher'] ?? null),
@@ -365,10 +374,10 @@ final class SecurityConfigExtractor
     }
 
     /**
-     * @param array{path: ?string, host: ?string, roles: list<string>, methods: list<string>, ips: list<string>, allowIf: ?string, requestMatcher: ?string, requiresChannel: ?string, port: ?string, attributes: array<string, string>, route: ?string} $rule
-     * @param list<array{file: string, lines: array<int, string>}>                                                                                                                                                                                      $sources
-     * @param array<int, array<int, bool>>                                                                                                                                                                                                              $taken
-     * @param \Closure(string): array{0: string, 1: bool}                                                                                                                                                                                               $resolve
+     * @param array{path: ?string, host: ?string, roles: string|list<string>, methods: string|list<string>, ips: list<string>, allowIf: ?string, requestMatcher: ?string, requiresChannel: ?string, port: ?string, attributes: array<string, string>, route: ?string} $rule
+     * @param list<array{file: string, lines: array<int, string>}>                                                                                                                                                                                                    $sources
+     * @param array<int, array<int, bool>>                                                                                                                                                                                                                            $taken
+     * @param \Closure(string): array{0: string, 1: bool}                                                                                                                                                                                                             $resolve
      *
      * @throws SecurityConfigException
      *
@@ -387,9 +396,9 @@ final class SecurityConfigExtractor
             // A rule with none of these, "{ roles: ROLE_USER }", is found by
             // what else it writes.
             $matchers = self::entryMatchers([
-                'roles' => $rule['roles'],
+                'roles' => self::listOf($rule['roles'], true),
                 'ips' => $rule['ips'],
-                'methods' => $rule['methods'],
+                'methods' => self::listOf($rule['methods'], true),
                 'requires_channel' => null === $rule['requiresChannel'] ? [] : [$rule['requiresChannel']],
             ]);
         }
@@ -409,8 +418,8 @@ final class SecurityConfigExtractor
 
         $path = null === $rule['path'] ? null : $read($rule['path'], 'path');
         $host = null === $rule['host'] ? null : $read($rule['host'], 'host');
-        $roles = array_map(static fn (string $role): string => $read($role, 'roles'), $rule['roles']);
-        $methods = array_map(static fn (string $method): string => $read($method, 'methods'), $rule['methods']);
+        $roles = self::resolvedList($rule['roles'], $read, 'roles');
+        $methods = self::resolvedList($rule['methods'], $read, 'methods');
         $port = null === $rule['port'] ? null : $read($rule['port'], 'port');
 
         // SecurityExtension builds the port matcher, and upper-cases the
@@ -485,6 +494,26 @@ final class SecurityConfigExtractor
             'requestMatcher' => $firewall['requestMatcher'],
             'fromEnvironment' => $fromEnvironment,
         ];
+    }
+
+    /**
+     * The roles or methods of a rule: a string resolved first, then split
+     * on its commas, as the security bundle splits it once
+     * MergeExtensionConfigurationPass has resolved it; each item of a list
+     * resolved alone.
+     *
+     * @param string|list<string>              $written
+     * @param \Closure(string, string): string $read
+     *
+     * @return list<string>
+     */
+    private static function resolvedList(string|array $written, \Closure $read, string $field): array
+    {
+        if (\is_string($written)) {
+            return self::listOf($read($written, $field), true);
+        }
+
+        return array_map(static fn (string $item): string => $read($item, $field), $written);
     }
 
     /**

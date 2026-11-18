@@ -411,6 +411,34 @@ final class SecurityConfigKernelTest extends TestCase
     }
 
     /**
+     * The kernel resolves a parameter before the bundle splits a string of
+     * roles or methods: a parameter holding "ROLE_A,ROLE_B" is two roles
+     * where it is the whole string, as a file named with --config reads it
+     * (SecurityConfigExtractorTest checks that reading against the bundle).
+     */
+    #[Test]
+    public function test_a_list_held_by_a_parameter_is_split_as_the_kernel_splits_it(): void
+    {
+        $parameters = "parameters:\n    admin_roles: 'ROLE_A,ROLE_B'\n    admin_methods: 'GET, POST'\n";
+        $security = "security:\n".self::FIREWALLS."    access_control:\n"
+            ."        - { path: ^/a, roles: '%admin_roles%', methods: '%admin_methods%' }\n"
+            ."        - { path: ^/b, roles: ['%admin_roles%', ROLE_C] }\n";
+        $project = $this->makeProject([
+            'config/services.yaml' => $parameters,
+            'config/packages/security.yaml' => $security,
+            'security.yaml' => $parameters.$security,
+        ]);
+
+        $kernel = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
+        $file = (new SecurityConfigExtractor())->extract($project.'/security.yaml');
+
+        $this->assertNotNull($kernel);
+        $this->assertSame([['ROLE_A', 'ROLE_B'], ['ROLE_A,ROLE_B', 'ROLE_C']], array_column($kernel['accessControl'], 'roles'));
+        $this->assertSame(array_column($file['accessControl'], 'roles'), array_column($kernel['accessControl'], 'roles'));
+        $this->assertSame(['GET', 'POST'], $kernel['accessControl'][0]['methods']);
+    }
+
+    /**
      * The security bundle joins a list of firewall patterns into one
      * alternation once their parameters are resolved, as the kernel
      * resolves them; one read from the environment is said to be so.

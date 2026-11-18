@@ -37,8 +37,9 @@ CHANGELOG
  * `regex:security` and `regex:analyze` read the roles, methods and
    addresses of an `access_control` rule as the security bundle and its
    request matchers do, where they were trimmed and a string was split on
-   every comma: `methods: ['GET,POST']` takes `GET` and `POST`, ` get` takes
-   no request, `ips: '10.0.0.1, 10.0.0.2'` holds both addresses, and a rule
+   every comma: `roles: '%admin_roles%'` holding `ROLE_A,ROLE_B` is two
+   roles, `methods: ['GET,POST']` takes `GET` and `POST`, ` get` takes no
+   request, `ips: '10.0.0.1, 10.0.0.2'` holds both addresses, and a rule
    is public only for `PUBLIC_ACCESS` as written, no longer for
    `public_access` or `IS_AUTHENTICATED_ANONYMOUSLY`, which grant nothing.
    Roles differing in case are other roles. An `allow_if` of `"0"` is none,
