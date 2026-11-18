@@ -14,11 +14,16 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -33,6 +38,7 @@ use PHPUnit\Framework\TestCase;
 final class RedosHeuristicShapesTest extends TestCase
 {
     use InstalledLocales;
+    use PcreGates;
 
     #[Test]
     #[DataProvider('provideUnmodelledBodies')]
@@ -589,9 +595,11 @@ final class RedosHeuristicShapesTest extends TestCase
      * every byte above ASCII, "\h" the no-break space, "\v" and "\R" the
      * next line, "\s" both under (*UCP) or u, and under i, set by the
      * modifier or by an option setting, "\x41" an "a".
-     * Under (*ANY) the dot stops at the next line. Under u a character
-     * above ASCII ends a repeat as it starts the next one: "é+é" in a loop
-     * is critical as "a+a" is (69 -> 467 -> 3 195).
+     * Under (*ANY) the dot stops at the next line, unless s is set (1 536
+     * -> 24 576), and under (*CR) at a carriage return, whichever branch
+     * comes first. Under u a character above ASCII ends a repeat as it
+     * starts the next one: "é+é" in a loop is critical as "a+a" is (69 ->
+     * 467 -> 3 195).
      *
      * @return iterable<string, array{pattern: string, unit: string, critical: bool}>
      */
@@ -604,6 +612,10 @@ final class RedosHeuristicShapesTest extends TestCase
         yield 'the sequence under i and s' => ['pattern' => '/^((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)%?\1/is', 'unit' => "\xC3\xA9", 'critical' => false];
         yield 'the code points under u' => ['pattern' => '/^((?:[a-z]|[\xC2-\xDF][\x80-\xBF])+)%?\1/u', 'unit' => "\u{C3}\u{A9}", 'critical' => false];
         yield 'the dot beside the next line under (*ANY)' => ['pattern' => '/(*ANY)^((?:.|\x85)+)\1$/', 'unit' => "\x85", 'critical' => false];
+        yield 'the dot beside the next line under (*ANY) and s' => ['pattern' => '/(*ANY)^((?:.|\x85)+)\1$/s', 'unit' => "\x85", 'critical' => true];
+        yield 'the next line beside the dot under (*ANY)' => ['pattern' => '/(*ANY)^((?:\x85|.)+)\1$/', 'unit' => "\x85", 'critical' => false];
+        yield 'the next line beside the dot under (*ANY) and s' => ['pattern' => '/(*ANY)^((?:\x85|.)+)\1$/s', 'unit' => "\x85", 'critical' => true];
+        yield 'a carriage return beside the dot under (*CR)' => ['pattern' => '/(*CR)^((?:\r|.)+)\1$/', 'unit' => "\r", 'critical' => false];
         yield 'a negated class beside a byte it takes' => ['pattern' => '/^((?:[^a]|\xC3)+)\1$/', 'unit' => "\xC3", 'critical' => true];
         yield 'a negated class beside a two-byte letter' => ['pattern' => '/^((?:[^a]|é)+)\1$/', 'unit' => 'é', 'critical' => true];
         yield 'a negated class beside a letter under u' => ['pattern' => '/^((?:[^a]|\xE9)+)\1$/u', 'unit' => 'é', 'critical' => true];
@@ -673,11 +685,15 @@ final class RedosHeuristicShapesTest extends TestCase
     #[DataProvider('provideBranchesInEitherCase')]
     public function test_branches_are_compared_in_the_case_the_engine_reads_them(string $pattern, string $unit, bool $critical): void
     {
-        if (false === @preg_match($pattern, '')) {
-            $this->assertTrue(\PHP_VERSION_ID < 80400 || version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '<'), $pattern.' does not compile here.');
-
-            return;
+        // The r modifier is read from PCRE2 10.43, and from PHP 8.4 only: an
+        // older PHP refuses the flag, whatever its engine. Every other row
+        // runs on every engine.
+        if (str_contains(substr($pattern, (int) strrpos($pattern, $pattern[0]) + 1), 'r')) {
+            $this->requiresPcre2('10.43', $pattern);
+            $this->requiresPhp('8.4', $pattern, 'does not read the r modifier');
         }
+
+        $this->assertNotFalse(@preg_match($pattern, ''), 'Oracle: PCRE compiles the row.');
 
         $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
         $short = self::steps($unoptimized, str_repeat($unit, 8).'!');
@@ -896,6 +912,62 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * The loops put to the proof alone share one budget, the one the proof
+     * of the whole pattern has: past it, a loop keeps the heuristics'
+     * finding, whatever the number of loops. Each loop here is proven
+     * linear alone in about a hundred steps, as PCRE reads it (36 -> 52
+     * steps on 8 -> 12 "az" then "!"): a budget of a thousand proves one,
+     * not twenty, which the default budget proves.
+     */
+    #[Test]
+    public function test_the_loops_proven_alone_share_one_budget(): void
+    {
+        $unoptimized = PcreInterpreter::pattern('/(*NO_START_OPT)^((?:a|az)+)\1$/');
+        $short = self::steps($unoptimized, str_repeat('az', 8).'!');
+        $long = self::steps($unoptimized, str_repeat('az', 12).'!');
+        $this->assertLessThan(4 * $short, $long, 'Oracle: the engine stays linear.');
+
+        $loops = [];
+        foreach (range(0, 19) as $letter) {
+            $loops[] = '(?:'.\chr(0x61 + $letter).'|'.\chr(0x61 + $letter).'z)+';
+        }
+
+        $twenty = '/^('.implode('-', $loops).')\1$/';
+        $this->assertNotFalse(@preg_match($twenty, ''), 'Oracle: PCRE compiles the twenty loops.');
+
+        $short = new RedosAnalyzer(options: new RedosOptions(maxSteps: 1_000));
+        $this->assertNotSame(RedosSeverity::Critical, $short->analyze('/^((?:a|az)+)\1$/')->severity, 'One loop is proven within the budget.');
+        $this->assertSame(RedosSeverity::Critical, $short->analyze($twenty)->severity, 'Twenty loops are not all proven within it.');
+        $this->assertNotSame(RedosSeverity::Critical, (new RedosAnalyzer())->analyze($twenty)->severity, 'The default budget proves the twenty.');
+    }
+
+    /**
+     * A loop put to the proof alone is read through a parser that keeps
+     * nothing: the caller's cache is asked for the pattern analysed alone,
+     * and the results its parser keeps hold that pattern alone, never the
+     * text written for the proof. PCRE reads the loop linearly (36 -> 52
+     * steps on 8 -> 12 "ab" then "!").
+     */
+    #[Test]
+    public function test_a_loop_proven_alone_leaves_nothing_in_the_callers_caches(): void
+    {
+        $pattern = '/^((?:a|ab)+)\1$/';
+        $unoptimized = PcreInterpreter::pattern('/(*NO_START_OPT)^((?:a|ab)+)\1$/');
+        $short = self::steps($unoptimized, str_repeat('ab', 8).'!');
+        $long = self::steps($unoptimized, str_repeat('ab', 12).'!');
+        $this->assertLessThan(4 * $short, $long, 'Oracle: the engine stays linear.');
+
+        $cache = new ArrayCache();
+        $parser = RegexParser::create(['cache' => $cache]);
+        $this->assertSame(RedosSeverity::Medium, (new RedosAnalyzer($parser))->analyze($pattern)->severity, 'The loop is proven linear alone.');
+
+        $this->assertSame(1, $cache->getStats()['misses']);
+        $results = (new \ReflectionProperty($parser, 'results'))->getValue($parser);
+        $this->assertIsArray($results);
+        $this->assertSame(['p'.$pattern], array_keys($results));
+    }
+
+    /**
      * An item that reads nothing, an option setting above all, neither
      * separates a loop from what stands before or after it nor stands
      * between two loops: each row is read as its twin without the item,
@@ -940,6 +1012,104 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * Two loops that meet past items that read nothing or may match empty
+     * are reported with those items, as the source writes them: the option
+     * setting of "a+(?i)A+" is what makes the runs meet. The engine takes
+     * the steps of the twin where the loops stand side by side (31 -> 69 on
+     * 8 -> 12 "a" then "!").
+     *
+     * @return iterable<string, array{pattern: string, twin: string, fragment: string}>
+     */
+    public static function provideLoopsThatMeetPastAnItem(): iterable
+    {
+        yield 'an option setting between two loops' => ['pattern' => '/^(a+(?i)A+)\1$/', 'twin' => '/^(a+[aA]+)\1$/', 'fragment' => 'a+(?i)A+'];
+        yield 'an optional item between two loops' => ['pattern' => '/^(a+x?a+)\1$/', 'twin' => '/^(a+a+)\1$/', 'fragment' => 'a+x?a+'];
+        yield 'an optional item and an option setting' => ['pattern' => '/^(a+x?(?i)A+)\1$/', 'twin' => '/^(a+[aA]+)\1$/', 'fragment' => 'a+x?(?i)A+'];
+        yield 'a comment between two loops' => ['pattern' => '/^(a+(?#c)a+)\1$/', 'twin' => '/^(a+a+)\1$/', 'fragment' => 'a+(?#c)a+'];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsThatMeetPastAnItem')]
+    public function test_loops_that_meet_past_an_item_are_reported_with_it(string $pattern, string $twin, string $fragment): void
+    {
+        foreach ([8, 12] as $units) {
+            $subject = str_repeat('a', $units).'!';
+            $this->assertSame(
+                self::steps(PcreInterpreter::pattern($twin[0].'(*NO_START_OPT)'.substr($twin, 1)), $subject),
+                self::steps(PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1)), $subject),
+                'Oracle: the loops meet, as in the twin.',
+            );
+        }
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+        $adjacent = array_values(array_filter($analysis->findings, static fn ($finding): bool => str_starts_with($finding->message, 'Adjacent quantified tokens')));
+        $this->assertCount(1, $adjacent);
+        $this->assertSame($fragment, $adjacent[0]->pattern);
+
+        // A hotspot's offsets count from the start of the body.
+        $written = [];
+        foreach ($analysis->hotspots as $hotspot) {
+            if ($fragment === $hotspot->pattern) {
+                $written[] = substr($pattern, 1 + $hotspot->start, $hotspot->end - $hotspot->start);
+            }
+        }
+
+        $this->assertSame([$fragment], $written);
+    }
+
+    /**
+     * A loop is read past eight items that may match empty at most, on
+     * either side: a run of loops that may all match empty, each of which
+     * meets every other, is read in work and findings that grow with its
+     * length, not with its square. Two hundred "a*" gave 20 099 findings,
+     * one for each pair of them; each now meets the eight after it.
+     */
+    #[Test]
+    public function test_a_run_of_loops_that_may_match_empty_is_read_in_bounded_work(): void
+    {
+        $pattern = '/^(x)'.str_repeat('a*', 200).'\1$/';
+        $this->assertNotFalse(@preg_match($pattern, ''), 'Oracle: PCRE compiles the run.');
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+        $this->assertSame(RedosSeverity::Medium, $analysis->severity);
+        $this->assertLessThanOrEqual(10 * 200, \count($analysis->findings));
+        $this->assertCount(\count($analysis->findings), $analysis->hotspots);
+    }
+
+    /**
+     * Past eight items that may match empty, a loop meets no more: the
+     * runs of "a+x?{9}a+" meet as the engine reads them, as those of
+     * "a+x?{8}a+" and of "a+a+" do (31 -> 69 steps on 8 -> 12 "a" then
+     * "!"), but only the nearer pair is named; each run is still rated
+     * medium on its own.
+     *
+     * @return iterable<string, array{pattern: string, named: bool}>
+     */
+    public static function provideLoopsPastOptionalItems(): iterable
+    {
+        yield 'eight optional items' => ['pattern' => '/^(a+'.str_repeat('x?', 8).'a+)\1$/', 'named' => true];
+        yield 'nine optional items' => ['pattern' => '/^(a+'.str_repeat('x?', 9).'a+)\1$/', 'named' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsPastOptionalItems')]
+    public function test_a_loop_meets_another_past_eight_optional_items_at_most(string $pattern, bool $named): void
+    {
+        foreach ([8, 12] as $units) {
+            $subject = str_repeat('a', $units).'!';
+            $this->assertSame(
+                self::steps(PcreInterpreter::pattern('/(*NO_START_OPT)^(a+a+)\1$/'), $subject),
+                self::steps(PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1)), $subject),
+                'Oracle: the loops meet, as in "a+a+".',
+            );
+        }
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+        $this->assertSame(RedosSeverity::Medium, $analysis->severity);
+        $this->assertSame($named, [] !== array_filter($analysis->findings, static fn ($finding): bool => str_starts_with($finding->message, 'Adjacent quantified tokens')));
+    }
+
+    /**
      * A byte above ASCII is read under PCRE2's own tables, which PHP
      * compiles with under "C": there "\w" leaves "\xE9" out, and the loop
      * beside it gives its iterations back one at a time (8 -> 12 units of
@@ -956,8 +1126,14 @@ final class RedosHeuristicShapesTest extends TestCase
         $pattern = '/^((?:\w|\xE9)+)\1$/';
         $unoptimized = PcreInterpreter::pattern('/(*NO_START_OPT)^((?:\w|\xE9)+)\1$/');
 
-        $short = self::steps($unoptimized, str_repeat("\xE9", 8).'!');
-        $long = self::steps($unoptimized, str_repeat("\xE9", 12).'!');
+        // Each side is measured under its own tables, whatever locale the
+        // process runs under.
+        $short = 0;
+        $long = 0;
+        CharacterTables::under(CharacterTables::BUILT_IN, static function () use ($unoptimized, &$short, &$long): void {
+            $short = self::steps($unoptimized, str_repeat("\xE9", 8).'!');
+            $long = self::steps($unoptimized, str_repeat("\xE9", 12).'!');
+        });
         $this->assertLessThan(4 * $short, $long, 'Oracle: under C the engine stays linear.');
         CharacterTables::under($locale, static function () use ($unoptimized, &$short, &$long): void {
             $short = self::steps($unoptimized, str_repeat("\xE9", 8).'!');
@@ -965,7 +1141,7 @@ final class RedosHeuristicShapesTest extends TestCase
         });
         $this->assertGreaterThan(4 * $short, $long, 'Oracle: under the Latin-1 locale the engine goes exponential.');
 
-        $this->assertNotSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity);
+        $this->assertNotSame(RedosSeverity::Critical, Regex::create(['cache' => null, 'locale' => CharacterTables::BUILT_IN])->redos($pattern)->severity);
         $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null, 'locale' => $locale])->redos($pattern)->severity);
     }
 

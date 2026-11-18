@@ -114,6 +114,8 @@ final class RedosInputGeneratorTest extends TestCase
         $input = $this->generator->generate($ast);
         $this->assertStringStartsWith('a', $input);
         // The class is read: the input ends with the first printable byte outside it.
+        $this->assertSame(1, preg_match('/^[\x00-\x1F]$/', "\x1F"), 'Oracle: PCRE takes the byte below the space in the class.');
+        $this->assertSame(0, preg_match('/^[\x00-\x1F]$/', ' '), 'Oracle: PCRE leaves the space out of the class.');
         $this->assertStringEndsWith(' ', $input);
     }
 }

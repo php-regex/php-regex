@@ -63,11 +63,15 @@ CHANGELOG
    `/^((?:[a-z]|[\xC2-\xDF][\x80-\xBF])+)%?\1/` and WordPress's `SHOW
    TABLES LIKE` pattern, which were critical, are medium: PCRE reads the
    first in 20, 28 and 36 steps on 8, 12 and 16 units. Above ASCII a negated
-   class, the dot, `\D`, `\W` and `\S` take every byte they do not name,
+   class, `\D`, `\W` and `\S` take every byte they do not name, the dot
+   every byte but the newlines of the convention in force unless s is set,
    `\h` the no-break space and `\v` and `\R` the next line:
    `/^((?:[^a]|é)+)\1$/` and `/^((?:.|é)+)\1$/`, which were medium, are
-   critical. Under u a character above ASCII ends a repeat as it starts the
-   next one: `/^((?:é+é)+)\1$/u`, which was medium, is critical, as
+   critical. Under `(*ANY)` the next line is a newline the dot does not
+   take, whichever branch comes first: `/(*ANY)^((?:.|\x85)+)\1$/` and
+   `/(*ANY)^((?:\x85|.)+)\1$/` are medium, and critical under s.
+   Under u a character above ASCII ends a repeat as it starts the next
+   one: `/^((?:é+é)+)\1$/u`, which was medium, is critical, as
    `/^((?:a+a)+)\1$/` is.
  * The heuristics compare first and last characters in the case the engine
    reads them: under i, set by the modifier, an option setting or a group,
@@ -89,7 +93,9 @@ CHANGELOG
    `/^((?i)a+)\1$/`, `/(?i)^((?-i)(?:a|A)+)\1$/`, `/^(x|(?i)a+)\1$/`,
    `/^((?:a|A)+(?i))\1$/` and `/^(a+(?i)A+)\1$/`, which were safe, are
    medium, as `/^(a+)\1$/i`, `/^((?:a|A)+)\1$/` and `/^(a+[aA]+)\1$/` are,
-   and PCRE takes the same steps on each and on its twin.
+   and PCRE takes the same steps on each and on its twin. The finding of
+   two loops that meet so names them with the items between them, as
+   written: `a+(?i)A+`, not `a+A+`.
  * An item that may match empty, an optional one, a run or a count that may
    be empty, an alternation with an empty branch or a group of those, and a
    lookaround, which reads nothing, no longer keep a loop apart on their
@@ -108,7 +114,12 @@ CHANGELOG
    medium, is safe, PCRE giving up in 5 steps whatever the length. Read past
    such items, a loop whose runs a later item always ends is apart:
    `/^((?:\w+(?=,),)+)\1$/`, which was critical, is medium, as
-   `/^((?:\w+,)+)\1$/` is.
+   `/^((?:\w+,)+)\1$/` is. The heuristics read past eight such items at
+   most: a loop meets none further, and nothing further keeps it apart, so
+   that a run of loops that may all match empty costs work and findings
+   that grow with its length, not with its square. In
+   `/^(a+x?x?x?x?x?x?x?x?x?a+)\1$/` each run is medium on its own, and the
+   two are not named together.
  * Without a proof of the whole pattern, a loop whose branches start alike
    is critical only where the loop, read alone before an end that never
    matches, is not proven linear: `/^((?:a|ab)+)\1$/`, `/^((?:ab|abc)+)\1$/`
@@ -117,7 +128,10 @@ CHANGELOG
    `/^((?:a|ab|b)+)\1$/`, `/^((?:a|aa)+)\1$/` and `/^((?:\w|\d)+)\1$/`, which
    PCRE reads exponentially, stay critical. A loop holding an anchor, an
    assertion or a lookaround, a reference or a call to a group outside it,
-   or in a pattern that sets options inline, keeps the finding.
+   or in a pattern that sets options inline, keeps the finding. The loops
+   put to that proof share one budget of steps, the one the proof of the
+   whole pattern has: past it, a loop keeps the finding, and a pattern of
+   many such loops no longer costs a budget for each.
  * The heuristics read a loop that ends the body of another against the
    first characters of the next iteration: Friedl's unrolled C comment,
    `/(?C1)\/\*[^*]*\*+([^\/*][^*]*\*+)*\//`, which was critical, is safe
@@ -144,8 +158,9 @@ CHANGELOG
    critical when the body of the loop reads its input one way, each
    alternation choosing its branch by the first character and each count
    fixed: `/^(a|b\1)+$/`, the PCRE2 manual's example, which PCRE2 reads in
-   linear steps, is medium as any loop is. Under `i` or an option setting
-   the branches are not told apart, and `/^(a|A\1)+$/i` stays critical.
+   linear steps, is medium as any loop is. Where the options in force make
+   the branches start alike, as `i` does in `/^(a|A\1)+$/i`, the loop stays
+   critical.
  * The heuristics read a body repeated `{0}` as PCRE runs it: never where it
    stands. One holding no group gives no hotspot, as `x+x+` in
    `/(?:x+x+){0}^(?:a+)+$/` gave two, which a repair then tried first; the

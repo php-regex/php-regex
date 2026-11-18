@@ -68,6 +68,15 @@ final class RedosProfiler extends AbstractNodeVisitor
     private const UNROLLED_COUNT = 16;
 
     /**
+     * The items that may match empty a loop is read past, at most, on
+     * either side: a loop meets none further, and what stands further is
+     * taken to keep it apart from nothing, so that a run of loops that may
+     * all match empty costs the heuristics work and findings that grow
+     * with its length, not with its square.
+     */
+    private const ITEMS_READ_PAST = 8;
+
+    /**
      * The unbounded loops around the node that may come back into it: an
      * atomic group or a possessive loop between them counts them from none.
      */
@@ -339,14 +348,14 @@ final class RedosProfiler extends AbstractNodeVisitor
         // ones past it: each, to the first that always reads a character,
         // must start or end apart from the loop. The walk that runs out of
         // items is kept apart by nothing, but after the loop by the head of
-        // the iteration the sequence ends.
+        // the iteration the sequence ends; the walk cut short, by nothing.
         [$before, $afterTheStart] = $this->itemsAround(-1);
         [$after, $beforeTheEnd] = $this->itemsAround(1);
-        $boundarySeparatedPrev = !$afterTheStart && $this->apartFrom($before, $node->node, false);
-        $boundarySeparatedNext = !$beforeTheEnd && $this->apartFrom($after, $node->node, true);
+        $boundarySeparatedPrev = false === $afterTheStart && $this->apartFrom($before, $node->node, false);
+        $boundarySeparatedNext = false === $beforeTheEnd && $this->apartFrom($after, $node->node, true);
         $boundarySeparated = $boundarySeparatedPrev || $boundarySeparatedNext;
         $iterationsSeparated = $boundarySeparated
-            || ($beforeTheEnd && null !== $this->iterationHead && $this->apartFrom([...$after, $this->iterationHead], $node->node, true) && $this->separatesIterations($this->iterationHead));
+            || (true === $beforeTheEnd && null !== $this->iterationHead && $this->apartFrom([...$after, $this->iterationHead], $node->node, true) && $this->separatesIterations($this->iterationHead));
 
         $controlVerbShield = $this->hasTrailingBacktrackingControl($node->node);
         $isPossessive = QuantifierType::Possessive === $node->type;
@@ -1102,17 +1111,10 @@ final class RedosProfiler extends AbstractNodeVisitor
         foreach ($branches as $alt) {
             $set = $this->setsAt($alt)->firstChars($alt);
 
-            if ($this->startsWithDot($alt)) {
-                if (!empty($sets)) {
-                    return true;
-                }
-                $sets[] = $set;
-
-                continue;
-            }
-
             // A set not known may meet any other, in whichever order the
-            // branches are written: "a|\1" as "\1|a".
+            // branches are written: "a|\1" as "\1|a". The dot's set leaves
+            // out the newlines of the convention in force without s: under
+            // (*ANY), "\x85|." starts apart as ".|\x85" does.
             foreach ($sets as $existing) {
                 if ($set->intersects($existing)) {
                     return true;
@@ -1123,32 +1125,6 @@ final class RedosProfiler extends AbstractNodeVisitor
         }
 
         return false;
-    }
-
-    /**
-     * Generates a "signature" for the starting element of a node, used for overlap detection.
-     */
-    private function getPrefixSignature(NodeInterface $node): string
-    {
-        if ($node instanceof DotNode) {
-            return 'DOT';
-        }
-        if ($node instanceof SequenceNode && !empty($node->children)) {
-            return $this->getPrefixSignature($node->children[0]);
-        }
-        if ($node instanceof GroupNode) {
-            return $this->getPrefixSignature($node->child);
-        }
-        if ($node instanceof QuantifierNode) {
-            return $this->getPrefixSignature($node->node);
-        }
-
-        return '';
-    }
-
-    private function startsWithDot(NodeInterface $node): bool
-    {
-        return 'DOT' === $this->getPrefixSignature($node);
     }
 
     /**
@@ -1319,14 +1295,15 @@ final class RedosProfiler extends AbstractNodeVisitor
     /**
      * The items on one side of the node being read, nearest first, past
      * those that read nothing, to the first that always reads a character;
-     * and whether the walk ran out of items before one. An item that may
-     * match empty and ends with a verb that cuts backtracking ends the walk
-     * on its own: the engine always gets through it and never goes back
-     * past it, "\s?(*COMMIT)" after "\w+".
+     * and whether the walk ran out of items before one, null when it is cut
+     * short past ITEMS_READ_PAST items that may match empty. An item that
+     * may match empty and ends with a verb that cuts backtracking ends the
+     * walk on its own: the engine always gets through it and never goes
+     * back past it, "\s?(*COMMIT)" after "\w+".
      *
      * @param -1|1 $direction
      *
-     * @return array{list<NodeInterface>, bool}
+     * @return array{list<NodeInterface>, bool|null}
      */
     private function itemsAround(int $direction): array
     {
@@ -1348,6 +1325,9 @@ final class RedosProfiler extends AbstractNodeVisitor
             }
 
             $items[] = $item;
+            if (\count($items) > self::ITEMS_READ_PAST) {
+                return [$items, null];
+            }
         }
 
         return [$items, true];
@@ -1799,13 +1779,13 @@ final class RedosProfiler extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<NodeInterface> $children the items of the sequence
-     * @param array<bool>|null     $reads    whether each item reads a character, null when each
-     *                                       does: two loops meet across one that reads nothing,
-     *                                       "a+(?i)A+"
-     * @param int|null             $tail     the index of the item that ends an atomic body, if
-     *                                       any: a pair it closes is matched the first way
-     *                                       through
+     * @param list<NodeInterface>   $children the items of the sequence
+     * @param array<int, bool>|null $reads    whether each item reads a character, null when each
+     *                                        does: two loops meet across one that reads nothing,
+     *                                        "a+(?i)A+"
+     * @param int|null              $tail     the index of the item that ends an atomic body, if
+     *                                        any: a pair it closes is matched the first way
+     *                                        through
      */
     private function analyzeAdjacentQuantifiers(array $children, ?array $reads, ?int $tail): RedosSeverity
     {
@@ -1814,23 +1794,24 @@ final class RedosProfiler extends AbstractNodeVisitor
         $count = null === $reading ? \count($children) : \count($reading);
 
         for ($k = 0; $k < $count - 1; $k++) {
-            $left = $children[null === $reading ? $k : $reading[$k]];
-            $leftQuantifier = $this->unwrapAdjacentQuantifier($left);
+            $leftIndex = null === $reading ? $k : $reading[$k];
+            $leftQuantifier = $this->unwrapAdjacentQuantifier($children[$leftIndex]);
             if (null === $leftQuantifier) {
                 continue;
             }
 
             // A loop meets each item after it as far as the first that
-            // always reads a character: "a+x?a+" meets the second "a+"
-            // where "x?" matches empty.
+            // always reads a character, past ITEMS_READ_PAST that may match
+            // empty at most: "a+x?a+" meets the second "a+" where "x?"
+            // matches empty.
             for ($m = $k + 1; $m < $count; $m++) {
                 $rightIndex = null === $reading ? $m : $reading[$m];
                 $right = $children[$rightIndex];
                 if ($rightIndex !== $tail) {
-                    $max = $this->maxSeverity($max, $this->adjacentLoops($left, $leftQuantifier, $right));
+                    $max = $this->maxSeverity($max, $this->adjacentLoops($children, $leftIndex, $leftQuantifier, $rightIndex));
                 }
 
-                if ($this->alwaysReads($right) || $this->hasTrailingBacktrackingControl($right)) {
+                if ($m - $k > self::ITEMS_READ_PAST || $this->alwaysReads($right) || $this->hasTrailingBacktrackingControl($right)) {
                     break;
                 }
             }
@@ -1841,11 +1822,15 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     /**
      * The finding of a loop and an item it meets, when the item is a loop
-     * too and the two may read the same characters.
+     * too and the two may read the same characters: it names them with
+     * the items between them, as written, an option setting that makes
+     * them meet above all.
+     *
+     * @param list<NodeInterface> $children the items of the sequence
      */
-    private function adjacentLoops(NodeInterface $left, QuantifierNode $leftQuantifier, NodeInterface $right): RedosSeverity
+    private function adjacentLoops(array $children, int $leftIndex, QuantifierNode $leftQuantifier, int $rightIndex): RedosSeverity
     {
-        $rightQuantifier = $this->unwrapAdjacentQuantifier($right);
+        $rightQuantifier = $this->unwrapAdjacentQuantifier($children[$rightIndex]);
 
         if (null === $rightQuantifier || $this->isQuantifierShielded($leftQuantifier) || $this->isQuantifierShielded($rightQuantifier)) {
             return RedosSeverity::Safe;
@@ -1885,7 +1870,7 @@ final class RedosProfiler extends AbstractNodeVisitor
             ? 'Medium false-positive risk; overlap is inferred from boundary character sets.'
             : 'High false-positive risk; overlap could not be determined precisely.';
 
-        $adjacentSpan = new SequenceNode([$left, $right], $left->getStartPosition(), $right->getEndPosition());
+        $adjacentSpan = new SequenceNode(\array_slice($children, $leftIndex, $rightIndex - $leftIndex + 1), $children[$leftIndex]->getStartPosition(), $children[$rightIndex]->getEndPosition());
 
         $this->addVulnerability(
             $severity,
