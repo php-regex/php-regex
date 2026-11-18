@@ -119,10 +119,18 @@ final class MatchEquivalenceTest extends TestCase
         $this->assertTrue($solver->equivalent('/a|ab/', '/a/', $partial)->isEquivalent);
     }
 
+    /**
+     * Where a row names a witness, the engine writes different matches for
+     * the two patterns on it: the refusal stands on a real difference.
+     */
     #[Test]
     #[DataProvider('provideRefusedPairs')]
-    public function test_patterns_outside_the_readable_fragment_are_refused(string $left, string $right, string $reason): void
+    public function test_patterns_outside_the_readable_fragment_are_refused(string $left, string $right, string $reason, ?string $witness = null): void
     {
+        if (null !== $witness) {
+            $this->assertNotSame(self::matchesOf($left, $witness), self::matchesOf($right, $witness), \sprintf('%s and %s write the same matches on %s.', $left, $right, json_encode($witness)));
+        }
+
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessageIsOrContains($reason);
 
@@ -328,7 +336,7 @@ final class MatchEquivalenceTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{left: string, right: string, reason: string}>
+     * @return iterable<string, array{left: string, right: string, reason: string, witness?: string}>
      */
     public static function provideRefusedPairs(): iterable
     {
@@ -369,10 +377,71 @@ final class MatchEquivalenceTest extends TestCase
         yield 'start anchor after empty branches' => ['left' => '/$'.str_repeat('(?:|)', 30).'\\A/', 'right' => '/$/', 'reason' => 'An end anchor followed by more of the pattern'];
         yield 'multiline flag' => ['left' => '/a/m', 'right' => '/a/', 'reason' => 'Unsupported regex flags for the match solver: m.'];
         yield 'utf mode on one side' => ['left' => '/a/u', 'right' => '/a/', 'reason' => 'Both patterns must read the subject the same way'];
-        // PHP 8.4.26 / PCRE2 10.49: on "ab\r\n" the left one captures "\r"
-        // in $2 and the right one does not match: the dot reads a "\r"
-        // alone but not one before a "\n".
-        yield 'a dot under (*CRLF)' => ['left' => '/(*CRLF)(.*)(\r?)\n/', 'right' => '/(*CRLF)(.*)()\n/', 'reason' => 'Under (*CRLF)'];
+        // On "ab\r\n" the left one captures "\r" in $2 and the right one
+        // does not match: the dot reads a "\r" alone but not one before a
+        // "\n".
+        yield 'a dot under (*CRLF)' => ['left' => '/(*CRLF)(.*)(\r?)\n/', 'right' => '/(*CRLF)(.*)()\n/', 'reason' => 'Under (*CRLF)', 'witness' => "ab\r\n"];
+        // "$" and "\Z" stand before the final newline the convention sets.
+        // On "a\n" the left one finds no match under (*CR) and (*NUL), the
+        // right one "a"; on "a\r" the left one finds "a" under (*ANYCRLF)
+        // and (*ANY), the right one nothing; on "a\r" the lazy loop matches
+        // "a", the greedy one "a\r".
+        $newline = 'A newline convention other than "\n" moves where';
+        yield 'a dollar under (*CR)' => ['left' => '/(*CR)a$/', 'right' => '/a$/', 'reason' => $newline, 'witness' => "a\n"];
+        yield 'a dollar under (*NUL)' => ['left' => '/(*NUL)a$/', 'right' => '/a$/', 'reason' => $newline, 'witness' => "a\n"];
+        yield 'a dollar under (*ANYCRLF)' => ['left' => '/(*ANYCRLF)a$/', 'right' => '/a$/', 'reason' => $newline, 'witness' => "a\r"];
+        yield 'a dollar under (*ANY)' => ['left' => '/(*ANY)a$/', 'right' => '/a$/', 'reason' => $newline, 'witness' => "a\r"];
+        yield 'a capital Z under (*CR)' => ['left' => '/(*CR)a\Z/', 'right' => '/a\Z/', 'reason' => $newline, 'witness' => "a\n"];
+        yield 'a dollar under (*CR) on the right' => ['left' => '/a$/', 'right' => '/(*CR)a$/', 'reason' => $newline, 'witness' => "a\n"];
+        yield 'a dollar under (*CR) after another option' => ['left' => '/(*UTF)(*CR)a$/', 'right' => '/(*UTF)a$/', 'reason' => $newline, 'witness' => "a\n"];
+        yield 'a lazy loop before a dollar under (*CR)' => ['left' => '/(*CR)a\r*?(?:$|b)/', 'right' => '/(*CR)a\r*(?:$|b)/', 'reason' => $newline, 'witness' => "a\r"];
+        // On "b", without the JIT, the left one finds no match, or "" at 1
+        // under (*NOTEMPTY_ATSTART), the right one "" at 0. The JIT ignores
+        // the option, so the rows that leave the JIT on differ only under
+        // pcre.jit=0 (SolverOnHirRefusalsTest runs both).
+        $notEmpty = '(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse';
+        yield 'not empty without the JIT' => ['left' => '/(*NO_JIT)(*NOTEMPTY)a?/', 'right' => '/a?/', 'reason' => $notEmpty, 'witness' => 'b'];
+        yield 'not empty at start without the JIT' => ['left' => '/(*NO_JIT)(*NOTEMPTY_ATSTART)a?/', 'right' => '/a?/', 'reason' => $notEmpty, 'witness' => 'b'];
+        yield 'not empty' => ['left' => '/(*NOTEMPTY)a?/', 'right' => '/a?/', 'reason' => $notEmpty];
+        yield 'not empty at start' => ['left' => '/(*NOTEMPTY_ATSTART)a?/', 'right' => '/a?/', 'reason' => $notEmpty];
+        yield 'not empty on the right' => ['left' => '/a/', 'right' => '/(*NOTEMPTY)a/', 'reason' => $notEmpty];
+    }
+
+    /**
+     * The newline a convention sets is read where no "$" or "\Z" reads it,
+     * and the last convention the options name is the one that holds:
+     * "/(*CR)(*LF)a$/" finds "a" in "a\n". The engine answers first: the
+     * two patterns write the same matches on every string over "a", "b",
+     * "\r" and "\n" up to a length exactly where they are equivalent, and
+     * a difference the solver hands back shows there too.
+     */
+    #[Test]
+    #[DataProvider('provideNewlineConventionsLeftUnread')]
+    public function test_a_newline_convention_no_end_anchor_reads_is_answered(string $left, string $right, bool $equivalent): void
+    {
+        $alike = true;
+        foreach (self::subjects("ab\r\n", 4) as $subject) {
+            $alike = $alike && self::matchesOf($left, $subject) === self::matchesOf($right, $subject);
+        }
+        $this->assertSame($equivalent, $alike, \sprintf('%s and %s.', $left, $right));
+
+        $result = (new LanguageSolver())->matchEquivalent($left, $right);
+
+        $this->assertSame($equivalent, $result->isEquivalent);
+        if (null !== $result->counterExample) {
+            $this->assertNotSame(self::matchesOf($left, $result->counterExample), self::matchesOf($right, $result->counterExample));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{left: string, right: string, equivalent: bool}>
+     */
+    public static function provideNewlineConventionsLeftUnread(): iterable
+    {
+        yield 'no end anchor' => ['left' => '/(*CR)ab/', 'right' => '/ab/', 'equivalent' => true];
+        yield 'a dot' => ['left' => '/(*CR)a./', 'right' => '/a./', 'equivalent' => false];
+        yield 'an end of subject' => ['left' => '/(*CR)a\z/', 'right' => '/a\z/', 'equivalent' => true];
+        yield 'a line feed named last' => ['left' => '/(*CR)(*LF)a$/', 'right' => '/a$/', 'equivalent' => true];
     }
 
     /**

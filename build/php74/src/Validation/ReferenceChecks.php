@@ -77,6 +77,11 @@ final class ReferenceChecks
      */
     private bool $utf = false;
     /**
+     * @var \Closure(int, int): int|null
+     *
+     */
+    private ?\Closure $first = null;
+    /**
      * A group name in Unicode mode, and in any mode once read by the lexer.
      */
     private const GROUP_NAME = '[_\p{L}][_\p{L}\p{Nd}]*+';
@@ -99,8 +104,12 @@ final class ReferenceChecks
      *                                                          pattern
      * @param bool                                   $utf       whether PCRE reads the pattern
      *                                                          as UTF-8
+     * @param (\Closure(int, int): int)|null         $first     given a group numbered below 10
+     *                                                          and where a reference to it is
+     *                                                          refused, where the first one to
+     *                                                          it stands, which PCRE reports
      */
-    public function __construct(GroupIndex $groups, GroupNumbering $numbering, PcreTarget $target, \Closure $missing, ?string $pattern = null, ?string $source = null, int $offset = 0, bool $utf = false)
+    public function __construct(GroupIndex $groups, GroupNumbering $numbering, PcreTarget $target, \Closure $missing, ?string $pattern = null, ?string $source = null, int $offset = 0, bool $utf = false, ?\Closure $first = null)
     {
         $this->groups = $groups;
         $this->numbering = $numbering;
@@ -110,6 +119,7 @@ final class ReferenceChecks
         $this->source = $source;
         $this->offset = $offset;
         $this->utf = $utf;
+        $this->first = $first;
     }
 
     /**
@@ -118,7 +128,7 @@ final class ReferenceChecks
      */
     public function reading(?string $source, int $offset): self
     {
-        return new self($this->groups, $this->numbering, $this->target, $this->missing, $this->pattern, $source, $offset, $this->utf);
+        return new self($this->groups, $this->numbering, $this->target, $this->missing, $this->pattern, $source, $offset, $this->utf, $this->first);
     }
 
     /**
@@ -147,11 +157,7 @@ final class ReferenceChecks
             // "\NN" that PCRE reads as an octal escape is parsed as one: a
             // reference by number here names a group or none.
             if ($num > $this->numbering->maxGroupNumber) {
-                $this->raiseMissingReference(
-                    \sprintf('Backreference to non-existent group: \\%d.', $num),
-                    $this->missingReferenceOffset($node),
-                    ErrorCode::BackrefMissingGroup(),
-                );
+                $this->raiseMissingReference(\sprintf('Backreference to non-existent group: \\%d.', $num), $this->missingReferenceOffset($node), ErrorCode::BackrefMissingGroup(), null, $num);
             }
 
             return;
@@ -247,18 +253,14 @@ final class ReferenceChecks
 
             if (0 === strncmp($numStr, '+', strlen('+')) || 0 === strncmp($numStr, '-', strlen('-'))) {
                 $offset = (int) $numStr;
-                $this->assertRelativeReferenceExists($offset, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative(), 'Backreference', $node);
+                $this->assertRelativeReferenceExists($offset, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative(), 'Backreference', $node, ($this->groups->nextNumberAt($node) ?? 1) - 1 + $offset);
 
                 return;
             }
 
             $num = (int) $numStr;
             if ($num > $this->numbering->maxGroupNumber) {
-                $this->raiseMissingReference(
-                    \sprintf('Backreference to non-existent group: \\g{%d}.', $num),
-                    $this->missingReferenceOffset($node),
-                    ErrorCode::BackrefMissingGroup(),
-                );
+                $this->raiseMissingReference(\sprintf('Backreference to non-existent group: \\g{%d}.', $num), $this->missingReferenceOffset($node), ErrorCode::BackrefMissingGroup(), null, $num);
             }
 
             return;
@@ -753,9 +755,11 @@ final class ReferenceChecks
     }
 
     /**
+     * @param int|null                        $group the group a back reference counts to, which PCRE
+     *                                               reports where the first reference to it stands
      * @param BackrefNode|SubroutineNode|null $node
      */
-    private function assertRelativeReferenceExists(int $offset, int $position, ErrorCode $code, string $context, $node = null): void
+    private function assertRelativeReferenceExists(int $offset, int $position, ErrorCode $code, string $context, $node = null, ?int $group = null): void
     {
         if (0 === $offset) {
             $this->raise(
@@ -772,11 +776,7 @@ final class ReferenceChecks
         // A reference forward names a group PCRE has not read yet: it is
         // resolved with the references by number, once the pattern is read.
         if ($offset > 0) {
-            $this->raiseMissingReference(
-                \sprintf('%s relative reference %d is outside the range of available capture groups.', $context, $offset),
-                $position,
-                $code,
-            );
+            $this->raiseMissingReference(\sprintf('%s relative reference %d is outside the range of available capture groups.', $context, $offset), $position, $code, null, $group);
 
             return;
         }
@@ -844,11 +844,20 @@ final class ReferenceChecks
 
     /**
      * A reference to a group the pattern does not have, which the validator
-     * raises when PCRE would.
+     * raises when PCRE would. PCRE keeps one offset for each group a back
+     * reference names by a number below 10, that of the first such
+     * reference, and reports there whichever reference to it fails.
+     *
+     * @param int|null $group the group a back reference names by number
      */
-    private function raiseMissingReference(string $message, int $position, ErrorCode $code, ?string $hint = null): void
+    private function raiseMissingReference(string $message, int $position, ErrorCode $code, ?string $hint = null, ?int $group = null): void
     {
-        ($this->missing)(new SemanticErrorException($message, $code, $position + $this->offset, $this->pattern, null, null, $hint));
+        $position += $this->offset;
+        if (null !== $group && $group < 10 && null !== $this->first) {
+            $position = ($this->first)($group, $position);
+        }
+
+        ($this->missing)(new SemanticErrorException($message, $code, $position, $this->pattern, null, null, $hint));
     }
 
     /**

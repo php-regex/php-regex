@@ -133,10 +133,19 @@ jobs:
         run: |
           mkdir -p reference
           cp patterns.json reference/
-          for i in 0 1 2 3; do
-            php -d memory_limit=2G build/verify/run-witness.php build/verify/original-autoload.php reference/patterns.json "$i/4" --hash > "reference/witnesses-$i.jsonl" &
+          # Sixteen slices, four at a time, each run without the cycle
+          # collector: a slice frees everything when it exits, and stays
+          # under 1 GB. A slice that fails stops the step.
+          for batch in 0 4 8 12; do
+            pids=
+            for i in $batch $((batch + 1)) $((batch + 2)) $((batch + 3)); do
+              php -d memory_limit=2G -d zend.enable_gc=0 build/verify/run-witness.php build/verify/original-autoload.php reference/patterns.json "$i/16" --hash > "reference/witnesses-$i.jsonl" &
+              pids="$pids $!"
+            done
+            for pid in $pids; do
+              wait "$pid"
+            done
           done
-          wait
           php build/verify/api.php build/verify/original-autoload.php src/Parser > reference/api.json
 
       - uses: actions/upload-artifact@v7
@@ -182,10 +191,19 @@ jobs:
         run: |
           mkdir -p reference
           cp patterns.json reference/
-          for i in 0 1 2 3; do
-            php -d memory_limit=2G build/verify/run-witness.php build/verify/original-autoload.php reference/patterns.json "$i/4" --hash > "reference/witnesses-$i.jsonl" &
+          # Sixteen slices, four at a time, each run without the cycle
+          # collector: a slice frees everything when it exits, and stays
+          # under 1 GB. A slice that fails stops the step.
+          for batch in 0 4 8 12; do
+            pids=
+            for i in $batch $((batch + 1)) $((batch + 2)) $((batch + 3)); do
+              php -d memory_limit=2G -d zend.enable_gc=0 build/verify/run-witness.php build/verify/original-autoload.php reference/patterns.json "$i/16" --hash > "reference/witnesses-$i.jsonl" &
+              pids="$pids $!"
+            done
+            for pid in $pids; do
+              wait "$pid"
+            done
           done
-          wait
           php build/verify/api.php build/verify/original-autoload.php src/Parser > reference/api.json
 
       - name: Run the twin's suite

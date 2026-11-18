@@ -31,6 +31,10 @@ CHANGELOG
    in one (`/[é]/`) PCRE reads each of its bytes as a member, and the class
    is refused. Each refusal names the fix PCRE takes: `u`, after writing a
    raw byte of invalid UTF-8 as its character.
+ * For Python, a lookbehind is measured in characters without `u` too, as
+   Python reads them: `/(?<=(?:ab|é))c/` is refused, where it was written
+   as a pattern `re.compile()` refuses, "look-behind requires fixed-width
+   pattern", and `/(?<=(?:a|é))c/` is written, where it was refused.
  * Without `u`, `\s` is `[\t-\r ]` and `\S` is `[^\t-\r ]` for JavaScript and
    `html-pattern`: JavaScript's `\s` also takes the Unicode spaces, so
    `/^\s+$/` matched `U+00A0` there and not in PCRE. `\h` and `\v` are

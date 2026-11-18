@@ -137,7 +137,10 @@ character after the backslash, and what follows is read again as pattern text.
 the text `g{-1}`, `\g{+65535}` after a group, past the 65535 groups PCRE2
 numbers, `g`, then `{` repeated by the `+`, then the text `65535}`, and `\o{8}`
 is `o` repeated eight times, as the braces read again make a count. PHP 8.0 compiles without the option and ignores `X`, so it
-refuses all of them. The library judges a 7.3 or 7.4 target the same way, and
+refuses all of them. A `\x` with no hex digit is NUL up to PCRE2 10.44 and
+refused from 10.45: PHP 7.3 and 7.4 linked against 10.45 or later read it as
+the letter `x`, so `/[\x-a]/` is a range out of order there, and refuse it
+under `X`. The library judges a 7.3 or 7.4 target the same way, and
 reads the escape as that character in the tree it builds:
 
 ```php
@@ -549,6 +552,11 @@ What this library does about it:
   no result. That covers `generate()` and its samples, runtime validation,
   the ReDoS confirmation (`--redos-mode=confirmed`), the PHPStan extension
   and the bridges.
+- The ReDoS confirmation replays a pattern holding `(*SKIP:NAME)` under the
+  JIT, as PHP runs it by default, and its confirmation says so
+  (`jit_setting: true`). Where `pcre.jit` cannot be turned on for the call
+  (fixed by `php_admin_flag`), nothing is replayed, as where a limit cannot
+  be set.
 - The `redos` command's benchmark alone runs the JIT, unless `--jit 0` says
   otherwise: it measures what production sees.
 
@@ -591,7 +599,9 @@ and gets the same verdict under a tiny limit as under the default.
   `PREG_INTERNAL_ERROR`, `matchAll()` and `answer()` return `null`, and a
   limit already changed is put back. The ReDoS confirmation then reports the
   run as skipped, its evidence `engine limits unavailable`, as it does where
-  `ini_set()` is disabled. A pattern the engine runs without the JIT by
+  `ini_set()` is disabled. So does the engine that replays a pattern under
+  the JIT where `ini_set()` refuses `pcre.jit` (`… ini_set() refused
+  pcre.jit`), with or without limits. A pattern the engine runs without the JIT by
   turning `pcre.jit` off (one whose delimiters leave no room for
   `(*NO_JIT)`) runs with your settings instead. The engine reads no setting
   with `ini_get()`: it restores the value `ini_set()` hands back, so a

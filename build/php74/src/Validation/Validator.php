@@ -113,6 +113,16 @@ final class Validator extends AbstractNodeVisitor
      */
     public const MAX_GROUP_NESTING = 250;
     /**
+     * What PCRE reads past an opener before the first item of its body, a
+     * longer text before one it ends with: the quotes, and the spaces "x"
+     * skips, NEL and the marks and separators of UTF-8 among them, NEL a
+     * byte outside UTF. Outside "x" or UTF a space is that first item.
+     */
+    private const SKIPPED_AFTER_OPENER = [
+        "\u{85}", "\u{200E}", "\u{200F}", "\u{2028}", "\u{2029}", '\Q', '\E',
+        ' ', "\t", "\n", "\r", "\v", "\f", "\x85",
+    ];
+    /**
      * The assertions an escaped letter stands for.
      */
     private const VALID_ASSERTIONS = [
@@ -236,6 +246,22 @@ final class Validator extends AbstractNodeVisitor
      * offset reports it.
      */
     private int $referenceAt = 0;
+
+    /**
+     * Where the first back reference to each group numbered below 10 stands,
+     * by that number, in the pattern walked.
+     *
+     * @var array<int, int>
+     */
+    private array $firstReferences = [];
+
+    /**
+     * The group, numbered below 10, of the reference the measure of a
+     * lookbehind refused, kept in $lateErrors[0]: PCRE reports it where the
+     * first reference to that group is written, which the walk may read
+     * after the measure.
+     */
+    private ?int $lookbehindReferenceGroup = null;
 
     /**
      */
@@ -744,11 +770,13 @@ final class Validator extends AbstractNodeVisitor
     {
         $this->referenceAt = $node->startPosition + $this->positionOffset;
 
-        // PCRE counts the conditional as it opens it: past a reference, or
-        // on the assertion that decides it.
-        $this->enterNesting($node->condition instanceof GroupNode || $this->isCalloutThenAssertion($node->condition)
-            ? $node->condition->getStartPosition()
-            : $node->yes->getStartPosition());
+        // PCRE counts the conditional as it opens it: on the assertion that
+        // decides it, an item read after, or past a condition written in
+        // the opener, which it judges first.
+        $assertion = $node->condition instanceof GroupNode || $this->isCalloutThenAssertion($node->condition);
+        if ($assertion) {
+            $this->enterNesting($node->condition->getStartPosition());
+        }
 
         // Check if the condition is a valid *type* of condition first
         // (e.g., a backreference, a subroutine call, or a lookaround)
@@ -788,6 +816,10 @@ final class Validator extends AbstractNodeVisitor
                 $node->condition->getStartPosition(),
                 ErrorCode::ConditionalInvalid(),
             );
+        }
+
+        if (!$assertion) {
+            $this->enterNesting($node->yes->getStartPosition());
         }
 
         $this->conditionals->branches($node);
@@ -919,7 +951,9 @@ final class Validator extends AbstractNodeVisitor
             $this->engine,
         );
         $groups = GroupIndex::of($node->pattern);
-        $this->references = new ReferenceChecks($groups, $groups->numbering(), $this->target, \Closure::fromCallable([$this, 'keepMissingReference']), $this->pattern, $node->source, 0, $this->unicodeMode);
+        $this->firstReferences = [];
+        $this->lookbehindReferenceGroup = null;
+        $this->references = new ReferenceChecks($groups, $groups->numbering(), $this->target, \Closure::fromCallable([$this, 'keepMissingReference']), $this->pattern, $node->source, 0, $this->unicodeMode, \Closure::fromCallable([$this, 'firstReference']));
         $this->verbs = VerbChecks::forPattern($this->target, $this->pattern, $node->source, $this->unicodeMode);
         $this->classes = new ClassChecks($this->target, $this->pattern, $node->source);
         $this->ranges = new RangeChecks($this->target, $this->pattern, $node->source, 0, $this->unicodeMode);
@@ -938,12 +972,34 @@ final class Validator extends AbstractNodeVisitor
         } finally {
             $this->walkingPattern = false;
         }
+
+        $this->placeMeasuredReference();
+    }
+
+    /**
+     * The measure of a lookbehind meets a reference before those it skips,
+     * in a lookahead or a DEFINE group of the lookbehind, after an
+     * "(*ACCEPT)" there, and those past it in a group it calls: PCRE reports
+     * a missing group where the first reference to it is written, which the
+     * walk has read by now.
+     */
+    private function placeMeasuredReference(): void
+    {
+        $error = $this->lateErrors[0] ?? null;
+        if (null === $error || null === $this->lookbehindReferenceGroup) {
+            return;
+        }
+
+        $first = $this->firstReferences[$this->lookbehindReferenceGroup] ?? $error->position;
+        if ($first !== $error->position) {
+            $this->lateErrors[0] = new SemanticErrorException($error->getMessage(), $error->errorCode, $first, $this->pattern, null, null, $error->hint);
+        }
     }
 
     /**
      * One more level of parentheses, whose body starts at $bodyStart. PCRE
      * refuses the level past its limit once it has read the opener, before
-     * any space that "x" skips.
+     * the quotes and the spaces that "x" skips after it.
      */
     private function enterNesting(int $bodyStart): void
     {
@@ -953,9 +1009,18 @@ final class Validator extends AbstractNodeVisitor
 
         --$this->nestingDepth;
         $source = $this->source ?? '';
-        while ($bodyStart > 0 && isset($source[$bodyStart - 1]) && Ascii::isSpace($source[$bodyStart - 1])) {
-            --$bodyStart;
-        }
+        do {
+            $skipped = false;
+            foreach (self::SKIPPED_AFTER_OPENER as $text) {
+                $length = \strlen($text);
+                if ($bodyStart >= $length && (string) substr($source, $bodyStart - $length, $length) === $text) {
+                    $bodyStart -= $length;
+                    $skipped = true;
+
+                    break;
+                }
+            }
+        } while ($skipped);
 
         $this->raiseSemanticError(
             \sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', self::MAX_GROUP_NESTING),
@@ -1174,6 +1239,23 @@ final class Validator extends AbstractNodeVisitor
         if (!isset($this->lateErrors[1])) {
             $this->keepFirstPassError($error, $this->referenceAt);
         }
+    }
+
+    /**
+     * Where the first back reference to $group stands that the walk has
+     * met, this one at $position included: the walk meets them in the order
+     * PCRE reads them, but the measure of a lookbehind may meet one before
+     * others written earlier.
+     */
+    private function firstReference(int $group, int $position): int
+    {
+        // The measure refuses the reference at once: its error is the one
+        // kept for the lookbehinds unless one is kept already.
+        if ($this->measuringLookbehind && !isset($this->lateErrors[0])) {
+            $this->lookbehindReferenceGroup = $group;
+        }
+
+        return $this->firstReferences[$group] = min($this->firstReferences[$group] ?? $position, $position);
     }
 
     /**

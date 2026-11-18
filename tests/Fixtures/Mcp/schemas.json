@@ -24,6 +24,7 @@
             "additionalProperties": false
         },
         "outputSchema": {
+            "type": "object",
             "oneOf": [
                 {
                     "type": "object",
@@ -293,6 +294,7 @@
             "additionalProperties": false
         },
         "outputSchema": {
+            "type": "object",
             "oneOf": [
                 {
                     "type": "object",
@@ -516,6 +518,7 @@
             "additionalProperties": false
         },
         "outputSchema": {
+            "type": "object",
             "oneOf": [
                 {
                     "type": "object",
@@ -755,6 +758,7 @@
             "additionalProperties": false
         },
         "outputSchema": {
+            "type": "object",
             "oneOf": [
                 {
                     "type": "object",
@@ -1017,6 +1021,7 @@
             "additionalProperties": false
         },
         "outputSchema": {
+            "type": "object",
             "oneOf": [
                 {
                     "type": "object",

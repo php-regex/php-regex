@@ -17,6 +17,8 @@ use PHPRegex\LanguageServer\Protocol\MessageLimits;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Parser\Text\Path;
+use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\TestUtils\FileUri;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -63,13 +65,18 @@ final class ServerTest extends TestCase
 
     /**
      * A pattern spelled with "\xFF" in a double-quoted string holds a byte
-     * JSON cannot carry: its hover, which quotes the pattern, cannot be
-     * encoded. The request is answered all the same, with an internal
-     * error, where the client would have waited for an answer forever.
+     * JSON cannot carry: its hover, which quotes the pattern, spells that
+     * byte \xHH and is answered, where it was answered with an internal
+     * error. A response the transport still cannot encode is answered with
+     * one (TransportTest), never left for the client to wait on.
      */
     #[Test]
-    public function test_a_response_that_cannot_be_encoded_is_answered_with_an_internal_error(): void
+    public function test_a_hover_quoting_a_byte_json_cannot_carry_is_answered(): void
     {
+        // The engine runs the pattern on bytes and refuses it as UTF-8.
+        $this->assertSame(1, preg_match("/\xFF\xFEa+/", "\xFF\xFEaa"));
+        $this->assertStringContainsString('UTF-8 error', (string) EngineProbe::warning("/\xFF\xFEa+/u"));
+
         $this->serve([
             ['id' => 1, 'method' => 'initialize', 'params' => []],
             ['method' => 'initialized'],
@@ -83,11 +90,13 @@ final class ServerTest extends TestCase
             ['id' => 3, 'method' => 'shutdown'],
         ]);
 
-        $this->assertSame(-32603, $this->errorCodeOf(2));
-        $error = $this->answerTo(2)['error'];
-        $this->assertIsArray($error);
-        $this->assertSame('The response could not be encoded as JSON: Malformed UTF-8 characters, possibly incorrectly encoded.', $error['message']);
-        $this->assertArrayHasKey('result', $this->answerTo(3), 'The session did not go on after the unencodable response.');
+        $this->assertArrayNotHasKey('error', $this->answerTo(2));
+        $result = $this->answerTo(2)['result'];
+        $this->assertIsArray($result);
+        $value = JsonContract::asArray($result['contents'] ?? null)['value'] ?? null;
+        $this->assertIsString($value);
+        $this->assertStringContainsString("```\n/\\xFF\\xFEa+/\n```", (string) $value);
+        $this->assertArrayHasKey('result', $this->answerTo(3), 'The session did not go on after the hover.');
     }
 
     #[Test]

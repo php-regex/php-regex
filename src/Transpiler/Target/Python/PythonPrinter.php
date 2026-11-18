@@ -656,7 +656,9 @@ final class PythonPrinter extends AbstractTargetPrinter
     /**
      * Python re compiles a lookbehind of one length only, each branch of a
      * top-level alternation on its own once split: "(?<=a{1,3})" is refused
-     * by re.compile(), which PCRE2 from 10.43 reads.
+     * by re.compile(), which PCRE2 from 10.43 reads. It measures it in the
+     * characters it reads, without u too: there "é" is one, where PCRE
+     * counts two bytes, and "(?<=(?:ab|é))" is refused.
      *
      * @throws TranspileException
      */
@@ -664,7 +666,7 @@ final class PythonPrinter extends AbstractTargetPrinter
     {
         $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
         foreach ($branches as $branch) {
-            [$min, $max] = $branch->accept(new LengthRangeCalculator($this->unicode));
+            [$min, $max] = $branch->accept(new LengthRangeCalculator(true));
             if ($min !== $max) {
                 $this->unsupported(\sprintf('Python re needs a lookbehind of one length: this branch is %d to %s characters long.', $min, null === $max ? 'any number of' : (string) $max), \count($branches) > 1 ? $branch : $node);
             }

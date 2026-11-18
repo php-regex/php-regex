@@ -6,6 +6,25 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:security` and `regex:analyze` read an `access_control` path or
+   host ending on a comment of the `x` flag, `(?x)^/admin  # back office`,
+   or on a `\Q` left open, `^/admin\Q.x`, as Symfony compiles it, where the
+   search built from it swallowed its closing parenthesis and the command
+   stopped on a syntax error. A path PCRE refuses, `^/(admin` or
+   `(?<=a+)b`, leaves its rule out as an invalid path regex, and a host PCRE
+   refuses is not evaluated, where the first stopped the command and the
+   second was compared.
+ * `regex:security` and `regex:analyze` read the `port`, `route` and
+   `attributes` of an `access_control` rule, as the security bundle chains
+   them to its request matcher: an earlier rule holding one the later rule
+   does not require the same way no longer shadows it, and two rules for
+   different ports share no request. `{ route: app_login, roles:
+   PUBLIC_ACCESS }` before `{ path: ^/admin, roles: ROLE_ADMIN }` is an
+   overlap, where it was reported as a critical shadow. A rule with no
+   path is said to match every path, where it was said to match all
+   requests whatever its methods, host, port or addresses; one naming a
+   route or attributes is no longer counted among them. A `port` that is no
+   number is an error.
  * `regex:security` compares a path under `(*UTF)` with one without it, and
    `regex:routes` a route with the `utf8` option with one without it, on the
    request paths that are valid UTF-8, as Symfony matches them:
@@ -176,6 +195,31 @@ CHANGELOG
    an overlap whichever is declared first, the earlier one winning them, and
    a route is shadowed when an earlier one takes all its paths. A narrower
    route declared before a wider one is not reported.
+ * `regex:routes` and `regex:analyze` read the redirect of the trailing
+   slash, as the framework's matcher sends it: a `GET` or `HEAD` request
+   whose path differs from an earlier route's by a trailing slash alone
+   goes to that route, and a later route never gets it, whatever its
+   scheme. `/foo/` before `/foo`, or `/a/{x}/` before `/a/{x}`, is an
+   overlap, or a shadow when the later route takes only `GET` and `HEAD`,
+   where the pair was reported as no conflict. A later route whose paths
+   the earlier one matches in part and redirects for the rest,
+   `/blog{slash}` (`/?`) after `/blog`, is shadowed too. On another
+   scheme, a later route that shares paths with the earlier one keeps them
+   and loses the redirected ones: an overlap, or a pair skipped where the
+   earlier route ends on a variable, whose redirect PCRE's order decides.
+   The report
+   suggests paths that differ by more than the slash, never the reorder
+   that only turns the redirect round.
+ * `regex:routes` and `regex:analyze` call a route shadowed only when an
+   earlier route takes every request of it, its methods (`GET` taking
+   `HEAD`), its schemes and its host included, as the security analysis
+   does; any other pair sharing a path is an overlap. A route for `HEAD`
+   only before a route for `GET` on the same path, a route for `GET` before
+   one for `GET` and `POST`, a route for `https` before one for any scheme
+   and a route for a host before one for any host were reported as
+   shadowed. The report no longer suggests moving the later route of such
+   an overlap first, which would leave the earlier route unreachable, nor
+   merging two routes on the same paths that each keep some requests.
  * `regex:routes` and `regex:analyze` read a route for `GET` as taking the
    `HEAD` requests too, as Symfony's matchers send them: a route for `HEAD`
    only declared after a route for `GET` on its paths is shadowed, where the

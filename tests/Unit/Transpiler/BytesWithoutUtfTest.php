@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
@@ -30,6 +31,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class BytesWithoutUtfTest extends TestCase
 {
+    use PcreGates;
     use PhpUnitForwardCompat;
 
     #[Test]
@@ -159,6 +161,50 @@ final class BytesWithoutUtfTest extends TestCase
             // The quantifier repeats the last byte of the character.
             yield $target.': quantified multibyte character' => ['pattern' => '/é+/', 'target' => $target];
         }
+    }
+
+    /**
+     * Python re measures a lookbehind in the characters it reads: a
+     * multibyte character written whole is one there, where PCRE without u
+     * counts its bytes. Python 3.13 finds "c" after "é" with the first
+     * pattern and after "éé" with the second, as preg_match() does.
+     */
+    #[Test]
+    #[DataProvider('provideLookbehindsOfOneLengthInCharacters')]
+    public function test_a_python_lookbehind_is_measured_in_characters(string $pattern, string $python, string $subject, int $offset): void
+    {
+        // A lookbehind of one length in characters is of two in bytes,
+        // which PCRE2 reads from 10.43.
+        $this->requiresCompile($pattern);
+        $this->assertSame(1, preg_match($pattern, $subject, $matches, \PREG_OFFSET_CAPTURE));
+        $this->assertSame($offset, $matches[0][1]);
+
+        $this->assertSame($python, Regex::create()->transpile($pattern, 'python')->pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, python: string, subject: string, offset: int}>
+     */
+    public static function provideLookbehindsOfOneLengthInCharacters(): iterable
+    {
+        yield 'one character of two bytes or one of one' => ['pattern' => '/(?<=(?:a|é))c/', 'python' => '(?<=(?:a|é))c', 'subject' => 'éc', 'offset' => 2];
+        yield 'two characters of two bytes or two of one' => ['pattern' => '/(?<=(?:ab|éé))c/', 'python' => '(?<=(?:ab|éé))c', 'subject' => 'ééc', 'offset' => 4];
+    }
+
+    /**
+     * Two bytes each, "ab" and "é" are two characters and one to Python re,
+     * which refuses the lookbehind: "look-behind requires fixed-width
+     * pattern".
+     */
+    #[Test]
+    public function test_a_python_lookbehind_of_two_lengths_in_characters_is_refused(): void
+    {
+        $this->assertSame(1, preg_match('/(?<=(?:ab|é))c/', 'éc'));
+
+        $this->expectException(TranspileException::class);
+        $this->expectExceptionMessageIsOrContains('Python re needs a lookbehind of one length: this branch is 1 to 2 characters long.');
+
+        Regex::create()->transpile('/(?<=(?:ab|é))c/', 'python');
     }
 
     #[Test]

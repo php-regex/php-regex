@@ -26,6 +26,7 @@ use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\FormatResult;
 use PHPRegex\Parser\Printer\PatternFormatter;
+use PHPRegex\Parser\Text\Utf8;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -239,6 +240,12 @@ final class CodeActionHandler
     {
         $actions = [];
 
+        // PCRE refuses a pattern under u that holds a byte no UTF-8
+        // character takes.
+        if (!mb_check_encoding($occurrence->pattern, 'UTF-8')) {
+            return [];
+        }
+
         $hasUnicodeIssue = [] !== $diagnostics;
 
         if (!$hasUnicodeIssue) {
@@ -440,11 +447,29 @@ final class CodeActionHandler
      *
      * A pattern is free to hold a quote — "/it's/" is a fine regex — and
      * wrapping it in quotes without escaping produced source the editor
-     * could not parse.
+     * could not parse. One holding a byte no UTF-8 character takes is
+     * written between double quotes, that byte as \xHH: the edit travels as
+     * JSON, which holds UTF-8 only.
      */
     private function asPhpString(string $pattern): string
     {
-        return var_export($pattern, true);
+        if (mb_check_encoding($pattern, 'UTF-8')) {
+            return var_export($pattern, true);
+        }
+
+        $literal = '';
+        $length = \strlen($pattern);
+        for ($i = 0; $i < $length;) {
+            $character = substr($pattern, $i, Utf8::width($pattern, $i));
+            if (mb_check_encoding($character, 'UTF-8')) {
+                $literal .= strtr($character, ['\\' => '\\\\', '"' => '\\"', '$' => '\\$']);
+                $i += \strlen($character);
+            } else {
+                $literal .= \sprintf('\\x%02X', \ord($pattern[$i++]));
+            }
+        }
+
+        return '"'.$literal.'"';
     }
 
     /**

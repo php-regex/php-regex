@@ -280,7 +280,7 @@ final class SecurityAnalyzer implements AnalyzerInterface
             $warnings[] = new AnalysisNotice(
                 CheckOutcome::Warn,
                 \sprintf(
-                    '%d rules have no path and match all requests.',
+                    '%d rules have no path and match every path.',
                     \count(array_unique($report->rulesWithNoPath)),
                 ),
             );

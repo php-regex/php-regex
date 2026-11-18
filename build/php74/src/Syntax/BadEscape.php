@@ -34,7 +34,8 @@ use PHPRegex\Parser\Text\Ascii;
  * pattern is read, a property in a class and a class escape before a "-"
  * stay refused. 10.32 also reads as a literal an escape it refuses in a
  * class, an assertion or "\N" there, and a class escape ending a range;
- * 10.33 refuses them.
+ * 10.33 refuses them. A PHP 7 linked against PCRE2 10.45 or later also
+ * reads "\x" with no hex digit as the letter, which those releases refuse.
  *
  * @internal
  */
@@ -129,7 +130,8 @@ final class BadEscape
             case 'o' === $letter:
                 return self::octalBracesFail($pattern, $after, $utf);
             case 'x' === $letter:
-                return '{' === ($pattern[$after] ?? '') && self::hexBracesFail($pattern, $after + 1, $utf);
+                return '{' === ($pattern[$after] ?? '') ? self::hexBracesFail($pattern, $after + 1, $utf)
+                    : $target->supports(PcreFeature::HexEscapeNeedsDigits()) && !Ascii::isHexDigit($pattern[$after] ?? '');
             case 'c' === $letter:
                 return self::controlFails($pattern, $after);
             case '0' === $letter:

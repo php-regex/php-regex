@@ -16,7 +16,7 @@ namespace PHPRegex\Symfony\Security;
 /**
  * @internal
  *
- * @phpstan-type AccessRule array{index: int, file: string, line: int, path: ?string, pattern: string, roles: array<int, string>, methods: array<int, string>, host: ?string, hostPattern: ?string, hostUnsupported: bool, ips: array<int, string>, allowIf: ?string, requiresChannel: ?string, accessLevel: string, notes: array<int, string>}
+ * @phpstan-type AccessRule array{index: int, file: string, line: int, path: ?string, pattern: string, roles: array<int, string>, methods: array<int, string>, host: ?string, hostPattern: ?string, hostUnsupported: bool, ips: array<int, string>, allowIf: ?string, requiresChannel: ?string, port: ?int, attributes: array<string, string>, route: ?string, accessLevel: string, notes: array<int, string>}
  * @phpstan-type AccessConflict array{
  *     rule: AccessRule,
  *     conflict: AccessRule,

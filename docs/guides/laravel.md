@@ -389,9 +389,22 @@ reads it. A rules string is split on every `|`, one inside the pattern
 included: `'code' => 'required|regex:/^(?:a|b)$/'` hands `/^(?:a` to
 `preg_match()`, and the lint reports it as invalid. Write such a rule as an
 array element, `['required', 'regex:/^(?:a|b)$/']`, which keeps its `|`. The
-pattern is linted as written, between any delimiter PHP takes: `{^a$}` is
-the pattern between braces, not `/{^a$}/`. The rule's name is read without
-case, as Laravel reads it, and `notregex:` is `not_regex:`.
+rules a call takes are a rules string too, given by position or by name:
+`$validator->sometimes('code', 'regex:/^(a|b)$/', …)`, the `$rules` and
+`$defaultRules` of `Rule::when()` and `Rule::unless()`, and those of
+`new ConditionalRules()` are split. A string another call takes is one rule:
+`array_push($rules['code'], 'regex:/^(a|b)$/')` appends one element, and
+one element with a rule before the regex one, `'nullable|regex:/^a$/'`, is a
+rule Laravel names `nullable|regex`, which runs no pattern. The
+pattern is linted as written, between any delimiter PHP takes: `{^a$}` is the
+pattern between braces, not `/{^a$}/`, and a double-quoted literal as PHP
+decodes it: `"regex:/^[\u{0600}-\u{06FF}]+$/u"` holds the characters PHP
+decodes, not `\u`, and `"required|\tregex:/^a$/"` a tab before the rule's
+name. The rule's name is read without case, as Laravel reads it, and
+`notregex:` is `not_regex:`. A name with blanks around it,
+`'required | regex:/^a$/'`, is still the regex rule, but Laravel then reads
+its parameter as comma-separated values and runs the first one:
+`' regex:/^a{1,2}$/'` runs `/^a{1`, and that is what is linted.
 
 A route constraint is judged as the router compiles it: stripped of a
 leading `^` or `\A` and a trailing `$` or `\z`, its groups made

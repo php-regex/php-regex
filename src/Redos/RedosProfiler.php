@@ -61,6 +61,12 @@ use PHPRegex\Parser\Text\Ascii;
 final class RedosProfiler extends AbstractNodeVisitor
 {
     /**
+     * The largest count the proof unrolls, by default: past it, a count is
+     * analysed as a loop.
+     */
+    private const UNROLLED_COUNT = 16;
+
+    /**
      * The unbounded loops around the node that may come back into it: an
      * atomic group or a possessive loop between them counts them from none.
      */
@@ -105,6 +111,13 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     private ?NodeInterface $nextNode = null;
 
+    /**
+     * The body of the loop whose iteration the node ends: the next
+     * iteration starts there. A run that ends "([^/*][^*]*\*+)*" never
+     * takes the "[^/*]" that starts the next one.
+     */
+    private ?NodeInterface $iterationHead = null;
+
     private bool $backrefLoopDetected = false;
 
     private ?NodeInterface $culpritNode = null;
@@ -132,12 +145,35 @@ final class RedosProfiler extends AbstractNodeVisitor
     private array $groupsBeforeCall = [];
 
     /**
-     * The calls already read as the group they run, by object id: each is
-     * read so once, which ends a recursion.
+     * The calls already read as the group they run, by object id and the
+     * place they were read from, with what the reading found: each is read
+     * so once from each place.
+     *
+     * @var array<string, RedosSeverity>
+     */
+    private array $callsReadThrough = [];
+
+    /**
+     * The groups being read through a call, by object id: a call of one of
+     * them is a recursion.
      *
      * @var array<int, true>
      */
-    private array $callsReadThrough = [];
+    private array $groupsReadThrough = [];
+
+    /**
+     * The pattern the profile reads, for the skips to a name looked up
+     * when first asked about.
+     */
+    private ?NodeInterface $pattern = null;
+
+    /**
+     * The skips to a name the engine finds a mark of their name for on its
+     * way back, by object id; null until one is asked about.
+     *
+     * @var array<int, true>|null
+     */
+    private ?array $skipsPastTheirMark = null;
 
     /**
      * Whether the pattern holds options that may change what a character
@@ -221,6 +257,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->endsAtomicBody = false;
         $this->previousNode = null;
         $this->nextNode = null;
+        $this->iterationHead = null;
         $this->backrefLoopDetected = false;
         $this->culpritNode = null;
         $this->culpritSeverity = RedosSeverity::Safe;
@@ -228,6 +265,9 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->groupsBeforeCall = [];
         $this->indexGroups($node->pattern, 0);
         $this->callsReadThrough = [];
+        $this->groupsReadThrough = [];
+        $this->pattern = $node->pattern;
+        $this->skipsPastTheirMark = null;
         $this->setsMayChange = str_contains($node->flags, 'i') || self::holdsOptionSetting($node->pattern);
 
         // A recursion the attempt tries first, before it reads a character,
@@ -266,7 +306,8 @@ final class RedosProfiler extends AbstractNodeVisitor
         $boundarySeparatedNext = $this->hasForwardMutuallyExclusiveBoundary($node->node, $this->nextNode);
         $boundarySeparated = $boundarySeparatedPrev || $boundarySeparatedNext;
         $iterationsSeparated = ($boundarySeparatedPrev && $this->separatesIterations($this->previousNode))
-            || ($boundarySeparatedNext && $this->separatesIterations($this->nextNode));
+            || ($boundarySeparatedNext && $this->separatesIterations($this->nextNode))
+            || (null === $this->nextNode && $this->hasForwardMutuallyExclusiveBoundary($node->node, $this->iterationHead) && $this->separatesIterations($this->iterationHead));
 
         $controlVerbShield = $this->hasTrailingBacktrackingControl($node->node);
         $isPossessive = QuantifierType::Possessive === $node->type;
@@ -307,13 +348,20 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         $severity = RedosSeverity::Safe;
         $entersUnbounded = $isUnbounded && !$isTargetAtomic;
-        $isNestedUnbounded = $entersUnbounded && $this->unboundedQuantifierDepth > 0;
+        // Past the count the proof unrolls, a count repeats its body as a
+        // loop does, "(?:a|a){1,40}"; in a loop, a count of variable length
+        // splits a run as a loop does, the "\d{1,3}" of "(?:\d{1,3}\.?)+".
+        $entersLongCount = !$isUnbounded && !$isTargetAtomic && null !== $qMax && $qMin !== $qMax && $qMax > self::UNROLLED_COUNT;
+        $loopsAround = $this->unboundedQuantifierDepth;
+        $isNestedUnbounded = !$isTargetAtomic && $qMin !== $qMax && $loopsAround > 0;
 
-        if ($entersUnbounded) {
+        if ($entersUnbounded || $entersLongCount) {
             $this->unboundedQuantifierDepth++;
             $this->repeatingLoopDepth++;
+        }
 
-            if ($this->hasBackrefLoop($node->node)) {
+        if ($entersUnbounded || $isNestedUnbounded) {
+            if ($entersUnbounded && $this->hasBackrefLoop($node->node)) {
                 $this->backrefLoopDetected = true;
                 $this->addVulnerability(
                     RedosSeverity::Critical,
@@ -332,7 +380,9 @@ final class RedosProfiler extends AbstractNodeVisitor
                     $vulnSeverity = $hasRecursion ? RedosSeverity::Medium : RedosSeverity::Critical;
                     $this->addVulnerability(
                         $vulnSeverity,
-                        'Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).',
+                        $isUnbounded
+                            ? 'Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).'
+                            : 'A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).',
                         $node,
                         'Replace inner quantifiers with possessive variants or wrap them in (?>...).',
                         RedosConfidence::High,
@@ -363,7 +413,7 @@ final class RedosProfiler extends AbstractNodeVisitor
                     RedosConfidence::Low,
                     'High false-positive risk; bounded quantifiers may still be safe in context.',
                 );
-            } elseif ($this->totalQuantifierDepth > 1 && 0 === $this->unboundedQuantifierDepth) {
+            } elseif ($this->totalQuantifierDepth > 1 && 0 === $loopsAround) {
                 $severity = RedosSeverity::Low;
                 $this->addVulnerability(
                     RedosSeverity::Low,
@@ -410,11 +460,14 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         $childPrevious = $this->previousNode;
         $childNext = $this->nextNode;
+        $head = $this->iterationHead;
         $this->previousNode = null;
         $this->nextNode = null;
+        $this->iterationHead = $this->quantifierAllowsMultiple($qMax) ? $node->node : null;
         $childSeverity = $node->node->accept($this);
         $this->previousNode = $childPrevious;
         $this->nextNode = $childNext;
+        $this->iterationHead = $head;
 
         if ($entersUnbounded && !$boundarySeparated && RedosSeverity::High === $childSeverity) {
             $hasRecursion = $this->hasRecursion($node->node);
@@ -432,7 +485,7 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         $this->endsAtomicBody = $wasAtomic;
         [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth] = $depths;
-        if ($entersUnbounded) {
+        if ($entersUnbounded || $entersLongCount) {
             $this->repeatingLoopDepth--;
         }
 
@@ -498,11 +551,18 @@ final class RedosProfiler extends AbstractNodeVisitor
             $this->repeatingLoopDepth = 0;
         }
 
+        // Only a group that wraps what it holds ends the iteration with it.
+        $head = $this->iterationHead;
+        if (!\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::BranchReset], true)) {
+            $this->iterationHead = null;
+        }
+
         $this->previousNode = null;
         $this->nextNode = null;
         $severity = $node->child->accept($this);
         $this->previousNode = $previous;
         $this->nextNode = $next;
+        $this->iterationHead = $head;
 
         [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth, $this->repeatingLoopDepth] = $depths;
         $this->endsAtomicBody = $wasAtomic;
@@ -517,6 +577,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $previous = $this->previousNode;
         $next = $this->nextNode;
         $endsAtomicBody = $this->endsAtomicBody;
+        $head = $this->iterationHead;
         $last = null;
         $children = $node->children;
         $total = \count($children);
@@ -530,6 +591,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         foreach ($children as $index => $child) {
             $this->previousNode = $last;
             $this->nextNode = $index + 1 < $total ? $children[$index + 1] : null;
+            $this->iterationHead = $index + 1 < $total ? null : $head;
             $this->endsAtomicBody = $index === $tail;
             $max = $this->maxSeverity($max, $child->accept($this));
             $last = $child;
@@ -537,6 +599,7 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         $this->previousNode = $previous;
         $this->nextNode = $next;
+        $this->iterationHead = $head;
         $this->endsAtomicBody = $endsAtomicBody;
 
         return $max;
@@ -700,19 +763,27 @@ final class RedosProfiler extends AbstractNodeVisitor
             'Medium false-positive risk; recursion depth and input shape matter.',
         );
 
-        // In a loop, a call runs the group it calls at each iteration, as
-        // if its body stood in its place: "(?:(?1))+" over "(a|a)" is
-        // "(?:a|a)+". Each call is read so once, which ends a recursion.
-        $severity = RedosSeverity::Low;
-        if ($this->totalQuantifierDepth > 0 && !isset($this->callsReadThrough[spl_object_id($node)])) {
-            $this->callsReadThrough[spl_object_id($node)] = true;
-            $group = $this->calledGroup($node);
-            if (null !== $group) {
-                $severity = $this->maxSeverity($severity, $group->child->accept($this));
-            }
+        // A call runs the group it calls where it stands, as if its body
+        // stood in its place: in a loop at each iteration, "(?:(?1))+" over
+        // "(a|a)" is "(?:a|a)+", and outside one without the atomic group
+        // written around the group, "y(?1)$" backtracking into the
+        // "(?:a+)+" of an atomic "x((?:a+)+)". A call met again while its
+        // group is read is a recursion, left there. Any other is read once
+        // from each place it runs from: a call reached from a DEFINE block,
+        // outside any loop, is read again where a repeated call reaches it.
+        $group = $this->calledGroup($node);
+        if (null === $group || isset($this->groupsReadThrough[spl_object_id($group)])) {
+            return RedosSeverity::Low;
         }
 
-        return $severity;
+        $place = $this->placeOf($node);
+        if (!isset($this->callsReadThrough[$place])) {
+            $this->groupsReadThrough[spl_object_id($group)] = true;
+            $this->callsReadThrough[$place] = $this->maxSeverity(RedosSeverity::Low, $group->child->accept($this));
+            unset($this->groupsReadThrough[spl_object_id($group)]);
+        }
+
+        return $this->callsReadThrough[$place];
     }
 
     #[\Override]
@@ -801,6 +872,26 @@ final class RedosProfiler extends AbstractNodeVisitor
     }
 
     /**
+     * The call and what its reading depends on: the loops around it, as
+     * far as the checks tell them apart, whether it ends an atomic body,
+     * and the items around it and the iteration it ends.
+     */
+    private function placeOf(SubroutineNode $node): string
+    {
+        return \sprintf(
+            '%d:%d:%d:%d:%d:%d:%d:%d',
+            spl_object_id($node),
+            min($this->unboundedQuantifierDepth, 2),
+            min($this->totalQuantifierDepth, 2),
+            min($this->repeatingLoopDepth, 1),
+            (int) $this->endsAtomicBody,
+            null === $this->previousNode ? 0 : spl_object_id($this->previousNode),
+            null === $this->nextNode ? 0 : spl_object_id($this->nextNode),
+            null === $this->iterationHead ? 0 : spl_object_id($this->iterationHead),
+        );
+    }
+
+    /**
      * A part that runs only through a call: read outside the loops around
      * where it stands.
      */
@@ -808,13 +899,16 @@ final class RedosProfiler extends AbstractNodeVisitor
     {
         $depths = [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth, $this->repeatingLoopDepth];
         $endsAtomicBody = $this->endsAtomicBody;
+        $head = $this->iterationHead;
         $this->unboundedQuantifierDepth = 0;
         $this->totalQuantifierDepth = 0;
         $this->repeatingLoopDepth = 0;
         $this->endsAtomicBody = false;
+        $this->iterationHead = null;
         $severity = $node->accept($this);
         [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth, $this->repeatingLoopDepth] = $depths;
         $this->endsAtomicBody = $endsAtomicBody;
+        $this->iterationHead = $head;
 
         return $severity;
     }
@@ -893,16 +987,24 @@ final class RedosProfiler extends AbstractNodeVisitor
      */
     private function hasOverlappingAlternatives(AlternationNode $node): bool
     {
-        // If any alternative is a subroutine (recursion), consider it non-overlapping for ReDoS purposes
+        // A branch that calls a group starts as that group does; a recursion
+        // into the whole pattern is left out, read as no overlap, and the
+        // other branches are compared without it.
+        $branches = [];
         foreach ($node->alternatives as $alt) {
             if ($alt instanceof SubroutineNode) {
-                return false;
+                $alt = $this->calledGroup($alt);
+                if (null === $alt) {
+                    continue;
+                }
             }
+
+            $branches[] = $alt;
         }
 
         $sets = [];
 
-        foreach ($node->alternatives as $alt) {
+        foreach ($branches as $alt) {
             $set = $this->charSetAnalyzer->firstChars($alt);
 
             if ($this->startsWithDot($alt)) {
@@ -914,11 +1016,11 @@ final class RedosProfiler extends AbstractNodeVisitor
                 continue;
             }
 
-            if (!$set->isUnknown()) {
-                foreach ($sets as $existing) {
-                    if ($set->intersects($existing)) {
-                        return true;
-                    }
+            // A set not known may meet any other, in whichever order the
+            // branches are written: "a|\1" as "\1|a".
+            foreach ($sets as $existing) {
+                if ($set->intersects($existing)) {
+                    return true;
                 }
             }
 
@@ -976,13 +1078,43 @@ final class RedosProfiler extends AbstractNodeVisitor
             && \in_array(Ascii::upper(explode(':', $node->verb, 2)[0]), ['COMMIT', 'PRUNE', 'SKIP'], true);
     }
 
+    /**
+     * Whether the engine cuts backtracking at the verb: "(*SKIP:NAME)" only
+     * where it finds a "(*MARK:NAME)" on its way back, being ignored
+     * otherwise.
+     */
+    private function cutsBacktracking(PcreVerbNode $verb): bool
+    {
+        if (!$this->isBacktrackingControl($verb)) {
+            return false;
+        }
+
+        if ('SKIP' !== Ascii::upper($verb->name) || null === $verb->argument) {
+            return true;
+        }
+
+        if (null === $this->skipsPastTheirMark) {
+            $this->skipsPastTheirMark = [];
+            if (null !== $this->pattern) {
+                $this->indexSkips($this->pattern, []);
+            }
+        }
+
+        return isset($this->skipsPastTheirMark[spl_object_id($verb)]);
+    }
+
     private function hasTrailingBacktrackingControl(NodeInterface $node): bool
     {
         $verbNode = $this->extractTrailingVerb($node);
 
-        return null !== $verbNode && $this->isBacktrackingControl($verbNode);
+        return null !== $verbNode && $this->cutsBacktracking($verbNode);
     }
 
+    /**
+     * The verb that ends the node, through the groups that only wrap what
+     * they hold: a verb inside a lookaround or an atomic group acts there
+     * alone, that group never backtracked into once it has matched.
+     */
     private function extractTrailingVerb(NodeInterface $node): ?PcreVerbNode
     {
         if ($node instanceof PcreVerbNode) {
@@ -995,11 +1127,87 @@ final class RedosProfiler extends AbstractNodeVisitor
             return $this->extractTrailingVerb($last);
         }
 
-        if ($node instanceof GroupNode) {
+        if ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::BranchReset], true)) {
             return $this->extractTrailingVerb($node->child);
         }
 
         return null;
+    }
+
+    /**
+     * Records the skips to a name that follow a mark of their name the
+     * engine meets on every way to them and finds again going back: one
+     * written before them in the sequence that holds them or in one around
+     * it, through the groups that only wrap what they hold. A mark inside
+     * a lookaround or an atomic group, which the engine never goes back
+     * into once they have matched, or on one branch of an alternation is
+     * not found from every way, and a skip that finds none is ignored.
+     *
+     * @param array<string, true> $marks the marks set on every way to the node
+     */
+    private function indexSkips(NodeInterface $node, array $marks): void
+    {
+        if ($node instanceof PcreVerbNode) {
+            if ('SKIP' === Ascii::upper($node->name) && null !== $node->argument && isset($marks[$node->argument])) {
+                $this->skipsPastTheirMark[spl_object_id($node)] = true;
+            }
+
+            return;
+        }
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                $this->indexSkips($child, $marks);
+                $marks += self::marksAlwaysSet($child);
+            }
+
+            return;
+        }
+
+        if ($node instanceof GroupNode) {
+            $this->indexSkips($node->child, self::onlyWraps($node) ? $marks : []);
+
+            return;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            $this->indexSkips($child, $marks);
+        }
+    }
+
+    /**
+     * The marks the node sets on every way through it, where the engine
+     * finds them going back.
+     *
+     * @return array<string, true>
+     */
+    private static function marksAlwaysSet(NodeInterface $node): array
+    {
+        if ($node instanceof PcreVerbNode) {
+            return 'MARK' === Ascii::upper($node->name) && null !== $node->argument ? [$node->argument => true] : [];
+        }
+
+        if ($node instanceof GroupNode) {
+            return self::onlyWraps($node) ? self::marksAlwaysSet($node->child) : [];
+        }
+
+        $marks = [];
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                $marks += self::marksAlwaysSet($child);
+            }
+        }
+
+        return $marks;
+    }
+
+    /**
+     * Whether the group only wraps what it holds: the engine goes back
+     * into it as into what it holds.
+     */
+    private static function onlyWraps(GroupNode $node): bool
+    {
+        return \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::BranchReset], true);
     }
 
     private function hasMutuallyExclusiveBoundary(?NodeInterface $previous, NodeInterface $current): bool

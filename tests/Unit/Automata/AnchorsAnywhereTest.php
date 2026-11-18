@@ -38,6 +38,10 @@ final class AnchorsAnywhereTest extends TestCase
 
     use PhpUnitForwardCompat;
 
+    /**
+     * The engine answers first, on every string up to a length over "a",
+     * "b", ",", and the newlines a convention may set, "\n", "\r" and NUL.
+     */
     #[Test]
     #[DataProvider('providePatterns')]
     public function test_the_automaton_accepts_what_the_engine_matches(string $pattern): void
@@ -46,17 +50,30 @@ final class AnchorsAnywhereTest extends TestCase
             $this->requiresPhp('8.2', $pattern, 'refuses the n modifier');
         }
 
+        $matched = [];
+        foreach (self::subjects("ab\n\r\0,", 5) as $subject) {
+            $matched[] = [$subject, 1 === preg_match($pattern, $subject)];
+        }
+
         $dfa = (new LanguageSolver())->compile($pattern, new SolverOptions(matchMode: MatchMode::Partial));
 
-        foreach (self::subjects("ab\n,", 5) as $subject) {
-            $this->assertSame(1 === preg_match($pattern, $subject), self::accepts($dfa, $subject), \sprintf('%s on %s.', $pattern, json_encode($subject)));
+        foreach ($matched as [$subject, $match]) {
+            $this->assertSame($match, self::accepts($dfa, $subject), \sprintf('%s on %s.', $pattern, json_encode($subject)));
         }
     }
 
+    /**
+     * The convention moves what an anchor reads: on the witness, the
+     * pattern finds a match, and finds none once the convention is gone
+     * and "\n" is the newline again.
+     */
     #[Test]
     #[DataProvider('provideNewlineConventions')]
-    public function test_a_newline_convention_the_solver_does_not_read_is_refused(string $pattern): void
+    public function test_a_newline_convention_the_solver_does_not_read_is_refused(string $pattern, string $witness): void
     {
+        $this->assertSame(1, preg_match($pattern, $witness));
+        $this->assertSame(0, preg_match(str_replace(['(*CRLF)', '(*CR)', '(*NUL)', '(*ANYCRLF)', '(*ANY)'], '', $pattern), $witness));
+
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessageIsOrContains('A newline convention other than');
 
@@ -96,16 +113,27 @@ final class AnchorsAnywhereTest extends TestCase
         yield 'duplicate names' => ['pattern' => '/(?<n>a)|(?<n>b)/J'];
         yield 'study and extra' => ['pattern' => '/ab/SX'];
         yield 'lines with ungreedy' => ['pattern' => '/^a+$/mU'];
+        // The last convention the options name holds.
+        yield 'a line feed named after a carriage return' => ['pattern' => '/(*CR)(*LF)a$/'];
+        // "^" without "/m" holds at the start of the subject only, whatever
+        // the newline.
+        yield 'a start under (*CR), multiline turned off' => ['pattern' => '/(*CR)(?-m)^a/'];
+        yield 'a start under (*CR), multiline turned on and off' => ['pattern' => '/(*CR)(?m-m)^a/'];
     }
 
     /**
-     * @return iterable<string, array{pattern: string}>
+     * @return iterable<string, array{pattern: string, witness: string}>
      */
     public static function provideNewlineConventions(): iterable
     {
-        yield 'crlf dollar' => ['pattern' => '/(*CRLF)a$/'];
-        yield 'cr capital Z' => ['pattern' => '/(*CR)a\Z/'];
-        yield 'anycrlf multiline' => ['pattern' => '/(*ANYCRLF)^a/m'];
+        yield 'crlf dollar' => ['pattern' => '/(*CRLF)a$/', 'witness' => "a\r\n"];
+        yield 'cr capital Z' => ['pattern' => '/(*CR)a\Z/', 'witness' => "a\r"];
+        yield 'anycrlf multiline' => ['pattern' => '/(*ANYCRLF)^a/m', 'witness' => "\ra"];
+        // "(?m)" turns on what "/m" turns on.
+        yield 'cr inline multiline' => ['pattern' => '/(*CR)(?m)^a/', 'witness' => "\ra"];
+        yield 'nul inline multiline among other options' => ['pattern' => '/(*NUL)(?im)^a/', 'witness' => "\0a"];
+        yield 'cr multiline group' => ['pattern' => '/(*CR)(?m:^a)/', 'witness' => "\ra"];
+        yield 'any multiline turned on after a reset' => ['pattern' => '/(*ANY)(?^m)b|^a/', 'witness' => "\ra"];
     }
 
     private static function accepts(Dfa $dfa, string $subject): bool

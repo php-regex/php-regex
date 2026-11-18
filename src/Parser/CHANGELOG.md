@@ -39,6 +39,17 @@ CHANGELOG
    one in a lookahead, in a DEFINE group or after an `(*ACCEPT)` there waits
    its turn, as PCRE2 orders them. `/\g{1}(?<=(?=\k{n}))/` is refused on
    `\g{1}`, offset 5, where it was refused on `\k{n}`.
+ * A missing group numbered below 10 is reported where the first back
+   reference to it is written, as PCRE2 reports it, whichever reference the
+   measure of a lookbehind meets first: `/\1(?<=\1)/` is
+   `regex.backref.missing_group` at offset 2, where it was 8, and
+   `/(?<=(?=\1)\1)/` at 9, where it was 12.
+ * A PHP 7.3 or 7.4 target linked against PCRE2 10.45 or later reads `\x`
+   with no hex digit as the letter `x`, as PHP does there: PCRE2 refuses it
+   from 10.45, and PHP 7 compiles with `PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL`.
+   `/\x/` matches `x` and `/[\x-a]/` is `regex.range.reversed` at offset 5,
+   where both were `regex.escape.digits_missing`; under the `X` modifier,
+   which turns the option off, `/\x/X` stays refused.
  * A reversed range in a class nested in an extended class comes before a
    range further on that no class takes, as PCRE2 reads them:
    `/(?[[^]--[a-\d]])/` is `regex.range.reversed` at offset 8, where it was

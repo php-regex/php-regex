@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Redos\RedosProfiler;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
@@ -244,6 +245,79 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * A verb that ends an iteration cuts backtracking only where the engine
+     * honours it: "(*SKIP:NAME)" with no "(*MARK:NAME)" before it is
+     * ignored, as is a mark of another name, a mark cuts nothing, and a
+     * verb inside a lookaround or an atomic group acts only there. A mark
+     * written before the skip is no help where the engine does not find it
+     * on its way back: inside a lookahead or an atomic group, which it never
+     * goes back into once they have matched, or on a branch the match did
+     * not take (766 -> 12 286 -> 196 606). The nested loop stays critical,
+     * and the engine agrees: 765 -> 12 285 -> 196 605 steps on 8 -> 12 ->
+     * 16 letters then "!:" (start optimizations off, the JIT counting).
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideVerbsThatCutNothing(): iterable
+    {
+        yield 'skip to a name no mark sets' => ['pattern' => '/^(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a name another mark does not set' => ['pattern' => '/^(?:(*MARK:m)\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a mark set after it' => ['pattern' => '/^(?:\w+\s?(*SKIP:n))+(*MARK:n):/'];
+        yield 'commit in a lookahead' => ['pattern' => '/^(?:\w+\s?(?=(*COMMIT)))+:/'];
+        yield 'commit in an atomic group' => ['pattern' => '/^(?:\w+\s?(?>(*COMMIT)))+:/'];
+        yield 'prune in a lookbehind' => ['pattern' => '/^(?:\w+\s?(?<=(*PRUNE)))+:/'];
+        yield 'mark' => ['pattern' => '/^(?:\w+\s?(*MARK:n))+:/'];
+        yield 'skip to a name a mark sets in a lookahead before it' => ['pattern' => '/^(?=(*MARK:n))(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a name a mark sets in an atomic group before it' => ['pattern' => '/^(?>(*MARK:n))(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a name a mark sets on a branch not taken' => ['pattern' => '/^(?:x(*MARK:n)|)(?:\w+\s?(*SKIP:n))+:/'];
+    }
+
+    #[Test]
+    #[DataProvider('provideVerbsThatCutNothing')]
+    public function test_a_verb_that_cuts_nothing_leaves_a_nested_loop_critical(string $pattern): void
+    {
+        if (true === \constant('PCRE_JIT_SUPPORT')) {
+            $unoptimized = $pattern[0].'(*NO_START_OPT)'.substr($pattern, 1);
+            $short = self::steps($unoptimized, str_repeat('a', 8).'!:', true);
+            $long = self::steps($unoptimized, str_repeat('a', 12).'!:', true);
+            $this->assertGreaterThan(8 * $short, $long, 'Oracle: the engine goes exponential.');
+        }
+
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * A skip to a mark set before it, like a bare "(*COMMIT)", ends the
+     * attempt the first time the engine backtracks onto it: 3 or 4 steps
+     * whatever the letters, and the loop it ends is safe. A mark in a group
+     * that only wraps it is found as one written in the sequence.
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideVerbsThatCut(): iterable
+    {
+        yield 'skip to a mark set in the iteration' => ['pattern' => '/^(?:(*MARK:n)\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a mark set as (*:NAME) before the loop' => ['pattern' => '/^(*:n)(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a mark set in a group before the loop' => ['pattern' => '/^((*MARK:n))(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'skip to a mark set in a group before the loop, beside a letter' => ['pattern' => '/^(?:(*MARK:n)\w?)(?:\w+\s?(*SKIP:n))+:/'];
+        yield 'commit in a group' => ['pattern' => '/^(?:\w+\s?(?:(*COMMIT)))+:/'];
+    }
+
+    #[Test]
+    #[DataProvider('provideVerbsThatCut')]
+    public function test_a_verb_that_cuts_backtracking_keeps_a_nested_loop_safe(string $pattern): void
+    {
+        if (true === \constant('PCRE_JIT_SUPPORT')) {
+            $unoptimized = $pattern[0].'(*NO_START_OPT)'.substr($pattern, 1);
+            $short = self::steps($unoptimized, str_repeat('a', 8).'!:', true);
+            $long = self::steps($unoptimized, str_repeat('a', 16).'!:', true);
+            $this->assertSame($short, $long, 'Oracle: the engine ends the attempt at once.');
+        }
+
+        $this->assertSame(RedosSeverity::Safe, Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
      * A nested loop that ends the body is matched the first way through,
      * and nothing in the body can fail after it: the engine takes as many
      * steps on 16 letters as on 8 (5, 6, 4, 6 and 6 steps), and the heuristic
@@ -298,7 +372,21 @@ final class RedosHeuristicShapesTest extends TestCase
      * first of them: 67 -> 99 -> 131 steps when it is "(a|b)", 4 081 ->
      * 65 521 -> 1 048 561 when it is "(a|a)". A call in a loop inside an
      * atomic script run still backtracks until the body has matched (2 047
-     * -> 32 767 -> 524 287).
+     * -> 32 767 -> 524 287). A branch that is a call starts as the group
+     * it calls: one that shares a letter with the other branch is read
+     * twice at each letter (2 045 -> 32 765 -> 524 285 for "[a-z]" beside
+     * a call of "[a-z0-9]", 2 046 -> 32 766 -> 524 286 for "a" beside a
+     * call of "(a)"), one that does not chooses its branch (69 -> 101 ->
+     * 133 for "-" beside a call of "[a-z0-9]", on "a-" units). A branch
+     * that recurses into the whole pattern is left out of the comparison
+     * (42 -> 58 -> 74 for nested parentheses after a "("), and the other
+     * branches are still compared: two "a" beside it are read twice at
+     * each letter (2 556 -> 40 956 -> 655 356 after an "x"), an "a" and a
+     * "b" are not (46 -> 66 -> 86). A call is read again wherever it runs:
+     * reached first from a DEFINE block, outside any loop, then from a
+     * repeated call of the group holding it (2 556 -> 40 956 -> 655 356),
+     * or first from a loop where a comma keeps its runs apart, then from
+     * a loop where nothing does (1 286 -> 20 486 -> 327 686 after "a,;").
      *
      * @return iterable<string, array{pattern: string, prefix: string, unit: string, critical: bool}>
      */
@@ -320,11 +408,157 @@ final class RedosHeuristicShapesTest extends TestCase
         yield 'call of a name two groups share, the first disjoint' => ['pattern' => '/(?J)^(?:(?&n))+(?<n>a|b)(?<n>a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => false];
         yield 'call of a name two groups share, the first ambiguous' => ['pattern' => '/(?J)^(?:(?&n))+(?<n>a|a)(?<n>a|b)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
         yield 'call in a loop of an atomic script run' => ['pattern' => '/^(*asr:(?:(?1))+c)(a|a)$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'branch calling a group that shares a letter with the other branch' => ['pattern' => '/^(?:[a-z]|(?&c))+$(?(DEFINE)(?<c>[a-z0-9]))/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'branch calling a group before the letter it shares' => ['pattern' => '/^(?:(?&c)|[a-z])+$(?(DEFINE)(?<c>[a-z0-9]))/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'branch calling the group that opens the pattern' => ['pattern' => '/^(a)(?:a|(?1))+$/', 'prefix' => 'a', 'unit' => 'a', 'critical' => true];
+        yield 'branch recursing into the whole pattern' => ['pattern' => '/^\((?:[^()]|(?R))*\)/', 'prefix' => '(', 'unit' => 'a', 'critical' => false];
+        yield 'branch calling a group the other branch never starts' => ['pattern' => '/^(?:-|(?&c))+$(?(DEFINE)(?<c>[a-z0-9]))/', 'prefix' => '', 'unit' => 'a-', 'critical' => false];
+        yield 'branch recursing into the whole pattern beside two that overlap' => ['pattern' => '/^x(?:a|a|(?R))+$/', 'prefix' => 'x', 'unit' => 'a', 'critical' => true];
+        yield 'branch recursing into the whole pattern beside two that do not' => ['pattern' => '/^x(?:a|b|(?R))+$/', 'prefix' => 'x', 'unit' => 'a', 'critical' => false];
+        yield 'call a DEFINE block reads first, then a repeated call' => ['pattern' => '/(?(DEFINE)(?<wrap>(?&atom))(?<atom>a|a))^(?&wrap)+$/', 'prefix' => '', 'unit' => 'a', 'critical' => true];
+        yield 'call read first where a comma keeps its runs apart' => ['pattern' => '/^(?:(?&w),)+;(?:(?&w))+$(?(DEFINE)(?<w>(?&a))(?<a>[a-z]+))/', 'prefix' => 'a,;', 'unit' => 'a', 'critical' => true];
     }
 
     #[Test]
     #[DataProvider('provideCallsInALoop')]
     public function test_a_call_in_a_loop_is_read_as_the_group_it_calls(string $pattern, string $prefix, string $unit, bool $critical): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, $prefix.str_repeat($unit, 8).'!');
+        $long = self::steps($unoptimized, $prefix.str_repeat($unit, 12).'!');
+        $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * A call outside any loop still runs the group it calls, there and not
+     * where the group is written: nested loops kept safe by an atomic group
+     * around their definition backtrack where the call runs them, and the
+     * engine goes exponential on 8 -> 12 -> 16 letters then "!" (387 ->
+     * 6 147 -> 98 307 steps). A call of a single loop (12 -> 16 -> 20), or
+     * one that ends an atomic group itself (8 -> 8 -> 8), stays below
+     * critical.
+     *
+     * @return iterable<string, array{pattern: string, prefix: string, critical: bool}>
+     */
+    public static function provideCallsOutsideALoop(): iterable
+    {
+        yield 'call in another branch of nested loops written in an atomic group' => ['pattern' => '/^(?:(?>x((?:a+)+))|y(?1)$)/', 'prefix' => 'y', 'critical' => true];
+        yield 'call after an optional atomic group of nested loops' => ['pattern' => '/^(?>x((?:a+)+))?y(?1)$/', 'prefix' => 'y', 'critical' => true];
+        yield 'call of a single loop' => ['pattern' => '/^(?:(?>x(a+))|y(?1)$)/', 'prefix' => 'y', 'critical' => false];
+        yield 'call ending an atomic group' => ['pattern' => '/^(?:(?>x((?:a+)+))|y(?>(?1))$)/', 'prefix' => 'y', 'critical' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideCallsOutsideALoop')]
+    public function test_a_call_outside_a_loop_is_read_as_the_group_it_calls(string $pattern, string $prefix, bool $critical): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, $prefix.str_repeat('a', 8).'!');
+        $long = self::steps($unoptimized, $prefix.str_repeat('a', 12).'!');
+        $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * Where the proof does not decide, a mark here, a count of more than 16
+     * repeats its body as a loop does, and a count of variable length in a
+     * loop splits a run as a loop does. PCRE runs out of its default
+     * backtrack limit on 24 units then "!" for an ambiguous alternation
+     * repeated up to 40 times, runs of one to three digits each maybe
+     * followed by a dot up to 30 times, and a call of an ambiguous
+     * alternation up to 30 times. Up to 16 times the alternation never
+     * reaches the limit (262 141 steps at most), and a dot after each run
+     * keeps the runs apart (50 steps on 24 units).
+     *
+     * @return iterable<string, array{pattern: string, unit: string, critical: bool}>
+     */
+    public static function provideCountsReadAsLoops(): iterable
+    {
+        yield 'ambiguous alternation repeated up to 40 times' => ['pattern' => '/^(?:a|a){1,40}(*MARK:y)$/', 'unit' => 'a', 'critical' => true];
+        yield 'runs of digits before an optional dot up to 30 times' => ['pattern' => '/^(?:\d{1,3}\.?){1,30}(*MARK:y)$/', 'unit' => '1', 'critical' => true];
+        yield 'call of an ambiguous alternation up to 30 times' => ['pattern' => '/^(?:(?1)){1,30}(a|a)$/', 'unit' => 'a', 'critical' => true];
+        yield 'runs of digits before an optional dot in a loop' => ['pattern' => '/^(?:\d{1,3}\.?)+(*MARK:y)$/', 'unit' => '1', 'critical' => true];
+        yield 'ambiguous alternation repeated up to 16 times' => ['pattern' => '/^(?:a|a){1,16}(*MARK:y)$/', 'unit' => 'a', 'critical' => false];
+        yield 'runs of digits each before a dot up to 30 times' => ['pattern' => '/^(?:\d{1,3}\.){1,30}(*MARK:y)$/', 'unit' => '1.', 'critical' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideCountsReadAsLoops')]
+    public function test_a_count_where_the_proof_does_not_decide_is_read_as_a_loop(string $pattern, string $unit, bool $critical): void
+    {
+        $saved = (string) ini_get('pcre.backtrack_limit');
+        ini_set('pcre.backtrack_limit', '1000000');
+
+        try {
+            $result = @preg_match(PcreInterpreter::pattern($pattern), str_repeat($unit, 24).'!');
+            $error = preg_last_error();
+        } finally {
+            ini_set('pcre.backtrack_limit', $saved);
+        }
+
+        $this->assertSame($critical, false === $result && \PREG_BACKTRACK_LIMIT_ERROR === $error, 'Oracle disagrees with the row.');
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+        $this->assertSame(RedosProof::Heuristic, $analysis->proof);
+        $this->assertSame($critical, RedosSeverity::Critical === $analysis->severity);
+    }
+
+    /**
+     * A branch whose first characters are not known, a backreference or a
+     * Unicode property, may start as any other branch does: the verdict
+     * does not depend on the order the branches are written in. The engine
+     * reads each letter both ways, whichever comes first: 1 535 -> 24 575
+     * -> 393 215 steps on 8 -> 12 -> 16 letters for "a" beside "\1" over
+     * "(a)", 1 024 -> 16 384 -> 262 144 for "[a-z]" beside "\p{Ll}" after a
+     * quote.
+     *
+     * @return iterable<string, array{pattern: string, prefix: string}>
+     */
+    public static function provideBranchesOfUnknownFirstCharacters(): iterable
+    {
+        yield 'a letter before a reference to it' => ['pattern' => '/^(a)(?:a|\1)+$/', 'prefix' => 'a'];
+        yield 'a reference before the letter it reads' => ['pattern' => '/^(a)(?:\1|a)+$/', 'prefix' => 'a'];
+        yield 'a class before a property' => ['pattern' => '/^(["\'])(?:[a-z]|\p{Ll})+\1$/u', 'prefix' => '"'];
+        yield 'a property before a class' => ['pattern' => '/^(["\'])(?:\p{Ll}|[a-z])+\1$/u', 'prefix' => '"'];
+    }
+
+    #[Test]
+    #[DataProvider('provideBranchesOfUnknownFirstCharacters')]
+    public function test_a_branch_of_unknown_first_characters_overlaps_in_either_order(string $pattern, string $prefix): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, $prefix.str_repeat('a', 8).'!');
+        $long = self::steps($unoptimized, $prefix.str_repeat('a', 12).'!');
+        $this->assertGreaterThan(8 * $short, $long, 'Oracle: the engine goes exponential.');
+
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * A loop that ends an iteration meets the next iteration where its
+     * head starts: one that never takes the head's first character ends
+     * where the next iteration begins, as in Friedl's unrolled C comment,
+     * and the engine stays linear on its units then a failing tail (18 ->
+     * 26 -> 34 steps on 8 -> 12 -> 16 units of "*a", 27 -> 39 -> 51 on
+     * "a**"). A head that may take that character leaves the loop critical:
+     * 2 585 -> 121 394 -> 5 702 888 on "**". The callout keeps each pattern
+     * from the proof, and the heuristic decides.
+     *
+     * @return iterable<string, array{pattern: string, prefix: string, unit: string, critical: bool}>
+     */
+    public static function provideLoopsEndingAnIteration(): iterable
+    {
+        yield 'unrolled C comment' => ['pattern' => '/(?C1)\/\*[^*]*\*+([^\/*][^*]*\*+)*\//', 'prefix' => '/*', 'unit' => '*a', 'critical' => false];
+        yield 'run of stars before a letter' => ['pattern' => '/(?C1)^(?:a[^*]*\*+)*$/', 'prefix' => '', 'unit' => 'a**', 'critical' => false];
+        yield 'run of stars before a head that takes a star' => ['pattern' => '/(?C1)^(?:[a*]\*+)*$/', 'prefix' => '', 'unit' => '**', 'critical' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsEndingAnIteration')]
+    public function test_a_loop_ending_an_iteration_is_read_against_the_next_head(string $pattern, string $prefix, string $unit, bool $critical): void
     {
         $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
         $short = self::steps($unoptimized, $prefix.str_repeat($unit, 8).'!');
@@ -357,11 +591,13 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
-     * The smallest backtrack limit under which the match attempt ends.
+     * The smallest backtrack limit under which the match attempt ends, the
+     * JIT on when asked.
      */
-    private static function steps(string $pattern, string $subject): int
+    private static function steps(string $pattern, string $subject, bool $jit = false): int
     {
         $saved = (string) ini_get('pcre.backtrack_limit');
+        $savedJit = $jit ? ini_set('pcre.jit', '1') : false;
 
         try {
             $low = 1;
@@ -379,6 +615,9 @@ final class RedosHeuristicShapesTest extends TestCase
             return $low;
         } finally {
             ini_set('pcre.backtrack_limit', $saved);
+            if (false !== $savedJit) {
+                ini_set('pcre.jit', $savedJit);
+            }
         }
     }
 }

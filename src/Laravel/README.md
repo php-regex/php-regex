@@ -21,7 +21,7 @@ PHPRegex Laravel
 
 Laravel integration for PHPRegex: the Regex service and facade, and the regex:lint, regex:routes, regex:explain, regex:compare and regex:transpile commands.
 
-Requires PHP 8.1+ and Laravel 10.37 or later, 11, 12 or 13 (11 and 12 need PHP 8.2, 13 needs PHP 8.3). Laravel 10 and 11 carry a security advisory with no fixed release (PKSA-mdq4-51ck-6kdq), so Composer refuses to install them unless the project's `audit` settings in `composer.json` (`config.audit.block-insecure`, `config.audit.ignore`) allow it.
+Requires PHP 8.1+ with the `tokenizer` extension, and Laravel 10.37 or later, 11, 12 or 13 (11 and 12 need PHP 8.2, 13 needs PHP 8.3). Laravel 10 and 11 carry a security advisory with no fixed release (PKSA-mdq4-51ck-6kdq), so Composer refuses to install them unless the project's `audit` settings in `composer.json` (`config.audit.block-insecure`, `config.audit.ignore`) allow it.
 
 Documentation: [php-regex.com](https://php-regex.com) — the [Laravel guide](https://php-regex.com/guides/laravel/) walks the integration end to end.
 
@@ -35,7 +35,8 @@ Features
   anchored and flagged as the router matches it
 * A `regex:` or `not_regex:` validation rule is read as Laravel reads it: a rules string is split on every `|`, one
   inside the pattern included, so `'code' => 'required|regex:/^(?:a|b)$/'` is linted as the `/^(?:a` Laravel runs (write
-  such a rule as an array element); the pattern is linted as written, `{^a$}` between its braces
+  such a rule as an array element), the rules given to `Rule::when()` or `$validator->sometimes()` are split too, and
+  the pattern is linted as written, `{^a$}` between its braces, a double-quoted literal as PHP decodes it
 * In PHP files, `regex:lint` reads the calls `regex lint` reads: `preg_*`, `RegexIterator`, `filter_var()`, Laravel's `Str::match()` and the other wrapper libraries, PHPUnit's regex assertions, and a pattern held in a constant, a variable or a property of the same file
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
 * `regex:lint` judges patterns for the PHP your `composer.json` supports, not for the one running it

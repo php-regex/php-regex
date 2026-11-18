@@ -1291,7 +1291,7 @@ builds the attack.
 |---|---|---|
 | `confirmed` | bool | Whether a replay made PCRE fail |
 | `samples` | list of objects | Each subject tried |
-| `jit_setting` | bool \| null | The `pcre.jit` setting the replay ran under: the setting, not JIT availability; `false` today, as the replay runs without JIT |
+| `jit_setting` | bool \| null | The `pcre.jit` setting the replay ran under: the setting, not JIT availability; `false`, as the replay runs without JIT, but `true` for a heuristic verdict on a pattern holding `(*SKIP:NAME)`, which is replayed under the JIT |
 | `backtrack_limit` | int \| null | The backtrack limit the replay ran under |
 | `recursion_limit` | int \| null | The recursion limit the replay ran under |
 | `iterations` | int | The runs per subject |

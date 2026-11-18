@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,9 +37,104 @@ final class ValidatorNestingTest extends TestCase
     public function test_the_level_past_the_limit_is_refused_before_the_spaces_x_skips(): void
     {
         $pattern = '/(?x)'.str_repeat('(', 250).'(   a'.str_repeat(')', 251).'/';
+        $this->assertSame(255, PhpErrorOffset::of($pattern), 'Oracle on PCRE2 '.\PCRE_VERSION);
+
         $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
 
         $this->assertSame([ErrorCode::GroupNestedTooDeep, 255], [$result->errorCode, $result->offset]);
+    }
+
+    /**
+     * Nor does PCRE read the quotes or the Unicode spaces that follow the
+     * opener: each row is the offset preg_match() reports on PHP 8.4.27 with
+     * PCRE2 10.49, right after the opener of the 251st level, as with the
+     * PCRE2 that PHP 7.4 to 8.4 bundle.
+     */
+    #[Test]
+    #[DataProvider('provideTextSkippedAfterTheOpener')]
+    public function test_the_level_past_the_limit_is_refused_before_the_quotes_and_spaces_pcre_skips(string $pattern, int $offset): void
+    {
+        $this->assertSame($offset, PhpErrorOffset::of($pattern), 'Oracle on PCRE2 '.\PCRE_VERSION);
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([ErrorCode::GroupNestedTooDeep, $offset], [$result->errorCode, $result->offset]);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideTextSkippedAfterTheOpener(): iterable
+    {
+        $open = str_repeat('(', 250);
+        $close = str_repeat(')', 251);
+
+        yield 'quoted text' => ['pattern' => '/'.$open.'(\Qa\E'.$close.'/', 'offset' => 251];
+        yield 'empty quotes' => ['pattern' => '/'.$open.'(?:\Q\Ea'.$close.'/', 'offset' => 253];
+        yield 'a lone \E' => ['pattern' => '/'.$open.'(?<n>\Ea'.$close.'/', 'offset' => 255];
+        yield 'empty quotes, then a space x skips' => ['pattern' => '/()'.$open.'(?(1)\Q\E a'.$close.'/x', 'offset' => 257];
+        yield 'a space x skips, then empty quotes' => ['pattern' => '/'.$open.'(?i: \Q\Ea'.$close.'/x', 'offset' => 254];
+        yield 'line separator under xu' => ['pattern' => '/'.$open."(\u{2028}a".$close.'/xu', 'offset' => 251];
+        yield 'paragraph separator under (*UTF) and x' => ['pattern' => '/(*UTF)'.$open."(\u{2029}a".$close.'/x', 'offset' => 257];
+        yield 'next line under xu' => ['pattern' => '/'.$open."(*pla:\u{85}a".$close.'/xu', 'offset' => 256];
+        yield 'left-to-right mark under xu' => ['pattern' => '/'.$open."(?=\u{200E}a".$close.'/xu', 'offset' => 253];
+        yield 'next line byte under x' => ['pattern' => '/'.$open."(\x85a".$close.'/x', 'offset' => 251];
+    }
+
+    /**
+     * PCRE reads an opener whole, a condition written in it or an option
+     * setting included, and refuses what is wrong in it before it counts
+     * the level: an assertion or a callout that decides a conditional is
+     * an item of its own, read after. A verb nests no level: one the
+     * pattern ends in is refused for itself. Each row is what preg_match()
+     * reports on PHP 8.4.27 with PCRE2 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideOpenersReadBeforeTheLevelIsCounted')]
+    public function test_the_level_past_the_limit_is_refused_after_what_pcre_reads_with_its_opener(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), 'Oracle: the engine refuses the pattern.');
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset]);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideOpenersReadBeforeTheLevelIsCounted(): iterable
+    {
+        $open = str_repeat('(', 250);
+        $close = str_repeat(')', 250);
+
+        yield 'condition on group zero' => ['pattern' => '/'.$open.'(?(0)a)'.$close.'/', 'code' => ErrorCode::BackrefZero, 'offset' => 254];
+        yield 'malformed VERSION condition' => ['pattern' => '/'.$open.'(?(VERSION=1x)a)'.$close.'/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 263];
+        yield 'hyphen after a caret in an option setting' => ['pattern' => '/'.$open.'(?^-i:a)'.$close.'/', 'code' => ErrorCode::GroupOptionHyphen, 'offset' => 254];
+        yield 'hyphen alone after a caret' => ['pattern' => '/'.$open.'(?^-:a)'.$close.'/', 'code' => ErrorCode::GroupOptionHyphen, 'offset' => 254];
+        yield 'callout deciding a conditional alone' => ['pattern' => '/'.$open.'(?(?C1)x)'.$close.'/', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 252];
+        yield 'string callout deciding a conditional alone' => ['pattern' => '/'.$open.'(?(?C"x")x)'.$close.'/', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 252];
+        yield 'lookahead deciding a conditional' => ['pattern' => '/'.$open.'(?(?=b)x)'.$close.'/', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 252];
+        yield 'callout and lookbehind deciding a conditional' => ['pattern' => '/'.$open.'(?(?C1)(?<=b)x)'.$close.'/', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 252];
+        yield 'mark the pattern ends in' => ['pattern' => '/'.$open.'(*:a/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 254];
+        yield 'spelled mark the pattern ends in' => ['pattern' => '/'.$open.'(*MARK:a/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 258];
+        yield 'verb with a name the pattern ends in' => ['pattern' => '/'.$open.'(*THEN:a/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 258];
+        yield 'unknown verb the pattern ends in' => ['pattern' => '/'.$open.'(*a/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 253];
+        // The parentheses of a condition, "(1)", open no level: the group
+        // the conditional holds is the level past the limit.
+        $belowTheConditional = '/()'.str_repeat('(', 249);
+        yield 'mark the pattern ends in, in a conditional' => ['pattern' => $belowTheConditional.'(?(1)(*:a(/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 261];
+        yield 'unknown character after "(?", in a conditional' => ['pattern' => $belowTheConditional.'(?(1)(?%/', 'code' => ErrorCode::GroupSyntax, 'offset' => 259];
+        yield 'name expected, in a DEFINE group' => ['pattern' => $belowTheConditional.'(?(DEFINE)(?P</', 'code' => ErrorCode::GroupNameExpected, 'offset' => 265];
+        yield 'name expected, in a conditional on a name' => ['pattern' => $belowTheConditional.'(?(<n>)(?P</', 'code' => ErrorCode::GroupNameExpected, 'offset' => 262];
+        yield 'unknown character after "(?", in a conditional on recursion' => ['pattern' => $belowTheConditional.'(?(R)(?%/', 'code' => ErrorCode::GroupSyntax, 'offset' => 259];
+        yield 'mark the pattern ends in, in a conditional on recursion into a group' => ['pattern' => $belowTheConditional.'(?(R1)(*:a(/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 262];
+        // Nor do those of an option setting, which opens nothing.
+        yield 'unknown character after "(?", after an option setting' => ['pattern' => '/'.$open.'(?i)(?%/', 'code' => ErrorCode::GroupSyntax, 'offset' => 257];
+        yield 'unknown character after "(?", after an empty option setting' => ['pattern' => '/'.$open.'(?)(?%/', 'code' => ErrorCode::GroupSyntax, 'offset' => 256];
+        yield 'hyphen after a caret, after a caret setting' => ['pattern' => '/'.$open.'(?^)(?^-:a)/', 'code' => ErrorCode::GroupOptionHyphen, 'offset' => 258];
+        yield 'mark the pattern ends in, after an option setting' => ['pattern' => '/'.$open.'(?i)(*:a/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 258];
+        yield 'name expected, after an option setting that turns one off' => ['pattern' => '/'.$open.'(?i-x)(?P</', 'code' => ErrorCode::GroupNameExpected, 'offset' => 260];
     }
 
     /**

@@ -16,6 +16,13 @@ CHANGELOG
  * A baseline entry of a file gone is read with the excludes as the lint
    reads them: under an `--exclude` naming a file or a directory by its
    path, behind `./` or absolute, it is not reported as stale.
+ * `regex lint --jobs` takes a whole number, 1 or more, written in digits
+   alone, as `regex:lint` does in the Symfony and Laravel packages:
+   `--jobs=4abc` was read as 4 workers and `--jobs=1e3` as one. The counts
+   of `regex redos` (`--repeat`, `--iterations`, `--warmup`,
+   `--backtrack-limit`, `--recursion-limit`, `--time-limit`) refuse a value
+   past the integer range or with a leading zero: `--repeat=99999999999999999999`
+   was read as `PHP_INT_MAX` and stopped PHP on its memory limit.
  * `regex lint --min-savings` takes a whole number, 0 or more, and refuses
    anything else as `--jobs` does, exit code 2 and `The --min-savings value
    must be a non-negative integer.`: `--min-savings=abc` was read as 0 and

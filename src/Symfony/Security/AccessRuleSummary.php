@@ -27,7 +27,8 @@ final class AccessRuleSummary
 {
     /**
      * "#index location  path=...  roles=...", with "scope=..." when the rule
-     * is restricted to some methods, a host, some IPs or a channel.
+     * is restricted to some methods, a host, some IPs, a channel, a port, a
+     * route or request attributes.
      *
      * @phpstan-param AccessRule $rule
      */
@@ -40,8 +41,9 @@ final class AccessRuleSummary
         ];
 
         $scope = self::scope($rule['methods'], $rule['host'], $rule['ips'], $rule['requiresChannel']);
-        if ('any' !== $scope) {
-            $parts[] = 'scope='.$scope;
+        $request = self::requestScope($rule['port'], $rule['route'], $rule['attributes']);
+        if ('any' !== $scope || [] !== $request) {
+            $parts[] = 'scope='.implode(' • ', [...('any' === $scope ? [] : [$scope]), ...$request]);
         }
 
         return implode('  ', $parts);
@@ -92,6 +94,27 @@ final class AccessRuleSummary
         }
 
         return implode('|', $values);
+    }
+
+    /**
+     * @param array<string, string> $attributes
+     *
+     * @return list<string>
+     */
+    private static function requestScope(?int $port, ?string $route, array $attributes): array
+    {
+        $parts = [];
+        if (null !== $port) {
+            $parts[] = 'port='.$port;
+        }
+        if (null !== $route) {
+            $parts[] = 'route='.$route;
+        }
+        if ([] !== $attributes) {
+            $parts[] = 'attributes='.implode('|', array_map(static fn (string $name, string $value): string => $name.':'.$value, array_keys($attributes), $attributes));
+        }
+
+        return $parts;
     }
 
     /**

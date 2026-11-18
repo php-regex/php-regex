@@ -25,6 +25,7 @@ use PHPRegex\Parser\Syntax\ParseState;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -91,6 +92,8 @@ final class ExtendedClassParserTest extends TestCase
     #[DataProvider('provideRangesBeforeAFault')]
     public function test_a_reversed_range_before_a_fault_in_its_class_is_reported_first(string $pattern, ErrorCode $code, int $offset): void
     {
+        $this->assertTheEngineRefusesAt($offset, $pattern);
+
         $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
 
         $this->assertSame($code, $result->errorCode, $pattern);
@@ -106,6 +109,66 @@ final class ExtendedClassParserTest extends TestCase
         yield 'reversed range before a range no class takes, side by side' => ['pattern' => '/(?[[z-ab-\d]])/', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
         yield 'reversed range before an escape the lexer refuses' => ['pattern' => '/(?[[z-a\x{zz}]])/', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
         yield 'escape no class takes as a range start' => ['pattern' => '/(?[[\X-\d]])/', 'code' => ErrorCode::CharclassInvalidEscape, 'offset' => 6];
+        yield 'range no class takes before an escape PCRE refuses' => ['pattern' => "/(?[[a-\d\c\u{E9}])/", 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 8];
+        yield 'range no class takes after a member, before an escape PCRE refuses' => ['pattern' => "/(?[[ab-\d\c\u{E9}])/", 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 9];
+        yield 'class escape starting a range before an escape PCRE refuses' => ['pattern' => "/(?[[\d-z\c\u{E9}])/", 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 7];
+        yield 'two ranges no class takes before an escape PCRE refuses' => ['pattern' => "/(?[[a-\db-\d\c\u{E9}])/", 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 8];
+        yield 'range no class takes before a quote that swallows the end' => ['pattern' => '/(?[[a-\d\Q]])/', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 8];
+        yield 'reversed range, then a range no class takes, before an escape PCRE refuses' => ['pattern' => "/(?[[z-ab-\d\c\u{E9}])/", 'code' => ErrorCode::RangeReversed, 'offset' => 7];
+        yield 'class escape starting a range down to a hyphen, before an escape PCRE refuses' => ['pattern' => "/(?[[\w--\c\u{E9}])/x", 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 7];
+        yield 'reversed range down to a hyphen, before an escape PCRE refuses' => ['pattern' => "/(?[[a--\c\u{E9}]-[b])/", 'code' => ErrorCode::RangeReversed, 'offset' => 7];
+        // The end of the range is read before the range is judged: an escape
+        // PCRE refuses there comes first, a POSIX item does not.
+        yield 'class escape starting a range whose hex end PCRE refuses' => ['pattern' => '/(?[[\d-\x{zz}]])/', 'code' => ErrorCode::UnicodeInvalidDigit, 'offset' => 11];
+        yield 'class escape starting a range whose octal end PCRE refuses' => ['pattern' => '/(?[[\d-\o{8}]])/', 'code' => ErrorCode::OctalInvalidDigit, 'offset' => 11];
+        yield 'class escape starting a range whose hex end PCRE refuses, then a quote' => ['pattern' => '/(?[[\d-\x{zz}\Q/', 'code' => ErrorCode::UnicodeInvalidDigit, 'offset' => 11];
+        yield 'class escape starting a range a POSIX class ends' => ['pattern' => '/(?[[\d-[:foo:]]])/', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 7];
+        // A range the pattern or the fault ends before its end is never
+        // judged.
+        yield 'class escape starting a range the pattern ends in' => ['pattern' => '/(?[[b\d-\E\c/u', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 12];
+        yield 'class escape starting a range a quote then an escape PCRE refuses end' => ['pattern' => "/(?[[\d-\E\c\u{E9}])/", 'code' => ErrorCode::ControlCharInvalid, 'offset' => 12];
+        // A refusal that is no range's stays the member's.
+        yield 'escape no class takes before an escape PCRE refuses' => ['pattern' => "/(?[[\X\c\u{E9}])/", 'code' => ErrorCode::CharclassInvalidEscape, 'offset' => 6];
+    }
+
+    /**
+     * A "[" quoted by "\Q" is text, and opens no POSIX item: PCRE reaches
+     * the end of the class that the quote leaves open. Each row is the error
+     * preg_match() reports on PHP 8.4.27 with PCRE2 10.49.
+     */
+    #[Test]
+    #[DataProvider('provideQuotedBrackets')]
+    public function test_a_quoted_bracket_opens_no_posix_item_before_a_fault(string $pattern, int $offset): void
+    {
+        $this->assertTheEngineRefusesAt($offset, $pattern);
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame(ErrorCode::CharclassUnclosed, $result->errorCode, $pattern);
+        $this->assertSame($offset, $result->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideQuotedBrackets(): iterable
+    {
+        yield 'quoted unknown POSIX class' => ['pattern' => '/(?[[\Q[:foo:]]])/', 'offset' => 16];
+        yield 'quoted collating element' => ['pattern' => '/(?[[\Q[.a.]]])/', 'offset' => 14];
+        yield 'quoted equivalence class under u' => ['pattern' => '/(?[[\Q[=a=]^]-[b])/u', 'offset' => 18];
+        yield 'quoted unknown POSIX class after a member, under x' => ['pattern' => '/(?[[b\Q[:foo:]\B]-[b])/x', 'offset' => 22];
+    }
+
+    /**
+     * PHP first, where it links the PCRE2 10.49 the rows were read on: a
+     * PCRE2 before 10.45 refuses "(?[" itself, and one before 10.47 reports
+     * most errors on the character at fault.
+     */
+    private function assertTheEngineRefusesAt(int $offset, string $pattern): void
+    {
+        if ('10.49' === PcreTarget::runtime()->pcreVersion) {
+            $this->assertSame($offset, PhpErrorOffset::of($pattern), 'Oracle on PCRE2 10.49: '.$pattern);
+        }
     }
 
     private static function parse(string $body): NodeInterface

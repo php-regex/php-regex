@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Laravel\Extractor;
 
+use PHPRegex\Linter\Extraction\PhpStringLiteral;
+use PHPRegex\Linter\Extraction\PhpTokens;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
@@ -32,21 +34,42 @@ final class ValidationRulePatternSource implements PatternSourceInterface
 {
     /**
      * A single- or double-quoted literal on one line that holds a 'regex:',
-     * 'not_regex:' or 'notregex:' rule, in any case, at its start or after
-     * a "|", up to the quote that opened it. Group 1 is the quote, group 2
-     * the literal as written.
+     * 'not_regex:' or 'notregex:' rule, in any case and blanks around its
+     * name, at its start or after a "|", up to the quote that opened it.
+     * A double-quoted one may spell that name and its blanks with escapes,
+     * as "\tregex:" or "\x72egex:": a name of letters, digits, braces,
+     * blanks and escapes, one escape at least, is taken too, and the rule
+     * is read once PHP has decoded the literal.
+     * Group 1 is the quote, group 2 the literal as written.
      * An escaped character (a backslash and the character after it) and any
      * other character but a backslash, the quote and a newline are
      * disjoint, so a run of backslashes is read in one pass.
      */
-    private const RULE_PATTERN = '/(?|(\')(?=(?:(?:\\\\.|[^\'\\\\\n|])*+\|)*(?i:(?:not_?)?regex):)((?:\\\\.|[^\'\\\\\n])++)\'|(")(?=(?:(?:\\\\.|[^"\\\\\n|])*+\|)*(?i:(?:not_?)?regex):)((?:\\\\.|[^"\\\\\n])++)")/';
+    private const RULE_PATTERN = '/(?|(\')(?=(?:(?:\\\\.|[^\'\\\\\n|])*+\|)*[ \t\r\0\x0B]*+(?i:(?:not_?)?regex)[ \t\r\0\x0B]*+:)((?:\\\\.|[^\'\\\\\n])++)\'|(")(?=(?:(?:\\\\.|[^"\\\\\n|])*+\|)*(?:[ \t\r\0\x0B]*+(?i:(?:not_?)?regex)[ \t\r\0\x0B]*+:|(?=[ \t\r\0\x0B0-9A-Za-z_{}]*+\\\\)(?:[ \t\r\0\x0B0-9A-Za-z_{}]|\\\\[^\n:])++:))((?:\\\\.|[^"\\\\\n])++)")/';
+
+    /**
+     * The calls that take a rules string, which Laravel splits on "|", by
+     * the name of the method, or of the class built, in lower case: the
+     * arguments that are one, by position from 0 and by name.
+     * Validator::sometimes() explodes [$key => $rules], and
+     * ConditionalRules::rules() and defaultRules() a string, as
+     * Rule::when() and Rule::unless() keep it.
+     */
+    private const RULES_ARGUMENTS = [
+        'sometimes' => [1 => 'rules'],
+        'when' => [1 => 'rules', 2 => 'defaultRules'],
+        'unless' => [1 => 'rules', 2 => 'defaultRules'],
+        'conditionalrules' => [1 => 'rules', 2 => 'defaultRules'],
+    ];
 
     /**
      * A regex rule as Laravel's ValidationRuleParser reads one rule: the
-     * name, then all the text after the first ":". ruleIsRegex() reads the
-     * name without case, and "notregex" as "not_regex".
+     * name, then all the text after the first ":". parseStringRule() trims
+     * the name before Str::studly() picks the rule, ruleIsRegex() reads it
+     * without case, and "notregex" as "not_regex". Groups 1 and 3 are the
+     * blanks around the name, group 2 the negation.
      */
-    private const RULE = '/^(not_?)?regex:/i';
+    private const RULE = '/^([ \t\n\r\0\x0B]*+)(not_?)?regex([ \t\n\r\0\x0B]*+):/i';
 
     /**
      * The files the last extract() could not read, each with why.
@@ -54,6 +77,15 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * @var list<array{file: string, message: string}>
      */
     private array $failures = [];
+
+    /**
+     * The offsets of the string literals of the file read that a call takes
+     * as rules, and of the parentheses that only group what they hold, read
+     * once a literal asks.
+     *
+     * @var array{rules: array<int, true>, grouping: array<int, true>, appended: array<int, true>}|null
+     */
+    private ?array $tokenReading = null;
 
     public function getName(): string
     {
@@ -140,6 +172,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         }
 
         $patterns = [];
+        $this->tokenReading = null;
 
         // The pattern runs until the quote that opened the string literal,
         // so the other quote character (and escaped quotes) may appear
@@ -150,7 +183,8 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             $previousOffset = 0;
             $lineNumber = 1;
             foreach ($matches[2] as $index => $match) {
-                $literal = $this->unescapeStringLiteral($match[0], $matches[1][$index][0]);
+                $quote = $matches[1][$index][0];
+                $literal = PhpStringLiteral::decode($quote.$match[0].$quote) ?? $match[0];
                 $offset = $match[1];
                 // Match offsets increase: count each intervening byte only once.
                 $lineNumber += substr_count($content, "\n", $previousOffset, $offset - $previousOffset);
@@ -158,7 +192,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
 
                 // Laravel splits a rules string on every "|", one inside a
                 // pattern included; an element of a rules array is one rule.
-                $rules = $this->isRulesString($literal, $content, $offset - 2) ? explode('|', $literal) : [$literal];
+                $rules = $this->isRulesString($literal, $content, $offset - 1) ? explode('|', $literal) : [$literal];
 
                 foreach ($rules as $rule) {
                     if (1 !== LibraryPcre::match(self::RULE, $rule, $name)) {
@@ -166,8 +200,13 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                     }
 
                     // preg_match() gets the parameter as it is, delimiters and
-                    // all: it is linted as written.
+                    // all: it is linted as written. A name with blanks around
+                    // it is no regex name to ruleIsRegex(), which then reads
+                    // the parameter as CSV: the rule runs on its first field.
                     $pattern = substr($rule, \strlen($name[0]));
+                    if ('' !== $name[1].$name[3]) {
+                        $pattern = (string) (str_getcsv($pattern, ',', '"', '\\')[0] ?? '');
+                    }
                     $trimmed = trim($pattern, " \t\n\r\0\x0B");
                     if ('' === $trimmed) {
                         continue;
@@ -177,7 +216,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                         $trimmed,
                         $filePath,
                         $lineNumber,
-                        'validation:'.('' === ($name[1] ?? '') ? 'regex' : 'not_regex'),
+                        'validation:'.('' === $name[2] ? 'regex' : 'not_regex'),
                         $pattern,
                         'Laravel validation rule',
                     );
@@ -200,25 +239,37 @@ final class ValidationRulePatternSource implements PatternSourceInterface
 
     /**
      * Whether the literal is a rules string, which Laravel splits on "|",
-     * rather than one element of a rules array: a rule before the regex one,
-     * as "nullable|regex:/a/", or a literal given to a key ('a' => '…') or
-     * assigned ($rules['a'] = '…'), where $rules['a'][] = '…' pushes one
-     * element.
+     * rather than one element of a rules array: a literal given to a key
+     * ('a' => '…') or assigned ($rules['a'] = '…'), where $rules['a'][] = '…'
+     * pushes one element, or the rules a call takes (RULES_ARGUMENTS), where
+     * a string another call takes, as array_push() appends it, is one
+     * element. Anywhere else, a rule before the regex one, as
+     * "nullable|regex:/a/", makes a rules string, unless array_push() or
+     * array_unshift() appends it: Laravel then reads one rule named
+     * "nullable|regex", and runs no pattern. Parentheses that only group the
+     * literal change nothing.
+     *
+     * @param int $start the offset of the quote that opens the literal
      */
-    private function isRulesString(string $literal, string $content, int $before): bool
+    private function isRulesString(string $literal, string $content, int $start): bool
     {
-        if (1 !== LibraryPcre::match(self::RULE, $literal)) {
-            return true;
+        $before = $this->previousNonWhitespace($content, $start - 1);
+        while ($before >= 0 && '(' === $content[$before] && isset($this->tokenReading($content)['grouping'][$before])) {
+            $before = $this->previousNonWhitespace($content, $before - 1);
         }
 
-        $before = $this->previousNonWhitespace($content, $before);
         if ($before >= 1 && '=>' === substr($content, $before - 1, 2)) {
             return true;
         }
 
         // "==", "!=", "<=" and ">=" compare; "=", ".=" and "??=" assign.
         if ($before < 0 || '=' !== $content[$before] || ($before > 0 && str_contains('=!<>', $content[$before - 1]))) {
-            return false;
+            $reading = $this->tokenReading($content);
+            if (isset($reading['rules'][$start])) {
+                return true;
+            }
+
+            return 1 !== LibraryPcre::match(self::RULE, $literal) && !isset($reading['appended'][$start]);
         }
 
         $before = $this->previousNonWhitespace($content, $before - 1);
@@ -238,11 +289,156 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     }
 
     /**
-     * Undo the PHP string-literal escaping of the quote that delimited the
-     * rule, so the extracted pattern matches what the validator receives.
+     * The offsets of the string literals of the file that a call takes as
+     * rules, by position or by name, of those array_push() or
+     * array_unshift() appends as elements, and of the parentheses that only
+     * group what they hold. A literal is an argument of the innermost
+     * bracket around it that does not only group.
+     *
+     * @return array{rules: array<int, true>, grouping: array<int, true>, appended: array<int, true>}
      */
-    private function unescapeStringLiteral(string $pattern, string $quote): string
+    private function tokenReading(string $content): array
     {
-        return str_replace(['\\'.$quote, '\\\\'], [$quote, '\\'], $pattern);
+        if (null !== $this->tokenReading) {
+            return $this->tokenReading;
+        }
+
+        $tokens = token_get_all($content);
+        $offsets = PhpTokens::offsets($tokens);
+        $rules = [];
+        $grouping = [];
+        $appended = [];
+        // Each open bracket, null where it only groups: the arguments it
+        // takes as rules, whether it appends its arguments after the first,
+        // the position of the one read and its name.
+        $brackets = [];
+        foreach ($tokens as $index => $token) {
+            if (PhpTokens::opensNesting($token)) {
+                $previous = PhpTokens::previousSignificant($tokens, $index - 1);
+                // An open tag stands before any bracket.
+                if ('(' === $token && null !== $previous && self::groups($tokens[$previous])) {
+                    $grouping[$offsets[$index]] = true;
+                    $brackets[] = null;
+                } else {
+                    $call = '(' === $token && null !== $previous;
+                    $brackets[] = ['rules' => $call ? self::rulesArgumentsOf($tokens, $previous) : [], 'appends' => $call && self::appendsElements($tokens, $previous), 'position' => 0, 'name' => null];
+                }
+
+                continue;
+            }
+
+            if (')' === $token || ']' === $token || '}' === $token) {
+                array_pop($brackets);
+
+                continue;
+            }
+
+            $top = \count($brackets) - 1;
+            if (',' === $token || ':' === $token) {
+                $bracket = $brackets[$top] ?? null;
+                if (null === $bracket || ([] === $bracket['rules'] && !$bracket['appends'])) {
+                    continue;
+                }
+
+                if (',' === $token) {
+                    $bracket['position']++;
+                    $bracket['name'] = null;
+                } else {
+                    // "rules:" names the argument after a "(" or a ",";
+                    // a ternary's ":" follows no such label.
+                    $label = PhpTokens::previousSignificant($tokens, $index - 1);
+                    $opener = null === $label ? null : PhpTokens::previousSignificant($tokens, $label - 1);
+                    if (null !== $label && null !== $opener && \in_array($tokens[$opener], ['(', ','], true)) {
+                        $bracket['name'] = PhpTokens::identifier($tokens[$label]);
+                    }
+                }
+                $brackets[$top] = $bracket;
+
+                continue;
+            }
+
+            if (!\is_array($token) || \T_CONSTANT_ENCAPSED_STRING !== $token[0]) {
+                continue;
+            }
+
+            while ($top >= 0 && null === $brackets[$top]) {
+                $top--;
+            }
+            $bracket = $brackets[$top] ?? null;
+            if (null !== $bracket && (null === $bracket['name'] ? isset($bracket['rules'][$bracket['position']]) : \in_array($bracket['name'], $bracket['rules'], true))) {
+                $rules[$offsets[$index]] = true;
+            }
+            if (null !== $bracket && $bracket['appends'] && $bracket['position'] > 0) {
+                $appended[$offsets[$index]] = true;
+            }
+        }
+
+        return $this->tokenReading = ['rules' => $rules, 'grouping' => $grouping, 'appended' => $appended];
+    }
+
+    /**
+     * Whether a parenthesis after this token only groups what it holds:
+     * after an operator, a cast or a punctuation mark. After a name, a
+     * variable, a string, a ")" or a "]" it opens a call, after a keyword a
+     * control structure, array(), isset() or a closure.
+     *
+     * @param array{0: int, 1: string, 2?: int}|string $token
+     */
+    private static function groups(array|string $token): bool
+    {
+        if (!\is_array($token)) {
+            return ')' !== $token && ']' !== $token;
+        }
+
+        return \T_VARIABLE !== $token[0] && \T_CONSTANT_ENCAPSED_STRING !== $token[0] && null === PhpTokens::name($token) && null === PhpTokens::identifier($token);
+    }
+
+    /**
+     * Whether the call after this name is the function array_push() or
+     * array_unshift(), which add each argument after the first as one
+     * element.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    private static function appendsElements(array $tokens, int $callee): bool
+    {
+        $name = PhpTokens::name($tokens[$callee]);
+        if (null === $name) {
+            return false;
+        }
+
+        $short = strtolower(substr($name, (int) strrpos('\\'.$name, '\\')));
+        $operator = PhpTokens::previousSignificant($tokens, $callee - 1);
+
+        return \in_array($short, ['array_push', 'array_unshift'], true) && (null === $operator || !PhpTokens::isObjectOrStaticOperator($tokens[$operator]));
+    }
+
+    /**
+     * The arguments the call after this name takes as rules, by position
+     * and by name: the method sometimes(), when() or unless(), or the
+     * ConditionalRules built. A function of these names takes none.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array<int, string>
+     */
+    private static function rulesArgumentsOf(array $tokens, int $callee): array
+    {
+        $name = PhpTokens::name($tokens[$callee]);
+        if (null === $name) {
+            return [];
+        }
+
+        // The last segment of a qualified name: the "\" put before the name
+        // stands one byte before the last one of the name itself.
+        $short = strtolower(substr($name, (int) strrpos('\\'.$name, '\\')));
+        $arguments = self::RULES_ARGUMENTS[$short] ?? [];
+        if ([] === $arguments || 'conditionalrules' === $short) {
+            return $arguments;
+        }
+
+        $operator = PhpTokens::previousSignificant($tokens, $callee - 1);
+
+        return null !== $operator && PhpTokens::isObjectOrStaticOperator($tokens[$operator]) ? $arguments : [];
     }
 }

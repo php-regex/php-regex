@@ -240,6 +240,28 @@ final class SecurityConfigKernelTest extends TestCase
         $this->assertSame(['admin' => 8, 'main' => 9], array_column($config['firewalls'], 'line', 'name'));
     }
 
+    /**
+     * The processed configuration holds a port as an integer and the
+     * attributes as a map, the route beside them.
+     */
+    #[Test]
+    public function test_the_port_the_attributes_and_the_route_are_read_as_the_kernel_processes_them(): void
+    {
+        $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($this->makeProject([
+            'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n"
+                ."        - { path: ^/admin, port: 8080, roles: PUBLIC_ACCESS }\n"
+                ."        - { path: ^/api, attributes: { _format: json }, roles: PUBLIC_ACCESS }\n"
+                ."        - { route: app_login, roles: PUBLIC_ACCESS }\n"
+                ."        - { path: ^/, roles: ROLE_USER }\n",
+        ])));
+
+        $this->assertNotNull($config);
+        $this->assertSame(
+            [[8080, [], null, 6], [null, ['_format' => 'json'], null, 7], [null, [], 'app_login', 8], [null, [], null, 9]],
+            array_map(static fn (array $rule): array => [$rule['port'] ?? null, $rule['attributes'] ?? [], $rule['route'] ?? null, $rule['line']], $config['accessControl']),
+        );
+    }
+
     #[Test]
     public function test_an_environment_variable_in_a_path_is_resolved(): void
     {

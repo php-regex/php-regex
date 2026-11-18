@@ -130,7 +130,7 @@ final class SecurityAnalyzerTest extends TestCase
             ['shadowed', 'critical', "#1 (security.yaml:3) \u{21B3} #2 (security.yaml:4)", '/admin/users', []],
             ['shadowed', 'fail', "#3 (security.yaml:5) \u{21B3} #4 (security.yaml:6)", '/shop/cart', []],
             ['overlap', 'warn', "#5 (security.yaml:7) \u{21B3} #6 (security.yaml:8)", '/a3', []],
-            ['shadowed', 'fail', "#9 (security.yaml:11) \u{21B3} #10 (security.yaml:12)", '/api', ['Rule has no path; it matches all requests.', 'Host restrictions are not evaluated.']],
+            ['shadowed', 'fail', "#9 (security.yaml:11) \u{21B3} #10 (security.yaml:12)", '/api', ['Rule has no path; it matches every path.', 'Host restrictions are not evaluated.']],
         ], array_map(self::issue(...), $section->issues));
         $this->assertSame(['Rule', '#1 security.yaml:3  path=^/admin  roles=PUBLIC_ACCESS'], [$section->issues[0]->details[0]->label, $section->issues[0]->details[0]->value]);
         $this->assertSame(['Conflict', '#2 security.yaml:4  path=^/admin/users  roles=ROLE_ADMIN'], [$section->issues[0]->details[1]->label, $section->issues[0]->details[1]->value]);
@@ -156,7 +156,7 @@ final class SecurityAnalyzerTest extends TestCase
             ['warn', '1 access_control rules skipped due to unsupported regex features.'],
             ['warn', '1 rules use allow_if; conditions are not evaluated during analysis.'],
             ['warn', '1 rules use IP restrictions; IPs are not evaluated during analysis.'],
-            ['warn', '1 rules have no path and match all requests.'],
+            ['warn', '1 rules have no path and match every path.'],
             ['warn', '1 rules use host restrictions that could not be analyzed.'],
         ], self::notices($section->warnings));
     }

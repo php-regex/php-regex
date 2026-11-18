@@ -36,14 +36,42 @@ final class PcreEngine
      */
     private const FRESH_CACHE_KEY = "\v";
 
+    /**
+     * The white space that leads a pattern run with the JIT: a key of its
+     * own in PHP's cache, compiled with the JIT on.
+     */
+    private const JIT_CACHE_KEY = "\f";
+
     private const LIMITS_NOT_SET = 'The PCRE limits could not be set: ';
 
     private const LIMITS_UNAVAILABLE = self::LIMITS_NOT_SET.'ini_set() is disabled';
 
     /**
+     * Whether the engine runs the pattern with the JIT, as PHP does by
+     * default, rather than without it.
+     */
+    private bool $jit = false;
+
+    /**
+     * An engine that runs the pattern as written, with the JIT turned on
+     * for the call, under the limits asked for, the ini left as it was
+     * found. Where ini_set() refuses the JIT, it runs nothing: its answer
+     * says the setting could not be made, as for a refused limit.
+     *
+     * @internal the ReDoS confirmation replays a pattern holding "(*SKIP:NAME)" under the JIT
+     */
+    public static function withJit(): self
+    {
+        $engine = new self();
+        $engine->jit = true;
+
+        return $engine;
+    }
+
+    /**
      * Whether the engine ran nothing because the limits asked for could not
-     * be set, ini_set() disabled or refusing one: the answer of no run, not
-     * of an engine error.
+     * be set, ini_set() disabled or refusing one, or the JIT it runs under:
+     * the answer of no run, not of an engine error.
      *
      * @internal the ReDoS confirmation reports such a run as skipped
      */
@@ -289,8 +317,9 @@ final class PcreEngine
      * Each setting is put back from the value ini_set() returned when it was
      * changed, so a disabled ini_get() changes nothing. Where ini_set() is
      * disabled or refuses a limit, a call under limits gets no answer and an error saying so;
-     * a pattern that needs the JIT off runs as it is, under the caller's
-     * settings.
+     * where it refuses the JIT, so does every call of the engine that runs
+     * under it. A pattern that needs the JIT off runs as it is, under the
+     * caller's settings.
      *
      * @param \Closure(string): (int|false) $call
      *
@@ -327,18 +356,31 @@ final class PcreEngine
             ];
         }
 
-        $prepared = $this->withVerb($pattern);
+        $prepared = $this->jit ? null : $this->withVerb($pattern);
         $shift = null === $prepared ? 0 : \strlen(NoJit::VERB);
-        $jitOff = $canSet && null === $prepared && null !== NoJit::split($pattern);
-        $runnable = $prepared ?? ($jitOff ? self::FRESH_CACHE_KEY.$pattern : $pattern);
+        $jitOff = !$this->jit && $canSet && null === $prepared && null !== NoJit::split($pattern);
+        switch (true) {
+            case true === (null !== $prepared):
+                $runnable = $prepared;
+                break;
+            case true === $jitOff:
+                $runnable = self::FRESH_CACHE_KEY.$pattern;
+                break;
+            case true === $this->jit:
+                $runnable = self::JIT_CACHE_KEY.$pattern;
+                break;
+            default:
+                $runnable = $pattern;
+                break;
+        }
 
         $settings = [];
         if (null !== $limits) {
             $settings['pcre.backtrack_limit'] = (string) $limits->backtrackLimit;
             $settings['pcre.recursion_limit'] = (string) $limits->recursionLimit;
         }
-        if ($jitOff) {
-            $settings['pcre.jit'] = '0';
+        if ($jitOff || ($this->jit && $canSet)) {
+            $settings['pcre.jit'] = $jitOff ? '0' : '1';
         }
 
         $saved = [];
@@ -349,8 +391,9 @@ final class PcreEngine
                 $previous = ini_set($key, $value);
                 if (false !== $previous) {
                     $saved[$key] = $previous;
-                } elseif (null !== $limits && 'pcre.jit' !== $key) {
-                    // A refused limit may leave a higher inherited budget.
+                } elseif ('pcre.jit' === $key ? $this->jit : null !== $limits) {
+                    // A refused limit may leave a higher inherited budget,
+                    // and a refused JIT the run of the engine without it.
                     // Return inside the try so earlier changes are restored.
                     return [
                         'result' => false,

@@ -41,7 +41,10 @@ final class SolverOnHirRefusalsTest extends TestCase
      * flag. The atomic message and the flags message are today's, kept
      * word for word; the others replace the validator's generic ones.
      *
-     * @return iterable<string, array{pattern: string, expected: string}>
+     * A row may name what the engine reads apart: on the subject, the
+     * first pattern finds another match than the second.
+     *
+     * @return iterable<string, array{pattern: string, expected: string, engine?: array{string, string, string}}>
      */
     public static function provideRefusalRows(): iterable
     {
@@ -99,12 +102,25 @@ final class SolverOnHirRefusalsTest extends TestCase
         // refuses it word for word.
         yield 'A flag' => ['pattern' => '/a/A', 'expected' => 'Unsupported regex flags for automata: A.'];
         yield 'newline convention under m' => ['pattern' => '/(*CR)ab/m', 'expected' => 'A newline convention other than "\n" moves where'];
+        // Without the JIT the option refuses the empty match "/a?/" finds
+        // at 0; the JIT ignores it: test_the_jit_decides_what_an_empty_match_option_refuses().
+        yield 'not empty' => ['pattern' => '/(*NOTEMPTY)a?/', 'expected' => '(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse', 'engine' => ['/(*NO_JIT)(*NOTEMPTY)a?/', '/a?/', 'b']];
+        yield 'not empty at start' => ['pattern' => '/(*NOTEMPTY_ATSTART)a?/', 'expected' => '(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse', 'engine' => ['/(*NO_JIT)(*NOTEMPTY_ATSTART)a?/', '/a?/', 'b']];
+        yield 'not empty without the JIT' => ['pattern' => '/(*NO_JIT)(*NOTEMPTY)a?/', 'expected' => '(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse', 'engine' => ['/(*NO_JIT)(*NOTEMPTY)a?/', '/(*NO_JIT)a?/', 'b']];
     }
 
+    /**
+     * @param array{string, string, string}|null $engine
+     */
     #[Test]
     #[DataProvider('provideRefusalRows')]
-    public function test_the_hir_ladder_refuses_with_one_message_per_reason(string $pattern, string $expected): void
+    public function test_the_hir_ladder_refuses_with_one_message_per_reason(string $pattern, string $expected, ?array $engine = null): void
     {
+        if (null !== $engine) {
+            [$read, $apart, $subject] = $engine;
+            $this->assertNotSame(self::firstMatch($apart, $subject), self::firstMatch($read, $subject), $read.' against '.$apart);
+        }
+
         // A target that reads every flag of the rows below, whatever engine
         // runs the suite.
         $solver = new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']));
@@ -113,6 +129,41 @@ final class SolverOnHirRefusalsTest extends TestCase
         $this->expectExceptionMessageIsOrContains($expected);
 
         $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
+    }
+
+    /**
+     * The engine the rows of an empty match option stand on: on "b", "/a?/"
+     * finds "" at 0. Under pcre.jit=0, or behind (*NO_JIT), (*NOTEMPTY)
+     * finds no match and (*NOTEMPTY_ATSTART) "" at 1; the JIT ignores both
+     * and finds "" at 0. A pattern stays in PHP's cache as compiled under
+     * the setting of its first use, so each setting reads the patterns
+     * under a delimiter of its own. Where the JIT cannot run, a PHP built
+     * without it, which has no pcre.jit, or one ini_set() cannot change,
+     * the interpreter runs, and honours the options there too.
+     */
+    #[Test]
+    public function test_the_jit_decides_what_an_empty_match_option_refuses(): void
+    {
+        $this->assertSame([['', 0]], self::firstMatch('/a?/', 'b'));
+        $this->assertSame([], self::firstMatch('/(*NO_JIT)(*NOTEMPTY)a?/', 'b'));
+        $this->assertSame([['', 1]], self::firstMatch('/(*NO_JIT)(*NOTEMPTY_ATSTART)a?/', 'b'));
+
+        $jit = (string) \ini_get('pcre.jit');
+
+        try {
+            ini_set('pcre.jit', '0');
+            if ('0' === \ini_get('pcre.jit')) {
+                $this->assertSame([], self::firstMatch("\x01(*NOTEMPTY)a?\x01", 'b'));
+                $this->assertSame([['', 1]], self::firstMatch("\x01(*NOTEMPTY_ATSTART)a?\x01", 'b'));
+            }
+
+            ini_set('pcre.jit', '1');
+            $jitRuns = '1' === \ini_get('pcre.jit');
+            $this->assertSame($jitRuns ? [['', 0]] : [], self::firstMatch("\x02(*NOTEMPTY)a?\x02", 'b'));
+            $this->assertSame($jitRuns ? [['', 0]] : [['', 1]], self::firstMatch("\x02(*NOTEMPTY_ATSTART)a?\x02", 'b'));
+        } finally {
+            ini_set('pcre.jit', $jit);
+        }
     }
 
     /**
@@ -176,6 +227,18 @@ final class SolverOnHirRefusalsTest extends TestCase
 
         $this->assertTrue((new LanguageSolver())->equivalent('/(?:x|y){0}\w/', '/\w/', $this->fullMatchOptions())->isEquivalent);
         $this->assertTrue((new LanguageSolver())->equivalent('/(?:x|y){0}\w/', '/\w/', new SolverOptions(matchMode: MatchMode::Partial))->isEquivalent);
+    }
+
+    /**
+     * The first match and its offset, none where there is none.
+     *
+     * @return array<array{string, int}>
+     */
+    private static function firstMatch(string $pattern, string $subject): array
+    {
+        preg_match($pattern, $subject, $match, \PREG_OFFSET_CAPTURE);
+
+        return $match;
     }
 
     private function fullMatchOptions(): SolverOptions

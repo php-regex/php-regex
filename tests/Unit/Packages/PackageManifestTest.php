@@ -108,6 +108,9 @@ final class PackageManifestTest extends TestCase
             'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir', 'Parser\Hir\RepetitionHir',
             'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\StartOptions',
             'Parser\Cache\StaticCaches', 'Parser\NodeWalker', 'Parser\TraversalAction',
+            // An inline "m" turns "^" multiline under a newline convention
+            // the solvers refuse, read as the parser reads its letters.
+            'Parser\Syntax\InlineFlags',
         ],
         // The CLI, the PHPStan rule and the Psalm plugin name the directory
         // where the class sets PCRE2 answered are kept between runs. The
@@ -165,6 +168,10 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\TokenBasedExtractionStrategy', 'Linter\RedosVerdict',
             'Linter\Rule\InvisibleCharacterRule', 'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId', 'Parser\Text\Ascii', 'Parser\Text\Path', 'Parser\Engine\IniFlag',
             'Parser\Engine\LibraryPcre',
+            // A hover, a diagnostic or a fix quoting bytes that are no
+            // UTF-8 spells them as the JSON reports do, so the answer
+            // encodes.
+            'Parser\Json\JsonDocument', 'Parser\Text\Utf8',
         ],
         'Laravel' => [
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Console\ConsoleLintRequest',
@@ -180,6 +187,9 @@ final class PackageManifestTest extends TestCase
             // A php_version of another type is refused in lint's words,
             // naming the Composer constraint it takes.
             'Linter\Config\TargetSpec',
+            // A rule string is decoded as PHP decodes its literal, and one
+            // given to a call is told apart by the tokens around it.
+            'Linter\Extraction\PhpStringLiteral', 'Linter\Extraction\PhpTokens',
         ],
         // The overlap rule asks PCRE2 for the characters of a branch's first
         // atom where the byte sets stop, above ASCII, and compares the
@@ -267,6 +277,8 @@ final class PackageManifestTest extends TestCase
             // An access_control path keeps the start options PCRE reads at
             // the very start ahead of what the search adds around it.
             'Parser\Syntax\StartOptions',
+            // A port is digits in any locale.
+            'Parser\Text\Ascii',
         ],
         // The HTML pattern attribute takes no flag: /i is spelled out
         // with the characters the running PCRE takes for each atom.

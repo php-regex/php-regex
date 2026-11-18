@@ -145,9 +145,11 @@ final class ParseState
         return match ($type) {
             // Between "\Q" and "\E" a backslash is text: "\Q\x\E" is "\x".
             TokenType::Literal => new LiteralNode($token->value, $startPosition, $token->end()),
-            // "\x" with no digit is NUL where PCRE takes it (up to 10.44).
+            // "\x" with no digit is NUL where PCRE takes it (up to 10.44),
+            // and the letter for PHP 7.3 and 7.4 where PCRE2 refuses it.
             TokenType::LiteralEscaped => '\\x' === substr($this->pattern, $token->position, 2) && 2 === $token->end() - $token->position
                 && '{' !== ($this->pattern[$token->end()] ?? '')
+                && !($this->badEscapeIsLiteral && BadEscape::at($this->pattern, $token->position, false, $this->unicodeMode, $this->target))
                 ? new CharLiteralNode('\\x', 0, CharLiteralType::Unicode, $startPosition, $token->end())
                 : new LiteralNode($token->value, $startPosition, $token->end()),
             TokenType::CharType => new CharTypeNode($token->value, $startPosition, $token->end()),
