@@ -1549,6 +1549,18 @@ backtracking for want of a `b`. Without a proof, the input is built from the cul
 `--jit 0` forces the interpreter. See the [ReDoS guide](redos.md#confirmed-mode) for
 what a replay does and does not prove.
 
+`--repeat <n>` repeats the input n times between `--prefix` and `--suffix`. The repeated
+input weighs 8 MiB (8,388,608 bytes) at most: printed with `--show-input`, a subject takes
+up to five times its size, which must fit in PHP's default `memory_limit` of 128M. A larger
+count is refused before the subject is built, with exit code 2 and the largest count the
+input takes:
+
+```bash
+vendor/bin/regex redos '/a+$/' --input a --repeat 10000000000
+# Error: --repeat 10000000000 repeats the 1-byte input past 8 MiB (8388608 bytes), ...
+# The largest count for this input is 8388608.
+```
+
 ---
 
 ### 10. Format (Lay Out or Compact)
