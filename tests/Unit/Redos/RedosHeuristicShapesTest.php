@@ -19,6 +19,7 @@ use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -33,6 +34,7 @@ use PHPUnit\Framework\TestCase;
 final class RedosHeuristicShapesTest extends TestCase
 {
     use InstalledLocales;
+    use PcreGates;
 
     #[Test]
     #[DataProvider('provideUnmodelledBodies')]
@@ -673,11 +675,15 @@ final class RedosHeuristicShapesTest extends TestCase
     #[DataProvider('provideBranchesInEitherCase')]
     public function test_branches_are_compared_in_the_case_the_engine_reads_them(string $pattern, string $unit, bool $critical): void
     {
-        if (false === @preg_match($pattern, '')) {
-            $this->assertTrue(\PHP_VERSION_ID < 80400 || version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '<'), $pattern.' does not compile here.');
-
-            return;
+        // The r modifier is read from PCRE2 10.43, and from PHP 8.4 only: an
+        // older PHP refuses the flag, whatever its engine. Every other row
+        // runs on every engine.
+        if (str_contains(substr($pattern, (int) strrpos($pattern, $pattern[0]) + 1), 'r')) {
+            $this->requiresPcre2('10.43', $pattern);
+            $this->requiresPhp('8.4', $pattern, 'does not read the r modifier');
         }
+
+        $this->assertNotFalse(@preg_match($pattern, ''), 'Oracle: PCRE compiles the row.');
 
         $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
         $short = self::steps($unoptimized, str_repeat($unit, 8).'!');
@@ -956,8 +962,14 @@ final class RedosHeuristicShapesTest extends TestCase
         $pattern = '/^((?:\w|\xE9)+)\1$/';
         $unoptimized = PcreInterpreter::pattern('/(*NO_START_OPT)^((?:\w|\xE9)+)\1$/');
 
-        $short = self::steps($unoptimized, str_repeat("\xE9", 8).'!');
-        $long = self::steps($unoptimized, str_repeat("\xE9", 12).'!');
+        // Each side is measured under its own tables, whatever locale the
+        // process runs under.
+        $short = 0;
+        $long = 0;
+        CharacterTables::under(CharacterTables::BUILT_IN, static function () use ($unoptimized, &$short, &$long): void {
+            $short = self::steps($unoptimized, str_repeat("\xE9", 8).'!');
+            $long = self::steps($unoptimized, str_repeat("\xE9", 12).'!');
+        });
         $this->assertLessThan(4 * $short, $long, 'Oracle: under C the engine stays linear.');
         CharacterTables::under($locale, static function () use ($unoptimized, &$short, &$long): void {
             $short = self::steps($unoptimized, str_repeat("\xE9", 8).'!');
@@ -965,7 +977,7 @@ final class RedosHeuristicShapesTest extends TestCase
         });
         $this->assertGreaterThan(4 * $short, $long, 'Oracle: under the Latin-1 locale the engine goes exponential.');
 
-        $this->assertNotSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity);
+        $this->assertNotSame(RedosSeverity::Critical, Regex::create(['cache' => null, 'locale' => CharacterTables::BUILT_IN])->redos($pattern)->severity);
         $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null, 'locale' => $locale])->redos($pattern)->severity);
     }
 
