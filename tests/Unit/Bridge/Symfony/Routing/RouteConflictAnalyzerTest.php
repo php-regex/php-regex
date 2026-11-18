@@ -1340,6 +1340,76 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * When a route names a host, the dumper sorts the routes by host
+     * before it tells the routes it looks up by their path from those it
+     * tries with a regex: a route tried with a regex declared after a
+     * route with no variable may come before it, or one declared before
+     * after it.
+     *
+     * @param list<array{0: string, 1: string, 2: list<string>, 3: string}> $routes    name, path, methods, host
+     * @param array{0: string, 1: string, 2: string}                        $probe     host, path, and the route a GET request reaches
+     * @param list<string>                                                  $conflicts
+     */
+    #[Test]
+    #[DataProvider('provideRoutesTheDumperSortsByHost')]
+    public function test_a_route_with_no_variable_is_looked_up_by_its_path_as_the_dumper_sorts_the_hosts(array $routes, array $probe, array $conflicts): void
+    {
+        $collection = new RouteCollection();
+        foreach ($routes as [$name, $path, $methods, $host]) {
+            $collection->add($name, (new Route($path))->setMethods($methods)->setHost($host));
+        }
+
+        $this->assertSame($probe[2], FrameworkMatcher::reached($collection, 'GET', $probe[1], 'http', $probe[0]));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame($conflicts, array_map(
+            static fn (array $conflict): string => $conflict['type'].' '.$conflict['route']['name'].' '.$conflict['conflict']['name'],
+            $report->conflicts,
+        ));
+    }
+
+    /**
+     * @return iterable<string, array{routes: list<array{0: string, 1: string, 2: list<string>, 3: string}>, probe: array{0: string, 1: string, 2: string}, conflicts: list<string>}>
+     */
+    public static function provideRoutesTheDumperSortsByHost(): iterable
+    {
+        yield 'a route tried with a regex declared before, sorted after' => [
+            'routes' => [['unused', '/unused', [], '{sub}.a.com'], ['regex', '/{x<admin>}', ['POST'], 'A.COM'], ['admin', '/admin', ['GET'], 'a.com'], ['later', '/{p<admin//>}', ['GET'], 'a.com']],
+            'probe' => ['a.com', '/admin//', 'admin'],
+            'conflicts' => ['shadowed admin later'],
+        ];
+        yield 'a route tried with a regex declared after, sorted before' => [
+            'routes' => [['unused', '/unused', [], 'x.a.com'], ['admin', '/admin', ['GET'], '{sub}.b.org'], ['regex', '/{x<admin>}', ['POST'], 'a.com'], ['later', '/{p<admin//>}', ['GET'], '{sub}.b.org']],
+            'probe' => ['x.b.org', '/admin//', 'later'],
+            'conflicts' => [],
+        ];
+    }
+
+    /**
+     * A route regex the engine refuses stops the dumper, as it stops the
+     * router: the routes are then all read as tried with a regex, the pairs
+     * of that route left out, and the others still read.
+     */
+    #[Test]
+    public function test_a_route_regex_the_engine_refuses_leaves_the_other_routes_read(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('refused', new Route('/x/{a}', [], ['a' => '(b)\2']));
+        $collection->add('list', new Route('/x/list'));
+        $collection->add('user', new Route('/users/{id}'));
+        $collection->add('users', new Route('/users/list'));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame(['shadowed user users'], array_map(
+            static fn (array $conflict): string => $conflict['type'].' '.$conflict['route']['name'].' '.$conflict['conflict']['name'],
+            $report->conflicts,
+        ));
+        $this->assertSame(1, $report->stats['skipped_pairs']);
+    }
+
+    /**
      * When a route names a host, the dumper sorts the routes by the literal
      * end of their host, letter case included, and may move a route before
      * an earlier one whose literal end parts from its own. No host matches

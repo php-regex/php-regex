@@ -31,6 +31,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Routing\CompiledRoute;
+use Symfony\Component\Routing\Matcher\Dumper\CompiledUrlMatcherDumper;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
@@ -74,7 +75,7 @@ final class RouteConflictAnalyzer
         $skippedRoutes = [];
         $routesWithConditions = [];
         $routesWithUnsupportedHosts = [];
-        $matchedWithARegex = [];
+        $lookedUpByPath = self::routesLookedUpByPath($collection);
         $index = 0;
 
         $options = new SolverOptions(
@@ -93,7 +94,7 @@ final class RouteConflictAnalyzer
                 $skippedRoutes,
                 $routesWithConditions,
                 $routesWithUnsupportedHosts,
-                $matchedWithARegex,
+                $lookedUpByPath,
             );
             if (null !== $descriptor) {
                 $routes[] = $descriptor;
@@ -313,10 +314,10 @@ final class RouteConflictAnalyzer
     }
 
     /**
-     * @param array<RouteSkip>                                  $skippedRoutes
-     * @param array<int, string>                                $routesWithConditions
-     * @param array<int, string>                                $routesWithUnsupportedHosts
-     * @param list<array{0: string|null, 1: string, 2: string}> $matchedWithARegex          the host pattern, the path pattern as the matcher tries it, and the static prefix of each route so far that the matcher tries with a regex
+     * @param array<RouteSkip>    $skippedRoutes
+     * @param array<int, string>  $routesWithConditions
+     * @param array<int, string>  $routesWithUnsupportedHosts
+     * @param array<string, true> $lookedUpByPath             the names of the routes the matcher looks up by their path
      *
      * @phpstan-return RouteDescriptor|null
      */
@@ -327,7 +328,7 @@ final class RouteConflictAnalyzer
         array &$skippedRoutes,
         array &$routesWithConditions,
         array &$routesWithUnsupportedHosts,
-        array &$matchedWithARegex,
+        array $lookedUpByPath,
     ): ?array {
         try {
             $compiled = $route->compile();
@@ -397,13 +398,9 @@ final class RouteConflictAnalyzer
         }
 
         $path = $route->getPath();
-        $static = [] === $compiled->getPathVariables()
-            && !self::followsARegexMatchingIt($path, [] === $compiled->getHostVariables() ? $hostValue : '', $matchedWithARegex);
+        $static = isset($lookedUpByPath[$name]);
         [$takenAsIs, $taken, $redirected] = self::slashForms($pathRegex, $path, $static);
         $slashPattern = $this->normalizePattern($taken)['pattern'];
-        if (!$static) {
-            $matchedWithARegex[] = ['' === $hostPattern ? null : $hostPattern, $slashPattern, rtrim($compiled->getStaticPrefix(), '/')];
-        }
 
         return [
             'name' => $name,
@@ -625,28 +622,48 @@ final class RouteConflictAnalyzer
     }
 
     /**
-     * Whether a route tried with a regex, declared before a route with no
-     * variable, matches its path, with the trailing slash or without it,
-     * on its host: the dumper then has the matcher try the route with a
-     * regex too, where it looks the others up by their path before any
-     * regex, as CompiledUrlMatcherDumper::groupStaticRoutes() sorts them.
-     * A host pattern the analysis cannot read is taken as matching.
+     * The names of the routes the compiled matcher looks up by their path,
+     * before any route it tries with a regex, as the framework's dumper
+     * sorts them: a route with no path variable that no route sorted
+     * before it and tried with a regex matches, the routes being sorted by
+     * host first when one names a host. Conditions play no part in the
+     * sort, and the dumper compiles them only with ExpressionLanguage: it
+     * reads a copy of the routes without them. None when the dumper refuses
+     * the routes, as for a regex the engine refuses, which stops the
+     * router too: every route is then read as tried with a regex.
      *
-     * @param string                                            $host              the route's host when it names no variable, else ""
-     * @param list<array{0: string|null, 1: string, 2: string}> $matchedWithARegex
+     * @return array<string, true>
      */
-    private static function followsARegexMatchingIt(string $path, string $host, array $matchedWithARegex): bool
+    private static function routesLookedUpByPath(RouteCollection $collection): array
     {
-        $url = '/' !== $path && str_ends_with($path, '/') ? substr($path, 0, -1) : $path;
-        foreach ($matchedWithARegex as [$hostPattern, $pathPattern, $prefix]) {
-            if (('' === $prefix || str_starts_with($url, $prefix))
-                && (1 === LibraryPcre::match($pathPattern, $url) || 1 === LibraryPcre::match($pathPattern, $url.'/'))
-                && ('' === $host || null === $hostPattern || 1 === LibraryPcre::match($hostPattern, $host))) {
-                return true;
+        $routes = new RouteCollection();
+        foreach ($collection->all() as $name => $route) {
+            $routes->add($name, (clone $route)->setCondition(''));
+        }
+
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            $compiled = (new CompiledUrlMatcherDumper($routes))->getCompiledRoutes();
+        } catch (\Throwable) {
+            // A boundary: the routes belong to the application, and
+            // whatever the dumper throws on them only drops this sort.
+            return [];
+        } finally {
+            restore_error_handler();
+        }
+
+        $names = [];
+        foreach (\is_array($compiled[1] ?? null) ? $compiled[1] : [] as $routesOfAPath) {
+            foreach (\is_array($routesOfAPath) ? $routesOfAPath : [] as $compiledRoute) {
+                $name = \is_array($compiledRoute) && \is_array($compiledRoute[0] ?? null) ? ($compiledRoute[0]['_route'] ?? null) : null;
+                if (\is_string($name)) {
+                    $names[$name] = true;
+                }
             }
         }
 
-        return false;
+        return $names;
     }
 
     /**

@@ -278,8 +278,9 @@ CHANGELOG
    route, `/files/{path<[a-z/]+>}` on `http` after `/files/{name}` on
    `https`, the pair is skipped. A route with no variable is looked up by
    its path, every trailing slash of the request trimmed off, before any
-   route tried with a regex, unless an earlier one of those matches its
-   path: `/admin` redirects `GET /admin//` too, shadowing `/{p<admin//>}`,
+   route tried with a regex, unless one of those the router sorts before
+   it matches its path, the routes sorted by host first when one names a
+   host, as the router's dumper reads them: `/admin` redirects `GET /admin//` too, shadowing `/{p<admin//>}`,
    `/admin/` takes `/admin//` as is, for any method on its own schemes,
    and `/` answers `GET //` with a 404; a route tried with a regex takes
    one slash at most. A later route ending on a variable that may end on

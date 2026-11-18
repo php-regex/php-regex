@@ -583,8 +583,10 @@ route whose paths the earlier one matches in part and redirects for the
 rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
 route that takes no `GET` request redirects none. The router looks a route
 with no variable up by its path, every trailing slash of the request
-trimmed off, before it tries any route with a regex, unless an earlier
-route it tries with a regex matches that path: `/admin` redirects
+trimmed off, before it tries any route with a regex, unless a route it
+tries with a regex and sorts before it matches that path, the routes
+sorted by host first when one names a host, as the router's dumper reads
+them: `/admin` redirects
 `GET /admin//` too, so `/{p<admin//>}` after it is shadowed, `/admin/`
 takes `/admin//` as is, for any method on its own schemes, and `/` answers
 `GET //` with a 404. A route tried with a regex takes its path with one
