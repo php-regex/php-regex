@@ -48,6 +48,21 @@ final class ExtendedModeSuggestionTest extends TestCase
         $this->assertSame(0, preg_match('/ \d++(?!b) /x', '12b'), 'The possessive rewrite misses what the pattern matches.');
         $this->assertSame(1, preg_match('/ (?:[0-9]+b?)1 /x', '11'));
         $this->assertSame(0, preg_match('/ (?:\d++b?)1 /x', '11'), 'The possessive rewrite misses what the pattern matches.');
+        // The rewrites suggested match what the patterns match, where and
+        // what they match included.
+        $rewrites = [
+            ['/ [0-9]+(?!b) /x', '/ \d+(?!b) /x'],
+            ["/\n  a+(?!b)  # a run\n  [0-9]\n/x", "/\n  a+(?!b)  # a run\n  \\d\n/x"],
+        ];
+        foreach ($rewrites as [$pattern, $rewrite]) {
+            foreach (['12b', '1', 'aa1', 'aab1', 'ab1', 'a1b'] as $subject) {
+                $this->assertSame(
+                    [preg_match($pattern, $subject, $original, \PREG_OFFSET_CAPTURE), $original],
+                    [preg_match($rewrite, $subject, $rewritten, \PREG_OFFSET_CAPTURE), $rewritten],
+                    \sprintf('%s matches as %s does on "%s".', $rewrite, $pattern, $subject),
+                );
+            }
+        }
 
         $options = new OptimizerOptions(possessive: true, verifyWithAutomata: false);
         $optimized = static fn (array $suggestions): array => array_map(static fn (OptimizationResult $suggestion): string => $suggestion->optimized, $suggestions);
