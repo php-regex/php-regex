@@ -86,9 +86,10 @@ CHANGELOG
    later) and `#[Validate]` (3.2 and later) as Livewire hands it to Laravel,
    the property's rules: a string, given first or named `rule`, is split on
    every `|`, `#[Validate('regex:/^(a|b)$/')]` runs `/^(a`, where
-   `/^(a|b)$/` was linted. A list keeps one rule per element, and so do the
-   strings of two attributes that give rules to one property, which
-   Livewire merges into one list:
+   `/^(a|b)$/` was linted, and so is a value of keyed rules. A list keeps
+   one rule per element, and so do the strings two attributes of one
+   component give one key, whatever property each marks, which Livewire
+   merges into one list:
    `'nullable|regex:/^a$/'` there is one rule Laravel names
    `nullable|regex`, and no pattern is linted.
  * `regex:lint` reads validation rules from the string literals of the PHP

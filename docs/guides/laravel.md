@@ -398,11 +398,13 @@ alone: `Rule::anyOf(['regex:/^(a|b)$/'])` hands `/^(a` to `preg_match()`,
 where `Rule::anyOf([['regex:/^(a|b)$/']])` keeps its `|`. The rule of
 Livewire's `#[Rule]` (Livewire 3.0 and later) or `#[Validate]` (3.2 and
 later) is the rules string of the property it marks:
-`#[Validate('regex:/^(a|b)$/')]` hands `/^(a` to `preg_match()`, unless a
-second attribute of the property gives it rules too, which Livewire merges
-into one list: each string is then one rule, and `'nullable|regex:/^a$/'`
-one rule Laravel names `nullable|regex`. A string another call takes is one
-rule:
+`#[Validate('regex:/^(a|b)$/')]` hands `/^(a` to `preg_match()`, and so
+does the key of the rules an attribute is given keyed,
+`#[Validate(['code' => 'regex:/^(a|b)$/'])]`. Livewire merges the rules
+all the attributes of a component give, though: where two of them give
+rules to one key, whatever property each marks, that key holds one list,
+each string is one rule, and `'nullable|regex:/^a$/'` is one rule Laravel
+names `nullable|regex`. A string another call takes is one rule:
 `array_push($rules['code'], 'regex:/^(a|b)$/')` appends one element, and
 one element with a rule before the regex one, `'nullable|regex:/^a$/'`, is a
 rule Laravel names `nullable|regex`, which runs no pattern. The

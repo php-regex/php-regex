@@ -67,8 +67,8 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * Livewire's attributes that hand their rule, given first or named
      * "rule", to Laravel as the rules of the property they mark, in lower
      * case (Livewire 3.0 to 4.x). Livewire merges the rules of all the
-     * attributes of one property with array_merge_recursive(): two of them
-     * make one list, each string one rule.
+     * attributes of one component with array_merge_recursive(): what two of
+     * them give one key makes one list, each string one rule.
      */
     private const LIVEWIRE_RULE_ATTRIBUTES = ['livewire\attributes\validate', 'livewire\attributes\rule'];
 
@@ -330,15 +330,15 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * as rules (RULES_ARGUMENTS) or an element of the array of rule sets a
      * call takes (RULE_SETS_ARGUMENTS). One element is pushed
      * ($rules['a'][] = '…'), appended by array_push() or array_unshift(), or
-     * the rule of one of two Livewire attributes of a property: Laravel
-     * reads "nullable|regex:/a/" there as one rule named "nullable|regex",
-     * and runs no pattern. Parentheses that only group the expression, and
-     * comments, change nothing.
+     * a rule Livewire's attributes give one key of a component with others:
+     * Laravel reads "nullable|regex:/a/" there as one rule named
+     * "nullable|regex", and runs no pattern. Parentheses that only group the
+     * expression, and comments, change nothing.
      *
-     * @param array<int, array{int, string, int}|string>                                             $tokens
-     * @param int                                                                                    $start   the first token of the expression
-     * @param array<int, int>                                                                        $offsets
-     * @param array{rules: array<int, true>, grouping: array<int, true>, elements: array<int, true>} $reading what the tokens of the file say, from tokenReading()
+     * @param array<int, array{int, string, int}|string>                                                                       $tokens
+     * @param int                                                                                                              $start   the first token of the expression
+     * @param array<int, int>                                                                                                  $offsets
+     * @param array{rules: array<int, true>, grouping: array<int, true>, elements: array<int, true>, listed: array<int, true>} $reading what the tokens of the file say, from tokenReading()
      */
     private static function rulesStringContext(array $tokens, int $start, array $offsets, array $reading): ?bool
     {
@@ -348,7 +348,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         }
 
         if (null !== $before && PhpTokens::isDoubleArrow($tokens[$before])) {
-            return true;
+            return !isset($reading['listed'][$offsets[$before]]);
         }
 
         // "=", ".=" and "??=" assign; "==" and the other comparisons do not.
@@ -373,15 +373,17 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * rule sets a call takes, of those that start one element, an argument
      * array_push() or array_unshift() appends, and of the parentheses that
      * only group what they hold. A token is in the innermost bracket around
-     * it that does not only group. The rule of a Livewire attribute is a
-     * rules string where it is the only one of its declaration, and one
-     * element of the list Livewire merges where it is one of several.
+     * it that does not only group. The rule of a Livewire attribute, or an
+     * element of the keyed rules it is given, is a rules string where it is
+     * the only rule Livewire's attributes give its key in the component, and
+     * one element of the list Livewire merges where it is one of several:
+     * "listed" holds the "=>" of each such keyed element.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $offsets
      * @param array<int, int>                            $closers the closing bracket of each opening one
      *
-     * @return array{rules: array<int, true>, grouping: array<int, true>, elements: array<int, true>}
+     * @return array{rules: array<int, true>, grouping: array<int, true>, elements: array<int, true>, listed: array<int, true>}
      */
     private static function tokenReading(array $tokens, array $offsets, array $closers): array
     {
@@ -390,9 +392,8 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         $elements = [];
         $count = \count($tokens);
         $context = new NameResolutionContext();
-        // The closing bracket of the last attribute group of the run being
-        // read, and how many of Livewire's rule attributes the run holds.
-        $run = [-1, 0];
+        // The rules Livewire lists, read once the file shows an attribute.
+        $lists = null;
         // Each open bracket, null where it only groups: the arguments it
         // takes as rules, as an array of rule sets and as one element,
         // whether it appends its arguments after the first, whether it is
@@ -426,8 +427,8 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             if (PhpTokens::opensNesting($token)) {
                 $previous = PhpTokens::previousSignificant($tokens, $index - 1);
                 $attribute = \is_array($token) && \T_ATTRIBUTE === $token[0];
-                if ($attribute && $index > $run[0]) {
-                    $run = self::livewireRun($tokens, $index, $closers, $context);
+                if ($attribute) {
+                    $lists ??= self::livewireLists($tokens, $closers);
                 }
 
                 if (self::isGrouping($tokens, $index)) {
@@ -443,14 +444,15 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                     }
                     $inAttribute = null !== $outer && $outer['attribute'];
                     $livewire = $call && $inAttribute && self::isLivewireRuleAttribute($tokens[$previous], $context);
+                    $listed = $livewire && isset($lists['rules'][self::ruleArgument($tokens, $index, $closers) ?? -1]);
                     $brackets[] = [
                         'rules' => match (true) {
                             !$call || ($inAttribute && !$livewire) => [],
-                            $livewire => 1 === $run[1] ? [0 => 'rule'] : [],
+                            $livewire => $listed ? [] : [0 => 'rule'],
                             default => self::rulesArgumentsOf($tokens, $previous),
                         },
                         'sets' => $call ? self::ruleSetsArgumentsOf($tokens, $previous, $context) : [],
-                        'elements' => $livewire && $run[1] > 1 ? [0 => 'rule'] : [],
+                        'elements' => $listed ? [0 => 'rule'] : [],
                         'appends' => $call && self::appendsElements($tokens, $previous),
                         'holdsSets' => $array && null !== $outer && self::isOneOf($outer['sets'], $outer['position'], $outer['name']),
                         'attribute' => $attribute,
@@ -491,26 +493,95 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             }
         }
 
-        return ['rules' => $rules, 'grouping' => $grouping, 'elements' => $elements];
+        $listed = [];
+        foreach ($lists['arrows'] ?? [] as $arrow => $true) {
+            $listed[$offsets[$arrow]] = $true;
+        }
+
+        return ['rules' => $rules, 'grouping' => $grouping, 'elements' => $elements, 'listed' => $listed];
     }
 
     /**
-     * The closing bracket of the last attribute group of the run that opens
-     * at $start, groups that follow one another, and how many of Livewire's
-     * rule attributes the run holds give rules to the property the run
-     * marks: BaseValidate::boot() gives a keyed array as it is, keys and
-     * all, and any other rule under the name of the property.
+     * The rules Livewire's attributes give a key of their component that
+     * others give too. BaseValidate::boot() gives a keyed array as it is,
+     * keys and all, and any other rule under the name of the property the
+     * attribute marks; HandlesValidation::getRules() merges what all the
+     * attributes of the component give with array_merge_recursive(), which
+     * makes one list of what two or more give one key: each string of it is
+     * one rule. A property's component is the innermost body around it.
+     * Returned: the first token of each such rule an attribute is given,
+     * and the "=>" of each such element of the keyed rules it is given.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $closers
      *
-     * @return array{int, int}
+     * @return array{rules: array<int, true>, arrows: array<int, true>}
+     */
+    private static function livewireLists(array $tokens, array $closers): array
+    {
+        $count = \count($tokens);
+        $context = new NameResolutionContext();
+        // The opening brace of each body the walk is in.
+        $bodies = [];
+        // Each rule given: its component, its key, its token and whether
+        // that token is the "=>" of a keyed element.
+        $given = [];
+        $counts = [];
+        for ($index = 0; $index < $count; $index++) {
+            $token = $tokens[$index];
+            if (\is_array($token) && \T_NAMESPACE === $token[0]) {
+                TokenNameResolver::readNamespace($tokens, $index, $count, $context);
+            } elseif (\is_array($token) && \T_USE === $token[0]) {
+                TokenNameResolver::readUse($tokens, $index, $count, $context);
+            }
+
+            if ('{' === $token || (\is_array($token) && \in_array($token[0], [\T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES], true))) {
+                $bodies[] = $index;
+            } elseif ('}' === $token) {
+                array_pop($bodies);
+            } elseif (\is_array($token) && \T_ATTRIBUTE === $token[0]) {
+                $component = [] === $bodies ? -1 : $bodies[\count($bodies) - 1];
+                [$index, $rules, $property] = self::livewireRun($tokens, $index, $closers, $context);
+                foreach ($rules as $rule) {
+                    $keys = self::arrayKeys($tokens, $rule, $closers);
+                    if (null === $keys && null !== $property) {
+                        $given[] = [$component, $property, $rule, false];
+                    }
+                    foreach ($keys ?? [] as $arrow => $key) {
+                        $given[] = [$component, $key, $arrow, true];
+                    }
+                }
+            }
+        }
+
+        foreach ($given as [$component, $key]) {
+            $counts[$component][$key] = ($counts[$component][$key] ?? 0) + 1;
+        }
+
+        $lists = ['rules' => [], 'arrows' => []];
+        foreach ($given as [$component, $key, $token, $arrow]) {
+            if ($counts[$component][$key] > 1) {
+                $lists[$arrow ? 'arrows' : 'rules'][$token] = true;
+            }
+        }
+
+        return $lists;
+    }
+
+    /**
+     * The closing bracket of the last attribute group of the run that opens
+     * at $start, groups that follow one another, the first token of the rule
+     * each of Livewire's rule attributes of the run is given, and the
+     * property the run marks, null where it marks none.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     *
+     * @return array{int, list<int>, ?string}
      */
     private static function livewireRun(array $tokens, int $start, array $closers, NameResolutionContext $context): array
     {
         $count = \count($tokens);
-        // The rule each of Livewire's attributes is given, by the index of
-        // its first token; null where it is given none.
         $rules = [];
         $end = $start;
         for ($group = $start; null !== $group; $group = null !== $next && \is_array($tokens[$next]) && \T_ATTRIBUTE === $tokens[$next][0] ? $next : null) {
@@ -519,8 +590,9 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             // are stepped over.
             for ($index = $group + 1; $index < $end; $index++) {
                 $open = PhpTokens::nextSignificant($tokens, $index + 1, $end);
-                if (null !== $open && '(' === $tokens[$open] && self::isLivewireRuleAttribute($tokens[$index], $context)) {
-                    $rules[] = self::ruleArgument($tokens, $open, $closers);
+                $rule = null !== $open && '(' === $tokens[$open] && self::isLivewireRuleAttribute($tokens[$index], $context) ? self::ruleArgument($tokens, $open, $closers) : null;
+                if (null !== $rule) {
+                    $rules[] = $rule;
                 }
 
                 $index = $closers[$index] ?? $index;
@@ -537,13 +609,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             }
         }
 
-        $attributes = 0;
-        foreach ($rules as $rule) {
-            $keys = null === $rule ? [] : self::arrayKeys($tokens, $rule, $closers);
-            $attributes += null === $rule ? 0 : (int) (null === $keys || \in_array($property, $keys, true));
-        }
-
-        return [$end, $attributes];
+        return [$end, $rules, $property];
     }
 
     /**
@@ -577,14 +643,15 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     }
 
     /**
-     * The keys of the array literal at $start, decoded, where its first
-     * element is given a key, as Livewire tells keyed rules from a list;
-     * null for anything else. A key that is no literal is left out.
+     * The keys of the array literal at $start, decoded, by the "=>" that
+     * gives each its element, where its first element is given a key, as
+     * Livewire tells keyed rules from a list; null for anything else. A key
+     * that is no literal is left out.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $closers
      *
-     * @return list<string>|null
+     * @return array<int, string>|null
      */
     private static function arrayKeys(array $tokens, int $start, array $closers): ?array
     {
@@ -604,7 +671,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 $keyed = true;
                 $key = PhpTokens::previousSignificant($tokens, $index - 1);
                 if (null !== $key && \is_array($tokens[$key]) && \T_CONSTANT_ENCAPSED_STRING === $tokens[$key][0]) {
-                    $keys[] = PhpTokens::stringValue($tokens[$key][1]);
+                    $keys[$index] = PhpTokens::stringValue($tokens[$key][1]);
                 }
             } elseif (',' === $tokens[$index] && !$keyed) {
                 // The first element holds no key: a list.

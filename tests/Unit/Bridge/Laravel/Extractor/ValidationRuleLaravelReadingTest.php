@@ -1009,20 +1009,28 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             'expected' => '/^(a',
             'compiles' => false,
         ];
+        yield 'a string for a key another component of the file gives too' => [
+            'code' => "#[Validate('required')]\npublic \$code;\n}\nfinal class Dock extends Component\n{\n#[Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
     }
 
     /**
-     * The strings of two Livewire attributes of one property reach Laravel
-     * as the elements of the list array_merge_recursive() makes of them:
-     * each is one rule, which Laravel does not split. "nullable|regex:/^c$/"
-     * is then one rule named "nullable|regex", and runs no pattern.
+     * The strings Livewire attributes give one key of a component reach
+     * Laravel as the elements of the list array_merge_recursive() makes of
+     * them, whatever property the attributes mark and whether the key is
+     * written: each is one rule, which Laravel does not split.
+     * "nullable|regex:/^c$/" is then one rule named "nullable|regex", and
+     * runs no pattern.
      *
      * @param \Closure(): array<mixed> $rules    the rules as Livewire hands them to Laravel
      * @param list<string>             $expected
      */
     #[Test]
     #[DataProvider('provideMergedLivewireAttributes')]
-    public function test_the_rules_of_two_livewire_attributes_of_one_property_are_one_element_each(string $code, \Closure $rules, array $expected): void
+    public function test_the_rules_livewire_attributes_give_one_key_are_one_element_each(string $code, \Closure $rules, array $expected): void
     {
         $this->assertSame($expected, self::laravelPatterns($rules()));
         $this->assertSame(array_fill(0, \count($expected), true), array_map(EngineProbe::compiles(...), $expected));
@@ -1057,6 +1065,26 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             'code' => "#[Validate(['code' => 'required'])]\n#[Validate('regex:/^(f|g)$/')]\npublic \$code;",
             'rules' => static fn (): array => array_merge_recursive(['code' => 'required'], ['code' => 'regex:/^(f|g)$/']),
             'expected' => ['/^(f|g)$/'],
+        ];
+        yield 'keyed rules for the property beside a string' => [
+            'code' => "#[Validate(['code' => 'regex:/^(h|i)$/'])]\n#[Validate('required')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(h|i)$/'], ['code' => 'required']),
+            'expected' => ['/^(h|i)$/'],
+        ];
+        yield 'keyed rules for a key another property gives too' => [
+            'code' => "#[Validate(['other' => 'regex:/^(j|k)$/'])]\npublic \$code;\n#[Validate('required')]\npublic \$other;",
+            'rules' => static fn (): array => array_merge_recursive(['other' => 'regex:/^(j|k)$/'], ['other' => 'required']),
+            'expected' => ['/^(j|k)$/'],
+        ];
+        yield 'a string for a property the keyed rules of another give too' => [
+            'code' => "#[Validate('regex:/^(l|m)$/')]\npublic \$code;\n#[Validate(['code' => 'required'])]\npublic \$other;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(l|m)$/'], ['code' => 'required']),
+            'expected' => ['/^(l|m)$/'],
+        ];
+        yield 'a string beside an empty list' => [
+            'code' => "#[Validate([])]\n#[Validate('regex:/^(n|o)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => []], ['code' => 'regex:/^(n|o)$/']),
+            'expected' => ['/^(n|o)$/'],
         ];
     }
 
