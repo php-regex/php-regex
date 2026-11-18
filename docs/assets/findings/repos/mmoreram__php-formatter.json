@@ -738,6 +738,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\s+use\\s+?[\\w\\\\\\,\\s]+?;)\" at offset 7 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",

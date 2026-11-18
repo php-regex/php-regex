@@ -1,6 +1,6 @@
 {
     "repo": "php/php-src",
-    "sha": "4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b",
+    "sha": "0f55811bca0bdc31b80ce24c810ebc5bd9819929",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L799-L805",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L799-L805",
             "snippet": [
                 {
                     "number": 799,
@@ -181,7 +181,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L800-L806",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L800-L806",
             "snippet": [
                 {
                     "number": 800,
@@ -361,7 +361,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L801-L807",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L801-L807",
             "snippet": [
                 {
                     "number": 801,
@@ -581,7 +581,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L836-L842",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L836-L842",
             "snippet": [
                 {
                     "number": 836,
@@ -729,7 +729,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L837-L843",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L837-L843",
             "snippet": [
                 {
                     "number": 837,
@@ -909,7 +909,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L838-L844",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L838-L844",
             "snippet": [
                 {
                     "number": 838,
@@ -1129,7 +1129,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L874-L880",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L874-L880",
             "snippet": [
                 {
                     "number": 874,
@@ -1277,7 +1277,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L875-L881",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L875-L881",
             "snippet": [
                 {
                     "number": 875,
@@ -1457,7 +1457,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L876-L882",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L876-L882",
             "snippet": [
                 {
                     "number": 876,
@@ -1677,7 +1677,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L898-L904",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L898-L904",
             "snippet": [
                 {
                     "number": 898,
@@ -1825,7 +1825,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L899-L905",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L899-L905",
             "snippet": [
                 {
                     "number": 899,
@@ -2005,7 +2005,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L900-L906",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L900-L906",
             "snippet": [
                 {
                     "number": 900,
@@ -2220,7 +2220,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L2701-L2707",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L2701-L2707",
             "snippet": [
                 {
                     "number": 2701,
@@ -2320,7 +2320,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/Zend/zend_vm_gen.php#L2852-L2858",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/Zend/zend_vm_gen.php#L2852-L2858",
             "snippet": [
                 {
                     "number": 2852,
@@ -2509,7 +2509,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/build/gen_stub.php#L4844-L4850",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/build/gen_stub.php#L4844-L4850",
             "snippet": [
                 {
                     "number": 4844,
@@ -2872,7 +2872,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/build/gen_stub.php#L5696-L5702",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/build/gen_stub.php#L5696-L5702",
             "snippet": [
                 {
                     "number": 5696,
@@ -3063,7 +3063,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/build/gen_stub.php#L6042-L6048",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/build/gen_stub.php#L6042-L6048",
             "snippet": [
                 {
                     "number": 6042,
@@ -3243,7 +3243,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/ext/curl/sync-constants.php#L246-L252",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/ext/curl/sync-constants.php#L246-L252",
             "snippet": [
                 {
                     "number": 246,
@@ -3722,7 +3722,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/run-tests.php#L3977-L3983",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/run-tests.php#L3977-L3983",
             "snippet": [
                 {
                     "number": 3977,
@@ -3950,7 +3950,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/scripts/dev/bless_tests.php#L62-L68",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/scripts/dev/bless_tests.php#L62-L68",
             "snippet": [
                 {
                     "number": 62,
@@ -4134,7 +4134,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/scripts/dev/bless_tests.php#L63-L69",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/scripts/dev/bless_tests.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -4306,8 +4306,15 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"0 0\" . \" , 0\" x n . \"!;\" Replayed on PCRE2 10.49: preg_match fails from length 37 (backtrack_limit 100000, JIT off). The risky part is: \\** Hotspot offsets: 107-110 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"0 0\" . \" , 0\" x n . \"!;\" Replayed on PCRE2 10.49: preg_match fails from length 37 (backtrack_limit 100000, JIT off). The risky part is: \\** Hotspot offsets: 107-110 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\s*,\\s*\\**\\s*\\w+(?:\\[\\s*\\w*…\" at offset 97 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
             ],
             "rewrite": null,
@@ -4321,7 +4328,7 @@
                 "limit": 100000
             },
             "subject": "0 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0!;",
-            "permalink": "https://github.com/php/php-src/blob/4bc158b509a3c8d1ae1468e8b42cc71e0c00f63b/scripts/dev/check_parameters.php#L97-L103",
+            "permalink": "https://github.com/php/php-src/blob/0f55811bca0bdc31b80ce24c810ebc5bd9819929/scripts/dev/check_parameters.php#L97-L103",
             "snippet": [
                 {
                     "number": 97,

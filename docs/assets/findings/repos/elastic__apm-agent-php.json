@@ -1,6 +1,6 @@
 {
     "repo": "elastic/apm-agent-php",
-    "sha": "b822ba03083620d100e5849433a00678e6393e0e",
+    "sha": "43dc3ebf2aec4bc38aa8db2f610e5c8cafe18832",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elastic/apm-agent-php/blob/b822ba03083620d100e5849433a00678e6393e0e/agent/extension_phpt_test/scripts/run-tests-7.2.php#L610-L616",
+            "permalink": "https://github.com/elastic/apm-agent-php/blob/43dc3ebf2aec4bc38aa8db2f610e5c8cafe18832/agent/extension_phpt_test/scripts/run-tests-7.2.php#L610-L616",
             "snippet": [
                 {
                     "number": 610,
@@ -251,7 +251,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elastic/apm-agent-php/blob/b822ba03083620d100e5849433a00678e6393e0e/agent/extension_phpt_test/scripts/run-tests-7.3.php#L3001-L3007",
+            "permalink": "https://github.com/elastic/apm-agent-php/blob/43dc3ebf2aec4bc38aa8db2f610e5c8cafe18832/agent/extension_phpt_test/scripts/run-tests-7.3.php#L3001-L3007",
             "snippet": [
                 {
                     "number": 3001,
@@ -474,7 +474,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elastic/apm-agent-php/blob/b822ba03083620d100e5849433a00678e6393e0e/agent/extension_phpt_test/scripts/run-tests-7.4.php#L3637-L3643",
+            "permalink": "https://github.com/elastic/apm-agent-php/blob/43dc3ebf2aec4bc38aa8db2f610e5c8cafe18832/agent/extension_phpt_test/scripts/run-tests-7.4.php#L3637-L3643",
             "snippet": [
                 {
                     "number": 3637,
@@ -697,7 +697,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elastic/apm-agent-php/blob/b822ba03083620d100e5849433a00678e6393e0e/agent/extension_phpt_test/scripts/run-tests-8.0.php#L3728-L3734",
+            "permalink": "https://github.com/elastic/apm-agent-php/blob/43dc3ebf2aec4bc38aa8db2f610e5c8cafe18832/agent/extension_phpt_test/scripts/run-tests-8.0.php#L3728-L3734",
             "snippet": [
                 {
                     "number": 3728,
@@ -920,7 +920,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elastic/apm-agent-php/blob/b822ba03083620d100e5849433a00678e6393e0e/agent/extension_phpt_test/scripts/run-tests-8.1.php#L3829-L3835",
+            "permalink": "https://github.com/elastic/apm-agent-php/blob/43dc3ebf2aec4bc38aa8db2f610e5c8cafe18832/agent/extension_phpt_test/scripts/run-tests-8.1.php#L3829-L3835",
             "snippet": [
                 {
                     "number": 3829,
@@ -1143,7 +1143,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elastic/apm-agent-php/blob/b822ba03083620d100e5849433a00678e6393e0e/agent/extension_phpt_test/scripts/run-tests-8.2.php#L3766-L3772",
+            "permalink": "https://github.com/elastic/apm-agent-php/blob/43dc3ebf2aec4bc38aa8db2f610e5c8cafe18832/agent/extension_phpt_test/scripts/run-tests-8.2.php#L3766-L3772",
             "snippet": [
                 {
                     "number": 3766,
@@ -1371,7 +1371,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elastic/apm-agent-php/blob/b822ba03083620d100e5849433a00678e6393e0e/agent/php/ElasticApm/Impl/MetadataDiscoverer.php#L198-L204",
+            "permalink": "https://github.com/elastic/apm-agent-php/blob/43dc3ebf2aec4bc38aa8db2f610e5c8cafe18832/agent/php/ElasticApm/Impl/MetadataDiscoverer.php#L198-L204",
             "snippet": [
                 {
                     "number": 198,

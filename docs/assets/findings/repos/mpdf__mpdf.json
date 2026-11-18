@@ -9031,6 +9031,13 @@
                     "message": "Nested quantifiers in capturing group 1 \"([CR]J?((Z?F)?[N]{0,2})?[ZJ]?G…\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in capturing group 12 \"([ZJ]{0,3}MN?(H|JHJR)?)\" can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
             ],
             "rewrite": null,

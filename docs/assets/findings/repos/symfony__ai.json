@@ -1,6 +1,6 @@
 {
     "repo": "symfony/ai",
-    "sha": "999d5fbeea73cb9bbb3a22b069ee890847655ac7",
+    "sha": "56d6d587b595ce10e3fe4f22db95dba43271e467",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/ai/blob/999d5fbeea73cb9bbb3a22b069ee890847655ac7/.github/affected-packages.php#L138-L144",
+            "permalink": "https://github.com/symfony/ai/blob/56d6d587b595ce10e3fe4f22db95dba43271e467/.github/affected-packages.php#L138-L144",
             "snippet": [
                 {
                     "number": 138,
@@ -199,7 +199,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/ai/blob/999d5fbeea73cb9bbb3a22b069ee890847655ac7/src/platform/src/Bridge/OpenAi/Gpt/ResultConverter.php#L75-L81",
+            "permalink": "https://github.com/symfony/ai/blob/56d6d587b595ce10e3fe4f22db95dba43271e467/src/platform/src/Bridge/OpenAi/Gpt/ResultConverter.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,

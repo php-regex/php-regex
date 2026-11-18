@@ -1,6 +1,6 @@
 {
     "repo": "octobercms/october",
-    "sha": "f6914ea283c3820476fde0b587f17ba2ef12840a",
+    "sha": "84ddc71413b54522d302ccb62b91206403078e5a",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/classes/CodeParser.php#L100-L106",
+            "permalink": "https://github.com/octobercms/october/blob/84ddc71413b54522d302ccb62b91206403078e5a/modules/cms/classes/CodeParser.php#L100-L106",
             "snippet": [
                 {
                     "number": 100,
@@ -296,7 +296,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/classes/PageManager.php#L197-L203",
+            "permalink": "https://github.com/octobercms/october/blob/84ddc71413b54522d302ccb62b91206403078e5a/modules/cms/classes/PageManager.php#L197-L203",
             "snippet": [
                 {
                     "number": 197,
@@ -475,428 +475,6 @@
             ]
         },
         {
-            "id": "f-b7dd682aa5",
-            "file": "modules/cms/classes/controller/HasAjaxRequests.php",
-            "line": 130,
-            "column": 29,
-            "pattern": "/^(?:\\w+\\:{2})?on[A-Z]{1}[\\w+]*$/",
-            "source": "preg_match()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.useless",
-                    "message": "Quantifier is redundant; it matches exactly once.",
-                    "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.charclass.literalMetachar",
-                    "message": "\"+\" is a literal character inside a character class, not a quantifier.",
-                    "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
-                }
-            ],
-            "rewrite": {
-                "optimized": "/^(?:\\w+:{2})?on[A-Z][\\w+]*$/",
-                "changes": [
-                    "Removed a quantifier that repeats once."
-                ]
-            },
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/classes/controller/HasAjaxRequests.php#L127-L133",
-            "snippet": [
-                {
-                    "number": 127,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 128,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        try {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 129,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            // Validate the handler name",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 130,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "            if (!preg_match(",
-                            ""
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "^",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "(?:",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "\\w",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "+",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "\\:",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "{2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "on",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "A",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "Z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{1}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\w",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "+",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "$",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            ", $handler)) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 131,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "                throw new CmsException(Lang::get('cms::lang.ajax_handler.invalid_name', ['name'=>e($handler)]));",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 132,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            }",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 133,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "id": "f-b7dd682aa5-2",
-            "file": "modules/cms/classes/controller/HasAjaxRequests.php",
-            "line": 238,
-            "column": 25,
-            "pattern": "/^(?:\\w+\\:{2})?on[A-Z]{1}[\\w+]*$/",
-            "source": "preg_match()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.useless",
-                    "message": "Quantifier is redundant; it matches exactly once.",
-                    "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.charclass.literalMetachar",
-                    "message": "\"+\" is a literal character inside a character class, not a quantifier.",
-                    "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
-                }
-            ],
-            "rewrite": {
-                "optimized": "/^(?:\\w+:{2})?on[A-Z][\\w+]*$/",
-                "changes": [
-                    "Removed a quantifier that repeats once."
-                ]
-            },
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/classes/controller/HasAjaxRequests.php#L235-L241",
-            "snippet": [
-                {
-                    "number": 235,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        }",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 236,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 237,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        // Validate the handler name",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 238,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "        if (!preg_match(",
-                            ""
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "^",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "(?:",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "\\w",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "+",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "\\:",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "{2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "on",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "A",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "Z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{1}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\w",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "+",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "$",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            ", $handler)) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 239,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            return null;",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 240,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        }",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 241,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
             "id": "f-79fff1d6a7",
             "file": "modules/cms/twig/DebugExtension.php",
             "line": 519,
@@ -929,7 +507,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/twig/DebugExtension.php#L516-L522",
+            "permalink": "https://github.com/octobercms/october/blob/84ddc71413b54522d302ccb62b91206403078e5a/modules/cms/twig/DebugExtension.php#L516-L522",
             "snippet": [
                 {
                     "number": 516,
@@ -1112,7 +690,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/cms/twig/DebugExtension.php#L520-L526",
+            "permalink": "https://github.com/octobercms/october/blob/84ddc71413b54522d302ccb62b91206403078e5a/modules/cms/twig/DebugExtension.php#L520-L526",
             "snippet": [
                 {
                     "number": 520,
@@ -1287,7 +865,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/f6914ea283c3820476fde0b587f17ba2ef12840a/modules/media/helpers/MediaView.php#L56-L62",
+            "permalink": "https://github.com/octobercms/october/blob/84ddc71413b54522d302ccb62b91206403078e5a/modules/media/helpers/MediaView.php#L56-L62",
             "snippet": [
                 {
                     "number": 56,

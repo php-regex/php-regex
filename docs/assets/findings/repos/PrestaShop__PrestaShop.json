@@ -1,6 +1,6 @@
 {
     "repo": "PrestaShop/PrestaShop",
-    "sha": "6297dba61fc43de28f15e3057d3d18eb5ccd68fd",
+    "sha": "35bcc135403b7694bb982e3ce4ca9f8c322e2b15",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/.ai/bin/check-conventions.php#L50-L56",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/.ai/bin/check-conventions.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -159,7 +159,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/.ai/bin/check-conventions.php#L351-L357",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/.ai/bin/check-conventions.php#L351-L357",
             "snippet": [
                 {
                     "number": 351,
@@ -357,7 +357,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/AddressFormat.php#L94-L100",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/AddressFormat.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -509,7 +509,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Connection.php#L125-L131",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Connection.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -604,7 +604,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Cookie.php#L137-L143",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Cookie.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -998,7 +998,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Cookie.php#L142-L148",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Cookie.php#L142-L148",
             "snippet": [
                 {
                     "number": 142,
@@ -1093,7 +1093,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Cookie.php#L157-L163",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Cookie.php#L157-L163",
             "snippet": [
                 {
                     "number": 157,
@@ -1300,7 +1300,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Dispatcher.php#L1000-L1006",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Dispatcher.php#L1000-L1006",
             "snippet": [
                 {
                     "number": 1000,
@@ -1467,7 +1467,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Search.php#L192-L198",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Search.php#L192-L198",
             "snippet": [
                 {
                     "number": 192,
@@ -1562,7 +1562,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Search.php#L193-L199",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Search.php#L193-L199",
             "snippet": [
                 {
                     "number": 193,
@@ -1657,7 +1657,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Tools.php#L413-L419",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Tools.php#L413-L419",
             "snippet": [
                 {
                     "number": 413,
@@ -1792,7 +1792,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Tools.php#L413-L419",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Tools.php#L413-L419",
             "snippet": [
                 {
                     "number": 413,
@@ -1987,7 +1987,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Tools.php#L414-L420",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Tools.php#L414-L420",
             "snippet": [
                 {
                     "number": 414,
@@ -2118,7 +2118,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Tools.php#L414-L420",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Tools.php#L414-L420",
             "snippet": [
                 {
                     "number": 414,
@@ -2253,7 +2253,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Tools.php#L1412-L1418",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Tools.php#L1412-L1418",
             "snippet": [
                 {
                     "number": 1412,
@@ -2465,7 +2465,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Tools.php#L1415-L1421",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Tools.php#L1415-L1421",
             "snippet": [
                 {
                     "number": 1415,
@@ -2696,7 +2696,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Tools.php#L1416-L1422",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Tools.php#L1416-L1422",
             "snippet": [
                 {
                     "number": 1416,
@@ -2860,7 +2860,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Tools.php#L1418-L1424",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Tools.php#L1418-L1424",
             "snippet": [
                 {
                     "number": 1418,
@@ -3039,7 +3039,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Tools.php#L1471-L1477",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Tools.php#L1471-L1477",
             "snippet": [
                 {
                     "number": 1471,
@@ -3198,7 +3198,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Validate.php#L370-L376",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Validate.php#L370-L376",
             "snippet": [
                 {
                     "number": 370,
@@ -3340,7 +3340,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Validate.php#L475-L481",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Validate.php#L475-L481",
             "snippet": [
                 {
                     "number": 475,
@@ -3567,7 +3567,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Validate.php#L548-L554",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Validate.php#L548-L554",
             "snippet": [
                 {
                     "number": 548,
@@ -3722,7 +3722,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Validate.php#L548-L554",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Validate.php#L548-L554",
             "snippet": [
                 {
                     "number": 548,
@@ -3822,7 +3822,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Validate.php#L548-L554",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Validate.php#L548-L554",
             "snippet": [
                 {
                     "number": 548,
@@ -3961,7 +3961,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Validate.php#L552-L558",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Validate.php#L552-L558",
             "snippet": [
                 {
                     "number": 552,
@@ -4152,7 +4152,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Validate.php#L971-L977",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Validate.php#L971-L977",
             "snippet": [
                 {
                     "number": 971,
@@ -4307,7 +4307,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Validate.php#L1076-L1082",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Validate.php#L1076-L1082",
             "snippet": [
                 {
                     "number": 1076,
@@ -4462,11 +4462,11 @@
             ]
         },
         {
-            "id": "f-c682f43eac",
+            "id": "f-0433e05ea6",
             "file": "classes/Validate.php",
-            "line": 1347,
-            "column": 45,
-            "pattern": "/^\\-?[0-9]{1,8}\\.[0-9]{1,8}$/s",
+            "line": 1353,
+            "column": 34,
+            "pattern": "/^\\-?[0-9]{1,3}\\.[0-9]{1,8}$/s",
             "source": "preg_match()",
             "location": null,
             "level": "warn",
@@ -4480,51 +4480,51 @@
                 }
             ],
             "rewrite": {
-                "optimized": "/^\\-?[0-9]{1,8}\\.[0-9]{1,8}$/",
+                "optimized": "/^\\-?[0-9]{1,3}\\.[0-9]{1,8}$/",
                 "changes": [
                     "Removed a flag nothing in the pattern reads."
                 ]
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Validate.php#L1344-L1350",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Validate.php#L1350-L1356",
             "snippet": [
                 {
-                    "number": 1344,
+                    "number": 1350,
                     "focus": false,
                     "runs": [
                         [
-                            "     */",
+                            "            return true;",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 1345,
+                    "number": 1351,
                     "focus": false,
                     "runs": [
                         [
-                            "    public static function isCoordinate($data)",
+                            "        }",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 1346,
+                    "number": 1352,
                     "focus": false,
                     "runs": [
                         [
-                            "    {",
+                            "",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 1347,
+                    "number": 1353,
                     "focus": true,
                     "runs": [
                         [
-                            "        return $data === null || preg_match(",
+                            "        return (bool) preg_match(",
                             ""
                         ],
                         [
@@ -4568,7 +4568,7 @@
                             "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
-                            "{1,8}",
+                            "{1,3}",
                             "pg-snippet-pattern pg-tok-quantifier"
                         ],
                         [
@@ -4616,13 +4616,23 @@
                             "pg-snippet-pattern pg-snippet-quote"
                         ],
                         [
-                            ", $data);",
+                            ", (string) $data)",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 1348,
+                    "number": 1354,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            && abs((float) $data) <= $maxAbsoluteValue;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1355,
                     "focus": false,
                     "runs": [
                         [
@@ -4632,21 +4642,11 @@
                     ]
                 },
                 {
-                    "number": 1349,
+                    "number": 1356,
                     "focus": false,
                     "runs": [
                         [
                             "",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1350,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "    /**",
                             ""
                         ]
                     ]
@@ -4656,7 +4656,7 @@
         {
             "id": "f-fd04238d14",
             "file": "classes/Validate.php",
-            "line": 1359,
+            "line": 1366,
             "column": 34,
             "pattern": "/^[a-zA-Z]{2,3}$/s",
             "source": "preg_match()",
@@ -4679,10 +4679,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Validate.php#L1356-L1362",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Validate.php#L1363-L1369",
             "snippet": [
                 {
-                    "number": 1356,
+                    "number": 1363,
                     "focus": false,
                     "runs": [
                         [
@@ -4692,7 +4692,7 @@
                     ]
                 },
                 {
-                    "number": 1357,
+                    "number": 1364,
                     "focus": false,
                     "runs": [
                         [
@@ -4702,7 +4702,7 @@
                     ]
                 },
                 {
-                    "number": 1358,
+                    "number": 1365,
                     "focus": false,
                     "runs": [
                         [
@@ -4712,7 +4712,7 @@
                     ]
                 },
                 {
-                    "number": 1359,
+                    "number": 1366,
                     "focus": true,
                     "runs": [
                         [
@@ -4786,7 +4786,7 @@
                     ]
                 },
                 {
-                    "number": 1360,
+                    "number": 1367,
                     "focus": false,
                     "runs": [
                         [
@@ -4796,7 +4796,7 @@
                     ]
                 },
                 {
-                    "number": 1361,
+                    "number": 1368,
                     "focus": false,
                     "runs": [
                         [
@@ -4806,7 +4806,7 @@
                     ]
                 },
                 {
-                    "number": 1362,
+                    "number": 1369,
                     "focus": false,
                     "runs": [
                         [
@@ -4820,7 +4820,7 @@
         {
             "id": "f-322bf1eb95",
             "file": "classes/Validate.php",
-            "line": 1371,
+            "line": 1378,
             "column": 34,
             "pattern": "/^[a-zA-Z]{2,3}\\.(?:gzip|tar\\.gz)$/s",
             "source": "preg_match()",
@@ -4843,10 +4843,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/Validate.php#L1368-L1374",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/Validate.php#L1375-L1381",
             "snippet": [
                 {
-                    "number": 1368,
+                    "number": 1375,
                     "focus": false,
                     "runs": [
                         [
@@ -4856,7 +4856,7 @@
                     ]
                 },
                 {
-                    "number": 1369,
+                    "number": 1376,
                     "focus": false,
                     "runs": [
                         [
@@ -4866,7 +4866,7 @@
                     ]
                 },
                 {
-                    "number": 1370,
+                    "number": 1377,
                     "focus": false,
                     "runs": [
                         [
@@ -4876,7 +4876,7 @@
                     ]
                 },
                 {
-                    "number": 1371,
+                    "number": 1378,
                     "focus": true,
                     "runs": [
                         [
@@ -4974,7 +4974,7 @@
                     ]
                 },
                 {
-                    "number": 1372,
+                    "number": 1379,
                     "focus": false,
                     "runs": [
                         [
@@ -4984,7 +4984,7 @@
                     ]
                 },
                 {
-                    "number": 1373,
+                    "number": 1380,
                     "focus": false,
                     "runs": [
                         [
@@ -4994,7 +4994,7 @@
                     ]
                 },
                 {
-                    "number": 1374,
+                    "number": 1381,
                     "focus": false,
                     "runs": [
                         [
@@ -5038,7 +5038,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/controller/AdminController.php#L1093-L1099",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/controller/AdminController.php#L1093-L1099",
             "snippet": [
                 {
                     "number": 1093,
@@ -5273,7 +5273,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/module/Module.php#L1721-L1727",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/module/Module.php#L1721-L1727",
             "snippet": [
                 {
                     "number": 1721,
@@ -5432,7 +5432,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/module/Module.php#L1723-L1729",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/module/Module.php#L1723-L1729",
             "snippet": [
                 {
                     "number": 1723,
@@ -5598,7 +5598,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/module/Module.php#L3045-L3051",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/module/Module.php#L3045-L3051",
             "snippet": [
                 {
                     "number": 3045,
@@ -5742,7 +5742,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/module/Module.php#L3108-L3114",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/module/Module.php#L3108-L3114",
             "snippet": [
                 {
                     "number": 3108,
@@ -5886,7 +5886,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/module/Module.php#L3108-L3114",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/module/Module.php#L3108-L3114",
             "snippet": [
                 {
                     "number": 3108,
@@ -6037,7 +6037,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/module/Module.php#L3108-L3114",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/module/Module.php#L3108-L3114",
             "snippet": [
                 {
                     "number": 3108,
@@ -6211,7 +6211,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/module/Module.php#L3284-L3290",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/module/Module.php#L3284-L3290",
             "snippet": [
                 {
                     "number": 3284,
@@ -6350,7 +6350,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/module/Module.php#L3424-L3430",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/module/Module.php#L3424-L3430",
             "snippet": [
                 {
                     "number": 3424,
@@ -6501,7 +6501,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/module/Module.php#L3426-L3432",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/module/Module.php#L3426-L3432",
             "snippet": [
                 {
                     "number": 3426,
@@ -6644,7 +6644,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/module/Module.php#L3430-L3436",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/module/Module.php#L3430-L3436",
             "snippet": [
                 {
                     "number": 3430,
@@ -6787,7 +6787,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/module/Module.php#L3431-L3437",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/module/Module.php#L3431-L3437",
             "snippet": [
                 {
                     "number": 3431,
@@ -6926,7 +6926,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/webservice/WebserviceRequest.php#L1109-L1115",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/webservice/WebserviceRequest.php#L1109-L1115",
             "snippet": [
                 {
                     "number": 1109,
@@ -7077,7 +7077,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/webservice/WebserviceRequest.php#L1183-L1189",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/webservice/WebserviceRequest.php#L1183-L1189",
             "snippet": [
                 {
                     "number": 1183,
@@ -7228,7 +7228,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/webservice/WebserviceRequest.php#L1356-L1362",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/webservice/WebserviceRequest.php#L1356-L1362",
             "snippet": [
                 {
                     "number": 1356,
@@ -7379,7 +7379,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/webservice/WebserviceRequest.php#L1559-L1565",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/webservice/WebserviceRequest.php#L1559-L1565",
             "snippet": [
                 {
                     "number": 1559,
@@ -7530,7 +7530,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/classes/webservice/WebserviceRequest.php#L2031-L2037",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/classes/webservice/WebserviceRequest.php#L2031-L2037",
             "snippet": [
                 {
                     "number": 2031,
@@ -7673,7 +7673,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/controllers/admin/AdminCustomerThreadsController.php#L856-L862",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/controllers/admin/AdminCustomerThreadsController.php#L856-L862",
             "snippet": [
                 {
                     "number": 856,
@@ -7864,7 +7864,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/controllers/admin/AdminCustomerThreadsController.php#L1080-L1086",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/controllers/admin/AdminCustomerThreadsController.php#L1080-L1086",
             "snippet": [
                 {
                     "number": 1080,
@@ -8031,7 +8031,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/controllers/admin/AdminImportController.php#L582-L588",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/controllers/admin/AdminImportController.php#L582-L588",
             "snippet": [
                 {
                     "number": 582,
@@ -8179,7 +8179,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/controllers/admin/AdminImportController.php#L690-L696",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/controllers/admin/AdminImportController.php#L690-L696",
             "snippet": [
                 {
                     "number": 690,
@@ -8402,7 +8402,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/controllers/admin/AdminTranslationsController.php#L1495-L1501",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/controllers/admin/AdminTranslationsController.php#L1495-L1501",
             "snippet": [
                 {
                     "number": 1495,
@@ -8549,7 +8549,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/controllers/admin/AdminTranslationsController.php#L1710-L1716",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/controllers/admin/AdminTranslationsController.php#L1710-L1716",
             "snippet": [
                 {
                     "number": 1710,
@@ -8644,7 +8644,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/controllers/admin/AdminTranslationsController.php#L1711-L1717",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/controllers/admin/AdminTranslationsController.php#L1711-L1717",
             "snippet": [
                 {
                     "number": 1711,
@@ -8744,7 +8744,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/controllers/admin/AdminTranslationsController.php#L2664-L2670",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/controllers/admin/AdminTranslationsController.php#L2664-L2670",
             "snippet": [
                 {
                     "number": 2664,
@@ -8895,7 +8895,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Adapter/ImageThumbnailsRegenerator.php#L130-L136",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Adapter/ImageThumbnailsRegenerator.php#L130-L136",
             "snippet": [
                 {
                     "number": 130,
@@ -9084,7 +9084,7 @@
                 "limit": 100000
             },
             "subject": "________________________________________________________!",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Adapter/Meta/ShopUrlDataConfiguration.php#L116-L122",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Adapter/Meta/ShopUrlDataConfiguration.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,
@@ -9271,7 +9271,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Adapter/Product/Validate/ProductValidator.php#L135-L141",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Adapter/Product/Validate/ProductValidator.php#L135-L141",
             "snippet": [
                 {
                     "number": 135,
@@ -9462,7 +9462,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Adapter/Requirement/CheckMissingOrUpdatedFiles.php#L41-L47",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Adapter/Requirement/CheckMissingOrUpdatedFiles.php#L41-L47",
             "snippet": [
                 {
                     "number": 41,
@@ -9569,7 +9569,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/ConstraintValidator/CleanHtmlValidator.php#L17-L23",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/ConstraintValidator/CleanHtmlValidator.php#L17-L23",
             "snippet": [
                 {
                     "number": 17,
@@ -9772,7 +9772,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/ConstraintValidator/CleanHtmlValidator.php#L46-L52",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/ConstraintValidator/CleanHtmlValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -9920,7 +9920,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/ConstraintValidator/CleanHtmlValidator.php#L46-L52",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/ConstraintValidator/CleanHtmlValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -10066,7 +10066,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/ConstraintValidator/CleanHtmlValidator.php#L52-L58",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/ConstraintValidator/CleanHtmlValidator.php#L52-L58",
             "snippet": [
                 {
                     "number": 52,
@@ -10293,7 +10293,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/ConstraintValidator/TypedRegexValidator.php#L224-L230",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/ConstraintValidator/TypedRegexValidator.php#L224-L230",
             "snippet": [
                 {
                     "number": 224,
@@ -10441,7 +10441,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/ConstraintValidator/TypedRegexValidator.php#L224-L230",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/ConstraintValidator/TypedRegexValidator.php#L224-L230",
             "snippet": [
                 {
                     "number": 224,
@@ -10580,7 +10580,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/ConstraintValidator/TypedRegexValidator.php#L228-L234",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/ConstraintValidator/TypedRegexValidator.php#L228-L234",
             "snippet": [
                 {
                     "number": 228,
@@ -10778,7 +10778,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/Domain/Country/AddressFormat/AddressFormatChecker.php#L35-L41",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/Domain/Country/AddressFormat/AddressFormatChecker.php#L35-L41",
             "snippet": [
                 {
                     "number": 35,
@@ -10938,7 +10938,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/Domain/Customer/ValueObject/ApeCode.php#L22-L28",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/Domain/Customer/ValueObject/ApeCode.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,
@@ -11153,7 +11153,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/Domain/CustomerService/CommandHandler/ForwardCustomerThreadHandler.php#L309-L315",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/Domain/CustomerService/CommandHandler/ForwardCustomerThreadHandler.php#L309-L315",
             "snippet": [
                 {
                     "number": 309,
@@ -11349,7 +11349,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/Import/File/FileUploader.php#L119-L125",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/Import/File/FileUploader.php#L119-L125",
             "snippet": [
                 {
                     "number": 119,
@@ -11567,7 +11567,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/Localization/Currency/PatternTransformer.php#L79-L85",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/Localization/Currency/PatternTransformer.php#L79-L85",
             "snippet": [
                 {
                     "number": 79,
@@ -11662,7 +11662,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/Localization/Currency/PatternTransformer.php#L80-L86",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/Localization/Currency/PatternTransformer.php#L80-L86",
             "snippet": [
                 {
                     "number": 80,
@@ -11764,7 +11764,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/Localization/Currency/PatternTransformer.php#L81-L87",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/Localization/Currency/PatternTransformer.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -11859,7 +11859,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/Localization/Currency/PatternTransformer.php#L82-L88",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/Localization/Currency/PatternTransformer.php#L82-L88",
             "snippet": [
                 {
                     "number": 82,
@@ -11954,7 +11954,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/Translation/Storage/Loader/LegacyTranslationKey.php#L18-L24",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/Translation/Storage/Loader/LegacyTranslationKey.php#L18-L24",
             "snippet": [
                 {
                     "number": 18,
@@ -12225,6 +12225,153 @@
             ]
         },
         {
+            "id": "f-173f5a5836",
+            "file": "src/Core/Util/String/StringModifier.php",
+            "line": 81,
+            "column": 30,
+            "pattern": "/(?:\\s*,\\s*){2,}/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\s*,\\s*)\" at offset 0 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/Util/String/StringModifier.php#L78-L84",
+            "snippet": [
+                {
+                    "number": 78,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $text = preg_replace('/([.!?])\\s*,/', '$1', $text);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 79,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 80,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Collapse repeated commas created by empty list items.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 81,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $text = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ",",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "{2,}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", ', ', $text);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 82,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 83,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Collapse repeated sentence dots created by list endings next to existing punctuation.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 84,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $text = preg_replace('/(?:\\.\\s*){2,}/', '. ', $text);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-5d03fdb559",
             "file": "src/Core/Util/Url/UrlCleaner.php",
             "line": 35,
@@ -12245,7 +12392,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/Core/Util/Url/UrlCleaner.php#L32-L38",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/Core/Util/Url/UrlCleaner.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -12397,7 +12544,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/PrestaShopBundle/DependencyInjection/Compiler/ModulesDoctrineCompilerPass.php#L104-L110",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/PrestaShopBundle/DependencyInjection/Compiler/ModulesDoctrineCompilerPass.php#L104-L110",
             "snippet": [
                 {
                     "number": 104,
@@ -12572,7 +12719,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/PrestaShopBundle/Install/SqlLoader.php#L88-L94",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/PrestaShopBundle/Install/SqlLoader.php#L88-L94",
             "snippet": [
                 {
                     "number": 88,
@@ -12720,7 +12867,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/PrestaShopBundle/Translation/Exporter/ThemeExporter.php#L380-L386",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/PrestaShopBundle/Translation/Exporter/ThemeExporter.php#L380-L386",
             "snippet": [
                 {
                     "number": 380,
@@ -12891,7 +13038,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/6297dba61fc43de28f15e3057d3d18eb5ccd68fd/src/PrestaShopBundle/Translation/Loader/LegacyTranslationKey.php#L16-L22",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/35bcc135403b7694bb982e3ce4ca9f8c322e2b15/src/PrestaShopBundle/Translation/Loader/LegacyTranslationKey.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,

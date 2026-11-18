@@ -1,6 +1,6 @@
 {
     "repo": "twigphp/Twig",
-    "sha": "beb4b229784425ceb6514cec9c573b3e42b30703",
+    "sha": "7bef834832d5e3426dfecc0564690acd81b6a68a",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -37,6 +37,13 @@
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:--TEMPLATE(?:\\(.*?\\))?--(?:…\" at offset 79 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
             ],
             "rewrite": null,
@@ -50,7 +57,7 @@
                 "limit": 100000
             },
             "subject": "--TEST----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)--",
-            "permalink": "https://github.com/twigphp/Twig/blob/beb4b229784425ceb6514cec9c573b3e42b30703/src/Test/IntegrationTestCase.php#L188-L194",
+            "permalink": "https://github.com/twigphp/Twig/blob/7bef834832d5e3426dfecc0564690acd81b6a68a/src/Test/IntegrationTestCase.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,
@@ -451,6 +458,13 @@
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:--TEMPLATE(?:\\(.*?\\))?--(?:…\" at offset 79 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
             ],
             "rewrite": null,
@@ -464,7 +478,7 @@
                 "limit": 100000
             },
             "subject": "--TEST----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)--!--EXPECT--",
-            "permalink": "https://github.com/twigphp/Twig/blob/beb4b229784425ceb6514cec9c573b3e42b30703/src/Test/IntegrationTestCase.php#L195-L201",
+            "permalink": "https://github.com/twigphp/Twig/blob/7bef834832d5e3426dfecc0564690acd81b6a68a/src/Test/IntegrationTestCase.php#L195-L201",
             "snippet": [
                 {
                     "number": 195,

@@ -1,6 +1,6 @@
 {
     "repo": "WordPress/wordpress-develop",
-    "sha": "0239f9b5de94ef7eb4d0db41e5de57af339b3926",
+    "sha": "19379c816819a77e55a2f2f577ac9809340cc407",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/ajax-actions.php#L4285-L4291",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-admin/includes/ajax-actions.php#L4285-L4291",
             "snippet": [
                 {
                     "number": 4285,
@@ -177,7 +177,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/ajax-actions.php#L4380-L4386",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-admin/includes/ajax-actions.php#L4380-L4386",
             "snippet": [
                 {
                     "number": 4380,
@@ -312,7 +312,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/class-ftp-pure.php#L106-L112",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-admin/includes/class-ftp-pure.php#L106-L112",
             "snippet": [
                 {
                     "number": 106,
@@ -643,7 +643,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/class-ftp-sockets.php#L127-L133",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-admin/includes/class-ftp-sockets.php#L127-L133",
             "snippet": [
                 {
                     "number": 127,
@@ -956,7 +956,7 @@
         {
             "id": "f-1c74f0c4d2",
             "file": "src/wp-admin/includes/class-wp-debug-data.php",
-            "line": 628,
+            "line": 553,
             "column": 53,
             "pattern": "/\\# BEGIN WordPress[\\s\\S]+?# END WordPress/si",
             "source": "preg_replace()",
@@ -979,10 +979,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/class-wp-debug-data.php#L625-L631",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-admin/includes/class-wp-debug-data.php#L550-L556",
             "snippet": [
                 {
-                    "number": 625,
+                    "number": 550,
                     "focus": false,
                     "runs": [
                         [
@@ -992,7 +992,7 @@
                     ]
                 },
                 {
-                    "number": 626,
+                    "number": 551,
                     "focus": false,
                     "runs": [
                         [
@@ -1002,7 +1002,7 @@
                     ]
                 },
                 {
-                    "number": 627,
+                    "number": 552,
                     "focus": false,
                     "runs": [
                         [
@@ -1012,7 +1012,7 @@
                     ]
                 },
                 {
-                    "number": 628,
+                    "number": 553,
                     "focus": true,
                     "runs": [
                         [
@@ -1070,7 +1070,7 @@
                     ]
                 },
                 {
-                    "number": 629,
+                    "number": 554,
                     "focus": false,
                     "runs": [
                         [
@@ -1080,7 +1080,7 @@
                     ]
                 },
                 {
-                    "number": 630,
+                    "number": 555,
                     "focus": false,
                     "runs": [
                         [
@@ -1090,7 +1090,7 @@
                     ]
                 },
                 {
-                    "number": 631,
+                    "number": 556,
                     "focus": false,
                     "runs": [
                         [
@@ -1127,7 +1127,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/class-wp-filesystem-base.php#L243-L249",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-admin/includes/class-wp-filesystem-base.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -1268,7 +1268,7 @@
         {
             "id": "f-1026174fb9",
             "file": "src/wp-admin/includes/upgrade.php",
-            "line": 3086,
+            "line": 3065,
             "column": 15,
             "pattern": "|\\((.*)\\)|ms",
             "source": "preg_match()",
@@ -1291,10 +1291,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-admin/includes/upgrade.php#L3083-L3089",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-admin/includes/upgrade.php#L3062-L3068",
             "snippet": [
                 {
-                    "number": 3083,
+                    "number": 3062,
                     "focus": false,
                     "runs": [
                         [
@@ -1304,7 +1304,7 @@
                     ]
                 },
                 {
-                    "number": 3084,
+                    "number": 3063,
                     "focus": false,
                     "runs": [
                         [
@@ -1314,7 +1314,7 @@
                     ]
                 },
                 {
-                    "number": 3085,
+                    "number": 3064,
                     "focus": false,
                     "runs": [
                         [
@@ -1324,7 +1324,7 @@
                     ]
                 },
                 {
-                    "number": 3086,
+                    "number": 3065,
                     "focus": true,
                     "runs": [
                         [
@@ -1382,7 +1382,7 @@
                     ]
                 },
                 {
-                    "number": 3087,
+                    "number": 3066,
                     "focus": false,
                     "runs": [
                         [
@@ -1392,7 +1392,7 @@
                     ]
                 },
                 {
-                    "number": 3088,
+                    "number": 3067,
                     "focus": false,
                     "runs": [
                         [
@@ -1402,7 +1402,7 @@
                     ]
                 },
                 {
-                    "number": 3089,
+                    "number": 3068,
                     "focus": false,
                     "runs": [
                         [
@@ -1439,7 +1439,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/ID3/getid3.php#L1593-L1599",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/ID3/getid3.php#L1593-L1599",
             "snippet": [
                 {
                     "number": 1593,
@@ -1586,7 +1586,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/ID3/module.audio-video.quicktime.php#L1698-L1704",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/ID3/module.audio-video.quicktime.php#L1698-L1704",
             "snippet": [
                 {
                     "number": 1698,
@@ -1834,7 +1834,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/ID3/module.audio-video.riff.php#L1645-L1651",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/ID3/module.audio-video.riff.php#L1645-L1651",
             "snippet": [
                 {
                     "number": 1645,
@@ -2014,7 +2014,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/ID3/module.audio-video.riff.php#L1726-L1732",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/ID3/module.audio-video.riff.php#L1726-L1732",
             "snippet": [
                 {
                     "number": 1726,
@@ -2211,7 +2211,7 @@
                 "limit": 100000
             },
             "subject": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\u0000",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/ID3/module.tag.id3v2.php#L2080-L2086",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/ID3/module.tag.id3v2.php#L2080-L2086",
             "snippet": [
                 {
                     "number": 2080,
@@ -2435,7 +2435,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L943-L949",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/PHPMailer/PHPMailer.php#L943-L949",
             "snippet": [
                 {
                     "number": 943,
@@ -2587,7 +2587,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L1541-L1547",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/PHPMailer/PHPMailer.php#L1541-L1547",
             "snippet": [
                 {
                     "number": 1541,
@@ -2687,7 +2687,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L1559-L1565",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/PHPMailer/PHPMailer.php#L1559-L1565",
             "snippet": [
                 {
                     "number": 1559,
@@ -2787,7 +2787,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L1576-L1582",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/PHPMailer/PHPMailer.php#L1576-L1582",
             "snippet": [
                 {
                     "number": 1576,
@@ -2889,7 +2889,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L2613-L2619",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/PHPMailer/PHPMailer.php#L2613-L2619",
             "snippet": [
                 {
                     "number": 2613,
@@ -3120,7 +3120,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/PHPMailer.php#L5056-L5062",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/PHPMailer/PHPMailer.php#L5056-L5062",
             "snippet": [
                 {
                     "number": 5056,
@@ -3360,7 +3360,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/PHPMailer/SMTP.php#L328-L334",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/PHPMailer/SMTP.php#L328-L334",
             "snippet": [
                 {
                     "number": 328,
@@ -3496,7 +3496,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/Requests/src/IdnaEncoder.php#L141-L147",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/Requests/src/IdnaEncoder.php#L141-L147",
             "snippet": [
                 {
                     "number": 141,
@@ -3639,7 +3639,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/Requests/src/Requests.php#L765-L771",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/Requests/src/Requests.php#L765-L771",
             "snippet": [
                 {
                     "number": 765,
@@ -3801,7 +3801,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/Requests/src/Requests.php#L853-L859",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/Requests/src/Requests.php#L853-L859",
             "snippet": [
                 {
                     "number": 853,
@@ -4119,7 +4119,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/Requests/src/Requests.php#L861-L867",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/Requests/src/Requests.php#L861-L867",
             "snippet": [
                 {
                     "number": 861,
@@ -4422,7 +4422,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Item.php#L2301-L2307",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/SimplePie/src/Item.php#L2301-L2307",
             "snippet": [
                 {
                     "number": 2301,
@@ -4713,7 +4713,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Item.php#L2326-L2332",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/SimplePie/src/Item.php#L2326-L2332",
             "snippet": [
                 {
                     "number": 2326,
@@ -4985,7 +4985,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"</A\" . \" ! =\" x n Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). The risky part is: [\\x09\\x0A\\x0B\\x0C\\x0D\\x20]+ Hotspot offsets: 92-119 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"</A\" . \" ! =\" x n Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). The risky part is: [\\x09\\x0A\\x0B\\x0C\\x0D\\x20]+ Hotspot offsets: 92-119 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -5007,7 +5007,7 @@
                 "limit": 100000
             },
             "subject": "</A ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! =",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Sanitize.php#L418-L424",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/SimplePie/src/Sanitize.php#L418-L424",
             "snippet": [
                 {
                     "number": 418,
@@ -5107,7 +5107,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Sanitize.php#L574-L580",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/SimplePie/src/Sanitize.php#L574-L580",
             "snippet": [
                 {
                     "number": 574,
@@ -5214,7 +5214,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/SimplePie.php#L2984-L2990",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/SimplePie/src/SimplePie.php#L2984-L2990",
             "snippet": [
                 {
                     "number": 2984,
@@ -5505,7 +5505,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/SimplePie.php#L3009-L3015",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/SimplePie/src/SimplePie.php#L3009-L3015",
             "snippet": [
                 {
                     "number": 3009,
@@ -5796,7 +5796,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Source.php#L469-L475",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/SimplePie/src/Source.php#L469-L475",
             "snippet": [
                 {
                     "number": 469,
@@ -6087,7 +6087,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/SimplePie/src/Source.php#L485-L491",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/SimplePie/src/Source.php#L485-L491",
             "snippet": [
                 {
                     "number": 485,
@@ -6366,7 +6366,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/blocks/cover.php#L150-L156",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/blocks/cover.php#L150-L156",
             "snippet": [
                 {
                     "number": 150,
@@ -6557,7 +6557,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/canonical.php#L582-L588",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/canonical.php#L582-L588",
             "snippet": [
                 {
                     "number": 582,
@@ -6692,7 +6692,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/canonical.php#L685-L691",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/canonical.php#L685-L691",
             "snippet": [
                 {
                     "number": 685,
@@ -6827,7 +6827,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-json.php#L823-L829",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-json.php#L823-L829",
             "snippet": [
                 {
                     "number": 823,
@@ -7026,7 +7026,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-json.php#L832-L838",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-json.php#L832-L838",
             "snippet": [
                 {
                     "number": 832,
@@ -7204,7 +7204,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-snoopy.php#L678-L684",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-snoopy.php#L678-L684",
             "snippet": [
                 {
                     "number": 678,
@@ -7363,7 +7363,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-snoopy.php#L751-L757",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-snoopy.php#L751-L757",
             "snippet": [
                 {
                     "number": 751,
@@ -7491,7 +7491,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"</A\" . \" ! =\" x n Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). The risky part is: [\\x09\\x0A\\x0B\\x0C\\x0D\\x20]+ Hotspot offsets: 92-119 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"</A\" . \" ! =\" x n Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). The risky part is: [\\x09\\x0A\\x0B\\x0C\\x0D\\x20]+ Hotspot offsets: 92-119 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -7513,7 +7513,7 @@
                 "limit": 100000
             },
             "subject": "</A ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! =",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wp-simplepie-sanitize-kses.php#L39-L45",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-wp-simplepie-sanitize-kses.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -7615,7 +7615,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wp-theme.php#L1968-L1974",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-wp-theme.php#L1968-L1974",
             "snippet": [
                 {
                     "number": 1968,
@@ -7775,7 +7775,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wp-xmlrpc-server.php#L7212-L7218",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-wp-xmlrpc-server.php#L7212-L7218",
             "snippet": [
                 {
                     "number": 7212,
@@ -7931,7 +7931,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wpdb.php#L2118-L2124",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-wpdb.php#L2118-L2124",
             "snippet": [
                 {
                     "number": 2118,
@@ -8167,7 +8167,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wpdb.php#L3898-L3904",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-wpdb.php#L3898-L3904",
             "snippet": [
                 {
                     "number": 3898,
@@ -8337,7 +8337,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wpdb.php#L3905-L3911",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-wpdb.php#L3905-L3911",
             "snippet": [
                 {
                     "number": 3905,
@@ -8432,7 +8432,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wpdb.php#L3930-L3936",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-wpdb.php#L3930-L3936",
             "snippet": [
                 {
                     "number": 3930,
@@ -8825,7 +8825,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/class-wpdb.php#L3936-L3942",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/class-wpdb.php#L3936-L3942",
             "snippet": [
                 {
                     "number": 3936,
@@ -8925,7 +8925,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/comment.php#L3334-L3340",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/comment.php#L3334-L3340",
             "snippet": [
                 {
                     "number": 3334,
@@ -9110,7 +9110,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/deprecated.php#L5155-L5161",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/deprecated.php#L5155-L5161",
             "snippet": [
                 {
                     "number": 5155,
@@ -9440,7 +9440,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/deprecated.php#L5172-L5178",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/deprecated.php#L5172-L5178",
             "snippet": [
                 {
                     "number": 5172,
@@ -9712,7 +9712,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/embed.php#L963-L969",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/embed.php#L963-L969",
             "snippet": [
                 {
                     "number": 963,
@@ -9903,7 +9903,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/formatting.php#L2058-L2064",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/formatting.php#L2058-L2064",
             "snippet": [
                 {
                     "number": 2058,
@@ -10031,7 +10031,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/formatting.php#L2648-L2654",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/formatting.php#L2648-L2654",
             "snippet": [
                 {
                     "number": 2648,
@@ -10197,7 +10197,7 @@
                 "limit": 100000
             },
             "subject": "<a-------------------------------------------------------------!>",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/formatting.php#L2665-L2671",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/formatting.php#L2665-L2671",
             "snippet": [
                 {
                     "number": 2665,
@@ -10297,7 +10297,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/formatting.php#L3266-L3272",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/formatting.php#L3266-L3272",
             "snippet": [
                 {
                     "number": 3266,
@@ -10492,7 +10492,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/formatting.php#L4955-L4961",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/formatting.php#L4955-L4961",
             "snippet": [
                 {
                     "number": 4955,
@@ -10704,7 +10704,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/functions.php#L860-L866",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/functions.php#L860-L866",
             "snippet": [
                 {
                     "number": 860,
@@ -10862,7 +10862,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/functions.php#L5440-L5446",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/functions.php#L5440-L5446",
             "snippet": [
                 {
                     "number": 5440,
@@ -10957,7 +10957,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/functions.php#L6585-L6591",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/functions.php#L6585-L6591",
             "snippet": [
                 {
                     "number": 6585,
@@ -11120,7 +11120,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/functions.php#L6590-L6596",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/functions.php#L6590-L6596",
             "snippet": [
                 {
                     "number": 6590,
@@ -11263,7 +11263,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/functions.php#L6602-L6608",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/functions.php#L6602-L6608",
             "snippet": [
                 {
                     "number": 6602,
@@ -11388,7 +11388,7 @@
         {
             "id": "f-71dcd412d1",
             "file": "src/wp-includes/html-api/class-wp-html-tag-processor.php",
-            "line": 4006,
+            "line": 4008,
             "column": 27,
             "pattern": "/^-?>|--!?>/",
             "source": "preg_match()",
@@ -11406,10 +11406,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/html-api/class-wp-html-tag-processor.php#L4003-L4009",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/html-api/class-wp-html-tag-processor.php#L4005-L4011",
             "snippet": [
                 {
-                    "number": 4003,
+                    "number": 4005,
                     "focus": false,
                     "runs": [
                         [
@@ -11419,7 +11419,7 @@
                     ]
                 },
                 {
-                    "number": 4004,
+                    "number": 4006,
                     "focus": false,
                     "runs": [
                         [
@@ -11429,7 +11429,7 @@
                     ]
                 },
                 {
-                    "number": 4005,
+                    "number": 4007,
                     "focus": false,
                     "runs": [
                         [
@@ -11439,7 +11439,7 @@
                     ]
                 },
                 {
-                    "number": 4006,
+                    "number": 4008,
                     "focus": true,
                     "runs": [
                         [
@@ -11501,7 +11501,7 @@
                     ]
                 },
                 {
-                    "number": 4007,
+                    "number": 4009,
                     "focus": false,
                     "runs": [
                         [
@@ -11511,7 +11511,7 @@
                     ]
                 },
                 {
-                    "number": 4008,
+                    "number": 4010,
                     "focus": false,
                     "runs": [
                         [
@@ -11521,7 +11521,7 @@
                     ]
                 },
                 {
-                    "number": 4009,
+                    "number": 4011,
                     "focus": false,
                     "runs": [
                         [
@@ -11553,7 +11553,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1006-L1012",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1006-L1012",
             "snippet": [
                 {
                     "number": 1006,
@@ -11704,7 +11704,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1159-L1165",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/interactivity-api/class-wp-interactivity-api.php#L1159-L1165",
             "snippet": [
                 {
                     "number": 1159,
@@ -11851,7 +11851,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/link-template.php#L4620-L4626",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/link-template.php#L4620-L4626",
             "snippet": [
                 {
                     "number": 4620,
@@ -11980,7 +11980,7 @@
         {
             "id": "f-57e2ad7120",
             "file": "src/wp-includes/load.php",
-            "line": 2090,
+            "line": 2010,
             "column": 46,
             "pattern": "/(^|\\s|,)application\\/([\\w!#\\$&-\\^\\.\\+]+\\+)?json(\\+oembed)?($|\\s|;|,)/i",
             "source": "preg_match()",
@@ -11998,10 +11998,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/load.php#L2087-L2093",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/load.php#L2007-L2013",
             "snippet": [
                 {
-                    "number": 2087,
+                    "number": 2007,
                     "focus": false,
                     "runs": [
                         [
@@ -12011,7 +12011,7 @@
                     ]
                 },
                 {
-                    "number": 2088,
+                    "number": 2008,
                     "focus": false,
                     "runs": [
                         [
@@ -12021,7 +12021,7 @@
                     ]
                 },
                 {
-                    "number": 2089,
+                    "number": 2009,
                     "focus": false,
                     "runs": [
                         [
@@ -12031,7 +12031,7 @@
                     ]
                 },
                 {
-                    "number": 2090,
+                    "number": 2010,
                     "focus": true,
                     "runs": [
                         [
@@ -12197,7 +12197,7 @@
                     ]
                 },
                 {
-                    "number": 2091,
+                    "number": 2011,
                     "focus": false,
                     "runs": [
                         [
@@ -12207,7 +12207,7 @@
                     ]
                 },
                 {
-                    "number": 2092,
+                    "number": 2012,
                     "focus": false,
                     "runs": [
                         [
@@ -12217,7 +12217,7 @@
                     ]
                 },
                 {
-                    "number": 2093,
+                    "number": 2013,
                     "focus": false,
                     "runs": [
                         [
@@ -12261,7 +12261,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L307-L313",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L307-L313",
             "snippet": [
                 {
                     "number": 307,
@@ -12540,7 +12540,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L315-L321",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L315-L321",
             "snippet": [
                 {
                     "number": 315,
@@ -12727,7 +12727,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L554-L560",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/rest-api/endpoints/class-wp-rest-url-details-controller.php#L554-L560",
             "snippet": [
                 {
                     "number": 554,
@@ -12827,7 +12827,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/wordpress-develop/blob/0239f9b5de94ef7eb4d0db41e5de57af339b3926/src/wp-includes/script-loader.php#L4345-L4351",
+            "permalink": "https://github.com/WordPress/wordpress-develop/blob/19379c816819a77e55a2f2f577ac9809340cc407/src/wp-includes/script-loader.php#L4345-L4351",
             "snippet": [
                 {
                     "number": 4345,

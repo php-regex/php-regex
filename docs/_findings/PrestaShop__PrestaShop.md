@@ -1,16 +1,16 @@
 ---
 layout: landing
-title: "PrestaShop/PrestaShop: 80 regex findings"
-description: "PHPRegex on PrestaShop/PrestaShop: 5 failures and 75 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39."
+title: "PrestaShop/PrestaShop: 81 regex findings"
+description: "PHPRegex on PrestaShop/PrestaShop: 5 failures and 76 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39."
 permalink: /findings/PrestaShop/PrestaShop/
 findings_repo: PrestaShop/PrestaShop
 findings_slug: PrestaShop__PrestaShop
-findings_count: 80
+findings_count: 81
 findings_fail: 5
-findings_warn: 75
+findings_warn: 76
 findings_php: "8.1"
 findings_pcre: "10.39"
-findings_committed: 2026-11-16
+findings_committed: 2026-11-17
 findings_rank: 11
 image: /assets/img/findings-social.png
 image_alt: "PHPRegex findings: what the linter reports on real open-source PHP."

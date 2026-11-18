@@ -13633,6 +13633,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\s+(?:\\w|\\w[\\w-]*\\w)(?:\\s*=…\" at offset 10 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\w\" and \"\\w[\\w-]*\\w\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",

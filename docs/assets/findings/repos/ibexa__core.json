@@ -1,6 +1,6 @@
 {
     "repo": "ibexa/core",
-    "sha": "73ee08f43780fae69cc790fe7505b2a1989d3715",
+    "sha": "b344d4ed4e1fd16db24755b18d8ffcf4db6a2bc3",
     "target": {
         "php": "8.5",
         "pcre": "10.44",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ibexa/core/blob/73ee08f43780fae69cc790fe7505b2a1989d3715/src/lib/Persistence/TransformationProcessor/PcreCompiler.php#L232-L238",
+            "permalink": "https://github.com/ibexa/core/blob/b344d4ed4e1fd16db24755b18d8ffcf4db6a2bc3/src/lib/Persistence/TransformationProcessor/PcreCompiler.php#L232-L238",
             "snippet": [
                 {
                     "number": 232,
@@ -203,7 +203,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ibexa/core/blob/73ee08f43780fae69cc790fe7505b2a1989d3715/src/lib/QueryType/BuiltIn/SortSpec/SortSpecLexer.php#L95-L101",
+            "permalink": "https://github.com/ibexa/core/blob/b344d4ed4e1fd16db24755b18d8ffcf4db6a2bc3/src/lib/QueryType/BuiltIn/SortSpec/SortSpecLexer.php#L95-L101",
             "snippet": [
                 {
                     "number": 95,
@@ -298,7 +298,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ibexa/core/blob/73ee08f43780fae69cc790fe7505b2a1989d3715/src/lib/Repository/NameSchema/SchemaIdentifierExtractor.php#L27-L33",
+            "permalink": "https://github.com/ibexa/core/blob/b344d4ed4e1fd16db24755b18d8ffcf4db6a2bc3/src/lib/Repository/NameSchema/SchemaIdentifierExtractor.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,

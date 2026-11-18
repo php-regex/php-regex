@@ -1,6 +1,6 @@
 {
     "repo": "MyIntervals/PHP-CSS-Parser",
-    "sha": "a78aaa2ae9e6619ee2ecae3398b9aa6cf5c10299",
+    "sha": "76350f9d302f27069f1638ffbb043ed9eb7c159a",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -10,7 +10,7 @@
         {
             "id": "f-2587d28302",
             "file": "src/Parsing/ParserState.php",
-            "line": 119,
+            "line": 132,
             "column": 40,
             "pattern": "/[a-zA-Z0-9\\x{00A0}-\\x{FFFF}_-]/Sux",
             "source": "preg_match()",
@@ -28,10 +28,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a78aaa2ae9e6619ee2ecae3398b9aa6cf5c10299/src/Parsing/ParserState.php#L116-L122",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/76350f9d302f27069f1638ffbb043ed9eb7c159a/src/Parsing/ParserState.php#L129-L135",
             "snippet": [
                 {
-                    "number": 116,
+                    "number": 129,
                     "focus": false,
                     "runs": [
                         [
@@ -41,7 +41,7 @@
                     ]
                 },
                 {
-                    "number": 117,
+                    "number": 130,
                     "focus": false,
                     "runs": [
                         [
@@ -51,7 +51,7 @@
                     ]
                 },
                 {
-                    "number": 118,
+                    "number": 131,
                     "focus": false,
                     "runs": [
                         [
@@ -61,7 +61,7 @@
                     ]
                 },
                 {
-                    "number": 119,
+                    "number": 132,
                     "focus": true,
                     "runs": [
                         [
@@ -139,7 +139,7 @@
                     ]
                 },
                 {
-                    "number": 120,
+                    "number": 133,
                     "focus": false,
                     "runs": [
                         [
@@ -149,7 +149,7 @@
                     ]
                 },
                 {
-                    "number": 121,
+                    "number": 134,
                     "focus": false,
                     "runs": [
                         [
@@ -159,7 +159,7 @@
                     ]
                 },
                 {
-                    "number": 122,
+                    "number": 135,
                     "focus": false,
                     "runs": [
                         [
@@ -173,7 +173,7 @@
         {
             "id": "f-ff7f5eec4b",
             "file": "src/Parsing/ParserState.php",
-            "line": 157,
+            "line": 174,
             "column": 44,
             "pattern": "/\\s/isSu",
             "source": "preg_match()",
@@ -203,10 +203,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a78aaa2ae9e6619ee2ecae3398b9aa6cf5c10299/src/Parsing/ParserState.php#L154-L160",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/76350f9d302f27069f1638ffbb043ed9eb7c159a/src/Parsing/ParserState.php#L171-L177",
             "snippet": [
                 {
-                    "number": 154,
+                    "number": 171,
                     "focus": false,
                     "runs": [
                         [
@@ -216,7 +216,7 @@
                     ]
                 },
                 {
-                    "number": 155,
+                    "number": 172,
                     "focus": false,
                     "runs": [
                         [
@@ -226,7 +226,7 @@
                     ]
                 },
                 {
-                    "number": 156,
+                    "number": 173,
                     "focus": false,
                     "runs": [
                         [
@@ -236,7 +236,7 @@
                     ]
                 },
                 {
-                    "number": 157,
+                    "number": 174,
                     "focus": true,
                     "runs": [
                         [
@@ -274,7 +274,7 @@
                     ]
                 },
                 {
-                    "number": 158,
+                    "number": 175,
                     "focus": false,
                     "runs": [
                         [
@@ -284,7 +284,7 @@
                     ]
                 },
                 {
-                    "number": 159,
+                    "number": 176,
                     "focus": false,
                     "runs": [
                         [
@@ -294,7 +294,7 @@
                     ]
                 },
                 {
-                    "number": 160,
+                    "number": 177,
                     "focus": false,
                     "runs": [
                         [
@@ -308,7 +308,7 @@
         {
             "id": "f-ff7f5eec4b-2",
             "file": "src/Parsing/ParserState.php",
-            "line": 230,
+            "line": 247,
             "column": 44,
             "pattern": "/\\s/isSu",
             "source": "preg_match()",
@@ -338,10 +338,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a78aaa2ae9e6619ee2ecae3398b9aa6cf5c10299/src/Parsing/ParserState.php#L227-L233",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/76350f9d302f27069f1638ffbb043ed9eb7c159a/src/Parsing/ParserState.php#L244-L250",
             "snippet": [
                 {
-                    "number": 227,
+                    "number": 244,
                     "focus": false,
                     "runs": [
                         [
@@ -351,7 +351,7 @@
                     ]
                 },
                 {
-                    "number": 228,
+                    "number": 245,
                     "focus": false,
                     "runs": [
                         [
@@ -361,7 +361,7 @@
                     ]
                 },
                 {
-                    "number": 229,
+                    "number": 246,
                     "focus": false,
                     "runs": [
                         [
@@ -371,7 +371,7 @@
                     ]
                 },
                 {
-                    "number": 230,
+                    "number": 247,
                     "focus": true,
                     "runs": [
                         [
@@ -409,7 +409,7 @@
                     ]
                 },
                 {
-                    "number": 231,
+                    "number": 248,
                     "focus": false,
                     "runs": [
                         [
@@ -419,7 +419,7 @@
                     ]
                 },
                 {
-                    "number": 232,
+                    "number": 249,
                     "focus": false,
                     "runs": [
                         [
@@ -429,7 +429,7 @@
                     ]
                 },
                 {
-                    "number": 233,
+                    "number": 250,
                     "focus": false,
                     "runs": [
                         [
@@ -473,7 +473,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a78aaa2ae9e6619ee2ecae3398b9aa6cf5c10299/src/Value/CSSString.php#L57-L63",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/76350f9d302f27069f1638ffbb043ed9eb7c159a/src/Value/CSSString.php#L57-L63",
             "snippet": [
                 {
                     "number": 57,

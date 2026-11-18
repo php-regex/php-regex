@@ -1,6 +1,6 @@
 {
     "repo": "nette/latte",
-    "sha": "9fcfa2e3f1c31d47e28889a0ee7481b9f1718935",
+    "sha": "0b31b39970b9e6d05c5ec9a6407498782a479523",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/latte/blob/9fcfa2e3f1c31d47e28889a0ee7481b9f1718935/src/Latte/Compiler/PrintContext.php#L55-L61",
+            "permalink": "https://github.com/nette/latte/blob/0b31b39970b9e6d05c5ec9a6407498782a479523/src/Latte/Compiler/PrintContext.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -269,7 +269,7 @@
         {
             "id": "f-1261bae5bc",
             "file": "src/Latte/Compiler/TemplateParser.php",
-            "line": 446,
+            "line": 460,
             "column": 42,
             "pattern": "#^[a-z]#iD",
             "source": "preg_match()",
@@ -287,10 +287,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/latte/blob/9fcfa2e3f1c31d47e28889a0ee7481b9f1718935/src/Latte/Compiler/TemplateParser.php#L443-L449",
+            "permalink": "https://github.com/nette/latte/blob/0b31b39970b9e6d05c5ec9a6407498782a479523/src/Latte/Compiler/TemplateParser.php#L457-L463",
             "snippet": [
                 {
-                    "number": 443,
+                    "number": 457,
                     "focus": false,
                     "runs": [
                         [
@@ -300,7 +300,7 @@
                     ]
                 },
                 {
-                    "number": 444,
+                    "number": 458,
                     "focus": false,
                     "runs": [
                         [
@@ -310,7 +310,7 @@
                     ]
                 },
                 {
-                    "number": 445,
+                    "number": 459,
                     "focus": false,
                     "runs": [
                         [
@@ -320,7 +320,7 @@
                     ]
                 },
                 {
-                    "number": 446,
+                    "number": 460,
                     "focus": true,
                     "runs": [
                         [
@@ -374,7 +374,7 @@
                     ]
                 },
                 {
-                    "number": 447,
+                    "number": 461,
                     "focus": false,
                     "runs": [
                         [
@@ -384,7 +384,7 @@
                     ]
                 },
                 {
-                    "number": 448,
+                    "number": 462,
                     "focus": false,
                     "runs": [
                         [
@@ -394,7 +394,7 @@
                     ]
                 },
                 {
-                    "number": 449,
+                    "number": 463,
                     "focus": false,
                     "runs": [
                         [

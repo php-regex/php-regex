@@ -1,6 +1,6 @@
 {
     "repo": "thephpleague/glide",
-    "sha": "704e51e1bf4af99a9efd6d3083d7fab41718e8f1",
+    "sha": "fd76cb70463ec5b1f6df4d2f635b18c0f08b566f",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thephpleague/glide/blob/704e51e1bf4af99a9efd6d3083d7fab41718e8f1/src/Manipulators/Helpers/Color.php#L14-L20",
+            "permalink": "https://github.com/thephpleague/glide/blob/fd76cb70463ec5b1f6df4d2f635b18c0f08b566f/src/Manipulators/Helpers/Color.php#L14-L20",
             "snippet": [
                 {
                     "number": 14,
@@ -238,7 +238,7 @@
                 "limit": 100000
             },
             "subject": "crop-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left-top-left!",
-            "permalink": "https://github.com/thephpleague/glide/blob/704e51e1bf4af99a9efd6d3083d7fab41718e8f1/src/Manipulators/Size.php#L112-L118",
+            "permalink": "https://github.com/thephpleague/glide/blob/fd76cb70463ec5b1f6df4d2f635b18c0f08b566f/src/Manipulators/Size.php#L112-L118",
             "snippet": [
                 {
                     "number": 112,
@@ -456,6 +456,13 @@
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"crop\" . \"-0-0-0-0-0\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 75 (backtrack_limit 100000, JIT off). Suggested (verify behavior): Use possessive quantifiers (*+ instead of *, ++ instead of +, or {m,n}+ instead of {m,n}) to prevent ReDoS. Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in capturing group 2 \"(-[\\d]{1,3}-[\\d]{1,3}(?:-[\\d]{…\" can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
             ],
             "rewrite": null,
@@ -469,7 +476,7 @@
                 "limit": 100000
             },
             "subject": "crop-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0!",
-            "permalink": "https://github.com/thephpleague/glide/blob/704e51e1bf4af99a9efd6d3083d7fab41718e8f1/src/Manipulators/Size.php#L116-L122",
+            "permalink": "https://github.com/thephpleague/glide/blob/fd76cb70463ec5b1f6df4d2f635b18c0f08b566f/src/Manipulators/Size.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,

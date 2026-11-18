@@ -1,6 +1,6 @@
 {
     "repo": "facebook/facebook-for-woocommerce",
-    "sha": "8bfff9fbeb5008148906ccbb16262dc649c5dac3",
+    "sha": "facd27658ff7c82cd107cea349f9523a3eb5c48d",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/8bfff9fbeb5008148906ccbb16262dc649c5dac3/includes/Events/Normalizer.php#L194-L200",
+            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/facd27658ff7c82cd107cea349f9523a3eb5c48d/includes/Events/Normalizer.php#L194-L200",
             "snippet": [
                 {
                     "number": 194,
@@ -160,6 +160,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in capturing group 1 \"(\\s*,\\s*pa_[a-zA-Z0-9_]+:\\s*[a…\" can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
@@ -177,7 +184,7 @@
                 "limit": 100000
             },
             "subject": "pa_0:- ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: -!",
-            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/8bfff9fbeb5008148906ccbb16262dc649c5dac3/includes/fbutils.php#L1072-L1078",
+            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/facd27658ff7c82cd107cea349f9523a3eb5c48d/includes/fbutils.php#L1072-L1078",
             "snippet": [
                 {
                     "number": 1072,
@@ -525,8 +532,15 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"MPN:-\" . \" ,MPN: -\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 62 (backtrack_limit 100000, JIT off). The risky part is: size|color|colour|brand|material|style|type|gender|age_group|pattern|condition|mpn|gtin Hotspot offsets: 125-212 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"MPN:-\" . \" ,MPN: -\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 62 (backtrack_limit 100000, JIT off). The risky part is: size|color|colour|brand|material|style|type|gender|age_group|pattern|condition|mpn|gtin Hotspot offsets: 125-212 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in capturing group 2 \"(\\s*,\\s*(size|color|colour|bra…\" can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
             ],
             "rewrite": null,
@@ -540,7 +554,7 @@
                 "limit": 100000
             },
             "subject": "MPN:- ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: -!",
-            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/8bfff9fbeb5008148906ccbb16262dc649c5dac3/includes/fbutils.php#L1074-L1080",
+            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/facd27658ff7c82cd107cea349f9523a3eb5c48d/includes/fbutils.php#L1074-L1080",
             "snippet": [
                 {
                     "number": 1074,
@@ -1020,8 +1034,15 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"0:-\" . \" ,0: -\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 46 (backtrack_limit 100000, JIT off). The risky part is: (\\s*,\\s*[a-zA-Z0-9_]{1,20}:\\s*[a-zA-Z0-9_\\-\\s]{1,30})* Hotspot offsets: 45-99 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Critical nesting of quantifiers detected (Star Height > 1). This is a classic ReDoS risk. Refactor the pattern to avoid nested unbounded quantifiers over the same subpattern. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Use atomic groups or restructure the repetition to be deterministic. Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"0:-\" . \" ,0: -\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 46 (backtrack_limit 100000, JIT off). The risky part is: [a-zA-Z0-9_\\-\\s]{1,30} Hotspot offsets: 75-97 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in capturing group 1 \"(\\s*,\\s*[a-zA-Z0-9_]{1,20}:\\s*…\" can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
                 }
             ],
             "rewrite": null,
@@ -1035,7 +1056,7 @@
                 "limit": 100000
             },
             "subject": "0:- ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: -!",
-            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/8bfff9fbeb5008148906ccbb16262dc649c5dac3/includes/fbutils.php#L1076-L1082",
+            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/facd27658ff7c82cd107cea349f9523a3eb5c48d/includes/fbutils.php#L1076-L1082",
             "snippet": [
                 {
                     "number": 1076,

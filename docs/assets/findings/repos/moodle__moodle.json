@@ -1,6 +1,6 @@
 {
     "repo": "moodle/moodle",
-    "sha": "afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda",
+    "sha": "2d4bafe8548a6d6c01494c862ec3d9749ba6ea84",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/classes/setting/setting/emoticons.php#L192-L198",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/classes/setting/setting/emoticons.php#L192-L198",
             "snippet": [
                 {
                     "number": 192,
@@ -228,7 +228,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/phpinfo.php#L22-L28",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/phpinfo.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,
@@ -351,7 +351,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/brickfield/classes/local/htmlchecker/common/brickfield_accessibility_css.php#L321-L327",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/brickfield/classes/local/htmlchecker/common/brickfield_accessibility_css.php#L321-L327",
             "snippet": [
                 {
                     "number": 321,
@@ -498,7 +498,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/brickfield/classes/local/htmlchecker/common/checks/img_alt_is_different.php#L40-L46",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/brickfield/classes/local/htmlchecker/common/checks/img_alt_is_different.php#L40-L46",
             "snippet": [
                 {
                     "number": 40,
@@ -689,7 +689,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php#L93-L99",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
@@ -796,7 +796,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php#L145-L151",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php#L145-L151",
             "snippet": [
                 {
                     "number": 145,
@@ -971,7 +971,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php#L148-L154",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php#L148-L154",
             "snippet": [
                 {
                     "number": 148,
@@ -1119,7 +1119,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php#L153-L159",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -1275,7 +1275,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/messageinbound/roundcube/rcube_charset.php#L580-L586",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/messageinbound/roundcube/rcube_charset.php#L580-L586",
             "snippet": [
                 {
                     "number": 580,
@@ -1375,7 +1375,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php#L138-L144",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php#L138-L144",
             "snippet": [
                 {
                     "number": 138,
@@ -1534,7 +1534,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php#L1287-L1293",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php#L1287-L1293",
             "snippet": [
                 {
                     "number": 1287,
@@ -1682,7 +1682,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php#L2189-L2195",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php#L2189-L2195",
             "snippet": [
                 {
                     "number": 2189,
@@ -1813,7 +1813,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php#L2588-L2594",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php#L2588-L2594",
             "snippet": [
                 {
                     "number": 2588,
@@ -1952,7 +1952,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php#L2651-L2657",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php#L2651-L2657",
             "snippet": [
                 {
                     "number": 2651,
@@ -2117,7 +2117,7 @@
                 "limit": 100000
             },
             "subject": "<\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/messageinbound/roundcube/rcube_mime.php#L348-L354",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/messageinbound/roundcube/rcube_mime.php#L348-L354",
             "snippet": [
                 {
                     "number": 348,
@@ -2234,7 +2234,7 @@
                 "limit": 100000
             },
             "subject": "\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/messageinbound/roundcube/rcube_mime.php#L354-L360",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/messageinbound/roundcube/rcube_mime.php#L354-L360",
             "snippet": [
                 {
                     "number": 354,
@@ -2351,7 +2351,7 @@
                 "limit": 100000
             },
             "subject": "\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/messageinbound/roundcube/rcube_mime.php#L362-L368",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/messageinbound/roundcube/rcube_mime.php#L362-L368",
             "snippet": [
                 {
                     "number": 362,
@@ -2446,7 +2446,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/messageinbound/roundcube/rcube_utils.php#L293-L299",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/messageinbound/roundcube/rcube_utils.php#L293-L299",
             "snippet": [
                 {
                     "number": 293,
@@ -2598,7 +2598,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/messageinbound/roundcube/rcube_utils.php#L766-L772",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/messageinbound/roundcube/rcube_utils.php#L766-L772",
             "snippet": [
                 {
                     "number": 766,
@@ -2738,7 +2738,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/usertours/classes/local/forms/editstep.php#L165-L171",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/usertours/classes/local/forms/editstep.php#L165-L171",
             "snippet": [
                 {
                     "number": 165,
@@ -2912,7 +2912,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/admin/tool/usertours/classes/step.php#L812-L818",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/admin/tool/usertours/classes/step.php#L812-L818",
             "snippet": [
                 {
                     "number": 812,
@@ -3103,7 +3103,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/backup/cc/cc_lib/gral_lib/cssparser.php#L215-L221",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/backup/cc/cc_lib/gral_lib/cssparser.php#L215-L221",
             "snippet": [
                 {
                     "number": 215,
@@ -3255,7 +3255,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/backup/cc/restore_cc.php#L110-L116",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/backup/cc/restore_cc.php#L110-L116",
             "snippet": [
                 {
                     "number": 110,
@@ -3387,7 +3387,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/backup/converter/imscc1/lib.php#L51-L57",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/backup/converter/imscc1/lib.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,
@@ -3519,7 +3519,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/backup/converter/imscc11/lib.php#L52-L58",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/backup/converter/imscc11/lib.php#L52-L58",
             "snippet": [
                 {
                     "number": 52,
@@ -3646,7 +3646,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/communication/provider/matrix/classes/matrix_user_manager.php#L59-L65",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/communication/provider/matrix/classes/matrix_user_manager.php#L59-L65",
             "snippet": [
                 {
                     "number": 59,
@@ -3776,7 +3776,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/customfield/classes/handler.php#L80-L86",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/customfield/classes/handler.php#L80-L86",
             "snippet": [
                 {
                     "number": 80,
@@ -3981,7 +3981,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/enrol/imsenterprise/lib.php#L879-L885",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/enrol/imsenterprise/lib.php#L879-L885",
             "snippet": [
                 {
                     "number": 879,
@@ -4170,7 +4170,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/enrol/imsenterprise/lib.php#L884-L890",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/enrol/imsenterprise/lib.php#L884-L890",
             "snippet": [
                 {
                     "number": 884,
@@ -4353,7 +4353,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/displayh5p/classes/text_filter.php#L200-L206",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/displayh5p/classes/text_filter.php#L200-L206",
             "snippet": [
                 {
                     "number": 200,
@@ -4576,7 +4576,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/emailprotect/classes/text_filter.php#L38-L44",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/emailprotect/classes/text_filter.php#L38-L44",
             "snippet": [
                 {
                     "number": 38,
@@ -4683,7 +4683,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/emailprotect/classes/text_filter.php#L42-L48",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/emailprotect/classes/text_filter.php#L42-L48",
             "snippet": [
                 {
                     "number": 42,
@@ -4783,7 +4783,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/emoticon/classes/text_filter.php#L87-L93",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/emoticon/classes/text_filter.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -4971,7 +4971,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/emoticon/classes/text_filter.php#L94-L100",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/emoticon/classes/text_filter.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -5103,7 +5103,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/emoticon/classes/text_filter.php#L94-L100",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/emoticon/classes/text_filter.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -5275,7 +5275,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/emoticon/classes/text_filter.php#L94-L100",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/emoticon/classes/text_filter.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -5402,7 +5402,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/mediaplugin/classes/text_filter.php#L73-L79",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/mediaplugin/classes/text_filter.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -5558,7 +5558,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/mediaplugin/classes/text_filter.php#L214-L220",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/mediaplugin/classes/text_filter.php#L214-L220",
             "snippet": [
                 {
                     "number": 214,
@@ -5736,7 +5736,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/multilang/classes/text_filter.php#L50-L56",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/multilang/classes/text_filter.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -6103,7 +6103,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/multilang/classes/text_filter.php#L54-L60",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/multilang/classes/text_filter.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -6491,7 +6491,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/tex/classes/text_filter.php#L54-L60",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/tex/classes/text_filter.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -6646,7 +6646,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/urltolink/classes/text_filter.php#L93-L99",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/urltolink/classes/text_filter.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
@@ -6757,7 +6757,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/urltolink/classes/text_filter.php#L93-L99",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/urltolink/classes/text_filter.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
@@ -6868,7 +6868,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/urltolink/classes/text_filter.php#L97-L103",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/urltolink/classes/text_filter.php#L97-L103",
             "snippet": [
                 {
                     "number": 97,
@@ -7024,7 +7024,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/filter/urltolink/classes/text_filter.php#L138-L144",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/filter/urltolink/classes/text_filter.php#L138-L144",
             "snippet": [
                 {
                     "number": 138,
@@ -7236,7 +7236,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/grade/report/singleview/classes/local/screen/screen.php#L299-L305",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/grade/report/singleview/classes/local/screen/screen.php#L299-L305",
             "snippet": [
                 {
                     "number": 299,
@@ -7380,7 +7380,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/group/autogroup_form.php#L244-L250",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/group/autogroup_form.php#L244-L250",
             "snippet": [
                 {
                     "number": 244,
@@ -7507,7 +7507,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L1142-L1148",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L1142-L1148",
             "snippet": [
                 {
                     "number": 1142,
@@ -7641,7 +7641,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L1159-L1165",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L1159-L1165",
             "snippet": [
                 {
                     "number": 1159,
@@ -7796,7 +7796,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L1190-L1196",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L1190-L1196",
             "snippet": [
                 {
                     "number": 1190,
@@ -7978,7 +7978,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L2794-L2800",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L2794-L2800",
             "snippet": [
                 {
                     "number": 2794,
@@ -8221,7 +8221,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L4427-L4433",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L4427-L4433",
             "snippet": [
                 {
                     "number": 4427,
@@ -8348,7 +8348,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L5136-L5142",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/h5p/h5plib/v128/joubel/core/h5p.classes.php#L5136-L5142",
             "snippet": [
                 {
                     "number": 5136,
@@ -8443,7 +8443,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/h5p/h5plib/v128/joubel/editor/h5peditor.class.php#L179-L185",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/h5p/h5plib/v128/joubel/editor/h5peditor.class.php#L179-L185",
             "snippet": [
                 {
                     "number": 179,
@@ -8599,7 +8599,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/adodb-lib.inc.php#L36-L42",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/adodb-lib.inc.php#L36-L42",
             "snippet": [
                 {
                     "number": 36,
@@ -8787,7 +8787,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/adodb-lib.inc.php#L410-L416",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/adodb-lib.inc.php#L410-L416",
             "snippet": [
                 {
                     "number": 410,
@@ -8939,7 +8939,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/adodb-lib.inc.php#L411-L417",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/adodb-lib.inc.php#L411-L417",
             "snippet": [
                 {
                     "number": 411,
@@ -9095,7 +9095,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/adodb-lib.inc.php#L412-L418",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/adodb-lib.inc.php#L412-L418",
             "snippet": [
                 {
                     "number": 412,
@@ -9239,7 +9239,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/adodb-lib.inc.php#L481-L487",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/adodb-lib.inc.php#L481-L487",
             "snippet": [
                 {
                     "number": 481,
@@ -9383,7 +9383,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/drivers/adodb-informix72.inc.php#L352-L358",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/drivers/adodb-informix72.inc.php#L352-L358",
             "snippet": [
                 {
                     "number": 352,
@@ -9518,7 +9518,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/drivers/adodb-mssql.inc.php#L736-L742",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/drivers/adodb-mssql.inc.php#L736-L742",
             "snippet": [
                 {
                     "number": 736,
@@ -9675,7 +9675,7 @@
                 "limit": 100000
             },
             "subject": "INSERT\"VALUES(!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!'!'''!''values",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/drivers/adodb-mssqlnative.inc.php#L624-L630",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/drivers/adodb-mssqlnative.inc.php#L624-L630",
             "snippet": [
                 {
                     "number": 624,
@@ -9955,7 +9955,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/drivers/adodb-odbtp.inc.php#L471-L477",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/drivers/adodb-odbtp.inc.php#L471-L477",
             "snippet": [
                 {
                     "number": 471,
@@ -10098,7 +10098,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/drivers/adodb-sybase.inc.php#L403-L409",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/drivers/adodb-sybase.inc.php#L403-L409",
             "snippet": [
                 {
                     "number": 403,
@@ -10205,7 +10205,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/drivers/adodb-sybase.inc.php#L420-L426",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/drivers/adodb-sybase.inc.php#L420-L426",
             "snippet": [
                 {
                     "number": 420,
@@ -10317,7 +10317,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/adodb/drivers/adodb-vfp.inc.php#L62-L68",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/adodb/drivers/adodb-vfp.inc.php#L62-L68",
             "snippet": [
                 {
                     "number": 62,
@@ -10465,7 +10465,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/aws-sdk/src/CloudFront/Signer.php#L80-L86",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/aws-sdk/src/CloudFront/Signer.php#L80-L86",
             "snippet": [
                 {
                     "number": 80,
@@ -10643,7 +10643,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/aws-sdk/src/EndpointV2/Ruleset/RulesetStandardLibrary.php#L13-L19",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/aws-sdk/src/EndpointV2/Ruleset/RulesetStandardLibrary.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,
@@ -10738,7 +10738,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/aws-sdk/src/EndpointV2/Ruleset/RulesetStandardLibrary.php#L24-L30",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/aws-sdk/src/EndpointV2/Ruleset/RulesetStandardLibrary.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -10905,7 +10905,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/behat/classes/behat_session_trait.php#L1109-L1115",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/behat/classes/behat_session_trait.php#L1109-L1115",
             "snippet": [
                 {
                     "number": 1109,
@@ -11161,7 +11161,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/behat/classes/behat_session_trait.php#L1110-L1116",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/behat/classes/behat_session_trait.php#L1110-L1116",
             "snippet": [
                 {
                     "number": 1110,
@@ -11296,7 +11296,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/bennu/iCalendar_rfc2445.php#L141-L147",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/bennu/iCalendar_rfc2445.php#L141-L147",
             "snippet": [
                 {
                     "number": 141,
@@ -11743,7 +11743,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/component.php#L1590-L1596",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/component.php#L1590-L1596",
             "snippet": [
                 {
                     "number": 1590,
@@ -11966,7 +11966,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/event/base.php#L648-L654",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/event/base.php#L648-L654",
             "snippet": [
                 {
                     "number": 648,
@@ -12102,7 +12102,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/ip_utils.php#L102-L108",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/ip_utils.php#L102-L108",
             "snippet": [
                 {
                     "number": 102,
@@ -12197,7 +12197,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/output/activity_header.php#L149-L155",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/output/activity_header.php#L149-L155",
             "snippet": [
                 {
                     "number": 149,
@@ -12368,7 +12368,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/param.php#L805-L811",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/param.php#L805-L811",
             "snippet": [
                 {
                     "number": 805,
@@ -12499,7 +12499,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/param.php#L1342-L1348",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/param.php#L1342-L1348",
             "snippet": [
                 {
                     "number": 1342,
@@ -12859,7 +12859,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/test/phpunit/phpunit_util.php#L1028-L1034",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/test/phpunit/phpunit_util.php#L1028-L1034",
             "snippet": [
                 {
                     "number": 1028,
@@ -12995,7 +12995,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/test/phpunit/phpunit_util.php#L1096-L1102",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/test/phpunit/phpunit_util.php#L1096-L1102",
             "snippet": [
                 {
                     "number": 1096,
@@ -13126,7 +13126,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/text.php#L693-L699",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/text.php#L693-L699",
             "snippet": [
                 {
                     "number": 693,
@@ -13278,7 +13278,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/update/validator.php#L534-L540",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/update/validator.php#L534-L540",
             "snippet": [
                 {
                     "number": 534,
@@ -13514,7 +13514,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/update/validator.php#L535-L541",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/update/validator.php#L535-L541",
             "snippet": [
                 {
                     "number": 535,
@@ -13706,7 +13706,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/update/validator.php#L536-L542",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/update/validator.php#L536-L542",
             "snippet": [
                 {
                     "number": 536,
@@ -13914,7 +13914,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/classes/update/validator.php#L537-L543",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/classes/update/validator.php#L537-L543",
             "snippet": [
                 {
                     "number": 537,
@@ -14134,7 +14134,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/ddl/mysql_sql_generator.php#L221-L227",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/ddl/mysql_sql_generator.php#L221-L227",
             "snippet": [
                 {
                     "number": 221,
@@ -14277,7 +14277,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/evalmath/evalmath.class.php#L207-L213",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/evalmath/evalmath.class.php#L207-L213",
             "snippet": [
                 {
                     "number": 207,
@@ -14412,7 +14412,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/filterlib.php#L1136-L1142",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/filterlib.php#L1136-L1142",
             "snippet": [
                 {
                     "number": 1136,
@@ -14563,7 +14563,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/form/classes/external/dynamic_form.php#L102-L108",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/form/classes/external/dynamic_form.php#L102-L108",
             "snippet": [
                 {
                     "number": 102,
@@ -14727,7 +14727,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/formslib.php#L3617-L3623",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/formslib.php#L3617-L3623",
             "snippet": [
                 {
                     "number": 3617,
@@ -14894,7 +14894,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/graphlib.php#L1221-L1227",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/graphlib.php#L1221-L1227",
             "snippet": [
                 {
                     "number": 1221,
@@ -15037,7 +15037,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/guzzlehttp/psr7/src/Uri.php#L115-L121",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/guzzlehttp/psr7/src/Uri.php#L115-L121",
             "snippet": [
                 {
                     "number": 115,
@@ -15173,7 +15173,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/html2text/src/Html2Text.php#L471-L477",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/html2text/src/Html2Text.php#L471-L477",
             "snippet": [
                 {
                     "number": 471,
@@ -15341,7 +15341,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/html2text/src/Html2Text.php#L490-L496",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/html2text/src/Html2Text.php#L490-L496",
             "snippet": [
                 {
                     "number": 490,
@@ -15501,7 +15501,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/htmlpurifier/HTMLPurifier/AttrDef/URI/IPv6.php#L29-L35",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/htmlpurifier/HTMLPurifier/AttrDef/URI/IPv6.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -15601,7 +15601,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/htmlpurifier/HTMLPurifier/AttrDef/URI/IPv6.php#L78-L84",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/htmlpurifier/HTMLPurifier/AttrDef/URI/IPv6.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,
@@ -15768,7 +15768,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/markdown/Michelf/Markdown.php#L217-L223",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/markdown/Michelf/Markdown.php#L217-L223",
             "snippet": [
                 {
                     "number": 217,
@@ -15904,7 +15904,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/markdown/Michelf/Markdown.php#L693-L699",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/markdown/Michelf/Markdown.php#L693-L699",
             "snippet": [
                 {
                     "number": 693,
@@ -15999,7 +15999,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/markdown/Michelf/Markdown.php#L1450-L1456",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/markdown/Michelf/Markdown.php#L1450-L1456",
             "snippet": [
                 {
                     "number": 1450,
@@ -16150,7 +16150,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/markdown/Michelf/Markdown.php#L1610-L1616",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/markdown/Michelf/Markdown.php#L1610-L1616",
             "snippet": [
                 {
                     "number": 1610,
@@ -16245,7 +16245,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/markdown/Michelf/MarkdownExtra.php#L717-L723",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/markdown/Michelf/MarkdownExtra.php#L717-L723",
             "snippet": [
                 {
                     "number": 717,
@@ -16393,7 +16393,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/markdown/Michelf/MarkdownExtra.php#L844-L850",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/markdown/Michelf/MarkdownExtra.php#L844-L850",
             "snippet": [
                 {
                     "number": 844,
@@ -16500,7 +16500,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/minify/matthiasmullie-minify/src/JS.php#L403-L409",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/minify/matthiasmullie-minify/src/JS.php#L403-L409",
             "snippet": [
                 {
                     "number": 403,
@@ -16855,7 +16855,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/minify/matthiasmullie-minify/src/JS.php#L404-L410",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/minify/matthiasmullie-minify/src/JS.php#L404-L410",
             "snippet": [
                 {
                     "number": 404,
@@ -17210,7 +17210,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/minify/matthiasmullie-minify/src/JS.php#L405-L411",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/minify/matthiasmullie-minify/src/JS.php#L405-L411",
             "snippet": [
                 {
                     "number": 405,
@@ -17572,7 +17572,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/minify/matthiasmullie-minify/src/JS.php#L407-L413",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/minify/matthiasmullie-minify/src/JS.php#L407-L413",
             "snippet": [
                 {
                     "number": 407,
@@ -17788,7 +17788,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/minify/matthiasmullie-minify/src/JS.php#L412-L418",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/minify/matthiasmullie-minify/src/JS.php#L412-L418",
             "snippet": [
                 {
                     "number": 412,
@@ -17964,7 +17964,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/minify/matthiasmullie-minify/src/JS.php#L420-L426",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/minify/matthiasmullie-minify/src/JS.php#L420-L426",
             "snippet": [
                 {
                     "number": 420,
@@ -18144,7 +18144,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/minify/matthiasmullie-minify/src/JS.php#L430-L436",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/minify/matthiasmullie-minify/src/JS.php#L430-L436",
             "snippet": [
                 {
                     "number": 430,
@@ -18272,7 +18272,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/minify/matthiasmullie-minify/src/JS.php#L438-L444",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/minify/matthiasmullie-minify/src/JS.php#L438-L444",
             "snippet": [
                 {
                     "number": 438,
@@ -18420,7 +18420,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/moodlelib.php#L7965-L7971",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/moodlelib.php#L7965-L7971",
             "snippet": [
                 {
                     "number": 7965,
@@ -18604,7 +18604,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/moodlelib.php#L7986-L7992",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/moodlelib.php#L7986-L7992",
             "snippet": [
                 {
                     "number": 7986,
@@ -18735,7 +18735,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/mustache/src/Loader/InlineLoader.php#L118-L124",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/mustache/src/Loader/InlineLoader.php#L118-L124",
             "snippet": [
                 {
                     "number": 118,
@@ -18898,7 +18898,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/pear/HTML/QuickForm/Renderer/Default.php#L244-L250",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/pear/HTML/QuickForm/Renderer/Default.php#L244-L250",
             "snippet": [
                 {
                     "number": 244,
@@ -19105,7 +19105,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/pear/HTML/QuickForm/Renderer/Default.php#L251-L257",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/pear/HTML/QuickForm/Renderer/Default.php#L251-L257",
             "snippet": [
                 {
                     "number": 251,
@@ -19312,7 +19312,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/pear/HTML/QuickForm/Renderer/Default.php#L289-L295",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/pear/HTML/QuickForm/Renderer/Default.php#L289-L295",
             "snippet": [
                 {
                     "number": 289,
@@ -19519,7 +19519,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/php-css-parser/src/Parsing/ParserState.php#L153-L159",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/php-css-parser/src/Parsing/ParserState.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -19694,7 +19694,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/php-css-parser/src/Parsing/ParserState.php#L193-L199",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/php-css-parser/src/Parsing/ParserState.php#L193-L199",
             "snippet": [
                 {
                     "number": 193,
@@ -19829,7 +19829,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/php-css-parser/src/Parsing/ParserState.php#L238-L244",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/php-css-parser/src/Parsing/ParserState.php#L238-L244",
             "snippet": [
                 {
                     "number": 238,
@@ -19964,7 +19964,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/php-css-parser/src/Value/CSSString.php#L53-L59",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/php-css-parser/src/Value/CSSString.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -20096,7 +20096,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpmailer/src/PHPMailer.php#L929-L935",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpmailer/src/PHPMailer.php#L929-L935",
             "snippet": [
                 {
                     "number": 929,
@@ -20248,7 +20248,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpmailer/src/PHPMailer.php#L1410-L1416",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpmailer/src/PHPMailer.php#L1410-L1416",
             "snippet": [
                 {
                     "number": 1410,
@@ -20348,7 +20348,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpmailer/src/PHPMailer.php#L1428-L1434",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpmailer/src/PHPMailer.php#L1428-L1434",
             "snippet": [
                 {
                     "number": 1428,
@@ -20450,7 +20450,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpmailer/src/PHPMailer.php#L2409-L2415",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpmailer/src/PHPMailer.php#L2409-L2415",
             "snippet": [
                 {
                     "number": 2409,
@@ -20681,7 +20681,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpmailer/src/PHPMailer.php#L4687-L4693",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpmailer/src/PHPMailer.php#L4687-L4693",
             "snippet": [
                 {
                     "number": 4687,
@@ -20921,7 +20921,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpmailer/src/SMTP.php#L308-L314",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpmailer/src/SMTP.php#L308-L314",
             "snippet": [
                 {
                     "number": 308,
@@ -21057,7 +21057,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1066-L1072",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1066-L1072",
             "snippet": [
                 {
                     "number": 1066,
@@ -21164,7 +21164,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1338-L1344",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1338-L1344",
             "snippet": [
                 {
                     "number": 1338,
@@ -21259,7 +21259,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1365-L1371",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1365-L1371",
             "snippet": [
                 {
                     "number": 1365,
@@ -21354,7 +21354,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1437-L1443",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1437-L1443",
             "snippet": [
                 {
                     "number": 1437,
@@ -21449,7 +21449,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1464-L1470",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1464-L1470",
             "snippet": [
                 {
                     "number": 1464,
@@ -21544,7 +21544,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1528-L1534",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1528-L1534",
             "snippet": [
                 {
                     "number": 1528,
@@ -21651,7 +21651,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1530-L1536",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1530-L1536",
             "snippet": [
                 {
                     "number": 1530,
@@ -21753,7 +21753,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1763-L1769",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L1763-L1769",
             "snippet": [
                 {
                     "number": 1763,
@@ -21848,7 +21848,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L2235-L2241",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php#L2235-L2241",
             "snippet": [
                 {
                     "number": 2235,
@@ -21943,7 +21943,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Database/DatabaseAbstract.php#L155-L161",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Database/DatabaseAbstract.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -22150,7 +22150,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L30-L36",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L30-L36",
             "snippet": [
                 {
                     "number": 30,
@@ -22370,7 +22370,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L312-L318",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L312-L318",
             "snippet": [
                 {
                     "number": 312,
@@ -22470,7 +22470,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L312-L318",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L312-L318",
             "snippet": [
                 {
                     "number": 312,
@@ -22570,7 +22570,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L312-L318",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L312-L318",
             "snippet": [
                 {
                     "number": 312,
@@ -22670,7 +22670,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L312-L318",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L312-L318",
             "snippet": [
                 {
                     "number": 312,
@@ -22777,7 +22777,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/FormulaParser.php#L213-L219",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/FormulaParser.php#L213-L219",
             "snippet": [
                 {
                     "number": 213,
@@ -22956,7 +22956,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Functions.php#L165-L171",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Functions.php#L165-L171",
             "snippet": [
                 {
                     "number": 165,
@@ -23079,7 +23079,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/LookupRef/Indirect.php#L78-L84",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/LookupRef/Indirect.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,
@@ -23174,7 +23174,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/LookupRef/Offset.php#L125-L131",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/LookupRef/Offset.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -23281,7 +23281,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/DefinedName.php#L107-L113",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/DefinedName.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -23381,7 +23381,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Helper/Html.php#L654-L660",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Helper/Html.php#L654-L660",
             "snippet": [
                 {
                     "number": 654,
@@ -23508,7 +23508,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Helper/Sample.php#L87-L93",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Helper/Sample.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -23651,7 +23651,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L30-L36",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L30-L36",
             "snippet": [
                 {
                     "number": 30,
@@ -23902,7 +23902,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L31-L37",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L31-L37",
             "snippet": [
                 {
                     "number": 31,
@@ -24121,7 +24121,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L32-L38",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -24312,7 +24312,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L33-L39",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L33-L39",
             "snippet": [
                 {
                     "number": 33,
@@ -24499,7 +24499,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L34-L40",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -24658,7 +24658,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L35-L41",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L35-L41",
             "snippet": [
                 {
                     "number": 35,
@@ -24793,7 +24793,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L65-L71",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L65-L71",
             "snippet": [
                 {
                     "number": 65,
@@ -25016,7 +25016,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L66-L72",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L66-L72",
             "snippet": [
                 {
                     "number": 66,
@@ -25211,7 +25211,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L67-L73",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L67-L73",
             "snippet": [
                 {
                     "number": 67,
@@ -25402,7 +25402,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L68-L74",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,
@@ -25565,7 +25565,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L69-L75",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -25693,7 +25693,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Security/XmlScanner.php#L7-L13",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Security/XmlScanner.php#L7-L13",
             "snippet": [
                 {
                     "number": 7,
@@ -25864,7 +25864,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Xlsx.php#L1886-L1892",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Reader/Xlsx.php#L1886-L1892",
             "snippet": [
                 {
                     "number": 1886,
@@ -26079,7 +26079,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L722-L728",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L722-L728",
             "snippet": [
                 {
                     "number": 722,
@@ -26179,7 +26179,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L746-L752",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L746-L752",
             "snippet": [
                 {
                     "number": 746,
@@ -26279,7 +26279,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L770-L776",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L770-L776",
             "snippet": [
                 {
                     "number": 770,
@@ -26379,7 +26379,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L796-L802",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L796-L802",
             "snippet": [
                 {
                     "number": 796,
@@ -26479,7 +26479,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L860-L866",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L860-L866",
             "snippet": [
                 {
                     "number": 860,
@@ -26579,7 +26579,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L901-L907",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L901-L907",
             "snippet": [
                 {
                     "number": 901,
@@ -26686,7 +26686,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L940-L946",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/ReferenceHelper.php#L940-L946",
             "snippet": [
                 {
                     "number": 940,
@@ -26793,7 +26793,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L14-L20",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L14-L20",
             "snippet": [
                 {
                     "number": 14,
@@ -27004,7 +27004,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L20-L26",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L20-L26",
             "snippet": [
                 {
                     "number": 20,
@@ -27208,7 +27208,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L61-L67",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L61-L67",
             "snippet": [
                 {
                     "number": 61,
@@ -27283,177 +27283,6 @@
             ]
         },
         {
-            "id": "f-e4ad3e2646",
-            "file": "public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php",
-            "line": 176,
-            "column": 13,
-            "pattern": "/([\"])(?:(?=(\\\\?))\\2.)*?\\1/u",
-            "source": "preg_replace_callback()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:(?=(\\\\?))\\2.)\" at offset 5 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L173-L179",
-            "snippet": [
-                {
-                    "number": 173,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        $format = (string) preg_replace('/^\\[\\$-[^\\]]*\\]/', '', $format);",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 174,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 175,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        $format = (string) preg_replace_callback(",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 176,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "            ",
-                            ""
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\"",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            ")(?:(?=(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "\\\\\\",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "))",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "\\2",
-                            "pg-snippet-pattern pg-tok-backref"
-                        ],
-                        [
-                            ".",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "*?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "\\1",
-                            "pg-snippet-pattern pg-tok-backref"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "u",
-                            "pg-snippet-pattern pg-tok-flag"
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            ",",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 177,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            fn (array $matches): string => str_replace('.', chr(0x00), $matches[0]),",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 178,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            $format",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 179,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        );",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
             "id": "f-c258e56b4b",
             "file": "public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php",
             "line": 193,
@@ -27474,7 +27303,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L190-L196",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L190-L196",
             "snippet": [
                 {
                     "number": 190,
@@ -27610,7 +27439,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L197-L203",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L197-L203",
             "snippet": [
                 {
                     "number": 197,
@@ -27773,7 +27602,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L199-L205",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L199-L205",
             "snippet": [
                 {
                     "number": 199,
@@ -27932,7 +27761,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/FractionFormatter.php#L24-L30",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/FractionFormatter.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -28107,7 +27936,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L209-L215",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L209-L215",
             "snippet": [
                 {
                     "number": 209,
@@ -28306,7 +28135,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L278-L284",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L278-L284",
             "snippet": [
                 {
                     "number": 278,
@@ -28505,7 +28334,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/PercentageFormatter.php#L38-L44",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/PercentageFormatter.php#L38-L44",
             "snippet": [
                 {
                     "number": 38,
@@ -28672,7 +28501,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Accounting.php#L26-L32",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Accounting.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,
@@ -28811,7 +28640,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/CurrencyBase.php#L107-L113",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Wizard/CurrencyBase.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -28938,7 +28767,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Worksheet/Table.php#L117-L123",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Worksheet/Table.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -29073,7 +28902,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Worksheet/Table.php#L120-L126",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Worksheet/Table.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,
@@ -29240,7 +29069,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Worksheet/Worksheet.php#L53-L59",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Worksheet/Worksheet.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -29399,7 +29228,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Worksheet/Worksheet.php#L1204-L1210",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Worksheet/Worksheet.php#L1204-L1210",
             "snippet": [
                 {
                     "number": 1204,
@@ -29506,7 +29335,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Ods/Formula.php#L38-L44",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Ods/Formula.php#L38-L44",
             "snippet": [
                 {
                     "number": 38,
@@ -29606,7 +29435,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Ods/Formula.php#L64-L70",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Ods/Formula.php#L64-L70",
             "snippet": [
                 {
                     "number": 64,
@@ -29706,7 +29535,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Ods/NamedExpressions.php#L83-L89",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Ods/NamedExpressions.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -29806,7 +29635,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Xlsx/DefinedNames.php#L195-L201",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Xlsx/DefinedNames.php#L195-L201",
             "snippet": [
                 {
                     "number": 195,
@@ -29914,7 +29743,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L7-L13",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L7-L13",
             "snippet": [
                 {
                     "number": 7,
@@ -30014,7 +29843,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L176-L182",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L176-L182",
             "snippet": [
                 {
                     "number": 176,
@@ -30114,7 +29943,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/rtlcss/src/MoodleHQ/RTLCSS/RTLCSS.php#L236-L242",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/rtlcss/src/MoodleHQ/RTLCSS/RTLCSS.php#L236-L242",
             "snippet": [
                 {
                     "number": 236,
@@ -30242,7 +30071,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/rtlcss/src/MoodleHQ/RTLCSS/RTLCSS.php#L239-L245",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/rtlcss/src/MoodleHQ/RTLCSS/RTLCSS.php#L239-L245",
             "snippet": [
                 {
                     "number": 239,
@@ -30384,7 +30213,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/scssphp/src/Compiler.php#L1738-L1744",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/scssphp/src/Compiler.php#L1738-L1744",
             "snippet": [
                 {
                     "number": 1738,
@@ -30516,7 +30345,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"</A\" . \" ! =\" x n Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). The risky part is: [\\x09\\x0A\\x0B\\x0C\\x0D\\x20]+ Hotspot offsets: 92-119 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"</A\" . \" ! =\" x n Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). The risky part is: [\\x09\\x0A\\x0B\\x0C\\x0D\\x20]+ Hotspot offsets: 92-119 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -30538,7 +30367,7 @@
                 "limit": 100000
             },
             "subject": "</A ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! =",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/simplepie/moodle_simplepie.php#L187-L193",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/simplepie/moodle_simplepie.php#L187-L193",
             "snippet": [
                 {
                     "number": 187,
@@ -30645,7 +30474,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/simplepie/src/Item.php#L2301-L2307",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/simplepie/src/Item.php#L2301-L2307",
             "snippet": [
                 {
                     "number": 2301,
@@ -30936,7 +30765,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/simplepie/src/Item.php#L2326-L2332",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/simplepie/src/Item.php#L2326-L2332",
             "snippet": [
                 {
                     "number": 2326,
@@ -31208,7 +31037,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"</A\" . \" ! =\" x n Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). The risky part is: [\\x09\\x0A\\x0B\\x0C\\x0D\\x20]+ Hotspot offsets: 92-119 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"</A\" . \" ! =\" x n Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). The risky part is: [\\x09\\x0A\\x0B\\x0C\\x0D\\x20]+ Hotspot offsets: 92-119 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -31230,7 +31059,7 @@
                 "limit": 100000
             },
             "subject": "</A ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! = ! =",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/simplepie/src/Sanitize.php#L418-L424",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/simplepie/src/Sanitize.php#L418-L424",
             "snippet": [
                 {
                     "number": 418,
@@ -31330,7 +31159,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/simplepie/src/Sanitize.php#L574-L580",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/simplepie/src/Sanitize.php#L574-L580",
             "snippet": [
                 {
                     "number": 574,
@@ -31437,7 +31266,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/simplepie/src/SimplePie.php#L2984-L2990",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/simplepie/src/SimplePie.php#L2984-L2990",
             "snippet": [
                 {
                     "number": 2984,
@@ -31728,7 +31557,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/simplepie/src/SimplePie.php#L3009-L3015",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/simplepie/src/SimplePie.php#L3009-L3015",
             "snippet": [
                 {
                     "number": 3009,
@@ -32019,7 +31848,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/simplepie/src/Source.php#L469-L475",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/simplepie/src/Source.php#L469-L475",
             "snippet": [
                 {
                     "number": 469,
@@ -32310,7 +32139,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/simplepie/src/Source.php#L485-L491",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/simplepie/src/Source.php#L485-L491",
             "snippet": [
                 {
                     "number": 485,
@@ -32596,7 +32425,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_filters.php#L206-L212",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_filters.php#L206-L212",
             "snippet": [
                 {
                     "number": 206,
@@ -32736,7 +32565,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_fonts.php#L214-L220",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_fonts.php#L214-L220",
             "snippet": [
                 {
                     "number": 214,
@@ -32975,7 +32804,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L186-L192",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L186-L192",
             "snippet": [
                 {
                     "number": 186,
@@ -33135,7 +32964,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L188-L194",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,
@@ -33279,7 +33108,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1055-L1061",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1055-L1061",
             "snippet": [
                 {
                     "number": 1055,
@@ -33458,7 +33287,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1060-L1066",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1060-L1066",
             "snippet": [
                 {
                     "number": 1060,
@@ -33588,7 +33417,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1066-L1072",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1066-L1072",
             "snippet": [
                 {
                     "number": 1066,
@@ -33790,7 +33619,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1071-L1077",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1071-L1077",
             "snippet": [
                 {
                     "number": 1071,
@@ -33990,7 +33819,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1117-L1123",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1117-L1123",
             "snippet": [
                 {
                     "number": 1117,
@@ -34173,7 +34002,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1171-L1177",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1171-L1177",
             "snippet": [
                 {
                     "number": 1171,
@@ -34329,7 +34158,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1172-L1178",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1172-L1178",
             "snippet": [
                 {
                     "number": 1172,
@@ -34477,7 +34306,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1175-L1181",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1175-L1181",
             "snippet": [
                 {
                     "number": 1175,
@@ -34647,7 +34476,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1219-L1225",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1219-L1225",
             "snippet": [
                 {
                     "number": 1219,
@@ -34851,7 +34680,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1221-L1227",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1221-L1227",
             "snippet": [
                 {
                     "number": 1221,
@@ -35071,7 +34900,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1678-L1684",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1678-L1684",
             "snippet": [
                 {
                     "number": 1678,
@@ -35295,7 +35124,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1690-L1696",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1690-L1696",
             "snippet": [
                 {
                     "number": 1690,
@@ -35759,7 +35588,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1701-L1707",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1701-L1707",
             "snippet": [
                 {
                     "number": 1701,
@@ -35983,7 +35812,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1704-L1710",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1704-L1710",
             "snippet": [
                 {
                     "number": 1704,
@@ -36147,7 +35976,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1710-L1716",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1710-L1716",
             "snippet": [
                 {
                     "number": 1710,
@@ -36371,7 +36200,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1713-L1719",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1713-L1719",
             "snippet": [
                 {
                     "number": 1713,
@@ -36535,7 +36364,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1720-L1726",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1720-L1726",
             "snippet": [
                 {
                     "number": 1720,
@@ -36818,7 +36647,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1730-L1736",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1730-L1736",
             "snippet": [
                 {
                     "number": 1730,
@@ -36981,7 +36810,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1742-L1748",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1742-L1748",
             "snippet": [
                 {
                     "number": 1742,
@@ -37144,7 +36973,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/include/tcpdf_static.php#L1748-L1754",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/include/tcpdf_static.php#L1748-L1754",
             "snippet": [
                 {
                     "number": 1748,
@@ -37300,7 +37129,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L7220-L7226",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L7220-L7226",
             "snippet": [
                 {
                     "number": 7220,
@@ -37456,7 +37285,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L7223-L7229",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L7223-L7229",
             "snippet": [
                 {
                     "number": 7223,
@@ -37664,7 +37493,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L7226-L7232",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L7226-L7232",
             "snippet": [
                 {
                     "number": 7226,
@@ -37864,7 +37693,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L7231-L7237",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L7231-L7237",
             "snippet": [
                 {
                     "number": 7231,
@@ -38072,7 +37901,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L7234-L7240",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L7234-L7240",
             "snippet": [
                 {
                     "number": 7234,
@@ -38272,7 +38101,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L7239-L7245",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L7239-L7245",
             "snippet": [
                 {
                     "number": 7239,
@@ -38664,7 +38493,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L7245-L7251",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L7245-L7251",
             "snippet": [
                 {
                     "number": 7245,
@@ -38820,7 +38649,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L12594-L12600",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L12594-L12600",
             "snippet": [
                 {
                     "number": 12594,
@@ -39159,7 +38988,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L12599-L12605",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L12599-L12605",
             "snippet": [
                 {
                     "number": 12599,
@@ -39302,7 +39131,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L12600-L12606",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L12600-L12606",
             "snippet": [
                 {
                     "number": 12600,
@@ -39438,7 +39267,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L14890-L14896",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L14890-L14896",
             "snippet": [
                 {
                     "number": 14890,
@@ -39582,7 +39411,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L14891-L14897",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L14891-L14897",
             "snippet": [
                 {
                     "number": 14891,
@@ -39745,7 +39574,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L15155-L15161",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L15155-L15161",
             "snippet": [
                 {
                     "number": 15155,
@@ -39881,7 +39710,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16503-L16509",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16503-L16509",
             "snippet": [
                 {
                     "number": 16503,
@@ -40037,7 +39866,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16511-L16517",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16511-L16517",
             "snippet": [
                 {
                     "number": 16511,
@@ -40193,7 +40022,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16534-L16540",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16534-L16540",
             "snippet": [
                 {
                     "number": 16534,
@@ -40377,7 +40206,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16550-L16556",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16550-L16556",
             "snippet": [
                 {
                     "number": 16550,
@@ -40561,7 +40390,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16590-L16596",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16590-L16596",
             "snippet": [
                 {
                     "number": 16590,
@@ -40713,7 +40542,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16591-L16597",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16591-L16597",
             "snippet": [
                 {
                     "number": 16591,
@@ -40865,7 +40694,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16603-L16609",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16603-L16609",
             "snippet": [
                 {
                     "number": 16603,
@@ -40993,7 +40822,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16604-L16610",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16604-L16610",
             "snippet": [
                 {
                     "number": 16604,
@@ -41149,7 +40978,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16605-L16611",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16605-L16611",
             "snippet": [
                 {
                     "number": 16605,
@@ -41277,7 +41106,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16615-L16621",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16615-L16621",
             "snippet": [
                 {
                     "number": 16615,
@@ -41592,7 +41421,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16619-L16625",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16619-L16625",
             "snippet": [
                 {
                     "number": 16619,
@@ -41779,7 +41608,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16620-L16626",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16620-L16626",
             "snippet": [
                 {
                     "number": 16620,
@@ -41930,7 +41759,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L16622-L16628",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L16622-L16628",
             "snippet": [
                 {
                     "number": 16622,
@@ -42109,7 +41938,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L17932-L17938",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L17932-L17938",
             "snippet": [
                 {
                     "number": 17932,
@@ -42240,7 +42069,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L17933-L17939",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L17933-L17939",
             "snippet": [
                 {
                     "number": 17933,
@@ -42371,7 +42200,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L17935-L17941",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L17935-L17941",
             "snippet": [
                 {
                     "number": 17935,
@@ -42522,7 +42351,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L17972-L17978",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L17972-L17978",
             "snippet": [
                 {
                     "number": 17972,
@@ -42745,7 +42574,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L18147-L18153",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L18147-L18153",
             "snippet": [
                 {
                     "number": 18147,
@@ -42876,7 +42705,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L18148-L18154",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L18148-L18154",
             "snippet": [
                 {
                     "number": 18148,
@@ -43007,7 +42836,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L18149-L18155",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L18149-L18155",
             "snippet": [
                 {
                     "number": 18149,
@@ -43158,7 +42987,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L18177-L18183",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L18177-L18183",
             "snippet": [
                 {
                     "number": 18177,
@@ -43281,7 +43110,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L19137-L19143",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L19137-L19143",
             "snippet": [
                 {
                     "number": 19137,
@@ -43465,7 +43294,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23068-L23074",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23068-L23074",
             "snippet": [
                 {
                     "number": 23068,
@@ -43621,7 +43450,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23071-L23077",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23071-L23077",
             "snippet": [
                 {
                     "number": 23071,
@@ -43829,7 +43658,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23075-L23081",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23075-L23081",
             "snippet": [
                 {
                     "number": 23075,
@@ -44037,7 +43866,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23079-L23085",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23079-L23085",
             "snippet": [
                 {
                     "number": 23079,
@@ -44245,7 +44074,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23083-L23089",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23083-L23089",
             "snippet": [
                 {
                     "number": 23083,
@@ -44453,7 +44282,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23088-L23094",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23088-L23094",
             "snippet": [
                 {
                     "number": 23088,
@@ -44845,7 +44674,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23099-L23105",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23099-L23105",
             "snippet": [
                 {
                     "number": 23099,
@@ -45060,7 +44889,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23100-L23106",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23100-L23106",
             "snippet": [
                 {
                     "number": 23100,
@@ -45196,7 +45025,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23395-L23401",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23395-L23401",
             "snippet": [
                 {
                     "number": 23395,
@@ -45372,7 +45201,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23412-L23418",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23412-L23418",
             "snippet": [
                 {
                     "number": 23412,
@@ -45712,7 +45541,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23430-L23436",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23430-L23436",
             "snippet": [
                 {
                     "number": 23430,
@@ -45888,7 +45717,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23568-L23574",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23568-L23574",
             "snippet": [
                 {
                     "number": 23568,
@@ -46076,7 +45905,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23573-L23579",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23573-L23579",
             "snippet": [
                 {
                     "number": 23573,
@@ -46268,7 +46097,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23578-L23584",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23578-L23584",
             "snippet": [
                 {
                     "number": 23578,
@@ -46460,7 +46289,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23583-L23589",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23583-L23589",
             "snippet": [
                 {
                     "number": 23583,
@@ -46652,7 +46481,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23588-L23594",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23588-L23594",
             "snippet": [
                 {
                     "number": 23588,
@@ -46844,7 +46673,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23593-L23599",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23593-L23599",
             "snippet": [
                 {
                     "number": 23593,
@@ -47036,7 +46865,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23691-L23697",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23691-L23697",
             "snippet": [
                 {
                     "number": 23691,
@@ -47204,7 +47033,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23692-L23698",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23692-L23698",
             "snippet": [
                 {
                     "number": 23692,
@@ -47372,7 +47201,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L23693-L23699",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L23693-L23699",
             "snippet": [
                 {
                     "number": 23693,
@@ -47564,7 +47393,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L24093-L24099",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L24093-L24099",
             "snippet": [
                 {
                     "number": 24093,
@@ -47775,7 +47604,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf.php#L24481-L24487",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf.php#L24481-L24487",
             "snippet": [
                 {
                     "number": 24481,
@@ -47922,7 +47751,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tcpdf/tcpdf_barcodes_2d.php#L304-L310",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tcpdf/tcpdf_barcodes_2d.php#L304-L310",
             "snippet": [
                 {
                     "number": 304,
@@ -48053,7 +47882,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/tokeniserlib.php#L364-L370",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/tokeniserlib.php#L364-L370",
             "snippet": [
                 {
                     "number": 364,
@@ -48148,7 +47977,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/webauthn/src/WebAuthn.php#L584-L590",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/webauthn/src/WebAuthn.php#L584-L590",
             "snippet": [
                 {
                     "number": 584,
@@ -48297,7 +48126,7 @@
                 "limit": 100000
             },
             "subject": "BEGIN PUBLIC KEY-\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n!END PUBLIC KEY",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/webauthn/src/WebAuthn.php#L679-L685",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/webauthn/src/WebAuthn.php#L679-L685",
             "snippet": [
                 {
                     "number": 679,
@@ -48520,7 +48349,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/weblib.php#L820-L826",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/weblib.php#L820-L826",
             "snippet": [
                 {
                     "number": 820,
@@ -48780,7 +48609,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/weblib.php#L1032-L1038",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/weblib.php#L1032-L1038",
             "snippet": [
                 {
                     "number": 1032,
@@ -48928,7 +48757,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/weblib.php#L1036-L1042",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/weblib.php#L1036-L1042",
             "snippet": [
                 {
                     "number": 1036,
@@ -49084,7 +48913,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/weblib.php#L1040-L1046",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/weblib.php#L1040-L1046",
             "snippet": [
                 {
                     "number": 1040,
@@ -49235,7 +49064,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/weblib.php#L1273-L1279",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/weblib.php#L1273-L1279",
             "snippet": [
                 {
                     "number": 1273,
@@ -49386,7 +49215,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/weblib.php#L1276-L1282",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/weblib.php#L1276-L1282",
             "snippet": [
                 {
                     "number": 1276,
@@ -49529,7 +49358,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/weblib.php#L1277-L1283",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/weblib.php#L1277-L1283",
             "snippet": [
                 {
                     "number": 1277,
@@ -49672,7 +49501,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L232-L238",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L232-L238",
             "snippet": [
                 {
                     "number": 232,
@@ -49871,7 +49700,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L265-L271",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L265-L271",
             "snippet": [
                 {
                     "number": 265,
@@ -49982,7 +49811,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L267-L273",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L267-L273",
             "snippet": [
                 {
                     "number": 267,
@@ -50093,7 +49922,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L271-L277",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L271-L277",
             "snippet": [
                 {
                     "number": 271,
@@ -50204,7 +50033,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L273-L279",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L273-L279",
             "snippet": [
                 {
                     "number": 273,
@@ -50315,7 +50144,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L278-L284",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L278-L284",
             "snippet": [
                 {
                     "number": 278,
@@ -50538,7 +50367,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L283-L289",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L283-L289",
             "snippet": [
                 {
                     "number": 283,
@@ -50717,7 +50546,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L286-L292",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L286-L292",
             "snippet": [
                 {
                     "number": 286,
@@ -50896,7 +50725,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L332-L338",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L332-L338",
             "snippet": [
                 {
                     "number": 332,
@@ -51043,7 +50872,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L343-L349",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L343-L349",
             "snippet": [
                 {
                     "number": 343,
@@ -51170,7 +50999,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L349-L355",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L349-L355",
             "snippet": [
                 {
                     "number": 349,
@@ -51297,7 +51126,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L357-L363",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L357-L363",
             "snippet": [
                 {
                     "number": 357,
@@ -51424,7 +51253,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/wiki_to_markdown.php#L360-L366",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/wiki_to_markdown.php#L360-L366",
             "snippet": [
                 {
                     "number": 360,
@@ -51551,7 +51380,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/lib/xmldb/xmldb_object.php#L375-L381",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/lib/xmldb/xmldb_object.php#L375-L381",
             "snippet": [
                 {
                     "number": 375,
@@ -51714,7 +51543,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/message/lib.php#L753-L759",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/message/lib.php#L753-L759",
             "snippet": [
                 {
                     "number": 753,
@@ -51873,7 +51702,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/assign/gradingtable.php#L1876-L1882",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/assign/gradingtable.php#L1876-L1882",
             "snippet": [
                 {
                     "number": 1876,
@@ -52028,7 +51857,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/assign/submission/onlinetext/locallib.php#L610-L616",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/assign/submission/onlinetext/locallib.php#L610-L616",
             "snippet": [
                 {
                     "number": 610,
@@ -52311,7 +52140,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/assign/submission/onlinetext/locallib.php#L637-L643",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/assign/submission/onlinetext/locallib.php#L637-L643",
             "snippet": [
                 {
                     "number": 637,
@@ -52599,7 +52428,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/book/tool/importhtml/locallib.php#L219-L225",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/book/tool/importhtml/locallib.php#L219-L225",
             "snippet": [
                 {
                     "number": 219,
@@ -52746,7 +52575,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/scorm/locallib.php#L1446-L1452",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/scorm/locallib.php#L1446-L1452",
             "snippet": [
                 {
                     "number": 1446,
@@ -52889,7 +52718,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/wiki/parser/markups/nwiki.php#L165-L171",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/wiki/parser/markups/nwiki.php#L165-L171",
             "snippet": [
                 {
                     "number": 165,
@@ -53056,7 +52885,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/wiki/parser/markups/nwiki.php#L212-L218",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/wiki/parser/markups/nwiki.php#L212-L218",
             "snippet": [
                 {
                     "number": 212,
@@ -53211,7 +53040,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/wiki/parser/markups/nwiki.php#L216-L222",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/wiki/parser/markups/nwiki.php#L216-L222",
             "snippet": [
                 {
                     "number": 216,
@@ -53366,7 +53195,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/wiki/parser/markups/wikimarkup.php#L156-L162",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/wiki/parser/markups/wikimarkup.php#L156-L162",
             "snippet": [
                 {
                     "number": 156,
@@ -53597,7 +53426,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/wiki/parser/markups/wikimarkup.php#L364-L370",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/wiki/parser/markups/wikimarkup.php#L364-L370",
             "snippet": [
                 {
                     "number": 364,
@@ -53768,7 +53597,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/wiki/parser/markups/wikimarkup.php#L367-L373",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/wiki/parser/markups/wikimarkup.php#L367-L373",
             "snippet": [
                 {
                     "number": 367,
@@ -53923,7 +53752,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/mod/workshop/view.php#L98-L104",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/mod/workshop/view.php#L98-L104",
             "snippet": [
                 {
                     "number": 98,
@@ -54094,7 +53923,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/privacy/classes/local/request/contextlist.php#L142-L148",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/privacy/classes/local/request/contextlist.php#L142-L148",
             "snippet": [
                 {
                     "number": 142,
@@ -54257,7 +54086,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/question/format/gift/format.php#L643-L649",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/question/format/gift/format.php#L643-L649",
             "snippet": [
                 {
                     "number": 643,
@@ -54359,7 +54188,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/question/type/multianswer/backup/moodle2/restore_qtype_multianswer_plugin.class.php#L121-L127",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/question/type/multianswer/backup/moodle2/restore_qtype_multianswer_plugin.class.php#L121-L127",
             "snippet": [
                 {
                     "number": 121,
@@ -54461,7 +54290,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/question/type/multianswer/questiontype.php#L418-L424",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/question/type/multianswer/questiontype.php#L418-L424",
             "snippet": [
                 {
                     "number": 418,
@@ -54561,7 +54390,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/question/type/multianswer/questiontype.php#L527-L533",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/question/type/multianswer/questiontype.php#L527-L533",
             "snippet": [
                 {
                     "number": 527,
@@ -54656,7 +54485,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/question/type/ordering/question.php#L252-L258",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/question/type/ordering/question.php#L252-L258",
             "snippet": [
                 {
                     "number": 252,
@@ -54799,7 +54628,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/repository/url/lib.php#L241-L247",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/repository/url/lib.php#L241-L247",
             "snippet": [
                 {
                     "number": 241,
@@ -54943,7 +54772,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"URL(\" . \"!\" x n . \"!'\" Replayed on PCRE2 10.49: preg_match fails from length 19 (backtrack_limit 100000, JIT off). The risky part is: [^\\\\'\", ()]* Hotspot offsets: 18-32 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"URL(\" . \"!\" x n . \"!'\" Replayed on PCRE2 10.49: preg_match fails from length 19 (backtrack_limit 100000, JIT off). The risky part is: [^\\\\'\", ()]* Hotspot offsets: 18-32 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -54979,7 +54808,7 @@
                 "limit": 100000
             },
             "subject": "URL(!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'",
-            "permalink": "https://github.com/moodle/moodle/blob/afbcc55fa1bd80dcdd887b8965dd8c28c0f3bbda/public/repository/url/locallib.php#L722-L728",
+            "permalink": "https://github.com/moodle/moodle/blob/2d4bafe8548a6d6c01494c862ec3d9749ba6ea84/public/repository/url/locallib.php#L722-L728",
             "snippet": [
                 {
                     "number": 722,
