@@ -187,8 +187,9 @@ final class PatternAttributeScanner
      */
     private static function declarations(string $content): array
     {
+        // As the extraction reads the source: without a word.
         $tokens = array_values(array_filter(
-            \PhpToken::tokenize($content),
+            @\PhpToken::tokenize($content),
             static fn (\PhpToken $token): bool => !\in_array($token->id, self::IGNORED, true),
         ));
 

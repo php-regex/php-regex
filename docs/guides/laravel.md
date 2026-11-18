@@ -392,15 +392,35 @@ array element, `['required', 'regex:/^(?:a|b)$/']`, which keeps its `|`. The
 rules a call takes are a rules string too, given by position or by name:
 `$validator->sometimes('code', 'regex:/^(a|b)$/', …)`, the `$rules` and
 `$defaultRules` of `Rule::when()` and `Rule::unless()`, and those of
-`new ConditionalRules()` are split. A string another call takes is one rule:
+`new ConditionalRules()` are split. So is each string element of the array
+`Rule::anyOf()` takes, which the rule validates alone:
+`Rule::anyOf(['regex:/^(a|b)$/'])` hands `/^(a` to `preg_match()`, where
+`Rule::anyOf([['regex:/^(a|b)$/']])` keeps its `|`. The rule of Livewire's
+`#[Validate]` or `#[Rule]` is the rules string of the property it marks:
+`#[Validate('regex:/^(a|b)$/')]` hands `/^(a` to `preg_match()`, unless a
+second attribute of the property gives it rules too, which Livewire merges
+into one list: each string is then one rule, and `'nullable|regex:/^a$/'`
+one rule Laravel names `nullable|regex`. A string another call takes is one
+rule:
 `array_push($rules['code'], 'regex:/^(a|b)$/')` appends one element, and
 one element with a rule before the regex one, `'nullable|regex:/^a$/'`, is a
 rule Laravel names `nullable|regex`, which runs no pattern. The
 pattern is linted as written, between any delimiter PHP takes: `{^a$}` is the
 pattern between braces, not `/{^a$}/`, and a double-quoted literal as PHP
 decodes it: `"regex:/^[\u{0600}-\u{06FF}]+$/u"` holds the characters PHP
-decodes, not `\u`, and `"required|\tregex:/^a$/"` a tab before the rule's
-name. The rule's name is read without case, as Laravel reads it, and
+decodes, not `\u`, `"required|\tregex:/^a$/"` a tab before the rule's
+name and `"regex\x3a/^a$/"` the rule's `:`. Only the string literals of
+the PHP code are read: a quoted rule in a comment, in the text of a heredoc
+or a nowdoc, or in the text around the PHP tags is none. A heredoc is read
+as PHP decodes it, a nowdoc as written, where the code says it holds rules:
+given to a key, assigned, or taken by a call as rules. Literals joined with
+`.` are the one string PHP builds: `'regex:/^(a' . 'b)$/'` runs `/^(ab)$/`,
+not `/^(a`, and an operand that is no literal is read as an expression of
+an interpolated string. In a double-quoted rules string that
+interpolates, a rule between two `|` of its text is read,
+`"min:$min|regex:/^a$/"` runs `/^a$/`, and one an expression is part of,
+`"regex:/^{$prefix}-\d+$/"`, is not: only the running code knows its
+pattern. The rule's name is read without case, as Laravel reads it, and
 `notregex:` is `not_regex:`. A name with blanks around it,
 `'required | regex:/^a$/'`, is still the regex rule, but Laravel then reads
 its parameter as comma-separated values and runs the first one:

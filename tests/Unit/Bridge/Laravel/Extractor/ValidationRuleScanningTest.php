@@ -28,12 +28,12 @@ final class ValidationRuleScanningTest extends TestCase
     use TemporaryProject;
 
     #[Test]
-    public function test_dense_empty_rules_in_comments_are_scanned_in_linear_time(): void
+    public function test_dense_empty_rules_are_scanned_in_linear_time(): void
     {
         // These produce no patterns, but every literal reaches syntax and line lookup.
         $projects = [];
         foreach ([5_000, 20_000] as $rows) {
-            $projects[$rows] = $this->makeProject(['Rules.php' => "<?php\n/*\n".str_repeat("'regex:' \"not_regex:\"\n", $rows)."*/\n"]);
+            $projects[$rows] = $this->makeProject(['Rules.php' => "<?php\n\$rules = [\n".str_repeat("'regex:', \"not_regex:\",\n", $rows)."];\n"]);
         }
 
         $this->assertLinearTime(function (int $rows) use ($projects): void {
@@ -75,6 +75,54 @@ final class ValidationRuleScanningTest extends TestCase
     }
 
     /**
+     * A file PHP warns about as it reads it, an octal escape above \377 in
+     * a double-quoted literal, is read without a word on the output: the
+     * warning would land in the middle of a report printed there.
+     */
+    #[Test]
+    public function test_a_file_php_warns_about_is_read_without_a_word(): void
+    {
+        $project = $this->makeProject(['Rules.php' => "<?php\n\$byte = \"\\600\";\n\$rules = ['a' => 'regex:/^a$/', 'b' => ('regex:/^b$/')];\nreturn \$rules;\n"]);
+        $display = (string) \ini_get('display_errors');
+        \ini_set('display_errors', '1');
+        ob_start();
+
+        try {
+            $rules = require $project.'/Rules.php';
+            $warning = (string) ob_get_contents();
+            ob_clean();
+            $source = new ValidationRulePatternSource();
+            $occurrences = $source->extract(new PatternSourceContext([$project], []));
+        } finally {
+            $output = (string) ob_get_clean();
+            \ini_set('display_errors', $display);
+        }
+
+        $this->assertSame(['a' => 'regex:/^a$/', 'b' => 'regex:/^b$/'], $rules);
+        $this->assertStringContainsString('Octal escape sequence overflow \600 is greater than \377', $warning);
+        $this->assertSame('', $output);
+        $this->assertSame([[3, '/^a$/'], [3, '/^b$/']], array_map(static fn (PatternOccurrence $p): array => [$p->line, $p->pattern], $occurrences));
+        $this->assertSame([], $source->failures());
+    }
+
+    /**
+     * A file cut short inside a heredoc given as rules, which PHP refuses,
+     * keeps the rules written before it, and the heredoc gives none.
+     */
+    #[Test]
+    public function test_a_file_cut_short_in_a_heredoc_keeps_the_rules_before_it(): void
+    {
+        $code = "<?php\n\$rules = ['a' => 'required|regex:/^(a|b)$/'];\n\$more = <<<'RULES'\n    regex:/^c$/\n";
+        $ends = array_filter(token_get_all($code), static fn (array|string $token): bool => \is_array($token) && \T_END_HEREDOC === $token[0]);
+        $this->assertSame([], $ends);
+        $project = $this->makeProject(['Rules.php' => $code]);
+        $source = new ValidationRulePatternSource();
+
+        $this->assertSame([[2, '/^(a']], array_map(static fn (PatternOccurrence $p): array => [$p->line, $p->pattern], $source->extract(new PatternSourceContext([$project], []))));
+        $this->assertSame([], $source->failures());
+    }
+
+    /**
      * @param list<array{int, string}> $expected
      */
     #[Test]
@@ -97,11 +145,12 @@ final class ValidationRuleScanningTest extends TestCase
         yield 'a comparison without spaces' => ['code' => "<?php\n\$x=='regex:/k|l/';\n", 'expected' => [[2, '/k|l/']]];
         yield 'an assignment without spaces' => ['code' => "<?php\n\$x='regex:/k|l/';\n", 'expected' => [[2, '/k']]];
         yield 'a push without spaces' => ['code' => "<?php\n\$x[]='regex:/k|l/';\n", 'expected' => [[2, '/k|l/']]];
-        yield 'a literal opening the file' => ['code' => "'regex:/k|l/'", 'expected' => [[1, '/k|l/']]];
-        yield 'an assignment opening a file that ends on an operator' => ['code' => "='regex:/k|l/';\n\$y !=", 'expected' => [[1, '/k']]];
-        yield 'a push opening the file' => ['code' => "[]='regex:/k|l/'", 'expected' => [[1, '/k|l/']]];
-        yield 'an assignment opening a file that ends on brackets' => ['code' => "='regex:/k|l/';[]", 'expected' => [[1, '/k']]];
-        yield 'an arrow opening the file' => ['code' => "=>'regex:/k|l/'", 'expected' => [[1, '/k']]];
+        yield 'a literal opening the code' => ['code' => "<?php 'regex:/k|l/'", 'expected' => [[1, '/k|l/']]];
+        yield 'an assignment opening code that ends on an operator' => ['code' => "<?php ='regex:/k|l/';\n\$y !=", 'expected' => [[1, '/k']]];
+        yield 'a push opening the code' => ['code' => "<?php []='regex:/k|l/'", 'expected' => [[1, '/k|l/']]];
+        yield 'an assignment opening code that ends on brackets' => ['code' => "<?php ='regex:/k|l/';[]", 'expected' => [[1, '/k']]];
+        yield 'an arrow opening the code' => ['code' => "<?php =>'regex:/k|l/'", 'expected' => [[1, '/k']]];
+        yield 'rules without a regex one' => ['code' => "<?php\n\$r=['a'=>'required|min:2'];\n", 'expected' => []];
     }
 
     /**
