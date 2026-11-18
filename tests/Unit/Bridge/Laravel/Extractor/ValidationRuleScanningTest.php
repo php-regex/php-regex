@@ -106,6 +106,23 @@ final class ValidationRuleScanningTest extends TestCase
     }
 
     /**
+     * A file cut short inside a heredoc given as rules, which PHP refuses,
+     * keeps the rules written before it, and the heredoc gives none.
+     */
+    #[Test]
+    public function test_a_file_cut_short_in_a_heredoc_keeps_the_rules_before_it(): void
+    {
+        $code = "<?php\n\$rules = ['a' => 'required|regex:/^(a|b)$/'];\n\$more = <<<'RULES'\n    regex:/^c$/\n";
+        $ends = array_filter(token_get_all($code), static fn (array|string $token): bool => \is_array($token) && \T_END_HEREDOC === $token[0]);
+        $this->assertSame([], $ends);
+        $project = $this->makeProject(['Rules.php' => $code]);
+        $source = new ValidationRulePatternSource();
+
+        $this->assertSame([[2, '/^(a']], array_map(static fn (PatternOccurrence $p): array => [$p->line, $p->pattern], $source->extract(new PatternSourceContext([$project], []))));
+        $this->assertSame([], $source->failures());
+    }
+
+    /**
      * @param list<array{int, string}> $expected
      */
     #[Test]

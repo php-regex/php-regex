@@ -69,6 +69,26 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     private const LIVEWIRE_RULE_ATTRIBUTES = ['livewire\attributes\validate', 'livewire\attributes\rule'];
 
     /**
+     * The tokens that may stand inside an operand of ".": names, variables,
+     * numbers and literals, member and static access, the operators that
+     * bind tighter (arithmetic, shifts, increments, casts, instanceof), new
+     * and clone, and the keywords a value is written with. Any other token,
+     * a comparison, a logical operator, "?", "??", an assignment, a comma
+     * or a keyword that starts a statement, ends the expression.
+     */
+    private const OPERAND_TOKENS = [
+        \T_VARIABLE => true, \T_STRING => true, \T_NAME_QUALIFIED => true, \T_NAME_FULLY_QUALIFIED => true,
+        \T_NAME_RELATIVE => true, \T_LNUMBER => true, \T_DNUMBER => true, \T_CONSTANT_ENCAPSED_STRING => true,
+        \T_OBJECT_OPERATOR => true, \T_NULLSAFE_OBJECT_OPERATOR => true, \T_DOUBLE_COLON => true,
+        \T_POW => true, \T_SL => true, \T_SR => true, \T_INC => true, \T_DEC => true, \T_INSTANCEOF => true,
+        \T_NEW => true, \T_CLONE => true, \T_STATIC => true, \T_CLASS => true, \T_ARRAY => true,
+        \T_ISSET => true, \T_EMPTY => true, \T_MATCH => true, \T_INT_CAST => true, \T_DOUBLE_CAST => true,
+        \T_STRING_CAST => true, \T_ARRAY_CAST => true, \T_OBJECT_CAST => true, \T_BOOL_CAST => true,
+        \T_LINE => true, \T_FILE => true, \T_DIR => true, \T_CLASS_C => true, \T_TRAIT_C => true,
+        \T_METHOD_C => true, \T_FUNC_C => true, \T_NS_C => true,
+    ];
+
+    /**
      * A regex rule as Laravel's ValidationRuleParser reads one rule: the
      * name, then all the text after the first ":". parseStringRule() trims
      * the name before Str::studly() picks the rule, ruleIsRegex() reads it
@@ -191,15 +211,31 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             // \377, is no word of the run's.
             $tokens = @token_get_all($content);
             $offsets = PhpTokens::offsets($tokens);
+            $closers = PhpTokens::closers($tokens);
+            $openers = array_flip($closers);
+            // The first token of each literal a concatenation read already.
+            $joined = [];
             for ($index = 0, $count = \count($tokens); $index < $count; $index++) {
-                $token = $tokens[$index];
-                $opening = $index;
-                if (\is_array($token) && \T_CONSTANT_ENCAPSED_STRING === $token[0]) {
-                    $pieces = [PhpTokens::stringValue($token[1])];
-                } elseif (\is_string($token) && str_ends_with($token, '"')) {
-                    [$pieces, $index] = self::interpolatedPieces($tokens, $index);
-                } else {
+                $literal = self::literalAt($tokens, $index);
+                if (null === $literal || isset($joined[$index])) {
+                    $index = $literal[1] ?? $index;
+
                     continue;
+                }
+
+                // A literal an operator joins to its neighbours is read as
+                // the string PHP builds from the expression around it.
+                [$pieces, $end, $heredoc] = $literal;
+                $start = $index;
+                $before = PhpTokens::previousSignificant($tokens, $index - 1);
+                $after = PhpTokens::nextSignificant($tokens, $end + 1, $count);
+                if ((null !== $before && ('.' === $tokens[$before] || self::isOperandToken($tokens[$before])))
+                    || (null !== $after && (\in_array($tokens[$after], ['.', '(', '['], true) || self::isOperandToken($tokens[$after])))) {
+                    $start = self::expressionStart($tokens, $index, $openers);
+                    [$pieces, $heredoc, $literals] = self::concatenation($tokens, $start, $closers);
+                    $joined += array_fill_keys($literals, true);
+                } else {
+                    $index = $end;
                 }
 
                 // Every name of a regex rule holds "regex" once PHP has
@@ -210,10 +246,18 @@ final class ValidationRulePatternSource implements PatternSourceInterface
 
                 // Laravel splits a rules string on every "|", one inside a
                 // pattern included; an element of a rules array is one rule,
-                // not known when an expression is part of it.
+                // not known when an expression is part of it. Anywhere the
+                // code says neither, a rule before the regex one, as
+                // "nullable|regex:/a/", makes a rules string, and a heredoc
+                // is not read.
                 $literal = $pieces[0] ?? '';
                 $reading ??= self::tokenReading($tokens, $offsets);
-                if ($this->isRulesString($literal, $content, $offsets[$opening], $reading)) {
+                $rulesString = $this->rulesStringContext($content, $offsets[$start], $reading);
+                if (null === $rulesString && $heredoc) {
+                    continue;
+                }
+
+                if ($rulesString ?? 1 !== LibraryPcre::match(self::RULE, $literal)) {
                     $rules = self::rulesOf($pieces);
                 } else {
                     $rules = \in_array(null, $pieces, true) ? [] : [$literal];
@@ -240,7 +284,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                     $patterns[] = new PatternOccurrence(
                         $trimmed,
                         $filePath,
-                        PhpTokens::lineOf($tokens, $opening),
+                        PhpTokens::lineOf($tokens, $start),
                         'validation:'.('' === $name[2] ? 'regex' : 'not_regex'),
                         $pattern,
                         'Laravel validation rule',
@@ -263,23 +307,21 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     }
 
     /**
-     * Whether the literal is a rules string, which Laravel splits on "|",
-     * rather than one element of a rules array: a literal given to a key
-     * ('a' => '…') or assigned ($rules['a'] = '…'), where $rules['a'][] = '…'
-     * pushes one element, the rules a call takes (RULES_ARGUMENTS), or an
-     * element of the array of rule sets a call takes (RULE_SETS_ARGUMENTS),
-     * where a string another call takes, as array_push() appends it, is one
-     * element. Anywhere else, a rule before the regex one, as
-     * "nullable|regex:/a/", makes a rules string, unless array_push() or
-     * array_unshift() appends it: Laravel then reads one rule named
-     * "nullable|regex", and runs no pattern. Parentheses that only group the
-     * literal change nothing.
+     * Whether the expression that starts at $start is a rules string, which
+     * Laravel splits on "|", or one element of a rules array, as the code
+     * around it says; null where it says neither. A rules string is given
+     * to a key ('a' => '…'), assigned ($rules['a'] = '…'), taken by a call
+     * as rules (RULES_ARGUMENTS) or an element of the array of rule sets a
+     * call takes (RULE_SETS_ARGUMENTS). One element is pushed
+     * ($rules['a'][] = '…') or appended by array_push() or array_unshift():
+     * Laravel reads "nullable|regex:/a/" there as one rule named
+     * "nullable|regex", and runs no pattern. Parentheses that only group
+     * the expression change nothing.
      *
-     * @param string                                                                                 $literal the value of the literal, up to its first expression when it interpolates
-     * @param int                                                                                    $start   the offset of the token that opens the literal
+     * @param int                                                                                    $start   the offset of the first token of the expression
      * @param array{rules: array<int, true>, grouping: array<int, true>, appended: array<int, true>} $reading what the tokens of the file say, from tokenReading()
      */
-    private function isRulesString(string $literal, string $content, int $start, array $reading): bool
+    private function rulesStringContext(string $content, int $start, array $reading): ?bool
     {
         $before = $this->previousNonWhitespace($content, $start - 1);
         while ($before >= 0 && '(' === $content[$before] && isset($reading['grouping'][$before])) {
@@ -296,7 +338,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 return true;
             }
 
-            return 1 !== LibraryPcre::match(self::RULE, $literal) && !isset($reading['appended'][$start]);
+            return isset($reading['appended'][$start]) ? false : null;
         }
 
         $before = $this->previousNonWhitespace($content, $before - 1);
@@ -316,13 +358,12 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     }
 
     /**
-     * The offsets of the string literals of the file that a call takes as
-     * rules, by position or by name, or that the array of rule sets a call
-     * takes holds as elements, of those array_push() or array_unshift()
-     * appends as elements, and of the parentheses that only group what they
-     * hold. A literal is an argument of the innermost bracket around it
-     * that does not only group. A double-quoted string that interpolates is
-     * placed by its opening quote. The rule of a Livewire attribute is a
+     * The offsets of the tokens of the file that start an argument a call
+     * takes as rules, by position or by name, or an element of the array of
+     * rule sets a call takes, of those that start an argument array_push()
+     * or array_unshift() appends as an element, and of the parentheses that
+     * only group what they hold. A token is in the innermost bracket around
+     * it that does not only group. The rule of a Livewire attribute is a
      * rules string where it is the only one of its declaration.
      *
      * @param array<int, array{int, string, int}|string> $tokens
@@ -422,7 +463,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 continue;
             }
 
-            if (\is_array($token) ? \T_CONSTANT_ENCAPSED_STRING !== $token[0] : !str_ends_with($token, '"')) {
+            if (PhpTokens::isIgnorable($token)) {
                 continue;
             }
 
@@ -501,27 +542,73 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     }
 
     /**
-     * The texts of the double-quoted string that interpolates from the
-     * quote at $open, as PHP decodes them, with null for each expression
-     * between them, and the index of the quote that closes it.
+     * The string literal that starts at $index, quoted, double-quoted and
+     * interpolating, a heredoc or a nowdoc: its texts as PHP decodes them,
+     * null for each expression between them and for a heredoc PHP refuses,
+     * the index of its last token, and whether it is a heredoc or a nowdoc.
+     * Null where no literal starts.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array{list<string|null>, int, bool}|null
+     */
+    private static function literalAt(array $tokens, int $index): ?array
+    {
+        $token = $tokens[$index];
+        if (\is_string($token)) {
+            if (!str_ends_with($token, '"')) {
+                return null;
+            }
+
+            [$pieces, $end] = self::rawPieces($tokens, $index);
+
+            return [array_map(static fn (?string $piece): ?string => null === $piece ? null : PhpStringLiteral::decodeInterpolated($piece), $pieces), $end, false];
+        }
+
+        if (\T_CONSTANT_ENCAPSED_STRING === $token[0]) {
+            return [[PhpTokens::stringValue($token[1])], $index, false];
+        }
+
+        if (\T_START_HEREDOC !== $token[0]) {
+            return null;
+        }
+
+        [$pieces, $end] = self::rawPieces($tokens, $index);
+        $closing = $tokens[$end] ?? null;
+        if (!\is_array($closing) || \T_END_HEREDOC !== $closing[0]) {
+            return [[null], $end, true];
+        }
+
+        // The quote around the label of a nowdoc: <<<'RULES'.
+        if (str_contains($token[1], "'")) {
+            return [[PhpStringLiteral::decodeHeredoc($token[1], implode('', $pieces), $closing[1])], $end, true];
+        }
+
+        return [PhpStringLiteral::decodeHeredocPieces($pieces, $closing[1]) ?? [null], $end, true];
+    }
+
+    /**
+     * The texts of the double-quoted string or the heredoc that opens at
+     * $open, as written, with null for each expression between them, and
+     * the index of the token that closes it.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      *
      * @return array{list<string|null>, int}
      */
-    private static function interpolatedPieces(array $tokens, int $open): array
+    private static function rawPieces(array $tokens, int $open): array
     {
         $pieces = [];
         // An expression between braces may hold strings of its own.
         $depth = 0;
         for ($index = $open + 1, $count = \count($tokens); $index < $count; $index++) {
             $token = $tokens[$index];
-            if (0 === $depth && '"' === $token) {
+            if (0 === $depth && ('"' === $token || (\is_array($token) && \T_END_HEREDOC === $token[0]))) {
                 break;
             }
 
             if (0 === $depth && \is_array($token) && \T_ENCAPSED_AND_WHITESPACE === $token[0]) {
-                $pieces[] = PhpStringLiteral::decodeInterpolated($token[1]);
+                $pieces[] = $token[1];
 
                 continue;
             }
@@ -580,6 +667,122 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         }
 
         return $rules;
+    }
+
+    /**
+     * The first token of the expression that holds the literal at $index,
+     * the first literal of the expression the walk over the file meets: the
+     * walk back steps over the operands of "." and of the operators that
+     * bind tighter, a call or an index between brackets included, and
+     * stops at any other token and at a bracket it did not close.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $openers the opening bracket of each closing one
+     */
+    private static function expressionStart(array $tokens, int $index, array $openers): int
+    {
+        $start = $index;
+        for ($at = PhpTokens::previousSignificant($tokens, $index - 1); null !== $at; $at = PhpTokens::previousSignificant($tokens, $at - 1)) {
+            $token = $tokens[$at];
+            if (')' === $token || ']' === $token) {
+                // A bracket a file cut short never opened is stepped over.
+                $at = $openers[$at] ?? $at;
+            } elseif ('.' !== $token && !self::isOperandToken($token)) {
+                break;
+            }
+
+            $start = $at;
+        }
+
+        return $start;
+    }
+
+    /**
+     * The texts of the expression that starts at $start, the operands of
+     * "." that are a literal alone joined into the string PHP builds, null
+     * for each other operand; whether one of its literals is a heredoc or a
+     * nowdoc; and the first token of each literal it holds outside
+     * brackets.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     *
+     * @return array{list<string|null>, bool, list<int>}
+     */
+    private static function concatenation(array $tokens, int $start, array $closers): array
+    {
+        $pieces = [];
+        $heredoc = false;
+        $literals = [];
+        // The texts of the last literal of the operand being read, and the
+        // count of the units it holds: a literal alone is one, a bracket
+        // with what it holds one.
+        $operand = null;
+        $units = 0;
+        $count = \count($tokens);
+        for ($index = $start; null !== $index; $index = PhpTokens::nextSignificant($tokens, $end + 1, $count)) {
+            $token = $tokens[$index];
+            if ('.' === $token) {
+                $pieces = self::join($pieces, 1 === $units && null !== $operand ? $operand : [null]);
+                [$operand, $units, $end] = [null, 0, $index];
+
+                continue;
+            }
+
+            $literal = self::literalAt($tokens, $index);
+            if (null !== $literal) {
+                $literals[] = $index;
+                $operand = $literal[0];
+                $heredoc = $heredoc || (0 === $units && $literal[2]);
+                $end = $literal[1];
+            } elseif (\in_array($token, ['(', '[', '{'], true) && isset($closers[$index])) {
+                $end = $closers[$index];
+            } elseif (self::isOperandToken($token)) {
+                $end = $index;
+            } else {
+                break;
+            }
+
+            $units++;
+        }
+
+        return [self::join($pieces, 1 === $units && null !== $operand ? $operand : [null]), $heredoc, $literals];
+    }
+
+    /**
+     * The texts with these after them: two texts in a row are one, as PHP
+     * joins them, and two expressions in a row one unknown.
+     *
+     * @param list<string|null> $pieces
+     * @param list<string|null> $more
+     *
+     * @return list<string|null>
+     */
+    private static function join(array $pieces, array $more): array
+    {
+        foreach ($more as $piece) {
+            $last = array_key_last($pieces);
+            $previous = null === $last ? null : $pieces[$last];
+            if (null !== $last && null !== $previous && null !== $piece) {
+                $pieces[$last] = $previous.$piece;
+            } elseif (null === $last || null !== $previous || null !== $piece) {
+                $pieces[] = $piece;
+            }
+        }
+
+        return $pieces;
+    }
+
+    /**
+     * Whether the token may stand inside an operand of ".", which binds
+     * looser than every operator but the comparisons, the logical ones, the
+     * ternary, the null coalescing and the assignments.
+     *
+     * @param array{int, string, int}|string $token
+     */
+    private static function isOperandToken(array|string $token): bool
+    {
+        return \is_array($token) ? isset(self::OPERAND_TOKENS[$token[0]]) : str_contains('+-*/%!~@$', $token);
     }
 
     /**

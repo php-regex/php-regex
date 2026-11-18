@@ -97,6 +97,15 @@ CHANGELOG
    rule between two `|` of its text is read, `"min:$min|regex:/^a$/"` runs
    `/^a$/`; one an expression is part of, `"regex:/^{$prefix}-\d+$/"`, is
    no longer linted with the expression as its text.
+ * `regex:lint` reads literals joined with `.` as the one string PHP
+   builds, where it read each literal alone: `'regex:/^(a' . 'b)$/'` runs
+   `/^(ab)$/`, and `/^(a`, which Laravel never runs, was linted;
+   `'required|' . 'regex:/^(a|b)$/'` is split as the rules string it is. An
+   operand that is no literal is read as an expression of an interpolated
+   string: the rule it is part of is not read, and `'regex:/^' . $prefix .
+   '$/'` no longer lints `/^`. A heredoc is read as PHP decodes it, a nowdoc
+   as written, where the code says it holds rules: given to a key,
+   assigned, or taken by a call as rules.
  * `regex:lint` reads a regex rule whose name has blanks around it,
    `'required | regex:/^b+$/'` or `'regex :/^b+$/'`, which Laravel trims and
    runs: it was not linted. Laravel reads the parameter of such a rule as

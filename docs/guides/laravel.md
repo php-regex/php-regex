@@ -407,10 +407,14 @@ pattern is linted as written, between any delimiter PHP takes: `{^a$}` is the
 pattern between braces, not `/{^a$}/`, and a double-quoted literal as PHP
 decodes it: `"regex:/^[\u{0600}-\u{06FF}]+$/u"` holds the characters PHP
 decodes, not `\u`, `"required|\tregex:/^a$/"` a tab before the rule's
-name and `"regex\x3a/^a$/"` the rule's `:`. Only the quoted string
-literals of the PHP code are read: a quoted rule in a comment, in a heredoc
-or a nowdoc, or in the text around the PHP tags is none, and a rules string
-written as a heredoc is not read. In a double-quoted rules string that
+name and `"regex\x3a/^a$/"` the rule's `:`. Only the string literals of
+the PHP code are read: a quoted rule in a comment, in the text of a heredoc
+or a nowdoc, or in the text around the PHP tags is none. A heredoc is read
+as PHP decodes it, a nowdoc as written, where the code says it holds rules:
+given to a key, assigned, or taken by a call as rules. Literals joined with
+`.` are the one string PHP builds: `'regex:/^(a' . 'b)$/'` runs `/^(ab)$/`,
+not `/^(a`, and an operand that is no literal is read as an expression of
+an interpolated string. In a double-quoted rules string that
 interpolates, a rule between two `|` of its text is read,
 `"min:$min|regex:/^a$/"` runs `/^a$/`, and one an expression is part of,
 `"regex:/^{$prefix}-\d+$/"`, is not: only the running code knows its

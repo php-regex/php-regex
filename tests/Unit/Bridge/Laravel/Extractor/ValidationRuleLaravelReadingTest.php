@@ -434,6 +434,80 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
+     * Literals joined with "." are the one string PHP builds, read where
+     * the concatenation starts: "'regex:/^(a' . 'b)$/'" runs "/^(ab)$/", not
+     * "/^(a". An operand that is no literal is as an expression of an
+     * interpolation: the rule it is part of is not read, and a rule between
+     * two "|" of the literals beside it is.
+     */
+    #[Test]
+    public function test_a_concatenation_is_read_as_the_string_php_builds(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $max = 9; $prefix = 'ab'; $base = 'nullable'; $rule = 'nullable|';
+            return [
+                'a' => 'regex:/^(a' . 'b)$/',
+                'b' => ['required', 'regex:/^(c|' . 'd)$/'],
+                'c' => 'required|'
+                    // The rule Laravel splits.
+                    . 'regex:/^(e|f)$/',
+                'd' => 'required|max:' . $max . '|regex:/^(g|h)$/',
+                'e' => 'regex:/^' . $prefix . '[a-z]+$/',
+                'f' => $base . '|regex:/^(i|j)$/',
+                'g' => ['required', $rule . 'regex:/^k$/'],
+                'h' => "regex:/^l" . '$/',
+                'i' => 'required|max:' . strlen($prefix) . '|regex:/^(m|n)$/',
+                'j' => trim($base) . '|regex:/^(o|p)$/',
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = self::laravelPatterns($rules);
+        $this->assertSame(['/^(ab)$/', '/^(c|d)$/', '/^(e', '/^(g', '/^ab[a-z]+$/', '/^(i', '/^l$/', '/^(m', '/^(o'], $expected);
+        $this->assertSame([true, true, false, false, true, false, true, false, false], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[4, '/^(ab)$/'], [5, '/^(c|d)$/'], [6, '/^(e'], [9, '/^(g'], [11, '/^(i'], [13, '/^l$/'], [14, '/^(m'], [15, '/^(o']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A heredoc is read as PHP decodes it, a nowdoc as written, where the
+     * code says it holds rules: given to a key, assigned, or taken by a call
+     * as rules, alone or in a concatenation. Anywhere else its text is
+     * not read.
+     */
+    #[Test]
+    public function test_a_heredoc_given_as_rules_is_read_as_php_decodes_it(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $length = strlen(<<<'TEXT'
+                regex:/^(x|y)$/
+                TEXT);
+            return [
+                'a' => <<<'RULES'
+                    required|regex:/^(a|b)$/
+                    RULES,
+                'b' => <<<RULES
+                    regex\x3a/^c$/
+                    RULES,
+                'c' => 'required|' . <<<'RULE'
+                    regex:/^d$/
+                    RULE,
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $this->assertSame(['/^(a', '/^c$/', '/^d$/'], self::laravelPatterns($rules));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[6, '/^(a'], [9, '/^c$/'], [12, '/^d$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
      * A rules string given to a call is a rules string: Validator::sometimes()
      * explodes [$key => $rules], and ConditionalRules::rules() explodes a
      * string on "|". An element of an array literal, an argument of the call
