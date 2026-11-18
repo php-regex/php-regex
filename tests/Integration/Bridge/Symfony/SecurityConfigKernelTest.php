@@ -439,6 +439,30 @@ final class SecurityConfigKernelTest extends TestCase
     }
 
     /**
+     * A rule is found in the files by its values as written, before the
+     * parameters they hold are resolved and split: one written with roles
+     * alone is found by them, one with methods alone by them, one with a
+     * path by its path. Each is then read with its parameters resolved.
+     */
+    #[Test]
+    public function test_a_rule_written_with_parameters_is_located_at_its_line(): void
+    {
+        $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_roles: 'ROLE_A,ROLE_B'\n    admin_method: post\n",
+            'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n"
+                ."        - { roles: '%admin_roles%' }\n"
+                ."        - { methods: ['%admin_method%'] }\n"
+                ."        - { path: ^/c, roles: '%admin_roles%' }\n",
+        ])));
+
+        $this->assertNotNull($config);
+        $this->assertSame(
+            [[6, ['ROLE_A', 'ROLE_B'], []], [7, [], ['post']], [8, ['ROLE_A', 'ROLE_B'], []]],
+            array_map(static fn (array $rule): array => [$rule['line'], $rule['roles'], $rule['methods']], $config['accessControl']),
+        );
+    }
+
+    /**
      * The security bundle joins a list of firewall patterns into one
      * alternation once their parameters are resolved, as the kernel
      * resolves them; one read from the environment is said to be so.

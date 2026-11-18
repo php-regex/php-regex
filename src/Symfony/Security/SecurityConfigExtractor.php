@@ -150,7 +150,8 @@ final class SecurityConfigExtractor
         // and 8.1.11).
         $prefix = $parameters->getEnvPlaceholderUniquePrefix();
         $written = [];
-        array_walk_recursive($configs, static function (&$value, int|string $key) use ($parameters, $prefix, &$written): void {
+        $pieces = [];
+        array_walk_recursive($configs, static function (&$value, int|string $key) use ($parameters, $prefix, &$written, &$pieces): void {
             try {
                 if (!\is_string($value) || $value === $resolved = $parameters->resolveValue($value)) {
                     return;
@@ -161,10 +162,17 @@ final class SecurityConfigExtractor
             }
 
             // The bundle splits a string of roles or methods once the pass
-            // has resolved it: it is given resolved, and its entry is found
-            // by what else it writes.
+            // has resolved it: each piece it splits is a placeholder of its
+            // own, its entry found by the string as written, and read as the
+            // piece.
             if (\is_string($resolved) && \in_array($key, ['roles', 'role', 'methods', 'method'], true)) {
-                $value = $resolved;
+                $split = [];
+                foreach (preg_split('/\s*,\s*/', $resolved) ?: [] as $piece) {
+                    $placeholder = $prefix.'_piece_'.\count($pieces);
+                    $pieces[$placeholder] = [$value, $piece];
+                    $split[] = $placeholder;
+                }
+                $value = implode(',', $split);
 
                 return;
             }
@@ -202,7 +210,7 @@ final class SecurityConfigExtractor
             return self::written($placeholders, self::text($resolved) ?? throw self::notAString($value));
         };
 
-        return $this->build([$processed], $locator->locate($kernel->getProjectDir(), $kernel->getEnvironment()), $resolve);
+        return $this->build([$processed], $locator->locate($kernel->getProjectDir(), $kernel->getEnvironment()), $resolve, $pieces);
     }
 
     /**
@@ -308,10 +316,12 @@ final class SecurityConfigExtractor
      * @param list<array<array-key, mixed>>               $configs the security configurations, in the order they apply
      * @param list<string>                                $files   the files to locate each entry in
      * @param \Closure(string): array{0: string, 1: bool} $resolve resolves the parameters of a value, and says whether it reads the environment
+     * @param array<string, array{0: string, 1: string}>  $pieces  each piece of a string of roles or methods a parameter holds, by its placeholder:
+     *                                                             the string as written, and the piece
      *
      * @return array{accessControl: list<AccessControlRule>, firewalls: list<FirewallRule>}
      */
-    private function build(array $configs, array $files, \Closure $resolve): array
+    private function build(array $configs, array $files, \Closure $resolve, array $pieces = []): array
     {
         $sources = self::sources($files);
         $taken = [];
@@ -347,7 +357,7 @@ final class SecurityConfigExtractor
                     'port' => self::text($rule['port'] ?? null),
                     'attributes' => $attributes,
                     'route' => self::text($rule['route'] ?? null),
-                ], \count($accessControl) + 1, $sources, $taken, $resolve);
+                ], \count($accessControl) + 1, $sources, $taken, $resolve, $pieces);
             }
 
             // A later configuration adds to a firewall an earlier one declared.
@@ -378,13 +388,19 @@ final class SecurityConfigExtractor
      * @param list<array{file: string, lines: array<int, string>}>                                                                                                                                                                                                    $sources
      * @param array<int, array<int, bool>>                                                                                                                                                                                                                            $taken
      * @param \Closure(string): array{0: string, 1: bool}                                                                                                                                                                                                             $resolve
+     * @param array<string, array{0: string, 1: string}>                                                                                                                                                                                                              $pieces
      *
      * @throws SecurityConfigException
      *
      * @return AccessControlRule
      */
-    private function accessRule(array $rule, int $index, array $sources, array &$taken, \Closure $resolve): array
+    private function accessRule(array $rule, int $index, array $sources, array &$taken, \Closure $resolve, array $pieces): array
     {
+        // A piece of a string of roles or methods a parameter holds is found
+        // by the string as written, and read as the piece.
+        $writtenAs = static fn (string $item): string => $pieces[$item][0] ?? $item;
+        $readAs = static fn (string $item): string => $pieces[$item][1] ?? $item;
+
         $matchers = [
             ...self::valueMatchers($rule['path'], 'path'),
             ...self::valueMatchers($rule['host'], 'host'),
@@ -396,9 +412,9 @@ final class SecurityConfigExtractor
             // A rule with none of these, "{ roles: ROLE_USER }", is found by
             // what else it writes.
             $matchers = self::entryMatchers([
-                'roles' => self::listOf($rule['roles'], true),
+                'roles' => array_map($writtenAs, self::listOf($rule['roles'], true)),
                 'ips' => $rule['ips'],
-                'methods' => self::listOf($rule['methods'], true),
+                'methods' => array_map($writtenAs, self::listOf($rule['methods'], true)),
                 'requires_channel' => null === $rule['requiresChannel'] ? [] : [$rule['requiresChannel']],
             ]);
         }
@@ -418,8 +434,8 @@ final class SecurityConfigExtractor
 
         $path = null === $rule['path'] ? null : $read($rule['path'], 'path');
         $host = null === $rule['host'] ? null : $read($rule['host'], 'host');
-        $roles = self::resolvedList($rule['roles'], $read, 'roles');
-        $methods = self::resolvedList($rule['methods'], $read, 'methods');
+        $roles = self::resolvedList(\is_string($rule['roles']) ? $rule['roles'] : array_map($readAs, $rule['roles']), $read, 'roles');
+        $methods = self::resolvedList(\is_string($rule['methods']) ? $rule['methods'] : array_map($readAs, $rule['methods']), $read, 'methods');
         $port = null === $rule['port'] ? null : $read($rule['port'], 'port');
 
         // SecurityExtension builds the port matcher, and upper-cases the
