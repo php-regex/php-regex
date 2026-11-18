@@ -252,7 +252,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 // is not read.
                 $literal = $pieces[0] ?? '';
                 $reading ??= self::tokenReading($tokens, $offsets);
-                $rulesString = $this->rulesStringContext($content, $offsets[$start], $reading);
+                $rulesString = self::rulesStringContext($tokens, $start, $offsets, $reading);
                 if (null === $rulesString && $heredoc) {
                     continue;
                 }
@@ -316,46 +316,39 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * ($rules['a'][] = '…'), appended by array_push() or array_unshift(), or
      * the rule of one of two Livewire attributes of a property: Laravel
      * reads "nullable|regex:/a/" there as one rule named "nullable|regex",
-     * and runs no pattern. Parentheses that only group the expression
-     * change nothing.
+     * and runs no pattern. Parentheses that only group the expression, and
+     * comments, change nothing.
      *
-     * @param int                                                                                    $start   the offset of the first token of the expression
+     * @param array<int, array{int, string, int}|string>                                             $tokens
+     * @param int                                                                                    $start   the first token of the expression
+     * @param array<int, int>                                                                        $offsets
      * @param array{rules: array<int, true>, grouping: array<int, true>, elements: array<int, true>} $reading what the tokens of the file say, from tokenReading()
      */
-    private function rulesStringContext(string $content, int $start, array $reading): ?bool
+    private static function rulesStringContext(array $tokens, int $start, array $offsets, array $reading): ?bool
     {
-        $before = $this->previousNonWhitespace($content, $start - 1);
-        while ($before >= 0 && '(' === $content[$before] && isset($reading['grouping'][$before])) {
-            $before = $this->previousNonWhitespace($content, $before - 1);
+        $before = PhpTokens::previousSignificant($tokens, $start - 1);
+        while (null !== $before && '(' === $tokens[$before] && isset($reading['grouping'][$offsets[$before]])) {
+            $before = PhpTokens::previousSignificant($tokens, $before - 1);
         }
 
-        if ($before >= 1 && '=>' === substr($content, $before - 1, 2)) {
+        if (null !== $before && PhpTokens::isDoubleArrow($tokens[$before])) {
             return true;
         }
 
-        // "==", "!=", "<=" and ">=" compare; "=", ".=" and "??=" assign.
-        if ($before < 0 || '=' !== $content[$before] || ($before > 0 && str_contains('=!<>', $content[$before - 1]))) {
-            if (isset($reading['rules'][$start])) {
+        // "=", ".=" and "??=" assign; "==" and the other comparisons do not.
+        if (null === $before || ('=' !== $tokens[$before] && (!\is_array($tokens[$before]) || !\in_array($tokens[$before][0], [\T_CONCAT_EQUAL, \T_COALESCE_EQUAL], true)))) {
+            if (isset($reading['rules'][$offsets[$start]])) {
                 return true;
             }
 
-            return isset($reading['elements'][$start]) ? false : null;
+            return isset($reading['elements'][$offsets[$start]]) ? false : null;
         }
 
-        $before = $this->previousNonWhitespace($content, $before - 1);
+        // "[] =" pushes one element.
+        $close = PhpTokens::previousSignificant($tokens, $before - 1);
+        $open = null === $close ? null : PhpTokens::previousSignificant($tokens, $close - 1);
 
-        return $before < 1 || '[]' !== substr($content, $before - 1, 2);
-    }
-
-    private function previousNonWhitespace(string $content, int $offset): int
-    {
-        // Only the whitespace immediately before this literal (or its assignment)
-        // is visited; earlier literals stop the walk without copying a prefix.
-        while ($offset >= 0 && str_contains(" \t\n\r\0\x0B", $content[$offset])) {
-            $offset--;
-        }
-
-        return $offset;
+        return null === $open || ']' !== $tokens[$close] || '[' !== $tokens[$open];
     }
 
     /**

@@ -509,6 +509,38 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
+     * A comment between a key or an assignment and the rules changes
+     * nothing Laravel reads: the rules are given to the key, assigned or
+     * pushed all the same.
+     */
+    #[Test]
+    public function test_a_comment_before_the_rules_changes_nothing(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $rules = [
+                'a' => /* partner rule */ <<<'RULES'
+                    required|regex:/^(a|b)$/
+                    RULES,
+                'b' => // the lane code
+                    'regex:/^(c|d)$/',
+            ];
+            $rules['e'] = /* split */ 'regex:/^(e|f)$/';
+            $rules['g'][ ] /* one element */ = 'regex:/^(g|h)$/';
+            return $rules;
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = self::laravelPatterns($rules);
+        $this->assertSame(['/^(a', '/^(c', '/^(e', '/^(g|h)$/'], $expected);
+        $this->assertSame([false, false, false, true], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[3, '/^(a'], [7, '/^(c'], [9, '/^(e'], [10, '/^(g|h)$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
      * A rules string given to a call is a rules string: Validator::sometimes()
      * explodes [$key => $rules], and ConditionalRules::rules() explodes a
      * string on "|". An element of an array literal, an argument of the call
