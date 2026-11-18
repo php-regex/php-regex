@@ -144,8 +144,9 @@ CHANGELOG
    critical when the body of the loop reads its input one way, each
    alternation choosing its branch by the first character and each count
    fixed: `/^(a|b\1)+$/`, the PCRE2 manual's example, which PCRE2 reads in
-   linear steps, is medium as any loop is. Under `i` or an option setting
-   the branches are not told apart, and `/^(a|A\1)+$/i` stays critical.
+   linear steps, is medium as any loop is. Where the options in force make
+   the branches start alike, as `i` does in `/^(a|A\1)+$/i`, the loop stays
+   critical.
  * The heuristics read a body repeated `{0}` as PCRE runs it: never where it
    stands. One holding no group gives no hotspot, as `x+x+` in
    `/(?:x+x+){0}^(?:a+)+$/` gave two, which a repair then tried first; the
