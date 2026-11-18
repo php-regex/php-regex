@@ -337,13 +337,17 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
             $set = null;
             foreach ($leaves as $leaf) {
-                $atom = self::spelledAtom($leaf, $context->pattern->unicodeMode, $context->pattern->source);
-                $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
                 // The atom is read under the options in force where it
                 // stands: those a group opening the branch sets included.
                 $flags = $context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags());
                 $modifiers = self::probeModifiers($flags, self::asciiOptions($flags, $leaf, $root));
-                $read = null === $atom ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
+                $read = self::asciiCharacter($leaf, $modifiers);
+                if (null === $read) {
+                    $atom = self::spelledAtom($leaf, $context->pattern->unicodeMode, $context->pattern->source);
+                    $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
+                    $read = null === $atom ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
+                }
+
                 if (null === $read) {
                     return null;
                 }
@@ -359,6 +363,21 @@ final class OverlappingAlternationRule extends AbstractLintRule
         }
 
         return $sets;
+    }
+
+    /**
+     * The character an ASCII character written as it is reads in its own
+     * case: itself, under every table and every option but "i", which a
+     * locale's tables or Unicode fold. Asked of PCRE, it would cost a scan
+     * of every code point under u.
+     */
+    private static function asciiCharacter(NodeInterface $node, string $modifiers): ?CharSet
+    {
+        if (!$node instanceof LiteralNode || '' === $node->value || \ord($node->value[0]) > 0x7F || str_contains($modifiers, 'i')) {
+            return null;
+        }
+
+        return CharSet::single(\ord($node->value[0]));
     }
 
     /**
