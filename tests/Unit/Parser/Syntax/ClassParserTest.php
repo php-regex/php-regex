@@ -166,6 +166,18 @@ final class ClassParserTest extends TestCase
             new LiteralNode("\xC3", 3, 4),
             new LiteralNode("\xA9", 4, 5),
         ], 3, 5), false, 0, 8)];
+        // The ASCII parts around a multibyte member stay as they are read.
+        yield 'a multibyte member between ranges' => ['pattern' => '[a-zé0-9]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new RangeNode(new LiteralNode('a', 1, 2), new LiteralNode('z', 3, 4), 1, 4),
+            new LiteralNode("\xC3", 4, 5),
+            new LiteralNode("\xA9", 5, 6),
+            new RangeNode(new LiteralNode('0', 6, 7), new LiteralNode('9', 8, 9), 6, 9),
+        ], 1, 9), false, 0, 10)];
+        yield 'a class with no byte above 0x7F' => ['pattern' => '[a-z_0-9]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new RangeNode(new LiteralNode('a', 1, 2), new LiteralNode('z', 3, 4), 1, 4),
+            new LiteralNode('_', 4, 5),
+            new RangeNode(new LiteralNode('0', 5, 6), new LiteralNode('9', 7, 8), 5, 8),
+        ], 1, 8), false, 0, 9)];
         yield 'a range in UTF mode' => ['pattern' => '[à-é]', 'flags' => 'u', 'expected' => new CharClassNode(
             new RangeNode(new LiteralNode('à', 1, 3), new LiteralNode('é', 4, 6), 1, 6),
             false,

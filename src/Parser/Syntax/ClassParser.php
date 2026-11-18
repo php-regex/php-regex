@@ -174,6 +174,12 @@ final class ClassParser
             array_push($parts, ...$this->readParts());
         }
 
+        // Without UTF mode every multibyte character is its bytes; a class
+        // that holds none, the common case, keeps its parts as they are read.
+        if (!$this->state->unicodeMode && self::holdsALiteralOfSeveralBytes($parts)) {
+            $parts = array_merge(...array_map($this->asBytes(...), $parts));
+        }
+
         if (empty($parts)) {
             $position = $this->stream->current()->position;
 
@@ -372,7 +378,7 @@ final class ClassParser
      * range ends it on its first byte, and a "-" after it starts a range
      * from its last byte, the bytes between members: "[a-é-a]" is the range
      * a to 0xC3, then 0xA9 to "a". The range is cut only when that "-" makes
-     * a range. Every other multibyte character is its bytes too.
+     * a range; readMembers() cuts every other multibyte character.
      *
      * @return non-empty-list<NodeInterface>
      */
@@ -406,7 +412,25 @@ final class ClassParser
 
         $parts[] = $part;
 
-        return $this->state->unicodeMode ? $parts : array_merge(...array_map($this->asBytes(...), $parts));
+        return $parts;
+    }
+
+    /**
+     * Whether a part is, or a range has for an end, a literal of more than
+     * one byte.
+     *
+     * @param list<NodeInterface> $parts
+     */
+    private static function holdsALiteralOfSeveralBytes(array $parts): bool
+    {
+        foreach ($parts as $part) {
+            if (($part instanceof LiteralNode && isset($part->value[1]))
+                || ($part instanceof RangeNode && (($part->start instanceof LiteralNode && isset($part->start->value[1])) || ($part->end instanceof LiteralNode && isset($part->end->value[1]))))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
