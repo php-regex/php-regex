@@ -32,6 +32,7 @@ use PHPRegex\Tests\Fixtures\Laravel\ValidationRules\UpdateUserLaneRequest;
 use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -543,11 +544,8 @@ final class ValidationRuleLaravelReadingTest extends TestCase
      * A string is a rules string where the call takes rules: the second
      * argument of Validator::sometimes(), the second and third of
      * Rule::when(), Rule::unless() and the ConditionalRules they build, by
-     * position or by name, and through parentheses that only group it, and
-     * an element of the array Rule::anyOf() or an AnyOf rule takes, which
-     * the rule validates alone through Validator::make(). A string another
-     * call takes is one rule, as array_unshift() adds it, and so is an
-     * element of an array inside the one AnyOf takes.
+     * position or by name, and through parentheses that only group it. A
+     * string another call takes is one rule, as array_unshift() adds it.
      *
      * @param \Closure(): array<mixed> $rules the rules as Laravel holds them
      */
@@ -555,13 +553,7 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     #[DataProvider('provideCallArguments')]
     public function test_a_string_is_split_where_the_call_takes_rules(string $code, \Closure $rules, string $expected, bool $compiles): void
     {
-        $this->assertSame([$expected], self::laravelPatterns($rules()));
-        $this->assertSame($compiles, EngineProbe::compiles($expected), $expected);
-
-        $project = $this->makeProject(['app/Rules.php' => "<?php\nuse Illuminate\\Validation\\ConditionalRules;\nuse Illuminate\\Validation\\Rule;\nuse Illuminate\\Validation\\Rules\\AnyOf;\n".$code."\n"]);
-        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
-
-        $this->assertSame([$expected], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+        $this->assertReadAsLaravelRunsIt($code, $rules, $expected, $compiles);
     }
 
     /**
@@ -616,6 +608,29 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             'expected' => '/^(a|b)$/',
             'compiles' => true,
         ];
+    }
+
+    /**
+     * An element of the array Rule::anyOf() or an AnyOf rule takes is a
+     * rules string: the rule validates each alone through
+     * Validator::make() (Laravel 12.8 and later, where the call exists). An
+     * element of an array inside it is one rule.
+     *
+     * @param \Closure(): array<mixed> $rules the rules as Laravel holds them
+     */
+    #[Test]
+    #[DataProvider('provideRuleSetArguments')]
+    #[RequiresMethod(Rule::class, 'anyOf')]
+    public function test_a_string_element_of_the_rule_sets_any_of_takes_is_split(string $code, \Closure $rules, string $expected, bool $compiles): void
+    {
+        $this->assertReadAsLaravelRunsIt($code, $rules, $expected, $compiles);
+    }
+
+    /**
+     * @return iterable<string, array{code: string, rules: \Closure(): array<mixed>, expected: string, compiles: bool}>
+     */
+    public static function provideRuleSetArguments(): iterable
+    {
         yield 'an element of the array Rule::anyOf() takes' => [
             'code' => "return ['code' => Rule::anyOf(['regex:/^(a|b)$/'])];",
             'rules' => static fn (): array => self::anyOfRules(Rule::anyOf(['regex:/^(a|b)$/'])),
@@ -801,6 +816,23 @@ final class ValidationRuleLaravelReadingTest extends TestCase
             'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(d|e)$/'], ['code' => 'required']),
             'expected' => ['/^(d|e)$/'],
         ];
+    }
+
+    /**
+     * The extractor reads in the code the one pattern Laravel runs for these
+     * rules, which compiles or not as the engine says.
+     *
+     * @param \Closure(): array<mixed> $rules the rules as Laravel holds them
+     */
+    private function assertReadAsLaravelRunsIt(string $code, \Closure $rules, string $expected, bool $compiles): void
+    {
+        $this->assertSame([$expected], self::laravelPatterns($rules()));
+        $this->assertSame($compiles, EngineProbe::compiles($expected), $expected);
+
+        $project = $this->makeProject(['app/Rules.php' => "<?php\nuse Illuminate\\Validation\\ConditionalRules;\nuse Illuminate\\Validation\\Rule;\nuse Illuminate\\Validation\\Rules\\AnyOf;\n".$code."\n"]);
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([$expected], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
     }
 
     /**
