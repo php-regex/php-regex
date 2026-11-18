@@ -82,12 +82,13 @@ CHANGELOG
    `Rule::anyOf(['regex:/^(a|b)$/'])` runs `/^(a`, where `/^(a|b)$/` was
    linted. An array element, `Rule::anyOf([['required', 'regex:/^(a|b)$/']])`,
    stays one rule.
- * `regex:lint` reads the rule of Livewire's `#[Validate]` and `#[Rule]`
-   (Livewire 3.0 to 4.x) as Livewire hands it to Laravel, the property's
-   rules: a string, given first or named `rule`, is split on every `|`,
-   `#[Validate('regex:/^(a|b)$/')]` runs `/^(a`, where `/^(a|b)$/` was
-   linted. A list keeps one rule per element, and so do the strings of two
-   attributes of one property, which Livewire merges into one list:
+ * `regex:lint` reads the rule of Livewire's `#[Rule]` (Livewire 3.0 and
+   later) and `#[Validate]` (3.2 and later) as Livewire hands it to Laravel,
+   the property's rules: a string, given first or named `rule`, is split on
+   every `|`, `#[Validate('regex:/^(a|b)$/')]` runs `/^(a`, where
+   `/^(a|b)$/` was linted. A list keeps one rule per element, and so do the
+   strings of two attributes that give rules to one property, which
+   Livewire merges into one list:
    `'nullable|regex:/^a$/'` there is one rule Laravel names
    `nullable|regex`, and no pattern is linted.
  * `regex:lint` reads validation rules from the string literals of the PHP
