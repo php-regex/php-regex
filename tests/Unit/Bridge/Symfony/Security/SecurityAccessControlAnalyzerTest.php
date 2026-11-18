@@ -24,7 +24,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
 use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolver;
 use Symfony\Component\Security\Core\Authentication\Token\NullToken;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\Authorization\AccessDecisionManager;
+use Symfony\Component\Security\Core\Authorization\Strategy\AccessDecisionStrategyInterface;
+use Symfony\Component\Security\Core\Authorization\Strategy\AffirmativeStrategy;
+use Symfony\Component\Security\Core\Authorization\Strategy\ConsensusStrategy;
+use Symfony\Component\Security\Core\Authorization\Strategy\UnanimousStrategy;
 use Symfony\Component\Security\Core\Authorization\Voter\AuthenticatedVoter;
 use Symfony\Component\Security\Core\Authorization\Voter\RoleVoter;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
@@ -486,6 +492,48 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
     }
 
     /**
+     * A later rule of the same path is redundant when Symfony decides every
+     * request it would take as it decides them for the earlier rule. A role
+     * written twice changes nothing to the voters, whatever the strategy,
+     * but AccessListener lets a request through only for "PUBLIC_ACCESS"
+     * written once and alone, and AuthenticatedVoter grants only that list:
+     * "PUBLIC_ACCESS" written twice refuses every visitor.
+     *
+     * @param list<string> $earlier
+     * @param list<string> $later
+     */
+    #[Test]
+    #[DataProvider('provideRolesWrittenTwice')]
+    public function test_a_later_rule_is_redundant_only_where_symfony_decides_its_roles_alike(array $earlier, array $later): void
+    {
+        $alike = true;
+        foreach ([new AffirmativeStrategy(), new UnanimousStrategy(), new ConsensusStrategy()] as $strategy) {
+            foreach ([new NullToken(), new UsernamePasswordToken(new InMemoryUser('a', null, ['ROLE_A']), 'main', ['ROLE_A'])] as $token) {
+                $alike = $alike && self::granted($strategy, $token, $earlier) === self::granted($strategy, $token, $later);
+            }
+        }
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin', roles: $earlier),
+            self::rule(path: '^/admin', roles: $later, line: 4),
+        ]);
+
+        $this->assertSame(1, $report->stats['shadowed']);
+        $this->assertSame($alike ? 1 : 0, $report->stats['redundant']);
+    }
+
+    /**
+     * @return iterable<string, array{earlier: list<string>, later: list<string>}>
+     */
+    public static function provideRolesWrittenTwice(): iterable
+    {
+        yield 'PUBLIC_ACCESS, then PUBLIC_ACCESS twice' => ['earlier' => ['PUBLIC_ACCESS'], 'later' => ['PUBLIC_ACCESS', 'PUBLIC_ACCESS']];
+        yield 'PUBLIC_ACCESS twice, then PUBLIC_ACCESS' => ['earlier' => ['PUBLIC_ACCESS', 'PUBLIC_ACCESS'], 'later' => ['PUBLIC_ACCESS']];
+        yield 'a role twice, then once' => ['earlier' => ['ROLE_A', 'ROLE_A'], 'later' => ['ROLE_A']];
+        yield 'a role once, then twice' => ['earlier' => ['ROLE_A'], 'later' => ['ROLE_A', 'ROLE_A']];
+    }
+
+    /**
      * The RoleVoter compares roles as written: a later rule for "role_admin"
      * does not take the users an earlier rule for "ROLE_ADMIN" takes, and is
      * not redundant.
@@ -504,6 +552,27 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
 
         $this->assertSame(1, $report->stats['shadowed']);
         $this->assertSame(0, $report->stats['redundant']);
+    }
+
+    /**
+     * Whether a request of the token reaches the rule's controller, as
+     * AccessListener decides it: through for "PUBLIC_ACCESS" alone, else
+     * as the AccessDecisionManager of the strategy decides the roles.
+     *
+     * @param list<string> $roles
+     */
+    private static function granted(AccessDecisionStrategyInterface $strategy, TokenInterface $token, array $roles): bool
+    {
+        if (['PUBLIC_ACCESS'] === $roles) {
+            return true;
+        }
+
+        $manager = new AccessDecisionManager([new RoleVoter(), new AuthenticatedVoter(new AuthenticationTrustResolver())], $strategy);
+
+        // Symfony 7.3 puts an AccessDecision before allowMultipleAttributes.
+        return 5 === (new \ReflectionMethod($manager, 'decide'))->getNumberOfParameters()
+            ? $manager->decide($token, $roles, null, null, true)
+            : $manager->decide($token, $roles, null, true);
     }
 
     /**

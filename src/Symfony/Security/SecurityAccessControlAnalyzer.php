@@ -432,8 +432,11 @@ final class SecurityAccessControlAnalyzer
      */
     private function accessRulesEquivalent(array $left, array $right): bool
     {
+        // A role written twice changes no vote; "PUBLIC_ACCESS" written once
+        // and alone is public and twice is not, which the access level says.
         return $left['fromEnvironment'] === $right['fromEnvironment']
             && $this->sameList($left['roles'], $right['roles'], false)
+            && $left['accessLevel'] === $right['accessLevel']
             && $left['methodsTaken'] === $right['methodsTaken']
             && $left['host'] === $right['host']
             && $left['hostPattern'] === $right['hostPattern']
