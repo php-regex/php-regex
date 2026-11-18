@@ -393,10 +393,11 @@ rules a call takes are a rules string too, given by position or by name:
 `$validator->sometimes('code', 'regex:/^(a|b)$/', …)`, the `$rules` and
 `$defaultRules` of `Rule::when()` and `Rule::unless()`, and those of
 `new ConditionalRules()` are split. So is each string element of the array
-`Rule::anyOf()` takes, which the rule validates alone:
-`Rule::anyOf(['regex:/^(a|b)$/'])` hands `/^(a` to `preg_match()`, where
-`Rule::anyOf([['regex:/^(a|b)$/']])` keeps its `|`. The rule of Livewire's
-`#[Validate]` or `#[Rule]` is the rules string of the property it marks:
+`Rule::anyOf()` takes (Laravel 12.8 and later), which the rule validates
+alone: `Rule::anyOf(['regex:/^(a|b)$/'])` hands `/^(a` to `preg_match()`,
+where `Rule::anyOf([['regex:/^(a|b)$/']])` keeps its `|`. The rule of
+Livewire's `#[Rule]` (Livewire 3.0 and later) or `#[Validate]` (3.2 and
+later) is the rules string of the property it marks:
 `#[Validate('regex:/^(a|b)$/')]` hands `/^(a` to `preg_match()`, unless a
 second attribute of the property gives it rules too, which Livewire merges
 into one list: each string is then one rule, and `'nullable|regex:/^a$/'`
