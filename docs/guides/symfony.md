@@ -656,7 +656,8 @@ one on a path read from the environment gives no example path.
 The same expression, the same processors over the same variable, gives the
 same value: two rules with `host: '%env(ADMIN_HOST)%'`, written so or
 through a parameter, compare as holding one host, and
-`'%env(trim:ADMIN_HOST)%'` is another value. A firewall whose pattern holds
+`'%env(trim:ADMIN_HOST)%'` is another value, as is an attribute written
+`'%%env(FORMAT)%%'`, the text itself. A firewall whose pattern holds
 an `%env()%` value is skipped. A `port` or `methods` read
 from the environment is refused, as the security bundle refuses them: it
 builds the port matcher, and upper-cases the methods, when the container is

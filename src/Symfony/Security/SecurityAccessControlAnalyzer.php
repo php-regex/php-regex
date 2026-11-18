@@ -344,7 +344,9 @@ final class SecurityAccessControlAnalyzer
         // IpsRequestMatcher splits each address it is given on its commas.
         $ips = [];
         foreach ($rule['ips'] as $item) {
-            $ips = [...$ips, ...(LibraryPcre::split('/\s*,\s*/', $item) ?: [])];
+            foreach (LibraryPcre::split('/\s*,\s*/', $item) ?: [] as $ip) {
+                $ips[] = $ip;
+            }
         }
         $ips = self::distinct($ips);
 
@@ -599,9 +601,11 @@ final class SecurityAccessControlAnalyzer
             return false;
         }
 
+        // An attribute read from the environment and one written as the
+        // same text, "%%env(FORMAT)%%", are other values.
         $required = self::requestAttributes($inner);
         foreach (self::requestAttributes($outer) as $name => $pattern) {
-            if (($required[$name] ?? null) !== $pattern) {
+            if (($required[$name] ?? null) !== $pattern || (str_contains($pattern, '%env(') && self::attributeFromEnvironment($outer, $name) !== self::attributeFromEnvironment($inner, $name))) {
                 return false;
             }
         }
@@ -676,6 +680,17 @@ final class SecurityAccessControlAnalyzer
         sort($taken);
 
         return $taken;
+    }
+
+    /**
+     * Whether a rule reads a request attribute from the environment: its
+     * route, given as "_route", or one of its attributes.
+     *
+     * @phpstan-param AccessRule $rule
+     */
+    private static function attributeFromEnvironment(array $rule, string $name): bool
+    {
+        return \in_array('_route' === $name && null !== $rule['route'] ? 'route' : 'attributes', $rule['fromEnvironment'], true);
     }
 
     /**

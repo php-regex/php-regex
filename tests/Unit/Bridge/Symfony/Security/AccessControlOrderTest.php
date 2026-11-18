@@ -816,6 +816,29 @@ final class AccessControlOrderTest extends TestCase
     }
 
     /**
+     * An attribute read from the environment and one written as the same
+     * text, "%%env(FORMAT)%%" read as "%env(FORMAT)%", are other values: the
+     * environment gives the first its value, the second is the text itself,
+     * which AttributesRequestMatcher reads as a regex. With FORMAT=json the
+     * second rule takes the requests whose format "%envFORMAT%" matches,
+     * which the first does not take: it is not shadowed.
+     */
+    #[Test]
+    public function test_an_attribute_read_from_the_environment_is_not_the_text_it_is_written_as(): void
+    {
+        $concrete = [['path' => '^/catalog$', 'attributes' => ['_format' => 'json']], ['path' => '^/catalog$', 'attributes' => ['_format' => '%%env(FORMAT)%%']]];
+        $this->assertSame(0, self::ruleApplied($concrete, 'GET', 'http://localhost/catalog', '10.0.0.1', ['_format' => 'json']));
+        $this->assertSame(1, self::ruleApplied($concrete, 'GET', 'http://localhost/catalog', '10.0.0.1', ['_format' => '%envFORMAT%']));
+
+        $read = array_map(self::rule(...), [['path' => '^/catalog$', 'attributes' => ['_format' => '%env(FORMAT)%']], ['path' => '^/catalog$', 'attributes' => ['_format' => '%env(FORMAT)%']]]);
+        $read[0]['fromEnvironment'] = ['attributes'];
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze($read, true);
+
+        $this->assertSame(0, $report->stats['shadowed']);
+        $this->assertSame(0, $report->stats['redundant']);
+    }
+
+    /**
      * The index of the rule Symfony's AccessMap applies to the request, in
      * the order of the array, or null when none does. Each rule is given
      * the request matcher the security bundle chains for it.
