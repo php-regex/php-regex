@@ -72,15 +72,16 @@ final class RouteConflictSuggestionBuilder
                 continue;
             }
 
-            // Moved first, a shadowed route is reached, and the routes of
-            // an overlap each keep requests of their own. An earlier route
-            // the later one would take every request of, moved first, is a
-            // carve-out, never reported.
-            $suggestions[\sprintf(
-                'Reorder routes: move "%s" before "%s".',
-                $other['name'],
-                $route['name'],
-            )] = true;
+            // Moved first, the later route is reached: the reorder serves
+            // both unless it then takes every request of the earlier one,
+            // a duplicate, or one whose paths it matches or redirects.
+            if (!$conflict['laterFirstTakesEarlier']) {
+                $suggestions[\sprintf(
+                    'Reorder routes: move "%s" before "%s".',
+                    $other['name'],
+                    $route['name'],
+                )] = true;
+            }
 
             // Two routes on the same paths that each keep some requests
             // are no duplicates.

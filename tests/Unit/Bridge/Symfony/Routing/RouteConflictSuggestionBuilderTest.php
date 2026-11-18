@@ -109,8 +109,9 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
     }
 
     /**
-     * Two routes matching the same paths are offered a merge, once, with
-     * the reorder.
+     * Two routes matching the same paths are offered a merge, once, and no
+     * reorder: moved first, the later route takes every request of the
+     * earlier one.
      */
     #[Test]
     public function test_two_routes_matching_the_same_paths_are_offered_a_merge(): void
@@ -120,10 +121,34 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
         $collection->add('second', new Route('/pages/{slug}'));
         $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
 
+        $this->assertSame(['second'], self::routesReached(self::reversed($collection), '/pages/a'));
         $this->assertSame(
-            ['Reorder routes: move "second" before "first".', 'Merge duplicate routes: "first" and "second" match the same paths.'],
+            ['Merge duplicate routes: "first" and "second" match the same paths.'],
             (new RouteConflictSuggestionBuilder())->collect([...$conflicts, ...$conflicts]),
         );
+    }
+
+    /**
+     * An overlap whose later route, moved first, would take every request
+     * of the earlier one, the paths it matches and those it redirects to
+     * its own, gets no reorder: both routes serve requests as declared, and
+     * the reorder would leave the earlier one none.
+     */
+    #[Test]
+    public function test_an_overlap_the_reorder_would_shadow_gets_no_reorder(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('first', (new Route('/p/{x<a|b>}/'))->setMethods(['GET']));
+        $collection->add('second', (new Route('/p/{y<a/|b|c>}'))->setMethods(['GET']));
+
+        $paths = ['/p/a/', '/p/b/', '/p/a', '/p/b', '/p/c'];
+        $this->assertSame(['first', 'second'], self::routesReachedOn($collection, $paths));
+        $this->assertSame(['second'], self::routesReachedOn(self::reversed($collection), $paths));
+
+        $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
+        $this->assertSame(['overlap'], array_column($conflicts, 'type'));
+
+        $this->assertSame([], (new RouteConflictSuggestionBuilder())->collect($conflicts));
     }
 
     /**
@@ -306,6 +331,27 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
         foreach (['GET', 'HEAD', 'POST', 'PUT'] as $method) {
             $route = FrameworkMatcher::reached($collection, $method, $path);
             if (null !== $route) {
+                $routes[$route] = true;
+            }
+        }
+        ksort($routes);
+
+        return array_keys($routes);
+    }
+
+    /**
+     * The routes the framework's matcher sends a GET or HEAD request on the
+     * paths to: each name once, sorted.
+     *
+     * @param list<string> $paths
+     *
+     * @return list<string>
+     */
+    private static function routesReachedOn(RouteCollection $collection, array $paths): array
+    {
+        $routes = [];
+        foreach ($paths as $path) {
+            foreach (self::routesReached($collection, $path) as $route) {
                 $routes[$route] = true;
             }
         }

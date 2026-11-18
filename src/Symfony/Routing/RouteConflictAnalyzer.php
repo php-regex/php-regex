@@ -209,6 +209,7 @@ final class RouteConflictAnalyzer
                     $equivalence = $this->solver->equivalent($earlier['pathPattern'], $later['pathPattern'], $options);
                     $redirectsTheRest = null !== $equivalence->rightOnlyExample && $this->redirectTakesTheRest($earlier, $later, $options);
                     $passesSomeOn = null === $equivalence->rightOnlyExample && $this->passesOnAPathEndingOnTheSlash($earlier, $later, $options);
+                    $laterFirstRedirectsEarlier = null !== $equivalence->leftOnlyExample && $this->redirectsEveryPathOf($later, $earlier, $options);
                 } catch (ComplexityException) {
                     $skippedPairs++;
 
@@ -273,6 +274,7 @@ final class RouteConflictAnalyzer
                     'schemes' => $this->intersectSchemes($earlier['schemes'], $later['schemes']),
                     'notes' => $notes,
                     'redirected' => false,
+                    'laterFirstTakesEarlier' => $laterTakesEarlier || $laterFirstRedirectsEarlier,
                 ];
             }
         }
@@ -829,7 +831,27 @@ final class RouteConflictAnalyzer
             'schemes' => $later['schemes'],
             'notes' => [...$this->buildNotes($earlier, $later, $hostsUnread), self::slashNote($earlier, $example)],
             'redirected' => true,
+            'laterFirstTakesEarlier' => false,
         ];
+    }
+
+    /**
+     * Whether the later route, declared first, would take every request of
+     * the earlier one through its trailing slash: it takes the earlier
+     * route's methods, schemes and host, these are GET and HEAD alone, and
+     * each path of the earlier route is one it matches or redirects to one
+     * of its own.
+     *
+     * @phpstan-param RouteDescriptor $later
+     * @phpstan-param RouteDescriptor $earlier
+     *
+     * @throws ComplexityException When the solver gives up on the paths
+     */
+    private function redirectsEveryPathOf(array $later, array $earlier, SolverOptions $options): bool
+    {
+        return $this->listHolds(['GET', 'HEAD'], $earlier['methods'])
+            && $this->takesEveryRequestOf($later, $earlier, $options)
+            && $this->solver->subsetOf($earlier['pathPattern'], $later['slashPattern'], $options)->isSubset;
     }
 
     /**

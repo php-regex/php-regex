@@ -27,6 +27,7 @@ namespace PHPRegex\Symfony\Routing;
  *     schemes: array<int, string>,
  *     notes: array<int, string>,
  *     redirected: bool,
+ *     laterFirstTakesEarlier: bool,
  * }
  * @phpstan-type RouteSkip array{route: string, reason: string}
  */

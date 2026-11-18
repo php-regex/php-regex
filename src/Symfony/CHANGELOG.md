@@ -307,7 +307,9 @@ CHANGELOG
    a route for a host before one for any host, which were reported as
    shadowed. Any other pair sharing a path is an overlap. The report no
    longer suggests merging two routes on the same paths that each keep
-   some requests.
+   some requests, nor moving first a later route that would then take
+   every request of the earlier one, a duplicate or a route whose paths
+   it matches or redirects to its own.
  * `regex:routes` and `regex:analyze` read a route for `GET` as taking the
    `HEAD` requests too, as Symfony's matchers send them: a route for `HEAD`
    only declared after a route for `GET` on its paths is shadowed, where the
