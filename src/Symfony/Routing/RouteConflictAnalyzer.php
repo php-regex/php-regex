@@ -175,7 +175,7 @@ final class RouteConflictAnalyzer
                     if ($intersection->isEmpty || !$schemesOverlap) {
                         $redirect = $intersection->isEmpty
                             ? $this->redirectConflict($earlier, $later, $options, null === $hostsOverlap)
-                            : $this->redirectBesideSharedPaths($earlier, $later, $options, null === $hostsOverlap);
+                            : $this->redirectBesideSharedPaths($earlier, $later, $options, null === $hostsOverlap, $skippedPairs);
                         if (null !== $redirect && 'shadowed' === $redirect['type']) {
                             $shadowed++;
                             $conflicts[] = $redirect;
@@ -520,14 +520,17 @@ final class RouteConflictAnalyzer
      * The conflict of two routes on disjoint schemes that share paths: the
      * later route keeps those on its own schemes, and loses to the redirect
      * a path that differs from one of the earlier route by its trailing
-     * slash alone. An overlap at most; null when it has no such path, or
-     * when the later route matches every path of the earlier one: the
-     * redirect leads to one of them, which the later route serves on its
-     * own scheme. The earlier route ends on no variable, or on one no value
-     * of which ends on the slash: no path of its own differs from another
-     * of them by the slash, and the matcher redirects every path that
-     * differs from one of them by it. The pair reaches it only where
-     * redirects() holds.
+     * slash alone, unless it serves the path of the earlier route the
+     * redirect leads to. An overlap where the shortest such path leads to
+     * a path the later route does not match. Null when it has no such path,
+     * or when every one leads to a path the later route matches: it matches
+     * every path of the earlier one. The pair is counted among the skipped
+     * ones when the shortest leads to a path the later route matches and
+     * another may not: telling which takes a question on three languages.
+     * The earlier route ends on no variable, or on one no value of which
+     * ends on the slash: no path of its own differs from another of them by
+     * the slash, and the matcher redirects every path that differs from
+     * one of them by it. The pair reaches it only where redirects() holds.
      *
      * @param bool $hostsUnread whether the solver gave up on the two hosts
      *
@@ -538,14 +541,45 @@ final class RouteConflictAnalyzer
      *
      * @phpstan-return RouteConflict|null
      */
-    private function redirectBesideSharedPaths(array $earlier, array $later, SolverOptions $options, bool $hostsUnread): ?array
+    private function redirectBesideSharedPaths(array $earlier, array $later, SolverOptions $options, bool $hostsUnread, int &$skippedPairs): ?array
     {
         $redirected = $this->solver->intersection(self::slashSwapped($earlier['pathPattern']), $later['pathPattern'], $options);
-        if ($redirected->isEmpty || $this->solver->subsetOf($earlier['pathPattern'], $later['pathPattern'], $options)->isSubset) {
+        if ($redirected->isEmpty || null === $redirected->example) {
             return null;
         }
 
-        return $this->redirected($earlier, $later, 'overlap', $redirected->example, $hostsUnread);
+        if (!$this->holds($later['pathPattern'], self::landing($redirected->example), $options)) {
+            return $this->redirected($earlier, $later, 'overlap', $redirected->example, $hostsUnread);
+        }
+
+        if (!$this->solver->subsetOf($earlier['pathPattern'], $later['pathPattern'], $options)->isSubset) {
+            $skippedPairs++;
+        }
+
+        return null;
+    }
+
+    /**
+     * The path the framework's matcher redirects a request to for its
+     * trailing slash: the slashes trimmed off its path, or one added.
+     */
+    private static function landing(string $path): string
+    {
+        $trimmed = rtrim($path, '/');
+
+        return $trimmed === $path ? $path.'/' : $trimmed;
+    }
+
+    /**
+     * Whether the paths of the pattern hold the given one.
+     *
+     * @throws ComplexityException When the solver gives up on the pattern
+     */
+    private function holds(string $pattern, string $path, SolverOptions $options): bool
+    {
+        $flags = DelimitedPattern::fromDelimited($pattern)->flags;
+
+        return !$this->solver->intersection($pattern, (string) new DelimitedPattern('^'.preg_quote($path, '{').'$', $flags, '{'), $options)->isEmpty;
     }
 
     /**

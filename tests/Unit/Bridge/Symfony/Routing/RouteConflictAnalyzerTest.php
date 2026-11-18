@@ -1060,6 +1060,23 @@ final class RouteConflictAnalyzerTest extends TestCase
             'type' => null,
             'skipped' => 0,
         ];
+        // The shortest path the redirect takes leads to a path the later
+        // route serves; another may not, which no question on two
+        // languages tells: the pair is left out rather than reported.
+        yield 'the default requirement, on https before a route on http that serves the path the shortest redirect leads to' => [
+            'earlier' => ['/files/{name}', ['GET'], ['https']],
+            'later' => ['/files/{path<[a-z/]+>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/files/a/', true], ['HEAD', 'http', '/files/a/', true], ['GET', 'http', '/files/ab/', true]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+        yield 'the default requirement, on https before a route on http that serves the path the shortest redirect leads to and loses another' => [
+            'earlier' => ['/files/{name}', ['GET'], ['https']],
+            'later' => ['/files/{path<a/|a|b/>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/files/a/', true], ['HEAD', 'http', '/files/a/', true], ['GET', 'http', '/files/b/', false]],
+            'type' => null,
+            'skipped' => 1,
+        ];
         yield 'a requirement that can end on the slash, on https before a route on http' => [
             'earlier' => ['/files/{path<.+>}', ['GET'], ['https']],
             'later' => ['/files/{name}/', ['GET'], ['http']],
@@ -1212,6 +1229,22 @@ final class RouteConflictAnalyzerTest extends TestCase
             'later' => ['/{path<.+>}', ['GET'], ['http']],
             'probes' => [['GET', 'http', '/admin', true], ['HEAD', 'http', '/admin', true], ['GET', 'http', '/admin/', true]],
             'type' => null,
+            'filtered' => 0,
+        ];
+        // A route with no variable redirects every path to one: the later
+        // route serves it, or loses each redirected path.
+        yield 'a route on https ending on a slash before one on http that serves the path the redirect leads to' => [
+            'earlier' => ['/admin/', ['GET'], ['https']],
+            'later' => ['/{p<admin/|admin>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/admin', true], ['HEAD', 'http', '/admin', true], ['GET', 'http', '/admin/', true]],
+            'type' => null,
+            'filtered' => 0,
+        ];
+        yield 'a route on https ending on a slash before one on http that does not serve the path the redirect leads to' => [
+            'earlier' => ['/admin/', ['GET'], ['https']],
+            'later' => ['/{p<admin|admin//>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/admin', false], ['HEAD', 'http', '/admin', false], ['GET', 'http', '/admin//', true]],
+            'type' => 'overlap',
             'filtered' => 0,
         ];
         yield 'a route on https sharing every path with a later one on http, whose paths the redirect leaves alone' => [

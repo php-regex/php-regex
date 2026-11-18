@@ -209,9 +209,12 @@ CHANGELOG
    earlier route ends on a variable a value of which may end on the slash
    or be empty, `.+` or `[a-z]*`, whose redirect PCRE's order decides; the
    default `[^/]++`, or `\d+`, redirects whatever that order and is read.
-   One that matches every path of the earlier route, `/{path<.*>}` on
-   `http` after `/admin` on `https`, serves the paths the redirect leads
-   to and loses none. The report
+   A later route serves the path a redirect leads to when it matches it:
+   one that matches every path of the earlier route, `/{path<.*>}` on
+   `http` after `/admin` on `https`, loses none. Where it serves the path
+   the shortest redirected one leads to but not every path of the earlier
+   route, `/files/{path<[a-z/]+>}` on `http` after `/files/{name}` on
+   `https`, the pair is skipped. The report
    suggests paths that differ by more than the slash, never the reorder
    that only turns the redirect round.
  * `regex:routes` and `regex:analyze` call a route shadowed only when an
