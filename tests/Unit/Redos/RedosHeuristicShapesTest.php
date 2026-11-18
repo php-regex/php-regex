@@ -1054,6 +1054,58 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * A loop is read past eight items that may match empty at most, on
+     * either side: a run of loops that may all match empty, each of which
+     * meets every other, is read in work and findings that grow with its
+     * length, not with its square. Two hundred "a*" gave 20 099 findings,
+     * one for each pair of them; each now meets the eight after it.
+     */
+    #[Test]
+    public function test_a_run_of_loops_that_may_match_empty_is_read_in_bounded_work(): void
+    {
+        $pattern = '/^(x)'.str_repeat('a*', 200).'\1$/';
+        $this->assertNotFalse(@preg_match($pattern, ''), 'Oracle: PCRE compiles the run.');
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+        $this->assertSame(RedosSeverity::Medium, $analysis->severity);
+        $this->assertLessThanOrEqual(10 * 200, \count($analysis->findings));
+        $this->assertCount(\count($analysis->findings), $analysis->hotspots);
+    }
+
+    /**
+     * Past eight items that may match empty, a loop meets no more: the
+     * runs of "a+x?{9}a+" meet as the engine reads them, as those of
+     * "a+x?{8}a+" and of "a+a+" do (31 -> 69 steps on 8 -> 12 "a" then
+     * "!"), but only the nearer pair is named; each run is still rated
+     * medium on its own.
+     *
+     * @return iterable<string, array{pattern: string, named: bool}>
+     */
+    public static function provideLoopsPastOptionalItems(): iterable
+    {
+        yield 'eight optional items' => ['pattern' => '/^(a+'.str_repeat('x?', 8).'a+)\1$/', 'named' => true];
+        yield 'nine optional items' => ['pattern' => '/^(a+'.str_repeat('x?', 9).'a+)\1$/', 'named' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsPastOptionalItems')]
+    public function test_a_loop_meets_another_past_eight_optional_items_at_most(string $pattern, bool $named): void
+    {
+        foreach ([8, 12] as $units) {
+            $subject = str_repeat('a', $units).'!';
+            $this->assertSame(
+                self::steps(PcreInterpreter::pattern('/(*NO_START_OPT)^(a+a+)\1$/'), $subject),
+                self::steps(PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1)), $subject),
+                'Oracle: the loops meet, as in "a+a+".',
+            );
+        }
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+        $this->assertSame(RedosSeverity::Medium, $analysis->severity);
+        $this->assertSame($named, [] !== array_filter($analysis->findings, static fn ($finding): bool => str_starts_with($finding->message, 'Adjacent quantified tokens')));
+    }
+
+    /**
      * A byte above ASCII is read under PCRE2's own tables, which PHP
      * compiles with under "C": there "\w" leaves "\xE9" out, and the loop
      * beside it gives its iterations back one at a time (8 -> 12 units of

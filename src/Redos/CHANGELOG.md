@@ -113,7 +113,12 @@ CHANGELOG
    medium, is safe, PCRE giving up in 5 steps whatever the length. Read past
    such items, a loop whose runs a later item always ends is apart:
    `/^((?:\w+(?=,),)+)\1$/`, which was critical, is medium, as
-   `/^((?:\w+,)+)\1$/` is.
+   `/^((?:\w+,)+)\1$/` is. The heuristics read past eight such items at
+   most: a loop meets none further, and nothing further keeps it apart, so
+   that a run of loops that may all match empty costs work and findings
+   that grow with its length, not with its square. In
+   `/^(a+x?x?x?x?x?x?x?x?x?a+)\1$/` each run is medium on its own, and the
+   two are not named together.
  * Without a proof of the whole pattern, a loop whose branches start alike
    is critical only where the loop, read alone before an end that never
    matches, is not proven linear: `/^((?:a|ab)+)\1$/`, `/^((?:ab|abc)+)\1$/`

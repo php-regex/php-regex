@@ -68,6 +68,15 @@ final class RedosProfiler extends AbstractNodeVisitor
     private const UNROLLED_COUNT = 16;
 
     /**
+     * The items that may match empty a loop is read past, at most, on
+     * either side: a loop meets none further, and what stands further is
+     * taken to keep it apart from nothing, so that a run of loops that may
+     * all match empty costs the heuristics work and findings that grow
+     * with its length, not with its square.
+     */
+    private const ITEMS_READ_PAST = 8;
+
+    /**
      * The unbounded loops around the node that may come back into it: an
      * atomic group or a possessive loop between them counts them from none.
      */
@@ -339,14 +348,14 @@ final class RedosProfiler extends AbstractNodeVisitor
         // ones past it: each, to the first that always reads a character,
         // must start or end apart from the loop. The walk that runs out of
         // items is kept apart by nothing, but after the loop by the head of
-        // the iteration the sequence ends.
+        // the iteration the sequence ends; the walk cut short, by nothing.
         [$before, $afterTheStart] = $this->itemsAround(-1);
         [$after, $beforeTheEnd] = $this->itemsAround(1);
-        $boundarySeparatedPrev = !$afterTheStart && $this->apartFrom($before, $node->node, false);
-        $boundarySeparatedNext = !$beforeTheEnd && $this->apartFrom($after, $node->node, true);
+        $boundarySeparatedPrev = false === $afterTheStart && $this->apartFrom($before, $node->node, false);
+        $boundarySeparatedNext = false === $beforeTheEnd && $this->apartFrom($after, $node->node, true);
         $boundarySeparated = $boundarySeparatedPrev || $boundarySeparatedNext;
         $iterationsSeparated = $boundarySeparated
-            || ($beforeTheEnd && null !== $this->iterationHead && $this->apartFrom([...$after, $this->iterationHead], $node->node, true) && $this->separatesIterations($this->iterationHead));
+            || (true === $beforeTheEnd && null !== $this->iterationHead && $this->apartFrom([...$after, $this->iterationHead], $node->node, true) && $this->separatesIterations($this->iterationHead));
 
         $controlVerbShield = $this->hasTrailingBacktrackingControl($node->node);
         $isPossessive = QuantifierType::Possessive === $node->type;
@@ -1319,14 +1328,15 @@ final class RedosProfiler extends AbstractNodeVisitor
     /**
      * The items on one side of the node being read, nearest first, past
      * those that read nothing, to the first that always reads a character;
-     * and whether the walk ran out of items before one. An item that may
-     * match empty and ends with a verb that cuts backtracking ends the walk
-     * on its own: the engine always gets through it and never goes back
-     * past it, "\s?(*COMMIT)" after "\w+".
+     * and whether the walk ran out of items before one, null when it is cut
+     * short past ITEMS_READ_PAST items that may match empty. An item that
+     * may match empty and ends with a verb that cuts backtracking ends the
+     * walk on its own: the engine always gets through it and never goes
+     * back past it, "\s?(*COMMIT)" after "\w+".
      *
      * @param -1|1 $direction
      *
-     * @return array{list<NodeInterface>, bool}
+     * @return array{list<NodeInterface>, bool|null}
      */
     private function itemsAround(int $direction): array
     {
@@ -1348,6 +1358,9 @@ final class RedosProfiler extends AbstractNodeVisitor
             }
 
             $items[] = $item;
+            if (\count($items) > self::ITEMS_READ_PAST) {
+                return [$items, null];
+            }
         }
 
         return [$items, true];
@@ -1821,8 +1834,9 @@ final class RedosProfiler extends AbstractNodeVisitor
             }
 
             // A loop meets each item after it as far as the first that
-            // always reads a character: "a+x?a+" meets the second "a+"
-            // where "x?" matches empty.
+            // always reads a character, past ITEMS_READ_PAST that may match
+            // empty at most: "a+x?a+" meets the second "a+" where "x?"
+            // matches empty.
             for ($m = $k + 1; $m < $count; $m++) {
                 $rightIndex = null === $reading ? $m : $reading[$m];
                 $right = $children[$rightIndex];
@@ -1830,7 +1844,7 @@ final class RedosProfiler extends AbstractNodeVisitor
                     $max = $this->maxSeverity($max, $this->adjacentLoops($children, $leftIndex, $leftQuantifier, $rightIndex));
                 }
 
-                if ($this->alwaysReads($right) || $this->hasTrailingBacktrackingControl($right)) {
+                if ($m - $k > self::ITEMS_READ_PAST || $this->alwaysReads($right) || $this->hasTrailingBacktrackingControl($right)) {
                     break;
                 }
             }
