@@ -655,13 +655,17 @@ final class AccessControlOrderTest extends TestCase
      * A value read from the environment is known at run time only: the
      * rule is restricted to a value the analysis cannot know. Through that
      * value it shadows no later rule, and a later rule holding one is
-     * shadowed only by an earlier rule that takes every value of it. Each
-     * case is checked against the AccessMap for values the environment may
-     * give: "%env(VALUE)%" is replaced by each.
+     * shadowed only by an earlier rule that takes every value of it. The
+     * same expression, the same processors over the same variable, gives
+     * the same value: two rules holding it compare as holding one value.
+     * Each case is checked against the AccessMap for values the environment
+     * may give: "%env(VALUE)%" is replaced by each, or each variable by the
+     * value a probe gives it.
      *
-     * @param list<array<string, mixed>>                                             $rules
-     * @param list<array{0: string, 1: string, 2: string, 3: int|null, 4: int|null}> $probes the value, the method and URL of a request, and the
-     *                                                                                       rule that applies to it in the declared and the swapped order
+     * @param list<array<string, mixed>>                                                                   $rules
+     * @param list<array{0: string|array<string, string>, 1: string, 2: string, 3: int|null, 4: int|null}> $probes the value or values, the method and URL of a
+     *                                                                                                             request, and the rule that applies to it in the
+     *                                                                                                             declared and the swapped order
      */
     #[Test]
     #[DataProvider('provideValuesFromTheEnvironment')]
@@ -669,8 +673,8 @@ final class AccessControlOrderTest extends TestCase
     {
         foreach ($probes as [$value, $method, $url, $declared, $swapped]) {
             $concrete = self::withEnvironment($rules, $value);
-            $this->assertSame($declared, self::ruleApplied($concrete, $method, $url, '10.0.0.1'), 'declared order, '.$value.', '.$method.' '.$url);
-            $this->assertSame($swapped, self::ruleApplied(array_reverse($concrete, true), $method, $url, '10.0.0.1'), 'swapped order, '.$value.', '.$method.' '.$url);
+            $this->assertSame($declared, self::ruleApplied($concrete, $method, $url, '10.0.0.1'), 'declared order, '.json_encode($value).', '.$method.' '.$url);
+            $this->assertSame($swapped, self::ruleApplied(array_reverse($concrete, true), $method, $url, '10.0.0.1'), 'swapped order, '.json_encode($value).', '.$method.' '.$url);
         }
 
         $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze(array_map(self::ruleFromEnvironment(...), $rules), true);
@@ -685,10 +689,59 @@ final class AccessControlOrderTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{rules: list<array<string, mixed>>, field: string, expected: 'shadowed'|'overlap'|'carve-out'|null, probes: list<array{0: string, 1: string, 2: string, 3: int|null, 4: int|null}>}>
+     * @return iterable<string, array{rules: list<array<string, mixed>>, field: string, expected: 'shadowed'|'overlap'|'carve-out'|null, probes: list<array{0: string|array<string, string>, 1: string, 2: string, 3: int|null, 4: int|null}>}>
      */
     public static function provideValuesFromTheEnvironment(): iterable
     {
+        yield 'two rules for the path the same expression gives' => [
+            'rules' => [['path' => '%env(VALUE)%'], ['path' => '%env(VALUE)%']],
+            'field' => 'path',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['^/admin', 'GET', 'http://localhost/admin', 0, 1],
+                ['^/shop', 'GET', 'http://localhost/shop', 0, 1],
+            ],
+        ];
+
+        yield 'two rules for the paths two variables give' => [
+            'rules' => [['path' => '%env(ADMIN_PATH)%'], ['path' => '%env(SHOP_PATH)%']],
+            'field' => 'path',
+            'expected' => 'overlap',
+            'probes' => [
+                [['ADMIN_PATH' => '^/', 'SHOP_PATH' => '^/shop'], 'GET', 'http://localhost/shop', 0, 1],
+                [['ADMIN_PATH' => '^/admin', 'SHOP_PATH' => '^/shop'], 'GET', 'http://localhost/shop', 1, 1],
+            ],
+        ];
+
+        yield 'a later rule for the host the same expression gives, on a narrower path' => [
+            'rules' => [['path' => '^/admin', 'host' => '%env(VALUE)%'], ['path' => '^/admin/x', 'host' => '%env(VALUE)%']],
+            'field' => 'host',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['^admin\\.example\\.com$', 'GET', 'http://admin.example.com/admin/x', 0, 1],
+                ['\\.example\\.com$', 'GET', 'http://shop.example.com/admin/x', 0, 1],
+            ],
+        ];
+
+        yield 'two rules for the hosts two processor chains give' => [
+            'rules' => [['path' => '^/admin', 'host' => '%env(trim:VALUE)%'], ['path' => '^/admin/x', 'host' => '%env(VALUE)%']],
+            'field' => 'host',
+            'expected' => 'overlap',
+            'probes' => [
+                ['^admin\\.example\\.com$', 'GET', 'http://admin.example.com/admin/x', 0, 1],
+            ],
+        ];
+
+        yield 'a later rule for the addresses the same expression gives, on a narrower path' => [
+            'rules' => [['path' => '^/admin', 'ips' => ['%env(VALUE)%']], ['path' => '^/admin/x', 'ips' => ['%env(VALUE)%']]],
+            'field' => 'ips',
+            'expected' => 'shadowed',
+            'probes' => [
+                ['10.0.0.1', 'GET', 'http://localhost/admin/x', 0, 1],
+                ['10.0.0.0/8', 'GET', 'http://localhost/admin/x', 0, 1],
+            ],
+        ];
+
         yield 'an earlier rule for a path from the environment' => [
             'rules' => [['path' => '%env(VALUE)%'], ['path' => '^/admin']],
             'field' => 'path',
@@ -922,18 +975,21 @@ final class AccessControlOrderTest extends TestCase
     }
 
     /**
-     * The rules with the value the environment gives in place of
-     * "%env(VALUE)%", a number for a port.
+     * The rules with the value the environment gives each variable in
+     * place of each "%env(...)%" that reads it: one value is the value of
+     * VALUE.
      *
-     * @param list<array<string, mixed>> $rules
+     * @param list<array<string, mixed>>   $rules
+     * @param string|array<string, string> $values
      *
      * @return list<array<string, mixed>>
      */
-    private static function withEnvironment(array $rules, string $value): array
+    private static function withEnvironment(array $rules, string|array $values): array
     {
-        array_walk_recursive($rules, static function (mixed &$item, int|string $key) use ($value): void {
-            if ('%env(VALUE)%' === $item) {
-                $item = 'port' === $key ? (int) $value : $value;
+        $values = \is_string($values) ? ['VALUE' => $values] : $values;
+        array_walk_recursive($rules, static function (mixed &$item) use ($values): void {
+            if (\is_string($item)) {
+                $item = preg_replace_callback('/%env\((?:[a-z]+:)*(\w+)\)%/', static fn (array $match): string => $values[$match[1]] ?? $match[0], $item);
             }
         });
 

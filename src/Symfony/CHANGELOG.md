@@ -55,8 +55,11 @@ CHANGELOG
    restricted to a value the analysis cannot know, shadows no later rule
    through it, and notes
    `Values read from the environment are not evaluated: host.`; a firewall
-   whose pattern holds one is skipped, with that reason. An `%env()%` value
-   nothing defines no longer stops the reading of a `--config` file. A
+   whose pattern holds one is skipped, with that reason. Two rules reading
+   a field through the same expression, the same processors over the same
+   variable, compare as holding one value, so the shadow between them is
+   found. An `%env()%` value nothing defines no longer stops the reading of
+   a `--config` file. A
    `port` or `methods` read from the environment stops the command with
    exit code 2, naming the field and the rule, as the security bundle
    refuses them: the application does not boot.

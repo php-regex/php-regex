@@ -43,13 +43,6 @@ final class SecurityAccessControlAnalyzer
     private const LEVEL_CONDITIONAL = 'conditional';
     private const LEVEL_UNKNOWN = 'unknown';
 
-    /**
-     * The fields of a rule its request matcher reads that may hold a value
-     * read from the environment, but for the path: the security bundle
-     * refuses a port or methods so read.
-     */
-    private const REQUEST_FIELDS = ['host', 'ips', 'route', 'attributes'];
-
     private readonly LanguageSolver $solver;
 
     public function __construct(
@@ -161,9 +154,11 @@ final class SecurityAccessControlAnalyzer
                 //
                 // A path read from the environment is read as every path,
                 // which it may be, but holds no other path, nor is held by
-                // any other than every path.
-                $laterPathInEarlier = null === $equivalence->rightOnlyExample && !\in_array('path', $left['fromEnvironment'], true);
-                $earlierPathInLater = null === $equivalence->leftOnlyExample && !\in_array('path', $right['fromEnvironment'], true);
+                // any other than every path, unless the same expression
+                // gives both: the same value.
+                $samePathFromEnvironment = self::sameFromEnvironment($left, $right, 'path');
+                $laterPathInEarlier = null === $equivalence->rightOnlyExample && (!\in_array('path', $left['fromEnvironment'], true) || $samePathFromEnvironment);
+                $earlierPathInLater = null === $equivalence->leftOnlyExample && (!\in_array('path', $right['fromEnvironment'], true) || $samePathFromEnvironment);
                 $isSubset = $laterPathInEarlier && $this->takesEveryRequestOf($left, $right, $options);
                 if (!$isSubset && $earlierPathInLater && (!$laterPathInEarlier || $this->takesEveryRequestOf($right, $left, $options))) {
                     $carveOuts++;
@@ -431,9 +426,10 @@ final class SecurityAccessControlAnalyzer
      */
     private function accessRulesEquivalent(array $left, array $right): bool
     {
-        return [] === $left['fromEnvironment'] && [] === $right['fromEnvironment']
+        return $left['fromEnvironment'] === $right['fromEnvironment']
             && $this->sameList($left['roles'], $right['roles'], false)
             && $left['methodsTaken'] === $right['methodsTaken']
+            && $left['host'] === $right['host']
             && $left['hostPattern'] === $right['hostPattern']
             && $this->sameList($left['ips'], $right['ips'], true)
             && $left['requiresChannel'] === $right['requiresChannel']
@@ -583,16 +579,15 @@ final class SecurityAccessControlAnalyzer
      */
     private function takesEveryRequestOf(array $outer, array $inner, SolverOptions $options): bool
     {
-        // A value of the outer rule read from the environment holds none.
-        if ([] !== array_intersect($outer['fromEnvironment'], self::REQUEST_FIELDS)) {
-            return false;
-        }
-
         if (null !== $outer['methodsTaken'] && (null === $inner['methodsTaken'] || [] !== array_diff($inner['methodsTaken'], $outer['methodsTaken']))) {
             return false;
         }
 
-        if ([] !== $outer['ips'] && !$this->listHolds($outer['ips'], $inner['ips'])) {
+        // Addresses read from the environment compare as written, as do a
+        // route and attributes: the same expression gives the same value,
+        // any other may give any.
+        $fromEnvironment = \in_array('ips', $outer['fromEnvironment'], true) || \in_array('ips', $inner['fromEnvironment'], true);
+        if ([] !== $outer['ips'] && !$this->listHolds($outer['ips'], $inner['ips'], !$fromEnvironment)) {
             return false;
         }
 
@@ -605,6 +600,12 @@ final class SecurityAccessControlAnalyzer
             if (($required[$name] ?? null) !== $pattern) {
                 return false;
             }
+        }
+
+        // A host read from the environment holds the one the same
+        // expression gives alone.
+        if (\in_array('host', $outer['fromEnvironment'], true)) {
+            return self::sameFromEnvironment($outer, $inner, 'host');
         }
 
         if ($outer['hostUnsupported'] || $inner['hostUnsupported'] || null === $outer['hostPattern']) {
@@ -671,12 +672,13 @@ final class SecurityAccessControlAnalyzer
 
     /**
      * Whether a list of addresses takes every value the inner one takes:
-     * an empty list takes them all.
+     * an empty list takes them all. An address is read in any case, an
+     * expression read from the environment as written.
      *
      * @param array<int, string> $outer
      * @param array<int, string> $inner
      */
-    private function listHolds(array $outer, array $inner): bool
+    private function listHolds(array $outer, array $inner, bool $caseInsensitive): bool
     {
         if ([] === $outer) {
             return true;
@@ -686,7 +688,26 @@ final class SecurityAccessControlAnalyzer
             return false;
         }
 
-        return [] === array_diff(array_map(strtoupper(...), $inner), array_map(strtoupper(...), $outer));
+        return $caseInsensitive
+            ? [] === array_diff(array_map(strtoupper(...), $inner), array_map(strtoupper(...), $outer))
+            : [] === array_diff($inner, $outer);
+    }
+
+    /**
+     * Whether two rules read a field from the environment through the same
+     * expression, the same processors over the same variable: the value
+     * is the same at run time.
+     *
+     * @param 'path'|'host' $field
+     *
+     * @phpstan-param AccessRule $left
+     * @phpstan-param AccessRule $right
+     */
+    private static function sameFromEnvironment(array $left, array $right, string $field): bool
+    {
+        return \in_array($field, $left['fromEnvironment'], true)
+            && \in_array($field, $right['fromEnvironment'], true)
+            && $left[$field] === $right[$field];
     }
 
     /**

@@ -607,8 +607,12 @@ not even its `env()` default, and a rule holding one in its path, host,
 addresses, route or attributes is restricted to a value the analysis cannot
 know. Through that value it shadows no later rule, a later rule holding one
 is shadowed only by an earlier rule that takes every value of it, and the
-finding notes `Values read from the environment are not evaluated: host.`;
-a firewall whose pattern holds one is skipped. A `port` or `methods` read
+finding notes `Values read from the environment are not evaluated: host.`
+The same expression, the same processors over the same variable, gives the
+same value: two rules with `host: '%env(ADMIN_HOST)%'`, written so or
+through a parameter, compare as holding one host, and
+`'%env(trim:ADMIN_HOST)%'` is another value. A firewall whose pattern holds
+an `%env()%` value is skipped. A `port` or `methods` read
 from the environment is refused, as the security bundle refuses them: it
 builds the port matcher, and upper-cases the methods, when the container is
 compiled, and the application does not boot.
