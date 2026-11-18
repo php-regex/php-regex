@@ -229,8 +229,13 @@ CHANGELOG
    path: `/admin` redirects `GET /admin//` too, shadowing `/{p<admin//>}`,
    `/admin/` takes `/admin//` as is, for any method on its own schemes,
    and `/` answers `GET //` with a 404; a route tried with a regex takes
-   one slash at most. Each such finding notes what the router does with
-   the request: redirects it to the earlier route, matches it as is, or
+   one slash at most. A later route ending on a variable that may end on
+   the slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its
+   own ending on the slash for the slash: for `POST` it passes `/a/` on,
+   which it does not lose, and a pair whose shortest shared path it passes
+   on is skipped; a redirect leading to a path it reads for its slash
+   still loses the request. Each such finding notes what the router does
+   with the request: redirects it to the earlier route, matches it as is, or
    answers it with a 404. The report
    suggests paths that differ by more than the slash, never the reorder
    that only turns the redirect round.

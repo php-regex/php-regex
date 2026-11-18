@@ -1352,6 +1352,100 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * A later route ending on a variable that may end on the slash, with
+     * no slash after it, reads a path of its own ending on the slash for
+     * the slash, as PCRE captures the value: it redirects a GET or HEAD
+     * request of it, and passes any other on. A request it passes on is
+     * none it loses, and a path it redirects is no path it serves.
+     *
+     * @param array{0: string, 1: list<string>, 2: list<string>}    $earlier path, methods, schemes
+     * @param array{0: string, 1: list<string>, 2: list<string>}    $later   path, methods, schemes
+     * @param list<array{0: string, 1: string, 2: string, 3: bool}> $probes  method, scheme, path, and whether the later route takes the request
+     * @param list<array{0: string, 1: string, 2: string, 3: bool}> $alone   the same, the later route alone
+     */
+    #[Test]
+    #[DataProvider('provideLaterRoutesReadingTheirOwnPathsForTheSlash')]
+    public function test_a_later_route_reading_its_own_paths_for_the_slash_loses_none_it_would_not_serve(array $earlier, array $later, array $probes, array $alone, ?string $type, int $skipped): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route($earlier[0]))->setMethods($earlier[1])->setSchemes($earlier[2]));
+        $collection->add('later', (new Route($later[0]))->setMethods($later[1])->setSchemes($later[2]));
+        $laterAlone = new RouteCollection();
+        $laterAlone->add('later', (new Route($later[0]))->setMethods($later[1])->setSchemes($later[2]));
+
+        foreach ($probes as [$method, $scheme, $path, $laterTakesIt]) {
+            $this->assertSame($laterTakesIt, 'later' === FrameworkMatcher::reached($collection, $method, $path, $scheme), $method.' '.$scheme.' '.$path);
+        }
+        foreach ($alone as [$method, $scheme, $path, $laterTakesIt]) {
+            $this->assertSame($laterTakesIt, 'later' === FrameworkMatcher::reached($laterAlone, $method, $path, $scheme), $method.' '.$scheme.' '.$path.', alone');
+        }
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame(null === $type ? [] : [[$type, 'earlier', 'later']], array_map(
+            static fn (array $conflict): array => [$conflict['type'], $conflict['route']['name'], $conflict['conflict']['name']],
+            $report->conflicts,
+        ));
+        $this->assertSame($skipped, $report->stats['skipped_pairs']);
+        if (null !== $type) {
+            $this->assertIsString($report->conflicts[0]['example']);
+            $this->assertNotSame('later', FrameworkMatcher::reached($collection, $earlier[1][0] ?? 'GET', $report->conflicts[0]['example'], $later[2][0] ?? 'http'));
+            $this->assertSame('later', FrameworkMatcher::reached($laterAlone, $earlier[1][0] ?? 'GET', $report->conflicts[0]['example'], $later[2][0] ?? 'http'));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{earlier: array{0: string, 1: list<string>, 2: list<string>}, later: array{0: string, 1: list<string>, 2: list<string>}, probes: list<array{0: string, 1: string, 2: string, 3: bool}>, alone: list<array{0: string, 1: string, 2: string, 3: bool}>, type: string|null, skipped: int}>
+     */
+    public static function provideLaterRoutesReadingTheirOwnPathsForTheSlash(): iterable
+    {
+        yield 'for POST, the shortest shared path the later route passes on' => [
+            'earlier' => ['/{x<a/|c>}', ['POST'], []],
+            'later' => ['/{y<a|a/|b>}', ['POST'], []],
+            'probes' => [['POST', 'http', '/a/', false]],
+            'alone' => [['POST', 'http', '/a/', false], ['POST', 'http', '/b', true]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+        yield 'for GET, the shortest shared path the later route redirects to a path of its own' => [
+            'earlier' => ['/{x<a/|c>}', ['GET'], []],
+            'later' => ['/{y<a|a/|b>}', ['GET'], []],
+            'probes' => [['GET', 'http', '/a/', false]],
+            'alone' => [['GET', 'http', '/a/', true]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        yield 'for POST, the shortest shared path the later route takes as is' => [
+            'earlier' => ['/{x<a/|c|d>}', ['POST'], []],
+            'later' => ['/{y<a|a/|d|b>}', ['POST'], []],
+            'probes' => [['POST', 'http', '/d', false]],
+            'alone' => [['POST', 'http', '/d', true]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        // The redirect leads to a path the later route reads for its own
+        // slash: it sends the request back to the earlier route's scheme.
+        yield 'a route on https before a route on http that redirects the path the redirect leads to' => [
+            'earlier' => ['/admin/', ['GET'], ['https']],
+            'later' => ['/{p<admin|admin/>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/admin', false], ['HEAD', 'http', '/admin', false]],
+            'alone' => [['GET', 'http', '/admin', true]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        // The shortest redirect leads to a path the later route takes as
+        // is, another to one it reads for its slash.
+        yield 'a route on https before a route on http that matches every path of it and reads some for the slash' => [
+            'earlier' => ['/files/{name}/', ['GET'], ['https']],
+            'later' => ['/files/{p<[^b]/|.+?>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/files/a', true], ['GET', 'http', '/files/b', false]],
+            'alone' => [['GET', 'http', '/files/b', true]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+    }
+
+    /**
      * A conflict the trailing slash makes notes what the matcher does with
      * a GET request of its example: it redirects it to the earlier route,
      * matches it as is under a variable whose captured value ends on the

@@ -579,7 +579,15 @@ route it tries with a regex matches that path: `/admin` redirects
 `GET /admin//` too, so `/{p<admin//>}` after it is shadowed, `/admin/`
 takes `/admin//` as is, for any method on its own schemes, and `/` answers
 `GET //` with a 404. A route tried with a regex takes its path with one
-slash at most. Each such finding notes what the router does with the
+slash at most. A later route ending on a variable that may end on the
+slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its own
+ending on the slash for the slash, as PCRE captures the value: it
+redirects `GET /a/` to `/a`, and passes `POST /a/` on to the routes after
+it. A request it passes on is none it loses, so a pair whose shortest
+shared path is one it passes on for the methods both routes take is
+counted among the pairs skipped; a redirect of an earlier route leading to
+a path it reads for its slash still loses it the request. Each such
+finding notes what the router does with the
 request: it redirects it to the earlier route, matches it as is where the
 earlier route ends on a variable whose value PCRE captures with the slash,
 or, for `//` after `/`, answers it with a 404.

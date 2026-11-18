@@ -249,6 +249,10 @@ final class RouteConflictAnalyzer
                     $notes[] = 'Less specific route declared BEFORE more specific route.';
                 } elseif (($earlierPathInLater && !$laterPathInEarlier) || $laterTakesEarlier) {
                     continue;
+                } elseif ($this->passesOnTheExample($earlier, $later, $intersection->example)) {
+                    $skippedPairs++;
+
+                    continue;
                 } else {
                     $overlaps++;
 
@@ -520,7 +524,43 @@ final class RouteConflictAnalyzer
             && self::endsOnAVariable($earlier['path'])
             && !$this->listHolds(['GET', 'HEAD'], $later['methods'])
             && $this->sharesAString($later['pathPattern'], '^.+/$', $options)
-            && $this->lastVariableMayEndOnTheSlash($earlier, $options);
+            && $this->readsOwnPathsForTheSlash($earlier, $options);
+    }
+
+    /**
+     * Whether the later route passes on to the routes after it every
+     * request of the shared path, for the methods both routes take: none
+     * is GET or HEAD, and it reads the path for the slash. The path tells
+     * no request the later route loses: another shared path may, which
+     * the pair is left out rather than judged on.
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     * @phpstan-param RouteDescriptor $later
+     */
+    private function passesOnTheExample(array $earlier, array $later, ?string $path): bool
+    {
+        $methods = $this->intersectMethods($earlier['methods'], $later['methods']);
+
+        return null !== $path
+            && [] !== $methods
+            && [] === array_intersect($methods, ['GET', 'HEAD'])
+            && self::capturesWithoutTheSlash($later, $path);
+    }
+
+    /**
+     * Whether the route may read a path of its own ending on the slash for
+     * the slash, as PCRE captures the variable it ends on: it ends on one
+     * with no slash after it, whose requirement may end on the slash.
+     *
+     * @phpstan-param RouteDescriptor $route
+     *
+     * @throws ComplexityException When the solver gives up on the requirement
+     */
+    private function readsOwnPathsForTheSlash(array $route, SolverOptions $options): bool
+    {
+        return !str_ends_with($route['path'], '/')
+            && self::endsOnAVariable($route['path'])
+            && $this->lastVariableMayEndOnTheSlash($route, $options);
     }
 
     /**
@@ -687,12 +727,14 @@ final class RouteConflictAnalyzer
             return null;
         }
 
+        // The later route serves the path the redirect leads to when it
+        // matches it, and takes it as is rather than for its own slash.
         $landing = self::landing($redirected->example);
-        if (null === $landing || !$this->sharesAString($later['pathPattern'], '^'.preg_quote($landing, '{').'$', $options)) {
+        if (null === $landing || !$this->sharesAString($later['pathPattern'], '^'.preg_quote($landing, '{').'$', $options) || self::capturesWithoutTheSlash($later, $landing)) {
             return $this->redirected($earlier, $later, 'overlap', $redirected->example, $hostsUnread);
         }
 
-        if (!$earlier['static'] && !$this->solver->subsetOf($earlier['pathPattern'], $later['pathPattern'], $options)->isSubset) {
+        if (!$earlier['static'] && (!$this->solver->subsetOf($earlier['pathPattern'], $later['pathPattern'], $options)->isSubset || (str_ends_with($landing, '/') && $this->readsOwnPathsForTheSlash($later, $options)))) {
             $skippedPairs++;
         }
 
