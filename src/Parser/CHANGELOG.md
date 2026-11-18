@@ -50,7 +50,12 @@ CHANGELOG
    with `x`, `a(?=x)` and `a(?<!x)` end with it, and a lookaround alone
    reads nothing. An alternation that may match empty through one branch
    lets the items around it lead too: `(?:|b)a` starts with `a` or `b`,
-   where it was read as starting with `b` alone. Two branches overlap on
+   where it was read as starting with `b` alone. So does a repeat of an
+   item that may match empty, whatever its count: `(?=b){1}b` starts with
+   `b`, where it was read as starting with nothing, and `(a?)+b` with `a`
+   or `b`, where it was `a` alone. The ReDoS heuristics rate
+   `/(x)[^a]+(?:(?=b){1}b)+\1/` medium, where it was safe: PCRE takes 74,
+   274 and 1 058 steps on `x` then 8, 16 and 32 `b`. Two branches overlap on
    the characters they take, never on what a lookaround looks at:
    `regex.lint.overlap.charset` no longer reports `/(?:[^$]+|(?<=\\)\$)+/`
    or `/^(?:>(?:(?!!)|!))+$/`, and reports `/^(?:(?!x)a|a)+$/`, which the

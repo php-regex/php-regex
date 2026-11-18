@@ -26,7 +26,8 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The characters a node starts and ends with, read above ASCII as the
- * ReDoS analysis reads them: what the start options change there.
+ * ReDoS analysis reads them: what the start options change there, and the
+ * items that may match empty.
  */
 final class CharSetReadingTest extends TestCase
 {
@@ -115,6 +116,43 @@ final class CharSetReadingTest extends TestCase
         yield 'a line break under (*BSR_ANYCRLF) and UTF' => ['options' => '(*BSR_ANYCRLF)', 'atom' => '\R', 'flags' => 'u', 'probes' => $breaksUnderUtf];
         yield 'a vertical space under (*BSR_ANYCRLF)' => ['options' => '(*BSR_ANYCRLF)', 'atom' => '\v', 'flags' => '', 'probes' => $breaks];
         yield 'a line break under (*BSR_ANYCRLF), repeated' => ['options' => '(*BSR_ANYCRLF)', 'atom' => '\R+', 'flags' => '', 'probes' => $breaks];
+    }
+
+    /**
+     * An item that may match empty lets the item after it lead, and the
+     * one before it end, whatever its count: a lookaround repeated once,
+     * "(?=a){1}a", reads nothing and "a" leads, and "(a?)+b" may start with
+     * "b". An item that must match stops the scan, repeated or not: "b"
+     * never leads "a{1}b". Each match is asked of the engine first.
+     */
+    #[Test]
+    #[DataProvider('provideItemsThatMayMatchEmpty')]
+    public function test_an_item_that_may_match_empty_lets_the_next_one_lead(string $pattern, string $match, string $never): void
+    {
+        $this->assertSame(1, preg_match('/\A(?:'.substr($pattern, 1, -1).')\z/', $match), 'Oracle: '.$pattern.' takes '.$match.' whole.');
+        $this->assertSame(0, preg_match('/\A(?:'.substr($pattern, 1, -1).')/', $never.$match), 'Oracle: no match of '.$pattern.' starts with '.$never.'.');
+
+        $regex = RegexParser::create(['cache' => null])->parse($pattern);
+        $analyzer = CharSetAnalyzer::forRegex($regex, true);
+
+        $this->assertTrue($analyzer->firstChars($regex)->intersects(ByteCharSet::fromChar($match[0])), $pattern.' starts with '.$match[0]);
+        $this->assertTrue($analyzer->lastChars($regex)->intersects(ByteCharSet::fromChar($match[-1])), $pattern.' ends with '.$match[-1]);
+        $this->assertFalse($analyzer->firstChars($regex)->intersects(ByteCharSet::fromChar($never)), $pattern.' never starts with '.$never);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, match: string, never: string}>
+     */
+    public static function provideItemsThatMayMatchEmpty(): iterable
+    {
+        yield 'a lookahead repeated once' => ['pattern' => '/(?=a){1}a/', 'match' => 'a', 'never' => 'b'];
+        yield 'a lookahead repeated at least once' => ['pattern' => '/(?=a)+a/', 'match' => 'a', 'never' => 'b'];
+        yield 'a negative lookahead repeated up to three times' => ['pattern' => '/(?!x){1,3}b/', 'match' => 'b', 'never' => 'x'];
+        yield 'a lookbehind repeated once' => ['pattern' => '/a(?<=a){1}/', 'match' => 'a', 'never' => 'b'];
+        yield 'a group that may match empty, repeated at least once' => ['pattern' => '/(a?)+b/', 'match' => 'b', 'never' => 'c'];
+        yield 'a group that may match empty, repeated at least once, at the end' => ['pattern' => '/b(a?)+/', 'match' => 'b', 'never' => 'c'];
+        yield 'an empty branch repeated at least once' => ['pattern' => '/(?:a|)+b/', 'match' => 'b', 'never' => 'c'];
+        yield 'a letter repeated once' => ['pattern' => '/a{1}b/', 'match' => 'ab', 'never' => 'b'];
     }
 
     /**

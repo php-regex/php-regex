@@ -735,8 +735,10 @@ final class CharSetAnalyzer
             return '' === $node->value;
         }
 
+        // A repeat of an item that may match empty may too, whatever its
+        // count: "(?=a){1}" reads nothing, and "(a?)+" may.
         if ($node instanceof QuantifierNode) {
-            return $this->isOptional($node);
+            return $this->isOptional($node) || $this->isOptionalNode($node->node, $fromStart);
         }
 
         if ($node instanceof GroupNode) {
