@@ -102,7 +102,7 @@ final class CharSetAnalyzer
         private readonly bool $readsAboveAscii = false,
         ?self $samePattern = null
     ) {
-        $this->options = null === $samePattern ? self::readStartOptions($startOptions) : $samePattern->options;
+        $this->options = $samePattern->options ?? self::readStartOptions($startOptions);
         $this->flags = null === $samePattern ? $this->restrictedFromTheStart($flags) : $flags;
         $this->unicodeMode = str_contains($flags, 'u') || $this->options['ucp'];
         $this->utf = str_contains($flags, 'u') || $this->options['utf'];

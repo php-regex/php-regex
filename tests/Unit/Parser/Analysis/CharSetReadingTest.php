@@ -217,7 +217,7 @@ final class CharSetReadingTest extends TestCase
         $regex = RegexParser::create(['cache' => null])->parse($pattern);
         $node = $regex->pattern;
         if ($node instanceof SequenceNode) {
-            $node = $node->children[array_key_last($node->children)];
+            $node = $node->children[\count($node->children) - 1];
         }
 
         $inForce = CharSetAnalyzer::forRegex($regex, true)->inForce($regex);
