@@ -109,7 +109,8 @@ final class ConsoleLayout
                 continue;
             }
 
-            $output .= $this->hintLines(str_starts_with($hint, self::RISKY_PART) ? [$hint] : TextWrap::lines($hint, $this->width - self::HINT_COLUMN));
+            // An x-flag excerpt spans lines: each one goes under the text of the hint.
+            $output .= $this->hintLines(str_starts_with($hint, self::RISKY_PART) ? explode("\n", rtrim($hint, "\n")) : TextWrap::lines($hint, $this->width - self::HINT_COLUMN));
         }
 
         return $output;
