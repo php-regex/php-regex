@@ -112,6 +112,69 @@ final class ClassParserTest extends TestCase
     }
 
     /**
+     * Without UTF mode every multibyte character of a class is its bytes,
+     * each a member, as PCRE reads them: a range starts at the last byte of
+     * its start and ends at the first byte of its end, "[à-é]" is 0xC3, the
+     * range 0xA0 to 0xC3, then 0xA9. A byte an escape writes keeps its
+     * backslash. In UTF mode the character stays whole.
+     */
+    #[Test]
+    #[DataProvider('provideMultibyteMembers')]
+    public function test_parse_reads_a_multibyte_member_as_its_bytes_without_utf(string $pattern, string $flags, CharClassNode $expected): void
+    {
+        $this->assertEquals($expected, self::parse($pattern, $flags));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, flags: string, expected: CharClassNode}>
+     */
+    public static function provideMultibyteMembers(): iterable
+    {
+        yield 'a lone member' => ['pattern' => '[é]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 1, 2),
+            new LiteralNode("\xA9", 2, 3),
+        ], 1, 3), false, 0, 4)];
+        yield 'a lone member of three bytes' => ['pattern' => '[€]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xE2", 1, 2),
+            new LiteralNode("\x82", 2, 3),
+            new LiteralNode("\xAC", 3, 4),
+        ], 1, 4), false, 0, 5)];
+        yield 'a negated member' => ['pattern' => '[^é]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 2, 3),
+            new LiteralNode("\xA9", 3, 4),
+        ], 2, 4), true, 0, 5)];
+        yield 'a range between two multibyte characters' => ['pattern' => '[à-é]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 1, 2),
+            new RangeNode(new LiteralNode("\xA0", 2, 3), new LiteralNode("\xC3", 4, 5), 2, 5),
+            new LiteralNode("\xA9", 5, 6),
+        ], 1, 6), false, 0, 7)];
+        yield 'a range between two multibyte characters, the later first' => ['pattern' => '[é-à]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 1, 2),
+            new RangeNode(new LiteralNode("\xA9", 2, 3), new LiteralNode("\xC3", 4, 5), 2, 5),
+            new LiteralNode("\xA0", 5, 6),
+        ], 1, 6), false, 0, 7)];
+        yield 'a range to a multibyte character' => ['pattern' => '[a-é]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new RangeNode(new LiteralNode('a', 1, 2), new LiteralNode("\xC3", 3, 4), 1, 4),
+            new LiteralNode("\xA9", 4, 5),
+        ], 1, 5), false, 0, 6)];
+        yield 'a range from an escaped multibyte character' => ['pattern' => '[\é-ê]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 1, 3),
+            new RangeNode(new LiteralNode("\xA9", 3, 4), new LiteralNode("\xC3", 5, 6), 3, 6),
+            new LiteralNode("\xAA", 6, 7),
+        ], 1, 7), false, 0, 8)];
+        yield 'a quoted member' => ['pattern' => '[\Qé\E]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 3, 4),
+            new LiteralNode("\xA9", 4, 5),
+        ], 3, 5), false, 0, 8)];
+        yield 'a range in UTF mode' => ['pattern' => '[à-é]', 'flags' => 'u', 'expected' => new CharClassNode(
+            new RangeNode(new LiteralNode('à', 1, 3), new LiteralNode('é', 4, 6), 1, 6),
+            false,
+            0,
+            7,
+        )];
+    }
+
+    /**
      * Where no range is read, the "-" is a member, read again from where
      * the range would have started.
      */
@@ -293,6 +356,11 @@ final class ClassParserTest extends TestCase
         yield 'a POSIX class' => ['pattern' => '[[:alpha:]-z]', 'flags' => ''];
         yield 'a multibyte range end in UTF mode' => ['pattern' => '[a-é-z]', 'flags' => 'u'];
         yield 'a multibyte range end, then no range' => ['pattern' => '[a-éb]', 'flags' => ''];
+        yield 'a range between two multibyte characters' => ['pattern' => '[à-é]', 'flags' => ''];
+        yield 'a range between two multibyte characters, caseless' => ['pattern' => '[à-é]', 'flags' => 'i'];
+        yield 'a multibyte range start past a quote' => ['pattern' => '[é\E-à]', 'flags' => ''];
+        yield 'a multibyte member of four bytes' => ['pattern' => '[a😀b]', 'flags' => ''];
+        yield 'a range between characters of four bytes' => ['pattern' => '[😀-😁]', 'flags' => ''];
         yield 'a backslash-k' => ['pattern' => '[\k]', 'flags' => ''];
         yield 'an octal escape past a byte' => ['pattern' => '[\400-a]', 'flags' => ''];
         yield 'a negation after a quote' => ['pattern' => '[\E^a]', 'flags' => ''];

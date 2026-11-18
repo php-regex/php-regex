@@ -29,6 +29,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Utf8;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\TranspileContext;
 
@@ -370,7 +371,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
             return;
         }
 
-        if ($inCharClass && mb_check_encoding($text, 'UTF-8')) {
+        if ($inCharClass && $this->writesAByteOfACharacter($node)) {
             $this->unsupported('A multibyte character in a class has no equivalent in this target, which reads characters, not bytes: without the u flag PCRE reads each of its bytes as a member of its own. '.$this->utf8Advice(), $node);
         }
 
@@ -473,6 +474,20 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         }
 
         return false;
+    }
+
+    /**
+     * Whether the byte the node writes starts a multibyte character the
+     * pattern writes as valid UTF-8: without u the parser reads each byte of
+     * it in a class as a member of its own, as PCRE does, the first byte
+     * first, which is where the target refuses the class.
+     */
+    private function writesAByteOfACharacter(NodeInterface $node): bool
+    {
+        $at = $node->getEndPosition() - 1;
+        $width = Utf8::width($this->body, $at);
+
+        return $width > 1 && mb_check_encoding(substr($this->body, $at, $width), 'UTF-8');
     }
 
     /**

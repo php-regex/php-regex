@@ -172,7 +172,8 @@ final class ValidatorChecksTest extends TestCase
         // Ranges.
         yield 'reversed range' => ['pattern' => '/[z-a]/', 'error' => [ErrorCode::RangeReversed, 4, 'Invalid range "z-a": start character comes after end character.']];
         yield 'reversed range from an escape' => ['pattern' => '/[\x{100}-a]/u', 'error' => [ErrorCode::RangeReversed, 10, 'Invalid range "\x{100}-a": start character comes after end character.']];
-        yield 'reversed range from the last byte of a character' => ['pattern' => "/[\u{e9}-a]/", 'error' => [ErrorCode::RangeReversed, 5, "Invalid range \"\u{e9}-a\": start character comes after end character."]];
+        // Without UTF the range starts at the last byte of "é", 0xA9.
+        yield 'reversed range from the last byte of a character' => ['pattern' => "/[\u{e9}-a]/", 'error' => [ErrorCode::RangeReversed, 5, 'Invalid range "\xA9-a": start character comes after end character.']];
         yield 'reversed range in a payload' => ['pattern' => '/(*pla:[z-a])/', 'error' => [ErrorCode::RangeReversed, 10, 'Invalid range "z-a": start character comes after end character.']];
 
         // The branches of conditionals.

@@ -1257,7 +1257,10 @@ default — the ASCII-only shorthands.
 **Identifier:** `regex.lint.unicode.multibyteInClassWithoutU`
 
 **When it triggers:** A character class holds a character of two bytes or more, and the
-pattern has neither `/u` nor `(*UTF)`. The class holds each byte on its own.
+pattern has neither `/u` nor `(*UTF)`. The class holds each byte on its own, and a range
+starts at the last byte of its start and ends at the first byte of its end: `[à-é]` is
+`\xC3`, the range `\xA0-\xC3`, then `\xA9`. The other class rules read those bytes too:
+`[äö]` holds `\xC3` twice, which `regex.lint.charclass.redundant` reports as well.
 
 **Example:**
 ```php

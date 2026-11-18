@@ -123,6 +123,11 @@ final class CompiledLengthTest extends TestCase
         yield 'two-byte letter in UTF mode' => ['pattern' => '/é/u', 'length' => 10];
         yield 'three-byte character in UTF mode' => ['pattern' => '/€/u', 'length' => 11];
         yield 'two-byte letter in byte mode, two characters' => ['pattern' => '/é/', 'length' => 11];
+        // Without UTF a class reads "é" as its two bytes: "[é-\xff]" is 0xC3,
+        // then the range 0xA9 to 0xFF, a map as "[\xc3\xa9-\xff]" is.
+        yield 'range from a two-byte letter in byte mode' => ['pattern' => '/[é-\\xff]/', 'length' => 40];
+        yield 'range between two-byte letters in byte mode' => ['pattern' => '/[à-é]/', 'length' => 40];
+        yield 'range to a two-byte letter in byte mode' => ['pattern' => '/[a-é]/', 'length' => 40];
         yield 'caseless letter' => ['pattern' => '/k/i', 'length' => 9];
         yield 'caseless letter of three cases in UTF mode' => ['pattern' => '/k/iu', 'length' => 10];
         yield 'caseless two-byte letter in UTF mode' => ['pattern' => '/é/iu', 'length' => 10];
@@ -586,9 +591,6 @@ final class CompiledLengthTest extends TestCase
         // An inline "a" may hold the types of a class to ASCII.
         yield 'class holding a type under ASCII options' => ['pattern' => '/(?aD)[\\dx]/u'];
         yield 'class of every character in POSIX names and a range' => ['pattern' => '/[[:^ascii:][:cntrl:]\x20-\x7e]/'];
-        // Without UTF, "é" is two bytes: a range that ends on it is read as
-        // one ending on the first, then the second.
-        yield 'range ending on a two-byte letter in byte mode' => ['pattern' => '/[é-\\xff]/'];
         // Without UTF, the cases of a byte past ASCII follow the locale PHP
         // builds its tables from.
         // Turkish tables make the other case of "i" a byte past ASCII.

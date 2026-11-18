@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * Without UTF mode the tree holds a multibyte character of a class as its
+   bytes, wherever it stands, as PCRE2 reads it: `/[à-é]/` is `\xC3`, the
+   range `\xA0` to `\xC3`, then `\xA9`, where it was one range from `à` to
+   `é`, which the explanation, the lint rules and the sample generator read
+   as code points. `/^[é]$/` now has a sample, and a reversed range names
+   the bytes PCRE2 reads: `/[é-a]/` is "Invalid range "\xA9-a"", where it
+   was "é-a". The pattern prints back as written.
  * What follows an operand of an extended class, where an operator, a `)`
    or the `]` is due, is refused as PCRE2 names it: a character that starts
    no operand is `regex.extended_class.unexpected_character`, `/(?[\d a])/`
