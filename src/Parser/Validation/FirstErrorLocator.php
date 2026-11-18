@@ -473,7 +473,9 @@ final class FirstErrorLocator
             } while (null !== $next && self::isOptionLetter($next));
         }
 
-        for ($cut = min(\count($tokens), $opener + 1 + self::HEADER_TOKENS); $cut > $options; $cut--) {
+        // PCRE reads the option letters to their end, however many, and the
+        // ":" or ")" after them: the runs reach that far, whatever the bound.
+        for ($cut = min(\count($tokens), max($opener + 1 + self::HEADER_TOKENS, $options + 1)); $cut > $options; $cut--) {
             yield \array_slice($tokens, 0, $cut);
         }
     }

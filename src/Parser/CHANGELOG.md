@@ -36,7 +36,10 @@ CHANGELOG
    it, are read with the opener of the level past 250 as `i` is: 250 `(`
    then `(?^a[` is `regex.group.syntax` at offset 255, where it was
    `regex.group.nested_too_deep` at 254, and an option setting `(?a)` there
-   opens no level.
+   opens no level. The letters are read to their end, however many: 250 `(`
+   then `(?`, 160 `i`, `:` and `\x{}` is `regex.group.nested_too_deep` at
+   413, where it was `regex.escape.digits_missing` at 416, and an option
+   setting of that many letters still opens none.
  * A condition on a relative zero, `/(?(+0)a)/`, is `regex.backref.zero`, as
    `(?(0)` and `\g{-0}` are, where it was `regex.backref.relative`. A zero
    that no `)` follows is refused on the number, as PCRE2 refuses it before
