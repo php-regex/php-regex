@@ -1,33 +1,146 @@
-# The sponsor frame at the foot of every documentation page, and the
-# lists BACKERS.md mirrors.
+# Sponsorship, in one file: the companies, the spots they back, the
+# developers who back the project. The sponsor frame at the foot of every
+# documentation page, the "Backed by" strip of the footer and the
+# /sponsorship/ page all read this file; BACKERS.md and the package READMEs
+# repeat it by hand.
 #
-# `sponsors` are the companies (the $150 and $400 monthly tiers, and the
-# $300 one-time tier for three months). While the list is empty the frame
-# shows the open slot: an empty named group waiting for a logo.
-#
-#   sponsors:
-#     - name: Acme
-#       url: https://acme.example
-#       logo: /assets/img/sponsors/acme.svg            # light paper
-#       logo_dark: /assets/img/sponsors/acme-dark.svg  # optional, dark paper
-#       featured: true                                 # the $400 tier: first, larger
-#
-# `backers` are the developers (the $15 monthly tier). Avatars are served
-# from this site, never hot-linked: save the GitHub avatar as
-# /assets/img/backers/<login>.png. Without an avatar the row draws the
-# backer's initial.
-#
-#   backers:
-#     - name: Jane Doe
-#       login: janedoe
-#       avatar: /assets/img/backers/janedoe.png
-#
-# A page opts out of the frame with `sponsor: false` in its front matter.
+# How a page picks its frame:
+#   1. the page belongs to a spot (its address is in the spot's `pages`, or
+#      starts with one of its `prefixes`): the frame names the spot's
+#      company, or pitches the spot while it is open;
+#   2. otherwise the frame thanks every company, in a random order;
+#   3. with no company yet, it shows the open slot.
+# A page opts out with `sponsor: false` in its front matter.
 
 github: https://github.com/sponsors/yoeunes
 email: younes.ennaji.pro@gmail.com
 backers_md: https://github.com/php-regex/php-regex/blob/2.x/BACKERS.md
-company_from: $150
-backer_from: $15
-sponsors: []
+policy: /sponsorship/
+# The release the spots are offered for: a spot is held for a whole
+# release, the way a Symfony component is backed for one version.
+release: '2.0'
+
+# The companies. Every company that sponsors, spot holders and past spot
+# holders included, takes part in the thank-you rotation and the footer
+# strip — and stays there: nobody is ever taken off.
+#
+#   - id: acme                                         # what a spot's `sponsor` names
+#     name: Acme
+#     url: https://acme.example
+#     logo: /assets/img/sponsors/acme.svg              # for light paper
+#     logo_dark: /assets/img/sponsors/acme-dark.svg    # optional, for dark paper
+#     tagline: Acme builds the thing your team ships with.   # one line, 120 characters at most
+#     since: 2026-12
+companies: []
+
+# The developers who back the project. They stay listed for good. Avatars are served from this site, never
+# hot-linked: save the GitHub avatar as /assets/img/backers/<login>.png.
+# Without an avatar the row draws the backer's initial.
+#
+#   - name: Jane Doe
+#     login: janedoe
+#     avatar: /assets/img/backers/janedoe.png
 backers: []
+
+# The spots: one company each, for a whole release, first come first
+# served. `packages` are the packages whose README names the spot's company —
+# the README Composer installs into vendor/. A held spot carries `sponsor`
+# (a company id) and `held_for` (the release it was taken for).
+#
+# When a company takes a spot: set its `sponsor` and `held_for`, then
+# replace the open-spot paragraph of each package README with the line a
+# Symfony component carries, before the next release is tagged:
+#
+#   The Laravel integration for PHPRegex 2.0 is [backed](https://php-regex.com/sponsorship/#spot-laravel)
+#   by [Acme](https://acme.example). Acme builds the thing your team ships with.
+#
+# and fill the spot's row in BACKERS.md. The name stays in every version of
+# that release. When the next release opens, the holder is asked first.
+spots:
+  - id: core
+    title: Core engine
+    what: the core engine
+    packages: [regex-parser, regex-toolkit, regex-explain, regex-optimizer, regex-generator, regex-transpiler, regex-automata]
+    pitch: "Every PHPRegex package installs php-regex/regex-parser, so this spot's line rides in the README of every vendor/ folder that holds PHPRegex — and on the concept, internals and data pages of these docs."
+    pages: [/concepts/, /concepts/ast/, /concepts/visitors/, /concepts/pcre/, /concepts/how-pcre2-matches/, /nodes/, /visitors/, /architecture/, /design/ast-traversal/, /extending/, /reference/api/, /reference/capture-shapes/, /reference/pattern-info/, /reference/prefilters/, /reference/logic-solver/, /reference/pcre2-conformance/, /reference/feature-support-matrix/, /reference/correctness-contracts/, /reference/extraction-coverage/]
+    sponsor:
+
+  - id: linter-redos
+    title: Linter & ReDoS
+    what: the linter and the ReDoS analysis
+    packages: [regex-linter, regex-redos, regex-cli]
+    pitch: "The pages a team reads when a pattern fails its build: every diagnostic, the rules, the ReDoS guide and the CLI. Twelve PHPRegex packages install php-regex/regex-redos, and its README names this spot's company."
+    pages: [/reference/rules/, /reference/diagnostics/, /reference/diagnostics-cheatsheet/, /reference/sonar/, /reference/json-output/, /guides/redos/, /concepts/redos/, /guides/cli/, /adding-a-lint-rule/]
+    sponsor:
+
+  - id: education
+    title: Education
+    what: the tutorial and the learning pages
+    packages: []
+    pitch: "The ten chapters of the regex tutorial, the cookbook and the PHP regex guide: the pages a developer reads to learn regular expressions, from the first pattern to ReDoS."
+    pages: [/guides/regex-in-php/, /cookbook/, /guides/formatting/]
+    prefixes: [/tutorial/]
+    sponsor:
+
+  - id: phpstan
+    title: PHPStan integration
+    what: the PHPStan integration
+    packages: [regex-phpstan]
+    pages: [/guides/phpstan/]
+    sponsor:
+
+  - id: psalm
+    title: Psalm integration
+    what: the Psalm integration
+    packages: [regex-psalm]
+    pages: [/guides/psalm/]
+    sponsor:
+
+  - id: rector
+    title: Rector integration
+    what: the Rector integration
+    packages: [regex-rector]
+    pages: [/guides/rector/]
+    sponsor:
+
+  - id: phpunit
+    title: PHPUnit integration
+    what: the PHPUnit integration
+    packages: [regex-phpunit]
+    pages: [/guides/phpunit/]
+    sponsor:
+
+  - id: infection
+    title: Infection integration
+    what: the Infection integration
+    packages: [regex-infection]
+    pages: [/guides/infection/]
+    sponsor:
+
+  - id: laravel
+    title: Laravel integration
+    what: the Laravel integration
+    packages: [regex-laravel]
+    pages: [/guides/laravel/]
+    sponsor:
+
+  - id: symfony
+    title: Symfony integration
+    what: the Symfony integration
+    packages: [regex-symfony]
+    pages: [/guides/symfony/]
+    sponsor:
+
+  - id: lsp
+    title: Language server
+    what: the language server
+    packages: [regex-language-server]
+    pages: [/guides/lsp/]
+    sponsor:
+
+  - id: mcp
+    title: MCP server
+    what: the MCP server
+    packages: [regex-mcp]
+    pages: [/guides/mcp/]
+    sponsor:

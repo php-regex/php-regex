@@ -41,10 +41,23 @@
         <li><a href="/blog/">Articles</a></li>
         <li><a href="/feed/articles.xml">RSS feed</a></li>
         <li><a href="/findings/">Projects</a></li>
-        <li><a href="{{ site.data.sponsors.github }}">Sponsor</a></li>
+        <li><a href="{{ site.data.sponsors.policy }}">Sponsor</a></li>
       </ul>
     </div>
   </div>
+  {% comment %}The companies that fund the project, on every page — the
+    landing page included — in a random order. Nothing is drawn until
+    there is a company to thank.{% endcomment %}
+  {% if site.data.sponsors.companies.size > 0 %}
+  <div class="footer-sponsors">
+    <p class="footer-sponsors-label"><a href="{{ site.data.sponsors.policy }}">Backed by</a></p>
+    <ul class="footer-sponsors-list" data-shuffle>
+      {% for s in site.data.sponsors.companies %}
+      <li><a href="{{ s.url }}" rel="sponsored noopener" title="{{ s.name }}"><img class="sponsor-logo{% if s.logo_dark %} sponsor-logo-light{% endif %}" src="{{ s.logo }}" alt="{{ s.name }}" loading="lazy" decoding="async">{% if s.logo_dark %}<img class="sponsor-logo sponsor-logo-dark" src="{{ s.logo_dark }}" alt="" loading="lazy" decoding="async">{% endif %}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
   <div class="footer-baseline">
     <span>MIT license</span>
     <span class="footer-baseline-sep" aria-hidden="true">·</span>

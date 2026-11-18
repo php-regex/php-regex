@@ -2574,6 +2574,39 @@ main p.post-meta {
 }
 
 
+/* A spot's company stands alone in the slot, larger than in a list. */
+.sponsor-logo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.sponsor[data-state='backed'] .sponsor-logo {
+  max-width: 11rem;
+  max-height: 3.5rem;
+}
+
+.sponsor .sponsor-title a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--link-line);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+
+.sponsor .sponsor-title a:hover {
+  color: var(--amber-deep);
+  text-decoration-color: var(--amber);
+}
+
+/* A company that backs a page does not need the outline to march: the
+   slot is filled. The handles stay, the selection is made. */
+.sponsor[data-state='backed']:hover,
+.sponsor[data-state='backed']:focus-within {
+  animation: none;
+}
+
 /* Side by side once the column holds both: the slot keeps a fixed width,
    the pitch takes the rest. */
 @container (min-width: 34rem) {
@@ -2599,4 +2632,64 @@ main p.post-meta {
   .sponsor {
     display: none;
   }
+}
+
+
+/* ---- The footer's "Backed by" strip ----------------------------------------
+ * The companies that fund the project, on every page, the landing page
+ * included: small, quiet, greyed until hovered — a thank-you under the map
+ * of the site, not a banner over it. Drawn only once there is a company. */
+
+.footer-sponsors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem 1.5rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--line-mid);
+}
+
+.footer-sponsors-label {
+  @include label;
+  margin: 0;
+}
+
+.footer-sponsors-label a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.footer-sponsors-label a:hover {
+  color: var(--amber);
+}
+
+.footer-sponsors-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem 1.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer-sponsors-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  opacity: .7;
+  filter: grayscale(1);
+  transition: opacity .15s ease, filter .15s ease;
+}
+
+.footer-sponsors-list a:hover,
+.footer-sponsors-list a:focus-visible {
+  opacity: 1;
+  filter: none;
+}
+
+.footer-sponsors-list .sponsor-logo {
+  max-width: 7rem;
+  max-height: 1.75rem;
 }
