@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 use PHPRegex\Cli\Command\RedosInput;
 
-require __DIR__.'/../vendor/autoload.php';
+// The class that holds the limit of `regex redos`, loaded from its file:
+// the script needs nothing Composer installs.
+require_once __DIR__.'/../src/Cli/Command/RedosInput.php';
 
 const EXIT_USAGE = 64;
 
