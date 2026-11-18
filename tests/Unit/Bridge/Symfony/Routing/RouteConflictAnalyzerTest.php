@@ -1317,6 +1317,68 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * A conflict the trailing slash makes notes what the matcher does with
+     * a GET request of its example: it redirects it to the earlier route,
+     * matches it as is under a variable whose captured value ends on the
+     * slash, or answers "/" with more slashes with a 404.
+     *
+     * @param array{0: string, 1: list<string>, 2: list<string>} $earlier path, methods, schemes
+     * @param array{0: string, 1: list<string>, 2: list<string>} $later   path, methods, schemes
+     */
+    #[Test]
+    #[DataProvider('provideAnswersToTheSlash')]
+    public function test_a_conflict_of_the_trailing_slash_notes_what_the_matcher_does(array $earlier, array $later, string $answer, string $note): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route($earlier[0]))->setMethods($earlier[1])->setSchemes($earlier[2]));
+        $collection->add('later', (new Route($later[0]))->setMethods($later[1])->setSchemes($later[2]));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertCount(1, $report->conflicts);
+        $this->assertIsString($report->conflicts[0]['example']);
+        $this->assertSame($answer, FrameworkMatcher::answer($collection, 'GET', $report->conflicts[0]['example'], $earlier[2][0] ?? 'http'));
+        $this->assertContains($note, $report->conflicts[0]['notes']);
+    }
+
+    /**
+     * @return iterable<string, array{earlier: array{0: string, 1: list<string>, 2: list<string>}, later: array{0: string, 1: list<string>, 2: list<string>}, answer: string, note: string}>
+     */
+    public static function provideAnswersToTheSlash(): iterable
+    {
+        yield 'a path the earlier route redirects' => [
+            'earlier' => ['/foo/', [], []],
+            'later' => ['/foo', ['GET'], []],
+            'answer' => 'redirect',
+            'note' => 'GET and HEAD requests differing by a trailing slash are redirected to the earlier route.',
+        ];
+        yield '"/" with more slashes' => [
+            'earlier' => ['/', ['GET'], []],
+            'later' => ['/{p</+>}', ['GET'], []],
+            'answer' => '404',
+            'note' => 'The earlier route answers GET and HEAD requests for "/" followed by more slashes with a 404.',
+        ];
+        yield 'a path the earlier route matches as is' => [
+            'earlier' => ['/{x<a/?>}', ['GET'], []],
+            'later' => ['/{y<a//>}', ['GET'], []],
+            'answer' => 'match',
+            'note' => 'GET and HEAD requests differing by a trailing slash are matched as is by the earlier route, as PCRE captures its last variable.',
+        ];
+        yield 'slashes alone the earlier route matches as is under a slash after its variable' => [
+            'earlier' => ['/{x<.+>}/', ['GET'], []],
+            'later' => ['/{y</>}', ['GET'], []],
+            'answer' => 'match',
+            'note' => 'GET and HEAD requests differing by a trailing slash are matched as is by the earlier route, as PCRE captures its last variable.',
+        ];
+        yield 'a path the earlier route matches as is on its scheme' => [
+            'earlier' => ['/{x<a/?>}', ['GET'], ['https']],
+            'later' => ['/{y<a//>}', ['GET'], ['https', 'http']],
+            'answer' => 'match',
+            'note' => 'GET and HEAD requests differing by a trailing slash are matched as is by the earlier route, as PCRE captures its last variable.',
+        ];
+    }
+
+    /**
      * @return iterable<string, array{first: string, winner: string, conflicts: list<string>}>
      */
     public static function provideRoutesDeclaredBeforeOneWithNoVariable(): iterable

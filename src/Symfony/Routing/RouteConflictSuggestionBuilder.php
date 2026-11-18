@@ -47,11 +47,11 @@ final class RouteConflictSuggestionBuilder
             // serve both.
             if ($conflict['redirected']) {
                 $suggestions[\sprintf(
-                    'Give "%s" and "%s" paths that differ by more than a trailing slash: the GET and HEAD requests of "%s" are redirected to "%s".',
+                    'Give "%s" and "%s" paths that differ by more than a trailing slash: "%s" answers the GET and HEAD requests of "%s" that differ from its paths by the slash.',
                     $route['name'],
                     $other['name'],
-                    $other['name'],
                     $route['name'],
+                    $other['name'],
                 )] = true;
 
                 continue;

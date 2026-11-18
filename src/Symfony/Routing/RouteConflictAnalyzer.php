@@ -702,8 +702,9 @@ final class RouteConflictAnalyzer
     }
 
     /**
-     * A conflict the trailing-slash redirect makes, scoped to the GET and
-     * HEAD requests of the later route.
+     * A conflict the trailing slash makes, scoped to the GET and HEAD
+     * requests of the later route, with a note on what the matcher does
+     * with a request of the example.
      *
      * @param bool $hostsUnread whether the solver gave up on the two hosts
      *
@@ -722,10 +723,57 @@ final class RouteConflictAnalyzer
             'equivalent' => false,
             'methods' => $this->intersectMethods(['GET', 'HEAD'], $later['methods']),
             'schemes' => $later['schemes'],
-            'notes' => [...$this->buildNotes($earlier, $later, $hostsUnread), 'GET and HEAD requests differing by a trailing slash are redirected to the earlier route.'],
+            'notes' => [...$this->buildNotes($earlier, $later, $hostsUnread), self::slashNote($earlier, $example)],
             'laterTakesEarlier' => false,
             'redirected' => true,
         ];
+    }
+
+    /**
+     * What the matcher does with a GET or HEAD request of the path, which
+     * differs from a path of the earlier route by its trailing slashes: it
+     * takes as is a path ending on the slash under a variable whose value
+     * PCRE captures with the slash, or with a slash after it, and reads
+     * any other for its slash, answering "/" with more slashes with a 404
+     * and redirecting the rest to the earlier route.
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     */
+    private static function slashNote(array $earlier, ?string $path): string
+    {
+        if (null !== $path && str_ends_with($path, '/') && self::endsOnAVariable($earlier['path']) && !self::capturesWithoutTheSlash($earlier, $path)) {
+            return 'GET and HEAD requests differing by a trailing slash are matched as is by the earlier route, as PCRE captures its last variable.';
+        }
+
+        if (null !== $path && null === self::landing($path)) {
+            return 'The earlier route answers GET and HEAD requests for "/" followed by more slashes with a 404.';
+        }
+
+        return 'GET and HEAD requests differing by a trailing slash are redirected to the earlier route.';
+    }
+
+    /**
+     * Whether the matcher reads a path ending on the slash, which the
+     * route's regex matches with the slash or without it, for its slash:
+     * the route ends on a variable with no slash after it, and the value
+     * PCRE captures for it is not set, or set and ending on another
+     * character. It then redirects a GET or HEAD request of the path, and
+     * passes any other on to the routes after it. A route with a slash
+     * after its last variable takes such a path as is.
+     *
+     * @phpstan-param RouteDescriptor $route
+     */
+    private static function capturesWithoutTheSlash(array $route, string $path): bool
+    {
+        if ('/' === $path || !str_ends_with($path, '/') || str_ends_with($route['path'], '/') || !self::endsOnAVariable($route['path'])) {
+            return false;
+        }
+
+        LibraryPcre::match($route['slashPattern'], $path, $matches, \PREG_UNMATCHED_AS_NULL);
+        $values = \is_array($matches) ? array_filter($matches, static fn (int|string $key): bool => \is_int($key) && 0 < $key, \ARRAY_FILTER_USE_KEY) : [];
+        $value = [] === $values ? null : end($values);
+
+        return !\is_string($value) || ('' !== $value && !str_ends_with($value, '/'));
     }
 
     private function resolveHostRegex(CompiledRoute $compiled): ?string

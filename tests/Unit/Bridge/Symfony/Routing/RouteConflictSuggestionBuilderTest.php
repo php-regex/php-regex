@@ -192,7 +192,7 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
         $this->assertCount(1, $conflicts);
 
         $this->assertSame(
-            ['Give "first" and "second" paths that differ by more than a trailing slash: the GET and HEAD requests of "second" are redirected to "first".'],
+            ['Give "first" and "second" paths that differ by more than a trailing slash: "first" answers the GET and HEAD requests of "second" that differ from its paths by the slash.'],
             (new RouteConflictSuggestionBuilder())->collect($conflicts),
         );
     }

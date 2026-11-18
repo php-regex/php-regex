@@ -226,7 +226,9 @@ CHANGELOG
    path: `/admin` redirects `GET /admin//` too, shadowing `/{p<admin//>}`,
    `/admin/` takes `/admin//` as is, for any method on its own schemes,
    and `/` answers `GET //` with a 404; a route tried with a regex takes
-   one slash at most. The report
+   one slash at most. Each such finding notes what the router does with
+   the request: redirects it to the earlier route, matches it as is, or
+   answers it with a 404. The report
    suggests paths that differ by more than the slash, never the reorder
    that only turns the redirect round.
  * `regex:routes` and `regex:analyze` call a route shadowed only when an

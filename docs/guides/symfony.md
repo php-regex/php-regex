@@ -576,7 +576,10 @@ route it tries with a regex matches that path: `/admin` redirects
 `GET /admin//` too, so `/{p<admin//>}` after it is shadowed, `/admin/`
 takes `/admin//` as is, for any method on its own schemes, and `/` answers
 `GET //` with a 404. A route tried with a regex takes its path with one
-slash at most.
+slash at most. Each such finding notes what the router does with the
+request: it redirects it to the earlier route, matches it as is where the
+earlier route ends on a variable whose value PCRE captures with the slash,
+or, for `//` after `/`, answers it with a 404.
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods, addresses, port, route and attributes take a request
