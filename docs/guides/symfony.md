@@ -528,7 +528,10 @@ route for `https` before one for any scheme, a route for a host before one
 for any host. Two hosts the analysis cannot compare,
 a host it cannot read or one the solver gives up on (a conditional in a
 host requirement, say), leave the paths to decide, and the finding notes
-`Host requirements were not evaluated.` A route that names no method or no
+`Host requirements were not evaluated.` Two routes whose hosts part on
+letter case alone, `A.COM` and `a.com`, are counted among the pairs
+skipped: the router sorts the routes that name a host by the end of it,
+letter case included, and may try the later one first. A route that names no method or no
 scheme takes any; one given only empty ones, `setMethods([''])` or
 `setSchemes([''])`, takes no request, as Symfony's matchers read it, and
 conflicts with no other route. A route for `GET` takes the `HEAD` requests

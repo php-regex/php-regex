@@ -194,7 +194,10 @@ CHANGELOG
    as the router does, first match wins: two routes sharing some paths are
    an overlap whichever is declared first, the earlier one winning them, and
    a route is shadowed when an earlier one takes all its paths. A narrower
-   route declared before a wider one is not reported.
+   route declared before a wider one is not reported. Two routes whose
+   hosts part on letter case alone, `A.COM` and `a.com`, are counted among
+   the pairs skipped: the router sorts the routes that name a host by the
+   end of it, letter case included, and may try the later one first.
  * `regex:routes` and `regex:analyze` read the redirect of the trailing
    slash, as the framework's matcher sends it: a `GET` or `HEAD` request
    whose path differs from an earlier route's by a trailing slash alone

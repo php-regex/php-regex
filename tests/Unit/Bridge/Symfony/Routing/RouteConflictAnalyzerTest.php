@@ -1317,6 +1317,41 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * When a route names a host, the dumper sorts the routes by the literal
+     * end of their host, letter case included, and may move a route before
+     * an earlier one whose literal end parts from its own. No host matches
+     * both, unless they part on letter case alone, which hosts ignore: the
+     * later route may then answer first, and the pair is skipped.
+     *
+     * @param array{0: string, 1: string} $host the hosts of the second and the third route
+     */
+    #[Test]
+    #[DataProvider('provideHostsTheDumperMaySort')]
+    public function test_two_routes_whose_hosts_part_on_letter_case_alone_are_skipped(array $host, string $winner, int $conflicts, int $skipped): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('first', (new Route('/p'))->setHost('{sub}.a.com'));
+        $collection->add('earlier', (new Route('/p'))->setHost($host[0]));
+        $collection->add('later', (new Route('/p'))->setHost($host[1]));
+
+        $this->assertSame($winner, FrameworkMatcher::reached($collection, 'GET', '/p', 'http', 'a.com'));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertCount($conflicts, $report->conflicts);
+        $this->assertSame($skipped, $report->stats['skipped_pairs']);
+    }
+
+    /**
+     * @return iterable<string, array{host: array{0: string, 1: string}, winner: string, conflicts: int, skipped: int}>
+     */
+    public static function provideHostsTheDumperMaySort(): iterable
+    {
+        yield 'hosts parting on letter case alone' => ['host' => ['A.COM', 'a.com'], 'winner' => 'later', 'conflicts' => 0, 'skipped' => 1];
+        yield 'the same host' => ['host' => ['a.com', 'a.com'], 'winner' => 'earlier', 'conflicts' => 1, 'skipped' => 0];
+    }
+
+    /**
      * A conflict the trailing slash makes notes what the matcher does with
      * a GET request of its example: it redirects it to the earlier route,
      * matches it as is under a variable whose captured value ends on the

@@ -167,6 +167,12 @@ final class RouteConflictAnalyzer
                     continue;
                 }
 
+                if (self::mayBeTriedFirst($earlier['host'], $later['host'])) {
+                    $skippedPairs++;
+
+                    continue;
+                }
+
                 try {
                     $pathIntersections++;
                     $intersection = $this->solver->intersection($earlier['pathPattern'], $later['pathPattern'], $options);
@@ -402,12 +408,43 @@ final class RouteConflictAnalyzer
             'staticSegments' => $this->extractStaticSegments($route->getPath()),
             'methods' => $this->normalizeMethods($route->getMethods()),
             'schemes' => $this->normalizeSchemes($route->getSchemes()),
+            'host' => $hostValue,
             'hostPattern' => $hostPattern,
             'hasHostRequirement' => $hasHostRequirement,
             'hostUnsupported' => $hostUnsupported,
             'hasCondition' => $hasCondition,
             'index' => $index,
         ];
+    }
+
+    /**
+     * Whether the matcher may try the later of two routes on overlapping
+     * hosts first. When a route names a host, the dumper sorts the routes
+     * by the literal end of their host, letter case included, as
+     * StaticPrefixCollection::addRoute() groups them, and may move a route
+     * before an earlier one whose literal end parts from its own: no host
+     * matches both, unless they part on letter case alone, which the
+     * matcher ignores in a host.
+     */
+    private static function mayBeTriedFirst(string $earlierHost, string $laterHost): bool
+    {
+        $earlierEnd = self::literalEnd($earlierHost);
+        $laterEnd = self::literalEnd($laterHost);
+        if ('' === $earlierEnd || '' === $laterEnd || str_ends_with($earlierEnd, $laterEnd) || str_ends_with($laterEnd, $earlierEnd)) {
+            return false;
+        }
+
+        return str_ends_with(strtolower($earlierEnd), strtolower($laterEnd)) || str_ends_with(strtolower($laterEnd), strtolower($earlierEnd));
+    }
+
+    /**
+     * The host after its last variable.
+     */
+    private static function literalEnd(string $host): string
+    {
+        $variableEnd = strrpos($host, '}');
+
+        return false === $variableEnd ? $host : substr($host, $variableEnd + 1);
     }
 
     /**
