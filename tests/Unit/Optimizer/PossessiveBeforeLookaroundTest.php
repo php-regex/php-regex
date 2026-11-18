@@ -65,15 +65,19 @@ final class PossessiveBeforeLookaroundTest extends TestCase
         yield 'a repeated group' => ['pattern' => '/(?:a+b?)+(?!c)/', 'possessive' => '/(?:a++b?)+(?!c)/', 'subject' => 'aac'];
         yield 'an optional item after the group' => ['pattern' => '/(a+b?)x?(?!c)/', 'possessive' => '/(a++b?)x?(?!c)/', 'subject' => 'aac'];
         yield 'a lookbehind' => ['pattern' => '/(a+b?)(?<!aa)/', 'possessive' => '/(a++b?)(?<!aa)/', 'subject' => 'aa'];
+        yield 'a repetition after an item of its group' => ['pattern' => '/(xa+b?)(?!c)/', 'possessive' => '/(xa++b?)(?!c)/', 'subject' => 'xaac'];
+        yield 'a group after an atomic one in a group' => ['pattern' => '/((?>y)(a+b?))(?!c)/', 'possessive' => '/((?>y)(a++b?))(?!c)/', 'subject' => 'yaac'];
     }
 
     /**
-     * Nothing after an atomic group or a lookaround backtracks into it: a
-     * repetition that ends one is made possessive whatever follows it.
+     * A repetition is made possessive where no lookaround may follow it
+     * before a character it never gives back: past such a character its
+     * group reads, at the end of the pattern, or at the end of an atomic
+     * group or a lookaround, which nothing after it backtracks into.
      */
     #[Test]
-    #[DataProvider('provideRepetitionsEndingAnAtomicGroup')]
-    public function test_a_repetition_ending_an_atomic_group_is_made_possessive(string $pattern, string $possessive): void
+    #[DataProvider('provideRepetitionsNoLookaroundFollows')]
+    public function test_a_repetition_no_lookaround_follows_is_made_possessive(string $pattern, string $possessive): void
     {
         foreach (self::SUBJECTS as $subject) {
             $this->assertSame(self::matched($pattern, $subject), self::matched($possessive, $subject), \sprintf('Oracle: %s and %s differ on "%s".', $pattern, $possessive, $subject));
@@ -85,10 +89,12 @@ final class PossessiveBeforeLookaroundTest extends TestCase
     /**
      * @return iterable<string, array{pattern: string, possessive: string}>
      */
-    public static function provideRepetitionsEndingAnAtomicGroup(): iterable
+    public static function provideRepetitionsNoLookaroundFollows(): iterable
     {
-        yield 'an atomic group' => ['pattern' => '/(?>a+b?)(?!c)/', 'possessive' => '/(?>a++b?)(?!c)/'];
-        yield 'a lookahead' => ['pattern' => '/(?=a+b?)(?!c)/', 'possessive' => '/(?=a++b?)(?!c)/'];
+        yield 'a character its group reads' => ['pattern' => '/(a+b)(?!c)/', 'possessive' => '/(a++b)(?!c)/'];
+        yield 'the end of the pattern' => ['pattern' => '/a+b?/', 'possessive' => '/a++b?/'];
+        yield 'the end of an atomic group' => ['pattern' => '/(?>a+b?)(?!c)/', 'possessive' => '/(?>a++b?)(?!c)/'];
+        yield 'the end of a lookahead' => ['pattern' => '/(?=a+b?)(?!c)/', 'possessive' => '/(?=a++b?)(?!c)/'];
     }
 
     #[Test]

@@ -357,7 +357,7 @@ final class Rewriter extends AbstractNodeVisitor
         try {
             $optimizedChild = $node->child->accept($this);
         } finally {
-            $this->possessiveRewrites->leave();
+            $this->possessiveRewrites->leaveGroup($node);
         }
 
         // Enhanced Group Unwrapping: (?:x) -> x

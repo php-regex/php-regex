@@ -71,9 +71,9 @@ final class PossessiveRewrites
 
     /**
      * What follows each item the rewriter is in, the innermost last: the
-     * items of its sequence from the index given, none for a group but what
-     * follows the group, or null at the end of an atomic group or a
-     * lookaround, which nothing after it backtracks into.
+     * items of its sequence from the index given, or null at the end of an
+     * atomic group or a lookaround, which nothing after it backtracks into.
+     * What follows any other group is what follows the group.
      *
      * @var list<array{list<NodeInterface>, int}|null>
      */
@@ -105,21 +105,32 @@ final class PossessiveRewrites
     }
 
     /**
-     * Records the group the rewriter enters: what follows the group
-     * follows its end, but for an atomic group or a lookaround, which
-     * nothing after it backtracks into.
-     */
-    public function enterGroup(GroupNode $node): void
-    {
-        $this->after[] = GroupType::Atomic === $node->type || \in_array($node->type, self::LOOKAROUNDS, true) ? null : [[], 0];
-    }
-
-    /**
-     * Forgets the item or the group the rewriter leaves.
+     * Forgets the item the rewriter leaves in a sequence.
      */
     public function leave(): void
     {
         array_pop($this->after);
+    }
+
+    /**
+     * Records the group the rewriter enters, when nothing after it
+     * backtracks into it.
+     */
+    public function enterGroup(GroupNode $node): void
+    {
+        if (self::closes($node)) {
+            $this->after[] = null;
+        }
+    }
+
+    /**
+     * Forgets the group the rewriter leaves.
+     */
+    public function leaveGroup(GroupNode $node): void
+    {
+        if (self::closes($node)) {
+            array_pop($this->after);
+        }
     }
 
     /**
@@ -320,6 +331,15 @@ final class PossessiveRewrites
         }
 
         return false;
+    }
+
+    /**
+     * Whether nothing after the group backtracks into it: an atomic group
+     * or a lookaround.
+     */
+    private static function closes(GroupNode $node): bool
+    {
+        return GroupType::Atomic === $node->type || \in_array($node->type, self::LOOKAROUNDS, true);
     }
 
     private static function holdsLookaround(NodeInterface $node): bool
