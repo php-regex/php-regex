@@ -221,7 +221,8 @@ final class RedosAnalyzer
      * matches, "(?:...)(?!)", is proven linear: one that reads no text in
      * two ways, as "(?:a|ab)+" does not. A loop whose text does not read
      * alone, a reference or a call to a group outside it, is not; each text
-     * is proven once.
+     * is proven once, read through a parser that keeps nothing: the text
+     * written for the proof stays out of the caller's caches.
      *
      * @return \Closure(QuantifierNode): bool
      */
@@ -230,8 +231,9 @@ final class RedosAnalyzer
         $source = $ast->source ?? '';
         $options = StartOptions::of($source);
         $proven = [];
+        $reader = null;
 
-        return function (QuantifierNode $loop) use ($ast, $parser, $source, $options, &$proven): bool {
+        return function (QuantifierNode $loop) use ($ast, $parser, $source, $options, &$proven, &$reader): bool {
             $text = substr($source, $loop->startPosition, $loop->endPosition - $loop->startPosition);
             if (\array_key_exists($text, $proven)) {
                 return $proven[$text];
@@ -251,13 +253,15 @@ final class RedosAnalyzer
             }
 
             // A reference or a call to a group outside the loop leaves the
-            // text invalid alone.
+            // text invalid alone, and with no tree.
             $alone = $delimiter.$options.'(?:'.$text.')(?!)'.$delimiter.$ast->flags;
-            if (!$parser->validate($alone)->isValid) {
+            $reader ??= $parser->withoutCache();
+            $tree = $reader->validate($alone)->ast;
+            if (null === $tree) {
                 return $proven[$text] = false;
             }
 
-            $outcome = $this->prover()->prove($parser->parse($alone), $alone, $parser->target());
+            $outcome = $this->prover()->prove($tree, $alone, $reader->target());
 
             return $proven[$text] = null === $outcome->limit && RedosComplexity::Linear === $outcome->result?->complexity;
         };

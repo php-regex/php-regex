@@ -14,7 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
@@ -901,6 +904,32 @@ final class RedosHeuristicShapesTest extends TestCase
         $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
 
         $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * A loop put to the proof alone is read through a parser that keeps
+     * nothing: the caller's cache is asked for the pattern analysed alone,
+     * and the results its parser keeps hold that pattern alone, never the
+     * text written for the proof. PCRE reads the loop linearly (36 -> 52
+     * steps on 8 -> 12 "ab" then "!").
+     */
+    #[Test]
+    public function test_a_loop_proven_alone_leaves_nothing_in_the_callers_caches(): void
+    {
+        $pattern = '/^((?:a|ab)+)\1$/';
+        $unoptimized = PcreInterpreter::pattern('/(*NO_START_OPT)^((?:a|ab)+)\1$/');
+        $short = self::steps($unoptimized, str_repeat('ab', 8).'!');
+        $long = self::steps($unoptimized, str_repeat('ab', 12).'!');
+        $this->assertLessThan(4 * $short, $long, 'Oracle: the engine stays linear.');
+
+        $cache = new ArrayCache();
+        $parser = RegexParser::create(['cache' => $cache]);
+        $this->assertSame(RedosSeverity::Medium, (new RedosAnalyzer($parser))->analyze($pattern)->severity, 'The loop is proven linear alone.');
+
+        $this->assertSame(1, $cache->getStats()['misses']);
+        $results = (new \ReflectionProperty($parser, 'results'))->getValue($parser);
+        $this->assertIsArray($results);
+        $this->assertSame(['p'.$pattern], array_keys($results));
     }
 
     /**
