@@ -223,15 +223,23 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                     continue;
                 }
 
-                // A literal an operator joins to its neighbours is read as
-                // the string PHP builds from the expression around it.
+                // A literal an operator joins to its neighbours, through
+                // parentheses that only group it, is read as the string PHP
+                // builds from the expression around it.
                 [$pieces, $end, $heredoc] = $literal;
                 $start = $index;
-                $before = PhpTokens::previousSignificant($tokens, $index - 1);
-                $after = PhpTokens::nextSignificant($tokens, $end + 1, $count);
+                [$first, $last] = [$index, $end];
+                $before = PhpTokens::previousSignificant($tokens, $first - 1);
+                $after = PhpTokens::nextSignificant($tokens, $last + 1, $count);
+                while (null !== $before && null !== $after && ($closers[$before] ?? null) === $after && self::isGrouping($tokens, $before)) {
+                    [$first, $last] = [$before, $after];
+                    $before = PhpTokens::previousSignificant($tokens, $first - 1);
+                    $after = PhpTokens::nextSignificant($tokens, $last + 1, $count);
+                }
+
                 if ((null !== $before && ('.' === $tokens[$before] || self::isOperandToken($tokens[$before])))
                     || (null !== $after && (\in_array($tokens[$after], ['.', '(', '['], true) || self::isOperandToken($tokens[$after])))) {
-                    $start = self::expressionStart($tokens, $index, $openers);
+                    $start = self::expressionStart($tokens, $first, $openers);
                     [$pieces, $heredoc, $literals] = self::concatenation($tokens, $start, $closers);
                     $joined += array_fill_keys($literals, true);
                 } else {
@@ -390,6 +398,23 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 TokenNameResolver::readUse($tokens, $index, $count, $context);
             }
 
+            // A token in an argument a call takes as rules or as one
+            // element: an opening bracket too, as the grouping parenthesis
+            // a concatenation may start with.
+            if (!PhpTokens::isIgnorable($token) && !\in_array($token, [')', ']', '}', ',', ':'], true)) {
+                $top = \count($brackets) - 1;
+                while ($top >= 0 && null === $brackets[$top]) {
+                    $top--;
+                }
+                $bracket = $brackets[$top] ?? null;
+                if (null !== $bracket && ($bracket['holdsSets'] || self::isOneOf($bracket['rules'], $bracket['position'], $bracket['name']))) {
+                    $rules[$offsets[$index]] = true;
+                }
+                if (null !== $bracket && (($bracket['appends'] && $bracket['position'] > 0) || self::isOneOf($bracket['elements'], $bracket['position'], $bracket['name']))) {
+                    $elements[$offsets[$index]] = true;
+                }
+            }
+
             if (PhpTokens::opensNesting($token)) {
                 $previous = PhpTokens::previousSignificant($tokens, $index - 1);
                 $attribute = \is_array($token) && \T_ATTRIBUTE === $token[0];
@@ -397,8 +422,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                     $run = self::livewireRun($tokens, $index, $closers, $context);
                 }
 
-                // An open tag stands before any bracket.
-                if ('(' === $token && null !== $previous && self::groups($tokens[$previous])) {
+                if (self::isGrouping($tokens, $index)) {
                     $grouping[$offsets[$index]] = true;
                     $brackets[] = null;
                 } else {
@@ -436,8 +460,8 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 continue;
             }
 
-            $top = \count($brackets) - 1;
             if (',' === $token || ':' === $token) {
+                $top = \count($brackets) - 1;
                 $bracket = $brackets[$top] ?? null;
                 if (null === $bracket || ([] === $bracket['rules'] && [] === $bracket['sets'] && [] === $bracket['elements'] && !$bracket['appends'])) {
                     continue;
@@ -456,23 +480,6 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                     }
                 }
                 $brackets[$top] = $bracket;
-
-                continue;
-            }
-
-            if (PhpTokens::isIgnorable($token)) {
-                continue;
-            }
-
-            while ($top >= 0 && null === $brackets[$top]) {
-                $top--;
-            }
-            $bracket = $brackets[$top] ?? null;
-            if (null !== $bracket && ($bracket['holdsSets'] || self::isOneOf($bracket['rules'], $bracket['position'], $bracket['name']))) {
-                $rules[$offsets[$index]] = true;
-            }
-            if (null !== $bracket && (($bracket['appends'] && $bracket['position'] > 0) || self::isOneOf($bracket['elements'], $bracket['position'], $bracket['name']))) {
-                $elements[$offsets[$index]] = true;
             }
         }
 
@@ -698,13 +705,13 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * The texts of the expression that starts at $start, the operands of
      * "." that are a literal alone joined into the string PHP builds, null
      * for each other operand; whether one of its literals is a heredoc or a
-     * nowdoc; and the first token of each literal it holds outside
-     * brackets.
+     * nowdoc; the first token of each literal it holds outside brackets
+     * other than grouping ones; and its last token.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $closers
      *
-     * @return array{list<string|null>, bool, list<int>}
+     * @return array{list<string|null>, bool, list<int>, int}
      */
     private static function concatenation(array $tokens, int $start, array $closers): array
     {
@@ -717,6 +724,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         $operand = null;
         $units = 0;
         $count = \count($tokens);
+        $end = $start - 1;
         for ($index = $start; null !== $index; $index = PhpTokens::nextSignificant($tokens, $end + 1, $count)) {
             $token = $tokens[$index];
             if ('.' === $token) {
@@ -732,6 +740,18 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 $operand = $literal[0];
                 $heredoc = $heredoc || (0 === $units && $literal[2]);
                 $end = $literal[1];
+            } elseif ('(' === $token && 0 === $units && isset($closers[$index])) {
+                // Parentheses that open an operand only group it: the
+                // operand is the expression they hold, when they hold one.
+                $inner = PhpTokens::nextSignificant($tokens, $index + 1, $closers[$index]);
+                $grouped = null === $inner ? null : self::concatenation($tokens, $inner, $closers);
+                $operand = null;
+                if (null !== $grouped && PhpTokens::nextSignificant($tokens, $grouped[3] + 1, $count) === $closers[$index]) {
+                    [$operand, $groupedHeredoc, $groupedLiterals] = $grouped;
+                    $heredoc = $heredoc || $groupedHeredoc;
+                    array_push($literals, ...$groupedLiterals);
+                }
+                $end = $closers[$index];
             } elseif (\in_array($token, ['(', '[', '{'], true) && isset($closers[$index])) {
                 $end = $closers[$index];
             } elseif (self::isOperandToken($token)) {
@@ -743,7 +763,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             $units++;
         }
 
-        return [self::join($pieces, 1 === $units && null !== $operand ? $operand : [null]), $heredoc, $literals];
+        return [self::join($pieces, 1 === $units && null !== $operand ? $operand : [null]), $heredoc, $literals, $end];
     }
 
     /**
@@ -780,6 +800,19 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     private static function isOperandToken(array|string $token): bool
     {
         return \is_array($token) ? isset(self::OPERAND_TOKENS[$token[0]]) : str_contains('+-*/%!~@$', $token);
+    }
+
+    /**
+     * Whether the parenthesis at $index only groups what it holds. An open
+     * tag stands before any bracket.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    private static function isGrouping(array $tokens, int $index): bool
+    {
+        $previous = PhpTokens::previousSignificant($tokens, $index - 1);
+
+        return '(' === $tokens[$index] && null !== $previous && self::groups($tokens[$previous]);
     }
 
     /**

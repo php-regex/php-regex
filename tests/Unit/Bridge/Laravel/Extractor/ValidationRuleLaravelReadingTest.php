@@ -541,6 +541,37 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
+     * An operand of a concatenation in parentheses that only group it is
+     * the string they hold: "('regex:/^a') . '$/'" runs "/^a$/", and no
+     * operand of it is read on its own.
+     */
+    #[Test]
+    public function test_an_operand_in_parentheses_is_part_of_the_concatenation(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            function lane($validator): void
+            {
+                $validator->sometimes('e', ('required|') . 'regex:/^(e|f)$/', fn () => true);
+            }
+            return [
+                'a' => [('regex:/^a') . '$/'],
+                'b' => ('required|') . ('regex:/^(b|c)$/'),
+                'c' => (('regex:/^d') . ('$/')),
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = [...self::laravelPatterns(self::sometimes('e', ('required|').'regex:/^(e|f)$/')), ...self::laravelPatterns($rules)];
+        $this->assertSame(['/^(e', '/^a$/', '/^(b', '/^d$/'], $expected);
+        $this->assertSame([false, true, false, true], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[4, '/^(e'], [7, '/^a$/'], [8, '/^(b'], [9, '/^d$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
      * A rules string given to a call is a rules string: Validator::sometimes()
      * explodes [$key => $rules], and ConditionalRules::rules() explodes a
      * string on "|". An element of an array literal, an argument of the call
