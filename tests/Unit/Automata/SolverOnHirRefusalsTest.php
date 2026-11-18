@@ -18,6 +18,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,6 +33,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class SolverOnHirRefusalsTest extends TestCase
 {
+    use PcreGates;
     use PhpUnitForwardCompat;
 
     /**
@@ -137,13 +139,13 @@ final class SolverOnHirRefusalsTest extends TestCase
      * finds no match and (*NOTEMPTY_ATSTART) "" at 1; the JIT ignores both
      * and finds "" at 0. A pattern stays in PHP's cache as compiled under
      * the setting of its first use, so each setting reads the patterns
-     * under a delimiter of its own. Where the JIT cannot run, a PHP built
-     * without it, which has no pcre.jit, or one ini_set() cannot change,
-     * the interpreter runs, and honours the options there too.
+     * under a delimiter of its own.
      */
     #[Test]
     public function test_the_jit_decides_what_an_empty_match_option_refuses(): void
     {
+        $this->requiresJit('An empty match option the JIT ignores');
+
         $this->assertSame([['', 0]], self::firstMatch('/a?/', 'b'));
         $this->assertSame([], self::firstMatch('/(*NO_JIT)(*NOTEMPTY)a?/', 'b'));
         $this->assertSame([['', 1]], self::firstMatch('/(*NO_JIT)(*NOTEMPTY_ATSTART)a?/', 'b'));
@@ -152,15 +154,12 @@ final class SolverOnHirRefusalsTest extends TestCase
 
         try {
             ini_set('pcre.jit', '0');
-            if ('0' === \ini_get('pcre.jit')) {
-                $this->assertSame([], self::firstMatch("\x01(*NOTEMPTY)a?\x01", 'b'));
-                $this->assertSame([['', 1]], self::firstMatch("\x01(*NOTEMPTY_ATSTART)a?\x01", 'b'));
-            }
+            $this->assertSame([], self::firstMatch("\x01(*NOTEMPTY)a?\x01", 'b'));
+            $this->assertSame([['', 1]], self::firstMatch("\x01(*NOTEMPTY_ATSTART)a?\x01", 'b'));
 
             ini_set('pcre.jit', '1');
-            $jitRuns = '1' === \ini_get('pcre.jit');
-            $this->assertSame($jitRuns ? [['', 0]] : [], self::firstMatch("\x02(*NOTEMPTY)a?\x02", 'b'));
-            $this->assertSame($jitRuns ? [['', 0]] : [['', 1]], self::firstMatch("\x02(*NOTEMPTY_ATSTART)a?\x02", 'b'));
+            $this->assertSame([['', 0]], self::firstMatch("\x02(*NOTEMPTY)a?\x02", 'b'));
+            $this->assertSame([['', 0]], self::firstMatch("\x02(*NOTEMPTY_ATSTART)a?\x02", 'b'));
         } finally {
             ini_set('pcre.jit', $jit);
         }
