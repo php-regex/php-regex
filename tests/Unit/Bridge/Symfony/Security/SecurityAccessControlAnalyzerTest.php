@@ -20,6 +20,8 @@ use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
 
 final class SecurityAccessControlAnalyzerTest extends TestCase
 {
@@ -390,6 +392,28 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
 
         $this->assertSame(1, $report->stats['shadowed']);
         $this->assertSame(1, $report->stats['redundant']);
+    }
+
+    /**
+     * symfony/http-foundation's MethodRequestMatcher takes a HEAD request
+     * for GET since 6.4.50, 7.4.23 and 8.1.11, and never on 8.0: where the
+     * matcher installed does, a later rule for GET and HEAD of the same
+     * roles takes the requests of an earlier rule for GET, and is
+     * redundant.
+     */
+    #[Test]
+    public function test_a_rule_for_get_and_head_after_a_rule_for_get_is_redundant_where_get_takes_head(): void
+    {
+        $getTakesHead = (new MethodRequestMatcher(['GET']))->matches(Request::create('/', 'HEAD'));
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            ['methods' => ['GET']] + self::rule(path: '^/x'),
+            ['methods' => ['GET', 'HEAD']] + self::rule(path: '^/x', line: 4),
+        ]);
+
+        $this->assertSame($getTakesHead ? 1 : 0, $report->stats['shadowed']);
+        $this->assertSame($getTakesHead ? 1 : 0, $report->stats['redundant']);
+        $this->assertSame($getTakesHead ? 0 : 1, $report->stats['carve_outs']);
     }
 
     /**

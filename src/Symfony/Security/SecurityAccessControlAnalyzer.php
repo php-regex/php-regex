@@ -23,6 +23,8 @@ use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Toolkit\Regex;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
 
 /**
  * Analyzes Symfony security access_control ordering with regex automata.
@@ -43,6 +45,14 @@ final class SecurityAccessControlAnalyzer
 
     private readonly LanguageSolver $solver;
 
+    /**
+     * Whether a rule for GET takes the HEAD requests, as the router serves
+     * them: symfony/http-foundation's MethodRequestMatcher does since
+     * 6.4.50, 7.4.23 and 8.1.11, and never on 8.0. The application's
+     * matcher is asked.
+     */
+    private readonly bool $getTakesHead;
+
     public function __construct(
         private readonly Regex $regex,
         private readonly SecurityPatternNormalizer $patternNormalizer = new SecurityPatternNormalizer(),
@@ -51,6 +61,7 @@ final class SecurityAccessControlAnalyzer
         private readonly string $determinizationAlgorithm = 'subset-indexed',
     ) {
         $this->solver = $solver ?? new LanguageSolver($this->regex->parser(), new InMemoryDfaCache());
+        $this->getTakesHead = (new MethodRequestMatcher('GET'))->matches(Request::create('/', 'HEAD'));
     }
 
     /**
@@ -112,7 +123,7 @@ final class SecurityAccessControlAnalyzer
                 $right = $descriptors[$j];
                 $pairsTotal++;
 
-                if (!$this->methodsOverlap($left['methods'], $right['methods'])) {
+                if (!$this->methodsOverlap($this->methodsTaken($left['methods']), $this->methodsTaken($right['methods']))) {
                     $pairsFilteredMethods++;
 
                     continue;
@@ -408,7 +419,7 @@ final class SecurityAccessControlAnalyzer
     private function accessRulesEquivalent(array $left, array $right): bool
     {
         return $this->sameList($left['roles'], $right['roles'], true)
-            && $this->sameList($left['methods'], $right['methods'], true)
+            && $this->sameList($this->methodsTaken($left['methods']), $this->methodsTaken($right['methods']), true)
             && $left['hostPattern'] === $right['hostPattern']
             && $this->sameList($left['ips'], $right['ips'], true)
             && $left['requiresChannel'] === $right['requiresChannel']
@@ -563,7 +574,7 @@ final class SecurityAccessControlAnalyzer
      */
     private function takesEveryRequestOf(array $outer, array $inner, SolverOptions $options): bool
     {
-        if (!$this->listHolds($outer['methods'], $inner['methods'])) {
+        if (!$this->listHolds($this->methodsTaken($outer['methods']), $this->methodsTaken($inner['methods']))) {
             return false;
         }
 
@@ -611,6 +622,25 @@ final class SecurityAccessControlAnalyzer
         ksort($attributes);
 
         return $attributes;
+    }
+
+    /**
+     * The methods a rule takes, as MethodRequestMatcher reads those it
+     * lists: in upper case, and HEAD beside GET where the application's
+     * matcher adds it. A rule that lists none takes every method.
+     *
+     * @param array<int, string> $methods
+     *
+     * @return list<string>
+     */
+    private function methodsTaken(array $methods): array
+    {
+        $taken = array_values(array_map(strtoupper(...), $methods));
+        if ($this->getTakesHead && \in_array('GET', $taken, true) && !\in_array('HEAD', $taken, true)) {
+            $taken[] = 'HEAD';
+        }
+
+        return $taken;
     }
 
     /**

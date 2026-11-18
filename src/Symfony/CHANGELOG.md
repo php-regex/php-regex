@@ -28,6 +28,12 @@ CHANGELOG
    shadows `^/admin\nx`. A path is still searched for across the line
    feeds of a request path, whatever the modifier. The package requires
    `symfony/http-foundation`, which `symfony/http-kernel` already installs.
+ * `regex:security` and `regex:analyze` read an `access_control` rule for
+   `GET` as taking the `HEAD` requests where the application's
+   `symfony/http-foundation` sends them to it (6.4.50, 7.4.23 and 8.1.11
+   on, never 8.0): there `{ path: ^/x, methods: [GET] }` shadows a later
+   `{ path: ^/x, methods: [HEAD] }`, where the pair was set apart on its
+   methods.
  * `regex:security` and `regex:analyze` read the `port`, `route` and
    `attributes` of an `access_control` rule, as the security bundle chains
    them to its request matcher: an earlier rule holding one the later rule

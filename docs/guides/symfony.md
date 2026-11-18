@@ -580,9 +580,13 @@ Addresses, a route and attributes are compared as written: an earlier rule
 holding a route or an attribute the later one does not require the same way
 leaves it the other requests, so `{ route: app_login }` before
 `{ path: ^/admin }` is an overlap. Two rules for different ports share no
-request. A host the analysis cannot read leaves the paths to decide;
-`allow_if` and `requires_channel` decide access, not which rule applies, and
-play no part.
+request. A rule for `GET` takes the `HEAD` requests too where the
+application's `symfony/http-foundation` sends them to it, as the router
+does (6.4.50, 7.4.23 and 8.1.11 on, never 8.0): there a rule for `HEAD`
+only declared after a rule for `GET` on its paths is shadowed, and one
+declared before it is a carve-out. A host the analysis cannot read leaves
+the paths to decide; `allow_if` and `requires_channel` decide access, not
+which rule applies, and play no part.
 
 `regex:security` and `regex:analyze` read the security configuration the
 application runs with, as `bin/console debug:config security` shows it:

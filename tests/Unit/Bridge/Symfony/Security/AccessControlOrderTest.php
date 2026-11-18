@@ -22,6 +22,7 @@ use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcherInterface;
 use Symfony\Component\Security\Http\AccessMap;
@@ -552,6 +553,65 @@ final class AccessControlOrderTest extends TestCase
             ],
         ];
 
+        // symfony/http-foundation's MethodRequestMatcher takes a HEAD request
+        // for GET since 6.4.50, 7.4.23 and 8.1.11, and never on 8.0, as the
+        // router serves it: a rule for GET then shares the HEAD requests of
+        // a rule for HEAD, where the matcher installed does.
+        $getTakesHead = (new MethodRequestMatcher(['GET']))->matches(Request::create('/', 'HEAD'));
+        yield 'a rule for HEAD only after a rule for GET' => [
+            'rules' => [['path' => '^/x', 'methods' => ['GET']], ['path' => '^/x', 'methods' => ['HEAD']]],
+            'expected' => $getTakesHead ? 'shadowed' : null,
+            'requests' => [
+                ['HEAD', 'http://localhost/x', $getTakesHead ? 0 : 1, 1],
+                ['GET', 'http://localhost/x', 0, 0],
+            ],
+        ];
+
+        yield 'a rule for HEAD only before a rule for GET' => [
+            'rules' => [['path' => '^/x', 'methods' => ['HEAD']], ['path' => '^/x', 'methods' => ['GET']]],
+            'expected' => $getTakesHead ? 'carve-out' : null,
+            'requests' => [
+                ['HEAD', 'http://localhost/x', 0, $getTakesHead ? 1 : 0],
+                ['GET', 'http://localhost/x', 1, 1],
+            ],
+        ];
+
+        yield 'a rule for GET written in lower case before a rule for HEAD only' => [
+            'rules' => [['path' => '^/x', 'methods' => ['get']], ['path' => '^/x', 'methods' => ['head']]],
+            'expected' => $getTakesHead ? 'shadowed' : null,
+            'requests' => [
+                ['HEAD', 'http://localhost/x', $getTakesHead ? 0 : 1, 1],
+            ],
+        ];
+
+        yield 'a rule for GET before a rule for GET and HEAD' => [
+            'rules' => [['path' => '^/x', 'methods' => ['GET']], ['path' => '^/x', 'methods' => ['GET', 'HEAD']]],
+            'expected' => $getTakesHead ? 'shadowed' : 'carve-out',
+            'requests' => [
+                ['HEAD', 'http://localhost/x', $getTakesHead ? 0 : 1, 1],
+                ['GET', 'http://localhost/x', 0, 1],
+            ],
+        ];
+
+        yield 'a rule for GET before a rule for HEAD and POST' => [
+            'rules' => [['path' => '^/x', 'methods' => ['GET']], ['path' => '^/x', 'methods' => ['HEAD', 'POST']]],
+            'expected' => $getTakesHead ? 'overlap' : null,
+            'requests' => [
+                ['HEAD', 'http://localhost/x', $getTakesHead ? 0 : 1, 1],
+                ['POST', 'http://localhost/x', 1, 1],
+                ['GET', 'http://localhost/x', 0, 0],
+            ],
+        ];
+
+        yield 'a rule for HEAD and POST before a rule for GET on a narrower path' => [
+            'rules' => [['path' => '^/x', 'methods' => ['HEAD', 'POST']], ['path' => '^/x/y', 'methods' => ['GET']]],
+            'expected' => $getTakesHead ? 'overlap' : null,
+            'requests' => [
+                ['HEAD', 'http://localhost/x/y', 0, $getTakesHead ? 1 : 0],
+                ['GET', 'http://localhost/x/y', 1, 1],
+            ],
+        ];
+
         yield 'paths that share no request are no conflict' => [
             'rules' => [['path' => '^/admin'], ['path' => '^/api']],
             'expected' => null,
@@ -626,21 +686,24 @@ final class AccessControlOrderTest extends TestCase
     }
 
     /**
-     * A method every rule of the pair takes: a rule without methods takes
-     * them all.
+     * A method every rule of the pair takes, as MethodRequestMatcher reads
+     * its methods: a rule without methods takes them all.
      *
      * @param list<OrderRule> $rules
      */
     private static function methodOf(array $rules): string
     {
-        $methods = null;
-        foreach ($rules as $rule) {
-            if (isset($rule['methods'])) {
-                $methods = null === $methods ? $rule['methods'] : array_values(array_intersect($methods, $rule['methods']));
+        foreach (['GET', 'HEAD', 'POST', 'PUT'] as $method) {
+            foreach ($rules as $rule) {
+                if (isset($rule['methods']) && !(new MethodRequestMatcher($rule['methods']))->matches(Request::create('/', $method))) {
+                    continue 2;
+                }
             }
+
+            return $method;
         }
 
-        return $methods[0] ?? 'GET';
+        return 'GET';
     }
 
     /**
