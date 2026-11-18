@@ -364,11 +364,11 @@ final class OverlappingAlternationRule extends AbstractLintRule
     /**
      * The atoms a node may read its first character with, and whether it
      * may read nothing. An item the probe does not read (an anchor, a
-     * lookaround, a reference) is an atom of its own, which leaves the
+     * reference, a script run) is an atom of its own, which leaves the
      * branch unjudged. Groups start with what their body starts with, a
      * branch reset group and an alternation with what any branch does; a
-     * sequence goes on past an item that may read nothing, and a quantifier
-     * that may run no time reads nothing.
+     * lookaround reads nothing, a sequence goes on past an item that may
+     * read nothing, and a quantifier that may run no time reads nothing.
      *
      * @return array{list<NodeInterface>, bool}
      */
@@ -383,6 +383,13 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
             if (\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags], true)) {
                 return self::firstAtoms($node->child);
+            }
+
+            // A lookaround looks at characters without taking them, as the
+            // scan of a captured substring does: the branch takes its first
+            // character with what follows.
+            if (\in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring], true)) {
+                return [[], true];
             }
         }
 
