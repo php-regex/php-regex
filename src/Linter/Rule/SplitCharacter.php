@@ -46,4 +46,29 @@ final class SplitCharacter
             ? [$character, $start, $start + \strlen($character)]
             : null;
     }
+
+    /**
+     * The character any byte of which the literal holds, where it starts
+     * and where it ends in the source; null when the literal is no byte of
+     * a whole UTF-8 character written there.
+     *
+     * @return array{string, int, int}|null
+     */
+    public static function holding(string $source, LiteralNode $literal): ?array
+    {
+        $at = $literal->getEndPosition() - 1;
+        if (1 !== \strlen($literal->value) || $literal->value !== ($source[$at] ?? '')) {
+            return null;
+        }
+
+        // Back over the continuation bytes, three at most, to the lead.
+        $start = $at;
+        while ($start > 0 && $at - $start < 3 && 0x80 === (\ord($source[$start]) & 0xC0)) {
+            $start--;
+        }
+
+        $character = self::startedBy($source, new LiteralNode($source[$start], $start, $start + 1));
+
+        return null !== $character && $character[2] > $at ? $character : null;
+    }
 }

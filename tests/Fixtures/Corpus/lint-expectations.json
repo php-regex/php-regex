@@ -573,7 +573,6 @@
     {
         "pattern": "/^[A-Za-zÄäÖöÜüß0-9_.@+-]*$/D",
         "issues": [
-            "regex.lint.charclass.redundant",
             "regex.lint.unicode.multibyteInClassWithoutU"
         ]
     },
@@ -2062,7 +2061,6 @@
         "pattern": "#([\"']?)((?:([\\w-]+:)?//?)[^\\s()<>]+[.](?:\\([\\w\\d]+\\)|(?:[^`!()\\[\\]{}:'\".,<>«»“”‘’\\s]|(?:[:]\\d+)?/?)+))\\1#",
         "issues": [
             "regex.lint.charclass.duplicateChars",
-            "regex.lint.charclass.redundant",
             "regex.lint.overlap.charset",
             "regex.lint.quantifier.nested",
             "regex.lint.unicode.multibyteInClassWithoutU"
@@ -9055,7 +9053,6 @@
     {
         "pattern": "/['\"‘’“”ʻ\\[\\]\\(\\)\\{\\}:]/",
         "issues": [
-            "regex.lint.charclass.redundant",
             "regex.lint.unicode.multibyteInClassWithoutU"
         ]
     },
@@ -9911,7 +9908,6 @@
     {
         "pattern": "/[aou][^äöy]*$/i",
         "issues": [
-            "regex.lint.charclass.redundant",
             "regex.lint.unicode.multibyteInClassWithoutU"
         ]
     },
