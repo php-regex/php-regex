@@ -15,12 +15,15 @@ namespace PHPRegex\Parser\Analysis;
 
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\ClassSetOperator;
+use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
@@ -28,13 +31,25 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Parser\Text\Utf8;
 
 /**
  * Approximates leading/trailing character sets for AST nodes.
  *
  * Used to detect mutually exclusive boundaries that avoid catastrophic backtracking.
+ *
+ * The sets stop at ASCII unless the analyzer reads above it, as the ReDoS
+ * analysis asks: the linter's rules ask the engine and the tables of the
+ * target's locale there. Read above ASCII, without UTF a character is a
+ * byte, and a set holds the bytes the node may start or end with. Under
+ * UTF a character above ASCII is two to four bytes, and a set knows it by
+ * the byte it starts with, the last character of a node as its first: "é"
+ * is 0xC3 at either end, so a node that ends with it meets one that starts
+ * with it.
  *
  * @internal
  */
@@ -46,30 +61,78 @@ final class CharSetAnalyzer
 
     /**
      */
+    private bool $utf;
+
+    /**
+     */
+    private bool $caseless;
+
+    /**
+     * Whether r keeps a character of ASCII and one above it from matching
+     * each other caselessly: "k" and the Kelvin sign.
+     *
+     */
+    private bool $restricted;
+
+    /**
+     */
     private ByteCharSet $dot;
     /**
      */
+    private string $flags = '';
+    /**
+     */
     private string $startOptions = '';
+    /**
+     */
+    private bool $readsAboveAscii = false;
 
     /**
-     * @param string $startOptions the options the pattern opens with, such
-     *                             as "(*CR)(*UTF)": the newline convention
-     *                             they set decides where the dot stops
+     * @param string $startOptions    the options the pattern opens with, such
+     *                                as "(*CR)(*UTF)": the newline convention
+     *                                they set decides where the dot stops
+     * @param bool   $readsAboveAscii whether the sets hold the characters above
+     *                                ASCII, read under PCRE2's own tables
      */
-    public function __construct(string $flags = '', string $startOptions = '')
-    {
+    public function __construct(
+        string $flags = '',
+        string $startOptions = '',
+        bool $readsAboveAscii = false
+    ) {
+        $this->flags = $flags;
         $this->startOptions = $startOptions;
+        $this->readsAboveAscii = $readsAboveAscii;
         $this->unicodeMode = false !== strpos($flags, 'u') || false !== strpos($startOptions, '(*UCP)');
-        $this->dot = self::dotSet(false !== strpos($flags, 's'), StartOptions::newline($startOptions));
+        $this->utf = false !== strpos($flags, 'u') || false !== strpos($startOptions, '(*UTF');
+        $this->caseless = false !== strpos($flags, 'i');
+        $this->restricted = false !== strpos($flags, 'r');
+        $this->dot = $this->dotSet(false !== strpos($flags, 's'), StartOptions::newline($startOptions));
     }
 
     /**
      * An analyzer for the pattern as a whole: its flags and the newline
      * convention its start options set.
      */
-    public static function forRegex(RegexNode $regex): self
+    public static function forRegex(RegexNode $regex, bool $readsAboveAscii = false): self
     {
-        return new self($regex->flags, StartOptions::of($regex->source ?? ''));
+        return new self($regex->flags, StartOptions::of($regex->source ?? ''), $readsAboveAscii);
+    }
+
+    /**
+     * The analyzer in force at each node under $root, $root included, this
+     * one at its start: an option setting changes the flags inside its
+     * group, "(?i:...)", or after it up to the end of the group around it,
+     * "(?i)", the alternatives after its own included.
+     *
+     * @return \SplObjectStorage<NodeInterface, self>
+     */
+    public function inForce(NodeInterface $root): \SplObjectStorage
+    {
+        /** @var \SplObjectStorage<NodeInterface, self> $inForce */
+        $inForce = new \SplObjectStorage();
+        $this->mapInForce($root, $inForce);
+
+        return $inForce;
     }
 
     /**
@@ -78,7 +141,7 @@ final class CharSetAnalyzer
      */
     public function withFlags(string $flags): self
     {
-        return new self($flags, $this->startOptions);
+        return new self($flags, $this->startOptions, $this->readsAboveAscii);
     }
 
     public function firstChars(NodeInterface $node): ByteCharSet
@@ -98,14 +161,26 @@ final class CharSetAnalyzer
         }
 
         if ($node instanceof LiteralNode) {
-            $length = \strlen($node->value);
-            if (0 === $length) {
+            $at = \strlen($node->value) - 1;
+            if (-1 === $at) {
                 return ByteCharSet::empty();
             }
 
-            $char = $fromStart ? $node->value[0] : $node->value[$length - 1];
+            if ($fromStart) {
+                $at = 0;
+            }
 
-            return ByteCharSet::fromChar($char);
+            while (!$fromStart && $this->readsAboveAscii && $this->utf && $at > 0 && Utf8::continues($node->value[$at])) {
+                --$at;
+            }
+
+            $set = ByteCharSet::fromChar($node->value[$at]);
+
+            return $this->caseless ? $set->union($this->otherCasesOfLiteral($node->value, $at)) : $set;
+        }
+
+        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
+            return $this->fromCodePoints($node->codePoint, $node->codePoint);
         }
 
         if ($node instanceof CharTypeNode) {
@@ -121,14 +196,14 @@ final class CharSetAnalyzer
         }
 
         if ($node instanceof RangeNode) {
-            $start = $this->literalCodepoint($node->start);
-            $end = $this->literalCodepoint($node->end);
+            $start = $this->codePoint($node->start);
+            $end = $this->codePoint($node->end);
 
             if (null === $start || null === $end) {
                 return ByteCharSet::unknown();
             }
 
-            return ByteCharSet::fromRange(min($start, $end), max($start, $end));
+            return $this->fromCodePoints(min($start, $end), max($start, $end));
         }
 
         if ($node instanceof CharClassNode) {
@@ -136,15 +211,19 @@ final class CharSetAnalyzer
 
             $parts = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
             foreach ($parts as $part) {
-                $candidate = $this->walk($part, $fromStart);
+                // Without UTF a class reads each byte of a character
+                // written in several apart: "[é]" is "[\xC3\xA9]".
+                $candidate = $this->readsAboveAscii && !$this->utf && $part instanceof LiteralNode ? $this->eachByte($part->value) : $this->walk($part, $fromStart);
                 $set = $set->union($candidate);
             }
 
-            return $node->isNegated ? $set->complement() : $set;
+            return $node->isNegated ? $this->complement($set) : $set;
         }
 
+        // A lookaround reads nothing, whatever its body reads: "(?!x)a"
+        // starts with "a", and "a(?=x)" ends with it.
         if ($node instanceof GroupNode) {
-            return $this->walk($node->child, $fromStart);
+            return self::readsNothing($node) ? ByteCharSet::empty() : $this->inside($node)->walk($node->child, $fromStart);
         }
 
         // A script run matches what its body matches, in one script.
@@ -159,7 +238,7 @@ final class CharSetAnalyzer
         if ($node instanceof ClassSetOperationNode) {
             $right = $this->walk($node->right, $fromStart);
             if (null === $node->left) {
-                return $right->complement();
+                return $this->complement($right);
             }
 
             $left = $this->walk($node->left, $fromStart);
@@ -168,9 +247,9 @@ final class CharSetAnalyzer
                 case $node->operator === ClassSetOperator::Intersection():
                     return $left->intersect($right);
                 case $node->operator === ClassSetOperator::Difference():
-                    return $left->intersect($right->complement());
+                    return $left->intersect($this->complement($right));
                 case $node->operator === ClassSetOperator::SymmetricDifference():
-                    return $left->union($right)->intersect($left->intersect($right)->complement());
+                    return $left->union($right)->intersect($this->complement($left->intersect($right)));
                 default:
                     return $left->union($right);
             }
@@ -178,23 +257,33 @@ final class CharSetAnalyzer
 
         if ($node instanceof AlternationNode) {
             $set = ByteCharSet::empty();
+            $analyzer = $this;
             foreach ($node->alternatives as $alt) {
-                $set = $set->union($this->walk($alt, $fromStart));
+                $set = $set->union($analyzer->walk($alt, $fromStart));
+                $analyzer = $analyzer->after($alt);
             }
 
             return $set;
         }
 
         if ($node instanceof SequenceNode) {
-            $children = $fromStart ? $node->children : array_reverse($node->children);
+            // From the start, the options an item sets carry to the next as
+            // the walk goes; from the end, they are read up front.
+            $analyzers = $fromStart ? [] : $this->acrossChildren($node->children);
+            $children = $fromStart ? $node->children : array_reverse($node->children, true);
+            $analyzer = $this;
             $set = ByteCharSet::empty();
 
-            foreach ($children as $child) {
-                $candidate = $this->walk($child, $fromStart);
+            foreach ($children as $index => $child) {
+                $candidate = ($analyzers[$index] ?? $analyzer)->walk($child, $fromStart);
                 $set = $set->union($candidate);
 
                 if (!$this->isOptionalNode($child, $fromStart)) {
                     break;
+                }
+
+                if ($fromStart && ($child instanceof GroupNode || $child instanceof SequenceNode)) {
+                    $analyzer = $analyzer->after($child);
                 }
             }
 
@@ -214,64 +303,83 @@ final class CharSetAnalyzer
             case 'd' === $type:
                 return ByteCharSet::fromRange(\ord('0'), \ord('9'));
             case 'D' === $type:
-                return ByteCharSet::fromRange(\ord('0'), \ord('9'))->complement();
+                return $this->complement(ByteCharSet::fromRange(\ord('0'), \ord('9')));
             case 'w' === $type:
-                return ByteCharSet::fromRange(\ord('0'), \ord('9'))
-                    ->union(ByteCharSet::fromRange(\ord('A'), \ord('Z')))
-                    ->union(ByteCharSet::fromRange(\ord('a'), \ord('z')))
-                    ->union(ByteCharSet::fromChar('_'));
+                return self::wordCharacters();
             case 'W' === $type:
-                return ByteCharSet::fromRange(\ord('0'), \ord('9'))
-                    ->union(ByteCharSet::fromRange(\ord('A'), \ord('Z')))
-                    ->union(ByteCharSet::fromRange(\ord('a'), \ord('z')))
-                    ->union(ByteCharSet::fromChar('_'))
-                    ->complement();
+                return $this->complement(self::wordCharacters());
             case 's' === $type:
-                return $this->whitespace();
+                return $this->spaces();
             case 'S' === $type:
-                return $this->whitespace()->complement();
+                return $this->complement($this->spaces());
             case 'v' === $type:
-                return $this->verticalWhitespace();
+                return $this->verticalSpaces();
             case 'V' === $type:
-                return $this->verticalWhitespace()->complement();
+                return $this->complement($this->verticalSpaces());
             case 'R' === $type:
-                return $this->verticalWhitespace()->union(ByteCharSet::fromChar("\r"));
+                return $this->verticalSpaces();
             case 'h' === $type:
-                return ByteCharSet::fromChar("\t")->union(ByteCharSet::fromChar(' '));
+                return $this->horizontalSpaces();
             case 'H' === $type:
-                return ByteCharSet::fromChar("\t")->union(ByteCharSet::fromChar(' '))->complement();
+                return $this->complement($this->horizontalSpaces());
             default:
                 return ByteCharSet::unknown();
         }
     }
 
-    private function whitespace(): ByteCharSet
+    private static function wordCharacters(): ByteCharSet
     {
-        $set = ByteCharSet::empty();
-        foreach ([9, 10, 11, 12, 13, 32] as $code) {
-            $set = $set->union(ByteCharSet::fromRange($code, $code));
-        }
-
-        return $set;
+        return ByteCharSet::fromRange(\ord('0'), \ord('9'))
+            ->union(ByteCharSet::fromRange(\ord('A'), \ord('Z')))
+            ->union(ByteCharSet::fromRange(\ord('a'), \ord('z')))
+            ->union(ByteCharSet::fromChar('_'));
     }
 
-    private function verticalWhitespace(): ByteCharSet
+    /**
+     * "\s": the white space of ASCII, and under (*UCP) the next line and
+     * the no-break space.
+     */
+    private function spaces(): ByteCharSet
     {
-        $set = ByteCharSet::empty();
-        foreach ([10, 11, 12, 13] as $code) {
-            $set = $set->union(ByteCharSet::fromRange($code, $code));
+        return self::bytes("\t\n\v\f\r ")->union($this->spacesAboveAscii($this->unicodeMode ? "\x85\xA0" : ''));
+    }
+
+    /**
+     * "\v", and the line breaks "\R" takes, "\r\n" ending as "\n".
+     */
+    private function verticalSpaces(): ByteCharSet
+    {
+        return self::bytes("\n\v\f\r")->union($this->spacesAboveAscii("\x85"));
+    }
+
+    private function horizontalSpaces(): ByteCharSet
+    {
+        return self::bytes("\t ")->union($this->spacesAboveAscii("\xA0"));
+    }
+
+    /**
+     * The spaces above ASCII a class of spaces takes: without UTF the bytes
+     * given, the next line 0x85 or the no-break space 0xA0. Under UTF each
+     * one, from U+0085 to U+3000, starts with 0xC2, 0xE1, 0xE2 or 0xE3.
+     */
+    private function spacesAboveAscii(string $bytes): ByteCharSet
+    {
+        if (!$this->readsAboveAscii) {
+            return ByteCharSet::empty();
         }
 
-        return $set;
+        return self::bytes($this->utf ? "\xC2\xE1\xE2\xE3" : $bytes);
     }
 
     /**
      * Without dotall, the dot matches every character but a newline, which
      * the convention defines. Under (*CRLF) only the pair is a newline, so
-     * a single byte of it is an ordinary character. The newlines (*ANY)
-     * adds above ASCII lie outside the sets.
+     * a single byte of it is an ordinary character. (*ANY) adds the next
+     * line, 0x85 without UTF; under UTF, U+0085 starts with 0xC2 as other
+     * characters the dot takes do. Read in ASCII, the newlines above it lie
+     * outside the sets.
      */
-    private static function dotSet(bool $dotAll, string $newline): ByteCharSet
+    private function dotSet(bool $dotAll, string $newline): ByteCharSet
     {
         switch (true) {
             case true === $dotAll:
@@ -288,32 +396,307 @@ final class CharSetAnalyzer
                 $newlines = "\n\r";
                 break;
             case true === ('ANY' === $newline):
-                $newlines = "\n\v\f\r";
+                $newlines = $this->readsAboveAscii && !$this->utf ? "\n\v\f\r\x85" : "\n\v\f\r";
                 break;
             default:
                 $newlines = "\n";
                 break;
         }
 
-        $set = ByteCharSet::empty();
-        foreach (Bytes::split($newlines) as $char) {
-            $set = $set->union(ByteCharSet::fromChar($char));
-        }
-
-        return $set->complement();
+        return $this->complement(self::bytes($newlines));
     }
 
-    private function literalCodepoint(NodeInterface $node): ?int
+    /**
+     * The characters outside the set, in ASCII unless the analyzer reads
+     * above it. Under UTF a byte above ASCII stands for every character
+     * that starts with it, and some may be outside the set while others
+     * are in: those bytes stay.
+     */
+    private function complement(ByteCharSet $set): ByteCharSet
     {
-        if (!$node instanceof LiteralNode) {
+        if (!$this->readsAboveAscii) {
+            return $set->complement();
+        }
+
+        $complement = $set->complement(0xFF);
+
+        return $this->utf ? $complement->union(ByteCharSet::fromBytes(0x80, 0xFF)) : $complement;
+    }
+
+    /**
+     * The characters from $start to $end, and under i their other case;
+     * above ASCII, not known unless the analyzer reads there. Without UTF a
+     * character is a byte, and a code point above 0xFF none. Under UTF one
+     * above ASCII is known by the byte it starts with, which UTF-8 orders as
+     * the code points.
+     */
+    private function fromCodePoints(int $start, int $end): ByteCharSet
+    {
+        if ($end <= 0x7F) {
+            $set = ByteCharSet::fromRange($start, $end);
+        } elseif (!$this->readsAboveAscii || ($this->utf && $end > 0x10FFFF)) {
+            return ByteCharSet::unknown();
+        } elseif (!$this->utf) {
+            $set = ByteCharSet::fromBytes($start, $end);
+        } else {
+            $ascii = $start <= 0x7F ? ByteCharSet::fromRange($start, 0x7F) : ByteCharSet::empty();
+            $set = $ascii->union(ByteCharSet::fromBytes(self::leadByte(max($start, 0x80)), self::leadByte($end)));
+        }
+
+        return $this->caseless && !$set->isUnknown() ? $set->union($this->otherCases($start, $end)) : $set;
+    }
+
+    /**
+     * The characters the characters from $start to $end match besides
+     * themselves under i. An ASCII letter matches its other case. Above
+     * ASCII, read under PCRE2's own tables, a byte has no other case; under
+     * (*UCP) a Latin-1 letter has the other one where it is a byte, "\xC9"
+     * for "\xE9". Under UTF a character above ASCII may match characters
+     * that start with any byte, and "k" and "s" match the Kelvin sign and
+     * the long s, both ways, unless r keeps ASCII apart.
+     */
+    private function otherCases(int $start, int $end): ByteCharSet
+    {
+        $set = ByteCharSet::empty();
+        if ($start === $end && $end <= 0x7F) {
+            // One ASCII character, the case of most literals.
+            $set = Ascii::isAlpha(\chr($start)) ? ByteCharSet::fromChar(\chr($start ^ 0x20)) : $set;
+        } else {
+            foreach ([[\ord('A'), \ord('Z'), 0x20], [\ord('a'), \ord('z'), -0x20]] as [$first, $last, $shift]) {
+                if (max($start, $first) <= min($end, $last)) {
+                    $set = $set->union(ByteCharSet::fromRange(max($start, $first) + $shift, min($end, $last) + $shift));
+                }
+            }
+        }
+
+        if (!$this->readsAboveAscii) {
+            return $set;
+        }
+
+        if ($this->utf) {
+            if (!$this->restricted) {
+                foreach ([['k', "\u{212A}"], ['s', "\u{17F}"]] as [$letter, $partner]) {
+                    if (self::holdsALetter($start, $end, $letter)) {
+                        $set = $set->union(ByteCharSet::fromChar($partner));
+                    }
+
+                    if ($start <= mb_ord($partner, 'UTF-8') && mb_ord($partner, 'UTF-8') <= $end) {
+                        $set = $set->union(self::bytes($letter.Ascii::upper($letter)));
+                    }
+                }
+            }
+
+            return $end > 0x7F ? $set->union(ByteCharSet::fromBytes(0x80, 0xFF)) : $set;
+        }
+
+        if ($this->unicodeMode) {
+            for ($byte = max($start, 0x80); $byte <= min($end, 0xFF); ++$byte) {
+                $char = (string) mb_chr($byte, 'UTF-8');
+                foreach ([\MB_CASE_UPPER_SIMPLE, \MB_CASE_LOWER_SIMPLE] as $case) {
+                    $other = mb_ord(mb_convert_case($char, $case, 'UTF-8'), 'UTF-8');
+                    if (false !== $other && $other <= 0xFF) {
+                        $set = $set->union(ByteCharSet::fromBytes($other, $other));
+                    }
+                }
+            }
+        }
+
+        return $set;
+    }
+
+    /**
+     * Under i, the other case of the character a literal starts at $at,
+     * the byte itself without UTF.
+     */
+    private function otherCasesOfLiteral(string $value, int $at): ByteCharSet
+    {
+        $codePoint = \ord($value[$at]);
+        if ($codePoint > 0x7F && $this->readsAboveAscii && $this->utf) {
+            $codePoint = mb_ord((string) substr($value, $at, Utf8::width($value, $at)), 'UTF-8');
+        }
+
+        return false === $codePoint ? ByteCharSet::unknown() : $this->otherCases($codePoint, $codePoint);
+    }
+
+    /**
+     * Each byte of a literal a class reads without UTF, and under i its
+     * other case.
+     */
+    private function eachByte(string $value): ByteCharSet
+    {
+        $set = ByteCharSet::empty();
+        foreach (Bytes::split($value) as $byte) {
+            $set = $set->union($this->fromCodePoints(\ord($byte), \ord($byte)));
+        }
+
+        return $set;
+    }
+
+    private static function holdsALetter(int $start, int $end, string $letter): bool
+    {
+        foreach ([$letter, Ascii::upper($letter)] as $case) {
+            if ($start <= \ord($case) && \ord($case) <= $end) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The byte UTF-8 starts a code point above ASCII with.
+     */
+    private static function leadByte(int $codePoint): int
+    {
+        switch (true) {
+            case true === $codePoint < 0x800:
+                return 0xC0 | $codePoint >> 6;
+            case true === $codePoint < 0x10000:
+                return 0xE0 | $codePoint >> 12;
+            default:
+                return 0xF0 | $codePoint >> 18;
+        }
+    }
+
+    /**
+     * The analyzer inside the group: a scoped option setting, "(?i:...)",
+     * changes the flags there.
+     */
+    private function inside(GroupNode $group): self
+    {
+        return GroupType::InlineFlags() === $group->type && null !== $group->flags && !self::setsOptionsOnly($group)
+            ? $this->with($group->flags)
+            : $this;
+    }
+
+    /**
+     * The analyzer after the node: an option setting alone, "(?i)", changes
+     * the flags for what follows it, as one at the top of a sequence does.
+     */
+    private function after(NodeInterface $node): self
+    {
+        if ($node instanceof GroupNode && self::setsOptionsOnly($node)) {
+            return $this->with((string) $node->flags);
+        }
+
+        $analyzer = $this;
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                $analyzer = $analyzer->after($child);
+            }
+        }
+
+        return $analyzer;
+    }
+
+    /**
+     * The analyzer at each child of a sequence whose start reads this one,
+     * where an option setting before it changed the flags.
+     *
+     * @param array<int|string, NodeInterface> $children
+     *
+     * @return array<int|string, self>
+     */
+    private function acrossChildren(array $children): array
+    {
+        $analyzers = [];
+        $analyzer = $this;
+        foreach ($children as $index => $child) {
+            if ($analyzer !== $this) {
+                $analyzers[$index] = $analyzer;
+            }
+
+            // Only a group or a sequence may set options for what follows.
+            if ($child instanceof GroupNode || $child instanceof SequenceNode) {
+                $analyzer = $analyzer->after($child);
+            }
+        }
+
+        return $analyzers;
+    }
+
+    /**
+     * @param \SplObjectStorage<NodeInterface, self> $inForce
+     */
+    private function mapInForce(NodeInterface $node, \SplObjectStorage $inForce): void
+    {
+        $inForce[$node] = $this;
+        if ($node instanceof GroupNode) {
+            $this->inside($node)->mapInForce($node->child, $inForce);
+
+            return;
+        }
+
+        $analyzer = $this;
+        foreach ($node->getChildren() as $child) {
+            $analyzer->mapInForce($child, $inForce);
+            $analyzer = $analyzer->after($child);
+        }
+    }
+
+    /**
+     * The analyzer under the flags an option setting writes: "i", "s-i",
+     * "^i". PCRE2's ASCII options ("a", "aD", ...) change nothing read here.
+     */
+    private function with(string $options): self
+    {
+        $setting = InlineFlags::read(InlineFlags::withoutAsciiOptions($options), InlineFlags::LETTERS.'r');
+
+        return null === $setting ? $this : new self($setting->applyTo($this->flags), $this->startOptions, $this->readsAboveAscii);
+    }
+
+    /**
+     * Whether the group is an option setting alone, "(?i)", rather than one
+     * holding a body, "(?i:)", whose span its flags and three bytes tell.
+     */
+    private static function setsOptionsOnly(GroupNode $group): bool
+    {
+        return GroupType::InlineFlags() === $group->type
+            && null !== $group->flags
+            && $group->getEndPosition() - $group->getStartPosition() === \strlen($group->flags) + 3;
+    }
+
+    /**
+     * Whether the group is a lookaround, or the scan of a captured
+     * substring, which the engine reads without taking a character.
+     */
+    private static function readsNothing(GroupNode $group): bool
+    {
+        return \in_array($group->type, [GroupType::LookaheadPositive(), GroupType::LookaheadNegative(), GroupType::LookbehindPositive(), GroupType::LookbehindNegative(), GroupType::ScanSubstring()], true);
+    }
+
+    private static function bytes(string $bytes): ByteCharSet
+    {
+        $set = ByteCharSet::empty();
+        foreach (Bytes::split($bytes) as $byte) {
+            $set = $set->union(ByteCharSet::fromChar($byte));
+        }
+
+        return $set;
+    }
+
+    /**
+     * The code point a range starts or ends with: a letter of several
+     * bytes is one under UTF, and without it the class reads its bytes
+     * apart, so the range is not known.
+     */
+    private function codePoint(NodeInterface $node): ?int
+    {
+        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
+            return $node->codePoint;
+        }
+
+        if (!$node instanceof LiteralNode || '' === $node->value) {
             return null;
         }
 
-        if ('' === $node->value) {
-            return null;
+        if (1 === \strlen($node->value)) {
+            return \ord($node->value);
         }
 
-        return \ord($node->value[0]);
+        $codePoint = $this->utf ? mb_ord($node->value, 'UTF-8') : false;
+
+        return false === $codePoint ? null : $codePoint;
     }
 
     /**
@@ -336,11 +719,23 @@ final class CharSetAnalyzer
         }
 
         if ($node instanceof GroupNode) {
-            return $this->isOptionalNode($node->child, $fromStart);
+            return self::readsNothing($node) || $this->isOptionalNode($node->child, $fromStart);
         }
 
         if ($node instanceof ScriptRunNode) {
             return null !== $node->content && $this->isOptionalNode($node->content, $fromStart);
+        }
+
+        // An alternation may match empty through any of its branches:
+        // "(?:|b)a" matches "a".
+        if ($node instanceof AlternationNode) {
+            foreach ($node->alternatives as $alternative) {
+                if ($this->isOptionalNode($alternative, $fromStart)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         if ($node instanceof SequenceNode) {

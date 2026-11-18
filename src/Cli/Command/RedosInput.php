@@ -44,6 +44,14 @@ final class RedosInput
     private const POLYNOMIAL_PUMPS = 1000;
 
     /**
+     * The most the input repeated may weigh, 8 MiB: printed with
+     * --show-input, a subject of bytes to escape takes about five times its
+     * size, which stays within PHP's default memory_limit of 128M at 8 MiB
+     * and goes past it at 16 MiB.
+     */
+    private const MAX_REPEATED_LENGTH = 8 * 1024 * 1024;
+
+    /**
      * @param string  $value   the input before it is repeated
      * @param string  $source  "user", "file", "auto" or "default"
      * @param ?string $note    why the input is not the one asked for
@@ -58,7 +66,8 @@ final class RedosInput
 
     /**
      * The subject of the command line, or the message saying its input
-     * file cannot be read.
+     * file cannot be read or its count repeats the input past the limit,
+     * before the subject is built.
      */
     public static function from(RedosArguments $arguments, Regex $regex): self|string
     {
@@ -78,7 +87,26 @@ final class RedosInput
             [$value, $source, $note] = self::generate($regex, $arguments->pattern);
         }
 
+        $refusal = self::refuseRepeat($value, $arguments->repeat);
+        if (null !== $refusal) {
+            return $refusal;
+        }
+
         return new self($value, $source, $note, $arguments->prefix.str_repeat($value, $arguments->repeat).$arguments->suffix);
+    }
+
+    /**
+     * The message refusing a count that repeats the input past the limit,
+     * or null when the input repeated fits: bin/redos-bench asks it too.
+     */
+    public static function refuseRepeat(string $value, int $repeat): ?string
+    {
+        $largest = '' === $value ? \PHP_INT_MAX : intdiv(self::MAX_REPEATED_LENGTH, \strlen($value));
+        if ($repeat <= $largest) {
+            return null;
+        }
+
+        return \sprintf("--repeat %d repeats the %d-byte input past 8 MiB (%d bytes), the most it may weigh: printed with --show-input, a subject takes up to five times its size, which must fit in PHP's default memory_limit of 128M. The largest count for this input is %d.", $repeat, \strlen($value), self::MAX_REPEATED_LENGTH, $largest);
     }
 
     /**

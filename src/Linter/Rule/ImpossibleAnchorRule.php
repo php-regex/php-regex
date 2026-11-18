@@ -392,6 +392,13 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             return $this->newlineReads[$key] = true === LanguageQuestions::areDisjoint($atomPattern, $characterPattern, $context->dfas, $context->target) ? false : null;
         };
 
-        return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, $before);
+        // A byte above ASCII may be a word character under u, under (*UCP)
+        // and under the tables of a locale other than PCRE2's own, the "C"
+        // locale of the target.
+        $wordAboveAscii = $context->pattern->unicodeMode
+            || str_contains(StartOptions::of($context->pattern->source), '(*UCP)')
+            || 'C' !== $context->target->locale;
+
+        return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, $before, $wordAboveAscii);
     }
 }

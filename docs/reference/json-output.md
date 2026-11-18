@@ -588,7 +588,7 @@ pattern, or an invalid `--safe` pattern, stops it with the envelope (see
 | `source` | string | `user` for `--input`, `file` for `--input-file`, `auto` for one generated from the ReDoS verdict, `default` when none could be generated; an open set |
 | `base_length` | int | The length of the base input, in bytes |
 | `final_length` | int | The length of the subject, prefix, repeats and suffix included, in bytes |
-| `repeat` | int | How many times the base input is repeated (`--repeat`) |
+| `repeat` | int | How many times the base input is repeated (`--repeat`), into 8 MiB at most |
 | `prefix` | string | The text before the repeats (`--prefix`) |
 | `suffix` | string | The text after the repeats (`--suffix`) |
 | `preview` | string \| null | The subject, shortened for display; `null` with `--show-input` |

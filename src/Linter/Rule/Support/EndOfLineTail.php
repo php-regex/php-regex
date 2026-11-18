@@ -121,6 +121,8 @@ final class EndOfLineTail
      * @param ByteCharSet|null                              $before         the characters the one read just before the anchor can be,
      *                                                                      from lastCharacters(); null when the anchor may stand where
      *                                                                      nothing is known of it
+     * @param bool                                          $wordAboveAscii whether a byte above ASCII may be a word character: under u,
+     *                                                                      (*UCP) or another locale's tables; PCRE2's own hold none
      */
     public function __construct(
         private readonly CharSetAnalyzer $analyzer,
@@ -128,6 +130,7 @@ final class EndOfLineTail
         private readonly GroupIndex $groups,
         private readonly ?\Closure $readsCharacter = null,
         private readonly ?ByteCharSet $before = null,
+        private readonly bool $wordAboveAscii = false,
     ) {
         $this->newlineStarts = self::setOf($newline);
     }
@@ -426,11 +429,18 @@ final class EndOfLineTail
             return true;
         }
 
-        // The sets hold ASCII only: a character above it makes the set
-        // unknown, and the character before unknown.
+        // A byte above ASCII, a literal written as it is, is no word
+        // character under PCRE2's own tables, and may be one or not under
+        // u, (*UCP) or another locale's.
         $word = self::setOf(self::WORD);
+        $aboveAscii = ByteCharSet::fromBytes(0x80, 0xFF);
+        $others = $word->complement()->union($aboveAscii);
 
-        return $this->before->intersects($boundary ? $word : $word->complement());
+        return $this->before->intersects(match (true) {
+            !$boundary => $others,
+            $this->wordAboveAscii => $word->union($aboveAscii),
+            default => $word,
+        });
     }
 
     private static function setOf(string $characters): ByteCharSet

@@ -113,6 +113,7 @@ final class RedosInputGeneratorTest extends TestCase
         $ast = Regex::create()->parse('/[\x00-\x1F]+/');
         $input = $this->generator->generate($ast);
         $this->assertStringStartsWith('a', $input);
-        $this->assertStringEndsWith('!', $input);
+        // The class is read: the input ends with the first printable byte outside it.
+        $this->assertStringEndsWith(' ', $input);
     }
 }

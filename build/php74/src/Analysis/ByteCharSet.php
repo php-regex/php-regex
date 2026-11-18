@@ -30,6 +30,8 @@ final class ByteCharSet
     private bool $unknown = false;
     private const ASCII_MAX = 0x7F;
 
+    private const BYTE_MAX = 0xFF;
+
     /**
      * @param array<array{0:int, 1:int}> $ranges inclusive ranges of byte values
      */
@@ -70,6 +72,19 @@ final class ByteCharSet
         return new self([[$clampedStart, $clampedEnd]]);
     }
 
+    /**
+     * The bytes from $start to $end, where fromRange() stops at ASCII: not
+     * known when either lies outside 0x00 to 0xFF.
+     */
+    public static function fromBytes(int $start, int $end): self
+    {
+        if ($start < 0 || $end > self::BYTE_MAX) {
+            return self::unknown();
+        }
+
+        return $start > $end ? self::empty() : new self([[$start, $end]]);
+    }
+
     public static function fromChar(string $char): self
     {
         return '' === $char ? self::empty() : new self([[\ord($char[0]), \ord($char[0])]]);
@@ -102,10 +117,16 @@ final class ByteCharSet
             return self::unknown();
         }
 
-        $merged = array_merge($this->ranges, $other->ranges);
-        if ([] === $merged) {
-            return self::empty();
+        // A set joined to an empty one is itself, the walks' first union.
+        if ([] === $other->ranges) {
+            return $this;
         }
+
+        if ([] === $this->ranges) {
+            return $other;
+        }
+
+        $merged = array_merge($this->ranges, $other->ranges);
 
         usort($merged, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
 
@@ -165,14 +186,18 @@ final class ByteCharSet
         return $common;
     }
 
-    public function complement(): self
+    /**
+     * The characters outside the set up to $last: the ASCII ones, unless
+     * asked for every byte with 0xFF.
+     */
+    public function complement(int $last = self::ASCII_MAX): self
     {
         if ($this->unknown) {
             return self::unknown();
         }
 
         if ([] === $this->ranges) {
-            return self::full();
+            return new self([[0, $last]]);
         }
 
         $complement = [];
@@ -185,8 +210,8 @@ final class ByteCharSet
             $cursor = $end + 1;
         }
 
-        if ($cursor <= self::ASCII_MAX) {
-            $complement[] = [$cursor, self::ASCII_MAX];
+        if ($cursor <= $last) {
+            $complement[] = [$cursor, $last];
         }
 
         return new self($complement);

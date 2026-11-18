@@ -12,6 +12,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use PHPRegex\Cli\Command\RedosInput;
+
+require __DIR__.'/../vendor/autoload.php';
+
 const EXIT_USAGE = 64;
 
 $script = basename(__FILE__);
@@ -35,7 +39,7 @@ Required:
   --input-file PATH       Read input from a file (alternative to --input).
 
 Input shaping:
-  --repeat N              Repeat input N times (default: 1).
+  --repeat N              Repeat input N times, into 8 MiB at most (default: 1).
   --prefix STRING         Prefix for the input (default: '').
   --suffix STRING         Suffix for the input (default: '').
 
@@ -234,6 +238,12 @@ if ($inputFile !== null) {
 $repeat = readIntOption($options, 'repeat', 1, $script);
 if ($repeat < 1) {
     fail('Option --repeat must be >= 1.', $script);
+}
+
+// The limit `regex redos` holds the input repeated to.
+$refusal = RedosInput::refuseRepeat((string) $input, $repeat);
+if ($refusal !== null) {
+    fail($refusal, $script);
 }
 
 $iterations = readIntOption($options, 'iterations', 1, $script);

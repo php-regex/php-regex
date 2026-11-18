@@ -17,8 +17,11 @@ use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Redos\Backtrack\BacktrackProver;
 use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\Backtrack\SearchCostProver;
@@ -119,7 +122,14 @@ final class RedosAnalyzer
             $profiler = null;
             $heuristics = self::NO_HEURISTICS;
             if (RedosComplexity::Linear !== $proof?->complexity) {
-                $profiler = new RedosProfiler(CharSetAnalyzer::forRegex($ast));
+                // Above ASCII the sets are read under PCRE2's own tables:
+                // another locale's may put any byte in a type or a case.
+                // Without a proof, a loop whose branches start alike is put
+                // to the proof alone.
+                $profiler = new RedosProfiler(
+                    CharSetAnalyzer::forRegex($ast, CharacterTables::BUILT_IN === $parser->target()->locale),
+                    null === $proof ? $this->provenLinearAlone($ast, $parser) : null,
+                );
                 $ast->accept($profiler);
                 $heuristics = $profiler->getResult();
             }
@@ -204,6 +214,53 @@ final class RedosAnalyzer
         } catch (ExceptionInterface) {
             return false;
         }
+    }
+
+    /**
+     * Whether a loop of the pattern, read alone before an end that never
+     * matches, "(?:...)(?!)", is proven linear: one that reads no text in
+     * two ways, as "(?:a|ab)+" does not. A loop whose text does not read
+     * alone, a reference or a call to a group outside it, is not; each text
+     * is proven once.
+     *
+     * @return \Closure(QuantifierNode): bool
+     */
+    private function provenLinearAlone(RegexNode $ast, RegexParser $parser): \Closure
+    {
+        $source = $ast->source ?? '';
+        $options = StartOptions::of($source);
+        $proven = [];
+
+        return function (QuantifierNode $loop) use ($ast, $parser, $source, $options, &$proven): bool {
+            $text = substr($source, $loop->startPosition, $loop->endPosition - $loop->startPosition);
+            if (\array_key_exists($text, $proven)) {
+                return $proven[$text];
+            }
+
+            $delimiter = null;
+            foreach (['/', '#', '~', '%', '@', ';', ',', '`'] as $candidate) {
+                if (!str_contains($text.$options, $candidate)) {
+                    $delimiter = $candidate;
+
+                    break;
+                }
+            }
+
+            if (null === $delimiter) {
+                return $proven[$text] = false;
+            }
+
+            // A reference or a call to a group outside the loop leaves the
+            // text invalid alone.
+            $alone = $delimiter.$options.'(?:'.$text.')(?!)'.$delimiter.$ast->flags;
+            if (!$parser->validate($alone)->isValid) {
+                return $proven[$text] = false;
+            }
+
+            $outcome = $this->prover()->prove($parser->parse($alone), $alone, $parser->target());
+
+            return $proven[$text] = null === $outcome->limit && RedosComplexity::Linear === $outcome->result?->complexity;
+        };
     }
 
     private function prover(): BacktrackProver

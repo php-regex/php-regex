@@ -13,6 +13,26 @@ CHANGELOG
    could not read. A byte two different characters share, the `\xC3` of
    `/[äö]/`, is no duplicate: `regex.lint.unicode.multibyteInClassWithoutU`
    reports that class, with the fix, `/u`.
+ * The rules that compare first and last characters read an escape that
+   names an ASCII character, `\x41`, `\101`, `\x{41}`, `\o{101}` or `\cA`,
+   as that character, where they asked the engine or gave up:
+   `/^(?:\x20*[\x22-\x7E])*$/`, which PCRE reads in 11 and 19 steps on 8 and
+   16 units, no longer reports nested quantifiers, nor does the quoted
+   text of the RFC 5322 address pattern of Symfony Mime and SwiftMailer,
+   and the branches `[^\s\042\047=><`]+` and `\s*(?U:[^\s\042\047=><`]*)` of
+   CodeIgniter's attribute pattern, which both start with `a`, are
+   reported as overlapping. An escape above ASCII is left to the engine as
+   before.
+ * A byte above ASCII written as it is, not as an escape, is read as the
+   target reads it. `\b` or `\B` after it, before the newline an end anchor
+   lets through, is not reported as never matching where the engine
+   matches: it is no word character under PCRE2's own tables, so
+   `/ÿ$\B\n/` (the byte 0xFF) matches `"ÿ\n"`, and may be one under u,
+   (*UCP) or another locale's tables, so `/(*UCP)ÿ$\b\n/` and `/é$\b\n/u`
+   match too; all three were reported. Without u a branch starting with
+   such a byte is compared with the others by the engine under the target's
+   locale: `/(?:\W|é)+/` with the byte 0xE9 overlaps under C and
+   `/(?:\w|é)+/` under fr_FR.ISO8859-1, which were not reported.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

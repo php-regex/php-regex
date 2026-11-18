@@ -233,4 +233,45 @@ final class CharSetTest extends TestCase
         $set = ByteCharSet::fromRange(0, 200);
         $this->assertTrue($set->isUnknown(), 'Range with end > ASCII_MAX should return unknown');
     }
+
+    #[Test]
+    public function test_from_bytes_reads_bytes_above_ascii_and_nothing_past_them(): void
+    {
+        $set = ByteCharSet::fromBytes(0x80, 0xBF);
+        $this->assertFalse($set->isUnknown());
+        $this->assertTrue($set->intersects(ByteCharSet::fromChar("\x80")));
+        $this->assertTrue($set->intersects(ByteCharSet::fromChar("\xBF")));
+        $this->assertFalse($set->intersects(ByteCharSet::fromChar("\x7F")));
+        $this->assertFalse($set->intersects(ByteCharSet::fromChar("\xC0")));
+
+        $this->assertTrue(ByteCharSet::fromBytes(0, 0xFF)->intersects(ByteCharSet::fromChar("\xFF")));
+        $this->assertTrue(ByteCharSet::fromBytes(0xC3, 0xC2)->isEmpty());
+        $this->assertTrue(ByteCharSet::fromBytes(0x80, 0x100)->isUnknown());
+        $this->assertTrue(ByteCharSet::fromBytes(-1, 0x41)->isUnknown());
+    }
+
+    /**
+     * complement() stops at ASCII; asked for every byte, it takes each one
+     * the set does not hold, up to 0xFF.
+     */
+    #[Test]
+    public function test_the_complement_in_bytes_reaches_the_last_byte(): void
+    {
+        $complement = ByteCharSet::fromRange(\ord('a'), \ord('z'))->complement(0xFF);
+        $this->assertTrue($complement->intersects(ByteCharSet::fromChar('A')));
+        $this->assertTrue($complement->intersects(ByteCharSet::fromChar("\x80")));
+        $this->assertTrue($complement->intersects(ByteCharSet::fromChar("\xFF")));
+        $this->assertFalse($complement->intersects(ByteCharSet::fromChar('a')));
+
+        $aboveAscii = ByteCharSet::fromBytes(0x80, 0xBF)->complement(0xFF);
+        $this->assertTrue($aboveAscii->intersects(ByteCharSet::fromChar("\x7F")));
+        $this->assertTrue($aboveAscii->intersects(ByteCharSet::fromChar("\xC0")));
+        $this->assertFalse($aboveAscii->intersects(ByteCharSet::fromChar("\x80")));
+        $this->assertFalse($aboveAscii->intersects(ByteCharSet::fromChar("\xBF")));
+
+        $this->assertTrue(ByteCharSet::empty()->complement(0xFF)->intersects(ByteCharSet::fromChar("\xFF")));
+        $this->assertTrue(ByteCharSet::fromBytes(0, 0xFF)->complement(0xFF)->isEmpty());
+        $this->assertTrue(ByteCharSet::unknown()->complement(0xFF)->isUnknown());
+        $this->assertFalse(ByteCharSet::fromRange(\ord('a'), \ord('z'))->complement()->intersects(ByteCharSet::fromChar("\x80")));
+    }
 }

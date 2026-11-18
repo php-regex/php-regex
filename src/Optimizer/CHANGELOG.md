@@ -6,6 +6,20 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The possessive rewrite leaves a repetition greedy before a lookaround,
+   which reads nothing yet looks at the characters the repetition would
+   give back: `/a+(?!b)/` matches `a` in `aab`, `/a++(?!b)/` nothing. Such a
+   rewrite, which the check of the result refused, no longer takes the
+   other rewrites of the pattern with it: under the possessive option
+   `/x\s+(?!y)/s` loses its useless `s`, and
+   `/^[a-z](?:[a-z0-9_](?!__))*[a-z0-9]+$/` becomes
+   `/^[a-z](?:[0-9_a-z](?!__))*[0-9a-z]+$/`. The last `\s*` of
+   `#^(?:([=<>!]=?|<>)\s*)?((?:\d*\.)?\d+)\s*(K|M|G|)B?$#Di` stays greedy:
+   the empty branch lets `B` or the end follow it, which the first
+   characters of the other branches left out.
+ * The possessive rewrite reads an escape that names an ASCII character as
+   that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
+   `/^[0-9]+x$/` becomes `/^[0-9]++x$/`; it was left greedy.
  * `RedosRepairer::firstRepair()` returns the repair `repair()` offers first,
    or null, and stops at the first rewrite certified that writes the same
    `$matches`: the rewrites after it are not proven, nor is the optimizer
