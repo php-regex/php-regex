@@ -207,7 +207,9 @@ CHANGELOG
    scheme, a later route that shares paths with the earlier one keeps them
    and loses the redirected ones: an overlap, or a pair skipped where the
    earlier route ends on a variable, whose redirect PCRE's order decides.
-   The report
+   One that matches every path of the earlier route, `/{path<.*>}` on
+   `http` after `/admin` on `https`, serves the paths the redirect leads
+   to and loses none. The report
    suggests paths that differ by more than the slash, never the reorder
    that only turns the redirect round.
  * `regex:routes` and `regex:analyze` call a route shadowed only when an

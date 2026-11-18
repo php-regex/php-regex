@@ -1032,6 +1032,22 @@ final class RouteConflictAnalyzerTest extends TestCase
             'type' => 'overlap',
             'filtered' => 0,
         ];
+        // The router redirects to the path of the earlier route, which the
+        // later route also matches and serves on its own scheme.
+        yield 'a route on https before a catch-all on http, which serves the paths the redirect leads to' => [
+            'earlier' => ['/admin', ['GET'], ['https']],
+            'later' => ['/{path<.*>}', [], ['http']],
+            'probes' => [['GET', 'http', '/admin/', true], ['HEAD', 'http', '/admin/', true], ['GET', 'http', '/admin', true], ['GET', 'https', '/admin', false]],
+            'type' => null,
+            'filtered' => 0,
+        ];
+        yield 'a route on https ending on a slash before a catch-all on http, which serves the paths the redirect leads to' => [
+            'earlier' => ['/admin/', ['GET'], ['https']],
+            'later' => ['/{path<.+>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/admin', true], ['HEAD', 'http', '/admin', true], ['GET', 'http', '/admin/', true]],
+            'type' => null,
+            'filtered' => 0,
+        ];
         yield 'a route on https sharing every path with a later one on http, whose paths the redirect leaves alone' => [
             'earlier' => ['/{x<a|b>}.html', ['GET'], ['https']],
             'later' => ['/{y<a>}.html', ['GET'], ['http']],

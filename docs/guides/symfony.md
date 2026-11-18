@@ -545,8 +545,10 @@ not reported. The router checks the slash before the
 scheme: a later route on another scheme loses those requests too, and
 keeps on its own scheme the paths both routes match: `/{x<a|b>}.html` on
 `https` before `/{y<a\.html|b\.html/>}` on `http` is an overlap, the later
-route serving `http://…/a.html` and losing `/b.html/` to the redirect.
-Where the earlier route ends on a variable, which path the router
+route serving `http://…/a.html` and losing `/b.html/` to the redirect. A
+later route that matches every path of the earlier one, `/{path<.*>}` on
+`http` after `/admin` on `https`, serves the paths the redirect leads to
+and loses none. Where the earlier route ends on a variable, which path the router
 redirects is the order in which PCRE tries the variable's requirement, and
 such a pair is counted among the pairs skipped. A later
 route whose paths the earlier one matches in part and redirects for the

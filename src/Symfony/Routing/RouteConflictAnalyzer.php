@@ -474,22 +474,26 @@ final class RouteConflictAnalyzer
      * The conflict of two routes on disjoint schemes that share paths: the
      * later route keeps those on its own schemes, and loses to the redirect
      * a path that differs from one of the earlier route by its trailing
-     * slash alone. An overlap at most; null when it has no such path. The
-     * earlier route ends on no variable, so no path of its own differs from
-     * another of them by the slash, and the pair reaches it only where
-     * redirects() holds.
+     * slash alone. An overlap at most; null when it has no such path, or
+     * when the later route matches every path of the earlier one: the
+     * redirect leads to one of them, which the later route serves on its
+     * own scheme. The earlier route ends on no variable, so no path of its
+     * own differs from another of them by the slash, and the pair reaches
+     * it only where redirects() holds.
      *
      * @param bool $hostsUnread whether the solver gave up on the two hosts
      *
      * @phpstan-param RouteDescriptor $earlier
      * @phpstan-param RouteDescriptor $later
      *
+     * @throws ComplexityException When the solver gives up on the paths
+     *
      * @phpstan-return RouteConflict|null
      */
     private function redirectBesideSharedPaths(array $earlier, array $later, SolverOptions $options, bool $hostsUnread): ?array
     {
         $redirected = $this->solver->intersection(self::slashSwapped($earlier['pathPattern']), $later['pathPattern'], $options);
-        if ($redirected->isEmpty) {
+        if ($redirected->isEmpty || $this->solver->subsetOf($earlier['pathPattern'], $later['pathPattern'], $options)->isSubset) {
             return null;
         }
 
