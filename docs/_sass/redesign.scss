@@ -2160,3 +2160,324 @@ main p.post-meta {
     margin-inline: -1.5rem;
   }
 }
+
+/* ==========================================================================
+   Sponsor frame
+ *
+ * The foot of every documentation page carries one open slot, drawn the way
+ * a design tool draws a selection: a dashed outline and four corner handles
+ * in the accent — the same square node the rail titles wear. Inside, the
+ * slot is a pattern on the dark code panel, an empty named group with a
+ * caret where a match would land. The outline marches while the frame is
+ * hovered or focused from within, and stands still for reduced motion.
+ *
+ * The dashes are background layers, not a border: a dashed border cannot
+ * move, and a background tile can. Each side is one 12px tile repeated
+ * along its own axis; the four positions step clockwise in the keyframes.
+   ========================================================================== */
+
+.sponsor {
+  --ants: var(--marker);
+  --ant-step: 12px;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  margin: 4.5rem 0 0;
+  padding: 1.25rem;
+  background-color: transparent;
+  background-image:
+    linear-gradient(90deg, var(--ants) 50%, transparent 50%),
+    linear-gradient(90deg, var(--ants) 50%, transparent 50%),
+    linear-gradient(0deg, var(--ants) 50%, transparent 50%),
+    linear-gradient(0deg, var(--ants) 50%, transparent 50%);
+  background-size:
+    var(--ant-step) 1px,
+    var(--ant-step) 1px,
+    1px var(--ant-step),
+    1px var(--ant-step);
+  background-position: 0 0, 0 100%, 0 0, 100% 0;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  transition: background-color .2s ease;
+}
+
+/* The four handles: one layer per corner, each a filled square centered on
+   the outline's corner — the box steps out by half a handle on every side. */
+.sponsor::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--amber), var(--amber)),
+    linear-gradient(var(--amber), var(--amber)),
+    linear-gradient(var(--amber), var(--amber)),
+    linear-gradient(var(--amber), var(--amber));
+  background-size: 7px 7px;
+  background-position: 0 0, 100% 0, 0 100%, 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* The frame's name, hung above its top-left handle the way a canvas names
+   a frame: the one line of the frame that is chrome, not copy. */
+.sponsor::after {
+  content: 'sponsor';
+  position: absolute;
+  top: -1.55rem;
+  left: -3px;
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  letter-spacing: .04em;
+  color: var(--amber);
+  pointer-events: none;
+}
+
+.sponsor:hover,
+.sponsor:focus-within {
+  --ants: var(--amber);
+  background-color: var(--amber-tint);
+  animation: sponsor-ants .6s linear infinite;
+}
+
+@keyframes sponsor-ants {
+  to {
+    background-position: 12px 0, -12px 100%, 0 -12px, 100% 12px;
+  }
+}
+
+/* ---- The slot: an empty named group on the dark panel ---- */
+
+.sponsor-well {
+  @include code-panel-roles;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  min-height: 8.5rem;
+  padding: 1.25rem 1rem;
+  border-radius: var(--radius-m);
+  background: var(--block-bg);
+  box-shadow: inset 0 0 0 1px var(--block-ring);
+  color: var(--block-ink);
+}
+
+.sponsor-pattern {
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.sponsor-pattern .rx-delim {
+  color: var(--rx-delim);
+}
+
+.sponsor-pattern .rx-group {
+  color: var(--rx-group);
+}
+
+.sponsor-pattern .rx-name {
+  color: var(--rx-name);
+}
+
+/* Where the match would land: a caret in the panel's warm role, blinking
+   at the pace of a text field's. */
+.sponsor-caret {
+  display: inline-block;
+  width: .55em;
+  height: 1.15em;
+  margin-inline: 2px;
+  vertical-align: -.2em;
+  background: var(--rx-type);
+  animation: sponsor-blink 1.1s steps(1) infinite;
+}
+
+@keyframes sponsor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.sponsor-status {
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--block-soft);
+}
+
+/* With sponsors listed, the slot turns to paper: a logo is drawn for a
+   page, not for a code panel. */
+.sponsor-well[data-sponsors] {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.sponsor-logos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem 1.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sponsor-logos a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  opacity: .85;
+  transition: opacity .15s ease;
+}
+
+.sponsor-logos a:hover,
+.sponsor-logos a:focus-visible {
+  opacity: 1;
+}
+
+.sponsor-logo {
+  display: block;
+  max-width: 9rem;
+  max-height: 2.5rem;
+}
+
+.sponsor-logo-dark,
+[data-theme='dark'] .sponsor-logo-light {
+  display: none;
+}
+
+[data-theme='dark'] .sponsor-logo-dark {
+  display: block;
+}
+
+/* ---- The pitch ---- */
+
+.sponsor .sponsor-eyebrow {
+  @include label;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: 0 0 .5rem;
+  color: var(--amber);
+}
+
+.sponsor .sponsor-title {
+  margin: 0 0 .4rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.sponsor .sponsor-text {
+  max-width: 52ch;
+  margin: 0 0 1.1rem;
+  font-size: .9375rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.sponsor .sponsor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem 1.25rem;
+  margin: 0;
+}
+
+.sponsor a.sponsor-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-m);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: .875rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-1);
+  transition: background-color .15s ease, box-shadow .15s ease;
+}
+
+.sponsor a.sponsor-cta .icon {
+  width: 15px;
+  height: 15px;
+  color: var(--link-line);
+  transition: transform .2s ease, fill .2s ease;
+}
+
+.sponsor a.sponsor-cta:hover,
+.sponsor a.sponsor-cta:focus-visible {
+  background: var(--ink-hover);
+  box-shadow: var(--shadow-glow);
+}
+
+/* The heart fills and beats once: the one warm gesture of the frame. */
+.sponsor a.sponsor-cta:hover .icon,
+.sponsor a.sponsor-cta:focus-visible .icon {
+  fill: var(--link-line);
+  animation: sponsor-beat .5s ease;
+}
+
+@keyframes sponsor-beat {
+  40% {
+    transform: scale(1.25);
+  }
+}
+
+.sponsor a.sponsor-mail {
+  font-size: .875rem;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--link-line);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.sponsor a.sponsor-mail:hover {
+  text-decoration-color: var(--amber);
+}
+
+.sponsor .sponsor-mail-label {
+  color: var(--ink-soft);
+}
+
+/* The pager follows the frame: one gap between them, not two flights. */
+.sponsor + .pager {
+  margin-top: 2.5rem;
+}
+
+/* Side by side once the column holds both: the slot keeps a fixed width,
+   the pitch takes the rest. */
+@container (min-width: 34rem) {
+  .sponsor {
+    grid-template-columns: 13.5rem minmax(0, 1fr);
+    align-items: center;
+    gap: 1.75rem;
+    padding: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sponsor:hover,
+  .sponsor:focus-within,
+  .sponsor-caret,
+  .sponsor a.sponsor-cta:hover .icon,
+  .sponsor a.sponsor-cta:focus-visible .icon {
+    animation: none;
+  }
+}
+
+@media print {
+  .sponsor {
+    display: none;
+  }
+}

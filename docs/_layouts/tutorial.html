@@ -32,6 +32,7 @@
         {% endcapture %}
         {% capture h1_with_banner %}</h1>{{ tutorial_banner }}{% endcapture %}
         {{ content | replace: '</h1>', h1_with_banner }}
+        {% unless page.sponsor == false %}{% include sponsor.html %}{% endunless %}
         {% include pager.html nav=tutorial_nav numbered=true %}
       </main>
       {% include toc.html %}

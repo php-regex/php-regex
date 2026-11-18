@@ -1,0 +1,17 @@
+# The sponsor frame at the foot of every documentation page.
+#
+# While `sponsors` is empty the frame shows the open slot: an empty named
+# group waiting for a logo. Each entry added below takes a place in the
+# frame, and the frame keeps one open slot beside them.
+#
+#   sponsors:
+#     - name: Acme
+#       url: https://acme.example
+#       logo: /assets/img/sponsors/acme.svg       # light paper
+#       logo_dark: /assets/img/sponsors/acme-dark.svg  # optional, dark paper
+#
+# A page opts out with `sponsor: false` in its front matter.
+
+github: https://github.com/sponsors/yoeunes
+email: younes.ennaji.pro@gmail.com
+sponsors: []
