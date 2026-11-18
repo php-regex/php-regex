@@ -18,14 +18,11 @@ use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\ChainRequestMatcher;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestMatcher\AttributesRequestMatcher;
-use Symfony\Component\HttpFoundation\RequestMatcher\HostRequestMatcher;
-use Symfony\Component\HttpFoundation\RequestMatcher\IpsRequestMatcher;
-use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
-use Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher;
-use Symfony\Component\HttpFoundation\RequestMatcher\PortRequestMatcher;
+use Symfony\Component\HttpFoundation\RequestMatcherInterface;
 use Symfony\Component\Security\Http\AccessMap;
 
 /**
@@ -40,7 +37,8 @@ use Symfony\Component\Security\Http\AccessMap;
  * - otherwise the order decides which rule applies to the requests both
  *   take, and the pair is an overlap.
  *
- * Each case is first checked against Symfony's own AccessMap: which rule
+ * Each case is first checked against Symfony's own AccessMap, given the
+ * request matchers SecurityExtension chains for the rules: which rule
  * applies to some requests, in the declared order and in the swapped one.
  *
  * @phpstan-type OrderRule array{path?: string, methods?: list<string>, host?: string, ips?: list<string>, port?: int, attributes?: array<string, string>, route?: string}
@@ -79,11 +77,12 @@ final class AccessControlOrderTest extends TestCase
 
         // The request the report gives as an example is one both rules
         // take: the earlier one applies to it, and the later one would
-        // were they swapped.
+        // were they swapped. Its path is sent encoded, as a client sends a
+        // space or a line feed, and Symfony decodes it.
         $example = $report->conflicts[0]['example'];
         $this->assertIsString($example);
         $method = self::methodOf($rules);
-        $url = 'http://'.self::hostOf($rules).self::portOf($rules).$example;
+        $url = 'http://'.self::hostOf($rules).self::portOf($rules).implode('/', array_map(rawurlencode(...), explode('/', $example)));
         $address = self::addressOf($rules);
         $attributes = self::attributesOf($rules);
         $this->assertSame(0, self::ruleApplied($rules, $method, $url, $address, $attributes), $method.' '.$url);
@@ -462,6 +461,63 @@ final class AccessControlOrderTest extends TestCase
             ],
         ];
 
+        // SecurityExtension::createRequestMatcher() chains a path or a host
+        // as written, when it is no "" and no "0": a space or a line feed
+        // at either end is part of it.
+        yield 'a path ending on an escaped line feed first is a carve-out' => [
+            'rules' => [['path' => "^/admin\\\n"], ['path' => '^/admin']],
+            'expected' => 'carve-out',
+            'requests' => [
+                ['GET', 'http://localhost/admin%0A', 0, 1],
+                ['GET', 'http://localhost/admin', 1, 1],
+            ],
+        ];
+
+        yield 'a path opening with a space takes no request' => [
+            'rules' => [['path' => ' ^/admin'], ['path' => '^/admin']],
+            'expected' => null,
+            'requests' => [
+                ['GET', 'http://localhost/admin', 1, 1],
+                ['GET', 'http://localhost/%20/admin', null, null],
+            ],
+        ];
+
+        yield 'a path of a space takes the paths holding one' => [
+            'rules' => [['path' => ' '], ['path' => '^/admin']],
+            'expected' => 'overlap',
+            'requests' => [
+                ['GET', 'http://localhost/admin/a%20b', 0, 1],
+                ['GET', 'http://localhost/admin', 1, 1],
+                ['GET', 'http://localhost/a%20b', 0, 0],
+            ],
+        ];
+
+        yield 'a path of "0" is no path' => [
+            'rules' => [['path' => '0'], ['path' => '^/admin']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin', 0, 1],
+                ['GET', 'http://localhost/shop', 0, 0],
+            ],
+        ];
+
+        yield 'a host ending on a space after its end takes no request' => [
+            'rules' => [['path' => '^/admin', 'host' => '^admin\.example\.com$ '], ['path' => '^/admin', 'host' => '^admin\.example\.com$']],
+            'expected' => null,
+            'requests' => [
+                ['GET', 'http://admin.example.com/admin', 1, 1],
+            ],
+        ];
+
+        yield 'a host of "0" is no host' => [
+            'rules' => [['path' => '^/admin', 'host' => '0'], ['path' => '^/admin']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://admin.example.com/admin', 0, 1],
+                ['GET', 'http://shop.example.com/admin', 0, 1],
+            ],
+        ];
+
         yield 'paths that share no request are no conflict' => [
             'rules' => [['path' => '^/admin'], ['path' => '^/api']],
             'expected' => null,
@@ -474,36 +530,32 @@ final class AccessControlOrderTest extends TestCase
 
     /**
      * The index of the rule Symfony's AccessMap applies to the request, in
-     * the order of the array, or null when none does.
+     * the order of the array, or null when none does. Each rule is given
+     * the request matcher the security bundle chains for it.
      *
      * @param array<int, OrderRule> $rules
      * @param array<string, string> $attributes the attributes the router gave the request
      */
     private static function ruleApplied(array $rules, string $method, string $url, string $address, array $attributes = []): ?int
     {
-        $map = new AccessMap();
+        $accessControl = [];
         foreach ($rules as $index => $rule) {
-            $matchers = [];
-            if (isset($rule['path'])) {
-                $matchers[] = new PathRequestMatcher($rule['path']);
-            }
-            if (isset($rule['host'])) {
-                $matchers[] = new HostRequestMatcher($rule['host']);
-            }
-            if (isset($rule['methods'])) {
-                $matchers[] = new MethodRequestMatcher($rule['methods']);
-            }
-            if (isset($rule['ips'])) {
-                $matchers[] = new IpsRequestMatcher($rule['ips']);
-            }
-            $required = ($rule['attributes'] ?? []) + (isset($rule['route']) ? ['_route' => $rule['route']] : []);
-            if ([] !== $required) {
-                $matchers[] = new AttributesRequestMatcher($required);
-            }
-            if (isset($rule['port'])) {
-                $matchers[] = new PortRequestMatcher($rule['port']);
-            }
-            $map->add(new ChainRequestMatcher($matchers), ['RULE_'.$index]);
+            $accessControl[] = ['roles' => ['RULE_'.$index]] + $rule;
+        }
+
+        $container = new ContainerBuilder();
+        (new SecurityExtension())->load([['firewalls' => ['main' => ['security' => false]], 'access_control' => $accessControl]], $container);
+
+        $map = new AccessMap();
+        foreach ($container->getDefinition('security.access_map')->getMethodCalls() as $call) {
+            self::assertIsArray($call);
+            self::assertIsArray($call[1]);
+            [$matcher, $roles] = $call[1];
+            self::assertInstanceOf(Reference::class, $matcher);
+            self::assertIsArray($roles);
+            $chain = $container->get((string) $matcher);
+            self::assertInstanceOf(RequestMatcherInterface::class, $chain);
+            $map->add($chain, $roles);
         }
 
         $request = Request::create($url, $method, server: ['REMOTE_ADDR' => $address]);

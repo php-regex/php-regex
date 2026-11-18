@@ -17,12 +17,15 @@ use PHPRegex\Symfony\Security\SecurityPatternNormalizer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestMatcher\HostRequestMatcher;
+use Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher;
 
 /**
  * Symfony matches a path with preg_match('{'.$path.'}s', ...) and a host
  * with preg_match('{'.$host.'}i', ...) (PathRequestMatcher,
  * HostRequestMatcher): the normalized pattern is that pattern, so a path
- * or a host is a fragment, never a delimited pattern.
+ * or a host is a fragment, never a delimited pattern, taken as written.
  */
 final class SecurityPatternNormalizerTest extends TestCase
 {
@@ -44,6 +47,41 @@ final class SecurityPatternNormalizerTest extends TestCase
         yield 'path holding a hash' => ['pattern' => '^/a#b', 'host' => false, 'expected' => '{^/a#b}s'];
         yield 'host' => ['pattern' => '^api\.example\.com$', 'host' => true, 'expected' => '{^api\.example\.com$}i'];
         yield 'empty path' => ['pattern' => '', 'host' => false, 'expected' => '{}s'];
+        yield 'path opening with a space' => ['pattern' => ' ^/admin', 'host' => false, 'expected' => '{ ^/admin}s'];
+        yield 'path ending on an escaped line feed' => ['pattern' => "^/a\\\n", 'host' => false, 'expected' => "{^/a\\\n}s"];
+        yield 'host ending on a tab' => ['pattern' => "^example\\.com\t", 'host' => true, 'expected' => "{^example\\.com\t}i"];
+    }
+
+    /**
+     * PathRequestMatcher and HostRequestMatcher compile the path or the
+     * host as written: a space or a tab at either end is part of the
+     * pattern, and a backslash before a line feed that ends it escapes
+     * that line feed.
+     */
+    #[Test]
+    #[DataProvider('provideUntrimmedPatterns')]
+    public function test_normalize_keeps_the_spaces_symfony_compiles(string $pattern, bool $host, string $url, bool $matches): void
+    {
+        $request = Request::create($url);
+        $this->assertSame($matches, ($host ? new HostRequestMatcher($pattern) : new PathRequestMatcher($pattern))->matches($request));
+
+        $subject = $host ? $request->getHost() : rawurldecode($request->getPathInfo());
+        $this->assertSame($matches ? 1 : 0, preg_match((new SecurityPatternNormalizer())->normalize($pattern, $host), $subject));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, host: bool, url: string, matches: bool}>
+     */
+    public static function provideUntrimmedPatterns(): iterable
+    {
+        yield 'path ending on an escaped line feed' => ['pattern' => "^/a\\\n", 'host' => false, 'url' => 'http://localhost/a%0A', 'matches' => true];
+        yield 'path opening with a space' => ['pattern' => ' ^/admin', 'host' => false, 'url' => 'http://localhost/admin', 'matches' => false];
+        yield 'path ending on a space after its end' => ['pattern' => '^/admin$ ', 'host' => false, 'url' => 'http://localhost/admin', 'matches' => false];
+        yield 'path ending on a space the request path holds' => ['pattern' => '^/admin ', 'host' => false, 'url' => 'http://localhost/admin%20', 'matches' => true];
+        yield 'path ending on a tab' => ['pattern' => "^/admin\t", 'host' => false, 'url' => 'http://localhost/admin', 'matches' => false];
+        yield 'path of spaces only' => ['pattern' => '  ', 'host' => false, 'url' => 'http://localhost/admin', 'matches' => false];
+        yield 'host opening with a space' => ['pattern' => ' admin\.example\.com', 'host' => true, 'url' => 'http://admin.example.com/', 'matches' => false];
+        yield 'host ending on a tab after its end' => ['pattern' => "^admin\\.example\\.com$\t", 'host' => true, 'url' => 'http://admin.example.com/', 'matches' => false];
     }
 
     /**

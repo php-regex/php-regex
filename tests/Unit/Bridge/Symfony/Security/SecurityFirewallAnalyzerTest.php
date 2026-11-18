@@ -18,6 +18,8 @@ use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher;
 
 final class SecurityFirewallAnalyzerTest extends TestCase
 {
@@ -59,5 +61,24 @@ final class SecurityFirewallAnalyzerTest extends TestCase
         $this->assertNotSame('', $report->skippedFirewalls[0]['reason']);
         $this->assertStringNotContainsString('ReDoS analysis failed', $report->skippedFirewalls[0]['reason']);
         $this->assertSame(['main'], array_column($report->findings, 'name'));
+    }
+
+    /**
+     * The security bundle compiles a firewall pattern as written: one
+     * ending on a backslash and a line feed matches that line feed, and
+     * its firewall is analysed, not skipped.
+     */
+    #[Test]
+    public function test_a_pattern_ending_on_an_escaped_line_feed_is_analysed(): void
+    {
+        $pattern = "^/api/(a+)+\\\n";
+        $this->assertTrue((new PathRequestMatcher($pattern))->matches(Request::create('/api/aa%0A')));
+
+        $report = (new SecurityFirewallAnalyzer(Regex::create()))->analyze([
+            ['name' => 'api', 'file' => 'security.yaml', 'line' => 4, 'pattern' => $pattern, 'requestMatcher' => null],
+        ], RedosSeverity::High);
+
+        $this->assertSame([], $report->skippedFirewalls);
+        $this->assertSame(['api'], array_column($report->findings, 'name'));
     }
 }

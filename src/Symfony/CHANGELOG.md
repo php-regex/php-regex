@@ -14,6 +14,13 @@ CHANGELOG
    `(?<=a+)b`, leaves its rule out as an invalid path regex, and a host PCRE
    refuses is not evaluated, where the first stopped the command and the
    second was compared.
+ * `regex:security` and `regex:analyze` read an `access_control` path or
+   host, and a firewall pattern, as written, as the security bundle
+   compiles it: `^/admin\` and a line feed matches that line feed, where it
+   was trimmed into an invalid path regex and its rule left out, and
+   `' ^/admin'` matches no path, where it was read as `^/admin`. A path or
+   a host of spaces only is one, where it was read as none, and one of
+   `"0"` is none, as the bundle reads it.
  * `regex:security` and `regex:analyze` read the `port`, `route` and
    `attributes` of an `access_control` rule, as the security bundle chains
    them to its request matcher: an earlier rule holding one the later rule

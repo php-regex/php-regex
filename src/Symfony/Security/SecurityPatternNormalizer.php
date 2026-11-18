@@ -17,7 +17,8 @@ namespace PHPRegex\Symfony\Security;
  * The pattern Symfony matches a security path or host with:
  * preg_match('{'.$path.'}s', ...) in PathRequestMatcher and
  * preg_match('{'.$host.'}i', ...) in HostRequestMatcher. A path or a host
- * is a fragment, never a delimited pattern, and gets no anchor.
+ * is a fragment, never a delimited pattern, and is compiled as written: it
+ * gets no anchor, and a space or a line feed at either end is part of it.
  *
  * @internal
  */
@@ -25,6 +26,6 @@ final class SecurityPatternNormalizer
 {
     public function normalize(string $pattern, bool $host = false): string
     {
-        return '{'.trim($pattern, " \t\n\r\0\x0B").'}'.($host ? 'i' : 's');
+        return '{'.$pattern.'}'.($host ? 'i' : 's');
     }
 }

@@ -341,8 +341,11 @@ Each one is read as the pattern Symfony runs:
   rewrite that only drops a flag, and a repeated unnamed group (the router
   makes it non-capturing) are not reported.
 - A security `path` (in `access_control` or as a firewall `pattern`) is
-  matched with `{...}s`, and a `host` with `{...}i`, without anchors:
-  `path: /api` matches `/v1/api` too. The options a path opens with,
+  matched with `{...}s`, and a `host` with `{...}i`, as written and without
+  anchors: `path: /api` matches `/v1/api` too, and a space or a line feed
+  at either end is part of the pattern, so `' ^/admin'` matches no path.
+  An `access_control` path or host of `""` or `"0"` is none, as the
+  security bundle reads it. The options a path opens with,
   `(*UTF)` or `(*LIMIT_MATCH=1000)`, are read there, as PCRE reads them,
   and a path ending on a comment of the `x` flag or on a `\Q` left open
   means what it means alone: `(?x)^/admin  # back office` takes every path

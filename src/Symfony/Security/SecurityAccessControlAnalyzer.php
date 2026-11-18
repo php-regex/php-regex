@@ -269,7 +269,7 @@ final class SecurityAccessControlAnalyzer
         $path = $rule['path'];
         $route = $rule['route'] ?? null;
         $attributes = $rule['attributes'] ?? [];
-        if (null === $path || '' === trim((string) $path, " \t\n\r\0\x0B")) {
+        if (!self::chainsAMatcher($path)) {
             $path = '';
             // A route or request attributes keep the rule to the paths the
             // router gives them; methods, a host, a port or addresses keep
@@ -312,8 +312,8 @@ final class SecurityAccessControlAnalyzer
 
         $hostPattern = null;
         $hostUnsupported = false;
-        $host = $rule['host'];
-        if (null !== $host && '' !== trim($host, " \t\n\r\0\x0B")) {
+        $host = self::chainsAMatcher($rule['host']) ? $rule['host'] : null;
+        if (null !== $host) {
             $hostPattern = $this->normalizePattern($host, true);
             if (null === $hostPattern) {
                 $hostUnsupported = true;
@@ -346,6 +346,18 @@ final class SecurityAccessControlAnalyzer
             'accessLevel' => $this->resolveAccessLevel($roles, $rule['allowIf']),
             'notes' => $notes,
         ];
+    }
+
+    /**
+     * Whether SecurityExtension chains a request matcher for a path or a
+     * host: it tests the value as PHP does, so "" and "0" are none, and a
+     * value holding only spaces is one, compiled as written.
+     *
+     * @phpstan-assert-if-true string $value
+     */
+    private static function chainsAMatcher(?string $value): bool
+    {
+        return null !== $value && '' !== $value && '0' !== $value;
     }
 
     /**
