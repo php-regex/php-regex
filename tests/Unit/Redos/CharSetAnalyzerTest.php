@@ -543,6 +543,70 @@ final class CharSetAnalyzerTest extends TestCase
     }
 
     /**
+     * A lookaround reads nothing: the characters a match starts and ends
+     * with are those of the items around it, whatever its body reads, at
+     * the head of the pattern, at its tail, and alone, where the pattern
+     * reads nothing. The engine is the oracle: each match PCRE finds at
+     * each offset of every text of up to four of "a", "b" and "x" starts
+     * and ends with a character of the set. A positive lookaround keeps
+     * the set of the item it stands before or after, which holds the
+     * characters it lets through. A branch that may match empty, a
+     * lookaround or nothing at all, lets the items after or before the
+     * alternation lead as well.
+     */
+    #[Test]
+    #[DataProvider('provideLookarounds')]
+    public function test_a_lookaround_reads_nothing(string $pattern, string $first, string $last): void
+    {
+        $this->requiresCompile($pattern);
+        $regex = RegexParser::create(['cache' => null])->parse($pattern);
+        $analyzer = CharSetAnalyzer::forRegex($regex);
+
+        [$starts, $ends] = self::boundaryBytes($pattern);
+        foreach (['first' => [$analyzer->firstChars($regex), $first, $starts], 'last' => [$analyzer->lastChars($regex), $last, $ends]] as $side => [$set, $expected, $seen]) {
+            $this->assertFalse($set->isUnknown(), $pattern.' '.$side);
+            foreach (str_split('abx') as $char) {
+                $this->assertSame(str_contains($expected, $char), $set->intersects(ByteCharSet::fromChar($char)), \sprintf('%s %s: %s', $pattern, $side, $char));
+            }
+            foreach ($seen as $char) {
+                $this->assertStringContainsString($char, $expected, \sprintf('Oracle: a match of %s %s with "%s".', $pattern, 'first' === $side ? 'starts' : 'ends', $char));
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, first: string, last: string}>
+     */
+    public static function provideLookarounds(): iterable
+    {
+        yield 'a negative lookahead at the head' => ['pattern' => '/(?!x)a/', 'first' => 'a', 'last' => 'a'];
+        yield 'a positive lookahead at the head' => ['pattern' => '/(?=[ab])a/', 'first' => 'a', 'last' => 'a'];
+        yield 'a positive lookbehind at the head' => ['pattern' => '/(?<=x)a/', 'first' => 'a', 'last' => 'a'];
+        yield 'a negative lookbehind at the head' => ['pattern' => '/(?<!x)a/', 'first' => 'a', 'last' => 'a'];
+        yield 'a positive lookahead at the tail' => ['pattern' => '/a(?=x)/', 'first' => 'a', 'last' => 'a'];
+        yield 'a negative lookahead at the tail' => ['pattern' => '/a(?!x)/', 'first' => 'a', 'last' => 'a'];
+        yield 'a positive lookbehind at the tail' => ['pattern' => '/[ab](?<=b)/', 'first' => 'ab', 'last' => 'ab'];
+        yield 'a negative lookbehind at the tail' => ['pattern' => '/a(?<!x)/', 'first' => 'a', 'last' => 'a'];
+        yield 'a lookaround on each side' => ['pattern' => '/(?<=x)(?!b)a(?=b)(?<!x)/', 'first' => 'a', 'last' => 'a'];
+        yield 'a lookahead before an optional item' => ['pattern' => '/(?!x)a?b/', 'first' => 'ab', 'last' => 'b'];
+        yield 'a lookahead in a group' => ['pattern' => '/(?:(?!x))a/', 'first' => 'a', 'last' => 'a'];
+        yield 'a lookahead in a branch' => ['pattern' => '/(?:(?=x)|b)a/', 'first' => 'ab', 'last' => 'a'];
+        yield 'a lookahead between two items' => ['pattern' => '/a(?!x)b/', 'first' => 'a', 'last' => 'b'];
+        yield 'an empty branch before an item' => ['pattern' => '/(?:|b)a/', 'first' => 'ab', 'last' => 'a'];
+        yield 'an empty branch after an item' => ['pattern' => '/a(?:b|)/', 'first' => 'a', 'last' => 'ab'];
+        yield 'an optional branch before an item' => ['pattern' => '/(?:b|x?)a/', 'first' => 'abx', 'last' => 'a'];
+        yield 'a positive lookahead alone' => ['pattern' => '/(?=a)/', 'first' => '', 'last' => ''];
+        yield 'a negative lookbehind alone' => ['pattern' => '/(?<!x)/', 'first' => '', 'last' => ''];
+        yield 'the alphabetic negative lookahead' => ['pattern' => '/(*nla:x)a/', 'first' => 'a', 'last' => 'a'];
+        yield 'the alphabetic positive lookahead' => ['pattern' => '/a(*positive_lookahead:x)/', 'first' => 'a', 'last' => 'a'];
+        yield 'the alphabetic positive lookbehind' => ['pattern' => '/(*plb:x)a/', 'first' => 'a', 'last' => 'a'];
+        yield 'the alphabetic negative lookbehind' => ['pattern' => '/a(*negative_lookbehind:x)/', 'first' => 'a', 'last' => 'a'];
+        yield 'the non-atomic positive lookahead' => ['pattern' => '/(*napla:x)a|a/', 'first' => 'a', 'last' => 'a'];
+        yield 'the non-atomic positive lookbehind' => ['pattern' => '/a(?<*x)/', 'first' => 'a', 'last' => 'a'];
+        yield 'a scan of a captured substring at the tail' => ['pattern' => '/(a)b(*scs:(1)a)/', 'first' => 'a', 'last' => 'b'];
+    }
+
+    /**
      * The analyzer of the pattern, and its last atom: the one after the
      * options it opens with.
      *
@@ -559,6 +623,40 @@ final class CharSetAnalyzerTest extends TestCase
         $inForce = CharSetAnalyzer::forRegex($regex, $readsAboveAscii)->inForce($regex);
 
         return [$inForce[$node], $node];
+    }
+
+    /**
+     * The characters the matches PCRE finds start and end with: at each
+     * offset of every text of up to four of "a", "b" and "x", the match
+     * that starts there, read with what comes before it.
+     *
+     * @return array{list<string>, list<string>}
+     */
+    private static function boundaryBytes(string $pattern): array
+    {
+        $anchored = $pattern[0].'\G(?:'.substr($pattern, 1, (int) strrpos($pattern, $pattern[0]) - 1).')'.substr($pattern, (int) strrpos($pattern, $pattern[0]));
+        $texts = [''];
+        $starts = [];
+        $ends = [];
+        for ($length = 1; $length <= 4; $length++) {
+            $longer = [];
+            foreach ($texts as $text) {
+                foreach (['a', 'b', 'x'] as $char) {
+                    $longer[] = $text.$char;
+                }
+            }
+            $texts = $longer;
+            foreach ($texts as $text) {
+                for ($offset = 0; $offset < $length; $offset++) {
+                    if (1 === preg_match($anchored, $text, $match, 0, $offset) && '' !== $match[0]) {
+                        $starts[$match[0][0]] = true;
+                        $ends[$match[0][-1]] = true;
+                    }
+                }
+            }
+        }
+
+        return [array_map(strval(...), array_keys($starts)), array_map(strval(...), array_keys($ends))];
     }
 
     /**

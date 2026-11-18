@@ -220,8 +220,10 @@ final class CharSetAnalyzer
             return $node->isNegated ? $this->complement($set) : $set;
         }
 
+        // A lookaround reads nothing, whatever its body reads: "(?!x)a"
+        // starts with "a", and "a(?=x)" ends with it.
         if ($node instanceof GroupNode) {
-            return $this->inside($node)->walk($node->child, $fromStart);
+            return self::readsNothing($node) ? ByteCharSet::empty() : $this->inside($node)->walk($node->child, $fromStart);
         }
 
         // A script run matches what its body matches, in one script.
@@ -654,6 +656,15 @@ final class CharSetAnalyzer
             && $group->getEndPosition() - $group->getStartPosition() === \strlen($group->flags) + 3;
     }
 
+    /**
+     * Whether the group is a lookaround, or the scan of a captured
+     * substring, which the engine reads without taking a character.
+     */
+    private static function readsNothing(GroupNode $group): bool
+    {
+        return \in_array($group->type, [GroupType::LookaheadPositive(), GroupType::LookaheadNegative(), GroupType::LookbehindPositive(), GroupType::LookbehindNegative(), GroupType::ScanSubstring()], true);
+    }
+
     private static function bytes(string $bytes): ByteCharSet
     {
         $set = ByteCharSet::empty();
@@ -708,11 +719,23 @@ final class CharSetAnalyzer
         }
 
         if ($node instanceof GroupNode) {
-            return $this->isOptionalNode($node->child, $fromStart);
+            return self::readsNothing($node) || $this->isOptionalNode($node->child, $fromStart);
         }
 
         if ($node instanceof ScriptRunNode) {
             return null !== $node->content && $this->isOptionalNode($node->content, $fromStart);
+        }
+
+        // An alternation may match empty through any of its branches:
+        // "(?:|b)a" matches "a".
+        if ($node instanceof AlternationNode) {
+            foreach ($node->alternatives as $alternative) {
+                if ($this->isOptionalNode($alternative, $fromStart)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         if ($node instanceof SequenceNode) {

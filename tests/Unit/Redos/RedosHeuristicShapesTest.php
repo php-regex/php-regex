@@ -775,6 +775,7 @@ final class RedosHeuristicShapesTest extends TestCase
         yield 'a lookahead before a run that may be empty' => ['pattern' => '/^(?:(?!\.\n)[\n.]*[^\n.]+)*$/', 'end' => "\n\n"];
         yield 'a lookahead on each side of a run that may be empty' => ['pattern' => '/^(?:(?!\.\n|\n{2})[\n.]*(?![ \t]*@)[^\n.]+)*$/', 'end' => "\n\n"];
         yield 'a lookahead at the head of each branch' => ['pattern' => '/^(?:(?!x)a+|(?!y)b)*$/', 'end' => '!'];
+        yield 'a lookahead before a branch that starts as the other' => ['pattern' => '/^(?:(?!x)a|a)+$/', 'end' => '!'];
     }
 
     #[Test]
