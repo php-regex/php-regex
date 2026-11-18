@@ -174,9 +174,12 @@ final class OverlappingAlternationRule extends AbstractLintRule
             $charSet = $caseless ? self::foldCharSet($charSet) : $charSet;
             // Under u a byte past ASCII is the lead or a continuation byte
             // of a character: two characters sharing a lead byte meet there.
+            // Without u it is a character the sets class in ASCII alone,
+            // where "\W" or "[^a]" takes it under PCRE2's own tables and
+            // "\w" under a Latin-1 locale's.
             if ($charSet->isUnknown()) {
                 $anyUnknown = true;
-            } elseif ($context->pattern->unicodeMode && $charSet->intersects(ByteCharSet::fromRange(0x80, 0xFF))) {
+            } elseif ($context->pattern->unicodeMode || $charSet->intersects(ByteCharSet::fromBytes(0x80, 0xFF))) {
                 $pastAscii = true;
             }
             $charSets[] = $charSet;
@@ -184,9 +187,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
         // At least one charset is unknown, a byte past ASCII read caselessly
         // included, which folds as the target's tables say: the sets are
-        // asked of PCRE. Under u, bytes past ASCII are asked of PCRE too,
-        // which reads characters; where it judges no branch, the bytes
-        // stand, two characters sharing a lead byte meeting there.
+        // asked of PCRE. Under u, and without it for a byte past ASCII, the
+        // sets are asked of PCRE too, which reads characters under the
+        // target's tables; where it judges no branch, the bytes stand, two
+        // characters sharing a lead byte meeting there.
         $sets = match (true) {
             $anyUnknown => $this->setsFromPcre($node, $context),
             $pastAscii => $this->setsFromPcre($node, $context) ?? array_map(self::alphabetSet(...), $charSets),

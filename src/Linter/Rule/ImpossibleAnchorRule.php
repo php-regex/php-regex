@@ -19,6 +19,7 @@ use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\GroupIndex as PcreGroups;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -392,6 +393,12 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             return $this->newlineReads[$key] = true === LanguageQuestions::areDisjoint($atomPattern, $characterPattern, $context->dfas, $context->target) ? false : null;
         };
 
-        return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, $before);
+        // A byte above ASCII may be a word character under u, under (*UCP)
+        // and under the tables of a locale other than PCRE2's own.
+        $wordAboveAscii = $context->pattern->unicodeMode
+            || str_contains(StartOptions::of($context->pattern->source), '(*UCP)')
+            || CharacterTables::BUILT_IN !== $context->target->locale;
+
+        return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, $before, $wordAboveAscii);
     }
 }

@@ -81,6 +81,9 @@ final class OverlappingAlternationLocaleTest extends TestCase
         foreach (['C' => false, self::LATIN1 => true] as $locale => $word) {
             yield 'a word character or "\xE9", '.$locale => ['pattern' => '/(?:\w|\xE9)+/', 'locale' => $locale, 'reported' => $word];
             yield 'no word character or "\xE9", '.$locale => ['pattern' => '/(?:\W|\xE9)+/', 'locale' => $locale, 'reported' => !$word];
+            // The byte written as it is, not as an escape.
+            yield 'a word character or the byte 0xE9, '.$locale => ['pattern' => "/(?:\\w|\xE9)+/", 'locale' => $locale, 'reported' => $word];
+            yield 'no word character or the byte 0xE9, '.$locale => ['pattern' => "/(?:\\W|\xE9)+/", 'locale' => $locale, 'reported' => !$word];
         }
     }
 }

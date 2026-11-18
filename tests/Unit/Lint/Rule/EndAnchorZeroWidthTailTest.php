@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,6 +30,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class EndAnchorZeroWidthTailTest extends TestCase
 {
+    use InstalledLocales;
     use PcreGates;
 
     /**
@@ -100,6 +103,10 @@ final class EndAnchorZeroWidthTailTest extends TestCase
         yield 'non-boundary after a non-word character' => ['pattern' => '/-$\B\n/', 'subject' => "-\n"];
         yield 'word boundary after a letter above ASCII under UCP' => ['pattern' => '/(*UCP)\xaa$\b\n/', 'subject' => "\xaa\n"];
         yield 'word boundary after the last letter of Latin-1 under UCP' => ['pattern' => '/(*UCP)\xff$\b\n/', 'subject' => "\xff\n"];
+        // A byte above ASCII written as it is, not as an escape.
+        yield 'word boundary after a letter of Latin-1 written as a byte under UCP' => ['pattern' => "/(*UCP)\xFF\$\\b\\n/", 'subject' => "\xFF\n"];
+        yield 'non-boundary after a byte above ASCII, no word character in C' => ['pattern' => "/\xFF\$\\B\\n/", 'subject' => "\xFF\n"];
+        yield 'word boundary after a two-byte letter under u' => ['pattern' => '/é$\b\n/u', 'subject' => "é\n"];
     }
 
     #[Test]
@@ -155,12 +162,36 @@ final class EndAnchorZeroWidthTailTest extends TestCase
     }
 
     /**
+     * Under another locale the tables say which bytes above ASCII are word
+     * characters: under fr_FR.ISO8859-1 "\xE9" is one, and "\b" holds
+     * between it and the newline, as it does not under C.
+     */
+    #[Test]
+    public function test_a_word_boundary_after_a_byte_above_ascii_follows_the_locale(): void
+    {
+        $locale = 'fr_FR.ISO8859-1';
+        $this->requiresLocale($locale, 'The Latin-1 row');
+        $pattern = "/\xE9\$\\b\\n/";
+
+        $this->assertSame(0, preg_match($pattern, "\xE9\n"), 'Oracle: under C "\xE9" is no word character.');
+        $matched = new \ArrayObject();
+        CharacterTables::under($locale, static function () use ($pattern, $matched): void {
+            $matched[] = preg_match($pattern, "\xE9\n");
+        });
+        $this->assertSame([1], $matched->getArrayCopy(), 'Oracle: under the Latin-1 locale "\xE9" is a word character.');
+
+        $this->assertContains('regex.lint.anchor.impossible.end', $this->issueIds($pattern));
+        $this->assertNotContains('regex.lint.anchor.impossible.end', $this->issueIds($pattern, $locale));
+    }
+
+    /**
      * @return list<string>
      */
-    private function issueIds(string $pattern): array
+    private function issueIds(string $pattern, ?string $locale = null): array
     {
-        $linter = new PatternLinter();
-        Regex::create(['cache' => null])->parse($pattern)->accept($linter);
+        $regex = Regex::create(null === $locale ? ['cache' => null] : ['cache' => null, 'locale' => $locale]);
+        $linter = new PatternLinter([], $regex->target());
+        $regex->parse($pattern)->accept($linter);
 
         return array_map(static fn ($issue): string => $issue->id, $linter->getIssues());
     }
