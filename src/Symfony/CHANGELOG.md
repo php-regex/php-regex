@@ -56,7 +56,8 @@ CHANGELOG
    a rule holding one in its path, host, addresses, route or attributes is
    restricted to a value the analysis cannot know, shadows no later rule
    through it, and notes
-   `Values read from the environment are not evaluated: host.`; a firewall
+   `Values read from the environment are not evaluated: host.`, with no
+   example path when the path is read so; a firewall
    whose pattern holds one is skipped, with that reason. Two rules reading
    a field through the same expression, the same processors over the same
    variable, compare as holding one value, so the shadow between them is

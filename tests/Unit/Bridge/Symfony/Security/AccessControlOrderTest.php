@@ -685,6 +685,9 @@ final class AccessControlOrderTest extends TestCase
         $this->assertSame('carve-out' === $expected ? 1 : 0, $report->stats['carve_outs']);
         if (null !== $expected && 'carve-out' !== $expected) {
             $this->assertContains('Values read from the environment are not evaluated: '.$field.'.', $report->conflicts[0]['notes']);
+            // A path read from the environment is compared as every path,
+            // which gives no path both rules take.
+            $this->assertSame('path' === $field, null === $report->conflicts[0]['example']);
         }
     }
 

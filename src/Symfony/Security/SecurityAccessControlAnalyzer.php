@@ -167,7 +167,9 @@ final class SecurityAccessControlAnalyzer
                     continue;
                 }
 
-                $example = $intersection->example;
+                // A path read from the environment is read as every path:
+                // a path both would take is none the rules are known to.
+                $example = \in_array('path', $left['fromEnvironment'], true) || \in_array('path', $right['fromEnvironment'], true) ? null : $intersection->example;
                 $isEquivalent = $equivalence->isEquivalent && $laterPathInEarlier && $earlierPathInLater;
                 if ($isEquivalent) {
                     $equivalent++;
