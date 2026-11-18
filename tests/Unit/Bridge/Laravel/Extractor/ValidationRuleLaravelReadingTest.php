@@ -572,6 +572,32 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
+     * A rule whose name and colon two literals write is read, in a file
+     * that writes neither elsewhere.
+     */
+    #[Test]
+    public function test_a_rule_whose_name_and_colon_are_two_literals_is_read(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            return [
+                'a' => 'regex' . ':/[/',
+                'b' => "required|not_regex" . ':/^(b|c)$/',
+                'c' => ['regex ' . ' :/^d$/'],
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = self::laravelPatterns($rules);
+        $this->assertSame(['/[/', '/^(b', '/^d$/'], $expected);
+        $this->assertSame([false, false, true], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[3, '/[/'], [4, '/^(b'], [5, '/^d$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
      * A rules string given to a call is a rules string: Validator::sometimes()
      * explodes [$key => $rules], and ConditionalRules::rules() explodes a
      * string on "|". An element of an array literal, an argument of the call
