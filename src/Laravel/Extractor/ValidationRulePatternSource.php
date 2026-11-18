@@ -313,13 +313,14 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * to a key ('a' => '…'), assigned ($rules['a'] = '…'), taken by a call
      * as rules (RULES_ARGUMENTS) or an element of the array of rule sets a
      * call takes (RULE_SETS_ARGUMENTS). One element is pushed
-     * ($rules['a'][] = '…') or appended by array_push() or array_unshift():
-     * Laravel reads "nullable|regex:/a/" there as one rule named
-     * "nullable|regex", and runs no pattern. Parentheses that only group
-     * the expression change nothing.
+     * ($rules['a'][] = '…'), appended by array_push() or array_unshift(), or
+     * the rule of one of two Livewire attributes of a property: Laravel
+     * reads "nullable|regex:/a/" there as one rule named "nullable|regex",
+     * and runs no pattern. Parentheses that only group the expression
+     * change nothing.
      *
      * @param int                                                                                    $start   the offset of the first token of the expression
-     * @param array{rules: array<int, true>, grouping: array<int, true>, appended: array<int, true>} $reading what the tokens of the file say, from tokenReading()
+     * @param array{rules: array<int, true>, grouping: array<int, true>, elements: array<int, true>} $reading what the tokens of the file say, from tokenReading()
      */
     private function rulesStringContext(string $content, int $start, array $reading): ?bool
     {
@@ -338,7 +339,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 return true;
             }
 
-            return isset($reading['appended'][$start]) ? false : null;
+            return isset($reading['elements'][$start]) ? false : null;
         }
 
         $before = $this->previousNonWhitespace($content, $before - 1);
@@ -360,22 +361,23 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     /**
      * The offsets of the tokens of the file that start an argument a call
      * takes as rules, by position or by name, or an element of the array of
-     * rule sets a call takes, of those that start an argument array_push()
-     * or array_unshift() appends as an element, and of the parentheses that
+     * rule sets a call takes, of those that start one element, an argument
+     * array_push() or array_unshift() appends, and of the parentheses that
      * only group what they hold. A token is in the innermost bracket around
      * it that does not only group. The rule of a Livewire attribute is a
-     * rules string where it is the only one of its declaration.
+     * rules string where it is the only one of its declaration, and one
+     * element of the list Livewire merges where it is one of several.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $offsets
      *
-     * @return array{rules: array<int, true>, grouping: array<int, true>, appended: array<int, true>}
+     * @return array{rules: array<int, true>, grouping: array<int, true>, elements: array<int, true>}
      */
     private static function tokenReading(array $tokens, array $offsets): array
     {
         $rules = [];
         $grouping = [];
-        $appended = [];
+        $elements = [];
         $count = \count($tokens);
         $closers = PhpTokens::closers($tokens);
         $context = new NameResolutionContext();
@@ -383,10 +385,10 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         // read, and how many of Livewire's rule attributes the run holds.
         $run = [-1, 0];
         // Each open bracket, null where it only groups: the arguments it
-        // takes as rules and as an array of rule sets, whether it appends
-        // its arguments after the first, whether it is an array of rule
-        // sets, whether it opens an attribute group, the position of the
-        // argument read and its name.
+        // takes as rules, as an array of rule sets and as one element,
+        // whether it appends its arguments after the first, whether it is
+        // an array of rule sets, whether it opens an attribute group, the
+        // position of the argument read and its name.
         $brackets = [];
         foreach ($tokens as $index => $token) {
             if (\is_array($token) && \T_NAMESPACE === $token[0]) {
@@ -415,13 +417,15 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                         $outer = $brackets[$level];
                     }
                     $inAttribute = null !== $outer && $outer['attribute'];
+                    $livewire = $call && $inAttribute && self::isLivewireRuleAttribute($tokens[$previous], $context);
                     $brackets[] = [
                         'rules' => match (true) {
-                            !$call => [],
-                            $inAttribute => 1 === $run[1] && self::isLivewireRuleAttribute($tokens[$previous], $context) ? [0 => 'rule'] : [],
+                            !$call || ($inAttribute && !$livewire) => [],
+                            $livewire => 1 === $run[1] ? [0 => 'rule'] : [],
                             default => self::rulesArgumentsOf($tokens, $previous),
                         },
                         'sets' => $call ? self::ruleSetsArgumentsOf($tokens, $previous) : [],
+                        'elements' => $livewire && $run[1] > 1 ? [0 => 'rule'] : [],
                         'appends' => $call && self::appendsElements($tokens, $previous),
                         'holdsSets' => $array && null !== $outer && self::isOneOf($outer['sets'], $outer['position'], $outer['name']),
                         'attribute' => $attribute,
@@ -442,7 +446,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             $top = \count($brackets) - 1;
             if (',' === $token || ':' === $token) {
                 $bracket = $brackets[$top] ?? null;
-                if (null === $bracket || ([] === $bracket['rules'] && [] === $bracket['sets'] && !$bracket['appends'])) {
+                if (null === $bracket || ([] === $bracket['rules'] && [] === $bracket['sets'] && [] === $bracket['elements'] && !$bracket['appends'])) {
                     continue;
                 }
 
@@ -474,12 +478,12 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             if (null !== $bracket && ($bracket['holdsSets'] || self::isOneOf($bracket['rules'], $bracket['position'], $bracket['name']))) {
                 $rules[$offsets[$index]] = true;
             }
-            if (null !== $bracket && $bracket['appends'] && $bracket['position'] > 0) {
-                $appended[$offsets[$index]] = true;
+            if (null !== $bracket && (($bracket['appends'] && $bracket['position'] > 0) || self::isOneOf($bracket['elements'], $bracket['position'], $bracket['name']))) {
+                $elements[$offsets[$index]] = true;
             }
         }
 
-        return ['rules' => $rules, 'grouping' => $grouping, 'appended' => $appended];
+        return ['rules' => $rules, 'grouping' => $grouping, 'elements' => $elements];
     }
 
     /**

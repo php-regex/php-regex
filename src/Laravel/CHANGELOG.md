@@ -87,7 +87,9 @@ CHANGELOG
    rules: a string, given first or named `rule`, is split on every `|`,
    `#[Validate('regex:/^(a|b)$/')]` runs `/^(a`, where `/^(a|b)$/` was
    linted. A list keeps one rule per element, and so do the strings of two
-   attributes of one property, which Livewire merges into one list.
+   attributes of one property, which Livewire merges into one list:
+   `'nullable|regex:/^a$/'` there is one rule Laravel names
+   `nullable|regex`, and no pattern is linted.
  * `regex:lint` reads validation rules from the string literals of the PHP
    code as PHP reads them, where it searched the file's text for quotes. A
    rule whose `:` an escape writes, `"regex\x3a/^a$/"`, is read; a literal

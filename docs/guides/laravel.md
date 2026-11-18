@@ -399,7 +399,9 @@ rules a call takes are a rules string too, given by position or by name:
 `#[Validate]` or `#[Rule]` is the rules string of the property it marks:
 `#[Validate('regex:/^(a|b)$/')]` hands `/^(a` to `preg_match()`, unless a
 second attribute of the property gives it rules too, which Livewire merges
-into one list. A string another call takes is one rule:
+into one list: each string is then one rule, and `'nullable|regex:/^a$/'`
+one rule Laravel names `nullable|regex`. A string another call takes is one
+rule:
 `array_push($rules['code'], 'regex:/^(a|b)$/')` appends one element, and
 one element with a rule before the regex one, `'nullable|regex:/^a$/'`, is a
 rule Laravel names `nullable|regex`, which runs no pattern. The

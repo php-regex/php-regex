@@ -760,6 +760,50 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
+     * The strings of two Livewire attributes of one property reach Laravel
+     * as the elements of the list array_merge_recursive() makes of them:
+     * each is one rule, which Laravel does not split. "nullable|regex:/^c$/"
+     * is then one rule named "nullable|regex", and runs no pattern.
+     *
+     * @param \Closure(): array<mixed> $rules    the rules as Livewire hands them to Laravel
+     * @param list<string>             $expected
+     */
+    #[Test]
+    #[DataProvider('provideMergedLivewireAttributes')]
+    public function test_the_rules_of_two_livewire_attributes_of_one_property_are_one_element_each(string $code, \Closure $rules, array $expected): void
+    {
+        $this->assertSame($expected, self::laravelPatterns($rules()));
+        $this->assertSame(array_fill(0, \count($expected), true), array_map(EngineProbe::compiles(...), $expected));
+
+        $project = $this->makeProject(['app/Livewire/Lane.php' => "<?php\nnamespace App\\Livewire;\nuse Livewire\\Attributes\\Rule;\nuse Livewire\\Attributes\\Validate;\nuse Livewire\\Component;\nfinal class Lane extends Component\n{\n".$code."\n}\n"]);
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame($expected, array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+    }
+
+    /**
+     * @return iterable<string, array{code: string, rules: \Closure(): array<mixed>, expected: list<string>}>
+     */
+    public static function provideMergedLivewireAttributes(): iterable
+    {
+        yield 'two regex rules' => [
+            'code' => "#[Validate('regex:/^a$/')]\n#[Validate('not_regex:/^b$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^a$/'], ['code' => 'not_regex:/^b$/']),
+            'expected' => ['/^a$/', '/^b$/'],
+        ];
+        yield 'a rule before the regex one' => [
+            'code' => "#[Validate('required')]\n#[Validate('nullable|regex:/^c$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'required'], ['code' => 'nullable|regex:/^c$/']),
+            'expected' => [],
+        ];
+        yield 'a pattern that holds a bar' => [
+            'code' => "#[Validate(rule: 'regex:/^(d|e)$/'), Rule('required')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(d|e)$/'], ['code' => 'required']),
+            'expected' => ['/^(d|e)$/'],
+        ];
+    }
+
+    /**
      * The rules Validator::sometimes() adds for the attribute, its callback
      * passing.
      *
