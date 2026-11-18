@@ -55,6 +55,17 @@ use PHPRegex\Parser\Text\Utf8;
  */
 final class CharSetAnalyzer
 {
+    private readonly string $flags;
+
+    /**
+     * What the start options set, read once for the pattern: the newline
+     * convention, whether "\R" takes CR and LF alone, and whether they turn
+     * UTF, (*UCP), the caseless restriction or Turkish casing on.
+     *
+     * @var array{newline: string, anyCrlfBreaks: bool, utf: bool, ucp: bool, restricted: bool, turkish: bool}
+     */
+    private readonly array $options;
+
     private readonly bool $unicodeMode;
 
     private readonly bool $utf;
@@ -67,25 +78,38 @@ final class CharSetAnalyzer
      */
     private readonly bool $restricted;
 
+    /**
+     * Whether "i" and "I" match the Turkish letters above ASCII caselessly
+     * rather than each other: (*TURKISH_CASING), unless r holds.
+     */
+    private readonly bool $turkish;
+
     private readonly ByteCharSet $dot;
 
     /**
-     * @param string $startOptions    the options the pattern opens with, such
-     *                                as "(*CR)(*UTF)": the newline convention
-     *                                they set decides where the dot stops
-     * @param bool   $readsAboveAscii whether the sets hold the characters above
-     *                                ASCII, read under PCRE2's own tables
+     * @param string    $startOptions    the options the pattern opens with, such
+     *                                   as "(*CR)(*UTF)": the newline convention
+     *                                   they set decides where the dot stops
+     * @param bool      $readsAboveAscii whether the sets hold the characters above
+     *                                   ASCII, read under PCRE2's own tables
+     * @param self|null $samePattern     an analyzer of the same pattern, whose
+     *                                   reading of the start options this one
+     *                                   takes rather than read them again
      */
     public function __construct(
-        private readonly string $flags = '',
+        string $flags = '',
         private readonly string $startOptions = '',
-        private readonly bool $readsAboveAscii = false
+        private readonly bool $readsAboveAscii = false,
+        ?self $samePattern = null
     ) {
-        $this->unicodeMode = str_contains($flags, 'u') || str_contains($startOptions, '(*UCP)');
-        $this->utf = str_contains($flags, 'u') || str_contains($startOptions, '(*UTF');
+        $this->options = null === $samePattern ? self::readStartOptions($startOptions) : $samePattern->options;
+        $this->flags = null === $samePattern ? $this->restrictedFromTheStart($flags) : $flags;
+        $this->unicodeMode = str_contains($flags, 'u') || $this->options['ucp'];
+        $this->utf = str_contains($flags, 'u') || $this->options['utf'];
         $this->caseless = str_contains($flags, 'i');
-        $this->restricted = str_contains($flags, 'r');
-        $this->dot = $this->dotSet(str_contains($flags, 's'), StartOptions::newline($startOptions));
+        $this->restricted = str_contains($this->flags, 'r');
+        $this->turkish = $this->options['turkish'] && !$this->restricted;
+        $this->dot = $this->dotSet(str_contains($flags, 's'), $this->options['newline']);
     }
 
     /**
@@ -120,7 +144,7 @@ final class CharSetAnalyzer
      */
     public function withFlags(string $flags): self
     {
-        return new self($flags, $this->startOptions, $this->readsAboveAscii);
+        return new self($this->restrictedFromTheStart($flags), $this->startOptions, $this->readsAboveAscii, $this);
     }
 
     public function firstChars(NodeInterface $node): ByteCharSet
@@ -283,7 +307,7 @@ final class CharSetAnalyzer
             'S' => $this->complement($this->spaces()),
             'v' => $this->verticalSpaces(),
             'V' => $this->complement($this->verticalSpaces()),
-            'R' => $this->verticalSpaces(),
+            'R' => $this->options['anyCrlfBreaks'] ? self::bytes("\n\r") : $this->verticalSpaces(),
             'h' => $this->horizontalSpaces(),
             'H' => $this->complement($this->horizontalSpaces()),
             default => ByteCharSet::unknown(),
@@ -308,7 +332,8 @@ final class CharSetAnalyzer
     }
 
     /**
-     * "\v", and the line breaks "\R" takes, "\r\n" ending as "\n".
+     * "\v", and the line breaks "\R" takes, "\r\n" ending as "\n", unless
+     * (*BSR_ANYCRLF) holds it to CR and LF.
      */
     private function verticalSpaces(): ByteCharSet
     {
@@ -403,7 +428,9 @@ final class CharSetAnalyzer
      * (*UCP) a Latin-1 letter has the other one where it is a byte, "\xC9"
      * for "\xE9". Under UTF a character above ASCII may match characters
      * that start with any byte, and "k" and "s" match the Kelvin sign and
-     * the long s, both ways, unless r keeps ASCII apart.
+     * the long s, both ways, unless r keeps ASCII apart. Under Turkish
+     * casing "i" and "I" are no pair: "i" matches the capital dotted I,
+     * U+0130, and "I" the small dotless i, U+0131, both ways.
      */
     private function otherCases(int $start, int $end): ByteCharSet
     {
@@ -419,6 +446,10 @@ final class CharSetAnalyzer
             }
         }
 
+        if ($this->turkish) {
+            $set = $set->intersect(self::bytes('iI')->complement(0xFF));
+        }
+
         if (!$this->readsAboveAscii) {
             return $set;
         }
@@ -432,6 +463,18 @@ final class CharSetAnalyzer
 
                     if ($start <= mb_ord($partner, 'UTF-8') && mb_ord($partner, 'UTF-8') <= $end) {
                         $set = $set->union(self::bytes($letter.Ascii::upper($letter)));
+                    }
+                }
+            }
+
+            if ($this->turkish) {
+                foreach ([['i', 0x130], ['I', 0x131]] as [$letter, $partner]) {
+                    if ($start <= \ord($letter) && \ord($letter) <= $end) {
+                        $set = $set->union(ByteCharSet::fromBytes(self::leadByte($partner), self::leadByte($partner)));
+                    }
+
+                    if ($start <= $partner && $partner <= $end) {
+                        $set = $set->union(ByteCharSet::fromChar($letter));
                     }
                 }
             }
@@ -589,7 +632,38 @@ final class CharSetAnalyzer
     {
         $setting = InlineFlags::read(InlineFlags::withoutAsciiOptions($options), InlineFlags::LETTERS.'r');
 
-        return null === $setting ? $this : new self($setting->applyTo($this->flags), $this->startOptions, $this->readsAboveAscii);
+        return null === $setting ? $this : new self($setting->applyTo($this->flags), $this->startOptions, $this->readsAboveAscii, $this);
+    }
+
+    /**
+     * The flags a pattern opens under: (*CASELESS_RESTRICT) holds from the
+     * start as r does, and "(?-r)" or "(?^)" turns it off after.
+     */
+    private function restrictedFromTheStart(string $flags): string
+    {
+        return $this->options['restricted'] && !str_contains($flags, 'r') ? $flags.'r' : $flags;
+    }
+
+    /**
+     * What the start options set, read once for the pattern: the analyzers
+     * an option setting makes take it as read.
+     *
+     * @return array{newline: string, anyCrlfBreaks: bool, utf: bool, ucp: bool, restricted: bool, turkish: bool}
+     */
+    private static function readStartOptions(string $startOptions): array
+    {
+        $options = StartOptions::items($startOptions);
+        // The last of (*BSR_ANYCRLF) and (*BSR_UNICODE) decides.
+        $breaks = array_values(array_intersect($options, ['BSR_ANYCRLF', 'BSR_UNICODE']));
+
+        return [
+            'newline' => StartOptions::newline($startOptions),
+            'anyCrlfBreaks' => 'BSR_ANYCRLF' === ($breaks[\count($breaks) - 1] ?? null),
+            'utf' => \in_array('UTF', $options, true) || \in_array('UTF8', $options, true),
+            'ucp' => \in_array('UCP', $options, true),
+            'restricted' => \in_array('CASELESS_RESTRICT', $options, true),
+            'turkish' => \in_array('TURKISH_CASING', $options, true),
+        ];
     }
 
     /**

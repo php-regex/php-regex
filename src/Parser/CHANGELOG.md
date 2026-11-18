@@ -56,6 +56,16 @@ CHANGELOG
    or `/^(?:>(?:(?!!)|!))+$/`, and reports `/^(?:(?!x)a|a)+$/`, which the
    ReDoS heuristics, where it was medium, now rate critical: PCRE takes 94,
    1 534 and 393 214 steps on 4, 8 and 16 `a` then `!`.
+ * Those characters follow what the start options set, read once for the
+   pattern rather than again at each option setting. `(*CASELESS_RESTRICT)`
+   keeps `k` and the Kelvin sign apart from the start, as the `r` modifier
+   does, until `(?-r)` or `(?^)` turns it off. `(*TURKISH_CASING)` pairs `i`
+   with `İ` and `I` with `ı`, never `i` with `I`, unless `r` holds. `\R`
+   takes CR and LF alone under `(*BSR_ANYCRLF)`. The ReDoS heuristics rate
+   `/(*CASELESS_RESTRICT)[^\x{212A}]+(?-i:k)+!/iu` and
+   `/(*TURKISH_CASING)[^I]+i+!/iu` medium, where they were safe: PCRE takes
+   30, 122 and 498 steps on 8, 16 and 32 `i` for the second. They rate
+   `/(*BSR_ANYCRLF)\R+\x85+$/` safe, where it was medium.
  * A mark written short accepts an `=` in its name, `/(*:foo=bar)/`, and
    four characters after it, `/(*:x)a=b/`: the check that only the limits
    take a value read it as `(*MARK:`, four characters longer, and refused
