@@ -88,9 +88,10 @@ final class RedosBenchScriptTest extends TestCase
             foreach ($files as $file) {
                 unlink($root.'/'.$file);
             }
-            foreach (['bin', 'src/Cli/Command', 'src/Cli', 'src', ''] as $directory) {
+            foreach (['bin', 'src/Cli/Command', 'src/Cli', 'src'] as $directory) {
                 rmdir($root.'/'.$directory);
             }
+            rmdir($root);
         }
 
         $this->assertSame(0, $helpExitCode, $help);
