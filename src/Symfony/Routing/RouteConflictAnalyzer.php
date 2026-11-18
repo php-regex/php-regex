@@ -273,7 +273,6 @@ final class RouteConflictAnalyzer
                     'methods' => $this->intersectMethods($earlier['methods'], $later['methods']),
                     'schemes' => $this->intersectSchemes($earlier['schemes'], $later['schemes']),
                     'notes' => $notes,
-                    'laterTakesEarlier' => $laterTakesEarlier,
                     'redirected' => false,
                 ];
             }
@@ -698,14 +697,16 @@ final class RouteConflictAnalyzer
      * later route keeps those on its own schemes, and loses to the redirect
      * a path that differs from one of the earlier route by its trailing
      * slashes alone, unless it serves the path of the earlier route the
-     * redirect leads to. An overlap where the shortest such path leads to
-     * a path the later route does not match, or to none, as "//" after "/".
-     * Null when it has no such path, or when every one leads to a path the
-     * later route matches: it matches every path of the earlier one, or the
-     * one path every redirect of a route looked up by its path leads to.
-     * The pair is counted among the skipped ones when the shortest leads to
-     * a path the later route matches and another may not: telling which
-     * takes a question on three languages. The earlier route ends on no
+     * redirect leads to: it matches it, and takes it as is rather than for
+     * its own slash. An overlap where the shortest such path leads to a
+     * path the later route does not serve, or to none, as "//" after "/".
+     * Null when it has no such path, or when it serves every path one leads
+     * to: it matches every path of the earlier one and reads none of them
+     * for its slash, or serves the one path every redirect of a route
+     * looked up by its path leads to. The pair is counted among the skipped
+     * ones when the later route serves the path the shortest leads to and
+     * may not serve another: telling which takes a question on three
+     * languages, or on PCRE's ordered choice. The earlier route ends on no
      * variable, or on one no value of which ends on the slash: no path of
      * its own differs from another of them by the slash, and the matcher
      * redirects every path that differs from one of them by it. The pair
@@ -803,7 +804,6 @@ final class RouteConflictAnalyzer
             'methods' => $this->intersectMethods(['GET', 'HEAD'], $later['methods']),
             'schemes' => $later['schemes'],
             'notes' => [...$this->buildNotes($earlier, $later, $hostsUnread), self::slashNote($earlier, $example)],
-            'laterTakesEarlier' => false,
             'redirected' => true,
         ];
     }
