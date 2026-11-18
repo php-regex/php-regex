@@ -1077,6 +1077,65 @@ final class RouteConflictAnalyzerTest extends TestCase
             'type' => null,
             'skipped' => 1,
         ];
+        // A value captured with the slash is matched as is, on the earlier
+        // route's schemes; one captured without it is redirected, on any:
+        // which of the two is PCRE's order.
+        yield 'a requirement that can end on the slash, on https before a route on http whose paths it matches only with the slash' => [
+            'earlier' => ['/{x<a/?>}', ['GET'], ['https']],
+            'later' => ['/{y<a//>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/a//', true], ['HEAD', 'http', '/a//', true]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+        yield 'a requirement that can end on the slash, on https before a route on https and http whose paths it matches only with the slash' => [
+            'earlier' => ['/{x<a/?>}', ['GET'], ['https']],
+            'later' => ['/{y<a//>}', ['GET'], ['https', 'http']],
+            'probes' => [['GET', 'https', '/a//', false], ['GET', 'http', '/a//', true]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        yield 'a requirement that can end on the slash, before a route whose paths it matches only with the slash' => [
+            'earlier' => ['/{x<a/?>}', ['GET'], []],
+            'later' => ['/{y<a//>}', ['GET'], []],
+            'probes' => [['GET', 'http', '/a//', false], ['HEAD', 'http', '/a//', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
+        // A path ending on the slash whose value PCRE captured without it
+        // is redirected for GET and HEAD, and passed on to the later route
+        // for any other method.
+        yield 'a lazy requirement that can end on the slash, before a route for any method ending on a slash' => [
+            'earlier' => ['/files/{path<.+?>}', [], []],
+            'later' => ['/files/{name}/', [], []],
+            'probes' => [['GET', 'http', '/files/a/', false], ['HEAD', 'http', '/files/a/', false], ['POST', 'http', '/files/a/', true]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        // The greedy requirement captures the slash and takes every request,
+        // which its language does not tell from the lazy one: an overlap,
+        // never a shadow the lazy one refutes.
+        yield 'a greedy requirement that can end on the slash, before a route for any method ending on a slash' => [
+            'earlier' => ['/files/{path<.+>}', [], []],
+            'later' => ['/files/{name}/', [], []],
+            'probes' => [['GET', 'http', '/files/a/', false], ['POST', 'http', '/files/a/', false]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        // The matcher never reads "/" for its trailing slash.
+        yield 'a requirement that can be empty, before the root route for any method' => [
+            'earlier' => ['/{page<.*?>}', [], []],
+            'later' => ['/', [], []],
+            'probes' => [['GET', 'http', '/', false], ['POST', 'http', '/', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
+        yield 'a lazy requirement that can end on the slash, before a route for GET ending on a slash' => [
+            'earlier' => ['/files/{path<.+?>}', [], []],
+            'later' => ['/files/{name}/', ['GET'], []],
+            'probes' => [['GET', 'http', '/files/a/', false], ['HEAD', 'http', '/files/a/', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
         yield 'a requirement that can end on the slash, on https before a route on http' => [
             'earlier' => ['/files/{path<.+>}', ['GET'], ['https']],
             'later' => ['/files/{name}/', ['GET'], ['http']],

@@ -209,6 +209,12 @@ CHANGELOG
    earlier route ends on a variable a value of which may end on the slash
    or be empty, `.+` or `[a-z]*`, whose redirect PCRE's order decides; the
    default `[^/]++`, or `\d+`, redirects whatever that order and is read.
+   Such a route matches a path ending on the slash as is, on its own
+   schemes, or redirects it, as PCRE captured the value: a later route it
+   matches only with that slash, `/{y<a//>}` after `/{x<a/?>}`, is shadowed
+   only when the earlier route takes every scheme of it, and one for other
+   methods than `GET` and `HEAD` on a path ending on the slash,
+   `/files/{name}/` after `/files/{path<.+?>}`, is an overlap.
    A later route serves the path a redirect leads to when it matches it:
    one that matches every path of the earlier route, `/{path<.*>}` on
    `http` after `/admin` on `https`, loses none. Where it serves the path

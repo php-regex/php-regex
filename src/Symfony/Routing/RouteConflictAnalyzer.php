@@ -161,12 +161,12 @@ final class RouteConflictAnalyzer
                     $intersection = $this->solver->intersection($earlier['pathPattern'], $later['pathPattern'], $options);
                     // On disjoint schemes, each route keeps the paths both
                     // match for its own scheme: only the redirect is read,
-                    // which takes the later route's other paths. Beside
-                    // shared paths, the path the matcher redirects for an
-                    // earlier route ending on a variable that may end on
-                    // the slash is PCRE's ordered choice, which no language
-                    // reads: the pair is left out.
-                    if (!$intersection->isEmpty && !$schemesOverlap && self::endsOnAVariable($earlier['path']) && $this->lastVariableMayEndOnTheSlash($earlier, $options)) {
+                    // which takes the later route's other paths. The path
+                    // the matcher redirects for an earlier route ending on
+                    // a variable that may end on the slash is PCRE's
+                    // ordered choice, which no language reads: the pair is
+                    // left out.
+                    if (!$schemesOverlap && self::endsOnAVariable($earlier['path']) && $this->lastVariableMayEndOnTheSlash($earlier, $options)) {
                         $skippedPairs++;
 
                         continue;
@@ -192,6 +192,7 @@ final class RouteConflictAnalyzer
                     $pathSubsets++;
                     $equivalence = $this->solver->equivalent($earlier['pathPattern'], $later['pathPattern'], $options);
                     $redirectsTheRest = null !== $equivalence->rightOnlyExample && $this->redirectTakesTheRest($earlier, $later, $options);
+                    $passesSomeOn = null === $equivalence->rightOnlyExample && $this->passesOnAPathEndingOnTheSlash($earlier, $later, $options);
                 } catch (ComplexityException) {
                     $skippedPairs++;
 
@@ -215,11 +216,12 @@ final class RouteConflictAnalyzer
                 // schemes and its host. An earlier route whose paths are a
                 // strict part of the later one's is declared first on
                 // purpose: both stay reachable. Any other pair sharing a
-                // path overlaps: each route keeps some requests.
+                // path overlaps: each route keeps some requests, or may, as
+                // PCRE captures the variable the earlier route ends on.
                 $laterPathInEarlier = null === $equivalence->rightOnlyExample;
                 $earlierPathInLater = null === $equivalence->leftOnlyExample;
                 $laterTakesEarlier = $earlierPathInLater && $this->takesEveryRequestOf($later, $earlier, $options);
-                if ($laterPathInEarlier && $this->takesEveryRequestOf($earlier, $later, $options)) {
+                if ($laterPathInEarlier && !$passesSomeOn && $this->takesEveryRequestOf($earlier, $later, $options)) {
                     $shadowed++;
                     $conflictType = 'shadowed';
                     if ($equivalence->isEquivalent) {
@@ -431,10 +433,45 @@ final class RouteConflictAnalyzer
         }
 
         $flags = DelimitedPattern::fromDelimited($route['pathPattern'])->flags;
-        $requirement = new DelimitedPattern('^(?:'.$route['lastRequirement'].')$', $flags, '{');
-        $emptyOrEndingOnTheSlash = new DelimitedPattern('^(?:.*/)?$', $flags, '{');
 
-        return !$this->solver->intersection((string) $requirement, (string) $emptyOrEndingOnTheSlash, $options)->isEmpty;
+        return $this->sharesAString((string) new DelimitedPattern('^(?:'.$route['lastRequirement'].')$', $flags, '{'), '^(?:.*/)?$', $options);
+    }
+
+    /**
+     * Whether the earlier route may pass a request of the later one on to
+     * the routes after it, as PCRE captures the variable it ends on: with
+     * no slash after it, and a requirement that may end on the slash, it
+     * takes a path ending on the slash as is when the value captured ends
+     * on it, and redirects it otherwise, which it does for GET and HEAD
+     * alone. The later route may then keep a request of another method on
+     * a path of its own that ends on the slash, "/" aside, which the
+     * matcher never reads for its slash.
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     * @phpstan-param RouteDescriptor $later
+     *
+     * @throws ComplexityException When the solver gives up on a path or the requirement
+     */
+    private function passesOnAPathEndingOnTheSlash(array $earlier, array $later, SolverOptions $options): bool
+    {
+        return !str_ends_with($earlier['path'], '/')
+            && self::endsOnAVariable($earlier['path'])
+            && !$this->listHolds(['GET', 'HEAD'], $later['methods'])
+            && $this->sharesAString($later['pathPattern'], '^.+/$', $options)
+            && $this->lastVariableMayEndOnTheSlash($earlier, $options);
+    }
+
+    /**
+     * Whether the pattern matches a string the regex matches, the regex
+     * read under the pattern's flags.
+     *
+     * @throws ComplexityException When the solver gives up on the pattern
+     */
+    private function sharesAString(string $pattern, string $regex, SolverOptions $options): bool
+    {
+        $flags = DelimitedPattern::fromDelimited($pattern)->flags;
+
+        return !$this->solver->intersection($pattern, (string) new DelimitedPattern($regex, $flags, '{'), $options)->isEmpty;
     }
 
     /**
@@ -488,7 +525,11 @@ final class RouteConflictAnalyzer
      * the scheme, and tries no later one. Null when the earlier route takes
      * no GET request, the later one no GET or HEAD request, or none of its
      * paths is redirected. The later route is shadowed when it takes only
-     * GET and HEAD requests, on hosts the earlier one holds.
+     * GET and HEAD requests, on hosts the earlier one holds. An earlier
+     * route ending on a variable that may end on the slash matches such a
+     * path as is, or redirects it, as PCRE captures the value: matched as
+     * is, the path keeps to the earlier route's schemes, which must then
+     * hold the later route's for a shadow.
      *
      * @param bool $hostsUnread whether the solver gave up on the two hosts
      *
@@ -511,7 +552,8 @@ final class RouteConflictAnalyzer
         }
 
         $everyPath = $this->solver->subsetOf($later['pathPattern'], $earlier['slashPattern'], $options)->isSubset;
-        $shadowed = $everyPath && $this->takesEveryRequestOf(['methods' => ['GET', 'HEAD'], 'schemes' => []] + $earlier, $later, $options);
+        $schemes = $everyPath && self::endsOnAVariable($earlier['path']) && $this->lastVariableMayEndOnTheSlash($earlier, $options) ? $earlier['schemes'] : [];
+        $shadowed = $everyPath && $this->takesEveryRequestOf(['methods' => ['GET', 'HEAD'], 'schemes' => $schemes] + $earlier, $later, $options);
 
         return $this->redirected($earlier, $later, $shadowed ? 'shadowed' : 'overlap', $redirected->example, $hostsUnread);
     }
@@ -548,7 +590,7 @@ final class RouteConflictAnalyzer
             return null;
         }
 
-        if (!$this->holds($later['pathPattern'], self::landing($redirected->example), $options)) {
+        if (!$this->sharesAString($later['pathPattern'], '^'.preg_quote(self::landing($redirected->example), '{').'$', $options)) {
             return $this->redirected($earlier, $later, 'overlap', $redirected->example, $hostsUnread);
         }
 
@@ -568,18 +610,6 @@ final class RouteConflictAnalyzer
         $trimmed = rtrim($path, '/');
 
         return $trimmed === $path ? $path.'/' : $trimmed;
-    }
-
-    /**
-     * Whether the paths of the pattern hold the given one.
-     *
-     * @throws ComplexityException When the solver gives up on the pattern
-     */
-    private function holds(string $pattern, string $path, SolverOptions $options): bool
-    {
-        $flags = DelimitedPattern::fromDelimited($pattern)->flags;
-
-        return !$this->solver->intersection($pattern, (string) new DelimitedPattern('^'.preg_quote($path, '{').'$', $flags, '{'), $options)->isEmpty;
     }
 
     /**

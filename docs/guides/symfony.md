@@ -552,12 +552,18 @@ that matches every path of the earlier one, `/{path<.*>}` on `http` after
 redirected one leads to but not every path of the earlier route,
 `/files/{path<[a-z/]+>}` on `http` after `/files/{name}` on `https`, which
 paths it loses is a question on three languages the solver does not
-answer, and the pair is counted among the pairs skipped. Where the earlier route ends on a variable a value of which
-may end on the slash or be empty, `.+` or `[a-z]*`, which path the router
-redirects is the order in which PCRE tries the variable's requirement, and
-such a pair is counted among the pairs skipped; the default requirement
-`[^/]++`, or `\d+`, redirects whatever that order, and the pair is read as
-any other. A later
+answer, and the pair is counted among the pairs skipped. Where the
+earlier route ends on a variable a value of which may end on the slash or
+be empty, `.+` or `[a-z]*`, the router matches a path ending on the slash
+as is, on that route's schemes, or redirects it, as PCRE captured the
+value: on another scheme such a pair is counted among the pairs skipped, a
+later route it matches only with the slash, `/{y<a//>}` after
+`/{x<a/?>}`, is shadowed only when the earlier route takes every scheme of
+it, and a later route for other methods than `GET` and `HEAD` keeps those
+on its paths ending on the slash, `/files/{name}/` after
+`/files/{path<.+?>}` being an overlap. The default requirement `[^/]++`,
+or `\d+`, redirects whatever that order, and the pair is read as any
+other. A later
 route whose paths the earlier one matches in part and redirects for the
 rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
 route that takes no `GET` request redirects none.
