@@ -119,6 +119,38 @@ final class CharSetReadingTest extends TestCase
     }
 
     /**
+     * The analyzer of a pattern under other flags, as the linter asks for
+     * the ones in effect at a node, keeps what the start options set: the
+     * caseless restriction holds as r does, "\R" takes CR and LF alone, and
+     * the dot stops at the newline they set.
+     */
+    #[Test]
+    public function test_the_analyzer_under_other_flags_keeps_what_the_start_options_set(): void
+    {
+        $pattern = '/(*CASELESS_RESTRICT)(*BSR_ANYCRLF)(*CR)[^\x{212A}]\R./u';
+        $this->requiresCompile($pattern);
+        $this->assertSame(1, preg_match('/(*CASELESS_RESTRICT)(*BSR_ANYCRLF)(*CR)\A[^\x{212A}]\z/iu', 'k'), 'Oracle: the class takes "k" under the restriction.');
+        $this->assertSame(0, preg_match('/(*CASELESS_RESTRICT)(*BSR_ANYCRLF)(*CR)\A\R\z/iu', "\v"), 'Oracle: "\R" refuses a vertical tab.');
+        $this->assertSame(1, preg_match('/(*CASELESS_RESTRICT)(*BSR_ANYCRLF)(*CR)\A.\z/iu', "\n"), 'Oracle: the dot takes a line feed.');
+
+        $regex = RegexParser::create(['cache' => null])->parse($pattern);
+        $this->assertInstanceOf(SequenceNode::class, $regex->pattern);
+        [$class, $break, $dot] = array_values(\array_slice($regex->pattern->children, -3));
+        $analyzer = CharSetAnalyzer::forRegex($regex, true)->withFlags('iu');
+
+        $this->assertTrue($analyzer->firstChars($class)->intersects(ByteCharSet::fromChar('k')));
+        $this->assertFalse($analyzer->firstChars($break)->intersects(ByteCharSet::fromChar("\v")));
+        $this->assertTrue($analyzer->firstChars($dot)->intersects(ByteCharSet::fromChar("\n")));
+        $this->assertFalse($analyzer->firstChars($dot)->intersects(ByteCharSet::fromChar("\r")));
+        $this->assertTrue($analyzer->withFlags('iur')->firstChars($class)->intersects(ByteCharSet::fromChar('k')));
+
+        // Without the start option, the class leaves "k" out under i.
+        $this->assertSame(0, preg_match('/\A[^\x{212A}]\z/iu', 'k'), 'Oracle: without the restriction the class refuses "k".');
+        $unrestricted = RegexParser::create(['cache' => null])->parse('/[^\x{212A}]/u');
+        $this->assertFalse(CharSetAnalyzer::forRegex($unrestricted, true)->withFlags('iu')->firstChars($unrestricted->pattern)->intersects(ByteCharSet::fromChar('k')));
+    }
+
+    /**
      * An item that may match empty lets the item after it lead, and the
      * one before it end, whatever its count: a lookaround repeated once,
      * "(?=a){1}a", reads nothing and "a" leads, and "(a?)+b" may start with
