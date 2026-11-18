@@ -87,6 +87,33 @@ final class RedosInputTest extends TestCase
         $this->assertSame(self::pastTheLimit(1, 8_388_609, 0), $past);
     }
 
+    /**
+     * A longer file is read to one byte past the limit, never whole, and
+     * refused with the length the file system gives it.
+     */
+    #[Test]
+    public function test_an_input_file_past_the_limit_is_read_to_one_byte_past_it(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'regex-redos-');
+        $this->assertIsString($file);
+        $handle = fopen($file, 'w');
+        $this->assertIsResource($handle);
+        ftruncate($handle, 16 * 1024 * 1024);
+        fclose($handle);
+
+        try {
+            $read = RedosInput::readFile($file);
+            $refusal = RedosInput::from(new RedosArguments('/a/', inputFile: $file), Regex::create());
+        } finally {
+            unlink($file);
+        }
+
+        $this->assertNotNull($read);
+        $this->assertSame(8_388_609, \strlen($read[0]));
+        $this->assertSame(16_777_216, $read[1]);
+        $this->assertSame(self::pastTheLimit(1, 16_777_216, 0), $refusal);
+    }
+
     #[Test]
     public function test_without_an_input_one_is_generated_from_the_culprit_of_the_pattern(): void
     {
