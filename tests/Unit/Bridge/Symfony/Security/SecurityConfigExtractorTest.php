@@ -678,6 +678,25 @@ final class SecurityConfigExtractorTest extends TestCase
         (new SecurityConfigExtractor())->extractFromKernel($this->createStub(KernelInterface::class));
     }
 
+    /**
+     * A kernel of its own making builds no container the parameters can be
+     * read from as the application writes them: it lends a named file none,
+     * rather than values its compiled container may have read from the
+     * environment.
+     */
+    #[Test]
+    public function test_a_kernel_of_its_own_making_lends_a_named_file_no_parameter(): void
+    {
+        $project = $this->makeProject(['security.yaml' => "security:\n    access_control: [{ path: '%admin_path%' }]\n"]);
+        $kernel = $this->createStub(KernelInterface::class);
+        $kernel->method('getContainer')->willReturn(new Container(new ParameterBag(['admin_path' => '^/admin'])));
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('The parameter "admin_path" used in');
+
+        (new SecurityConfigExtractor())->read([$project.'/security.yaml'], $kernel, new SecurityConfigLocator(), $project, null);
+    }
+
     #[After]
     protected function restoreYaml(): void
     {

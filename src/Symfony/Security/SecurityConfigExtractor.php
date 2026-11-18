@@ -86,7 +86,7 @@ final class SecurityConfigExtractor
     public function read(array $configPaths, ?KernelInterface $kernel, SecurityConfigLocator $locator, ?string $projectDir, ?string $environment): ?array
     {
         if ([] !== $configPaths) {
-            return $this->readFiles($configPaths, $environment, null === $kernel ? null : self::bootedContainer($kernel), true);
+            return $this->readFiles($configPaths, $environment, null === $kernel ? null : self::applicationParameters($kernel), true);
         }
 
         if (null !== $kernel) {
@@ -549,17 +549,24 @@ final class SecurityConfigExtractor
     }
 
     /**
-     * The parameters of the application a file named with --config may use.
+     * The parameters of the application a file named with --config may use,
+     * as the application writes them: those of the container its kernel
+     * builds, before compiling it. The compiled container resolves one read
+     * from the environment from the environment the analysis runs in. A
+     * kernel that is not booted, or of another making than Kernel, lends
+     * the file none.
      */
-    private static function bootedContainer(KernelInterface $kernel): ?ContainerInterface
+    private static function applicationParameters(KernelInterface $kernel): ?ContainerInterface
     {
         try {
-            return $kernel->getContainer();
+            $kernel->getContainer();
         } catch (\LogicException) {
             // A boundary: a kernel that is not booted refuses to give its
             // container, and the file then has its own parameters only.
             return null;
         }
+
+        return $kernel instanceof Kernel ? self::uncompiledContainer($kernel) : null;
     }
 
     /**

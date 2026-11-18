@@ -51,7 +51,8 @@ CHANGELOG
    `port: '%admin_port%'` or a firewall's `stateless: '%env(bool:STATELESS)%'`
    no longer stops the command with `Expected "int", but got "string"`. An
    `%env()%` value, in the kernel or in a `--config` file, is never read
-   from the environment the command runs in, nor from its `env()` default:
+   from the environment the command runs in, nor from its `env()` default,
+   nor through a parameter of the application a `--config` file takes:
    a rule holding one in its path, host, addresses, route or attributes is
    restricted to a value the analysis cannot know, shadows no later rule
    through it, and notes

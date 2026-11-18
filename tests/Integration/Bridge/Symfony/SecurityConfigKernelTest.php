@@ -531,6 +531,36 @@ final class SecurityConfigKernelTest extends TestCase
         $this->assertSame(['^/admin'], array_column($config['accessControl'], 'path'));
     }
 
+    /**
+     * A parameter the named file lacks is taken from the application as it
+     * writes it: one the application reads from the environment stays
+     * unknown there too, where the compiled container resolves it from the
+     * environment of the machine the command runs on.
+     */
+    #[Test]
+    public function test_a_parameter_the_application_reads_from_the_environment_stays_unknown_in_a_named_file(): void
+    {
+        $project = $this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_path: '%env(PHPREGEX_TEST_ADMIN_PATH)%'\n    public_path: '%admin_path%/public'\n",
+            'security.yaml' => "security:\n    access_control: [{ path: '%admin_path%' }, { path: '%public_path%' }]\n",
+        ]);
+        $_ENV['PHPREGEX_TEST_ADMIN_PATH'] = $_SERVER['PHPREGEX_TEST_ADMIN_PATH'] = '^/back-office';
+
+        try {
+            $kernel = new SecurityConfigKernel($project, withSecurityBundle: false);
+            $kernel->boot();
+            $this->assertSame('^/back-office', $kernel->getContainer()->getParameter('admin_path'));
+
+            $config = (new SecurityConfigExtractor())->read([$project.'/security.yaml'], $kernel, new SecurityConfigLocator(), $project, 'test');
+        } finally {
+            unset($_ENV['PHPREGEX_TEST_ADMIN_PATH'], $_SERVER['PHPREGEX_TEST_ADMIN_PATH']);
+        }
+
+        $this->assertNotNull($config);
+        $this->assertSame(['%env(PHPREGEX_TEST_ADMIN_PATH)%', '%env(PHPREGEX_TEST_ADMIN_PATH)%/public'], array_column($config['accessControl'], 'path'));
+        $this->assertSame([['path'], ['path']], array_column($config['accessControl'], 'fromEnvironment'));
+    }
+
     #[Test]
     public function test_a_kernel_not_booted_lends_a_named_file_no_parameter(): void
     {
