@@ -134,29 +134,46 @@ final class SolverOnHirRefusalsTest extends TestCase
     }
 
     /**
-     * The engine the rows of an empty match option stand on: on "b", "/a?/"
-     * finds "" at 0. Under pcre.jit=0, or behind (*NO_JIT), (*NOTEMPTY)
-     * finds no match and (*NOTEMPTY_ATSTART) "" at 1; the JIT ignores both
-     * and finds "" at 0. A pattern stays in PHP's cache as compiled under
-     * the setting of its first use, so each setting reads the patterns
-     * under a delimiter of its own.
+     * The engine the rows of an empty match option stand on, where the
+     * interpreter runs, whatever the JIT does: on "b", "/a?/" finds "" at 0.
+     * Under pcre.jit=0, or behind (*NO_JIT), (*NOTEMPTY) finds no match and
+     * (*NOTEMPTY_ATSTART) "" at 1. Where PHP is built without the JIT, it
+     * has no pcre.jit, and the interpreter runs all the same. A pattern
+     * stays in PHP's cache as compiled under the setting of its first use,
+     * so each setting reads the patterns under a delimiter of its own.
+     */
+    #[Test]
+    public function test_the_interpreter_honours_an_empty_match_option(): void
+    {
+        $this->assertSame([['', 0]], self::firstMatch('/a?/', 'b'));
+        $this->assertSame([], self::firstMatch('/(*NO_JIT)(*NOTEMPTY)a?/', 'b'));
+        $this->assertSame([['', 1]], self::firstMatch('/(*NO_JIT)(*NOTEMPTY_ATSTART)a?/', 'b'));
+
+        $jit = \ini_get('pcre.jit');
+
+        try {
+            ini_set('pcre.jit', '0');
+            $this->assertSame([], self::firstMatch("\x01(*NOTEMPTY)a?\x01", 'b'));
+            $this->assertSame([['', 1]], self::firstMatch("\x01(*NOTEMPTY_ATSTART)a?\x01", 'b'));
+        } finally {
+            if (false !== $jit) {
+                ini_set('pcre.jit', $jit);
+            }
+        }
+    }
+
+    /**
+     * The JIT ignores both options and finds "" at 0 on "b", where the
+     * interpreter does not: test_the_interpreter_honours_an_empty_match_option().
      */
     #[Test]
     public function test_the_jit_decides_what_an_empty_match_option_refuses(): void
     {
         $this->requiresJit('An empty match option the JIT ignores');
 
-        $this->assertSame([['', 0]], self::firstMatch('/a?/', 'b'));
-        $this->assertSame([], self::firstMatch('/(*NO_JIT)(*NOTEMPTY)a?/', 'b'));
-        $this->assertSame([['', 1]], self::firstMatch('/(*NO_JIT)(*NOTEMPTY_ATSTART)a?/', 'b'));
-
         $jit = (string) \ini_get('pcre.jit');
 
         try {
-            ini_set('pcre.jit', '0');
-            $this->assertSame([], self::firstMatch("\x01(*NOTEMPTY)a?\x01", 'b'));
-            $this->assertSame([['', 1]], self::firstMatch("\x01(*NOTEMPTY_ATSTART)a?\x01", 'b'));
-
             ini_set('pcre.jit', '1');
             $this->assertSame([['', 0]], self::firstMatch("\x02(*NOTEMPTY)a?\x02", 'b'));
             $this->assertSame([['', 0]], self::firstMatch("\x02(*NOTEMPTY_ATSTART)a?\x02", 'b'));
