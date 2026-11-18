@@ -1556,8 +1556,8 @@ count is refused before the subject is built, with exit code 2 and the largest c
 input takes:
 
 ```bash
-vendor/bin/regex redos '/a+$/' --input a --repeat 10000000000
-# Error: --repeat 10000000000 repeats the 1-byte input past 8 MiB (8388608 bytes), ...
+vendor/bin/regex redos '/a+$/' --input a --repeat 8388609
+# Error: --repeat 8388609 repeats the 1-byte input past 8 MiB (8388608 bytes), ...
 # The largest count for this input is 8388608.
 ```
 

@@ -129,7 +129,7 @@ final class RedosInputTest extends TestCase
      */
     public static function provideRepeatsPastTheLimit(): iterable
     {
-        yield 'ten billion copies of a byte' => ['input' => 'a', 'repeat' => 10_000_000_000, 'error' => self::pastTheLimit(10_000_000_000, 1, 8_388_608)];
+        yield 'the largest integer of copies of a byte' => ['input' => 'a', 'repeat' => \PHP_INT_MAX, 'error' => self::pastTheLimit(\PHP_INT_MAX, 1, 8_388_608)];
         yield 'one copy of a byte past the limit' => ['input' => 'a', 'repeat' => 8_388_609, 'error' => self::pastTheLimit(8_388_609, 1, 8_388_608)];
         yield 'one copy of two bytes past the limit' => ['input' => 'ab', 'repeat' => 4_194_305, 'error' => self::pastTheLimit(4_194_305, 2, 4_194_304)];
         yield 'the largest count of a long input' => ['input' => str_repeat('x', 8_388_609), 'repeat' => \PHP_INT_MAX, 'error' => self::pastTheLimit(\PHP_INT_MAX, 8_388_609, 0)];
