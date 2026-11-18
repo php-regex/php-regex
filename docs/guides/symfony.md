@@ -548,9 +548,12 @@ keeps on its own scheme the paths both routes match: `/{x<a|b>}.html` on
 route serving `http://…/a.html` and losing `/b.html/` to the redirect. A
 later route that matches every path of the earlier one, `/{path<.*>}` on
 `http` after `/admin` on `https`, serves the paths the redirect leads to
-and loses none. Where the earlier route ends on a variable, which path the router
+and loses none. Where the earlier route ends on a variable a value of which
+may end on the slash or be empty, `.+` or `[a-z]*`, which path the router
 redirects is the order in which PCRE tries the variable's requirement, and
-such a pair is counted among the pairs skipped. A later
+such a pair is counted among the pairs skipped; the default requirement
+`[^/]++`, or `\d+`, redirects whatever that order, and the pair is read as
+any other. A later
 route whose paths the earlier one matches in part and redirects for the
 rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
 route that takes no `GET` request redirects none.

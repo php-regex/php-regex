@@ -962,6 +962,172 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * An earlier route ending on a variable no value of which ends on the
+     * slash, the default "[^/]++", "\d+" or "[a-z]+", redirects every GET
+     * or HEAD request whose path differs from one of its own by a trailing
+     * slash, whatever order PCRE tries the requirement in: beside paths it
+     * shares with a later route on another scheme, the pair is read as for
+     * a route ending on no variable. A requirement a value of which may end
+     * on the slash, ".+" or "[^?]+", or be empty, which the matcher reads as
+     * ending on it, leaves the redirect to that order and the pair skipped.
+     * On the same scheme, the paths both routes match decide the pair.
+     *
+     * @param array{0: string, 1: list<string>, 2: list<string>}    $earlier path, methods, schemes
+     * @param array{0: string, 1: list<string>, 2: list<string>}    $later   path, methods, schemes
+     * @param list<array{0: string, 1: string, 2: string, 3: bool}> $probes  method, scheme, path, and whether the later route takes the request
+     */
+    #[Test]
+    #[DataProvider('provideRequirementsOfTheVariableAnEarlierRouteEndsOn')]
+    public function test_the_redirect_of_an_earlier_route_ending_on_a_variable_is_read_where_no_value_of_it_ends_on_the_slash(array $earlier, array $later, array $probes, ?string $type, int $skipped): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route($earlier[0]))->setMethods($earlier[1])->setSchemes($earlier[2]));
+        $collection->add('later', (new Route($later[0]))->setMethods($later[1])->setSchemes($later[2]));
+
+        $compiled = (new CompiledUrlMatcherDumper($collection))->getCompiledRoutes();
+        foreach ($probes as [$method, $scheme, $path, $laterTakesIt]) {
+            $this->assertSame($laterTakesIt, 'later' === FrameworkMatcher::reached($compiled, $method, $path, $scheme), $method.' '.$scheme.' '.$path);
+        }
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame(null === $type ? [] : [[$type, 'earlier', 'later']], array_map(
+            static fn (array $conflict): array => [$conflict['type'], $conflict['route']['name'], $conflict['conflict']['name']],
+            $report->conflicts,
+        ));
+        $this->assertSame($skipped, $report->stats['skipped_pairs']);
+        if (null !== $type) {
+            $this->assertIsString($report->conflicts[0]['example']);
+            $this->assertNotSame('later', FrameworkMatcher::reached($compiled, 'GET', $report->conflicts[0]['example'], $later[2][0] ?? 'http'));
+        }
+    }
+
+    /**
+     * A route of the application whose compiled route names no variable,
+     * though its path ends on one, leaves the requirement unknown: beside
+     * shared paths on another scheme, the pair is skipped.
+     */
+    #[Test]
+    public function test_an_earlier_route_whose_compiled_route_names_no_variable_is_left_out_beside_shared_paths_on_disjoint_schemes(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new CompiledAsRoute('/{x}', new CompiledRoute('/', '{^/(?P<x>[^/]++)$}sD', [], [])))->setMethods(['GET'])->setSchemes(['https']));
+        $collection->add('later', (new Route('/{y<a|b/>}'))->setMethods(['GET'])->setSchemes(['http']));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame([], $report->conflicts);
+        $this->assertSame(1, $report->stats['skipped_pairs']);
+    }
+
+    /**
+     * @return iterable<string, array{earlier: array{0: string, 1: list<string>, 2: list<string>}, later: array{0: string, 1: list<string>, 2: list<string>}, probes: list<array{0: string, 1: string, 2: string, 3: bool}>, type: string|null, skipped: int}>
+     */
+    public static function provideRequirementsOfTheVariableAnEarlierRouteEndsOn(): iterable
+    {
+        yield 'the default requirement, on https before a route on http that loses a path to the redirect' => [
+            'earlier' => ['/files/{name}', ['GET'], ['https']],
+            'later' => ['/files/{p<a|b/>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/files/a', true], ['GET', 'http', '/files/b/', false], ['HEAD', 'http', '/files/b/', false]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        yield 'the default requirement before a trailing slash, on https before a route on http that loses a path to the redirect' => [
+            'earlier' => ['/files/{name}/', ['GET'], ['https']],
+            'later' => ['/files/{p<a/|b>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/files/a/', true], ['GET', 'http', '/files/b', false], ['HEAD', 'http', '/files/b', false]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        yield 'a custom requirement, on https before a route on http that loses a path to the redirect' => [
+            'earlier' => ['/page/{n<\d+>}', ['GET'], ['https']],
+            'later' => ['/page/{p<1|2/>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/page/1', true], ['GET', 'http', '/page/2/', false], ['HEAD', 'http', '/page/2/', false]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        yield 'a custom requirement before a trailing slash, on https before a route on http that loses a path to the redirect' => [
+            'earlier' => ['/tag/{t<[a-z]+>}/', ['GET'], ['https']],
+            'later' => ['/tag/{p<a/|b>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/tag/a/', true], ['GET', 'http', '/tag/b', false], ['HEAD', 'http', '/tag/b', false]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        yield 'the default requirement, on https before a route on http that matches every path of it' => [
+            'earlier' => ['/files/{name}', ['GET'], ['https']],
+            'later' => ['/files/{path<.+>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/files/a', true], ['GET', 'http', '/files/a/', true], ['HEAD', 'http', '/files/a/', true]],
+            'type' => null,
+            'skipped' => 0,
+        ];
+        yield 'a requirement that can end on the slash, on https before a route on http' => [
+            'earlier' => ['/files/{path<.+>}', ['GET'], ['https']],
+            'later' => ['/files/{name}/', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/files/a/', true], ['HEAD', 'http', '/files/a/', true]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+        yield 'a requirement that can end on the slash before a trailing slash, on https before a route on http' => [
+            'earlier' => ['/files/{path<[^?]+>}/', ['GET'], ['https']],
+            'later' => ['/files/{p<.+>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/files/a', true], ['GET', 'http', '/files/a/', true]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+        // The matcher reads an empty value as ending on the slash: "/f/" is
+        // matched with an empty name, not redirected.
+        yield 'a requirement that can be empty, on https before a route on http' => [
+            'earlier' => ['/f{name<[a-z]*>}', ['GET'], ['https']],
+            'later' => ['/f{p</?>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/f/', true], ['GET', 'http', '/f', true]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+        yield 'the default requirement before a route that matches every path of it' => [
+            'earlier' => ['/files/{name}', ['GET'], []],
+            'later' => ['/files/{path<.+>}', ['GET'], []],
+            'probes' => [['GET', 'http', '/files/a', false], ['GET', 'http', '/files/a/', false], ['GET', 'http', '/files/a/b', true]],
+            'type' => null,
+            'skipped' => 0,
+        ];
+        yield 'the default requirement before a trailing slash, before a route that matches every path of it' => [
+            'earlier' => ['/files/{name}/', ['GET'], []],
+            'later' => ['/files/{path<.+>}', ['GET'], []],
+            'probes' => [['GET', 'http', '/files/a', false], ['GET', 'http', '/files/a/', false], ['GET', 'http', '/files/a/b', true]],
+            'type' => null,
+            'skipped' => 0,
+        ];
+        yield 'a custom requirement, before a route whose every path it redirects' => [
+            'earlier' => ['/page/{n<\d+>}', ['GET'], []],
+            'later' => ['/page/{p<\d+/>}', ['GET'], []],
+            'probes' => [['GET', 'http', '/page/1/', false], ['HEAD', 'http', '/page/1/', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
+        yield 'a custom requirement before a trailing slash, before a route whose every path it redirects' => [
+            'earlier' => ['/tag/{t<[a-z]+>}/', ['GET'], []],
+            'later' => ['/tag/{p<[a-z]+>}', ['GET'], []],
+            'probes' => [['GET', 'http', '/tag/a', false], ['HEAD', 'http', '/tag/a', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
+        yield 'a requirement that can end on the slash, before a route whose every path it matches' => [
+            'earlier' => ['/files/{path<.+>}', ['GET'], []],
+            'later' => ['/files/{name}/', ['GET'], []],
+            'probes' => [['GET', 'http', '/files/a/', false], ['HEAD', 'http', '/files/a/', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
+        yield 'a requirement that can end on the slash before a trailing slash, before a route that matches every path of it' => [
+            'earlier' => ['/files/{path<[^?]+>}/', ['GET'], []],
+            'later' => ['/files/{p<.+>}', ['GET'], []],
+            'probes' => [['GET', 'http', '/files/a', false], ['GET', 'http', '/files/a/', false], ['GET', 'http', '/files/a?b', true]],
+            'type' => null,
+            'skipped' => 0,
+        ];
+    }
+
+    /**
      * @return iterable<string, array{earlier: array{0: string, 1: list<string>, 2: list<string>}, later: array{0: string, 1: list<string>, 2: list<string>}, probes: list<array{0: string, 1: string, 2: string, 3: bool}>}>
      */
     public static function provideEarlierRoutesEndingOnAVariable(): iterable

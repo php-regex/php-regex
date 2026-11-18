@@ -206,7 +206,9 @@ CHANGELOG
    `/blog{slash}` (`/?`) after `/blog`, is shadowed too. On another
    scheme, a later route that shares paths with the earlier one keeps them
    and loses the redirected ones: an overlap, or a pair skipped where the
-   earlier route ends on a variable, whose redirect PCRE's order decides.
+   earlier route ends on a variable a value of which may end on the slash
+   or be empty, `.+` or `[a-z]*`, whose redirect PCRE's order decides; the
+   default `[^/]++`, or `\d+`, redirects whatever that order and is read.
    One that matches every path of the earlier route, `/{path<.*>}` on
    `http` after `/admin` on `https`, serves the paths the redirect leads
    to and loses none. The report

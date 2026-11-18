@@ -163,9 +163,10 @@ final class RouteConflictAnalyzer
                     // match for its own scheme: only the redirect is read,
                     // which takes the later route's other paths. Beside
                     // shared paths, the path the matcher redirects for an
-                    // earlier route ending on a variable is PCRE's ordered
-                    // choice, which no language reads: the pair is left out.
-                    if (!$intersection->isEmpty && !$schemesOverlap && self::endsOnAVariable($earlier['path'])) {
+                    // earlier route ending on a variable that may end on
+                    // the slash is PCRE's ordered choice, which no language
+                    // reads: the pair is left out.
+                    if (!$intersection->isEmpty && !$schemesOverlap && self::endsOnAVariable($earlier['path']) && $this->lastVariableMayEndOnTheSlash($earlier, $options)) {
                         $skippedPairs++;
 
                         continue;
@@ -369,6 +370,7 @@ final class RouteConflictAnalyzer
             'path' => $route->getPath(),
             'pathPattern' => $pathNormalization['pattern'],
             'slashPattern' => $this->normalizePattern(self::slashToggled($pathRegex))['pattern'],
+            'lastRequirement' => self::lastRequirement($compiled),
             'staticPrefix' => $this->resolveStaticPrefix($compiled),
             'staticSegments' => $this->extractStaticSegments($route->getPath()),
             'methods' => $this->normalizeMethods($route->getMethods()),
@@ -389,6 +391,50 @@ final class RouteConflictAnalyzer
     private static function endsOnAVariable(string $path): bool
     {
         return 1 === LibraryPcre::match('#\{[\w\x80-\xFF]+\}/?$#', $path);
+    }
+
+    /**
+     * The requirement of the last variable of the path, as the compiler
+     * wrote it into the route regex, the default "[^/]++" included. Null
+     * when the compiled route names no variable.
+     */
+    private static function lastRequirement(CompiledRoute $compiled): ?string
+    {
+        // The compiled route lists its tokens last first.
+        foreach ($compiled->getTokens() as $token) {
+            if (\is_array($token) && 'variable' === ($token[0] ?? null) && \is_string($token[2] ?? null)) {
+                return $token[2];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether a value of the variable the route ends on may end on the
+     * slash, as the framework's matcher reads it, an empty value as ending
+     * on it: the matcher redirects a path ending on the slash, or not, as
+     * PCRE's ordered choice captured the value. When no value of the
+     * requirement ends on the slash, "[^/]++" or "\d+", it redirects every
+     * path that differs from one of the route by its trailing slash,
+     * whatever that order. A requirement the compiled route does not name
+     * may.
+     *
+     * @phpstan-param RouteDescriptor $route
+     *
+     * @throws ComplexityException When the solver gives up on the requirement
+     */
+    private function lastVariableMayEndOnTheSlash(array $route, SolverOptions $options): bool
+    {
+        if (null === $route['lastRequirement']) {
+            return true;
+        }
+
+        $flags = DelimitedPattern::fromDelimited($route['pathPattern'])->flags;
+        $requirement = new DelimitedPattern('^(?:'.$route['lastRequirement'].')$', $flags, '{');
+        $emptyOrEndingOnTheSlash = new DelimitedPattern('^(?:.*/)?$', $flags, '{');
+
+        return !$this->solver->intersection((string) $requirement, (string) $emptyOrEndingOnTheSlash, $options)->isEmpty;
     }
 
     /**
@@ -477,9 +523,11 @@ final class RouteConflictAnalyzer
      * slash alone. An overlap at most; null when it has no such path, or
      * when the later route matches every path of the earlier one: the
      * redirect leads to one of them, which the later route serves on its
-     * own scheme. The earlier route ends on no variable, so no path of its
-     * own differs from another of them by the slash, and the pair reaches
-     * it only where redirects() holds.
+     * own scheme. The earlier route ends on no variable, or on one no value
+     * of which ends on the slash: no path of its own differs from another
+     * of them by the slash, and the matcher redirects every path that
+     * differs from one of them by it. The pair reaches it only where
+     * redirects() holds.
      *
      * @param bool $hostsUnread whether the solver gave up on the two hosts
      *
