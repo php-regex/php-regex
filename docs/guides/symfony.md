@@ -590,7 +590,10 @@ them: `/admin` redirects
 `GET /admin//` too, so `/{p<admin//>}` after it is shadowed, `/admin/`
 takes `/admin//` as is, for any method on its own schemes, and `/` answers
 `GET //` with a 404. A route tried with a regex takes its path with one
-slash at most. A later route ending on a variable that may end on the
+slash at most. A route with no variable therefore takes the requests of a
+route tried with a regex declared before it, `/admin/` those of
+`/{x<admin//>}`: the pair is read in the order the router tries them,
+noted, and offered distinct paths, which a reorder would not give. A later route ending on a variable that may end on the
 slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its own
 ending on the slash for the slash, as PCRE captures the value: it
 redirects `GET /a/` to `/a`, and passes `POST /a/` on to the routes after

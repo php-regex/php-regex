@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Routing;
 
 use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
+use PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -1686,14 +1687,58 @@ final class RouteConflictAnalyzerTest extends TestCase
             'type' => null,
             'skipped' => 0,
         ];
-        // The static path is looked up first: the earlier route never gets
-        // it, whatever it matches.
-        yield 'a route matched with a regex before a route with no variable that it does not match' => [
-            'earlier' => ['/{x<admin//|other>}', ['GET'], []],
-            'later' => ['/admin/', ['GET'], []],
-            'probes' => [['GET', 'http', '/admin//', true], ['GET', 'http', '/admin/', true], ['GET', 'http', '/other', false]],
-            'type' => null,
-            'skipped' => 0,
+    }
+
+    /**
+     * The matcher looks a route with no variable up by its path before it
+     * tries any route with a regex, whatever their order: of a route tried
+     * with a regex declared before it, it takes the requests first. The
+     * pair is read in that order, noted, and offered distinct paths rather
+     * than a reorder that changes nothing.
+     *
+     * @param list<array{0: string, 1: string, 2: string|null}> $probes method, path, and the route the request reaches
+     */
+    #[Test]
+    #[DataProvider('provideRoutesTriedWithARegexBeforeOneLookedUpByItsPath')]
+    public function test_a_later_route_looked_up_by_its_path_is_read_before_an_earlier_one_tried_with_a_regex(string $earlier, array $probes, string $type): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route($earlier))->setMethods(['GET']));
+        $collection->add('later', (new Route('/admin/'))->setMethods(['GET']));
+
+        foreach ($probes as [$method, $path, $winner]) {
+            $this->assertSame($winner, FrameworkMatcher::reached($collection, $method, $path), $method.' '.$path);
+        }
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame([$type.' later earlier'], array_map(
+            static fn (array $conflict): string => $conflict['type'].' '.$conflict['route']['name'].' '.$conflict['conflict']['name'],
+            $report->conflicts,
+        ));
+        $this->assertContains('The router looks up the route with no variable by its path before it tries the other with a regex, whatever their order.', $report->conflicts[0]['notes']);
+        $this->assertIsString($report->conflicts[0]['example']);
+        $this->assertSame('later', FrameworkMatcher::reached($collection, 'GET', $report->conflicts[0]['example']));
+        $this->assertSame(
+            ['Give "later" and "earlier" paths that do not overlap: "later" has no variable, and the router looks it up by its path before it tries "earlier" with a regex, whatever their order.'],
+            (new RouteConflictSuggestionBuilder())->collect($report->conflicts),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{earlier: string, probes: list<array{0: string, 1: string, 2: string|null}>, type: string}>
+     */
+    public static function provideRoutesTriedWithARegexBeforeOneLookedUpByItsPath(): iterable
+    {
+        yield 'an earlier route all of whose paths the later one takes' => [
+            'earlier' => '/{x<admin//>}',
+            'probes' => [['GET', '/admin//', 'later'], ['HEAD', '/admin//', 'later'], ['GET', '/admin/', 'later']],
+            'type' => 'shadowed',
+        ];
+        yield 'an earlier route with a path of its own' => [
+            'earlier' => '/{x<admin//|other>}',
+            'probes' => [['GET', '/admin//', 'later'], ['GET', '/admin/', 'later'], ['GET', '/other', 'earlier']],
+            'type' => 'overlap',
         ];
     }
 

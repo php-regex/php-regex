@@ -283,7 +283,10 @@ CHANGELOG
    host, as the router's dumper reads them: `/admin` redirects `GET /admin//` too, shadowing `/{p<admin//>}`,
    `/admin/` takes `/admin//` as is, for any method on its own schemes,
    and `/` answers `GET //` with a 404; a route tried with a regex takes
-   one slash at most. A later route ending on a variable that may end on
+   one slash at most. Such a route takes the requests of a route tried
+   with a regex declared before it, `/admin/` those of `/{x<admin//>}`:
+   the pair is read in the matcher's order, noted, and offered distinct
+   paths, which a reorder would not give. A later route ending on a variable that may end on
    the slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its
    own ending on the slash for the slash: for `POST` it passes `/a/` on,
    which it does not lose, and a pair whose shortest shared path it, or

@@ -57,6 +57,21 @@ final class RouteConflictSuggestionBuilder
                 continue;
             }
 
+            // A route with no variable declared after one tried with a
+            // regex is looked up first all the same: a reorder changes
+            // nothing.
+            if ($route['index'] > $other['index']) {
+                $suggestions[\sprintf(
+                    'Give "%s" and "%s" paths that do not overlap: "%s" has no variable, and the router looks it up by its path before it tries "%s" with a regex, whatever their order.',
+                    $route['name'],
+                    $other['name'],
+                    $route['name'],
+                    $other['name'],
+                )] = true;
+
+                continue;
+            }
+
             // Moved first, a shadowed route is reached, and the routes of
             // an overlap each keep requests of their own. An earlier route
             // the later one would take every request of, moved first, is a

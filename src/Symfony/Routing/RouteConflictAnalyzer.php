@@ -121,11 +121,12 @@ final class RouteConflictAnalyzer
         // The router tries the routes in the order they were declared and
         // stops at the first match: of two routes sharing a path, the
         // earlier one always wins it. Each pair is therefore read earlier
-        // route first.
+        // route first, but for a route it looks up by its path, which it
+        // reads before any route it tries with a regex, whatever their
+        // order: such a pair is read in the matcher's order.
         for ($i = 0; $i < $count; $i++) {
             for ($j = $i + 1; $j < $count; $j++) {
-                $earlier = $routes[$i];
-                $later = $routes[$j];
+                [$earlier, $later] = !$routes[$i]['static'] && $routes[$j]['static'] ? [$routes[$j], $routes[$i]] : [$routes[$i], $routes[$j]];
                 $pairsTotal++;
 
                 if (!$this->methodsOverlap($earlier['methods'], $later['methods'])) {
@@ -149,15 +150,6 @@ final class RouteConflictAnalyzer
                 if (!$this->prefixOverlaps($earlier['staticPrefix'], $later['staticPrefix'])) {
                     $pairsFilteredPrefix++;
 
-                    continue;
-                }
-
-                // The matcher looks a route with no variable up by its path
-                // before it tries any route with a regex, and keeps it so
-                // only when no such route declared before it matches that
-                // path: an earlier route tried with a regex takes none of
-                // its requests.
-                if (!$earlier['static'] && $later['static']) {
                     continue;
                 }
 
@@ -1051,6 +1043,10 @@ final class RouteConflictAnalyzer
 
         if ($hostsUnread || $left['hostUnsupported'] || $right['hostUnsupported']) {
             $notes[] = 'Host requirements were not evaluated.';
+        }
+
+        if ($left['index'] > $right['index']) {
+            $notes[] = 'The router looks up the route with no variable by its path before it tries the other with a regex, whatever their order.';
         }
 
         return $notes;
