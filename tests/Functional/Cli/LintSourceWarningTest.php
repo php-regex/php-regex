@@ -77,11 +77,14 @@ final class LintSourceWarningTest extends TestCase
     ];
 
     /**
-     * @param \Closure(string): void $parses
+     * The report holds what the fixture gives: the raw U+200B, which the
+     * spelling of its literal, read from the file, says is written raw.
+     *
+     * @param \Closure(string): list<array{mixed, mixed, mixed}> $issues the file, the line and the identifier of each issue of the report
      */
     #[Test]
     #[DataProvider('provideFormats')]
-    public function test_a_file_php_warns_about_leaves_stdout_to_the_report(string $format, \Closure $parses): void
+    public function test_a_file_php_warns_about_leaves_stdout_to_the_report(string $format, \Closure $issues): void
     {
         $this->enterProject(self::FILES);
         self::assertPhpWarnsAbout(self::FILES['lib/Patterns.php']);
@@ -90,26 +93,49 @@ final class LintSourceWarningTest extends TestCase
         \ini_set('display_errors', '1');
 
         try {
-            [, $stdout] = $this->runRegex(['lint', 'lib', '--format='.$format, '--jobs=1']);
+            [$exitCode, $stdout] = $this->runRegex(['lint', 'lib', '--format='.$format, '--jobs=1']);
         } finally {
             \ini_set('display_errors', $display);
         }
 
         $this->assertStringNotContainsString('Octal escape sequence overflow', $stdout);
-        $parses($stdout);
+        // Warnings alone leave the exit code at 0.
+        $this->assertSame(0, $exitCode, $stdout);
+        $this->assertContains(['lib/rules.php', 17, 'regex.lint.literal.invisible'], $issues($stdout), $stdout);
     }
 
     /**
-     * @return iterable<string, array{format: string, parses: \Closure(string): void}>
+     * @return iterable<string, array{format: string, issues: \Closure(string): list<array{mixed, mixed, mixed}>}>
      */
     public static function provideFormats(): iterable
     {
-        yield 'checkstyle' => ['format' => 'checkstyle', 'parses' => static function (string $stdout): void {
+        yield 'checkstyle' => ['format' => 'checkstyle', 'issues' => static function (string $stdout): array {
             self::assertNotSame('', $stdout);
-            self::assertTrue((new \DOMDocument())->loadXML($stdout), $stdout);
+            $document = new \DOMDocument();
+            self::assertTrue($document->loadXML($stdout), $stdout);
+            $issues = [];
+            foreach ($document->getElementsByTagName('error') as $error) {
+                $file = $error->parentNode instanceof \DOMElement ? $error->parentNode->getAttribute('name') : null;
+                $issues[] = [$file, (int) $error->getAttribute('line'), $error->getAttribute('source')];
+            }
+
+            return $issues;
         }];
-        yield 'json' => ['format' => 'json', 'parses' => static function (string $stdout): void {
-            self::assertIsArray(json_decode($stdout, true, flags: \JSON_THROW_ON_ERROR));
+        yield 'json' => ['format' => 'json', 'issues' => static function (string $stdout): array {
+            $document = json_decode($stdout, true, flags: \JSON_THROW_ON_ERROR);
+            self::assertIsArray($document);
+            self::assertIsArray($document['results'] ?? null);
+            $issues = [];
+            foreach ($document['results'] as $result) {
+                self::assertIsArray($result);
+                self::assertIsArray($result['issues'] ?? null);
+                foreach ($result['issues'] as $issue) {
+                    self::assertIsArray($issue);
+                    $issues[] = [$issue['file'] ?? null, $issue['line'] ?? null, $issue['issue_id'] ?? null];
+                }
+            }
+
+            return $issues;
         }];
     }
 
