@@ -1799,13 +1799,13 @@ final class RedosProfiler extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<NodeInterface> $children the items of the sequence
-     * @param array<bool>|null     $reads    whether each item reads a character, null when each
-     *                                       does: two loops meet across one that reads nothing,
-     *                                       "a+(?i)A+"
-     * @param int|null             $tail     the index of the item that ends an atomic body, if
-     *                                       any: a pair it closes is matched the first way
-     *                                       through
+     * @param list<NodeInterface>   $children the items of the sequence
+     * @param array<int, bool>|null $reads    whether each item reads a character, null when each
+     *                                        does: two loops meet across one that reads nothing,
+     *                                        "a+(?i)A+"
+     * @param int|null              $tail     the index of the item that ends an atomic body, if
+     *                                        any: a pair it closes is matched the first way
+     *                                        through
      */
     private function analyzeAdjacentQuantifiers(array $children, ?array $reads, ?int $tail): RedosSeverity
     {
@@ -1814,8 +1814,8 @@ final class RedosProfiler extends AbstractNodeVisitor
         $count = null === $reading ? \count($children) : \count($reading);
 
         for ($k = 0; $k < $count - 1; $k++) {
-            $left = $children[null === $reading ? $k : $reading[$k]];
-            $leftQuantifier = $this->unwrapAdjacentQuantifier($left);
+            $leftIndex = null === $reading ? $k : $reading[$k];
+            $leftQuantifier = $this->unwrapAdjacentQuantifier($children[$leftIndex]);
             if (null === $leftQuantifier) {
                 continue;
             }
@@ -1827,7 +1827,7 @@ final class RedosProfiler extends AbstractNodeVisitor
                 $rightIndex = null === $reading ? $m : $reading[$m];
                 $right = $children[$rightIndex];
                 if ($rightIndex !== $tail) {
-                    $max = $this->maxSeverity($max, $this->adjacentLoops($left, $leftQuantifier, $right));
+                    $max = $this->maxSeverity($max, $this->adjacentLoops($children, $leftIndex, $leftQuantifier, $rightIndex));
                 }
 
                 if ($this->alwaysReads($right) || $this->hasTrailingBacktrackingControl($right)) {
@@ -1841,11 +1841,15 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     /**
      * The finding of a loop and an item it meets, when the item is a loop
-     * too and the two may read the same characters.
+     * too and the two may read the same characters: it names them with
+     * the items between them, as written, an option setting that makes
+     * them meet above all.
+     *
+     * @param list<NodeInterface> $children the items of the sequence
      */
-    private function adjacentLoops(NodeInterface $left, QuantifierNode $leftQuantifier, NodeInterface $right): RedosSeverity
+    private function adjacentLoops(array $children, int $leftIndex, QuantifierNode $leftQuantifier, int $rightIndex): RedosSeverity
     {
-        $rightQuantifier = $this->unwrapAdjacentQuantifier($right);
+        $rightQuantifier = $this->unwrapAdjacentQuantifier($children[$rightIndex]);
 
         if (null === $rightQuantifier || $this->isQuantifierShielded($leftQuantifier) || $this->isQuantifierShielded($rightQuantifier)) {
             return RedosSeverity::Safe;
@@ -1885,7 +1889,7 @@ final class RedosProfiler extends AbstractNodeVisitor
             ? 'Medium false-positive risk; overlap is inferred from boundary character sets.'
             : 'High false-positive risk; overlap could not be determined precisely.';
 
-        $adjacentSpan = new SequenceNode([$left, $right], $left->getStartPosition(), $right->getEndPosition());
+        $adjacentSpan = new SequenceNode(\array_slice($children, $leftIndex, $rightIndex - $leftIndex + 1), $children[$leftIndex]->getStartPosition(), $children[$rightIndex]->getEndPosition());
 
         $this->addVulnerability(
             $severity,

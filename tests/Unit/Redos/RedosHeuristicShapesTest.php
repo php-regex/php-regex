@@ -948,6 +948,52 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * Two loops that meet past items that read nothing or may match empty
+     * are reported with those items, as the source writes them: the option
+     * setting of "a+(?i)A+" is what makes the runs meet. The engine takes
+     * the steps of the twin where the loops stand side by side (31 -> 69 on
+     * 8 -> 12 "a" then "!").
+     *
+     * @return iterable<string, array{pattern: string, twin: string, fragment: string}>
+     */
+    public static function provideLoopsThatMeetPastAnItem(): iterable
+    {
+        yield 'an option setting between two loops' => ['pattern' => '/^(a+(?i)A+)\1$/', 'twin' => '/^(a+[aA]+)\1$/', 'fragment' => 'a+(?i)A+'];
+        yield 'an optional item between two loops' => ['pattern' => '/^(a+x?a+)\1$/', 'twin' => '/^(a+a+)\1$/', 'fragment' => 'a+x?a+'];
+        yield 'an optional item and an option setting' => ['pattern' => '/^(a+x?(?i)A+)\1$/', 'twin' => '/^(a+[aA]+)\1$/', 'fragment' => 'a+x?(?i)A+'];
+        yield 'a comment between two loops' => ['pattern' => '/^(a+(?#c)a+)\1$/', 'twin' => '/^(a+a+)\1$/', 'fragment' => 'a+(?#c)a+'];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsThatMeetPastAnItem')]
+    public function test_loops_that_meet_past_an_item_are_reported_with_it(string $pattern, string $twin, string $fragment): void
+    {
+        foreach ([8, 12] as $units) {
+            $subject = str_repeat('a', $units).'!';
+            $this->assertSame(
+                self::steps(PcreInterpreter::pattern($twin[0].'(*NO_START_OPT)'.substr($twin, 1)), $subject),
+                self::steps(PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1)), $subject),
+                'Oracle: the loops meet, as in the twin.',
+            );
+        }
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+        $adjacent = array_values(array_filter($analysis->findings, static fn ($finding): bool => str_starts_with($finding->message, 'Adjacent quantified tokens')));
+        $this->assertCount(1, $adjacent);
+        $this->assertSame($fragment, $adjacent[0]->pattern);
+
+        // A hotspot's offsets count from the start of the body.
+        $written = [];
+        foreach ($analysis->hotspots as $hotspot) {
+            if ($fragment === $hotspot->pattern) {
+                $written[] = substr($pattern, 1 + $hotspot->start, $hotspot->end - $hotspot->start);
+            }
+        }
+
+        $this->assertSame([$fragment], $written);
+    }
+
+    /**
      * A byte above ASCII is read under PCRE2's own tables, which PHP
      * compiles with under "C": there "\w" leaves "\xE9" out, and the loop
      * beside it gives its iterations back one at a time (8 -> 12 units of

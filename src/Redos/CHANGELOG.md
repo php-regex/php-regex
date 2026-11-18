@@ -92,7 +92,9 @@ CHANGELOG
    `/^((?i)a+)\1$/`, `/(?i)^((?-i)(?:a|A)+)\1$/`, `/^(x|(?i)a+)\1$/`,
    `/^((?:a|A)+(?i))\1$/` and `/^(a+(?i)A+)\1$/`, which were safe, are
    medium, as `/^(a+)\1$/i`, `/^((?:a|A)+)\1$/` and `/^(a+[aA]+)\1$/` are,
-   and PCRE takes the same steps on each and on its twin.
+   and PCRE takes the same steps on each and on its twin. The finding of
+   two loops that meet so names them with the items between them, as
+   written: `a+(?i)A+`, not `a+A+`.
  * An item that may match empty, an optional one, a run or a count that may
    be empty, an alternation with an empty branch or a group of those, and a
    lookaround, which reads nothing, no longer keep a loop apart on their
