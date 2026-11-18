@@ -260,7 +260,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 // "nullable|regex:/a/", makes a rules string, and a heredoc
                 // is not read.
                 $literal = $pieces[0] ?? '';
-                $reading ??= self::tokenReading($tokens, $offsets);
+                $reading ??= self::tokenReading($tokens, $offsets, $closers);
                 $rulesString = self::rulesStringContext($tokens, $start, $offsets, $reading);
                 if (null === $rulesString && $heredoc) {
                     continue;
@@ -372,16 +372,16 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $offsets
+     * @param array<int, int>                            $closers the closing bracket of each opening one
      *
      * @return array{rules: array<int, true>, grouping: array<int, true>, elements: array<int, true>}
      */
-    private static function tokenReading(array $tokens, array $offsets): array
+    private static function tokenReading(array $tokens, array $offsets, array $closers): array
     {
         $rules = [];
         $grouping = [];
         $elements = [];
         $count = \count($tokens);
-        $closers = PhpTokens::closers($tokens);
         $context = new NameResolutionContext();
         // The closing bracket of the last attribute group of the run being
         // read, and how many of Livewire's rule attributes the run holds.
