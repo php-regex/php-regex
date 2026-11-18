@@ -450,9 +450,10 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
 
     /**
      * A rule is public when the security bundle's AuthenticatedVoter grants
-     * its roles to a visitor: "PUBLIC_ACCESS" as written, and nothing else
-     * (IS_AUTHENTICATED_ANONYMOUSLY is gone since Symfony 6.0). A public rule
-     * before a restricted one it shadows is critical.
+     * its roles to a visitor: "PUBLIC_ACCESS" as written, alone, as the
+     * voter and AccessListener compare the whole list with it, and nothing
+     * else (IS_AUTHENTICATED_ANONYMOUSLY is gone since Symfony 6.0). A public
+     * rule before a restricted one it shadows is critical.
      *
      * @param list<string> $roles
      */
@@ -480,6 +481,8 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
         yield 'PUBLIC_ACCESS after a space' => ['roles' => [' PUBLIC_ACCESS']];
         yield 'PUBLIC_ACCESS in lower case' => ['roles' => ['public_access']];
         yield 'IS_AUTHENTICATED_ANONYMOUSLY' => ['roles' => ['IS_AUTHENTICATED_ANONYMOUSLY']];
+        yield 'PUBLIC_ACCESS beside another role' => ['roles' => ['PUBLIC_ACCESS', 'ROLE_USER']];
+        yield 'PUBLIC_ACCESS twice' => ['roles' => ['PUBLIC_ACCESS', 'PUBLIC_ACCESS']];
     }
 
     /**

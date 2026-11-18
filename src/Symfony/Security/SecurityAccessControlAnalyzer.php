@@ -365,7 +365,7 @@ final class SecurityAccessControlAnalyzer
             'attributes' => $attributes,
             'route' => $route,
             'fromEnvironment' => $fromEnvironment,
-            'accessLevel' => $this->resolveAccessLevel(\in_array('roles', $fromEnvironment, true) ? [] : $roles, $rule['allowIf']),
+            'accessLevel' => $this->resolveAccessLevel(\in_array('roles', $fromEnvironment, true) ? [] : array_values($rule['roles']), $rule['allowIf']),
             'notes' => $notes,
         ];
     }
@@ -395,9 +395,10 @@ final class SecurityAccessControlAnalyzer
             return self::LEVEL_UNKNOWN;
         }
 
-        // AuthenticatedVoter grants a visitor "PUBLIC_ACCESS" as written,
-        // and no other role.
-        if (\in_array('PUBLIC_ACCESS', $roles, true)) {
+        // AuthenticatedVoter grants a visitor "PUBLIC_ACCESS" as written and
+        // alone: it compares the whole list of roles with it, as
+        // AccessListener does.
+        if (['PUBLIC_ACCESS'] === $roles) {
             return self::LEVEL_PUBLIC;
         }
 
