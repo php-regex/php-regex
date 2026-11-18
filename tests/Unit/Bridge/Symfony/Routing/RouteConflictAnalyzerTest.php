@@ -878,6 +878,14 @@ final class RouteConflictAnalyzerTest extends TestCase
             'probes' => [['GET', '/foobar', 'later'], ['GET', '/foo', 'earlier']],
             'type' => null,
         ];
+        // The slash variant of a path carved out of a catch-all is the
+        // router's normalisation, not a conflict.
+        yield 'a route carved out of a catch-all, whose slash variant the redirect takes' => [
+            'earlier' => ['/admin', ['GET']],
+            'later' => ['/{path<.*>}', []],
+            'probes' => [['GET', '/admin/', 'earlier'], ['HEAD', '/admin/', 'earlier'], ['POST', '/admin/', 'later'], ['PUT', '/admin/', 'later'], ['POST', '/admin', 'later'], ['GET', '/other', 'later']],
+            'type' => null,
+        ];
     }
 
     /**
