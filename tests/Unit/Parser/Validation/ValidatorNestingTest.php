@@ -237,13 +237,16 @@ final class ValidatorNestingTest extends TestCase
      * level is counted, a ":" after them opens the level past the limit,
      * and a ")" makes them an option setting, which opens none. Each row is
      * what preg_match() reports on PHP 8.4.27 with PCRE2 10.49; "text" is
-     * what follows the 250 levels.
+     * what follows the 250 levels. Every engine refuses each row: a release
+     * before 10.43 refuses the letter it does not know, past the limit or
+     * not, at an offset of its own (PCRE2 10.39 and 10.42 agree).
      */
     #[Test]
     #[DataProvider('provideOptionsOfPcre1043AtTheLevelPastTheLimit')]
     public function test_the_options_of_pcre2_10_43_are_read_with_the_opener_of_the_level_past_the_limit(string $text, ErrorCode $code, int $offset): void
     {
         $pattern = '/'.str_repeat('(', 250).$text.'/';
+        $this->assertFalse(@preg_match($pattern, ''), 'Oracle: the engine refuses '.$text);
         if ('10.49' === PcreTarget::runtime()->pcreVersion) {
             $this->assertSame($offset, PhpErrorOffset::of($pattern), 'Oracle on PCRE2 10.49: '.$text);
         }
