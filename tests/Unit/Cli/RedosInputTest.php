@@ -63,6 +63,30 @@ final class RedosInputTest extends TestCase
         $this->assertSame('Input file not readable: '.sys_get_temp_dir(), RedosInput::from(new RedosArguments('/a/', inputFile: sys_get_temp_dir()), Regex::create()));
     }
 
+    /**
+     * An input file of 8 MiB is read whole; one a byte longer is past the
+     * limit whatever the count, refused with its own length.
+     */
+    #[Test]
+    public function test_an_input_file_is_held_to_the_limit_of_the_input_repeated(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'regex-redos-');
+        $this->assertIsString($file);
+
+        try {
+            file_put_contents($file, str_repeat('a', 8_388_608));
+            $whole = RedosInput::from(new RedosArguments('/a/', inputFile: $file), Regex::create());
+            file_put_contents($file, 'b', \FILE_APPEND);
+            $past = RedosInput::from(new RedosArguments('/a/', inputFile: $file), Regex::create());
+        } finally {
+            unlink($file);
+        }
+
+        $this->assertInstanceOf(RedosInput::class, $whole);
+        $this->assertSame(8_388_608, \strlen($whole->subject));
+        $this->assertSame(self::pastTheLimit(1, 8_388_609, 0), $past);
+    }
+
     #[Test]
     public function test_without_an_input_one_is_generated_from_the_culprit_of_the_pattern(): void
     {

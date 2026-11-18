@@ -1561,6 +1561,9 @@ vendor/bin/regex redos '/a+$/' --input a --repeat 8388609
 # The largest count for this input is 8388608.
 ```
 
+An `--input-file` is read to one byte past the limit, never whole: a longer file is
+refused the same way, whatever the count, with the length the file system gives it.
+
 ---
 
 ### 10. Format (Lay Out or Compact)

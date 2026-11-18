@@ -59,6 +59,38 @@ final class RedosInputLimitTest extends TestCase
     }
 
     /**
+     * A file past the limit is refused whatever the count: it is read to
+     * one byte past the limit, never whole, and the message gives the
+     * length the file system gives it. Read whole, 160 MiB stops PHP on
+     * its memory_limit before anything is refused.
+     */
+    #[Test]
+    public function test_an_input_file_past_the_memory_limit_is_refused_without_being_read_whole(): void
+    {
+        $file = $this->directory.'/large.txt';
+        self::sparseFile($file, 160 * 1024 * 1024);
+
+        [$exitCode, $stdout, $stderr] = $this->runRedos(['redos', '/a/', '--input-file='.$file, '--json']);
+
+        $this->assertSame(2, $exitCode, $stdout.$stderr);
+        $this->assertSame('', $stderr);
+        $this->assertSame(['error' => "--repeat 1 repeats the 167772160-byte input past 8 MiB (8388608 bytes), the most it may weigh: printed with --show-input, an 8 MiB subject of bytes to escape takes up to about 115 MiB, which must fit in PHP's default memory_limit of 128M. The largest count for this input is 0.", 'stage' => 'usage'], json_decode($stdout, true));
+    }
+
+    /**
+     * A file of $length zero bytes, which the file system need not store.
+     *
+     * @param int<0, max> $length
+     */
+    private static function sparseFile(string $file, int $length): void
+    {
+        $handle = fopen($file, 'w');
+        self::assertIsResource($handle);
+        ftruncate($handle, $length);
+        fclose($handle);
+    }
+
+    /**
      * @param list<string> $arguments the command line after "regex"
      *
      * @return array{int, string, string} exit code, stdout, stderr

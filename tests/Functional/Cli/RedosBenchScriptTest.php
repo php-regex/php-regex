@@ -43,6 +43,29 @@ final class RedosBenchScriptTest extends TestCase
     }
 
     /**
+     * A file past the limit is read to one byte past it, never whole: read
+     * whole, 160 MiB stops PHP on its memory_limit before the refusal.
+     */
+    #[Test]
+    public function test_an_input_file_past_the_memory_limit_is_refused_without_being_read_whole(): void
+    {
+        $file = sys_get_temp_dir().'/regex-redos-bench-'.bin2hex(random_bytes(4)).'.txt';
+        $handle = fopen($file, 'w');
+        $this->assertIsResource($handle);
+        ftruncate($handle, 160 * 1024 * 1024);
+        fclose($handle);
+
+        try {
+            [$exitCode, $output] = self::bench(['--regex', '/a+$/', '--input-file', $file]);
+        } finally {
+            unlink($file);
+        }
+
+        $this->assertSame(64, $exitCode, $output);
+        $this->assertStringContainsString("\n--repeat 1 repeats the 167772160-byte input past 8 MiB (8388608 bytes), the most it may weigh: ", $output);
+    }
+
+    /**
      * The script measures preg_match() alone, in a checkout without its
      * Composer dependencies too: the one class it shares with `regex
      * redos`, for the limit, is loaded from its file.
