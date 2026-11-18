@@ -102,13 +102,14 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     private const RULE = '/^([ \t\n\r\0\x0B]*+)(not_?)?regex([ \t\n\r\0\x0B]*+):/i';
 
     /**
-     * What a file writes of a regex rule: its name and the colon after it,
-     * with blanks or their escapes between, the name closing a literal a
-     * "." joins the colon to, or an escape, hexadecimal, octal or a code
-     * point, that may write one of their characters. A file that holds none
-     * of these holds no rule.
+     * What a file writes of a regex rule: the letters of its name, with
+     * nothing between them but what joins two literals (quotes, dots,
+     * blanks, brackets), or an escape, hexadecimal, octal or a code point,
+     * that may write one of them. The colon may stand anywhere after. A
+     * file that holds neither holds no rule, but for a name cut in two by a
+     * comment holding a word or by a heredoc's label.
      */
-    private const RULE_TEXT = '/regex(?:[ \t\n\r\0\x0B]|\\\\[tnrv])*+(?::|[\'"]\s*+\.)|\\\\(?:[0-7xX]|u\{)/i';
+    private const RULE_TEXT = '/r[^\w$\\\\]*+e[^\w$\\\\]*+g[^\w$\\\\]*+e[^\w$\\\\]*+x|\\\\(?:[0-7xX]|u\{)/i';
 
     /**
      * The files the last extract() could not read, each with why.

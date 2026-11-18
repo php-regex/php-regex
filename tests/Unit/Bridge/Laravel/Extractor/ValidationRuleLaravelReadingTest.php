@@ -628,6 +628,40 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
+     * Laravel reads the rule the literals of a concatenation join, whatever
+     * stands between them or cuts the name in two. The rule alone in its
+     * file is read all the same.
+     */
+    #[Test]
+    #[DataProvider('provideRuleNamesTheLiteralsCut')]
+    public function test_a_rule_whose_name_the_literals_cut_is_read_alone_in_its_file(string $rule): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => "<?php\nreturn ['a' => ".$rule."];\n"]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $this->assertSame(['/[/'], self::laravelPatterns($rules));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame(['/[/'], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+    }
+
+    /**
+     * @return iterable<string, array{rule: string}>
+     */
+    public static function provideRuleNamesTheLiteralsCut(): iterable
+    {
+        yield 'a comment before the dot' => ['rule' => "'regex' /* partner rule */ . ':/[/'"];
+        yield 'a line comment before the dot' => ['rule' => "'regex' // partner rule\n    . ':/[/'"];
+        yield 'the name in brackets' => ['rule' => "('regex') . ':/[/'"];
+        yield 'the name in a nowdoc' => ['rule' => "<<<'NAME'\n    regex\n    NAME . ':/[/'"];
+        yield 'the name in a heredoc' => ['rule' => "<<<NAME\n    regex\n    NAME . ':/[/'"];
+        yield 'the name cut in two' => ['rule' => "'re' . 'gex:/[/'"];
+        yield 'the name cut in three, the colon apart' => ['rule' => "'reg' . \"e\" . 'x' . ':/[/'"];
+        yield 'the name cut in capitals, an empty comment and brackets between' => ['rule' => "'RE' /**/ . ('GEX:/[/')"];
+    }
+
+    /**
      * A rules string given to a call is a rules string: Validator::sometimes()
      * explodes [$key => $rules], and ConditionalRules::rules() explodes a
      * string on "|". An element of an array literal, an argument of the call
