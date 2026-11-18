@@ -283,6 +283,31 @@ final class RedosRepairerTest extends TestCase
     }
 
     /**
+     * The engine premise of the two runs blamed together above: they share
+     * the characters of a subject, the item between them matching nothing,
+     * so that the engine may split the same run of characters between them.
+     *
+     * @param list<string> $matches
+     */
+    #[Test]
+    #[DataProvider('provideRunsThatMeet')]
+    public function test_the_runs_blamed_together_meet_where_the_item_between_matches_nothing(string $pattern, string $split, string $subject, array $matches): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject), 'Oracle: the pattern matches the subject.');
+        $this->assertSame(1, preg_match($split, $subject, $groups), 'Oracle: each run may take a share of it.');
+        $this->assertSame($matches, $groups);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, split: string, subject: string, matches: list<string>}>
+     */
+    public static function provideRunsThatMeet(): iterable
+    {
+        yield 'two runs past an optional item' => ['pattern' => '/^a*b?a*$/', 'split' => '/^(a+)b?(a+)$/', 'subject' => 'aa', 'matches' => ['aa', 'a', 'a']];
+        yield 'two iterations past a space that may be empty' => ['pattern' => '/^\s*(?:\w+\s*)*$/', 'split' => '/^\s*(?:(\w+)\s*)(?:(\w+)\s*)$/', 'subject' => 'ab', 'matches' => ['ab', 'a', 'b']];
+    }
+
+    /**
      * A rewrite tried is a pattern nobody wrote: it is proven linear or
      * dropped without the parser keeping a tree of it. The parser is asked
      * for the pattern, the optimizer's rewrite and the rewrites proven
