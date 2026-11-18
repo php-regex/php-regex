@@ -1,17 +1,33 @@
-# The sponsor frame at the foot of every documentation page.
+# The sponsor frame at the foot of every documentation page, and the
+# lists BACKERS.md mirrors.
 #
-# While `sponsors` is empty the frame shows the open slot: an empty named
-# group waiting for a logo. Each entry added below takes a place in the
-# frame, and the frame keeps one open slot beside them.
+# `sponsors` are the companies (the $150 and $400 monthly tiers, and the
+# $300 one-time tier for three months). While the list is empty the frame
+# shows the open slot: an empty named group waiting for a logo.
 #
 #   sponsors:
 #     - name: Acme
 #       url: https://acme.example
-#       logo: /assets/img/sponsors/acme.svg       # light paper
+#       logo: /assets/img/sponsors/acme.svg            # light paper
 #       logo_dark: /assets/img/sponsors/acme-dark.svg  # optional, dark paper
+#       featured: true                                 # the $400 tier: first, larger
 #
-# A page opts out with `sponsor: false` in its front matter.
+# `backers` are the developers (the $15 monthly tier). Avatars are served
+# from this site, never hot-linked: save the GitHub avatar as
+# /assets/img/backers/<login>.png. Without an avatar the row draws the
+# backer's initial.
+#
+#   backers:
+#     - name: Jane Doe
+#       login: janedoe
+#       avatar: /assets/img/backers/janedoe.png
+#
+# A page opts out of the frame with `sponsor: false` in its front matter.
 
 github: https://github.com/sponsors/yoeunes
 email: younes.ennaji.pro@gmail.com
+backers_md: https://github.com/php-regex/php-regex/blob/2.x/BACKERS.md
+company_from: $150
+backer_from: $15
 sponsors: []
+backers: []

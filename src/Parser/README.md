@@ -158,7 +158,10 @@ Sponsors
 
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=github)](https://github.com/sponsors/yoeunes)
 
-If PHPRegex saves you time, consider [sponsoring its maintenance](https://github.com/sponsors/yoeunes).
+If PHPRegex saves you time, consider [sponsoring its maintenance](https://github.com/sponsors/yoeunes):
+from $5 a month to say thanks, $15 a month to see your name on every documentation page, and $150 a month
+for your company logo there. The people and companies who already do are listed in
+[BACKERS.md](https://github.com/php-regex/php-regex/blob/2.x/BACKERS.md).
 
 License
 -------

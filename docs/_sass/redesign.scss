@@ -2164,7 +2164,10 @@ main p.post-meta {
 /* ==========================================================================
    Sponsor frame
  *
- * The foot of every documentation page carries one open slot, drawn the way
+ * The last thing on every documentation page, after the pager: the way on
+ * to the next page stays where the reader's eye ends the text, and a long
+ * row of backers can grow without pushing it away. The frame carries one
+ * open slot, drawn the way
  * a design tool draws a selection: a dashed outline and four corner handles
  * in the accent — the same square node the rail titles wear. Inside, the
  * slot is a pattern on the dark code panel, an empty named group with a
@@ -2183,7 +2186,7 @@ main p.post-meta {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
-  margin: 4.5rem 0 0;
+  margin: 3.5rem 0 0;
   padding: 1.25rem;
   background-color: transparent;
   background-image:
@@ -2450,10 +2453,126 @@ main p.post-meta {
   color: var(--ink-soft);
 }
 
-/* The pager follows the frame: one gap between them, not two flights. */
-.sponsor + .pager {
-  margin-top: 2.5rem;
+/* The featured company — the $400 place — comes first and draws larger. */
+.sponsor-logos .is-featured .sponsor-logo {
+  max-width: 12rem;
+  max-height: 3.25rem;
 }
+
+/* ---- The backers: the developers at the frame's foot ----------------------
+ * The same frame speaks to a solo developer: a row of faces on the
+ * frame's last line, and a dashed place beside them — the open slot again,
+ * at the size of one person. Avatars are served from this site. */
+
+.sponsor-backers {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--line-mid);
+}
+
+.sponsor .sponsor-backers-label {
+  @include label;
+  margin: 0;
+}
+
+.sponsor .sponsor-backers-label a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sponsor .sponsor-backers-label a:hover {
+  color: var(--amber);
+}
+
+.sponsor .sponsor-backers-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sponsor .sponsor-backers-list li {
+  margin: 0;
+}
+
+.sponsor a.sponsor-backer {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  min-height: 2rem;
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+  font-size: .8125rem;
+  text-decoration: none;
+}
+
+.sponsor a.sponsor-backer img,
+.sponsor-backer-initial,
+.sponsor-backer-plus {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+}
+
+.sponsor a.sponsor-backer img {
+  box-shadow: 0 0 0 1px var(--line-soft);
+}
+
+.sponsor-backer-initial {
+  background: var(--wash-strong);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: .8125rem;
+  font-weight: 600;
+}
+
+.sponsor a.sponsor-backer:hover img,
+.sponsor a.sponsor-backer:hover .sponsor-backer-initial {
+  box-shadow: 0 0 0 2px var(--amber);
+}
+
+/* The open place: a dashed circle, the frame's outline at a face's size. */
+.sponsor-backer-plus {
+  border: 1px dashed var(--marker);
+  color: var(--mute);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  line-height: 1;
+  transition: border-color .15s ease, color .15s ease, background-color .15s ease;
+}
+
+.sponsor-backer-you {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.sponsor-backer-price {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.sponsor a.sponsor-backer-open:hover .sponsor-backer-plus,
+.sponsor a.sponsor-backer-open:focus-visible .sponsor-backer-plus {
+  border-color: var(--amber);
+  border-style: solid;
+  color: var(--amber);
+  background: var(--amber-tint);
+}
+
+.sponsor a.sponsor-backer-open:hover .sponsor-backer-you {
+  color: var(--amber-deep);
+}
+
 
 /* Side by side once the column holds both: the slot keeps a fixed width,
    the pitch takes the rest. */
