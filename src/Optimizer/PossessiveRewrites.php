@@ -99,7 +99,10 @@ final class PossessiveRewrites
                 $suffixNode = 1 === \count($suffix) ? $suffix[0] : new SequenceNode($suffix, $current->startPosition, $current->endPosition);
 
                 // The sets stop at 0x7F: above it nothing is known disjoint.
-                if ($this->mayTakeAboveAscii($current->node) || $this->suffixMayStartAboveAscii($suffix)) {
+                // A lookaround reads nothing, yet it looks at the characters
+                // the repetition would give back: "a+(?!b)" matches "a" in
+                // "aab", "a++(?!b)" nothing.
+                if ($this->mayTakeAboveAscii($current->node) || $this->suffixMayStartAboveAscii($suffix) || $this->suffixLooksAround($suffix)) {
                     continue;
                 }
 
@@ -221,6 +224,42 @@ final class PossessiveRewrites
 
             if (!$this->canMatchEmpty($item)) {
                 return false;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether a lookaround stands among the items the suffix may start
+     * with, up to the first that reads a character.
+     *
+     * @param array<NodeInterface> $suffix
+     */
+    private function suffixLooksAround(array $suffix): bool
+    {
+        foreach ($suffix as $item) {
+            if (self::holdsLookaround($item)) {
+                return true;
+            }
+
+            if (!$this->canMatchEmpty($item)) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private static function holdsLookaround(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring], true)) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsLookaround($child)) {
+                return true;
             }
         }
 
