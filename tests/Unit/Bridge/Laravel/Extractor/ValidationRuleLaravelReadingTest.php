@@ -702,17 +702,32 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     /**
      * An element of the array Rule::anyOf() or an AnyOf rule takes is a
      * rules string: the rule validates each alone through
-     * Validator::make() (Laravel 12.8 and later, where the call exists). An
-     * element of an array inside it is one rule.
+     * Validator::make(). An element of an array inside it is one rule. The
+     * code is read on every Laravel; the pattern Laravel runs is checked
+     * where Laravel has the call (12.8 and later), by the test below.
+     *
+     * @param \Closure(): array<mixed> $rules the rules as Laravel holds them
+     */
+    #[Test]
+    #[DataProvider('provideRuleSetArguments')]
+    public function test_a_string_element_of_the_rule_sets_any_of_takes_is_split(string $code, \Closure $rules, string $expected, bool $compiles): void
+    {
+        $this->assertReadInTheCode($code, $expected, $compiles);
+    }
+
+    /**
+     * The pattern each row of provideRuleSetArguments() expects is the one
+     * Laravel runs for its rules.
      *
      * @param \Closure(): array<mixed> $rules the rules as Laravel holds them
      */
     #[Test]
     #[DataProvider('provideRuleSetArguments')]
     #[RequiresMethod(Rule::class, 'anyOf')]
-    public function test_a_string_element_of_the_rule_sets_any_of_takes_is_split(string $code, \Closure $rules, string $expected, bool $compiles): void
+    public function test_laravel_runs_the_pattern_read_in_the_rule_sets_any_of_takes(string $code, \Closure $rules, string $expected, bool $compiles): void
     {
-        $this->assertReadAsLaravelRunsIt($code, $rules, $expected, $compiles);
+        $this->assertSame([$expected], self::laravelPatterns($rules()));
+        $this->assertSame($compiles, EngineProbe::compiles($expected), $expected);
     }
 
     /**
@@ -928,6 +943,15 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     private function assertReadAsLaravelRunsIt(string $code, \Closure $rules, string $expected, bool $compiles): void
     {
         $this->assertSame([$expected], self::laravelPatterns($rules()));
+        $this->assertReadInTheCode($code, $expected, $compiles);
+    }
+
+    /**
+     * The extractor reads in the code this one pattern, which compiles or
+     * not as the engine says.
+     */
+    private function assertReadInTheCode(string $code, string $expected, bool $compiles): void
+    {
         $this->assertSame($compiles, EngineProbe::compiles($expected), $expected);
 
         $project = $this->makeProject(['app/Rules.php' => "<?php\nuse Illuminate\\Validation\\ConditionalRules;\nuse Illuminate\\Validation\\Rule;\nuse Illuminate\\Validation\\Rules\\AnyOf;\n".$code."\n"]);
