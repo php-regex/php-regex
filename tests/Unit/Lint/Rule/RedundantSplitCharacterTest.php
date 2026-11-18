@@ -24,8 +24,8 @@ use PHPUnit\Framework\TestCase;
  * holds 0xC3 twice. A byte two different characters share is no duplicate
  * the author wrote, and the class is reported once, for the missing u. A
  * character written twice, or a byte written beside one, is a duplicate.
- * Each row checks over every byte that the class without the duplicate is
- * the same class.
+ * Each row checks over every byte, or in UTF mode over ASCII and whole
+ * characters, that the class without the duplicate is the same class.
  */
 final class RedundantSplitCharacterTest extends TestCase
 {
@@ -36,9 +36,20 @@ final class RedundantSplitCharacterTest extends TestCase
     #[DataProvider('provideClasses')]
     public function test_a_byte_shared_by_two_characters_is_no_duplicate(string $pattern, string $without, array $issues): void
     {
-        for ($byte = 0; $byte <= 0xFF; $byte++) {
-            $this->assertSame(preg_match($without, \chr($byte)), preg_match($pattern, \chr($byte)), \sprintf('byte 0x%02X', $byte));
+        // In UTF mode a byte past ASCII on its own is no UTF-8, which the
+        // engine refuses: the subjects are ASCII and whole characters.
+        $subjects = str_ends_with($pattern, '/u')
+            ? [...array_map(\chr(...), range(0, 0x7F)), 'ä', 'ö', 'à', 'é', 'Ã', '¤']
+            : array_map(\chr(...), range(0, 0xFF));
+        $results = [];
+        foreach ($subjects as $subject) {
+            $expected = preg_match($without, $subject);
+            $this->assertNotFalse($expected, \sprintf('%s runs on %s', $without, bin2hex($subject)));
+            $this->assertSame($expected, preg_match($pattern, $subject), \sprintf('%s on %s', $pattern, bin2hex($subject)));
+            $results[$expected] = true;
         }
+        ksort($results);
+        $this->assertSame([0 => true, 1 => true], $results, 'The subjects hold a match and a non-match.');
 
         $linter = new PatternLinter();
         Regex::create(['cache' => null])->parse($pattern)->accept($linter);
