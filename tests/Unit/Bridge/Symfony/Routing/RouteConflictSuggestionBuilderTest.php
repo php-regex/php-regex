@@ -232,7 +232,7 @@ final class RouteConflictSuggestionBuilderTest extends TestCase
         $conflicts = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true)->conflicts;
         $this->assertSame(['overlap'], array_column($conflicts, 'type'));
 
-        $this->assertContains('Reorder routes: move "second" before "first".', (new RouteConflictSuggestionBuilder())->collect($conflicts));
+        $this->assertSame(['Reorder routes: move "second" before "first".'], (new RouteConflictSuggestionBuilder())->collect($conflicts));
     }
 
     /**
