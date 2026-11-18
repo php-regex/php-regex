@@ -129,11 +129,13 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         // What the items before the current one read, kept as the loop goes:
         // whether they may all read nothing, whether one may end the match,
         // and the characters the last of them reads (an empty set when none
-        // reads one, null when unknown).
+        // reads one, null when unknown), read up to the item $read only as
+        // far as an end anchor asks.
         $prefixCanBeEmpty = true;
         $accepted = false;
         $prefix = null;
         $before = ByteCharSet::empty();
+        $read = 0;
         $tailCanBeEmpty = null;
 
         for ($i = 0; $i < $count; $i++) {
@@ -160,6 +162,13 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
             if (NodePredicates::isEndAnchorNode($child) && $i + 1 < $count) {
                 $tailCanBeEmpty ??= self::emptyFromEachItem($children);
+                for (; !$tailCanBeEmpty[$i + 1] && $read < $i; $read++) {
+                    $last = $this->lastCharacters($children[$read], $context);
+                    if (null === $last || !$last->isEmpty()) {
+                        $before = $last;
+                    }
+                }
+
                 if (!$tailCanBeEmpty[$i + 1]
                     && !$this->tailCanContinueEndOfLine($child, null === $before || $before->isEmpty() ? null : $before, \array_slice($children, $i + 1), $flags, $node, $context)
                 ) {
@@ -190,10 +199,6 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             $prefixCanBeEmpty = $prefixCanBeEmpty && (NodePredicates::canBeEmpty($child)
                 || ($prefix ??= new EndOfLineTail($context->charSetAnalyzer, "\n", $context->groups->pcre ?? PcreGroups::empty()))->canMatchNothingAnywhere($child));
             $accepted = $accepted || NodePredicates::holdsAccept($child);
-            $last = $this->lastCharacters($child, $context);
-            if (null === $last || !$last->isEmpty()) {
-                $before = $last;
-            }
         }
 
         return $issues;
