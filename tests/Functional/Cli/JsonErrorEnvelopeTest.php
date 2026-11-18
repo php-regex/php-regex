@@ -382,7 +382,8 @@ final class JsonErrorEnvelopeTest extends TestCase
         [$exitCode, $stdout, $stderr] = $this->runRegex($arguments);
 
         $this->assertSame(2, $exitCode, $stdout);
-        $this->assertMatchesRegularExpression($line, $stdout.$stderr);
+        $this->assertSame('', $stdout);
+        $this->assertMatchesRegularExpression($line, $stderr);
     }
 
     /**
