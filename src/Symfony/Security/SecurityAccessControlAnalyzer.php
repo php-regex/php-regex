@@ -494,7 +494,8 @@ final class SecurityAccessControlAnalyzer
 
     /**
      * A search for the pattern, as a whole-subject match: any text before,
-     * the pattern grouped, any text after. Grouped, every branch of a
+     * the pattern grouped, any text after, line feeds included whether or
+     * not Symfony compiles the pattern with "s". Grouped, every branch of a
      * top-level alternation is searched for, and an anchor binds only the
      * branch it is written in, as in preg_match(). The options the pattern
      * opens with, "(*UTF)" or "(*LIMIT_MATCH=1000)", stay first: PCRE reads
@@ -512,7 +513,7 @@ final class SecurityAccessControlAnalyzer
     {
         $options = StartOptions::of($pattern);
 
-        return $options.'.*(?:'.substr($pattern, \strlen($options))."\\E(?#\n(?#)).*";
+        return $options.'(?s:.*)(?:'.substr($pattern, \strlen($options))."\\E(?#\n(?#))(?s:.*)";
     }
 
     /**

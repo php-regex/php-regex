@@ -141,6 +141,7 @@
         "symfony/config": "<6.4",
         "symfony/console": "<6.4",
         "symfony/dependency-injection": "<6.4",
+        "symfony/http-foundation": "<6.4",
         "symfony/http-kernel": "<6.4",
         "vimeo/psalm": "<6.19"
     },

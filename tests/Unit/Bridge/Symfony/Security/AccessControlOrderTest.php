@@ -22,6 +22,7 @@ use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcherInterface;
 use Symfony\Component\Security\Http\AccessMap;
 
@@ -515,6 +516,39 @@ final class AccessControlOrderTest extends TestCase
             'requests' => [
                 ['GET', 'http://admin.example.com/admin', 0, 1],
                 ['GET', 'http://shop.example.com/admin', 0, 1],
+            ],
+        ];
+
+        // symfony/http-foundation compiles a path with "s" since 6.4.46,
+        // 7.4.19 and 8.1.7, and never on 8.0: a dot takes a line feed where
+        // the PathRequestMatcher installed does. Whatever the modifier, a
+        // path is searched for in the whole request path, line feeds and
+        // all.
+        $dotAll = (new PathRequestMatcher('^/.$'))->matches(Request::create('/%0A'));
+        yield 'a dot takes a line feed where the path is compiled with "s"' => [
+            'rules' => [['path' => '^/admin.x'], ['path' => '^/admin\nx']],
+            'expected' => $dotAll ? 'shadowed' : null,
+            'requests' => [
+                ['GET', 'http://localhost/admin%0Ax', $dotAll ? 0 : 1, 1],
+                ['GET', 'http://localhost/adminyx', 0, 0],
+            ],
+        ];
+
+        yield 'a path is searched for after a line feed' => [
+            'rules' => [['path' => '/admin'], ['path' => '^/x\n/admin']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/x%0A/admin', 0, 1],
+                ['GET', 'http://localhost/shop/admin', 0, 0],
+            ],
+        ];
+
+        yield 'a path is searched for before a line feed' => [
+            'rules' => [['path' => '^/admin'], ['path' => '^/admin\n']],
+            'expected' => 'shadowed',
+            'requests' => [
+                ['GET', 'http://localhost/admin%0Ausers', 0, 1],
+                ['GET', 'http://localhost/admin', 0, 0],
             ],
         ];
 

@@ -21,6 +21,13 @@ CHANGELOG
    `' ^/admin'` matches no path, where it was read as `^/admin`. A path or
    a host of spaces only is one, where it was read as none, and one of
    `"0"` is none, as the bundle reads it.
+ * `regex:security` and `regex:analyze` read an `access_control` path, and
+   a firewall pattern, with the `s` modifier only where the application's
+   `symfony/http-foundation` compiles it with `s` (6.4.46, 7.4.19 and 8.1.7
+   on, never 8.0): elsewhere `^/admin.x` no longer takes `/admin%0Ax`, nor
+   shadows `^/admin\nx`. A path is still searched for across the line
+   feeds of a request path, whatever the modifier. The package requires
+   `symfony/http-foundation`, which `symfony/http-kernel` already installs.
  * `regex:security` and `regex:analyze` read the `port`, `route` and
    `attributes` of an `access_control` rule, as the security bundle chains
    them to its request matcher: an earlier rule holding one the later rule

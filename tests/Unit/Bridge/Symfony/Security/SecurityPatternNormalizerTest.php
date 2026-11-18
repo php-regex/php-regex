@@ -26,6 +26,9 @@ use Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher;
  * with preg_match('{'.$host.'}i', ...) (PathRequestMatcher,
  * HostRequestMatcher): the normalized pattern is that pattern, so a path
  * or a host is a fragment, never a delimited pattern, taken as written.
+ * symfony/http-foundation adds the "s" to a path since 6.4.46, 7.4.19 and
+ * 8.1.7, and never on 8.0: the path is read with the modifier of the
+ * PathRequestMatcher installed.
  */
 final class SecurityPatternNormalizerTest extends TestCase
 {
@@ -33,7 +36,7 @@ final class SecurityPatternNormalizerTest extends TestCase
     #[DataProvider('providePatterns')]
     public function test_normalize_writes_the_pattern_symfony_matches_with(string $pattern, bool $host, string $expected): void
     {
-        $this->assertSame($expected, (new SecurityPatternNormalizer())->normalize($pattern, $host));
+        $this->assertSame($expected.($host ? 'i' : self::pathModifier()), (new SecurityPatternNormalizer())->normalize($pattern, $host));
     }
 
     /**
@@ -41,15 +44,43 @@ final class SecurityPatternNormalizerTest extends TestCase
      */
     public static function providePatterns(): iterable
     {
-        yield 'anchored path' => ['pattern' => '^/admin', 'host' => false, 'expected' => '{^/admin}s'];
-        yield 'path starting with a slash' => ['pattern' => '/admin', 'host' => false, 'expected' => '{/admin}s'];
-        yield 'path that looks delimited' => ['pattern' => '#^/admin#x', 'host' => false, 'expected' => '{#^/admin#x}s'];
-        yield 'path holding a hash' => ['pattern' => '^/a#b', 'host' => false, 'expected' => '{^/a#b}s'];
-        yield 'host' => ['pattern' => '^api\.example\.com$', 'host' => true, 'expected' => '{^api\.example\.com$}i'];
-        yield 'empty path' => ['pattern' => '', 'host' => false, 'expected' => '{}s'];
-        yield 'path opening with a space' => ['pattern' => ' ^/admin', 'host' => false, 'expected' => '{ ^/admin}s'];
-        yield 'path ending on an escaped line feed' => ['pattern' => "^/a\\\n", 'host' => false, 'expected' => "{^/a\\\n}s"];
-        yield 'host ending on a tab' => ['pattern' => "^example\\.com\t", 'host' => true, 'expected' => "{^example\\.com\t}i"];
+        yield 'anchored path' => ['pattern' => '^/admin', 'host' => false, 'expected' => '{^/admin}'];
+        yield 'path starting with a slash' => ['pattern' => '/admin', 'host' => false, 'expected' => '{/admin}'];
+        yield 'path that looks delimited' => ['pattern' => '#^/admin#x', 'host' => false, 'expected' => '{#^/admin#x}'];
+        yield 'path holding a hash' => ['pattern' => '^/a#b', 'host' => false, 'expected' => '{^/a#b}'];
+        yield 'host' => ['pattern' => '^api\.example\.com$', 'host' => true, 'expected' => '{^api\.example\.com$}'];
+        yield 'empty path' => ['pattern' => '', 'host' => false, 'expected' => '{}'];
+        yield 'path opening with a space' => ['pattern' => ' ^/admin', 'host' => false, 'expected' => '{ ^/admin}'];
+        yield 'path ending on an escaped line feed' => ['pattern' => "^/a\\\n", 'host' => false, 'expected' => "{^/a\\\n}"];
+        yield 'host ending on a tab' => ['pattern' => "^example\\.com\t", 'host' => true, 'expected' => "{^example\\.com\t}"];
+    }
+
+    /**
+     * A dot takes a line feed of the request path where the application's
+     * PathRequestMatcher compiles the path with "s", and only there, unless
+     * the path sets or clears the option itself; it takes a carriage return
+     * either way.
+     */
+    #[Test]
+    #[DataProvider('provideLineFeeds')]
+    public function test_normalize_reads_a_dot_as_the_application_compiles_a_path(string $pattern, string $url): void
+    {
+        $request = Request::create($url);
+        $matches = (new PathRequestMatcher($pattern))->matches($request);
+
+        $this->assertSame($matches ? 1 : 0, preg_match((new SecurityPatternNormalizer())->normalize($pattern), rawurldecode($request->getPathInfo())));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, url: string}>
+     */
+    public static function provideLineFeeds(): iterable
+    {
+        yield 'dot over a line feed in a path' => ['pattern' => '^/a.b', 'url' => 'http://localhost/a%0Ab'];
+        yield 'dot over a line feed ending a path' => ['pattern' => '^/admin/.+$', 'url' => 'http://localhost/admin/%0A'];
+        yield 'dot over a carriage return' => ['pattern' => '^/a.b', 'url' => 'http://localhost/a%0Db'];
+        yield 'dot over a line feed, the s option written' => ['pattern' => '(?s)^/a.b', 'url' => 'http://localhost/a%0Ab'];
+        yield 'dot over a line feed, the s option turned off' => ['pattern' => '(?-s)^/a.b', 'url' => 'http://localhost/a%0Ab'];
     }
 
     /**
@@ -102,7 +133,15 @@ final class SecurityPatternNormalizerTest extends TestCase
         // No anchor is added: "/api" matches anywhere in the path.
         yield 'unanchored path' => ['pattern' => '/api', 'host' => false, 'subject' => '/v1/api/users', 'matches' => true];
         yield 'anchored path' => ['pattern' => '^/api', 'host' => false, 'subject' => '/v1/api', 'matches' => false];
-        yield 'dot over a newline in a path' => ['pattern' => '^/a.b', 'host' => false, 'subject' => "/a\nb", 'matches' => true];
         yield 'host in another case' => ['pattern' => '^example\.com$', 'host' => true, 'subject' => 'EXAMPLE.com', 'matches' => true];
+    }
+
+    /**
+     * The modifier the PathRequestMatcher installed compiles a path with:
+     * "s" when a dot takes a line feed ("%0A" decoded), none otherwise.
+     */
+    private static function pathModifier(): string
+    {
+        return (new PathRequestMatcher('^/.$'))->matches(Request::create('/%0A')) ? 's' : '';
     }
 }
