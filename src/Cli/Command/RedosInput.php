@@ -87,12 +87,26 @@ final class RedosInput
             [$value, $source, $note] = self::generate($regex, $arguments->pattern);
         }
 
-        $largest = '' === $value ? \PHP_INT_MAX : intdiv(self::MAX_REPEATED_LENGTH, \strlen($value));
-        if ($arguments->repeat > $largest) {
-            return \sprintf("--repeat %d repeats the %d-byte input past 8 MiB (%d bytes), the most it may weigh: printed with --show-input, a subject takes up to five times its size, which must fit in PHP's default memory_limit of 128M. The largest count for this input is %d.", $arguments->repeat, \strlen($value), self::MAX_REPEATED_LENGTH, $largest);
+        $refusal = self::refuseRepeat($value, $arguments->repeat);
+        if (null !== $refusal) {
+            return $refusal;
         }
 
         return new self($value, $source, $note, $arguments->prefix.str_repeat($value, $arguments->repeat).$arguments->suffix);
+    }
+
+    /**
+     * The message refusing a count that repeats the input past the limit,
+     * or null when the input repeated fits: bin/redos-bench asks it too.
+     */
+    public static function refuseRepeat(string $value, int $repeat): ?string
+    {
+        $largest = '' === $value ? \PHP_INT_MAX : intdiv(self::MAX_REPEATED_LENGTH, \strlen($value));
+        if ($repeat <= $largest) {
+            return null;
+        }
+
+        return \sprintf("--repeat %d repeats the %d-byte input past 8 MiB (%d bytes), the most it may weigh: printed with --show-input, a subject takes up to five times its size, which must fit in PHP's default memory_limit of 128M. The largest count for this input is %d.", $repeat, \strlen($value), self::MAX_REPEATED_LENGTH, $largest);
     }
 
     /**
