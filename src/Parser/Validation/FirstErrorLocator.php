@@ -390,14 +390,15 @@ final class FirstErrorLocator
     /**
      * The tokens up to the end of each run that follows the first opener of
      * the level PCRE refuses, past its limit, longest first, each holding at
-     * most HEADER_TOKENS tokens past that opener, enough for the longest.
-     * A comment opens no level. A "(?" followed only by option letters is
-     * no run: closed there, it would read as an option setting where the
-     * opener goes on, or is refused for itself. None where no level passes
-     * the limit, or where its opener ends at or past $position: that level
-     * is refused past its opener, too late to come first. A conditional an
-     * assertion or a callout decides is one run: the tokens before it and
-     * a group opening at its "(?".
+     * most HEADER_TOKENS tokens past that opener, enough for the longest,
+     * or up to the token after its option letters, which PCRE reads however
+     * many. A comment opens no level. A "(?" followed only by option
+     * letters is no run: closed there, it would read as an option setting
+     * where the opener goes on, or is refused for itself. None where no
+     * level passes the limit, or where its opener ends at or past
+     * $position: that level is refused past its opener, too late to come
+     * first. A conditional an assertion or a callout decides is one run:
+     * the tokens before it and a group opening at its "(?".
      *
      * @param list<Token> $tokens
      *
