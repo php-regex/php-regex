@@ -626,7 +626,8 @@ the request matchers split each method and each address on its commas
 (`['GET,POST']` takes `GET` and `POST`), a method written ` get` takes no
 request, and a rule is public only for `PUBLIC_ACCESS` written so and alone
 (`IS_AUTHENTICATED_ANONYMOUSLY` grants nothing since Symfony 6.0). An
-`allow_if` of `"0"` is none, as the bundle reads it.
+`allow_if` of `"0"`, written so or held by a parameter, is none, as the
+bundle reads it.
 Addresses, a route and attributes are compared as written: an earlier rule
 holding a route or an attribute the later one does not require the same way
 leaves it the other requests, so `{ route: app_login }` before

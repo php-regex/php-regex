@@ -455,6 +455,7 @@ final class SecurityConfigExtractor
         $roles = self::resolvedList(\is_string($rule['roles']) ? $rule['roles'] : array_map($readAs, $rule['roles']), $read, 'roles');
         $methods = self::resolvedList(\is_string($rule['methods']) ? $rule['methods'] : array_map($readAs, $rule['methods']), $read, 'methods');
         $port = null === $rule['port'] ? null : $read($rule['port'], 'port');
+        $allowIf = null === $rule['allowIf'] ? null : $resolve($rule['allowIf'])[0];
 
         // SecurityExtension builds the port matcher, and upper-cases the
         // methods, when the container is compiled: from the environment, a
@@ -476,9 +477,9 @@ final class SecurityConfigExtractor
             'roles' => $roles,
             'methods' => $methods,
             'ips' => array_map(static fn (string $ip): string => $read($readAs($ip), 'ips'), $rule['ips']),
-            // SecurityExtension takes an allow_if when it is truthy, and a
-            // request_matcher and a channel as written.
-            'allowIf' => '' === $rule['allowIf'] || '0' === $rule['allowIf'] ? null : $rule['allowIf'],
+            // SecurityExtension takes an allow_if when it is truthy once
+            // resolved, and a request_matcher and a channel as written.
+            'allowIf' => '' === $allowIf || '0' === $allowIf ? null : $allowIf,
             'requestMatcher' => $rule['requestMatcher'],
             'requiresChannel' => $rule['requiresChannel'],
             'port' => null === $port ? null : self::port($port),

@@ -442,6 +442,22 @@ final class SecurityConfigExtractorTest extends TestCase
     }
 
     /**
+     * The bundle tests an allow_if once MergeExtensionConfigurationPass has
+     * resolved its parameters: one holding "0" gives the rule no
+     * expression.
+     */
+    #[Test]
+    public function test_an_allow_if_held_by_a_parameter_is_tested_once_resolved(): void
+    {
+        $yaml = "parameters:\n    access_expr: '0'\nsecurity:\n    access_control:\n        - { path: ^/a, allow_if: '%access_expr%', roles: PUBLIC_ACCESS }\n";
+        $this->assertFalse(self::loadedRule($yaml)['allowIf']);
+
+        $read = (new SecurityConfigExtractor())->extract($this->makeProject(['security.yaml' => $yaml]).'/security.yaml')['accessControl'][0];
+
+        $this->assertNull($read['allowIf']);
+    }
+
+    /**
      * @return iterable<string, array{rule: string}>
      */
     public static function provideListsHeldByParameters(): iterable
