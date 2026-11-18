@@ -1,12 +1,26 @@
 <footer class="site-footer">
   <div class="footer-grid">
+    {% comment %}The brand column: the wordmark and its release, the one line
+      that says what PHPRegex is, the facts a reader checks before
+      installing — read from product.yml, never spelled here — and the way
+      to the package that fits. PHPRegex ships as many packages, so the
+      column names none of them: it leads to the page that chooses.{% endcomment %}
+    {%- assign product = site.data.product -%}
     <div class="footer-brand">
-      <a class="footer-wordmark" href="/" aria-label="PHPRegex home">
-        <svg class="mark" viewBox="-200 -150 400 300" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M-176 126L-112-126M112 126L176-126" stroke-width="40"/><path d="M0-64L-52 72M0-64L52 72" stroke-width="28"/></g><g class="mark-nodes"><circle cx="0" cy="-64" r="42"/><circle cx="-52" cy="72" r="34"/><circle cx="52" cy="72" r="34"/></g></svg>
-        <span class="brand-name"><span class="brand-php">PHP</span>Regex</span>
-      </a>
+      <div class="footer-brand-head">
+        <a class="footer-wordmark" href="/" aria-label="PHPRegex home">
+          <svg class="mark" viewBox="-200 -150 400 300" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round"><path d="M-176 126L-112-126M112 126L176-126" stroke-width="40"/><path d="M0-64L-52 72M0-64L52 72" stroke-width="28"/></g><g class="mark-nodes"><circle cx="0" cy="-64" r="42"/><circle cx="-52" cy="72" r="34"/><circle cx="52" cy="72" r="34"/></g></svg>
+          <span class="brand-name"><span class="brand-php">PHP</span>Regex</span>
+        </a>
+        <a class="footer-release" href="/reference/backward-compatibility/">{{ product.version_label }}</a>
+      </div>
       <p class="footer-blurb">A PCRE parser you can reason about — AST, visitors, proofs.</p>
-      <p class="footer-install"><a href="/packages/"><code>composer require php-regex/regex-parser</code></a></p>
+      <ul class="footer-facts" aria-label="At a glance">
+        <li>PHP {{ product.php_floor }}+</li>
+        <li>PCRE2</li>
+        <li>{{ product.license }}</li>
+      </ul>
+      <a class="footer-choose" href="/packages/"><span class="footer-choose-label">Choose a package</span><span class="footer-choose-arrow" aria-hidden="true">→</span></a>
     </div>
     <div class="footer-group">
       <h2 class="footer-title">Learn</h2>
@@ -41,10 +55,23 @@
         <li><a href="/blog/">Articles</a></li>
         <li><a href="/feed/articles.xml">RSS feed</a></li>
         <li><a href="/findings/">Projects</a></li>
-        <li><a href="{{ site.data.sponsors.github }}">Sponsor</a></li>
+        <li><a href="{{ site.data.sponsors.policy }}">Sponsor</a></li>
       </ul>
     </div>
   </div>
+  {% comment %}The companies that fund the project, on every page — the
+    landing page included — in a random order. Nothing is drawn until
+    there is a company to thank.{% endcomment %}
+  {% if site.data.sponsors.companies.size > 0 %}
+  <div class="footer-sponsors">
+    <p class="footer-sponsors-label"><a href="{{ site.data.sponsors.policy }}">Backed by</a></p>
+    <ul class="footer-sponsors-list" data-shuffle>
+      {% for s in site.data.sponsors.companies %}
+      <li><a href="{{ s.url }}" rel="sponsored noopener" title="{{ s.name }}"><img class="sponsor-logo{% if s.logo_dark %} sponsor-logo-light{% endif %}" src="{{ s.logo }}" alt="{{ s.name }}" loading="lazy" decoding="async">{% if s.logo_dark %}<img class="sponsor-logo sponsor-logo-dark" src="{{ s.logo_dark }}" alt="" loading="lazy" decoding="async">{% endif %}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
   <div class="footer-baseline">
     <span>MIT license</span>
     <span class="footer-baseline-sep" aria-hidden="true">·</span>

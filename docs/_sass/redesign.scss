@@ -632,6 +632,109 @@ body {
   font-weight: 500;
 }
 
+/* The rail card: the sponsor frame's open-spot design, drawn small for
+ * the 13rem column — the frame's own styles do the drawing, this only
+ * tunes the size and the place.
+ *
+ * The card leads the rail and the "On this page" title follows it: the
+ * title names the list under it, so nothing may come between the two. The
+ * rail is a column, and the order puts the card first, the title second,
+ * the list last — the markup and the pseudo-element stay where they are.
+ *
+ * The rail scrolls, and a scroll box clips what sticks out of it: the
+ * card keeps the room its frame name (above it) and its corner handles
+ * (on its edges) need inside the box. It stays short — the list it sits
+ * on is the rail's job — so the slot draws the pattern on one line, and
+ * the pitch shows its first lines; the frame at the foot of the page
+ * carries it whole. */
+@media (min-width: 1280px) {
+  .toc {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .toc::before {
+    order: 1;
+  }
+
+  .toc > .sponsor-rail {
+    order: 0;
+  }
+
+  .toc > nav {
+    order: 2;
+  }
+}
+
+.sponsor.sponsor-rail {
+  flex: none;
+  margin: 1.35rem 4px 1.75rem;
+  padding: .75rem;
+  gap: .7rem;
+  font-size: .8125rem;
+}
+
+.sponsor.sponsor-rail::after {
+  top: -1.25rem;
+  font-size: .625rem;
+}
+
+.sponsor.sponsor-rail .sponsor-well {
+  flex-direction: row;
+  gap: 0;
+  min-height: 0;
+  padding: .7rem .5rem;
+}
+
+.sponsor.sponsor-rail .sponsor-pattern {
+  font-size: .8125rem;
+}
+
+.sponsor.sponsor-rail .sponsor-status {
+  display: none;
+}
+
+.sponsor.sponsor-rail .sponsor-eyebrow {
+  margin-bottom: .35rem;
+  font-size: .625rem;
+  line-height: 1.5;
+}
+
+.sponsor.sponsor-rail .sponsor-title {
+  margin-bottom: .3rem;
+  font-size: .9375rem;
+  line-height: 1.3;
+}
+
+.sponsor.sponsor-rail .sponsor-text {
+  display: -webkit-box;
+  margin-bottom: .8rem;
+  overflow: hidden;
+  font-size: .75rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.sponsor.sponsor-rail .sponsor-actions {
+  flex-direction: column;
+  align-items: stretch;
+  gap: .5rem;
+}
+
+.sponsor.sponsor-rail .sponsor-cta {
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0 .875rem;
+  font-size: .8125rem;
+}
+
+.sponsor.sponsor-rail .sponsor-mail {
+  align-self: center;
+  font-size: .75rem;
+}
+
 /* ---- Eyebrow ---------------------------------------------------------------
  * The breadcrumb's three steps said "Documentation / Learn / Quick Start"
  * above a title that already said the last of them. The section alone is
@@ -1822,11 +1925,116 @@ main > section:not([class]) p > a.button:hover {
   color: var(--ink-soft);
 }
 
-.footer-install code {
-  border: 0;
+/* ---- The brand column ----------------------------------------------------
+ * The wordmark carries its release beside it, the way the header does; the
+ * line under it says what PHPRegex is; three facts in the label voice say
+ * what it runs on; and the column ends on the one way in that holds for
+ * every reader — the page that chooses among the packages. */
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .9rem;
+}
+
+.footer-brand-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem .7rem;
+}
+
+.footer-release {
+  padding: .1rem .5rem;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--amber-ring);
+  background: var(--amber-tint);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color .15s ease, box-shadow .15s ease;
+}
+
+.footer-release:hover,
+.footer-release:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--amber);
+}
+
+.footer-brand .footer-blurb {
+  max-width: 30ch;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.footer-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer-facts li {
+  padding: .2rem .55rem;
   border-radius: var(--radius-s);
   box-shadow: inset 0 0 0 1px var(--line-soft);
-  font-size: .75rem;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: .6875rem;
+  letter-spacing: .02em;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.footer-choose {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 44px;
+  margin-top: -.35rem;
+  color: var(--ink);
+  font-size: .875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* The underline is the words', not the arrow's: the arrow moves. */
+.footer-choose-label {
+  text-decoration: underline;
+  text-decoration-color: var(--link-line);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+
+.footer-choose-arrow {
+  color: var(--amber);
+  transition: transform .15s ease;
+}
+
+.footer-choose:hover {
+  color: var(--amber-deep);
+}
+
+.footer-choose:hover .footer-choose-label {
+  text-decoration-color: var(--amber);
+}
+
+.footer-choose:hover .footer-choose-arrow,
+.footer-choose:focus-visible .footer-choose-arrow {
+  transform: translateX(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-choose-arrow {
+    transition: none;
+  }
 }
 
 /* ==========================================================================
@@ -2409,6 +2617,30 @@ main p.post-meta {
   transition: background-color .15s ease, box-shadow .15s ease;
 }
 
+/* The same button, outside the sponsor frame — the /sponsorship/ page CTA. */
+main a.sponsor-page-cta {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 1.5rem;
+  min-height: 2.75rem;
+  padding: 0 1.5rem;
+  border-radius: var(--radius-m);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: .9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-1);
+  transition: background-color .15s ease, box-shadow .15s ease;
+}
+
+main a.sponsor-page-cta:hover,
+main a.sponsor-page-cta:focus-visible {
+  background: var(--ink-hover);
+  box-shadow: var(--shadow-glow);
+}
+
+
 .sponsor a.sponsor-cta .icon {
   width: 15px;
   height: 15px;
@@ -2574,6 +2806,39 @@ main p.post-meta {
 }
 
 
+/* A spot's company stands alone in the slot, larger than in a list. */
+.sponsor-logo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.sponsor[data-state='backed'] .sponsor-logo {
+  max-width: 11rem;
+  max-height: 3.5rem;
+}
+
+.sponsor .sponsor-title a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--link-line);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+
+.sponsor .sponsor-title a:hover {
+  color: var(--amber-deep);
+  text-decoration-color: var(--amber);
+}
+
+/* A company that backs a page does not need the outline to march: the
+   slot is filled. The handles stay, the selection is made. */
+.sponsor[data-state='backed']:hover,
+.sponsor[data-state='backed']:focus-within {
+  animation: none;
+}
+
 /* Side by side once the column holds both: the slot keeps a fixed width,
    the pitch takes the rest. */
 @container (min-width: 34rem) {
@@ -2599,4 +2864,64 @@ main p.post-meta {
   .sponsor {
     display: none;
   }
+}
+
+
+/* ---- The footer's "Backed by" strip ----------------------------------------
+ * The companies that fund the project, on every page, the landing page
+ * included: small, quiet, greyed until hovered — a thank-you under the map
+ * of the site, not a banner over it. Drawn only once there is a company. */
+
+.footer-sponsors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem 1.5rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--line-mid);
+}
+
+.footer-sponsors-label {
+  @include label;
+  margin: 0;
+}
+
+.footer-sponsors-label a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.footer-sponsors-label a:hover {
+  color: var(--amber);
+}
+
+.footer-sponsors-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem 1.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer-sponsors-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  opacity: .7;
+  filter: grayscale(1);
+  transition: opacity .15s ease, filter .15s ease;
+}
+
+.footer-sponsors-list a:hover,
+.footer-sponsors-list a:focus-visible {
+  opacity: 1;
+  filter: none;
+}
+
+.footer-sponsors-list .sponsor-logo {
+  max-width: 7rem;
+  max-height: 1.75rem;
 }

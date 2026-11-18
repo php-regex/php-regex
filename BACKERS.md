@@ -1,49 +1,57 @@
 # Backers
 
-PHPRegex is built and maintained in my own time. The people and companies
-below fund that time. Thank you.
+The people and companies below fund the time that goes into PHPRegex. Thank
+you. Once listed, always listed: nobody is ever taken off this page.
+
+How sponsorship works — who gets what, the spots, where each name appears and
+for how long — is written down at <https://php-regex.com/sponsorship/>.
+
+The page is empty today, and that is the opportunity: the first sponsors of
+PHPRegex 2.0 are the most visible ones, and they stay visible for good, long
+after the frame fills up.
+
+## Spots
+
+Each spot is a part of PHPRegex that one company backs for a whole release,
+first come, first served. Its company stands alone on that part's
+documentation pages and is named in the README of its packages, the file
+Composer installs into `vendor/`.
+
+| Spot | Packages | PHPRegex 2.0 |
+|---|---|---|
+| [Core engine](https://php-regex.com/sponsorship/#spot-core) | regex-parser, regex-toolkit, regex-explain, regex-optimizer, regex-generator, regex-transpiler, regex-automata | _founding spot, open_ |
+| [Linter & ReDoS](https://php-regex.com/sponsorship/#spot-linter-redos) | regex-linter, regex-redos, regex-cli | _founding spot, open_ |
+| [Education](https://php-regex.com/sponsorship/#spot-education) | the tutorial, the cookbook, the PHP regex guide | _founding spot, open_ |
+| [PHPStan integration](https://php-regex.com/sponsorship/#spot-phpstan) | regex-phpstan | _founding spot, open_ |
+| [Psalm integration](https://php-regex.com/sponsorship/#spot-psalm) | regex-psalm | _founding spot, open_ |
+| [Rector integration](https://php-regex.com/sponsorship/#spot-rector) | regex-rector | _founding spot, open_ |
+| [PHPUnit integration](https://php-regex.com/sponsorship/#spot-phpunit) | regex-phpunit | _founding spot, open_ |
+| [Infection integration](https://php-regex.com/sponsorship/#spot-infection) | regex-infection | _founding spot, open_ |
+| [Laravel integration](https://php-regex.com/sponsorship/#spot-laravel) | regex-laravel | _founding spot, open_ |
+| [Symfony integration](https://php-regex.com/sponsorship/#spot-symfony) | regex-symfony | _founding spot, open_ |
+| [Language server](https://php-regex.com/sponsorship/#spot-lsp) | regex-language-server | _founding spot, open_ |
+| [MCP server](https://php-regex.com/sponsorship/#spot-mcp) | regex-mcp | _founding spot, open_ |
 
 ## Companies
 
-<!-- $400 / month (featured) first, then $150 / month, then $300 one-time (three months) -->
-
-_No company sponsor yet. Your logo could be the first one:
-[become a sponsor](https://github.com/sponsors/yoeunes)._
+_No company sponsor yet. Your logo could be the first one — and the first
+ones are the ones people remember: [become a sponsor](https://php-regex.com/sponsorship/)._
 
 ## Backers
 
-<!-- $15 and $50 / month -->
+_No backer yet. [Back the project](https://github.com/sponsors/yoeunes),
+for the amount you choose, and your name lands here and on every
+documentation page of [php-regex.com](https://php-regex.com) — for good._
 
-_No backer yet. [Back the project](https://github.com/sponsors/yoeunes)
-from $15 a month and your name lands here and on every documentation page
-of [php-regex.com](https://php-regex.com)._
+## What you get
 
-## One-time backers
+| You are | What you get |
+|---|---|
+| Anyone | Our thanks, and your name here |
+| A developer | Your name and avatar here and among the backers on every documentation page, and a thank-you post on X |
+| A company | Your logo in the "Backed by" footer of every documentation page, in the README and here, and a thank-you in the release notes |
+| A company with a spot | Everything above, plus your company alone on that part's pages and named in the README of its packages for the whole release |
 
-<!-- $15 and $50 one-time -->
-
-_Nobody yet._
-
-## How to appear here
-
-Sponsorship goes through [GitHub Sponsors](https://github.com/sponsors/yoeunes).
-
-| Tier | For | What you get |
-|---|---|---|
-| $5 / month | Anyone | A sponsor badge on your profile, and my thanks |
-| $15 / month | Solo developers | Your name and avatar here and in the backers row on every docs page, a thank-you post on X |
-| $50 / month | Freelancers, agencies, small teams | Your small logo or name, linked, here and in the README |
-| $150 / month | Companies | Your logo in the sponsor frame on every docs page, in the README and here, a thank-you in release notes |
-| $400 / month | Featured company | The first and largest logo in the sponsor frame, the README and here |
-| $300 one-time | Companies | Your logo in the sponsor frame on every docs page for three months |
-
-One-time sponsorships of $15 and $50 list your name under one-time backers.
-
-## What sponsorship does not include
-
-Sponsoring funds maintenance: issues read, bugs fixed, releases shipped. It
-does not buy calls or meetings, talks or workshops, reviews of your own code,
-consulting, or a support contract. Issues and pull requests from sponsors are
-handled like everyone else's.
+Sponsoring funds maintenance: issues read, bugs fixed, releases shipped.
 
 Questions about sponsoring: <younes.ennaji.pro@gmail.com>.

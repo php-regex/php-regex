@@ -158,9 +158,11 @@ Sponsors
 
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=github)](https://github.com/sponsors/yoeunes)
 
-If PHPRegex saves you time, consider [sponsoring its maintenance](https://github.com/sponsors/yoeunes):
-from $5 a month to say thanks, $15 a month to see your name on every documentation page, and $150 a month
-for your company logo there. The people and companies who already do are listed in
+This package belongs to the **Core engine** spot, which one company backs for a whole release. The spot is open
+for PHPRegex 2.0: its company is named here — in every `vendor/php-regex/regex-parser` that Composer installs — and on its documentation pages.
+The first to ask takes it: see [how spots work](https://php-regex.com/sponsorship/#spot-core).
+
+Anyone can back PHPRegex, for the amount they choose. The people and companies who already do are listed in
 [BACKERS.md](https://github.com/php-regex/php-regex/blob/2.x/BACKERS.md).
 
 License
