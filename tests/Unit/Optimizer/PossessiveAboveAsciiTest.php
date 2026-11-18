@@ -68,12 +68,11 @@ final class PossessiveAboveAsciiTest extends TestCase
     #[Test]
     public function test_a_repeat_written_with_ascii_escapes_is_made_possessive(): void
     {
-        $rewritten = $this->rewrite('/^[\x30-\x39]+x$/');
-
-        $this->assertSame('/^[\x30-\x39]++x$/', $rewritten);
         foreach (['123x', '1x', 'x', '12', '1x2', "1\xE9x"] as $subject) {
-            $this->assertSame(preg_match('/^[\x30-\x39]+x$/', $subject), preg_match($rewritten, $subject), $subject);
+            $this->assertSame(preg_match('/^[\x30-\x39]+x$/', $subject), preg_match('/^[\x30-\x39]++x$/', $subject), 'Oracle: '.$subject);
         }
+
+        $this->assertSame('/^[\x30-\x39]++x$/', $this->rewrite('/^[\x30-\x39]+x$/'));
     }
 
     private function rewrite(string $pattern): string

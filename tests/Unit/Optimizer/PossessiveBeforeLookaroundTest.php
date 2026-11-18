@@ -42,12 +42,13 @@ final class PossessiveBeforeLookaroundTest extends TestCase
     #[DataProvider('provideRepetitionsBeforeALookaround')]
     public function test_a_repetition_before_a_lookaround_stays_greedy(string $pattern, string $optimized): void
     {
+        foreach (self::SUBJECTS as $subject) {
+            $this->assertSame(self::matched($pattern, $subject), self::matched($optimized, $subject), \sprintf('Oracle: %s and %s differ on "%s".', $pattern, $optimized, $subject));
+        }
+
         $result = (new Optimizer(RegexParser::create(['cache' => null])))->optimize($pattern, new OptimizerOptions(possessive: true));
 
         $this->assertSame($optimized, $result->optimized);
-        foreach (self::SUBJECTS as $subject) {
-            $this->assertSame(preg_match($pattern, $subject), preg_match($optimized, $subject), \sprintf('%s rewritten as %s differs on "%s".', $pattern, $optimized, $subject));
-        }
     }
 
     /**
@@ -62,5 +63,18 @@ final class PossessiveBeforeLookaroundTest extends TestCase
         yield 'a lookahead in a group' => ['pattern' => '/[a-z.-]*(?:(?!b))/', 'optimized' => '/[\-.a-z]*(?:(?!b))/'];
         yield 'a lookahead that left the other rewrites undone' => ['pattern' => '/x\s+(?!y)/s', 'optimized' => '/x\s+(?!y)/'];
         yield 'a lookahead at the end of a loop body' => ['pattern' => '/^[a-z](?:[a-z0-9_](?!__))*[a-z0-9]+$/', 'optimized' => '/^[a-z](?:[0-9_a-z](?!__))*[0-9a-z]+$/'];
+    }
+
+    /**
+     * What preg_match() answers, with the text and the offset of the match
+     * and of each group.
+     *
+     * @return array{int|false, array<array-key, mixed>}
+     */
+    private static function matched(string $pattern, string $subject): array
+    {
+        $result = preg_match($pattern, $subject, $matches, \PREG_OFFSET_CAPTURE);
+
+        return [$result, $matches];
     }
 }
