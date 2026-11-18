@@ -380,7 +380,8 @@ final class FileLevelCode
     private function readTokensUntil(int $offset): void
     {
         if (!$this->tokenized) {
-            $this->tokens = token_get_all($this->content);
+            // As the extraction reads the source: without a word.
+            $this->tokens = @token_get_all($this->content);
             $this->offsets = PhpTokens::offsets($this->tokens);
             $this->tokenized = true;
         }

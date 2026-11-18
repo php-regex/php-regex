@@ -81,7 +81,8 @@ final class InlineIgnores
 
         $markers = [];
         $offset = 0;
-        foreach (token_get_all($content) as $token) {
+        // As the extraction reads the source: without a word.
+        foreach (@token_get_all($content) as $token) {
             $text = \is_array($token) ? $token[1] : $token;
             if (\is_array($token) && (\T_COMMENT === $token[0] || \T_DOC_COMMENT === $token[0])) {
                 array_push($markers, ...self::markersOfComment($token[1], $token[2], $offset, $content));
