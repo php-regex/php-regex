@@ -122,7 +122,10 @@ CHANGELOG
    `/^((?:a|ab|b)+)\1$/`, `/^((?:a|aa)+)\1$/` and `/^((?:\w|\d)+)\1$/`, which
    PCRE reads exponentially, stay critical. A loop holding an anchor, an
    assertion or a lookaround, a reference or a call to a group outside it,
-   or in a pattern that sets options inline, keeps the finding.
+   or in a pattern that sets options inline, keeps the finding. The loops
+   put to that proof share one budget of steps, the one the proof of the
+   whole pattern has: past it, a loop keeps the finding, and a pattern of
+   many such loops no longer costs a budget for each.
  * The heuristics read a loop that ends the body of another against the
    first characters of the next iteration: Friedl's unrolled C comment,
    `/(?C1)\/\*[^*]*\*+([^\/*][^*]*\*+)*\//`, which was critical, is safe

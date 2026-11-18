@@ -18,6 +18,7 @@ use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
@@ -904,6 +905,36 @@ final class RedosHeuristicShapesTest extends TestCase
         $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
 
         $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * The loops put to the proof alone share one budget, the one the proof
+     * of the whole pattern has: past it, a loop keeps the heuristics'
+     * finding, whatever the number of loops. Each loop here is proven
+     * linear alone in about a hundred steps, as PCRE reads it (36 -> 52
+     * steps on 8 -> 12 "az" then "!"): a budget of a thousand proves one,
+     * not twenty, which the default budget proves.
+     */
+    #[Test]
+    public function test_the_loops_proven_alone_share_one_budget(): void
+    {
+        $unoptimized = PcreInterpreter::pattern('/(*NO_START_OPT)^((?:a|az)+)\1$/');
+        $short = self::steps($unoptimized, str_repeat('az', 8).'!');
+        $long = self::steps($unoptimized, str_repeat('az', 12).'!');
+        $this->assertLessThan(4 * $short, $long, 'Oracle: the engine stays linear.');
+
+        $loops = [];
+        foreach (range(0, 19) as $letter) {
+            $loops[] = '(?:'.\chr(0x61 + $letter).'|'.\chr(0x61 + $letter).'z)+';
+        }
+
+        $twenty = '/^('.implode('-', $loops).')\1$/';
+        $this->assertNotFalse(@preg_match($twenty, ''), 'Oracle: PCRE compiles the twenty loops.');
+
+        $short = new RedosAnalyzer(options: new RedosOptions(maxSteps: 1_000));
+        $this->assertNotSame(RedosSeverity::Critical, $short->analyze('/^((?:a|az)+)\1$/')->severity, 'One loop is proven within the budget.');
+        $this->assertSame(RedosSeverity::Critical, $short->analyze($twenty)->severity, 'Twenty loops are not all proven within it.');
+        $this->assertNotSame(RedosSeverity::Critical, (new RedosAnalyzer())->analyze($twenty)->severity, 'The default budget proves the twenty.');
     }
 
     /**

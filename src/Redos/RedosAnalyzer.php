@@ -23,6 +23,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Redos\Backtrack\BacktrackProver;
+use PHPRegex\Redos\Backtrack\Budget;
 use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\Backtrack\SearchCostProver;
 use PHPRegex\Redos\Backtrack\WitnessReplayer;
@@ -222,7 +223,9 @@ final class RedosAnalyzer
      * two ways, as "(?:a|ab)+" does not. A loop whose text does not read
      * alone, a reference or a call to a group outside it, is not; each text
      * is proven once, read through a parser that keeps nothing: the text
-     * written for the proof stays out of the caller's caches.
+     * written for the proof stays out of the caller's caches. The proofs
+     * share one budget of steps, the one the proof of the whole pattern
+     * has: past it, a loop is not proven, whatever the number of loops.
      *
      * @return \Closure(QuantifierNode): bool
      */
@@ -232,8 +235,9 @@ final class RedosAnalyzer
         $options = StartOptions::of($source);
         $proven = [];
         $reader = null;
+        $pool = null;
 
-        return function (QuantifierNode $loop) use ($ast, $parser, $source, $options, &$proven, &$reader): bool {
+        return function (QuantifierNode $loop) use ($ast, $parser, $source, $options, &$proven, &$reader, &$pool): bool {
             $text = substr($source, $loop->startPosition, $loop->endPosition - $loop->startPosition);
             if (\array_key_exists($text, $proven)) {
                 return $proven[$text];
@@ -261,18 +265,23 @@ final class RedosAnalyzer
                 return $proven[$text] = false;
             }
 
-            $outcome = $this->prover()->prove($tree, $alone, $reader->target());
+            $pool ??= new Budget($this->options->maxSteps, $this->options->maxStates);
+            $outcome = $this->prover($pool)->prove($tree, $alone, $reader->target());
 
             return $proven[$text] = null === $outcome->limit && RedosComplexity::Linear === $outcome->result?->complexity;
         };
     }
 
-    private function prover(): BacktrackProver
+    /**
+     * @param Budget|null $pool the budget the proofs draw their steps from too, when they share one
+     */
+    private function prover(?Budget $pool = null): BacktrackProver
     {
         return new BacktrackProver(
             $this->options->maxStates,
             $this->options->maxSteps,
             $this->options->boundedRepeatCutoff,
+            $pool,
         );
     }
 
