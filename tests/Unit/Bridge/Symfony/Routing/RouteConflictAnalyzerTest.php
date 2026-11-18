@@ -1204,6 +1204,200 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * The compiled matcher looks a route with no variable up by its path,
+     * every trailing slash of the request trimmed off, before it tries any
+     * route with a regex. A route ending on a slash takes its path with any
+     * number of slashes as is, and redirects it with none; any other takes
+     * its path, and redirects it with any number of slashes, "/" answering
+     * them with a 404. A route matched with a regex takes its path with one
+     * slash at most.
+     *
+     * @param array{0: string, 1: list<string>, 2: list<string>}    $earlier path, methods, schemes
+     * @param array{0: string, 1: list<string>, 2: list<string>}    $later   path, methods, schemes
+     * @param list<array{0: string, 1: string, 2: string, 3: bool}> $probes  method, scheme, path, and whether the later route takes the request
+     */
+    #[Test]
+    #[DataProvider('provideRoutesLookedUpByTheirPath')]
+    public function test_a_route_looked_up_by_its_path_takes_it_with_any_number_of_trailing_slashes(array $earlier, array $later, array $probes, ?string $type, int $skipped): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route($earlier[0]))->setMethods($earlier[1])->setSchemes($earlier[2]));
+        $collection->add('later', (new Route($later[0]))->setMethods($later[1])->setSchemes($later[2]));
+
+        $compiled = (new CompiledUrlMatcherDumper($collection))->getCompiledRoutes();
+        foreach ($probes as [$method, $scheme, $path, $laterTakesIt]) {
+            $this->assertSame($laterTakesIt, 'later' === FrameworkMatcher::reached($compiled, $method, $path, $scheme), $method.' '.$scheme.' '.$path);
+        }
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame(null === $type ? [] : [[$type, 'earlier', 'later']], array_map(
+            static fn (array $conflict): array => [$conflict['type'], $conflict['route']['name'], $conflict['conflict']['name']],
+            $report->conflicts,
+        ));
+        $this->assertSame($skipped, $report->stats['skipped_pairs']);
+        if (null !== $type) {
+            $this->assertIsString($report->conflicts[0]['example']);
+            $this->assertNotSame('later', FrameworkMatcher::reached($compiled, 'GET', $report->conflicts[0]['example'], $later[2][0] ?? 'http'));
+        }
+    }
+
+    /**
+     * A route with no variable is matched with a regex, one slash at most,
+     * when a route declared before it that is matched with a regex matches
+     * its path: the dumper keeps it among the static paths otherwise.
+     *
+     * @param list<string> $conflicts the conflicts, as "type earlier later"
+     */
+    #[Test]
+    #[DataProvider('provideRoutesDeclaredBeforeOneWithNoVariable')]
+    public function test_a_route_with_no_variable_is_matched_with_a_regex_after_one_matching_its_path(string $first, ?string $winner, array $conflicts): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('first', (new Route($first))->setMethods(['POST']));
+        $collection->add('earlier', (new Route('/admin'))->setMethods(['GET']));
+        $collection->add('later', (new Route('/{p<admin//>}'))->setMethods(['GET']));
+
+        $this->assertSame($winner, FrameworkMatcher::reached($collection, 'GET', '/admin//'));
+        $this->assertSame('earlier', FrameworkMatcher::reached($collection, 'GET', '/admin'));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame($conflicts, array_map(
+            static fn (array $conflict): string => $conflict['type'].' '.$conflict['route']['name'].' '.$conflict['conflict']['name'],
+            $report->conflicts,
+        ));
+    }
+
+    /**
+     * The dumper reads the hosts too: a route with no variable on a host
+     * an earlier route tried with a regex does not match stays looked up
+     * by its path.
+     */
+    #[Test]
+    #[DataProvider('provideHostsOfARouteWithNoVariable')]
+    public function test_a_route_with_no_variable_is_matched_with_a_regex_after_one_matching_its_path_on_its_host(string $earlierHost, string $laterHost, string $winner, int $conflicts): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route('/{x<admin>}'))->setMethods(['GET'])->setHost($earlierHost));
+        $collection->add('later', (new Route('/admin'))->setMethods(['GET'])->setHost($laterHost));
+
+        $this->assertSame($winner, FrameworkMatcher::reached($collection, 'GET', '/admin', 'http', $laterHost));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame($conflicts, $report->stats['shadowed']);
+        $this->assertCount($conflicts, $report->conflicts);
+    }
+
+    /**
+     * @return iterable<string, array{earlierHost: string, laterHost: string, winner: string, conflicts: int}>
+     */
+    public static function provideHostsOfARouteWithNoVariable(): iterable
+    {
+        yield 'the same host' => ['earlierHost' => 'a.example.com', 'laterHost' => 'a.example.com', 'winner' => 'earlier', 'conflicts' => 1];
+        yield 'a host the earlier route matches with a variable' => ['earlierHost' => '{sub}.example.com', 'laterHost' => 'a.example.com', 'winner' => 'earlier', 'conflicts' => 1];
+        yield 'another host' => ['earlierHost' => 'a.example.com', 'laterHost' => 'b.example.com', 'winner' => 'later', 'conflicts' => 0];
+    }
+
+    /**
+     * @return iterable<string, array{first: string, winner: string, conflicts: list<string>}>
+     */
+    public static function provideRoutesDeclaredBeforeOneWithNoVariable(): iterable
+    {
+        yield 'a route matching its path' => ['first' => '/{x<admin>}', 'winner' => 'later', 'conflicts' => []];
+        yield 'a route matching another path' => ['first' => '/{x<other>}', 'winner' => 'earlier', 'conflicts' => ['shadowed earlier later']];
+    }
+
+    /**
+     * @return iterable<string, array{earlier: array{0: string, 1: list<string>, 2: list<string>}, later: array{0: string, 1: list<string>, 2: list<string>}, probes: list<array{0: string, 1: string, 2: string, 3: bool}>, type: string|null, skipped: int}>
+     */
+    public static function provideRoutesLookedUpByTheirPath(): iterable
+    {
+        yield 'a route before one taking its path with two slashes' => [
+            'earlier' => ['/admin', ['GET'], []],
+            'later' => ['/{p<admin//>}', ['GET'], []],
+            'probes' => [['GET', 'http', '/admin//', false], ['HEAD', 'http', '/admin//', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
+        yield 'a route on https before one on http taking its path with two slashes' => [
+            'earlier' => ['/admin', ['GET'], ['https']],
+            'later' => ['/{p<admin//>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/admin//', false], ['HEAD', 'http', '/admin//', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
+        yield 'a route for any method before one taking its path with one slash or more' => [
+            'earlier' => ['/admin', [], []],
+            'later' => ['/{p<admin/+>}', [], []],
+            'probes' => [['GET', 'http', '/admin///', false], ['POST', 'http', '/admin///', true]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        yield 'a route ending on a slash before one taking its path with two slashes' => [
+            'earlier' => ['/admin/', [], []],
+            'later' => ['/{p<admin//>}', [], []],
+            'probes' => [['GET', 'http', '/admin//', false], ['POST', 'http', '/admin//', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
+        yield 'a route on https ending on a slash before one on http taking its path with two slashes' => [
+            'earlier' => ['/admin/', [], ['https']],
+            'later' => ['/{p<admin//>}', [], ['http']],
+            'probes' => [['GET', 'http', '/admin//', true], ['POST', 'http', '/admin//', true]],
+            'type' => null,
+            'skipped' => 0,
+        ];
+        // Every path a route with no variable redirects leads to its own:
+        // the later route serves it, and loses none.
+        yield 'a route on https ending on a slash before one on http that serves the path the redirect leads to' => [
+            'earlier' => ['/admin/', ['GET'], ['https']],
+            'later' => ['/{p<admin/|admin>}', ['GET'], ['http']],
+            'probes' => [['GET', 'http', '/admin', true], ['GET', 'http', '/admin/', true]],
+            'type' => null,
+            'skipped' => 0,
+        ];
+        yield 'the root route before one taking it with more slashes' => [
+            'earlier' => ['/', ['GET'], []],
+            'later' => ['/{p</+>}', ['GET'], []],
+            'probes' => [['GET', 'http', '//', false], ['HEAD', 'http', '///', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
+        yield 'the root route on https before a catch-all on http' => [
+            'earlier' => ['/', ['GET'], ['https']],
+            'later' => ['/{p<.*>}', [], ['http']],
+            'probes' => [['GET', 'http', '/', true], ['GET', 'http', '//', false], ['HEAD', 'http', '//', false], ['POST', 'http', '//', true]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        yield 'a route matched with a regex before one taking its path with two slashes' => [
+            'earlier' => ['/{x<admin>}', ['GET'], []],
+            'later' => ['/{p<admin//>}', ['GET'], []],
+            'probes' => [['GET', 'http', '/admin//', true]],
+            'type' => null,
+            'skipped' => 0,
+        ];
+        yield 'a route matched with a regex ending on a slash before one taking its path with two slashes' => [
+            'earlier' => ['/{x<admin>}/', ['GET'], []],
+            'later' => ['/{p<admin//>}', ['GET'], []],
+            'probes' => [['GET', 'http', '/admin//', true]],
+            'type' => null,
+            'skipped' => 0,
+        ];
+        // The static path is looked up first: the earlier route never gets
+        // it, whatever it matches.
+        yield 'a route matched with a regex before a route with no variable that it does not match' => [
+            'earlier' => ['/{x<admin//|other>}', ['GET'], []],
+            'later' => ['/admin/', ['GET'], []],
+            'probes' => [['GET', 'http', '/admin//', true], ['GET', 'http', '/admin/', true], ['GET', 'http', '/other', false]],
+            'type' => null,
+            'skipped' => 0,
+        ];
+    }
+
+    /**
      * @return iterable<string, array{earlier: array{0: string, 1: list<string>, 2: list<string>}, later: array{0: string, 1: list<string>, 2: list<string>}, probes: list<array{0: string, 1: string, 2: string, 3: bool}>}>
      */
     public static function provideEarlierRoutesEndingOnAVariable(): iterable

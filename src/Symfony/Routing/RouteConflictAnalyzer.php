@@ -68,6 +68,7 @@ final class RouteConflictAnalyzer
         $skippedRoutes = [];
         $routesWithConditions = [];
         $routesWithUnsupportedHosts = [];
+        $matchedWithARegex = [];
         $index = 0;
 
         $options = new SolverOptions(
@@ -86,6 +87,7 @@ final class RouteConflictAnalyzer
                 $skippedRoutes,
                 $routesWithConditions,
                 $routesWithUnsupportedHosts,
+                $matchedWithARegex,
             );
             if (null !== $descriptor) {
                 $routes[] = $descriptor;
@@ -140,6 +142,15 @@ final class RouteConflictAnalyzer
                 if (!$this->prefixOverlaps($earlier['staticPrefix'], $later['staticPrefix'])) {
                     $pairsFilteredPrefix++;
 
+                    continue;
+                }
+
+                // The matcher looks a route with no variable up by its path
+                // before it tries any route with a regex, and keeps it so
+                // only when no such route declared before it matches that
+                // path: an earlier route tried with a regex takes none of
+                // its requests.
+                if (!$earlier['static'] && $later['static']) {
                     continue;
                 }
 
@@ -286,9 +297,10 @@ final class RouteConflictAnalyzer
     }
 
     /**
-     * @param array<RouteSkip>   $skippedRoutes
-     * @param array<int, string> $routesWithConditions
-     * @param array<int, string> $routesWithUnsupportedHosts
+     * @param array<RouteSkip>                                  $skippedRoutes
+     * @param array<int, string>                                $routesWithConditions
+     * @param array<int, string>                                $routesWithUnsupportedHosts
+     * @param list<array{0: string|null, 1: string, 2: string}> $matchedWithARegex          the host pattern, the path pattern as the matcher tries it, and the static prefix of each route so far that the matcher tries with a regex
      *
      * @phpstan-return RouteDescriptor|null
      */
@@ -299,6 +311,7 @@ final class RouteConflictAnalyzer
         array &$skippedRoutes,
         array &$routesWithConditions,
         array &$routesWithUnsupportedHosts,
+        array &$matchedWithARegex,
     ): ?array {
         try {
             $compiled = $route->compile();
@@ -367,11 +380,22 @@ final class RouteConflictAnalyzer
             $routesWithConditions[] = $name;
         }
 
+        $path = $route->getPath();
+        $static = [] === $compiled->getPathVariables()
+            && !self::followsARegexMatchingIt($path, [] === $compiled->getHostVariables() ? $hostValue : '', $matchedWithARegex);
+        [$takenAsIs, $taken, $redirected] = self::slashForms($pathRegex, $path, $static);
+        $slashPattern = $this->normalizePattern($taken)['pattern'];
+        if (!$static) {
+            $matchedWithARegex[] = ['' === $hostPattern ? null : $hostPattern, $slashPattern, rtrim($compiled->getStaticPrefix(), '/')];
+        }
+
         return [
             'name' => $name,
-            'path' => $route->getPath(),
-            'pathPattern' => $pathNormalization['pattern'],
-            'slashPattern' => $this->normalizePattern(self::slashToggled($pathRegex))['pattern'],
+            'path' => $path,
+            'static' => $static,
+            'pathPattern' => $this->normalizePattern($takenAsIs)['pattern'],
+            'slashPattern' => $slashPattern,
+            'redirectPattern' => $this->normalizePattern($redirected)['pattern'],
             'lastRequirement' => self::lastRequirement($compiled),
             'staticPrefix' => $this->resolveStaticPrefix($compiled),
             'staticSegments' => $this->extractStaticSegments($route->getPath()),
@@ -475,29 +499,62 @@ final class RouteConflictAnalyzer
     }
 
     /**
-     * The paths that differ from those of the regex by their trailing slash:
-     * the slash before the closing anchor is dropped, or one is added.
+     * The paths the compiled matcher takes for the route as is, takes on a
+     * GET or HEAD request, as is or redirected, and redirects, as forms of
+     * its regex. A route tried with a regex takes its path with one
+     * trailing slash at most, the "/?" the dumper writes before "$", and
+     * redirects the path with the slash it lacks, or without the one it
+     * has. A route looked up by its path is looked up with every trailing
+     * slash of the request trimmed off: ending on a slash, it takes its
+     * path with any number of them and redirects it with none; else it
+     * redirects it with any number, "/" answering those with a 404. The
+     * slash of "/" is no trailing one. A regex of the application's own
+     * with no "$" is taken as it is.
+     *
+     * @return array{string, string, string}
      */
-    private static function slashSwapped(string $regex): string
+    private static function slashForms(string $regex, string $path, bool $static): array
     {
         $end = strrpos($regex, '$');
-        $slash = false !== $end && $end > 0 && '/' === $regex[$end - 1] ? 1 : 0;
+        if (false === $end) {
+            return [$regex, $regex, $regex];
+        }
 
-        return false === $end ? $regex : substr_replace($regex, 1 === $slash ? '$' : '/$', $end - $slash, 1 + $slash);
+        $slash = '/' !== $path && $end > 0 && '/' === $regex[$end - 1];
+        $head = substr($regex, 0, $end - (int) $slash);
+        $tail = substr($regex, $end + 1);
+        $any = $static ? '/*$' : '/?$';
+
+        if ($slash) {
+            return [$static ? $head.'/+$'.$tail : $regex, $head.$any.$tail, $head.'$'.$tail];
+        }
+
+        return [$regex, $head.$any.$tail, $head.($static ? '/+$' : '/$').$tail];
     }
 
     /**
-     * The route regex as the matchers try it on a GET or HEAD request,
-     * with its trailing slash or without it, as UrlMatcher::matchCollection()
-     * rewrites it: "$" becomes "/?$", the slash before it dropped. A regex
-     * of the application's own with no "$" is left as it is.
+     * Whether a route tried with a regex, declared before a route with no
+     * variable, matches its path, with the trailing slash or without it,
+     * on its host: the dumper then has the matcher try the route with a
+     * regex too, where it looks the others up by their path before any
+     * regex, as CompiledUrlMatcherDumper::groupStaticRoutes() sorts them.
+     * A host pattern the analysis cannot read is taken as matching.
+     *
+     * @param string                                            $host              the route's host when it names no variable, else ""
+     * @param list<array{0: string|null, 1: string, 2: string}> $matchedWithARegex
      */
-    private static function slashToggled(string $regex): string
+    private static function followsARegexMatchingIt(string $path, string $host, array $matchedWithARegex): bool
     {
-        $end = strrpos($regex, '$');
-        $slash = false !== $end && $end > 0 && '/' === $regex[$end - 1] ? 1 : 0;
+        $url = '/' !== $path && str_ends_with($path, '/') ? substr($path, 0, -1) : $path;
+        foreach ($matchedWithARegex as [$hostPattern, $pathPattern, $prefix]) {
+            if (('' === $prefix || str_starts_with($url, $prefix))
+                && (1 === LibraryPcre::match($pathPattern, $url) || 1 === LibraryPcre::match($pathPattern, $url.'/'))
+                && ('' === $host || null === $hostPattern || 1 === LibraryPcre::match($hostPattern, $host))) {
+                return true;
+            }
+        }
 
-        return false === $end ? $regex : substr_replace($regex, '/?$', $end - $slash, 1 + $slash);
+        return false;
     }
 
     /**
@@ -562,17 +619,19 @@ final class RouteConflictAnalyzer
      * The conflict of two routes on disjoint schemes that share paths: the
      * later route keeps those on its own schemes, and loses to the redirect
      * a path that differs from one of the earlier route by its trailing
-     * slash alone, unless it serves the path of the earlier route the
+     * slashes alone, unless it serves the path of the earlier route the
      * redirect leads to. An overlap where the shortest such path leads to
-     * a path the later route does not match. Null when it has no such path,
-     * or when every one leads to a path the later route matches: it matches
-     * every path of the earlier one. The pair is counted among the skipped
-     * ones when the shortest leads to a path the later route matches and
-     * another may not: telling which takes a question on three languages.
-     * The earlier route ends on no variable, or on one no value of which
-     * ends on the slash: no path of its own differs from another of them by
-     * the slash, and the matcher redirects every path that differs from
-     * one of them by it. The pair reaches it only where redirects() holds.
+     * a path the later route does not match, or to none, as "//" after "/".
+     * Null when it has no such path, or when every one leads to a path the
+     * later route matches: it matches every path of the earlier one, or the
+     * one path every redirect of a route looked up by its path leads to.
+     * The pair is counted among the skipped ones when the shortest leads to
+     * a path the later route matches and another may not: telling which
+     * takes a question on three languages. The earlier route ends on no
+     * variable, or on one no value of which ends on the slash: no path of
+     * its own differs from another of them by the slash, and the matcher
+     * redirects every path that differs from one of them by it. The pair
+     * reaches it only where redirects() holds.
      *
      * @param bool $hostsUnread whether the solver gave up on the two hosts
      *
@@ -585,16 +644,17 @@ final class RouteConflictAnalyzer
      */
     private function redirectBesideSharedPaths(array $earlier, array $later, SolverOptions $options, bool $hostsUnread, int &$skippedPairs): ?array
     {
-        $redirected = $this->solver->intersection(self::slashSwapped($earlier['pathPattern']), $later['pathPattern'], $options);
+        $redirected = $this->solver->intersection($earlier['redirectPattern'], $later['pathPattern'], $options);
         if ($redirected->isEmpty || null === $redirected->example) {
             return null;
         }
 
-        if (!$this->sharesAString($later['pathPattern'], '^'.preg_quote(self::landing($redirected->example), '{').'$', $options)) {
+        $landing = self::landing($redirected->example);
+        if (null === $landing || !$this->sharesAString($later['pathPattern'], '^'.preg_quote($landing, '{').'$', $options)) {
             return $this->redirected($earlier, $later, 'overlap', $redirected->example, $hostsUnread);
         }
 
-        if (!$this->solver->subsetOf($earlier['pathPattern'], $later['pathPattern'], $options)->isSubset) {
+        if (!$earlier['static'] && !$this->solver->subsetOf($earlier['pathPattern'], $later['pathPattern'], $options)->isSubset) {
             $skippedPairs++;
         }
 
@@ -603,11 +663,15 @@ final class RouteConflictAnalyzer
 
     /**
      * The path the framework's matcher redirects a request to for its
-     * trailing slash: the slashes trimmed off its path, or one added.
+     * trailing slash: every slash trimmed off its path, or one added. Null
+     * where trimming leaves nothing: it answers "//" with a 404.
      */
-    private static function landing(string $path): string
+    private static function landing(string $path): ?string
     {
         $trimmed = rtrim($path, '/');
+        if ('' === $trimmed) {
+            return null;
+        }
 
         return $trimmed === $path ? $path.'/' : $trimmed;
     }

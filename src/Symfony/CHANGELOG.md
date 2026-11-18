@@ -220,7 +220,13 @@ CHANGELOG
    `http` after `/admin` on `https`, loses none. Where it serves the path
    the shortest redirected one leads to but not every path of the earlier
    route, `/files/{path<[a-z/]+>}` on `http` after `/files/{name}` on
-   `https`, the pair is skipped. The report
+   `https`, the pair is skipped. A route with no variable is looked up by
+   its path, every trailing slash of the request trimmed off, before any
+   route tried with a regex, unless an earlier one of those matches its
+   path: `/admin` redirects `GET /admin//` too, shadowing `/{p<admin//>}`,
+   `/admin/` takes `/admin//` as is, for any method on its own schemes,
+   and `/` answers `GET //` with a 404; a route tried with a regex takes
+   one slash at most. The report
    suggests paths that differ by more than the slash, never the reorder
    that only turns the redirect round.
  * `regex:routes` and `regex:analyze` call a route shadowed only when an

@@ -16,7 +16,7 @@ namespace PHPRegex\Symfony\Routing;
 /**
  * @internal
  *
- * @phpstan-type RouteDescriptor array{name: string, path: string, pathPattern: string, slashPattern: string, lastRequirement: string|null, staticPrefix: string, staticSegments: array<int, string>, methods: array<int, string>, schemes: array<int, string>, hostPattern: string, hasHostRequirement: bool, hostUnsupported: bool, hasCondition: bool, index: int}
+ * @phpstan-type RouteDescriptor array{name: string, path: string, static: bool, pathPattern: string, slashPattern: string, redirectPattern: string, lastRequirement: string|null, staticPrefix: string, staticSegments: array<int, string>, methods: array<int, string>, schemes: array<int, string>, hostPattern: string, hasHostRequirement: bool, hostUnsupported: bool, hasCondition: bool, index: int}
  * @phpstan-type RouteConflict array{
  *     route: RouteDescriptor,
  *     conflict: RouteDescriptor,

@@ -566,7 +566,14 @@ or `\d+`, redirects whatever that order, and the pair is read as any
 other. A later
 route whose paths the earlier one matches in part and redirects for the
 rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
-route that takes no `GET` request redirects none.
+route that takes no `GET` request redirects none. The router looks a route
+with no variable up by its path, every trailing slash of the request
+trimmed off, before it tries any route with a regex, unless an earlier
+route it tries with a regex matches that path: `/admin` redirects
+`GET /admin//` too, so `/{p<admin//>}` after it is shadowed, `/admin/`
+takes `/admin//` as is, for any method on its own schemes, and `/` answers
+`GET //` with a 404. A route tried with a regex takes its path with one
+slash at most.
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods, addresses, port, route and attributes take a request

@@ -32,10 +32,10 @@ final class FrameworkMatcher
      *
      * @param array<mixed>|RouteCollection $routes the routes, or what the dumper compiled of them
      */
-    public static function reached(array|RouteCollection $routes, string $method, string $path, string $scheme = 'http'): ?string
+    public static function reached(array|RouteCollection $routes, string $method, string $path, string $scheme = 'http', string $host = 'localhost'): ?string
     {
         $compiled = $routes instanceof RouteCollection ? (new CompiledUrlMatcherDumper($routes))->getCompiledRoutes() : $routes;
-        $matcher = new class($compiled, new RequestContext(method: $method, scheme: $scheme)) extends CompiledUrlMatcher implements RedirectableUrlMatcherInterface {
+        $matcher = new class($compiled, new RequestContext(method: $method, host: $host, scheme: $scheme)) extends CompiledUrlMatcher implements RedirectableUrlMatcherInterface {
             /**
              * @return array{_route: string}
              */
