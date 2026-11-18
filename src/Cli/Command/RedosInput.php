@@ -45,9 +45,11 @@ final class RedosInput
 
     /**
      * The most the input repeated may weigh, 8 MiB: printed with
-     * --show-input, a subject of bytes to escape takes about five times its
-     * size, which stays within PHP's default memory_limit of 128M at 8 MiB
-     * and goes past it at 16 MiB.
+     * --show-input, a subject of bytes PHP escapes as \xHH takes four times
+     * its size once escaped, and the console copies that line as it lays it
+     * out. At 8 MiB the run peaks at about 115 MiB (PHP 8.1 to 8.5, 32- and
+     * 64-bit), within PHP's default memory_limit of 128M, which a subject of
+     * 16 MiB goes past.
      */
     private const MAX_REPEATED_LENGTH = 8 * 1024 * 1024;
 
@@ -106,7 +108,7 @@ final class RedosInput
             return null;
         }
 
-        return \sprintf("--repeat %d repeats the %d-byte input past 8 MiB (%d bytes), the most it may weigh: printed with --show-input, a subject takes up to five times its size, which must fit in PHP's default memory_limit of 128M. The largest count for this input is %d.", $repeat, \strlen($value), self::MAX_REPEATED_LENGTH, $largest);
+        return \sprintf("--repeat %d repeats the %d-byte input past 8 MiB (%d bytes), the most it may weigh: printed with --show-input, an 8 MiB subject of bytes to escape takes up to about 115 MiB, which must fit in PHP's default memory_limit of 128M. The largest count for this input is %d.", $repeat, \strlen($value), self::MAX_REPEATED_LENGTH, $largest);
     }
 
     /**

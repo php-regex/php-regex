@@ -30,7 +30,7 @@ final class RedosBenchScriptTest extends TestCase
         [$exitCode, $output] = self::bench(['--regex', '/a+$/', '--input', 'a', '--repeat', '8388609']);
 
         $this->assertSame(64, $exitCode, $output);
-        $this->assertStringContainsString("--repeat 8388609 repeats the 1-byte input past 8 MiB (8388608 bytes), the most it may weigh: printed with --show-input, a subject takes up to five times its size, which must fit in PHP's default memory_limit of 128M. The largest count for this input is 8388608.\n", $output);
+        $this->assertStringContainsString("--repeat 8388609 repeats the 1-byte input past 8 MiB (8388608 bytes), the most it may weigh: printed with --show-input, an 8 MiB subject of bytes to escape takes up to about 115 MiB, which must fit in PHP's default memory_limit of 128M. The largest count for this input is 8388608.\n", $output);
     }
 
     #[Test]

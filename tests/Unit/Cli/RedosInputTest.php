@@ -112,10 +112,10 @@ final class RedosInputTest extends TestCase
 
     /**
      * The input repeated weighs 8 MiB at most: printed with --show-input, a
-     * subject of bytes to escape takes about five times its size, which
-     * stays within PHP's default memory_limit of 128M at 8 MiB and goes past
-     * it at 16 MiB. A count past the limit is refused before the subject is
-     * built: ten billion copies of one byte would take 10 GB.
+     * subject of bytes to escape takes up to about 115 MiB at 8 MiB, within
+     * PHP's default memory_limit of 128M, and goes past it at 16 MiB. A count
+     * past the limit is refused before the subject is built: ten billion
+     * copies of one byte would take 10 GB.
      */
     #[Test]
     #[DataProvider('provideRepeatsPastTheLimit')]
@@ -186,6 +186,6 @@ final class RedosInputTest extends TestCase
 
     private static function pastTheLimit(int $repeat, int $length, int $largest): string
     {
-        return \sprintf('--repeat %d repeats the %d-byte input past 8 MiB (8388608 bytes), the most it may weigh: printed with --show-input, a subject takes up to five times its size, which must fit in PHP\'s default memory_limit of 128M. The largest count for this input is %d.', $repeat, $length, $largest);
+        return \sprintf('--repeat %d repeats the %d-byte input past 8 MiB (8388608 bytes), the most it may weigh: printed with --show-input, an 8 MiB subject of bytes to escape takes up to about 115 MiB, which must fit in PHP\'s default memory_limit of 128M. The largest count for this input is %d.', $repeat, $length, $largest);
     }
 }

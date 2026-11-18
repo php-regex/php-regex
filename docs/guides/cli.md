@@ -1550,10 +1550,10 @@ backtracking for want of a `b`. Without a proof, the input is built from the cul
 what a replay does and does not prove.
 
 `--repeat <n>` repeats the input n times between `--prefix` and `--suffix`. The repeated
-input weighs 8 MiB (8,388,608 bytes) at most: printed with `--show-input`, a subject takes
-up to five times its size, which must fit in PHP's default `memory_limit` of 128M. A larger
-count is refused before the subject is built, with exit code 2 and the largest count the
-input takes:
+input weighs 8 MiB (8,388,608 bytes) at most: printed with `--show-input`, an 8 MiB subject
+of bytes to escape as `\xHH` takes up to about 115 MiB, which must fit in PHP's default
+`memory_limit` of 128M. A larger count is refused before the subject is built, with exit
+code 2 and the largest count the input takes:
 
 ```bash
 vendor/bin/regex redos '/a+$/' --input a --repeat 8388609

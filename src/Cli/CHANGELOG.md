@@ -26,8 +26,8 @@ CHANGELOG
  * `regex redos --repeat` refuses a count that repeats the input past 8 MiB
    before it builds the subject, exit code 2, naming the largest count the
    input takes: `--repeat=10000000000` on a one-byte input asked PHP for
-   10 GB. Printed with `--show-input`, a subject takes up to five times its
-   size, which 8 MiB keeps within PHP's default `memory_limit` of 128M.
+   10 GB. Printed with `--show-input`, an 8 MiB subject of bytes to escape
+   takes up to about 115 MiB, within PHP's default `memory_limit` of 128M.
  * `regex lint --min-savings` takes a whole number, 0 or more, and refuses
    anything else as `--jobs` does, exit code 2 and `The --min-savings value
    must be a non-negative integer.`: `--min-savings=abc` was read as 0 and
