@@ -39,13 +39,6 @@ final class SecurityConfigKernel extends Kernel
         parent::__construct($environment, false);
     }
 
-    protected function build(ContainerBuilder $container): void
-    {
-        foreach ($this->compilerPasses as $pass) {
-            $container->addCompilerPass($pass);
-        }
-    }
-
     /**
      * @return list<SecurityBundle>
      */
@@ -65,5 +58,12 @@ final class SecurityConfigKernel extends Kernel
     public function getProjectDir(): string
     {
         return $this->projectDirectory;
+    }
+
+    protected function build(ContainerBuilder $container): void
+    {
+        foreach ($this->compilerPasses as $pass) {
+            $container->addCompilerPass($pass);
+        }
     }
 }

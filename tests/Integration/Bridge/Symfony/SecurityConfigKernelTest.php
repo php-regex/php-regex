@@ -280,7 +280,7 @@ final class SecurityConfigKernelTest extends TestCase
             'config/packages/security.yaml' => "security:\n    firewalls:\n        main:\n            pattern: ^/\n            stateless: '%env(bool:PHPREGEX_TEST_STATELESS)%'\n"
                 ."    access_control:\n        - { path: '%env(PHPREGEX_TEST_ADMIN_PATH)%', host: '%admin_host%', ips: ['%env(PHPREGEX_TEST_ADMIN_IP)%'], roles: '%env(PHPREGEX_TEST_ADMIN_ROLE)%' }\n",
         ]);
-        $_ENV['PHPREGEX_TEST_ADMIN_PATH'] = $_SERVER['PHPREGEX_TEST_ADMIN_PATH'] = '^/back-office';
+        $saved = self::setEnvironment(['PHPREGEX_TEST_ADMIN_PATH' => '^/back-office']);
 
         try {
             $kernel = new SecurityConfigKernel($project);
@@ -290,7 +290,7 @@ final class SecurityConfigKernelTest extends TestCase
 
             $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
         } finally {
-            unset($_ENV['PHPREGEX_TEST_ADMIN_PATH'], $_SERVER['PHPREGEX_TEST_ADMIN_PATH']);
+            self::restoreEnvironment($saved);
         }
 
         $this->assertNotNull($config);
@@ -320,8 +320,7 @@ final class SecurityConfigKernelTest extends TestCase
             'config/services.yaml' => "parameters:\n    admin_port: '%env(int:PHPREGEX_TEST_PORT)%'\n",
             'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n        - { path: ^/, roles: ROLE_USER }\n        - ".$rule."\n",
         ]);
-        $_ENV['PHPREGEX_TEST_PORT'] = $_SERVER['PHPREGEX_TEST_PORT'] = '8080';
-        $_ENV['PHPREGEX_TEST_METHOD'] = $_SERVER['PHPREGEX_TEST_METHOD'] = 'POST';
+        $saved = self::setEnvironment(['PHPREGEX_TEST_PORT' => '8080', 'PHPREGEX_TEST_METHOD' => 'POST']);
 
         try {
             try {
@@ -339,7 +338,7 @@ final class SecurityConfigKernelTest extends TestCase
 
             (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
         } finally {
-            unset($_ENV['PHPREGEX_TEST_PORT'], $_SERVER['PHPREGEX_TEST_PORT'], $_ENV['PHPREGEX_TEST_METHOD'], $_SERVER['PHPREGEX_TEST_METHOD']);
+            self::restoreEnvironment($saved);
         }
     }
 
@@ -681,7 +680,7 @@ final class SecurityConfigKernelTest extends TestCase
             'config/services.yaml' => "parameters:\n    unused: ~\n",
             'security.yaml' => "security:\n    access_control: [{ path: '%admin_path%', host: '%admin_host%' }]\n",
         ]);
-        $_ENV['PHPREGEX_TEST_ADMIN_HOST'] = $_SERVER['PHPREGEX_TEST_ADMIN_HOST'] = 'admin.example.com';
+        $saved = self::setEnvironment(['PHPREGEX_TEST_ADMIN_HOST' => 'admin.example.com']);
 
         try {
             $kernel = new SecurityConfigKernel($project, withSecurityBundle: false, compilerPasses: [$pass]);
@@ -690,7 +689,7 @@ final class SecurityConfigKernelTest extends TestCase
 
             $config = (new SecurityConfigExtractor())->read([$project.'/security.yaml'], $kernel, new SecurityConfigLocator(), $project, 'test');
         } finally {
-            unset($_ENV['PHPREGEX_TEST_ADMIN_HOST'], $_SERVER['PHPREGEX_TEST_ADMIN_HOST']);
+            self::restoreEnvironment($saved);
         }
 
         $this->assertNotNull($config);
@@ -710,7 +709,7 @@ final class SecurityConfigKernelTest extends TestCase
             'config/services.yaml' => "parameters:\n    admin_path: '%env(PHPREGEX_TEST_ADMIN_PATH)%'\n    public_path: '%admin_path%/public'\n",
             'security.yaml' => "security:\n    access_control: [{ path: '%admin_path%' }, { path: '%public_path%' }]\n",
         ]);
-        $_ENV['PHPREGEX_TEST_ADMIN_PATH'] = $_SERVER['PHPREGEX_TEST_ADMIN_PATH'] = '^/back-office';
+        $saved = self::setEnvironment(['PHPREGEX_TEST_ADMIN_PATH' => '^/back-office']);
 
         try {
             $kernel = new SecurityConfigKernel($project, withSecurityBundle: false);
@@ -719,7 +718,7 @@ final class SecurityConfigKernelTest extends TestCase
 
             $config = (new SecurityConfigExtractor())->read([$project.'/security.yaml'], $kernel, new SecurityConfigLocator(), $project, 'test');
         } finally {
-            unset($_ENV['PHPREGEX_TEST_ADMIN_PATH'], $_SERVER['PHPREGEX_TEST_ADMIN_PATH']);
+            self::restoreEnvironment($saved);
         }
 
         $this->assertNotNull($config);
@@ -972,6 +971,44 @@ final class SecurityConfigKernelTest extends TestCase
 
         $this->assertStringContainsString('"id": "security_access"', $tester->getDisplay());
         $this->assertStringContainsString('No security configuration found.', $tester->getDisplay());
+    }
+
+    /**
+     * Sets environment variables, and gives back what each held for
+     * restoreEnvironment(): a test runs beside any other.
+     *
+     * @param array<string, string> $values
+     *
+     * @return array<string, array{0: bool, 1: mixed, 2: bool, 3: mixed}>
+     */
+    private static function setEnvironment(array $values): array
+    {
+        $saved = [];
+        foreach ($values as $name => $value) {
+            $saved[$name] = [\array_key_exists($name, $_ENV), $_ENV[$name] ?? null, \array_key_exists($name, $_SERVER), $_SERVER[$name] ?? null];
+            $_ENV[$name] = $_SERVER[$name] = $value;
+        }
+
+        return $saved;
+    }
+
+    /**
+     * @param array<string, array{0: bool, 1: mixed, 2: bool, 3: mixed}> $saved what setEnvironment() gave back
+     */
+    private static function restoreEnvironment(array $saved): void
+    {
+        foreach ($saved as $name => [$inEnvironment, $environment, $inServer, $server]) {
+            if ($inEnvironment) {
+                $_ENV[$name] = $environment;
+            } else {
+                unset($_ENV[$name]);
+            }
+            if ($inServer) {
+                $_SERVER[$name] = $server;
+            } else {
+                unset($_SERVER[$name]);
+            }
+        }
     }
 
     private static function securityCommand(SecurityConfigKernel $kernel): SecurityCommand

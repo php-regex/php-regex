@@ -19,8 +19,10 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
+use Symfony\Component\DependencyInjection\Compiler\MergeExtensionConfigurationPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\HttpFoundation\ChainRequestMatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestMatcher\IpsRequestMatcher;
 use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
@@ -659,8 +661,9 @@ final class AccessControlOrderTest extends TestCase
      * same expression, the same processors over the same variable, gives
      * the same value: two rules holding it compare as holding one value.
      * Each case is checked against the AccessMap for values the environment
-     * may give: "%env(VALUE)%" is replaced by each, or each variable by the
-     * value a probe gives it.
+     * may give, VALUE or each variable a probe names: the rules keep their
+     * "%env()%" through SecurityExtension, as the kernel does, and each
+     * request matcher reads the environment when it is built.
      *
      * @param list<array<string, mixed>>                                                                   $rules
      * @param list<array{0: string|array<string, string>, 1: string, 2: string, 3: int|null, 4: int|null}> $probes the value or values, the method and URL of a
@@ -672,9 +675,9 @@ final class AccessControlOrderTest extends TestCase
     public function test_a_value_read_from_the_environment_is_one_the_analysis_cannot_know(array $rules, string $field, ?string $expected, array $probes): void
     {
         foreach ($probes as [$value, $method, $url, $declared, $swapped]) {
-            $concrete = self::withEnvironment($rules, $value);
-            $this->assertSame($declared, self::ruleApplied($concrete, $method, $url, '10.0.0.1'), 'declared order, '.json_encode($value).', '.$method.' '.$url);
-            $this->assertSame($swapped, self::ruleApplied(array_reverse($concrete, true), $method, $url, '10.0.0.1'), 'swapped order, '.json_encode($value).', '.$method.' '.$url);
+            $values = \is_string($value) ? ['VALUE' => $value] : $value;
+            $this->assertSame($declared, self::ruleAppliedReadingTheEnvironment($rules, $values, $method, $url), 'declared order, '.json_encode($value).', '.$method.' '.$url);
+            $this->assertSame($swapped, self::ruleAppliedReadingTheEnvironment(array_reverse($rules, true), $values, $method, $url), 'swapped order, '.json_encode($value).', '.$method.' '.$url);
         }
 
         $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze(array_map(self::ruleFromEnvironment(...), $rules), true);
@@ -732,6 +735,7 @@ final class AccessControlOrderTest extends TestCase
             'expected' => 'overlap',
             'probes' => [
                 ['^admin\\.example\\.com$', 'GET', 'http://admin.example.com/admin/x', 0, 1],
+                [' ^admin\\.example\\.com$ ', 'GET', 'http://admin.example.com/admin/x', 0, 0],
             ],
         ];
 
@@ -752,6 +756,8 @@ final class AccessControlOrderTest extends TestCase
             'probes' => [
                 ['^/', 'GET', 'http://localhost/admin', 0, 1],
                 ['^/shop', 'GET', 'http://localhost/admin', 1, 1],
+                ['0', 'GET', 'http://localhost/admin', 1, 1],
+                ['0', 'GET', 'http://localhost/x0', 0, 0],
             ],
         ];
 
@@ -1001,25 +1007,72 @@ final class AccessControlOrderTest extends TestCase
     }
 
     /**
-     * The rules with the value the environment gives each variable in
-     * place of each "%env(...)%" that reads it: one value is the value of
-     * VALUE.
+     * The index of the rule Symfony's AccessMap applies to the request,
+     * the environment giving each variable its value: the rules keep their
+     * "%env()%" through MergeExtensionConfigurationPass and SecurityExtension,
+     * as in the kernel, and each request matcher reads the environment when
+     * it is built.
      *
-     * @param list<array<string, mixed>>   $rules
-     * @param string|array<string, string> $values
-     *
-     * @return list<array<string, mixed>>
+     * @param array<int, array<string, mixed>> $rules
+     * @param array<string, string>            $values
      */
-    private static function withEnvironment(array $rules, string|array $values): array
+    private static function ruleAppliedReadingTheEnvironment(array $rules, array $values, string $method, string $url): ?int
     {
-        $values = \is_string($values) ? ['VALUE' => $values] : $values;
-        array_walk_recursive($rules, static function (mixed &$item) use ($values): void {
-            if (\is_string($item)) {
-                $item = preg_replace_callback('/%env\((?:[a-z]+:)*(\w+)\)%/', static fn (array $match): string => $values[$match[1]] ?? $match[0], $item);
-            }
-        });
+        $accessControl = [];
+        foreach ($rules as $index => $rule) {
+            $accessControl[] = ['roles' => ['RULE_'.$index]] + $rule;
+        }
 
-        return $rules;
+        $container = new ContainerBuilder();
+        $container->registerExtension(new SecurityExtension());
+        $container->loadFromExtension('security', ['firewalls' => ['main' => ['security' => false]], 'access_control' => $accessControl]);
+        (new MergeExtensionConfigurationPass())->process($container);
+
+        $saved = [];
+        foreach ($values as $name => $value) {
+            $saved[$name] = [\array_key_exists($name, $_ENV), $_ENV[$name] ?? null];
+            $_ENV[$name] = $value;
+        }
+
+        try {
+            $map = new AccessMap();
+            foreach ($container->getDefinition('security.access_map')->getMethodCalls() as $call) {
+                self::assertIsArray($call);
+                self::assertIsArray($call[1]);
+                [$chain, $roles] = $call[1];
+                self::assertInstanceOf(Reference::class, $chain);
+                self::assertIsArray($roles);
+                $references = $container->getDefinition((string) $chain)->getArgument(0);
+                self::assertIsArray($references);
+                $matchers = [];
+                foreach ($references as $reference) {
+                    self::assertInstanceOf(Reference::class, $reference);
+                    $definition = $container->getDefinition((string) $reference);
+                    $class = $definition->getClass();
+                    self::assertIsString($class);
+                    $arguments = $container->resolveEnvPlaceholders($definition->getArguments(), true);
+                    self::assertIsArray($arguments);
+                    $matcher = new $class(...$arguments);
+                    self::assertInstanceOf(RequestMatcherInterface::class, $matcher);
+                    $matchers[] = $matcher;
+                }
+                $map->add(new ChainRequestMatcher($matchers), $roles);
+            }
+
+            [$applied] = $map->getPatterns(Request::create($url, $method, server: ['REMOTE_ADDR' => '10.0.0.1']));
+        } finally {
+            foreach ($saved as $name => [$present, $value]) {
+                if ($present) {
+                    $_ENV[$name] = $value;
+                } else {
+                    unset($_ENV[$name]);
+                }
+            }
+        }
+
+        $applied = $applied[0] ?? null;
+
+        return \is_string($applied) ? (int) substr($applied, 5) : null;
     }
 
     /**
