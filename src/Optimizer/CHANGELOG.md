@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The possessive rewrite reads an escape that names an ASCII character as
+   that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
+   `/^[0-9]+x$/` becomes `/^[0-9]++x$/`; it was left greedy.
  * `RedosRepairer::firstRepair()` returns the repair `repair()` offers first,
    or null, and stops at the first rewrite certified that writes the same
    `$matches`: the rewrites after it are not proven, nor is the optimizer

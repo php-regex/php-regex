@@ -14,9 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -30,6 +32,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosHeuristicShapesTest extends TestCase
 {
+    use InstalledLocales;
+
     #[Test]
     #[DataProvider('provideUnmodelledBodies')]
     public function test_a_repeated_body_the_proof_does_not_model_is_never_called_safe(string $pattern): void
@@ -566,6 +570,93 @@ final class RedosHeuristicShapesTest extends TestCase
         $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
 
         $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * A branch written with escapes is read as the bytes the engine reads:
+     * a UTF-8 sequence spelled byte by byte beside an ASCII class starts
+     * apart from it, the loop gives its iterations back one at a time, and
+     * the engine stays linear on 8 -> 12 -> 16 units then "!" (20 -> 28 ->
+     * 36 steps, PCRE2 10.49, JIT and start optimizations off), in octal,
+     * braced and under i, s or u alike. A branch that takes a character
+     * the other takes stays critical, above ASCII too, and the engine
+     * agrees (1 024 -> 16 384 -> 262 144 for "\h" beside "\xA0", 1 536 ->
+     * 24 576 -> 393 216 for "[^a]" beside "\xC3", 2 046 -> 32 766 ->
+     * 524 286 for "[^a]" beside "é" without u): "[^a]" and the dot take
+     * every byte above ASCII, "\h" the no-break space, "\v" and "\R" the
+     * next line, "\s" both under (*UCP) or u, and under i, set by the
+     * modifier or by an option setting, "\x41" an "a".
+     * Under (*ANY) the dot stops at the next line. Under u a character
+     * above ASCII ends a repeat as it starts the next one: "é+é" in a loop
+     * is critical as "a+a" is (69 -> 467 -> 3 195).
+     *
+     * @return iterable<string, array{pattern: string, unit: string, critical: bool}>
+     */
+    public static function provideBranchesWrittenWithEscapes(): iterable
+    {
+        yield 'a two-byte sequence beside an ASCII class' => ['pattern' => '/^((?:[a-z]|[\xC2-\xDF][\x80-\xBF])+)%?\1/', 'unit' => "\xC3\xA9", 'critical' => false];
+        yield 'the sequence in octal' => ['pattern' => '/^((?:[a-z]|[\302-\337][\200-\277])+)%?\1/', 'unit' => "\xC3\xA9", 'critical' => false];
+        yield 'the sequence in braced hex' => ['pattern' => '/^((?:[a-z]|[\x{C2}-\x{DF}][\x{80}-\x{BF}])+)%?\1/', 'unit' => "\xC3\xA9", 'critical' => false];
+        yield 'the sequence in braced octal' => ['pattern' => '/^((?:[a-z]|[\o{302}-\o{337}][\o{200}-\o{277}])+)%?\1/', 'unit' => "\xC3\xA9", 'critical' => false];
+        yield 'the sequence under i and s' => ['pattern' => '/^((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)%?\1/is', 'unit' => "\xC3\xA9", 'critical' => false];
+        yield 'the code points under u' => ['pattern' => '/^((?:[a-z]|[\xC2-\xDF][\x80-\xBF])+)%?\1/u', 'unit' => "\u{C3}\u{A9}", 'critical' => false];
+        yield 'the dot beside the next line under (*ANY)' => ['pattern' => '/(*ANY)^((?:.|\x85)+)\1$/', 'unit' => "\x85", 'critical' => false];
+        yield 'a negated class beside a byte it takes' => ['pattern' => '/^((?:[^a]|\xC3)+)\1$/', 'unit' => "\xC3", 'critical' => true];
+        yield 'a negated class beside a two-byte letter' => ['pattern' => '/^((?:[^a]|é)+)\1$/', 'unit' => 'é', 'critical' => true];
+        yield 'a negated class beside a letter under u' => ['pattern' => '/^((?:[^a]|\xE9)+)\1$/u', 'unit' => 'é', 'critical' => true];
+        yield 'the dot beside a byte above ASCII' => ['pattern' => '/^((?:.|\xE9)+)\1$/', 'unit' => "\xE9", 'critical' => true];
+        yield 'a horizontal space beside the no-break space' => ['pattern' => '/^((?:\h|\xA0)+)\1$/', 'unit' => "\xA0", 'critical' => true];
+        yield 'a vertical space beside the next line' => ['pattern' => '/^((?:\v|\x85)+)\1$/', 'unit' => "\x85", 'critical' => true];
+        yield 'a line break beside the next line' => ['pattern' => '/^((?:\R|\x85)+)\1$/', 'unit' => "\x85", 'critical' => true];
+        yield 'a space under (*UCP) beside the no-break space' => ['pattern' => '/(*UCP)^((?:\s|\xA0)+)\1$/', 'unit' => "\xA0", 'critical' => true];
+        yield 'a space under u beside the no-break space' => ['pattern' => '/^((?:\s|\xA0)+)\1$/u', 'unit' => "\u{A0}", 'critical' => true];
+        yield 'a letter beside its escape under i' => ['pattern' => '/^((?:a|\x41)+)\1$/i', 'unit' => 'a', 'critical' => true];
+        yield 'a letter beside its escape after an option setting' => ['pattern' => '/(?i)^((?:a|\x41)+)\1$/', 'unit' => 'a', 'critical' => true];
+        yield 'a letter beside its escape in a group that sets i' => ['pattern' => '/^((?i)(?:a|\x41)+)\1$/', 'unit' => 'a', 'critical' => true];
+        yield 'a two-byte letter repeated before itself under u' => ['pattern' => '/^((?:é+é)+)\1$/u', 'unit' => 'é', 'critical' => true];
+        yield 'its escape repeated before itself under u' => ['pattern' => '/^((?:\xE9+\xE9)+)\1$/u', 'unit' => 'é', 'critical' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideBranchesWrittenWithEscapes')]
+    public function test_a_branch_written_with_escapes_is_read_as_the_engine_reads_it(string $pattern, string $unit, bool $critical): void
+    {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, str_repeat($unit, 8).'!');
+        $long = self::steps($unoptimized, str_repeat($unit, 12).'!');
+        $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * A byte above ASCII is read under PCRE2's own tables, which PHP
+     * compiles with under "C": there "\w" leaves "\xE9" out, and the loop
+     * beside it gives its iterations back one at a time (8 -> 12 units of
+     * "\xE9" then "!": 20 -> 28 steps). Under fr_FR.ISO8859-1 the tables put
+     * "\xE9" in "\w", each one is read two ways, and the engine goes
+     * exponential (1 024 -> 16 384): under another locale the heuristic
+     * reads nothing above ASCII, and the loop stays critical.
+     */
+    #[Test]
+    public function test_a_byte_above_ascii_is_read_under_pcre2s_own_tables_only(): void
+    {
+        $locale = 'fr_FR.ISO8859-1';
+        $this->requiresLocale($locale, 'The Latin-1 row');
+        $pattern = '/^((?:\w|\xE9)+)\1$/';
+        $unoptimized = PcreInterpreter::pattern('/(*NO_START_OPT)^((?:\w|\xE9)+)\1$/');
+
+        $short = self::steps($unoptimized, str_repeat("\xE9", 8).'!');
+        $long = self::steps($unoptimized, str_repeat("\xE9", 12).'!');
+        $this->assertLessThan(4 * $short, $long, 'Oracle: under C the engine stays linear.');
+        CharacterTables::under($locale, static function () use ($unoptimized, &$short, &$long): void {
+            $short = self::steps($unoptimized, str_repeat("\xE9", 8).'!');
+            $long = self::steps($unoptimized, str_repeat("\xE9", 12).'!');
+        });
+        $this->assertGreaterThan(4 * $short, $long, 'Oracle: under the Latin-1 locale the engine goes exponential.');
+
+        $this->assertNotSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos($pattern)->severity);
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null, 'locale' => $locale])->redos($pattern)->severity);
     }
 
     /**

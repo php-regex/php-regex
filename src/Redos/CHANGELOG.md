@@ -55,6 +55,22 @@ CHANGELOG
    branch, whichever comes first: `/^(a)(?:a|\1)+$/` and
    `/^(["'])(?:[a-z]|\p{Ll})+\1$/u`, which were medium while their branches
    swapped were critical, are critical.
+ * The heuristics read a character written as an escape, `\xC2`, `\x{C2}`,
+   `\302`, `\o{302}`, `\N{U+C2}` or `\cA`, and a class of them, as the
+   characters PCRE reads, above ASCII too, under PCRE2's own tables (under
+   another locale's, nothing above ASCII is read): a UTF-8 sequence spelled
+   byte by byte beside an ASCII class,
+   `/^((?:[a-z]|[\xC2-\xDF][\x80-\xBF])+)%?\1/` and WordPress's `SHOW
+   TABLES LIKE` pattern, which were critical, are medium: PCRE reads the
+   first in 20, 28 and 36 steps on 8, 12 and 16 units. Above ASCII a negated
+   class, the dot, `\D`, `\W` and `\S` take every byte they do not name,
+   `\h` the no-break space and `\v` and `\R` the next line:
+   `/^((?:[^a]|é)+)\1$/` and `/^((?:.|é)+)\1$/`, which were medium, are
+   critical. Under u a character above ASCII ends a repeat as it starts the
+   next one: `/^((?:é+é)+)\1$/u`, which was medium, is critical, as
+   `/^((?:a+a)+)\1$/` is. Under i, set by the modifier or an option
+   setting, an escape the case may change is not read: `/^((?:a|\x41)+)\1$/i`
+   stays critical.
  * The heuristics read a loop that ends the body of another against the
    first characters of the next iteration: Friedl's unrolled C comment,
    `/(?C1)\/\*[^*]*\*+([^\/*][^*]*\*+)*\//`, which was critical, is safe

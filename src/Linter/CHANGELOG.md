@@ -6,6 +6,16 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The rules that compare first and last characters read an escape that
+   names an ASCII character, `\x41`, `\101`, `\x{41}`, `\o{101}` or `\cA`,
+   as that character, where they asked the engine or gave up:
+   `/^(?:\x20*[\x22-\x7E])*$/`, which PCRE reads in 11 and 19 steps on 8 and
+   16 units, no longer reports nested quantifiers, nor does the quoted
+   text of the RFC 5322 address pattern of Symfony Mime and SwiftMailer,
+   and the branches `[^\s\042\047=><`]+` and `\s*(?U:[^\s\042\047=><`]*)` of
+   CodeIgniter's attribute pattern, which both start with `a`, are
+   reported as overlapping. An escape above ASCII is left to the engine as
+   before.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

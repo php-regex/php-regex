@@ -119,7 +119,9 @@ final class RedosAnalyzer
             $profiler = null;
             $heuristics = self::NO_HEURISTICS;
             if (RedosComplexity::Linear !== $proof?->complexity) {
-                $profiler = new RedosProfiler(CharSetAnalyzer::forRegex($ast));
+                // Above ASCII the sets are read under PCRE2's own tables:
+                // another locale's may put any byte in a type or a case.
+                $profiler = new RedosProfiler(CharSetAnalyzer::forRegex($ast, CharacterTables::BUILT_IN === $parser->target()->locale));
                 $ast->accept($profiler);
                 $heuristics = $profiler->getResult();
             }
