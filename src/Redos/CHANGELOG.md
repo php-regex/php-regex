@@ -68,9 +68,21 @@ CHANGELOG
    `/^((?:[^a]|é)+)\1$/` and `/^((?:.|é)+)\1$/`, which were medium, are
    critical. Under u a character above ASCII ends a repeat as it starts the
    next one: `/^((?:é+é)+)\1$/u`, which was medium, is critical, as
-   `/^((?:a+a)+)\1$/` is. Under i, set by the modifier or an option
-   setting, an escape the case may change is not read: `/^((?:a|\x41)+)\1$/i`
-   stays critical.
+   `/^((?:a+a)+)\1$/` is.
+ * The heuristics compare first and last characters in the case the engine
+   reads them: under i, set by the modifier, an option setting or a group,
+   a letter meets its other case, and where `(?-i)` turns i off again it
+   does not. `/^((?:a|A)+)\1$/i`, `/(?i)^((?:a|A)+)\1$/` and
+   `/^((?:a|(?-i:A))+)\1$/i`, which were medium, are critical, as PCRE goes
+   exponential on them (1 024 and 16 384 steps on 8 and 12 letters then
+   `!`), and `/^((?:[^a]|A)+)\1$/i`, which was critical, is medium: `[^a]`
+   leaves `A` out under i. Under iu `k` meets the Kelvin sign and `s` the
+   long s, unless r keeps ASCII apart (`/^((?:k|\x{212A})+)\1$/iur`, which
+   was critical, is medium), and under (*UCP) a Latin-1 letter meets its
+   other case. A backreference in a loop whose branches start apart in
+   either case reads one way under i too: `/^(a|b\1)+$/i`, which was
+   critical, is medium, where PCRE reads it in 3 004 and 6 004 steps on 1 000
+   and 2 000 `a`.
  * The heuristics read a loop that ends the body of another against the
    first characters of the next iteration: Friedl's unrolled C comment,
    `/(?C1)\/\*[^*]*\*+([^\/*][^*]*\*+)*\//`, which was critical, is safe

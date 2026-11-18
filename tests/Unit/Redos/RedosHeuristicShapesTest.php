@@ -98,7 +98,8 @@ final class RedosHeuristicShapesTest extends TestCase
      * comment, a fixed count or a possessive repeat in a branch. A script
      * run reads its body one way when it is atomic or when its body does:
      * 5 004 -> 10 004 -> 20 004 for "(*asr:x+)", 4 004 -> 8 004 -> 16 004
-     * for "(*sr:x)".
+     * for "(*sr:x)". Under i, set by the modifier or an option setting,
+     * the branches "a" and "b" still start apart: 3 004 -> 6 004.
      *
      * @return iterable<string, array{pattern: string, unit: string}>
      */
@@ -118,6 +119,8 @@ final class RedosHeuristicShapesTest extends TestCase
         yield 'possessive repeat in a branch' => ['pattern' => '/^(ax++|b\1)+$/', 'unit' => 'ax'];
         yield 'atomic script run of a run in a branch' => ['pattern' => '/^(a(*asr:x+)|b\1)+$/', 'unit' => 'ax'];
         yield 'script run of one letter in a branch' => ['pattern' => '/^(a(*sr:x)|b\1)+$/', 'unit' => 'ax'];
+        yield 'reference in a branch of its own group under i' => ['pattern' => '/^(a|b\1)+$/i', 'unit' => 'a'];
+        yield 'reference in a branch after an option setting' => ['pattern' => '/(?i)^(a|b\1)+$/', 'unit' => 'a'];
     }
 
     #[Test]
@@ -621,6 +624,61 @@ final class RedosHeuristicShapesTest extends TestCase
     #[DataProvider('provideBranchesWrittenWithEscapes')]
     public function test_a_branch_written_with_escapes_is_read_as_the_engine_reads_it(string $pattern, string $unit, bool $critical): void
     {
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+        $short = self::steps($unoptimized, str_repeat($unit, 8).'!');
+        $long = self::steps($unoptimized, str_repeat($unit, 12).'!');
+        $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
+
+        $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * Under i the branches are compared in the case the engine reads them,
+     * where the modifier, an option setting or a group sets i, and in the
+     * case they are written where an option setting turns it off again.
+     * Each overlapping row goes exponential on 8 -> 12 units then "!"
+     * (1 024 -> 16 384 steps, PCRE2 10.49, JIT and start optimizations off)
+     * and each other row stays linear (20 -> 28, 22 -> 30 for the negated
+     * class): "a" and "A" meet under i, "[^a]" leaves "A" out there, "k"
+     * takes the Kelvin sign and "s" the long s under iu, but not under r,
+     * the micro sign takes the Greek mu, and under (*UCP) "\xE9" takes
+     * "\xC9", which PCRE2's own tables leave apart without it.
+     *
+     * @return iterable<string, array{pattern: string, unit: string, critical: bool}>
+     */
+    public static function provideBranchesInEitherCase(): iterable
+    {
+        yield 'a letter beside its capital under i' => ['pattern' => '/^((?:a|A)+)\1$/i', 'unit' => 'a', 'critical' => true];
+        yield 'a letter beside its capital' => ['pattern' => '/^((?:a|A)+)\1$/', 'unit' => 'a', 'critical' => false];
+        yield 'a range beside a capital it holds under i' => ['pattern' => '/^((?:[a-c]|B)+)\1$/i', 'unit' => 'b', 'critical' => true];
+        yield 'a negated class beside the capital it leaves out under i' => ['pattern' => '/^((?:[^a]|A)+)\1$/i', 'unit' => 'A', 'critical' => false];
+        yield 'an option setting before the pattern' => ['pattern' => '/(?i)^((?:a|A)+)\1$/', 'unit' => 'a', 'critical' => true];
+        yield 'an option setting inside the group' => ['pattern' => '/^((?i)(?:a|A)+)\1$/', 'unit' => 'a', 'critical' => true];
+        yield 'an option setting that turns i off again' => ['pattern' => '/(?i)^((?-i)(?:a|A)+)\1$/', 'unit' => 'a', 'critical' => false];
+        yield 'a branch that sets i beside the capital' => ['pattern' => '/^((?:(?i:a)|A)+)\1$/', 'unit' => 'A', 'critical' => true];
+        yield 'a branch that sets i beside another letter' => ['pattern' => '/^((?:(?i:a)|B)+)\1$/', 'unit' => 'A', 'critical' => false];
+        yield 'a branch that turns i off under i' => ['pattern' => '/^((?:a|(?-i:A))+)\1$/i', 'unit' => 'A', 'critical' => true];
+        yield 'the Kelvin sign beside k under iu' => ['pattern' => '/^((?:k|\x{212A})+)\1$/iu', 'unit' => "\u{212A}", 'critical' => true];
+        yield 'the long s beside s under iu' => ['pattern' => '/^((?:s|\x{17F})+)\1$/iu', 'unit' => 's', 'critical' => true];
+        yield 'a capital beside its letter under iu' => ['pattern' => '/^((?:K|k)+)\1$/iu', 'unit' => 'k', 'critical' => true];
+        yield 'a Latin-1 letter beside its capital under iu' => ['pattern' => '/^((?:é|É)+)\1$/iu', 'unit' => 'é', 'critical' => true];
+        yield 'the micro sign beside the Greek mu under iu' => ['pattern' => '/^((?:\x{3BC}|\xB5)+)\1$/iu', 'unit' => "\u{B5}", 'critical' => true];
+        yield 'Latin-1 letters under (*UCP) and i' => ['pattern' => '/(*UCP)^((?:\xE9|\xC9)+)\1$/i', 'unit' => "\xE9", 'critical' => true];
+        yield 'Latin-1 letters under i alone' => ['pattern' => '/^((?:\xE9|\xC9)+)\1$/i', 'unit' => "\xE9", 'critical' => false];
+        // The r modifier, from PHP 8.4 and PCRE2 10.43.
+        yield 'the Kelvin sign beside k under iur' => ['pattern' => '/^((?:k|\x{212A})+)\1$/iur', 'unit' => "\u{212A}", 'critical' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideBranchesInEitherCase')]
+    public function test_branches_are_compared_in_the_case_the_engine_reads_them(string $pattern, string $unit, bool $critical): void
+    {
+        if (false === @preg_match($pattern, '')) {
+            $this->assertTrue(\PHP_VERSION_ID < 80400 || version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '<'), $pattern.' does not compile here.');
+
+            return;
+        }
+
         $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
         $short = self::steps($unoptimized, str_repeat($unit, 8).'!');
         $long = self::steps($unoptimized, str_repeat($unit, 12).'!');

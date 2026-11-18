@@ -360,6 +360,21 @@ final class CharSetAnalyzerTest extends TestCase
         yield 'a hex range under i' => ['options' => '', 'atom' => '[\xC2-\xDF]', 'flags' => 'i'];
         yield 'a negated hex range under i' => ['options' => '', 'atom' => '[^\x80-\xBF]', 'flags' => 'i'];
         yield 'a hex digit range under i' => ['options' => '', 'atom' => '[\x30-\x39]', 'flags' => 'i'];
+        yield 'a letter under i' => ['options' => '', 'atom' => 'a', 'flags' => 'i'];
+        yield 'a hex letter under i' => ['options' => '', 'atom' => '\x41', 'flags' => 'i'];
+        yield 'a range of letters under i' => ['options' => '', 'atom' => '[a-c]', 'flags' => 'i'];
+        yield 'a negated letter under i' => ['options' => '', 'atom' => '[^a]', 'flags' => 'i'];
+        yield 'a class of hex escapes under i' => ['options' => '', 'atom' => '[\x20-\x7E]', 'flags' => 'i'];
+        yield 'Latin-1 letters under i alone' => ['options' => '', 'atom' => '[\xC0-\xC5]', 'flags' => 'i'];
+        yield 'Latin-1 letters under (*UCP) and i' => ['options' => '(*UCP)', 'atom' => '[\xC0-\xC5]', 'flags' => 'i'];
+        yield 'a negated Latin-1 letter under (*UCP) and i' => ['options' => '(*UCP)', 'atom' => '[^\xE9]', 'flags' => 'i'];
+        yield 'the micro sign under (*UCP) and i' => ['options' => '(*UCP)', 'atom' => '\xB5', 'flags' => 'i'];
+        yield 'a two-byte letter in a class under (*UCP) and i' => ['options' => '(*UCP)', 'atom' => '[é]', 'flags' => 'i'];
+        yield 'a letter after an option setting' => ['options' => '(?i)', 'atom' => 'a', 'flags' => ''];
+        yield 'a letter after i is turned on and off' => ['options' => '(?i)(?-i)', 'atom' => 'a', 'flags' => ''];
+        yield 'a letter where i is turned off' => ['options' => '(?-i)', 'atom' => 'a', 'flags' => 'i'];
+        yield 'a letter after a reset' => ['options' => '(?^)', 'atom' => 'a', 'flags' => 'i'];
+        yield 'a letter in a group that turns i off' => ['options' => '', 'atom' => '(?-i:a)', 'flags' => 'i'];
         // Extended classes, from PCRE2 10.45.
         yield 'an extended class difference' => ['options' => '', 'atom' => '(?[ [\x80-\xFF] - [\xC0-\xFF] ])', 'flags' => ''];
         yield 'an extended class complement' => ['options' => '', 'atom' => '(?[ ![\x00-\x7F] ])', 'flags' => ''];
@@ -422,6 +437,16 @@ final class CharSetAnalyzerTest extends TestCase
         yield 'a vertical space' => ['options' => '', 'atom' => '\v', 'flags' => 'u'];
         yield 'a line break' => ['options' => '', 'atom' => '\R', 'flags' => 'u'];
         yield 'a horizontal space under (*UTF)' => ['options' => '(*UTF)', 'atom' => '\h', 'flags' => ''];
+        yield 'a letter under iu' => ['options' => '', 'atom' => 'k', 'flags' => 'iu'];
+        yield 'the Kelvin sign under iu' => ['options' => '', 'atom' => '\x{212A}', 'flags' => 'iu'];
+        yield 'the long s under iu' => ['options' => '', 'atom' => '\x{17F}', 'flags' => 'iu'];
+        yield 'a range of letters under iu' => ['options' => '', 'atom' => '[a-z]', 'flags' => 'iu'];
+        yield 'a two-byte letter under iu' => ['options' => '', 'atom' => 'é', 'flags' => 'iu'];
+        yield 'the micro sign under iu' => ['options' => '', 'atom' => '\xB5', 'flags' => 'iu'];
+        yield 'a negated letter under iu' => ['options' => '', 'atom' => '[^k]', 'flags' => 'iu'];
+        // The r modifier, from PHP 8.4 and PCRE2 10.43.
+        yield 'the Kelvin sign under iur' => ['options' => '', 'atom' => '\x{212A}', 'flags' => 'iur'];
+        yield 'a letter under iur' => ['options' => '', 'atom' => 'k', 'flags' => 'iur'];
         // Extended classes, from PCRE2 10.45.
         yield 'an extended class complement' => ['options' => '', 'atom' => '(?[ ![\x00-\x7F] ])', 'flags' => 'u'];
         yield 'an extended class difference' => ['options' => '', 'atom' => '(?[ [\x{80}-\x{10FFFF}] - [\xC0-\xFF] ])', 'flags' => 'u'];
@@ -430,22 +455,21 @@ final class CharSetAnalyzerTest extends TestCase
 
     /**
      * Under i a letter is matched in either case: "\x41" takes "a", and
-     * under UTF "\x{212A}", the Kelvin sign, takes "k". An escape the case
-     * may change is not read, nor a range that holds one; one the case
-     * leaves alone is read as it stands. An option setting may set i at
-     * any point of the pattern, so the pattern as a whole is read as if it
-     * did.
+     * under UTF "\x{212A}", the Kelvin sign, takes "k". A set read under i
+     * holds the other case, by the byte it starts with, whether the
+     * modifier or an option setting before the atom sets i.
      */
     #[Test]
     #[DataProvider('provideEscapesTheCaseMayChange')]
-    public function test_an_escape_the_case_may_change_is_not_read(string $options, string $atom, string $flags, string $other): void
+    public function test_a_set_read_under_i_holds_the_other_case(string $options, string $atom, string $flags, string $other): void
     {
+        $this->requiresCompile('/'.$options.$atom.'/'.$flags);
         $this->assertSame(1, preg_match('/'.$options.'^(?:'.$atom.')\z/'.$flags, $other), 'Oracle: the engine matches the other case.');
 
         [$analyzer, $node] = self::atom('/'.$options.$atom.'/'.$flags);
 
-        $this->assertTrue($analyzer->firstChars($node)->isUnknown(), $atom);
-        $this->assertTrue($analyzer->lastChars($node)->isUnknown(), $atom);
+        $this->assertTrue($analyzer->firstChars($node)->intersects(ByteCharSet::fromChar($other[0])), $atom);
+        $this->assertTrue($analyzer->lastChars($node)->intersects(ByteCharSet::fromChar($other[0])), $atom);
     }
 
     /**
@@ -462,6 +486,10 @@ final class CharSetAnalyzerTest extends TestCase
         yield 'a Latin-1 letter under (*UCP)' => ['options' => '(*UCP)', 'atom' => '\xC9', 'flags' => 'i', 'other' => "\xE9"];
         yield 'a letter after an option setting' => ['options' => '(?i)', 'atom' => '\x41', 'flags' => '', 'other' => 'a'];
         yield 'a letter after a reset that sets i' => ['options' => '(?^i)', 'atom' => '\x41', 'flags' => '', 'other' => 'a'];
+        yield 'a letter in a group that sets i' => ['options' => '', 'atom' => '(?i:\x41)', 'flags' => '', 'other' => 'a'];
+        yield 'the long s under UTF' => ['options' => '', 'atom' => '\x{17F}', 'flags' => 'iu', 'other' => 's'];
+        yield 'a letter whose other case is the long s' => ['options' => '', 'atom' => 'S', 'flags' => 'iu', 'other' => "\u{17F}"];
+        yield 'a capital of Latin-1 under UTF' => ['options' => '', 'atom' => 'É', 'flags' => 'iu', 'other' => 'é'];
     }
 
     /**
@@ -493,6 +521,28 @@ final class CharSetAnalyzerTest extends TestCase
     }
 
     /**
+     * An option setting holds for the items after it, read from either end
+     * of the sequence, and in ASCII as above it: in "(?i)a(?-i)b" the "a"
+     * takes "A" and the "b" does not take "B".
+     */
+    #[Test]
+    public function test_an_option_setting_holds_for_the_items_after_it(): void
+    {
+        $this->assertSame(1, preg_match('/^(?i)a(?-i)b$/', 'Ab'), 'Oracle: "a" is read in either case.');
+        $this->assertSame(0, preg_match('/^(?i)a(?-i)b$/', 'aB'), 'Oracle: "b" is not.');
+
+        foreach ([false, true] as $readsAboveAscii) {
+            $regex = RegexParser::create(['cache' => null])->parse('/(?i)a(?-i)b/');
+            $analyzer = CharSetAnalyzer::forRegex($regex, $readsAboveAscii);
+
+            $this->assertTrue($analyzer->firstChars($regex)->intersects(ByteCharSet::fromChar('A')));
+            $this->assertTrue($analyzer->lastChars($regex)->intersects(ByteCharSet::fromChar('b')));
+            $this->assertFalse($analyzer->lastChars($regex)->intersects(ByteCharSet::fromChar('B')));
+            $this->assertTrue($analyzer->lastChars(RegexParser::create(['cache' => null])->parse('/(?i)a/'))->intersects(ByteCharSet::fromChar('A')));
+        }
+    }
+
+    /**
      * The analyzer of the pattern, and its last atom: the one after the
      * options it opens with.
      *
@@ -506,7 +556,9 @@ final class CharSetAnalyzerTest extends TestCase
             $node = $node->children[\count($node->children) - 1];
         }
 
-        return [CharSetAnalyzer::forRegex($regex, $readsAboveAscii), $node];
+        $inForce = CharSetAnalyzer::forRegex($regex, $readsAboveAscii)->inForce($regex);
+
+        return [$inForce[$node], $node];
     }
 
     /**

@@ -117,10 +117,16 @@ final class ByteCharSet
             return self::unknown();
         }
 
-        $merged = array_merge($this->ranges, $other->ranges);
-        if ([] === $merged) {
-            return self::empty();
+        // A set joined to an empty one is itself, the walks' first union.
+        if ([] === $other->ranges) {
+            return $this;
         }
+
+        if ([] === $this->ranges) {
+            return $other;
+        }
+
+        $merged = array_merge($this->ranges, $other->ranges);
 
         usort($merged, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
 

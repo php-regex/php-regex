@@ -176,11 +176,12 @@ final class RedosProfiler extends AbstractNodeVisitor
     private ?array $skipsPastTheirMark = null;
 
     /**
-     * Whether the pattern holds options that may change what a character
-     * set reads, the i modifier or an option setting: the sets of the
-     * analyzer do not follow them.
+     * The analyzer in force at each node of a pattern that holds an option
+     * setting, whose sets follow it; null for one that holds none.
+     *
+     * @var \SplObjectStorage<NodeInterface, CharSetAnalyzer>|null
      */
-    private bool $setsMayChange = false;
+    private ?\SplObjectStorage $setsInForce = null;
 
     public function __construct(private readonly CharSetAnalyzer $charSetAnalyzer = new CharSetAnalyzer())
     {
@@ -268,7 +269,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->groupsReadThrough = [];
         $this->pattern = $node->pattern;
         $this->skipsPastTheirMark = null;
-        $this->setsMayChange = str_contains($node->flags, 'i') || self::holdsOptionSetting($node->pattern);
+        $this->setsInForce = self::holdsOptionSetting($node->pattern) ? $this->charSetAnalyzer->inForce($node->pattern) : null;
 
         // A recursion the attempt tries first, before it reads a character,
         // enters the pattern again where it started, and PCRE2 stops the
@@ -1005,7 +1006,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $sets = [];
 
         foreach ($branches as $alt) {
-            $set = $this->charSetAnalyzer->firstChars($alt);
+            $set = $this->setsAt($alt)->firstChars($alt);
 
             if ($this->startsWithDot($alt)) {
                 if (!empty($sets)) {
@@ -1216,8 +1217,8 @@ final class RedosProfiler extends AbstractNodeVisitor
             return false;
         }
 
-        $previousTail = $this->charSetAnalyzer->lastChars($previous);
-        $currentHead = $this->charSetAnalyzer->firstChars($current);
+        $previousTail = $this->setsAt($previous)->lastChars($previous);
+        $currentHead = $this->setsAt($current)->firstChars($current);
 
         if ($previousTail->isUnknown() || $currentHead->isUnknown()) {
             return false;
@@ -1232,8 +1233,8 @@ final class RedosProfiler extends AbstractNodeVisitor
             return false;
         }
 
-        $currentTail = $this->charSetAnalyzer->lastChars($current);
-        $nextHead = $this->charSetAnalyzer->firstChars($next);
+        $currentTail = $this->setsAt($current)->lastChars($current);
+        $nextHead = $this->setsAt($next)->firstChars($next);
 
         if ($currentTail->isUnknown() || $nextHead->isUnknown()) {
             return false;
@@ -1336,7 +1337,15 @@ final class RedosProfiler extends AbstractNodeVisitor
         $state = $this->analyzeBackrefLoop($node);
 
         return $state['hasBackref'] && $state['hasVariableCapture']
-            && !(!$this->setsMayChange && false === $node->accept($this->nullability) && $this->readsOneWay($node));
+            && !(false === $node->accept($this->nullability) && $this->readsOneWay($node));
+    }
+
+    /**
+     * The analyzer that reads the node under the flags in force there.
+     */
+    private function setsAt(NodeInterface $node): CharSetAnalyzer
+    {
+        return null !== $this->setsInForce && $this->setsInForce->contains($node) ? $this->setsInForce[$node] : $this->charSetAnalyzer;
     }
 
     private static function holdsOptionSetting(NodeInterface $node): bool
@@ -1414,7 +1423,7 @@ final class RedosProfiler extends AbstractNodeVisitor
                 return false;
             }
 
-            $first = $this->charSetAnalyzer->firstChars($alternative);
+            $first = $this->setsAt($alternative)->firstChars($alternative);
             if ($first->isUnknown()) {
                 return false;
             }
@@ -1596,8 +1605,8 @@ final class RedosProfiler extends AbstractNodeVisitor
                 continue;
             }
 
-            $leftTail = $this->charSetAnalyzer->lastChars($leftQuantifier->node);
-            $rightHead = $this->charSetAnalyzer->firstChars($rightQuantifier->node);
+            $leftTail = $this->setsAt($leftQuantifier->node)->lastChars($leftQuantifier->node);
+            $rightHead = $this->setsAt($rightQuantifier->node)->firstChars($rightQuantifier->node);
             $overlapKnown = !$leftTail->isUnknown() && !$rightHead->isUnknown();
 
             if ($overlapKnown && !$leftTail->intersects($rightHead)) {
