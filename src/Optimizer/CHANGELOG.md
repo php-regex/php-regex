@@ -19,7 +19,7 @@ CHANGELOG
    characters of the other branches left out.
  * The possessive rewrite reads an escape that names an ASCII character as
    that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
-   `/^[0-9]+x$/` becomes `/^[0-9]++x$/`; it was left greedy.
+   `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.
  * `RedosRepairer::firstRepair()` returns the repair `repair()` offers first,
    or null, and stops at the first rewrite certified that writes the same
    `$matches`: the rewrites after it are not proven, nor is the optimizer
