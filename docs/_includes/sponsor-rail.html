@@ -1,0 +1,39 @@
+{% comment %}
+  The rail card, above the "On this page" menu: the sponsor frame's
+  open-spot design, drawn small. On every page that belongs to a spot
+  still open, it pitches that spot with the frame's own markup — the
+  empty named group, the open-spot copy, the heart button — so the two
+  frames read as one system. A held spot, a page that belongs to no
+  spot, or a page that opted out with `sponsor: false` shows nothing:
+  the rail stays a navigation tool except where there is a spot to
+  pitch. The backers row is left out: the frame at the foot of the same
+  page already carries it.
+{% endcomment %}
+{% if page.sponsor != false %}
+{% assign sp = site.data.sponsors %}
+{% assign sr_spot = nil %}
+{% for spot in sp.spots %}
+  {% if spot.pages contains page.url %}{% assign sr_spot = spot %}{% endif %}
+  {% for prefix in spot.prefixes %}
+    {% assign sr_head = page.url | slice: 0, prefix.size %}
+    {% if sr_head == prefix %}{% assign sr_spot = spot %}{% endif %}
+  {% endfor %}
+{% endfor %}
+{% if sr_spot and sr_spot.sponsor == nil or sr_spot.sponsor == empty %}
+<aside class="sponsor sponsor-rail" data-state="open-spot" aria-labelledby="sponsor-rail-title">
+  <div class="sponsor-well">
+    <span class="sponsor-pattern" aria-hidden="true"><span class="rx-delim">/</span><span class="rx-group">(?&lt;</span><span class="rx-name">your_logo</span><span class="rx-group">&gt;</span><span class="sponsor-caret"></span><span class="rx-group">)</span><span class="rx-delim">/</span></span>
+    <span class="sponsor-status" aria-hidden="true">0 matches, for now</span>
+  </div>
+  <div class="sponsor-body">
+    <p class="sponsor-eyebrow">Open spot · {{ sr_spot.title }}</p>
+    <p class="sponsor-title" id="sponsor-rail-title">Back {{ sr_spot.what }}.</p>
+    <p class="sponsor-text">{% if sr_spot.pitch %}{{ sr_spot.pitch }}{% else %}One company backs this guide and the php-regex/{{ sr_spot.packages.first }} package: its logo stands here, and a line in the README that Composer installs into every vendor/ folder.{% endif %} The first to ask takes it.</p>
+    <p class="sponsor-actions">
+      <a class="sponsor-cta" href="{{ sp.github }}" rel="noopener">{% include sponsor-heart.html %}Sponsor on GitHub</a>
+      <a class="sponsor-mail" href="{{ sp.policy }}#spot-{{ sr_spot.id }}">How it works</a>
+    </p>
+  </div>
+</aside>
+{% endif %}
+{% endif %}

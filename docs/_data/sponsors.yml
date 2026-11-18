@@ -17,7 +17,7 @@ email: younes.ennaji.pro@gmail.com
 backers_md: https://github.com/php-regex/php-regex/blob/2.x/BACKERS.md
 policy: /sponsorship/
 # The release the spots are offered for: a spot is held for a whole
-# release, the way a Symfony component is backed for one version.
+# release, from the first version to the last patch.
 release: '2.0'
 
 # The companies. Every company that sponsors, spot holders and past spot
@@ -48,8 +48,8 @@ backers: []
 # (a company id) and `held_for` (the release it was taken for).
 #
 # When a company takes a spot: set its `sponsor` and `held_for`, then
-# replace the open-spot paragraph of each package README with the line a
-# Symfony component carries, before the next release is tagged:
+# replace the open-spot paragraph of each package README with this line,
+# before the next release is tagged:
 #
 #   The Laravel integration for PHPRegex 2.0 is [backed](https://php-regex.com/sponsorship/#spot-laravel)
 #   by [Acme](https://acme.example). Acme builds the thing your team ships with.

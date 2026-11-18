@@ -632,6 +632,39 @@ body {
   font-weight: 500;
 }
 
+/* The rail card: the sponsor frame's open-spot design, drawn small for
+ * the 13rem column — the frame's own styles do the drawing, this only
+ * tunes the size. */
+.sponsor.sponsor-rail {
+  margin: 0 0 1.75rem;
+  padding: .875rem;
+  gap: .875rem;
+  font-size: .8125rem;
+}
+
+.sponsor.sponsor-rail::after {
+  top: -1.3rem;
+  font-size: .625rem;
+}
+
+.sponsor.sponsor-rail .sponsor-title {
+  font-size: .9375rem;
+}
+
+.sponsor.sponsor-rail .sponsor-text {
+  font-size: .75rem;
+}
+
+.sponsor.sponsor-rail .sponsor-cta {
+  min-height: 2.25rem;
+  padding: 0 .875rem;
+  font-size: .8125rem;
+}
+
+.sponsor.sponsor-rail .sponsor-mail {
+  font-size: .75rem;
+}
+
 /* ---- Eyebrow ---------------------------------------------------------------
  * The breadcrumb's three steps said "Documentation / Learn / Quick Start"
  * above a title that already said the last of them. The section alone is
@@ -2408,6 +2441,30 @@ main p.post-meta {
   box-shadow: var(--shadow-1);
   transition: background-color .15s ease, box-shadow .15s ease;
 }
+
+/* The same button, outside the sponsor frame — the /sponsorship/ page CTA. */
+main a.sponsor-page-cta {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 1.5rem;
+  min-height: 2.75rem;
+  padding: 0 1.5rem;
+  border-radius: var(--radius-m);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: .9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-1);
+  transition: background-color .15s ease, box-shadow .15s ease;
+}
+
+main a.sponsor-page-cta:hover,
+main a.sponsor-page-cta:focus-visible {
+  background: var(--ink-hover);
+  box-shadow: var(--shadow-glow);
+}
+
 
 .sponsor a.sponsor-cta .icon {
   width: 15px;
