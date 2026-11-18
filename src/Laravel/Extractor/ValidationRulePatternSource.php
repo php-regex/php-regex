@@ -25,28 +25,14 @@ use PHPRegex\Parser\Text\Path;
 /**
  * Extracts regex patterns from Laravel validation rules.
  *
- * This extractor parses PHP files looking for Laravel validation rules
- * that use regex patterns, such as 'regex:/pattern/' in validation arrays.
+ * This extractor reads the string literals of the PHP code, as PHP decodes
+ * them, looking for Laravel validation rules that use regex patterns, such
+ * as 'regex:/pattern/' in validation arrays.
  *
  * @internal
  */
 final class ValidationRulePatternSource implements PatternSourceInterface
 {
-    /**
-     * A single- or double-quoted literal on one line that holds a 'regex:',
-     * 'not_regex:' or 'notregex:' rule, in any case and blanks around its
-     * name, at its start or after a "|", up to the quote that opened it.
-     * A double-quoted one may spell that name and its blanks with escapes,
-     * as "\tregex:" or "\x72egex:": a name of letters, digits, braces,
-     * blanks and escapes, one escape at least, is taken too, and the rule
-     * is read once PHP has decoded the literal.
-     * Group 1 is the quote, group 2 the literal as written.
-     * An escaped character (a backslash and the character after it) and any
-     * other character but a backslash, the quote and a newline are
-     * disjoint, so a run of backslashes is read in one pass.
-     */
-    private const RULE_PATTERN = '/(?|(\')(?=(?:(?:\\\\.|[^\'\\\\\n|])*+\|)*[ \t\r\0\x0B]*+(?i:(?:not_?)?regex)[ \t\r\0\x0B]*+:)((?:\\\\.|[^\'\\\\\n])++)\'|(")(?=(?:(?:\\\\.|[^"\\\\\n|])*+\|)*(?:[ \t\r\0\x0B]*+(?i:(?:not_?)?regex)[ \t\r\0\x0B]*+:|(?=[ \t\r\0\x0B0-9A-Za-z_{}]*+\\\\)(?:[ \t\r\0\x0B0-9A-Za-z_{}]|\\\\[^\n:])++:))((?:\\\\.|[^"\\\\\n])++)")/';
-
     /**
      * The calls that take a rules string, which Laravel splits on "|", by
      * the name of the method, or of the class built, in lower case: the
@@ -72,20 +58,19 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     private const RULE = '/^([ \t\n\r\0\x0B]*+)(not_?)?regex([ \t\n\r\0\x0B]*+):/i';
 
     /**
+     * What a file writes of a regex rule: its name and the colon after it,
+     * with blanks or their escapes between, or an escape, hexadecimal,
+     * octal or a code point, that may write one of their characters. A file
+     * that holds neither holds no rule.
+     */
+    private const RULE_TEXT = '/regex(?:[ \t\n\r\0\x0B]|\\\\[tnrv])*+:|\\\\(?:[0-7xX]|u\{)/i';
+
+    /**
      * The files the last extract() could not read, each with why.
      *
      * @var list<array{file: string, message: string}>
      */
     private array $failures = [];
-
-    /**
-     * The offsets of the string literals of the file read that a call takes
-     * as rules, and of the parentheses that only group what they hold, read
-     * once a literal asks.
-     *
-     * @var array{rules: array<int, true>, grouping: array<int, true>, appended: array<int, true>}|null
-     */
-    private ?array $tokenReading = null;
 
     public function getName(): string
     {
@@ -172,27 +157,47 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         }
 
         $patterns = [];
-        $this->tokenReading = null;
+        $reading = null;
 
-        // The pattern runs until the quote that opened the string literal,
-        // so the other quote character (and escaped quotes) may appear
-        // inside it, e.g. 'regex:/^[^"]+$/'.
         try {
-            LibraryPcre::matchAll(self::RULE_PATTERN, $content, $matches, \PREG_OFFSET_CAPTURE);
+            // A file that writes no regex rule is not tokenized.
+            if (1 !== LibraryPcre::match(self::RULE_TEXT, $content)) {
+                return [];
+            }
 
-            $previousOffset = 0;
-            $lineNumber = 1;
-            foreach ($matches[2] as $index => $match) {
-                $quote = $matches[1][$index][0];
-                $literal = PhpStringLiteral::decode($quote.$match[0].$quote) ?? $match[0];
-                $offset = $match[1];
-                // Match offsets increase: count each intervening byte only once.
-                $lineNumber += substr_count($content, "\n", $previousOffset, $offset - $previousOffset);
-                $previousOffset = $offset;
+            // PHP reads the literals of its code alone: a quote inside
+            // another literal, in a comment or around the PHP tags opens
+            // none. What PHP warns about the file, an octal escape above
+            // \377, is no word of the run's.
+            $tokens = @token_get_all($content);
+            $offsets = PhpTokens::offsets($tokens);
+            for ($index = 0, $count = \count($tokens); $index < $count; $index++) {
+                $token = $tokens[$index];
+                $opening = $index;
+                if (\is_array($token) && \T_CONSTANT_ENCAPSED_STRING === $token[0]) {
+                    $pieces = [PhpTokens::stringValue($token[1])];
+                } elseif (\is_string($token) && str_ends_with($token, '"')) {
+                    [$pieces, $index] = self::interpolatedPieces($tokens, $index);
+                } else {
+                    continue;
+                }
+
+                // Every name of a regex rule holds "regex" once PHP has
+                // decoded it.
+                if (false === stripos(implode('', $pieces), 'regex')) {
+                    continue;
+                }
 
                 // Laravel splits a rules string on every "|", one inside a
-                // pattern included; an element of a rules array is one rule.
-                $rules = $this->isRulesString($literal, $content, $offset - 1) ? explode('|', $literal) : [$literal];
+                // pattern included; an element of a rules array is one rule,
+                // not known when an expression is part of it.
+                $literal = $pieces[0] ?? '';
+                $reading ??= self::tokenReading($tokens, $offsets);
+                if ($this->isRulesString($literal, $content, $offsets[$opening], $reading)) {
+                    $rules = self::rulesOf($pieces);
+                } else {
+                    $rules = \in_array(null, $pieces, true) ? [] : [$literal];
+                }
 
                 foreach ($rules as $rule) {
                     if (1 !== LibraryPcre::match(self::RULE, $rule, $name)) {
@@ -215,7 +220,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                     $patterns[] = new PatternOccurrence(
                         $trimmed,
                         $filePath,
-                        $lineNumber,
+                        PhpTokens::lineOf($tokens, $opening),
                         'validation:'.('' === $name[2] ? 'regex' : 'not_regex'),
                         $pattern,
                         'Laravel validation rule',
@@ -249,12 +254,14 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * "nullable|regex", and runs no pattern. Parentheses that only group the
      * literal change nothing.
      *
-     * @param int $start the offset of the quote that opens the literal
+     * @param string                                                                                 $literal the value of the literal, up to its first expression when it interpolates
+     * @param int                                                                                    $start   the offset of the token that opens the literal
+     * @param array{rules: array<int, true>, grouping: array<int, true>, appended: array<int, true>} $reading what the tokens of the file say, from tokenReading()
      */
-    private function isRulesString(string $literal, string $content, int $start): bool
+    private function isRulesString(string $literal, string $content, int $start, array $reading): bool
     {
         $before = $this->previousNonWhitespace($content, $start - 1);
-        while ($before >= 0 && '(' === $content[$before] && isset($this->tokenReading($content)['grouping'][$before])) {
+        while ($before >= 0 && '(' === $content[$before] && isset($reading['grouping'][$before])) {
             $before = $this->previousNonWhitespace($content, $before - 1);
         }
 
@@ -264,7 +271,6 @@ final class ValidationRulePatternSource implements PatternSourceInterface
 
         // "==", "!=", "<=" and ">=" compare; "=", ".=" and "??=" assign.
         if ($before < 0 || '=' !== $content[$before] || ($before > 0 && str_contains('=!<>', $content[$before - 1]))) {
-            $reading = $this->tokenReading($content);
             if (isset($reading['rules'][$start])) {
                 return true;
             }
@@ -293,18 +299,16 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * rules, by position or by name, of those array_push() or
      * array_unshift() appends as elements, and of the parentheses that only
      * group what they hold. A literal is an argument of the innermost
-     * bracket around it that does not only group.
+     * bracket around it that does not only group. A double-quoted string
+     * that interpolates is placed by its opening quote.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $offsets
      *
      * @return array{rules: array<int, true>, grouping: array<int, true>, appended: array<int, true>}
      */
-    private function tokenReading(string $content): array
+    private static function tokenReading(array $tokens, array $offsets): array
     {
-        if (null !== $this->tokenReading) {
-            return $this->tokenReading;
-        }
-
-        $tokens = token_get_all($content);
-        $offsets = PhpTokens::offsets($tokens);
         $rules = [];
         $grouping = [];
         $appended = [];
@@ -357,7 +361,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
                 continue;
             }
 
-            if (!\is_array($token) || \T_CONSTANT_ENCAPSED_STRING !== $token[0]) {
+            if (\is_array($token) ? \T_CONSTANT_ENCAPSED_STRING !== $token[0] : !str_ends_with($token, '"')) {
                 continue;
             }
 
@@ -373,7 +377,89 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             }
         }
 
-        return $this->tokenReading = ['rules' => $rules, 'grouping' => $grouping, 'appended' => $appended];
+        return ['rules' => $rules, 'grouping' => $grouping, 'appended' => $appended];
+    }
+
+    /**
+     * The texts of the double-quoted string that interpolates from the
+     * quote at $open, as PHP decodes them, with null for each expression
+     * between them, and the index of the quote that closes it.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array{list<string|null>, int}
+     */
+    private static function interpolatedPieces(array $tokens, int $open): array
+    {
+        $pieces = [];
+        // An expression between braces may hold strings of its own.
+        $depth = 0;
+        for ($index = $open + 1, $count = \count($tokens); $index < $count; $index++) {
+            $token = $tokens[$index];
+            if (0 === $depth && '"' === $token) {
+                break;
+            }
+
+            if (0 === $depth && \is_array($token) && \T_ENCAPSED_AND_WHITESPACE === $token[0]) {
+                $pieces[] = PhpStringLiteral::decodeInterpolated($token[1]);
+
+                continue;
+            }
+
+            if (PhpTokens::opensNesting($token)) {
+                $depth++;
+            } elseif (')' === $token || ']' === $token || '}' === $token) {
+                $depth--;
+            }
+
+            if ([] === $pieces || null !== $pieces[array_key_last($pieces)]) {
+                $pieces[] = null;
+            }
+        }
+
+        return [$pieces, $index];
+    }
+
+    /**
+     * The rules of a rules string that its text holds whole: each between
+     * two "|" its text writes, or the start or the end of the string, with
+     * no expression inside. The value of an expression may hold a "|" of
+     * its own, so the rule it is part of is not known.
+     *
+     * @param list<string|null> $pieces the texts of the string, null for each expression between them
+     *
+     * @return list<string>
+     */
+    private static function rulesOf(array $pieces): array
+    {
+        $rules = [];
+        $rule = '';
+        foreach ($pieces as $piece) {
+            if (null === $piece) {
+                $rule = null;
+
+                continue;
+            }
+
+            foreach (explode('|', $piece) as $position => $part) {
+                if ($position > 0) {
+                    if (null !== $rule) {
+                        $rules[] = $rule;
+                    }
+                    $rule = '';
+                }
+
+                if (null !== $rule) {
+                    $rule .= $part;
+                }
+            }
+        }
+
+        if (null !== $rule) {
+            $rules[] = $rule;
+        }
+
+        return $rules;
     }
 
     /**

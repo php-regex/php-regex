@@ -399,8 +399,15 @@ rule Laravel names `nullable|regex`, which runs no pattern. The
 pattern is linted as written, between any delimiter PHP takes: `{^a$}` is the
 pattern between braces, not `/{^a$}/`, and a double-quoted literal as PHP
 decodes it: `"regex:/^[\u{0600}-\u{06FF}]+$/u"` holds the characters PHP
-decodes, not `\u`, and `"required|\tregex:/^a$/"` a tab before the rule's
-name. The rule's name is read without case, as Laravel reads it, and
+decodes, not `\u`, `"required|\tregex:/^a$/"` a tab before the rule's
+name and `"regex\x3a/^a$/"` the rule's `:`. Only the quoted string
+literals of the PHP code are read: a quoted rule in a comment, in a heredoc
+or a nowdoc, or in the text around the PHP tags is none, and a rules string
+written as a heredoc is not read. In a double-quoted rules string that
+interpolates, a rule between two `|` of its text is read,
+`"min:$min|regex:/^a$/"` runs `/^a$/`, and one an expression is part of,
+`"regex:/^{$prefix}-\d+$/"`, is not: only the running code knows its
+pattern. The rule's name is read without case, as Laravel reads it, and
 `notregex:` is `not_regex:`. A name with blanks around it,
 `'required | regex:/^a$/'`, is still the regex rule, but Laravel then reads
 its parameter as comma-separated values and runs the first one:

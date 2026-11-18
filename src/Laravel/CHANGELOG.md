@@ -76,6 +76,15 @@ CHANGELOG
    `array_push()`, `array_unshift()` or `[] =` adds with a rule before the
    regex one, `'nullable|regex:/x|y/'`, is a rule Laravel names
    `nullable|regex`, and no pattern is linted.
+ * `regex:lint` reads validation rules from the string literals of the PHP
+   code as PHP reads them, where it searched the file's text for quotes. A
+   rule whose `:` an escape writes, `"regex\x3a/^a$/"`, is read; a literal
+   over several lines is read; a quoted rule in a comment, in a heredoc or a
+   nowdoc, or in the text around the PHP tags, which Laravel never runs, is
+   no longer linted. In a double-quoted rules string that interpolates, a
+   rule between two `|` of its text is read, `"min:$min|regex:/^a$/"` runs
+   `/^a$/`; one an expression is part of, `"regex:/^{$prefix}-\d+$/"`, is
+   no longer linted with the expression as its text.
  * `regex:lint` reads a regex rule whose name has blanks around it,
    `'required | regex:/^b+$/'` or `'regex :/^b+$/'`, which Laravel trims and
    runs: it was not linted. Laravel reads the parameter of such a rule as

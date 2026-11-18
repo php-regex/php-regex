@@ -276,21 +276,32 @@ final class ValidationRuleLaravelReadingTest extends TestCase
         yield 'an escaped line feed after the name' => ['literal' => '"regex\n:/^b$/"', 'compiles' => true];
         yield 'an escaped letter in the name' => ['literal' => '"nullable|\x72egex:/^c$/"', 'compiles' => true];
         yield 'an escaped bar between two rules' => ['literal' => '"required\x7cregex:/^c$/"', 'compiles' => true];
+        yield 'a name of hexadecimal escapes' => ['literal' => '"\x72\x65\x67\x65\x78:/^o$/"', 'compiles' => true];
+        yield 'a name of octal escapes' => ['literal' => '"required|\162\145\147\145\170:/^p$/"', 'compiles' => true];
+        yield 'a name of code point escapes' => ['literal' => '"\u{72}\u{65}\u{67}\u{65}\u{78}:/^q$/"', 'compiles' => true];
+        yield 'an escaped colon after the name' => ['literal' => '"regex\x3a/^d$/"', 'compiles' => true];
+        yield 'an octal colon in a rules string' => ['literal' => '"required|regex\072/^(e|f)$/"', 'compiles' => false];
+        yield 'a code point colon after a negation' => ['literal' => '"not_regex\u{3a}/^g$/"', 'compiles' => true];
+        yield 'a binary literal given to a key' => ['literal' => "b'regex:/^(h|i)$/'", 'compiles' => false];
+        // PHP keeps a line feed written in the literal: Laravel reads it as
+        // a blank before the rule's name.
+        yield 'a literal over two lines' => ['literal' => "'required|\nregex:/^(j|k)$/'", 'compiles' => false];
     }
 
     /**
      * A double-quoted literal whose escapes spell no regex rule once PHP
      * decodes it holds no pattern: Laravel reads "regex=/a/" as a rule named
-     * "regex=/a/", and a line feed as no rule at all.
+     * "regex=/a/", and a line feed as no rule at all. A single-quoted one
+     * keeps its escapes: 'regex\x3a/a/' is a rule of that name.
      */
     #[Test]
     public function test_a_literal_whose_escapes_spell_no_rule_is_not_read(): void
     {
-        $this->assertSame([], self::laravelPatterns(['a' => "regex\x3d/a/", 'b' => "required|regex\x3d/a/"]));
+        $this->assertSame([], self::laravelPatterns(['a' => "regex\x3d/a/", 'b' => "required|regex\x3d/a/", 'e' => 'regex\x3a/a/']));
 
         $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
             <?php
-            return ['a' => "regex\x3d/a/", 'b' => "required|regex\x3d/a/", 'c' => "required\n", 'd' => ["min:2\x7cmax:3"]];
+            return ['a' => "regex\x3d/a/", 'b' => "required|regex\x3d/a/", 'c' => "required\n", 'd' => ["min:2\x7cmax:3"], 'e' => 'regex\x3a/a/'];
             PHP]);
 
         $this->assertSame([], (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], [])));
@@ -316,6 +327,105 @@ final class ValidationRuleLaravelReadingTest extends TestCase
         $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
 
         $this->assertSame([[2, '/^d$/'], [3, '/^f$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A rule whose colon an escape writes is read once PHP decodes its
+     * literal, whatever quote another literal of the line holds: a double
+     * quote inside a single-quoted one, or a single quote inside a
+     * double-quoted one.
+     */
+    #[Test]
+    public function test_a_rule_whose_colon_is_escaped_is_read_whatever_quote_another_literal_holds(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $path = 'C:\dir "x\y'; $rules = ['c' => "regex\x3a/^d$/"];
+            $label = 'say "hi\n'; $more = ['e' => "required|regex\072/^(f|g)$/"];
+            $quote = "it's"; $last = ['h' => "regex\u{3a}/^i$/", 'j' => 'regex:/^k$/'];
+            return $rules + $more + $last;
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = self::laravelPatterns($rules);
+        $this->assertSame(['/^d$/', '/^(f', '/^i$/', '/^k$/'], $expected);
+        $this->assertSame([true, false, true, true], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[2, '/^d$/'], [3, '/^(f'], [4, '/^i$/'], [4, '/^k$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A quote in a comment, in a heredoc or a nowdoc, or in the text around
+     * the PHP tags opens no literal: Laravel never runs the rule it seems to
+     * hold.
+     */
+    #[Test]
+    public function test_text_outside_the_php_code_holds_no_rule(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <p>'regex:/^(a|b)$/'</p>
+            <?php
+            // 'regex:/^(c|d)$/'
+            /** "regex:/^(e|f)$/" */
+            $text = <<<TEXT
+                'regex:/^(g|h)$/'
+                TEXT;
+            $quoted = <<<'TEXT'
+                "regex:/^(i|j)$/"
+                TEXT;
+            $rules = ['k' => 'regex:/^k$/'];
+            ?>
+            "regex:/^(l|m)$/"
+            <?php return $rules;
+            PHP]);
+        ob_start();
+
+        try {
+            $rules = require $project.'/app/Rules.php';
+        } finally {
+            ob_end_clean();
+        }
+        $this->assertIsArray($rules);
+        $this->assertSame(['/^k$/'], self::laravelPatterns($rules));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[11, '/^k$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A double-quoted rules string that interpolates is split on the "|"
+     * its text writes: a rule between two of them, or the start or the end
+     * of the string, is read once PHP decodes it, its colon escaped or not.
+     * A rule an expression is part of runs a pattern only the running code
+     * knows, and is not read: "/^{$prefix}[a-z]+$/" is no pattern Laravel
+     * runs.
+     */
+    #[Test]
+    public function test_a_rule_an_interpolation_builds_is_not_read_and_one_beside_it_is(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $min = 2; $max = 9; $prefix = 'ab'; $flags = 'i'; $rule = 'nullable';
+            return [
+                'a' => "min:$min|regex:/^a$/",
+                'b' => "regex:/^(b|c)$/|max:{$max}",
+                'c' => "{$rule}|regex\x3a/^(d|e)$/",
+                'd' => "required|regex:/^{$prefix}[a-z]+$/",
+                'e' => "regex:/^$prefix-\d+$/$flags",
+                'f' => ["regex:/^f$/{$flags}"],
+                'g' => "{$rule}regex:/^g$/",
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $this->assertSame(['/^a$/', '/^(b', '/^(d', '/^ab[a-z]+$/', '/^ab-\d+$/i', '/^f$/i'], self::laravelPatterns($rules));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[4, '/^a$/'], [5, '/^(b'], [6, '/^(d']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
     }
 
     /**
