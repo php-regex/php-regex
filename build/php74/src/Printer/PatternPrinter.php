@@ -49,6 +49,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Syntax\ConditionParser;
 use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\StartOptions;
@@ -1074,7 +1075,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     public static function writesNoBranch(ConditionalNode $node): bool
     {
-        return !($node->no instanceof LiteralNode && '' === $node->no->value && $node->no->getStartPosition() <= $node->yes->getEndPosition());
+        return ConditionParser::writesNoBranch($node);
     }
 
     #[\Override]
@@ -1399,24 +1400,24 @@ final class PatternPrinter extends AbstractNodeVisitor
             ) {
                 $result .= ($this->bracketMarkFor($char) ?? '\\').$char;
             } elseif (\ord($char) < 32 || 127 === \ord($char) || (!$unicodeMode && \ord($char) >= 128)) {
-                $matchSubject1409 = \ord($char);
+                $matchSubject1410 = \ord($char);
                 switch (true) {
-                    case 8 === $matchSubject1409:
+                    case 8 === $matchSubject1410:
                         $escape = $this->inCharClass ? '\\b' : '\\x08';
                         break;
-                    case 9 === $matchSubject1409:
+                    case 9 === $matchSubject1410:
                         $escape = '\\t';
                         break;
-                    case 10 === $matchSubject1409:
+                    case 10 === $matchSubject1410:
                         $escape = '\\n';
                         break;
-                    case 13 === $matchSubject1409:
+                    case 13 === $matchSubject1410:
                         $escape = '\\r';
                         break;
-                    case 12 === $matchSubject1409:
+                    case 12 === $matchSubject1410:
                         $escape = '\\f';
                         break;
-                    case 27 === $matchSubject1409:
+                    case 27 === $matchSubject1410:
                         $escape = '\\e';
                         break;
                     default:

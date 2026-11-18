@@ -370,6 +370,10 @@ final class ModernizerTest extends TestCase
         yield 'a group condition and a grouped "yes" branch' => ['pattern' => '/(a)?(?<!(?(1)(?:a)))c/', 'expected' => '/(a)?(?<!(?(1)a))c/', 'subjects' => ['c', 'ac']];
         yield 'a "no" branch written empty' => ['pattern' => '/(a)?(?<!(?(1)(?:a)|))c/', 'expected' => '/(a)?(?<!(?(1)a|))c/', 'subjects' => ['c', 'ac']];
         yield 'a "no" branch written' => ['pattern' => '/(a)?(?<!(?(1)(?:a)|b))c/', 'expected' => '/(a)?(?<!(?(1)a|b))c/', 'subjects' => ['c', 'ac', 'bc']];
+        yield 'no "|" after a space x skips' => ['pattern' => '/(a)?(?<!(?(1)(?:a) ))c/x', 'expected' => '/(a)?(?<!(?(1)a))c/x', 'subjects' => ['c', 'ac']];
+        yield 'a "no" branch written empty after a space x skips' => ['pattern' => '/(a)?(?<!(?(1)(?:a) |))c/x', 'expected' => '/(a)?(?<!(?(1)a|))c/x', 'subjects' => ['c', 'ac']];
+        yield 'a conditional with no "|" in the "no" branch of another' => ['pattern' => '/(a)?(?<!(?(1)(?:a)|(?(?=x)(?:xx))))c/', 'expected' => '/(a)?(?<!(?(1)a|(?(?=x)xx)))c/', 'subjects' => ['c', 'ac', 'xxc']];
+        yield 'a conditional with a "no" branch written empty in the "no" branch of another' => ['pattern' => '/(a)?(?<!(?(1)(?:a)|(?(?=x)(?:xx)|)))c/', 'expected' => '/(a)?(?<!(?(1)a|(?(?=x)xx|)))c/', 'subjects' => ['c', 'ac', 'xxc']];
     }
 
     /**

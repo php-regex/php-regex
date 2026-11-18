@@ -238,6 +238,16 @@ final class ConditionParser
     }
 
     /**
+     * Whether a "|" stands before the "no" branch of a conditional, even an
+     * empty one, "(?(c)X|)": read without one, that branch is the empty text
+     * readBranches() puts where the "yes" branch ends.
+     */
+    public static function writesNoBranch(ConditionalNode $node): bool
+    {
+        return !($node->no instanceof LiteralNode && '' === $node->no->value && $node->no->getStartPosition() <= $node->yes->getEndPosition());
+    }
+
+    /**
      * @param int $nameStart the offset of the name's first character
      */
     private function guardNameLength(string $name, int $nameStart): void
