@@ -160,6 +160,79 @@ final class ExtendedClassParserTest extends TestCase
     }
 
     /**
+     * The braced name of a "\p{" or "\P{" is read as PCRE2 reads it, on
+     * past the "]" of a nested class, a "\Q" or a "-", up to its "}", the
+     * first character no name holds, the end of the pattern, or the most
+     * characters a name takes: nothing past where PCRE gives up on it is
+     * read, as an operand or as a member, and a "]" before its "}" closes
+     * no class. What PCRE refuses before it comes first. Each row is the
+     * error preg_match() reports on PHP 8.4.27 with PCRE2 10.49.
+     */
+    #[Test]
+    #[DataProvider('providePropertyNames')]
+    public function test_a_braced_property_name_is_read_as_far_as_pcre_reads_it(string $pattern, ErrorCode $code, int $offset): void
+    {
+        $this->assertTheEngineRefusesAt($offset, $pattern);
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function providePropertyNames(): iterable
+    {
+        $malformed = ErrorCode::UnicodePropertyMalformed;
+        $unknown = ErrorCode::UnicodePropertyInvalid;
+
+        // In a nested class: what the lexer reads past "\p" as members, a
+        // range quoted out of order among them, PCRE reads as the name.
+        yield 'nested class, a quote then a byte no name holds' => ['pattern' => '/(?[[\p{-\Q\cé]])/', 'code' => $malformed, 'offset' => 13];
+        yield 'nested class, a quote then a character no name holds, under u' => ['pattern' => '/(?[[\p{-\Q\cé]])/u', 'code' => $malformed, 'offset' => 14];
+        yield 'nested class, a quote then a byte no name holds, under x' => ['pattern' => '/(?[[\p{-\Q\cé]])/x', 'code' => $malformed, 'offset' => 13];
+        yield 'nested class, a quote then the end of the pattern' => ['pattern' => '/(?[[\p{-\Q\c]])/', 'code' => $malformed, 'offset' => 15];
+        yield 'nested class, \P then a quote' => ['pattern' => '/(?[[\P{-\Qa]])/', 'code' => $malformed, 'offset' => 14];
+        yield 'nested class, a quoted range out of order' => ['pattern' => '/(?[[\p{-\Qz-a]])/', 'code' => $malformed, 'offset' => 16];
+        yield 'nested class, after a member' => ['pattern' => '/(?[[a\p{-\Q\cé]])/', 'code' => $malformed, 'offset' => 14];
+        yield 'nested class, before an operator' => ['pattern' => '/(?[[\p{-\Q\cé]]+[a])/', 'code' => $malformed, 'offset' => 13];
+        yield 'nested class, a short name then a quote to the end' => ['pattern' => '/(?[[\p{'.str_repeat('a', 40).'\Q]])/', 'code' => $malformed, 'offset' => 52];
+        yield 'nested class, a reversed range before' => ['pattern' => '/(?[[z-a\p{-\Qa]])/', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
+        // Nor is what follows the extended class read: PCRE reads it as the
+        // name too.
+        yield 'nested class, a name read past the extended class and a ")"' => ['pattern' => '/(?[[\p{]])])(b)/', 'code' => $malformed, 'offset' => 15];
+        yield 'nested class, a name read past the extended class and a POSIX class' => ['pattern' => '/(?[[a\p{L])[:alpha:]])\1/', 'code' => $malformed, 'offset' => 24];
+        yield 'nested class, a name read to the end of the extended class' => ['pattern' => '/(?[[\p{-a]])/', 'code' => $malformed, 'offset' => 12];
+
+        // As an operand: the escape reads the name the same way.
+        yield 'operand, a quote then a byte no name holds' => ['pattern' => '/(?[\p{-\Q\cé])/', 'code' => $malformed, 'offset' => 12];
+        yield 'operand, a quote then a character no name holds, under u' => ['pattern' => '/(?[\p{-\Q\cé])/u', 'code' => $malformed, 'offset' => 13];
+        yield 'operand, a space then a byte no name holds' => ['pattern' => '/(?[\p{L é])/', 'code' => $malformed, 'offset' => 9];
+        yield 'operand, a space then a character no name holds, under u' => ['pattern' => '/(?[\p{L é])/u', 'code' => $malformed, 'offset' => 10];
+        yield 'operand, \P then a byte no name holds' => ['pattern' => '/(?[\P{Lé])/', 'code' => $malformed, 'offset' => 8];
+        yield 'operand, a caret then a byte no name holds' => ['pattern' => '/(?[\p{^é])/', 'code' => $malformed, 'offset' => 8];
+        yield 'operand, a name past the most characters it takes' => ['pattern' => '/(?[\p{'.str_repeat('a', 60).'])/', 'code' => $malformed, 'offset' => 55];
+        yield 'operand, a name the "]" takes to the most characters' => ['pattern' => '/(?[\p{'.str_repeat('a', 48).'])/', 'code' => $malformed, 'offset' => 55];
+        yield 'operand, a quote then the end of the pattern' => ['pattern' => '/(?[\p{-\Q\c])/', 'code' => $malformed, 'offset' => 13];
+        yield 'operand after an operand' => ['pattern' => '/(?[\d\p{L é])/', 'code' => $malformed, 'offset' => 11];
+        yield 'operand after an operator' => ['pattern' => '/(?[\d+\p{L é])/', 'code' => $malformed, 'offset' => 12];
+        yield 'operand after a complement' => ['pattern' => '/(?[!\p{L é])/', 'code' => $malformed, 'offset' => 10];
+        yield 'operand in parentheses' => ['pattern' => '/(?[(\p{L é))/', 'code' => $malformed, 'offset' => 10];
+        yield 'operand after a class with a reversed range' => ['pattern' => '/(?[[z-a]+\p{L é])/', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
+
+        // A "}" closes the name past the "]" that would close the class.
+        yield 'nested class, a "]" in the name' => ['pattern' => '/(?[[\p{]}])/', 'code' => $unknown, 'offset' => 9];
+        yield 'nested class, a "]" in the name, under u' => ['pattern' => '/(?[[\p{L]}])/u', 'code' => $unknown, 'offset' => 10];
+        yield 'nested class, a "]" in the name, before an operator' => ['pattern' => '/(?[[\p{L]}]+[a])/', 'code' => $unknown, 'offset' => 10];
+        yield 'nested class, \P with a "]" in the name, after a member' => ['pattern' => '/(?[[a\P{Lu]}]]+[a])/', 'code' => $unknown, 'offset' => 12];
+        yield 'nested class, a name closed past the extended class' => ['pattern' => '/(?[[\p{^]])x}/', 'code' => $unknown, 'offset' => 13];
+        yield 'nested class, a name closed past an operator and a class' => ['pattern' => '/(?[[\p{L]] + [b])x}/', 'code' => $unknown, 'offset' => 19];
+        yield 'nested class, a "]" then a byte no name holds' => ['pattern' => '/(?[[\p{L]é}])/', 'code' => $malformed, 'offset' => 10];
+        yield 'nested class, a "]" then a character no name holds' => ['pattern' => '/(?[[\p{L]] ! [b])x}/', 'code' => $malformed, 'offset' => 12];
+    }
+
+    /**
      * PHP first, where it links the PCRE2 10.49 the rows were read on: a
      * PCRE2 before 10.45 refuses "(?[" itself, and one before 10.47 reports
      * most errors on the character at fault.

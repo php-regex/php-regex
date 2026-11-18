@@ -269,6 +269,20 @@ final class ExtendedClassReader
                 continue;
             }
 
+            // The braced name of a property is read up to its "}": a "]"
+            // there closes nothing. With no "}" after it, PCRE reads the
+            // name to where it gives up on it, and the class never closes.
+            if ('\\' === $char && '{' === ($pattern[$at + 2] ?? '') && \in_array($pattern[$at + 1], ['p', 'P'], true)) {
+                $close = strpos($pattern, '}', $at + 3);
+                if (false === $close) {
+                    return null;
+                }
+
+                $at = $close + 1;
+
+                continue;
+            }
+
             if ('\\' === $char) {
                 // "\c]" is a control character: its "]" closes nothing.
                 $at += 'c' === ($pattern[$at + 1] ?? '') ? 3 : 2;
@@ -535,8 +549,9 @@ final class ExtendedClassReader
             $this->operands[] = ($this->class)(substr($this->pattern, $start).']', $start);
         } catch (LexerException|ParserException $error) {
             // A fault in what the pattern writes comes first; one at its end
-            // is the "]" added to read it.
-            if (($error->position ?? $this->length) < $this->length) {
+            // is the "]" added to read it, but for a property PCRE reads the
+            // rest of the pattern for, and refuses there.
+            if (($error->position ?? $this->length) < $this->length || ErrorCode::UnicodePropertyMalformed() === $error->errorCode) {
                 ($this->fail)($error, $start, $this->operands);
             }
         }

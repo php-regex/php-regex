@@ -618,6 +618,14 @@ final class ConditionParser
             throw $this->state->error(\sprintf('Condition relative reference -%s is outside the range of available capture groups.', $num), ErrorCode::BackrefRelative, $position);
         }
 
+        // So does it refuse a zero, before it looks for the ")": with one
+        // there, the reference checks refuse it with the rest.
+        if (0 === (int) $num && !$this->stream->check(TokenType::GroupClose)) {
+            $position = $this->stream->current()->position;
+
+            throw $this->state->error('' === $sign ? 'Backreference 0 is not valid.' : 'Condition relative reference cannot be zero.', ErrorCode::BackrefZero, $position);
+        }
+
         return new BackrefNode($sign.$num, $startPosition, $this->stream->current()->position);
     }
 

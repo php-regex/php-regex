@@ -18,6 +18,7 @@ use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\Validator;
@@ -227,6 +228,54 @@ final class ValidatorNestingTest extends TestCase
         yield 'alphabetic lookahead, then a class never closed' => ['opener' => '(*pla:', 'after' => '[', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 256, 'newer' => 256];
         yield 'named group, then a property never closed' => ['opener' => '(?<n>', 'after' => '\\p{', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 255, 'newer' => 255];
         yield 'non-capturing group, then a comment never closed' => ['opener' => '(?:', 'after' => '(?#', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 253, 'newer' => 253];
+    }
+
+    /**
+     * The options PCRE2 10.43 added, "r" and "a" with one of "D", "S", "W",
+     * "P" or "T" after it, are read with the opener as "i" is: a character
+     * after them that no option setting takes is refused there, before the
+     * level is counted, a ":" after them opens the level past the limit,
+     * and a ")" makes them an option setting, which opens none. Each row is
+     * what preg_match() reports on PHP 8.4.27 with PCRE2 10.49; "text" is
+     * what follows the 250 levels.
+     */
+    #[Test]
+    #[DataProvider('provideOptionsOfPcre1043AtTheLevelPastTheLimit')]
+    public function test_the_options_of_pcre2_10_43_are_read_with_the_opener_of_the_level_past_the_limit(string $text, ErrorCode $code, int $offset): void
+    {
+        $pattern = '/'.str_repeat('(', 250).$text.'/';
+        if ('10.49' === PcreTarget::runtime()->pcreVersion) {
+            $this->assertSame($offset, PhpErrorOffset::of($pattern), 'Oracle on PCRE2 10.49: '.$text);
+        }
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], $text);
+    }
+
+    /**
+     * @return iterable<string, array{text: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideOptionsOfPcre1043AtTheLevelPastTheLimit(): iterable
+    {
+        yield 'ASCII option after a caret' => ['text' => '(?^a[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option' => ['text' => '(?a[', 'code' => ErrorCode::GroupSyntax, 'offset' => 254];
+        yield 'ASCII digit option after a caret' => ['text' => '(?^aD[', 'code' => ErrorCode::GroupSyntax, 'offset' => 256];
+        yield 'ASCII POSIX option' => ['text' => '(?aT[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option turned off' => ['text' => '(?-a[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option after another' => ['text' => '(?ia[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option, then one turned off' => ['text' => '(?a-i[', 'code' => ErrorCode::GroupSyntax, 'offset' => 256];
+        yield 'caseless restriction' => ['text' => '(?r[', 'code' => ErrorCode::GroupSyntax, 'offset' => 254];
+        yield 'caseless restriction after a caret' => ['text' => '(?^r[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option and caseless restriction after a caret' => ['text' => '(?^ar[', 'code' => ErrorCode::GroupSyntax, 'offset' => 256];
+        yield 'an option PCRE2 always took, after a caret' => ['text' => '(?^i[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option opening a group' => ['text' => '(?a:[', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 254];
+        // "a" takes one class letter along, and only after it.
+        yield 'ASCII class letter with no "a" before it' => ['text' => '(?D[', 'code' => ErrorCode::GroupSyntax, 'offset' => 253];
+        yield 'ASCII option with two class letters' => ['text' => '(?aDS[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'unknown character after "(?", after an ASCII option setting' => ['text' => '(?a)(?%', 'code' => ErrorCode::GroupSyntax, 'offset' => 257];
+        yield 'unknown character after "(?", after an ASCII digit option setting' => ['text' => '(?aD)(?%', 'code' => ErrorCode::GroupSyntax, 'offset' => 258];
+        yield 'unknown character after "(?", after a caseless restriction setting' => ['text' => '(?r)(?%', 'code' => ErrorCode::GroupSyntax, 'offset' => 257];
     }
 
     /**

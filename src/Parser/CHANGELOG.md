@@ -6,6 +6,23 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The braced name of a `\p{` or `\P{` in an extended class is read as PCRE2
+   reads it, past the `]` of a nested class, a `\Q` or a `-`, up to its `}`
+   or to where PCRE2 gives up on it: `/(?[[\p{-\Q\cé]])/` is
+   `regex.unicode.property_malformed` at offset 13, where it was
+   `regex.range.reversed` at 11, `/(?[\p{L é])/` is refused at 9, where it
+   was 12, and `/(?[[\p{]}])/` is `regex.unicode.property_invalid` at 9,
+   where it was `regex.unicode.property_malformed` at 11.
+ * The options PCRE2 10.43 added, `r` and `a` with the class letter after
+   it, are read with the opener of the level past 250 as `i` is: 250 `(`
+   then `(?^a[` is `regex.group.syntax` at offset 255, where it was
+   `regex.group.nested_too_deep` at 254, and an option setting `(?a)` there
+   opens no level.
+ * A condition on a relative zero, `/(?(+0)a)/`, is `regex.backref.zero`, as
+   `(?(0)` and `\g{-0}` are, where it was `regex.backref.relative`. A zero
+   that no `)` follows is refused on the number, as PCRE2 refuses it before
+   it looks for the `)`: `/(?(0x)a)/` and `/(?(+0 )a)/` are
+   `regex.backref.zero`, where they were `regex.conditional.unclosed`.
  * A mark written short accepts an `=` in its name, `/(*:foo=bar)/`, and
    four characters after it, `/(*:x)a=b/`: the check that only the limits
    take a value read it as `(*MARK:`, four characters longer, and refused

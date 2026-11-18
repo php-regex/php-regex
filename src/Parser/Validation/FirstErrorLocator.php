@@ -585,11 +585,14 @@ final class FirstErrorLocator
 
     /**
      * Whether the token is a letter of an option setting, "-" and "^"
-     * included; the lexer reads the "^" as an anchor.
+     * included; the lexer reads the "^" as an anchor. The letters PCRE2
+     * 10.43 added count on every release, "r" and "a" with the letter
+     * after it: a release before refuses them where they stand, before it
+     * counts a level for the opener.
      */
     private static function isOptionLetter(Token $token): bool
     {
-        return \in_array($token->type, [TokenType::Literal, TokenType::Anchor], true) && 1 === \strlen($token->value) && str_contains(InlineFlags::LETTERS.'-^', $token->value);
+        return \in_array($token->type, [TokenType::Literal, TokenType::Anchor], true) && 1 === \strlen($token->value) && str_contains(InlineFlags::LETTERS.'raDSWPT-^', $token->value);
     }
 
     /**

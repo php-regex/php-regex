@@ -24,6 +24,7 @@ use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\ClassSetOperator;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
+use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -77,11 +78,11 @@ final class ExtendedClassParser
             $this->pattern,
             // An escape is read as a class reads it: "\b" is a backspace, "\1" an octal escape.
             function (string $escape, int $at): NodeInterface {
-                // "\p{" never closed is refused where the pattern ends.
+                // "\p{" never closed is "\p" then text, as the lexer reads
+                // it: the escape checks refuse it where PCRE gives up on its
+                // name, which reads on to the end of the pattern at most.
                 if (1 === LibraryPcre::match('/^\\\\[pP]\{[^}]*+$/', $escape)) {
-                    $end = \strlen($this->pattern);
-
-                    throw $this->state->error(\sprintf('Malformed \\%s sequence: the braced name never closes at position %d.', $escape[1], $end), ErrorCode::UnicodePropertyMalformed, $end);
+                    return new LiteralNode($escape[1], $at, $at + 2);
                 }
 
                 // A backslash ends the pattern: PCRE refuses it there.
@@ -174,8 +175,9 @@ final class ExtendedClassParser
             $read = $lexer->tokenize($text, $this->flags, $class)->getTokens();
         } catch (LexerException $error) {
             $moved = $this->state->movedError($error, $at);
+            [$tokens, $position] = $this->readUpToAPropertyLeftOpen($this->movedTokens($lexer->tokensRead(), $at), $moved->position ?? $at, $lexer->literalEscapesRead(), $at);
 
-            throw $this->firstMemberErrorBefore($this->movedTokens($lexer->tokensRead(), $at), $moved->position ?? $at) ?? $moved;
+            throw $this->firstMemberErrorBefore($tokens, $position) ?? $moved;
         }
 
         $tokens = $this->movedTokens($read, $at, $class);
@@ -189,7 +191,12 @@ final class ExtendedClassParser
                 $error = $this->refusalAsRead($error, $tokens, \PHP_INT_MAX) ?? $error;
             }
 
-            throw ($class ? $this->firstMemberErrorBefore($tokens, $error->position ?? $at) : null) ?? $error;
+            if ($class) {
+                [$read, $position] = $this->readUpToAPropertyLeftOpen($tokens, $error->position ?? $at, $lexer->literalEscapesRead(), $at);
+                $error = $this->firstMemberErrorBefore($read, $position) ?? $error;
+            }
+
+            throw $error;
         }
     }
 
@@ -219,6 +226,37 @@ final class ExtendedClassParser
         }
 
         return $tokens;
+    }
+
+    /**
+     * The tokens read up to the first "\p{" or "\P{" that no "}" closes,
+     * that one included, and the end of the pattern past which faults are
+     * looked for, when one starts before $position, where reading failed;
+     * the tokens and $position as they are otherwise. The lexer reads
+     * "\p" then text there, where PCRE reads the rest as the name: a fault
+     * the lexer finds past it is none of PCRE's, which gives up on the
+     * name first.
+     *
+     * @param list<Token>      $tokens         moved into the whole pattern
+     * @param array<int, true> $literalEscapes where the escapes PHP 7.3 and 7.4 read as their character stand, in the text read
+     * @param int              $at             where the text read starts in the whole pattern
+     *
+     * @return array{list<Token>, int}
+     */
+    private function readUpToAPropertyLeftOpen(array $tokens, int $position, array $literalEscapes, int $at): array
+    {
+        foreach ($tokens as $index => $token) {
+            if ($token->position >= $position) {
+                break;
+            }
+
+            if (TokenType::LiteralEscaped === $token->type && \in_array($token->value, ['p', 'P'], true) && !isset($literalEscapes[$token->position - $at])
+                && '{' === ($this->pattern[$token->end()] ?? '') && false === strpos($this->pattern, '}', $token->end())) {
+                return [\array_slice($tokens, 0, $index + 1), \strlen($this->pattern) + 1];
+            }
+        }
+
+        return [$tokens, $position];
     }
 
     /**
