@@ -689,37 +689,6 @@ final class AccessControlOrderTest extends TestCase
      */
     public static function provideValuesFromTheEnvironment(): iterable
     {
-        yield 'an earlier rule for a port from the environment, before a rule for any port' => [
-            'rules' => [['path' => '^/admin', 'port' => '%env(VALUE)%'], ['path' => '^/admin']],
-            'field' => 'port',
-            'expected' => 'carve-out',
-            'probes' => [
-                ['8080', 'GET', 'http://localhost:8080/admin', 0, 1],
-                ['8080', 'GET', 'http://localhost/admin', 1, 1],
-                ['9090', 'GET', 'http://localhost:9090/admin', 0, 1],
-            ],
-        ];
-
-        yield 'a later rule for a port from the environment, after a rule for any port' => [
-            'rules' => [['path' => '^/admin'], ['path' => '^/admin/x', 'port' => '%env(VALUE)%']],
-            'field' => 'port',
-            'expected' => 'shadowed',
-            'probes' => [
-                ['8080', 'GET', 'http://localhost:8080/admin/x', 0, 1],
-                ['9090', 'GET', 'http://localhost:9090/admin/x', 0, 1],
-            ],
-        ];
-
-        yield 'an earlier rule for a port from the environment, before a rule for a port' => [
-            'rules' => [['path' => '^/admin', 'port' => '%env(VALUE)%'], ['path' => '^/admin/x', 'port' => 8080]],
-            'field' => 'port',
-            'expected' => 'overlap',
-            'probes' => [
-                ['8080', 'GET', 'http://localhost:8080/admin/x', 0, 1],
-                ['9090', 'GET', 'http://localhost:8080/admin/x', 1, 1],
-            ],
-        ];
-
         yield 'an earlier rule for a path from the environment' => [
             'rules' => [['path' => '%env(VALUE)%'], ['path' => '^/admin']],
             'field' => 'path',
@@ -766,25 +735,6 @@ final class AccessControlOrderTest extends TestCase
             'probes' => [
                 ['example\.com$', 'GET', 'http://admin.example.com/admin', 0, 1],
                 ['^shop\.', 'GET', 'http://admin.example.com/admin', 1, 1],
-            ],
-        ];
-
-        yield 'an earlier rule for a method from the environment, before a rule for any method' => [
-            'rules' => [['path' => '^/x', 'methods' => ['%env(VALUE)%']], ['path' => '^/x']],
-            'field' => 'methods',
-            'expected' => 'carve-out',
-            'probes' => [
-                ['POST', 'POST', 'http://localhost/x', 0, 1],
-                ['POST', 'GET', 'http://localhost/x', 1, 1],
-            ],
-        ];
-
-        yield 'a later rule for a method from the environment, after a rule for any method' => [
-            'rules' => [['path' => '^/x'], ['path' => '^/x', 'methods' => ['%env(VALUE)%']]],
-            'field' => 'methods',
-            'expected' => 'shadowed',
-            'probes' => [
-                ['POST', 'POST', 'http://localhost/x', 0, 1],
             ],
         ];
 

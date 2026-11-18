@@ -44,9 +44,11 @@ final class SecurityAccessControlAnalyzer
     private const LEVEL_UNKNOWN = 'unknown';
 
     /**
-     * The fields of a rule its request matcher reads, but for the path.
+     * The fields of a rule its request matcher reads that may hold a value
+     * read from the environment, but for the path: the security bundle
+     * refuses a port or methods so read.
      */
-    private const REQUEST_FIELDS = ['host', 'port', 'methods', 'ips', 'route', 'attributes'];
+    private const REQUEST_FIELDS = ['host', 'ips', 'route', 'attributes'];
 
     private readonly LanguageSolver $solver;
 
@@ -586,7 +588,7 @@ final class SecurityAccessControlAnalyzer
             return false;
         }
 
-        if (null !== $outer['methodsTaken'] && (null === $inner['methodsTaken'] || \in_array('methods', $inner['fromEnvironment'], true) || [] !== array_diff($inner['methodsTaken'], $outer['methodsTaken']))) {
+        if (null !== $outer['methodsTaken'] && (null === $inner['methodsTaken'] || [] !== array_diff($inner['methodsTaken'], $outer['methodsTaken']))) {
             return false;
         }
 
@@ -690,18 +692,13 @@ final class SecurityAccessControlAnalyzer
     /**
      * Whether two rules take a method in common: a rule that lists none
      * takes them all, one whose list the matcher reads as no request method
-     * takes none, and one whose methods are read from the environment may
-     * take any.
+     * takes none.
      *
      * @phpstan-param AccessRule $left
      * @phpstan-param AccessRule $right
      */
     private static function methodsOverlap(array $left, array $right): bool
     {
-        if (\in_array('methods', $left['fromEnvironment'], true) || \in_array('methods', $right['fromEnvironment'], true)) {
-            return true;
-        }
-
         if ([] === $left['methodsTaken'] || [] === $right['methodsTaken']) {
             return false;
         }

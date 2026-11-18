@@ -301,36 +301,89 @@ final class SecurityConfigKernelTest extends TestCase
     }
 
     /**
-     * A port written "%env(int:APP_PORT)%" passes the configuration tree as
-     * an environment value, as MergeExtensionConfigurationPass lets it pass:
-     * the rule's port is unknown. SecurityExtension then hands it to the
-     * port matcher it builds at compile time, which takes an integer only,
-     * and the application does not boot.
+     * The security bundle refuses a port or methods read from the
+     * environment: SecurityExtension hands the port to the matcher it builds
+     * when the container is compiled, which takes an integer only, and
+     * upper-cases the methods there, which loses the environment value. The
+     * application does not boot, and the analysis stops as it does on any
+     * configuration the bundle refuses, naming the field and the rule.
+     *
+     * @param \Closure(\Throwable): bool $refusal what the kernel throws when it boots
      */
     #[Test]
-    public function test_a_port_from_the_environment_is_unknown(): void
+    #[DataProvider('provideFieldsTheBundleRefusesFromTheEnvironment')]
+    public function test_a_field_the_security_bundle_refuses_from_the_environment_stops_the_reading(string $rule, \Closure $refusal, string $message): void
     {
         $project = $this->makeProject([
-            'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n        - { path: ^/admin, port: '%env(int:PHPREGEX_TEST_PORT)%', roles: ROLE_ADMIN }\n",
+            'config/services.yaml' => "parameters:\n    admin_port: '%env(int:PHPREGEX_TEST_PORT)%'\n",
+            'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n        - { path: ^/, roles: ROLE_USER }\n        - ".$rule."\n",
         ]);
         $_ENV['PHPREGEX_TEST_PORT'] = $_SERVER['PHPREGEX_TEST_PORT'] = '8080';
+        $_ENV['PHPREGEX_TEST_METHOD'] = $_SERVER['PHPREGEX_TEST_METHOD'] = 'POST';
 
         try {
             try {
                 (new SecurityConfigKernel($project))->boot();
-                $this->fail('The kernel built a port matcher from an environment value.');
-            } catch (\TypeError $e) {
-                $this->assertStringContainsString('$port', $e->getMessage());
+                $this->fail('The kernel booted.');
+            } catch (\Throwable $e) {
+                $this->assertTrue($refusal($e), $e::class.': '.$e->getMessage());
             }
 
-            $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
-        } finally {
-            unset($_ENV['PHPREGEX_TEST_PORT'], $_SERVER['PHPREGEX_TEST_PORT']);
-        }
+            $status = (new CommandTester(self::securityCommand(new SecurityConfigKernel($project))))->execute([]);
+            $this->assertSame(Command::INVALID, $status);
 
-        $this->assertNotNull($config);
-        $this->assertNull($config['accessControl'][0]['port'] ?? null);
-        $this->assertSame(['port'], $config['accessControl'][0]['fromEnvironment'] ?? []);
+            $this->expectException(SecurityConfigException::class);
+            $this->expectExceptionMessageIsOrContains(\sprintf($message, $project.'/config/packages/security.yaml:7'));
+
+            (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
+        } finally {
+            unset($_ENV['PHPREGEX_TEST_PORT'], $_SERVER['PHPREGEX_TEST_PORT'], $_ENV['PHPREGEX_TEST_METHOD'], $_SERVER['PHPREGEX_TEST_METHOD']);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{rule: string, refusal: \Closure(\Throwable): bool, message: string}>
+     */
+    public static function provideFieldsTheBundleRefusesFromTheEnvironment(): iterable
+    {
+        $port = 'The security configuration is invalid: the port of access_control rule 2 (%s), "%%env(int:PHPREGEX_TEST_PORT)%%", is read from the environment, which the security bundle refuses: it builds the port matcher when the container is compiled, from an integer only.';
+        $portRefused = static fn (\Throwable $e): bool => $e instanceof \TypeError && str_contains($e->getMessage(), '$port');
+
+        yield 'a port' => ['rule' => "{ path: ^/admin, port: '%env(int:PHPREGEX_TEST_PORT)%', roles: ROLE_ADMIN }", 'refusal' => $portRefused, 'message' => $port];
+        yield 'a port held by a parameter' => ['rule' => "{ path: ^/admin, port: '%admin_port%', roles: ROLE_ADMIN }", 'refusal' => $portRefused, 'message' => $port];
+        yield 'methods' => [
+            'rule' => "{ path: ^/admin, methods: ['%env(PHPREGEX_TEST_METHOD)%'], roles: ROLE_ADMIN }",
+            'refusal' => static fn (\Throwable $e): bool => str_contains($e->getMessage(), '"PHPREGEX_TEST_METHOD" are never used'),
+            'message' => 'The security configuration is invalid: the methods of access_control rule 2 (%s), "%%env(PHPREGEX_TEST_METHOD)%%", are read from the environment, which the security bundle refuses: it upper-cases them when the container is compiled, which loses the environment value.',
+        ];
+    }
+
+    /**
+     * A rule no security file writes is named by its place in
+     * access_control alone.
+     */
+    #[Test]
+    public function test_a_port_from_the_environment_no_security_file_writes_is_refused_by_its_place(): void
+    {
+        $project = $this->makeProject([
+            'config/packages/app.php' => <<<'CONFIG'
+                <?php
+
+                use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+                return static function (ContainerConfigurator $container): void {
+                    $container->extension('security', [
+                        'firewalls' => ['main' => ['pattern' => '^/']],
+                        'access_control' => [['path' => '^/admin', 'port' => '%env(int:PHPREGEX_TEST_PORT)%', 'roles' => 'ROLE_ADMIN']],
+                    ]);
+                };
+                CONFIG,
+        ]);
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('the port of access_control rule 1 (security configuration), "%env(int:PHPREGEX_TEST_PORT)%", is read from the environment');
+
+        (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
     }
 
     /**

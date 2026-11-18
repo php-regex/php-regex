@@ -134,14 +134,20 @@ final class SecurityConfigExtractor
         $placeholders = new ContainerBuilder($parameters);
 
         // MergeExtensionConfigurationPass resolves a parameter before the
-        // bundle reads it, and the bundle's nodes take an environment value
-        // through the placeholder prefix it gives BaseNode. Each value
-        // holding a parameter or an environment value is read so, through a
-        // placeholder of that prefix, which any node takes, an integer port
-        // as well as a path, and comes out as written: its entry is found in
-        // the files by it, and it is resolved then. BaseNode's placeholders
-        // are @internal: the prefix is set for this one processing, and
-        // cleared after it.
+        // bundle reads it, and has the bundle's nodes take an environment
+        // value through a placeholder prefix it gives BaseNode, a boolean
+        // node as well as a path. Each value holding a parameter or an
+        // environment value is read so, through a placeholder of that
+        // prefix, and comes out as written: its entry is found in the files
+        // by it, and it is resolved then.
+        //
+        // No public API does this: the pass runs the load() of every
+        // extension and gives no processed configuration back, and
+        // ValidateEnvPlaceholdersPass gives its own only through an @internal
+        // getter, resolved, without the text each entry is found by. The
+        // prefix is set and cleared through BaseNode, @internal too, here
+        // alone, for this one processing (checked on Symfony 6.4.0, 7.4.0
+        // and 8.1.11).
         $prefix = $parameters->getEnvPlaceholderUniquePrefix();
         $written = [];
         array_walk_recursive($configs, static function (&$value) use ($parameters, $prefix, &$written): void {
@@ -332,7 +338,7 @@ final class SecurityConfigExtractor
                     'port' => self::text($rule['port'] ?? null),
                     'attributes' => $attributes,
                     'route' => self::text($rule['route'] ?? null),
-                ], $sources, $taken, $resolve);
+                ], \count($accessControl) + 1, $sources, $taken, $resolve);
             }
 
             // A later configuration adds to a firewall an earlier one declared.
@@ -368,7 +374,7 @@ final class SecurityConfigExtractor
      *
      * @return AccessControlRule
      */
-    private function accessRule(array $rule, array $sources, array &$taken, \Closure $resolve): array
+    private function accessRule(array $rule, int $index, array $sources, array &$taken, \Closure $resolve): array
     {
         $matchers = [
             ...self::valueMatchers($rule['path'], 'path'),
@@ -401,20 +407,38 @@ final class SecurityConfigExtractor
             return $text;
         };
 
+        $path = null === $rule['path'] ? null : $read($rule['path'], 'path');
+        $host = null === $rule['host'] ? null : $read($rule['host'], 'host');
+        $roles = array_map(static fn (string $role): string => $read($role, 'roles'), $rule['roles']);
+        $methods = array_map(static fn (string $method): string => $read($method, 'methods'), $rule['methods']);
+        $port = null === $rule['port'] ? null : $read($rule['port'], 'port');
+
+        // SecurityExtension builds the port matcher, and upper-cases the
+        // methods, when the container is compiled: from the environment, a
+        // port is no integer and the methods lose the value, and the
+        // application does not boot (Symfony 6.4, 7.4 and 8.1).
+        $where = \sprintf('access_control rule %d (%s)', $index, '' === $file ? 'security configuration' : $file.':'.$line);
+        if (\in_array('port', $fromEnvironment, true)) {
+            throw new SecurityConfigException(\sprintf('The security configuration is invalid: the port of %s, "%s", is read from the environment, which the security bundle refuses: it builds the port matcher when the container is compiled, from an integer only.', $where, $port));
+        }
+        if (\in_array('methods', $fromEnvironment, true)) {
+            throw new SecurityConfigException(\sprintf('The security configuration is invalid: the methods of %s, "%s", are read from the environment, which the security bundle refuses: it upper-cases them when the container is compiled, which loses the environment value.', $where, implode(', ', $methods)));
+        }
+
         return [
             'file' => $file,
             'line' => $line,
-            'path' => null === $rule['path'] ? null : $read($rule['path'], 'path'),
-            'host' => null === $rule['host'] ? null : $read($rule['host'], 'host'),
-            'roles' => array_map(static fn (string $role): string => $read($role, 'roles'), $rule['roles']),
-            'methods' => array_map(static fn (string $method): string => $read($method, 'methods'), $rule['methods']),
+            'path' => $path,
+            'host' => $host,
+            'roles' => $roles,
+            'methods' => $methods,
             'ips' => array_map(static fn (string $ip): string => $read($ip, 'ips'), $rule['ips']),
             // SecurityExtension takes an allow_if when it is truthy, and a
             // request_matcher and a channel as written.
             'allowIf' => '' === $rule['allowIf'] || '0' === $rule['allowIf'] ? null : $rule['allowIf'],
             'requestMatcher' => $rule['requestMatcher'],
             'requiresChannel' => $rule['requiresChannel'],
-            'port' => null === $rule['port'] ? null : self::port($read($rule['port'], 'port'), $fromEnvironment),
+            'port' => null === $port ? null : self::port($port),
             'attributes' => array_map(static fn (string $value): string => $read($value, 'attributes'), $rule['attributes']),
             'route' => null === $rule['route'] ? null : $read($rule['route'], 'route'),
             'fromEnvironment' => $fromEnvironment,
@@ -644,19 +668,12 @@ final class SecurityConfigExtractor
 
     /**
      * The port a rule's request matcher compares the request's with: the
-     * security bundle takes an integer only. Null for a port read from the
-     * environment.
-     *
-     * @param list<string> $fromEnvironment
+     * security bundle takes an integer only.
      *
      * @throws SecurityConfigException
      */
-    private static function port(string $value, array $fromEnvironment): ?int
+    private static function port(string $value): int
     {
-        if (\in_array('port', $fromEnvironment, true)) {
-            return null;
-        }
-
         if (!Ascii::isDigit($value)) {
             throw new SecurityConfigException(\sprintf('The access_control port "%s" is not a port number.', $value));
         }

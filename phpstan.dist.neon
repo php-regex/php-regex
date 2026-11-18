@@ -234,9 +234,10 @@ parameters:
         # Symfony's config component lets a node take a parameter or an
         # environment value it would refuse as written only through the
         # placeholder prefix of BaseNode, @internal, which
-        # MergeExtensionConfigurationPass sets: the security configuration
-        # is read as that pass reads it, in one method that sets the prefix
-        # and clears it.
+        # MergeExtensionConfigurationPass sets; no public API gives the
+        # configuration it processes so. The security configuration is read
+        # as that pass reads it, in one block that sets the prefix and clears
+        # it (checked on Symfony 6.4.0, 7.4.0 and 8.1.11).
         - identifier: staticMethod.internal
           count: 2
           path: src/Symfony/Security/SecurityConfigExtractor.php

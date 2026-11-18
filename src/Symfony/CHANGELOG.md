@@ -51,12 +51,15 @@ CHANGELOG
    no longer stops the command with `Expected "int", but got "string"`. An
    `%env()%` value, in the kernel or in a `--config` file, is never read
    from the environment the command runs in, nor from its `env()` default:
-   a rule holding one in its path, host, port, methods, addresses, route or
-   attributes is restricted to a value the analysis cannot know, shadows no
-   later rule through it, and notes
-   `Values read from the environment are not evaluated: port.`; a firewall
+   a rule holding one in its path, host, addresses, route or attributes is
+   restricted to a value the analysis cannot know, shadows no later rule
+   through it, and notes
+   `Values read from the environment are not evaluated: host.`; a firewall
    whose pattern holds one is skipped, with that reason. An `%env()%` value
-   nothing defines no longer stops the reading of a `--config` file.
+   nothing defines no longer stops the reading of a `--config` file. A
+   `port` or `methods` read from the environment stops the command with
+   exit code 2, naming the field and the rule, as the security bundle
+   refuses them: the application does not boot.
  * `regex:security` and `regex:analyze` read the `port`, `route` and
    `attributes` of an `access_control` rule, as the security bundle chains
    them to its request matcher: an earlier rule holding one the later rule

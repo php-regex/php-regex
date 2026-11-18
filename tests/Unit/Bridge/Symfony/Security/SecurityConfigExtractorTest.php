@@ -488,11 +488,9 @@ final class SecurityConfigExtractorTest extends TestCase
         yield 'path, its default left aside' => ['rule' => "{ path: '%env(ADMIN_PATH)%' }", 'field' => 'path', 'key' => 'path', 'value' => '%env(ADMIN_PATH)%'];
         yield 'host' => ['rule' => "{ path: ^/admin, host: '%env(ADMIN_HOST)%' }", 'field' => 'host', 'key' => 'host', 'value' => '%env(ADMIN_HOST)%'];
         yield 'host held by a parameter' => ['rule' => "{ path: ^/admin, host: '%admin_host%' }", 'field' => 'host', 'key' => 'host', 'value' => '%env(ADMIN_HOST)%'];
-        yield 'port' => ['rule' => "{ path: ^/admin, port: '%env(int:ADMIN_PORT)%' }", 'field' => 'port', 'key' => 'port', 'value' => null];
         yield 'route' => ['rule' => "{ route: '%env(LOGIN_ROUTE)%' }", 'field' => 'route', 'key' => 'route', 'value' => '%env(LOGIN_ROUTE)%'];
         yield 'attribute' => ['rule' => "{ path: ^/api, attributes: { _format: '%env(API_FORMAT)%' } }", 'field' => 'attributes', 'key' => 'attributes', 'value' => ['_format' => '%env(API_FORMAT)%']];
         yield 'roles' => ['rule' => "{ path: ^/admin, roles: '%env(ADMIN_ROLE)%' }", 'field' => 'roles', 'key' => 'roles', 'value' => ['%env(ADMIN_ROLE)%']];
-        yield 'methods' => ['rule' => "{ path: ^/admin, methods: ['%env(ADMIN_METHOD)%'] }", 'field' => 'methods', 'key' => 'methods', 'value' => ['%env(ADMIN_METHOD)%']];
         yield 'addresses' => ['rule' => "{ path: ^/admin, ips: ['%env(ADMIN_IP)%'] }", 'field' => 'ips', 'key' => 'ips', 'value' => ['%env(ADMIN_IP)%']];
     }
 
@@ -500,6 +498,37 @@ final class SecurityConfigExtractorTest extends TestCase
      * A firewall pattern read from the environment, alone or in a list, is
      * kept as written and said to be so.
      */
+    /**
+     * The security bundle refuses a port or methods read from the
+     * environment, from whatever file (SecurityConfigKernelTest boots an
+     * application on it): the reading stops, naming the field and the rule.
+     */
+    #[Test]
+    #[DataProvider('provideFieldsTheBundleRefusesFromTheEnvironment')]
+    public function test_a_field_the_security_bundle_refuses_from_the_environment_stops_the_reading(string $rule, string $message): void
+    {
+        $path = $this->makeProject(['security.yaml' => "parameters:\n    admin_port: '%env(int:ADMIN_PORT)%'\nsecurity:\n    access_control:\n        - ".$rule."\n"]).'/security.yaml';
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains(\sprintf($message, $path.':5'));
+
+        (new SecurityConfigExtractor())->extract($path, null, new Container());
+    }
+
+    /**
+     * @return iterable<string, array{rule: string, message: string}>
+     */
+    public static function provideFieldsTheBundleRefusesFromTheEnvironment(): iterable
+    {
+        $port = 'The security configuration is invalid: the port of access_control rule 1 (%s), "%%env(int:ADMIN_PORT)%%", is read from the environment, which the security bundle refuses: it builds the port matcher when the container is compiled, from an integer only.';
+        $methods = 'The security configuration is invalid: the methods of access_control rule 1 (%s), "%s", are read from the environment, which the security bundle refuses: it upper-cases them when the container is compiled, which loses the environment value.';
+
+        yield 'a port' => ['rule' => "{ path: ^/admin, port: '%env(int:ADMIN_PORT)%' }", 'message' => $port];
+        yield 'a port held by a parameter' => ['rule' => "{ path: ^/admin, port: '%admin_port%' }", 'message' => $port];
+        yield 'methods written as a list' => ['rule' => "{ path: ^/admin, methods: ['%env(ADMIN_METHOD)%'] }", 'message' => \sprintf($methods, '%s', '%%env(ADMIN_METHOD)%%')];
+        yield 'methods written as a string' => ['rule' => "{ path: ^/admin, methods: 'GET, %env(ADMIN_METHOD)%' }", 'message' => \sprintf($methods, '%s', 'GET, %%env(ADMIN_METHOD)%%')];
+    }
+
     #[Test]
     public function test_a_firewall_pattern_read_from_the_environment_is_said_so(): void
     {
