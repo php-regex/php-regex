@@ -527,11 +527,12 @@ final class RouteConflictAnalyzer
     }
 
     /**
-     * Whether the later route passes on to the routes after it every
+     * Whether one of the two routes passes on to the routes after it every
      * request of the shared path, for the methods both routes take: none
-     * is GET or HEAD, and it reads the path for the slash. The path tells
-     * no request the later route loses: another shared path may, which
-     * the pair is left out rather than judged on.
+     * is GET or HEAD, and it reads the path for the slash. The earlier
+     * route then takes none of them, or the later route would not have:
+     * the path tells no request the later route loses. Another shared path
+     * may, which the pair is left out rather than judged on.
      *
      * @phpstan-param RouteDescriptor $earlier
      * @phpstan-param RouteDescriptor $later
@@ -543,7 +544,7 @@ final class RouteConflictAnalyzer
         return null !== $path
             && [] !== $methods
             && [] === array_intersect($methods, ['GET', 'HEAD'])
-            && self::capturesWithoutTheSlash($later, $path);
+            && (self::capturesWithoutTheSlash($earlier, $path) || self::capturesWithoutTheSlash($later, $path));
     }
 
     /**

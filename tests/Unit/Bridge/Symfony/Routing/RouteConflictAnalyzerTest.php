@@ -1120,6 +1120,20 @@ final class RouteConflictAnalyzerTest extends TestCase
         // A path ending on the slash whose value PCRE captured without it
         // is redirected for GET and HEAD, and passed on to the later route
         // for any other method.
+        yield 'a requirement that can end on the slash, for POST, before a route ending on a slash whose only path it passes on' => [
+            'earlier' => ['/files/{p<a|a/>}', ['POST'], []],
+            'later' => ['/files/{q<a>}/', ['POST'], []],
+            'probes' => [['POST', 'http', '/files/a/', true], ['POST', 'http', '/files/a', false]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+        yield 'a requirement that can end on the slash, for GET, before a route ending on a slash whose only path it redirects' => [
+            'earlier' => ['/files/{p<a|a/>}', ['GET'], []],
+            'later' => ['/files/{q<a>}/', ['GET'], []],
+            'probes' => [['GET', 'http', '/files/a/', false], ['HEAD', 'http', '/files/a/', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
         yield 'a lazy requirement that can end on the slash, before a route for any method ending on a slash' => [
             'earlier' => ['/files/{path<.+?>}', [], []],
             'later' => ['/files/{name}/', [], []],

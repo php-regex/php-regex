@@ -590,9 +590,10 @@ slash at most. A later route ending on a variable that may end on the
 slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its own
 ending on the slash for the slash, as PCRE captures the value: it
 redirects `GET /a/` to `/a`, and passes `POST /a/` on to the routes after
-it. A request it passes on is none it loses, so a pair whose shortest
-shared path is one it passes on for the methods both routes take is
-counted among the pairs skipped; a redirect of an earlier route leading to
+it. A request it passes on is none it loses, nor is one the earlier route
+passes on, so a pair whose shortest shared path either route passes on
+for the methods both routes take is counted among the pairs skipped; a
+redirect of an earlier route leading to
 a path it reads for its slash still loses it the request. Each such
 finding notes what the router does with the
 request: it redirects it to the earlier route, matches it as is where the
