@@ -18,6 +18,7 @@ use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\GroupIndex as PcreGroups;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -76,6 +77,12 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
     private readonly QuestionBudget $questions;
 
+    /**
+     * The sets of the pattern being linted read over every byte, where the
+     * analyzer of the context reads ASCII alone; built at its first use.
+     */
+    private ?CharSetAnalyzer $everyByte = null;
+
     public function __construct()
     {
         $this->questions = new QuestionBudget();
@@ -86,6 +93,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         $this->questions->reset();
         $this->wordKinds = [];
         $this->newlineReads = [];
+        $this->everyByte = null;
     }
 
     public function getRuleIds(): array
@@ -121,11 +129,13 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         // What the items before the current one read, kept as the loop goes:
         // whether they may all read nothing, whether one may end the match,
         // and the characters the last of them reads (an empty set when none
-        // reads one, null when unknown).
+        // reads one, null when unknown), read up to the item $read only as
+        // far as an end anchor asks.
         $prefixCanBeEmpty = true;
         $accepted = false;
         $prefix = null;
         $before = ByteCharSet::empty();
+        $read = 0;
         $tailCanBeEmpty = null;
 
         for ($i = 0; $i < $count; $i++) {
@@ -152,6 +162,13 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
             if (NodePredicates::isEndAnchorNode($child) && $i + 1 < $count) {
                 $tailCanBeEmpty ??= self::emptyFromEachItem($children);
+                for (; !$tailCanBeEmpty[$i + 1] && $read < $i; $read++) {
+                    $last = $this->lastCharacters($children[$read], $context);
+                    if (null === $last || !$last->isEmpty()) {
+                        $before = $last;
+                    }
+                }
+
                 if (!$tailCanBeEmpty[$i + 1]
                     && !$this->tailCanContinueEndOfLine($child, null === $before || $before->isEmpty() ? null : $before, \array_slice($children, $i + 1), $flags, $node, $context)
                 ) {
@@ -182,13 +199,29 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             $prefixCanBeEmpty = $prefixCanBeEmpty && (NodePredicates::canBeEmpty($child)
                 || ($prefix ??= new EndOfLineTail($context->charSetAnalyzer, "\n", $context->groups->pcre ?? PcreGroups::empty()))->canMatchNothingAnywhere($child));
             $accepted = $accepted || NodePredicates::holdsAccept($child);
-            $last = EndOfLineTail::lastCharacters([$child], $context->charSetAnalyzer);
-            if (null === $last || !$last->isEmpty()) {
-                $before = $last;
-            }
         }
 
         return $issues;
+    }
+
+    /**
+     * The characters the item reads last, as the analyzer of the context
+     * reads them and as one reading every byte does: the first reads ASCII
+     * alone, where "[^\x00-\x7F]" reads nothing and "[^\x00-\x7E]" reads
+     * "\x7F" alone, and the engine reads the bytes or the characters above
+     * ASCII too. Null where either cannot tell.
+     */
+    private function lastCharacters(NodeInterface $child, LintContext $context): ?ByteCharSet
+    {
+        $ascii = EndOfLineTail::lastCharacters([$child], $context->charSetAnalyzer);
+        if (null === $ascii) {
+            return null;
+        }
+
+        $this->everyByte ??= new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true);
+        $everyByte = EndOfLineTail::lastCharacters([$child], $this->everyByte);
+
+        return null === $everyByte ? null : $ascii->union($everyByte);
     }
 
     /**

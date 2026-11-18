@@ -337,13 +337,17 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
             $set = null;
             foreach ($leaves as $leaf) {
-                $atom = self::spelledAtom($leaf, $context->pattern->unicodeMode, $context->pattern->source);
-                $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
                 // The atom is read under the options in force where it
                 // stands: those a group opening the branch sets included.
                 $flags = $context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags());
                 $modifiers = self::probeModifiers($flags, self::asciiOptions($flags, $leaf, $root));
-                $read = null === $atom ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
+                $read = self::asciiCharacter($leaf, $modifiers);
+                if (null === $read) {
+                    $atom = self::spelledAtom($leaf, $context->pattern->unicodeMode, $context->pattern->source);
+                    $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
+                    $read = null === $atom ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
+                }
+
                 if (null === $read) {
                     return null;
                 }
@@ -362,13 +366,28 @@ final class OverlappingAlternationRule extends AbstractLintRule
     }
 
     /**
+     * The character an ASCII character written as it is reads in its own
+     * case: itself, under every table and every option but "i", which a
+     * locale's tables or Unicode fold. Asked of PCRE, it would cost a scan
+     * of every code point under u.
+     */
+    private static function asciiCharacter(NodeInterface $node, string $modifiers): ?CharSet
+    {
+        if (!$node instanceof LiteralNode || '' === $node->value || \ord($node->value[0]) > 0x7F || str_contains($modifiers, 'i')) {
+            return null;
+        }
+
+        return CharSet::single(\ord($node->value[0]));
+    }
+
+    /**
      * The atoms a node may read its first character with, and whether it
      * may read nothing. An item the probe does not read (an anchor, a
-     * lookaround, a reference) is an atom of its own, which leaves the
+     * reference, a script run) is an atom of its own, which leaves the
      * branch unjudged. Groups start with what their body starts with, a
      * branch reset group and an alternation with what any branch does; a
-     * sequence goes on past an item that may read nothing, and a quantifier
-     * that may run no time reads nothing.
+     * lookaround reads nothing, a sequence goes on past an item that may
+     * read nothing, and a quantifier that may run no time reads nothing.
      *
      * @return array{list<NodeInterface>, bool}
      */
@@ -383,6 +402,13 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
             if (\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags], true)) {
                 return self::firstAtoms($node->child);
+            }
+
+            // A lookaround looks at characters without taking them, as the
+            // scan of a captured substring does: the branch takes its first
+            // character with what follows.
+            if (\in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring], true)) {
+                return [[], true];
             }
         }
 

@@ -8,11 +8,13 @@ CHANGELOG
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * The class rules read the bytes PCRE2 reads in a class without UTF mode:
    `regex.lint.charclass.redundant` reports a character written twice,
-   `/[ää]/`, and a byte written beside a character that starts with it,
-   `/[aä\xC3]/`, where each multibyte character was left out as one it
-   could not read. A byte two different characters share, the `\xC3` of
-   `/[äö]/`, is no duplicate: `regex.lint.unicode.multibyteInClassWithoutU`
-   reports that class, with the fix, `/u`.
+   `/[ää]/` or `/[ö¤ää]/`, and a byte written beside a character that
+   starts with it, `/[aä\xC3]/`, where each multibyte character was left
+   out as one it could not read. A byte two different characters share,
+   the `\xC3` of `/[äö]/`, is no duplicate, nor is the `\xA4` of
+   `/[a-ä]/`, which the range `a-\xC3` holds:
+   `regex.lint.unicode.multibyteInClassWithoutU` reports that class, with
+   the fix, `/u`.
  * The rules that compare first and last characters read an escape that
    names an ASCII character, `\x41`, `\101`, `\x{41}`, `\o{101}` or `\cA`,
    as that character, where they asked the engine or gave up:
@@ -26,13 +28,16 @@ CHANGELOG
  * A byte above ASCII written as it is, not as an escape, is read as the
    target reads it. `\b` or `\B` after it, before the newline an end anchor
    lets through, is not reported as never matching where the engine
-   matches: it is no word character under PCRE2's own tables, so
-   `/ÿ$\B\n/` (the byte 0xFF) matches `"ÿ\n"`, and may be one under u,
-   (*UCP) or another locale's tables, so `/(*UCP)ÿ$\b\n/` and `/é$\b\n/u`
-   match too; all three were reported. Without u a branch starting with
-   such a byte is compared with the others by the engine under the target's
-   locale: `/(?:\W|é)+/` with the byte 0xE9 overlaps under C and
-   `/(?:\w|é)+/` under fr_FR.ISO8859-1, which were not reported.
+   matches: it is no word character under PCRE2's own tables, so, in PHP,
+   `"/\xFF\$\\B\\n/"` matches `"\xFF\n"`, and may be one under u, (*UCP)
+   or another locale's tables, so `"/(*UCP)\xFF\$\\b\\n/"` and
+   `'/é$\b\n/u'` match too; all three were reported. So were `\B` after a
+   class of the bytes above ASCII, `'/a[^\x00-\x7F]$\B\n/'` on
+   `"a\xFF\n"`, and `\b` after a class of the characters above ASCII under
+   u, `'/[^\x00-\x7E]$\b\n/u'` on `"é\n"`. Without u a branch starting
+   with such a byte is compared with the others by the engine under the
+   target's locale: `"/(?:\\W|\xE9)+/"` overlaps under C and
+   `"/(?:\\w|\xE9)+/"` under fr_FR.ISO8859-1, which were not reported.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and
@@ -49,7 +54,8 @@ CHANGELOG
    `\xE9`, met every other branch. PCRE gives those sets, as the target
    reads them, through the atomic or options group a branch opens with:
    `/(?:(?>ö)|è)+x/u` is no longer reported either, nor are a branch read
-   past its optional first item, `/(?:ö?è|ê)+x/u`, every branch of a branch
+   past its optional first item, `/(?:ö?è|ê)+x/u`, or past a lookaround,
+   which takes nothing, `/^(?:(?=ö)ö|è)+$/u`, every branch of a branch
    reset group, `/(?:(?|ö|ê)|è)+x/u`, and an atom under the very options of
    `a` that stand where it does, which restrict `\d`, `\s`, `\w`, their
    negations and the POSIX classes alone, `/(?:(?a:[ö])x|èy)+z/u`; the
