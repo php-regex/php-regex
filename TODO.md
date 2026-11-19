@@ -1,5 +1,21 @@
 # TODO
 
+## Before merging #408 to #411
+
+- None of the four has been reviewed yet; read them through, in stack
+  order, before merging the first.
+- #410 reports a trailing-slash redirect that takes part of a later
+  route's paths: `/admin` declared before a catch-all is now an overlap
+  (`GET /admin/`), listed with `--show-overlaps`. #403 declined it because
+  it flags every static route declared before a catch-all. Keep it, or
+  restore the carve-out in `RouteConflictAnalyzer` before merging.
+- #408: the reference job and the coverage job failed on the earlier head,
+  reportedly with the same failures as `pre-tag-3-core`; check them on the
+  new head.
+- Once #410 is merged, drop the three entries it settles under "Left from
+  the second pass": the trimmed `access_control` path, the partial
+  trailing-slash redirect, and the `s` flag of symfony/http-foundation 6.4.
+
 ## Before 2.0.0, a pull request of its own
 
 - The ReDoS analysis under another locale's tables (an `LC_CTYPE` other
