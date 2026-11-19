@@ -29,7 +29,9 @@ final class PublicSurface
             'Solver/EquivalenceResult', 'Solver/IntersectionResult', 'Solver/SubsetResult', 'Solver/MatchEquivalenceResult',
             'Model/Dfa', 'Model/DfaState', 'Solver/DfaCacheInterface', 'Solver/InMemoryDfaCache',
             'Exception/ComplexityException',
+            'Exception/IncompatibleArgumentException',
             'TrivialMatchClassifier', 'TrivialMatch', 'TrivialMatchKind', 'Language',
+            'Ordered/FirstMatchPartition', 'Ordered/FirstMatchCell',
         ],
         'Cli' => [],
         'Explain' => [
@@ -94,7 +96,7 @@ final class PublicSurface
     public const RESULTS = [
         'Automata' => [
             'Solver/EquivalenceResult', 'Solver/IntersectionResult', 'Solver/SubsetResult', 'Solver/MatchEquivalenceResult',
-            'Language', 'TrivialMatch',
+            'Language', 'TrivialMatch', 'Ordered/FirstMatchCell',
         ],
         'Optimizer' => ['OptimizationResult', 'RedosRepair'],
         'Parser' => [

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Automata;
 
 use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Exception\IncompatibleArgumentException;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Parser\Hir\CharSet;
@@ -39,6 +40,12 @@ final class Language
     private const MAX_ENUMERATION_MEMO = 50_000;
 
     /**
+     * The pairs of states a union, an intersection, a difference or a
+     * complement may build.
+     */
+    private const MAX_PRODUCT_STATES = 100_000;
+
+    /**
      * @var array<string, array<int, true>> per side, inside or outside, the states that lead to acceptance
      */
     private array $live = [];
@@ -59,6 +66,76 @@ final class Language
      * @internal built by LanguageSolver::language()
      */
     public function __construct(private readonly Dfa $dfa, private readonly bool $unicode) {}
+
+    /**
+     * The strings either language holds.
+     *
+     * @throws ComplexityException       When the product outgrows its state limit
+     * @throws IncompatibleArgumentException When one language is read as UTF-8 and the other as bytes
+     */
+    public function union(self $other): self
+    {
+        return $this->product($other, static fn (bool $left, bool $right): bool => $left || $right);
+    }
+
+    /**
+     * The strings both languages hold.
+     *
+     * @throws ComplexityException       When the product outgrows its state limit
+     * @throws IncompatibleArgumentException When one language is read as UTF-8 and the other as bytes
+     */
+    public function intersect(self $other): self
+    {
+        return $this->product($other, static fn (bool $left, bool $right): bool => $left && $right);
+    }
+
+    /**
+     * The strings this language holds and the other does not.
+     *
+     * @throws ComplexityException       When the product outgrows its state limit
+     * @throws IncompatibleArgumentException When one language is read as UTF-8 and the other as bytes
+     */
+    public function minus(self $other): self
+    {
+        return $this->product($other, static fn (bool $left, bool $right): bool => $left && !$right);
+    }
+
+    /**
+     * Every string over the alphabet the language is read on, bytes or
+     * code points, that it does not hold.
+     *
+     * @throws ComplexityException When the product outgrows its state limit
+     */
+    public function complement(): self
+    {
+        return $this->product($this, static fn (bool $left, bool $right): bool => !$left);
+    }
+
+    /**
+     * Whether every string of this language belongs to the other.
+     *
+     * @throws ComplexityException       When the product outgrows its state limit
+     * @throws IncompatibleArgumentException When one language is read as UTF-8 and the other as bytes
+     */
+    public function isSubsetOf(self $other): bool
+    {
+        return $this->minus($other)->isEmpty();
+    }
+
+    /**
+     * The shortest string of the language, the least in code point order
+     * of those, or null for the empty language.
+     *
+     * @throws ComplexityException When the search exceeds a budget of strings()
+     */
+    public function shortestExample(): ?string
+    {
+        foreach ($this->strings() as $string) {
+            return $string;
+        }
+
+        return null;
+    }
 
     /**
      * Whether no string at all belongs to the language.
@@ -548,5 +625,84 @@ final class Language
         }
 
         return $text;
+    }
+
+    /**
+     * The product of the two automata, every pair of states reached, the
+     * missing move of either one leading to a dead state of its own: a
+     * pair accepts as the operation says of the two sides.
+     *
+     * @param callable(bool, bool): bool $accepts
+     *
+     * @throws ComplexityException
+     * @throws IncompatibleArgumentException
+     */
+    private function product(self $other, callable $accepts): self
+    {
+        if ($this->unicode !== $other->unicode) {
+            throw new IncompatibleArgumentException('A language read as UTF-8 and one read as bytes hold different strings: compare them with LanguageSolver, which reads each character of the one as its bytes.');
+        }
+
+        $left = $this->dfa;
+        $right = $other->dfa;
+        $min = min($left->minCodePoint, $right->minCodePoint);
+        $max = max($left->maxCodePoint, $right->maxCodePoint);
+        $boundaries = [$min => true, $max + 1 => true];
+        foreach ([$left, $right] as $dfa) {
+            foreach ($dfa->alphabetRanges as [$start, $end]) {
+                $boundaries[$start] = true;
+                $boundaries[$end + 1] = true;
+            }
+        }
+
+        $points = array_keys($boundaries);
+        sort($points, \SORT_NUMERIC);
+        $ranges = [];
+        for ($i = 0, $last = \count($points) - 1; $i < $last; $i++) {
+            if ($points[$i] >= $min && $points[$i] <= $max) {
+                $ranges[] = [$points[$i], min($points[$i + 1], $max + 1) - 1];
+            }
+        }
+
+        $dead = -1;
+        $numbers = [];
+        $pairs = [];
+        $number = static function (int $l, int $r) use (&$numbers, &$pairs): int {
+            $key = $l.':'.$r;
+            if (!isset($numbers[$key])) {
+                if (\count($pairs) >= self::MAX_PRODUCT_STATES) {
+                    throw new ComplexityException(\sprintf('The product of the two languages outgrew %d states.', self::MAX_PRODUCT_STATES), diagnostic: ['phase' => 'product', 'limit' => self::MAX_PRODUCT_STATES]);
+                }
+
+                $numbers[$key] = \count($pairs);
+                $pairs[] = [$l, $r];
+            }
+
+            return $numbers[$key];
+        };
+
+        $number($left->startState, $right->startState);
+        $states = [];
+        for ($id = 0; $id < \count($pairs); $id++) {
+            [$l, $r] = $pairs[$id];
+            $leftState = $dead === $l ? null : $left->getState($l);
+            $rightState = $dead === $r ? null : $right->getState($r);
+            $moves = [];
+            foreach ($ranges as [$start, $end]) {
+                $target = $number($leftState?->transitionFor($start) ?? $dead, $rightState?->transitionFor($start) ?? $dead);
+                $count = \count($moves);
+                if ($count > 0 && $moves[$count - 1] === $target && $moves[$count - 2] === $start - 1) {
+                    $moves[$count - 2] = $end;
+
+                    continue;
+                }
+
+                array_push($moves, $start, $end, $target);
+            }
+
+            $states[$id] = new DfaState($id, [], $accepts(null !== $leftState && $leftState->isAccepting, null !== $rightState && $rightState->isAccepting), $moves);
+        }
+
+        return new self(new Dfa(0, $states, $ranges, $min, $max), $this->unicode);
     }
 }

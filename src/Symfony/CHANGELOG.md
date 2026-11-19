@@ -6,6 +6,20 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:routes --reachability` reports a route several earlier routes
+   shadow together, none of them alone: `/n/{x<\d+>}` and `/n/{x<[a-z]+>}`
+   before `/n/{x<\d+|[a-z]+>}`, or a route for `GET` and one for `POST`
+   before one for both. Each request is read as its method, scheme, host
+   and path at once, with the trailing-slash redirect of a route for `GET`.
+ * `regex:security` and `regex:analyze` report an `access_control` rule
+   several earlier rules shadow together, critical when one of them is
+   public and the rule is not.
+ * A trailing-slash redirect that takes part of a later route's paths is
+   reported as an overlap where the pair was read as a carve-out: `/admin`
+   before a catch-all takes `GET /admin/`. On disjoint schemes the path the
+   later route loses is searched past the shortest one redirected, and a
+   pair whose every redirected path lands on one the later route serves is
+   no longer counted among the skipped ones.
  * `regex:security` and `regex:analyze` read an `access_control` path or
    host ending on a comment of the `x` flag, `(?x)^/admin  # back office`,
    or on a `\Q` left open, `^/admin\Q.x`, as Symfony compiles it, where the

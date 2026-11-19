@@ -54,7 +54,7 @@ for example `LanguageSolver::equivalent()` for an `EquivalenceResult` or
 - `regex-optimizer`: `OptimizationResult`, `RedosRepair`;
 - `regex-automata`: `Solver\EquivalenceResult`, `Solver\IntersectionResult`,
   `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Language`,
-  `TrivialMatch`;
+  `TrivialMatch`, `Ordered\FirstMatchCell`;
 - `regex-redos`: `RedosAnalysis`, `Finding`, `Hotspot`, `RedosWitness`,
   `RedosSearchCost`, `Confirmation`, `ConfirmationSample`;
 - `regex-transpiler`: `TranspileResult`;
@@ -86,7 +86,7 @@ In short, the public surface is:
 | `regex-optimizer` | `Optimizer`, `OptimizerOptions`, `OptimizationResult`, `Modernizer`, `RedosRepairer`, `RedosRepair` |
 | `regex-generator` | `SampleGenerator`, `TestCaseGenerator`, `Exception\SampleGenerationException` |
 | `regex-infection` | `Mutator\RegexQuantifier`, `Mutator\RegexAnchor`, `Mutator\RegexCharClass`, `Mutator\RegexAlternation`, `Mutator\RegexFlag`, `Mutator\RegexEscape` |
-| `regex-automata` | `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`, `Options\SolverStrategy`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, `Solver\EquivalenceResult`, `Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Model\Dfa`, `Model\DfaState`, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `Exception\ComplexityException`, `TrivialMatchClassifier`, `TrivialMatch`, `TrivialMatchKind`, `Language` |
+| `regex-automata` | `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`, `Options\SolverStrategy`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, `Solver\EquivalenceResult`, `Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Model\Dfa`, `Model\DfaState`, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `Exception\ComplexityException`, `Exception\IncompatibleArgumentException`, `TrivialMatchClassifier`, `TrivialMatch`, `TrivialMatchKind`, `Language`, `Ordered\FirstMatchPartition`, `Ordered\FirstMatchCell` |
 | `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface`, `IgnoreList` |
 | `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `Exception\TranspileException` |
 | `regex-linter` | `PatternLinter`, `LintSeverity`, `Exception\LintException`, `Rule\RuleViolation`, `Exception\UnknownLintRuleException`, `Exception\UnsupportedTargetException`, `Extraction\ExtractorInterface`, `PatternOccurrence` |

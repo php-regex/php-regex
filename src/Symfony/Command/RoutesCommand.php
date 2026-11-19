@@ -57,15 +57,19 @@ final class RoutesCommand extends Command
     {
         $this
             ->addOption('show-overlaps', null, InputOption::VALUE_NONE, 'Include partial overlaps in the report.')
+            ->addOption('reachability', null, InputOption::VALUE_NONE, 'Also report the routes several earlier routes shadow together.')
             ->setHelp(<<<'EOF'
                 The <info>%command.name%</info> command inspects Symfony routes and detects ordering conflicts.
 
                 By default, it reports shadowed (unreachable) routes.
                 Use --show-overlaps to include partial overlaps.
+                Use --reachability to also find the routes no single earlier route shadows but several do together,
+                reading each request as its method, scheme, host and path.
                 With -v, it also prints the counts of the analysis and why a route was skipped.
 
                 <info>php %command.full_name%</info>
                 <info>php %command.full_name% --show-overlaps</info>
+                <info>php %command.full_name% --reachability</info>
                 EOF);
     }
 
@@ -85,6 +89,7 @@ final class RoutesCommand extends Command
             null,
             includeOverlaps: (bool) $input->getOption('show-overlaps'),
             debug: $output->isVerbose(),
+            reachability: (bool) $input->getOption('reachability'),
         );
         $report = new SecurityReport($this->routes->analyze($context));
 

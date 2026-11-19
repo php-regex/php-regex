@@ -487,7 +487,7 @@ exit code 2 and stage `usage` in the JSON envelope, as `regex lint` does.
 | Command | Arguments | Options |
 |---|---|---|
 | `regex:lint` | `[paths]...` | `--exclude=...` (default: `exclude`), `--min-savings=1`, `-j`/`--jobs=N`, `--no-routes`, `--no-validators`, `--no-twig`, `--format=console\|json\|github\|checkstyle\|junit` |
-| `regex:routes` | | `--show-overlaps` (conflicts are always checked) |
+| `regex:routes` | | `--show-overlaps` (conflicts are always checked), `--reachability` |
 | `regex:security` | | `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high` |
 | `regex:analyze` | | `--only=routes\|security...`, `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high`, `--format=console\|json`, `--debug`, `--fail-on=shadowed,redos,critical` (also `overlap`, `any`, `none`) |
 | `regex:compare` | `<pattern1> <pattern2>` | `--method=intersection\|subset\|equivalence`, `--minimizer=hopcroft\|moore`, `--determinizer=subset-indexed\|subset` (defaults: `automata.*`) |
@@ -518,6 +518,18 @@ U+2028 `\x{2028}`, and a console tag stays text. A pattern is spelled in its
 own mode: without `u` that character is its bytes (`/a\xE2\x80\xA8/`), under
 it `/a\x{2028}/u`. A value cannot open a line of its own or style the
 report; the JSON report keeps each value as found.
+
+`regex:routes --reachability` also reads each route against every route
+the matcher tries before it at once, not one pair at a time: a request is
+its method, scheme, host and path, and a route keeps the requests no earlier
+route takes. `/n/{x}` (`\d+`) and `/n/{x}` (`[a-z]+`) declared before
+`/n/{x}` (`\d+|[a-z]+`) leave it nothing, as do a route for `GET` and one for
+`POST` before a route for both on the same path, though no single earlier
+route takes all of its requests: the route is reported **shadowed by
+several earlier routes together**, each with a request it takes. A route
+for `GET` also takes the `GET` and `HEAD` requests whose path differs from
+one of its own by the trailing slash alone, which the matcher redirects;
+a route with a condition, or a host the analysis cannot read, takes none.
 
 `regex:routes` reads the routes in the order they are declared, as the router
 matches them: the first route that matches a request wins it. A route is

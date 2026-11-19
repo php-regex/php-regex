@@ -28,17 +28,23 @@ namespace PHPRegex\Symfony\Security;
  *     notes: array<int, string>,
  * }
  * @phpstan-type AccessSkip array{index: int, file: string, line: int, reason: string}
+ * @phpstan-type AccessCumulative array{
+ *     rule: AccessRule,
+ *     takenBy: list<array{rule: AccessRule, example: string}>,
+ *     severity: string,
+ * }
  */
 final class SecurityAccessControlReport
 {
     /**
-     * @param array<AccessConflict> $conflicts
-     * @param array<AccessSkip>     $skippedRules
-     * @param array<string, int>    $stats
-     * @param array<int, int>       $rulesWithAllowIf
-     * @param array<int, int>       $rulesWithIps
-     * @param array<int, int>       $rulesWithNoPath
-     * @param array<int, int>       $rulesWithUnsupportedHosts
+     * @param array<AccessConflict>  $conflicts
+     * @param array<AccessSkip>      $skippedRules
+     * @param array<string, int>     $stats
+     * @param array<int, int>        $rulesWithAllowIf
+     * @param array<int, int>        $rulesWithIps
+     * @param array<int, int>        $rulesWithNoPath
+     * @param array<int, int>        $rulesWithUnsupportedHosts
+     * @param list<AccessCumulative> $cumulative                the rules several earlier ones shadow together, none alone
      */
     public function __construct(
         public readonly array $conflicts,
@@ -48,5 +54,6 @@ final class SecurityAccessControlReport
         public readonly array $rulesWithIps,
         public readonly array $rulesWithNoPath,
         public readonly array $rulesWithUnsupportedHosts,
+        public readonly array $cumulative = [],
     ) {}
 }

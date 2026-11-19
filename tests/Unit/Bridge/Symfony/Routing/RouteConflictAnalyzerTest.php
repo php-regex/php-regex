@@ -901,7 +901,9 @@ final class RouteConflictAnalyzerTest extends TestCase
             'earlier' => ['/admin', ['GET']],
             'later' => ['/{path<.*>}', []],
             'probes' => [['GET', '/admin/', 'earlier'], ['HEAD', '/admin/', 'earlier'], ['POST', '/admin/', 'later'], ['PUT', '/admin/', 'later'], ['POST', '/admin', 'later'], ['GET', '/other', 'later']],
-            'type' => null,
+            // A carve-out, but the catch-all loses GET and HEAD "/admin/":
+            // (L ∩ swapped(E)) \ E holds it.
+            'type' => 'overlap',
         ];
     }
 
@@ -1085,14 +1087,18 @@ final class RouteConflictAnalyzerTest extends TestCase
             'later' => ['/files/{path<[a-z/]+>}', ['GET'], ['http']],
             'probes' => [['GET', 'http', '/files/a/', true], ['HEAD', 'http', '/files/a/', true], ['GET', 'http', '/files/ab/', true]],
             'type' => null,
-            'skipped' => 1,
+            // Every path redirected lands on one the later route serves:
+            // (L ∩ swapped(E)) \ E \ swapped(L) is empty.
+            'skipped' => 0,
         ];
         yield 'the default requirement, on https before a route on http that serves the path the shortest redirect leads to and loses another' => [
             'earlier' => ['/files/{name}', ['GET'], ['https']],
             'later' => ['/files/{path<a/|a|b/>}', ['GET'], ['http']],
             'probes' => [['GET', 'http', '/files/a/', true], ['HEAD', 'http', '/files/a/', true], ['GET', 'http', '/files/b/', false]],
-            'type' => null,
-            'skipped' => 1,
+            // "/files/b/" lands on "/files/b", which the later route does
+            // not serve: past the shortest, the three languages find it.
+            'type' => 'overlap',
+            'skipped' => 0,
         ];
         // A value captured with the slash is matched as is, on the earlier
         // route's schemes; one captured without it is redirected, on any:
@@ -1203,14 +1209,16 @@ final class RouteConflictAnalyzerTest extends TestCase
             'earlier' => ['/files/{name}', ['GET'], []],
             'later' => ['/files/{path<.+>}', ['GET'], []],
             'probes' => [['GET', 'http', '/files/a', false], ['GET', 'http', '/files/a/', false], ['GET', 'http', '/files/a/b', true]],
-            'type' => null,
+            // A carve-out, but the later route loses GET "/files/a/" to the
+            // redirect.
+            'type' => 'overlap',
             'skipped' => 0,
         ];
         yield 'the default requirement before a trailing slash, before a route that matches every path of it' => [
             'earlier' => ['/files/{name}/', ['GET'], []],
             'later' => ['/files/{path<.+>}', ['GET'], []],
             'probes' => [['GET', 'http', '/files/a', false], ['GET', 'http', '/files/a/', false], ['GET', 'http', '/files/a/b', true]],
-            'type' => null,
+            'type' => 'overlap',
             'skipped' => 0,
         ];
         yield 'a custom requirement, before a route whose every path it redirects' => [

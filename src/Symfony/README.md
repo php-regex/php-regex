@@ -149,6 +149,7 @@ Code that injects `PHPRegex\Toolkit\Regex` needs the bundle in every environment
 ```bash
 bin/console regex:lint src/ --format=json
 bin/console regex:routes --show-overlaps
+bin/console regex:routes --reachability
 bin/console regex:analyze --only=routes --redos-threshold=medium
 bin/console regex:compare '/[a-z]+/' '/edit/' --method=subset
 bin/console regex:transpile '/^\d{4}$/' --target=python
