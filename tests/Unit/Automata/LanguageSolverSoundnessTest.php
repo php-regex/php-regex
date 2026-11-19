@@ -225,11 +225,16 @@ final class LanguageSolverSoundnessTest extends TestCase
     #[Test]
     public function test_a_line_break_escape_reads_as_its_alternation(): void
     {
-        $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/', '/^a(?:\r\n|[\n\x0B\f\r\x85])b$/')->isEquivalent);
-        $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/u', '/^a(?:\r\n|[\n\x0B\f\r\x{85}\x{2028}\x{2029}])b$/u')->isEquivalent);
-        foreach (["a\r\nb", "a\nb", "a\rb", "a\r\rb", "a\n\rb", 'ab'] as $subject) {
+        foreach (["a\r\nb", "a\nb", "a\rb", "a\r\rb", "a\n\rb", 'ab', "a\x0Bb", "a\fb", "a\x85b"] as $subject) {
             $this->assertSame(preg_match('/^a(?:\r\n|[\n\x0B\f\r\x85])b$/', $subject), preg_match('/^a\Rb$/', $subject), (string) json_encode($subject));
         }
+
+        foreach (["a\r\nb", "a\nb", "a\rb", "a\r\rb", 'ab', "a\x0Bb", "a\u{85}b", "a\u{2028}b", "a\u{2029}b", "a\u{2028}\nb"] as $subject) {
+            $this->assertSame(preg_match('/^a(?:\r\n|[\n\x0B\f\r\x{85}\x{2028}\x{2029}])b$/u', $subject), preg_match('/^a\Rb$/u', $subject), (string) json_encode($subject));
+        }
+
+        $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/', '/^a(?:\r\n|[\n\x0B\f\r\x85])b$/')->isEquivalent);
+        $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/u', '/^a(?:\r\n|[\n\x0B\f\r\x{85}\x{2028}\x{2029}])b$/u')->isEquivalent);
     }
 
     /**

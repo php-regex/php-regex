@@ -79,7 +79,12 @@ final class AlphabetTest extends TestCase
     #[Test]
     public function test_the_states_of_a_unicode_automaton_share_one_alphabet(): void
     {
-        $dfa = (new LanguageSolver())->compile('/^[\p{L}\p{N}]{3,64}$/u');
+        $pattern = '/^[\p{L}\p{N}]{3,64}$/u';
+        foreach (['abc' => 1, 'été' => 1, 'ab1' => 1, 'ab' => 0, 'a_b' => 0, str_repeat('x', 64) => 1, str_repeat('x', 65) => 0] as $subject => $matched) {
+            $this->assertSame($matched, preg_match($pattern, (string) $subject), (string) $subject);
+        }
+
+        $dfa = (new LanguageSolver())->compile($pattern);
 
         $this->assertInstanceOf(Alphabet::class, $dfa->alphabet);
         $this->assertGreaterThan(1_000, $dfa->alphabet->rangeCount());
@@ -93,12 +98,18 @@ final class AlphabetTest extends TestCase
     /**
      * The witness found by classes is the one found range by range: the
      * product walks the classes in the order of their first range, and
-     * takes each class's smallest character.
+     * takes each class's smallest character. PCRE reads it as the question
+     * says: both patterns match an example of the intersection, the left
+     * one alone a counterexample to the inclusion.
      */
     #[Test]
     #[DataProvider('providePairs')]
     public function test_the_witness_is_the_one_found_range_by_range(string $left, string $right, string $method): void
     {
+        $witness = self::witness($left, $right, $method, DeterminizationAlgorithm::SubsetIndexed);
+        $this->assertNotNull($witness);
+        $this->assertSame('subsetOf' === $method ? [1, 0] : [1, 1], [preg_match($left, $witness), preg_match($right, $witness)], (string) json_encode($witness));
+
         $this->assertSame(self::witness($left, $right, $method, DeterminizationAlgorithm::Subset), self::witness($left, $right, $method, DeterminizationAlgorithm::SubsetIndexed));
         $this->assertNotNull(self::witness($left, $right, $method, DeterminizationAlgorithm::SubsetIndexed));
     }
