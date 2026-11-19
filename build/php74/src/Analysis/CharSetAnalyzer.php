@@ -124,7 +124,7 @@ final class CharSetAnalyzer
         $this->startOptions = $startOptions;
         $this->readsAboveAscii = $readsAboveAscii;
         $this->options = $samePattern->options ?? self::readStartOptions($startOptions);
-        $this->flags = null === $samePattern ? $this->restrictedFromTheStart($flags) : $flags;
+        $this->flags = null === $samePattern ? $this->flagsAtTheStart($flags) : $flags;
         $this->unicodeMode = false !== strpos($flags, 'u') || $this->options['ucp'];
         $this->utf = false !== strpos($flags, 'u') || $this->options['utf'];
         $this->caseless = false !== strpos($flags, 'i');
@@ -161,11 +161,12 @@ final class CharSetAnalyzer
 
     /**
      * The same pattern under other flags, such as the inline ones in effect
-     * at a node.
+     * at a node, read from flagsAtTheStart(): r holds the caseless
+     * restriction where it is in them, and only there, as "(?-r)" lifts it.
      */
     public function withFlags(string $flags): self
     {
-        return new self($this->restrictedFromTheStart($flags), $this->startOptions, $this->readsAboveAscii, $this);
+        return new self($flags, $this->startOptions, $this->readsAboveAscii, $this);
     }
 
     public function firstChars(NodeInterface $node): ByteCharSet
@@ -176,6 +177,16 @@ final class CharSetAnalyzer
     public function lastChars(NodeInterface $node): ByteCharSet
     {
         return $this->walk($node, false);
+    }
+
+    /**
+     * The flags a pattern whose modifiers are $flags opens under, those an
+     * option setting changes: (*CASELESS_RESTRICT) holds from the start as
+     * r does, and "(?-r)" or "(?^)" turns it off after.
+     */
+    public function flagsAtTheStart(string $flags): string
+    {
+        return $this->options['restricted'] && false === strpos($flags, 'r') ? $flags.'r' : $flags;
     }
 
     private function walk(NodeInterface $node, bool $fromStart): ByteCharSet
@@ -686,15 +697,6 @@ final class CharSetAnalyzer
         $setting = InlineFlags::read(InlineFlags::withoutAsciiOptions($options), InlineFlags::LETTERS.'r');
 
         return null === $setting ? $this : new self($setting->applyTo($this->flags), $this->startOptions, $this->readsAboveAscii, $this);
-    }
-
-    /**
-     * The flags a pattern opens under: (*CASELESS_RESTRICT) holds from the
-     * start as r does, and "(?-r)" or "(?^)" turns it off after.
-     */
-    private function restrictedFromTheStart(string $flags): string
-    {
-        return $this->options['restricted'] && false === strpos($flags, 'r') ? $flags.'r' : $flags;
     }
 
     /**

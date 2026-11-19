@@ -119,10 +119,11 @@ final class CharSetReadingTest extends TestCase
     }
 
     /**
-     * The analyzer of a pattern under other flags, as the linter asks for
-     * the ones in effect at a node, keeps what the start options set: the
-     * caseless restriction holds as r does, "\R" takes CR and LF alone, and
-     * the dot stops at the newline they set.
+     * The analyzer of a pattern under the flags in effect at a node, as the
+     * linter reads them from the flags at the start, keeps what the start
+     * options set: the caseless restriction holds while r is in force,
+     * "(?-r)" lifts it, "\R" takes CR and LF alone, and the dot stops at
+     * the newline they set.
      */
     #[Test]
     public function test_the_analyzer_under_other_flags_keeps_what_the_start_options_set(): void
@@ -130,19 +131,24 @@ final class CharSetReadingTest extends TestCase
         $pattern = '/(*CASELESS_RESTRICT)(*BSR_ANYCRLF)(*CR)[^\x{212A}]\R./u';
         $this->requiresCompile($pattern);
         $this->assertSame(1, preg_match('/(*CASELESS_RESTRICT)(*BSR_ANYCRLF)(*CR)\A[^\x{212A}]\z/iu', 'k'), 'Oracle: the class takes "k" under the restriction.');
+        $this->assertSame(0, preg_match('/(*CASELESS_RESTRICT)(*BSR_ANYCRLF)(*CR)(?-r)\A[^\x{212A}]\z/iu', 'k'), 'Oracle: "(?-r)" lifts the restriction, and the class refuses "k".');
         $this->assertSame(0, preg_match('/(*CASELESS_RESTRICT)(*BSR_ANYCRLF)(*CR)\A\R\z/iu', "\v"), 'Oracle: "\R" refuses a vertical tab.');
         $this->assertSame(1, preg_match('/(*CASELESS_RESTRICT)(*BSR_ANYCRLF)(*CR)\A.\z/iu', "\n"), 'Oracle: the dot takes a line feed.');
 
         $regex = RegexParser::create(['cache' => null])->parse($pattern);
         $this->assertInstanceOf(SequenceNode::class, $regex->pattern);
         [$class, $break, $dot] = array_values(\array_slice($regex->pattern->children, -3));
-        $analyzer = CharSetAnalyzer::forRegex($regex, true)->withFlags('iu');
+        $start = CharSetAnalyzer::forRegex($regex, true);
+        $this->assertSame('iur', $start->flagsAtTheStart('iu'));
+        $analyzer = $start->withFlags($start->flagsAtTheStart('iu'));
 
         $this->assertTrue($analyzer->firstChars($class)->intersects(ByteCharSet::fromChar('k')));
         $this->assertFalse($analyzer->firstChars($break)->intersects(ByteCharSet::fromChar("\v")));
         $this->assertTrue($analyzer->firstChars($dot)->intersects(ByteCharSet::fromChar("\n")));
         $this->assertFalse($analyzer->firstChars($dot)->intersects(ByteCharSet::fromChar("\r")));
-        $this->assertTrue($analyzer->withFlags('iur')->firstChars($class)->intersects(ByteCharSet::fromChar('k')));
+        // The flags "(?-r)" leaves: the restriction is lifted, the rest kept.
+        $this->assertFalse($start->withFlags('iu')->firstChars($class)->intersects(ByteCharSet::fromChar('k')));
+        $this->assertFalse($start->withFlags('iu')->firstChars($break)->intersects(ByteCharSet::fromChar("\v")));
 
         // Without the start option, the class leaves "k" out under i.
         $this->assertSame(0, preg_match('/\A[^\x{212A}]\z/iu', 'k'), 'Oracle: without the restriction the class refuses "k".');

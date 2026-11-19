@@ -82,7 +82,9 @@ final class LintContext
         ?DfaCacheInterface $dfas = null,
         ?PcreTarget $target = null,
     ) {
-        $this->activeFlags = $pattern->flags;
+        // The restriction (*CASELESS_RESTRICT) sets is in force as r is,
+        // until an option setting lifts it.
+        $this->activeFlags = $charSetAnalyzer->flagsAtTheStart($pattern->flags);
         $this->continuation = new Continuation($groups);
         $this->dfas = $dfas ?? LanguageQuestions::dfas();
         $this->target = $target ?? PcreTarget::runtime();
