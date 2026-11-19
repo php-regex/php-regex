@@ -64,7 +64,10 @@ CHANGELOG
    reset group, `/(?:(?|ö|ê)|è)+x/u`, and an atom under the very options of
    `a` that stand where it does, which restrict `\d`, `\s`, `\w`, their
    negations and the POSIX classes alone, `/(?:(?a:[ö])x|èy)+z/u`; the
-   pattern's own `/D` and `/S` are no `(?aD)` or `(?aS)`.
+   pattern's own `/D` and `/S` are no `(?aD)` or `(?aS)`. The caseless
+   restriction `(*CASELESS_RESTRICT)` sets holds there until `(?-r)` lifts
+   it: `/(*CASELESS_RESTRICT)(?-r:\x{212A}|[^k])+/iu`, whose Kelvin sign
+   then matches `k` and `K`, which `[^k]` refuses, is no longer reported.
    `/(?:[à-ÿ]+|é)+/u`, `/(?:(?a:\p{Lu})x|\p{L}y)+z/u` and
    `/(?:(?aD:\w)x|éy)+z/uD`, which it missed, are reported. The message quotes each branch as the
    pattern writes it, `\d+` rather than `\\d+`, and `é` under u rather than

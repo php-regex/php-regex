@@ -319,7 +319,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
      */
     private function setsFromPcre(AlternationNode $node, LintContext $context): ?array
     {
-        $startVerbs = StartOptions::of($context->pattern->source);
+        // The restriction "(*CASELESS_RESTRICT)" sets holds where r is in the
+        // flags in force, which the probe writes: the verb would set it again
+        // where "(?-r)" lifts it.
+        $startVerbs = str_replace('(*CASELESS_RESTRICT)', '', StartOptions::of($context->pattern->source));
         $unicodeFlag = str_contains($context->pattern->flags, 'u');
 
         $flagsAt = $context->flagsAtEachChild($node);
