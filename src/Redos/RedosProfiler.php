@@ -1801,8 +1801,9 @@ final class RedosProfiler extends AbstractNodeVisitor
         $max = RedosSeverity::Safe;
         $reading = null === $reads ? null : array_keys(array_filter($reads));
         $count = null === $reading ? \count($children) : \count($reading);
-        // The pairs read past ITEMS_READ_PAST items so far, and the first
-        // loop and item the end of PAIRS_READ_PAST parted, once it came.
+        // The pairs read past ITEMS_READ_PAST items so far, and each loop
+        // and item the end of PAIRS_READ_PAST parted, once it came, with the
+        // position of the item among those read.
         $pastPairs = 0;
         $cuts = [];
 
@@ -1823,14 +1824,15 @@ final class RedosProfiler extends AbstractNodeVisitor
             // always reads a character: "a+x?a+" meets the second "a+"
             // where "x?" matches empty. Past ITEMS_READ_PAST items, the
             // first loop it meets ends the scan, and so does the end of
-            // PAIRS_READ_PAST, after which the loops further are taken to
-            // meet: the items within ITEMS_READ_PAST are read all the same.
+            // PAIRS_READ_PAST, after which the loops further, if one lies
+            // before the scan would end, are taken to meet: the items
+            // within ITEMS_READ_PAST are read all the same.
             for ($m = $k + 1; $m < $count; $m++) {
                 $rightIndex = null === $reading ? $m : $reading[$m];
                 $right = $children[$rightIndex];
                 $past = $m - $k > self::ITEMS_READ_PAST;
                 if ($past && $pastPairs >= self::PAIRS_READ_PAST) {
-                    $cuts[] = [$leftIndex, $rightIndex];
+                    $cuts[] = [$leftIndex, $rightIndex, $m];
 
                     break;
                 }
@@ -1845,11 +1847,52 @@ final class RedosProfiler extends AbstractNodeVisitor
             }
         }
 
+        // A cut leaves a loop unread only where one lies at the item it
+        // stopped at or further, before the scan would have ended.
         if ([] !== $cuts) {
-            $max = $this->maxSeverity($max, $this->unreadLoops($children, ...$cuts[0]));
+            $loopsAhead = $this->loopsAhead($children, $reading, $count, $tail);
+            foreach ($cuts as [$leftIndex, $rightIndex, $m]) {
+                if ($loopsAhead[$m]) {
+                    return $this->maxSeverity($max, $this->unreadLoops($children, $leftIndex, $rightIndex));
+                }
+            }
         }
 
         return $max;
+    }
+
+    /**
+     * Whether a loop that may meet another lies at each item read of the
+     * sequence or further, as far as the first item that ends the scan, one
+     * that always reads a character or ends with a verb that cuts
+     * backtracking, that item included: a loop that repeats once at most,
+     * a shielded one or the one that ends an atomic body meets none.
+     *
+     * @param list<NodeInterface> $children the items of the sequence
+     * @param list<int>|null      $reading  the index of each item read, null when each is
+     *
+     * @return array<int, bool> by the position of the item among those read
+     */
+    private function loopsAhead(array $children, ?array $reading, int $count, ?int $tail): array
+    {
+        $ahead = [];
+        $loop = false;
+        for ($m = $count - 1; $m >= 0; $m--) {
+            $index = null === $reading ? $m : $reading[$m];
+            $item = $children[$index];
+            if ($this->alwaysReads($item) || $this->hasTrailingBacktrackingControl($item)) {
+                $loop = false;
+            }
+
+            $quantifier = $index !== $tail ? $this->unwrapAdjacentQuantifier($item) : null;
+            if (null !== $quantifier && $this->quantifierAllowsMultiple($this->quantifierBounds($quantifier)[1]) && !$this->isQuantifierShielded($quantifier)) {
+                $loop = true;
+            }
+
+            $ahead[$m] = $loop;
+        }
+
+        return $ahead;
     }
 
     /**

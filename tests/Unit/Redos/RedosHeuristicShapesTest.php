@@ -1156,6 +1156,44 @@ final class RedosHeuristicShapesTest extends TestCase
         $this->assertSame(RedosSeverity::Medium, $analysis->severity);
     }
 
+    /**
+     * Once a sequence has spent the pairs it reads past eight items, the
+     * loops further are taken to meet only where a loop lies further, before
+     * the first item that always reads a character: a lone loop before a
+     * run of items that repeat once at most meets none of them, and is read
+     * as before eight of them, safe. PCRE reads it as its twin with eight,
+     * giving the run back one "a" at a time (10, 14 and 18 steps on 8, 12
+     * and 16 "a" then "!", auto-possessification off), and reads a loop
+     * past the run as "a+a+" (31, 69 and 123 steps), which is still taken
+     * to meet the first.
+     *
+     * @return iterable<string, array{pattern: string, twin: string, unread: bool}>
+     */
+    public static function provideLoopsPastTheSpentPairs(): iterable
+    {
+        yield 'a lone loop before 1 032 optional items and a delimiter' => ['pattern' => '/^(x)a+'.str_repeat('b?', 1032).'!\1$/', 'twin' => '/^(x)a+'.str_repeat('b?', 8).'!\1$/', 'unread' => false];
+        yield 'a lone loop before 2 048 optional items and a delimiter' => ['pattern' => '/^(x)a+'.str_repeat('b?', 2048).'!\1$/', 'twin' => '/^(x)a+'.str_repeat('b?', 8).'!\1$/', 'unread' => false];
+        yield 'a loop past 2 048 optional items' => ['pattern' => '/^(x)a+'.str_repeat('b?', 2048).'a+\1$/', 'twin' => '/^(x)a+a+\1$/', 'unread' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsPastTheSpentPairs')]
+    public function test_the_loops_past_the_spent_pairs_are_taken_to_meet_only_where_one_lies_further(string $pattern, string $twin, bool $unread): void
+    {
+        foreach ([8, 12, 16] as $units) {
+            $subject = 'x'.str_repeat('a', $units).'!';
+            $this->assertSame(
+                self::steps(PcreInterpreter::pattern($twin[0].'(*NO_START_OPT)(*NO_AUTO_POSSESS)'.substr($twin, 1)), $subject),
+                self::steps(PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)(*NO_AUTO_POSSESS)'.substr($pattern, 1)), $subject),
+                'Oracle: the engine reads the pattern as its twin.',
+            );
+        }
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+        $this->assertSame(Regex::create(['cache' => null])->redos($twin)->severity, $analysis->severity);
+        $this->assertSame($unread, [] !== array_filter($analysis->findings, static fn ($finding): bool => str_starts_with($finding->message, 'Loops that may match empty')));
+    }
+
     #[Test]
     #[DataProvider('provideLoopsPastOptionalItems')]
     public function test_a_loop_meets_another_past_eight_optional_items_at_most(string $pattern, bool $named): void
