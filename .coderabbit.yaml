@@ -123,7 +123,7 @@ reviews:
 
     - path: "src/Automata/**"
       instructions: |
-        - The solver answers only for the regular subset it can model. Lookarounds, backreferences, possessive quantifiers, atomic groups and recursion must make it refuse (ComplexityException), never return an approximate "equivalent" or "subset".
+        - The solver answers only for the regular subset it can model. What docs/reference/logic-solver.md lists under "What the Solver Refuses" (backreferences and recursion among them) must make it refuse (ComplexityException), never return an approximate "equivalent" or "subset". A possessive quantifier, an atomic group or `\R` is read as its plain spelling only where AtomicInertiaAnalyzer proves it commits to nothing, and every such proof is checked against preg_match() in its tests; flag any other path that reads one plain.
         - DFA construction must stay under its state limits on hostile input.
 
     - path: "src/Transpiler/**"
