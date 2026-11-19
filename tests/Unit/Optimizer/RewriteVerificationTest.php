@@ -205,6 +205,10 @@ final class RewriteVerificationTest extends TestCase
     {
         $original = '/[\pL0-9]*0[\pL0-9]{1100}$/um';
         $rewrite = '/[\pL0-9]*0[\pL0-9]{1099}[\pL0-9]$/um';
+        foreach (['0'.str_repeat('1', 1100), '0'.str_repeat('1', 1099), 'é0'.str_repeat('é', 1100)."\nz", str_repeat('1', 1101), '-0'.str_repeat('1', 1100)] as $subject) {
+            $this->assertSame(self::span($original, $subject), self::span($rewrite, $subject), \strlen($subject).' bytes');
+        }
+
         $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null])))->rewritesAlikeInPlace($original, $rewrite), 'The default budget settles it.');
 
         $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
@@ -575,5 +579,19 @@ final class RewriteVerificationTest extends TestCase
             'preg_replace' => preg_replace($pattern, '<$0>', $subject),
             default => preg_split($pattern, $subject, -1, \PREG_SPLIT_OFFSET_CAPTURE),
         };
+    }
+
+    /**
+     * Where preg_match() finds the first match, as offsets into the
+     * subject, or null.
+     *
+     * @return array{int, int}|null
+     */
+    private static function span(string $pattern, string $subject): ?array
+    {
+        $result = preg_match($pattern, $subject, $match, \PREG_OFFSET_CAPTURE);
+        self::assertNotFalse($result, $pattern);
+
+        return 1 === $result ? [$match[0][1], $match[0][1] + \strlen($match[0][0])] : null;
     }
 }
