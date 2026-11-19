@@ -1,6 +1,6 @@
 {
     "repo": "composer/satis",
-    "sha": "1f64fd5ce05bc35e9a7c04d7d476c01d49871137",
+    "sha": "66c7b8ff47cdcc0c678e22e305f2760f6c19cf65",
     "target": {
         "php": "8.4",
         "pcre": "10.49",
@@ -10,7 +10,7 @@
         {
             "id": "f-58cc8ee5e8",
             "file": "src/PackageSelection/PackageSelection.php",
-            "line": 555,
+            "line": 629,
             "column": 21,
             "pattern": "#^[^@:\\/]+@([^\\/:]+)#ui",
             "source": "preg_match()",
@@ -28,10 +28,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/satis/blob/1f64fd5ce05bc35e9a7c04d7d476c01d49871137/src/PackageSelection/PackageSelection.php#L552-L558",
+            "permalink": "https://github.com/composer/satis/blob/66c7b8ff47cdcc0c678e22e305f2760f6c19cf65/src/PackageSelection/PackageSelection.php#L626-L632",
             "snippet": [
                 {
-                    "number": 552,
+                    "number": 626,
                     "focus": false,
                     "runs": [
                         [
@@ -41,7 +41,7 @@
                     ]
                 },
                 {
-                    "number": 553,
+                    "number": 627,
                     "focus": false,
                     "runs": [
                         [
@@ -51,7 +51,7 @@
                     ]
                 },
                 {
-                    "number": 554,
+                    "number": 628,
                     "focus": false,
                     "runs": [
                         [
@@ -61,7 +61,7 @@
                     ]
                 },
                 {
-                    "number": 555,
+                    "number": 629,
                     "focus": true,
                     "runs": [
                         [
@@ -143,7 +143,7 @@
                     ]
                 },
                 {
-                    "number": 556,
+                    "number": 630,
                     "focus": false,
                     "runs": [
                         [
@@ -153,7 +153,7 @@
                     ]
                 },
                 {
-                    "number": 557,
+                    "number": 631,
                     "focus": false,
                     "runs": [
                         [
@@ -163,7 +163,7 @@
                     ]
                 },
                 {
-                    "number": 558,
+                    "number": 632,
                     "focus": false,
                     "runs": [
                         [

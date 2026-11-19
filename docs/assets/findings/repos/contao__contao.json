@@ -1,6 +1,6 @@
 {
     "repo": "contao/contao",
-    "sha": "515d847e76068461504950b0e1828cdaf4954f0e",
+    "sha": "24bd85b3405e9629b382b6b8c3747a516fcabf19",
     "target": {
         "php": "8.4",
         "pcre": "10.49",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/dca/tl_content.php#L1090-L1096",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/dca/tl_content.php#L1090-L1096",
             "snippet": [
                 {
                     "number": 1090,
@@ -171,7 +171,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/File.php#L896-L902",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/File.php#L896-L902",
             "snippet": [
                 {
                     "number": 896,
@@ -406,7 +406,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L822-L828",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L822-L828",
             "snippet": [
                 {
                     "number": 822,
@@ -705,7 +705,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L915-L921",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L915-L921",
             "snippet": [
                 {
                     "number": 915,
@@ -881,7 +881,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L930-L936",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L930-L936",
             "snippet": [
                 {
                     "number": 930,
@@ -1125,7 +1125,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L931-L937",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L931-L937",
             "snippet": [
                 {
                     "number": 931,
@@ -1345,7 +1345,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L932-L938",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L932-L938",
             "snippet": [
                 {
                     "number": 932,
@@ -1553,7 +1553,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L933-L939",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L933-L939",
             "snippet": [
                 {
                     "number": 933,
@@ -1749,7 +1749,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L934-L940",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L934-L940",
             "snippet": [
                 {
                     "number": 934,
@@ -1945,7 +1945,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L935-L941",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L935-L941",
             "snippet": [
                 {
                     "number": 935,
@@ -2129,7 +2129,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L936-L942",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L936-L942",
             "snippet": [
                 {
                     "number": 936,
@@ -2349,7 +2349,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L937-L943",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L937-L943",
             "snippet": [
                 {
                     "number": 937,
@@ -2533,7 +2533,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L938-L944",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L938-L944",
             "snippet": [
                 {
                     "number": 938,
@@ -2729,7 +2729,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Input.php#L939-L945",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Input.php#L939-L945",
             "snippet": [
                 {
                     "number": 939,
@@ -2920,7 +2920,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/InsertTags.php#L425-L431",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/InsertTags.php#L425-L431",
             "snippet": [
                 {
                     "number": 425,
@@ -3015,7 +3015,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/StringUtil.php#L211-L217",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/StringUtil.php#L211-L217",
             "snippet": [
                 {
                     "number": 211,
@@ -3168,7 +3168,7 @@
         {
             "id": "f-d91524bebe",
             "file": "core-bundle/contao/library/Contao/Validator.php",
-            "line": 211,
+            "line": 213,
             "column": 27,
             "pattern": "/^[+(]?(\\d+[ +()\\/-]*)+$/",
             "source": "preg_match()",
@@ -3201,10 +3201,10 @@
                 "limit": 100000
             },
             "subject": "000000000000000000000000000000000000000000000000000000000000!",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/contao/library/Contao/Validator.php#L208-L214",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/contao/library/Contao/Validator.php#L210-L216",
             "snippet": [
                 {
-                    "number": 208,
+                    "number": 210,
                     "focus": false,
                     "runs": [
                         [
@@ -3214,7 +3214,7 @@
                     ]
                 },
                 {
-                    "number": 209,
+                    "number": 211,
                     "focus": false,
                     "runs": [
                         [
@@ -3224,7 +3224,7 @@
                     ]
                 },
                 {
-                    "number": 210,
+                    "number": 212,
                     "focus": false,
                     "runs": [
                         [
@@ -3234,7 +3234,7 @@
                     ]
                 },
                 {
-                    "number": 211,
+                    "number": 213,
                     "focus": true,
                     "runs": [
                         [
@@ -3324,7 +3324,7 @@
                     ]
                 },
                 {
-                    "number": 212,
+                    "number": 214,
                     "focus": false,
                     "runs": [
                         [
@@ -3334,7 +3334,7 @@
                     ]
                 },
                 {
-                    "number": 213,
+                    "number": 215,
                     "focus": false,
                     "runs": [
                         [
@@ -3344,7 +3344,7 @@
                     ]
                 },
                 {
-                    "number": 214,
+                    "number": 216,
                     "focus": false,
                     "runs": [
                         [
@@ -3391,7 +3391,7 @@
                 "limit": 100000
             },
             "subject": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/src/Cache/CacheTagManager.php#L332-L338",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/src/Cache/CacheTagManager.php#L332-L338",
             "snippet": [
                 {
                     "number": 332,
@@ -3622,7 +3622,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/src/EventListener/DataContainer/ContentElementViewListener.php#L94-L100",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/src/EventListener/DataContainer/ContentElementViewListener.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -3747,7 +3747,7 @@
         {
             "id": "f-5e58821e2e",
             "file": "core-bundle/src/String/HtmlAttributes.php",
-            "line": 464,
+            "line": 475,
             "column": 27,
             "pattern": "(\n            [\\s/]*+                                    # Optional white space including slash\n            ([^>\\s/][^>\\s/=]*+)                        # Attribute name\n            \\s*+                                       # Optional white space\n            (?:\n                =                                      # Assignment\n                \\s*+                                   # Optional white space\n                (?|                                    # Value\n                    \"([^\"]*)(?:\"|$(*SKIP)(*FAIL))      # Double quoted value\n                    |'([^']*)(?:'|$(*SKIP)(*FAIL))  # Or single quoted value\n                    |([^\\s>]*+)                        # Or unquoted or missing value\n                )                                      # Value end\n            )?+                                        # Assignment is optional\n            |>(*COMMIT)(*FAIL)                         # End of HTML tag\n        )ix",
             "source": "preg_match_all()",
@@ -3765,10 +3765,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/src/String/HtmlAttributes.php#L461-L467",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/src/String/HtmlAttributes.php#L472-L478",
             "snippet": [
                 {
-                    "number": 461,
+                    "number": 472,
                     "focus": false,
                     "runs": [
                         [
@@ -3778,7 +3778,7 @@
                     ]
                 },
                 {
-                    "number": 462,
+                    "number": 473,
                     "focus": false,
                     "runs": [
                         [
@@ -3788,7 +3788,7 @@
                     ]
                 },
                 {
-                    "number": 463,
+                    "number": 474,
                     "focus": false,
                     "runs": [
                         [
@@ -3798,7 +3798,7 @@
                     ]
                 },
                 {
-                    "number": 464,
+                    "number": 475,
                     "focus": true,
                     "runs": [
                         [
@@ -3808,7 +3808,7 @@
                     ]
                 },
                 {
-                    "number": 465,
+                    "number": 476,
                     "focus": false,
                     "runs": [
                         [
@@ -3818,7 +3818,7 @@
                     ]
                 },
                 {
-                    "number": 466,
+                    "number": 477,
                     "focus": false,
                     "runs": [
                         [
@@ -3828,7 +3828,7 @@
                     ]
                 },
                 {
-                    "number": 467,
+                    "number": 478,
                     "focus": false,
                     "runs": [
                         [
@@ -3842,7 +3842,7 @@
         {
             "id": "f-0650cf9726",
             "file": "core-bundle/src/String/HtmlAttributes.php",
-            "line": 525,
+            "line": 536,
             "column": 29,
             "pattern": "/\n            (?:\n                \\\\.                              # Escape\n                |\"(?:\\\\.|[^\"\\n])*+(?:\"|\\n|$)     # String token double quotes\n                |'(?:\\\\.|[^'\\n])*+(?:'|\\n|$)  # String token single quotes\n                |\\{(?:(?R)|[^}])*+(?:}|$)         # {}-block\n                |\\[(?:(?R)|[^]])*+(?:]|$)         # []-block\n                |\\((?:(?R)|[^)])*+(?:\\)|$)        # ()-block\n                |\\/\\*(?:(?!\\*\\/).)*+(?:\\*\\/|$)    # Comment block\n                |[^;{}\\[\\]()\"']                  # Anything else\n            )++\n        /ixs",
             "source": "preg_match_all()",
@@ -3860,10 +3860,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/515d847e76068461504950b0e1828cdaf4954f0e/core-bundle/src/String/HtmlAttributes.php#L522-L528",
+            "permalink": "https://github.com/contao/contao/blob/24bd85b3405e9629b382b6b8c3747a516fcabf19/core-bundle/src/String/HtmlAttributes.php#L533-L539",
             "snippet": [
                 {
-                    "number": 522,
+                    "number": 533,
                     "focus": false,
                     "runs": [
                         [
@@ -3873,7 +3873,7 @@
                     ]
                 },
                 {
-                    "number": 523,
+                    "number": 534,
                     "focus": false,
                     "runs": [
                         [
@@ -3883,7 +3883,7 @@
                     ]
                 },
                 {
-                    "number": 524,
+                    "number": 535,
                     "focus": false,
                     "runs": [
                         [
@@ -3893,7 +3893,7 @@
                     ]
                 },
                 {
-                    "number": 525,
+                    "number": 536,
                     "focus": true,
                     "runs": [
                         [
@@ -3903,7 +3903,7 @@
                     ]
                 },
                 {
-                    "number": 526,
+                    "number": 537,
                     "focus": false,
                     "runs": [
                         [
@@ -3913,7 +3913,7 @@
                     ]
                 },
                 {
-                    "number": 527,
+                    "number": 538,
                     "focus": false,
                     "runs": [
                         [
@@ -3923,7 +3923,7 @@
                     ]
                 },
                 {
-                    "number": 528,
+                    "number": 539,
                     "focus": false,
                     "runs": [
                         [
