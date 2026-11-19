@@ -131,6 +131,7 @@ final class CharSetReadingTest extends TestCase
         yield 'a non-space after every ASCII option but spaces, under (*UCP)' => ['options' => '(*UCP)(?a-aS)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
         yield 'a non-space in a group that lets every ASCII option go, under (*UCP)' => ['options' => '(*UCP)(?aS)', 'atom' => '(?-a:\S)', 'flags' => '', 'probes' => $spaces];
         yield 'a non-space after spaces held to ASCII and a reset, under (*UCP)' => ['options' => '(*UCP)(?aS)(?^)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after a reset that holds spaces to ASCII, under (*UCP)' => ['options' => '(*UCP)(?^aS)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
         yield 'a non-space after digits held to ASCII, under (*UCP)' => ['options' => '(*UCP)(?aD)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
         yield 'a non-space after POSIX classes held to ASCII, under (*UCP)' => ['options' => '(*UCP)(?aP)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
         yield 'a non-space after POSIX digits held to ASCII, under (*UCP)' => ['options' => '(*UCP)(?aT)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
