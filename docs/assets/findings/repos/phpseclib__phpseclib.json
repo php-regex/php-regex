@@ -1,6 +1,6 @@
 {
     "repo": "phpseclib/phpseclib",
-    "sha": "ead7145b7c7e8090112e4c39103487a3819dcb53",
+    "sha": "cc95bf62b73e1d65ae0cc40421f649d762380bc7",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpseclib/phpseclib/blob/ead7145b7c7e8090112e4c39103487a3819dcb53/phpseclib/Crypt/EC/Formats/Keys/PKCS1.php#L62-L68",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/cc95bf62b73e1d65ae0cc40421f649d762380bc7/phpseclib/Crypt/EC/Formats/Keys/PKCS1.php#L62-L68",
             "snippet": [
                 {
                     "number": 62,
@@ -205,7 +205,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpseclib/phpseclib/blob/ead7145b7c7e8090112e4c39103487a3819dcb53/phpseclib/Crypt/EC/Formats/Keys/PKCS1.php#L71-L77",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/cc95bf62b73e1d65ae0cc40421f649d762380bc7/phpseclib/Crypt/EC/Formats/Keys/PKCS1.php#L71-L77",
             "snippet": [
                 {
                     "number": 71,
@@ -354,7 +354,7 @@
         {
             "id": "f-033afcbec9",
             "file": "phpseclib/File/ASN1.php",
-            "line": 1412,
+            "line": 1435,
             "column": 34,
             "pattern": "#-+END.*[\\r\\n ]*.*#ms",
             "source": "preg_replace()",
@@ -384,10 +384,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpseclib/phpseclib/blob/ead7145b7c7e8090112e4c39103487a3819dcb53/phpseclib/File/ASN1.php#L1409-L1415",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/cc95bf62b73e1d65ae0cc40421f649d762380bc7/phpseclib/File/ASN1.php#L1432-L1438",
             "snippet": [
                 {
-                    "number": 1409,
+                    "number": 1432,
                     "focus": false,
                     "runs": [
                         [
@@ -397,7 +397,7 @@
                     ]
                 },
                 {
-                    "number": 1410,
+                    "number": 1433,
                     "focus": false,
                     "runs": [
                         [
@@ -407,7 +407,7 @@
                     ]
                 },
                 {
-                    "number": 1411,
+                    "number": 1434,
                     "focus": false,
                     "runs": [
                         [
@@ -417,7 +417,7 @@
                     ]
                 },
                 {
-                    "number": 1412,
+                    "number": 1435,
                     "focus": true,
                     "runs": [
                         [
@@ -495,7 +495,7 @@
                     ]
                 },
                 {
-                    "number": 1413,
+                    "number": 1436,
                     "focus": false,
                     "runs": [
                         [
@@ -505,7 +505,7 @@
                     ]
                 },
                 {
-                    "number": 1414,
+                    "number": 1437,
                     "focus": false,
                     "runs": [
                         [
@@ -515,7 +515,7 @@
                     ]
                 },
                 {
-                    "number": 1415,
+                    "number": 1438,
                     "focus": false,
                     "runs": [
                         [
@@ -547,7 +547,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpseclib/phpseclib/blob/ead7145b7c7e8090112e4c39103487a3819dcb53/phpseclib/Net/SFTP.php#L1043-L1049",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/cc95bf62b73e1d65ae0cc40421f649d762380bc7/phpseclib/Net/SFTP.php#L1043-L1049",
             "snippet": [
                 {
                     "number": 1043,
@@ -702,7 +702,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpseclib/phpseclib/blob/ead7145b7c7e8090112e4c39103487a3819dcb53/phpseclib/Net/SFTP.php#L1078-L1084",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/cc95bf62b73e1d65ae0cc40421f649d762380bc7/phpseclib/Net/SFTP.php#L1078-L1084",
             "snippet": [
                 {
                     "number": 1078,
@@ -857,7 +857,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpseclib/phpseclib/blob/ead7145b7c7e8090112e4c39103487a3819dcb53/phpseclib/Net/SFTP.php#L1104-L1110",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/cc95bf62b73e1d65ae0cc40421f649d762380bc7/phpseclib/Net/SFTP.php#L1104-L1110",
             "snippet": [
                 {
                     "number": 1104,
@@ -1012,7 +1012,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpseclib/phpseclib/blob/ead7145b7c7e8090112e4c39103487a3819dcb53/phpseclib/Net/SFTP.php#L1539-L1545",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/cc95bf62b73e1d65ae0cc40421f649d762380bc7/phpseclib/Net/SFTP.php#L1539-L1545",
             "snippet": [
                 {
                     "number": 1539,

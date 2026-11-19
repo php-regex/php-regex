@@ -1,6 +1,6 @@
 {
     "repo": "laravel/pao",
-    "sha": "fbd91ab5b77cd35f2f5df93410adc9769a23f94f",
+    "sha": "1266f9ccd0f97105983e9d88ffcedb844b8d4898",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/pao/blob/fbd91ab5b77cd35f2f5df93410adc9769a23f94f/src/Drivers/Concerns/TestResultParsable.php#L402-L408",
+            "permalink": "https://github.com/laravel/pao/blob/1266f9ccd0f97105983e9d88ffcedb844b8d4898/src/Drivers/Concerns/TestResultParsable.php#L402-L408",
             "snippet": [
                 {
                     "number": 402,

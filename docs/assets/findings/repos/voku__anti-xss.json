@@ -1,6 +1,6 @@
 {
     "repo": "voku/anti-xss",
-    "sha": "f9536c0187746e38f5892eac85bf55a724e8b0f5",
+    "sha": "62410f7894257693ad3432e5d2d6c824d4428cde",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/anti-xss/blob/f9536c0187746e38f5892eac85bf55a724e8b0f5/src/voku/helper/AntiXSS.php#L1650-L1656",
+            "permalink": "https://github.com/voku/anti-xss/blob/62410f7894257693ad3432e5d2d6c824d4428cde/src/voku/helper/AntiXSS.php#L1650-L1656",
             "snippet": [
                 {
                     "number": 1650,
@@ -208,7 +208,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/anti-xss/blob/f9536c0187746e38f5892eac85bf55a724e8b0f5/src/voku/helper/AntiXSS.php#L1755-L1761",
+            "permalink": "https://github.com/voku/anti-xss/blob/62410f7894257693ad3432e5d2d6c824d4428cde/src/voku/helper/AntiXSS.php#L1755-L1761",
             "snippet": [
                 {
                     "number": 1755,
@@ -473,7 +473,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/anti-xss/blob/f9536c0187746e38f5892eac85bf55a724e8b0f5/src/voku/helper/AntiXSS.php#L2384-L2390",
+            "permalink": "https://github.com/voku/anti-xss/blob/62410f7894257693ad3432e5d2d6c824d4428cde/src/voku/helper/AntiXSS.php#L2384-L2390",
             "snippet": [
                 {
                     "number": 2384,
@@ -795,7 +795,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/voku/anti-xss/blob/f9536c0187746e38f5892eac85bf55a724e8b0f5/src/voku/helper/AntiXSS.php#L2686-L2692",
+            "permalink": "https://github.com/voku/anti-xss/blob/62410f7894257693ad3432e5d2d6c824d4428cde/src/voku/helper/AntiXSS.php#L2686-L2692",
             "snippet": [
                 {
                     "number": 2686,

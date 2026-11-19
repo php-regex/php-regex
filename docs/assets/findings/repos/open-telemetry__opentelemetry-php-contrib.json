@@ -1,6 +1,6 @@
 {
     "repo": "open-telemetry/opentelemetry-php-contrib",
-    "sha": "db4bf86aaa00a001b3e95a0c93beccbfcf7d9f55",
+    "sha": "96bccb43ed302bb6a77f6a6c85e954b9490f3d71",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -43,7 +43,7 @@
                 "limit": 100000
             },
             "subject": "--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/",
-            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/db4bf86aaa00a001b3e95a0c93beccbfcf7d9f55/src/Instrumentation/MySqli/src/MySqliInstrumentation.php#L882-L888",
+            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/96bccb43ed302bb6a77f6a6c85e954b9490f3d71/src/Instrumentation/MySqli/src/MySqliInstrumentation.php#L882-L888",
             "snippet": [
                 {
                     "number": 882,
@@ -337,7 +337,7 @@
                 "limit": 100000
             },
             "subject": "--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/",
-            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/db4bf86aaa00a001b3e95a0c93beccbfcf7d9f55/src/Instrumentation/PostgreSql/src/PostgreSqlInstrumentation.php#L639-L645",
+            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/96bccb43ed302bb6a77f6a6c85e954b9490f3d71/src/Instrumentation/PostgreSql/src/PostgreSqlInstrumentation.php#L639-L645",
             "snippet": [
                 {
                     "number": 639,

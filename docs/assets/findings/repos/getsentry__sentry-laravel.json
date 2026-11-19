@@ -1,6 +1,6 @@
 {
     "repo": "getsentry/sentry-laravel",
-    "sha": "b1c5f55a3a1034dd2ff27406a65099702feb4f4b",
+    "sha": "367112a503852967c374d119d3b23d220f6823ac",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/getsentry/sentry-laravel/blob/b1c5f55a3a1034dd2ff27406a65099702feb4f4b/src/Sentry/Laravel/Features/Ai/AiDataSanitizer.php#L17-L23",
+            "permalink": "https://github.com/getsentry/sentry-laravel/blob/367112a503852967c374d119d3b23d220f6823ac/src/Sentry/Laravel/Features/Ai/AiDataSanitizer.php#L17-L23",
             "snippet": [
                 {
                     "number": 17,
