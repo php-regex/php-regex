@@ -55,7 +55,8 @@ CHANGELOG
    reads them, through the atomic or options group a branch opens with:
    `/(?:(?>ö)|è)+x/u` is no longer reported either, nor are a branch read
    past its optional first item, `/(?:ö?è|ê)+x/u`, or past a lookaround,
-   which takes nothing, `/^(?:(?=ö)ö|è)+$/u`, every branch of a branch
+   which takes nothing, whatever options its body sets,
+   `/^(?:(?=ö)ö|è)+$/u` and `/\A(?:(?=(?i:b))b|B)+\z/`, every branch of a branch
    reset group, `/(?:(?|ö|ê)|è)+x/u`, and an atom under the very options of
    `a` that stand where it does, which restrict `\d`, `\s`, `\w`, their
    negations and the POSIX classes alone, `/(?:(?a:[ö])x|èy)+z/u`; the

@@ -27,7 +27,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class AlternationOverlapLookaroundTest extends TestCase
 {
-    private const CHARACTERS = ['a', 'b', 'x', '!', '>', '$', '\\', 'z'];
+    private const CHARACTERS = ['a', 'b', 'B', 'x', '!', '>', '$', '\\', 'z'];
 
     /**
      * Under u, characters that share their first byte: "ö", "è" and "é"
@@ -61,6 +61,9 @@ final class AlternationOverlapLookaroundTest extends TestCase
         yield 'a lookbehind before a character the other branch never takes' => ['pattern' => '/(?:[^$]+|(?<=\\\\)\$)+/', 'branches' => ['[^$]+', '(?<=\\\\)\$'], 'reported' => false];
         yield 'a branch that is a lookahead alone' => ['pattern' => '/^(?:>(?:(?!!)|!))+$/', 'branches' => ['(?!!)', '!'], 'reported' => false];
         yield 'a positive lookahead wider than its branch' => ['pattern' => '/^(?:(?=[ab])a|b)+$/', 'branches' => ['(?=[ab])a', 'b'], 'reported' => false];
+        // The option group inside the lookahead takes no character either.
+        yield 'a lookahead holding an option group' => ['pattern' => '/\A(?:(?=(?i:b))b|B)+\z/', 'branches' => ['(?=(?i:b))b', 'B'], 'reported' => false];
+        yield 'a lookahead holding an option group before the shared character' => ['pattern' => '/\A(?:(?=(?i:b))b|b)+\z/', 'branches' => ['(?=(?i:b))b', 'b'], 'reported' => true];
     }
 
     /**
