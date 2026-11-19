@@ -31,6 +31,7 @@ use PHPRegex\Parser\Hir\LookKind;
 use PHPRegex\Parser\Hir\OpaqueHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
 use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,6 +39,8 @@ use PHPUnit\Framework\TestCase;
 
 final class HirTranslatorTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     public function test_adjacent_characters_are_one_literal_and_plain_groups_are_gone(): void
     {
@@ -356,10 +359,7 @@ final class HirTranslatorTest extends TestCase
     }
 
     /**
-     * Whether a "|" stands before the "no" branch, an empty one included:
-     * in a lookbehind PCRE gives "(?(c)X)" the length of X alone, where
-     * "(?(c)X|)" may also be empty, so "/(a)?(?<!(?(1)a))c/" finds "c" in
-     * "c" and "/(a)?(?<!(?(1)a|))c/" nothing.
+     * Whether a "|" stands before the "no" branch, an empty one included.
      */
     #[Test]
     #[DataProvider('provideConditionalBars')]
@@ -385,6 +385,40 @@ final class HirTranslatorTest extends TestCase
         yield 'a bar between two empty branches' => ['pattern' => '/(a)?(?(1)|)/', 'written' => true];
         yield 'no bar after a space x skips' => ['pattern' => '/(a)?(?(1)b )/x', 'written' => false];
         yield 'a bar after a space x skips' => ['pattern' => '/(a)?(?(1)b |)/x', 'written' => true];
+    }
+
+    /**
+     * The bar the conditional keeps is the one PCRE reads: in a lookbehind,
+     * it gives "(?(c)X)" the length of X alone, where "(?(c)X|)" may also
+     * be empty, so the negative lookbehind lets "c" through only without
+     * the bar.
+     */
+    #[Test]
+    #[DataProvider('provideConditionalBarsInALookbehind')]
+    public function test_the_bar_a_conditional_keeps_is_the_one_pcre_reads_in_a_lookbehind(string $pattern, bool $written, int $matches): void
+    {
+        $this->requiresCompile($pattern);
+        $this->assertSame($matches, preg_match($pattern, 'c'));
+
+        $bars = [];
+        $this->walk($this->translate($pattern), static function (Hir $hir) use (&$bars): void {
+            if ($hir instanceof ConditionalHir) {
+                $bars[] = $hir->noBranchWritten;
+            }
+        });
+
+        $this->assertSame([$written], $bars);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, written: bool, matches: int}>
+     */
+    public static function provideConditionalBarsInALookbehind(): iterable
+    {
+        yield 'no bar' => ['pattern' => '/(a)?(?<!(?(1)a))c/', 'written' => false, 'matches' => 1];
+        yield 'a bar before an empty branch' => ['pattern' => '/(a)?(?<!(?(1)a|))c/', 'written' => true, 'matches' => 0];
+        yield 'no bar after a space x skips' => ['pattern' => '/(a)?(?<!(?(1)a ))c/x', 'written' => false, 'matches' => 1];
+        yield 'a bar after a space x skips' => ['pattern' => '/(a)?(?<!(?(1)a |))c/x', 'written' => true, 'matches' => 0];
     }
 
     #[Test]
