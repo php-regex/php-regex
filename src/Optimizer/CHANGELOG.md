@@ -10,7 +10,11 @@ CHANGELOG
    which reads nothing yet looks at the characters the repetition would
    give back: `/a+(?!b)/` matches `a` in `aab`, `/a++(?!b)/` nothing. The
    lookaround may stand past the group the repetition ends, after items
-   that may match nothing: `/(a+b?)(?!c)/` matches `a` in `aac`. Such a
+   that may match nothing: `/(a+b?)(?!c)/` matches `a` in `aac`. It may
+   stand past a scan substring too, which what follows backtracks into:
+   `/^(aac)(*scs:(1)(a+b?))(?=\2ac)/` matches `aac` in `aacaac` with
+   group 2 given back to `a`, and `/^(aac)(*scs:(1)(a+b?))(?=\2ac)[0-9]/` now becomes
+   `/^(aac)(*scs:(1)(a+b?))(?=\2ac)\d/`. Such a
    rewrite, which the check of the result refused, no longer takes the
    other rewrites of the pattern with it: under the possessive option
    `/x\s+(?!y)/s` and `/(a+b?)(?!c)/s` lose their useless `s`, and

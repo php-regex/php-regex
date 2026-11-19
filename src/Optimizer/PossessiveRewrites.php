@@ -72,8 +72,9 @@ final class PossessiveRewrites
     /**
      * What follows each item the rewriter is in, the innermost last: the
      * items of its sequence from the index given, or null at the end of an
-     * atomic group or a lookaround, which nothing after it backtracks into.
-     * What follows any other group is what follows the group.
+     * atomic group or a lookaround but a scan substring, which nothing
+     * after it backtracks into. What follows any other group is what
+     * follows the group.
      *
      * @var list<array{list<NodeInterface>, int}|null>
      */
@@ -335,11 +336,13 @@ final class PossessiveRewrites
 
     /**
      * Whether nothing after the group backtracks into it: an atomic group
-     * or a lookaround.
+     * or a lookaround, but a scan substring, which what follows backtracks
+     * into: "^(aac)(*scs:(1)(a+b?))(?=\2ac)" matches "aac" in "aacaac"
+     * with group 2 given back to "a".
      */
     private static function closes(GroupNode $node): bool
     {
-        return GroupType::Atomic === $node->type || \in_array($node->type, self::LOOKAROUNDS, true);
+        return GroupType::Atomic === $node->type || (GroupType::ScanSubstring !== $node->type && \in_array($node->type, self::LOOKAROUNDS, true));
     }
 
     private static function holdsLookaround(NodeInterface $node): bool

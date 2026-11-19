@@ -18,6 +18,7 @@ use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,6 +33,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class PossessiveBeforeLookaroundTest extends TestCase
 {
+    use PcreGates;
+
+    /**
+     * The rows that hold from a PCRE2 newer than the floor: the scan
+     * substring assertion comes with 10.45.
+     */
+    private const NEWER_RELEASES = ['10.45' => ['/^(aac)(*scs:(1)(a+b?))(?=\\2ac)/', '/(ab)(*scs:(1)(a+b))(?=.c)/', '/^(aac)(*scs:(1)(a+b?))(?=\\2ac)[0-9]/']];
+
     private const SUBJECTS = ['aab', 'aac', 'ab', 'a.b', 'a-', 'ab.c', 'b', '', 'x.y.', 'abc.', "x \ny", "x \nz", 'a_b', 'a__b', 'ab_'];
 
     #[Test]
@@ -50,6 +59,8 @@ final class PossessiveBeforeLookaroundTest extends TestCase
     #[DataProvider('provideRepetitionsEndingAGroupBeforeALookaround')]
     public function test_a_repetition_ending_a_group_before_a_lookaround_stays_greedy(string $pattern, string $possessive, string $subject): void
     {
+        $this->requiresPcre2For($pattern, self::NEWER_RELEASES);
+
         $this->assertNotSame(self::matched($pattern, $subject), self::matched($possessive, $subject), \sprintf('Oracle: %s and %s match alike on "%s".', $pattern, $possessive, $subject));
 
         $this->assertSame($pattern, self::rewrite($pattern));
@@ -67,6 +78,9 @@ final class PossessiveBeforeLookaroundTest extends TestCase
         yield 'a lookbehind' => ['pattern' => '/(a+b?)(?<!aa)/', 'possessive' => '/(a++b?)(?<!aa)/', 'subject' => 'aa'];
         yield 'a repetition after an item of its group' => ['pattern' => '/(xa+b?)(?!c)/', 'possessive' => '/(xa++b?)(?!c)/', 'subject' => 'xaac'];
         yield 'a group after an atomic one in a group' => ['pattern' => '/((?>y)(a+b?))(?!c)/', 'possessive' => '/((?>y)(a++b?))(?!c)/', 'subject' => 'yaac'];
+        // What follows a scan substring backtracks into it: the lookahead
+        // has it give back an "a" of group 2.
+        yield 'a scan substring' => ['pattern' => '/^(aac)(*scs:(1)(a+b?))(?=\\2ac)/', 'possessive' => '/^(aac)(*scs:(1)(a++b?))(?=\\2ac)/', 'subject' => 'aacaac'];
     }
 
     /**
@@ -79,6 +93,8 @@ final class PossessiveBeforeLookaroundTest extends TestCase
     #[DataProvider('provideRepetitionsNoLookaroundFollows')]
     public function test_a_repetition_no_lookaround_follows_is_made_possessive(string $pattern, string $possessive): void
     {
+        $this->requiresPcre2For($pattern, self::NEWER_RELEASES);
+
         foreach (self::SUBJECTS as $subject) {
             $this->assertSame(self::matched($pattern, $subject), self::matched($possessive, $subject), \sprintf('Oracle: %s and %s differ on "%s".', $pattern, $possessive, $subject));
         }
@@ -95,12 +111,15 @@ final class PossessiveBeforeLookaroundTest extends TestCase
         yield 'the end of the pattern' => ['pattern' => '/a+b?/', 'possessive' => '/a++b?/'];
         yield 'the end of an atomic group' => ['pattern' => '/(?>a+b?)(?!c)/', 'possessive' => '/(?>a++b?)(?!c)/'];
         yield 'the end of a lookahead' => ['pattern' => '/(?=a+b?)(?!c)/', 'possessive' => '/(?=a++b?)(?!c)/'];
+        yield 'a character a scan substring reads' => ['pattern' => '/(ab)(*scs:(1)(a+b))(?=.c)/', 'possessive' => '/(ab)(*scs:(1)(a++b))(?=.c)/'];
     }
 
     #[Test]
     #[DataProvider('provideRepetitionsBeforeALookaround')]
     public function test_a_repetition_before_a_lookaround_stays_greedy(string $pattern, string $optimized): void
     {
+        $this->requiresPcre2For($pattern, self::NEWER_RELEASES);
+
         foreach (self::SUBJECTS as $subject) {
             $this->assertSame(self::matched($pattern, $subject), self::matched($optimized, $subject), \sprintf('Oracle: %s and %s differ on "%s".', $pattern, $optimized, $subject));
         }
@@ -123,6 +142,7 @@ final class PossessiveBeforeLookaroundTest extends TestCase
         yield 'a lookahead that left the other rewrites undone' => ['pattern' => '/x\s+(?!y)/s', 'optimized' => '/x\s+(?!y)/'];
         yield 'a lookahead at the end of a loop body' => ['pattern' => '/^[a-z](?:[a-z0-9_](?!__))*[a-z0-9]+$/', 'optimized' => '/^[a-z](?:[0-9_a-z](?!__))*[0-9a-z]+$/'];
         yield 'a lookahead past the group the repetition ends' => ['pattern' => '/(a+b?)(?!c)/s', 'optimized' => '/(a+b?)(?!c)/'];
+        yield 'a lookahead past a scan substring' => ['pattern' => '/^(aac)(*scs:(1)(a+b?))(?=\\2ac)[0-9]/', 'optimized' => '/^(aac)(*scs:(1)(a+b?))(?=\\2ac)\\d/'];
     }
 
     private static function rewrite(string $pattern): string
