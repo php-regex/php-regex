@@ -4,6 +4,15 @@ CHANGELOG
 2.0
 ---
 
+ * `SolverOptions::$strategy` chooses how `intersection()`, `subsetOf()` and
+   `equivalent()` search: `SolverStrategy::Lazy`, the default, walks the
+   product of the NFAs as it is reached, the right side of an inclusion
+   determinized one reached state at a time; `SolverStrategy::Eager` walks
+   the product of the minimized DFAs, as before. Both give the same witness,
+   the least of the shortest. `(a|b)*a(a|b){15}` meets `b+` in under a
+   millisecond, where its DFA ran past the 10,000-state limit. With a DFA
+   cache, or a pattern read as UTF-8 beside one read as bytes, the search
+   stays eager.
  * A determinized state holds one target per class of its automaton's
    alphabet, the ranges held once by an alphabet every state shares:
    `^[\p{L}\p{N}]{3,64}$/u ⊆ ^\w{3,64}$/u` takes 22 ms and 1.4 MB, where it

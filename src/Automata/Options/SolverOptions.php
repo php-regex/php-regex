@@ -30,6 +30,8 @@ final class SolverOptions
      * @param MinimizationAlgorithm    $minimizationAlgorithm    Strategy used for DFA minimization
      * @param int|null                 $maxTransitionsProcessed  Hard limit on transition work (determinize/minimize/compare); null disables the guard
      * @param DeterminizationAlgorithm $determinizationAlgorithm Strategy used for NFA determinization
+     * @param SolverStrategy           $strategy                 How intersection(), subsetOf() and equivalent() search: on the
+     *                                                           product of the NFAs as it is reached, or of the minimized DFAs
      *
      * @throws InvalidRegexOptionException when a state cap is below 1, or the transition budget below 0
      */
@@ -43,6 +45,7 @@ final class SolverOptions
         // spin the determinization loop for tens of minutes.
         public readonly ?int $maxTransitionsProcessed = 1_000_000,
         public readonly DeterminizationAlgorithm $determinizationAlgorithm = DeterminizationAlgorithm::SubsetIndexed,
+        public readonly SolverStrategy $strategy = SolverStrategy::Lazy,
     ) {
         // A transition budget of 0 is a budget: the first transition spends it.
         foreach (['maxNfaStates' => [$maxNfaStates, 1], 'maxDfaStates' => [$maxDfaStates, 1], 'maxTransitionsProcessed' => [$maxTransitionsProcessed ?? 0, 0]] as $name => [$value, $floor]) {

@@ -24,7 +24,7 @@ final class PublicSurface
      */
     public const CLASSES = [
         'Automata' => [
-            'LanguageSolver', 'Options/SolverOptions', 'Options/MatchMode',
+            'LanguageSolver', 'Options/SolverOptions', 'Options/MatchMode', 'Options/SolverStrategy',
             'Determinization/DeterminizationAlgorithm', 'Minimization/MinimizationAlgorithm',
             'Solver/EquivalenceResult', 'Solver/IntersectionResult', 'Solver/SubsetResult', 'Solver/MatchEquivalenceResult',
             'Model/Dfa', 'Model/DfaState', 'Solver/DfaCacheInterface', 'Solver/InMemoryDfaCache',

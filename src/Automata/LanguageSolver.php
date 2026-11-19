@@ -21,13 +21,18 @@ use PHPRegex\Automata\Match\PriorityNfa;
 use PHPRegex\Automata\Match\PriorityNfaBuilder;
 use PHPRegex\Automata\Model\Alphabet;
 use PHPRegex\Automata\Model\Dfa;
+use PHPRegex\Automata\Model\Nfa;
+use PHPRegex\Automata\Model\PackedNfa;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Options\SolverStrategy;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\EquivalenceResult;
 use PHPRegex\Automata\Solver\IntersectionResult;
+use PHPRegex\Automata\Solver\LazyDfa;
 use PHPRegex\Automata\Solver\MatchEquivalenceResult;
 use PHPRegex\Automata\Solver\PrefixReader;
+use PHPRegex\Automata\Solver\ProductSearch;
 use PHPRegex\Automata\Solver\RewriteSites;
 use PHPRegex\Automata\Solver\SubsetResult;
 use PHPRegex\Automata\Solver\Utf8Reading;
@@ -110,6 +115,15 @@ final class LanguageSolver
     public function intersection(string $left, string $right, ?SolverOptions $options = null): IntersectionResult
     {
         $options ??= new SolverOptions();
+        $lazy = $this->lazyPair($left, $right, $options);
+        if (null !== $lazy) {
+            [$leftNfa, $rightNfa, $bytes] = $lazy;
+            $classes = (new ProductSearch($options))->intersection($leftNfa, $rightNfa);
+            $example = null === $classes ? null : ProductSearch::spell($classes, $leftNfa->alphabet, $bytes);
+
+            return new IntersectionResult(null === $example, $example);
+        }
+
         [$leftDfa, $rightDfa] = $this->buildDfas($left, $right, $options);
 
         $example = $this->findExample(
@@ -131,6 +145,15 @@ final class LanguageSolver
     public function subsetOf(string $left, string $right, ?SolverOptions $options = null): SubsetResult
     {
         $options ??= new SolverOptions();
+        $lazy = $this->lazyPair($left, $right, $options);
+        if (null !== $lazy) {
+            // A language holds itself: the pattern was read, and refused
+            // if it leaves the regular subset, before this answer.
+            $example = $left === $right ? null : $this->lazyDifference($lazy[0], $lazy[1], $lazy[2], $options);
+
+            return new SubsetResult(null === $example, $example);
+        }
+
         [$leftDfa, $rightDfa] = $this->buildDfas($left, $right, $options);
 
         $example = $this->findExample(
@@ -152,6 +175,15 @@ final class LanguageSolver
     public function equivalent(string $left, string $right, ?SolverOptions $options = null): EquivalenceResult
     {
         $options ??= new SolverOptions();
+        $lazy = $this->lazyPair($left, $right, $options);
+        if (null !== $lazy) {
+            [$leftNfa, $rightNfa, $bytes] = $lazy;
+            $leftOnlyExample = $left === $right ? null : $this->lazyDifference($leftNfa, $rightNfa, $bytes, $options);
+            $rightOnlyExample = $left === $right ? null : $this->lazyDifference($rightNfa, $leftNfa, $bytes, $options);
+
+            return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample);
+        }
+
         [$leftDfa, $rightDfa] = $this->buildDfas($left, $right, $options);
 
         $leftOnlyExample = $this->findExample(
@@ -769,19 +801,68 @@ final class LanguageSolver
             }
         }
 
-        $ast = $this->parser->parse($pattern);
-        $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options, $this->parser->target());
-
-        $transformer = new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast));
-        $nfa = $transformer->transform($hir, $options);
-
-        $dfa = (new DfaBuilder())->determinize($nfa, $options);
+        $dfa = (new DfaBuilder())->determinize($this->buildNfa($pattern, $options), $options);
 
         if (null !== $this->dfaCache && null !== $cacheKey) {
             $this->dfaCache->set($cacheKey, $dfa);
         }
 
         return $dfa;
+    }
+
+    /**
+     * @throws ComplexityException
+     */
+    private function buildNfa(string $pattern, SolverOptions $options): Nfa
+    {
+        $ast = $this->parser->parse($pattern);
+        $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options, $this->parser->target());
+
+        return (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast)))->transform($hir, $options);
+    }
+
+    /**
+     * The NFAs of both patterns packed over one alphabet, for the lazy
+     * search, and whether a witness is spelled in bytes; null where the
+     * eager search answers: under the Eager strategy, with a DFA cache,
+     * whose compiled DFAs it reuses, or for a pattern read as UTF-8 beside
+     * one read as bytes, which the eager search reads through the UTF-8 of
+     * each character.
+     *
+     * @throws ComplexityException
+     *
+     * @return array{PackedNfa, PackedNfa, bool}|null
+     */
+    private function lazyPair(string $left, string $right, SolverOptions $options): ?array
+    {
+        if (SolverStrategy::Lazy !== $options->strategy || null !== $this->dfaCache) {
+            return null;
+        }
+
+        $leftNfa = $this->buildNfa($left, $options);
+        $rightNfa = $left === $right ? $leftNfa : $this->buildNfa($right, $options);
+        if (($leftNfa->maxCodePoint > self::MAX_BYTE) !== ($rightNfa->maxCodePoint > self::MAX_BYTE)) {
+            return null;
+        }
+
+        $budget = null === $options->maxTransitionsProcessed ? null : new WorkBudget($options->maxTransitionsProcessed, 'determinize', 0, 0, 0);
+        [$leftPacked, $rightPacked] = PackedNfa::packPair($leftNfa, $rightNfa, $budget);
+
+        return [$leftPacked, $rightPacked, $leftNfa->maxCodePoint <= self::MAX_BYTE];
+    }
+
+    /**
+     * The least shortest string the left NFA matches and the right one
+     * does not, the right one determinized as the search reaches it.
+     *
+     * @throws ComplexityException
+     */
+    private function lazyDifference(PackedNfa $left, PackedNfa $right, bool $bytes, SolverOptions $options): ?string
+    {
+        $budget = null === $options->maxTransitionsProcessed ? null : new WorkBudget($options->maxTransitionsProcessed, 'determinize', 0, 0, 0);
+        $classes = (new ProductSearch($options))->difference($left, new LazyDfa($right, $options->maxDfaStates, $budget));
+
+        return null === $classes ? null : ProductSearch::spell($classes, $left->alphabet, $bytes);
     }
 
     private function cacheKey(string $pattern, SolverOptions $options): string
