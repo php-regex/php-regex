@@ -15,6 +15,9 @@ namespace PHPRegex\Tests\Unit\Parser\Analysis;
 
 use PHPRegex\Parser\Analysis\AtomicInertiaAnalyzer;
 use PHPRegex\Parser\Analysis\InertCommitments;
+use PHPRegex\Parser\Hir\CharSet;
+use PHPRegex\Parser\Hir\ConcatHir;
+use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -121,6 +124,64 @@ final class AtomicInertiaAnalyzerTest extends TestCase
         $this->assertTrue(self::inert('/a++(?=a)/', true)->isInertPossessive(0));
         $this->assertTrue(self::inert('/(?>a+)\B/', true)->isInertAtomic(0));
         $this->assertFalse(self::inert('/a++(?=a)/', false)->isInertPossessive(0));
+    }
+
+    /**
+     * What follows each part of a sequence is worked out in one pass from
+     * its end: the first characters of the next part, through the parts
+     * that may be skipped, then what follows the sequence. Under a search,
+     * a lookahead proves nothing, and nothing before it is known.
+     */
+    #[Test]
+    public function test_works_out_what_follows_each_part_of_a_sequence(): void
+    {
+        $parts = self::parts('/ab?c*d/');
+        $beyond = CharSet::single(0x78);
+
+        $this->assertSame(
+            [self::key('bcd'), self::key('cd'), self::key('d'), self::key('x')],
+            array_map(static fn (?CharSet $set): ?string => $set?->key(), (new AtomicInertiaAnalyzer())->followSets($parts, $beyond)),
+        );
+        $this->assertSame([null, null, null, null], (new AtomicInertiaAnalyzer())->followSets($parts, null));
+
+        $this->assertSame(
+            [null, self::key('b'), CharSet::empty()->key(), CharSet::empty()->key()],
+            array_map(static fn (?CharSet $set): ?string => $set?->key(), (new AtomicInertiaAnalyzer(wholeSubject: false))->followSets(self::parts('/a(?=b)b$/'), CharSet::empty())),
+        );
+    }
+
+    /**
+     * Whether a commitment occurs at each part of a sequence or further
+     * along, worked out in one pass from its end.
+     */
+    #[Test]
+    public function test_finds_where_a_commitment_is_still_ahead(): void
+    {
+        $analyzer = new AtomicInertiaAnalyzer();
+
+        $this->assertSame([true, true, true, false], $analyzer->commitmentsFrom(self::parts('/a++b(?>c)d/')));
+        $this->assertSame([false, false, false, false], $analyzer->commitmentsFrom(self::parts('/ab?c*d/')));
+    }
+
+    /**
+     * @return list<Hir>
+     */
+    private static function parts(string $pattern): array
+    {
+        $hir = (new HirTranslator())->translate(RegexParser::create()->parse($pattern));
+        self::assertInstanceOf(ConcatHir::class, $hir);
+
+        return $hir->parts;
+    }
+
+    private static function key(string $characters): string
+    {
+        $set = CharSet::empty();
+        foreach (mb_str_split($characters) as $character) {
+            $set = $set->union(CharSet::single(mb_ord($character)));
+        }
+
+        return $set->key();
     }
 
     private static function inert(string $pattern, bool $wholeSubject): InertCommitments

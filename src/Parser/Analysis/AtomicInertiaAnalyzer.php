@@ -129,46 +129,47 @@ final class AtomicInertiaAnalyzer
     }
 
     /**
-     * The first characters of everything after the position: the rest of
-     * the sequence, through the followers that may be skipped, and what
-     * follows the sequence itself. All followers skippable and nothing
-     * beyond the sequence, an empty set; a follower or continuation whose
-     * first characters cannot be worked out, null.
+     * For each part of a sequence, the first characters of everything after
+     * it: the rest of the sequence, through the followers that may be
+     * skipped, and what follows the sequence itself. All followers
+     * skippable and nothing beyond the sequence, an empty set; a follower
+     * or continuation whose first characters cannot be worked out, null.
+     * Worked out in one pass from the end of the sequence.
      *
      * @param list<Hir> $parts
+     *
+     * @return list<CharSet|null>
      */
-    public function followSetOf(array $parts, int $index, ?CharSet $beyond): ?CharSet
+    public function followSets(array $parts, ?CharSet $beyond): array
     {
-        if (null === $beyond) {
-            return null;
-        }
-
+        $sets = [];
         $rest = $beyond;
-        for ($i = \count($parts) - 1; $i > $index; $i--) {
-            if (!$this->wholeSubject) {
-                $zeroWidth = self::zeroWidthFirst($parts[$i]);
-                if (false === $zeroWidth) {
-                    return null;
-                }
-
-                if (null !== $zeroWidth) {
-                    $rest = $zeroWidth->union($rest);
-
-                    continue;
-                }
-            }
-
-            $properties = $parts[$i]->properties;
-            if (null === $properties->first) {
-                return null;
-            }
-
-            $rest = true === $properties->nullable
-                ? $properties->first->union($rest)
-                : $properties->first;
+        for ($i = \count($parts) - 1; $i >= 0; $i--) {
+            $sets[] = $rest;
+            $rest = null === $rest ? null : $this->followSetBefore($parts[$i], $rest);
         }
 
-        return $rest;
+        return array_reverse($sets);
+    }
+
+    /**
+     * For each part of a sequence, whether a possessive quantifier or an
+     * atomic group occurs in it or in a part further along.
+     *
+     * @param list<Hir> $parts
+     *
+     * @return list<bool>
+     */
+    public function commitmentsFrom(array $parts): array
+    {
+        $from = [];
+        $ahead = false;
+        for ($i = \count($parts) - 1; $i >= 0; $i--) {
+            $ahead = $ahead || self::containsCommitment($parts[$i]);
+            $from[] = $ahead;
+        }
+
+        return array_reverse($from);
     }
 
     /**
@@ -208,31 +209,13 @@ final class AtomicInertiaAnalyzer
     }
 
     /**
-     * Whether a possessive quantifier or an atomic group occurs beyond the
-     * part that follows the position, anywhere in the parts after it.
-     *
-     * @param list<Hir> $parts
+     * Whether the commitment a sequence part ends with is proven, before the
+     * characters that follow it, when another commitment does or does not
+     * occur beyond the part right after it.
      */
-    public function commitsBeyond(array $parts, int $after): bool
+    public function commitmentIsInert(RepetitionHir|AtomicHir $commitment, ?CharSet $follow, bool $commitsBeyond): bool
     {
-        for ($i = $after + 1, $count = \count($parts); $i < $count; $i++) {
-            if (self::containsCommitment($parts[$i])) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Whether the commitment the sequence part at the index ends with is
-     * proven, before the characters given as what follows the sequence.
-     *
-     * @param list<Hir> $parts
-     */
-    public function commitmentIsInert(RepetitionHir|AtomicHir $commitment, array $parts, int $index, ?CharSet $follow): bool
-    {
-        if ($this->commitsBeyond($parts, $index + 1)) {
+        if ($commitsBeyond) {
             return false;
         }
 
@@ -250,6 +233,10 @@ final class AtomicInertiaAnalyzer
      */
     public function inertCommitments(Hir $root, ?CharSet $beyond = null): InertCommitments
     {
+        if (!self::containsCommitment($root)) {
+            return new InertCommitments();
+        }
+
         $possessives = [];
         $atomics = [];
         $this->collectSequence([$root], $beyond ?? CharSet::empty(), $possessives, $atomics);
@@ -305,10 +292,12 @@ final class AtomicInertiaAnalyzer
      */
     private function collectSequence(array $parts, ?CharSet $follow, array &$possessives, array &$atomics): void
     {
+        $follows = $this->followSets($parts, $follow);
+        $commitments = $this->commitmentsFrom($parts);
         foreach ($parts as $index => $part) {
-            $partFollow = $this->followSetOf($parts, $index, $follow);
+            $partFollow = $follows[$index];
             $commitment = $this->commitmentAtEnd($part);
-            if (null !== $commitment && $this->commitmentIsInert($commitment, $parts, $index, $partFollow)) {
+            if (null !== $commitment && $this->commitmentIsInert($commitment, $partFollow, $commitments[$index + 2] ?? false)) {
                 if ($commitment instanceof RepetitionHir) {
                     $possessives[$commitment->startPosition] = true;
                 } else {
@@ -498,6 +487,31 @@ final class AtomicInertiaAnalyzer
         }
 
         return $first;
+    }
+
+    /**
+     * The first characters of everything from the part on, before the
+     * characters that follow it; null when they cannot be worked out.
+     */
+    private function followSetBefore(Hir $part, CharSet $rest): ?CharSet
+    {
+        if (!$this->wholeSubject) {
+            $zeroWidth = self::zeroWidthFirst($part);
+            if (false === $zeroWidth) {
+                return null;
+            }
+
+            if (null !== $zeroWidth) {
+                return $zeroWidth->union($rest);
+            }
+        }
+
+        $properties = $part->properties;
+        if (null === $properties->first) {
+            return null;
+        }
+
+        return true === $properties->nullable ? $properties->first->union($rest) : $properties->first;
     }
 
     /**

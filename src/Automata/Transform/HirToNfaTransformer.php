@@ -307,11 +307,13 @@ final class HirToNfaTransformer
      */
     private function assertSequence(array $parts, SolverOptions $options, ?CharSet $follow): void
     {
+        $follows = $this->inertia->followSets($parts, $follow);
+        $commitments = $this->inertia->commitmentsFrom($parts);
         foreach ($parts as $index => $part) {
-            $partFollow = $this->inertia->followSetOf($parts, $index, $follow);
+            $partFollow = $follows[$index];
             $commitment = $this->inertia->commitmentAtEnd($part);
             if (null !== $commitment) {
-                $this->assertCommitmentIsSafe($commitment, $partFollow, $parts, $index);
+                $this->assertCommitmentIsSafe($commitment, $partFollow, $commitments[$index + 2] ?? false);
             }
 
             $this->assertNode($part, $options, $partFollow);
@@ -345,13 +347,14 @@ final class HirToNfaTransformer
      * each proof reads what follows its own commitment, and the two do not
      * compose.
      *
-     * @param list<Hir> $parts the parts of the sequence the commitment ends
+     * @param bool $commitsBeyond whether another commitment occurs beyond the
+     *                            part right after the one it ends
      *
      * @throws ComplexityException
      */
-    private function assertCommitmentIsSafe(RepetitionHir|AtomicHir $commitment, ?CharSet $follow, array $parts, int $index): void
+    private function assertCommitmentIsSafe(RepetitionHir|AtomicHir $commitment, ?CharSet $follow, bool $commitsBeyond): void
     {
-        if (!$this->inertia->commitmentIsInert($commitment, $parts, $index, $follow)) {
+        if (!$this->inertia->commitmentIsInert($commitment, $follow, $commitsBeyond)) {
             throw new ComplexityException($commitment instanceof AtomicHir ? self::ATOMIC_MESSAGE : self::POSSESSIVE_MESSAGE, $commitment->startPosition, $this->pattern);
         }
 
