@@ -78,7 +78,10 @@ CHANGELOG
    `/(*CASELESS_RESTRICT)[^\x{212A}]+(?-i:k)+!/iu` and
    `/(*TURKISH_CASING)[^I]+i+!/iu` medium, where they were safe: PCRE takes
    30, 122 and 498 steps on 8, 16 and 32 `i` for the second. They rate
-   `/(*BSR_ANYCRLF)\R+\x85+$/` safe, where it was medium.
+   `/(*BSR_ANYCRLF)\R+\x85+$/` safe, where it was medium. Under `(*UCP)`
+   without UTF, `(?aS)` and `(?a)` hold `\s` to ASCII, and `\S` takes the
+   next line and the no-break space, `\x85` and `\xA0`, until `(?-aS)` or
+   `(?-a)` lets them go: `\S` was read as taking neither.
  * A mark written short accepts an `=` in its name, `/(*:foo=bar)/`, and
    four characters after it, `/(*:x)a=b/`: the check that only the limits
    take a value read it as `(*MARK:`, four characters longer, and refused
