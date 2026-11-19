@@ -1,5 +1,20 @@
 # TODO
 
+## Before 2.0.0, a pull request of its own
+
+- The ReDoS analysis under another locale's tables (an `LC_CTYPE` other
+  than C) reads a negated class in ASCII only, and misses quadratic
+  patterns: `"/^(x)[^a]+\xC3+\1$/"` (a raw 0xC3) is rated safe under
+  fr_FR.ISO8859-1, where PCRE takes 32, 124 and 500 steps on `x` then 8,
+  16 and 32 0xC3; `"/^(x)[^é]+\x90+\1$/"` the same. Under those tables,
+  read the bytes above ASCII of literals and complements, and leave unknown
+  what the tables decide (`\w`, the cases). Clip the gaps of
+  `ByteCharSet::complement()` to its bound in the same change, not before:
+  alone, that makes the second pattern safe too. The linter's overlap
+  fallback reads such a literal as its byte, and
+  `CharSetAnalyzerTest::test_read_in_ascii_a_set_stops_there` pins the
+  ASCII read: both move with it. Spec first. From the review of #407.
+
 ## Left from the second pass before 2.0.0
 
 The bugs of the second pass are fixed in #403; these were left out of it.
