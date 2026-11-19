@@ -23,21 +23,34 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Which possessive quantifiers, atomic groups and "\R" commit to nothing,
- * by the offset each starts at in the pattern body. Each row's verdict is
- * PCRE's: the inert ones find the matches of their plain spelling (see
- * LanguageSolverSoundnessTest and JavaScriptCommitmentTest), the others a
- * subject where the two part.
+ * by the offset each starts at in the pattern body. Each row is read by
+ * PCRE first: written plain, the commitments proven find the matches of
+ * the pattern on every subject given, and a commitment refused, written
+ * plain, finds another match on the subject given, unless the refusal is
+ * only the rule's limit.
  */
 final class AtomicInertiaAnalyzerTest extends TestCase
 {
     /**
-     * @param list<int> $possessives
-     * @param list<int> $atomics
+     * @param list<int>                                  $possessives
+     * @param list<int>                                  $atomics
+     * @param list<string>                               $subjects
+     * @param array{plain: string, subject: string}|null $parting
      */
     #[Test]
     #[DataProvider('provideSearchVerdicts')]
-    public function test_finds_the_commitments_a_search_may_print_plain(string $pattern, array $possessives, array $atomics): void
+    public function test_finds_the_commitments_a_search_may_print_plain(string $pattern, array $possessives, array $atomics, ?string $plain, array $subjects, ?array $parting): void
     {
+        if (null !== $plain) {
+            foreach ($subjects as $subject) {
+                $this->assertSame(self::span($pattern, $subject), self::span($plain, $subject), $plain.' on '.json_encode($subject));
+            }
+        }
+
+        if (null !== $parting) {
+            $this->assertNotSame(self::span($pattern, $parting['subject']), self::span($parting['plain'], $parting['subject']), $parting['plain'].' on '.json_encode($parting['subject']));
+        }
+
         $inert = self::inert($pattern, false);
 
         foreach ($possessives as $offset) {
@@ -52,24 +65,28 @@ final class AtomicInertiaAnalyzerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, possessives: list<int>, atomics: list<int>}>
+     * @return iterable<string, array{pattern: string, possessives: list<int>, atomics: list<int>, plain: string|null, subjects: list<string>, parting: array{plain: string, subject: string}|null}>
      */
     public static function provideSearchVerdicts(): iterable
     {
-        yield 'a possessive run to the end' => ['pattern' => '/^\d++$/', 'possessives' => [1], 'atomics' => []];
-        yield 'an atomic run before a dash' => ['pattern' => '/^(?>\d+)-x$/', 'possessives' => [], 'atomics' => [1]];
-        yield 'a line break before a letter' => ['pattern' => '/a\Rb/', 'possessives' => [], 'atomics' => [1]];
-        yield 'a fixed atomic body' => ['pattern' => '/(?>abc)c/', 'possessives' => [], 'atomics' => [0]];
-        yield 'a longer branch first' => ['pattern' => '/(?>ab|a)c/', 'possessives' => [], 'atomics' => [0]];
-        yield 'a run at the end of a lookahead' => ['pattern' => '/(?=a++)a/', 'possessives' => [3], 'atomics' => []];
-        yield 'a shorter branch first' => ['pattern' => '/(?>a|ab)c/', 'possessives' => [], 'atomics' => []];
-        yield 'a run the follower shares' => ['pattern' => '/a*+a/', 'possessives' => [], 'atomics' => []];
-        yield 'a newline after a line break' => ['pattern' => "/\\R\n/", 'possessives' => [], 'atomics' => []];
-        yield 'a lazy atomic run' => ['pattern' => '/(?>a+?)b/', 'possessives' => [], 'atomics' => []];
-        yield 'a lookahead after a run' => ['pattern' => '/a++(?=a)/', 'possessives' => [], 'atomics' => []];
-        yield 'a word boundary after a run' => ['pattern' => '/(?>a+)\B/', 'possessives' => [], 'atomics' => []];
-        yield 'a line end under m' => ['pattern' => '/\s++$/m', 'possessives' => [], 'atomics' => []];
-        yield 'a commitment further along' => ['pattern' => '/a++b\d++c/', 'possessives' => [4], 'atomics' => []];
+        yield 'a possessive run to the end' => ['pattern' => '/^\d++$/', 'possessives' => [1], 'atomics' => [], 'plain' => '/^\d+$/', 'subjects' => ['123', "12\n", '12a', ''], 'parting' => null];
+        yield 'an atomic run before a dash' => ['pattern' => '/^(?>\d+)-x$/', 'possessives' => [], 'atomics' => [1], 'plain' => '/^(?:\d+)-x$/', 'subjects' => ['12-x', '1-x', '12x', '-x'], 'parting' => null];
+        yield 'a line break before a letter' => ['pattern' => '/a\Rb/', 'possessives' => [], 'atomics' => [1], 'plain' => '/a(?:\r\n|[\n\x0B\f\r\x85])b/', 'subjects' => ["a\r\nb", "a\nb", "a\rb", "a\r\rb", 'ab'], 'parting' => null];
+        yield 'a fixed atomic body' => ['pattern' => '/(?>abc)c/', 'possessives' => [], 'atomics' => [0], 'plain' => '/(?:abc)c/', 'subjects' => ['abcc', 'abc', 'xabcc'], 'parting' => null];
+        yield 'a longer branch first' => ['pattern' => '/(?>ab|a)c/', 'possessives' => [], 'atomics' => [0], 'plain' => '/(?:ab|a)c/', 'subjects' => ['abc', 'ac', 'abac', 'ab'], 'parting' => null];
+        yield 'a run at the end of a lookahead' => ['pattern' => '/(?=a++)a/', 'possessives' => [3], 'atomics' => [], 'plain' => '/(?=a+)a/', 'subjects' => ['a', 'aa', 'b'], 'parting' => null];
+        yield 'a shorter branch first' => ['pattern' => '/(?>a|ab)c/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:a|ab)c/', 'subject' => 'abc']];
+        yield 'a run the follower shares' => ['pattern' => '/a*+a/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/a*a/', 'subject' => 'aa']];
+        yield 'a newline after a line break' => ['pattern' => "/\\R\n/", 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:\r\n|[\n\x0B\f\r\x85])\n/', 'subject' => "\r\n"]];
+        yield 'a lazy atomic run' => ['pattern' => '/(?>a+?)b/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:a+?)b/', 'subject' => 'aab']];
+        yield 'a lazy run repeated in an atomic group' => ['pattern' => '/(?>(?:a+?){2})b/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:(?:a+?){2})b/', 'subject' => 'aaab']];
+        yield 'a lazy run repeated possessively' => ['pattern' => '/(?:a+?){2}+b/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:a+?){2}b/', 'subject' => 'aaab']];
+        yield 'a lookahead after a run' => ['pattern' => '/a++(?=a)/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/a+(?=a)/', 'subject' => 'aa']];
+        yield 'a word boundary after a run' => ['pattern' => '/(?>a+)\B/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:a+)\B/', 'subject' => 'aa']];
+        yield 'a line end under m' => ['pattern' => '/\s++$/m', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/\s+$/m', 'subject' => " \n x"]];
+        // The first run commits to nothing either, but its proof would read
+        // past the second one: the rule's limit, with no subject to part on.
+        yield 'a commitment further along' => ['pattern' => '/a++b\d++c/', 'possessives' => [4], 'atomics' => [], 'plain' => '/a++b\d+c/', 'subjects' => ['ab12c', 'aab1c', 'abc', 'ab1'], 'parting' => null];
     }
 
     /**
@@ -94,6 +111,13 @@ final class AtomicInertiaAnalyzerTest extends TestCase
     #[Test]
     public function test_skips_a_zero_width_follower_over_a_whole_subject(): void
     {
+        foreach (['', 'a', 'aa', 'ab', 'ba'] as $subject) {
+            $this->assertSame(preg_match('/^(?:a+(?=a))\z/', $subject), preg_match('/^(?:a++(?=a))\z/', $subject), json_encode($subject).' whole');
+            $this->assertSame(preg_match('/^(?:a+\B)\z/', $subject), preg_match('/^(?:(?>a+)\B)\z/', $subject), json_encode($subject).' whole');
+        }
+
+        $this->assertNotSame(self::span('/a+(?=a)/', 'aa'), self::span('/a++(?=a)/', 'aa'));
+
         $this->assertTrue(self::inert('/a++(?=a)/', true)->isInertPossessive(0));
         $this->assertTrue(self::inert('/(?>a+)\B/', true)->isInertAtomic(0));
         $this->assertFalse(self::inert('/a++(?=a)/', false)->isInertPossessive(0));
@@ -104,5 +128,19 @@ final class AtomicInertiaAnalyzerTest extends TestCase
         $hir = (new HirTranslator())->translate(RegexParser::create()->parse($pattern));
 
         return (new AtomicInertiaAnalyzer($wholeSubject))->inertCommitments($hir);
+    }
+
+    /**
+     * Where preg_match() finds the first match, as offsets into the
+     * subject, or null.
+     *
+     * @return array{int, int}|null
+     */
+    private static function span(string $pattern, string $subject): ?array
+    {
+        $result = preg_match($pattern, $subject, $match, \PREG_OFFSET_CAPTURE);
+        self::assertNotFalse($result, $pattern);
+
+        return 1 === $result ? [$match[0][1], $match[0][1] + \strlen($match[0][0])] : null;
     }
 }

@@ -118,6 +118,7 @@ final class LanguageSolverSoundnessTest extends TestCase
         yield 'an optional letter in the body' => ['possessive' => '/^(?:ab?)++b$/', 'greedy' => '/^(?:ab?)+b$/', 'subject' => 'ab'];
         yield 'a count between two bounds in the body' => ['possessive' => '/^(?:a{2,3})++b$/', 'greedy' => '/^(?:a{2,3})+b$/', 'subject' => 'aaaab'];
         yield 'an alternation in a sequence of the body' => ['possessive' => '/^(?:a(?:bc|b))++c$/', 'greedy' => '/^(?:a(?:bc|b))+c$/', 'subject' => 'abc'];
+        yield 'a lazy run in the body' => ['possessive' => '/^(?:a+?){2}+b$/', 'greedy' => '/^(?:a+?){2}b$/', 'subject' => 'aaab'];
     }
 
     /**
@@ -212,6 +213,7 @@ final class LanguageSolverSoundnessTest extends TestCase
         yield 'a shorter branch first' => ['atomic' => '/^(?>a|ab)c$/', 'plain' => '/^(?:a|ab)c$/', 'subject' => 'abc'];
         yield 'a run the follower shares' => ['atomic' => '/^(?>a+)a$/', 'plain' => '/^a+a$/', 'subject' => 'aa'];
         yield 'a lazy run' => ['atomic' => '/^(?>a+?)b$/', 'plain' => '/^a+?b$/', 'subject' => 'aab'];
+        yield 'a lazy run repeated' => ['atomic' => '/^(?>(?:a+?){2})b$/', 'plain' => '/^(?:a+?){2}b$/', 'subject' => 'aaab'];
         yield 'a longer branch the follower needs short' => ['atomic' => '/^(?>ab|a)b$/', 'plain' => '/^(?:ab|a)b$/', 'subject' => 'ab'];
         yield 'a newline after \R' => ['atomic' => "/^\\R\n$/", 'plain' => "/^(?:\r\n|\r|\n)\n$/", 'subject' => "\r\n"];
     }

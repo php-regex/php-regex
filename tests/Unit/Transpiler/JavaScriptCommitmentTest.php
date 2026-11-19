@@ -114,6 +114,8 @@ final class JavaScriptCommitmentTest extends TestCase
         yield 'a lookahead the run feeds' => ['pattern' => '/^a++(?=a)/', 'plain' => '/^a+(?=a)/', 'subject' => 'aa', 'message' => $possessive];
         yield 'a word boundary given back' => ['pattern' => '/^(?>a+)\B/', 'plain' => '/^a+\B/', 'subject' => 'aa', 'message' => $atomic];
         yield 'a line end under m' => ['pattern' => '/^\s++$/m', 'plain' => '/^\s+$/m', 'subject' => " \n x", 'message' => $possessive];
+        yield 'a lazy run repeated in an atomic group' => ['pattern' => '/(?>(?:a+?){2})b/', 'plain' => '/(?:a+?){2}b/', 'subject' => 'aaab', 'message' => $atomic];
+        yield 'a lazy run repeated possessively' => ['pattern' => '/(?:a+?){2}+b/', 'plain' => '/(?:a+?){2}b/', 'subject' => 'aaab', 'message' => $possessive];
     }
 
     /**

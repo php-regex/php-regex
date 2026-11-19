@@ -444,18 +444,20 @@ final class AtomicInertiaAnalyzer
      * The characters the atom of a repetition consumes first, when an
      * iteration gives nothing back that the follower or the next iteration
      * could take: a class or a literal, a sequence of them that matches one
-     * fixed way, or an unbounded run of one class (its characters given
-     * back are taken by no follower that starts otherwise, and the next
-     * iteration takes them all the same). A body that may match more than
-     * one way, "ab?", "a{2,3}", "(?:bc|b)", an alternation, an empty set,
-     * or anything that may match nothing first, proves nothing.
+     * fixed way, or an unbounded greedy run of one class (its characters
+     * given back are taken by no follower that starts otherwise, and the
+     * next iteration takes them all the same). A body that may match more
+     * than one way, "ab?", "a{2,3}", "(?:bc|b)", an alternation, an empty
+     * set, or anything that may match nothing first, proves nothing; nor
+     * does a lazy run, which stops at its first character where the group
+     * would keep it: "(?>(?:a+?){2})b" never matches "aaab" from its start.
      */
     private function atomFirstSet(Hir $atom): ?CharSet
     {
         $atom = self::unwrap($atom);
 
         if ($atom instanceof RepetitionHir) {
-            if ($atom->min < 1 || null !== $atom->max) {
+            if (Greed::Greedy !== $atom->greed || $atom->min < 1 || null !== $atom->max) {
                 return null;
             }
 
