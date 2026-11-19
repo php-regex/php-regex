@@ -93,6 +93,11 @@ final class ExtendedRewriteVerificationTest extends TestCase
     public function test_a_rewrite_whose_check_outgrows_its_work_is_not_suggested(): void
     {
         $pattern = '/[\pL0-9]*0'.str_repeat('\pL', 1100).'$/umx';
+        $rewrite = '/[0-9\pL]*0\pL{1100}$/umx';
+        foreach (['0'.str_repeat('a', 1100), '0'.str_repeat('a', 1099), 'x0'.str_repeat('é', 1100)."\nz", str_repeat('a', 1101), '0'.str_repeat('a', 1100).'0'] as $subject) {
+            $this->assertSame(self::span($pattern, $subject), self::span($rewrite, $subject), \strlen($subject).' bytes');
+        }
+
         $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null])))->rewritesAlikeInPlace($pattern, '/[0-9\pL]*0\pL{1100}$/umx'), 'The default budget settles it.');
 
         $this->assertSame([], $this->suggestions($pattern, true));
@@ -163,5 +168,19 @@ final class ExtendedRewriteVerificationTest extends TestCase
         $result = $analysis->suggestOptimizations([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')], 0, new OptimizerOptions(verifyWithAutomata: $verify));
 
         return array_values(array_map(static fn (array $suggestion): string => $suggestion['optimization']->optimized, $result));
+    }
+
+    /**
+     * Where preg_match() finds the first match, as offsets into the
+     * subject, or null.
+     *
+     * @return array{int, int}|null
+     */
+    private static function span(string $pattern, string $subject): ?array
+    {
+        $result = preg_match($pattern, $subject, $match, \PREG_OFFSET_CAPTURE);
+        self::assertNotFalse($result, $pattern);
+
+        return 1 === $result ? [$match[0][1], $match[0][1] + \strlen($match[0][0])] : null;
     }
 }
