@@ -135,6 +135,14 @@ final class RedosProfiler extends AbstractNodeVisitor
      */
     private array $reads = [];
 
+    /**
+     * Whether each loop asked about so far reads one way alone, by object
+     * id.
+     *
+     * @var array<int, bool>
+     */
+    private array $readsOneWayAlone = [];
+
     private ?NodeInterface $nextNode = null;
 
     /**
@@ -314,6 +322,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->calledGroups = [];
         $this->groupsBeforeCall = [];
         $this->reads = [];
+        $this->readsOneWayAlone = [];
         $this->indexGroups($node->pattern, 0);
         $this->callsReadThrough = [];
         $this->groupsReadThrough = [];
@@ -1499,15 +1508,16 @@ final class RedosProfiler extends AbstractNodeVisitor
      * that fails, is proven linear: its branches start alike, "a" and "ab",
      * yet it reads no text in two ways. Its text reads alone as it does in
      * place only where no option setting of the pattern and no assertion in
-     * it looks past the loop.
+     * it looks past the loop. Each loop is read so once, whatever the number
+     * of its alternations.
      */
     private function loopReadsOneWayAlone(): bool
     {
-        return null !== $this->provenLinearAlone
-            && null !== $this->loop
-            && null === $this->setsInForce
-            && !self::holdsAssertion($this->loop)
-            && ($this->provenLinearAlone)($this->loop);
+        if (null === $this->provenLinearAlone || null === $this->loop || null !== $this->setsInForce) {
+            return false;
+        }
+
+        return $this->readsOneWayAlone[spl_object_id($this->loop)] ??= !self::holdsAssertion($this->loop) && ($this->provenLinearAlone)($this->loop);
     }
 
     /**

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosOptions;
@@ -967,6 +968,44 @@ final class RedosHeuristicShapesTest extends TestCase
         $results = (new \ReflectionProperty($parser, 'results'))->getValue($parser);
         $this->assertIsArray($results);
         $this->assertSame(['p'.$pattern], array_keys($results));
+    }
+
+    /**
+     * Each loop is put to the proof once, whatever the number of its
+     * alternations whose branches start alike: each of them asks about the
+     * same loop, read once for an assertion.
+     */
+    #[Test]
+    public function test_each_loop_is_put_to_the_proof_once_for_all_its_alternations(): void
+    {
+        $loop = '(?:'.str_repeat('(?:a|ab)c', 50).')+';
+        $pattern = '/^(x)'.$loop.'-'.$loop.'\1$/';
+        $this->assertNotFalse(@preg_match($pattern, ''), 'Oracle: PCRE compiles the two loops.');
+
+        $tree = Regex::create(['cache' => null])->parse($pattern);
+        $asked = [];
+        $profiler = new RedosProfiler(CharSetAnalyzer::forRegex($tree), static function (QuantifierNode $loop) use (&$asked): bool {
+            $asked[] = $loop->getStartPosition();
+
+            return true;
+        });
+        $tree->accept($profiler);
+
+        $this->assertSame([4, 5 + \strlen($loop)], $asked);
+    }
+
+    /**
+     * A loop that holds an assertion is read for it once, whatever the
+     * number of its alternations whose branches start alike: four times the
+     * alternations take about four times as long to read, where each of
+     * them read the whole loop again.
+     */
+    #[Test]
+    public function test_a_loop_holding_an_assertion_is_read_for_it_once(): void
+    {
+        $this->assertLinearTime(static function (int $units): void {
+            Regex::create(['cache' => null])->redos('/^(x)(?:'.str_repeat('(?:a|ab)c', $units).'(?=c))+\1$/');
+        }, 400, 'a loop holding a lookahead and alternations whose branches start alike');
     }
 
     /**
