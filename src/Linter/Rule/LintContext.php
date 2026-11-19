@@ -356,13 +356,17 @@ final class LintContext
      * The analyzer's sets, with the flags followed through the groups, the
      * sequences and the alternations that can change them. Any other node,
      * and one with no inline flags inside, is read whole by the analyzer
-     * under the flags at its start.
+     * under the flags at its start. A lookaround reads nothing, as the
+     * analyzer has it, whatever options its body sets: "(?=(?i:b))b"
+     * starts with "b" alone.
      */
     private function charsInForce(NodeInterface $node, string $flags, bool $fromStart): ByteCharSet
     {
         if (FlagScope::containsInlineFlags($node)) {
             if ($node instanceof GroupNode) {
-                return $this->charsInForce($node->child, FlagScope::flagsInside($node, $flags), $fromStart);
+                return NodePredicates::isTransparentGroup($node->type)
+                    ? $this->charsInForce($node->child, FlagScope::flagsInside($node, $flags), $fromStart)
+                    : ByteCharSet::empty();
             }
 
             if ($node instanceof QuantifierNode) {

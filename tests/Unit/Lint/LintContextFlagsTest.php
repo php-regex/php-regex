@@ -71,6 +71,41 @@ final class LintContextFlagsTest extends TestCase
         yield 'no restriction' => ['pattern' => '/[^\x{212A}]/iu', 'oracle' => '/\A[^\x{212A}]\z/iu', 'takesK' => false];
     }
 
+    /**
+     * A lookaround reads nothing, whatever its body reads: the options
+     * group inside it takes no character either. "(?=(?i:b))b" starts
+     * with "b" alone, as the engine takes it.
+     */
+    #[Test]
+    #[DataProvider('provideLookarounds')]
+    public function test_a_lookaround_holding_an_option_group_reads_nothing(string $pattern, string $oracle, bool $fromStart, string $takes, string $never): void
+    {
+        $this->assertSame(1, preg_match($oracle, $takes), 'Oracle: '.$oracle.' on "'.$takes.'".');
+        $this->assertSame(0, preg_match($oracle, $never), 'Oracle: '.$oracle.' on "'.$never.'".');
+
+        $tree = RegexParser::create(['cache' => null])->parse($pattern);
+        $context = new LintContext(
+            new PatternInfo($tree->flags, $tree->delimiter, '', false),
+            new GroupIndex(0, [], [], [], false),
+            CharSetAnalyzer::forRegex($tree),
+        );
+        $set = $fromStart ? $context->firstChars($tree->pattern) : $context->lastChars($tree->pattern);
+
+        $this->assertTrue($set->intersects(ByteCharSet::fromChar($takes)), $pattern);
+        $this->assertFalse($set->intersects(ByteCharSet::fromChar($never)), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, oracle: string, fromStart: bool, takes: string, never: string}>
+     */
+    public static function provideLookarounds(): iterable
+    {
+        yield 'a lookahead before the first character' => ['pattern' => '/(?=(?i:b))b/', 'oracle' => '/\A(?=(?i:b))b\z/', 'fromStart' => true, 'takes' => 'b', 'never' => 'B'];
+        yield 'a negative lookahead before the first character' => ['pattern' => '/(?!(?i:c))b/', 'oracle' => '/\A(?!(?i:c))[bC]\z/', 'fromStart' => true, 'takes' => 'b', 'never' => 'C'];
+        yield 'a lookbehind after the last character' => ['pattern' => '/b(?<=(?i:b))/', 'oracle' => '/\Ab(?<=(?i:b))\z/', 'fromStart' => false, 'takes' => 'b', 'never' => 'B'];
+        yield 'a lookahead in a group before the first character' => ['pattern' => '/(?:(?=(?i:b)))b/', 'oracle' => '/\A(?:(?=(?i:b)))b\z/', 'fromStart' => true, 'takes' => 'b', 'never' => 'B'];
+    }
+
     private static function theClass(NodeInterface $node): CharClassNode
     {
         if ($node instanceof CharClassNode) {

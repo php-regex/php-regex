@@ -96,5 +96,9 @@ final class RedundantSplitCharacterTest extends TestCase
         yield 'a range from a multibyte character to an escape' => ['pattern' => '/[ä-\xFF]/', 'without' => '/[\xA4-\xFF]/', 'issues' => [$multibyte]];
         yield 'a byte written beside a range from an ASCII character to a multibyte one' => ['pattern' => '/[a-ä\xA4]/', 'without' => '/[a-\xC3]/', 'issues' => [$redundant, $multibyte]];
         yield 'an ASCII character written beside a range from it to a multibyte one' => ['pattern' => '/[a-äa]/', 'without' => '/[a-\xC3]/', 'issues' => [$redundant, $multibyte]];
+        // Two ranges from ASCII characters share ASCII characters, which no split makes.
+        yield 'two ranges from ASCII characters to multibyte ones' => ['pattern' => '/[a-äb-ö]/', 'without' => '/[a-\xC3]/', 'issues' => [$redundant, $multibyte]];
+        yield 'two ranges from ASCII characters to multibyte ones in UTF mode' => ['pattern' => '/[a-äb-ö]/u', 'without' => '/[a-ö]/u', 'issues' => [$redundant]];
+        yield 'a range from an ASCII character and one between multibyte ones' => ['pattern' => '/[a-äà-é]/', 'without' => '/[a-\xC3]/', 'issues' => [$multibyte]];
     }
 }

@@ -117,6 +117,11 @@ final class EndAnchorZeroWidthTailTest extends TestCase
         yield 'non-boundary after a group ending with a class of the bytes above ASCII' => ['pattern' => '/b(?:a[^\x00-\x7F])$\B\n/', 'subject' => "ba\xFF\n"];
         yield 'word boundary after a class of DEL and the characters above ASCII under u' => ['pattern' => '/[^\x00-\x7E]$\b\n/u', 'subject' => "é\n"];
         yield 'word boundary after a class of the characters above ASCII after a non-word character under u' => ['pattern' => '/-[^\x00-\x7F]$\b\n/u', 'subject' => "-é\n"];
+        // The class is read under the flags in effect where it stands: once
+        // "(?-i)" lifts i, it takes the capitals it leaves out under i.
+        yield 'word boundary after a class read once i is lifted' => ['pattern' => '/(?-i)[^a-z\x00-\x40\x5B-\x60\x7B-\x7E]$\b\n/i', 'subject' => "A\n"];
+        yield 'word boundary after a class in a group lifting i' => ['pattern' => '/(?-i:[^a-z\x00-\x40\x5B-\x60\x7B-\x7E])$\b\n/i', 'subject' => "A\n"];
+        yield 'word boundary after a class in a group past an option lifting i' => ['pattern' => '/(?:(?-i)[^a-z\x00-\x40\x5B-\x60\x7B-\x7E])$\b\n/i', 'subject' => "A\n"];
     }
 
     #[Test]
@@ -126,7 +131,7 @@ final class EndAnchorZeroWidthTailTest extends TestCase
         $this->requiresPcre2For($pattern, self::RELEASES);
 
         // Oracle, PHP 8.4.26 / PCRE2 10.49: the pattern never matches.
-        foreach (['', 'a', "\n", "a\n", "a\n\n", "aa\n", "a\nx", 'ax', "a\r\n", "\n\n", "a\x00", 'ab', "a\n1", "a\nb", "-\n"] as $subject) {
+        foreach (['', 'a', "\n", "a\n", "a\n\n", "aa\n", "a\nx", 'ax', "a\r\n", "\n\n", "a\x00", 'ab', "a\n1", "a\nb", "-\n", "A\n"] as $subject) {
             $this->assertSame(0, preg_match($pattern, $subject), $pattern.' '.json_encode($subject));
         }
 
@@ -170,6 +175,11 @@ final class EndAnchorZeroWidthTailTest extends TestCase
         yield 'circumflex after the final newline under m, nothing before' => ['pattern' => '/\Z\n^/m'];
         yield 'circumflex at the end after a newline' => ['pattern' => '/()\n\z^\1/'];
         yield 'subject start after the newline, nothing before' => ['pattern' => '/$\n\A/'];
+        // Under i the class leaves out the capitals with the small letters:
+        // DEL and the bytes above ASCII remain, no word character under C.
+        yield 'word boundary after a class of everything but letters and digits, under i' => ['pattern' => '/[^a-z\x00-\x40\x5B-\x60\x7B-\x7E]$\b\n/i'];
+        yield 'word boundary after a class of everything but letters and digits, under an inline i' => ['pattern' => '/(?i)[^a-z\x00-\x40\x5B-\x60\x7B-\x7E]$\b\n/'];
+        yield 'word boundary after a class of everything but letters and digits, in a group setting i' => ['pattern' => '/(?i:[^a-z\x00-\x40\x5B-\x60\x7B-\x7E])$\b\n/'];
     }
 
     /**

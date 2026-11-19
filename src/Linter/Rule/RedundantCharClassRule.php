@@ -113,7 +113,11 @@ final class RedundantCharClassRule extends AbstractLintRule
                 self::write($origin, $written);
                 $rangeLabel = $this->formatRangeForHint($start, $end);
                 foreach ($ranges as $key => $existingRange) {
-                    if ($start <= $existingRange['end'] && $end >= $existingRange['start'] && !self::fromSplitting($origin, $rangeOrigins[$key] ?? null, $written)) {
+                    // Two ranges sharing an ASCII character share one the
+                    // author wrote in both, which no split makes: "[a-äb-ö]".
+                    if ($start <= $existingRange['end'] && $end >= $existingRange['start']
+                        && (max($start, $existingRange['start']) < 0x80 || !self::fromSplitting($origin, $rangeOrigins[$key] ?? null, $written))
+                    ) {
                         $redundant = true;
                         $this->recordRedundantNote(
                             $redundantNotes,

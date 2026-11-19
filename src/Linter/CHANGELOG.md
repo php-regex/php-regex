@@ -34,7 +34,11 @@ CHANGELOG
    `'/é$\b\n/u'` match too; all three were reported. So were `\B` after a
    class of the bytes above ASCII, `'/a[^\x00-\x7F]$\B\n/'` on
    `"a\xFF\n"`, and `\b` after a class of the characters above ASCII under
-   u, `'/[^\x00-\x7E]$\b\n/u'` on `"é\n"`. Without u a branch starting
+   u, `'/[^\x00-\x7E]$\b\n/u'` on `"é\n"`, and `\b` after a class read
+   under the pattern's i where an option setting lifts it:
+   `'/(?-i)[^a-z\x00-\x40\x5B-\x60\x7B-\x7E]$\b\n/i'` takes `A` and
+   matches `"A\n"`. The character before the anchor is now read under the
+   flags in effect where it stands. Without u a branch starting
    with such a byte is compared with the others by the engine under the
    target's locale: `"/(?:\\W|\xE9)+/"` overlaps under C and
    `"/(?:\\w|\xE9)+/"` under fr_FR.ISO8859-1, which were not reported.
@@ -55,11 +59,21 @@ CHANGELOG
    reads them, through the atomic or options group a branch opens with:
    `/(?:(?>ö)|è)+x/u` is no longer reported either, nor are a branch read
    past its optional first item, `/(?:ö?è|ê)+x/u`, or past a lookaround,
-   which takes nothing, `/^(?:(?=ö)ö|è)+$/u`, every branch of a branch
+   which takes nothing, whatever options its body sets,
+   `/^(?:(?=ö)ö|è)+$/u` and `/\A(?:(?=(?i:b))b|B)+\z/`, every branch of a branch
    reset group, `/(?:(?|ö|ê)|è)+x/u`, and an atom under the very options of
    `a` that stand where it does, which restrict `\d`, `\s`, `\w`, their
    negations and the POSIX classes alone, `/(?:(?a:[ö])x|èy)+z/u`; the
-   pattern's own `/D` and `/S` are no `(?aD)` or `(?aS)`.
+   pattern's own `/D` and `/S` are no `(?aD)` or `(?aS)`. The caseless
+   restriction `(*CASELESS_RESTRICT)` sets holds there until `(?-r)` lifts
+   it: `/(*CASELESS_RESTRICT)(?-r:\x{212A}|[^k])+/iu`, whose Kelvin sign
+   then matches `k` and `K`, which `[^k]` refuses, is no longer reported.
+   A lookahead before a branch narrows the characters it starts with, with
+   or without u: a positive one to those its body starts with, a negative
+   one to all but those its body refuses whatever follows them, so
+   `/\A(?:(?=b)[ab]|a)+\z/` and `/\A(?:(?!a)[ab]|a)+\z/` are no longer
+   reported, while `/\A(?:(?=a)[ab]|a)+\z/` and `/(?:(?!ab)a|a)+/` are; a
+   lookahead the rule cannot read leaves the branch unjudged.
    `/(?:[à-ÿ]+|é)+/u`, `/(?:(?a:\p{Lu})x|\p{L}y)+z/u` and
    `/(?:(?aD:\w)x|éy)+z/uD`, which it missed, are reported. The message quotes each branch as the
    pattern writes it, `\d+` rather than `\\d+`, and `é` under u rather than

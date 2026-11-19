@@ -27,7 +27,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class AlternationOverlapLookaroundTest extends TestCase
 {
-    private const CHARACTERS = ['a', 'b', 'x', '!', '>', '$', '\\', 'z'];
+    private const CHARACTERS = ['a', 'b', 'B', 'x', '!', '>', '$', '\\', 'z'];
 
     /**
      * Under u, characters that share their first byte: "ö", "è" and "é"
@@ -61,6 +61,35 @@ final class AlternationOverlapLookaroundTest extends TestCase
         yield 'a lookbehind before a character the other branch never takes' => ['pattern' => '/(?:[^$]+|(?<=\\\\)\$)+/', 'branches' => ['[^$]+', '(?<=\\\\)\$'], 'reported' => false];
         yield 'a branch that is a lookahead alone' => ['pattern' => '/^(?:>(?:(?!!)|!))+$/', 'branches' => ['(?!!)', '!'], 'reported' => false];
         yield 'a positive lookahead wider than its branch' => ['pattern' => '/^(?:(?=[ab])a|b)+$/', 'branches' => ['(?=[ab])a', 'b'], 'reported' => false];
+        // The option group inside the lookahead takes no character either.
+        yield 'a lookahead holding an option group' => ['pattern' => '/\A(?:(?=(?i:b))b|B)+\z/', 'branches' => ['(?=(?i:b))b', 'B'], 'reported' => false];
+        yield 'a lookahead holding an option group before the shared character' => ['pattern' => '/\A(?:(?=(?i:b))b|b)+\z/', 'branches' => ['(?=(?i:b))b', 'b'], 'reported' => true];
+        // A lookahead narrows the characters its branch starts with: a
+        // positive one to those its body starts with, a negative one of a
+        // single character leaves that character out.
+        yield 'a lookahead narrower than its branch' => ['pattern' => '/\A(?:(?=b)[ab]|a)+\z/', 'branches' => ['(?=b)[ab]', 'a'], 'reported' => false];
+        yield 'a lookahead narrower than its branch, on the shared character' => ['pattern' => '/\A(?:(?=a)[ab]|a)+\z/', 'branches' => ['(?=a)[ab]', 'a'], 'reported' => true];
+        yield 'a lookahead of a choice narrower than its branch' => ['pattern' => '/\A(?:(?=b|x)[ab]|a)+\z/', 'branches' => ['(?=b|x)[ab]', 'a'], 'reported' => false];
+        yield 'a lookahead of two characters, on the shared character' => ['pattern' => '/(?:(?=az)[ab]|a)+/', 'branches' => ['(?=az)[ab]', 'a'], 'reported' => true];
+        yield 'a lookahead that may read nothing' => ['pattern' => '/\A(?:(?=b?)[ab]|a)+\z/', 'branches' => ['(?=b?)[ab]', 'a'], 'reported' => true];
+        yield 'a lookahead on one way into the branch' => ['pattern' => '/\A(?:(?:(?=b)|x)[ab]|a)+\z/', 'branches' => ['(?:(?=b)|x)[ab]', 'a'], 'reported' => false];
+        yield 'a negative lookahead leaving out the shared character' => ['pattern' => '/\A(?:(?!a)[ab]|a)+\z/', 'branches' => ['(?!a)[ab]', 'a'], 'reported' => false];
+        yield 'a negative lookahead of a choice leaving out the shared character' => ['pattern' => '/\A(?:(?!a|x)[ab]|a)+\z/', 'branches' => ['(?!a|x)[ab]', 'a'], 'reported' => false];
+        // "ab?" refuses "a" whatever follows it, "ab" only before "b".
+        yield 'a negative lookahead of a character and more' => ['pattern' => '/\A(?:(?!ab?)[ab]|a)+\z/', 'branches' => ['(?!ab?)[ab]', 'a'], 'reported' => false];
+        yield 'a negative lookahead of a character and more, on the character left' => ['pattern' => '/\A(?:(?!ab?)[ab]|b)+\z/', 'branches' => ['(?!ab?)[ab]', 'b'], 'reported' => true];
+        yield 'a negative lookahead of two characters, on the shared character' => ['pattern' => '/(?:(?!ab)a|a)+/', 'branches' => ['(?!ab)a', 'a'], 'reported' => true];
+        yield 'a negative lookahead of a group' => ['pattern' => '/\A(?:(?!(?:a))[ab]|a)+\z/', 'branches' => ['(?!(?:a))[ab]', 'a'], 'reported' => false];
+        // Without u "é" is two bytes: the lookahead refuses its first only before its second.
+        yield 'a negative lookahead of a character of two bytes' => ['pattern' => '/\A(?:(?!é)[ab]|a)+\z/', 'branches' => ['(?!é)[ab]', 'a'], 'reported' => true];
+        // A lookahead the rule cannot read leaves its branch unjudged.
+        yield 'a negative lookahead of a repeated character' => ['pattern' => '/\A(?:(?!a+)[ab]|a)+\z/', 'branches' => ['(?!a+)[ab]', 'a'], 'reported' => false];
+        yield 'a negative lookahead of a choice holding a repeated character' => ['pattern' => '/\A(?:(?!a|b+)[ab]|a)+\z/', 'branches' => ['(?!a|b+)[ab]', 'a'], 'reported' => false];
+        // What stands before the lookahead and reads nothing passes it on.
+        yield 'a lookahead after an option setting' => ['pattern' => '/\A(?:(?i)(?=b)[ab]|a)+\z/', 'branches' => ['(?i)(?=b)[ab]', 'a'], 'reported' => false];
+        yield 'a lookahead after a character taken no time' => ['pattern' => '/\A(?:x{0}(?=b)[ab]|a)+\z/', 'branches' => ['x{0}(?=b)[ab]', 'a'], 'reported' => false];
+        yield 'a lookahead after an empty alternative' => ['pattern' => '/\A(?:(?:|x)(?=b)[ab]|a)+\z/', 'branches' => ['(?:|x)(?=b)[ab]', 'a'], 'reported' => false];
+        yield 'a lookahead in a group that may read nothing' => ['pattern' => '/\A(?:(?:(?=b)x?)[ab]|a)+\z/', 'branches' => ['(?:(?=b)x?)[ab]', 'a'], 'reported' => false];
     }
 
     /**
@@ -94,6 +123,10 @@ final class AlternationOverlapLookaroundTest extends TestCase
         yield 'a lookahead before the character the other branch takes' => ['pattern' => '/^(?:(?=ö)ö|ö)+$/u', 'branches' => ['(?=ö)ö', 'ö'], 'reported' => true];
         yield 'a lookahead before the ASCII character the other branch takes' => ['pattern' => '/^(?:(?=a)a|a)+$/u', 'branches' => ['(?=a)a', 'a'], 'reported' => true];
         yield 'a lookbehind before a character sharing its first byte with the other branch' => ['pattern' => '/^(?:(?<=a)ö|è)+$/u', 'branches' => ['(?<=a)ö', 'è'], 'reported' => false];
+        yield 'a lookahead narrower than its branch' => ['pattern' => '/\A(?:(?=b)[ab]|a)+\z/u', 'branches' => ['(?=b)[ab]', 'a'], 'reported' => false];
+        yield 'a lookahead narrower than its class past ASCII' => ['pattern' => '/\A(?:(?=ö)[öè]|è)+\z/u', 'branches' => ['(?=ö)[öè]', 'è'], 'reported' => false];
+        yield 'a lookahead narrower than its class past ASCII, on the shared character' => ['pattern' => '/\A(?:(?=è)[öè]|è)+\z/u', 'branches' => ['(?=è)[öè]', 'è'], 'reported' => true];
+        yield 'a negative lookahead leaving out the shared character past ASCII' => ['pattern' => '/\A(?:(?!è)[öè]|è)+\z/u', 'branches' => ['(?!è)[öè]', 'è'], 'reported' => false];
     }
 
     /**
