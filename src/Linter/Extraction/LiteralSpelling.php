@@ -44,7 +44,8 @@ final class LiteralSpelling
     {
         $written = '';
         $expectsLiteral = true;
-        $tokens = \PhpToken::tokenize('<?php '.substr($code, $offset));
+        // As the extraction reads the source: without a word.
+        $tokens = @\PhpToken::tokenize('<?php '.substr($code, $offset));
         for ($i = 1, $count = \count($tokens); $i < $count; $i++) {
             $token = $tokens[$i];
             if ($token->is([\T_WHITESPACE, \T_COMMENT, \T_DOC_COMMENT])) {

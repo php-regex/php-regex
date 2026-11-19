@@ -47,20 +47,35 @@ final class RouteConflictSuggestionBuilder
             // serve both.
             if ($conflict['redirected']) {
                 $suggestions[\sprintf(
-                    'Give "%s" and "%s" paths that differ by more than a trailing slash: the GET and HEAD requests of "%s" are redirected to "%s".',
+                    'Give "%s" and "%s" paths that differ by more than a trailing slash: "%s" answers the GET and HEAD requests of "%s" that differ from its paths by the slash.',
                     $route['name'],
                     $other['name'],
-                    $other['name'],
                     $route['name'],
+                    $other['name'],
                 )] = true;
 
                 continue;
             }
 
-            // An overlap whose later route, moved first, would take every
-            // request of the earlier one is the order that serves both: a
-            // route for HEAD only before a route for GET.
-            if ($shadowed || !$conflict['laterTakesEarlier']) {
+            // A route with no variable declared after one tried with a
+            // regex is looked up first all the same: a reorder changes
+            // nothing.
+            if ($route['index'] > $other['index']) {
+                $suggestions[\sprintf(
+                    'Give "%s" and "%s" paths that do not overlap: "%s" has no variable, and the router looks it up by its path before it tries "%s" with a regex, whatever their order.',
+                    $route['name'],
+                    $other['name'],
+                    $route['name'],
+                    $other['name'],
+                )] = true;
+
+                continue;
+            }
+
+            // Moved first, the later route is reached: the reorder serves
+            // both unless it then takes every request of the earlier one,
+            // a duplicate, or one whose paths it matches or redirects.
+            if (!$conflict['laterFirstTakesEarlier']) {
                 $suggestions[\sprintf(
                     'Reorder routes: move "%s" before "%s".',
                     $other['name'],

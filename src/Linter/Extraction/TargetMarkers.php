@@ -59,7 +59,8 @@ final class TargetMarkers
             return [];
         }
 
-        $tokens = token_get_all($content);
+        // As the extraction reads the source: without a word.
+        $tokens = @token_get_all($content);
         $statements = null;
         $markers = [];
         $offset = 0;

@@ -341,8 +341,15 @@ Each one is read as the pattern Symfony runs:
   rewrite that only drops a flag, and a repeated unnamed group (the router
   makes it non-capturing) are not reported.
 - A security `path` (in `access_control` or as a firewall `pattern`) is
-  matched with `{...}s`, and a `host` with `{...}i`, without anchors:
-  `path: /api` matches `/v1/api` too. The options a path opens with,
+  matched with `{...}s`, and a `host` with `{...}i`, as written and without
+  anchors: `path: /api` matches `/v1/api` too, and a space or a line feed
+  at either end is part of the pattern, so `' ^/admin'` matches no path.
+  `symfony/http-foundation` adds the `s` to a path since 6.4.46, 7.4.19
+  and 8.1.7, and never on 8.0: a path is read with the `s` where the
+  application's release adds it, and without it elsewhere, so that `.`
+  takes the line feed a request path decodes `%0A` to only where Symfony
+  lets it. An `access_control` path or host of `""` or `"0"` is none, as
+  the security bundle reads it. The options a path opens with,
   `(*UTF)` or `(*LIMIT_MATCH=1000)`, are read there, as PCRE reads them,
   and a path ending on a comment of the `x` flag or on a `\Q` left open
   means what it means alone: `(?x)^/admin  # back office` takes every path
@@ -518,37 +525,88 @@ matches them: the first route that matches a request wins it. A route is
 it matches, its methods, its schemes and its host included, so it can never
 be reached. Two routes that share some requests but not all are an
 **overlap**, listed with `--show-overlaps`: `/blog/{slug}` (`[a-z]+`) declared
-before `/blog/{id}` (`\d+|new`) takes `/blog/new`, and a route for `GET`
-declared before a route for `GET` and `POST` on the same path leaves it the
-`POST` requests. A narrower route declared
-before a wider one, `/users/list` before `/users/{id}`, is the order the
-router expects and is not reported. Two hosts the analysis cannot compare,
+before `/blog/{id}` (`\d+|new`) takes `/blog/new`, and a route for `GET` and
+`POST` declared before a route for `GET` and `PUT` on the same path leaves
+it the `PUT` requests. A route declared before a wider one, strictly
+narrower by path or with all its requests among the later route's, is a
+**carve-out**, the order the router expects, and is not reported, as an
+`access_control` rule is: `/users/list` before `/users/{id}`, a route for
+`GET` before a route for `GET` and `POST` on the same path, a route for
+`https` before one for any scheme, a route for a host before one for any
+host. Two hosts the analysis cannot compare,
 a host it cannot read or one the solver gives up on (a conditional in a
 host requirement, say), leave the paths to decide, and the finding notes
-`Host requirements were not evaluated.` A route that names no method or no
+`Host requirements were not evaluated.` Two routes whose hosts part on
+letter case alone, `A.COM` and `a.com`, are counted among the pairs
+skipped: the router sorts the routes that name a host by the end of it,
+letter case included, and may try the later one first. A route that names no method or no
 scheme takes any; one given only empty ones, `setMethods([''])` or
 `setSchemes([''])`, takes no request, as Symfony's matchers read it, and
 conflicts with no other route. A route for `GET` takes the `HEAD` requests
 too, as the router sends them: a later route for `HEAD` only on the same
 path is shadowed, and a route for `HEAD` only declared before a route for
-`GET` on the same path is an overlap that serves both. The report suggests
+`GET` on the same path is a carve-out that serves both. The report suggests
 moving a later route first, or merging two routes on the same paths, only
 where neither would leave a route unreachable. The router redirects a `GET`
 or `HEAD` request whose path differs from a route's by a trailing slash
 alone to that route, and tries no later one: `/foo/` declared before
 `/foo` takes `GET /foo`, so the later route is shadowed when it takes only
 `GET` and `HEAD`, and an overlap otherwise; the report then suggests paths
-that differ by more than the slash. The router checks the slash before the
+that differ by more than the slash. A route carved out of a catch-all,
+`/admin` declared before `/{path<.*>}`, takes `GET /admin/` the same way:
+that is the router normalising the slash, not a conflict, and the pair is
+not reported. The router checks the slash before the
 scheme: a later route on another scheme loses those requests too, and
 keeps on its own scheme the paths both routes match: `/{x<a|b>}.html` on
 `https` before `/{y<a\.html|b\.html/>}` on `http` is an overlap, the later
-route serving `http://…/a.html` and losing `/b.html/` to the redirect.
-Where the earlier route ends on a variable, which path the router
-redirects is the order in which PCRE tries the variable's requirement, and
-such a pair is counted among the pairs skipped. A later
+route serving `http://…/a.html` and losing `/b.html/` to the redirect. A
+later route serves the path a redirect leads to when it matches it: one
+that matches every path of the earlier one, `/{path<.*>}` on `http` after
+`/admin` on `https`, loses none. Where it serves the path the shortest
+redirected one leads to but not every path of the earlier route,
+`/files/{path<[a-z/]+>}` on `http` after `/files/{name}` on `https`, which
+paths it loses is a question on three languages the solver does not
+answer, and the pair is counted among the pairs skipped. Where the
+earlier route ends on a variable a value of which may end on the slash or
+be empty, `.+` or `[a-z]*`, the router matches a path ending on the slash
+as is, on that route's schemes, or redirects it, as PCRE captured the
+value: on another scheme such a pair is counted among the pairs skipped, a
+later route it matches only with the slash, `/{y<a//>}` after
+`/{x<a/?>}`, is shadowed only when the earlier route takes every scheme of
+it, and a later route for other methods than `GET` and `HEAD` keeps those
+on its paths ending on the slash, `/files/{name}/` after
+`/files/{path<.+?>}` being an overlap. The default requirement `[^/]++`,
+or `\d+`, redirects whatever that order, and the pair is read as any
+other. A requirement holding a lookaround, a boundary or an anchor reads
+the route around the variable, `(?<=e)a/` matching after `pre` alone, and
+counts as one that may end on the slash. A later
 route whose paths the earlier one matches in part and redirects for the
 rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
-route that takes no `GET` request redirects none.
+route that takes no `GET` request redirects none. The router looks a route
+with no variable up by its path, every trailing slash of the request
+trimmed off, before it tries any route with a regex, unless a route it
+tries with a regex and sorts before it matches that path, the routes
+sorted by host first when one names a host, as the router's dumper reads
+them: `/admin` redirects
+`GET /admin//` too, so `/{p<admin//>}` after it is shadowed, `/admin/`
+takes `/admin//` as is, for any method on its own schemes, and `/` answers
+`GET //` with a 404. A route tried with a regex takes its path with one
+slash at most. A route with no variable therefore takes the requests of a
+route tried with a regex declared before it, `/admin/` those of
+`/{x<admin//>}`: the pair is read in the order the router tries them,
+noted, and offered distinct paths, which a reorder would not give. A later route ending on a variable that may end on the
+slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its own
+ending on the slash for the slash, as PCRE captures the value: it
+redirects `GET /a/` to `/a`, and passes `POST /a/` on to the routes after
+it. A request it passes on is none it loses, nor is one the earlier route
+passes on, so a pair whose shortest shared path either route passes on
+for the methods both routes take is counted among the pairs skipped; a
+redirect of an earlier route leading to
+a path it reads for its slash still loses it the request. Each such
+finding notes what the router does with the
+request: it redirects it to the earlier route, matches it as is where the
+earlier route ends on a variable whose value PCRE captures with the slash,
+or, for `//` after `/`, answers it with a 404.
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods, addresses, port, route and attributes take a request
@@ -569,19 +627,54 @@ Any other pair of rules that share a request is an **overlap**, listed with
 `--show-overlaps`: the order decides which rule applies to the requests both
 take. `{ path: ^/admin, methods: [GET] }` before `{ path: ^/admin/users }`
 leaves `POST /admin/users` to the later rule, an overlap and not a shadow.
+Roles, methods and addresses are read as the security bundle reads them,
+trimmed of nothing: a string of roles or methods is split on its commas
+once its parameters are resolved (`roles: '%admin_roles%'` holding
+`ROLE_A,ROLE_B` is two roles, `['%admin_roles%']` one),
+the request matchers split each method and each address on its commas
+(`['GET,POST']` takes `GET` and `POST`), a method written ` get` takes no
+request, and a rule is public only for `PUBLIC_ACCESS` written so and alone
+(`IS_AUTHENTICATED_ANONYMOUSLY` grants nothing since Symfony 6.0). An
+`allow_if` of `"0"`, written so or held by a parameter, is none, as the
+bundle reads it.
 Addresses, a route and attributes are compared as written: an earlier rule
 holding a route or an attribute the later one does not require the same way
 leaves it the other requests, so `{ route: app_login }` before
 `{ path: ^/admin }` is an overlap. Two rules for different ports share no
-request. A host the analysis cannot read leaves the paths to decide;
-`allow_if` and `requires_channel` decide access, not which rule applies, and
-play no part.
+request. A rule for `GET` takes the `HEAD` requests too where the
+application's `symfony/http-foundation` sends them to it, as the router
+does (6.4.50, 7.4.23 and 8.1.11 on, never 8.0): there a rule for `HEAD`
+only declared after a rule for `GET` on its paths is shadowed, and one
+declared before it is a carve-out. A host the analysis cannot read leaves
+the paths to decide; `allow_if` and `requires_channel` decide access, not
+which rule applies, and play no part.
 
 `regex:security` and `regex:analyze` read the security configuration the
 application runs with, as `bin/console debug:config security` shows it:
 `config/packages/security.yaml`, `security.php` or any other file the kernel
 loads, in any YAML shape (block or flow lists, anchors and aliases,
-`when@<env>` blocks), with its `%parameters%` and `%env()%` values resolved.
+`when@<env>` blocks), with its `%parameters%` resolved, as the kernel
+resolves them, and checked as the bundle checks what they hold:
+`port: '%admin_port%'` is the port the parameter holds, a parameter holding
+a list gives a rule its roles, methods or addresses, and one holding the
+string `'8080'` as a port is refused, as the bundle refuses it.
+An `%env()%` value is known at run time only, in the environment the
+application runs in: it is never read from the one the command runs in,
+not even its `env()` default, and a rule holding one in its path, host,
+addresses, route or attributes is restricted to a value the analysis cannot
+know. Through that value it shadows no later rule, a later rule holding one
+is shadowed only by an earlier rule that takes every value of it, and the
+finding notes `Values read from the environment are not evaluated: host.`;
+one on a path read from the environment gives no example path.
+The same expression, the same processors over the same variable, gives the
+same value: two rules with `host: '%env(ADMIN_HOST)%'`, written so or
+through a parameter, compare as holding one host, and
+`'%env(trim:ADMIN_HOST)%'` is another value, as is an attribute written
+`'%%env(FORMAT)%%'`, the text itself. A firewall whose pattern holds
+an `%env()%` value is skipped. A `port` or `methods` read
+from the environment is refused, as the security bundle refuses them: it
+builds the port matcher, and upper-cases the methods, when the container is
+compiled, and the application does not boot.
 Each finding names the file and the line its value is written on, or
 `security configuration` when no `security.*` file under `config/` writes it.
 A rule with no path, host, `route`, `request_matcher` or `allow_if`, such as
@@ -589,12 +682,17 @@ A rule with no path, host, `route`, `request_matcher` or `allow_if`, such as
 `requires_channel`, on the line that opens its entry.
 `--config=<file>` analyzes that YAML file instead, read with `symfony/yaml`
 (`composer require symfony/yaml`), its `%parameters%` taken from its own
-`parameters` and then from the application's.
+`parameters` and then from the application's, as its compiled container
+holds them, a parameter a compiler pass sets included, its `%env()%` values
+left unknown as above: a parameter the application reads from the
+environment stays unknown too. The application's container is built only
+when the file asks for one of its parameters.
 
 A security configuration either command cannot read stops it with exit code 2:
 a `--config` file that is missing, is not YAML or does not parse, a parameter
-nothing defines, a configuration the SecurityBundle refuses, `symfony/yaml`
-not installed. `regex:analyze --format=json` prints the
+nothing defines, a configuration the SecurityBundle refuses (a `port` or
+`methods` read from the environment among them, the message naming the
+field and the rule), `symfony/yaml` not installed. `regex:analyze --format=json` prints the
 [error envelope](../reference/json-output.md#the-error-envelope), stage
 `config`. An application without the SecurityBundle has no security
 configuration: `regex:security` stops with exit code 2 and says so, and

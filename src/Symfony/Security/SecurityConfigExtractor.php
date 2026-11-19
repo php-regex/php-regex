@@ -16,6 +16,7 @@ namespace PHPRegex\Symfony\Security;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Symfony\Exception\SecurityConfigException;
+use Symfony\Component\Config\Definition\BaseNode;
 use Symfony\Component\Config\Definition\Exception\Exception as ConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -23,7 +24,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Exception\ExceptionInterface as DependencyInjectionException;
 use Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException;
 use Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\DependencyInjection\ParameterBag\EnvPlaceholderParameterBag;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Yaml\Exception\ParseException;
@@ -56,6 +57,7 @@ use Symfony\Component\Yaml\Yaml;
  *     port?: ?int,
  *     attributes?: array<string, string>,
  *     route?: ?string,
+ *     fromEnvironment?: list<string>,
  * }
  * @phpstan-type FirewallRule array{
  *     name: string,
@@ -63,6 +65,7 @@ use Symfony\Component\Yaml\Yaml;
  *     line: int,
  *     pattern: ?string,
  *     requestMatcher: ?string,
+ *     fromEnvironment?: bool,
  * }
  */
 final class SecurityConfigExtractor
@@ -83,7 +86,7 @@ final class SecurityConfigExtractor
     public function read(array $configPaths, ?KernelInterface $kernel, SecurityConfigLocator $locator, ?string $projectDir, ?string $environment): ?array
     {
         if ([] !== $configPaths) {
-            return $this->readFiles($configPaths, $environment, null === $kernel ? null : self::bootedContainer($kernel), true);
+            return $this->readFiles($configPaths, $environment, null === $kernel ? null : self::applicationParameters($kernel), true);
         }
 
         if (null !== $kernel) {
@@ -123,37 +126,125 @@ final class SecurityConfigExtractor
             return null;
         }
 
+        // An environment value is resolved at run time only, in the
+        // environment the application runs in: the bag gives it a
+        // placeholder, and it is left unknown, never read from the
+        // environment the analysis runs in.
+        $parameters = new EnvPlaceholderParameterBag($container->getParameterBag()->all());
+        $placeholders = new ContainerBuilder($parameters);
+
+        // MergeExtensionConfigurationPass resolves a parameter before the
+        // bundle reads it, and has the bundle's nodes take an environment
+        // value through a placeholder prefix it gives BaseNode, a boolean
+        // node as well as a path. Each value holding a parameter or an
+        // environment value is read so, through a placeholder of that
+        // prefix, and comes out as written: its entry is found in the files
+        // by it, and it is resolved then.
+        //
+        // No public API does this: the pass runs the load() of every
+        // extension and gives no processed configuration back, and
+        // ValidateEnvPlaceholdersPass gives its own only through an @internal
+        // getter, resolved, without the text each entry is found by. The
+        // prefix is set and cleared through BaseNode, @internal too, here
+        // alone, for this one processing (checked on Symfony 6.4.0, 7.4.0
+        // and 8.1.11).
+        $prefix = $parameters->getEnvPlaceholderUniquePrefix();
+
+        // The pass resolves the parameters first, and the configuration tree
+        // checks what each holds: a port given as the string "8080" is
+        // refused.
+        $resolved = $configs;
+        array_walk_recursive($resolved, static function (&$value) use ($parameters): void {
+            try {
+                $value = \is_string($value) ? $parameters->resolveValue($value) : $value;
+            } catch (DependencyInjectionException) {
+                // Left as written: reading the value says why it cannot be.
+            }
+        });
+
+        $written = [];
+        $pieces = [];
+        array_walk_recursive($configs, static function (&$value, int|string $key) use ($parameters, $prefix, &$written, &$pieces): void {
+            try {
+                if (!\is_string($value) || $value === $resolved = $parameters->resolveValue($value)) {
+                    return;
+                }
+            } catch (DependencyInjectionException) {
+                // Left as written: resolving it again says why it cannot be.
+                return;
+            }
+
+            // The bundle splits a string of roles or methods once the pass
+            // has resolved it, and takes a list a parameter holds as it is:
+            // each piece is a placeholder of its own, its entry found by the
+            // value as written, and read as the piece.
+            $list = \is_array($resolved) ? array_map(self::text(...), $resolved) : null;
+            if (\is_string($resolved) && \in_array($key, ['roles', 'role', 'methods', 'method'], true)) {
+                $list = LibraryPcre::split('/\s*,\s*/', $resolved) ?: [];
+            }
+            if (null !== $list && !\in_array(null, $list, true) && \in_array($key, ['roles', 'role', 'methods', 'method', 'ips', 'ip'], true)) {
+                $split = [];
+                foreach ($list as $piece) {
+                    $placeholder = $prefix.'_piece_'.\count($pieces);
+                    $pieces[$placeholder] = [$value, $piece];
+                    $split[] = $placeholder;
+                }
+                $value = $split;
+
+                return;
+            }
+
+            $placeholder = $prefix.'_written_'.\count($written);
+            $written[$placeholder] = $value;
+            $value = $placeholder;
+        });
+
+        BaseNode::setPlaceholderUniquePrefix($prefix);
+
         try {
+            (new Processor())->processConfiguration($configuration, $resolved);
             $processed = (new Processor())->processConfiguration($configuration, $configs);
         } catch (ConfigurationException $e) {
             throw new SecurityConfigException('The security configuration is invalid: '.$e->getMessage(), previous: $e);
+        } finally {
+            BaseNode::resetPlaceholders();
         }
 
-        $parameters = $container->getParameterBag();
-        $resolve = static function (string $value) use ($container, $parameters): string {
+        // A node may join placeholders, as a list of firewall patterns is
+        // joined into one alternation: each is written back where it stands.
+        array_walk_recursive($processed, static function (&$value) use ($written): void {
+            if (\is_string($value)) {
+                $value = strtr($value, $written);
+            }
+        });
+
+        $resolve = static function (string $value) use ($parameters, $placeholders): array {
             try {
-                $resolved = $container->resolveEnvPlaceholders($parameters->unescapeValue($parameters->resolveValue($value)), true);
+                $resolved = $parameters->unescapeValue($parameters->resolveValue($value));
             } catch (DependencyInjectionException $e) {
                 throw new SecurityConfigException(\sprintf('The security configuration value "%s" cannot be resolved: %s', $value, $e->getMessage()), previous: $e);
             }
 
-            return self::text($resolved) ?? throw self::notAString($value);
+            return self::written($placeholders, self::text($resolved) ?? throw self::notAString($value));
         };
 
-        return $this->build([$processed], $locator->locate($kernel->getProjectDir(), $kernel->getEnvironment()), $resolve);
+        return $this->build([$processed], $locator->locate($kernel->getProjectDir(), $kernel->getEnvironment()), $resolve, $pieces);
     }
 
     /**
      * A YAML security file: its root "security" key, then the one under
      * "when@<environment>" (under every "when@" block when no environment is
      * given). A "%parameter%" is read from the file's "parameters", then
-     * from the container given.
+     * from the container given, or from what the closure given returns for
+     * its name.
+     *
+     * @param ContainerInterface|(\Closure(string): (scalar|null))|null $container
      *
      * @throws SecurityConfigException
      *
      * @return array{accessControl: list<AccessControlRule>, firewalls: list<FirewallRule>}
      */
-    public function extract(string $path, ?string $environment = null, ?ContainerInterface $container = null): array
+    public function extract(string $path, ?string $environment = null, ContainerInterface|\Closure|null $container = null): array
     {
         if (!class_exists(Yaml::class)) {
             throw new SecurityConfigException('Reading a YAML security file needs symfony/yaml: composer require symfony/yaml');
@@ -178,19 +269,24 @@ final class SecurityConfigExtractor
         // The parameters a value may use: a scalar. A list or a tagged value
         // (a service closure, a tagged iterator) is never a path.
         $declared = \is_array($data['parameters'] ?? null) ? $data['parameters'] : [];
-        $parameters = new ParameterBag(array_filter($declared, \is_scalar(...)));
-        $resolve = static function (string $value) use ($parameters, $container, $path): string {
+        // An environment value is left unknown, as in the kernel.
+        $parameters = new EnvPlaceholderParameterBag(array_filter($declared, \is_scalar(...)));
+        $placeholders = new ContainerBuilder($parameters);
+        $resolve = static function (string $value) use ($parameters, $placeholders, $container, $path): array {
             while (true) {
                 try {
-                    return self::text($parameters->unescapeValue($parameters->resolveValue($value))) ?? throw self::notAString($value);
+                    return self::written($placeholders, self::text($parameters->unescapeValue($parameters->resolveValue($value))) ?? throw self::notAString($value));
                 } catch (ParameterNotFoundException $e) {
                     $name = $e->getKey();
-                    $found = null !== $container && $container->hasParameter($name) ? $container->getParameter($name) : null;
+                    $found = $container instanceof \Closure ? $container($name) : (null !== $container && $container->hasParameter($name) ? $container->getParameter($name) : null);
                     if (!\is_scalar($found)) {
                         throw new SecurityConfigException(\sprintf('The parameter "%s" used in "%s" is defined neither in the file nor in the application.', $name, $path), previous: $e);
                     }
 
                     $parameters->set($name, $found);
+                } catch (DependencyInjectionException $e) {
+                    // An environment variable name the bag refuses, say.
+                    throw new SecurityConfigException(\sprintf('The security configuration value "%s" cannot be resolved: %s', $value, $e->getMessage()), previous: $e);
                 }
             }
         };
@@ -205,7 +301,7 @@ final class SecurityConfigExtractor
      *
      * @return array{accessControl: list<AccessControlRule>, firewalls: list<FirewallRule>, skippedFiles: list<array{file: string, reason: string}>}
      */
-    private function readFiles(array $paths, ?string $environment, ?ContainerInterface $container, bool $named): array
+    private function readFiles(array $paths, ?string $environment, ?\Closure $container, bool $named): array
     {
         $accessControl = [];
         $firewalls = [];
@@ -241,13 +337,15 @@ final class SecurityConfigExtractor
     }
 
     /**
-     * @param list<array<array-key, mixed>> $configs the security configurations, in the order they apply
-     * @param list<string>                  $files   the files to locate each entry in
-     * @param \Closure(string): string      $resolve resolves the parameters of a value
+     * @param list<array<array-key, mixed>>               $configs the security configurations, in the order they apply
+     * @param list<string>                                $files   the files to locate each entry in
+     * @param \Closure(string): array{0: string, 1: bool} $resolve resolves the parameters of a value, and says whether it reads the environment
+     * @param array<string, array{0: string, 1: string}>  $pieces  each piece of a string of roles or methods a parameter holds, by its placeholder:
+     *                                                             the string as written, and the piece
      *
      * @return array{accessControl: list<AccessControlRule>, firewalls: list<FirewallRule>}
      */
-    private function build(array $configs, array $files, \Closure $resolve): array
+    private function build(array $configs, array $files, \Closure $resolve, array $pieces = []): array
     {
         $sources = self::sources($files);
         $taken = [];
@@ -274,16 +372,16 @@ final class SecurityConfigExtractor
                 $accessControl[] = $this->accessRule([
                     'path' => self::text($rule['path'] ?? null),
                     'host' => self::text($rule['host'] ?? null),
-                    'roles' => self::listOf($rule['roles'] ?? null),
-                    'methods' => self::listOf($rule['methods'] ?? null),
-                    'ips' => self::listOf($rule['ips'] ?? null),
+                    'roles' => \is_string($rule['roles'] ?? null) ? $rule['roles'] : self::listOf($rule['roles'] ?? null, false),
+                    'methods' => \is_string($rule['methods'] ?? null) ? $rule['methods'] : self::listOf($rule['methods'] ?? null, false),
+                    'ips' => self::listOf($rule['ips'] ?? null, false),
                     'allowIf' => self::text($rule['allow_if'] ?? null),
                     'requestMatcher' => self::text($rule['request_matcher'] ?? null),
                     'requiresChannel' => self::text($rule['requires_channel'] ?? null),
                     'port' => self::text($rule['port'] ?? null),
                     'attributes' => $attributes,
                     'route' => self::text($rule['route'] ?? null),
-                ], $sources, $taken, $resolve);
+                ], \count($accessControl) + 1, $sources, $taken, $resolve, $pieces);
             }
 
             // A later configuration adds to a firewall an earlier one declared.
@@ -300,7 +398,7 @@ final class SecurityConfigExtractor
             $pattern = $firewall['pattern'] ?? null;
             $single = self::text($pattern);
             $firewallRules[] = $this->firewallRule((string) $name, [
-                'patterns' => \is_array($pattern) ? self::listOf($pattern) : (null === $single ? [] : [$single]),
+                'patterns' => \is_array($pattern) ? self::listOf($pattern, false) : (null === $single ? [] : [$single]),
                 'alternation' => \is_array($pattern),
                 'requestMatcher' => self::text($firewall['request_matcher'] ?? null),
             ], $sources, $taken, $resolve);
@@ -310,17 +408,23 @@ final class SecurityConfigExtractor
     }
 
     /**
-     * @param array{path: ?string, host: ?string, roles: list<string>, methods: list<string>, ips: list<string>, allowIf: ?string, requestMatcher: ?string, requiresChannel: ?string, port: ?string, attributes: array<string, string>, route: ?string} $rule
-     * @param list<array{file: string, lines: array<int, string>}>                                                                                                                                                                                      $sources
-     * @param array<int, array<int, bool>>                                                                                                                                                                                                              $taken
-     * @param \Closure(string): string                                                                                                                                                                                                                  $resolve
+     * @param array{path: ?string, host: ?string, roles: string|list<string>, methods: string|list<string>, ips: list<string>, allowIf: ?string, requestMatcher: ?string, requiresChannel: ?string, port: ?string, attributes: array<string, string>, route: ?string} $rule
+     * @param list<array{file: string, lines: array<int, string>}>                                                                                                                                                                                                    $sources
+     * @param array<int, array<int, bool>>                                                                                                                                                                                                                            $taken
+     * @param \Closure(string): array{0: string, 1: bool}                                                                                                                                                                                                             $resolve
+     * @param array<string, array{0: string, 1: string}>                                                                                                                                                                                                              $pieces
      *
      * @throws SecurityConfigException
      *
      * @return AccessControlRule
      */
-    private function accessRule(array $rule, array $sources, array &$taken, \Closure $resolve): array
+    private function accessRule(array $rule, int $index, array $sources, array &$taken, \Closure $resolve, array $pieces): array
     {
+        // A piece of the roles, methods or addresses a parameter holds is
+        // found by the value as written, and read as the piece.
+        $writtenAs = static fn (string $item): string => $pieces[$item][0] ?? $item;
+        $readAs = static fn (string $item): string => $pieces[$item][1] ?? $item;
+
         $matchers = [
             ...self::valueMatchers($rule['path'], 'path'),
             ...self::valueMatchers($rule['host'], 'host'),
@@ -332,29 +436,62 @@ final class SecurityConfigExtractor
             // A rule with none of these, "{ roles: ROLE_USER }", is found by
             // what else it writes.
             $matchers = self::entryMatchers([
-                'roles' => $rule['roles'],
-                'ips' => $rule['ips'],
-                'methods' => $rule['methods'],
+                'roles' => array_map($writtenAs, self::listOf($rule['roles'], true)),
+                'ips' => array_map($writtenAs, $rule['ips']),
+                'methods' => array_map($writtenAs, self::listOf($rule['methods'], true)),
                 'requires_channel' => null === $rule['requiresChannel'] ? [] : [$rule['requiresChannel']],
             ]);
         }
 
         [$file, $line] = self::locate($sources, $taken, $matchers);
 
+        // The fields holding a value read from the environment, in order.
+        $fromEnvironment = [];
+        $read = static function (string $value, string $field) use ($resolve, &$fromEnvironment): string {
+            [$text, $environment] = $resolve($value);
+            if ($environment && !\in_array($field, $fromEnvironment, true)) {
+                $fromEnvironment[] = $field;
+            }
+
+            return $text;
+        };
+
+        $path = null === $rule['path'] ? null : $read($rule['path'], 'path');
+        $host = null === $rule['host'] ? null : $read($rule['host'], 'host');
+        $roles = self::resolvedList(\is_string($rule['roles']) ? $rule['roles'] : array_map($readAs, $rule['roles']), $read, 'roles');
+        $methods = self::resolvedList(\is_string($rule['methods']) ? $rule['methods'] : array_map($readAs, $rule['methods']), $read, 'methods');
+        $port = null === $rule['port'] ? null : $read($rule['port'], 'port');
+        $allowIf = null === $rule['allowIf'] ? null : $resolve($rule['allowIf'])[0];
+
+        // SecurityExtension builds the port matcher, and upper-cases the
+        // methods, when the container is compiled: from the environment, a
+        // port is no integer and the methods lose the value, and the
+        // application does not boot (Symfony 6.4, 7.4 and 8.1).
+        $where = \sprintf('access_control rule %d (%s)', $index, '' === $file ? 'security configuration' : $file.':'.$line);
+        if (\in_array('port', $fromEnvironment, true)) {
+            throw new SecurityConfigException(\sprintf('The security configuration is invalid: the port of %s, "%s", is read from the environment, which the security bundle refuses: it builds the port matcher when the container is compiled, from an integer only.', $where, $port));
+        }
+        if (\in_array('methods', $fromEnvironment, true)) {
+            throw new SecurityConfigException(\sprintf('The security configuration is invalid: the methods of %s, "%s", are read from the environment, which the security bundle refuses: it upper-cases them when the container is compiled, which loses the environment value.', $where, implode(', ', $methods)));
+        }
+
         return [
             'file' => $file,
             'line' => $line,
-            'path' => null === $rule['path'] ? null : $resolve($rule['path']),
-            'host' => null === $rule['host'] ? null : $resolve($rule['host']),
-            'roles' => $rule['roles'],
-            'methods' => $rule['methods'],
-            'ips' => $rule['ips'],
-            'allowIf' => self::filled($rule['allowIf']),
-            'requestMatcher' => self::filled($rule['requestMatcher']),
-            'requiresChannel' => self::filled($rule['requiresChannel']),
-            'port' => null === $rule['port'] ? null : self::port($resolve($rule['port'])),
-            'attributes' => array_map($resolve, $rule['attributes']),
-            'route' => null === $rule['route'] ? null : $resolve($rule['route']),
+            'path' => $path,
+            'host' => $host,
+            'roles' => $roles,
+            'methods' => $methods,
+            'ips' => array_map(static fn (string $ip): string => $read($readAs($ip), 'ips'), $rule['ips']),
+            // SecurityExtension takes an allow_if when it is truthy once
+            // resolved, and a request_matcher and a channel as written.
+            'allowIf' => '' === $allowIf || '0' === $allowIf ? null : $allowIf,
+            'requestMatcher' => $rule['requestMatcher'],
+            'requiresChannel' => $rule['requiresChannel'],
+            'port' => null === $port ? null : self::port($port),
+            'attributes' => array_map(static fn (string $value): string => $read($value, 'attributes'), $rule['attributes']),
+            'route' => null === $rule['route'] ? null : $read($rule['route'], 'route'),
+            'fromEnvironment' => $fromEnvironment,
         ];
     }
 
@@ -362,7 +499,7 @@ final class SecurityConfigExtractor
      * @param array{patterns: list<string>, alternation: bool, requestMatcher: ?string} $firewall
      * @param list<array{file: string, lines: array<int, string>}>                      $sources
      * @param array<int, array<int, bool>>                                              $taken
-     * @param \Closure(string): string                                                  $resolve
+     * @param \Closure(string): array{0: string, 1: bool}                               $resolve
      *
      * @return FirewallRule
      */
@@ -375,11 +512,19 @@ final class SecurityConfigExtractor
             self::keyMatcher($name),
         ]);
 
+        $fromEnvironment = false;
+        $read = static function (string $value) use ($resolve, &$fromEnvironment): string {
+            [$text, $environment] = $resolve($value);
+            $fromEnvironment = $fromEnvironment || $environment;
+
+            return $text;
+        };
+
         $pattern = null;
         if ($firewall['alternation']) {
-            $pattern = \sprintf('(?:%s)', implode('|', array_map($resolve, $patterns)));
+            $pattern = \sprintf('(?:%s)', implode('|', array_map($read, $patterns)));
         } elseif ([] !== $patterns) {
-            $pattern = $resolve($patterns[0]);
+            $pattern = $read($patterns[0]);
         }
 
         return [
@@ -387,8 +532,43 @@ final class SecurityConfigExtractor
             'file' => $file,
             'line' => $line,
             'pattern' => $pattern,
-            'requestMatcher' => self::filled($firewall['requestMatcher']),
+            'requestMatcher' => $firewall['requestMatcher'],
+            'fromEnvironment' => $fromEnvironment,
         ];
+    }
+
+    /**
+     * The roles or methods of a rule: a string resolved first, then split
+     * on its commas, as the security bundle splits it once
+     * MergeExtensionConfigurationPass has resolved it; each item of a list
+     * resolved alone.
+     *
+     * @param string|list<string>              $written
+     * @param \Closure(string, string): string $read
+     *
+     * @return list<string>
+     */
+    private static function resolvedList(string|array $written, \Closure $read, string $field): array
+    {
+        if (\is_string($written)) {
+            return self::listOf($read($written, $field), true);
+        }
+
+        return array_map(static fn (string $item): string => $read($item, $field), $written);
+    }
+
+    /**
+     * A value resolved, one read from the environment written as the
+     * configuration writes it, "%env(APP_PORT)%", and said to be so.
+     *
+     * @return array{0: string, 1: bool}
+     */
+    private static function written(ContainerBuilder $container, string $resolved): array
+    {
+        $environment = [];
+        $written = $container->resolveEnvPlaceholders($resolved, '%%env(%s)%%', $environment);
+
+        return [\is_string($written) ? $written : $resolved, [] !== $environment];
     }
 
     /**
@@ -406,21 +586,65 @@ final class SecurityConfigExtractor
             return $this->buildContainer();
         }, $copy, Kernel::class) ?? throw new SecurityConfigException('The kernel cannot build its container.');
 
-        return $build();
+        try {
+            return $build();
+        } catch (\RuntimeException $e) {
+            // A cache or build directory the kernel cannot write in, as a
+            // production one may be.
+            throw new SecurityConfigException('The kernel cannot build its container: '.$e->getMessage(), previous: $e);
+        }
     }
 
     /**
-     * The parameters of the application a file named with --config may use.
+     * The parameters of the application a file named with --config may use,
+     * as the application holds them once the container its kernel builds is
+     * compiled, parameters a compiler pass sets included; a value read from
+     * the environment is written as the configuration writes it,
+     * "%env(APP_PATH)%", where the compiled container the kernel runs would
+     * read it from the environment the analysis runs in. The container is
+     * built the first time the file asks for a parameter. A kernel that is
+     * not booted, or of another making than Kernel, lends the file none.
+     *
+     * @return (\Closure(string): (scalar|null))|null
      */
-    private static function bootedContainer(KernelInterface $kernel): ?ContainerInterface
+    private static function applicationParameters(KernelInterface $kernel): ?\Closure
     {
         try {
-            return $kernel->getContainer();
+            $kernel->getContainer();
         } catch (\LogicException) {
             // A boundary: a kernel that is not booted refuses to give its
             // container, and the file then has its own parameters only.
             return null;
         }
+
+        if (!$kernel instanceof Kernel) {
+            return null;
+        }
+
+        $container = null;
+
+        return static function (string $name) use ($kernel, &$container): string|int|float|bool|null {
+            if (null === $container) {
+                $container = self::uncompiledContainer($kernel);
+
+                try {
+                    $container->compile();
+                } catch (DependencyInjectionException $e) {
+                    throw new SecurityConfigException('The container of the application cannot be compiled: '.$e->getMessage(), previous: $e);
+                }
+            }
+
+            $value = $container->hasParameter($name) ? $container->getParameter($name) : null;
+            if (!\is_string($value)) {
+                return \is_scalar($value) ? $value : null;
+            }
+
+            // As the configuration writes it: "%" escaped, and a value read
+            // from the environment as the "%env()%" it is read through.
+            $written = $container->resolveEnvPlaceholders(str_replace('%', '%%', $value), '%%env(%s)%%');
+
+            return \is_string($written) ? $written : null;
+        };
     }
 
     /**
@@ -576,28 +800,24 @@ final class SecurityConfigExtractor
         return new SecurityConfigException(\sprintf('The security configuration value "%s" does not resolve to a string.', $value));
     }
 
-    private static function filled(?string $value): ?string
-    {
-        return null === $value || '' === trim($value, " \t\n\r\0\x0B") ? null : $value;
-    }
-
     /**
-     * A list of roles, methods, addresses or patterns. A string of roles,
-     * methods or addresses is split on its commas, as the security bundle
-     * splits it.
+     * A list of roles, methods, addresses or patterns, its items as
+     * written. A string of roles or methods is split on its commas and
+     * the spaces around them, as the security bundle splits it, and any
+     * other string is one item.
      *
      * @return list<string>
      */
-    private static function listOf(mixed $value): array
+    private static function listOf(mixed $value, bool $splitOnCommas): array
     {
         if (\is_string($value)) {
-            $value = explode(',', $value);
+            return $splitOnCommas ? (LibraryPcre::split('/\s*,\s*/', $value) ?: []) : [$value];
         }
 
         $items = [];
         foreach (\is_array($value) ? $value : [] as $item) {
-            $item = trim(self::text($item) ?? '', " \t\n\r\0\x0B");
-            if ('' !== $item) {
+            $item = self::text($item);
+            if (null !== $item) {
                 $items[] = $item;
             }
         }

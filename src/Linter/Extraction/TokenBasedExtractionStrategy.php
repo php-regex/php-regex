@@ -128,7 +128,9 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
 
         // PHP hands preg_match() the bytes of its source, valid UTF-8 or not,
         // a NUL byte among them: the tokenizer reads them as they stand.
-        $tokens = token_get_all($content);
+        // What PHP warns about the source as it scans it, an octal escape
+        // above \377, is no word of the run's: stdout holds the report.
+        $tokens = @token_get_all($content);
         $tokenOffsets = PhpTokens::offsets($tokens);
         $closers = PhpTokens::closers($tokens);
         /** @var \ArrayObject<int, PatternOccurrence|PendingPattern<array{int, int}>> $found */

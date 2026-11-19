@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Routing;
 
 use Symfony\Component\Routing\Exception\ExceptionInterface as RoutingException;
+use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Matcher\CompiledUrlMatcher;
 use Symfony\Component\Routing\Matcher\Dumper\CompiledUrlMatcherDumper;
 use Symfony\Component\Routing\Matcher\RedirectableUrlMatcherInterface;
@@ -32,25 +33,55 @@ final class FrameworkMatcher
      *
      * @param array<mixed>|RouteCollection $routes the routes, or what the dumper compiled of them
      */
-    public static function reached(array|RouteCollection $routes, string $method, string $path, string $scheme = 'http'): ?string
+    public static function reached(array|RouteCollection $routes, string $method, string $path, string $scheme = 'http', string $host = 'localhost'): ?string
     {
-        $compiled = $routes instanceof RouteCollection ? (new CompiledUrlMatcherDumper($routes))->getCompiledRoutes() : $routes;
-        $matcher = new class($compiled, new RequestContext(method: $method, scheme: $scheme)) extends CompiledUrlMatcher implements RedirectableUrlMatcherInterface {
-            /**
-             * @return array{_route: string}
-             */
-            public function redirect(string $path, string $route, ?string $scheme = null): array
-            {
-                return ['_route' => $route];
-            }
-        };
-
         try {
-            $route = $matcher->match($path)['_route'] ?? null;
+            $route = self::match($routes, $method, $path, $scheme, $host)['_route'] ?? null;
         } catch (RoutingException) {
             return null;
         }
 
         return \is_string($route) ? $route : null;
+    }
+
+    /**
+     * How the matcher answers a request: "redirect" to a route, "match" of
+     * one as is, "405" when a route takes the path for other methods alone,
+     * or "404" when no route takes it.
+     *
+     * @param array<mixed>|RouteCollection $routes the routes, or what the dumper compiled of them
+     */
+    public static function answer(array|RouteCollection $routes, string $method, string $path, string $scheme = 'http'): string
+    {
+        try {
+            return isset(self::match($routes, $method, $path, $scheme, 'localhost')['_redirect']) ? 'redirect' : 'match';
+        } catch (MethodNotAllowedException) {
+            return '405';
+        } catch (RoutingException) {
+            return '404';
+        }
+    }
+
+    /**
+     * @param array<mixed>|RouteCollection $routes
+     *
+     * @throws RoutingException When no route takes the request
+     *
+     * @return array<mixed>
+     */
+    private static function match(array|RouteCollection $routes, string $method, string $path, string $scheme, string $host): array
+    {
+        $compiled = $routes instanceof RouteCollection ? (new CompiledUrlMatcherDumper($routes))->getCompiledRoutes() : $routes;
+        $matcher = new class($compiled, new RequestContext(method: $method, host: $host, scheme: $scheme)) extends CompiledUrlMatcher implements RedirectableUrlMatcherInterface {
+            /**
+             * @return array{_route: string, _redirect: string}
+             */
+            public function redirect(string $path, string $route, ?string $scheme = null): array
+            {
+                return ['_route' => $route, '_redirect' => $path];
+            }
+        };
+
+        return $matcher->match($path);
     }
 }

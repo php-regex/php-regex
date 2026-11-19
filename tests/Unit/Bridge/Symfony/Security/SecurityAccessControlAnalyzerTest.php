@@ -20,6 +20,21 @@ use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
+use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolver;
+use Symfony\Component\Security\Core\Authentication\Token\NullToken;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\Authorization\AccessDecisionManager;
+use Symfony\Component\Security\Core\Authorization\Strategy\AccessDecisionStrategyInterface;
+use Symfony\Component\Security\Core\Authorization\Strategy\AffirmativeStrategy;
+use Symfony\Component\Security\Core\Authorization\Strategy\ConsensusStrategy;
+use Symfony\Component\Security\Core\Authorization\Strategy\UnanimousStrategy;
+use Symfony\Component\Security\Core\Authorization\Voter\AuthenticatedVoter;
+use Symfony\Component\Security\Core\Authorization\Voter\RoleVoter;
+use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
+use Symfony\Component\Security\Core\User\InMemoryUser;
 
 final class SecurityAccessControlAnalyzerTest extends TestCase
 {
@@ -390,6 +405,174 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
 
         $this->assertSame(1, $report->stats['shadowed']);
         $this->assertSame(1, $report->stats['redundant']);
+    }
+
+    /**
+     * symfony/http-foundation's MethodRequestMatcher takes a HEAD request
+     * for GET since 6.4.50, 7.4.23 and 8.1.11, and never on 8.0: where the
+     * matcher installed does, a later rule for GET and HEAD of the same
+     * roles takes the requests of an earlier rule for GET, and is
+     * redundant.
+     */
+    #[Test]
+    public function test_a_rule_for_get_and_head_after_a_rule_for_get_is_redundant_where_get_takes_head(): void
+    {
+        $getTakesHead = (new MethodRequestMatcher(['GET']))->matches(Request::create('/', 'HEAD'));
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            ['methods' => ['GET']] + self::rule(path: '^/x'),
+            ['methods' => ['GET', 'HEAD']] + self::rule(path: '^/x', line: 4),
+        ]);
+
+        $this->assertSame($getTakesHead ? 1 : 0, $report->stats['shadowed']);
+        $this->assertSame($getTakesHead ? 1 : 0, $report->stats['redundant']);
+        $this->assertSame($getTakesHead ? 0 : 1, $report->stats['carve_outs']);
+    }
+
+    /**
+     * The methods a rule takes are asked of the MethodRequestMatcher
+     * installed through requests built as they are: a factory the
+     * application gives Request::setFactory() plays no part in them.
+     */
+    #[Test]
+    public function test_the_methods_are_read_without_the_application_request_factory(): void
+    {
+        $getTakesHead = (new MethodRequestMatcher(['GET']))->matches(Request::create('/', 'HEAD'));
+        Request::setFactory(static function (): Request {
+            throw new \LogicException('The application builds no request here.');
+        });
+
+        try {
+            $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+                ['methods' => ['GET']] + self::rule(path: '^/x'),
+                ['methods' => ['HEAD']] + self::rule(path: '^/x', line: 4),
+            ]);
+        } finally {
+            Request::setFactory(null);
+        }
+
+        $this->assertSame($getTakesHead ? 1 : 0, $report->stats['shadowed']);
+    }
+
+    /**
+     * A rule is public when the security bundle's AuthenticatedVoter grants
+     * its roles to a visitor: "PUBLIC_ACCESS" as written, alone, as the
+     * voter and AccessListener compare the whole list with it, and nothing
+     * else (IS_AUTHENTICATED_ANONYMOUSLY is gone since Symfony 6.0). A public
+     * rule before a restricted one it shadows is critical.
+     *
+     * @param list<string> $roles
+     */
+    #[Test]
+    #[DataProvider('providePublicRoles')]
+    public function test_a_rule_is_public_as_the_authenticated_voter_reads_its_roles(array $roles): void
+    {
+        $public = VoterInterface::ACCESS_GRANTED === (new AuthenticatedVoter(new AuthenticationTrustResolver()))->vote(new NullToken(), null, $roles);
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin', roles: $roles),
+            self::rule(path: '^/admin/users', line: 4),
+        ]);
+
+        $this->assertSame('shadowed', $report->conflicts[0]['type']);
+        $this->assertSame($public ? 'critical' : 'warning', $report->conflicts[0]['severity']);
+    }
+
+    /**
+     * @return iterable<string, array{roles: list<string>}>
+     */
+    public static function providePublicRoles(): iterable
+    {
+        yield 'PUBLIC_ACCESS' => ['roles' => ['PUBLIC_ACCESS']];
+        yield 'PUBLIC_ACCESS after a space' => ['roles' => [' PUBLIC_ACCESS']];
+        yield 'PUBLIC_ACCESS in lower case' => ['roles' => ['public_access']];
+        yield 'IS_AUTHENTICATED_ANONYMOUSLY' => ['roles' => ['IS_AUTHENTICATED_ANONYMOUSLY']];
+        yield 'PUBLIC_ACCESS beside another role' => ['roles' => ['PUBLIC_ACCESS', 'ROLE_USER']];
+        yield 'PUBLIC_ACCESS twice' => ['roles' => ['PUBLIC_ACCESS', 'PUBLIC_ACCESS']];
+    }
+
+    /**
+     * A later rule of the same path is redundant when Symfony decides every
+     * request it would take as it decides them for the earlier rule. A role
+     * written twice changes nothing to the voters, whatever the strategy,
+     * but AccessListener lets a request through only for "PUBLIC_ACCESS"
+     * written once and alone, and AuthenticatedVoter grants only that list:
+     * "PUBLIC_ACCESS" written twice refuses every visitor.
+     *
+     * @param list<string> $earlier
+     * @param list<string> $later
+     */
+    #[Test]
+    #[DataProvider('provideRolesWrittenTwice')]
+    public function test_a_later_rule_is_redundant_only_where_symfony_decides_its_roles_alike(array $earlier, array $later): void
+    {
+        $alike = true;
+        foreach ([new AffirmativeStrategy(), new UnanimousStrategy(), new ConsensusStrategy()] as $strategy) {
+            foreach ([new NullToken(), new UsernamePasswordToken(new InMemoryUser('a', null, ['ROLE_A']), 'main', ['ROLE_A'])] as $token) {
+                $alike = $alike && self::granted($strategy, $token, $earlier) === self::granted($strategy, $token, $later);
+            }
+        }
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin', roles: $earlier),
+            self::rule(path: '^/admin', roles: $later, line: 4),
+        ]);
+
+        $this->assertSame(1, $report->stats['shadowed']);
+        $this->assertSame($alike ? 1 : 0, $report->stats['redundant']);
+    }
+
+    /**
+     * @return iterable<string, array{earlier: list<string>, later: list<string>}>
+     */
+    public static function provideRolesWrittenTwice(): iterable
+    {
+        yield 'PUBLIC_ACCESS, then PUBLIC_ACCESS twice' => ['earlier' => ['PUBLIC_ACCESS'], 'later' => ['PUBLIC_ACCESS', 'PUBLIC_ACCESS']];
+        yield 'PUBLIC_ACCESS twice, then PUBLIC_ACCESS' => ['earlier' => ['PUBLIC_ACCESS', 'PUBLIC_ACCESS'], 'later' => ['PUBLIC_ACCESS']];
+        yield 'a role twice, then once' => ['earlier' => ['ROLE_A', 'ROLE_A'], 'later' => ['ROLE_A']];
+        yield 'a role once, then twice' => ['earlier' => ['ROLE_A'], 'later' => ['ROLE_A', 'ROLE_A']];
+    }
+
+    /**
+     * The RoleVoter compares roles as written: a later rule for "role_admin"
+     * does not take the users an earlier rule for "ROLE_ADMIN" takes, and is
+     * not redundant.
+     */
+    #[Test]
+    public function test_roles_differing_in_case_are_other_roles(): void
+    {
+        $token = new UsernamePasswordToken(new InMemoryUser('admin', null, ['ROLE_ADMIN']), 'main', ['ROLE_ADMIN']);
+        $this->assertSame(VoterInterface::ACCESS_GRANTED, (new RoleVoter())->vote($token, null, ['ROLE_ADMIN']));
+        $this->assertNotSame(VoterInterface::ACCESS_GRANTED, (new RoleVoter())->vote($token, null, ['role_admin']));
+
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin', roles: ['ROLE_ADMIN']),
+            self::rule(path: '^/admin', roles: ['role_admin'], line: 4),
+        ]);
+
+        $this->assertSame(1, $report->stats['shadowed']);
+        $this->assertSame(0, $report->stats['redundant']);
+    }
+
+    /**
+     * Whether a request of the token reaches the rule's controller, as
+     * AccessListener decides it: through for "PUBLIC_ACCESS" alone, else
+     * as the AccessDecisionManager of the strategy decides the roles.
+     *
+     * @param list<string> $roles
+     */
+    private static function granted(AccessDecisionStrategyInterface $strategy, TokenInterface $token, array $roles): bool
+    {
+        if (['PUBLIC_ACCESS'] === $roles) {
+            return true;
+        }
+
+        $manager = new AccessDecisionManager([new RoleVoter(), new AuthenticatedVoter(new AuthenticationTrustResolver())], $strategy);
+
+        // Symfony 7.3 puts an AccessDecision before allowMultipleAttributes.
+        return 5 === (new \ReflectionMethod($manager, 'decide'))->getNumberOfParameters()
+            ? $manager->decide($token, $roles, null, null, true)
+            : $manager->decide($token, $roles, null, true);
     }
 
     /**
