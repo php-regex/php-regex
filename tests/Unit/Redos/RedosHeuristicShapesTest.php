@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosOptions;
@@ -330,6 +331,30 @@ final class RedosHeuristicShapesTest extends TestCase
         }
 
         $this->assertSame(RedosSeverity::Safe, Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * A verb past a lookahead that may fail still keeps the iterations of
+     * the loop around apart: the lookahead sends the engine back into the
+     * run of the iteration it stands in, but each iteration that ends has
+     * passed the verb, and the loop around never splits the run again.
+     * PCRE takes 10 steps on 8 and 12 "a" then "!", where without the verb
+     * it goes exponential (512 -> 8 192), and the loop is safe.
+     */
+    #[Test]
+    public function test_a_verb_past_a_lookahead_that_may_fail_keeps_a_nested_loop_safe(): void
+    {
+        $steps = [];
+        foreach (['/^(x)(?:a+(?=a)(*COMMIT)b?)+\1$/', '/^(x)(?:a+(?=a)b?)+\1$/'] as $pattern) {
+            $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+            $steps[] = array_map(static fn (int $units): int => self::steps($unoptimized, 'x'.str_repeat('a', $units).'!'), [8, 12]);
+        }
+
+        $this->assertSame($steps[0][0], $steps[0][1], 'Oracle: past the verb the engine ends the attempt at once.');
+        $this->assertGreaterThan(8 * $steps[1][0], $steps[1][1], 'Oracle: without the verb the engine goes exponential.');
+
+        $this->assertSame(RedosSeverity::Safe, Regex::create(['cache' => null])->redos('/^(x)(?:a+(?=a)(*COMMIT)b?)+\1$/')->severity);
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos('/^(x)(?:a+(?=a)b?)+\1$/')->severity);
     }
 
     /**
@@ -970,6 +995,44 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * Each loop is put to the proof once, whatever the number of its
+     * alternations whose branches start alike: each of them asks about the
+     * same loop, read once for an assertion.
+     */
+    #[Test]
+    public function test_each_loop_is_put_to_the_proof_once_for_all_its_alternations(): void
+    {
+        $loop = '(?:'.str_repeat('(?:a|ab)c', 50).')+';
+        $pattern = '/^(x)'.$loop.'-'.$loop.'\1$/';
+        $this->assertNotFalse(@preg_match($pattern, ''), 'Oracle: PCRE compiles the two loops.');
+
+        $tree = Regex::create(['cache' => null])->parse($pattern);
+        $asked = [];
+        $profiler = new RedosProfiler(CharSetAnalyzer::forRegex($tree), static function (QuantifierNode $loop) use (&$asked): bool {
+            $asked[] = $loop->getStartPosition();
+
+            return true;
+        });
+        $tree->accept($profiler);
+
+        $this->assertSame([4, 5 + \strlen($loop)], $asked);
+    }
+
+    /**
+     * A loop that holds an assertion is read for it once, whatever the
+     * number of its alternations whose branches start alike: four times the
+     * alternations take about four times as long to read, where each of
+     * them read the whole loop again.
+     */
+    #[Test]
+    public function test_a_loop_holding_an_assertion_is_read_for_it_once(): void
+    {
+        $this->assertLinearTime(static function (int $units): void {
+            Regex::create(['cache' => null])->redos('/^(x)(?:'.str_repeat('(?:a|ab)c', $units).'(?=c))+\1$/');
+        }, 400, 'a loop holding a lookahead and alternations whose branches start alike');
+    }
+
+    /**
      * An item that reads nothing, an option setting above all, neither
      * separates a loop from what stands before or after it nor stands
      * between two loops: each row is read as its twin without the item,
@@ -1149,10 +1212,49 @@ final class RedosHeuristicShapesTest extends TestCase
         }
 
         $analysis = Regex::create(['cache' => null])->redos('/^(x)'.str_repeat('(?:ba)*', 400).'c+c+\1$/');
-        $named = array_filter($analysis->findings, static fn ($finding): bool => str_starts_with($finding->message, 'Adjacent quantified tokens'));
+        $named = array_values(array_filter($analysis->findings, static fn ($finding): bool => str_starts_with($finding->message, 'Adjacent quantified tokens')));
 
         $this->assertCount(1, $named);
+        $this->assertSame('c+c+', $named[0]->pattern);
         $this->assertSame(RedosSeverity::Medium, $analysis->severity);
+    }
+
+    /**
+     * Once a sequence has spent the pairs it reads past eight items, the
+     * loops further are taken to meet only where a loop lies further, before
+     * the first item that always reads a character: a lone loop before a
+     * run of items that repeat once at most meets none of them, and is read
+     * as before eight of them, safe. PCRE reads it as its twin with eight,
+     * giving the run back one "a" at a time (10, 14 and 18 steps on 8, 12
+     * and 16 "a" then "!", auto-possessification off), and reads a loop
+     * past the run as "a+a+" (31, 69 and 123 steps), which is still taken
+     * to meet the first.
+     *
+     * @return iterable<string, array{pattern: string, twin: string, unread: bool}>
+     */
+    public static function provideLoopsPastTheSpentPairs(): iterable
+    {
+        yield 'a lone loop before 1 032 optional items and a delimiter' => ['pattern' => '/^(x)a+'.str_repeat('b?', 1032).'!\1$/', 'twin' => '/^(x)a+'.str_repeat('b?', 8).'!\1$/', 'unread' => false];
+        yield 'a lone loop before 2 048 optional items and a delimiter' => ['pattern' => '/^(x)a+'.str_repeat('b?', 2048).'!\1$/', 'twin' => '/^(x)a+'.str_repeat('b?', 8).'!\1$/', 'unread' => false];
+        yield 'a loop past 2 048 optional items' => ['pattern' => '/^(x)a+'.str_repeat('b?', 2048).'a+\1$/', 'twin' => '/^(x)a+a+\1$/', 'unread' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsPastTheSpentPairs')]
+    public function test_the_loops_past_the_spent_pairs_are_taken_to_meet_only_where_one_lies_further(string $pattern, string $twin, bool $unread): void
+    {
+        foreach ([8, 12, 16] as $units) {
+            $subject = 'x'.str_repeat('a', $units).'!';
+            $this->assertSame(
+                self::steps(PcreInterpreter::pattern($twin[0].'(*NO_START_OPT)(*NO_AUTO_POSSESS)'.substr($twin, 1)), $subject),
+                self::steps(PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)(*NO_AUTO_POSSESS)'.substr($pattern, 1)), $subject),
+                'Oracle: the engine reads the pattern as its twin.',
+            );
+        }
+
+        $analysis = Regex::create(['cache' => null])->redos($pattern);
+        $this->assertSame(Regex::create(['cache' => null])->redos($twin)->severity, $analysis->severity);
+        $this->assertSame($unread, [] !== array_filter($analysis->findings, static fn ($finding): bool => str_starts_with($finding->message, 'Loops that may match empty')));
     }
 
     #[Test]
@@ -1233,7 +1335,10 @@ final class RedosHeuristicShapesTest extends TestCase
 
     /**
      * The smallest backtrack limit under which the match attempt ends, the
-     * JIT on when asked.
+     * JIT on when asked. Only an attempt the backtrack limit stops is read
+     * as one that needs more steps: any other error, a pattern PCRE
+     * refuses above all, fails the test, and so does an attempt that does
+     * not end within the largest limit searched.
      */
     private static function steps(string $pattern, string $subject, bool $jit = false): int
     {
@@ -1246,12 +1351,18 @@ final class RedosHeuristicShapesTest extends TestCase
             while ($low < $high) {
                 $middle = intdiv($low + $high, 2);
                 ini_set('pcre.backtrack_limit', (string) $middle);
-                if (false === @preg_match($pattern, $subject)) {
-                    $low = $middle + 1;
-                } else {
+                if (false !== @preg_match($pattern, $subject)) {
                     $high = $middle;
+
+                    continue;
                 }
+
+                self::assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error(), \sprintf('Oracle: PCRE stops %s with "%s", not at the backtrack limit.', $pattern, preg_last_error_msg()));
+                $low = $middle + 1;
             }
+
+            ini_set('pcre.backtrack_limit', (string) $low);
+            self::assertNotFalse(@preg_match($pattern, $subject), \sprintf('Oracle: the attempt of %s ends within %d steps, not with "%s".', $pattern, $low, preg_last_error_msg()));
 
             return $low;
         } finally {
