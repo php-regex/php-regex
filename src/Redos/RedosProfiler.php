@@ -1801,8 +1801,10 @@ final class RedosProfiler extends AbstractNodeVisitor
         $max = RedosSeverity::Safe;
         $reading = null === $reads ? null : array_keys(array_filter($reads));
         $count = null === $reading ? \count($children) : \count($reading);
-        // The pairs read past ITEMS_READ_PAST items so far.
+        // The pairs read past ITEMS_READ_PAST items so far, and the first
+        // loop and item the end of PAIRS_READ_PAST parted, once it came.
         $pastPairs = 0;
+        $cuts = [];
 
         for ($k = 0; $k < $count - 1; $k++) {
             $leftIndex = null === $reading ? $k : $reading[$k];
@@ -1820,14 +1822,17 @@ final class RedosProfiler extends AbstractNodeVisitor
             // A loop meets each item after it as far as the first that
             // always reads a character: "a+x?a+" meets the second "a+"
             // where "x?" matches empty. Past ITEMS_READ_PAST items, the
-            // first loop it meets ends the scan; the end of PAIRS_READ_PAST
-            // ends the reading of the sequence, its loops taken to meet.
+            // first loop it meets ends the scan, and so does the end of
+            // PAIRS_READ_PAST, after which the loops further are taken to
+            // meet: the items within ITEMS_READ_PAST are read all the same.
             for ($m = $k + 1; $m < $count; $m++) {
                 $rightIndex = null === $reading ? $m : $reading[$m];
                 $right = $children[$rightIndex];
                 $past = $m - $k > self::ITEMS_READ_PAST;
                 if ($past && $pastPairs >= self::PAIRS_READ_PAST) {
-                    return $this->maxSeverity($max, $this->unreadLoops($children, $leftIndex, $rightIndex));
+                    $cuts[] = [$leftIndex, $rightIndex];
+
+                    break;
                 }
 
                 $pastPairs += (int) $past;
@@ -1838,6 +1843,10 @@ final class RedosProfiler extends AbstractNodeVisitor
                     break;
                 }
             }
+        }
+
+        if ([] !== $cuts) {
+            $max = $this->maxSeverity($max, $this->unreadLoops($children, ...$cuts[0]));
         }
 
         return $max;
@@ -1909,10 +1918,10 @@ final class RedosProfiler extends AbstractNodeVisitor
     }
 
     /**
-     * The verdict of a sequence whose reading PAIRS_READ_PAST cut short at
-     * the loop at $leftIndex: its loops past the cut are taken to meet, as
-     * loops whose overlap is not known are, and the cut is named with the
-     * items read up to it.
+     * The verdict of a sequence whose reading PAIRS_READ_PAST cut short,
+     * first at the loop at $leftIndex: the loops past each cut are taken to
+     * meet, as loops whose overlap is not known are, and the first cut is
+     * named with the items read up to it.
      *
      * @param list<NodeInterface> $children the items of the sequence
      */

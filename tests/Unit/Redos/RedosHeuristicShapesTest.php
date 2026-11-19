@@ -1130,6 +1130,31 @@ final class RedosHeuristicShapesTest extends TestCase
         $this->assertSame(RedosSeverity::Medium, Regex::create(['cache' => null])->redos('/^(x)'.str_repeat('(?:ba)*', 400).'\1$/')->severity);
     }
 
+    /**
+     * Once a sequence has spent the pairs it reads past eight items, each
+     * loop after still meets the ones within eight items: "c+c+" at the end
+     * of a run of loops that never meet is named, as the engine reads its
+     * runs as those of "a+a+" (31 -> 69 steps on 8 -> 12 "c" then "!").
+     */
+    #[Test]
+    public function test_the_pairs_within_eight_items_are_read_once_the_pairs_past_them_are_spent(): void
+    {
+        foreach ([8, 12] as $units) {
+            $subject = str_repeat('c', $units).'!';
+            $this->assertSame(
+                self::steps(PcreInterpreter::pattern('/(*NO_START_OPT)^(a+a+)\1$/'), str_repeat('a', $units).'!'),
+                self::steps(PcreInterpreter::pattern('/(*NO_START_OPT)^(c+c+)\1$/'), $subject),
+                'Oracle: the runs of "c+c+" meet as those of "a+a+" do.',
+            );
+        }
+
+        $analysis = Regex::create(['cache' => null])->redos('/^(x)'.str_repeat('(?:ba)*', 400).'c+c+\1$/');
+        $named = array_filter($analysis->findings, static fn ($finding): bool => str_starts_with($finding->message, 'Adjacent quantified tokens'));
+
+        $this->assertCount(1, $named);
+        $this->assertSame(RedosSeverity::Medium, $analysis->severity);
+    }
+
     #[Test]
     #[DataProvider('provideLoopsPastOptionalItems')]
     public function test_a_loop_meets_another_past_eight_optional_items_at_most(string $pattern, bool $named): void
