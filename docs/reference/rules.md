@@ -1265,7 +1265,8 @@ twice, and the fix is `/u`, not removing it. So is a byte of a character that a 
 it holds: `[a-ä]` is the range `a-\xC3`, then the `\xA4` it holds. A character written
 twice, `[ää]`, even where others hold each of its bytes first, `[ö¤ää]`, or a byte
 written beside a character that starts with it, `[aä\xC3]`, is a duplicate
-`regex.lint.charclass.redundant` reports.
+`regex.lint.charclass.redundant` reports, as are two ranges sharing an ASCII character,
+which no split makes: `[a-äb-ö]` holds `b` to `z` twice, with `/u` or without.
 
 **Example:**
 ```php
