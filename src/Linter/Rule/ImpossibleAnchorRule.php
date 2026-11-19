@@ -231,12 +231,8 @@ final class ImpossibleAnchorRule extends AbstractLintRule
      */
     private function lastCharacters(NodeInterface $child, string $flags, LintContext $context): ?ByteCharSet
     {
-        // No inline flag turns the u modifier off: "(?^)" resets i, m, n, s
-        // and x only.
-        if (str_contains($context->pattern->flags, 'u') && !str_contains($flags, 'u')) {
-            $flags .= 'u';
-        }
-
+        // The flags hold u wherever the pattern sets it: no inline flag turns
+        // it off, "(?^)" resets i, m, n, r, s and x only.
         $this->ascii[$flags] ??= $context->charSetAnalyzer->withFlags($flags);
         $ascii = self::lastCharactersUnder($child, $this->ascii[$flags]);
         if (null === $ascii) {
