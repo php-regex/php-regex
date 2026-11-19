@@ -71,17 +71,6 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         '\\' => true, ']' => true, '-' => true, '^' => true, '[' => true,
     ];
 
-    /**
-     * What a class escapes under the v flag: the syntax characters, "/",
-     * "-", and the reserved punctuators, every one a legal escape there.
-     */
-    private const CLASS_SET_META = [
-        '\\' => true, ']' => true, '-' => true, '^' => true, '[' => true, '(' => true, ')' => true,
-        '{' => true, '}' => true, '/' => true, '|' => true, '$' => true, '.' => true, '*' => true,
-        '+' => true, '?' => true, '&' => true, '!' => true, '#' => true, '%' => true, ',' => true,
-        ':' => true, ';' => true, '<' => true, '=' => true, '>' => true, '@' => true, '`' => true, '~' => true,
-    ];
-
     private const BYTE_SPACES = '\t-\r ';
 
     private const SUPPORTED_CHAR_TYPES = ['d', 's', 'w', 'D', 'S', 'W'];
@@ -673,7 +662,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
     private function escapeString(string $value): string
     {
-        $meta = $this->inCharClass ? ($this->unicodeSets ? self::CLASS_SET_META : self::CHAR_CLASS_META) : self::META_CHARACTERS;
+        $meta = $this->inCharClass ? ($this->unicodeSets ? VModeCompatibility::CLASS_SET_META : self::CHAR_CLASS_META) : self::META_CHARACTERS;
         $needsEscape = false;
 
         $len = \strlen($value);
@@ -1003,7 +992,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         if ($codePoint > 0x20 && $codePoint < 0x7F) {
             $character = \chr($codePoint);
 
-            return isset(self::CLASS_SET_META[$character]) ? '\\'.$character : $character;
+            return isset(VModeCompatibility::CLASS_SET_META[$character]) ? '\\'.$character : $character;
         }
 
         return $codePoint > 0x7F && null !== $asWritten ? $asWritten : $this->formatCodePoint($codePoint);

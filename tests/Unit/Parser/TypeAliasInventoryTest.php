@@ -59,6 +59,7 @@ use PHPRegex\Symfony\Routing\RouteReachabilityReport;
 use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Symfony\Security\SecurityFirewallReport;
+use PHPRegex\Symfony\Validator\RegexConstraintAnalyzer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -132,6 +133,7 @@ final class TypeAliasInventoryTest extends TestCase
         SecurityAnalyzer::class => ['SkippedFile'],
         SymfonyLintCommand::class => ['RegexOptions'],
         RouteReachabilityReport::class => ['RouteReach'],
+        RegexConstraintAnalyzer::class => ['ValidatorFinding'],
 
         // Exported before the named-shape change and frozen since.
         RailroadLayoutVisitor::class => ['SvgBox', 'SvgLayout', 'SvgMarker', 'SvgNode', 'SvgPath', 'SvgPoint', 'SvgText'],

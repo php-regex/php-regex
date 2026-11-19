@@ -1,0 +1,654 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Symfony\Validator;
+
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\MatchMode;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Exception\RegexException;
+use PHPRegex\Parser\Printer\DisplayEscaper;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Transpiler\Target\JavaScript\VModeCompatibility;
+use PHPRegex\Transpiler\Transpiler;
+use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\Constraints\Choice;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\Regex;
+use Symfony\Component\Validator\Constraints\Sequentially;
+use Symfony\Component\Validator\Mapping\ClassMetadataInterface;
+use Symfony\Component\Validator\Mapping\GetterMetadata;
+
+/**
+ * Audits the Regex constraints of validated classes: what the browser
+ * checks against what the server checks, and what the other constraints of
+ * the same property make of the pattern.
+ *
+ * A form renders a Regex constraint as the HTML pattern attribute its
+ * getHtmlPattern() gives, and the browser compiles it as ^(?:H)$ under the
+ * v flag. For each Regex constraint the audit asks:
+ *
+ * - whether that attribute is dropped, as getHtmlPattern() gives none for a
+ *   pattern with flags, and which htmlPattern would carry it;
+ * - whether a browser compiles it at all, and reads it as PCRE does
+ *   (VModeCompatibility);
+ * - whether it accepts the values the server accepts, and only those: the
+ *   pattern under preg_match() against ^(?:H)$ read as the browser reads
+ *   it, code points, \w \d \b as ASCII, \s and . as JavaScript reads
+ *   them, over the values an input can hold (no line break);
+ *
+ * and across the constraints of a property, whether a Length or a Choice
+ * leaves any value the Regex accepts, and whether two Regex constraints of
+ * a group can both pass.
+ *
+ * Findings are errors (a value the browser accepts and the server rejects,
+ * a pattern the browser refuses or misreads, a property no value can
+ * satisfy),
+ * warnings (a value the server accepts and the browser rejects, a dropped
+ * attribute) or notices (a question the solver could not answer).
+ *
+ * @internal
+ *
+ * @phpstan-type ValidatorFinding array{
+ *     class: string,
+ *     property: string,
+ *     pattern: string,
+ *     check: string,
+ *     severity: 'error'|'warning'|'notice',
+ *     message: string,
+ *     htmlPattern?: string,
+ *     example?: string,
+ *     suggestion?: string,
+ * }
+ */
+final class RegexConstraintAnalyzer
+{
+    /**
+     * The delimiters the browser's pattern is wrapped in for PCRE, the first
+     * one it does not write.
+     */
+    private const DELIMITERS = ['/', '#', '~', '%', '@', '!', ',', ';', '`', '='];
+
+    /**
+     * The ASCII word characters, as JavaScript reads \w even under v.
+     */
+    private const WORD = 'A-Za-z0-9_';
+
+    /**
+     * JavaScript's white space but the line breaks no input holds: \s
+     * reads WhiteSpace and LineTerminator, Unicode's Zs among them.
+     */
+    private const SPACE = '\t\x{B}\f \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}';
+
+    private readonly RegexParser $parser;
+
+    private readonly Transpiler $transpiler;
+
+    private readonly PcreEngine $engine;
+
+    private readonly SolverOptions $options;
+
+    /**
+     * @var array<string, array{?string, ?string}|string> each comparison made, or why it failed, by pattern and HTML pattern
+     */
+    private array $compared = [];
+
+    /**
+     * @var array<string, array{?string, bool}> each suggestion made, by pattern
+     */
+    private array $suggested = [];
+
+    public function __construct(
+        private readonly LanguageSolver $solver = new LanguageSolver(),
+        ?RegexParser $parser = null,
+        ?SolverOptions $options = null,
+    ) {
+        $this->parser = $parser ?? RegexParser::create();
+        $this->transpiler = new Transpiler($this->parser);
+        $this->engine = new PcreEngine();
+        $this->options = $options ?? new SolverOptions(MatchMode::Partial);
+    }
+
+    /**
+     * @param iterable<ClassMetadataInterface> $classes
+     */
+    public function analyze(iterable $classes): RegexConstraintReport
+    {
+        $findings = [];
+        $stats = ['classes' => 0, 'properties' => 0, 'regex' => 0, 'html_compared' => 0];
+
+        foreach ($classes as $metadata) {
+            $stats['classes']++;
+            $class = $metadata->getClassName();
+            foreach ($metadata->getConstrainedProperties() as $property) {
+                foreach ($metadata->getPropertyMetadata($property) as $member) {
+                    $name = $member instanceof GetterMetadata ? $member->getName().'()' : '$'.$member->getPropertyName();
+                    $constraints = [];
+                    foreach ($member->getConstraints() as $constraint) {
+                        $constraints = [...$constraints, ...self::flatten($constraint)];
+                    }
+
+                    $regexes = [];
+                    foreach ($constraints as $constraint) {
+                        if ($constraint instanceof Regex && \is_string($constraint->pattern) && '' !== $constraint->pattern) {
+                            $regexes[] = $constraint;
+                        }
+                    }
+
+                    if ([] === $regexes) {
+                        continue;
+                    }
+
+                    $stats['properties']++;
+                    $subject = ['class' => $class, 'property' => $name];
+                    foreach ($regexes as $regex) {
+                        $stats['regex']++;
+                        foreach ($this->checkHtmlPattern($regex, $subject, $stats) as $finding) {
+                            $findings[] = $finding;
+                        }
+
+                        foreach ($constraints as $other) {
+                            $found = match (true) {
+                                $other instanceof Length => $this->checkLength($regex, $other, $subject),
+                                $other instanceof Choice => $this->checkChoice($regex, $other, $subject),
+                                default => [],
+                            };
+                            foreach ($found as $finding) {
+                                $findings[] = $finding;
+                            }
+                        }
+                    }
+
+                    foreach ($this->checkConsistency($regexes, $subject) as $finding) {
+                        $findings[] = $finding;
+                    }
+                }
+            }
+        }
+
+        return new RegexConstraintReport($findings, $stats);
+    }
+
+    /**
+     * The HTML pattern a browser reads for the constraint, as PCRE: the
+     * value of the attribute, ^(?:H)$, under u (the browser reads code
+     * points), with \w \d \b \W \D \B and . read as ASCII JavaScript reads
+     * them, over the values an input holds: none holds a line break.
+     *
+     * Null when the value writes every delimiter.
+     */
+    public static function browserPattern(string $html): ?string
+    {
+        $delimiter = null;
+        foreach (self::DELIMITERS as $candidate) {
+            if (!str_contains($html, $candidate)) {
+                $delimiter = $candidate;
+
+                break;
+            }
+        }
+
+        if (null === $delimiter) {
+            return null;
+        }
+
+        return $delimiter.'^(?:'.self::asJavaScriptReadsIt($html).')$'.$delimiter.'Du';
+    }
+
+    /**
+     * @param array{class: string, property: string} $subject
+     * @param array<string, int>                     $stats
+     *
+     * @return list<ValidatorFinding>
+     */
+    private function checkHtmlPattern(Regex $regex, array $subject, array &$stats): array
+    {
+        $pattern = (string) $regex->pattern;
+        $html = $regex->getHtmlPattern();
+
+        if (null === $html) {
+            if (null !== $regex->htmlPattern) {
+                // An empty htmlPattern turns the attribute off on purpose.
+                return [];
+            }
+
+            $message = 'The pattern has flags, so getHtmlPattern() gives no HTML pattern: the browser checks nothing.';
+            [$suggestion, $verified] = $regex->match ? $this->suggest($pattern) : [null, false];
+            if (null === $suggestion) {
+                return [self::finding($subject, $pattern, 'html_pattern.dropped', 'warning', $message)];
+            }
+
+            $message .= $verified ? ' This htmlPattern matches the same values.' : ' The html-pattern target writes this htmlPattern; the solver could not prove it matches the same values.';
+
+            return [self::finding($subject, $pattern, 'html_pattern.dropped', 'warning', $message, ['suggestion' => $suggestion])];
+        }
+
+        $findings = [];
+        $misread = $this->vModeFindings($html);
+        if ([] !== $misread) {
+            $refused = array_values(array_filter($misread, static fn (array $finding): bool => $finding['refused']));
+            $message = ([] !== $refused
+                ? 'A browser refuses to compile the HTML pattern under v, and then checks nothing: '
+                : 'A browser reads the HTML pattern under v otherwise than PCRE: ').implode(' ', array_map(static fn (array $r): string => \sprintf('[%s at %d] %s', $r['construct'], $r['offset'], $r['message']), [] !== $refused ? $refused : $misread));
+            [$suggestion] = $regex->match ? $this->suggest($pattern) : [null];
+            $extra = ['htmlPattern' => $html];
+            if (null !== $suggestion && $suggestion !== $html) {
+                $extra['suggestion'] = $suggestion;
+            }
+
+            return [self::finding($subject, $pattern, [] !== $refused ? 'html_pattern.invalid' : 'html_pattern.misread', 'error', $message, $extra)];
+        }
+
+        $browser = self::browserPattern($html);
+        if (null === $browser) {
+            return [];
+        }
+
+        $stats['html_compared']++;
+
+        // A class often repeats a pattern: each pair is compared once.
+        $key = ($regex->match ? '1' : '0').$pattern."\0".$browser;
+        if (!isset($this->compared[$key])) {
+            try {
+                $this->compared[$key] = $regex->match
+                    ? $this->compareMatching($pattern, $browser)
+                    : $this->compareNotMatching($pattern, $browser);
+            } catch (ComplexityException|RegexException|\InvalidArgumentException $e) {
+                $this->compared[$key] = $e->getMessage();
+            }
+        }
+
+        if (\is_string($this->compared[$key])) {
+            return [self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', 'The HTML pattern could not be compared with the pattern: '.$this->compared[$key], ['htmlPattern' => $html])];
+        }
+
+        [$looser, $stricter] = $this->compared[$key];
+
+        $normalized = null !== $regex->normalizer ? ' The server normalizes the value first; the browser does not.' : '';
+        if (null !== $looser) {
+            $extra = ['htmlPattern' => $html, 'example' => $looser];
+            [$suggestion, $verified] = $regex->match ? $this->suggest($pattern) : [null, false];
+            if ($verified && null !== $suggestion && $suggestion !== $html) {
+                $extra['suggestion'] = $suggestion;
+            }
+
+            $findings[] = self::finding($subject, $pattern, 'html_pattern.looser', 'error', \sprintf('The browser accepts %s, which the server rejects.%s', self::quote($looser), $normalized), $extra);
+        }
+
+        if (null !== $stricter) {
+            $findings[] = self::finding($subject, $pattern, 'html_pattern.stricter', 'warning', \sprintf('The browser rejects %s, which the server accepts.%s', self::quote($stricter), $normalized), ['htmlPattern' => $html, 'example' => $stricter]);
+        }
+
+        return $findings;
+    }
+
+    /**
+     * For a pattern the value must match: a value the browser accepts and
+     * the pattern does not match, and one the pattern matches and the
+     * browser rejects, each the shortest.
+     *
+     * @throws ComplexityException|RegexException|\InvalidArgumentException
+     *
+     * @return array{?string, ?string}
+     */
+    private function compareMatching(string $pattern, string $browser): array
+    {
+        $looser = $this->solver->subsetOf($browser, $pattern, $this->options);
+        $stricter = $this->solver->subsetOf($pattern, self::orLineBreak($browser), $this->options);
+
+        return [$looser->isSubset ? null : $looser->counterExample, $stricter->isSubset ? null : $stricter->counterExample];
+    }
+
+    /**
+     * For a pattern the value must not match: a value the browser accepts
+     * the pattern matches; then a value neither the pattern matches nor the
+     * browser accepts, read on the languages, so only for a pattern under u
+     * that reads code points as the browser does.
+     *
+     * @throws ComplexityException|RegexException|\InvalidArgumentException
+     *
+     * @return array{?string, ?string}
+     */
+    private function compareNotMatching(string $pattern, string $browser): array
+    {
+        $both = $this->solver->intersection($browser, $pattern, $this->options);
+        $looser = $both->isEmpty ? null : $both->example;
+
+        if (!$this->parser->parse($pattern)->isUnicode()) {
+            return [$looser, null];
+        }
+
+        $server = $this->solver->language($pattern, $this->options);
+        $client = $this->solver->language($browser, $this->options);
+        $inputs = $this->solver->language('/^[^\r\n]*$/Du', $this->options);
+        $stricter = $inputs->minus($server)->minus($client)->shortestExample();
+
+        return [$looser, $stricter];
+    }
+
+    /**
+     * The browser's pattern, or any value holding a line break: a value no
+     * input holds, so the server may accept it unchecked by the browser.
+     */
+    private static function orLineBreak(string $browser): string
+    {
+        $delimiter = $browser[0];
+        $body = substr($browser, 1, (int) strrpos($browser, $delimiter) - 1);
+
+        return $delimiter.'^(?:'.substr($body, 1).'|[\s\S]*?[\r\n])'.$delimiter.'Du';
+    }
+
+    /**
+     * @param array{class: string, property: string} $subject
+     *
+     * @return list<ValidatorFinding>
+     */
+    private function checkLength(Regex $regex, Length $length, array $subject): array
+    {
+        if (!$regex->match || null !== $regex->normalizer || null !== $length->normalizer || 'UTF-8' !== $length->charset || !self::sharesAGroup($regex, $length)) {
+            return [];
+        }
+
+        // Symfony 6.4 counts code points alone; 7.3 adds countUnit.
+        $unit = get_object_vars($length)['countUnit'] ?? 'codepoints';
+        if ('codepoints' !== $unit) {
+            return [];
+        }
+
+        $pattern = (string) $regex->pattern;
+
+        try {
+            // A pattern without u counts bytes, as many as code points over
+            // ASCII alone.
+            $unicode = $this->parser->parse($pattern)->isUnicode()
+                || $this->solver->subsetOf($pattern, '/\A[\x00-\x7F]*\z/', $this->options)->isSubset;
+            $language = $this->solver->language($pattern, $this->options);
+            $shortest = $language->minLength();
+            $longest = $language->isFinite() ? $language->maxLength() : null;
+        } catch (ComplexityException|RegexException|\InvalidArgumentException) {
+            return [];
+        }
+
+        if (null === $shortest) {
+            return [];
+        }
+
+        // Else bytes are never fewer than code points: only its longest
+        // value tells of a code point count.
+        $tooLong = $unicode && null !== $length->max && $shortest > $length->max;
+        $tooShort = null !== $length->min && null !== $longest && $longest < $length->min;
+        if (!$tooLong && !$tooShort) {
+            return [];
+        }
+
+        return [self::finding($subject, $pattern, 'length.contradiction', 'error', $tooLong
+            ? \sprintf('Every value the pattern accepts holds at least %d characters, more than the Length max of %d: no value passes both.', $shortest, $length->max)
+            : \sprintf('Every value the pattern accepts holds at most %d %s, fewer than the Length min of %d: no value passes both.', $longest, $unicode ? 'characters' : 'bytes', $length->min))];
+    }
+
+    /**
+     * @param array{class: string, property: string} $subject
+     *
+     * @return list<ValidatorFinding>
+     */
+    private function checkChoice(Regex $regex, Choice $choice, array $subject): array
+    {
+        if ($choice->multiple || null !== $choice->callback || !\is_array($choice->choices) || null !== $regex->normalizer || !self::sharesAGroup($regex, $choice)) {
+            return [];
+        }
+
+        $pattern = (string) $regex->pattern;
+        $rejected = [];
+        foreach ($choice->choices as $value) {
+            if (!\is_string($value) && !\is_int($value)) {
+                continue;
+            }
+
+            $matched = $this->engine->test($pattern, (string) $value)->matched;
+            if (null === $matched) {
+                return [];
+            }
+
+            if ($matched !== $regex->match) {
+                $rejected[] = (string) $value;
+            }
+        }
+
+        if ([] === $rejected) {
+            return [];
+        }
+
+        $all = \count($rejected) === \count($choice->choices);
+
+        $message = \sprintf('%s the Choice constraint offers %s rejected by the pattern: %s.', $all ? 'Every value' : 'Some values', $all ? 'is' : 'are', implode(', ', array_map(self::quote(...), $rejected)));
+
+        return [self::finding($subject, $pattern, 'choice.rejected', 'error', $message, ['example' => $rejected[0]])];
+    }
+
+    /**
+     * Two Regex constraints of a group no value passes together.
+     *
+     * @param list<Regex>                            $regexes
+     * @param array{class: string, property: string} $subject
+     *
+     * @return list<ValidatorFinding>
+     */
+    private function checkConsistency(array $regexes, array $subject): array
+    {
+        $findings = [];
+        $count = \count($regexes);
+        for ($i = 0; $i < $count; $i++) {
+            for ($j = $i + 1; $j < $count; $j++) {
+                $first = $regexes[$i];
+                $second = $regexes[$j];
+                if (!$first->match && !$second->match || null !== $first->normalizer || null !== $second->normalizer || !self::sharesAGroup($first, $second)) {
+                    continue;
+                }
+
+                // A value passes a match: false constraint when it holds no
+                // match: none passes both when the other's values all hold one.
+                [$must, $mustNot] = $first->match ? [$first, $second] : [$second, $first];
+
+                try {
+                    $contradicts = $mustNot->match
+                        ? $this->solver->intersection((string) $must->pattern, (string) $mustNot->pattern, $this->options)->isEmpty
+                        : $this->solver->subsetOf((string) $must->pattern, (string) $mustNot->pattern, $this->options)->isSubset;
+                } catch (ComplexityException|RegexException|\InvalidArgumentException) {
+                    continue;
+                }
+
+                if ($contradicts) {
+                    $findings[] = self::finding($subject, (string) $first->pattern, 'regex.contradiction', 'error', $mustNot->match
+                        ? \sprintf('No value matches both %s and %s: the property rejects every value.', $first->pattern, $second->pattern)
+                        : \sprintf('Every value %s matches also matches %s, which must not match: the property rejects every value.', $must->pattern, $mustNot->pattern));
+                }
+            }
+        }
+
+        return $findings;
+    }
+
+    /**
+     * What a browser does wrong with the HTML pattern under v, refusing it
+     * or reading it otherwise; nothing when the parser cannot read it, as
+     * the comparison then says so.
+     *
+     * @return list<array{offset: int, construct: string, message: string, refused: bool}>
+     */
+    private function vModeFindings(string $html): array
+    {
+        foreach (self::DELIMITERS as $delimiter) {
+            if (str_contains($html, $delimiter)) {
+                continue;
+            }
+
+            try {
+                return (new VModeCompatibility())->check($this->parser->parse($delimiter.$html.$delimiter.'u'));
+            } catch (RegexException) {
+                return [];
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * The htmlPattern the html-pattern target writes for the pattern, one a
+     * browser compiles, and whether the solver proved the browser reads it
+     * as the server reads the pattern; null when it reads it otherwise.
+     *
+     * @return array{?string, bool}
+     */
+    private function suggest(string $pattern): array
+    {
+        return $this->suggested[$pattern] ??= $this->writeSuggestion($pattern);
+    }
+
+    /**
+     * @return array{?string, bool}
+     */
+    private function writeSuggestion(string $pattern): array
+    {
+        try {
+            $html = $this->transpiler->transpile($pattern, 'html-pattern')->pattern;
+        } catch (\Throwable) {
+            return [null, false];
+        }
+
+        $browser = self::browserPattern($html);
+        if (null === $browser || [] !== $this->vModeFindings($html)) {
+            return [null, false];
+        }
+
+        try {
+            [$looser, $stricter] = $this->compareMatching($pattern, $browser);
+        } catch (ComplexityException|RegexException|\InvalidArgumentException) {
+            return [$html, false];
+        }
+
+        return null === $looser && null === $stricter ? [$html, true] : [null, false];
+    }
+
+    /**
+     * The value rewritten so PCRE reads it as JavaScript does, over the
+     * values an input holds: \w \d \b and their negations over ASCII, \s
+     * over JavaScript's white space, and none of ".", \s, \S, \W, \D or a
+     * negated class taking a line break. A line break the value writes
+     * itself (\n, \x0A, \P{L}...) is kept.
+     */
+    private static function asJavaScriptReadsIt(string $html): string
+    {
+        $word = '['.self::WORD.']';
+        $outside = [
+            'w' => $word,
+            'W' => '[^'.self::WORD.'\n\r]',
+            'd' => '[0-9]',
+            'D' => '[^0-9\n\r]',
+            's' => '['.self::SPACE.']',
+            'S' => '[^'.self::SPACE.'\n\r]',
+            'b' => '(?:(?<='.$word.')(?!'.$word.')|(?<!'.$word.')(?='.$word.'))',
+            'B' => '(?:(?<='.$word.')(?='.$word.')|(?<!'.$word.')(?!'.$word.'))',
+        ];
+        $inside = [
+            'w' => self::WORD,
+            'W' => '\x{0}-\x{9}\x{B}\x{C}\x{E}-\x{2F}\x{3A}-\x{40}\x{5B}-\x{5E}\x{60}\x{7B}-\x{10FFFF}',
+            'd' => '0-9',
+            'D' => '\x{0}-\x{9}\x{B}\x{C}\x{E}-\x{2F}\x{3A}-\x{10FFFF}',
+            's' => self::SPACE,
+        ];
+
+        $read = '';
+        $depth = 0;
+        $length = \strlen($html);
+        for ($i = 0; $i < $length; $i++) {
+            $char = $html[$i];
+            if ('\\' === $char && $i + 1 < $length) {
+                $next = $html[++$i];
+                $read .= (0 === $depth ? $outside[$next] ?? null : $inside[$next] ?? null) ?? '\\'.$next;
+
+                continue;
+            }
+
+            if ('[' === $char) {
+                $depth++;
+                if ($i + 1 < $length && '^' === $html[$i + 1]) {
+                    $read .= '[^\n\r';
+                    $i++;
+
+                    continue;
+                }
+            } elseif (']' === $char && $depth > 0) {
+                $depth--;
+            } elseif ('.' === $char && 0 === $depth) {
+                $read .= '[^\n\r\x{2028}\x{2029}]';
+
+                continue;
+            }
+
+            $read .= $char;
+        }
+
+        return $read;
+    }
+
+    /**
+     * The constraint, or the constraints a Sequentially runs.
+     *
+     * @return list<Constraint>
+     */
+    private static function flatten(Constraint $constraint): array
+    {
+        if (!$constraint instanceof Sequentially) {
+            return [$constraint];
+        }
+
+        $flat = [];
+        $nested = $constraint->constraints;
+        foreach (\is_array($nested) ? $nested : [$nested] as $inner) {
+            if ($inner instanceof Constraint) {
+                $flat = [...$flat, ...self::flatten($inner)];
+            }
+        }
+
+        return $flat;
+    }
+
+    private static function sharesAGroup(Constraint $first, Constraint $second): bool
+    {
+        return [] !== array_intersect((array) $first->groups, (array) $second->groups);
+    }
+
+    /**
+     * @param array{class: string, property: string}                             $subject
+     * @param 'error'|'notice'|'warning'                                         $severity
+     * @param array{htmlPattern?: string, example?: string, suggestion?: string} $extra
+     *
+     * @return ValidatorFinding
+     */
+    private static function finding(array $subject, string $pattern, string $check, string $severity, string $message, array $extra = []): array
+    {
+        return ['class' => $subject['class'], 'property' => $subject['property'], 'pattern' => $pattern, 'check' => $check, 'severity' => $severity, 'message' => $message] + $extra;
+    }
+
+    /**
+     * The value between double quotes, as the console reports spell text:
+     * a backslash doubled, a control or hidden character written as an
+     * escape, \x{2028} or \xFF.
+     */
+    private static function quote(string $value): string
+    {
+        return '"'.DisplayEscaper::escapeText($value).'"';
+    }
+}

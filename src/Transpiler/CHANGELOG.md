@@ -4,6 +4,12 @@ CHANGELOG
 2.0
 ---
 
+ * `Target\JavaScript\VModeCompatibility` lists what a browser does wrong
+   with a pattern written for PCRE and read as is under the `v` flag, as the
+   HTML `pattern` attribute reads it: each construct it refuses to compile
+   (a possessive, an atomic group, `\h`, `\A`, `(?P<name>`, `\Q...\E`, an
+   unescaped `-` or `(` in a class, a lone `{`, an escape JavaScript does not
+   know) or reads otherwise (a POSIX class, `&&`, `\v`), with its offset.
  * JavaScript and the HTML pattern attribute print a possessive quantifier,
    an atomic group or `\R` that commits to nothing plain, with a note:
    `/^\d++$/` gives `^\d+$`. One whose commitment changes the match, or one

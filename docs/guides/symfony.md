@@ -447,7 +447,8 @@ bundle says.
 | `regex:explain`  | Explain a pattern in plain English                   |
 | `regex:routes`   | Detect route conflicts and overlaps                  |
 | `regex:security` | Analyze access control ordering and firewall regexes |
-| `regex:analyze`  | Run the routes and security analyzers                |
+| `regex:validator`| Audit Regex constraints against their HTML pattern   |
+| `regex:analyze`  | Run the routes, security and validator analyzers     |
 | `regex:transpile`| Translate a pattern for another regex engine         |
 
 ```bash
@@ -489,7 +490,8 @@ exit code 2 and stage `usage` in the JSON envelope, as `regex lint` does.
 | `regex:lint` | `[paths]...` | `--exclude=...` (default: `exclude`), `--min-savings=1`, `-j`/`--jobs=N`, `--no-routes`, `--no-validators`, `--no-twig`, `--format=console\|json\|github\|checkstyle\|junit` |
 | `regex:routes` | | `--show-overlaps` (conflicts are always checked), `--reachability` |
 | `regex:security` | | `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high` |
-| `regex:analyze` | | `--only=routes\|security...`, `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high`, `--format=console\|json`, `--debug`, `--fail-on=shadowed,redos,critical` (also `overlap`, `any`, `none`) |
+| `regex:validator` | `[classes]...` | `--format=console\|json` |
+| `regex:analyze` | | `--only=routes\|security\|validator...`, `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high`, `--format=console\|json`, `--debug`, `--fail-on=shadowed,redos,critical` (also `overlap`, `validator`, `any`, `none`) |
 | `regex:compare` | `<pattern1> <pattern2>` | `--method=intersection\|subset\|equivalence`, `--minimizer=hopcroft\|moore`, `--determinizer=subset-indexed\|subset` (defaults: `automata.*`) |
 | `regex:explain` | `<pattern>` | `--format=console\|html`, `--highlight` |
 | `regex:transpile` | `<pattern>` | `-t`/`--target=js` (`javascript`, `html`, `html-pattern`, `python`, `py`), `--python-version=<x.y>` (3.11 carries atomic groups), `--format=console\|json` |
@@ -530,6 +532,45 @@ several earlier routes together**, each with a request it takes. A route
 for `GET` also takes the `GET` and `HEAD` requests whose path differs from
 one of its own by the trailing slash alone, which the matcher redirects;
 a route with a condition, or a host the analysis cannot read, takes none.
+
+`regex:validator` audits the `Regex` constraints of the validated classes,
+those the validator mapping files name and those `src/` declares with the
+constraint, or the classes given, read through the application's
+validator, so attributes and mapping files count as the validator counts
+them. A form renders a `Regex` constraint as the HTML `pattern` attribute
+`getHtmlPattern()` gives, and the browser compiles it as `^(?:pattern)$`
+under the `v` flag. For each constraint the command reports:
+
+- `html_pattern.dropped`: the pattern has flags, so `getHtmlPattern()` gives
+  no attribute and the browser checks nothing; the report suggests an
+  `htmlPattern` written by the `html-pattern` target and proved to accept
+  the same values;
+- `html_pattern.invalid`: a browser refuses to compile the attribute under
+  `v`, and checks nothing: `[a-z0-9-]` (a class under `v` takes `-`
+  escaped only), a possessive, an atomic group, `\h`, `\A`, `(?P<name>`,
+  `\Q...\E`, an escape JavaScript does not know;
+- `html_pattern.misread`: a browser compiles it but reads it otherwise than
+  PCRE, a POSIX class as a nested class, `&&` as an intersection;
+- `html_pattern.looser` (an error) and `html_pattern.stricter` (a warning),
+  with the shortest value the browser accepts and the server rejects, or
+  the reverse. The browser side is read as JavaScript reads it: code points
+  where a pattern without `u` reads bytes (`/^.{2}$/` refuses `aé`, which
+  the browser lets through), `\w`, `\d` and `\b` over ASCII, `.` refusing
+  U+2028, and only values an input can hold, without a line break.
+
+Across the constraints of a property, in a shared validation group, it
+reports a `Length` no value of the pattern fits (`length.contradiction`), a
+`Choice` value the pattern rejects (`choice.rejected`) and two `Regex`
+constraints no value passes together (`regex.contradiction`). A question the
+solver cannot answer is a warning of the section. The command exits 1 on an
+error; `regex:analyze` runs the same section and fails on it with
+`--fail-on=validator`.
+
+```bash
+bin/console regex:validator
+bin/console regex:validator 'App\Entity\User' --format=json
+bin/console regex:analyze --only=validator --fail-on=validator
+```
 
 `regex:routes` reads the routes in the order they are declared, as the router
 matches them: the first route that matches a request wins it. A route is

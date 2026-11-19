@@ -19,7 +19,7 @@
 PHPRegex Symfony
 ================
 
-Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:analyze, regex:compare, regex:explain and regex:transpile commands.
+Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:validator, regex:analyze, regex:compare, regex:explain and regex:transpile commands.
 
 Documentation: [php-regex.com](https://php-regex.com) — the [Symfony guide](https://php-regex.com/guides/symfony/) walks the bundle end to end.
 
@@ -28,7 +28,7 @@ Features
 
 * A `Regex` service, autowired as `PHPRegex\Toolkit\Regex`, to validate, parse, optimize, transpile and ReDoS-check patterns from your own code
 * A `ValidRegex` constraint for a pattern your users submit: valid as `regex validate` judges it, and optionally free of ReDoS
-* Seven console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:analyze`, `regex:compare`, `regex:explain` and `regex:transpile`; `regex:lint`, `regex:explain` and `regex:transpile` take the options of the Laravel package's commands of the same name, `regex:compare` all but `--format`, and the [Symfony guide](https://php-regex.com/guides/symfony/#commands) lists every option
+* Eight console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:validator`, `regex:analyze`, `regex:compare`, `regex:explain` and `regex:transpile`; `regex:lint`, `regex:explain` and `regex:transpile` take the options of the Laravel package's commands of the same name, `regex:compare` all but `--format`, and the [Symfony guide](https://php-regex.com/guides/symfony/#commands) lists every option
 * `regex:lint` reads your PHP files, your route requirements and the `Regex` constraints of your validator mapping files (`config/validator/*.yaml`, `*.xml`) in one pass, each reported at the line that writes it
 * In PHP files, `regex:lint` reads the calls `regex lint` reads: `preg_*`, `RegexIterator`, `filter_var()`, `new Regex()` and `#[Assert\Regex]`, the wrapper libraries, PHPUnit's regex assertions, and a pattern held in a constant, a variable or a property of the same file
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
@@ -141,7 +141,8 @@ Code that injects `PHPRegex\Toolkit\Regex` needs the bundle in every environment
 | `regex:lint`      | Lint, validate and optimize the patterns in your code  |
 | `regex:routes`    | Detect route requirement conflicts and overlaps        |
 | `regex:security`  | Analyze `access_control` ordering and firewall regexes |
-| `regex:analyze`   | Run the routes and security analyzers in one pass      |
+| `regex:validator` | Audit `Regex` constraints against their HTML pattern   |
+| `regex:analyze`   | Run the routes, security and validator analyzers       |
 | `regex:compare`   | Compare two patterns with automata logic               |
 | `regex:explain`   | Explain a pattern in plain English                     |
 | `regex:transpile` | Translate a pattern for another regex engine           |
@@ -150,6 +151,7 @@ Code that injects `PHPRegex\Toolkit\Regex` needs the bundle in every environment
 bin/console regex:lint src/ --format=json
 bin/console regex:routes --show-overlaps
 bin/console regex:routes --reachability
+bin/console regex:validator
 bin/console regex:analyze --only=routes --redos-threshold=medium
 bin/console regex:compare '/[a-z]+/' '/edit/' --method=subset
 bin/console regex:transpile '/^\d{4}$/' --target=python

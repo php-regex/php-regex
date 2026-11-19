@@ -17,11 +17,12 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
- * Hands regex:lint the validator mapping files the validator reads: those
- * FrameworkBundle, and any bundle after it, gives the validator builder
- * through addYamlMappings(), addXmlMappings() and their one-file forms
- * (config/validator/, framework.validation.mapping.paths, each bundle's
- * validation files). Without a validator builder there is none.
+ * Hands regex:lint and regex:validator the validator mapping files the
+ * validator reads: those FrameworkBundle, and any bundle after it, gives
+ * the validator builder through addYamlMappings(), addXmlMappings() and
+ * their one-file forms (config/validator/,
+ * framework.validation.mapping.paths, each bundle's validation files).
+ * Without a validator builder there is none.
  *
  * @internal
  */
@@ -32,11 +33,17 @@ final class ValidatorMappingPass implements CompilerPassInterface
      */
     public const SOURCE = 'php_regex.pattern_source.validators';
 
+    /**
+     * The service that finds the classes regex:validator audits.
+     */
+    public const LOCATOR = 'php_regex.validator.class_locator';
+
     private const MAPPING_CALLS = ['addYamlMappings', 'addXmlMappings', 'addYamlMapping', 'addXmlMapping'];
 
     public function process(ContainerBuilder $container): void
     {
-        if (!$container->hasDefinition(self::SOURCE)) {
+        $services = array_values(array_filter([self::SOURCE, self::LOCATOR], $container->hasDefinition(...)));
+        if ([] === $services) {
             return;
         }
 
@@ -60,6 +67,8 @@ final class ValidatorMappingPass implements CompilerPassInterface
 
         // The paths stay as FrameworkBundle wrote them, a % escaped: the
         // container resolves them with the rest of the arguments.
-        $container->getDefinition(self::SOURCE)->setArgument('$mappingFiles', array_values(array_unique($files)));
+        foreach ($services as $service) {
+            $container->getDefinition($service)->setArgument('$mappingFiles', array_values(array_unique($files)));
+        }
     }
 }
