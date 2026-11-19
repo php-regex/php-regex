@@ -23,6 +23,7 @@ use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
@@ -38,6 +39,7 @@ use PHPUnit\Framework\TestCase;
 final class RedosHeuristicShapesTest extends TestCase
 {
     use InstalledLocales;
+    use LinearTimeAssertions;
     use PcreGates;
 
     #[Test]
@@ -1109,6 +1111,23 @@ final class RedosHeuristicShapesTest extends TestCase
 
         $this->assertSame(RedosSeverity::High, Regex::create(['cache' => null])->redos($pattern)->severity);
         $this->assertSame(RedosSeverity::High, Regex::create(['cache' => null])->redos('/^(x)(?:ba+c?d?e?f?g?h?a+z)+\1$/')->severity);
+    }
+
+    /**
+     * Past eight items that may match empty, the scan reads a bounded
+     * number of pairs in each sequence: a run of loops that never meet,
+     * "(?:ba)*" after "(?:ba)*", is read in time that grows with its length
+     * where each loop would otherwise be compared with every later one, and
+     * the run is still rated medium.
+     */
+    #[Test]
+    public function test_a_run_of_loops_that_never_meet_is_read_in_bounded_work(): void
+    {
+        $this->assertLinearTime(static function (int $units): void {
+            Regex::create(['cache' => null])->redos('/^(x)'.str_repeat('(?:ba)*', $units).'\1$/');
+        }, 200, 'a run of loops that never meet');
+
+        $this->assertSame(RedosSeverity::Medium, Regex::create(['cache' => null])->redos('/^(x)'.str_repeat('(?:ba)*', 400).'\1$/')->severity);
     }
 
     #[Test]

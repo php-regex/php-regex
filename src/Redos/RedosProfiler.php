@@ -78,6 +78,14 @@ final class RedosProfiler extends AbstractNodeVisitor
     private const ITEMS_READ_PAST = 8;
 
     /**
+     * The pairs a sequence reads past ITEMS_READ_PAST items, at most: a run
+     * of loops that never meet would have each compared with every later
+     * one. Once they are spent, the loops past them are taken to meet, as
+     * an overlap not known is.
+     */
+    private const PAIRS_READ_PAST = 1024;
+
+    /**
      * The unbounded loops around the node that may come back into it: an
      * atomic group or a possessive loop between them counts them from none.
      */
@@ -1793,6 +1801,8 @@ final class RedosProfiler extends AbstractNodeVisitor
         $max = RedosSeverity::Safe;
         $reading = null === $reads ? null : array_keys(array_filter($reads));
         $count = null === $reading ? \count($children) : \count($reading);
+        // The pairs read past ITEMS_READ_PAST items so far.
+        $pastPairs = 0;
 
         for ($k = 0; $k < $count - 1; $k++) {
             $leftIndex = null === $reading ? $k : $reading[$k];
@@ -1810,10 +1820,17 @@ final class RedosProfiler extends AbstractNodeVisitor
             // A loop meets each item after it as far as the first that
             // always reads a character: "a+x?a+" meets the second "a+"
             // where "x?" matches empty. Past ITEMS_READ_PAST items, the
-            // first loop it meets ends the scan.
+            // first loop it meets ends the scan; the end of PAIRS_READ_PAST
+            // ends the reading of the sequence, its loops taken to meet.
             for ($m = $k + 1; $m < $count; $m++) {
                 $rightIndex = null === $reading ? $m : $reading[$m];
                 $right = $children[$rightIndex];
+                $past = $m - $k > self::ITEMS_READ_PAST;
+                if ($past && $pastPairs >= self::PAIRS_READ_PAST) {
+                    return $this->maxSeverity($max, $this->unreadLoops($children, $leftIndex, $rightIndex));
+                }
+
+                $pastPairs += (int) $past;
                 $met = $rightIndex !== $tail ? $this->adjacentLoops($children, $leftIndex, $leftQuantifier, $rightIndex) : RedosSeverity::Safe;
                 $max = $this->maxSeverity($max, $met);
 
@@ -1885,6 +1902,30 @@ final class RedosProfiler extends AbstractNodeVisitor
             'Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.',
             $confidence,
             $falsePositiveRisk,
+            'adjacent quantifiers',
+        );
+
+        return $severity;
+    }
+
+    /**
+     * The verdict of a sequence whose reading PAIRS_READ_PAST cut short at
+     * the loop at $leftIndex: its loops past the cut are taken to meet, as
+     * loops whose overlap is not known are, and the cut is named with the
+     * items read up to it.
+     *
+     * @param list<NodeInterface> $children the items of the sequence
+     */
+    private function unreadLoops(array $children, int $leftIndex, int $rightIndex): RedosSeverity
+    {
+        $severity = $this->unboundedQuantifierDepth > 0 ? RedosSeverity::High : RedosSeverity::Medium;
+        $this->addVulnerability(
+            $severity,
+            'Loops that may match empty follow one another past the pairs the analysis compares; the ones further are taken to meet.',
+            new SequenceNode(\array_slice($children, $leftIndex, $rightIndex - $leftIndex + 1), $children[$leftIndex]->getStartPosition(), $children[$rightIndex]->getEndPosition()),
+            'Shorten the run of loops that may match empty, or make them possessive.',
+            RedosConfidence::Low,
+            'High false-positive risk; the loops past the bound were not compared.',
             'adjacent quantifiers',
         );
 

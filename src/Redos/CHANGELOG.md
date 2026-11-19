@@ -115,9 +115,10 @@ CHANGELOG
    such items, a loop whose runs a later item always ends is apart:
    `/^((?:\w+(?=,),)+)\1$/`, which was critical, is medium, as
    `/^((?:\w+,)+)\1$/` is. Past eight such items, nothing further keeps a
-   loop apart, and of the loops it meets further only the first is named,
-   so that a run of loops that may all match empty costs work and findings
-   that grow with its length, not with its square: in
+   loop apart, of the loops it meets further only the first is named, and
+   past 1,024 such pairs in one sequence the loops further are taken to
+   meet, so that a run of loops that may all match empty costs work and
+   findings that grow with its length, not with its square: in
    `/^(x)(?:ba+c?d?e?f?g?h?i?j?k?a+z)+\1$/` the two `a+` still meet, and
    the pattern is high, as with fewer items between them.
  * Without a proof of the whole pattern, a loop whose branches start alike
