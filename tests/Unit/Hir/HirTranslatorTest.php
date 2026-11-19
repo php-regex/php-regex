@@ -31,6 +31,7 @@ use PHPRegex\Parser\Hir\LookKind;
 use PHPRegex\Parser\Hir\OpaqueHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
 use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -359,12 +360,21 @@ final class HirTranslatorTest extends TestCase
     }
 
     /**
-     * Whether a "|" stands before the "no" branch, an empty one included.
+     * Whether a "|" stands before the "no" branch, an empty one included,
+     * asked of the engine first: PCRE refuses a conditional of three
+     * branches, so one more "|" before its ")" compiles only where none
+     * was written.
      */
     #[Test]
     #[DataProvider('provideConditionalBars')]
     public function test_a_conditional_keeps_whether_a_bar_was_written_before_its_no_branch(string $pattern, bool $written): void
     {
+        $this->assertSame(1, preg_match($pattern, 'ab'), 'Oracle: PCRE compiles '.$pattern.' and matches "ab".');
+        $close = strrpos($pattern, ')');
+        $this->assertIsInt($close);
+        $oneMoreBar = substr_replace($pattern, '|z', $close, 0);
+        $this->assertSame(!$written, EngineProbe::compiles($oneMoreBar), \sprintf('Oracle: PCRE reads %s bar before the no branch of %s: %s.', $written ? 'a' : 'no', $pattern, EngineProbe::warning($oneMoreBar) ?? 'compiled'));
+
         $hir = $this->translate($pattern);
 
         $this->assertInstanceOf(ConcatHir::class, $hir);
