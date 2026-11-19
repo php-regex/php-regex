@@ -1,6 +1,6 @@
 {
     "repo": "FOSSBilling/FOSSBilling",
-    "sha": "2c35bfc75229681ae37878fc1939d76d60efcaeb",
+    "sha": "a4ef052f17624b2809e1ef6c376e1eceba11390e",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -47,7 +47,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/core/Doctrine/InstallSeeder.php#L307-L313",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/a4ef052f17624b2809e1ef6c376e1eceba11390e/src/core/Doctrine/InstallSeeder.php#L307-L313",
             "snippet": [
                 {
                     "number": 307,
@@ -170,6 +170,209 @@
             ]
         },
         {
+            "id": "f-43f6698eaf",
+            "file": "src/core/Doctrine/PaymentFenceConnection.php",
+            "line": 126,
+            "column": 33,
+            "pattern": "~\\A(?:\\s+|/\\*.*?\\*/|--[^\\n]*(?:\\n|$))*~s",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.dotstar.nested",
+                    "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
+                    "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/a4ef052f17624b2809e1ef6c376e1eceba11390e/src/core/Doctrine/PaymentFenceConnection.php#L123-L129",
+            "snippet": [
+                {
+                    "number": 123,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Only single statements are supported inside a payment scope. Data",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 124,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // belongs in bound parameters; an embedded COMMIT must never escape",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 125,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // the transaction that holds the ownership lock.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 126,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $command = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\A",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\*",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "--",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $sql);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 127,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $single = preg_replace('/;\\s*$/', '', trim($command));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 128,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (str_contains($single, ';') || str_contains($sql, '/*!')) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 129,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            throw new \\LogicException('Multiple SQL statements are not permitted during payment processing.');",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-117d7692c3",
             "file": "src/core/Update/Patch/Patch52.php",
             "line": 79,
@@ -195,7 +398,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/core/Update/Patch/Patch52.php#L76-L82",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/a4ef052f17624b2809e1ef6c376e1eceba11390e/src/core/Update/Patch/Patch52.php#L76-L82",
             "snippet": [
                 {
                     "number": 76,
@@ -403,7 +606,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/core/Update/Patch/Patch57.php#L120-L126",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/a4ef052f17624b2809e1ef6c376e1eceba11390e/src/core/Update/Patch/Patch57.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,
@@ -611,7 +814,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/core/Update/Patch/Patch90.php#L121-L127",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/a4ef052f17624b2809e1ef6c376e1eceba11390e/src/core/Update/Patch/Patch90.php#L121-L127",
             "snippet": [
                 {
                     "number": 121,
@@ -814,7 +1017,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/core/Validation/DomainValidator.php#L46-L52",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/a4ef052f17624b2809e1ef6c376e1eceba11390e/src/core/Validation/DomainValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -1019,7 +1222,7 @@
         {
             "id": "f-bc93c2ffd8",
             "file": "src/modules/Email/Service.php",
-            "line": 514,
+            "line": 520,
             "column": 24,
             "pattern": "#{%.?block subject.?%}((.*?)+){%.?endblock.?%}#",
             "source": "preg_match()",
@@ -1059,10 +1262,10 @@
                 "limit": 100000
             },
             "subject": "{%block subject%}!!!!!!!!!!!!!!!!!!!!!!!!!endblock",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/modules/Email/Service.php#L511-L517",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/a4ef052f17624b2809e1ef6c376e1eceba11390e/src/modules/Email/Service.php#L517-L523",
             "snippet": [
                 {
-                    "number": 511,
+                    "number": 517,
                     "focus": false,
                     "runs": [
                         [
@@ -1072,7 +1275,7 @@
                     ]
                 },
                 {
-                    "number": 512,
+                    "number": 518,
                     "focus": false,
                     "runs": [
                         [
@@ -1082,7 +1285,7 @@
                     ]
                 },
                 {
-                    "number": 513,
+                    "number": 519,
                     "focus": false,
                     "runs": [
                         [
@@ -1092,7 +1295,7 @@
                     ]
                 },
                 {
-                    "number": 514,
+                    "number": 520,
                     "focus": true,
                     "runs": [
                         [
@@ -1206,7 +1409,7 @@
                     ]
                 },
                 {
-                    "number": 515,
+                    "number": 521,
                     "focus": false,
                     "runs": [
                         [
@@ -1216,7 +1419,7 @@
                     ]
                 },
                 {
-                    "number": 516,
+                    "number": 522,
                     "focus": false,
                     "runs": [
                         [
@@ -1226,7 +1429,7 @@
                     ]
                 },
                 {
-                    "number": 517,
+                    "number": 523,
                     "focus": false,
                     "runs": [
                         [
@@ -1240,7 +1443,7 @@
         {
             "id": "f-adaa269a6b",
             "file": "src/modules/Email/Service.php",
-            "line": 520,
+            "line": 526,
             "column": 24,
             "pattern": "/{%.?block content.?%}((.*?\\n)+){%.?endblock.?%}/m",
             "source": "preg_match()",
@@ -1263,10 +1466,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/modules/Email/Service.php#L517-L523",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/a4ef052f17624b2809e1ef6c376e1eceba11390e/src/modules/Email/Service.php#L523-L529",
             "snippet": [
                 {
-                    "number": 517,
+                    "number": 523,
                     "focus": false,
                     "runs": [
                         [
@@ -1276,7 +1479,7 @@
                     ]
                 },
                 {
-                    "number": 518,
+                    "number": 524,
                     "focus": false,
                     "runs": [
                         [
@@ -1286,7 +1489,7 @@
                     ]
                 },
                 {
-                    "number": 519,
+                    "number": 525,
                     "focus": false,
                     "runs": [
                         [
@@ -1296,7 +1499,7 @@
                     ]
                 },
                 {
-                    "number": 520,
+                    "number": 526,
                     "focus": true,
                     "runs": [
                         [
@@ -1414,7 +1617,7 @@
                     ]
                 },
                 {
-                    "number": 521,
+                    "number": 527,
                     "focus": false,
                     "runs": [
                         [
@@ -1424,7 +1627,7 @@
                     ]
                 },
                 {
-                    "number": 522,
+                    "number": 528,
                     "focus": false,
                     "runs": [
                         [
@@ -1434,7 +1637,7 @@
                     ]
                 },
                 {
-                    "number": 523,
+                    "number": 529,
                     "focus": false,
                     "runs": [
                         [
@@ -1466,7 +1669,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/2c35bfc75229681ae37878fc1939d76d60efcaeb/src/modules/Theme/Model/Theme.php#L180-L186",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/a4ef052f17624b2809e1ef6c376e1eceba11390e/src/modules/Theme/Model/Theme.php#L180-L186",
             "snippet": [
                 {
                     "number": 180,

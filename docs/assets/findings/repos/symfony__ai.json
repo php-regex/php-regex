@@ -1,6 +1,6 @@
 {
     "repo": "symfony/ai",
-    "sha": "56d6d587b595ce10e3fe4f22db95dba43271e467",
+    "sha": "ef3728f28911b6d84720a671cc3db77dcf002bb0",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -10,7 +10,7 @@
         {
             "id": "f-0adb0c02e9",
             "file": ".github/affected-packages.php",
-            "line": 141,
+            "line": 142,
             "column": 20,
             "pattern": "/Symfony\\\\{1,2}(?:AI|McpBundle)\\\\{1,2}[\\w\\\\]+/",
             "source": "preg_match_all()",
@@ -28,10 +28,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/ai/blob/56d6d587b595ce10e3fe4f22db95dba43271e467/.github/affected-packages.php#L138-L144",
+            "permalink": "https://github.com/symfony/ai/blob/ef3728f28911b6d84720a671cc3db77dcf002bb0/.github/affected-packages.php#L139-L145",
             "snippet": [
                 {
-                    "number": 138,
+                    "number": 139,
                     "focus": false,
                     "runs": [
                         [
@@ -41,7 +41,7 @@
                     ]
                 },
                 {
-                    "number": 139,
+                    "number": 140,
                     "focus": false,
                     "runs": [
                         [
@@ -51,7 +51,7 @@
                     ]
                 },
                 {
-                    "number": 140,
+                    "number": 141,
                     "focus": false,
                     "runs": [
                         [
@@ -61,7 +61,7 @@
                     ]
                 },
                 {
-                    "number": 141,
+                    "number": 142,
                     "focus": true,
                     "runs": [
                         [
@@ -147,7 +147,7 @@
                     ]
                 },
                 {
-                    "number": 142,
+                    "number": 143,
                     "focus": false,
                     "runs": [
                         [
@@ -157,7 +157,7 @@
                     ]
                 },
                 {
-                    "number": 143,
+                    "number": 144,
                     "focus": false,
                     "runs": [
                         [
@@ -167,7 +167,7 @@
                     ]
                 },
                 {
-                    "number": 144,
+                    "number": 145,
                     "focus": false,
                     "runs": [
                         [
@@ -199,7 +199,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/ai/blob/56d6d587b595ce10e3fe4f22db95dba43271e467/src/platform/src/Bridge/OpenAi/Gpt/ResultConverter.php#L75-L81",
+            "permalink": "https://github.com/symfony/ai/blob/ef3728f28911b6d84720a671cc3db77dcf002bb0/src/platform/src/Bridge/OpenAi/Gpt/ResultConverter.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,

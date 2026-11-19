@@ -1,6 +1,6 @@
 {
     "repo": "minkphp/Mink",
-    "sha": "1efa659944300f34e4109178fab1118472370df6",
+    "sha": "24c0b771b01ace2820a0b2f67243ded7596a4cf6",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/minkphp/Mink/blob/1efa659944300f34e4109178fab1118472370df6/src/Selector/Xpath/Manipulator.php#L50-L56",
+            "permalink": "https://github.com/minkphp/Mink/blob/24c0b771b01ace2820a0b2f67243ded7596a4cf6/src/Selector/Xpath/Manipulator.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,

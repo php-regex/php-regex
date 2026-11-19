@@ -1,6 +1,6 @@
 {
     "repo": "thecodingmachine/safe",
-    "sha": "b713b2297432086d16bf4174ca4e2baa1559dfc0",
+    "sha": "9572f586031d88504c667bf70b4b41562095d80c",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L21-L27",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L21-L27",
             "snippet": [
                 {
                     "number": 21,
@@ -169,7 +169,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L22-L28",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,
@@ -321,7 +321,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L23-L29",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L23-L29",
             "snippet": [
                 {
                     "number": 23,
@@ -473,7 +473,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L24-L30",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -625,7 +625,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L25-L31",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L25-L31",
             "snippet": [
                 {
                     "number": 25,
@@ -777,7 +777,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L26-L32",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,
@@ -953,7 +953,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L27-L33",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,
@@ -1129,7 +1129,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L28-L34",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -1265,7 +1265,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L29-L35",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -1401,7 +1401,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L30-L36",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L30-L36",
             "snippet": [
                 {
                     "number": 30,
@@ -1537,7 +1537,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L31-L37",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L31-L37",
             "snippet": [
                 {
                     "number": 31,
@@ -1689,7 +1689,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L32-L38",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -1817,7 +1817,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L33-L39",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L33-L39",
             "snippet": [
                 {
                     "number": 33,
@@ -2065,7 +2065,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L34-L40",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -2284,7 +2284,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L35-L41",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L35-L41",
             "snippet": [
                 {
                     "number": 35,
@@ -2488,7 +2488,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L36-L42",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L36-L42",
             "snippet": [
                 {
                     "number": 36,
@@ -2664,7 +2664,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L37-L43",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L37-L43",
             "snippet": [
                 {
                     "number": 37,
@@ -2859,7 +2859,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L38-L44",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L38-L44",
             "snippet": [
                 {
                     "number": 38,
@@ -3035,7 +3035,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L39-L45",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -3163,7 +3163,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L40-L46",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L40-L46",
             "snippet": [
                 {
                     "number": 40,
@@ -3303,7 +3303,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L41-L47",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L41-L47",
             "snippet": [
                 {
                     "number": 41,
@@ -3455,7 +3455,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L42-L48",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L42-L48",
             "snippet": [
                 {
                     "number": 42,
@@ -3583,7 +3583,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L43-L49",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L43-L49",
             "snippet": [
                 {
                     "number": 43,
@@ -3711,7 +3711,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L44-L50",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L44-L50",
             "snippet": [
                 {
                     "number": 44,
@@ -3839,7 +3839,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L45-L51",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L45-L51",
             "snippet": [
                 {
                     "number": 45,
@@ -3979,7 +3979,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L46-L52",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -4107,7 +4107,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L47-L53",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,
@@ -4243,7 +4243,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L48-L54",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L48-L54",
             "snippet": [
                 {
                     "number": 48,
@@ -4383,7 +4383,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L49-L55",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L49-L55",
             "snippet": [
                 {
                     "number": 49,
@@ -4511,7 +4511,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L50-L56",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -4639,7 +4639,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L51-L57",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,
@@ -4767,7 +4767,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L52-L58",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L52-L58",
             "snippet": [
                 {
                     "number": 52,
@@ -4895,7 +4895,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L53-L59",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -5035,7 +5035,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L54-L60",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -5271,7 +5271,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L66-L72",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L66-L72",
             "snippet": [
                 {
                     "number": 66,
@@ -5411,7 +5411,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L66-L72",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L66-L72",
             "snippet": [
                 {
                     "number": 66,
@@ -5611,7 +5611,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L69-L75",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -5763,7 +5763,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L69-L75",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -5963,7 +5963,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L79-L85",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L79-L85",
             "snippet": [
                 {
                     "number": 79,
@@ -6091,7 +6091,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L102-L108",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L102-L108",
             "snippet": [
                 {
                     "number": 102,
@@ -6219,7 +6219,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L103-L109",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L103-L109",
             "snippet": [
                 {
                     "number": 103,
@@ -6347,7 +6347,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L104-L110",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L104-L110",
             "snippet": [
                 {
                     "number": 104,
@@ -6475,7 +6475,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/config/detectErrorType.php#L105-L111",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/config/detectErrorType.php#L105-L111",
             "snippet": [
                 {
                     "number": 105,
@@ -6603,7 +6603,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/src/XmlDocParser/DocPage.php#L78-L84",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/src/XmlDocParser/DocPage.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,
@@ -6779,7 +6779,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/src/XmlDocParser/DocPage.php#L85-L91",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/src/XmlDocParser/DocPage.php#L85-L91",
             "snippet": [
                 {
                     "number": 85,
@@ -6927,7 +6927,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/src/XmlDocParser/DocPage.php#L270-L276",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/src/XmlDocParser/DocPage.php#L270-L276",
             "snippet": [
                 {
                     "number": 270,
@@ -7138,7 +7138,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thecodingmachine/safe/blob/b713b2297432086d16bf4174ca4e2baa1559dfc0/generator/src/XmlDocParser/Scanner.php#L93-L99",
+            "permalink": "https://github.com/thecodingmachine/safe/blob/9572f586031d88504c667bf70b4b41562095d80c/generator/src/XmlDocParser/Scanner.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
