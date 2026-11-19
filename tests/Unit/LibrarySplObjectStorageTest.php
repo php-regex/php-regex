@@ -187,6 +187,40 @@ final class LibrarySplObjectStorageTest extends TestCase
                 PHP,
             'calls' => ['6 s->contains(), where PHP 8.5 wants isset($storage[$object])'],
         ];
+        yield 'a class imported after another in one statement' => [
+            'source' => <<<'PHP'
+                <?php
+                namespace App;
+                use DateTime, SplObjectStorage as Storage;
+                function f(Storage $s, DateTime $d, object $o): bool
+                {
+                    return $s->contains($o);
+                }
+                PHP,
+            'calls' => ['6 s->contains(), where PHP 8.5 wants isset($storage[$object])'],
+        ];
+        yield 'another class of the same short name imported after another, in a file without a namespace' => [
+            'source' => <<<'PHP'
+                <?php
+                use DateTime, Vendor\SplObjectStorage;
+                function f(SplObjectStorage $s, DateTime $d, object $o): bool
+                {
+                    return $s->contains($o);
+                }
+                PHP,
+            'calls' => [],
+        ];
+        yield 'a parameter passed by reference' => [
+            'source' => <<<'PHP'
+                <?php
+                namespace App;
+                function f(\SplObjectStorage &$s, object $o): bool
+                {
+                    return $s->contains($o);
+                }
+                PHP,
+            'calls' => ['5 s->contains(), where PHP 8.5 wants isset($storage[$object])'],
+        ];
         yield 'the class in a file without a namespace' => [
             'source' => <<<'PHP'
                 <?php
@@ -285,8 +319,13 @@ final class LibrarySplObjectStorageTest extends TestCase
                 continue;
             }
 
-            // A type: the variable it declares follows it.
+            // A type: the variable it declares follows it, past the "&" of
+            // a parameter passed by reference.
             $next = $code[$i + 1] ?? null;
+            if (\is_array($next) && \T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG === $next[0]) {
+                $next = $code[$i + 2] ?? null;
+            }
+
             if (\is_array($next) && \T_VARIABLE === $next[0]) {
                 $names[substr($next[1], 1)] = true;
 
@@ -328,25 +367,54 @@ final class LibrarySplObjectStorageTest extends TestCase
                 continue;
             }
 
-            $imported = $code[$i + 1] ?? null;
-            if (!\is_array($token) || \T_USE !== $token[0] || !\is_array($imported)) {
+            if (!\is_array($token) || \T_USE !== $token[0]) {
                 continue;
             }
 
-            // The name the import binds: its alias, or the last part of the
-            // class it names.
-            $class = strtolower(ltrim($imported[1], '\\'));
-            $as = $code[$i + 2] ?? null;
-            $alias = $code[$i + 3] ?? null;
-            $bound = \is_array($as) && \T_AS === $as[0] && \is_array($alias) ? strtolower($alias[1]) : substr((string) strrchr('\\'.$class, '\\'), 1);
-            if ('splobjectstorage' === $class) {
-                $names[$bound] = true;
-            } elseif ('splobjectstorage' === $bound) {
-                unset($names['splobjectstorage']);
+            foreach (self::imports($code, $i + 1) as [$class, $bound]) {
+                if ('splobjectstorage' === $class) {
+                    $names[$bound] = true;
+                } elseif ('splobjectstorage' === $bound) {
+                    unset($names['splobjectstorage']);
+                }
             }
         }
 
         return $names;
+    }
+
+    /**
+     * Each import of the "use" statement whose first name stands at $at, up
+     * to the last a comma leads to: the class it names and the name it
+     * binds, its alias or the last part of the class, both lowercased. A
+     * closure's "use (" imports nothing.
+     *
+     * @param list<array{0: int, 1: string, 2: int}|string> $code
+     *
+     * @return list<array{string, string}>
+     */
+    private static function imports(array $code, int $at): array
+    {
+        $imports = [];
+        for ($name = $code[$at] ?? null; \is_array($name); $name = $code[$at] ?? null) {
+            $class = strtolower(ltrim($name[1], '\\'));
+            $as = $code[$at + 1] ?? null;
+            $alias = $code[$at + 2] ?? null;
+            if (\is_array($as) && \T_AS === $as[0] && \is_array($alias)) {
+                $imports[] = [$class, strtolower($alias[1])];
+                $at += 2;
+            } else {
+                $imports[] = [$class, substr((string) strrchr('\\'.$class, '\\'), 1)];
+            }
+
+            if (',' !== ($code[$at + 1] ?? null)) {
+                break;
+            }
+
+            $at += 2;
+        }
+
+        return $imports;
     }
 
     /**
