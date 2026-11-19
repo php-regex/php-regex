@@ -100,6 +100,9 @@ final class AutomataBench
         'identifiers' => ['/^[A-Za-z_]\w*$/', '/^[a-z_][a-z0-9_]*$/i'],
         'dates' => ['/^\d{4}-\d{2}-\d{2}$/', '/^[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/'],
         'suffix-window' => ['/(a|b)*a(a|b){6}/', '/(a|b)*a(a|b){5}/'],
+        // A Unicode alphabet of some two thousand ranges and a handful of
+        // classes: each state holds a target per class, not per range.
+        'unicode-usernames' => ['/^[\p{L}\p{N}]{3,64}$/u', '/^\w{3,64}$/u'],
     ];
 
     /**

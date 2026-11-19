@@ -230,8 +230,9 @@ final class SetsWithoutUtfTest extends TestCase
     }
 
     /**
-     * What a target refuses reaches no output: "\H", "\V", "\N", "\C",
-     * "\R" and "\X" take a byte above 0x7F too, and stay refused.
+     * What a target refuses reaches no output: "\H", "\V", "\N", "\C"
+     * and "\X" take a byte above 0x7F too, and stay refused. "\R" before
+     * a "\n" stays refused too ("\R" printed plain is warned of as "\v").
      */
     #[Test]
     #[DataProvider('provideRefusedSets')]
@@ -477,10 +478,12 @@ final class SetsWithoutUtfTest extends TestCase
     public static function provideRefusedSets(): iterable
     {
         foreach (self::TARGETS as $target) {
-            // "\R" takes NEL alone above 0x7F, which "\V" leaves out.
-            foreach (['\H' => "\xE9", '\V' => "\xE9", '\N' => "\xE9", '\C' => "\xE9", '\R' => "\x85", '\X' => "\xE9"] as $set => $byte) {
+            foreach (['\H' => "\xE9", '\V' => "\xE9", '\N' => "\xE9", '\C' => "\xE9", '\X' => "\xE9"] as $set => $byte) {
                 yield $target.': '.$set => ['pattern' => '/^'.$set.'$/', 'target' => $target, 'byte' => $byte];
             }
+
+            // "\R" takes NEL alone above 0x7F, which "\V" leaves out.
+            yield $target.': \R before a newline' => ['pattern' => "/^\\R\n$/", 'target' => $target, 'byte' => "\x85\n"];
         }
     }
 

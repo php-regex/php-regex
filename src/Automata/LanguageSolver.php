@@ -19,6 +19,7 @@ use PHPRegex\Automata\Match\MatchExplorer;
 use PHPRegex\Automata\Match\MatchRun;
 use PHPRegex\Automata\Match\PriorityNfa;
 use PHPRegex\Automata\Match\PriorityNfaBuilder;
+use PHPRegex\Automata\Model\Alphabet;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
@@ -798,6 +799,7 @@ final class LanguageSolver
         $rightStateCount = \count($right->states);
         $startKey = $this->pairKey($startLeft, $startRight, $rightStateCount);
         $alphabetRanges = $this->mergeAlphabetRanges($left, $right);
+        $symbols = $this->productClasses($alphabetRanges, $left, $right);
 
         // Both alphabets the bytes: a witness is a byte, not the UTF-8 of
         // its value; with a code point alphabet anywhere it is a character.
@@ -807,7 +809,7 @@ final class LanguageSolver
             return '';
         }
 
-        $budget = new WorkBudget($options->maxTransitionsProcessed, 'comparison', 1, 0, \count($alphabetRanges));
+        $budget = new WorkBudget($options->maxTransitionsProcessed, 'comparison', 1, 0, \count($symbols));
         $transitions = 0;
 
         /** @var \SplQueue<array{int, int, int}> $queue */
@@ -825,14 +827,15 @@ final class LanguageSolver
             $leftState = self::DEAD === $leftStateId ? null : $left->getState($leftStateId);
             $rightState = self::DEAD === $rightStateId ? null : $right->getState($rightStateId);
 
-            foreach ($alphabetRanges as [$start]) {
-                $budget->updateStats(\count($visited), $transitions, \count($alphabetRanges));
+            $leftTargets = $leftState?->classTargets() ?? [];
+            $rightTargets = $rightState?->classTargets() ?? [];
+            foreach ($symbols as [$symbol, $leftClass, $rightClass]) {
+                $budget->updateStats(\count($visited), $transitions, \count($symbols));
                 $budget->consume();
                 $transitions++;
-                $symbol = $start;
-                $nextLeft = null === $leftState ? self::DEAD : $leftState->transitionFor($symbol);
+                $nextLeft = null === $leftState ? self::DEAD : (null !== $leftClass ? ($leftTargets[$leftClass] ?? null) : $leftState->transitionFor($symbol));
                 $nextLeft ??= self::DEAD;
-                $nextRight = null === $rightState ? self::DEAD : $rightState->transitionFor($symbol);
+                $nextRight = null === $rightState ? self::DEAD : (null !== $rightClass ? ($rightTargets[$rightClass] ?? null) : $rightState->transitionFor($symbol));
                 $nextRight ??= self::DEAD;
 
                 $nextKey = $this->pairKey($nextLeft, $nextRight, $rightStateCount);
@@ -890,6 +893,51 @@ final class LanguageSolver
         }
 
         return implode('', \array_reverse($chars));
+    }
+
+    /**
+     * The ranges of the merged alphabet grouped by what they read on each
+     * side: two ranges in the same class of the left automaton and in the
+     * same class (or range) of the right one move every pair of states
+     * alike, so the first of them stands for both. A Unicode class cuts the
+     * merged alphabet into hundreds of ranges and a handful of such pairs.
+     * Each is the character the witness takes, the class it falls in on
+     * the left and on the right, null on a side whose states hold their
+     * ranges themselves, which is then read by the character. The pairs
+     * come in the order of their first range, so the witness found is the
+     * one the ranges give.
+     *
+     * @param array<int, AlphabetRange> $ranges
+     *
+     * @return list<array{int, int|null, int|null}>
+     */
+    private function productClasses(array $ranges, Dfa $left, Dfa $right): array
+    {
+        $leftAlphabet = $left->alphabet;
+        $rightAlphabet = $right->alphabet;
+        $leftRanges = $leftAlphabet ?? new Alphabet(array_column($left->alphabetRanges, 0), array_column($left->alphabetRanges, 1), [], [], 0);
+        $rightRanges = $rightAlphabet ?? new Alphabet(array_column($right->alphabetRanges, 0), array_column($right->alphabetRanges, 1), [], [], 0);
+
+        $seen = [];
+        $classes = [];
+        foreach ($ranges as [$start]) {
+            $leftRange = $leftRanges->rangeOf($start);
+            $rightRange = $rightRanges->rangeOf($start);
+            $leftClass = null === $leftAlphabet || null === $leftRange ? null : $leftAlphabet->classOfRange[$leftRange];
+            $rightClass = null === $rightAlphabet || null === $rightRange ? null : $rightAlphabet->classOfRange[$rightRange];
+
+            // A side read by the character, or a character outside a
+            // side's alphabet, keeps its range apart.
+            $key = (null === $leftClass ? 'r'.($leftRange ?? 'x'.$start) : 'c'.$leftClass).':'.(null === $rightClass ? 'r'.($rightRange ?? 'x'.$start) : 'c'.$rightClass);
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            $classes[] = [$start, null === $leftRange ? null : $leftClass, null === $rightRange ? null : $rightClass];
+        }
+
+        return $classes;
     }
 
     /**

@@ -69,7 +69,7 @@ final class LanguageSolverSemanticsTest extends TestCase
     {
         $solver = new LanguageSolver();
 
-        foreach (['/^a*+a$/', '/(?>ab|a)b/', '/(?>(a+))b/'] as $pattern) {
+        foreach (['/^a*+a$/', '/(?>ab|a)b/', '/(?>(a+))a/'] as $pattern) {
             try {
                 $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
                 $this->fail(sprintf('%s was answered as a pure language; the solver must refuse it.', $pattern));
@@ -120,7 +120,7 @@ final class LanguageSolverSemanticsTest extends TestCase
     {
         $solver = new LanguageSolver();
 
-        foreach (['/^a*+a$/', '/(?:ab*+)b/', '/a*+/', '/(?:a|b)*+c/', '/x*+(?:ab*+)/', '/a++(?:ab)?/', '/a*+(?:ab)?/', '/k++(?:kx)?/iu', '/a++(?:ab|)/'] as $pattern) {
+        foreach (['/^a*+a$/', '/(?:ab*+)b/', '/(?:a|b)*+c/', '/x*+(?:ab*+)/', '/a++(?:ab)?/', '/a*+(?:ab)?/', '/k++(?:kx)?/iu', '/a++(?:ab|)/'] as $pattern) {
             try {
                 $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
                 $this->fail(sprintf('%s was answered; the solver must refuse it.', $pattern));

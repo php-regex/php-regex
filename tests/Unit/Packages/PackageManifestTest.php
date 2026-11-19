@@ -108,6 +108,9 @@ final class PackageManifestTest extends TestCase
             'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir', 'Parser\Hir\RepetitionHir',
             'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\StartOptions',
             'Parser\Cache\StaticCaches', 'Parser\NodeWalker', 'Parser\TraversalAction',
+            // Whether a possessive quantifier or an atomic group commits to
+            // nothing, the rule the transpiler reads through InertCommitments.
+            'Parser\Analysis\AtomicInertiaAnalyzer',
             // An inline "m" turns "^" multiline under a newline convention
             // the solvers refuse, read as the parser reads its letters.
             'Parser\Syntax\InlineFlags',

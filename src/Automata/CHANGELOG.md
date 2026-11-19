@@ -4,6 +4,15 @@ CHANGELOG
 2.0
 ---
 
+ * A determinized state holds one target per class of its automaton's
+   alphabet, the ranges held once by an alphabet every state shares:
+   `^[\p{L}\p{N}]{3,64}$/u ⊆ ^\w{3,64}$/u` takes 22 ms and 1.4 MB, where it
+   took 377 ms and 44 MB, and the work budget charges one unit per class
+   written. Witnesses are unchanged.
+ * An atomic group or `\R` that commits to nothing reads as its body:
+   `^(?>\d+)-x$` is equivalent to `^\d+-x$`, and `^a\Rb$` is answered. A
+   commitment that keeps a match a follower needs, `^(?>a|ab)c$`, stays
+   refused.
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * `equivalent()`, `intersection()` and `subsetOf()` compare a pattern read

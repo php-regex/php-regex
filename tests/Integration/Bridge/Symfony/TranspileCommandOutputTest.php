@@ -142,7 +142,7 @@ final class TranspileCommandOutputTest extends TestCase
     #[Test]
     public function test_console_reports_a_construct_the_target_lacks(): void
     {
-        [$status, $display] = $this->transpile(['pattern' => '/a++b/', '--target' => 'javascript']);
+        [$status, $display] = $this->transpile(['pattern' => '/a++a/', '--target' => 'javascript']);
 
         $this->assertSame(1, $status);
         $this->assertStringContainsString('Possessive quantifiers are not supported in JavaScript.', $display);

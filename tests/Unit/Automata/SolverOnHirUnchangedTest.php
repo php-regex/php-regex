@@ -112,6 +112,10 @@ final class SolverOnHirUnchangedTest extends TestCase
         yield 'through groups and sequences' => ['left' => '/(?:ab*+)c/', 'right' => '/abbc/', 'expectedEmpty' => false];
         yield 'a follower made of alternatives' => ['left' => '/a*+(?:[bc]|d)e/', 'right' => '/ade/', 'expectedEmpty' => false];
         yield 'through a skippable follower' => ['left' => '/a*+b?c/', 'right' => '/ac/', 'expectedEmpty' => false];
+        // A whole match ends where the subject does: nothing follows a
+        // bare possessive, which has nothing to give back to.
+        yield 'a bare possessive' => ['left' => '/a*+/', 'right' => '/aa/', 'expectedEmpty' => false];
+        yield 'a bare possessive stays disjoint' => ['left' => '/a*+/', 'right' => '/ab/', 'expectedEmpty' => true];
     }
 
     #[Test]
@@ -135,7 +139,6 @@ final class SolverOnHirUnchangedTest extends TestCase
     {
         yield 'possessive before itself' => ['pattern' => '/^a*+a$/'];
         yield 'possessive group before its own letter' => ['pattern' => '/(?:ab*+)b/'];
-        yield 'a bare possessive' => ['pattern' => '/a*+/'];
         yield 'alternation under a possessive star' => ['pattern' => '/(?:a|b)*+c/'];
         yield 'two possessives in a row' => ['pattern' => '/x*+(?:ab*+)/'];
         yield 'a nullable follower' => ['pattern' => '/a++(?:ab)?/'];

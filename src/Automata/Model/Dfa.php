@@ -27,6 +27,8 @@ final class Dfa
      *
      * @param array<int, DfaState>      $states
      * @param array<int, AlphabetRange> $alphabetRanges
+     * @param Alphabet|null             $alphabet       the classes the states move on, when they hold one
+     *                                                  target per class
      */
     public function __construct(
         public readonly int $startState,
@@ -34,6 +36,7 @@ final class Dfa
         public readonly array $alphabetRanges = [],
         public readonly int $minCodePoint = 0,
         public readonly int $maxCodePoint = 255,
+        public readonly ?Alphabet $alphabet = null,
     ) {}
 
     public function getState(int $stateId): DfaState

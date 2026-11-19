@@ -150,6 +150,87 @@ final class LanguageSolverSoundnessTest extends TestCase
     }
 
     /**
+     * An atomic group commits to nothing where its body matches one fixed
+     * way, where it holds a greedy run whose characters no follower starts
+     * with, or where its branches never shadow one another before what
+     * follows. It then reads the language of its body. Oracle: every
+     * string over "abc-" up to five characters.
+     */
+    #[Test]
+    #[DataProvider('provideAtomicGroupsThatCommitToNothing')]
+    public function test_an_atomic_group_that_commits_to_nothing_reads_its_body(string $atomic, string $plain): void
+    {
+        foreach ($this->generateStrings(['a', 'b', 'c', '-'], 5) as $subject) {
+            $this->assertSame(preg_match($plain, $subject), preg_match($atomic, $subject), $atomic.' on '.json_encode($subject));
+        }
+
+        $this->assertTrue((new LanguageSolver())->equivalent($atomic, $plain)->isEquivalent);
+    }
+
+    /**
+     * @return iterable<string, array{atomic: string, plain: string}>
+     */
+    public static function provideAtomicGroupsThatCommitToNothing(): iterable
+    {
+        yield 'a fixed sequence' => ['atomic' => '/^(?>ab)c$/', 'plain' => '/^abc$/'];
+        yield 'a run before a dash' => ['atomic' => '/^(?>a+)-c$/', 'plain' => '/^a+-c$/'];
+        yield 'an optional run' => ['atomic' => '/^(?>a*)b$/', 'plain' => '/^a*b$/'];
+        yield 'a bounded run' => ['atomic' => '/^(?>a{1,3})b$/', 'plain' => '/^a{1,3}b$/'];
+        yield 'a run of a class at the end' => ['atomic' => '/^(?>[ab]+)$/', 'plain' => '/^[ab]+$/'];
+        yield 'disjoint branches' => ['atomic' => '/^(?>a|b)c$/', 'plain' => '/^(?:a|b)c$/'];
+        yield 'a longer branch first' => ['atomic' => '/^(?>ab|a)c$/', 'plain' => '/^(?:ab|a)c$/'];
+        yield 'a capture inside' => ['atomic' => '/^(?>(a)b)c$/', 'plain' => '/^(a)bc$/'];
+        yield 'inside a lookahead' => ['atomic' => '/^(?=(?>a+)-)a+-$/', 'plain' => '/^a+-$/'];
+        yield 'unanchored' => ['atomic' => '/(?>a+)b/', 'plain' => '/a+b/'];
+    }
+
+    /**
+     * An atomic group that would keep a shorter or longer match than a
+     * follower needs reads another language: refused, never read as its
+     * body. Each row names a subject the two spellings part on.
+     */
+    #[Test]
+    #[DataProvider('provideAtomicGroupsThatCommit')]
+    public function test_an_atomic_group_that_commits_is_refused(string $atomic, string $plain, string $subject): void
+    {
+        $this->assertSame(0, preg_match($atomic, $subject));
+        $this->assertSame(1, preg_match($plain, $subject));
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('Atomic groups commit to their first match');
+
+        (new LanguageSolver())->equivalent($atomic, $plain);
+    }
+
+    /**
+     * @return iterable<string, array{atomic: string, plain: string, subject: string}>
+     */
+    public static function provideAtomicGroupsThatCommit(): iterable
+    {
+        // A first-set criterion on the suffix accepts this one: "c" never
+        // starts the body, yet "a" is kept where "ab" was needed.
+        yield 'a shorter branch first' => ['atomic' => '/^(?>a|ab)c$/', 'plain' => '/^(?:a|ab)c$/', 'subject' => 'abc'];
+        yield 'a run the follower shares' => ['atomic' => '/^(?>a+)a$/', 'plain' => '/^a+a$/', 'subject' => 'aa'];
+        yield 'a lazy run' => ['atomic' => '/^(?>a+?)b$/', 'plain' => '/^a+?b$/', 'subject' => 'aab'];
+        yield 'a longer branch the follower needs short' => ['atomic' => '/^(?>ab|a)b$/', 'plain' => '/^(?:ab|a)b$/', 'subject' => 'ab'];
+        yield 'a newline after \R' => ['atomic' => "/^\\R\n$/", 'plain' => "/^(?:\r\n|\r|\n)\n$/", 'subject' => "\r\n"];
+    }
+
+    /**
+     * "\R" is "\r\n" or one vertical space, tried in that order, and kept:
+     * unless a "\n" may follow it, it reads as the alternation.
+     */
+    #[Test]
+    public function test_a_line_break_escape_reads_as_its_alternation(): void
+    {
+        $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/', '/^a(?:\r\n|[\n\x0B\f\r\x85])b$/')->isEquivalent);
+        $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/u', '/^a(?:\r\n|[\n\x0B\f\r\x{85}\x{2028}\x{2029}])b$/u')->isEquivalent);
+        foreach (["a\r\nb", "a\nb", "a\rb", "a\r\rb", "a\n\rb", 'ab'] as $subject) {
+            $this->assertSame(preg_match('/^a(?:\r\n|[\n\x0B\f\r\x85])b$/', $subject), preg_match('/^a\Rb$/', $subject), (string) json_encode($subject));
+        }
+    }
+
+    /**
      * @return list<string>
      */
     private function supportedPatterns(): array

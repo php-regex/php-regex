@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\JavaScript;
 
+use PHPRegex\Parser\Analysis\InertCommitments;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
@@ -98,6 +99,12 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     private string $source = '';
 
     /**
+     * The possessive quantifiers and atomic groups of the pattern that
+     * commit to nothing, by where they start: printed plain.
+     */
+    private ?InertCommitments $inert = null;
+
+    /**
      * @param bool $unicodeSets print for the v flag (the HTML pattern attribute): classes escape
      *                          what the v flag reserves, "\A" reads as "^", "\z" and "\Z" as "$",
      *                          and /i or "(?i)" is spelled out, each atom written with the
@@ -116,6 +123,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     public function visitRegex(RegexNode $node): string
     {
         $this->enterPattern($node);
+        $this->inert = InertCommitments::of($node);
         if ($this->unicodeSets) {
             $this->unicodeText = $node->isUnicode();
             $this->source = $node->source ?? '';
@@ -205,7 +213,9 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             GroupType::LookbehindPositive => $this->compileLookbehind('(?<=', $child, $node),
             GroupType::LookbehindNegative => $this->compileLookbehind('(?<!', $child, $node),
             GroupType::InlineFlags => $this->unsupported('Inline flags groups are not supported in JavaScript.', $node),
-            GroupType::Atomic => $this->unsupported('Atomic groups are not supported in JavaScript.', $node),
+            GroupType::Atomic => $this->inert?->isInertAtomic($node->getStartPosition()) ?? false
+                ? $this->plainCommitment('(?:'.$child.')', 'the atomic group')
+                : $this->unsupported('Atomic groups are not supported in JavaScript.', $node),
             GroupType::BranchReset => $this->unsupported('Branch reset groups are not supported in JavaScript.', $node),
             GroupType::ScanSubstring => $this->unsupported('Substring scans are not supported in JavaScript.', $node),
         };
@@ -214,7 +224,8 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): string
     {
-        if (QuantifierType::Possessive === $node->type) {
+        $possessive = QuantifierType::Possessive === $node->type;
+        if ($possessive && !($this->inert?->isInertPossessive($node->getStartPosition()) ?? false)) {
             return $this->unsupported('Possessive quantifiers are not supported in JavaScript.', $node);
         }
 
@@ -227,6 +238,12 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
         if ($node->node instanceof SequenceNode || $node->node instanceof AlternationNode) {
             $nodeCompiled = '(?:'.$nodeCompiled.')';
+        }
+
+        if ($possessive) {
+            // Nothing that follows takes back what it matched: greedy, and
+            // greedy still under U, reads the same matches.
+            return $this->plainCommitment($nodeCompiled.$this->normalizeQuantifier($node->quantifier), 'the possessive quantifier');
         }
 
         return $nodeCompiled.$this->normalizeQuantifier($node->quantifier).$this->lazySuffix($node);
@@ -298,6 +315,12 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             $set = $this->spaceSet($node->value);
 
             return $this->inCharClass ? $set : '['.$set.']';
+        }
+
+        if ('R' === $node->value && !$this->inCharClass && ($this->inert?->isInertAtomic($node->getStartPosition()) ?? false)) {
+            // "\R" tries "\r\n" first and keeps it: unless a "\n" may
+            // follow, the alternation in that order reads the same matches.
+            return $this->plainCommitment('(?:\r\n|['.$this->spaceSet('v').'])', '\R');
         }
 
         if (!\in_array($node->value, self::SUPPORTED_CHAR_TYPES, true)) {
@@ -540,6 +563,13 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
      * Whether /i is spelled out, each atom written with its cases: in the
      * HTML pattern attribute, which takes no flag.
      */
+    private function plainCommitment(string $printed, string $what): string
+    {
+        $this->context->addNote('Printed '.$what.' without its commitment: nothing that follows it can take back what it matched.');
+
+        return $printed;
+    }
+
     private function spellsCase(): bool
     {
         return $this->unicodeSets && $this->caseless;

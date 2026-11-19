@@ -20,6 +20,7 @@ use PHPRegex\Automata\Model\NfaFragment;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Support\WorkBudget;
+use PHPRegex\Parser\Analysis\AtomicInertiaAnalyzer;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
@@ -83,12 +84,14 @@ final class HirToNfaTransformer
     private NfaBuilder $builder;
 
     /**
-     * The possessive repetitions an enclosing sequence has proven safe,
-     * by object id, for the refusal walk being run.
+     * The possessive repetitions and atomic groups an enclosing sequence
+     * has proven inert, by object id, for the refusal walk being run.
      *
      * @var array<int, true>
      */
-    private array $vouchedPossessives = [];
+    private array $vouched = [];
+
+    private readonly AtomicInertiaAnalyzer $inertia;
 
     private bool $insideLookaround = false;
 
@@ -105,7 +108,10 @@ final class HirToNfaTransformer
      */
     private array $edges = [];
 
-    public function __construct(private readonly string $pattern, private readonly bool $unicode) {}
+    public function __construct(private readonly string $pattern, private readonly bool $unicode)
+    {
+        $this->inertia = new AtomicInertiaAnalyzer();
+    }
 
     /**
      * @throws ComplexityException When the tree leaves the regular subset or a limit is reached
@@ -159,8 +165,8 @@ final class HirToNfaTransformer
      */
     public function assertTranslatable(Hir $hir, SolverOptions $options): void
     {
-        $this->vouchedPossessives = [];
-        $this->assertNode($hir, $options, MatchMode::Full === $options->matchMode ? CharSet::empty() : null);
+        $this->vouched = [];
+        $this->assertSequence([$hir], $options, MatchMode::Full === $options->matchMode ? CharSet::empty() : null);
     }
 
     /**
@@ -204,7 +210,7 @@ final class HirToNfaTransformer
             $this->insideLookaround = true;
 
             try {
-                $this->assertNode($node->body, new SolverOptions(matchMode: MatchMode::Full, maxNfaStates: $options->maxNfaStates, maxDfaStates: $options->maxDfaStates), CharSet::empty());
+                $this->assertSequence([$node->body], new SolverOptions(matchMode: MatchMode::Full, maxNfaStates: $options->maxNfaStates, maxDfaStates: $options->maxDfaStates), CharSet::empty());
             } finally {
                 $this->insideLookaround = false;
             }
@@ -213,7 +219,14 @@ final class HirToNfaTransformer
         }
 
         if ($node instanceof AtomicHir) {
-            throw new ComplexityException(self::ATOMIC_MESSAGE, $node->startPosition, $this->pattern);
+            if (!isset($this->vouched[spl_object_id($node)])) {
+                throw new ComplexityException(self::ATOMIC_MESSAGE, $node->startPosition, $this->pattern);
+            }
+
+            // Proven inert: the group reads as its body.
+            $this->assertNode($node->body, $options, $follow);
+
+            return;
         }
 
         if ($node instanceof AssertionHir) {
@@ -243,7 +256,7 @@ final class HirToNfaTransformer
         }
 
         if ($node instanceof RepetitionHir) {
-            if (Greed::Possessive === $node->greed && !isset($this->vouchedPossessives[spl_object_id($node)])) {
+            if (Greed::Possessive === $node->greed && !isset($this->vouched[spl_object_id($node)])) {
                 throw new ComplexityException(self::POSSESSIVE_MESSAGE, $node->startPosition, $this->pattern);
             }
 
@@ -276,21 +289,29 @@ final class HirToNfaTransformer
     }
 
     /**
-     * A sequence: each part that ends in a possessive quantifier is judged
-     * against what follows it — the rest of the sequence and, at its end,
-     * whatever follows the sequence itself.
+     * A sequence: each part that ends in a possessive quantifier or an
+     * atomic group is judged against what follows it — the rest of the
+     * sequence and, at its end, whatever follows the sequence itself.
      *
      * @throws ComplexityException
      */
     private function assertConcat(ConcatHir $node, SolverOptions $options, ?CharSet $follow): void
     {
-        $parts = $node->parts;
+        $this->assertSequence($node->parts, $options, $follow);
+    }
 
+    /**
+     * @param list<Hir> $parts
+     *
+     * @throws ComplexityException
+     */
+    private function assertSequence(array $parts, SolverOptions $options, ?CharSet $follow): void
+    {
         foreach ($parts as $index => $part) {
-            $partFollow = $this->followSetOf($parts, $index, $follow);
-            $possessive = $this->possessiveAtEnd($part);
-            if (null !== $possessive) {
-                $this->assertPossessiveIsSafe($possessive, $partFollow, $parts, $index);
+            $partFollow = $this->inertia->followSetOf($parts, $index, $follow);
+            $commitment = $this->inertia->commitmentAtEnd($part);
+            if (null !== $commitment) {
+                $this->assertCommitmentIsSafe($commitment, $partFollow, $parts, $index);
             }
 
             $this->assertNode($part, $options, $partFollow);
@@ -314,66 +335,27 @@ final class HirToNfaTransformer
     }
 
     /**
-     * A possessive quantifier reads the same language as its greedy
-     * spelling when nothing that follows it can consume what it would have
-     * to give back: the follower consumes no character of its own (its
-     * first set is empty), or its first characters and the atom's share
-     * none. What follows it is everything: the rest of its sequence and,
-     * past the sequence's end — a capture, an alternation branch, a
-     * repetition body all end where the engine keeps reading — whatever
-     * follows the sequence itself. A follow that cannot be worked out,
-     * or one a PARTIAL match may extend, refuses, and so does a possessive
-     * with another one further along the sequence: each proof reads what
-     * follows its own quantifier, and the two do not compose.
+     * A possessive quantifier or an atomic group reads the same language as
+     * its backtracking spelling when nothing that follows it can consume
+     * what it would have to give back (see AtomicInertiaAnalyzer). What
+     * follows it is everything: the rest of its sequence and, past the
+     * sequence's end, whatever follows the sequence itself. A follow that
+     * cannot be worked out, or one a PARTIAL match may extend, refuses, and
+     * so does a commitment with another one further along the sequence:
+     * each proof reads what follows its own commitment, and the two do not
+     * compose.
      *
-     * @param list<Hir> $parts the parts of the sequence the possessive ends
+     * @param list<Hir> $parts the parts of the sequence the commitment ends
      *
      * @throws ComplexityException
      */
-    private function assertPossessiveIsSafe(RepetitionHir $possessive, ?CharSet $follow, array $parts, int $index): void
+    private function assertCommitmentIsSafe(RepetitionHir|AtomicHir $commitment, ?CharSet $follow, array $parts, int $index): void
     {
-        $atom = $this->atomFirstSet($possessive->body);
-        $safe = null !== $follow
-            && null !== $atom
-            && $atom->intersect($follow)->isEmpty()
-            && !$this->containsPossessiveBeyond($parts, $index + 1);
-
-        if (!$safe) {
-            throw new ComplexityException(self::POSSESSIVE_MESSAGE, $possessive->startPosition, $this->pattern);
+        if (!$this->inertia->commitmentIsInert($commitment, $parts, $index, $follow)) {
+            throw new ComplexityException($commitment instanceof AtomicHir ? self::ATOMIC_MESSAGE : self::POSSESSIVE_MESSAGE, $commitment->startPosition, $this->pattern);
         }
 
-        $this->vouchedPossessives[spl_object_id($possessive)] = true;
-    }
-
-    /**
-     * The first characters of everything after the position: the rest of
-     * the sequence, through the followers that may be skipped, and what
-     * follows the sequence itself. All followers skippable and nothing
-     * beyond the sequence, an empty set; a follower or continuation whose
-     * first characters cannot be worked out, null, which the rule above
-     * reads as a refusal.
-     *
-     * @param list<Hir> $parts
-     */
-    private function followSetOf(array $parts, int $index, ?CharSet $beyond): ?CharSet
-    {
-        if (null === $beyond) {
-            return null;
-        }
-
-        $rest = $beyond;
-        for ($i = \count($parts) - 1; $i > $index; $i--) {
-            $properties = $parts[$i]->properties;
-            if (null === $properties->first) {
-                return null;
-            }
-
-            $rest = true === $properties->nullable
-                ? $properties->first->union($rest)
-                : $properties->first;
-        }
-
-        return $rest;
+        $this->vouched[spl_object_id($commitment)] = true;
     }
 
     /**
@@ -396,135 +378,6 @@ final class HirToNfaTransformer
     private static function surrogates(): CharSet
     {
         return CharSet::range(self::SURROGATE_FIRST, self::SURROGATE_LAST);
-    }
-
-    /**
-     * The characters the atom of a possessive quantifier consumes first,
-     * when an iteration gives nothing back that the follower or the next
-     * iteration could take: a class or a literal, a sequence of them that
-     * matches one fixed way, or an unbounded run of one class (its
-     * characters given back are taken by no follower that starts otherwise,
-     * and the next iteration takes them all the same). A body that may
-     * match more than one way, "ab?", "a{2,3}", "(?:bc|b)", an alternation,
-     * an empty set, or anything that may match nothing first, stays refused.
-     */
-    private function atomFirstSet(Hir $atom): ?CharSet
-    {
-        while ($atom instanceof CaptureHir) {
-            $atom = $atom->body;
-        }
-
-        if ($atom instanceof RepetitionHir) {
-            if ($atom->min < 1 || null !== $atom->max) {
-                return null;
-            }
-
-            $body = $atom->body;
-            while ($body instanceof CaptureHir) {
-                $body = $body->body;
-            }
-
-            return $body instanceof ClassHir || ($body instanceof LiteralHir && 1 === \count($body->codePoints)) ? $this->fixedFirstSet($body) : null;
-        }
-
-        return $this->fixedFirstSet($atom);
-    }
-
-    /**
-     * The characters a body that matches one fixed way starts with: a class,
-     * a literal, or a sequence of them, through captures; null otherwise.
-     */
-    private function fixedFirstSet(Hir $body): ?CharSet
-    {
-        while ($body instanceof CaptureHir) {
-            $body = $body->body;
-        }
-
-        if ($body instanceof ClassHir || $body instanceof LiteralHir) {
-            $first = $body->properties->first;
-
-            return null === $first || $first->isEmpty() ? null : $first;
-        }
-
-        if (!$body instanceof ConcatHir || [] === $body->parts) {
-            return null;
-        }
-
-        $first = null;
-        foreach ($body->parts as $part) {
-            $partFirst = $this->fixedFirstSet($part);
-            if (null === $partFirst) {
-                return null;
-            }
-
-            $first ??= $partFirst;
-        }
-
-        return $first;
-    }
-
-    /**
-     * Whether a possessive quantifier occurs beyond the part that follows
-     * the position, anywhere in the parts after it.
-     *
-     * @param list<Hir> $parts
-     */
-    private function containsPossessiveBeyond(array $parts, int $after): bool
-    {
-        for ($i = $after + 1, $count = \count($parts); $i < $count; $i++) {
-            if ($this->containsPossessive($parts[$i])) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function containsPossessive(Hir $node): bool
-    {
-        if ($node instanceof RepetitionHir) {
-            return Greed::Possessive === $node->greed || $this->containsPossessive($node->body);
-        }
-
-        foreach ($node->children() as $child) {
-            if ($this->containsPossessive($child)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * The possessive quantifier a subtree ends with, through captures and
-     * sequences, or null. An assertion, an alternation or anything else in
-     * the tail is a barrier: what follows it is not what follows the
-     * quantifier.
-     */
-    private function possessiveAtEnd(Hir $node): ?RepetitionHir
-    {
-        while (true) {
-            if ($node instanceof RepetitionHir) {
-                return Greed::Possessive === $node->greed ? $node : null;
-            }
-
-            if ($node instanceof ConcatHir) {
-                $node = $node->parts[\count($node->parts) - 1] ?? null;
-                if (null === $node) {
-                    return null;
-                }
-
-                continue;
-            }
-
-            if ($node instanceof CaptureHir) {
-                $node = $node->body;
-
-                continue;
-            }
-
-            return null;
-        }
     }
 
     /**
@@ -554,7 +407,9 @@ final class HirToNfaTransformer
             return $this->buildLiteral($node);
         }
 
-        if ($node instanceof CaptureHir) {
+        if ($node instanceof CaptureHir || $node instanceof AtomicHir) {
+            // An atomic group reaching the build was proven inert by the
+            // refusal walk: it reads as its body.
             return $this->buildNode($node->body);
         }
 

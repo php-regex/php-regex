@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `Analysis\InertCommitments::of()` names the possessive quantifiers and
+   the atomic groups of a pattern searched that commit to nothing: nothing
+   that may follow one can take back a character it matched. A printer for
+   an engine without them prints those plain.
  * A mark written short accepts an `=` in its name, `/(*:foo=bar)/`, and
    four characters after it, `/(*:x)a=b/`: the check that only the limits
    take a value read it as `(*MARK:`, four characters longer, and refused

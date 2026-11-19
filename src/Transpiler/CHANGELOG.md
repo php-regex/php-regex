@@ -4,6 +4,10 @@ CHANGELOG
 2.0
 ---
 
+ * JavaScript and the HTML pattern attribute print a possessive quantifier,
+   an atomic group or `\R` that commits to nothing plain, with a note:
+   `/^\d++$/` gives `^\d+$`. One whose commitment changes the match, or one
+   a lookaround or a word boundary follows, stays refused.
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * The advice to add `u` looks at the target: where the target refuses the

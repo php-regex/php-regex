@@ -57,6 +57,13 @@ final class DfaMinimizer
      */
     private function effectiveAlphabet(Dfa $dfa): array
     {
+        // The characters of a class move every state alike: its smallest
+        // one stands for it, and the classes are a handful where a Unicode
+        // class cuts the alphabet into hundreds of ranges.
+        if (null !== $dfa->alphabet) {
+            return $dfa->alphabet->representative;
+        }
+
         if ([] !== $dfa->alphabetRanges) {
             $symbols = [];
             foreach ($dfa->alphabetRanges as $range) {
@@ -87,7 +94,8 @@ final class DfaMinimizer
     {
         $count = 0;
         foreach ($dfa->states as $state) {
-            $ranges = $state->rangeCount();
+            $classes = \count($state->classTargets());
+            $ranges = 0 !== $classes ? $classes : $state->rangeCount();
             $count += 0 !== $ranges ? $ranges : \count($state->byteTransitions());
         }
 

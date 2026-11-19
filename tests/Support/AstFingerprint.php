@@ -71,6 +71,7 @@ final class AstFingerprint
         'src/Parser/ParserOptions.php',
         'src/Parser/Analysis/LengthRangeCalculator.php',
         'src/Parser/Analysis/AcceptVerb.php',
+        'src/Parser/Analysis/AtomicInertiaAnalyzer.php',
         'src/Parser/Engine/PcreEngine.php',
         'src/Parser/PcreTarget.php',
         'src/Parser/PcreFeature.php',
