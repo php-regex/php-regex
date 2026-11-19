@@ -24,6 +24,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Validation\CompiledLength;
 use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,6 +39,13 @@ use PHPUnit\Framework\TestCase;
  */
 final class CompiledLengthTest extends TestCase
 {
+    use PcreGates;
+
+    /**
+     * The most units PCRE2 compiles a pattern to, its end marker included.
+     */
+    private const LIMIT = 65536;
+
     #[Test]
     public function test_lookbehind_call_expansion_is_bounded_without_validation(): void
     {
@@ -86,6 +94,32 @@ final class CompiledLengthTest extends TestCase
 
         $this->assertSame($bytes, $taken, 'Oracle: the bytes '.$pattern.' takes.');
         $this->assertSame($length, self::lengthOf($pattern), $pattern);
+    }
+
+    /**
+     * The length of each of those classes asked of the engine: padded to
+     * the limit with "a", two units each, and a dot, one unit, the pattern
+     * compiles, and one unit more is too large. Only a class of that very
+     * length reaches the limit with that padding, which the measure counts
+     * to the limit too, then past it.
+     *
+     * @param list<int> $bytes
+     */
+    #[Test]
+    #[DataProvider('provideRangesOfTwoByteCharactersWithoutUtf')]
+    public function test_the_length_of_a_range_of_a_class_without_utf_is_the_one_the_engine_reaches_the_limit_with(string $pattern, array $bytes, int $length): void
+    {
+        unset($bytes);
+        $this->requiresPcre2('10.48', $pattern.' padded to the size limit');
+        $atTheLimit = self::padded($pattern, self::LIMIT - $length);
+        $pastTheLimit = self::padded($pattern, self::LIMIT - $length + 1);
+
+        $this->assertNull(EngineProbe::warning($atTheLimit), 'Oracle: PCRE2 compiles the class padded to the limit.');
+        $this->assertStringContainsString('regular expression is too large', (string) EngineProbe::warning($pastTheLimit), 'Oracle: PCRE2 refuses the class padded one unit past the limit.');
+
+        $this->assertSame($length, self::lengthOf($pattern), $pattern);
+        $this->assertSame(self::LIMIT, self::lengthOf($atTheLimit), $pattern.' padded to the limit');
+        $this->assertNull(self::lengthOf($pastTheLimit), $pattern.' padded one unit past the limit');
     }
 
     /**
@@ -901,6 +935,16 @@ final class CompiledLengthTest extends TestCase
         $regex = self::parseOnPhp82($pattern);
 
         return new CompiledLength(static fn (): int => 0, (string) $regex->source, false, false, $regex->flags, new PcreTarget($phpVersionId, '10.40'));
+    }
+
+    /**
+     * The pattern, of no modifier, with $units more units to compile after
+     * what it holds: a dot, one unit, where the count is odd, then an "a",
+     * two units, for each two.
+     */
+    private static function padded(string $pattern, int $units): string
+    {
+        return substr($pattern, 0, -1).(1 === $units % 2 ? '.' : '').str_repeat('a', intdiv($units, 2)).'/';
     }
 
     private static function lengthOf(string $pattern, string $release = '10.48'): ?int
