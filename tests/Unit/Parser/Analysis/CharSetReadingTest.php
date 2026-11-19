@@ -48,6 +48,9 @@ final class CharSetReadingTest extends TestCase
      * the small dotless one, not "i" with "I", unless r holds, which pairs
      * them as ASCII does. "\R" takes the line breaks the last of
      * (*BSR_ANYCRLF) and (*BSR_UNICODE) says, where "\v" stays as it is.
+     * Under (*UCP) "\s" takes the next line and the no-break space, unless
+     * "(?aS)" or "(?a)" holds it to ASCII, where "\S" takes them: "(?-aS)"
+     * lets it go, "(?^)" does not.
      *
      * @param list<string> $probes
      */
@@ -82,6 +85,7 @@ final class CharSetReadingTest extends TestCase
         $cases = ['k', 'K', "\u{212A}", 'i', 'I', "\u{130}", "\u{131}", 'h', 'j'];
         $breaks = ["\n", "\r", "\v", "\f", "\x85", ' '];
         $breaksUnderUtf = ["\n", "\r", "\v", "\f", "\u{85}", "\u{2028}", ' '];
+        $spaces = ["\xA0", "\x85", ' ', "\t", 'a'];
 
         yield 'a negated Kelvin sign' => ['options' => '', 'atom' => '[^\x{212A}]', 'flags' => 'iu', 'probes' => $cases];
         yield 'a negated Kelvin sign under r' => ['options' => '', 'atom' => '[^\x{212A}]', 'flags' => 'iur', 'probes' => $cases];
@@ -116,6 +120,24 @@ final class CharSetReadingTest extends TestCase
         yield 'a line break under (*BSR_ANYCRLF) and UTF' => ['options' => '(*BSR_ANYCRLF)', 'atom' => '\R', 'flags' => 'u', 'probes' => $breaksUnderUtf];
         yield 'a vertical space under (*BSR_ANYCRLF)' => ['options' => '(*BSR_ANYCRLF)', 'atom' => '\v', 'flags' => '', 'probes' => $breaks];
         yield 'a line break under (*BSR_ANYCRLF), repeated' => ['options' => '(*BSR_ANYCRLF)', 'atom' => '\R+', 'flags' => '', 'probes' => $breaks];
+
+        yield 'a non-space under (*UCP)' => ['options' => '(*UCP)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space in a group that holds spaces to ASCII, under (*UCP)' => ['options' => '(*UCP)', 'atom' => '(?aS:\S)', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after spaces held to ASCII, under (*UCP)' => ['options' => '(*UCP)(?aS)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after every ASCII option, under (*UCP)' => ['options' => '(*UCP)(?a)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a space after spaces held to ASCII, under (*UCP)' => ['options' => '(*UCP)(?aS)', 'atom' => '\s', 'flags' => '', 'probes' => $spaces];
+        yield 'a class of non-spaces after spaces held to ASCII, under (*UCP)' => ['options' => '(*UCP)(?aS)', 'atom' => '[^\s]', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after spaces held to ASCII and let go, under (*UCP)' => ['options' => '(*UCP)(?aS)(?-aS)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after every ASCII option but spaces, under (*UCP)' => ['options' => '(*UCP)(?a-aS)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space in a group that lets every ASCII option go, under (*UCP)' => ['options' => '(*UCP)(?aS)', 'atom' => '(?-a:\S)', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after spaces held to ASCII and a reset, under (*UCP)' => ['options' => '(*UCP)(?aS)(?^)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after digits held to ASCII, under (*UCP)' => ['options' => '(*UCP)(?aD)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after POSIX classes held to ASCII, under (*UCP)' => ['options' => '(*UCP)(?aP)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after POSIX digits held to ASCII, under (*UCP)' => ['options' => '(*UCP)(?aT)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after word characters held to ASCII, under (*UCP)' => ['options' => '(*UCP)(?aW)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after digits, then spaces, held to ASCII, under (*UCP)' => ['options' => '(*UCP)(?aDaS)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after spaces held to ASCII beside a modifier, under (*UCP)' => ['options' => '(*UCP)(?iaS)', 'atom' => '\S', 'flags' => '', 'probes' => $spaces];
+        yield 'a non-space after spaces held to ASCII, under UTF' => ['options' => '(?aS)', 'atom' => '\S', 'flags' => 'u', 'probes' => ["\u{A0}", "\u{85}", ' ', "\t", 'a']];
     }
 
     /**

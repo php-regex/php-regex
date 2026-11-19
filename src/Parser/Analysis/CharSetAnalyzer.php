@@ -95,12 +95,16 @@ final class CharSetAnalyzer
      * @param self|null $samePattern     an analyzer of the same pattern, whose
      *                                   reading of the start options this one
      *                                   takes rather than read them again
+     * @param bool      $asciiSpaces     whether "(?aS)" or "(?a)" holds "\s" to
+     *                                   ASCII under (*UCP), and "\S" takes the
+     *                                   spaces above it
      */
     public function __construct(
         string $flags = '',
         private readonly string $startOptions = '',
         private readonly bool $readsAboveAscii = false,
-        ?self $samePattern = null
+        ?self $samePattern = null,
+        private readonly bool $asciiSpaces = false,
     ) {
         $this->options = $samePattern->options ?? self::readStartOptions($startOptions);
         $this->flags = null === $samePattern ? $this->flagsAtTheStart($flags) : $flags;
@@ -335,11 +339,11 @@ final class CharSetAnalyzer
 
     /**
      * "\s": the white space of ASCII, and under (*UCP) the next line and
-     * the no-break space.
+     * the no-break space, unless "(?aS)" holds it to ASCII.
      */
     private function spaces(): ByteCharSet
     {
-        return self::bytes("\t\n\v\f\r ")->union($this->spacesAboveAscii($this->unicodeMode ? "\x85\xA0" : ''));
+        return self::bytes("\t\n\v\f\r ")->union($this->spacesAboveAscii($this->unicodeMode && !$this->asciiSpaces ? "\x85\xA0" : ''));
     }
 
     /**
@@ -637,13 +641,38 @@ final class CharSetAnalyzer
 
     /**
      * The analyzer under the flags an option setting writes: "i", "s-i",
-     * "^i". PCRE2's ASCII options ("a", "aD", ...) change nothing read here.
+     * "^i". Of PCRE2's ASCII options, "aS" and "a" alone hold "\s" to ASCII
+     * under (*UCP), and after the hyphen let it go; "^" leaves them as they
+     * are. The others narrow "\d", "\w" and the POSIX classes, which the
+     * sets do not read under (*UCP).
      */
     private function with(string $options): self
     {
+        [$on, $off] = explode('-', ltrim($options, '^'), 2) + [1 => ''];
+        $asciiSpaces = !self::holdsSpacesToAscii($off) && ($this->asciiSpaces || self::holdsSpacesToAscii($on));
         $setting = InlineFlags::read(InlineFlags::withoutAsciiOptions($options), InlineFlags::LETTERS.'r');
 
-        return null === $setting ? $this : new self($setting->applyTo($this->flags), $this->startOptions, $this->readsAboveAscii, $this);
+        if (null === $setting && $asciiSpaces === $this->asciiSpaces) {
+            return $this;
+        }
+
+        return new self(null === $setting ? $this->flags : $setting->applyTo($this->flags), $this->startOptions, $this->readsAboveAscii, $this, $asciiSpaces);
+    }
+
+    /**
+     * Whether the option letters name "aS", or "a" alone, which stands for
+     * every ASCII option: "a" followed by "D", "P", "T" or "W" names that
+     * one only.
+     */
+    private static function holdsSpacesToAscii(string $letters): bool
+    {
+        for ($at = strpos($letters, 'a'); false !== $at; $at = strpos($letters, 'a', $at + 1)) {
+            if (!\in_array($letters[$at + 1] ?? '', ['D', 'P', 'T', 'W'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
