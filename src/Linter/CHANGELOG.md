@@ -68,6 +68,12 @@ CHANGELOG
    restriction `(*CASELESS_RESTRICT)` sets holds there until `(?-r)` lifts
    it: `/(*CASELESS_RESTRICT)(?-r:\x{212A}|[^k])+/iu`, whose Kelvin sign
    then matches `k` and `K`, which `[^k]` refuses, is no longer reported.
+   A lookahead before a branch narrows the characters it starts with, with
+   or without u: a positive one to those its body starts with, a negative
+   one to all but those its body refuses whatever follows them, so
+   `/\A(?:(?=b)[ab]|a)+\z/` and `/\A(?:(?!a)[ab]|a)+\z/` are no longer
+   reported, while `/\A(?:(?=a)[ab]|a)+\z/` and `/(?:(?!ab)a|a)+/` are; a
+   lookahead the rule cannot read leaves the branch unjudged.
    `/(?:[à-ÿ]+|é)+/u`, `/(?:(?a:\p{Lu})x|\p{L}y)+z/u` and
    `/(?:(?aD:\w)x|éy)+z/uD`, which it missed, are reported. The message quotes each branch as the
    pattern writes it, `\d+` rather than `\\d+`, and `é` under u rather than
